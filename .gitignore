@@ -1,0 +1,7 @@
+.vercel
+node_modules/
+.next/
+
+# Backup files
+src/data/*.backup.json
+src/data/backups/

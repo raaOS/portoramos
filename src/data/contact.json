@@ -1,0 +1,47 @@
+{
+  "info": {
+    "email": "ra.920710@gmail.com",
+    "phone": "+628817472310",
+    "address": "Jakarta, Indonesia",
+    "socialMedia": {
+      "linkedin": "https://linkedin.com/in/yourname",
+      "instagram": "https://instagram.com/hallo.aufaly",
+      "twitter": "",
+      "github": "https://github.com/yourname",
+      "behance": ""
+    }
+  },
+  "formSettings": {
+    "enabled": true,
+    "fields": {
+      "name": {
+        "required": true,
+        "label": "Nama Lengkap"
+      },
+      "email": {
+        "required": true,
+        "label": "Email"
+      },
+      "phone": {
+        "required": false,
+        "label": "Nomor Telepon"
+      },
+      "company": {
+        "required": false,
+        "label": "Perusahaan"
+      },
+      "subject": {
+        "required": true,
+        "label": "Subjek"
+      },
+      "message": {
+        "required": true,
+        "label": "Pesan"
+      }
+    },
+    "submitButtonText": "Kirim Pesan",
+    "successMessage": "Terima kasih! Pesan Anda telah berhasil dikirim.",
+    "errorMessage": "Maaf, terjadi kesalahan. Silakan coba lagi."
+  },
+  "lastUpdated": "2025-09-12T13:21:48.443Z"
+}

@@ -1,0 +1,58 @@
+{
+  "projects": [
+    {
+      "title": "sandal",
+      "client": "amunra",
+      "year": 2025,
+      "description": "sendal selalu",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757859588/RA_12_SENDAL_IBU_FEED_1_ddkydg.png",
+      "coverWidth": 1080,
+      "coverHeight": 1350,
+      "gallery": [],
+      "tags": [
+        "manipulasi"
+      ],
+      "external_link": "",
+      "id": "project-1757867014832",
+      "slug": "sandal",
+      "autoplay": false,
+      "muted": true,
+      "loop": false,
+      "playsInline": true,
+      "galleryItems": [],
+      "order": 1,
+      "status": "published",
+      "createdAt": "2025-09-14T16:23:34.832Z",
+      "updatedAt": "2025-09-14T16:23:34.832Z"
+    },
+    {
+      "title": "gantungan",
+      "client": "ramos",
+      "year": 2025,
+      "description": "gantungan ituuu......",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1756500654/Provence_Beauty_Soft_Bisous_Animation_2_skincareanimation_3danimation_pjt31w.mp4",
+      "coverWidth": 1080,
+      "coverHeight": 1920,
+      "gallery": [
+        "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png",
+        "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757859588/RA_12_SENDAL_IBU_FEED_1_ddkydg.png"
+      ],
+      "tags": [
+        "video"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "id": "project-1757868324869",
+      "slug": "gantungan",
+      "galleryItems": [],
+      "order": 2,
+      "status": "published",
+      "createdAt": "2025-09-14T16:45:24.869Z",
+      "updatedAt": "2025-09-14T16:45:24.869Z"
+    }
+  ],
+  "lastUpdated": "2025-09-14T17:46:47.769Z"
+}

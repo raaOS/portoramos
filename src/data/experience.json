@@ -1,0 +1,93 @@
+{
+  "statistics": {
+    "years": "+12",
+    "projects": "+46 ",
+    "designTools": "+5",
+    "clientSatisfaction": "95%"
+  },
+  "workExperience": [
+    {
+      "year": "Nov 2019 - Sep 2025",
+      "duration": "5 tahun 10 bulan",
+      "company": "PT. Bitlabs Academy",
+      "position": "Graphic Designer",
+      "description": [
+        "Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offline",
+        "membantu UI/UX di Bitlabs"
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg"
+    },
+    {
+      "year": "Jan 2019 - Jan 2020",
+      "duration": "1 tahun 1 bulan",
+      "company": "Sekolah Desain",
+      "position": "Mentor Desain Grafis",
+      "description": [
+        "Melakukan kegiatan pembelajaran/sharing session dengan mahasiswa sesuai jadwal yang ditetapkan perusahaan. Melakukan observasi, monitoring, memberikan masukan dan saran perbaikan terkait kinerja peserta dan memastikan paham tentang desain grafis."
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png"
+    },
+    {
+      "year": "Mar 2017 - Nov 2019",
+      "duration": "2 tahun 9 bulan",
+      "company": "PT. Duta Mode",
+      "position": "Graphic Designer",
+      "description": [
+        "Berperan dalam perancangan strategi untuk promosi perusahaan.",
+        "Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offline"
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg"
+    },
+    {
+      "year": "Agt 2016 - Mar 2017",
+      "duration": "8 bulan",
+      "company": "Sthal.Co",
+      "position": "Graphic Designer & Admin",
+      "description": [
+        "Bertanggung jawab sebagain Admin Online dalam memasarkan dan merespon chat dari pembeli",
+        "Berhasil Mendesain product tshirt dan membantu dalam mencapai targate penjualan",
+        "Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin",
+        "Mengirim, Mengawasi, Mencatat Produk Sthal. Co"
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg"
+    },
+    {
+      "year": "Okt 2012 - Agt 2015",
+      "duration": "2 tahun 11 bulan",
+      "company": "PT Sari Coffee Indonesia",
+      "position": "Barista Starbuck Coffee",
+      "description": [
+        "Berhasil memiliki sertifikat coffee master dari PT.sari coffee indonesia dan memiliki pegetahuan mengenai dunia coffe yg di traning langsung dari starbucks",
+        "Berhasil dalam mengenalkan info seputar dunia kopi ke customer",
+        "Melayani transaksi customer"
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png"
+    },
+    {
+      "year": "Jan 2012 - Mar 2012",
+      "duration": "3 bulan",
+      "company": "Wulan Boutique",
+      "position": "Graphic Designer & Admin",
+      "description": [
+        "Bertanggung jawab sebagain Admin Online dalam memasarkan dan merespon chat dari pembeli",
+        "Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin",
+        "Mengirim, Mengawasi, Mencatat Produk Wulan Butique"
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg"
+    },
+    {
+      "id": "1757823198136",
+      "year": "Jan 2012 - Mar 2012",
+      "duration": "3 bulan",
+      "company": "Wulan Boutique",
+      "position": "Graphic Designer & Admin",
+      "description": [
+        "Bertanggung jawab sebagain Admin Online dalam memasarkan dan merespon chat dari pembeli",
+        "Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin",
+        "Mengirim, Mengawasi, Mencatat Produk Wulan Butique"
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg"
+    }
+  ],
+  "lastUpdated": "2025-09-14T14:12:30.365Z"
+}
