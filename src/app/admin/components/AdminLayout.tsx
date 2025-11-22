@@ -84,13 +84,11 @@ export default function AdminLayout({
                   <Link
                     key={href}
                     href={href}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 ${active ? `${color} font-semibold` : 'text-gray-900'}`}
+                    className={`flex items-center gap-2 px-2 py-1 transition ${active ? `${color} font-semibold` : 'text-gray-900'}`}
                     aria-label={label}
                     title={label}
                   >
-                    <span className={`rounded-md bg-white/70 p-1.5 ${color} shadow-sm`}>
-                      <Icon className="h-4 w-4" aria-hidden />
-                    </span>
+                    <Icon className={`h-4 w-4 ${color}`} aria-hidden />
                     <span className="hidden xl:inline font-medium">{label}</span>
                   </Link>
                 );
