@@ -50,12 +50,12 @@ export default function AdminLayout({
   };
 
   const navItems = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, color: 'text-sky-600', hover: 'hover:bg-sky-50' },
-    { href: '/admin/projects', label: 'Projects', icon: FolderKanban, color: 'text-purple-600', hover: 'hover:bg-purple-50' },
-    { href: '/admin/about', label: 'About', icon: Info, color: 'text-blue-600', hover: 'hover:bg-blue-50' },
-    { href: '/admin/experience', label: 'Experience', icon: BriefcaseBusiness, color: 'text-emerald-600', hover: 'hover:bg-emerald-50' },
-    { href: '/admin/contact', label: 'Contact', icon: PhoneCall, color: 'text-amber-600', hover: 'hover:bg-amber-50' },
-    { href: '/admin/testimonial', label: 'Testimonials', icon: Quote, color: 'text-pink-600', hover: 'hover:bg-pink-50' },
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, color: 'text-sky-600' },
+    { href: '/admin/projects', label: 'Projects', icon: FolderKanban, color: 'text-purple-600' },
+    { href: '/admin/about', label: 'About', icon: Info, color: 'text-blue-600' },
+    { href: '/admin/experience', label: 'Experience', icon: BriefcaseBusiness, color: 'text-emerald-600' },
+    { href: '/admin/contact', label: 'Contact', icon: PhoneCall, color: 'text-amber-600' },
+    { href: '/admin/testimonial', label: 'Testimonials', icon: Quote, color: 'text-pink-600' },
   ];
 
   const isActive = (href: string) => {
@@ -78,17 +78,17 @@ export default function AdminLayout({
               <span className="hidden sm:inline">Admin</span>
             </button>
             <nav className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
-              {navItems.map(({ href, label, icon: Icon, color, hover }) => {
+              {navItems.map(({ href, label, icon: Icon, color }) => {
                 const active = isActive(href);
                 return (
                   <Link
                     key={href}
                     href={href}
-                    className={`group flex items-center gap-2 rounded-lg px-3 py-2 transition ${hover} ${active ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-700 border border-transparent'}`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 ${active ? `${color} font-semibold` : 'text-gray-900'}`}
                     aria-label={label}
                     title={label}
                   >
-                    <span className={`rounded-md bg-white/70 p-1.5 ${color} shadow-sm group-hover:scale-105 transition`}>
+                    <span className={`rounded-md bg-white/70 p-1.5 ${color} shadow-sm`}>
                       <Icon className="h-4 w-4" aria-hidden />
                     </span>
                     <span className="hidden xl:inline font-medium">{label}</span>
