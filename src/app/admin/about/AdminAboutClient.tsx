@@ -255,25 +255,21 @@ export default function AdminAboutClient() {
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-3 px-6 overflow-x-auto py-2">
             {[
-              { id: 'hero', name: 'Hero', icon: Sparkles, color: 'text-blue-600', bg: 'bg-blue-50' },
-              { id: 'professional', name: 'Professional', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-              { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'bg-amber-50' },
-              { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'bg-violet-50' },
+              { id: 'hero', name: 'Hero', icon: Sparkles, color: 'text-blue-600' },
+              { id: 'professional', name: 'Professional', icon: BriefcaseBusiness, color: 'text-emerald-600' },
+              { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600' },
+              { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 rounded-xl px-4 py-3 border transition ${
-                  activeTab === tab.id
-                    ? `${tab.bg} ${tab.color} border-current shadow-sm`
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                className={`flex items-center gap-2 px-3 py-2 transition ${
+                  activeTab === tab.id ? `${tab.color} font-semibold` : 'text-gray-800'
                 }`}
                 title={tab.name}
                 aria-label={tab.name}
               >
-                <span className={`p-1.5 rounded-lg ${tab.bg} ${tab.color} shadow-sm`}>
-                  <tab.icon className="h-4 w-4" aria-hidden />
-                </span>
+                <tab.icon className={`h-4 w-4 ${activeTab === tab.id ? tab.color : 'text-gray-700'}`} aria-hidden />
                 <span className="font-semibold">{tab.name}</span>
               </button>
             ))}
