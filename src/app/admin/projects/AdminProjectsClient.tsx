@@ -23,6 +23,7 @@ export default function AdminProjectsClient() {
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<string>('title');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,6 +92,7 @@ export default function AdminProjectsClient() {
 
   const handleToggleProjectStatus = async (project: Project) => {
     const nextStatus = project.status === 'published' ? 'draft' : 'published';
+    setTogglingId(project.id);
     try {
       const response = await fetch(`/api/projects/${project.id}`, {
         method: 'PUT',
@@ -106,6 +108,8 @@ export default function AdminProjectsClient() {
       }
     } catch (err) {
       showError('Failed to update project status.');
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -225,6 +229,7 @@ export default function AdminProjectsClient() {
       priority: 'high' as const,
       render: (status: Project['status'], project: Project) => {
         const published = status === 'published';
+        const isLoadingToggle = togglingId === project.id;
         return (
           <button
             type="button"
@@ -232,13 +237,21 @@ export default function AdminProjectsClient() {
               published
                 ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 hover:bg-emerald-100'
                 : 'bg-amber-50 text-amber-700 ring-1 ring-amber-100 hover:bg-amber-100'
-            }`}
+            } ${isLoadingToggle ? 'opacity-70 cursor-not-allowed' : ''}`}
             title="Toggle status"
             aria-label={published ? 'Set as Draft' : 'Set as Published'}
-            onClick={() => handleToggleProjectStatus(project)}
+            onClick={() => !isLoadingToggle && handleToggleProjectStatus(project)}
+            disabled={isLoadingToggle}
+            aria-busy={isLoadingToggle}
           >
-            {published ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> : <Clock4 className="h-3.5 w-3.5" aria-hidden />}
-            {published ? 'Published' : 'Draft'}
+            {isLoadingToggle ? (
+              <span className="inline-flex h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden />
+            ) : published ? (
+              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+            ) : (
+              <Clock4 className="h-3.5 w-3.5" aria-hidden />
+            )}
+            {isLoadingToggle ? 'Saving...' : published ? 'Published' : 'Draft'}
           </button>
         );
       }
