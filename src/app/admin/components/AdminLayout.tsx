@@ -66,15 +66,12 @@ export default function AdminLayout({
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col items-start gap-1">
             <button
               onClick={() => router.push('/admin')}
-              className="flex items-center gap-2 text-lg sm:text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+              className="text-lg sm:text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors"
             >
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold">
-                A
-              </span>
-              <span className="hidden sm:inline">Admin</span>
+              Admin
             </button>
             <nav className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
               {navItems.map(({ href, label, icon: Icon, color }) => {
