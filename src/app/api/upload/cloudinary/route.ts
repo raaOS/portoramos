@@ -15,9 +15,9 @@ export async function POST(req: NextRequest) {
     let file: File | null = null
     let folder = 'portfolio'
     let subfolder = 'general'
-    
+
     const contentType = req.headers.get('content-type') || ''
-    
+
     if (contentType.includes('multipart/form-data')) {
       // Handle multipart form data
       const formData = await req.formData()
@@ -28,13 +28,13 @@ export async function POST(req: NextRequest) {
       // Handle JSON data with base64 file
       const body = await req.json()
       const { file: fileData, folder: folderData, subfolder: subfolderData } = body
-      
+
       if (fileData && fileData.startsWith('data:')) {
         // Convert base64 to File object
         const [header, base64Data] = fileData.split(',')
         const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/png'
         const buffer = Buffer.from(base64Data, 'base64')
-        
+
         file = new File([buffer], 'upload.png', { type: mimeType })
         folder = folderData || 'portfolio'
         subfolder = subfolderData || 'general'
@@ -48,16 +48,16 @@ export async function POST(req: NextRequest) {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ 
-        error: 'Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.' 
+      return NextResponse.json({
+        error: 'Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.'
       }, { status: 400 })
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
-      return NextResponse.json({ 
-        error: 'File too large. Maximum size is 10MB.' 
+      return NextResponse.json({
+        error: 'File too large. Maximum size is 10MB.'
       }, { status: 400 })
     }
 
@@ -65,20 +65,23 @@ export async function POST(req: NextRequest) {
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
 
-    console.log('Cloudinary config check:', {
-      cloudName: cloudName ? 'SET' : 'MISSING',
-      uploadPreset: uploadPreset ? 'SET' : 'MISSING',
-      cloudNameValue: cloudName,
-      uploadPresetValue: uploadPreset,
-      fileSize: file.size,
-      fileType: file.type,
-      fileName: file.name
-    })
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Cloudinary config check:', {
+        cloudName: cloudName ? 'SET' : 'MISSING',
+        uploadPreset: uploadPreset ? 'SET' : 'MISSING',
+        cloudNameValue: cloudName,
+        uploadPresetValue: uploadPreset,
+        fileSize: file.size,
+        fileType: file.type,
+        fileName: file.name
+      })
+    }
 
     if (!cloudName || !uploadPreset) {
       // Temporarily disabled logger to fix chunk loading issue
-    console.error('Cloudinary credentials not configured', new Error('Missing environment variables'))
-      return NextResponse.json({ 
+      console.error('Cloudinary credentials not configured', new Error('Missing environment variables'))
+      return NextResponse.json({
         error: 'Upload service not configured',
         message: 'Please create .env.local file with Cloudinary credentials',
         instructions: {
@@ -100,13 +103,13 @@ export async function POST(req: NextRequest) {
     cloudinaryFormData.append('file', file)
     cloudinaryFormData.append('upload_preset', uploadPreset)
     cloudinaryFormData.append('folder', `${folder}/${subfolder}`)
-    
+
     // Note: Transformation will be handled by the upload preset
 
     // Upload to Cloudinary with timeout
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
-    
+
     const uploadResponse = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
       {
@@ -115,7 +118,7 @@ export async function POST(req: NextRequest) {
         signal: controller.signal,
       }
     )
-    
+
     clearTimeout(timeoutId)
 
     if (!uploadResponse.ok) {
@@ -131,7 +134,7 @@ export async function POST(req: NextRequest) {
       })
       // Temporarily disabled logger to fix chunk loading issue
       console.error('Cloudinary upload failed', new Error(`Status: ${uploadResponse.status}, Error: ${errorData}`))
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Upload failed',
         message: 'Failed to upload to Cloudinary',
         details: {
@@ -170,13 +173,13 @@ export async function POST(req: NextRequest) {
       message: (error as Error).message,
       stack: (error as Error).stack
     })
-    
+
     // Temporarily disabled logger to fix chunk loading issue
     console.error('Upload error', error as Error)
-    
+
     // Handle specific error types
     if ((error as Error).name === 'AbortError') {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Upload timeout',
         message: 'Upload took too long and was cancelled',
         details: {
@@ -185,8 +188,8 @@ export async function POST(req: NextRequest) {
         }
       }, { status: 408 })
     }
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       error: 'Internal server error',
       message: 'An unexpected error occurred during upload',
       details: {

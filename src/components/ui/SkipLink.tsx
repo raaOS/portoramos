@@ -1,7 +1,5 @@
 "use client"
 
-// import { a11y } from '@/lib/accessibility' // Removed unused import
-
 interface SkipLinkProps {
   href: string
   children: React.ReactNode
@@ -50,7 +48,7 @@ interface FocusRingProps {
 
 export function FocusRing({ children, className = '', visible = true }: FocusRingProps) {
   return (
-    <div 
+    <div
       className={`
         ${visible ? 'focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2' : ''}
         rounded-md transition-all duration-200

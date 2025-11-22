@@ -7,7 +7,9 @@ export const createBackup = async (filePath: string) => {
   try {
     const backupPath = filePath.replace('.json', '.backup.json');
     await fs.copyFile(filePath, backupPath);
-    console.log(`✅ Backup created: ${backupPath}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ Backup created: ${backupPath}`);
+    }
   } catch (error) {
     console.error('❌ Backup failed:', error);
   }
@@ -23,7 +25,9 @@ export const loadData = async (filePath: string) => {
     const backupPath = filePath.replace('.json', '.backup.json');
     try {
       const backupData = await fs.readFile(backupPath, 'utf8');
-      console.log(`⚠️ Using backup data: ${backupPath}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`⚠️ Using backup data: ${backupPath}`);
+      }
       return JSON.parse(backupData);
     } catch {
       console.error('❌ Both main and backup data failed');
@@ -36,10 +40,12 @@ export const saveData = async (filePath: string, data: any) => {
   try {
     // 1. Backup dulu
     await createBackup(filePath);
-    
+
     // 2. Save data baru
     await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
-    console.log(`✅ Data saved: ${filePath}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ Data saved: ${filePath}`);
+    }
     return true;
   } catch (error) {
     console.error('❌ Save failed:', error);

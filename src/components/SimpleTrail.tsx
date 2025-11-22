@@ -24,31 +24,32 @@ const calcWinsize = () => {
 export default function SimpleTrail({ backgroundTrail = [] }: SimpleTrailProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  
+
   // Determine which images to use for trail effect with robust fallback
   const trailImages = useMemo(() => {
     const defaultImages = [
-    'https://res.cloudinary.com/dcb3dslfw/image/upload/v1234567890/portfolio/trail/sample-trail-1.jpg',
-    'https://res.cloudinary.com/dcb3dslfw/image/upload/v1234567890/portfolio/trail/sample-trail-2.jpg',
-    'https://res.cloudinary.com/dcb3dslfw/image/upload/v1234567890/portfolio/trail/sample-trail-3.jpg',
-    'https://res.cloudinary.com/dcb3dslfw/image/upload/v1234567890/portfolio/trail/sample-trail-4.jpg',
-    'https://res.cloudinary.com/dcb3dslfw/image/upload/v1234567890/portfolio/trail/sample-trail-5.jpg'
-  ];
-    
+      'https://res.cloudinary.com/dcb3dslfw/image/upload/v1234567890/portfolio/trail/sample-trail-1.jpg',
+      'https://res.cloudinary.com/dcb3dslfw/image/upload/v1234567890/portfolio/trail/sample-trail-2.jpg',
+      'https://res.cloudinary.com/dcb3dslfw/image/upload/v1234567890/portfolio/trail/sample-trail-3.jpg',
+      'https://res.cloudinary.com/dcb3dslfw/image/upload/v1234567890/portfolio/trail/sample-trail-4.jpg',
+      'https://res.cloudinary.com/dcb3dslfw/image/upload/v1234567890/portfolio/trail/sample-trail-5.jpg'
+    ];
+
     if (backgroundTrail && Array.isArray(backgroundTrail) && backgroundTrail.length > 0) {
       // Filter out any invalid URLs and ensure we have at least some images
       const validImages = backgroundTrail.filter(img => img && typeof img === 'string' && img.trim() !== '');
       return validImages.length > 0 ? validImages : defaultImages;
     }
-    
+
     return defaultImages;
   }, [backgroundTrail]);
 
-  // Debug logging for production
   useEffect(() => {
-    console.log('SimpleTrail mounted with backgroundTrail:', backgroundTrail);
-    console.log('Trail images to use:', trailImages);
-    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('SimpleTrail mounted with backgroundTrail:', backgroundTrail);
+      console.log('Trail images to use:', trailImages);
+    }
+
     // Ensure trail effect initializes even if images are still loading
     if (trailImages.length > 0) {
       setIsLoaded(true);
@@ -127,12 +128,12 @@ export default function SimpleTrail({ backgroundTrail = [] }: SimpleTrailProps) 
     }
   }
 
-// ImageTrail class - exactly like demo4.js
-class ImageTrail {
-  mousePos: React.MutableRefObject<{ x: number; y: number }>;
-  cacheMousePos: React.MutableRefObject<{ x: number; y: number }>;
-  lastMousePos: React.MutableRefObject<{ x: number; y: number }>;
-  getMouseDistance: () => number;
+  // ImageTrail class - exactly like demo4.js
+  class ImageTrail {
+    mousePos: React.MutableRefObject<{ x: number; y: number }>;
+    cacheMousePos: React.MutableRefObject<{ x: number; y: number }>;
+    lastMousePos: React.MutableRefObject<{ x: number; y: number }>;
+    getMouseDistance: () => number;
     DOM: { content: HTMLElement };
     images: Image[];
     imagesTotal: number;
@@ -264,7 +265,7 @@ class ImageTrail {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('resize', handleResize);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded]);
 
   useEffect(() => {
@@ -312,21 +313,21 @@ class ImageTrail {
       <div ref={containerRef} className="w-full h-full">
         {/* Trail images - using Next.js Image for optimization */}
         {trailImages.map((imageSrc, index) => (
-          <NextImage 
+          <NextImage
             key={`trail-${index}-${imageSrc}`}
-            src={imageSrc} 
-            alt={`Trail ${index + 1}`} 
-            width={150} 
-            height={150} 
-            className="content__img" 
-            style={{ 
-              position: 'absolute', 
-              opacity: 0, 
-              pointerEvents: 'none', 
-              maxWidth: 'var(--img-maxwidth, 150px)', 
-              width: 'auto' 
-            }} 
-            unoptimized 
+            src={imageSrc}
+            alt={`Trail ${index + 1}`}
+            width={150}
+            height={150}
+            className="content__img"
+            style={{
+              position: 'absolute',
+              opacity: 0,
+              pointerEvents: 'none',
+              maxWidth: 'var(--img-maxwidth, 150px)',
+              width: 'auto'
+            }}
+            unoptimized
             priority={index < 3} // Prioritize first 3 images
             onError={(e) => {
               console.error('Trail image failed to load:', imageSrc);

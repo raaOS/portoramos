@@ -34,7 +34,7 @@ export default function AdminForm({
     if (!autoSave) return;
 
     const currentValues = JSON.stringify(form.values);
-    
+
     // Only auto-save if values have changed and form is valid
     if (currentValues !== lastSavedRef.current && !form.hasErrors) {
       // Clear existing timeout
@@ -48,7 +48,9 @@ export default function AdminForm({
           await onSubmit(form.values);
           lastSavedRef.current = currentValues;
           // Show subtle success indicator
-          console.log('Auto-saved successfully');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Auto-saved successfully');
+          }
         } catch (err) {
           console.error('Auto-save failed:', err);
         }

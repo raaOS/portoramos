@@ -31,24 +31,24 @@ const generateBlurDataURL = (width: number = 8, height: number = 6): string => {
   return 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAGAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=='
 }
 
-const Media = forwardRef<HTMLVideoElement, MediaProps>(({ 
-  kind, 
-  src, 
-  alt = '', 
-  poster, 
-  className, 
-  sizes, 
-  priority = false, 
-  width = 1600, 
+const Media = forwardRef<HTMLVideoElement, MediaProps>(({
+  kind,
+  src,
+  alt = '',
+  poster,
+  className,
+  sizes,
+  priority = false,
+  width = 1600,
   height = 1000,
   blurDataURL,
-  autoplay = true, 
-  muted = true, 
-  loop = true, 
-  playsInline = true, 
+  autoplay = true,
+  muted = true,
+  loop = true,
+  playsInline = true,
   controls = false,
   lazy = false,
-  layoutId 
+  layoutId
 }, ref) => {
   const internalVideoRef = useRef<HTMLVideoElement | null>(null)
   const videoRef = ref || internalVideoRef
@@ -61,9 +61,9 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     if (kind !== 'video' || !autoplay) return
     const el = (videoRef as React.RefObject<HTMLVideoElement>)?.current
     if (!el) return
-    
+
     const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    
+
     if (prefersReduced) {
       return
     }
@@ -77,7 +77,9 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
             isPlaying = true
             el.play().catch((error) => {
               isPlaying = false
-              console.log('Video autoplay failed:', error)
+              if (process.env.NODE_ENV === 'development') {
+                console.log('Video autoplay failed:', error)
+              }
             })
           }
         } else {
@@ -89,11 +91,11 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
       })
     }
 
-    const observer = new IntersectionObserver(onIntersect, { 
+    const observer = new IntersectionObserver(onIntersect, {
       threshold: [0, 0.25, 0.5, 0.75, 1],
       rootMargin: '0px 0px 200px 0px'
     })
-    
+
     observer.observe(el)
 
     return () => {
@@ -123,9 +125,13 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
             setIsLoading(false)
             // Immediate play attempt when video is ready
             if (autoplay && (videoRef as React.RefObject<HTMLVideoElement>)?.current) {
-              console.log('Video can play - attempting immediate play')
-              ;(videoRef as React.RefObject<HTMLVideoElement>).current!.play().catch((error) => {
-                console.log('Video immediate play failed:', error)
+              if (process.env.NODE_ENV === 'development') {
+                console.log('Video can play - attempting immediate play')
+              }
+              ; (videoRef as React.RefObject<HTMLVideoElement>).current!.play().catch((error) => {
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('Video immediate play failed:', error)
+                }
               })
             }
           }}
@@ -152,7 +158,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     )
   }
   const defaultBlurDataURL = blurDataURL || generateBlurDataURL()
-  
+
   return (
     <div className="relative w-full h-full">
       <Image

@@ -40,7 +40,9 @@ export async function deleteFromCloudinary(
   resourceType: 'image' | 'video' = 'image'
 ): Promise<{ success: boolean; message: string; details?: any }> {
   // Temporarily disabled due to API signature issues
-  console.log(`🚧 Cloudinary delete temporarily disabled for ${resourceType}: ${publicId}`)
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🚧 Cloudinary delete temporarily disabled for ${resourceType}: ${publicId}`)
+  }
   
   return {
     success: false,

@@ -48,13 +48,13 @@ const defaultPhotos: Photo[] = [
 ];
 
 // Performance: Memoized Photo Item Component
-const PhotoItem = memo(({ 
-  photo, 
-  index, 
-  currentIndex, 
-  totalPhotos, 
-  onPhotoClick, 
-  onImageLoad, 
+const PhotoItem = memo(({
+  photo,
+  index,
+  currentIndex,
+  totalPhotos,
+  onPhotoClick,
+  onImageLoad,
   onImageError,
   imageErrors,
   onVideoRef
@@ -70,16 +70,16 @@ const PhotoItem = memo(({
   onVideoRef?: (ref: React.RefObject<HTMLVideoElement> | null) => void;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  
+
   // Update video ref when it changes - for hero video
   useEffect(() => {
     if (videoRef.current && onVideoRef) {
       onVideoRef(videoRef);
     }
   }, [videoRef, onVideoRef]);
-  
+
   // Memoized calculations for better performance
-      const { transform, zIndex, isVisible, imageSize } = useMemo(() => {
+  const { transform, zIndex, isVisible, imageSize } = useMemo(() => {
     const getResponsiveBaseSize = () => {
       if (typeof window === 'undefined') return 170;
       if (window.innerWidth < 768) return 120;
@@ -93,7 +93,7 @@ const PhotoItem = memo(({
     // Optimized position calculation
     const normalizePosition = (pos: number) => ((pos % totalPhotos) + totalPhotos) % totalPhotos;
     let relativePosition = normalizePosition(index - currentIndex);
-    
+
     // Adjust for shortest path in circular array
     if (relativePosition > totalPhotos / 2) {
       relativePosition -= totalPhotos;
@@ -101,7 +101,7 @@ const PhotoItem = memo(({
 
     const maxRange = totalPhotos <= 3 ? 2 : 3;
     const isVisible = Math.abs(relativePosition) <= maxRange;
-    
+
     if (!isVisible) return { transform: '', zIndex: 0, isVisible: false, imageSize: size };
 
     const translatePercentage = totalPhotos <= 3 ? 50 : 70;
@@ -171,7 +171,7 @@ const PhotoItem = memo(({
       tabIndex={0}
       aria-label={`View ${photo.title}. ${photo.type === 'video' ? 'Video content' : 'Image'}`}
     >
-      <div 
+      <div
         className="w-full h-full bg-cover bg-center rounded-lg overflow-hidden relative"
         style={{ backgroundImage: `url(${getImageSource()})` }}
       >
@@ -192,12 +192,12 @@ const PhotoItem = memo(({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-black/50 rounded-full p-2">
               <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
+                <path d="M8 5v14l11-7z" />
               </svg>
             </div>
           </div>
         ) : null}
-        
+
         {/* Hidden img for loading/error handling */}
         <Image
           src={getImageSource()}
@@ -209,7 +209,7 @@ const PhotoItem = memo(({
           onError={() => onImageError(photo.id)}
           style={{ display: 'none' }}
         />
-        
+
       </div>
     </motion.div>
   );
@@ -218,7 +218,7 @@ const PhotoItem = memo(({
 PhotoItem.displayName = 'PhotoItem';
 
 // Main Gallery Component
-export default function CoverFlowGallery({ 
+export default function CoverFlowGallery({
   items,
   autoPlay = true,
   autoPlayInterval = 3000,
@@ -230,20 +230,20 @@ export default function CoverFlowGallery({
   coverKind
 }: CoverFlowGalleryProps) {
   const { setIsModalOpen } = useModal();
-  
+
   // Create internal videoRef for modal video
   const modalVideoRef = useRef<HTMLVideoElement>(null);
-  
+
   // Use external videoRef for modal if provided, otherwise use internal modal ref
   const videoRef = externalVideoRef || modalVideoRef;
-  
+
   // Update parent with modal video ref
   useEffect(() => {
     if (videoRef && onVideoRef) {
       onVideoRef(videoRef);
     }
   }, [videoRef, onVideoRef]);
-  
+
   // Convert items to photos format with better typing
   const galleryPhotos: Photo[] = useMemo(() => {
     if (items && items.length > 0) {
@@ -276,7 +276,7 @@ export default function CoverFlowGallery({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [hasPlayedWithAudio, setHasPlayedWithAudio] = useState(false);
-  
+
   // Touch handling with better state management
   const [touchState, setTouchState] = useState<{
     startX: number | null;
@@ -339,10 +339,10 @@ export default function CoverFlowGallery({
   const handleTouchEnd = useCallback(() => {
     const { startX, endX } = touchState;
     if (!startX || !endX) return;
-    
+
     const distance = startX - endX;
     const minSwipeDistance = 50;
-    
+
     if (Math.abs(distance) > minSwipeDistance) {
       if (distance > 0) {
         flowLeft(); // Swipe left = go left
@@ -350,19 +350,21 @@ export default function CoverFlowGallery({
         flowRight(); // Swipe right = go right
       }
     }
-    
+
     setTouchState({ startX: null, endX: null, isTracking: false });
   }, [touchState, flowLeft, flowRight]);
 
   // Photo modal handlers
   const { hideNavbar, showNavbar } = useNavbarVisibility();
-  
+
   // Audio control callbacks
   const handleVideoLoadedMetadata = useCallback(() => {
     if (videoRef?.current && !hasPlayedWithAudio) {
       videoRef.current.muted = false;
       setHasPlayedWithAudio(true);
-      console.log('🎵 Video auto unmuted on load (first time)');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🎵 Video auto unmuted on load (first time)');
+      }
     }
   }, [videoRef, hasPlayedWithAudio]);
 
@@ -370,14 +372,18 @@ export default function CoverFlowGallery({
     if (videoRef?.current && !hasPlayedWithAudio && videoRef.current.muted) {
       videoRef.current.muted = false;
       setHasPlayedWithAudio(true);
-      console.log('🎵 Video auto unmuted on play (first time)');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🎵 Video auto unmuted on play (first time)');
+      }
     }
   }, [videoRef, hasPlayedWithAudio]);
 
   const handleVideoEnded = useCallback(() => {
     if (videoRef?.current) {
       videoRef.current.muted = true;
-      console.log('🔇 Video auto muted on end');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔇 Video auto muted on end');
+      }
     }
   }, [videoRef]);
 
@@ -442,7 +448,7 @@ export default function CoverFlowGallery({
   useEffect(() => {
     if (isAutoPlayActive && !selectedPhoto && !isMouseOverRef.current) {
       const interval = galleryPhotos.length <= 3 ? Math.max(autoPlayInterval, 4000) : autoPlayInterval;
-      
+
       autoPlayRef.current = setInterval(() => {
         flowRight();
       }, interval);
@@ -518,12 +524,12 @@ export default function CoverFlowGallery({
   }
 
   return (
-    <div 
+    <div
       className={`relative rounded-xl gallery-container ${className}`}
-      style={{ 
-        minHeight: '300px', 
-        paddingTop: '40px', 
-        maxWidth: '800px', 
+      style={{
+        minHeight: '300px',
+        paddingTop: '40px',
+        maxWidth: '800px',
         width: '100%',
         marginTop: '-20px',
         marginLeft: 'auto',
@@ -534,9 +540,9 @@ export default function CoverFlowGallery({
       onMouseLeave={handleMouseLeave}
     >
       {/* CoverFlow Container */}
-      <div 
+      <div
         className="relative flex items-center justify-center w-full h-full overflow-visible coverflow-container"
-        style={{ 
+        style={{
           perspective: '600px',
           height: '300px',
           maxWidth: '600px',
@@ -603,18 +609,17 @@ export default function CoverFlowGallery({
                 {/* Auto-play Toggle */}
                 <button
                   onClick={() => setIsAutoPlayActive(prev => !prev)}
-                  className={`p-2 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                    isAutoPlayActive ? 'text-blue-500 hover:text-blue-600' : 'text-gray-400 hover:text-gray-600'
-                  }`}
+                  className={`p-2 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 ${isAutoPlayActive ? 'text-blue-500 hover:text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                    }`}
                   aria-label={isAutoPlayActive ? 'Pause gallery slideshow' : 'Start gallery slideshow'}
                 >
                   {isAutoPlayActive ? (
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                     </svg>
                   ) : (
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"/>
+                      <path d="M8 5v14l11-7z" />
                     </svg>
                   )}
                 </button>
@@ -733,7 +738,7 @@ export default function CoverFlowGallery({
               </div>
 
               {/* Media Content */}
-              <div 
+              <div
                 className="relative w-full h-full flex items-center justify-center overflow-hidden"
                 onWheel={handleWheel}
                 onMouseDown={handleMouseDown}
@@ -753,8 +758,8 @@ export default function CoverFlowGallery({
                     loop={selectedPhoto.loop ?? true}
                     playsInline={selectedPhoto.playsInline ?? true}
                     className="max-w-full max-h-full object-contain rounded-lg transition-transform duration-200"
-                    style={{ 
-                      maxHeight: '90vh', 
+                    style={{
+                      maxHeight: '90vh',
                       maxWidth: '90vw',
                       transform: `scale(${zoomLevel}) translate(${panPosition.x / zoomLevel}px, ${panPosition.y / zoomLevel}px)`
                     }}
@@ -772,8 +777,8 @@ export default function CoverFlowGallery({
                     width={800}
                     height={600}
                     className="max-w-full max-h-full object-contain rounded-lg transition-transform duration-200"
-                    style={{ 
-                      maxHeight: '90vh', 
+                    style={{
+                      maxHeight: '90vh',
                       maxWidth: '90vw',
                       transform: `scale(${zoomLevel}) translate(${panPosition.x / zoomLevel}px, ${panPosition.y / zoomLevel}px)`
                     }}

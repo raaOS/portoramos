@@ -4,23 +4,22 @@ import { motion } from 'framer-motion';
 import type { Project } from '@/types';
 import Media from '@/components/Media'
 import { resolveCover } from '@/lib/images'
-// import { useReducedMotion } from '@/lib/accessibility' // Removed unused import
 
-export default function Card({ p, animate = true }: { p: Project; animate?: boolean }){
+export default function Card({ p, animate = true }: { p: Project; animate?: boolean }) {
   const id = `cover-${p.slug}`;
   const cover = resolveCover(p)
   const prefersReducedMotion = false // Simplified for now
   const shouldAutoplay = p.autoplay ?? true
-  
+
   // Use exact aspect ratio from image dimensions - no cropping, no limits
   const calculateRatio = () => {
     if (p.coverWidth && p.coverHeight) {
       // Use the exact ratio from the image - no approximation, no limits
       return p.coverWidth / p.coverHeight
     }
-    return 16/9 // Default ratio only if dimensions not available
+    return 16 / 9 // Default ratio only if dimensions not available
   }
-  
+
   const ratio = calculateRatio()
 
   // Configure motion props; disable on reduced motion or when explicitly requested
@@ -29,23 +28,23 @@ export default function Card({ p, animate = true }: { p: Project; animate?: bool
     : { initial: { opacity: 1, y: 0 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3 } }
 
   return (
-    <Link 
-      href={`/work/${p.slug}`} 
+    <Link
+      href={`/work/${p.slug}`}
       className="block group focus:outline-none rounded-2xl"
       aria-label={`View project: ${p.title}${p.description ? ` - ${p.description}` : ''}`}
       role="article"
     >
-      <motion.div 
-         layoutId={id} 
-         className="overflow-hidden rounded-2xl relative"
-         {...motionProps}
-         whileHover={{ 
-           y: -8,
-           transition: { duration: 0.3, ease: "easeOut" }
-         }}
-         whileTap={{ scale: 0.98 }}
-       >
-         <div style={{ aspectRatio: ratio }} role="img" aria-label={`${p.title} project preview`}>
+      <motion.div
+        layoutId={id}
+        className="overflow-hidden rounded-2xl relative"
+        {...motionProps}
+        whileHover={{
+          y: -8,
+          transition: { duration: 0.3, ease: "easeOut" }
+        }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <div style={{ aspectRatio: ratio }} role="img" aria-label={`${p.title} project preview`}>
           <Media
             kind={cover.kind}
             src={cover.src}
@@ -61,14 +60,14 @@ export default function Card({ p, animate = true }: { p: Project; animate?: bool
             playsInline={p.playsInline ?? true}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          
+
           {/* Creative Agency Style Overlay */}
           <motion.div
             className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"
             initial={{ opacity: 0 }}
             whileHover={{ opacity: 1 }}
           />
-          
+
           {/* View Project Indicator */}
           <motion.div
             className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -89,7 +88,7 @@ export default function Card({ p, animate = true }: { p: Project; animate?: bool
         {p.tags && p.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {p.tags.map((tag, index) => (
-              <span 
+              <span
                 key={index}
                 className="px-2 py-1 text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full"
                 aria-label={`Project tag: ${tag}`}

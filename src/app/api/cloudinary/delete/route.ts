@@ -5,9 +5,9 @@ import { checkAdminAuth } from '@/lib/auth'
 export const dynamic = 'force-dynamic';
 
 // Configure Cloudinary with proper error handling
-if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 
-    !process.env.CLOUDINARY_API_KEY || 
-    !process.env.CLOUDINARY_API_SECRET) {
+if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+  !process.env.CLOUDINARY_API_KEY ||
+  !process.env.CLOUDINARY_API_SECRET) {
   console.error('❌ Missing Cloudinary environment variables')
 } else {
   cloudinary.config({
@@ -16,7 +16,9 @@ if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
     api_secret: process.env.CLOUDINARY_API_SECRET,
     secure: true
   })
-  console.log('✅ Cloudinary configured successfully')
+  if (process.env.NODE_ENV === 'development') {
+    console.log('✅ Cloudinary configured successfully')
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -29,14 +31,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if Cloudinary is configured
-    if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 
-        !process.env.CLOUDINARY_API_KEY || 
-        !process.env.CLOUDINARY_API_SECRET) {
+    if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+      !process.env.CLOUDINARY_API_KEY ||
+      !process.env.CLOUDINARY_API_SECRET) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Cloudinary credentials not configured. Please set CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET in environment variables.' 
-        }, 
+        {
+          success: false,
+          error: 'Cloudinary credentials not configured. Please set CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET in environment variables.'
+        },
         { status: 500 }
       )
     }
@@ -46,19 +48,23 @@ export async function POST(req: NextRequest) {
 
     if (!public_id) {
       return NextResponse.json(
-        { success: false, error: 'public_id is required' }, 
+        { success: false, error: 'public_id is required' },
         { status: 400 }
       )
     }
 
-    console.log(`🗑️  Attempting to delete ${resource_type} from Cloudinary:`, public_id)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🗑️  Attempting to delete ${resource_type} from Cloudinary:`, public_id)
+    }
 
     // Delete from Cloudinary
     const result = await cloudinary.uploader.destroy(public_id, {
       resource_type: resource_type as 'image' | 'video'
     })
 
-    console.log('Cloudinary delete result:', result)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Cloudinary delete result:', result)
+    }
 
     if (result.result === 'ok') {
       return NextResponse.json({
@@ -86,11 +92,11 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Error deleting from Cloudinary:', error)
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Internal server error while deleting from Cloudinary',
         details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
+      },
       { status: 500 }
     )
   }
