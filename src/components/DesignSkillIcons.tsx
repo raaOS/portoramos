@@ -1,76 +1,79 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
+import { HardSkill } from '@/types/hardSkill';
 
-interface SkillIconProps {
-  name: string;
-  level: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
-  color: string;
+interface Props {
+  skills?: HardSkill[];
 }
 
-const skills: SkillIconProps[] = [
+const fallbackSkills: HardSkill[] = [
   {
+    id: 'hard-ai',
     name: 'Adobe Illustrator',
+    iconUrl: 'https://res.cloudinary.com/demo/image/upload/v1690000000/icons/ai.png',
     level: 'Expert',
-    color: '#FF6900'
+    order: 1,
+    createdAt: '',
+    updatedAt: '',
   },
   {
+    id: 'hard-ps',
     name: 'Adobe Photoshop',
+    iconUrl: 'https://res.cloudinary.com/demo/image/upload/v1690000000/icons/ps.png',
     level: 'Expert',
-    color: '#00C4FF'
+    order: 2,
+    createdAt: '',
+    updatedAt: '',
   },
   {
+    id: 'hard-figma',
     name: 'Figma',
+    iconUrl: 'https://res.cloudinary.com/demo/image/upload/v1690000000/icons/figma.png',
     level: 'Advanced',
-    color: '#F24E1E'
+    order: 3,
+    createdAt: '',
+    updatedAt: '',
   },
   {
+    id: 'hard-canva',
     name: 'Canva',
+    iconUrl: 'https://res.cloudinary.com/demo/image/upload/v1690000000/icons/canva.png',
     level: 'Intermediate',
-    color: '#00C4CC'
-  }
+    order: 4,
+    createdAt: '',
+    updatedAt: '',
+  },
 ];
 
-const levelColors = {
-  Beginner: 'bg-gray-100 text-gray-600',
-  Intermediate: 'bg-blue-100 text-blue-600',
-  Advanced: 'bg-green-100 text-green-600',
-  Expert: 'bg-red-100 text-red-600'
-};
-
-export default function DesignSkillIcons() {
-  const [hoveredSkill, setHoveredSkill] = useState<SkillIconProps | null>(null);
+export default function DesignSkillIcons({ skills }: Props) {
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const data = (skills && skills.length > 0 ? skills : fallbackSkills).sort(
+    (a, b) => (a.order || 0) - (b.order || 0)
+  );
 
   return (
-    <div className="flex items-center gap-3 pb-2 pr-4">
-      {skills.map((skill, index) => (
+    <div className="flex flex-wrap items-center gap-4 pb-2 pr-4">
+      {data.map((skill) => (
         <div
-          key={skill.name}
+          key={skill.id}
           className="relative flex-shrink-0 group"
-          onMouseEnter={() => setHoveredSkill(skill)}
-          onMouseLeave={() => setHoveredSkill(null)}
+          onMouseEnter={() => setHoveredId(skill.id)}
+          onMouseLeave={() => setHoveredId(null)}
         >
-          {/* App Logo Icon */}
-          <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer"
-            style={{ backgroundColor: skill.color }}
-          >
-            {skill.name === 'Adobe Illustrator' && (
-              <span className="text-white font-bold text-xs">AI</span>
-            )}
-            {skill.name === 'Adobe Photoshop' && (
-              <span className="text-white font-bold text-xs">PS</span>
-            )}
-            {skill.name === 'Figma' && (
-              <span className="text-white font-bold text-xs">F</span>
-            )}
-            {skill.name === 'Canva' && (
-              <span className="text-white font-bold text-xs">C</span>
-            )}
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer bg-white shadow-sm overflow-hidden border border-gray-200">
+            <Image
+              src={skill.iconUrl}
+              alt={skill.name}
+              width={56}
+              height={56}
+              className="object-contain w-full h-full"
+              unoptimized
+            />
           </div>
 
-          {/* Simple Tooltip */}
-          {hoveredSkill?.name === skill.name && (
+          {hoveredId === skill.id && (
             <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50">
               <div className="bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap">
                 {skill.name} - {skill.level}

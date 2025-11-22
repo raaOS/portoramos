@@ -1,13 +1,4 @@
 {
-  "testimonials": [
-    {
-      "id": 5,
-      "name": "ramos",
-      "company": "Urgent Studio",
-      "role": "Brand Manager",
-      "content": "Profesional, kreatif, dan selalu on-time. Partner yang sangat baik!",
-      "avatar": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg"
-    }
-  ],
-  "lastUpdated": "2025-09-14T15:17:46.292Z"
+  "testimonials": [],
+  "lastUpdated": "2025-11-22T11:31:45.114Z"
 }

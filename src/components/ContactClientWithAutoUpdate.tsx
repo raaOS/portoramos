@@ -61,6 +61,22 @@ export default function ContactClientWithAutoUpdate() {
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
             Ready to work together? Let&apos;s discuss your project and bring your ideas to life.
           </p>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+              href={`mailto:${contactData.info.email}`}
+              className="inline-flex items-center justify-center px-5 py-3 rounded-full bg-black text-white text-sm font-semibold hover:bg-gray-800 transition-colors"
+            >
+              Email langsung
+            </a>
+            <a
+              href={`https://wa.me/${contactData.info.phone?.replace(/\\D/g, '')}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center px-5 py-3 rounded-full border border-gray-300 text-sm font-semibold text-gray-800 hover:border-black hover:text-black transition-colors"
+            >
+              Chat via WhatsApp
+            </a>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16">
@@ -348,3 +364,6 @@ function ContactForm({ formSettings }: { formSettings: any }) {
     </form>
   );
 }
+
+
+

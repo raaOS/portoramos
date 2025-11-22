@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { isVideoLink } from '@/lib/images';
@@ -553,27 +553,46 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
   };
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
-    // Normalisasi khusus untuk daftar URL galeri (hapus duplikat, trim, satu per baris)
-    if (field === 'gallery' && typeof value === 'string') {
-      const urls = value
-        .split(/[\n,]+/)
-        .map((u) => u.trim())
-        .filter(Boolean);
-      const unique = Array.from(new Set(urls));
-      setFormData(prev => ({ ...prev, gallery: unique.join('\n') }));
+    if (field === 'tags' && typeof value === 'string') {
+      setFormData(prev => ({ ...prev, tags: value.toLowerCase() }));
       return;
     }
-
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
-    
-    // Auto-detect image dimensions when cover URL changes
     if (field === 'cover' && typeof value === 'string') {
       detectImageDimensions(value);
     }
+  };
+
+  const galleryList = useMemo(() => {
+    return formData.gallery
+      .split('\n')
+      .map((u) => u.trim())
+      .filter(Boolean);
+  }, [formData.gallery]);
+
+  const setGalleryList = (list: string[]) => {
+    setFormData((prev) => ({ ...prev, gallery: list.join('\n') }));
+  };
+
+  const [newGalleryUrl, setNewGalleryUrl] = useState('');
+
+  const handleAddGalleryUrl = () => {
+    const url = newGalleryUrl.trim();
+    if (!url) return;
+    if (galleryList.includes(url)) {
+      setNewGalleryUrl('');
+      return;
+    }
+    setGalleryList([...galleryList, url]);
+    setNewGalleryUrl('');
+  };
+
+  const handleRemoveGalleryUrl = (url: string) => {
+    const current = galleryList.filter((item) => item !== url);
+    setGalleryList(current);
   };
 
   return (
@@ -706,6 +725,31 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
           <p className="mt-1 text-sm text-gray-500">
             Use Cloudinary URL or direct image/video link. Supports .mp4, .mov, .webm for videos
           </p>
+          {formData.cover && (
+            <div className="mt-3 flex items-start gap-3">
+              <div className="relative w-20 h-20 rounded border bg-gray-50 overflow-hidden">
+                {isVideoLink(formData.cover) ? (
+                  <video
+                    src={formData.cover}
+                    className="w-full h-full object-cover"
+                    muted
+                    loop
+                    playsInline
+                  />
+                ) : (
+                  <Image
+                    src={formData.cover || FALLBACK_IMAGE}
+                    alt="Cover preview"
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                    unoptimized
+                  />
+                )}
+              </div>
+              <div className="text-xs text-gray-600 break-all max-w-xs">{formData.cover}</div>
+            </div>
+          )}
           
           {/* Image Preview and Dimensions */}
           {formData.cover && (
@@ -798,18 +842,48 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Gallery URLs
           </label>
-          <textarea
-            value={formData.gallery}
-            onChange={(e) => handleInputChange('gallery', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            rows={4}
-            placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/video.mp4"
-          />
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={newGalleryUrl}
+              onChange={(e) => setNewGalleryUrl(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Tambah URL lalu klik +"
+            />
+            <AdminButton type="button" onClick={handleAddGalleryUrl}>
+              +
+            </AdminButton>
+          </div>
           <p className="mt-1 text-sm text-gray-500">
-            {formData.gallery
-              ? `${formData.gallery.split('\n').filter((u) => u.trim()).length} URL unik`
-              : 'Belum ada URL'} &middot; satu URL per baris (image/video).
+            {galleryList.length} URL unik - satu URL per item (image/video).
           </p>
+          {galleryList.length > 0 && (
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {galleryList.map((url) => (
+                <div key={url} className="relative w-full pb-[100%] rounded border bg-gray-50 overflow-hidden group">
+                  {isVideoLink(url) ? (
+                    <video src={url} className="absolute inset-0 w-full h-full object-cover" muted playsInline />
+                  ) : (
+                    <Image
+                      src={url}
+                      alt="Gallery preview"
+                      fill
+                      className="object-cover"
+                      sizes="120px"
+                      unoptimized
+                    />
+                  )}
+                  <button
+                    type="button"
+                    className="absolute top-1 right-1 bg-white/80 text-xs px-2 py-1 rounded shadow hover:bg-white"
+                    onClick={() => handleRemoveGalleryUrl(url)}
+                  >
+                    Hapus
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>

@@ -375,6 +375,21 @@ export default function AdminExperienceClient() {
                       className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                       placeholder="https://example.com/image.jpg"
                     />
+                    {work.imageUrl && (
+                      <div className="mt-2 flex items-start gap-3">
+                        <div className="relative w-14 h-14 rounded border bg-gray-50 overflow-hidden">
+                          <Image
+                            src={work.imageUrl}
+                            alt={`${work.position} preview`}
+                            fill
+                            className="object-cover"
+                            sizes="56px"
+                            unoptimized
+                          />
+                        </div>
+                        <div className="text-xs text-gray-600 break-all max-w-xs">{work.imageUrl}</div>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">Description (comma-separated)</label>

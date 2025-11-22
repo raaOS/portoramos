@@ -37,13 +37,13 @@ export function useToast() {
 interface ToastProviderProps {
   children: ReactNode;
   maxToasts?: number;
-  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center' | 'center';
 }
 
 export function ToastProvider({ 
   children, 
   maxToasts = 5,
-  position = 'top-right'
+  position = 'bottom-left'
 }: ToastProviderProps) {
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
@@ -55,7 +55,7 @@ export function ToastProvider({
     const id = generateId();
     const newToast: ToastData = {
       id,
-      duration: 4000,
+      duration: 5000,
       ...toast,
     };
 
@@ -115,7 +115,7 @@ export function ToastProvider({
       case 'bottom-left':
         return 'bottom-4 left-4';
       case 'top-center':
-        return 'top-4 left-1/2 transform -translate-x-1/2';
+        return 'top-16 left-1/2 transform -translate-x-1/2';
       case 'bottom-center':
         return 'bottom-4 left-1/2 transform -translate-x-1/2';
       default:

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { Testimonial, TestimonialData } from '@/types/testimonial';
 import AdminTable from '../components/AdminTable';
 import AdminButton from '../components/AdminButton';
@@ -151,8 +152,22 @@ export default function AdminTestimonialClient() {
     { key: 'name', label: 'Name', width: 'w-32' },
     { key: 'company', label: 'Company', width: 'w-32' },
     { key: 'role', label: 'Role', width: 'w-32' },
-    { key: 'content', label: 'Content', width: 'w-64' },
-    { key: 'avatar', label: 'Avatar', width: 'w-32' }
+    {
+      key: 'content',
+      label: 'Content',
+      width: 'w-64',
+      render: (value: string) => (
+        <div className="max-w-xs truncate text-sm text-gray-700">{value}</div>
+      ),
+    },
+    {
+      key: 'avatar',
+      label: 'Avatar',
+      width: 'w-32',
+      render: (value: string) => (
+        <div className="max-w-[110px] truncate text-sm text-blue-600">{value}</div>
+      ),
+    },
   ];
 
   return (
@@ -175,8 +190,8 @@ export default function AdminTestimonialClient() {
           </div>
         )}
 
-        {/* Form */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
+      {/* Form */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200 max-w-5xl">
           <h2 className="text-lg font-semibold mb-4">
             {editingId ? 'Edit Testimonial' : 'Add New Testimonial'}
           </h2>
@@ -232,6 +247,21 @@ export default function AdminTestimonialClient() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Avatar image URL"
             />
+            {formData.avatar && (
+              <div className="mt-2 flex items-start gap-3">
+                <div className="relative w-12 h-12 rounded-full border bg-gray-50 overflow-hidden">
+                  <Image
+                    src={formData.avatar}
+                    alt="Avatar preview"
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                    unoptimized
+                  />
+                </div>
+                <div className="text-xs text-gray-600 break-all max-w-xs">{formData.avatar}</div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -275,12 +305,14 @@ export default function AdminTestimonialClient() {
       </div>
 
       {/* Table */}
-      <AdminTable
-        data={testimonials}
-        columns={columns}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <div className="bg-white p-4 rounded-lg border border-gray-200 max-w-5xl overflow-x-auto">
+        <AdminTable
+          data={testimonials}
+          columns={columns}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      </div>
     </div>
   </AdminLayout>
   );

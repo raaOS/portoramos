@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { AboutData, UpdateAboutData } from '@/types/about';
+import { HardSkill, HardSkillLevel } from '@/types/hardSkill';
+import { HardSkillConcept } from '@/types/hardSkillConcept';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -9,7 +12,11 @@ export default function AdminAboutClient() {
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills'>('hero');
+  const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills' | 'hardSkills'>('hero');
+  const [hardSkills, setHardSkills] = useState<HardSkill[]>([]);
+  const [hardSkillConcepts, setHardSkillConcepts] = useState<HardSkillConcept[]>([]);
+  const [hardSkillsLoading, setHardSkillsLoading] = useState(true);
+  const [hardSkillConceptsLoading, setHardSkillConceptsLoading] = useState(true);
   const { showSuccess, showError } = useToast();
 
   const loadAboutData = useCallback(async () => {
@@ -26,9 +33,37 @@ export default function AdminAboutClient() {
     }
   }, [showError]);
 
+  const loadHardSkills = useCallback(async () => {
+    try {
+      setHardSkillsLoading(true);
+      const response = await fetch('/api/hard-skills');
+      const data = await response.json();
+      setHardSkills(data.skills || []);
+    } catch (err) {
+      showError('Failed to load hard skills.');
+    } finally {
+      setHardSkillsLoading(false);
+    }
+  }, [showError]);
+
+  const loadHardSkillConcepts = useCallback(async () => {
+    try {
+      setHardSkillConceptsLoading(true);
+      const response = await fetch('/api/hard-skills/concepts');
+      const data = await response.json();
+      setHardSkillConcepts(data.concepts || []);
+    } catch (err) {
+      showError('Failed to load hard skill concepts.');
+    } finally {
+      setHardSkillConceptsLoading(false);
+    }
+  }, [showError]);
+
   useEffect(() => {
     loadAboutData();
-  }, [loadAboutData]);
+    loadHardSkills();
+    loadHardSkillConcepts();
+  }, [loadAboutData, loadHardSkills, loadHardSkillConcepts]);
 
   const handleUpdateAbout = async (updateData: UpdateAboutData) => {
     try {
@@ -51,6 +86,116 @@ export default function AdminAboutClient() {
       showError('Failed to update about content.');
     }
   }
+
+  const handleCreateHardSkill = async (payload: {
+    name: string;
+    iconUrl: string;
+    level: HardSkillLevel;
+    order?: number;
+    description?: string;
+  }) => {
+    try {
+      const response = await fetch('/api/hard-skills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        await loadHardSkills();
+        showSuccess('Hard skill berhasil ditambahkan.');
+      } else {
+        showError('Gagal menambahkan hard skill.');
+      }
+    } catch (err) {
+      showError('Gagal menambahkan hard skill.');
+    }
+  };
+
+  const handleUpdateHardSkill = async (id: string, payload: Partial<HardSkill>) => {
+    try {
+      const response = await fetch(`/api/hard-skills/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        await loadHardSkills();
+        showSuccess('Hard skill diperbarui.');
+      } else {
+        showError('Gagal memperbarui hard skill.');
+      }
+    } catch (err) {
+      showError('Gagal memperbarui hard skill.');
+    }
+  };
+
+  const handleDeleteHardSkill = async (id: string) => {
+    try {
+      const response = await fetch(`/api/hard-skills/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        await loadHardSkills();
+        showSuccess('Hard skill dihapus.');
+      } else {
+        showError('Gagal menghapus hard skill.');
+      }
+    } catch (err) {
+      showError('Gagal menghapus hard skill.');
+    }
+  };
+
+  const handleCreateConcept = async (payload: { title: string; description: string; order?: number }) => {
+    try {
+      const response = await fetch('/api/hard-skills/concepts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        await loadHardSkillConcepts();
+        showSuccess('Konsep hard skill berhasil ditambahkan.');
+      } else {
+        showError('Gagal menambahkan konsep hard skill.');
+      }
+    } catch (err) {
+      showError('Gagal menambahkan konsep hard skill.');
+    }
+  };
+
+  const handleUpdateConcept = async (id: string, payload: Partial<HardSkillConcept>) => {
+    try {
+      const response = await fetch(`/api/hard-skills/concepts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        await loadHardSkillConcepts();
+        showSuccess('Konsep hard skill diperbarui.');
+      } else {
+        showError('Gagal memperbarui konsep hard skill.');
+      }
+    } catch (err) {
+      showError('Gagal memperbarui konsep hard skill.');
+    }
+  };
+
+  const handleDeleteConcept = async (id: string) => {
+    try {
+      const response = await fetch(`/api/hard-skills/concepts/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        await loadHardSkillConcepts();
+        showSuccess('Konsep hard skill dihapus.');
+      } else {
+        showError('Gagal menghapus konsep hard skill.');
+      }
+    } catch (err) {
+      showError('Gagal menghapus konsep hard skill.');
+    }
+  };
 
   if (loading) {
     return null;
@@ -95,7 +240,8 @@ export default function AdminAboutClient() {
             {[
               { id: 'hero', name: 'Hero Section' },
               { id: 'professional', name: 'Professional Info' },
-              { id: 'softSkills', name: 'Soft Skills' }
+              { id: 'softSkills', name: 'Soft Skills' },
+              { id: 'hardSkills', name: 'Hard Skills' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -131,6 +277,25 @@ export default function AdminAboutClient() {
               onUpdate={(data) => handleUpdateAbout({ softSkills: data })} 
             />
           )}
+          {activeTab === 'hardSkills' && (
+            <div className="space-y-8">
+              <HardSkillsPanel
+                skills={hardSkills}
+                loading={hardSkillsLoading}
+                onCreate={handleCreateHardSkill}
+                onUpdate={handleUpdateHardSkill}
+                onDelete={handleDeleteHardSkill}
+              />
+              <div className="h-px bg-gray-200" />
+              <HardSkillConceptsPanel
+                concepts={hardSkillConcepts}
+                loading={hardSkillConceptsLoading}
+                onCreate={handleCreateConcept}
+                onUpdate={handleUpdateConcept}
+                onDelete={handleDeleteConcept}
+              />
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>
@@ -158,6 +323,27 @@ function HeroSectionForm({
     title: data.title || '',
     backgroundTrail: data.backgroundTrail?.join('\n') || ''
   });
+  const [newTrailUrl, setNewTrailUrl] = useState('');
+
+  const trailList = normalizeUrlList(formData.backgroundTrail);
+
+  const addTrailUrl = () => {
+    const url = newTrailUrl.trim();
+    if (!url) return;
+    if (trailList.includes(url)) {
+      setNewTrailUrl('');
+      return;
+    }
+    setFormData({ ...formData, backgroundTrail: [...trailList, url].join('\n') });
+    setNewTrailUrl('');
+  };
+
+  const removeTrailUrl = (url: string) => {
+    setFormData({
+      ...formData,
+      backgroundTrail: trailList.filter((u) => u !== url).join('\n')
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,20 +372,49 @@ function HeroSectionForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Background Trail Images (one per line)</label>
-        <textarea
-          rows={6}
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          value={formData.backgroundTrail}
-          onChange={(e) => {
-            const list = normalizeUrlList(e.target.value);
-            setFormData({ ...formData, backgroundTrail: list.join('\n') });
-          }}
-          placeholder="https://res.cloudinary.com/demo/image/upload/v1234567890/trail1.jpg&#10;https://res.cloudinary.com/demo/image/upload/v1234567890/trail2.jpg"
-        />
+        <label className="block text-sm font-medium text-gray-700">Background Trail Images</label>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={newTrailUrl}
+            onChange={(e) => setNewTrailUrl(e.target.value)}
+            className="flex-1 mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            placeholder="https://res.cloudinary.com/demo/image/upload/v1234567890/trail1.jpg"
+          />
+          <button
+            type="button"
+            onClick={addTrailUrl}
+            className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            +
+          </button>
+        </div>
         <p className="mt-1 text-sm text-gray-500">
-          {normalizeUrlList(formData.backgroundTrail).length} URL unik &middot; satu URL Cloudinary per baris
+          {trailList.length} URL &middot; satu URL Cloudinary per item
         </p>
+        {trailList.length > 0 && (
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {trailList.map((url) => (
+              <div key={url} className="relative w-full pb-[70%] rounded-md border bg-gray-50 overflow-hidden group">
+                <Image
+                  src={url}
+                  alt="Background preview"
+                  fill
+                  className="object-cover"
+                  sizes="160px"
+                  unoptimized
+                />
+                <button
+                  type="button"
+                  className="absolute top-1 right-1 bg-white/80 text-xs px-2 py-1 rounded shadow hover:bg-white"
+                  onClick={() => removeTrailUrl(url)}
+                >
+                  Hapus
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end">
@@ -228,6 +443,27 @@ function ProfessionalSectionForm({
     bioContent: data.bio?.content || '',
     bioGalleryImages: data.bio?.galleryImages?.join('\n') || ''
   });
+  const [newBioUrl, setNewBioUrl] = useState('');
+
+  const bioList = normalizeUrlList(formData.bioGalleryImages);
+
+  const addBioUrl = () => {
+    const url = newBioUrl.trim();
+    if (!url) return;
+    if (bioList.includes(url)) {
+      setNewBioUrl('');
+      return;
+    }
+    setFormData({ ...formData, bioGalleryImages: [...bioList, url].join('\n') });
+    setNewBioUrl('');
+  };
+
+  const removeBioUrl = (url: string) => {
+    setFormData({
+      ...formData,
+      bioGalleryImages: bioList.filter((u) => u !== url).join('\n')
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -286,19 +522,48 @@ function ProfessionalSectionForm({
 
       <div>
         <label className="block text-sm font-medium text-gray-700">Bio Gallery Images (one per line)</label>
-        <textarea
-          rows={6}
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          value={formData.bioGalleryImages}
-          onChange={(e) => {
-            const list = normalizeUrlList(e.target.value);
-            setFormData({ ...formData, bioGalleryImages: list.join('\n') });
-          }}
-          placeholder="https://res.cloudinary.com/demo/image/upload/v1234567890/gallery1.jpg&#10;https://res.cloudinary.com/demo/image/upload/v1234567890/gallery2.jpg"
-        />
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={newBioUrl}
+            onChange={(e) => setNewBioUrl(e.target.value)}
+            className="flex-1 mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            placeholder="https://res.cloudinary.com/demo/image/upload/v123/gallery1.jpg"
+          />
+          <button
+            type="button"
+            onClick={addBioUrl}
+            className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            +
+          </button>
+        </div>
         <p className="mt-1 text-sm text-gray-500">
-          {normalizeUrlList(formData.bioGalleryImages).length} URL unik &middot; satu URL Cloudinary per baris
+          {bioList.length} URL &middot; satu URL Cloudinary per item
         </p>
+        {bioList.length > 0 && (
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {bioList.map((url) => (
+              <div key={url} className="relative w-full pb-[70%] rounded-md border bg-gray-50 overflow-hidden group">
+                <Image
+                  src={url}
+                  alt="Bio gallery preview"
+                  fill
+                  className="object-cover"
+                  sizes="160px"
+                  unoptimized
+                />
+                <button
+                  type="button"
+                  className="absolute top-1 right-1 bg-white/80 text-xs px-2 py-1 rounded shadow hover:bg-white"
+                  onClick={() => removeBioUrl(url)}
+                >
+                  Hapus
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end">
@@ -375,5 +640,391 @@ function SoftSkillsSectionForm({
         </button>
       </div>
     </form>
+  );
+}
+
+// Hard Skills Panel
+function HardSkillsPanel({
+  skills,
+  loading,
+  onCreate,
+  onUpdate,
+  onDelete,
+}: {
+  skills: HardSkill[];
+  loading: boolean;
+  onCreate: (data: { name: string; iconUrl: string; level: HardSkillLevel; order?: number; description?: string }) => void;
+  onUpdate: (id: string, data: Partial<HardSkill>) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [form, setForm] = useState({
+    name: '',
+    iconUrl: '',
+    level: 'Intermediate' as HardSkillLevel,
+    order: '' as string | number,
+    description: '',
+  });
+
+  const sortedSkills = skills.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onCreate({
+      name: form.name,
+      iconUrl: form.iconUrl,
+      level: form.level,
+      order: form.order === '' ? undefined : Number(form.order),
+      description: form.description,
+    });
+    setForm({ name: '', iconUrl: '', level: 'Intermediate', order: '', description: '' });
+  };
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Tambah Hard Skill</h3>
+        <p className="text-sm text-gray-600 mb-4">Gunakan URL ikon dari Cloudinary (disarankan SVG/PNG kecil).</p>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Nama</label>
+            <input
+              type="text"
+              required
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Level</label>
+            <select
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={form.level}
+              onChange={(e) => setForm({ ...form, level: e.target.value as HardSkillLevel })}
+            >
+              {['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((lvl) => (
+                <option key={lvl} value={lvl}>
+                  {lvl}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1 md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Icon URL (Cloudinary)</label>
+            <input
+              type="url"
+              required
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={form.iconUrl}
+              onChange={(e) => setForm({ ...form, iconUrl: e.target.value })}
+              placeholder="https://res.cloudinary.com/xxx/image/upload/v123/icon.png"
+            />
+            {form.iconUrl && (
+              <div className="mt-2 flex items-start gap-3">
+                <div className="relative w-14 h-14 rounded border bg-gray-50 overflow-hidden">
+                  <Image
+                    src={form.iconUrl}
+                    alt="Icon preview"
+                    fill
+                    className="object-cover"
+                    sizes="56px"
+                    unoptimized
+                  />
+                </div>
+                <div className="text-xs text-gray-600 break-all max-w-xs">{form.iconUrl}</div>
+              </div>
+            )}
+          </div>
+          <div className="space-y-1 md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Deskripsi (opsional)</label>
+            <textarea
+              rows={2}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Penjelasan singkat skill ini..."
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Order (opsional)</label>
+            <input
+              type="number"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={form.order}
+              onChange={(e) => setForm({ ...form, order: e.target.value })}
+              placeholder={`${skills.length + 1}`}
+            />
+          </div>
+          <div className="flex items-end">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Tambah
+            </button>
+          </div>
+        </form>
+      </div>
+
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-3">Daftar Hard Skill</h3>
+            {loading ? (
+              <p className="text-sm text-gray-500">Memuat...</p>
+            ) : sortedSkills.length === 0 ? (
+              <p className="text-sm text-gray-500">Belum ada hard skill. Tambahkan di atas.</p>
+            ) : (
+              <div className="space-y-4">
+                {sortedSkills.map((skill) => (
+                  <div key={skill.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                    <div className="grid grid-cols-1 md:[grid-template-columns:1.1fr_0.9fr_1.5fr] gap-3 md:gap-4">
+                      <div className="space-y-1">
+                        <label className="block text-xs font-medium text-gray-700">Nama</label>
+                        <input
+                          type="text"
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      defaultValue={skill.name}
+                      onBlur={(e) => {
+                        if (e.target.value !== skill.name) {
+                          onUpdate(skill.id, { name: e.target.value });
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-gray-700">Level</label>
+                    <select
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      defaultValue={skill.level}
+                      onChange={(e) => onUpdate(skill.id, { level: e.target.value as HardSkillLevel })}
+                    >
+                      {['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((lvl) => (
+                        <option key={lvl} value={lvl}>
+                          {lvl}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="block text-xs font-medium text-gray-700">Icon URL (Cloudinary)</label>
+                    <input
+                      type="url"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      defaultValue={skill.iconUrl}
+                      onBlur={(e) => {
+                        if (e.target.value !== skill.iconUrl) {
+                          onUpdate(skill.id, { iconUrl: e.target.value });
+                        }
+                      }}
+                    />
+                    {skill.iconUrl && (
+                      <div className="mt-2 flex items-start gap-3">
+                        <div className="relative w-12 h-12 rounded border bg-gray-50 overflow-hidden">
+                          <Image
+                            src={skill.iconUrl}
+                            alt={`${skill.name} icon`}
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                            unoptimized
+                          />
+                        </div>
+                        <div className="text-xs text-gray-600 break-all max-w-xs">{skill.iconUrl}</div>
+                      </div>
+                    )}
+                  </div>
+                      <div className="space-y-1 md:col-span-3">
+                        <label className="block text-xs font-medium text-gray-700">Deskripsi (opsional)</label>
+                        <textarea
+                          rows={2}
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          defaultValue={skill.description || ''}
+                          onBlur={(e) => {
+                            if (e.target.value !== (skill.description || '')) {
+                              onUpdate(skill.id, { description: e.target.value });
+                            }
+                          }}
+                          placeholder="Penjelasan singkat skill ini..."
+                        />
+                      </div>
+                    </div>
+
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-gray-500">Order</div>
+                    <input
+                      type="number"
+                      className="w-20 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      defaultValue={skill.order}
+                      onBlur={(e) => {
+                        const val = Number(e.target.value);
+                        if (!Number.isNaN(val) && val !== skill.order) {
+                          onUpdate(skill.id, { order: val });
+                        }
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="text-sm text-red-600 hover:text-red-700"
+                    onClick={() => onDelete(skill.id)}
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function HardSkillConceptsPanel({
+  concepts,
+  loading,
+  onCreate,
+  onUpdate,
+  onDelete,
+}: {
+  concepts: HardSkillConcept[];
+  loading: boolean;
+  onCreate: (data: { title: string; description: string; order?: number }) => void;
+  onUpdate: (id: string, data: Partial<HardSkillConcept>) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    order: '' as string | number,
+  });
+
+  const sorted = concepts.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onCreate({
+      title: form.title,
+      description: form.description,
+      order: form.order === '' ? undefined : Number(form.order),
+    });
+    setForm({ title: '', description: '', order: '' });
+  };
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Tambah Poin Hard Skill</h3>
+        <p className="text-sm text-gray-600 mb-4">Isi judul (mis. Tipografi) dan deskripsi singkat.</p>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Judul</label>
+            <input
+              type="text"
+              required
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Order (opsional)</label>
+            <input
+              type="number"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={form.order}
+              onChange={(e) => setForm({ ...form, order: e.target.value })}
+              placeholder={`${concepts.length + 1}`}
+            />
+          </div>
+          <div className="space-y-1 md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
+            <textarea
+              rows={3}
+              required
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Penjelasan singkat skill ini..."
+            />
+          </div>
+          <div className="flex items-end">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Tambah
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-3">Daftar Poin Hard Skill</h3>
+        {loading ? (
+          <p className="text-sm text-gray-500">Memuat...</p>
+        ) : sorted.length === 0 ? (
+          <p className="text-sm text-gray-500">Belum ada poin. Tambahkan di atas.</p>
+        ) : (
+          <div className="space-y-4">
+            {sorted.map((item) => (
+              <div key={item.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-gray-700">Judul</label>
+                    <input
+                      type="text"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      defaultValue={item.title}
+                      onBlur={(e) => {
+                        if (e.target.value !== item.title) {
+                          onUpdate(item.id, { title: e.target.value });
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-gray-700">Order</label>
+                    <input
+                      type="number"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      defaultValue={item.order}
+                      onBlur={(e) => {
+                        const val = Number(e.target.value);
+                        if (!Number.isNaN(val) && val !== item.order) {
+                          onUpdate(item.id, { order: val });
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-3">
+                    <label className="block text-xs font-medium text-gray-700">Deskripsi</label>
+                    <textarea
+                      rows={2}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      defaultValue={item.description}
+                      onBlur={(e) => {
+                        if (e.target.value !== item.description) {
+                          onUpdate(item.id, { description: e.target.value });
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-end">
+                  <button
+                    type="button"
+                    className="text-sm text-red-600 hover:text-red-700"
+                    onClick={() => onDelete(item.id)}
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

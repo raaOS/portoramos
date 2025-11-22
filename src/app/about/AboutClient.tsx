@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
@@ -12,6 +12,8 @@ import AnimatedCounter from '@/components/AnimatedCounter';
 import HorizontalCounterAnimation from '@/components/HorizontalCounterAnimation';
 import HorizontalTestimonial from '@/components/HorizontalTestimonial';
 import { ExperienceData } from '@/types/experience';
+import { HardSkill } from '@/types/hardSkill';
+import { HardSkillConcept } from '@/types/hardSkillConcept';
 import { useSmoothScroll } from '@/hooks/useSmoothScroll';
 import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
 
@@ -164,7 +166,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         quote: '"Desain adalah solusi visual, bukan sekadar estetika."'
       },
       bio: {
-        content: 'Desainer grafis dengan lebih dari 14 tahun pengalaman (bekerja & freelance). Terbiasa menghadapi deadline, mampu bekerja dalam tim, serta adaptif dengan tren industri kreatif yang selalu berubah.',
+        content: 'Desainer grafis dengan lebih dari 14 tahun pengalaman di brand dan kampanye digital. Fokus pada visual bersih, tipografi kuat, dan storytelling yang relevan bisnis.',
         galleryImages: [
           '/images/trail/trail1.jpg',
           '/images/trail/trail2.jpg',
@@ -200,6 +202,116 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     : FALLBACK_WORK_EXPERIENCE);
   const workExperienceForGallery = resolvedWorkExperience.slice(0, 6);
 
+  const {
+    data: hardSkillsData,
+    isError: hardSkillsError,
+  } = useQuery<{ skills: HardSkill[]; lastUpdated: string }>({
+    queryKey: ['hard-skills'],
+    queryFn: async () => {
+      const response = await fetch('/api/hard-skills');
+      if (!response.ok) {
+        throw new Error('Gagal memuat hard skills');
+      }
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const fallbackHardSkills: HardSkill[] = [
+    {
+      id: 'hard-ai',
+      name: 'Adobe Illustrator',
+      iconUrl: 'https://res.cloudinary.com/demo/image/upload/v1690000000/icons/ai.png',
+      level: 'Expert',
+      order: 1,
+      createdAt: '',
+      updatedAt: '',
+    },
+    {
+      id: 'hard-ps',
+      name: 'Adobe Photoshop',
+      iconUrl: 'https://res.cloudinary.com/demo/image/upload/v1690000000/icons/ps.png',
+      level: 'Expert',
+      order: 2,
+      createdAt: '',
+      updatedAt: '',
+    },
+    {
+      id: 'hard-figma',
+      name: 'Figma',
+      iconUrl: 'https://res.cloudinary.com/demo/image/upload/v1690000000/icons/figma.png',
+      level: 'Advanced',
+      order: 3,
+      createdAt: '',
+      updatedAt: '',
+    },
+    {
+      id: 'hard-canva',
+      name: 'Canva',
+      iconUrl: 'https://res.cloudinary.com/demo/image/upload/v1690000000/icons/canva.png',
+      level: 'Intermediate',
+      order: 4,
+      createdAt: '',
+      updatedAt: '',
+    },
+  ];
+
+  const resolvedHardSkills =
+    hardSkillsData?.skills?.length ? hardSkillsData.skills : fallbackHardSkills;
+
+  const {
+    data: hardSkillConceptsData,
+    isError: hardSkillConceptsError,
+  } = useQuery<{ concepts: HardSkillConcept[]; lastUpdated: string }>({
+    queryKey: ['hard-skill-concepts'],
+    queryFn: async () => {
+      const response = await fetch('/api/hard-skills/concepts');
+      if (!response.ok) {
+        throw new Error('Gagal memuat konsep hard skills');
+      }
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const fallbackConcepts: HardSkillConcept[] = [
+    {
+      id: 'concept-typography',
+      title: 'Tipografi',
+      description: 'memahami jenis huruf, hierarki teks, dan readability',
+      order: 1,
+      createdAt: '',
+      updatedAt: '',
+    },
+    {
+      id: 'concept-color',
+      title: 'Teori warna',
+      description: 'color psychology, color harmony, kontras, dan palet warna',
+      order: 2,
+      createdAt: '',
+      updatedAt: '',
+    },
+    {
+      id: 'concept-layout',
+      title: 'Layout & Grid System',
+      description: 'mengatur komposisi visual agar rapi, seimbang, dan mudah dibaca',
+      order: 3,
+      createdAt: '',
+      updatedAt: '',
+    },
+    {
+      id: 'concept-branding',
+      title: 'Branding & Identitas Visual',
+      description: 'membuat logo, guideline brand, desain konsisten untuk bisnis',
+      order: 4,
+      createdAt: '',
+      updatedAt: '',
+    },
+  ];
+
+  const resolvedConcepts =
+    hardSkillConceptsData?.concepts?.length ? hardSkillConceptsData.concepts : fallbackConcepts;
+
   const handleImageClick = (imageSrc: string) => {
     hideNavbar();
     setPreviewImage(imageSrc);
@@ -218,12 +330,13 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     setIsClient(true);
   }, []);
 
-  const hardSkills = [
-    { category: "Tipografi", content: "memahami jenis huruf, hierarki teks, dan readability" },
-    { category: "Teori warna", content: "color psychology, color harmony, kontras, dan palet warna" },
-    { category: "Layout & Grid System", content: "mengatur komposisi visual agar rapi, seimbang, dan mudah dibaca" },
-    { category: "Branding & Identitas Visual", content: "membuat logo, guideline brand, desain konsisten untuk bisnis" }
-  ];
+  const hardSkills = resolvedConcepts
+    .slice()
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .map((concept) => ({
+      category: concept.title,
+      content: concept.description || '',
+    }));
 
   // Get gallery images from currentAboutData or empty array
   // Sample images for gallery mini
@@ -251,7 +364,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             { id: 'professional', label: 'About', number: '02' },
             { id: 'skills', label: 'Skills', number: '03' },
             { id: 'experience', label: 'Experience', number: '04' }
-          ].map((section, index) => {
+          ].map((section) => {
             const isActive = activeSection === section.id;
             return (
               <motion.button
@@ -279,7 +392,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 1: ABOUT ME dengan Trail Effect */}
       <motion.div 
         id="hero"
-        className="relative min-h-[75vh]"
+        className="relative min-h-[60vh]"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
@@ -294,9 +407,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         </div>
         
         {/* Hero Section */}
-        <div className="min-h-[75vh] flex items-center justify-center relative z-20">
+        <div className="min-h-[60vh] flex items-center justify-center relative z-20 px-4">
           <div className="text-center">
-              <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] xl:text-[14rem] leading-none tracking-wider text-black font-display">
+              <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[9rem] xl:text-[11rem] leading-none tracking-wider text-black font-display">
               {currentAboutData.hero?.title || 'ABOUT ME'}
               </h1>
           </div>
@@ -322,7 +435,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                 <div className="inline-block bg-gray-100 px-6 py-3 rounded-full text-sm font-medium mb-6">
                   {currentAboutData.professional?.motto.badge || 'Motto kerja'}
                 </div>
-                <p className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold italic text-gray-700 leading-tight">
+                <p className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold italic text-gray-700 leading-tight">
                   {currentAboutData.professional?.motto.quote || '"Desain adalah solusi visual, bukan sekadar estetika."'}
                 </p>
               </div>
@@ -369,29 +482,39 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                 
                 {/* Design Software Icons */}
                 <div className="mb-6">
-                  <div className="flex items-start mb-3">
+                <div className="flex items-start mb-3">
+                  <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                  <div className="flex-1">
+                    <strong className="text-sm">Software Desain:</strong>
+                  </div>
+                </div>
+                <div className="w-full overflow-visible">
+                  {hardSkillsError && (
+                    <p className="text-xs text-amber-600 mb-2">
+                      Menampilkan ikon default (gagal memuat dari server).
+                    </p>
+                  )}
+                  <DesignSkillIcons skills={resolvedHardSkills} />
+                </div>
+              </div>
+              
+              {/* Hard Skills List */}
+              <div className="space-y-3">
+                {hardSkillConceptsError && (
+                  <p className="text-xs text-amber-600">
+                    Menampilkan poin default (gagal memuat konsep dari server).
+                  </p>
+                )}
+                {hardSkills.map((skill, index) => (
+                  <div key={index} className="flex items-start">
                     <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
                     <div className="flex-1">
-                      <strong className="text-sm">Software Desain:</strong>
+                      <strong className="text-sm">{skill.category}:</strong>
+                      <span className="ml-1 text-gray-700 text-xs">{skill.content}</span>
                     </div>
                   </div>
-                  <div className="w-full overflow-visible">
-                    <DesignSkillIcons />
-                  </div>
-                </div>
-                
-                {/* Hard Skills List */}
-                <div className="space-y-3">
-                  {hardSkills.map((skill, index) => (
-                    <div key={index} className="flex items-start">
-                      <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                      <div className="flex-1">
-                        <strong className="text-sm">{skill.category}:</strong>
-                        <span className="ml-1 text-gray-700 text-xs">{skill.content}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                ))}
+              </div>
               </div>
             </div>
 
@@ -440,7 +563,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       >
         <div className="w-full max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-serif font-bold text-black mb-4">Experience</h2>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-black mb-4">Experience</h2>
             <p className="text-gray-600 font-serif">Perjalanan karir dan pengalaman profesional</p>
           </div>
           
@@ -486,14 +609,15 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                       Menampilkan data pengalaman bawaan karena: {experienceErrorDetail instanceof Error ? experienceErrorDetail.message : 'data tidak tersedia'}.
                     </p>
                   )}
-                  <SwayingGallery 
+                  <SwayingGallery
                     images={workExperienceForGallery.map((experience, index) => ({
                       src: experience.imageUrl,
                       alt: `Work Experience ${index + 1}`,
                       title: experience.year,
                       duration: experience.duration,
-                      description: `${experience.company} · ${experience.position}`,
-                      jobDetails: experience.description
+                      description: `${experience.company} - ${experience.position}`,
+                      // Tampilkan maksimal 3 poin jobdesk agar lebih informatif
+                      jobDetails: experience.description?.slice(0, 3) ?? []
                     }))}
                     className=""
                   />

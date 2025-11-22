@@ -1,0 +1,37 @@
+{
+  "concepts": [
+    {
+      "id": "concept-typography",
+      "title": "Tipografi",
+      "description": "memahami jenis huruf, hierarki teks, dan readability",
+      "order": 1,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-11-22T11:16:18.809Z"
+    },
+    {
+      "id": "concept-color",
+      "title": "Teori warna",
+      "description": "colour psychology, colour harmony, kontras, dan palet warna",
+      "order": 2,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-11-22T11:14:26.330Z"
+    },
+    {
+      "id": "concept-layout",
+      "title": "Layout & Grid System",
+      "description": "mengatur komposisi visual agar rapi, seimbang, dan mudah dibaca",
+      "order": 3,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "concept-branding",
+      "title": "Branding & Identitas Visual",
+      "description": "membuat logo, Guidelines brand, desain konsisten untuk bisnis",
+      "order": 4,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-11-22T11:12:36.124Z"
+    }
+  ],
+  "lastUpdated": "2025-11-22T11:16:18.809Z"
+}
