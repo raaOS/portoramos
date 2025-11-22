@@ -73,7 +73,7 @@ export default function AdminLayout({
             >
               Admin
             </button>
-            <nav className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
+            <nav className="hidden md:flex items-center space-x-2 text-sm text-gray-600 mt-1 pl-1">
               {navItems.map(({ href, label, icon: Icon, color }) => {
                 const active = isActive(href);
                 return (
