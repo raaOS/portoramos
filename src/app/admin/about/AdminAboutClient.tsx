@@ -199,7 +199,19 @@ export default function AdminAboutClient() {
   };
 
   if (loading) {
-    return null;
+    return (
+      <AdminLayout
+        title="About Content Management"
+        subtitle="Manage About page sections"
+        breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'About' }]}
+        titleIcon={<Info className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-blue-50 text-blue-700"
+      >
+        <div className="flex items-center justify-center py-10 text-sm text-gray-600">
+          Loading about data...
+        </div>
+      </AdminLayout>
+    );
   }
 
   if (!aboutData) {

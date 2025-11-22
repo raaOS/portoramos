@@ -88,7 +88,7 @@ export default function AdminLayout({
                     aria-label={label}
                     title={label}
                   >
-                    <Icon className={`h-4 w-4 ${color}`} aria-hidden />
+                    <Icon className={`h-4 w-4 ${active ? color : 'text-gray-800'}`} aria-hidden />
                     <span className="hidden xl:inline font-medium">{label}</span>
                   </Link>
                 );
