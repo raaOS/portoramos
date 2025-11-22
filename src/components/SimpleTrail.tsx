@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
 import NextImage from 'next/image';
 
@@ -308,15 +309,26 @@ export default function SimpleTrail({ backgroundTrail = [] }: SimpleTrailProps) 
 
   // Use the trailImages from useMemo above
 
-  return (
-    <div className="absolute pointer-events-none" style={{
-      top: 0,
-      bottom: 0,
-      left: '-100vw',
-      right: '-100vw',
-      width: '300vw',
-      zIndex: 30
-    }}>
+  // Use createPortal to render directly into body to escape main container constraints
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!mounted) return null;
+
+  // Render to body using Portal
+  // Absolute position at top:0 left:0 ensures it starts at the top of the page
+  // w-full ensures it spans the entire width (no container limits)
+  // h-[120vh] gives enough height for the hero section + some buffer
+  // z-0 ensures it's behind the hero text (which should be z-relative)
+  // pointer-events-none ensures clicks pass through
+  return createPortal(
+    <div
+      className="absolute top-0 left-0 w-full h-[120vh] z-0 pointer-events-none overflow-hidden"
+    >
       <div ref={containerRef} className="w-full h-full">
         {/* Trail images - using Next.js Image for optimization */}
         {trailImages.map((imageSrc, index) => (
@@ -347,6 +359,7 @@ export default function SimpleTrail({ backgroundTrail = [] }: SimpleTrailProps) 
           />
         ))}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -493,19 +493,14 @@ select:focus-visible {
 /* Horizontal scrolling animation for testimonials - using JavaScript instead */
 
 /* Prevent horizontal scrollbar from trail effect */
+html,
 body {
   overflow-x: hidden;
+  width: 100%;
+  position: relative;
 }
 
 /* Trail effect container - only visible in hero section */
 #hero {
-  overflow: hidden;
-  /* Hide overflow to prevent scrollbar */
   position: relative;
-}
-
-/* Allow trail to extend beyond section boundaries horizontally */
-#hero>div {
-  overflow-x: visible;
-  overflow-y: hidden;
 }
