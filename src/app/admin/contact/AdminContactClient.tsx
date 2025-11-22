@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ContactData, UpdateContactData } from '@/types/contact';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
@@ -12,12 +12,7 @@ export default function AdminContactClient() {
   const [activeTab, setActiveTab] = useState<'info' | 'form'>('info');
   const { showSuccess, showError } = useToast();
 
-  // Load contact data on mount
-  useEffect(() => {
-    loadContactData();
-  }, []);
-
-  const loadContactData = async () => {
+  const loadContactData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/contact');
@@ -29,7 +24,12 @@ export default function AdminContactClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
+
+  // Load contact data on mount
+  useEffect(() => {
+    loadContactData();
+  }, [loadContactData]);
 
   const handleUpdateContact = async (updateData: UpdateContactData) => {
     try {
@@ -90,7 +90,7 @@ export default function AdminContactClient() {
       breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Contact' }]}
     >
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Contact Management</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Contact Overview</h2>
         <div className="text-sm text-gray-500">
           Last updated: {new Date(contactData.lastUpdated).toLocaleString()}
         </div>

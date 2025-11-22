@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AboutData, UpdateAboutData } from '@/types/about';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
@@ -12,11 +12,7 @@ export default function AdminAboutClient() {
   const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills'>('hero');
   const { showSuccess, showError } = useToast();
 
-  useEffect(() => {
-    loadAboutData();
-  }, []);
-
-  const loadAboutData = async () => {
+  const loadAboutData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/about');
@@ -28,7 +24,11 @@ export default function AdminAboutClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    loadAboutData();
+  }, [loadAboutData]);
 
   const handleUpdateAbout = async (updateData: UpdateAboutData) => {
     try {
@@ -77,7 +77,7 @@ export default function AdminAboutClient() {
       breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'About' }]}
     >
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-xl font-semibold text-gray-900">About Content</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Content Overview</h2>
         <div className="text-sm text-gray-500">
           Last updated: {new Date(aboutData.lastUpdated).toLocaleString()}
         </div>
@@ -136,7 +136,15 @@ export default function AdminAboutClient() {
     </AdminLayout>
   );
 }
-}
+
+// Helper untuk merapikan daftar URL (1 per baris, unik)
+const normalizeUrlList = (raw: string) => {
+  const urls = raw
+    .split(/[\n,]+/)
+    .map((u) => u.trim())
+    .filter(Boolean);
+  return Array.from(new Set(urls));
+};
 
 // Hero Section Form
 function HeroSectionForm({ 
@@ -183,10 +191,15 @@ function HeroSectionForm({
           rows={6}
           className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
           value={formData.backgroundTrail}
-          onChange={(e) => setFormData({ ...formData, backgroundTrail: e.target.value })}
+          onChange={(e) => {
+            const list = normalizeUrlList(e.target.value);
+            setFormData({ ...formData, backgroundTrail: list.join('\n') });
+          }}
           placeholder="https://res.cloudinary.com/demo/image/upload/v1234567890/trail1.jpg&#10;https://res.cloudinary.com/demo/image/upload/v1234567890/trail2.jpg"
         />
-        <p className="mt-1 text-sm text-gray-500">Enter one Cloudinary URL per line</p>
+        <p className="mt-1 text-sm text-gray-500">
+          {normalizeUrlList(formData.backgroundTrail).length} URL unik &middot; satu URL Cloudinary per baris
+        </p>
       </div>
 
       <div className="flex justify-end">
@@ -226,7 +239,7 @@ function ProfessionalSectionForm({
       },
       bio: {
         content: formData.bioContent,
-        galleryImages: formData.bioGalleryImages.split('\n').filter(Boolean)
+        galleryImages: normalizeUrlList(formData.bioGalleryImages)
       }
     };
 
@@ -277,10 +290,15 @@ function ProfessionalSectionForm({
           rows={6}
           className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
           value={formData.bioGalleryImages}
-          onChange={(e) => setFormData({ ...formData, bioGalleryImages: e.target.value })}
+          onChange={(e) => {
+            const list = normalizeUrlList(e.target.value);
+            setFormData({ ...formData, bioGalleryImages: list.join('\n') });
+          }}
           placeholder="https://res.cloudinary.com/demo/image/upload/v1234567890/gallery1.jpg&#10;https://res.cloudinary.com/demo/image/upload/v1234567890/gallery2.jpg"
         />
-        <p className="mt-1 text-sm text-gray-500">Enter one Cloudinary URL per line</p>
+        <p className="mt-1 text-sm text-gray-500">
+          {normalizeUrlList(formData.bioGalleryImages).length} URL unik &middot; satu URL Cloudinary per baris
+        </p>
       </div>
 
       <div className="flex justify-end">

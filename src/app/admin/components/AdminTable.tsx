@@ -12,7 +12,7 @@ interface Column {
 
 interface AdminTableProps {
   columns: Column[];
-  data: any[];
+  data?: any[];
   loading?: boolean;
   emptyMessage?: string;
   onSort?: (key: string, direction: 'asc' | 'desc') => void;
@@ -25,7 +25,7 @@ interface AdminTableProps {
 
 export default function AdminTable({
   columns,
-  data,
+  data = [],
   loading = false,
   emptyMessage = 'No data available',
   onSort,

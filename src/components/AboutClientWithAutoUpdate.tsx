@@ -3,20 +3,16 @@
 import { useState } from 'react';
 import { useAutoUpdate } from '@/hooks/useAutoUpdate';
 import type { AboutData } from '@/types/about';
-import type { ExperienceData } from '@/types/experience';
 import AboutClient from '@/app/about/AboutClient';
 
 type Props = {
   initialAboutData?: AboutData | null;
-  initialExperienceData?: ExperienceData | null;
 };
 
 export default function AboutClientWithAutoUpdate({
-  initialAboutData,
-  initialExperienceData
+  initialAboutData
 }: Props) {
   const [clientInitialAbout] = useState<AboutData | null>(initialAboutData ?? null);
-  const [clientInitialExperience] = useState<ExperienceData | null>(initialExperienceData ?? null);
 
   // Auto-update data (lebih jarang karena konten jarang berubah)
   const { data: updatedAboutData } = useAutoUpdate<AboutData>(
@@ -42,7 +38,7 @@ export default function AboutClientWithAutoUpdate({
 
   return (
     <div>
-      <AboutClient initialData={aboutData} initialExperience={clientInitialExperience ?? undefined} />
+      <AboutClient initialData={aboutData} />
     </div>
   );
 }

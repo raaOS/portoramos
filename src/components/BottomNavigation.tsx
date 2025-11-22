@@ -41,7 +41,7 @@ export default function BottomNavigation() {
   if (!isNavbarVisible) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 print:hidden">
       <div className="bg-white/90 backdrop-blur-xl border border-black rounded-full px-2 py-2">
         <div className="flex items-center space-x-3">
           {NAV_ITEMS.map((item, index) => {

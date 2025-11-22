@@ -279,7 +279,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 1: ABOUT ME dengan Trail Effect */}
       <motion.div 
         id="hero"
-        className="relative min-h-screen"
+        className="relative min-h-[75vh]"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
@@ -294,7 +294,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         </div>
         
         {/* Hero Section */}
-        <div className="min-h-screen flex items-center justify-center relative z-20">
+        <div className="min-h-[75vh] flex items-center justify-center relative z-20">
           <div className="text-center">
               <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] xl:text-[14rem] leading-none tracking-wider text-black font-display">
               {currentAboutData.hero?.title || 'ABOUT ME'}
@@ -306,7 +306,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 2: Deskripsi Profesional dengan 2 Grid */}
       <motion.div 
         id="professional"
-        className="py-16 md:py-20 bg-white flex items-center justify-center px-4"
+        className="py-14 md:py-16 lg:py-20 bg-white flex items-center justify-center px-4"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
@@ -349,7 +349,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 3: Hard Skills dan Soft Skills dengan 2 Grid */}
       <motion.div 
         id="skills"
-        className="bg-white py-20 flex items-center justify-center min-h-screen"
+        className="bg-white py-16 md:py-20 lg:py-24 flex items-center justify-center lg:min-h-[70vh]"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
@@ -432,7 +432,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 4: Experience */}
       <motion.div 
         id="experience"
-        className="bg-white py-20"
+        className="bg-white py-16 md:py-20 lg:py-24"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
@@ -506,7 +506,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       </motion.div>
 
       {/* Section 5: Call to Action */}
-      <div className="bg-gray-50 py-16">
+      <div className="bg-gray-50 py-14 md:py-16">
         <div className="w-full max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-black mb-6">
             Tertarik Bekerja Sama?

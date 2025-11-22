@@ -2,8 +2,6 @@ import type { Metadata } from 'next';
 import { generateMetadata as generateSEOMetadata } from '@/lib/seo';
 import AboutClientWithAutoUpdate from '@/components/AboutClientWithAutoUpdate';
 import { loadAboutData } from '@/lib/about';
-import { loadExperienceData } from '@/lib/experience';
-import type { ExperienceData } from '@/types/experience';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'About Ramos',
@@ -15,15 +13,11 @@ export const metadata: Metadata = generateSEOMetadata({
 export const revalidate = 3600;
 
 export default async function AboutPage() {
-  const [aboutData, experienceData] = await Promise.all([
-    loadAboutData(),
-    loadExperienceData()
-  ]);
+  const aboutData = await loadAboutData();
 
   return (
     <AboutClientWithAutoUpdate
       initialAboutData={aboutData ?? undefined}
-      initialExperienceData={experienceData ?? (null as unknown as ExperienceData | undefined)}
     />
   );
 }

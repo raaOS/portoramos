@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import LoveButton from '@/components/LoveButton';
 
 interface Comment {
   id: string;
@@ -16,9 +17,11 @@ interface Comment {
 interface CommentSectionProps {
   projectId: string;
   className?: string;
+  initialLikes?: number;
+  initialLoved?: boolean;
 }
 
-export default function CommentSection({ projectId, className = '' }: CommentSectionProps) {
+export default function CommentSection({ projectId, className = '', initialLikes = 0, initialLoved = false }: CommentSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState({
     name: '',
@@ -90,10 +93,18 @@ export default function CommentSection({ projectId, className = '' }: CommentSec
 
   return (
     <div className={`space-y-6 ${className}`}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Comments ({comments.length})
-        </h3>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
+          <LoveButton 
+            projectId={projectId}
+            initialLikes={initialLikes}
+            initialLoved={initialLoved}
+            className="px-3 py-1 text-sm"
+          />
+          <h3 className="text-lg font-semibold text-gray-900">
+            Comments ({comments.length})
+          </h3>
+        </div>
         <motion.button
           onClick={() => setShowForm(!showForm)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"

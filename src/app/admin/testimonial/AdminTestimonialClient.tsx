@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Testimonial, TestimonialData } from '@/types/testimonial';
 import AdminTable from '../components/AdminTable';
 import AdminButton from '../components/AdminButton';
@@ -24,7 +24,7 @@ export default function AdminTestimonialClient() {
   const { showSuccess, showError } = useToast();
 
   // Load testimonials
-  const loadTestimonials = async () => {
+  const loadTestimonials = useCallback(async () => {
     try {
       const response = await fetch('/api/testimonial');
       const data: TestimonialData = await response.json();
@@ -37,13 +37,13 @@ export default function AdminTestimonialClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
 
   const { lastUpdated, refresh } = useAutoUpdate(loadTestimonials);
 
   useEffect(() => {
     loadTestimonials();
-  }, [lastUpdated]);
+  }, [lastUpdated, loadTestimonials]);
 
   // Create testimonial
   const handleCreate = async () => {
@@ -163,7 +163,7 @@ export default function AdminTestimonialClient() {
     >
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Testimonials</h1>
+          <h2 className="text-xl font-semibold text-gray-900">Testimonials Overview</h2>
           <div className="text-sm text-gray-500">
             Last updated: {lastUpdated ? new Date(lastUpdated).toLocaleString() : 'Never'}
           </div>
@@ -282,5 +282,6 @@ export default function AdminTestimonialClient() {
         onDelete={handleDelete}
       />
     </div>
+  </AdminLayout>
   );
 }

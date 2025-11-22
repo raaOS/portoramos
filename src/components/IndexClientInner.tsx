@@ -18,19 +18,7 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
 
   return (
     <section>
-      <div className="mb-6 flex items-end justify-between">
-        <div>
-          <h1 className="text-4xl md:text-5xl font-semibold">Indeks</h1>
-          {lastUpdated && (
-            <div className="mt-2 text-xs text-gray-700">
-              Last updated: {lastUpdated.toLocaleTimeString()}
-            </div>
-          )}
-        </div>
-        <p className="text-sm text-gray-600">
-          {filteredProjects.length} proyek{tag ? ` • tag: ${tag}` : ''}
-        </p>
-      </div>
+      <div className="mb-6 flex items-end justify-between gap-4 flex-wrap" />
 
       {filteredProjects.length > 0 ? (
         <div className="masonry">

@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 
 interface Column {
   key: string;
@@ -48,6 +48,22 @@ export default function AdminTable({
       setIsMobileView(window.innerWidth < 768);
     }
   };
+
+  useEffect(() => {
+    // Initialize on mount
+    checkMobileView();
+
+    if (typeof window === 'undefined') return;
+
+    const handleResize = () => {
+      checkMobileView();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   // Filter columns based on mobile view
   const visibleColumns = isMobileView 

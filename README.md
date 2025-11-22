@@ -7,13 +7,13 @@ Fitur Utama
 - Floating capsule nav: Work / About / Contact.
 - Masonry responsif (columns CSS) + autoplay video saat on‑screen (muted, playsInline).
 - Admin: tambah/edit/hapus proyek, unggah image/video via Cloudinary.
-- Data: Upstash (Vercel KV) untuk penyimpanan; tidak menggunakan dummy JSON.
+- Data: Upstash (Vercel KV) untuk penyimpanan; ada fallback ke JSON lokal (`src/data/*.json`) bila KV kosong atau offline.
 
 Struktur Penting
-- `src/app` – Halaman App Router (home, explore, filter, works, detail, admin, API).
-- `src/components` – Header, FloatingNav, Card, Media, Gallery, PrevNext, Footer, dll.
-- `src/lib` – projects (helper), store (Upstash REST), images (proxy helper), i18n.
-- Semua data berasal dari Upstash (KV); tidak ada dummy JSON.
+- `src/app` — Halaman App Router (home, explore, filter, works, detail, admin, API).
+- `src/components` — Header, FloatingNav, Card, Media, Gallery, PrevNext, Footer, dll.
+- `src/lib` — projects (helper), store (Upstash REST), images (proxy helper), i18n.
+- API About/Experience/Testimonial/Projects membaca/menulis JSON lokal jika KV tidak tersedia; backup file dibuat sebelum tulis (lihat `src/data`).
 
 Menjalankan
 - Dev: `npm run dev`

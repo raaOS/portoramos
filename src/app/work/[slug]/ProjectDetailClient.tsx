@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import HeroShared from '@/components/HeroShared';
 import ReadMoreDescription from '@/components/ReadMoreDescription';
 import ShareButtons from '@/components/ShareButtons';
-import LoveButton from '@/components/LoveButton';
 import CommentSection from '@/components/CommentSection';
 import DetailMeta from './DetailMeta';
 
@@ -34,6 +33,7 @@ export default function ProjectDetailClient({
   layoutStrategy 
 }: ProjectDetailClientProps) {
   const [videoRef, setVideoRef] = useState<React.RefObject<HTMLVideoElement> | null>(null);
+  const initialLikes = useMemo(() => Math.floor(Math.random() * 50) + 10, []);
   
   // Create unified media array with hero as first item
   const unifiedMedia = [
@@ -102,14 +102,13 @@ export default function ProjectDetailClient({
                 title={p.title}
                 description={p.description}
               />
-              <LoveButton 
-                projectId={p.id}
-                initialLikes={Math.floor(Math.random() * 50) + 10} // Random initial likes
-              />
             </div>
             
             {/* Comment Section */}
-            <CommentSection projectId={p.id} />
+            <CommentSection 
+              projectId={p.id} 
+              initialLikes={initialLikes} // Random initial likes (stable per mount)
+            />
           </div>
         </div>
       </div>

@@ -6,7 +6,6 @@ import { ExperienceData } from '@/types/experience';
 import AdminTable from '../components/AdminTable';
 import AdminButton from '../components/AdminButton';
 import AdminLayout from '../components/AdminLayout';
-import { useAutoUpdate } from '@/hooks/useAutoUpdate';
 import { useToast } from '@/contexts/ToastContext';
 
 export default function AdminExperienceClient() {
@@ -33,11 +32,11 @@ export default function AdminExperienceClient() {
     }
   };
 
-  const { lastUpdated, refresh } = useAutoUpdate(loadExperienceData);
-
   useEffect(() => {
     loadExperienceData();
-  }, [lastUpdated]);
+    // We intentionally run this only once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Update statistics
   const handleUpdateStatistics = async () => {
@@ -55,7 +54,7 @@ export default function AdminExperienceClient() {
       if (response.ok) {
         setEditingField(null);
         setFormData({});
-        refresh();
+        await loadExperienceData();
         showSuccess('Experience statistics updated successfully.');
       } else {
         showError('Failed to update statistics.');
@@ -82,7 +81,7 @@ export default function AdminExperienceClient() {
       if (response.ok) {
         setEditingField(null);
         setFormData({});
-        refresh();
+        await loadExperienceData();
         showSuccess('Work experience updated successfully.');
       } else {
         showError('Failed to update work experience.');
@@ -147,9 +146,14 @@ export default function AdminExperienceClient() {
     >
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Experience</h1>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Statistics & Work History
+          </h2>
           <div className="text-sm text-gray-500">
-            Last updated: {lastUpdated ? new Date(lastUpdated).toLocaleString() : 'Never'}
+            Last updated:{' '}
+            {experienceData.lastUpdated
+              ? new Date(experienceData.lastUpdated).toLocaleString()
+              : 'Never'}
           </div>
         </div>
 
@@ -454,5 +458,6 @@ export default function AdminExperienceClient() {
         )}
       </div>
     </div>
+  </AdminLayout>
   );
 }

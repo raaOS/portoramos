@@ -9,7 +9,7 @@ if (!JWT_SECRET) {
 const protectedAdminRoutes = ['/admin'];
 const publicAdminRoutes = ['/admin/login'];
 
-// Rate limiting configuration
+// Rate limiting configuration (disabled in development to avoid local 429 spam)
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 const RATE_LIMIT_MAX_REQUESTS = 1000; // Increase general limit
 const RATE_LIMIT_STRICT_ENDPOINTS = {
@@ -21,8 +21,18 @@ const RATE_LIMIT_STRICT_ENDPOINTS = {
   '/api/contact': 500,  // Increase contact rate limit
 };
 
-// Simple in-memory rate limiting (in production, use Redis)
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+// Simple in-memory rate limiting (in production, use Redis).
+// We also attach it to globalThis so the optional
+// /api/admin/clear-rate-limit endpoint can access the same map in development.
+const globalForRateLimit = globalThis as typeof globalThis & {
+  __rateLimitMap?: Map<string, { count: number; resetTime: number }>;
+};
+
+const rateLimitMap =
+  globalForRateLimit.__rateLimitMap ||
+  new Map<string, { count: number; resetTime: number }>();
+
+globalForRateLimit.__rateLimitMap = rateLimitMap;
 
 function getRateLimitKey(request: NextRequest, endpoint?: string): string {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -115,6 +125,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isProd = process.env.NODE_ENV === 'production';
   
   // Skip middleware for static assets
   if (isStaticAsset(pathname)) {
@@ -172,8 +183,8 @@ export async function middleware(request: NextRequest) {
     }
   }
   
-  // Rate limiting for API routes
-  if (isAPIRoute(pathname)) {
+  // Rate limiting for API routes (skip in development to avoid local throttling)
+  if (isAPIRoute(pathname) && isProd) {
     // Check for specific endpoint limits
     const endpointLimit = Object.entries(RATE_LIMIT_STRICT_ENDPOINTS).find(
       ([endpoint]) => pathname.startsWith(endpoint)

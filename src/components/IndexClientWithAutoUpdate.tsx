@@ -56,6 +56,19 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
     loadInitialData();
   }, [mounted, serverProjects.length, setLastUpdated]);
 
+  // Set lastUpdated based on initial projects (SSR data)
+  useEffect(() => {
+    if (!initialProjects.length) return;
+    const latest = initialProjects.reduce((acc, proj) => {
+      const updated = proj.updatedAt ? new Date(proj.updatedAt).getTime() : 0;
+      const created = proj.createdAt ? new Date(proj.createdAt).getTime() : 0;
+      return Math.max(acc, updated || created);
+    }, 0);
+    if (latest) {
+      setLastUpdated(new Date(latest));
+    }
+  }, [initialProjects, setLastUpdated]);
+
   // Auto-update data
   const { data: updatedData, lastUpdated } = useAutoUpdate<ProjectsResponse>(
     async () => {

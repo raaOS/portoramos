@@ -48,12 +48,19 @@ export default function Header() {
 
           {/* Last Updated - Kanan */}
           <motion.div
-            className="text-xs text-gray-500"
+            className="text-xs text-gray-500 flex items-center gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
             {isClient && lastUpdated && `Last updated: ${lastUpdated.toLocaleTimeString()}`}
+            <Link
+              href="/cv?mode=ats"
+              className="inline-flex items-center gap-2 rounded-full bg-red-600 text-white px-3 py-1.5 font-semibold hover:bg-red-700 transition-colors"
+              aria-label="Lihat CV versi ATS yang ramah screening"
+            >
+              CV versi ATS
+            </Link>
           </motion.div>
         </div>
       </motion.header>

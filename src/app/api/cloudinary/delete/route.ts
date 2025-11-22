@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
 import { checkAdminAuth } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic';
+
 // Configure Cloudinary with proper error handling
 if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 
     !process.env.CLOUDINARY_API_KEY || 

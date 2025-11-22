@@ -26,7 +26,7 @@ export default function AdminFileUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { showSuccess: success, showError } = useToast();
+  const { showSuccess: success, showError, showWarning } = useToast();
 
   const validateFile = useCallback((file: File): string | null => {
     // Check file size
@@ -55,22 +55,46 @@ export default function AdminFileUpload({
   }, [accept, maxSize]);
 
   const uploadToCloudinary = useCallback(async (file: File): Promise<string> => {
-    // Simulate upload to Cloudinary
-    // In real implementation, you would upload to your Cloudinary account
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        // Simulate upload delay
-        setTimeout(() => {
-          // For demo purposes, return a data URL
-          // In production, this would be the actual Cloudinary URL
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    // If Cloudinary is not configured, fall back to a local data URL
+    if (!cloudName || !uploadPreset) {
+      console.warn('Cloudinary is not configured. Falling back to data URL upload.');
+      showWarning('Cloudinary is not configured. Using local preview URL instead.');
+
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
           resolve(reader.result as string);
-        }, 1000);
-      };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsDataURL(file);
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+      method: 'POST',
+      body: formData,
     });
-  }, []);
+
+    if (!response.ok) {
+      throw new Error('Cloudinary upload failed');
+    }
+
+    const data = await response.json() as { secure_url?: string; url?: string };
+    const url = data.secure_url || data.url;
+
+    if (!url) {
+      throw new Error('Cloudinary upload response missing URL');
+    }
+
+    return url;
+  }, [showWarning]);
 
   const handleFiles = useCallback(async (files: FileList) => {
     if (disabled) return;

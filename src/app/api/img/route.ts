@@ -2,6 +2,34 @@ import { NextRequest } from 'next/server'
 
 const ALLOWED_HOSTS = new Set(['picsum.photos', 'res.cloudinary.com'])
 
+function stripCloudinaryTransform(u: URL){
+  if (u.hostname !== 'res.cloudinary.com') return null
+  const parts = u.pathname.split('/')
+  const uploadIdx = parts.findIndex(p => p === 'upload')
+  if (uploadIdx === -1) return null
+  const candidate = parts[uploadIdx + 1]
+  const looksLikeTransform = candidate && !candidate.startsWith('v') && candidate.indexOf('.') === -1
+  if (!looksLikeTransform) return null
+  const next = new URL(u.toString())
+  const nextParts = [...parts]
+  nextParts.splice(uploadIdx + 1, 1)
+  next.pathname = nextParts.join('/')
+  return next
+}
+
+async function fetchPassthrough(target: URL, headers: Record<string, string>){
+  try {
+    const res = await fetch(target.toString(), {
+      cache: 'no-store',
+      headers,
+    })
+    if (!res.ok || !res.body) return null
+    return res
+  } catch {
+    return null
+  }
+}
+
 export async function GET(req: NextRequest) {
   const u = req.nextUrl.searchParams.get('u')
   if (!u) return new Response('Missing u', { status: 400 })
@@ -12,12 +40,24 @@ export async function GET(req: NextRequest) {
   const fetchHeaders: Record<string, string> = {}
   const rangeHeader = req.headers.get('range')
   if (rangeHeader) fetchHeaders['Range'] = rangeHeader
-  
-  const res = await fetch(url.toString(), { 
-    cache: 'no-store',
-    headers: fetchHeaders
-  }).catch(() => null as any)
-  if (!res || !res.ok || !res.body) return new Response('Upstream error', { status: 502 })
+
+  let res = await fetchPassthrough(url, fetchHeaders)
+  if (!res) {
+    const fallbackUrl = stripCloudinaryTransform(url)
+    if (fallbackUrl) {
+      const retry = await fetchPassthrough(fallbackUrl, fetchHeaders)
+      if (retry) {
+        url = fallbackUrl
+        res = retry
+      }
+    }
+  }
+
+  if (!res) {
+    // As a last resort, let the client fetch directly (avoids server-side fetch blockers)
+    const redirectTarget = stripCloudinaryTransform(url) || url
+    return Response.redirect(redirectTarget.toString(), 302)
+  }
   
   const ct = res.headers.get('content-type') || 'image/jpeg'
   const contentLength = res.headers.get('content-length')

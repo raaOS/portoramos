@@ -445,8 +445,13 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
           video.load();
         });
       } else {
-        // For images, use the original Image approach
-        const img = new Image();
+        // For images, use the browser Image constructor (client-side only)
+        if (typeof window === 'undefined') {
+          setIsDetectingDimensions(false);
+          return;
+        }
+
+        const img = new window.Image();
         img.crossOrigin = 'anonymous';
         
         await new Promise((resolve, reject) => {
@@ -548,6 +553,17 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
   };
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
+    // Normalisasi khusus untuk daftar URL galeri (hapus duplikat, trim, satu per baris)
+    if (field === 'gallery' && typeof value === 'string') {
+      const urls = value
+        .split(/[\n,]+/)
+        .map((u) => u.trim())
+        .filter(Boolean);
+      const unique = Array.from(new Set(urls));
+      setFormData(prev => ({ ...prev, gallery: unique.join('\n') }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
@@ -790,7 +806,9 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
             placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/video.mp4"
           />
           <p className="mt-1 text-sm text-gray-500">
-            One URL per line. Supports images and videos.
+            {formData.gallery
+              ? `${formData.gallery.split('\n').filter((u) => u.trim()).length} URL unik`
+              : 'Belum ada URL'} &middot; satu URL per baris (image/video).
           </p>
         </div>
 

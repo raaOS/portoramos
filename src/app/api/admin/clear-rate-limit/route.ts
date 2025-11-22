@@ -5,8 +5,12 @@ export async function POST(request: NextRequest) {
     // Clear rate limits (for development only)
     // In production, this should be protected or removed
     if (process.env.NODE_ENV === 'development') {
-      // Clear rate limit map
-      const rateLimitMap = (global as any).rateLimitMap;
+      // Clear rate limit map shared via globalThis in middleware
+      const globalForRateLimit = globalThis as typeof globalThis & {
+        __rateLimitMap?: Map<string, { count: number; resetTime: number }>;
+      };
+
+      const rateLimitMap = globalForRateLimit.__rateLimitMap;
       if (rateLimitMap) {
         rateLimitMap.clear();
       }

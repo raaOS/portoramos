@@ -33,7 +33,7 @@ export default function AdminForm({
   useEffect(() => {
     if (!autoSave) return;
 
-    const currentValues = JSON.stringify(initialValues);
+    const currentValues = JSON.stringify(form.values);
     
     // Only auto-save if values have changed and form is valid
     if (currentValues !== lastSavedRef.current && !form.hasErrors) {
@@ -45,7 +45,7 @@ export default function AdminForm({
       // Set new timeout
       autoSaveTimeoutRef.current = setTimeout(async () => {
         try {
-          await onSubmit(initialValues);
+          await onSubmit(form.values);
           lastSavedRef.current = currentValues;
           // Show subtle success indicator
           console.log('Auto-saved successfully');
@@ -60,7 +60,7 @@ export default function AdminForm({
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [initialValues, form.hasErrors, autoSave, autoSaveDelay, onSubmit]);
+  }, [form.values, form.hasErrors, autoSave, autoSaveDelay, onSubmit]);
 
   // Cleanup on unmount
   useEffect(() => {
