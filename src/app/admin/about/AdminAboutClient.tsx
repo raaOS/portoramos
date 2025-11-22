@@ -7,7 +7,7 @@ import { HardSkill, HardSkillLevel } from '@/types/hardSkill';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
-import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info } from 'lucide-react';
+import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info, Trash2 } from 'lucide-react';
 
 export default function AdminAboutClient() {
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
@@ -875,9 +875,10 @@ function HardSkillsPanel({
                   </div>
                   <button
                     type="button"
-                    className="text-sm text-red-600 hover:text-red-700"
+                    className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700"
                     onClick={() => onDelete(skill.id)}
                   >
+                    <Trash2 className="h-4 w-4" aria-hidden />
                     Hapus
                   </button>
                 </div>
@@ -1024,9 +1025,10 @@ function HardSkillConceptsPanel({
                 <div className="mt-3 flex items-center justify-end">
                   <button
                     type="button"
-                    className="text-sm text-red-600 hover:text-red-700"
+                    className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700"
                     onClick={() => onDelete(item.id)}
                   >
+                    <Trash2 className="h-4 w-4" aria-hidden />
                     Hapus
                   </button>
                 </div>

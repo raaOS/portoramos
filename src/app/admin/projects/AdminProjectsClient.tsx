@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { isVideoLink } from '@/lib/images';
+import { Pencil, Trash2, CheckCircle2, Clock4 } from 'lucide-react';
 
 // Import design system components
 import AdminCard from '../components/AdminCard';
@@ -119,13 +120,17 @@ export default function AdminProjectsClient() {
       project.description.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
-      const aValue = a[sortKey as keyof Project];
-      const bValue = b[sortKey as keyof Project];
+      const aValue = (a as any)[sortKey] ?? '';
+      const bValue = (b as any)[sortKey] ?? '';
       
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortDirection === 'asc' 
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
+      }
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       }
       
       return 0;
@@ -194,6 +199,27 @@ export default function AdminProjectsClient() {
       )
     },
     {
+      key: 'status',
+      label: 'Status',
+      sortable: true,
+      priority: 'high' as const,
+      render: (status: Project['status']) => {
+        const published = status === 'published';
+        return (
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+              published
+                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
+                : 'bg-amber-50 text-amber-700 ring-1 ring-amber-100'
+            }`}
+          >
+            {published ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> : <Clock4 className="h-3.5 w-3.5" aria-hidden />}
+            {published ? 'Published' : 'Draft'}
+          </span>
+        );
+      }
+    },
+    {
       key: 'description',
       label: 'Description',
       hideOnMobile: true,
@@ -222,24 +248,24 @@ export default function AdminProjectsClient() {
       priority: 'high' as const,
       render: (_: any, project: Project) => (
         <div className="flex items-center space-x-1 sm:space-x-2">
-          <AdminButton
-            size="sm"
-            variant="ghost"
+          <button
+            type="button"
             onClick={() => setEditingProject(project)}
-            className="text-xs sm:text-sm px-2 py-1"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition"
+            aria-label="Edit project"
           >
+            <Pencil className="h-4 w-4" aria-hidden />
             <span className="hidden sm:inline">Edit</span>
-            <span className="sm:hidden">✏️</span>
-          </AdminButton>
-          <AdminButton
-            size="sm"
-            variant="danger"
+          </button>
+          <button
+            type="button"
             onClick={() => handleDeleteProject(project.id)}
-            className="text-xs sm:text-sm px-2 py-1"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition"
+            aria-label="Delete project"
           >
+            <Trash2 className="h-4 w-4" aria-hidden />
             <span className="hidden sm:inline">Delete</span>
-            <span className="sm:hidden">🗑️</span>
-          </AdminButton>
+          </button>
         </div>
       )
     }

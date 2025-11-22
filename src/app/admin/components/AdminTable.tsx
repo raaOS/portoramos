@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
 
 interface Column {
   key: string;
@@ -130,17 +131,21 @@ export default function AdminTable({
                       {onEdit && (
                         <button
                           onClick={() => onEdit(item)}
-                          className="text-indigo-600 hover:text-indigo-900"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-indigo-700 hover:bg-indigo-100 transition"
+                          aria-label="Edit"
                         >
-                          Edit
+                          <Pencil className="h-4 w-4" aria-hidden />
+                          <span className="hidden sm:inline">Edit</span>
                         </button>
                       )}
                       {onDelete && (
                         <button
                           onClick={() => onDelete(item.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-rose-700 hover:bg-rose-100 transition"
+                          aria-label="Delete"
                         >
-                          Delete
+                          <Trash2 className="h-4 w-4" aria-hidden />
+                          <span className="hidden sm:inline">Delete</span>
                         </button>
                       )}
                     </div>
