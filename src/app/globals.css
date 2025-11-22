@@ -6,33 +6,43 @@
 /* Import typography standardization */
 @import '../styles/typography.css';
 
-:root{ 
-  --bg:#ffffff; 
-  --fg:#111111; 
-  --muted:#6b7280; 
-  --card-bg:#ffffff;
-  --card-border:#e5e7eb;
-  --text-primary:#111111;
-  --text-secondary:#6b7280;
-  --text-muted:#9ca3af;
-  --border:#e5e7eb;
+:root {
+  --bg: #ffffff;
+  --fg: #111111;
+  --muted: #6b7280;
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --text-primary: #111111;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --border: #e5e7eb;
   --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
 }
 
 .dark {
-  --bg:#000000;
-  --fg:#ffffff;
-  --muted:#ffffff;
-  --card-bg:#000000;
-  --card-border:#ffffff;
-  --text-primary:#ffffff;
-  --text-secondary:#ffffff;
-  --text-muted:#ffffff;
-  --border:#ffffff;
+  --bg: #000000;
+  --fg: #ffffff;
+  --muted: #ffffff;
+  --card-bg: #000000;
+  --card-border: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #ffffff;
+  --text-muted: #ffffff;
+  --border: #ffffff;
 }
 
-html,body{background:var(--bg); color:var(--fg); transition: background-color 0.3s ease, color 0.3s ease;} 
-.container{max-width:1200px; margin:0 auto; padding:24px;}
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
 
 /* Touchscreen and mobile optimizations */
 * {
@@ -40,7 +50,9 @@ html,body{background:var(--bg); color:var(--fg); transition: background-color 0.
 }
 
 /* Allow text selection for input fields and content areas */
-input, textarea, [contenteditable] {
+input,
+textarea,
+[contenteditable] {
   -webkit-user-select: text;
   -khtml-user-select: text;
   -moz-user-select: text;
@@ -49,7 +61,11 @@ input, textarea, [contenteditable] {
 }
 
 /* Improve touch targets - minimum 44px for accessibility */
-button, a, [role="button"], input[type="button"], input[type="submit"] {
+button,
+a,
+[role="button"],
+input[type="button"],
+input[type="submit"] {
   min-height: 44px;
   min-width: 44px;
   display: inline-flex;
@@ -58,7 +74,9 @@ button, a, [role="button"], input[type="button"], input[type="submit"] {
 }
 
 /* Better touch feedback */
-button:active, a:active, [role="button"]:active {
+button:active,
+a:active,
+[role="button"]:active {
   transform: scale(0.98);
   transition: transform 0.1s ease;
 }
@@ -68,35 +86,67 @@ button:active, a:active, [role="button"]:active {
   .container {
     padding: 16px;
   }
-  
+
   /* Reduce gaps on mobile */
-  .gap-16 { gap: 1rem; }
-  .gap-12 { gap: 0.75rem; }
-  .gap-8 { gap: 0.5rem; }
-  
+  .gap-16 {
+    gap: 1rem;
+  }
+
+  .gap-12 {
+    gap: 0.75rem;
+  }
+
+  .gap-8 {
+    gap: 0.5rem;
+  }
+
   /* Better mobile typography */
-  .text-6xl { font-size: 3rem; }
-  .text-8xl { font-size: 4rem; }
-  .text-9xl { font-size: 5rem; }
+  .text-6xl {
+    font-size: 3rem;
+  }
+
+  .text-8xl {
+    font-size: 4rem;
+  }
+
+  .text-9xl {
+    font-size: 5rem;
+  }
 }
 
 @media (max-width: 480px) {
   .container {
     padding: 12px;
   }
-  
+
   /* Even smaller gaps on very small screens */
-  .gap-16 { gap: 0.75rem; }
-  .gap-12 { gap: 0.5rem; }
-  .gap-8 { gap: 0.375rem; }
-  
+  .gap-16 {
+    gap: 0.75rem;
+  }
+
+  .gap-12 {
+    gap: 0.5rem;
+  }
+
+  .gap-8 {
+    gap: 0.375rem;
+  }
+
   /* Smaller mobile typography */
-  .text-6xl { font-size: 2.5rem; }
-  .text-8xl { font-size: 3rem; }
-  .text-9xl { font-size: 3.5rem; }
+  .text-6xl {
+    font-size: 2.5rem;
+  }
+
+  .text-8xl {
+    font-size: 3rem;
+  }
+
+  .text-9xl {
+    font-size: 3.5rem;
+  }
 }
-.card-shadow{/* Shadow removed for flat design */}
-.dark .card-shadow{/* Shadow removed for flat design */}
+
+/* Shadow removed for flat design - card-shadow class intentionally empty */
 
 /* Force light mode for admin pages */
 .admin-page {
@@ -114,8 +164,14 @@ button:active, a:active, [role="button"]:active {
 
 
 /* Hide scrollbar utility */
-.no-scrollbar::-webkit-scrollbar{display:none;}
-.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
 /* Force Gallery Centering */
 .gallery-container {
@@ -134,28 +190,54 @@ button:active, a:active, [role="button"]:active {
 }
 
 /* Masonry grid helpers - Pinterest-like */
-.masonry{columns:4;column-gap:18px}
-@media(max-width:1280px){.masonry{columns:3}}
-@media(max-width:900px){.masonry{columns:2}}
-.masonry > div{break-inside:avoid;margin:0 0 18px}
+.masonry {
+  columns: 4;
+  column-gap: 18px
+}
+
+@media(max-width:1280px) {
+  .masonry {
+    columns: 3
+  }
+}
+
+@media(max-width:900px) {
+  .masonry {
+    columns: 2
+  }
+}
+
+.masonry>div {
+  break-inside: avoid;
+  margin: 0 0 18px
+}
 
 /* Dark mode variables */
-html.dark{ --bg:#0b0b0b; --fg:#f5f5f5; --muted:#9ca3af; }
+html.dark {
+  --bg: #0b0b0b;
+  --fg: #f5f5f5;
+  --muted: #9ca3af;
+}
 
 /* Enhanced project detail styling */
 .project-detail-media {
   aspect-ratio: var(--aspect-ratio, 16/9) !important;
-  max-height: 80vh !important; /* Increased for portrait images */
+  max-height: 80vh !important;
+  /* Increased for portrait images */
   width: 100% !important;
   height: auto !important;
 }
 
 /* Special handling for portrait videos (9:16) - No Crop, Keep Original */
 .project-detail-media[style*="--aspect-ratio: 0.5625"] {
-  max-height: 85vh !important; /* Allow taller for portrait */
-  max-width: 100% !important; /* Use full width of column */
-  margin: 0 !important; /* Remove center margin for better layout */
-  object-fit: contain !important; /* Keep original aspect ratio, no crop */
+  max-height: 85vh !important;
+  /* Allow taller for portrait */
+  max-width: 100% !important;
+  /* Use full width of column */
+  margin: 0 !important;
+  /* Remove center margin for better layout */
+  object-fit: contain !important;
+  /* Keep original aspect ratio, no crop */
   /* Center the video within its container */
   display: flex !important;
   align-items: center !important;
@@ -169,25 +251,32 @@ html.dark{ --bg:#0b0b0b; --fg:#f5f5f5; --muted:#9ca3af; }
 }
 
 .project-detail-container {
-  max-width: 80rem !important; /* max-w-7xl */
-  padding-left: 1rem !important; /* px-4 */
-  padding-right: 1rem !important; /* px-4 */
+  max-width: 80rem !important;
+  /* max-w-7xl */
+  padding-left: 1rem !important;
+  /* px-4 */
+  padding-right: 1rem !important;
+  /* px-4 */
 }
 
 @media (min-width: 768px) {
   .project-detail-container {
-    padding-left: 1.5rem !important; /* px-6 */
-    padding-right: 1.5rem !important; /* px-6 */
+    padding-left: 1.5rem !important;
+    /* px-6 */
+    padding-right: 1.5rem !important;
+    /* px-6 */
   }
 }
 
 .project-detail-content {
-  max-width: 80rem !important; /* max-w-7xl */
+  max-width: 80rem !important;
+  /* max-w-7xl */
 }
 
 /* Better balance for 2-column layout - flexbox approach */
 .project-detail-container {
-  gap: 1rem !important; /* 16px gap between columns on mobile */
+  gap: 1rem !important;
+  /* 16px gap between columns on mobile */
   justify-content: space-between !important;
   align-items: flex-start !important;
   background: var(--bg) !important;
@@ -197,7 +286,8 @@ html.dark{ --bg:#0b0b0b; --fg:#f5f5f5; --muted:#9ca3af; }
 
 @media (min-width: 768px) {
   .project-detail-container {
-    gap: 1.5rem !important; /* 24px gap on desktop */
+    gap: 1.5rem !important;
+    /* 24px gap on desktop */
   }
 }
 
@@ -218,16 +308,22 @@ html.dark{ --bg:#0b0b0b; --fg:#f5f5f5; --muted:#9ca3af; }
 
 /* Enhanced section spacing */
 .project-section {
-  margin-top: 5rem !important; /* mt-20 */
+  margin-top: 5rem !important;
+  /* mt-20 */
 }
 
 .project-section h2 {
-  margin-bottom: 3rem !important; /* mb-12 */
+  margin-bottom: 3rem !important;
+  /* mb-12 */
 }
 
 /* Focus-visible styles for accessibility */
-button:focus-visible, a:focus-visible, [role="button"]:focus-visible,
-input:focus-visible, textarea:focus-visible, select:focus-visible {
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25);
@@ -270,6 +366,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -278,7 +375,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  
+
   /* Allow swaying gallery animations even with reduced motion */
   #gallery.active figure,
   .gallery-container.active .gallery-item {
@@ -289,11 +386,10 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-  .card-shadow {
-    /* Shadow removed for flat design */
-  }
-  
-  button, a, [role="button"] {
+
+  button,
+  a,
+  [role="button"] {
     border: 2px solid currentColor;
   }
 }
@@ -365,7 +461,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 /* Portrait video specific styles */
 .portrait-video-container {
-  max-width: 400px; /* Limit width for portrait videos */
+  max-width: 400px;
+  /* Limit width for portrait videos */
   margin: 0 auto;
 }
 
@@ -382,11 +479,33 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 /* Hide scrollbar for horizontal testimonial */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* Internet Explorer 10+ */
+  scrollbar-width: none;
+  /* Firefox */
 }
+
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Safari and Chrome */
+  display: none;
+  /* Safari and Chrome */
 }
 
 /* Horizontal scrolling animation for testimonials - using JavaScript instead */
+
+/* Prevent horizontal scrollbar from trail effect */
+body {
+  overflow-x: hidden;
+}
+
+/* Trail effect container - only visible in hero section */
+#hero {
+  overflow: hidden;
+  /* Hide overflow to prevent scrollbar */
+  position: relative;
+}
+
+/* Allow trail to extend beyond section boundaries horizontally */
+#hero>div {
+  overflow-x: visible;
+  overflow-y: hidden;
+}

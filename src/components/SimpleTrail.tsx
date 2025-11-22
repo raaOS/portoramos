@@ -309,7 +309,14 @@ export default function SimpleTrail({ backgroundTrail = [] }: SimpleTrailProps) 
   // Use the trailImages from useMemo above
 
   return (
-    <div className="absolute inset-0 z-30 bg-transparent pointer-events-none overflow-hidden">
+    <div className="absolute pointer-events-none" style={{
+      top: 0,
+      bottom: 0,
+      left: '-100vw',
+      right: '-100vw',
+      width: '300vw',
+      zIndex: 30
+    }}>
       <div ref={containerRef} className="w-full h-full">
         {/* Trail images - using Next.js Image for optimization */}
         {trailImages.map((imageSrc, index) => (

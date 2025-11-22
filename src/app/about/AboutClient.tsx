@@ -28,7 +28,7 @@ const SimpleTrail = dynamic(() => import('@/components/SimpleTrail'), {
 const softSkills = {
   texts: [
     "Kreativitas & Inovasi",
-    "Komunikasi Visual", 
+    "Komunikasi Visual",
     "Problem Solving",
     "Adaptabilitas",
     "Attention to Detail",
@@ -147,11 +147,11 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
   const { scrollToSection } = useSmoothScroll();
-  
+
   // Fallback data jika initialData tidak ada
   const fallbackData = {
-    hero: { 
-      title: 'ABOUT ME', 
+    hero: {
+      title: 'ABOUT ME',
       backgroundTrail: [
         '/images/trail/trail1.jpg',
         '/images/trail/trail2.jpg',
@@ -178,7 +178,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       }
     }
   };
-  
+
   const [currentAboutData] = useState(initialData || fallbackData);
 
   const { hideNavbar, showNavbar } = useNavbarVisibility();
@@ -352,7 +352,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
   return (
     <div className="min-h-screen bg-white">
       {/* Section Navigation dengan Nomor */}
-      <motion.div 
+      <motion.div
         className="fixed right-8 top-1/2 transform -translate-y-1/2 z-30 hidden lg:block"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
@@ -373,11 +373,10 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                   setActiveSection(section.id);
                   scrollToSection(section.id, 100);
                 }}
-                className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                  isActive 
-                    ? 'bg-black text-white' 
-                    : 'bg-white text-black border border-black hover:bg-gray-100'
-                }`}
+                className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400 ${isActive
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black border border-black hover:bg-gray-100'
+                  }`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 title={`Go to ${section.label} section`}
@@ -390,7 +389,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       </motion.div>
 
       {/* Section 1: ABOUT ME dengan Trail Effect */}
-      <motion.div 
+      <motion.div
         id="hero"
         className="relative min-h-[60vh]"
         initial={{ opacity: 0, y: 20 }}
@@ -405,19 +404,19 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             <div className="absolute inset-0 z-10" />
           )}
         </div>
-        
+
         {/* Hero Section */}
         <div className="min-h-[60vh] flex items-center justify-center relative z-20 px-4">
           <div className="text-center">
-              <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[9rem] xl:text-[11rem] leading-none tracking-wider text-black font-display">
+            <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[9rem] xl:text-[11rem] leading-none tracking-wider text-black font-display">
               {currentAboutData.hero?.title || 'ABOUT ME'}
-              </h1>
+            </h1>
           </div>
         </div>
       </motion.div>
 
       {/* Section 2: Deskripsi Profesional dengan 2 Grid */}
-      <motion.div 
+      <motion.div
         id="professional"
         className="py-14 md:py-16 lg:py-20 bg-white flex items-center justify-center px-4"
         initial={{ opacity: 0, y: 50 }}
@@ -427,7 +426,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       >
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
-            
+
             {/* Grid Kiri - Motto Kerja */}
             <div className="space-y-6 md:space-y-8">
               {/* Motto Kerja */}
@@ -439,7 +438,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                   {currentAboutData.professional?.motto.quote || '"Desain adalah solusi visual, bukan sekadar estetika."'}
                 </p>
               </div>
-              
+
             </div>
 
             {/* Grid Kanan - Deskripsi Profesional */}
@@ -447,20 +446,20 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
               <p className="text-base md:text-lg leading-relaxed text-gray-700 font-serif">
                 {currentAboutData.professional?.bio.content || 'Desainer grafis dengan lebih dari 14 tahun pengalaman (bekerja & freelance). Terbiasa menghadapi deadline, mampu bekerja dalam tim, serta adaptif dengan tren industri kreatif yang selalu berubah.'}
               </p>
-              
+
               {/* Gallery Mini */}
               <div>
                 <h4 className="text-lg font-medium text-gray-600 mb-4">Portfolio Preview</h4>
                 <GalleryMini images={galleryImages} />
               </div>
             </div>
-            
+
           </div>
         </div>
       </motion.div>
 
       {/* Section 3: Hard Skills dan Soft Skills dengan 2 Grid */}
-      <motion.div 
+      <motion.div
         id="skills"
         className="bg-white py-16 md:py-20 lg:py-24 flex items-center justify-center lg:min-h-[70vh]"
         initial={{ opacity: 0, y: 50 }}
@@ -470,7 +469,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       >
         <div className="w-full max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
-            
+
             {/* Grid Kiri - Hard Skills (Diperkecil) */}
             <div className="lg:col-span-1 space-y-6">
               <div className="text-center lg:text-left">
@@ -479,42 +478,42 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                     Hard Skill
                   </h2>
                 </div>
-                
+
                 {/* Design Software Icons */}
                 <div className="mb-6">
-                <div className="flex items-start mb-3">
-                  <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                  <div className="flex-1">
-                    <strong className="text-sm">Software Desain:</strong>
-                  </div>
-                </div>
-                <div className="w-full overflow-visible">
-                  {hardSkillsError && (
-                    <p className="text-xs text-amber-600 mb-2">
-                      Menampilkan ikon default (gagal memuat dari server).
-                    </p>
-                  )}
-                  <DesignSkillIcons skills={resolvedHardSkills} />
-                </div>
-              </div>
-              
-              {/* Hard Skills List */}
-              <div className="space-y-3">
-                {hardSkillConceptsError && (
-                  <p className="text-xs text-amber-600">
-                    Menampilkan poin default (gagal memuat konsep dari server).
-                  </p>
-                )}
-                {hardSkills.map((skill, index) => (
-                  <div key={index} className="flex items-start">
+                  <div className="flex items-start mb-3">
                     <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
                     <div className="flex-1">
-                      <strong className="text-sm">{skill.category}:</strong>
-                      <span className="ml-1 text-gray-700 text-xs">{skill.content}</span>
+                      <strong className="text-sm">Software Desain:</strong>
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div className="w-full overflow-visible">
+                    {hardSkillsError && (
+                      <p className="text-xs text-amber-600 mb-2">
+                        Menampilkan ikon default (gagal memuat dari server).
+                      </p>
+                    )}
+                    <DesignSkillIcons skills={resolvedHardSkills} />
+                  </div>
+                </div>
+
+                {/* Hard Skills List */}
+                <div className="space-y-3">
+                  {hardSkillConceptsError && (
+                    <p className="text-xs text-amber-600">
+                      Menampilkan poin default (gagal memuat konsep dari server).
+                    </p>
+                  )}
+                  {hardSkills.map((skill, index) => (
+                    <div key={index} className="flex items-start">
+                      <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                      <div className="flex-1">
+                        <strong className="text-sm">{skill.category}:</strong>
+                        <span className="ml-1 text-gray-700 text-xs">{skill.content}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -526,7 +525,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                     Soft Skill
                   </h2>
                 </div>
-                
+
                 {/* Soft Skills Description */}
                 <div className="mb-8">
                   <div className="inline-block border border-gray-300 bg-white px-8 py-4 rounded-[50px] max-w-3xl">
@@ -535,9 +534,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                     </div>
                   </div>
                 </div>
-                
+
                 {/* TextMorph */}
-                <TextMorph 
+                <TextMorph
                   texts={softSkills.texts}
                   descriptions={softSkills.descriptions}
                   className=""
@@ -547,13 +546,13 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                 />
               </div>
             </div>
-            
+
           </div>
         </div>
       </motion.div>
 
       {/* Section 4: Experience */}
-      <motion.div 
+      <motion.div
         id="experience"
         className="bg-white py-16 md:py-20 lg:py-24"
         initial={{ opacity: 0, y: 50 }}
@@ -566,10 +565,10 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-black mb-4">Experience</h2>
             <p className="text-gray-600 font-serif">Perjalanan karir dan pengalaman profesional</p>
           </div>
-          
+
           {/* Experience Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            
+
             {/* Grid Kiri - Statistics & Testimoni */}
             <div className="space-y-6">
               <div className="text-center lg:text-left">
@@ -578,7 +577,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                     Freelance Experience
                   </h3>
                 </div>
-                
+
                 {/* Horizontal Counter Animation */}
                 <div className="mb-6">
                   <HorizontalCounterAnimation />
@@ -601,7 +600,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                     </h3>
                   </div>
                 </div>
-                
+
                 {/* Swaying Gallery - 6 photos with swing effect */}
                 <div className="space-y-3">
                   {experienceError && (
@@ -624,7 +623,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                 </div>
               </div>
             </div>
-            
+
           </div>
         </div>
       </motion.div>
@@ -639,14 +638,14 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             Mari diskusikan proyek desain Anda dan wujudkan visi kreatif menjadi kenyataan yang memukau.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a 
-              href="/contact" 
+            <a
+              href="/contact"
               className="inline-block bg-black text-white px-8 py-4 rounded-full font-medium hover:bg-gray-800 transition-colors duration-300"
             >
               Hubungi Saya
             </a>
-            <a 
-              href="/work" 
+            <a
+              href="/work"
               className="inline-block border border-black text-black px-8 py-4 rounded-full font-medium hover:bg-black hover:text-white transition-colors duration-300"
             >
               Lihat Karya
@@ -657,7 +656,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
 
       {/* Preview Modal */}
       {isPreviewOpen && previewImage && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
           onClick={closePreview}
         >
