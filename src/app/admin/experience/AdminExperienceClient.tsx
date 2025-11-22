@@ -7,6 +7,7 @@ import AdminTable from '../components/AdminTable';
 import AdminButton from '../components/AdminButton';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
+import { BriefcaseBusiness } from 'lucide-react';
 
 export default function AdminExperienceClient() {
   const [experienceData, setExperienceData] = useState<ExperienceData | null>(null);
@@ -116,6 +117,8 @@ export default function AdminExperienceClient() {
         title="Experience Management"
         subtitle="Manage experience statistics and work history"
         breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Experience' }]}
+        titleIcon={<BriefcaseBusiness className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-emerald-50 text-emerald-700"
       >
         <div className="flex items-center justify-center py-8">
           <p className="text-gray-500">Loading experience data...</p>
@@ -130,6 +133,8 @@ export default function AdminExperienceClient() {
         title="Experience Management"
         subtitle="Manage experience statistics and work history"
         breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Experience' }]}
+        titleIcon={<BriefcaseBusiness className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-emerald-50 text-emerald-700"
       >
         <div className="flex items-center justify-center py-8">
           <p className="text-red-600">Failed to load experience data</p>
@@ -143,6 +148,8 @@ export default function AdminExperienceClient() {
       title="Experience Management"
       subtitle="Manage experience statistics and work history"
       breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Experience' }]}
+      titleIcon={<BriefcaseBusiness className="h-5 w-5" aria-hidden />}
+      titleAccent="bg-emerald-50 text-emerald-700"
     >
       <div className="space-y-6">
         <div className="flex items-center justify-between">

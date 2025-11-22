@@ -7,7 +7,7 @@ import { HardSkill, HardSkillLevel } from '@/types/hardSkill';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
-import { Sparkles, BriefcaseBusiness, Smile, Dumbbell } from 'lucide-react';
+import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info } from 'lucide-react';
 
 export default function AdminAboutClient() {
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
@@ -208,6 +208,8 @@ export default function AdminAboutClient() {
         title="About Content Management"
         subtitle="Manage About page sections"
         breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'About' }]}
+        titleIcon={<Info className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-blue-50 text-blue-700"
       >
         <div className="flex items-center justify-center py-8">
           <p className="text-red-600">Failed to load about data</p>
@@ -221,6 +223,8 @@ export default function AdminAboutClient() {
       title="About Content Management"
       subtitle="Manage About page sections"
       breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'About' }]}
+      titleIcon={<Info className="h-5 w-5" aria-hidden />}
+      titleAccent="bg-blue-50 text-blue-700"
     >
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-xl font-semibold text-gray-900">Content Overview</h2>

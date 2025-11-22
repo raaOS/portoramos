@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { LayoutDashboard, Rocket, Lightbulb } from 'lucide-react';
 
 // Import design system components
 import AdminLayout from './components/AdminLayout';
@@ -62,20 +63,28 @@ export default function AdminDashboardClient() {
         title="Dashboard"
         subtitle="Portfolio Management"
         breadcrumbs={[{ label: 'Dashboard' }]}
+        titleIcon={<LayoutDashboard className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-slate-100 text-slate-700"
       >
         <div className="grid gap-6 md:grid-cols-3">
-          <AdminCard>
+          <AdminCard
+            tone="blue"
+            icon={<Rocket className="h-5 w-5" aria-hidden />}
+            title="Welcome back"
+          >
             <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-500">Welcome back</p>
               <p className="text-2xl font-semibold text-gray-900">Admin</p>
               <p className="text-sm text-gray-500">
                 Use the left navigation to manage your portfolio content.
               </p>
             </div>
           </AdminCard>
-          <AdminCard>
+          <AdminCard
+            tone="amber"
+            icon={<Lightbulb className="h-5 w-5" aria-hidden />}
+            title="Quick tips"
+          >
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-500">Quick tips</p>
               <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
                 <li>Projects are the primary content on your site.</li>
                 <li>About, Contact, and Experience support your profile.</li>
@@ -83,9 +92,12 @@ export default function AdminDashboardClient() {
               </ul>
             </div>
           </AdminCard>
-          <AdminCard>
+          <AdminCard
+            tone="emerald"
+            icon={<LayoutDashboard className="h-5 w-5" aria-hidden />}
+            title="Shortcuts"
+          >
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-500">Shortcuts</p>
               <div className="flex flex-wrap gap-2">
                 <AdminButton
                   variant="secondary"

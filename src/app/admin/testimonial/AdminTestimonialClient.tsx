@@ -9,6 +9,7 @@ import AdminFileUpload from '../components/AdminFileUpload';
 import AdminLayout from '../components/AdminLayout';
 import { useAutoUpdate } from '@/hooks/useAutoUpdate';
 import { useToast } from '@/contexts/ToastContext';
+import { Quote } from 'lucide-react';
 
 export default function AdminTestimonialClient() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -139,6 +140,8 @@ export default function AdminTestimonialClient() {
         title="Testimonials Management"
         subtitle="Manage client testimonials"
         breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Testimonial' }]}
+        titleIcon={<Quote className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-rose-50 text-rose-700"
       >
         <div className="flex items-center justify-center py-8">
           <p className="text-gray-500">Loading testimonials...</p>
@@ -175,6 +178,8 @@ export default function AdminTestimonialClient() {
       title="Testimonials Management"
       subtitle="Manage client testimonials"
       breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Testimonial' }]}
+      titleIcon={<Quote className="h-5 w-5" aria-hidden />}
+      titleAccent="bg-rose-50 text-rose-700"
     >
       <div className="space-y-6">
         <div className="flex items-center justify-between">

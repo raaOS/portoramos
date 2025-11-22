@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ContactData, UpdateContactData } from '@/types/contact';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
+import { PhoneCall } from 'lucide-react';
 
 export default function AdminContactClient() {
   const [contactData, setContactData] = useState<ContactData | null>(null);
@@ -59,6 +60,8 @@ export default function AdminContactClient() {
         title="Contact Management"
         subtitle="Manage contact information and form settings"
         breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Contact' }]}
+        titleIcon={<PhoneCall className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-amber-50 text-amber-700"
       >
         <div className="flex items-center justify-center py-8">
           <p className="text-gray-500">Loading contact data...</p>
@@ -73,6 +76,8 @@ export default function AdminContactClient() {
         title="Contact Management"
         subtitle="Manage contact information and form settings"
         breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Contact' }]}
+        titleIcon={<PhoneCall className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-amber-50 text-amber-700"
       >
         <div className="flex items-center justify-center py-8">
           <div className="text-center">
@@ -88,6 +93,8 @@ export default function AdminContactClient() {
       title="Contact Management"
       subtitle="Manage contact information and form settings"
       breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Contact' }]}
+      titleIcon={<PhoneCall className="h-5 w-5" aria-hidden />}
+      titleAccent="bg-amber-50 text-amber-700"
     >
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Contact Overview</h2>

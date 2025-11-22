@@ -20,6 +20,8 @@ interface AdminLayoutProps {
   subtitle?: string;
   breadcrumbs?: Array<{ label: string; href?: string }>;
   actions?: ReactNode;
+  titleIcon?: ReactNode;
+  titleAccent?: string;
 }
 
 export default function AdminLayout({ 
@@ -27,7 +29,9 @@ export default function AdminLayout({
   title, 
   subtitle, 
   breadcrumbs = [], 
-  actions 
+  actions,
+  titleIcon,
+  titleAccent = 'bg-blue-50 text-blue-700'
 }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -116,10 +120,19 @@ export default function AdminLayout({
         {/* Sidebar for breadcrumbs and page title */}
         <aside className="w-full lg:w-64 space-y-4">
           <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{title}</h1>
-            {subtitle && (
-              <p className="mt-1 text-sm text-gray-600">{subtitle}</p>
-            )}
+            <div className="flex items-center gap-3">
+              {titleIcon && (
+                <span className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${titleAccent} shadow-sm`}>
+                  {titleIcon}
+                </span>
+              )}
+              <div>
+                <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{title}</h1>
+                {subtitle && (
+                  <p className="mt-1 text-sm text-gray-600">{subtitle}</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {breadcrumbs.length > 0 && (
