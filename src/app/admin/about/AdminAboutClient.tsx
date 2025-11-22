@@ -887,11 +887,14 @@ function HardSkillsPanel({
                   </div>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2.5 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100"
                     onClick={() => onDelete(skill.id)}
+                    aria-label="Hapus skill"
                   >
-                    <Trash2 className="h-4 w-4" aria-hidden />
-                    Hapus
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-red-600 text-white">
+                      <Trash2 className="h-3 w-3" aria-hidden />
+                    </span>
+                    <span className="hidden sm:inline">Hapus</span>
                   </button>
                 </div>
               </div>
@@ -1037,11 +1040,14 @@ function HardSkillConceptsPanel({
                 <div className="mt-3 flex items-center justify-end">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2.5 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100"
                     onClick={() => onDelete(item.id)}
+                    aria-label="Hapus konsep"
                   >
-                    <Trash2 className="h-4 w-4" aria-hidden />
-                    Hapus
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-red-600 text-white">
+                      <Trash2 className="h-3 w-3" aria-hidden />
+                    </span>
+                    <span className="hidden sm:inline">Hapus</span>
                   </button>
                 </div>
               </div>
