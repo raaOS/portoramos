@@ -89,6 +89,26 @@ export default function AdminProjectsClient() {
     }
   };
 
+  const handleToggleProjectStatus = async (project: Project) => {
+    const nextStatus = project.status === 'published' ? 'draft' : 'published';
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+
+      if (response.ok) {
+        await loadProjects();
+        success(`Project marked as ${nextStatus}.`);
+      } else {
+        showError('Failed to update project status.');
+      }
+    } catch (err) {
+      showError('Failed to update project status.');
+    }
+  };
+
   const handleDeleteProject = async (id: string) => {
     if (!confirm('Are you sure you want to delete this project?')) return;
 
@@ -203,19 +223,23 @@ export default function AdminProjectsClient() {
       label: 'Status',
       sortable: true,
       priority: 'high' as const,
-      render: (status: Project['status']) => {
+      render: (status: Project['status'], project: Project) => {
         const published = status === 'published';
         return (
-          <span
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+          <button
+            type="button"
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition ${
               published
-                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
-                : 'bg-amber-50 text-amber-700 ring-1 ring-amber-100'
+                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 hover:bg-emerald-100'
+                : 'bg-amber-50 text-amber-700 ring-1 ring-amber-100 hover:bg-amber-100'
             }`}
+            title="Toggle status"
+            aria-label={published ? 'Set as Draft' : 'Set as Published'}
+            onClick={() => handleToggleProjectStatus(project)}
           >
             {published ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> : <Clock4 className="h-3.5 w-3.5" aria-hidden />}
             {published ? 'Published' : 'Draft'}
-          </span>
+          </button>
         );
       }
     },
