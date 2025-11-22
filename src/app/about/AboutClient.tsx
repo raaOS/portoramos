@@ -391,7 +391,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 1: ABOUT ME dengan Trail Effect */}
       <motion.div
         id="hero"
-        className="relative min-h-[60vh]"
+        className="relative min-h-[60vh] overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
