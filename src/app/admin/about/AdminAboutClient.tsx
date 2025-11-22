@@ -7,6 +7,7 @@ import { HardSkill, HardSkillLevel } from '@/types/hardSkill';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
+import { Sparkles, BriefcaseBusiness, Smile, Dumbbell } from 'lucide-react';
 
 export default function AdminAboutClient() {
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
@@ -236,23 +237,28 @@ export default function AdminAboutClient() {
 
       <div className="bg-white rounded-lg shadow mb-6">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8 px-6">
+          <nav className="-mb-px flex space-x-3 px-6 overflow-x-auto py-2">
             {[
-              { id: 'hero', name: 'Hero Section' },
-              { id: 'professional', name: 'Professional Info' },
-              { id: 'softSkills', name: 'Soft Skills' },
-              { id: 'hardSkills', name: 'Hard Skills' },
+              { id: 'hero', name: 'Hero', icon: Sparkles, color: 'text-blue-600', bg: 'bg-blue-50' },
+              { id: 'professional', name: 'Professional', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+              { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'bg-amber-50' },
+              { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'bg-violet-50' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`flex items-center gap-2 rounded-xl px-4 py-3 border transition ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? `${tab.bg} ${tab.color} border-current shadow-sm`
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
+                title={tab.name}
+                aria-label={tab.name}
               >
-                {tab.name}
+                <span className={`p-1.5 rounded-lg ${tab.bg} ${tab.color} shadow-sm`}>
+                  <tab.icon className="h-4 w-4" aria-hidden />
+                </span>
+                <span className="font-semibold">{tab.name}</span>
               </button>
             ))}
           </nav>

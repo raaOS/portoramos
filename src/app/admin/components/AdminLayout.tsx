@@ -2,7 +2,17 @@
 
 import { ReactNode } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  LayoutDashboard,
+  FolderKanban,
+  Info,
+  BriefcaseBusiness,
+  PhoneCall,
+  Quote,
+  Eye,
+  LogOut,
+} from 'lucide-react';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -20,6 +30,7 @@ export default function AdminLayout({
   actions 
 }: AdminLayoutProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = async () => {
     try {
@@ -34,6 +45,20 @@ export default function AdminLayout({
     }
   };
 
+  const navItems = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, color: 'text-sky-600', hover: 'hover:bg-sky-50' },
+    { href: '/admin/projects', label: 'Projects', icon: FolderKanban, color: 'text-purple-600', hover: 'hover:bg-purple-50' },
+    { href: '/admin/about', label: 'About', icon: Info, color: 'text-blue-600', hover: 'hover:bg-blue-50' },
+    { href: '/admin/experience', label: 'Experience', icon: BriefcaseBusiness, color: 'text-emerald-600', hover: 'hover:bg-emerald-50' },
+    { href: '/admin/contact', label: 'Contact', icon: PhoneCall, color: 'text-amber-600', hover: 'hover:bg-amber-50' },
+    { href: '/admin/testimonial', label: 'Testimonials', icon: Quote, color: 'text-pink-600', hover: 'hover:bg-pink-50' },
+  ];
+
+  const isActive = (href: string) => {
+    if (href === '/admin') return pathname === '/admin';
+    return pathname?.startsWith(href);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200">
@@ -41,40 +66,47 @@ export default function AdminLayout({
           <div className="flex items-center space-x-3">
             <button
               onClick={() => router.push('/admin')}
-              className="text-lg sm:text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+              className="flex items-center gap-2 text-lg sm:text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors"
             >
-              Admin
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold">
+                A
+              </span>
+              <span className="hidden sm:inline">Admin</span>
             </button>
-            <nav className="hidden md:flex items-center space-x-4 text-sm text-gray-600">
-              <Link href="/admin/projects" className="hover:text-gray-900">
-                Projects
-              </Link>
-              <Link href="/admin/about" className="hover:text-gray-900">
-                About
-              </Link>
-              <Link href="/admin/experience" className="hover:text-gray-900">
-                Experience
-              </Link>
-              <Link href="/admin/contact" className="hover:text-gray-900">
-                Contact
-              </Link>
-              <Link href="/admin/testimonial" className="hover:text-gray-900">
-                Testimonials
-              </Link>
+            <nav className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
+              {navItems.map(({ href, label, icon: Icon, color, hover }) => {
+                const active = isActive(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`group flex items-center gap-2 rounded-lg px-3 py-2 transition ${hover} ${active ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-700 border border-transparent'}`}
+                    aria-label={label}
+                    title={label}
+                  >
+                    <span className={`rounded-md bg-white/70 p-1.5 ${color} shadow-sm group-hover:scale-105 transition`}>
+                      <Icon className="h-4 w-4" aria-hidden />
+                    </span>
+                    <span className="hidden xl:inline font-medium">{label}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-3 ml-4">
             <button
               onClick={() => router.push('/')}
-              className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors px-2 py-1 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors px-2 py-1 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              View Site
+              <Eye className="h-4 w-4" aria-hidden />
+              <span className="hidden sm:inline">View Site</span>
             </button>
             <button
               onClick={handleLogout}
-              className="text-xs sm:text-sm text-red-600 hover:text-red-700 transition-colors px-2 py-1 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="inline-flex items-center gap-2 text-xs sm:text-sm text-red-600 hover:text-red-700 transition-colors px-2 py-1 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
             >
-              Logout
+              <LogOut className="h-4 w-4" aria-hidden />
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
