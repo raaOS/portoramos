@@ -938,10 +938,12 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
                   )}
                   <button
                     type="button"
-                    className="absolute top-1 right-1 bg-white/80 text-xs px-2 py-1 rounded shadow hover:bg-white"
+                    className="absolute top-1 right-1 inline-flex items-center gap-1 rounded-md bg-white/85 px-2 py-1 text-xs font-medium text-rose-700 shadow hover:bg-white"
                     onClick={() => handleRemoveGalleryUrl(url)}
+                    aria-label="Hapus media"
                   >
-                    Hapus
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                    <span className="hidden sm:inline">Hapus</span>
                   </button>
                 </div>
               ))}
