@@ -50,7 +50,6 @@ export default function AdminLayout({
   };
 
   const navItems = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, color: 'text-sky-600' },
     { href: '/admin/projects', label: 'Projects', icon: FolderKanban, color: 'text-purple-600' },
     { href: '/admin/about', label: 'About', icon: Info, color: 'text-blue-600' },
     { href: '/admin/experience', label: 'Experience', icon: BriefcaseBusiness, color: 'text-emerald-600' },
