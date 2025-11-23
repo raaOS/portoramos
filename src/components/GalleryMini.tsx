@@ -66,9 +66,9 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
     setOpen({ i: index });
   };
 
-  // looped list for seamless marquee
-  const loopImages = images.length ? [...images, ...images] : [];
-  const trackDuration = Math.max(6, images.length * 1.5); // faster, clearly visible motion
+  // looped list for seamless marquee - need 3 sets for smooth -50% translateX
+  const loopImages = images.length ? [...images, ...images, ...images] : [];
+  const trackDuration = Math.max(15, images.length * 2); // Slower for smooth viewing
 
   // Show loading state until client is ready
   if (!isClient) {
@@ -133,7 +133,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-50%);
+            transform: translateX(-33.333%);
           }
         }
       `}</style>
