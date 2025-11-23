@@ -408,7 +408,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         {/* Hero Section */}
         <div className="min-h-[35vh] md:min-h-[50vh] flex items-center justify-center relative z-20 px-4 overflow-hidden">
           <div className="text-center w-full">
-            <h1 className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-tighter text-black font-display font-bold uppercase select-none">
+            <h1 className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none">
               {currentAboutData.hero?.title || 'RAMOS'}
             </h1>
           </div>
