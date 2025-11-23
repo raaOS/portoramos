@@ -121,7 +121,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
   }
 
   return (
-    <div className={`w-full max-w-[480px] md:max-w-[500px] ${className}`}>
+    <div className={`w-full max-w-[450px] md:max-w-[480px] ${className}`}>
       <div
         className="w-full overflow-hidden relative"
       >
