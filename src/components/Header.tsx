@@ -58,21 +58,8 @@ export default function Header() {
             </motion.span>
           </Link>
 
-          {/* Desktop Navigation - Center */}
-          <nav className="hidden md:flex items-center gap-6">
-            {navLinks.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`text-sm font-medium transition-colors duration-300 ${pathname === item.href
-                    ? 'text-blue-600'
-                    : 'text-gray-600 hover:text-blue-600'
-                  }`}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
+          {/* Desktop Navigation - Removed as per user request */}
+          <div className="hidden md:block" />
 
           {/* Right Side: Last Updated (Desktop) & Mobile Menu Button */}
           <div className="flex items-center gap-3">
@@ -125,8 +112,8 @@ export default function Header() {
                     key={item.name}
                     href={item.href}
                     className={`text-base font-medium px-2 py-1 rounded-md transition-colors ${pathname === item.href
-                        ? 'text-blue-600 bg-blue-50'
-                        : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                      ? 'text-blue-600 bg-blue-50'
+                      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
                       }`}
                   >
                     {item.name}

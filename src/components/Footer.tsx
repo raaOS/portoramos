@@ -10,12 +10,7 @@ export default function Footer() {
       <div className="container flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <span className="font-medium">© {year} Ramos</span>
-          <nav className="hidden md:flex gap-4 text-sm">
-            <a href="/" className="hover:text-black dark:hover:text-gray-300 transition-colors">Home</a>
-            <a href="/about" className="hover:text-black dark:hover:text-gray-300 transition-colors">About</a>
-            <a href="/works" className="hover:text-black dark:hover:text-gray-300 transition-colors">Works</a>
-            <a href="/contact" className="hover:text-black dark:hover:text-gray-300 transition-colors">Contact</a>
-          </nav>
+          {/* Footer Navigation - Removed as per user request */}
         </div>
         <span>All rights reserved.</span>
       </div>
