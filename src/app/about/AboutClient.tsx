@@ -16,6 +16,7 @@ import { HardSkill } from '@/types/hardSkill';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
 import { useSmoothScroll } from '@/hooks/useSmoothScroll';
 import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
+import { Reveal, StaggerContainer, StaggerItem } from '@/components/Reveal';
 
 const TextMorph = dynamic(() => import('@/components/TextMorph'), {
   ssr: false
@@ -389,13 +390,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       </motion.div>
 
       {/* Section 1: ABOUT ME dengan Trail Effect */}
-      <motion.div
-        id="hero"
-        className="relative min-h-[35vh] md:min-h-[50vh]"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-      >
+      <div id="hero" className="relative min-h-[35vh] md:min-h-[50vh]">
         {/* Trail Effect - hanya di section 1 */}
         <div className="absolute inset-0 z-10">
           {isClient ? (
@@ -408,21 +403,19 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         {/* Hero Section */}
         <div className="min-h-[35vh] md:min-h-[50vh] flex items-center justify-center relative z-20 px-4 overflow-hidden">
           <div className="text-center w-full">
-            <h1 className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none">
-              {currentAboutData.hero?.title || 'RAMOS'}
-            </h1>
+            <Reveal width="100%">
+              <h1 className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none">
+                {currentAboutData.hero?.title || 'RAMOS'}
+              </h1>
+            </Reveal>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Section 2: Deskripsi Profesional dengan 2 Grid */}
-      <motion.div
+      <div
         id="professional"
         className="pb-12 pt-8 md:py-16 lg:py-20 bg-white flex items-center justify-center px-4"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        viewport={{ once: true, margin: "-100px" }}
       >
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
@@ -431,41 +424,45 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             <div className="space-y-6 md:space-y-8">
               {/* Motto Kerja */}
               <div>
-                <div className="inline-block bg-gray-100 px-6 py-3 rounded-full text-sm font-medium mb-6">
-                  {currentAboutData.professional?.motto.badge || 'Motto kerja'}
-                </div>
-                <p className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold italic text-gray-700 leading-tight">
-                  {currentAboutData.professional?.motto.quote || '"Desain adalah solusi visual, bukan sekadar estetika."'}
-                </p>
+                <Reveal>
+                  <div className="inline-block bg-gray-100 px-6 py-3 rounded-full text-sm font-medium mb-6">
+                    {currentAboutData.professional?.motto.badge || 'Motto kerja'}
+                  </div>
+                </Reveal>
+                <Reveal delay={0.3}>
+                  <p className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold italic text-gray-700 leading-tight">
+                    {currentAboutData.professional?.motto.quote || '"Desain adalah solusi visual, bukan sekadar estetika."'}
+                  </p>
+                </Reveal>
               </div>
 
             </div>
 
             {/* Grid Kanan - Deskripsi Profesional */}
             <div className="space-y-8">
-              <p className="text-base md:text-lg leading-relaxed text-gray-700 font-serif">
-                {currentAboutData.professional?.bio.content || 'Desainer grafis dengan lebih dari 14 tahun pengalaman (bekerja & freelance). Terbiasa menghadapi deadline, mampu bekerja dalam tim, serta adaptif dengan tren industri kreatif yang selalu berubah.'}
-              </p>
+              <Reveal delay={0.4}>
+                <p className="text-base md:text-lg leading-relaxed text-gray-700 font-serif">
+                  {currentAboutData.professional?.bio.content || 'Desainer grafis dengan lebih dari 14 tahun pengalaman (bekerja & freelance). Terbiasa menghadapi deadline, mampu bekerja dalam tim, serta adaptif dengan tren industri kreatif yang selalu berubah.'}
+                </p>
+              </Reveal>
 
               {/* Gallery Mini */}
-              <div>
-                <h4 className="text-lg font-medium text-gray-600 mb-4">Portfolio Preview</h4>
-                <GalleryMini images={galleryImages} />
-              </div>
+              <Reveal delay={0.5}>
+                <div>
+                  <h4 className="text-lg font-medium text-gray-600 mb-4">Portfolio Preview</h4>
+                  <GalleryMini images={galleryImages} />
+                </div>
+              </Reveal>
             </div>
 
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Section 3: Hard Skills dan Soft Skills dengan 2 Grid */}
-      <motion.div
+      <div
         id="skills"
         className="bg-white py-16 md:py-20 lg:py-24 flex items-center justify-center lg:min-h-[70vh]"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        viewport={{ once: true, margin: "-100px" }}
       >
         <div className="w-full max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
@@ -473,97 +470,111 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             {/* Grid Kiri - Hard Skills (Diperkecil) */}
             <div className="lg:col-span-1 space-y-6">
               <div className="text-center lg:text-left">
-                <div className="inline-block bg-black px-6 py-2 rounded-full mb-6">
-                  <h2 className="text-xl font-medium text-white font-serif italic">
-                    Hard Skill
-                  </h2>
-                </div>
+                <Reveal>
+                  <div className="inline-block bg-black px-6 py-2 rounded-full mb-6">
+                    <h2 className="text-xl font-medium text-white font-serif italic">
+                      Hard Skill
+                    </h2>
+                  </div>
+                </Reveal>
 
                 {/* Design Software Icons */}
                 <div className="mb-6">
-                  <div className="flex items-start mb-3">
-                    <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                    <div className="flex-1">
-                      <strong className="text-sm">Software Desain:</strong>
+                  <Reveal delay={0.3}>
+                    <div className="flex items-start mb-3">
+                      <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                      <div className="flex-1">
+                        <strong className="text-sm">Software Desain:</strong>
+                      </div>
                     </div>
-                  </div>
+                  </Reveal>
                   <div className="w-full overflow-visible">
                     {hardSkillsError && (
                       <p className="text-xs text-amber-600 mb-2">
                         Menampilkan ikon default (gagal memuat dari server).
                       </p>
                     )}
-                    <DesignSkillIcons skills={resolvedHardSkills} />
+                    <Reveal delay={0.4}>
+                      <DesignSkillIcons skills={resolvedHardSkills} />
+                    </Reveal>
                   </div>
                 </div>
 
                 {/* Hard Skills List */}
-                <div className="space-y-3">
+                <StaggerContainer className="space-y-3" staggerDelay={0.1}>
                   {hardSkillConceptsError && (
                     <p className="text-xs text-amber-600">
                       Menampilkan poin default (gagal memuat konsep dari server).
                     </p>
                   )}
                   {hardSkills.map((skill, index) => (
-                    <div key={index} className="flex items-start">
-                      <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                      <div className="flex-1">
-                        <strong className="text-sm">{skill.category}:</strong>
-                        <span className="ml-1 text-gray-700 text-xs">{skill.content}</span>
+                    <StaggerItem key={index}>
+                      <div className="flex items-start">
+                        <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                        <div className="flex-1">
+                          <strong className="text-sm">{skill.category}:</strong>
+                          <span className="ml-1 text-gray-700 text-xs">{skill.content}</span>
+                        </div>
                       </div>
-                    </div>
+                    </StaggerItem>
                   ))}
-                </div>
+                </StaggerContainer>
               </div>
             </div>
 
             {/* Grid Kanan - Soft Skills (Diperbesar) */}
             <div className="md:col-span-2 lg:col-span-2 space-y-8">
               <div className="text-center">
-                <div className="inline-block bg-black px-8 py-3 rounded-full mb-8">
-                  <h2 className="text-2xl font-medium text-white font-serif italic">
-                    Soft Skill
-                  </h2>
-                </div>
+                <Reveal>
+                  <div className="inline-block bg-black px-8 py-3 rounded-full mb-8">
+                    <h2 className="text-2xl font-medium text-white font-serif italic">
+                      Soft Skill
+                    </h2>
+                  </div>
+                </Reveal>
 
                 {/* Soft Skills Description */}
                 <div className="mb-8">
-                  <div className="inline-block border border-gray-300 bg-white px-8 py-4 rounded-[50px] max-w-3xl">
-                    <div className="text-base text-gray-600 font-serif italic text-center" style={{ fontFamily: 'Merriweather, serif' }}>
-                      {currentSoftSkillDescription}
+                  <Reveal delay={0.3}>
+                    <div className="inline-block border border-gray-300 bg-white px-8 py-4 rounded-[50px] max-w-3xl">
+                      <div className="text-base text-gray-600 font-serif italic text-center" style={{ fontFamily: 'Merriweather, serif' }}>
+                        {currentSoftSkillDescription}
+                      </div>
                     </div>
-                  </div>
+                  </Reveal>
                 </div>
 
                 {/* TextMorph */}
-                <TextMorph
-                  texts={softSkills.texts}
-                  descriptions={softSkills.descriptions}
-                  className=""
-                  morphTime={1}
-                  cooldownTime={0.25}
-                  onDescriptionChange={setCurrentSoftSkillDescription}
-                />
+                <Reveal delay={0.4}>
+                  <TextMorph
+                    texts={softSkills.texts}
+                    descriptions={softSkills.descriptions}
+                    className=""
+                    morphTime={1}
+                    cooldownTime={0.25}
+                    onDescriptionChange={setCurrentSoftSkillDescription}
+                  />
+                </Reveal>
               </div>
             </div>
 
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Section 4: Experience */}
-      <motion.div
+      <div
         id="experience"
         className="bg-white py-16 md:py-20 lg:py-24"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        viewport={{ once: true, margin: "-100px" }}
       >
         <div className="w-full max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-black mb-4">Experience</h2>
-            <p className="text-gray-600 font-serif">Perjalanan karir dan pengalaman profesional</p>
+            <Reveal>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-black mb-4">Experience</h2>
+            </Reveal>
+            <Reveal delay={0.3}>
+              <p className="text-gray-600 font-serif">Perjalanan karir dan pengalaman profesional</p>
+            </Reveal>
           </div>
 
           {/* Experience Grid */}
@@ -572,20 +583,26 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             {/* Grid Kiri - Statistics & Testimoni */}
             <div className="space-y-6">
               <div className="text-center lg:text-left">
-                <div className="inline-block bg-black px-4 py-2 rounded-full mb-4">
-                  <h3 className="text-lg font-medium text-white font-serif italic">
-                    Freelance Experience
-                  </h3>
-                </div>
+                <Reveal>
+                  <div className="inline-block bg-black px-4 py-2 rounded-full mb-4">
+                    <h3 className="text-lg font-medium text-white font-serif italic">
+                      Freelance Experience
+                    </h3>
+                  </div>
+                </Reveal>
 
                 {/* Horizontal Counter Animation */}
                 <div className="mb-6">
-                  <HorizontalCounterAnimation />
+                  <Reveal delay={0.3}>
+                    <HorizontalCounterAnimation />
+                  </Reveal>
                 </div>
 
                 {/* Testimoni Horizontal */}
                 <div className="mt-6">
-                  <HorizontalTestimonial />
+                  <Reveal delay={0.4}>
+                    <HorizontalTestimonial />
+                  </Reveal>
                 </div>
               </div>
             </div>
@@ -594,11 +611,13 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             <div className="space-y-6">
               <div>
                 <div className="text-center lg:text-left mb-4">
-                  <div className="inline-block bg-black px-4 py-2 rounded-full">
-                    <h3 className="text-lg font-medium text-white font-serif italic">
-                      Work Experience
-                    </h3>
-                  </div>
+                  <Reveal>
+                    <div className="inline-block bg-black px-4 py-2 rounded-full">
+                      <h3 className="text-lg font-medium text-white font-serif italic">
+                        Work Experience
+                      </h3>
+                    </div>
+                  </Reveal>
                 </div>
 
                 {/* Swaying Gallery - 6 photos with swing effect */}
@@ -608,49 +627,57 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                       Menampilkan data pengalaman bawaan karena: {experienceErrorDetail instanceof Error ? experienceErrorDetail.message : 'data tidak tersedia'}.
                     </p>
                   )}
-                  <SwayingGallery
-                    images={workExperienceForGallery.map((experience, index) => ({
-                      src: experience.imageUrl,
-                      alt: `Work Experience ${index + 1}`,
-                      title: experience.year,
-                      duration: experience.duration,
-                      description: `${experience.company} - ${experience.position}`,
-                      // Tampilkan maksimal 3 poin jobdesk agar lebih informatif
-                      jobDetails: experience.description?.slice(0, 3) ?? []
-                    }))}
-                    className=""
-                  />
+                  <Reveal delay={0.3}>
+                    <SwayingGallery
+                      images={workExperienceForGallery.map((experience, index) => ({
+                        src: experience.imageUrl,
+                        alt: `Work Experience ${index + 1}`,
+                        title: experience.year,
+                        duration: experience.duration,
+                        description: `${experience.company} - ${experience.position}`,
+                        // Tampilkan maksimal 3 poin jobdesk agar lebih informatif
+                        jobDetails: experience.description?.slice(0, 3) ?? []
+                      }))}
+                      className=""
+                    />
+                  </Reveal>
                 </div>
               </div>
             </div>
 
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Section 5: Call to Action */}
       <div className="bg-gray-50 py-14 md:py-16">
         <div className="w-full max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-serif font-bold text-black mb-6">
-            Tertarik Bekerja Sama?
-          </h2>
-          <p className="text-lg text-gray-600 font-serif mb-8 max-w-2xl mx-auto">
-            Mari diskusikan proyek desain Anda dan wujudkan visi kreatif menjadi kenyataan yang memukau.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/contact"
-              className="inline-block bg-black text-white px-8 py-4 rounded-full font-medium hover:bg-gray-800 transition-colors duration-300"
-            >
-              Hubungi Saya
-            </a>
-            <a
-              href="/work"
-              className="inline-block border border-black text-black px-8 py-4 rounded-full font-medium hover:bg-black hover:text-white transition-colors duration-300"
-            >
-              Lihat Karya
-            </a>
-          </div>
+          <Reveal>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-black mb-6">
+              Tertarik Bekerja Sama?
+            </h2>
+          </Reveal>
+          <Reveal delay={0.3}>
+            <p className="text-lg text-gray-600 font-serif mb-8 max-w-2xl mx-auto">
+              Mari diskusikan proyek desain Anda dan wujudkan visi kreatif menjadi kenyataan yang memukau.
+            </p>
+          </Reveal>
+          <Reveal delay={0.4}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a
+                href="/contact"
+                className="inline-block bg-black text-white px-8 py-4 rounded-full font-medium hover:bg-gray-800 transition-colors duration-300"
+              >
+                Hubungi Saya
+              </a>
+              <a
+                href="/work"
+                className="inline-block border border-black text-black px-8 py-4 rounded-full font-medium hover:bg-black hover:text-white transition-colors duration-300"
+              >
+                Lihat Karya
+              </a>
+            </div>
+          </Reveal>
         </div>
       </div>
 
