@@ -126,25 +126,11 @@ export default function SwayingGallery({
                 {image.description && (
                   <p className="gallery-description">{image.description}</p>
                 )}
-                {image.jobDetails && (
-                  <p className="gallery-click-hint">
-                    klik untuk lihat detail jobdesk
-                  </p>
-                )}
               </div>
             )}
           </div>
         ))}
       </div>
-
-      {tooltip.visible && (
-        <div
-          className="gallery-tooltip"
-          style={{ left: `${tooltip.x}px`, top: `${tooltip.y}px` }}
-        >
-          klik untuk detail
-        </div>
-      )}
 
       {selectedJob && (
         <div className="job-modal-overlay" onClick={closeModal}>

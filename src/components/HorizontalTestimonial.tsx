@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export default function HorizontalTestimonial() {
   const [scrollPosition, setScrollPosition] = useState(0);
-  const [isAutoScroll, setIsAutoScroll] = useState(false);
+  const [isAutoScroll, setIsAutoScroll] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const {
     data,
@@ -38,15 +38,15 @@ export default function HorizontalTestimonial() {
     const totalWidth = testimonials.length * itemWidth;
     let animationId: number;
     let startTime: number;
-    
+
     const animate = (currentTime: number) => {
       if (!startTime) startTime = currentTime;
-      
+
       // Calculate position based on time for consistent speed
       const elapsed = currentTime - startTime;
       const speed = 0.08; // pixels per millisecond (right to left movement) - SMOOTHER
       const position = totalWidth - (elapsed * speed) % totalWidth; // Reverse direction
-      
+
       setScrollPosition(position);
       animationId = requestAnimationFrame(animate);
     };
@@ -128,7 +128,7 @@ export default function HorizontalTestimonial() {
         <div
           ref={scrollRef}
           className={`flex gap-4 ${isAutoScroll ? '' : 'pr-4'}`}
-          style={isAutoScroll ? { 
+          style={isAutoScroll ? {
             transform: `translateX(-${scrollPosition}px)`,
             willChange: 'transform',
             backfaceVisibility: 'hidden',
