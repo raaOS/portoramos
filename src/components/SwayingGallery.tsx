@@ -181,16 +181,24 @@ export default function SwayingGallery({
       )}
 
       <style jsx>{`
+        .swaying-gallery-wrapper {
+          overflow: visible !important;
+          width: 100%;
+          padding: 0;
+          margin: 0;
+        }
+
         .gallery-container {
           display: grid !important;
           grid-template-columns: repeat(3, 1fr) !important;
           grid-template-rows: repeat(2, 1fr) !important;
           gap: 10px !important;
-          padding: 0px !important;
+          padding: 40px 20px !important;
           max-width: none !important;
           margin: 0 auto !important;
           width: 100% !important;
-          height: 510px !important;
+          height: 590px !important;
+          overflow: visible !important;
         }
 
         .gallery-item {
@@ -202,12 +210,20 @@ export default function SwayingGallery({
           border: 1px solid #000 !important;
           transform-origin: center 0.18rem !important;
           will-change: transform !important;
-          overflow: hidden !important;
+          overflow: visible !important;
           width: 100% !important;
           height: 100% !important;
           aspect-ratio: 221 / 250 !important;
           display: flex !important;
           flex-direction: column !important;
+        }
+
+        /* Allow Next.js image wrapper to let swing overflow show */
+        .gallery-item :global(span) {
+          display: block !important;
+          width: 100% !important;
+          height: 100% !important;
+          overflow: visible !important;
         }
 
         .gallery-item.clickable {
@@ -260,14 +276,17 @@ export default function SwayingGallery({
         .gallery-image {
           width: 100% !important;
           height: 100% !important;
-          object-fit: cover !important;
+          object-fit: contain !important;
           border-radius: 1px !important;
           transition: transform 0.2s ease !important;
           flex: 1 !important;
+          transform: scale(0.96);
+          background: #fff;
+          padding: 6px;
         }
 
         .gallery-item:hover .gallery-image {
-          transform: scale(1.05);
+          transform: scale(1);
         }
 
         .gallery-pin {
@@ -358,10 +377,11 @@ export default function SwayingGallery({
           .gallery-container {
             max-width: none;
             gap: 10px;
-            padding: 0px;
+            padding: 40px 20px;
             width: 100%;
-            height: 510px;
+            height: 590px;
             margin: 0 auto;
+            overflow: visible;
           }
 
           .gallery-item {
