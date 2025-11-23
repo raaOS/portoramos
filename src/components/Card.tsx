@@ -65,21 +65,19 @@ export default function Card({ p, animate = true }: { p: Project; animate?: bool
               muted={p.muted ?? true}
               loop={p.loop ?? true}
               playsInline={p.playsInline ?? true}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-500"
             />
 
             {/* Creative Agency Style Overlay */}
             <motion.div
               className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"
               initial={{ opacity: 0 }}
-              whileHover={{ opacity: 1 }}
             />
 
             {/* View Project Indicator */}
             <motion.div
               className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               initial={{ scale: 0.8, opacity: 0 }}
-              whileHover={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1 }}
             >
               <div className="bg-white/90 backdrop-blur-sm rounded-full p-2">
