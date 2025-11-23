@@ -410,7 +410,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                   text={currentAboutData.hero?.title || 'PORTOFOLIO'}
                   className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
                   delay={0.5}
-                  duration={4}
+                  duration={15}
                 />
               </div>
             </Reveal>
