@@ -391,7 +391,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 1: ABOUT ME dengan Trail Effect */}
       <motion.div
         id="hero"
-        className="relative min-h-[60vh]"
+        className="relative min-h-[40vh]"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
@@ -406,10 +406,10 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         </div>
 
         {/* Hero Section */}
-        <div className="min-h-[60vh] flex items-center justify-center relative z-20 px-4">
-          <div className="text-center">
-            <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[9rem] xl:text-[11rem] leading-none tracking-wider text-black font-display">
-              {currentAboutData.hero?.title || 'ABOUT ME'}
+        <div className="min-h-[40vh] flex items-center justify-center relative z-20 px-4 overflow-hidden">
+          <div className="text-center w-full">
+            <h1 className="text-[25vw] leading-[0.8] tracking-tighter text-black font-display font-bold uppercase select-none">
+              {currentAboutData.hero?.title || 'RAMOS'}
             </h1>
           </div>
         </div>
@@ -418,7 +418,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 2: Deskripsi Profesional dengan 2 Grid */}
       <motion.div
         id="professional"
-        className="py-14 md:py-16 lg:py-20 bg-white flex items-center justify-center px-4"
+        className="pb-14 pt-4 md:pb-16 md:pt-6 lg:pb-20 lg:pt-8 bg-white flex items-center justify-center px-4"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
