@@ -190,7 +190,7 @@ export default function SwayingGallery({
           max-width: 100% !important;
           margin: 0 auto !important;
           width: 100% !important;
-          height: 650px !important;
+          height: 700px !important;
         }
 
         .gallery-item {
@@ -360,7 +360,7 @@ export default function SwayingGallery({
             gap: 10px;
             padding: 0px;
             width: 100%;
-            height: 650px;
+            height: 700px;
             margin: 0 auto;
           }
 
