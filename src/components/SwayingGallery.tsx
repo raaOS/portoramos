@@ -193,11 +193,11 @@ export default function SwayingGallery({
           grid-template-columns: repeat(3, 1fr) !important;
           grid-template-rows: repeat(2, 1fr) !important;
           gap: 10px !important;
-          padding: 40px 20px !important;
+          padding: 60px 30px !important;
           max-width: none !important;
           margin: 0 auto !important;
           width: 100% !important;
-          height: 590px !important;
+          height: 630px !important;
           overflow: visible !important;
         }
 
@@ -377,9 +377,9 @@ export default function SwayingGallery({
           .gallery-container {
             max-width: none;
             gap: 10px;
-            padding: 40px 20px;
+            padding: 60px 30px;
             width: 100%;
-            height: 590px;
+            height: 630px;
             margin: 0 auto;
             overflow: visible;
           }
