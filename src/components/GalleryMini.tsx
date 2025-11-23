@@ -32,9 +32,9 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
       if (el.requestFullscreen) {
         el.requestFullscreen();
       } else if ((el as any).webkitRequestFullscreen) {
-        ;(el as any).webkitRequestFullscreen();
+        ; (el as any).webkitRequestFullscreen();
       } else if ((el as any).msRequestFullscreen) {
-        ;(el as any).msRequestFullscreen();
+        ; (el as any).msRequestFullscreen();
       }
     } catch (e) {
       // Failed to enter fullscreen
@@ -47,7 +47,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
 
   useEffect(() => {
     if (!open || !isClient) return;
-    
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         showNavbar();
@@ -57,7 +57,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
       else if (e.key === 'ArrowRight') goNext();
       else if (e.key.toLowerCase() === 'f') enterFullscreen();
     };
-    
+
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, goPrev, goNext, enterFullscreen, isClient, showNavbar]);
@@ -77,22 +77,26 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
     let lastTime = performance.now();
 
     const animate = (currentTime: number) => {
+      const deltaTime = currentTime - lastTime;
+
       if (!isPaused) {
-        const deltaTime = currentTime - lastTime;
-        lastTime = currentTime;
-        
-        scrollPosition += scrollSpeed * (deltaTime / 16); // Normalize to 60fps
-        
-        // PERFECT SEAMLESS LOOP - No gaps, no disappearing
-        // Reset when we've scrolled past the first complete set
-        if (scrollPosition >= totalWidth) {
-          scrollPosition = scrollPosition - totalWidth; // Seamless reset
-        }
-        
-        if (container) {
-          container.style.transform = `translate3d(-${scrollPosition}px, 0, 0)`;
+        // Only update scroll position if deltaTime is reasonable (not first frame)
+        if (deltaTime > 0 && deltaTime < 100) {
+          scrollPosition += scrollSpeed * (deltaTime / 16); // Normalize to 60fps
+
+          // PERFECT SEAMLESS LOOP - No gaps, no disappearing
+          // Reset when we've scrolled past the first complete set
+          if (scrollPosition >= totalWidth) {
+            scrollPosition = scrollPosition - totalWidth; // Seamless reset
+          }
+
+          if (container) {
+            container.style.transform = `translate3d(-${scrollPosition}px, 0, 0)`;
+          }
         }
       }
+
+      lastTime = currentTime;
       animationId = requestAnimationFrame(animate);
     };
 
@@ -153,10 +157,10 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
   return (
     <div className={`w-full ${className}`}>
       <div className="w-full overflow-hidden" style={{ contain: 'layout style paint' }}>
-        <div 
+        <div
           ref={containerRef}
           className="flex"
-          style={{ 
+          style={{
             width: 'max-content',
             willChange: 'transform',
             transition: 'none',
@@ -185,7 +189,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
               </div>
             </div>
           ))}
-          
+
           {/* Second set of images for seamless loop */}
           {images.map((image, index) => (
             <div
@@ -205,7 +209,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
               </div>
             </div>
           ))}
-          
+
           {/* Third set for ultra smooth loop - NO GAPS */}
           {images.map((image, index) => (
             <div
@@ -230,23 +234,23 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
 
       {/* Gallery Viewer */}
       {open && isClient && (
-        <div 
-          role="dialog" 
-          aria-modal="true" 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75" 
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75"
           onClick={() => {
             showNavbar();
             setOpen(null);
           }}
         >
-          <div 
-            ref={viewerRef} 
-            className="relative max-w-5xl w-full mx-4" 
+          <div
+            ref={viewerRef}
+            className="relative max-w-5xl w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute -top-12 left-0 right-0 flex items-center justify-between px-1">
-              <button 
-                className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded" 
+              <button
+                className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
                 onClick={() => {
                   showNavbar();
                   setOpen(null);
@@ -256,20 +260,20 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
               >
                 Tutup (Esc)
               </button>
-            
+
               <div className="flex items-center gap-3">
                 {hasMany && (
                   <>
-                    <button 
-                      className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded" 
+                    <button
+                      className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
                       onClick={goPrev}
                       aria-label="Previous image"
                       type="button"
                     >
                       ← Prev
                     </button>
-                    <button 
-                      className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded" 
+                    <button
+                      className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
                       onClick={goNext}
                       aria-label="Next image"
                       type="button"
@@ -278,9 +282,9 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
                     </button>
                   </>
                 )}
-            
-                <button 
-                  className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded" 
+
+                <button
+                  className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
                   onClick={enterFullscreen}
                   aria-label="Enter fullscreen"
                   type="button"
@@ -289,14 +293,14 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
                 </button>
               </div>
             </div>
-            
+
             {/* Image counter */}
             {hasMany && (
               <div className="absolute top-4 left-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded-full text-sm z-10">
                 {open.i + 1} / {images.length}
               </div>
             )}
-            
+
             {/* Main image */}
             <div className="relative w-full h-full flex items-center justify-center">
               <Image
@@ -308,7 +312,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
                 priority
               />
             </div>
-            
+
             {/* Keyboard shortcuts hint */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black bg-opacity-50 px-4 py-2 rounded-full">
               {hasMany && 'Arrow keys: Navigate • '}
