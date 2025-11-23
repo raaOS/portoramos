@@ -94,19 +94,9 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
   }
 
   return (
-    <div className={`w-full max-w-[520px] md:max-w-[560px] ${className}`}>
-      <div
-        className="w-full overflow-hidden relative bg-white/95 rounded-xl"
-        style={{ contain: 'layout style paint' }}
-      >
-        <div
-          className="marquee-track flex gap-4 px-4 md:px-6 py-3"
-          style={{
-            width: 'max-content',
-            animation: `galleryMiniMarquee ${trackDuration}s linear infinite`,
-            willChange: 'transform',
-          }}
-        >
+    <div className={`w-full ${className}`}>
+      <div className="w-full overflow-hidden relative">
+        <div className="gallery-mini-scroll flex gap-4">
           {loopImages.map((image, index) => (
             <div
               key={`gallery-${index}`}
@@ -127,8 +117,13 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
         </div>
       </div>
 
-      <style jsx global>{`
-        @keyframes galleryMiniMarquee {
+      <style jsx>{`
+        .gallery-mini-scroll {
+          width: max-content;
+          animation: scroll ${trackDuration}s linear infinite;
+        }
+        
+        @keyframes scroll {
           0% {
             transform: translateX(0);
           }
