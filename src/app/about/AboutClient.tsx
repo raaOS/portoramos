@@ -404,18 +404,16 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         {/* Hero Section */}
         <div className="min-h-[35vh] md:min-h-[50vh] flex items-center justify-center relative z-20 px-4 overflow-hidden">
           <div className="text-center w-full">
-            <Reveal width="100%">
-              <div className="flex justify-center">
-                <BlurText
-                  text={currentAboutData.hero?.title || 'PORTOFOLIO'}
-                  className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
-                  delay={150}
-                  animateBy="letters"
-                  direction="top"
-                  stepDuration={1}
-                />
-              </div>
-            </Reveal>
+            <div className="w-full flex justify-center">
+              <BlurText
+                text={currentAboutData.hero?.title || 'PORTOFOLIO'}
+                className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
+                delay={150}
+                animateBy="letters"
+                direction="top"
+                stepDuration={1}
+              />
+            </div>
           </div>
         </div>
       </div>
