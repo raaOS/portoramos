@@ -62,7 +62,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
     return () => window.removeEventListener('keydown', onKey);
   }, [open, goPrev, goNext, enterFullscreen, isClient, showNavbar]);
 
-  // Perfect infinite scroll effect - NO GAPS
+  // Perfect infinite scroll effect - NO GAPS, NO DELAY
   useEffect(() => {
     if (!isClient) return;
     const container = containerRef.current;
@@ -70,29 +70,25 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
 
     let animationId: number;
     let scrollPosition = 0;
-    const scrollSpeed = 0.3; // Smooth speed
+    const scrollSpeed = 0.5; // Faster continuous speed
     const singleImageWidth = 96 + 16; // 96px image + 16px gap
     const totalWidth = singleImageWidth * images.length; // Total width of one complete set
-    let isPaused = false;
     let lastTime = performance.now();
 
     const animate = (currentTime: number) => {
       const deltaTime = currentTime - lastTime;
 
-      if (!isPaused) {
-        // Only update scroll position if deltaTime is reasonable (not first frame)
-        if (deltaTime > 0 && deltaTime < 100) {
-          scrollPosition += scrollSpeed * (deltaTime / 16); // Normalize to 60fps
+      // Continuous scroll - no pause
+      if (deltaTime > 0 && deltaTime < 100) {
+        scrollPosition += scrollSpeed * (deltaTime / 16); // Normalize to 60fps
 
-          // PERFECT SEAMLESS LOOP - No gaps, no disappearing
-          // Reset when we've scrolled past the first complete set
-          if (scrollPosition >= totalWidth) {
-            scrollPosition = scrollPosition - totalWidth; // Seamless reset
-          }
+        // PERFECT SEAMLESS LOOP
+        if (scrollPosition >= totalWidth) {
+          scrollPosition = scrollPosition - totalWidth;
+        }
 
-          if (container) {
-            container.style.transform = `translate3d(-${scrollPosition}px, 0, 0)`;
-          }
+        if (container) {
+          container.style.transform = `translate3d(-${scrollPosition}px, 0, 0)`;
         }
       }
 
@@ -100,28 +96,11 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
       animationId = requestAnimationFrame(animate);
     };
 
-    // Start animation immediately
     animationId = requestAnimationFrame(animate);
-
-    // Pause on hover
-    const handleMouseEnter = () => {
-      isPaused = true;
-    };
-
-    const handleMouseLeave = () => {
-      isPaused = false;
-    };
-
-    container.addEventListener('mouseenter', handleMouseEnter);
-    container.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
       if (animationId) {
         cancelAnimationFrame(animationId);
-      }
-      if (container) {
-        container.removeEventListener('mouseenter', handleMouseEnter);
-        container.removeEventListener('mouseleave', handleMouseLeave);
       }
     };
   }, [images.length, isClient]);
@@ -166,11 +145,11 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
             transition: 'none',
             backfaceVisibility: 'hidden',
             perspective: '1000px',
-            transform: 'translateZ(0)', // Force hardware acceleration
+            transform: 'translateZ(0)',
             transformStyle: 'preserve-3d'
           }}
         >
-          {/* First set of images */}
+          {/* First set */}
           {images.map((image, index) => (
             <div
               key={`first-${index}`}
@@ -188,8 +167,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
               </div>
             </div>
           ))}
-
-          {/* Second set of images for seamless loop */}
+          {/* Second set for seamless loop */}
           {images.map((image, index) => (
             <div
               key={`second-${index}`}
@@ -207,8 +185,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
               </div>
             </div>
           ))}
-
-          {/* Third set for ultra smooth loop - NO GAPS */}
+          {/* Third set for ultra smooth loop */}
           {images.map((image, index) => (
             <div
               key={`third-${index}`}
