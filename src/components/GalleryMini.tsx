@@ -12,7 +12,6 @@ interface GalleryMiniProps {
 export default function GalleryMini({ images, className = '' }: GalleryMiniProps) {
   const [open, setOpen] = useState<{ i: number } | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement | null>(null);
   const hasMany = images.length > 1;
   const { hideNavbar, showNavbar } = useNavbarVisibility();
@@ -61,29 +60,6 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, goPrev, goNext, enterFullscreen, isClient, showNavbar]);
-
-  // Smooth infinite scroll
-  useEffect(() => {
-    if (!isClient) return;
-    const container = containerRef.current;
-    if (!container || images.length === 0) return;
-
-    let scrollPos = 0;
-    const speed = 0.5;
-    const gap = 16;
-    const itemWidth = 96 + gap;
-    const setWidth = itemWidth * images.length;
-
-    const scroll = () => {
-      scrollPos += speed;
-      if (scrollPos >= setWidth) scrollPos = 0;
-      container.style.transform = `translate3d(-${scrollPos}px, 0, 0)`;
-      requestAnimationFrame(scroll);
-    };
-
-    const id = requestAnimationFrame(scroll);
-    return () => cancelAnimationFrame(id);
-  }, [images.length, isClient]);
 
   const handleImageClick = (index: number) => {
     hideNavbar();
