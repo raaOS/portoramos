@@ -7,12 +7,12 @@ function getDynamicSiteUrl(): string {
   if (process.env.NODE_ENV === 'production') {
     return process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio.example.com'
   }
-  
+
   // In development, try to detect from browser if available
   if (typeof window !== 'undefined') {
     return window.location.origin
   }
-  
+
   // Fallback for server-side rendering in development
   return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 }
@@ -172,7 +172,7 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
 
     case 'project':
       if (!data) return baseStructuredData
-      
+
       return {
         '@context': 'https://schema.org',
         '@type': 'CreativeWork',
@@ -234,6 +234,11 @@ export function generateSitemapUrls(projects: Project[]) {
       changefreq: 'monthly'
     },
     {
+      url: '/works',
+      priority: 0.9,
+      changefreq: 'weekly'
+    },
+    {
       url: '/contact',
       priority: 0.7,
       changefreq: 'monthly'
@@ -252,7 +257,7 @@ export function generateSitemapUrls(projects: Project[]) {
 export function generateSitemap(projects: Project[]): string {
   const urls = generateSitemapUrls(projects)
   const siteUrl = baseSEO.siteUrl
-  
+
   const urlElements = urls.map(({ url, priority, changefreq }) => `
   <url>
     <loc>${siteUrl}${url}</loc>
@@ -301,7 +306,7 @@ Sitemap: ${baseSEO.siteUrl}/sitemap.xml`
 
   // Validate and clean meta description
   cleanMetaDescription: (description: string, maxLength = 160) => {
-    return description.length > maxLength 
+    return description.length > maxLength
       ? description.substring(0, maxLength - 3) + '...'
       : description
   },
