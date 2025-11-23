@@ -156,10 +156,10 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
 
   return (
     <div className={`w-full ${className}`}>
-      <div className="w-full overflow-hidden" style={{ contain: 'layout style paint' }}>
+      <div className="w-full overflow-hidden relative" style={{ contain: 'layout style paint' }}>
         <div
           ref={containerRef}
-          className="flex"
+          className="flex gap-4"
           style={{
             width: 'max-content',
             willChange: 'transform',
@@ -175,7 +175,6 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
             <div
               key={`first-${index}`}
               className="flex-shrink-0 cursor-pointer group"
-              style={{ marginRight: '16px' }}
               onClick={() => handleImageClick(index)}
             >
               <div className="relative w-24 h-24 rounded-lg overflow-hidden">
@@ -195,7 +194,6 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
             <div
               key={`second-${index}`}
               className="flex-shrink-0 cursor-pointer group"
-              style={{ marginRight: '16px' }}
               onClick={() => handleImageClick(index)}
             >
               <div className="relative w-24 h-24 rounded-lg overflow-hidden">
@@ -215,7 +213,6 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
             <div
               key={`third-${index}`}
               className="flex-shrink-0 cursor-pointer group"
-              style={{ marginRight: '16px' }}
               onClick={() => handleImageClick(index)}
             >
               <div className="relative w-24 h-24 rounded-lg overflow-hidden">
