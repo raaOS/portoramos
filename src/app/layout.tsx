@@ -13,6 +13,7 @@ import { LastUpdatedProvider } from '@/contexts/LastUpdatedContext';
 import { NavbarVisibilityProvider } from '@/contexts/NavbarVisibilityContext';
 import UnregisterSW from '@/components/UnregisterSW';
 import PageTransition from '@/components/PageTransition';
+import CustomCursor from '@/components/CustomCursor';
 
 
 export const metadata: Metadata = generateMetadata({
@@ -21,14 +22,14 @@ export const metadata: Metadata = generateMetadata({
   path: '/'
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }){
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   const websiteStructuredData = generateStructuredData('website');
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        
+
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData) }}
@@ -41,9 +42,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }){
               <NavbarVisibilityProvider>
                 <ErrorBoundary>
                   <AppWrapper>
+                    <CustomCursor />
                     <Header />
                     <main className="container pb-20">
-                      {children}
+                      <PageTransition>
+                        {children}
+                      </PageTransition>
                     </main>
                     <Footer />
                     <BottomNavigation />
