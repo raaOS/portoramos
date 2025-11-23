@@ -21,7 +21,7 @@ export const Reveal = ({
     className = "",
 }: RevealProps) => {
     const ref = useRef(null);
-    const isInView = useInView(ref, { once: true, margin: "-50px" });
+    const isInView = useInView(ref, { once: true, margin: "-100px" });
     const mainControls = useAnimation();
 
     useEffect(() => {
@@ -57,7 +57,7 @@ export const StaggerContainer = ({
     staggerDelay?: number;
 }) => {
     const ref = useRef(null);
-    const isInView = useInView(ref, { once: true, margin: "-50px" });
+    const isInView = useInView(ref, { once: true, margin: "-100px" });
     const controls = useAnimation();
 
     useEffect(() => {
