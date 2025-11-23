@@ -190,7 +190,7 @@ export default function SwayingGallery({
           max-width: 100% !important;
           margin: 0 auto !important;
           width: 100% !important;
-          height: 400px !important;
+          height: 550px !important;
         }
 
         .gallery-item {
@@ -205,7 +205,7 @@ export default function SwayingGallery({
           overflow: hidden !important;
           width: 100% !important;
           height: 100% !important;
-          aspect-ratio: 1 / 1 !important;
+          aspect-ratio: 4 / 5 !important;
           display: flex !important;
           flex-direction: column !important;
         }
@@ -360,12 +360,12 @@ export default function SwayingGallery({
             gap: 10px;
             padding: 0px;
             width: 100%;
-            height: 400px;
+            height: 550px;
             margin: 0 auto;
           }
 
           .gallery-item {
-            aspect-ratio: 1 / 1 !important;
+            aspect-ratio: 4 / 5 !important;
             padding: 0px;
             border-radius: 4px;
             box-shadow: none !important;
