@@ -122,7 +122,13 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
 
   return (
     <div className={`w-full ${className}`}>
-      <div className="w-full overflow-hidden relative">
+      <div
+        className="w-full overflow-hidden relative"
+        style={{
+          maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
+        }}
+      >
         <div
           className="flex"
           style={{
