@@ -62,53 +62,37 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
     return () => window.removeEventListener('keydown', onKey);
   }, [open, goPrev, goNext, enterFullscreen, isClient, showNavbar]);
 
-  // Perfect infinite scroll effect - NO GAPS, NO DELAY
+  // Smooth infinite scroll
   useEffect(() => {
     if (!isClient) return;
     const container = containerRef.current;
     if (!container || images.length === 0) return;
 
-    let animationId: number;
-    let scrollPosition = 0;
-    const scrollSpeed = 0.5; // Faster continuous speed
-    const singleImageWidth = 96 + 16; // 96px image + 16px gap
-    const totalWidth = singleImageWidth * images.length; // Total width of one complete set
-    let lastTime = performance.now();
+    let scrollPos = 0;
+    const speed = 0.5;
+    const gap = 16;
+    const itemWidth = 96 + gap;
+    const setWidth = itemWidth * images.length;
 
-    const animate = (currentTime: number) => {
-      const deltaTime = currentTime - lastTime;
-
-      // Continuous scroll - no pause
-      if (deltaTime > 0 && deltaTime < 100) {
-        scrollPosition += scrollSpeed * (deltaTime / 16); // Normalize to 60fps
-
-        // PERFECT SEAMLESS LOOP
-        if (scrollPosition >= totalWidth) {
-          scrollPosition = scrollPosition - totalWidth;
-        }
-
-        if (container) {
-          container.style.transform = `translate3d(-${scrollPosition}px, 0, 0)`;
-        }
-      }
-
-      lastTime = currentTime;
-      animationId = requestAnimationFrame(animate);
+    const scroll = () => {
+      scrollPos += speed;
+      if (scrollPos >= setWidth) scrollPos = 0;
+      container.style.transform = `translate3d(-${scrollPos}px, 0, 0)`;
+      requestAnimationFrame(scroll);
     };
 
-    animationId = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-    };
+    const id = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(id);
   }, [images.length, isClient]);
 
   const handleImageClick = (index: number) => {
     hideNavbar();
     setOpen({ i: index });
   };
+
+  // looped list for seamless marquee
+  const loopImages = images.length ? [...images, ...images] : [];
+  const trackDuration = Math.max(6, images.length * 1.5); // faster, clearly visible motion
 
   // Show loading state until client is ready
   if (!isClient) {
@@ -134,65 +118,26 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
   }
 
   return (
-    <div className={`w-full ${className}`}>
-      <div className="w-full overflow-hidden relative" style={{ contain: 'layout style paint' }}>
+    <div className={`w-full max-w-[520px] md:max-w-[560px] ${className}`}>
+      <div
+        className="w-full overflow-hidden relative bg-white/95 rounded-xl"
+        style={{ contain: 'layout style paint' }}
+      >
         <div
-          ref={containerRef}
-          className="flex gap-4"
+          className="marquee-track flex gap-4 px-4 md:px-6 py-3"
           style={{
             width: 'max-content',
+            animation: `galleryMiniMarquee ${trackDuration}s linear infinite`,
             willChange: 'transform',
-            transition: 'none',
-            backfaceVisibility: 'hidden',
-            perspective: '1000px',
-            transform: 'translateZ(0)',
-            transformStyle: 'preserve-3d'
           }}
         >
-          {/* First set */}
-          {images.map((image, index) => (
+          {loopImages.map((image, index) => (
             <div
-              key={`first-${index}`}
+              key={`gallery-${index}`}
               className="flex-shrink-0 cursor-pointer group"
-              onClick={() => handleImageClick(index)}
+              onClick={() => handleImageClick(index % images.length)}
             >
-              <div className="relative w-24 h-24 rounded-lg overflow-hidden">
-                <Image
-                  src={image}
-                  alt={`Gallery image ${index + 1}`}
-                  fill
-                  className="object-cover filter grayscale hover:grayscale-0 transition-all duration-300 group-hover:scale-105"
-                  sizes="96px"
-                />
-              </div>
-            </div>
-          ))}
-          {/* Second set for seamless loop */}
-          {images.map((image, index) => (
-            <div
-              key={`second-${index}`}
-              className="flex-shrink-0 cursor-pointer group"
-              onClick={() => handleImageClick(index)}
-            >
-              <div className="relative w-24 h-24 rounded-lg overflow-hidden">
-                <Image
-                  src={image}
-                  alt={`Gallery image ${index + 1}`}
-                  fill
-                  className="object-cover filter grayscale hover:grayscale-0 transition-all duration-300 group-hover:scale-105"
-                  sizes="96px"
-                />
-              </div>
-            </div>
-          ))}
-          {/* Third set for ultra smooth loop */}
-          {images.map((image, index) => (
-            <div
-              key={`third-${index}`}
-              className="flex-shrink-0 cursor-pointer group"
-              onClick={() => handleImageClick(index)}
-            >
-              <div className="relative w-24 h-24 rounded-lg overflow-hidden">
+              <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-white">
                 <Image
                   src={image}
                   alt={`Gallery image ${index + 1}`}
@@ -205,6 +150,17 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
           ))}
         </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes galleryMiniMarquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
 
       {/* Gallery Viewer */}
       {open && isClient && (
