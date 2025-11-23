@@ -94,134 +94,135 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
   }
 
   return (
-    <div className={`w-full ${className}`}>
-      <div className="w-full overflow-hidden relative">
-        <div className="gallery-mini-scroll flex gap-4">
-          {loopImages.map((image, index) => (
-            <div
-              key={`gallery-${index}`}
-              className="flex-shrink-0 cursor-pointer group"
-              onClick={() => handleImageClick(index % images.length)}
-            >
-              <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-white">
-                <Image
-                  src={image}
-                  alt={`Gallery image ${index + 1}`}
-                  fill
-                  className="object-cover filter grayscale hover:grayscale-0 transition-all duration-300 group-hover:scale-105"
-                  sizes="96px"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <style jsx>{`
-        .gallery-mini-scroll {
-          width: max-content;
-          animation: scroll ${trackDuration}s linear infinite;
-        }
-        
-        @keyframes scroll {
-          0% {
-            transform: translateX(0);
+    <>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes galleryMiniScroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-33.333%); }
           }
-          100% {
-            transform: translateX(-33.333%);
-          }
-        }
-      `}</style>
+        `
+      }} />
 
-      {/* Gallery Viewer */}
-      {open && isClient && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75"
-          onClick={() => {
-            showNavbar();
-            setOpen(null);
-          }}
-        >
+      <div className={`w-full ${className}`}>
+        <div className="w-full overflow-hidden relative">
           <div
-            ref={viewerRef}
-            className="relative max-w-5xl w-full mx-4"
-            onClick={(e) => e.stopPropagation()}
+            className="flex gap-4"
+            style={{
+              width: 'max-content',
+              animation: `galleryMiniScroll ${trackDuration}s linear infinite`
+            }}
           >
-            <div className="absolute -top-12 left-0 right-0 flex items-center justify-between px-1">
-              <button
-                className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
-                onClick={() => {
-                  showNavbar();
-                  setOpen(null);
-                }}
-                aria-label="Close gallery"
-                type="button"
+            {loopImages.map((image, index) => (
+              <div
+                key={`gallery-${index}`}
+                className="flex-shrink-0 cursor-pointer group"
+                onClick={() => handleImageClick(index % images.length)}
               >
-                Tutup (Esc)
-              </button>
-
-              <div className="flex items-center gap-3">
-                {hasMany && (
-                  <>
-                    <button
-                      className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
-                      onClick={goPrev}
-                      aria-label="Previous image"
-                      type="button"
-                    >
-                      ← Prev
-                    </button>
-                    <button
-                      className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
-                      onClick={goNext}
-                      aria-label="Next image"
-                      type="button"
-                    >
-                      Next →
-                    </button>
-                  </>
-                )}
-
-                <button
-                  className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
-                  onClick={enterFullscreen}
-                  aria-label="Enter fullscreen"
-                  type="button"
-                >
-                  Fullscreen (F)
-                </button>
+                <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-white">
+                  <Image
+                    src={image}
+                    alt={`Gallery image ${index + 1}`}
+                    fill
+                    className="object-cover filter grayscale hover:grayscale-0 transition-all duration-300 group-hover:scale-105"
+                    sizes="96px"
+                  />
+                </div>
               </div>
-            </div>
-
-            {/* Image counter */}
-            {hasMany && (
-              <div className="absolute top-4 left-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded-full text-sm z-10">
-                {open.i + 1} / {images.length}
-              </div>
-            )}
-
-            {/* Main image */}
-            <div className="relative w-full h-full flex items-center justify-center">
-              <Image
-                src={images[open.i]}
-                alt={`Gallery image ${open.i + 1}`}
-                width={1200}
-                height={800}
-                className="object-contain max-w-full max-h-full rounded-lg"
-                priority
-              />
-            </div>
-
-            {/* Keyboard shortcuts hint */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black bg-opacity-50 px-4 py-2 rounded-full">
-              {hasMany && 'Arrow keys: Navigate • '}
-              F: Fullscreen • ESC: Close
-            </div>
+            ))}
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Gallery Viewer */}
+        {open && isClient && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75"
+            onClick={() => {
+              showNavbar();
+              setOpen(null);
+            }}
+          >
+            <div
+              ref={viewerRef}
+              className="relative max-w-5xl w-full mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute -top-12 left-0 right-0 flex items-center justify-between px-1">
+                <button
+                  className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
+                  onClick={() => {
+                    showNavbar();
+                    setOpen(null);
+                  }}
+                  aria-label="Close gallery"
+                  type="button"
+                >
+                  Tutup (Esc)
+                </button>
+
+                <div className="flex items-center gap-3">
+                  {hasMany && (
+                    <>
+                      <button
+                        className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
+                        onClick={goPrev}
+                        aria-label="Previous image"
+                        type="button"
+                      >
+                        ← Prev
+                      </button>
+                      <button
+                        className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
+                        onClick={goNext}
+                        aria-label="Next image"
+                        type="button"
+                      >
+                        Next →
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    className="text-white/80 hover:text-white text-sm underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
+                    onClick={enterFullscreen}
+                    aria-label="Enter fullscreen"
+                    type="button"
+                  >
+                    Fullscreen (F)
+                  </button>
+                </div>
+              </div>
+
+              {/* Image counter */}
+              {hasMany && (
+                <div className="absolute top-4 left-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded-full text-sm z-10">
+                  {open.i + 1} / {images.length}
+                </div>
+              )}
+
+              {/* Main image */}
+              <div className="relative w-full h-full flex items-center justify-center">
+                <Image
+                  src={images[open.i]}
+                  alt={`Gallery image ${open.i + 1}`}
+                  width={1200}
+                  height={800}
+                  className="object-contain max-w-full max-h-full rounded-lg"
+                  priority
+                />
+              </div>
+
+              {/* Keyboard shortcuts hint */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black bg-opacity-50 px-4 py-2 rounded-full">
+                {hasMany && 'Arrow keys: Navigate • '}
+                F: Fullscreen • ESC: Close
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
