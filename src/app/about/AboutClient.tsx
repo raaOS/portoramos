@@ -535,26 +535,22 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
 
                 {/* Soft Skills Description */}
                 <div className="mb-8">
-                  <Reveal delay={0.3}>
-                    <div className="inline-block border border-gray-300 bg-white px-8 py-4 rounded-[50px] max-w-3xl">
-                      <div className="text-base text-gray-600 font-serif italic text-center" style={{ fontFamily: 'Merriweather, serif' }}>
-                        {currentSoftSkillDescription}
-                      </div>
+                  <div className="inline-block border border-gray-300 bg-white px-8 py-4 rounded-[50px] max-w-3xl">
+                    <div className="text-base text-gray-600 font-serif italic text-center" style={{ fontFamily: 'Merriweather, serif' }}>
+                      {currentSoftSkillDescription}
                     </div>
-                  </Reveal>
+                  </div>
                 </div>
 
-                {/* TextMorph */}
-                <Reveal delay={0.4}>
-                  <TextMorph
-                    texts={softSkills.texts}
-                    descriptions={softSkills.descriptions}
-                    className=""
-                    morphTime={1}
-                    cooldownTime={0.25}
-                    onDescriptionChange={setCurrentSoftSkillDescription}
-                  />
-                </Reveal>
+                {/* TextMorph - has its own animation, no Reveal needed */}
+                <TextMorph
+                  texts={softSkills.texts}
+                  descriptions={softSkills.descriptions}
+                  className=""
+                  morphTime={1}
+                  cooldownTime={0.25}
+                  onDescriptionChange={setCurrentSoftSkillDescription}
+                />
               </div>
             </div>
 
