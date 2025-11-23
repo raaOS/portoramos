@@ -32,7 +32,7 @@ export default function BlurText({
             y: 0,
             transition: {
                 type: 'tween',
-                ease: 'easeInOut',
+                ease: 'easeOut',
                 duration: duration,
             },
         },
@@ -42,7 +42,7 @@ export default function BlurText({
             y: 20,
             transition: {
                 type: 'tween',
-                ease: 'easeInOut',
+                ease: 'easeOut',
                 duration: duration,
             },
         },
