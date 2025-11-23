@@ -187,10 +187,10 @@ export default function SwayingGallery({
           grid-template-rows: repeat(2, 1fr) !important;
           gap: 10px !important;
           padding: 0px !important;
-          max-width: 100% !important;
+          max-width: none !important;
           margin: 0 auto !important;
           width: 100% !important;
-          height: 600px !important;
+          height: 510px !important;
         }
 
         .gallery-item {
@@ -205,7 +205,7 @@ export default function SwayingGallery({
           overflow: hidden !important;
           width: 100% !important;
           height: 100% !important;
-          aspect-ratio: 3 / 4 !important;
+          aspect-ratio: 221 / 250 !important;
           display: flex !important;
           flex-direction: column !important;
         }
@@ -356,16 +356,16 @@ export default function SwayingGallery({
         /* Desktop specific improvements */
         @media (min-width: 1024px) {
           .gallery-container {
-            max-width: 100%;
+            max-width: none;
             gap: 10px;
             padding: 0px;
             width: 100%;
-            height: 600px;
+            height: 510px;
             margin: 0 auto;
           }
 
           .gallery-item {
-            aspect-ratio: 3 / 4 !important;
+            aspect-ratio: 221 / 250 !important;
             padding: 0px;
             border-radius: 4px;
             box-shadow: none !important;
