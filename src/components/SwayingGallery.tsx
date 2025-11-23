@@ -205,7 +205,7 @@ export default function SwayingGallery({
           overflow: hidden !important;
           width: 100% !important;
           height: 100% !important;
-          aspect-ratio: 4 / 5 !important;
+          aspect-ratio: 3 / 4 !important;
           display: flex !important;
           flex-direction: column !important;
         }
@@ -365,7 +365,7 @@ export default function SwayingGallery({
           }
 
           .gallery-item {
-            aspect-ratio: 4 / 5 !important;
+            aspect-ratio: 3 / 4 !important;
             padding: 0px;
             border-radius: 4px;
             box-shadow: none !important;
