@@ -31,9 +31,8 @@ export default function BlurText({
             filter: 'blur(0px)',
             y: 0,
             transition: {
-                type: 'spring',
-                damping: 12,
-                stiffness: 100,
+                type: 'tween',
+                ease: 'easeInOut',
                 duration: duration,
             },
         },
@@ -42,9 +41,8 @@ export default function BlurText({
             filter: 'blur(20px)',
             y: 20,
             transition: {
-                type: 'spring',
-                damping: 12,
-                stiffness: 100,
+                type: 'tween',
+                ease: 'easeInOut',
                 duration: duration,
             },
         },
