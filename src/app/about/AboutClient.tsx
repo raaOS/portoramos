@@ -576,29 +576,23 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
           {/* Experience Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
 
-            {/* Grid Kiri - Statistics & Testimoni */}
+            {/* Grid Kiri - Statistics & Testimoni (No Reveal to prevent overlap) */}
             <div className="space-y-6">
               <div className="text-center lg:text-left">
-                <Reveal>
-                  <div className="inline-block bg-black px-4 py-2 rounded-full mb-4">
-                    <h3 className="text-lg font-medium text-white font-serif italic">
-                      Freelance Experience
-                    </h3>
-                  </div>
-                </Reveal>
+                <div className="inline-block bg-black px-4 py-2 rounded-full mb-4">
+                  <h3 className="text-lg font-medium text-white font-serif italic">
+                    Freelance Experience
+                  </h3>
+                </div>
 
                 {/* Horizontal Counter Animation */}
                 <div className="mb-6">
-                  <Reveal delay={0.3}>
-                    <HorizontalCounterAnimation />
-                  </Reveal>
+                  <HorizontalCounterAnimation />
                 </div>
 
                 {/* Testimoni Horizontal */}
                 <div className="mt-6">
-                  <Reveal delay={0.4}>
-                    <HorizontalTestimonial />
-                  </Reveal>
+                  <HorizontalTestimonial />
                 </div>
               </div>
             </div>
