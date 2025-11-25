@@ -22,12 +22,12 @@
 .dark {
   --bg: #000000;
   --fg: #ffffff;
-  --muted: #ffffff;
+  --muted: #a1a1aa;
   --card-bg: #000000;
   --card-border: #ffffff;
   --text-primary: #ffffff;
-  --text-secondary: #ffffff;
-  --text-muted: #ffffff;
+  --text-secondary: #e4e4e7;
+  --text-muted: #a1a1aa;
   --border: #ffffff;
 }
 
@@ -60,14 +60,14 @@ textarea,
   user-select: text;
 }
 
-/* Improve touch targets - minimum 44px for accessibility */
+/* Improve touch targets - minimum 48px for better accessibility */
 button,
 a,
 [role="button"],
 input[type="button"],
 input[type="submit"] {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: 48px;
+  min-width: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

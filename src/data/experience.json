@@ -12,8 +12,8 @@
       "company": "PT. Bitlabs Academy",
       "position": "Graphic Designer",
       "description": [
-        "Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offline",
-        "membantu UI/UX di Bitlabs"
+        "Mengelola seluruh visual brand, dari konten sosmed sampai materi cetak.",
+        "Kolaborasi dengan tim UI/UX untuk memastikan konsistensi desain produk."
       ],
       "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg"
     },
@@ -23,7 +23,8 @@
       "company": "Sekolah Desain",
       "position": "Mentor Desain Grafis",
       "description": [
-        "Melakukan kegiatan pembelajaran/sharing session dengan mahasiswa sesuai jadwal yang ditetapkan perusahaan. Melakukan observasi, monitoring, memberikan masukan dan saran perbaikan terkait kinerja peserta dan memastikan paham tentang desain grafis."
+        "Mentoring mahasiswa dan sharing session rutin biar mereka makin jago desain.",
+        "Kasih feedback konstruktif buat ningkatin kualitas karya peserta."
       ],
       "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png"
     },
@@ -33,8 +34,8 @@
       "company": "PT. Duta Mode",
       "position": "Graphic Designer",
       "description": [
-        "Berperan dalam perancangan strategi untuk promosi perusahaan.",
-        "Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offline"
+        "Merancang strategi visual buat promosi perusahaan yang lebih nendang.",
+        "Handle semua kebutuhan desain, baik online maupun offline."
       ],
       "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg"
     },
@@ -44,10 +45,9 @@
       "company": "Sthal.Co",
       "position": "Graphic Designer & Admin",
       "description": [
-        "Bertanggung jawab sebagain Admin Online dalam memasarkan dan merespon chat dari pembeli",
-        "Berhasil Mendesain product tshirt dan membantu dalam mencapai targate penjualan",
-        "Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin",
-        "Mengirim, Mengawasi, Mencatat Produk Sthal. Co"
+        "Mendesain produk t-shirt yang laku keras di pasaran.",
+        "Handle orderan customer dan pastiin pengiriman aman terkendali.",
+        "Kelola stok dan administrasi produk harian."
       ],
       "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg"
     },
@@ -55,11 +55,11 @@
       "year": "Okt 2012 - Agt 2015",
       "duration": "2 tahun 11 bulan",
       "company": "PT Sari Coffee Indonesia",
-      "position": "Barista Starbuck Coffee",
+      "position": "Barista Starbucks Coffee",
       "description": [
-        "Berhasil memiliki sertifikat coffee master dari PT.sari coffee indonesia dan memiliki pegetahuan mengenai dunia coffe yg di traning langsung dari starbucks",
-        "Berhasil dalam mengenalkan info seputar dunia kopi ke customer",
-        "Melayani transaksi customer"
+        "Certified Coffee Master. Belajar art of coffee langsung dari ahlinya.",
+        "Edukasi customer soal dunia kopi dengan cara yang fun.",
+        "Memberikan service terbaik buat setiap customer yang datang."
       ],
       "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png"
     },
@@ -69,25 +69,12 @@
       "company": "Wulan Boutique",
       "position": "Graphic Designer & Admin",
       "description": [
-        "Bertanggung jawab sebagain Admin Online dalam memasarkan dan merespon chat dari pembeli",
-        "Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin",
-        "Mengirim, Mengawasi, Mencatat Produk Wulan Butique"
-      ],
-      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg"
-    },
-    {
-      "id": "1757823198136",
-      "year": "Jan 2012 - Mar 2012",
-      "duration": "3 bulan",
-      "company": "Wulan Boutique",
-      "position": "Graphic Designer & Admin",
-      "description": [
-        "Bertanggung jawab sebagain Admin Online dalam memasarkan dan merespon chat dari pembeli",
-        "Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin",
-        "Mengirim, Mengawasi, Mencatat Produk Wulan Butique"
+        "Bikin konten visual buat marketing online.",
+        "Handle chat customer dan proses orderan.",
+        "Quality control produk sebelum dikirim."
       ],
       "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg"
     }
   ],
-  "lastUpdated": "2025-11-22T14:02:22.084Z"
+  "lastUpdated": "2025-11-25T15:00:00.000Z"
 }

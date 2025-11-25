@@ -56,17 +56,25 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   const [isLoading, setIsLoading] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [shouldLoad] = useState(true)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  )
 
   useEffect(() => {
-    if (kind !== 'video' || !autoplay) return
+    if (typeof window === 'undefined') return
+    const mediaQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+    const handleMediaChange = () => setPrefersReducedMotion(mediaQuery?.matches ?? false)
+    handleMediaChange()
+    mediaQuery?.addEventListener('change', handleMediaChange)
+    return () => mediaQuery?.removeEventListener('change', handleMediaChange)
+  }, [])
+
+  const effectiveAutoplay = autoplay && shouldLoad && !prefersReducedMotion
+
+  useEffect(() => {
+    if (kind !== 'video' || !effectiveAutoplay) return
     const el = (videoRef as React.RefObject<HTMLVideoElement>)?.current
     if (!el) return
-
-    const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-    if (prefersReduced) {
-      return
-    }
 
     let isPlaying = false
 
@@ -101,7 +109,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     return () => {
       observer.disconnect()
     }
-  }, [kind, autoplay, src, videoRef])
+  }, [kind, effectiveAutoplay, src, videoRef])
 
   if (kind === 'video') {
     return (
@@ -111,7 +119,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           className={className || "w-full h-full object-cover"}
           src={shouldLoad ? src : undefined}
           poster={poster}
-          autoPlay={autoplay && shouldLoad}
+          autoPlay={effectiveAutoplay}
           muted={muted}
           loop={loop}
           playsInline={playsInline}
@@ -124,7 +132,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
             setCanPlay(true)
             setIsLoading(false)
             // Immediate play attempt when video is ready
-            if (autoplay && (videoRef as React.RefObject<HTMLVideoElement>)?.current) {
+            if (effectiveAutoplay && (videoRef as React.RefObject<HTMLVideoElement>)?.current) {
               if (process.env.NODE_ENV === 'development') {
                 console.log('Video can play - attempting immediate play')
               }

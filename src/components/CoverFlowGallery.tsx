@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useModal } from '@/contexts/ModalContext';
 import AudioControl from '@/components/AudioControl';
 import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
+import { TRAIL_PLACEHOLDER_IMAGES } from '@/data/trailPlaceholders';
 
 interface Photo {
   id: string;
@@ -38,14 +39,14 @@ interface CoverFlowGalleryProps {
 // Performance: Memoized fallback image to prevent recreation
 const FALLBACK_IMAGE = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="170" height="170" viewBox="0 0 170 170"%3E%3Crect width="170" height="170" fill="%23f3f4f6"/%3E%3Ctext x="85" y="85" text-anchor="middle" fill="%236b7280" font-size="12"%3EImage%3C/text%3E%3C/svg%3E';
 
-const defaultPhotos: Photo[] = [
-  { id: '1', src: '/images/trail/trail1.jpg', alt: 'Mountain Trail Vista', title: 'Mountain Trail Vista', aspectRatio: 1.25, type: 'image' },
-  { id: '2', src: '/images/trail/trail2.jpg', alt: 'Forest Path Adventure', title: 'Forest Path Adventure', aspectRatio: 1.0, type: 'image' },
-  { id: '3', src: '/images/trail/trail3.jpg', alt: 'Sunset Ridge Walk', title: 'Sunset Ridge Walk', aspectRatio: 1.25, type: 'image' },
-  { id: '4', src: '/images/trail/trail4.jpg', alt: 'Alpine Lake Discovery', title: 'Alpine Lake Discovery', aspectRatio: 1.0, type: 'image' },
-  { id: '5', src: '/images/trail/trail5.jpg', alt: 'Canyon Explorer Route', title: 'Canyon Explorer Route', aspectRatio: 1.25, type: 'image' },
-  { id: '6', src: '/images/trail/trail6.jpg', alt: 'Wilderness Trail Journey', title: 'Wilderness Trail Journey', aspectRatio: 1.0, type: 'image' }
-];
+const defaultPhotos: Photo[] = TRAIL_PLACEHOLDER_IMAGES.map((item, index) => ({
+  id: `${index + 1}`,
+  src: item.src,
+  alt: item.alt,
+  title: item.title,
+  aspectRatio: item.aspectRatio ?? 1.0,
+  type: 'image'
+}));
 
 // Performance: Memoized Photo Item Component
 const PhotoItem = memo(({

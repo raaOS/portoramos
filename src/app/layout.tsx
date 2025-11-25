@@ -13,13 +13,15 @@ import { LastUpdatedProvider } from '@/contexts/LastUpdatedContext';
 import { NavbarVisibilityProvider } from '@/contexts/NavbarVisibilityContext';
 import UnregisterSW from '@/components/UnregisterSW';
 import PageTransition from '@/components/PageTransition';
-import CustomCursor from '@/components/CustomCursor';
+
 
 
 export const metadata: Metadata = generateMetadata({
   title: 'Ramos – Creative Portfolio',
   description: 'Portofolio desain dan proyek kreatif Ramos dengan fokus pada visual yang bersih, tipografi kuat, dan transisi halus.',
-  path: '/'
+  path: '/',
+  image: '/og-image.jpg',
+  keywords: ['portfolio', 'desain grafis', 'UI/UX', 'creative design', 'visual design', 'Ramos']
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -42,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <NavbarVisibilityProvider>
                 <ErrorBoundary>
                   <AppWrapper>
-                    <CustomCursor />
+
                     <Header />
                     <main className="container pb-20">
                       <PageTransition>

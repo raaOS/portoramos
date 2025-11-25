@@ -17,7 +17,7 @@ import { HardSkillConcept } from '@/types/hardSkillConcept';
 import { useSmoothScroll } from '@/hooks/useSmoothScroll';
 import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
 import { Reveal, StaggerContainer, StaggerItem } from '@/components/Reveal';
-import BlurText from '@/components/BlurText';
+import BlurTextLoop from '@/components/BlurTextLoop';
 
 const TextMorph = dynamic(() => import('@/components/TextMorph'), {
   ssr: false
@@ -405,13 +405,12 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         <div className="min-h-[35vh] md:min-h-[50vh] flex items-center justify-center relative z-20 px-4 overflow-hidden">
           <div className="text-center w-full">
             <div className="w-full flex justify-center">
-              <BlurText
+              <BlurTextLoop
                 text={currentAboutData.hero?.title || 'PORTOFOLIO'}
                 className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
-                delay={150}
+                initialDelay={0.15}
                 animateBy="letters"
                 direction="top"
-                stepDuration={1}
               />
             </div>
           </div>

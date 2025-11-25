@@ -1,12 +1,21 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState, useMemo } from 'react';
 
-const buildKeyframes = (from: any, steps: any[]) => {
+interface AnimationKeyframe {
+    filter?: string;
+    opacity?: number;
+    y?: number;
+    x?: number;
+    scale?: number;
+    rotate?: number;
+}
+
+const buildKeyframes = (from: AnimationKeyframe, steps: AnimationKeyframe[]) => {
     const keys = new Set([...Object.keys(from), ...steps.flatMap(s => Object.keys(s))]);
 
-    const keyframes: any = {};
+    const keyframes: Record<string, (string | number | undefined)[]> = {};
     keys.forEach(k => {
-        keyframes[k] = [from[k], ...steps.map(s => s[k])];
+        keyframes[k] = [from[k as keyof AnimationKeyframe], ...steps.map(s => s[k as keyof AnimationKeyframe])];
     });
     return keyframes;
 };
@@ -19,8 +28,8 @@ interface BlurTextProps {
     direction?: 'top' | 'bottom';
     threshold?: number;
     rootMargin?: string;
-    animationFrom?: any;
-    animationTo?: any;
+    animationFrom?: AnimationKeyframe;
+    animationTo?: AnimationKeyframe[];
     easing?: (t: number) => number;
     onAnimationComplete?: () => void;
     stepDuration?: number;
@@ -102,8 +111,8 @@ const BlurText = ({
                     <motion.span
                         className="inline-block will-change-[transform,filter,opacity]"
                         key={index}
-                        initial={fromSnapshot}
-                        animate={inView ? animateKeyframes : fromSnapshot}
+                        initial={fromSnapshot as any}
+                        animate={inView ? animateKeyframes as any : fromSnapshot as any}
                         transition={spanTransition}
                         onAnimationComplete={index === elements.length - 1 ? onAnimationComplete : undefined}
                     >
