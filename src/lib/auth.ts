@@ -4,6 +4,7 @@ import { sign, verify } from 'jsonwebtoken';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
+const ADMIN_PASSWORD_SCRYPT = process.env.ADMIN_PASSWORD_SCRYPT;
 const PASSWORD_SALT = process.env.PASSWORD_SALT;
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -11,14 +12,31 @@ function hashPassword(password: string, salt: string): string {
   return crypto.createHash('sha256').update(password + salt).digest('hex');
 }
 
+function hashPasswordScrypt(password: string, salt: string): string {
+  const key = crypto.scryptSync(password, salt, 64);
+  return key.toString('hex');
+}
+
+function timingSafeEqualString(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 export const verifyAdminPassword = (password: string): boolean => {
+  if (ADMIN_PASSWORD_SCRYPT && PASSWORD_SALT) {
+    const hashedInput = hashPasswordScrypt(password, PASSWORD_SALT);
+    return timingSafeEqualString(hashedInput, ADMIN_PASSWORD_SCRYPT);
+  }
+
   if (ADMIN_PASSWORD_HASH && PASSWORD_SALT) {
     const hashedInput = hashPassword(password, PASSWORD_SALT);
-    return hashedInput === ADMIN_PASSWORD_HASH;
+    return timingSafeEqualString(hashedInput, ADMIN_PASSWORD_HASH);
   }
 
   if (ADMIN_PASSWORD) {
-    return password === ADMIN_PASSWORD;
+    return timingSafeEqualString(password, ADMIN_PASSWORD);
   }
 
   console.error('Admin password is not configured. Set ADMIN_PASSWORD or ADMIN_PASSWORD_HASH/PASSWORD_SALT.');

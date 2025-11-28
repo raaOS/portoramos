@@ -202,7 +202,14 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
   const resolvedWorkExperience = (experienceData?.workExperience?.length
     ? experienceData.workExperience
     : FALLBACK_WORK_EXPERIENCE);
-  const workExperienceForGallery = resolvedWorkExperience.slice(0, 6);
+
+  // Pastikan selalu ada 6 item untuk grid 3x2 / 2x3; isi kekurangan dengan fallback
+  const normalizedWorkExperience =
+    resolvedWorkExperience.length >= 6
+      ? resolvedWorkExperience
+      : [...resolvedWorkExperience, ...FALLBACK_WORK_EXPERIENCE].slice(0, 6);
+
+  const workExperienceForGallery = normalizedWorkExperience.slice(0, 6);
 
   const {
     data: hardSkillsData,
@@ -422,7 +429,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 2: Deskripsi Profesional dengan 2 Grid */}
       <div
         id="professional"
-        className="pb-12 pt-8 md:py-16 lg:py-20 bg-white flex items-center justify-center px-4"
+        className="pb-16 pt-12 md:py-16 lg:py-20 bg-white flex items-center justify-center px-4 border-b border-gray-200"
       >
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
@@ -469,14 +476,14 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 3: Hard Skills dan Soft Skills dengan 2 Grid */}
       <div
         id="skills"
-        className="bg-white py-16 md:py-20 lg:py-24 flex items-center justify-center lg:min-h-[70vh]"
+        className="bg-white py-20 md:py-20 lg:py-24 flex items-center justify-center lg:min-h-[70vh] border-b border-gray-200"
       >
         <div className="w-full max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-12">
 
             {/* Grid Kiri - Hard Skills (Diperkecil) */}
             <div className="lg:col-span-1 space-y-6">
-              <div className="text-center lg:text-left">
+              <div className="text-left">
                 <Reveal>
                   <div className="inline-block bg-black px-6 py-2 rounded-full mb-6">
                     <h2 className="text-xl font-medium text-white font-serif italic">
@@ -531,11 +538,11 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
 
             {/* Grid Kanan - Soft Skills (Diperbesar) */}
             <div className="md:col-span-2 lg:col-span-2 space-y-8">
-              <div className="text-center">
-                <div className="flex justify-center">
+              <div className="text-left">
+                <div className="flex justify-start md:justify-center">
                   <Reveal>
-                    <div className="inline-block bg-black px-8 py-3 rounded-full mb-8">
-                      <h2 className="text-2xl font-medium text-white font-serif italic">
+                    <div className="inline-block bg-black px-6 py-2 md:px-8 md:py-3 rounded-full mb-8">
+                      <h2 className="text-xl md:text-2xl font-medium text-white font-serif italic">
                         Soft Skill
                       </h2>
                     </div>
@@ -543,23 +550,27 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                 </div>
 
                 {/* Soft Skills Description */}
-                <div className="mb-8 flex justify-center">
-                  <div className="inline-block border border-gray-300 bg-white px-8 py-4 rounded-[50px] max-w-3xl">
-                    <div className="text-base text-gray-600 font-serif italic text-center" style={{ fontFamily: 'Merriweather, serif' }}>
+                <div className="mb-8 flex justify-start md:justify-center">
+                  <div className="inline-block border border-gray-300 bg-white px-6 py-3 md:px-8 md:py-4 rounded-[30px] md:rounded-[50px] max-w-full md:max-w-3xl">
+                    <div className="text-sm md:text-base text-gray-600 font-serif italic text-left md:text-center" style={{ fontFamily: 'Merriweather, serif' }}>
                       {currentSoftSkillDescription}
                     </div>
                   </div>
                 </div>
 
                 {/* TextMorph - has its own animation, no Reveal needed */}
-                <TextMorph
-                  texts={softSkills.texts}
-                  descriptions={softSkills.descriptions}
-                  className=""
-                  morphTime={1}
-                  cooldownTime={0.25}
-                  onDescriptionChange={setCurrentSoftSkillDescription}
-                />
+                <div className="w-full overflow-hidden flex justify-start md:justify-center">
+                  <div className="origin-left md:origin-center transform scale-[0.85] md:scale-100 w-[115%] md:w-full">
+                    <TextMorph
+                      texts={softSkills.texts}
+                      descriptions={softSkills.descriptions}
+                      className=""
+                      morphTime={1}
+                      cooldownTime={0.25}
+                      onDescriptionChange={setCurrentSoftSkillDescription}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -570,7 +581,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 4: Experience */}
       <div
         id="experience"
-        className="bg-white py-16 md:py-20 lg:py-24"
+        className="bg-white pt-20 pb-40 md:pt-24 md:pb-44 lg:pt-24 lg:pb-48"
       >
         <div className="w-full max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
@@ -637,7 +648,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                         // Tampilkan maksimal 3 poin jobdesk agar lebih informatif
                         jobDetails: experience.description?.slice(0, 3) ?? []
                       }))}
-                      className=""
+                      className="w-full h-auto min-h-[820px] md:min-h-0 md:h-auto"
                     />
                   </Reveal>
                 </div>

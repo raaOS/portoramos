@@ -115,8 +115,8 @@ export default function SwayingGallery({
             <Image
               src={image.src}
               alt={image.alt}
-              width={200}
-              height={200}
+              width={225}
+              height={300}
               className="gallery-image"
             />
             <div className="gallery-pin" />
@@ -186,23 +186,29 @@ export default function SwayingGallery({
           width: 100%;
           padding: 0;
           margin: 0;
+          position: relative;
+          z-index: 10;
+          min-height: 100%;
         }
 
         .gallery-container {
+          position: relative;
+          z-index: 15;
           display: grid !important;
           grid-template-columns: repeat(3, 1fr) !important;
           grid-template-rows: repeat(2, 1fr) !important;
           gap: 10px !important;
-          padding: 80px 40px !important;
+          padding: 170px 40px 100px !important;
           max-width: none !important;
           margin: 0 auto !important;
           width: 100% !important;
-          height: 670px !important;
+          height: 760px !important;
           overflow: visible !important;
         }
 
         .gallery-item {
           position: relative !important;
+          z-index: 20;
           background: white !important;
           border-radius: 4px !important;
           padding: 0px !important;
@@ -213,7 +219,7 @@ export default function SwayingGallery({
           overflow: visible !important;
           width: 100% !important;
           height: 100% !important;
-          aspect-ratio: 221 / 250 !important;
+          aspect-ratio: 3 / 4 !important;
           display: flex !important;
           flex-direction: column !important;
         }
@@ -377,15 +383,15 @@ export default function SwayingGallery({
           .gallery-container {
             max-width: none;
             gap: 10px;
-            padding: 80px 40px;
+            padding: 170px 40px 100px;
             width: 100%;
-            height: 670px;
+            height: 760px;
             margin: 0 auto;
             overflow: visible;
           }
 
           .gallery-item {
-            aspect-ratio: 221 / 250 !important;
+            aspect-ratio: 3 / 4 !important;
             padding: 0px;
             border-radius: 4px;
             box-shadow: none !important;
@@ -393,41 +399,37 @@ export default function SwayingGallery({
           }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
           .gallery-container {
-            max-width: 400px;
-            gap: 10px;
-            padding: 0px;
-            width: 400px;
-            height: 480px;
-            margin: 0;
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            grid-template-rows: none !important;
+            grid-auto-flow: row;
+            grid-auto-rows: auto !important;
+            gap: 14px !important;
+            padding: 32px 14px 28px 14px !important;
+            width: min(100%, 540px) !important;
+            max-width: 540px !important;
+            height: auto !important;
+            min-height: 420px;
+            margin: 0 auto !important;
+            overflow: visible !important;
           }
 
           .gallery-item {
-            aspect-ratio: 1 / 1 !important;
+            width: 100% !important;
+            aspect-ratio: 3 / 4 !important;
             padding: 0px;
             border-radius: 4px;
-            box-shadow: none !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08) !important;
             border: 1px solid #000 !important;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .gallery-container {
-            max-width: 300px;
-            gap: 8px;
-            padding: 0px;
-            width: 300px;
-            height: 360px;
-            margin: 0;
+            height: 100% !important;
           }
 
-          .gallery-item {
-            aspect-ratio: 1 / 1 !important;
-            padding: 0px;
-            border-radius: 4px;
-            box-shadow: none !important;
-            border: 1px solid #000 !important;
+          .gallery-image {
+            object-fit: contain !important;
+            object-position: center !important;
+            padding: 10px !important;
           }
         }
 

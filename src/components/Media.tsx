@@ -1,6 +1,7 @@
 "use client"
 import Image from 'next/image'
-import { useEffect, useRef, useState, forwardRef } from 'react'
+import { useEffect, useRef, useState, forwardRef, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 
 
 export type MediaProps = {
@@ -50,12 +51,13 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   lazy = false,
   layoutId
 }, ref) => {
+  const pathname = usePathname()
   const internalVideoRef = useRef<HTMLVideoElement | null>(null)
-  const videoRef = ref || internalVideoRef
   const [canPlay, setCanPlay] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [shouldLoad] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(
     () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   )
@@ -69,11 +71,60 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     return () => mediaQuery?.removeEventListener('change', handleMediaChange)
   }, [])
 
+  // Track mount state
+  useEffect(() => {
+    setIsMounted(true)
+    return () => setIsMounted(false)
+  }, [])
+
   const effectiveAutoplay = autoplay && shouldLoad && !prefersReducedMotion
+
+  // Merge forwarded ref (object or callback) with our internal ref so autoplay logic always has a handle
+  const setVideoRef = useCallback((node: HTMLVideoElement | null) => {
+    internalVideoRef.current = node
+    if (!ref) return
+    if (typeof ref === 'function') {
+      ref(node)
+    } else {
+      (ref as React.MutableRefObject<HTMLVideoElement | null>).current = node
+    }
+  }, [ref])
+
+  const isInViewport = (el: HTMLElement) => {
+    if (typeof window === 'undefined') return true
+    const rect = el.getBoundingClientRect()
+    const viewHeight = window.innerHeight || document.documentElement.clientHeight
+    const viewWidth = window.innerWidth || document.documentElement.clientWidth
+    return rect.bottom > 0 && rect.right > 0 && rect.top < viewHeight && rect.left < viewWidth
+  }
+
+  const playIfPossible = useCallback(() => {
+    if (kind !== 'video' || !effectiveAutoplay) return
+    const el = internalVideoRef.current
+    if (!el) return
+    if (!isInViewport(el)) return
+
+    if (muted) {
+      el.muted = true
+      el.defaultMuted = true
+    }
+
+    // Force load if not loaded
+    if (el.readyState < 2) {
+      el.load()
+    }
+
+    const playPromise = el.play()
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Silently handle autoplay failures
+      })
+    }
+  }, [kind, effectiveAutoplay, muted])
 
   useEffect(() => {
     if (kind !== 'video' || !effectiveAutoplay) return
-    const el = (videoRef as React.RefObject<HTMLVideoElement>)?.current
+    const el = internalVideoRef.current
     if (!el) return
 
     let isPlaying = false
@@ -83,12 +134,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         if (entry.isIntersecting && entry.intersectionRatio > 0) {
           if (!isPlaying) {
             isPlaying = true
-            el.play().catch((error) => {
-              isPlaying = false
-              if (process.env.NODE_ENV === 'development') {
-                console.log('Video autoplay failed:', error)
-              }
-            })
+            playIfPossible()
           }
         } else {
           if (isPlaying) {
@@ -109,17 +155,63 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     return () => {
       observer.disconnect()
     }
-  }, [kind, effectiveAutoplay, src, videoRef])
+  }, [kind, effectiveAutoplay, src, muted, playIfPossible, pathname])
+
+  // Force autoplay on mount (critical for navigation)
+  useEffect(() => {
+    if (!isMounted || kind !== 'video' || !effectiveAutoplay) return
+
+    // Multiple attempts with increasing delays
+    const timers = [
+      setTimeout(() => {
+        playIfPossible()
+      }, 50),
+      setTimeout(() => {
+        playIfPossible()
+      }, 200),
+      setTimeout(() => {
+        playIfPossible()
+      }, 500)
+    ]
+
+    return () => timers.forEach(t => clearTimeout(t))
+  }, [isMounted, kind, effectiveAutoplay, playIfPossible, src])
+
+  // Retry playback when source changes or when component mounts (helps after client-side navigation)
+  useEffect(() => {
+    playIfPossible()
+  }, [playIfPossible, src])
+
+  // Trigger autoplay when pathname changes (navigation between pages)
+  useEffect(() => {
+    if (kind !== 'video' || !effectiveAutoplay) return
+    // Small delay to ensure DOM is ready after navigation
+    const timer = setTimeout(() => {
+      playIfPossible()
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [pathname, kind, effectiveAutoplay, playIfPossible])
+
+  // When returning to the page (tab focus/navigation back), re-attempt autoplay if needed
+  useEffect(() => {
+    if (kind !== 'video' || !effectiveAutoplay) return
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        playIfPossible()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [kind, effectiveAutoplay, playIfPossible])
 
   if (kind === 'video') {
     return (
       <div className="relative w-full h-full">
         <video
-          ref={videoRef as React.RefObject<HTMLVideoElement>}
+          ref={setVideoRef}
           className={className || "w-full h-full object-cover"}
           src={shouldLoad ? src : undefined}
           poster={poster}
-          autoPlay={effectiveAutoplay}
           muted={muted}
           loop={loop}
           playsInline={playsInline}
@@ -132,16 +224,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
             setCanPlay(true)
             setIsLoading(false)
             // Immediate play attempt when video is ready
-            if (effectiveAutoplay && (videoRef as React.RefObject<HTMLVideoElement>)?.current) {
-              if (process.env.NODE_ENV === 'development') {
-                console.log('Video can play - attempting immediate play')
-              }
-              ; (videoRef as React.RefObject<HTMLVideoElement>).current!.play().catch((error) => {
-                if (process.env.NODE_ENV === 'development') {
-                  console.log('Video immediate play failed:', error)
-                }
-              })
-            }
+            playIfPossible()
           }}
           onLoadStart={() => setIsLoading(true)}
           onError={() => {

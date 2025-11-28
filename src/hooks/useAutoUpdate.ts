@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface UseAutoUpdateOptions {
   interval?: number; // in milliseconds
@@ -15,10 +15,17 @@ export function useAutoUpdate<T>(
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  // Use ref to store fetchFunction to avoid dependency issues
+  const fetchFunctionRef = useRef(fetchFunction);
+
+  useEffect(() => {
+    fetchFunctionRef.current = fetchFunction;
+  }, [fetchFunction]);
+
   const fetchData = useCallback(async () => {
     try {
       setError(null);
-      const result = await fetchFunction();
+      const result = await fetchFunctionRef.current();
       setData(result);
       setLastUpdated(new Date());
     } catch (err) {
@@ -26,7 +33,7 @@ export function useAutoUpdate<T>(
     } finally {
       setLoading(false);
     }
-  }, [fetchFunction]);
+  }, []); // Empty dependency array - stable function
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;

@@ -20,3 +20,5 @@ tsconfig.tsbuildinfo
 
 # Editor
 .vscode/
+
+test-results/

@@ -70,8 +70,6 @@ export async function POST(req: NextRequest) {
       console.log('Cloudinary config check:', {
         cloudName: cloudName ? 'SET' : 'MISSING',
         uploadPreset: uploadPreset ? 'SET' : 'MISSING',
-        cloudNameValue: cloudName,
-        uploadPresetValue: uploadPreset,
         fileSize: file.size,
         fileType: file.type,
         fileName: file.name
@@ -87,7 +85,7 @@ export async function POST(req: NextRequest) {
         instructions: {
           step1: 'Create .env.local file in project root',
           step2: 'Add: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name',
-          step3: 'Add: CLOUDINARY_UPLOAD_PRESET=your_upload_preset',
+          step3: 'Add: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset',
           step4: 'Restart development server',
           documentation: 'See CLOUDINARY_SETUP.md for detailed instructions'
         },
