@@ -65,7 +65,7 @@ export default function CvPageClient({
               onClick={handlePrint}
               className="inline-flex items-center gap-2 rounded-full bg-black text-white px-4 py-2 text-sm font-semibold hover:bg-red-600 transition-colors"
             >
-              Download PDF ATS
+              Download sekarang
             </button>
           </div>
         </div>
@@ -100,7 +100,7 @@ export default function CvPageClient({
                 {softSkills.length > 0 ? (
                   <ul className="mt-2 space-y-2 text-sm">
                     {softSkills.slice(0, 4).map((skill) => (
-                      <li key={skill} className="px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-800">
+                      <li key={skill} className="px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-800 text-center">
                         {skill}
                       </li>
                     ))}

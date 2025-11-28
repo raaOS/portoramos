@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Eye } from 'lucide-react';
 
 import { SkipLink } from '@/components/ui/SkipLink'
 import { useLastUpdated } from '@/contexts/LastUpdatedContext'
@@ -73,10 +73,11 @@ export default function Header() {
               {isClient && lastUpdated && `Last updated: ${lastUpdated.toLocaleTimeString()}`}
               <Link
                 href="/cv?mode=ats"
-                className="inline-flex items-center gap-2 rounded-full bg-red-600 text-white px-3 py-1.5 font-semibold hover:bg-red-700 transition-colors"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-black bg-white text-black px-4 py-2 font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-300"
                 aria-label="Lihat CV versi ATS yang ramah screening"
               >
-                CV versi ATS
+                <Eye className="w-4 h-4" />
+                <span>Download CV</span>
               </Link>
             </motion.div>
 
@@ -123,9 +124,10 @@ export default function Header() {
                 <div className="pt-2 border-t border-gray-100 mt-2">
                   <Link
                     href="/cv?mode=ats"
-                    className="flex items-center justify-center gap-2 w-full rounded-full bg-red-600 text-white px-4 py-2 font-semibold hover:bg-red-700 transition-colors"
+                    className="flex items-center justify-center gap-2 w-full rounded-full border-2 border-black bg-white text-black px-4 py-2.5 font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-300"
                   >
-                    CV versi ATS
+                    <Eye className="w-4 h-4" />
+                    <span>Download CV</span>
                   </Link>
                 </div>
               </nav>

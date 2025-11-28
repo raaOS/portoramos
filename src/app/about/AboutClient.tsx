@@ -405,13 +405,15 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         <div className="min-h-[35vh] md:min-h-[50vh] flex items-center justify-center relative z-20 px-4 overflow-hidden">
           <div className="text-center w-full">
             <div className="w-full flex justify-center">
-              <BlurTextLoop
-                text={currentAboutData.hero?.title || 'PORTOFOLIO'}
-                className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
-                initialDelay={0.15}
-                animateBy="letters"
-                direction="top"
-              />
+              {isClient && (
+                <BlurTextLoop
+                  text={currentAboutData.hero?.title || 'PORTOFOLIO'}
+                  className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
+                  initialDelay={0.15}
+                  animateBy="letters"
+                  direction="top"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -530,16 +532,18 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             {/* Grid Kanan - Soft Skills (Diperbesar) */}
             <div className="md:col-span-2 lg:col-span-2 space-y-8">
               <div className="text-center">
-                <Reveal>
-                  <div className="inline-block bg-black px-8 py-3 rounded-full mb-8">
-                    <h2 className="text-2xl font-medium text-white font-serif italic">
-                      Soft Skill
-                    </h2>
-                  </div>
-                </Reveal>
+                <div className="flex justify-center">
+                  <Reveal>
+                    <div className="inline-block bg-black px-8 py-3 rounded-full mb-8">
+                      <h2 className="text-2xl font-medium text-white font-serif italic">
+                        Soft Skill
+                      </h2>
+                    </div>
+                  </Reveal>
+                </div>
 
                 {/* Soft Skills Description */}
-                <div className="mb-8">
+                <div className="mb-8 flex justify-center">
                   <div className="inline-block border border-gray-300 bg-white px-8 py-4 rounded-[50px] max-w-3xl">
                     <div className="text-base text-gray-600 font-serif italic text-center" style={{ fontFamily: 'Merriweather, serif' }}>
                       {currentSoftSkillDescription}
@@ -644,37 +648,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         </div>
       </div>
 
-      {/* Section 5: Call to Action */}
-      <div className="bg-gray-50 py-14 md:py-16">
-        <div className="w-full max-w-4xl mx-auto px-4 text-center">
-          <Reveal>
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-black mb-6">
-              Tertarik Bekerja Sama?
-            </h2>
-          </Reveal>
-          <Reveal delay={0.3}>
-            <p className="text-lg text-gray-600 font-serif mb-8 max-w-2xl mx-auto">
-              Mari diskusikan proyek desain Anda dan wujudkan visi kreatif menjadi kenyataan yang memukau.
-            </p>
-          </Reveal>
-          <Reveal delay={0.4}>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="/contact"
-                className="inline-block bg-black text-white px-8 py-4 rounded-full font-medium hover:bg-gray-800 transition-colors duration-300"
-              >
-                Hubungi Saya
-              </a>
-              <a
-                href="/work"
-                className="inline-block border border-black text-black px-8 py-4 rounded-full font-medium hover:bg-black hover:text-white transition-colors duration-300"
-              >
-                Lihat Karya
-              </a>
-            </div>
-          </Reveal>
-        </div>
-      </div>
+
 
       {/* Preview Modal */}
       {isPreviewOpen && previewImage && (
