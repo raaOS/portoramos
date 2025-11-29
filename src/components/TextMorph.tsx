@@ -207,7 +207,7 @@ export default function TextMorph({
           text-align: center;
           margin: 0;
           position: relative;
-          min-height: 200px;
+          min-height: 150px;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -218,7 +218,7 @@ export default function TextMorph({
           position: relative;
           width: 100%;
           min-width: 100%;
-          height: 200px;
+          height: 150px;
           margin: 0 auto;
           filter: url(#threshold) blur(0.6px);
           display: flex;
@@ -227,7 +227,7 @@ export default function TextMorph({
           overflow: visible;
           contain: layout style paint;
           flex-wrap: nowrap;
-          padding: 0 3rem;
+          padding: 0 2rem;
         }
 
         .text-morph-text {
@@ -280,19 +280,19 @@ export default function TextMorph({
             line-height: 0.8;
           }
           .text-morph-text-container {
-            height: 200px;
+            height: 150px;
             padding: 0 2rem;
           }
         }
 
         @media (max-width: 768px) {
           .text-morph-text {
-            font-size: 45px;
-            letter-spacing: -1.5px;
-            line-height: 0.8;
+            font-size: 48px;
+            letter-spacing: -1.1px;
+            line-height: 0.82;
           }
           .text-morph-text-container {
-            height: 160px;
+            height: 130px;
             padding: 0 1.5rem;
           }
           
@@ -300,9 +300,9 @@ export default function TextMorph({
 
         @media (max-width: 480px) {
           .text-morph-text {
-            font-size: 35px;
-            letter-spacing: -1px;
-            line-height: 0.8;
+            font-size: 40px;
+            letter-spacing: -0.8px;
+            line-height: 0.84;
           }
           .text-morph-text-container {
             height: 120px;
@@ -314,26 +314,26 @@ export default function TextMorph({
         /* Extra small screens */
         @media (max-width: 360px) {
           .text-morph-text {
-            font-size: 45px;
+            font-size: 36px;
             letter-spacing: -0.5px;
-            line-height: 0.8;
+            line-height: 0.85;
           }
           .text-morph-text-container {
-            height: 80px;
-            padding: 0 0.5rem;
+            height: 110px;
+            padding: 0 0.85rem;
           }
         }
 
         /* Very small screens */
         @media (max-width: 320px) {
           .text-morph-text {
-            font-size: 35px;
+            font-size: 34px;
             letter-spacing: -0.3px;
-            line-height: 0.8;
+            line-height: 0.86;
           }
           .text-morph-text-container {
-            height: 60px;
-            padding: 0 0.25rem;
+            height: 100px;
+            padding: 0 0.75rem;
           }
         }
       `}</style>

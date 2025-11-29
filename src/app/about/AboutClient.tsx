@@ -358,6 +358,13 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     '/images/trail/trail6.jpg'
   ];
 
+  const heroTitleRaw = currentAboutData.hero?.title || 'PORTOFOLIO';
+  const heroStartsWithPorto = /^porto/i.test(heroTitleRaw);
+  const heroTail = heroStartsWithPorto
+    ? heroTitleRaw.replace(/^porto\s*/i, '').trim() || 'FOLIO'
+    : heroTitleRaw;
+  const heroTailUpper = heroTail.toUpperCase();
+
   return (
     <div className="min-h-screen bg-white">
       {/* Section Navigation dengan Nomor */}
@@ -413,13 +420,47 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
           <div className="text-center w-full">
             <div className="w-full flex justify-center">
               {isClient && (
-                <BlurTextLoop
-                  text={currentAboutData.hero?.title || 'PORTOFOLIO'}
-                  className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
-                  initialDelay={0.15}
-                  animateBy="letters"
-                  direction="top"
-                />
+                <>
+                  {/* Mobile: paksa 2 baris PORTO + tail jika judul diawali PORTO, selain itu tetap satu baris */}
+                  {heroStartsWithPorto ? (
+                    <div className="block sm:hidden leading-[0.9] uppercase">
+                      <BlurTextLoop
+                        text="PORTO"
+                        className="block text-[32vw] tracking-normal text-black font-display font-bold select-none"
+                        initialDelay={0.15}
+                        animateBy="letters"
+                        direction="top"
+                      />
+                      <BlurTextLoop
+                        text={heroTailUpper}
+                        className="block text-[32vw] tracking-normal text-black font-display font-bold select-none"
+                        initialDelay={0.15}
+                        animateBy="letters"
+                        direction="top"
+                      />
+                    </div>
+                  ) : (
+                    <div className="block sm:hidden">
+                      <BlurTextLoop
+                        text={heroTitleRaw}
+                        className="text-[32vw] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
+                        initialDelay={0.15}
+                        animateBy="letters"
+                        direction="top"
+                      />
+                    </div>
+                  )}
+                  {/* Tablet/desktop: tetap satu baris */}
+                  <div className="hidden sm:block">
+                    <BlurTextLoop
+                      text={heroTitleRaw}
+                      className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
+                      initialDelay={0.15}
+                      animateBy="letters"
+                      direction="top"
+                    />
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -476,10 +517,10 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 3: Hard Skills dan Soft Skills dengan 2 Grid */}
       <div
         id="skills"
-        className="bg-white py-20 md:py-20 lg:py-24 flex items-center justify-center lg:min-h-[70vh] border-b border-gray-200"
+        className="bg-white pt-20 pb-6 md:pt-20 md:pb-8 lg:pt-24 lg:pb-12 flex items-center justify-center lg:min-h-[70vh] border-b border-gray-200"
       >
         <div className="w-full max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-16 xl:gap-20">
 
             {/* Grid Kiri - Hard Skills (Diperkecil) */}
             <div className="lg:col-span-1 space-y-6">
@@ -537,9 +578,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             </div>
 
             {/* Grid Kanan - Soft Skills (Diperbesar) */}
-            <div className="md:col-span-2 lg:col-span-2 space-y-8">
+            <div className="md:col-span-2 lg:col-span-2 space-y-8 mt-8 md:mt-10 lg:mt-0">
               <div className="text-left">
-                <div className="flex justify-start md:justify-center">
+                <div className="flex justify-start">
                   <Reveal>
                     <div className="inline-block bg-black px-6 py-2 md:px-8 md:py-3 rounded-full mb-8">
                       <h2 className="text-xl md:text-2xl font-medium text-white font-serif italic">
@@ -550,17 +591,17 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                 </div>
 
                 {/* Soft Skills Description */}
-                <div className="mb-8 flex justify-start md:justify-center">
-                  <div className="inline-block border border-gray-300 bg-white px-6 py-3 md:px-8 md:py-4 rounded-[30px] md:rounded-[50px] max-w-full md:max-w-3xl">
-                    <div className="text-sm md:text-base text-gray-600 font-serif italic text-left md:text-center" style={{ fontFamily: 'Merriweather, serif' }}>
+                <div className="mb-6 flex justify-start">
+                  <div className="inline-block border border-gray-300 bg-white px-5 py-3 md:px-8 md:py-4 rounded-[30px] md:rounded-[50px] max-w-[90%] md:max-w-3xl">
+                    <div className="text-sm md:text-base text-gray-600 font-serif italic text-left" style={{ fontFamily: 'Merriweather, serif' }}>
                       {currentSoftSkillDescription}
                     </div>
                   </div>
                 </div>
 
                 {/* TextMorph - has its own animation, no Reveal needed */}
-                <div className="w-full overflow-hidden flex justify-start md:justify-center">
-                  <div className="origin-left md:origin-center transform scale-[0.85] md:scale-100 w-[115%] md:w-full">
+                <div className="w-full overflow-hidden flex justify-start">
+                  <div className="origin-left transform scale-[0.85] md:scale-100 w-[115%] md:w-full">
                     <TextMorph
                       texts={softSkills.texts}
                       descriptions={softSkills.descriptions}
@@ -581,10 +622,10 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Section 4: Experience */}
       <div
         id="experience"
-        className="bg-white pt-20 pb-40 md:pt-24 md:pb-44 lg:pt-24 lg:pb-48"
+        className="bg-white pt-8 pb-40 md:pt-12 md:pb-44 lg:pt-14 lg:pb-48"
       >
         <div className="w-full max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
+          <div className="text-left mb-12">
             <Reveal>
               <h2 className="text-3xl md:text-4xl font-serif font-bold text-black mb-4">Experience</h2>
             </Reveal>
@@ -598,7 +639,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
 
             {/* Grid Kiri - Statistics & Testimoni (No Reveal to prevent overlap) */}
             <div className="space-y-6">
-              <div className="text-center lg:text-left">
+              <div className="text-left">
                 <div className="inline-block bg-black px-4 py-2 rounded-full mb-4">
                   <h3 className="text-lg font-medium text-white font-serif italic">
                     Freelance Experience
@@ -618,9 +659,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             </div>
 
             {/* Grid Kanan - Work Experience (Swaying Gallery) */}
-            <div className="space-y-6">
+            <div className="space-y-6 mt-14 md:mt-16 lg:mt-0">
               <div>
-                <div className="text-center lg:text-left mb-4">
+                <div className="text-left mb-4">
                   <Reveal>
                     <div className="inline-block bg-black px-4 py-2 rounded-full">
                       <h3 className="text-lg font-medium text-white font-serif italic">
