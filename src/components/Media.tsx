@@ -98,6 +98,8 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     return rect.bottom > 0 && rect.right > 0 && rect.top < viewHeight && rect.left < viewWidth
   }
 
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false)
+
   const playIfPossible = useCallback(() => {
     if (kind !== 'video' || !effectiveAutoplay) return
     const el = internalVideoRef.current
@@ -116,8 +118,22 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
 
     const playPromise = el.play()
     if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        // Silently handle autoplay failures
+      playPromise.catch((error) => {
+        // Show detailed error in development
+        if (process.env.NODE_ENV === 'development') {
+          console.group('🎬 Video Autoplay Blocked')
+          console.error('Error Name:', error.name)
+          console.error('Error Message:', error.message)
+          console.log('Video Src:', el.src)
+          console.log('Video Muted:', el.muted)
+          console.log('Video Ready State:', el.readyState)
+          console.log('Protocol:', window.location.protocol)
+          console.log('💡 Solution: Click the play button or enable autoplay in browser')
+          console.groupEnd()
+        }
+
+        // Show play button overlay
+        setAutoplayBlocked(true)
       })
     }
   }, [kind, effectiveAutoplay, muted])
@@ -234,8 +250,39 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           onPlay={() => {
             setCanPlay(true)
             setIsLoading(false)
+            setAutoplayBlocked(false) // Hide play button when playing
           }}
         />
+
+        {/* Play Button Overlay - Shows when autoplay is blocked */}
+        {autoplayBlocked && !hasError && (
+          <div
+            className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer group hover:bg-black/50 transition-colors"
+            onClick={() => {
+              const video = internalVideoRef.current
+              if (video) {
+                video.play()
+                  .then(() => {
+                    setAutoplayBlocked(false)
+                  })
+                  .catch((err) => {
+                    console.error('Manual play failed:', err)
+                  })
+              }
+            }}
+            title="Click to play video"
+          >
+            <div className="bg-white/95 rounded-full p-5 shadow-2xl group-hover:scale-110 transition-transform">
+              <svg
+                className="w-12 h-12 text-black"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </div>
+        )}
 
         {hasError && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-500">

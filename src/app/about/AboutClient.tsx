@@ -30,6 +30,7 @@ const SimpleTrail = dynamic(() => import('@/components/SimpleTrail'), {
 const softSkills = {
   texts: [
     "Kreativitas & Inovasi",
+    "Desain Grafis Kreatif",
     "Komunikasi Visual",
     "Problem Solving",
     "Adaptabilitas",
@@ -40,6 +41,7 @@ const softSkills = {
   ],
   descriptions: [
     "Mampu menghasilkan ide-ide segar dan solusi desain yang unik.",
+    "Mengemas pesan brand jadi visual yang berani, konsisten, dan mudah diingat.",
     "Menyampaikan pesan melalui elemen visual yang efektif dan menarik.",
     "Menganalisis kebutuhan klien dan menemukan solusi desain yang tepat.",
     "Menyesuaikan diri dengan perubahan teknologi dan tren industri.",
@@ -321,6 +323,13 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
   const resolvedConcepts =
     hardSkillConceptsData?.concepts?.length ? hardSkillConceptsData.concepts : fallbackConcepts;
 
+  const heroTitleRaw = currentAboutData.hero?.title || 'PORTOFOLIO';
+  const heroStartsWithPorto = /^porto/i.test(heroTitleRaw);
+  const heroTail = heroStartsWithPorto
+    ? heroTitleRaw.replace(/^porto\s*/i, '').trim() || 'FOLIO'
+    : heroTitleRaw;
+  const heroTailUpper = heroTail.toUpperCase();
+
   const handleImageClick = (imageSrc: string) => {
     hideNavbar();
     setPreviewImage(imageSrc);
@@ -338,6 +347,8 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     setCurrentSoftSkillDescription(softSkills.descriptions[0]);
     setIsClient(true);
   }, []);
+
+  // Animasi hero mobile diatur lewat BlurTextLoop dengan delay berbeda per baris
 
   const hardSkills = resolvedConcepts
     .slice()
@@ -357,13 +368,6 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     '/images/trail/trail5.jpg',
     '/images/trail/trail6.jpg'
   ];
-
-  const heroTitleRaw = currentAboutData.hero?.title || 'PORTOFOLIO';
-  const heroStartsWithPorto = /^porto/i.test(heroTitleRaw);
-  const heroTail = heroStartsWithPorto
-    ? heroTitleRaw.replace(/^porto\s*/i, '').trim() || 'FOLIO'
-    : heroTitleRaw;
-  const heroTailUpper = heroTail.toUpperCase();
 
   return (
     <div className="min-h-screen bg-white">
@@ -424,20 +428,22 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                   {/* Mobile: paksa 2 baris PORTO + tail jika judul diawali PORTO, selain itu tetap satu baris */}
                   {heroStartsWithPorto ? (
                     <div className="block sm:hidden leading-[0.9] uppercase">
-                      <BlurTextLoop
-                        text="PORTO"
-                        className="block text-[32vw] tracking-normal text-black font-display font-bold select-none"
-                        initialDelay={0.15}
-                        animateBy="letters"
-                        direction="top"
-                      />
-                      <BlurTextLoop
-                        text={heroTailUpper}
-                        className="block text-[32vw] tracking-normal text-black font-display font-bold select-none"
-                        initialDelay={0.15}
-                        animateBy="letters"
-                        direction="top"
-                      />
+                      <div className="flex flex-col items-start space-y-1">
+                        <BlurTextLoop
+                          text="PORTO"
+                          className="text-[32vw] tracking-normal text-black font-display font-bold select-none"
+                          initialDelay={0.1}
+                          animateBy="letters"
+                          direction="top"
+                        />
+                        <BlurTextLoop
+                          text={heroTailUpper}
+                          className="text-[32vw] tracking-normal text-black font-display font-bold select-none"
+                          initialDelay={1}
+                          animateBy="letters"
+                          direction="top"
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div className="block sm:hidden">

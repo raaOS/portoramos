@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 
 interface NavbarVisibilityContextType {
   isNavbarVisible: boolean;
@@ -13,11 +13,18 @@ const NavbarVisibilityContext = createContext<NavbarVisibilityContextType | unde
 export function NavbarVisibilityProvider({ children }: { children: ReactNode }) {
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
 
-  const hideNavbar = () => setIsNavbarVisible(false);
-  const showNavbar = () => setIsNavbarVisible(true);
+  // Memoize callback functions to prevent re-creating them on every render
+  const hideNavbar = useCallback(() => setIsNavbarVisible(false), []);
+  const showNavbar = useCallback(() => setIsNavbarVisible(true), []);
+
+  // Memoize value to prevent unnecessary re-renders
+  const value = useMemo(
+    () => ({ isNavbarVisible, hideNavbar, showNavbar }),
+    [isNavbarVisible, hideNavbar, showNavbar]
+  );
 
   return (
-    <NavbarVisibilityContext.Provider value={{ isNavbarVisible, hideNavbar, showNavbar }}>
+    <NavbarVisibilityContext.Provider value={value}>
       {children}
     </NavbarVisibilityContext.Provider>
   );

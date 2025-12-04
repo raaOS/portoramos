@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState, useMemo } from 'react';
+import { ANIMATION } from '@/lib/constants';
 
 interface AnimationKeyframe {
     filter?: string;
@@ -37,17 +38,17 @@ interface BlurTextProps {
 
 const BlurText = ({
     text = '',
-    delay = 200,
+    delay = ANIMATION.BLUR_DELAY,
     className = '',
     animateBy = 'words',
     direction = 'top',
-    threshold = 0.1,
-    rootMargin = '0px',
+    threshold = ANIMATION.BLUR_THRESHOLD,
+    rootMargin = ANIMATION.ROOT_MARGIN,
     animationFrom,
     animationTo,
     easing = (t: number) => t,
     onAnimationComplete,
-    stepDuration = 0.35
+    stepDuration = ANIMATION.STEP_DURATION
 }: BlurTextProps) => {
     const elements = animateBy === 'words' ? text.split(' ') : text.split('');
     const [inView, setInView] = useState(false);

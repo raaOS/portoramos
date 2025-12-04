@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, ReactNode } from 'react';
 
 interface LastUpdatedContextType {
   lastUpdated: Date | null;
@@ -12,8 +12,14 @@ const LastUpdatedContext = createContext<LastUpdatedContextType | undefined>(und
 export function LastUpdatedProvider({ children }: { children: ReactNode }) {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  // Memoize value to prevent unnecessary re-renders
+  const value = useMemo(
+    () => ({ lastUpdated, setLastUpdated }),
+    [lastUpdated]
+  );
+
   return (
-    <LastUpdatedContext.Provider value={{ lastUpdated, setLastUpdated }}>
+    <LastUpdatedContext.Provider value={value}>
       {children}
     </LastUpdatedContext.Provider>
   );

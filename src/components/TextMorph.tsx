@@ -204,13 +204,13 @@ export default function TextMorph({
 
       <style jsx>{`
         .text-morph-container {
-          text-align: center;
+          text-align: left;
           margin: 0;
           position: relative;
           min-height: 150px;
           display: flex;
           flex-direction: column;
-          align-items: center;
+          align-items: flex-start;
           justify-content: flex-start;
         }
 
@@ -223,7 +223,7 @@ export default function TextMorph({
           filter: url(#threshold) blur(0.6px);
           display: flex;
           align-items: center;
-          justify-content: center;
+          justify-content: flex-start;
           overflow: visible;
           contain: layout style paint;
           flex-wrap: nowrap;
@@ -233,14 +233,14 @@ export default function TextMorph({
         .text-morph-text {
           position: absolute;
           top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
+          left: 0;
+          transform: translateY(-50%);
           width: 100%;
           display: block;
           font-family: 'Merriweather', serif;
           font-size: 75px;
           font-weight: 700;
-          text-align: center;
+          text-align: left;
           user-select: none;
           color: #000000;
           text-transform: uppercase;

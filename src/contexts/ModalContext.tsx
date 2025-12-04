@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, ReactNode } from 'react';
 
 interface ModalContextType {
   isModalOpen: boolean;
@@ -12,8 +12,14 @@ const ModalContext = createContext<ModalContextType | undefined>(undefined);
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Memoize value to prevent unnecessary re-renders
+  const value = useMemo(
+    () => ({ isModalOpen, setIsModalOpen }),
+    [isModalOpen]
+  );
+
   return (
-    <ModalContext.Provider value={{ isModalOpen, setIsModalOpen }}>
+    <ModalContext.Provider value={value}>
       {children}
     </ModalContext.Provider>
   );

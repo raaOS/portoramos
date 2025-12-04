@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 
 /**
  * Feature Flags Context
@@ -79,8 +79,11 @@ export function FeatureFlagsProvider({ children, initialFlags = {} }: FeatureFla
         localStorage.setItem('featureFlags', JSON.stringify(flags));
     }, [flags]);
 
+    // Memoize value to prevent unnecessary re-renders when flags haven't changed
+    const value = useMemo(() => flags, [flags]);
+
     return (
-        <FeatureFlagsContext.Provider value={flags}>
+        <FeatureFlagsContext.Provider value={value}>
             {children}
         </FeatureFlagsContext.Provider>
     );

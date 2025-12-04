@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAutoUpdate } from '@/hooks/useAutoUpdate';
 import { Project } from '@/types/projects';
 import { useLastUpdated } from '@/contexts/LastUpdatedContext';
+import { POLLING } from '@/lib/constants';
 import IndexClientInner from './IndexClientInner';
 
 type Props = {
@@ -31,17 +32,17 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
   // Load initial data only if we don't have server data
   useEffect(() => {
     if (!mounted || serverProjects.length > 0) return;
-    
+
     const loadInitialData = async () => {
       try {
         setLoading(true);
         setInitialError(null);
         const response = await fetch('/api/projects');
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data: ProjectsResponse = await response.json();
         setInitialProjects(data.projects);
         setLastUpdated(new Date(data.lastUpdated));
@@ -76,7 +77,7 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
       if (!response.ok) throw new Error('Failed to fetch projects');
       return response.json();
     },
-    { interval: 30000, enabled: !loading && (initialProjects.length > 0 || serverProjects.length > 0) } // Update every 30 seconds, only after initial load
+    { interval: POLLING.UPDATE_INTERVAL, enabled: !loading && (initialProjects.length > 0 || serverProjects.length > 0) } // Update every 30 seconds, only after initial load
   );
 
   // Update context when lastUpdated changes

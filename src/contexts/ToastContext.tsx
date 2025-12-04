@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import Toast from '@/components/Toast';
 
 interface ToastData {
@@ -40,8 +40,8 @@ interface ToastProviderProps {
   position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center' | 'center';
 }
 
-export function ToastProvider({ 
-  children, 
+export function ToastProvider({
+  children,
   maxToasts = 5,
   position = 'bottom-left'
 }: ToastProviderProps) {
@@ -97,8 +97,8 @@ export function ToastProvider({
   }, [showToast]);
 
   const updateToast = useCallback((id: string, updates: Partial<Omit<ToastData, 'id'>>) => {
-    setToasts(prev => 
-      prev.map(toast => 
+    setToasts(prev =>
+      prev.map(toast =>
         toast.id === id ? { ...toast, ...updates } : toast
       )
     );
@@ -124,14 +124,16 @@ export function ToastProvider({
   };
 
   const toast = useCallback((options: { type: 'error' | 'success' | 'info' | 'warning'; text: string; duration?: number }) => {
-    return showToast({ 
-      message: options.text, 
-      type: options.type, 
-      duration: options.duration 
+    return showToast({
+      message: options.text,
+      type: options.type,
+      duration: options.duration
     });
   }, [showToast]);
 
-  const contextValue: ToastContextType = {
+  // Memoize context value to prevent re-renders when toasts list changes
+  // but the methods remain the same
+  const contextValue: ToastContextType = useMemo(() => ({
     showToast,
     hideToast,
     hideAllToasts,
@@ -142,14 +144,14 @@ export function ToastProvider({
     showLoading,
     updateToast,
     toast,
-  };
+  }), [showToast, hideToast, hideAllToasts, showSuccess, showError, showInfo, showWarning, showLoading, updateToast, toast]);
 
   return (
     <ToastContext.Provider value={contextValue}>
       {children}
-      
+
       {/* Toast Container */}
-      <div 
+      <div
         className={`fixed z-50 flex flex-col space-y-2 pointer-events-none ${getPositionClasses()}`}
         style={{ maxWidth: '400px' }}
       >
