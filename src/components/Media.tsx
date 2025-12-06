@@ -58,9 +58,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   const [hasError, setHasError] = useState(false)
   const [shouldLoad] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  )
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
