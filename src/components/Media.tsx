@@ -90,21 +90,15 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     }
   }, [ref])
 
-  const isInViewport = (el: HTMLElement) => {
-    if (typeof window === 'undefined') return true
-    const rect = el.getBoundingClientRect()
-    const viewHeight = window.innerHeight || document.documentElement.clientHeight
-    const viewWidth = window.innerWidth || document.documentElement.clientWidth
-    return rect.bottom > 0 && rect.right > 0 && rect.top < viewHeight && rect.left < viewWidth
-  }
-
   const [autoplayBlocked, setAutoplayBlocked] = useState(false)
 
   const playIfPossible = useCallback(() => {
     if (kind !== 'video' || !effectiveAutoplay) return
     const el = internalVideoRef.current
     if (!el) return
-    if (!isInViewport(el)) return
+
+    // Check if element is connected to DOM
+    if (!el.isConnected) return
 
     if (muted) {
       el.muted = true
@@ -128,12 +122,14 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           console.log('Video Muted:', el.muted)
           console.log('Video Ready State:', el.readyState)
           console.log('Protocol:', window.location.protocol)
-          console.log('💡 Solution: Click the play button or enable autoplay in browser')
+          console.error('Full Error:', error)
           console.groupEnd()
         }
 
-        // Show play button overlay
-        setAutoplayBlocked(true)
+        // Only show blocked state if not AbortError (pause was called)
+        if (error.name !== 'AbortError') {
+          setAutoplayBlocked(true)
+        }
       })
     }
   }, [kind, effectiveAutoplay, muted])
@@ -228,6 +224,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           className={className || "w-full h-full object-cover"}
           src={shouldLoad ? src : undefined}
           poster={poster}
+          {...(effectiveAutoplay ? { autoPlay: true } : {})}
           muted={muted}
           loop={loop}
           playsInline={playsInline}

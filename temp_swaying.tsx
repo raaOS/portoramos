@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import Media from './Media';
 import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
 
 interface GalleryImage {
@@ -31,7 +30,6 @@ interface TooltipState {
   visible: boolean;
   x: number;
   y: number;
-  content: string;
 }
 
 export default function SwayingGallery({
@@ -45,7 +43,6 @@ export default function SwayingGallery({
     visible: false,
     x: 0,
     y: 0,
-    content: '',
   });
   const { hideNavbar, showNavbar } = useNavbarVisibility();
 
@@ -93,75 +90,46 @@ export default function SwayingGallery({
         ref={galleryRef}
         className={`gallery-container ${isActive ? 'active' : ''}`}
       >
-        {images.map((image, index) => {
-          const isVideo = image.src.toLowerCase().match(/\.(mp4|webm|mov)$/);
-          return (
-            <div
-              key={index}
-              className={`gallery-item ${image.jobDetails ? 'clickable' : ''}`}
-              onClick={() => handlePhotoClick(image)}
-              onMouseEnter={() => {
-                if (image.jobDetails) {
-                  setTooltip((prev) => ({
-                    ...prev,
-                    visible: true,
-                    content: image.duration || ''
-                  }));
-                }
-              }}
-              onMouseLeave={() =>
-                setTooltip((prev) => ({ ...prev, visible: false }))
+        {images.map((image, index) => (
+          <div
+            key={index}
+            className={`gallery-item ${image.jobDetails ? 'clickable' : ''}`}
+            onClick={() => handlePhotoClick(image)}
+            onMouseEnter={() => {
+              if (image.jobDetails) {
+                setTooltip((prev) => ({ ...prev, visible: true }));
               }
-              onMouseMove={(event) => {
-                if (!image.jobDetails) return;
-                setTooltip((prev) => ({
-                  ...prev,
-                  visible: true,
-                  x: event.clientX + 20,
-                  y: event.clientY + 30,
-                }));
-              }}
-            >
-              <Media
-                kind={isVideo ? 'video' : 'image'}
-                src={image.src}
-                alt={image.alt}
-                width={225}
-                height={300}
-                className="gallery-image w-full h-full object-cover"
-                autoplay={true}
-                muted={true}
-                loop={true}
-                playsInline={true}
-              />
-              <div className="gallery-pin" />
-              {(image.title || image.description) && (
-                <div className="gallery-caption">
-                  {image.title && <h3 className="gallery-title">{image.title}</h3>}
-                  {image.description && (
-                    <div className="gallery-description flex flex-col gap-0.5">
-                      {image.description.includes(' - ') ? (
-                        <>
-                          <span className="font-semibold text-gray-900 leading-tight">
-                            {image.description.split(' - ')[1]}
-                          </span>
-                          <span className="text-gray-600 font-normal leading-tight">
-                            {image.description.split(' - ')[0]}
-                          </span>
-                        </>
-                      ) : (
-                        image.description
-                      )}
-                    </div>
-                  )}
-                  {image.jobDetails && (
-                    <p className="gallery-click-hint">(Klik detail jobdesk)</p>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+            }}
+            onMouseLeave={() =>
+              setTooltip((prev) => ({ ...prev, visible: false }))
+            }
+            onMouseMove={(event) => {
+              if (!image.jobDetails) return;
+              setTooltip({
+                visible: true,
+                x: event.clientX + 12,
+                y: event.clientY + 18,
+              });
+            }}
+          >
+            <Image
+              src={image.src}
+              alt={image.alt}
+              width={225}
+              height={300}
+              className="gallery-image"
+            />
+            <div className="gallery-pin" />
+            {(image.title || image.description) && (
+              <div className="gallery-caption">
+                {image.title && <h3 className="gallery-title">{image.title}</h3>}
+                {image.description && (
+                  <p className="gallery-description">{image.description}</p>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
 
       {/* Tooltip - Blue rounded background */}
@@ -170,7 +138,7 @@ export default function SwayingGallery({
           className="gallery-tooltip"
           style={{ left: `${tooltip.x}px`, top: `${tooltip.y}px` }}
         >
-          {tooltip.content}
+          Klik detail jobdesk
         </div>
       )}
 
@@ -230,11 +198,11 @@ export default function SwayingGallery({
           grid-template-columns: repeat(3, 1fr) !important;
           grid-template-rows: repeat(2, 1fr) !important;
           gap: 10px !important;
-          padding: 60px 40px 100px !important;
+          padding: 170px 40px 100px !important;
           max-width: none !important;
           margin: 0 auto !important;
           width: 100% !important;
-          height: 640px !important;
+          height: 760px !important;
           overflow: visible !important;
         }
 
@@ -345,11 +313,11 @@ export default function SwayingGallery({
           left: 0 !important;
           right: 0 !important;
           text-align: center !important;
-          padding: 8px 4px 10px 4px !important;
-          background: rgba(255, 255, 255, 0.98) !important;
+          padding: 2px 4px 10px 4px !important;
+          background: rgba(255, 255, 255, 0.95) !important;
           border-radius: 0 0 4px 4px !important;
           margin: 0 !important;
-          z-index: 100 !important;
+          z-index: 10 !important;
         }
 
         .gallery-title {
@@ -364,16 +332,15 @@ export default function SwayingGallery({
         .gallery-description {
           color: #666;
           font-size: 8px;
-          margin: 0 0 4px 0;
+          margin: 0 0 15px 0;
           text-transform: none;
           line-height: 1.1;
         }
 
         .gallery-click-hint {
-          color: #555;
-          font-size: 9px;
-          margin: 12px 0 0 0;
-          font-weight: 500;
+          color: #999;
+          font-size: 7px;
+          margin: 0;
           text-transform: none;
           line-height: 1.1;
           font-style: italic;
@@ -416,9 +383,9 @@ export default function SwayingGallery({
           .gallery-container {
             max-width: none;
             gap: 10px;
-            padding: 60px 40px 100px;
+            padding: 170px 40px 100px;
             width: 100%;
-            height: 640px;
+            height: 760px;
             margin: 0 auto;
             overflow: visible;
           }
@@ -461,53 +428,49 @@ export default function SwayingGallery({
 
           .gallery-image {
             object-fit: contain !important;
+            object-position: center !important;
+            padding: 10px !important;
           }
         }
 
+        /* Modal Styles */
         .job-modal-overlay {
           position: fixed;
           top: 0;
           left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.4);
-          z-index: 9999;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 1rem;
-          animation: fadeIn 0.15s ease-out;
-          backdrop-filter: blur(4px);
+          z-index: 1000;
+          padding: 20px;
         }
 
         .job-modal {
           background: white;
-          width: 90%;
-          max-width: 480px;
-          border-radius: 16px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-            0 10px 10px -5px rgba(0, 0, 0, 0.04);
-          overflow: hidden;
-          animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          border: 1px solid #f3f4f6;
-          max-height: 85vh;
+          border-radius: 14px;
+          max-width: 620px;
+          width: 100%;
+          max-height: 80vh;
           overflow-y: auto;
+          box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
         }
 
         .job-modal-header {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
-          padding: 20px 26px 16px;
-          border-bottom: 1px solid #f3f4f6;
+          align-items: center;
+          padding: 22px 26px;
+          border-bottom: 1px solid #e5e7eb;
         }
 
         .job-modal-title {
-          font-size: 18px;
+          font-size: 22px;
           font-weight: 700;
           color: #111827;
           margin: 0;
-          letter-spacing: -0.01em;
         }
 
         .job-modal-close {
@@ -614,26 +577,6 @@ export default function SwayingGallery({
           height: 8px;
           border-radius: 50%;
           background: #2563eb;
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px) scale(0.98);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
         }
       `}</style>
     </div>

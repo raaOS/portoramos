@@ -8,8 +8,14 @@ const nextConfig = {
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'via.placeholder.com' }
     ],
-    // Enable image optimization for better performance
-    unoptimized: false,
+    // Enable image optimization for better performance (disabled in dev to avoid localPatterns issues)
+    unoptimized: process.env.NODE_ENV !== 'production',
+    localPatterns: [
+      {
+        pathname: '/api/img',
+        search: '?u=*',
+      },
+    ],
   },
   // Enable production source maps for better error tracking
   productionBrowserSourceMaps: true,

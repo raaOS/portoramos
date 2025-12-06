@@ -13,9 +13,10 @@ import DetailMeta from './DetailMeta'
 
 export const dynamic = 'force-dynamic'
 
-export default async function ProjectPage({ params }: { params: { slug: string } }){
+export default async function ProjectPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const p = await getProjectBySlugAsync(params.slug);
-  if(!p) return notFound();
+  if (!p) return notFound();
   const list = await allProjectsAsync();
   const cover = resolveCover(p)
   // Calculate flexible aspect ratio for project detail
@@ -25,16 +26,16 @@ export default async function ProjectPage({ params }: { params: { slug: string }
       return cover.width / cover.height
     }
     // Default to 16:9 for consistent experience
-    return 16/9
+    return 16 / 9
   }
-  
+
   const ratio = calculateDetailRatio()
-  
+
   // Determine layout strategy based on aspect ratio
   const getLayoutStrategy = () => {
     if (cover.width && cover.height) {
       const aspectRatio = cover.width / cover.height
-      
+
       // Portrait videos (height > width) - 9:16, 3:4, etc.
       if (aspectRatio < 1) {
         return {
@@ -45,7 +46,7 @@ export default async function ProjectPage({ params }: { params: { slug: string }
           contentWidth: 'half'
         }
       }
-      
+
       // Square videos (1:1)
       if (aspectRatio === 1) {
         return {
@@ -56,7 +57,7 @@ export default async function ProjectPage({ params }: { params: { slug: string }
           contentWidth: 'half'
         }
       }
-      
+
       // Landscape videos (width > height) - 16:9, 4:3, etc.
       return {
         type: 'landscape',
@@ -66,7 +67,7 @@ export default async function ProjectPage({ params }: { params: { slug: string }
         contentWidth: 'half'
       }
     }
-    
+
     // Default for unknown aspect ratio
     return {
       type: 'unknown',
@@ -76,7 +77,7 @@ export default async function ProjectPage({ params }: { params: { slug: string }
       contentWidth: 'half'
     }
   }
-  
+
   const layoutStrategy = getLayoutStrategy()
   const gallery = resolveGallery(p)
   const structuredData = generateProjectStructuredData(p);
@@ -87,22 +88,23 @@ export default async function ProjectPage({ params }: { params: { slug: string }
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: structuredData }}
       />
-              <ProjectDetailClient 
-                p={p}
-                cover={cover}
-                gallery={gallery}
-                ratio={ratio}
-                layoutStrategy={layoutStrategy}
-              />
+      <ProjectDetailClient
+        p={p}
+        cover={cover}
+        gallery={gallery}
+        ratio={ratio}
+        layoutStrategy={layoutStrategy}
+      />
     </>
   );
 }
 
 export async function generateMetadata(
-  { params }: { params: { slug: string } }
+  props: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
+  const params = await props.params;
   const p = await getProjectBySlugAsync(params.slug);
   if (!p) return { title: 'Project Not Found' };
-  
+
   return generateProjectMetadata(p);
 }
