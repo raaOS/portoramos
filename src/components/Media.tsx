@@ -113,22 +113,17 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     const playPromise = el.play()
     if (playPromise !== undefined) {
       playPromise.catch((error) => {
-        // Show detailed error in development
-        if (process.env.NODE_ENV === 'development') {
-          console.group('🎬 Video Autoplay Blocked')
-          console.error('Error Name:', error.name)
-          console.error('Error Message:', error.message)
-          console.log('Video Src:', el.src)
-          console.log('Video Muted:', el.muted)
-          console.log('Video Ready State:', el.readyState)
-          console.log('Protocol:', window.location.protocol)
-          console.error('Full Error:', error)
-          console.groupEnd()
-        }
-
         // Only show blocked state if not AbortError (pause was called)
         if (error.name !== 'AbortError') {
           setAutoplayBlocked(true)
+          // Show detailed error in development only if NOT AbortError
+          if (process.env.NODE_ENV === 'development') {
+            console.group('🎬 Video Autoplay Blocked')
+            console.error('Error Name:', error.name)
+            console.error('Error Message:', error.message)
+            console.log('Video Src:', el.src)
+            console.groupEnd()
+          }
         }
       })
     }
