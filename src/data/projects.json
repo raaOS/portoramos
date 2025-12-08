@@ -21,9 +21,9 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 1,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-09-14T16:23:34.832Z",
-      "updatedAt": "2025-12-08T09:20:47.472Z"
+      "updatedAt": "2025-12-08T15:32:25.843Z"
     },
     {
       "title": "gantungan",
@@ -49,10 +49,10 @@
       "slug": "gantungan",
       "galleryItems": [],
       "order": 2,
-      "status": "published",
+      "status": "draft",
       "createdAt": "2025-09-14T16:45:24.869Z",
       "updatedAt": "2025-12-08T09:01:05.831Z"
     }
   ],
-  "lastUpdated": "2025-12-08T09:20:47.472Z"
+  "lastUpdated": "2025-12-08T18:00:09.784Z"
 }
