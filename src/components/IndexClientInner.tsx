@@ -1,7 +1,7 @@
 'use client'
 
 import Card from '@/components/Card'
-import type { Project } from '@/types'
+import type { Project } from '@/types/projects'
 import { useMemo } from 'react'
 
 type Props = {

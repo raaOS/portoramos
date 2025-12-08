@@ -1,18 +1,18 @@
 "use client"
 import Link from 'next/link';
-import type { Project } from '@/types';
+import type { Project } from '@/types/projects';
 
-export default function PrevNext({ list, current }: { list: Project[]; current: Project }){
-  const idx = list.findIndex(p=>p.slug===current.slug);
-  const prev = idx>0 ? list[idx-1] : undefined;
-  const next = idx<list.length-1 ? list[idx+1] : undefined;
+export default function PrevNext({ list, current }: { list: Project[]; current: Project }) {
+  const idx = list.findIndex(p => p.slug === current.slug);
+  const prev = idx > 0 ? list[idx - 1] : undefined;
+  const next = idx < list.length - 1 ? list[idx + 1] : undefined;
 
   return (
-          <div className="flex items-center justify-between pt-8 border-t border-gray-200">
+    <div className="flex items-center justify-between pt-8 border-t border-gray-200">
       <div className="flex-1">
         {prev && (
-          <Link 
-            className="group flex items-center gap-3 text-gray-600 hover:text-gray-900 transition-colors" 
+          <Link
+            className="group flex items-center gap-3 text-gray-600 hover:text-gray-900 transition-colors"
             href={`/work/${prev.slug}`}
           >
             <span className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
@@ -27,11 +27,11 @@ export default function PrevNext({ list, current }: { list: Project[]; current: 
           </Link>
         )}
       </div>
-      
+
       <div className="flex-1 flex justify-end">
         {next && (
-          <Link 
-            className="group flex items-center gap-3 text-gray-600 hover:text-gray-900 transition-colors" 
+          <Link
+            className="group flex items-center gap-3 text-gray-600 hover:text-gray-900 transition-colors"
             href={`/work/${next.slug}`}
           >
             <span className="flex flex-col">

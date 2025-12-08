@@ -1,5 +1,6 @@
 'use client';
 
+import type { Project, GalleryItem } from '@/types/projects';
 import { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import HeroShared from '@/components/HeroShared';
@@ -25,16 +26,16 @@ interface ProjectDetailClientProps {
   layoutStrategy: any;
 }
 
-export default function ProjectDetailClient({ 
-  p, 
-  cover, 
-  gallery, 
-  ratio, 
-  layoutStrategy 
+export default function ProjectDetailClient({
+  p,
+  cover,
+  gallery,
+  ratio,
+  layoutStrategy
 }: ProjectDetailClientProps) {
   const [videoRef, setVideoRef] = useState<React.RefObject<HTMLVideoElement> | null>(null);
   const initialLikes = useMemo(() => Math.floor(Math.random() * 50) + 10, []);
-  
+
   // Create unified media array with hero as first item
   const unifiedMedia = [
     {
@@ -54,17 +55,17 @@ export default function ProjectDetailClient({
   ];
 
   return (
-    <article 
+    <article
       className="max-w-7xl mx-auto px-4 md:px-6 py-12 project-detail-container min-h-screen bg-white text-gray-900"
       style={{ paddingTop: '20px' }}
     >
       {/* Grid Layout - 2 kolom sejajar horizontal */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start">
-        
+
         {/* Kolom Kiri - Gallery (3/5 ruang) */}
         <div className="order-1 lg:order-1 lg:col-span-3 w-full pb-16">
           <div className="w-full max-w-full">
-            <CoverFlowGallery 
+            <CoverFlowGallery
               items={unifiedMedia}
               autoPlay={false}
               showControls={true}
@@ -75,7 +76,7 @@ export default function ProjectDetailClient({
             />
           </div>
         </div>
-        
+
         {/* Kolom Kanan - Deskripsi dan Konten (2/5 ruang) */}
         <div className="order-2 lg:order-2 lg:col-span-2 space-y-6 w-full pl-0 lg:pl-4">
           {/* Judul dan Meta */}
@@ -83,30 +84,30 @@ export default function ProjectDetailClient({
             <h1 className="h1 font-display text-gray-900 mb-4">{p.title}</h1>
             <DetailMeta p={p} />
           </div>
-          
+
           {/* Deskripsi */}
           {p.description && (
-            <ReadMoreDescription 
+            <ReadMoreDescription
               text={p.description}
               maxLines={2}
               className="text-lg leading-relaxed text-gray-700"
             />
           )}
-          
+
           {/* Share, Love, and Comment Section */}
           <div className="space-y-8">
             {/* Share and Love Buttons */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 bg-gray-50 rounded-lg">
-              <ShareButtons 
+              <ShareButtons
                 url={typeof window !== 'undefined' ? window.location.href : ''}
                 title={p.title}
                 description={p.description}
               />
             </div>
-            
+
             {/* Comment Section */}
-            <CommentSection 
-              projectId={p.id} 
+            <CommentSection
+              projectId={p.id}
               initialLikes={initialLikes} // Random initial likes (stable per mount)
             />
           </div>

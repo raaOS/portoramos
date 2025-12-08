@@ -23,7 +23,7 @@
       "order": 1,
       "status": "draft",
       "createdAt": "2025-09-14T16:23:34.832Z",
-      "updatedAt": "2025-12-08T08:14:19.227Z"
+      "updatedAt": "2025-12-08T09:20:47.472Z"
     },
     {
       "title": "gantungan",
@@ -49,10 +49,10 @@
       "slug": "gantungan",
       "galleryItems": [],
       "order": 2,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-09-14T16:45:24.869Z",
-      "updatedAt": "2025-12-08T07:39:17.691Z"
+      "updatedAt": "2025-12-08T09:01:05.831Z"
     }
   ],
-  "lastUpdated": "2025-12-08T08:14:19.227Z"
+  "lastUpdated": "2025-12-08T09:20:47.472Z"
 }

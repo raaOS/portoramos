@@ -1,8 +1,9 @@
 "use client"
 import Link from 'next/link';
-import type { Project } from '@/types';
+import type { Project } from '@/types/projects';
 import Media from '@/components/Media'
 import { resolveCover } from '@/lib/images'
+import { ArrowUpRight } from 'lucide-react';
 
 export default function Card({ p, animate = true }: { p: Project; animate?: boolean }) {
   const id = `cover-${p.slug}`;
@@ -11,13 +12,14 @@ export default function Card({ p, animate = true }: { p: Project; animate?: bool
   const shouldAutoplay = p.autoplay ?? true
   const enableHover = animate && !prefersReducedMotion
 
-  // Use exact aspect ratio from image dimensions - no cropping, no limits
+  // Pinterest uses highly rounded corners
+  const PIN_ROUNDNESS = "rounded-3xl";
+
   const calculateRatio = () => {
     if (p.coverWidth && p.coverHeight) {
-      // Use the exact ratio from the image - no approximation, no limits
       return p.coverWidth / p.coverHeight
     }
-    return 16 / 9 // Default ratio only if dimensions not available
+    return 16 / 9
   }
 
   const ratio = calculateRatio()
@@ -25,72 +27,51 @@ export default function Card({ p, animate = true }: { p: Project; animate?: bool
   return (
     <Link
       href={`/work/${p.slug}`}
-      className="block group focus:outline-none rounded-2xl"
-      aria-label={`View project: ${p.title}${p.description ? ` - ${p.description}` : ''}`}
-      role="article"
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          window.location.href = `/work/${p.slug}`;
-        }
-      }}
+      className="block group relative mb-4 break-inside-avoid"
+      aria-label={`View project: ${p.title}`}
     >
-      <div className="relative">
-        <div
-          data-layout-id={id}
-          className="overflow-hidden rounded-2xl relative"
-        >
-          <div style={{ aspectRatio: ratio }} role="img" aria-label={`${p.title} project preview`}>
-            <Media
-              kind={cover.kind}
-              src={cover.src}
-              poster={cover.poster}
-              alt={`${p.title} project preview${p.description ? ` - ${p.description}` : ''}`}
-              sizes="(max-width:520px) 100vw, (max-width:1024px) 50vw, 33vw"
-              width={p.coverWidth || 1600}
-              height={p.coverHeight || 1000}
-              priority={false}
-              autoplay={shouldAutoplay}
-              muted={p.muted ?? true}
-              loop={p.loop ?? true}
-              playsInline={p.playsInline ?? true}
-              className="w-full h-full object-cover transition-transform duration-500"
-            />
+      <div className={`relative overflow-hidden ${PIN_ROUNDNESS} bg-gray-100 dark:bg-gray-800`}>
+        <div style={{ aspectRatio: ratio }} className="relative">
+          <Media
+            kind={cover.kind}
+            src={cover.src}
+            poster={cover.poster}
+            alt={p.title}
+            sizes="(max-width:520px) 100vw, (max-width:1024px) 50vw, 33vw"
+            width={p.coverWidth || 1600}
+            height={p.coverHeight || 1000}
+            autoplay={shouldAutoplay}
+            muted={p.muted ?? true}
+            loop={p.loop ?? true}
+            playsInline={p.playsInline ?? true}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
 
-            {/* Creative Agency Style Overlay */}
-            <div
-              className={`absolute inset-0 bg-black/0 transition-colors duration-300 ${enableHover ? 'group-hover:bg-black/20' : ''
-                }`}
-            />
+          {/* Pinterest-style Overlay */}
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6">
+            <div className="self-end">
+              <button className="bg-red-600 text-white font-bold px-5 py-3 rounded-full hover:bg-red-700 transform translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75 shadow-lg">
+                Save
+              </button>
+            </div>
 
-            {/* View Project Indicator */}
-            <div
-              className={`absolute top-4 right-4 transition-opacity duration-300 ${enableHover ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'
-                }`}
-            >
-              <div className="bg-white/90 backdrop-blur-sm rounded-full p-2">
-                <svg className="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
+            <div className="transform translate-y-[10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-100">
+              <div className="bg-white/90 backdrop-blur-md self-start inline-flex items-center gap-2 px-4 py-2 rounded-full text-black font-medium text-sm shadow-sm hover:bg-white transition-colors">
+                <span>View Project</span>
+                <ArrowUpRight className="w-4 h-4" />
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between">
-        <h3 className="card-title font-serif text-gray-900 dark:text-white" id={`title-${p.slug}`}>{p.title}</h3>
-        {p.tags && p.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {p.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="px-2 py-1 text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full"
-                aria-label={`Project tag: ${tag}`}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+
+      {/* Minimalist Info Below (Optional, Pinterest often hides this or keeps it very subtle) */}
+      <div className="mt-2 px-1">
+        <h3 className="font-medium text-sm text-gray-900 leading-tight group-hover:underline decoration-1 underline-offset-2">
+          {p.title}
+        </h3>
+        {p.tags?.[0] && (
+          <p className="text-xs text-gray-500 mt-0.5">{p.tags[0]}</p>
         )}
       </div>
     </Link>

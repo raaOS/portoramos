@@ -37,7 +37,7 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
       try {
         setLoading(true);
         setInitialError(null);
-        const response = await fetch('/api/projects');
+        const response = await fetch('/api/projects?status=published');
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -73,7 +73,7 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
   // Auto-update data
   const { data: updatedData, lastUpdated } = useAutoUpdate<ProjectsResponse>(
     async () => {
-      const response = await fetch('/api/projects');
+      const response = await fetch('/api/projects?status=published');
       if (!response.ok) throw new Error('Failed to fetch projects');
       return response.json();
     },

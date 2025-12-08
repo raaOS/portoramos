@@ -1,32 +1,14 @@
 // Media Types
-export type MediaItem = { 
-  kind: 'image' | 'video'; 
-  src: string; 
-  poster?: string; 
-  width?: number; 
+export type MediaItem = {
+  kind: 'image' | 'video';
+  src: string;
+  poster?: string;
+  width?: number;
   height?: number;
 }
 
 // Project Types
-export type Project = {
-  title: string;
-  slug: string;
-  client?: string;
-  year?: number;
-  tags?: string[];
-  cover: string;
-  coverWidth?: number;
-  coverHeight?: number;
-  autoplay?: boolean;
-  muted?: boolean;
-  loop?: boolean;
-  playsInline?: boolean;
-  gallery?: string[];
-  galleryItems?: MediaItem[];
-  description?: string;
-  external_link?: string;
-  order?: number;
-};
+// Project Types - Moved to @/types/projects.ts
 
 // About Content Types
 export interface AboutContent {

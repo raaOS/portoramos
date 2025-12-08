@@ -1,4 +1,4 @@
-import type { Project } from '@/types'
+import type { Project } from '@/types/projects'
 import { allProjectsAsync } from '@/lib/projects'
 import type { Metadata } from 'next'
 import { generateMetadata as generateSEOMetadata } from '@/lib/seo'
@@ -18,6 +18,6 @@ export default async function WorksPage({ searchParams }: Props) {
   const projects = await allProjectsAsync()
   const page = Number(searchParams?.page || '1')
   const currentPage = isNaN(page) || page < 1 ? 1 : page
-  
+
   return <WorksClient projects={projects} currentPage={currentPage} />
 }

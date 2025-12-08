@@ -290,25 +290,32 @@ a:active,
 
 /* Masonry grid helpers - Pinterest-like */
 .masonry {
-  columns: 4;
-  column-gap: 18px
+  column-count: 5;
+  column-gap: 16px;
 }
 
-@media(max-width:1280px) {
+@media(max-width: 1600px) {
   .masonry {
-    columns: 3
+    column-count: 4;
   }
 }
 
-@media(max-width:900px) {
+@media(max-width: 1200px) {
   .masonry {
-    columns: 2
+    column-count: 3;
   }
 }
 
-.masonry>div {
+@media(max-width: 800px) {
+  .masonry {
+    column-count: 2;
+    column-gap: 12px;
+  }
+}
+
+.masonry > div {
   break-inside: avoid;
-  margin: 0 0 18px
+  margin-bottom: 16px; 
 }
 
 /* Dark mode variables */

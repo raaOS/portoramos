@@ -5,10 +5,10 @@ import AnimateItem from '@/components/AnimateItem'
 import Link from 'next/link'
 
 import MainNav from '@/components/MainNav'
-import type { Project } from '@/types'
+import type { Project } from '@/types/projects'
 import { useMemo } from 'react'
 
-type Props = { 
+type Props = {
   projects: Project[]
   currentPage: number
 }

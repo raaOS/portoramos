@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import type { Project } from '@/types'
+import type { Project } from '@/types/projects';
 
 // Dynamic site URL detection
 function getDynamicSiteUrl(): string {

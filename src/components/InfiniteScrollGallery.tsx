@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useInView } from 'react-intersection-observer';
 import OptimizedCard from '@/components/OptimizedCard';
-import { Project } from '@/types';
+import type { Project } from '@/types/projects';
 import { Loader2 } from 'lucide-react';
 
 interface InfiniteScrollGalleryProps {
@@ -100,7 +100,7 @@ export default function InfiniteScrollGallery({
       }
     } catch (error) {
       if (controller.signal.aborted) return;
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Failed to load more projects';
       setError(errorMessage);
       console.error('Error loading more projects:', error);
