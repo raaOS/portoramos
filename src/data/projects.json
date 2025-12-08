@@ -1,6 +1,31 @@
 {
   "projects": [
     {
+      "title": "sandal",
+      "client": "amunra",
+      "year": 2025,
+      "description": "sendal selalu",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757859588/RA_12_SENDAL_IBU_FEED_1_ddkydg.png",
+      "coverWidth": 1080,
+      "coverHeight": 1350,
+      "gallery": [],
+      "tags": [
+        "manipulasi"
+      ],
+      "external_link": "",
+      "id": "project-1757867014832",
+      "slug": "sandal",
+      "autoplay": false,
+      "muted": true,
+      "loop": false,
+      "playsInline": true,
+      "galleryItems": [],
+      "order": 1,
+      "status": "draft",
+      "createdAt": "2025-09-14T16:23:34.832Z",
+      "updatedAt": "2025-12-08T15:32:25.843Z"
+    },
+    {
       "title": "gantungan",
       "client": "ramos",
       "year": 2025,
@@ -29,5 +54,5 @@
       "updatedAt": "2025-12-08T09:01:05.831Z"
     }
   ],
-  "lastUpdated": "2025-12-08T18:59:10.270Z"
+  "lastUpdated": "2025-12-08T19:20:42.066Z"
 }
