@@ -21,7 +21,7 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 1,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-09-14T16:23:34.832Z",
       "updatedAt": "2025-12-08T15:32:25.843Z"
     },
@@ -55,28 +55,28 @@
     },
     {
       "title": "ayam",
-      "client": "ramos",
+      "client": "ramos`",
       "year": 2025,
-      "description": "ayam itu",
-      "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png",
-      "coverWidth": 1024,
-      "coverHeight": 1024,
+      "description": "ayaaaaam",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg",
+      "coverWidth": 700,
+      "coverHeight": 700,
       "gallery": [],
       "galleryItems": [],
       "tags": [
-        "ayam"
+        "gambar"
       ],
       "external_link": "",
       "autoplay": true,
       "muted": true,
       "loop": true,
       "playsInline": true,
-      "id": "project-1765221705859",
+      "id": "project-1765221995412",
       "order": 3,
       "status": "published",
-      "createdAt": "2025-12-08T19:21:45.859Z",
-      "updatedAt": "2025-12-08T19:21:45.859Z"
+      "createdAt": "2025-12-08T19:26:35.412Z",
+      "updatedAt": "2025-12-08T19:26:35.412Z"
     }
   ],
-  "lastUpdated": "2025-12-08T19:21:47.588Z"
+  "lastUpdated": "2025-12-08T19:26:36.166Z"
 }
