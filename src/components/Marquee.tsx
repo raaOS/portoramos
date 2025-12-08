@@ -33,10 +33,10 @@ export default function Marquee({
             >
                 {marqueeItems.map((item, index) => (
                     <div key={index} className="mx-2 md:mx-4">
-                        <span className="text-3xl md:text-5xl font-bold font-display uppercase tracking-widest text-black/90">
+                        <span className="text-3xl md:text-5xl font-bold font-display uppercase tracking-widest text-black">
                             {item}
                         </span>
-                        <span className="ml-4 md:ml-8 mr-2 text-gray-300 text-2xl md:text-4xl">•</span>
+                        <span className="ml-4 md:ml-8 mr-2 text-gray-800 text-2xl md:text-4xl">•</span>
                     </div>
                 ))}
             </motion.div>

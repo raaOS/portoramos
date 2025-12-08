@@ -28,6 +28,8 @@ export interface GalleryItem {
   alt?: string;
   width?: number;
   height?: number;
+  isActive?: boolean;
+  poster?: string;
 }
 
 export interface ProjectsData {

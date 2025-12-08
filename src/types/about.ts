@@ -1,6 +1,11 @@
+export interface TrailItem {
+  src: string;
+  isActive: boolean;
+}
+
 export interface AboutHero {
   title: string;
-  backgroundTrail: string[];
+  backgroundTrail: (string | TrailItem)[];
 }
 
 export interface AboutMotto {
@@ -10,7 +15,7 @@ export interface AboutMotto {
 
 export interface AboutBio {
   content: string;
-  galleryImages: string[];
+  galleryImages: (string | TrailItem)[];
 }
 
 export interface AboutProfessional {

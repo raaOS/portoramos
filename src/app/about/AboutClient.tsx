@@ -18,6 +18,7 @@ import { useSmoothScroll } from '@/hooks/useSmoothScroll';
 import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
 import { Reveal, StaggerContainer, StaggerItem } from '@/components/Reveal';
 import BlurTextLoop from '@/components/BlurTextLoop';
+import RunningTextSection from '@/components/RunningTextSection';
 
 const TextMorph = dynamic(() => import('@/components/TextMorph'), {
   ssr: false
@@ -124,11 +125,15 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
   }
 ];
 
+import { TrailItem } from '@/types/about';
+
+// ... (imports)
+
 interface AboutClientProps {
   initialData?: {
     hero?: {
       title: string | null;
-      backgroundTrail: string[];
+      backgroundTrail: (string | TrailItem)[]; // Updated
     };
     professional?: {
       motto: {
@@ -137,7 +142,7 @@ interface AboutClientProps {
       };
       bio: {
         content: string;
-        galleryImages: string[];
+        galleryImages: (string | TrailItem)[]; // Updated
       };
     };
   };
@@ -202,7 +207,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     staleTime: 5 * 60 * 1000,
   });
   const resolvedWorkExperience = (experienceData?.workExperience?.length
-    ? experienceData.workExperience
+    ? experienceData.workExperience.filter((e) => e.isActive !== false)
     : FALLBACK_WORK_EXPERIENCE);
 
   // Pastikan selalu ada 6 item untuk grid 3x2 / 2x3; isi kekurangan dengan fallback
@@ -268,7 +273,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
   ];
 
   const resolvedHardSkills =
-    hardSkillsData?.skills?.length ? hardSkillsData.skills : fallbackHardSkills;
+    hardSkillsData?.skills?.length
+      ? hardSkillsData.skills.filter((s) => s.isActive !== false)
+      : fallbackHardSkills;
 
   const {
     data: hardSkillConceptsData,
@@ -321,7 +328,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
   ];
 
   const resolvedConcepts =
-    hardSkillConceptsData?.concepts?.length ? hardSkillConceptsData.concepts : fallbackConcepts;
+    hardSkillConceptsData?.concepts?.length
+      ? hardSkillConceptsData.concepts.filter((c) => c.isActive !== false)
+      : fallbackConcepts;
 
   const heroTitleRaw = currentAboutData.hero?.title || 'PORTOFOLIO';
   const heroStartsWithPorto = /^porto/i.test(heroTitleRaw);
@@ -472,6 +481,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
           </div>
         </div>
       </div>
+
+      {/* Running Text Section */}
+      <RunningTextSection />
 
       {/* Section 2: Deskripsi Profesional dengan 2 Grid */}
       <div

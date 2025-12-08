@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
       title: String(title),
       description: String(description),
       order: typeof order === 'number' ? order : data.concepts.length + 1,
+      isActive: body.isActive !== undefined ? body.isActive : true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

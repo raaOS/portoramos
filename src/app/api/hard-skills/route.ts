@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
       level: normaliseLevel(level),
       order: typeof order === 'number' ? order : data.skills.length + 1,
       description: description ? String(description) : '',
+      isActive: body.isActive !== undefined ? body.isActive : true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

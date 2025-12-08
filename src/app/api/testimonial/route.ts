@@ -28,24 +28,24 @@ export async function POST(request: NextRequest) {
     }
 
     const newTestimonial = await request.json();
-    
+
     // Read current data
     const data: TestimonialData = JSON.parse(fs.readFileSync(dataFilePath, 'utf8'));
-    
+
     // Create backup
     fs.writeFileSync(backupFilePath, JSON.stringify(data, null, 2));
-    
+
     // Generate new ID
     const newId = Math.max(...data.testimonials.map(t => t.id), 0) + 1;
-    
+
     // Add new testimonial
-    const testimonialWithId = { ...newTestimonial, id: newId };
+    const testimonialWithId = { ...newTestimonial, id: newId, isActive: newTestimonial.isActive !== undefined ? newTestimonial.isActive : true };
     data.testimonials.push(testimonialWithId);
     data.lastUpdated = new Date().toISOString();
-    
+
     // Write updated data
     fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
-    
+
     return NextResponse.json(testimonialWithId);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create testimonial' }, { status: 500 });
@@ -63,25 +63,25 @@ export async function PUT(request: NextRequest) {
     }
 
     const { id, ...updatedTestimonial } = await request.json();
-    
+
     // Read current data
     const data: TestimonialData = JSON.parse(fs.readFileSync(dataFilePath, 'utf8'));
-    
+
     // Create backup
     fs.writeFileSync(backupFilePath, JSON.stringify(data, null, 2));
-    
+
     // Find and update testimonial
     const index = data.testimonials.findIndex(t => t.id === id);
     if (index === -1) {
       return NextResponse.json({ error: 'Testimonial not found' }, { status: 404 });
     }
-    
+
     data.testimonials[index] = { ...data.testimonials[index], ...updatedTestimonial };
     data.lastUpdated = new Date().toISOString();
-    
+
     // Write updated data
     fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
-    
+
     return NextResponse.json(data.testimonials[index]);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update testimonial' }, { status: 500 });
@@ -99,20 +99,20 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { id } = await request.json();
-    
+
     // Read current data
     const data: TestimonialData = JSON.parse(fs.readFileSync(dataFilePath, 'utf8'));
-    
+
     // Create backup
     fs.writeFileSync(backupFilePath, JSON.stringify(data, null, 2));
-    
+
     // Remove testimonial
     data.testimonials = data.testimonials.filter(t => t.id !== id);
     data.lastUpdated = new Date().toISOString();
-    
+
     // Write updated data
     fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete testimonial' }, { status: 500 });

@@ -5,8 +5,10 @@ import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
 import NextImage from 'next/image';
 
+import { TrailItem } from '@/types/about';
+
 interface SimpleTrailProps {
-  backgroundTrail?: string[];
+  backgroundTrail?: (string | TrailItem)[];
 }
 
 // Helper functions - exactly like demo4.js
@@ -37,8 +39,15 @@ export default function SimpleTrail({ backgroundTrail = [] }: SimpleTrailProps) 
     ];
 
     if (backgroundTrail && Array.isArray(backgroundTrail) && backgroundTrail.length > 0) {
-      // Filter out any invalid URLs and ensure we have at least some images
-      const validImages = backgroundTrail.filter(img => img && typeof img === 'string' && img.trim() !== '');
+      // Normalize and filter
+      const validImages = backgroundTrail
+        .map(item => {
+          if (typeof item === 'string') return item;
+          if (item && typeof item === 'object' && item.isActive !== false) return item.src;
+          return null;
+        })
+        .filter((url): url is string => typeof url === 'string' && url.trim() !== '');
+
       return validImages.length > 0 ? validImages : defaultImages;
     }
 

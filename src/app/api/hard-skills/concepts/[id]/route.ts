@@ -6,13 +6,13 @@ import { HardSkillConceptsData } from '@/types/hardSkillConcept';
 
 const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'hardSkillConcepts.json');
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     if (!checkAdminAuth(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     await ensureDataDir();
@@ -32,6 +32,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       title: body.title ?? concept.title,
       description: body.description ?? concept.description,
       order: typeof body.order === 'number' ? body.order : concept.order,
+      isActive: body.isActive !== undefined ? body.isActive : concept.isActive,
       updatedAt: new Date().toISOString(),
     };
     data.lastUpdated = new Date().toISOString();
@@ -48,13 +49,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     if (!checkAdminAuth(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     await ensureDataDir();
     const data = ((await loadData(DATA_FILE)) as HardSkillConceptsData | null) || {

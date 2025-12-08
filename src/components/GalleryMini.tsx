@@ -4,8 +4,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
 
+import { TrailItem } from '@/types/about';
+
 interface GalleryMiniProps {
-  images: string[];
+  images: (string | TrailItem)[];
   className?: string;
 }
 
@@ -14,16 +16,28 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
   const [isClient, setIsClient] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const viewerRef = useRef<HTMLDivElement | null>(null);
-  const hasMany = images.length > 1;
   const { hideNavbar, showNavbar } = useNavbarVisibility();
 
+  // Normalize images: filter active only and extract src
+  const activeImages = React.useMemo(() => {
+    return images
+      .map(img => {
+        if (typeof img === 'string') return img;
+        if (img && typeof img === 'object' && img.isActive !== false) return img.src;
+        return null;
+      })
+      .filter((url): url is string => typeof url === 'string' && url.trim() !== '');
+  }, [images]);
+
+  const hasMany = activeImages.length > 1;
+
   const goPrev = useCallback(() => {
-    setOpen((o) => (!o ? o : { i: (o.i - 1 + images.length) % images.length }));
-  }, [images.length]);
+    setOpen((o) => (!o ? o : { i: (o.i - 1 + activeImages.length) % activeImages.length }));
+  }, [activeImages.length]);
 
   const goNext = useCallback(() => {
-    setOpen((o) => (!o ? o : { i: (o.i + 1) % images.length }));
-  }, [images.length]);
+    setOpen((o) => (!o ? o : { i: (o.i + 1) % activeImages.length }));
+  }, [activeImages.length]);
 
   const enterFullscreen = useCallback(() => {
     const el = viewerRef.current;
@@ -83,10 +97,10 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
 
   // Auto-scroll animation (left to right) with seamless looping - SAME AS HorizontalCounterAnimation
   useEffect(() => {
-    if (!isClient || images.length === 0) return;
+    if (!isClient || activeImages.length === 0) return;
 
     const itemWidth = 96 + 16; // w-24 (96px) + gap-4 (16px)
-    const totalWidth = images.length * itemWidth;
+    const totalWidth = activeImages.length * itemWidth;
     let animationId: number;
     let startTime: number;
 
@@ -122,7 +136,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
       <div className={`w-full ${className}`}>
         <div className="w-full overflow-hidden" style={{ contain: 'layout style paint' }}>
           <div className="flex gap-4">
-            {images.slice(0, 6).map((image, i) => (
+            {activeImages.slice(0, 6).map((image, i) => (
               <div key={i} className="w-24 h-24 bg-gray-100 rounded-lg flex-shrink-0 relative overflow-hidden">
                 <Image
                   src={image}
@@ -152,11 +166,11 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
           }}
         >
           {/* Multiple duplicates for seamless infinite loop - 3 sets like HorizontalCounterAnimation */}
-          {[...images, ...images, ...images].map((image, index) => (
+          {[...activeImages, ...activeImages, ...activeImages].map((image, index) => (
             <div
               key={`gallery-${index}`}
               className="flex-shrink-0 cursor-pointer group mr-4"
-              onClick={() => handleImageClick(index % images.length)}
+              onClick={() => handleImageClick(index % activeImages.length)}
             >
               <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-white">
                 <Image
@@ -228,7 +242,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
             {/* Image counter */}
             {hasMany && (
               <div className="absolute top-4 left-4 text-white bg-black/60 px-3 py-1 rounded-full text-sm z-10 border border-white/10">
-                {open.i + 1} / {images.length}
+                {open.i + 1} / {activeImages.length}
               </div>
             )}
 
@@ -236,7 +250,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
             <div className="absolute inset-0 flex items-center justify-center px-6 md:px-10">
               <div className="relative w-full h-full">
                 <Image
-                  src={images[open.i]}
+                  src={activeImages[open.i]}
                   alt={`Gallery image ${open.i + 1}`}
                   fill
                   className="object-contain drop-shadow-2xl"

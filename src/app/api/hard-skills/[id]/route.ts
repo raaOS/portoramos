@@ -14,13 +14,13 @@ function normaliseLevel(level?: string): HardSkillLevel | undefined {
 }
 
 // PUT - update hard skill
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     if (!checkAdminAuth(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     await ensureDataDir();
@@ -41,6 +41,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       level: nextLevel ?? skill.level,
       order: typeof body.order === 'number' ? body.order : skill.order,
       description: body.description !== undefined ? body.description : skill.description,
+      isActive: body.isActive !== undefined ? body.isActive : skill.isActive,
       updatedAt: new Date().toISOString(),
     };
 
@@ -59,13 +60,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE - delete hard skill
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     if (!checkAdminAuth(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     await ensureDataDir();
     const data = ((await loadData(DATA_FILE)) as HardSkillsData | null) || { skills: [], lastUpdated: new Date().toISOString() };

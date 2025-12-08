@@ -21,7 +21,9 @@ globalForLogin.__adminLoginAttempts = loginAttempts;
 
 function getClientKey(request: NextRequest) {
   const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded ? forwarded.split(',')[0] : request.ip || 'unknown';
+  // Safely access .ip which might be missing in some Next.js type definitions but exists at runtime
+  const requestIp = (request as unknown as { ip?: string }).ip;
+  const ip = forwarded ? forwarded.split(',')[0] : requestIp || 'unknown';
   const ua = request.headers.get('user-agent') || 'unknown';
   return `${ip}:${ua}`;
 }

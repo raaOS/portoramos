@@ -2,22 +2,29 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { AboutData, UpdateAboutData } from '@/types/about';
+import { AboutData, UpdateAboutData, TrailItem } from '@/types/about';
 import { HardSkill, HardSkillLevel } from '@/types/hardSkill';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
 import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info, Trash2 } from 'lucide-react';
+import RunningTextPanel from './components/RunningTextPanel';
+import StatusToggle from '../components/StatusToggle';
+
+import { RunningTextItem } from '@/types/runningText';
+import { Type, ArrowUp, ArrowDown } from 'lucide-react';
 
 export default function AdminAboutClient() {
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills' | 'hardSkills'>('hero');
+  const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills' | 'hardSkills' | 'runningText'>('hero');
   const [hardSkills, setHardSkills] = useState<HardSkill[]>([]);
   const [hardSkillConcepts, setHardSkillConcepts] = useState<HardSkillConcept[]>([]);
+  const [runningTexts, setRunningTexts] = useState<RunningTextItem[]>([]);
   const [hardSkillsLoading, setHardSkillsLoading] = useState(true);
   const [hardSkillConceptsLoading, setHardSkillConceptsLoading] = useState(true);
+  const [runningTextsLoading, setRunningTextsLoading] = useState(true);
   const { showSuccess, showError } = useToast();
 
   const loadAboutData = useCallback(async () => {
@@ -60,11 +67,25 @@ export default function AdminAboutClient() {
     }
   }, [showError]);
 
+  const loadRunningTexts = useCallback(async () => {
+    try {
+      setRunningTextsLoading(true);
+      const response = await fetch('/api/running-text');
+      const data = await response.json();
+      setRunningTexts(data.items || []);
+    } catch (err) {
+      showError('Failed to load running text.');
+    } finally {
+      setRunningTextsLoading(false);
+    }
+  }, [showError]);
+
   useEffect(() => {
     loadAboutData();
     loadHardSkills();
     loadHardSkillConcepts();
-  }, [loadAboutData, loadHardSkills, loadHardSkillConcepts]);
+    loadRunningTexts();
+  }, [loadAboutData, loadHardSkills, loadHardSkillConcepts, loadRunningTexts]);
 
   const handleUpdateAbout = async (updateData: UpdateAboutData) => {
     try {
@@ -88,13 +109,8 @@ export default function AdminAboutClient() {
     }
   }
 
-  const handleCreateHardSkill = async (payload: {
-    name: string;
-    iconUrl: string;
-    level: HardSkillLevel;
-    order?: number;
-    description?: string;
-  }) => {
+  // Hard Skill Handlers...
+  const handleCreateHardSkill = async (payload: any) => { /* ... existing ... */
     try {
       const response = await fetch('/api/hard-skills', {
         method: 'POST',
@@ -146,7 +162,8 @@ export default function AdminAboutClient() {
     }
   };
 
-  const handleCreateConcept = async (payload: { title: string; description: string; order?: number }) => {
+  // Hard Skill Concept Handlers...
+  const handleCreateConcept = async (payload: any) => { /* ... existing ... */
     try {
       const response = await fetch('/api/hard-skills/concepts', {
         method: 'POST',
@@ -198,7 +215,62 @@ export default function AdminAboutClient() {
     }
   };
 
+  // Running Text Handlers
+  const handleCreateRunningText = async (payload: { text: string; order?: number; isActive?: boolean }) => {
+    try {
+      const response = await fetch('/api/running-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        await loadRunningTexts();
+        showSuccess('Running text berhasil ditambahkan.');
+      } else {
+        showError('Gagal menambahkan running text.');
+      }
+    } catch (err) {
+      showError('Gagal menambahkan running text.');
+    }
+  };
+
+  const handleUpdateRunningText = async (id: string, payload: Partial<RunningTextItem>) => {
+    try {
+      const response = await fetch(`/api/running-text/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        await loadRunningTexts();
+        showSuccess('Running text diperbarui.');
+      } else {
+        showError('Gagal memperbarui running text.');
+      }
+    } catch (err) {
+      showError('Gagal memperbarui running text.');
+    }
+  };
+
+  const handleDeleteRunningText = async (id: string) => {
+    try {
+      const response = await fetch(`/api/running-text/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        await loadRunningTexts();
+        showSuccess('Running text dihapus.');
+      } else {
+        showError('Gagal menghapus running text.');
+      }
+    } catch (err) {
+      showError('Gagal menghapus running text.');
+    }
+  };
+
+
   if (loading) {
+    // ... same loading ...
     return (
       <AdminLayout
         title="About Content Management"
@@ -215,6 +287,7 @@ export default function AdminAboutClient() {
   }
 
   if (!aboutData) {
+    // ... same error ...
     return (
       <AdminLayout
         title="About Content Management"
@@ -257,15 +330,15 @@ export default function AdminAboutClient() {
             {[
               { id: 'hero', name: 'Hero', icon: Sparkles, color: 'text-blue-600' },
               { id: 'professional', name: 'Professional', icon: BriefcaseBusiness, color: 'text-emerald-600' },
+              { id: 'runningText', name: 'Running Text', icon: Type, color: 'text-pink-600' },
               { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600' },
               { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-3 py-2 transition ${
-                  activeTab === tab.id ? `${tab.color} font-semibold` : 'text-gray-800'
-                }`}
+                className={`flex items-center gap-2 px-3 py-2 transition ${activeTab === tab.id ? `${tab.color} font-semibold` : 'text-gray-800'
+                  }`}
                 title={tab.name}
                 aria-label={tab.name}
               >
@@ -278,21 +351,21 @@ export default function AdminAboutClient() {
 
         <div className="p-6">
           {activeTab === 'hero' && (
-            <HeroSectionForm 
-              data={aboutData.hero} 
-              onUpdate={(data) => handleUpdateAbout({ hero: data })} 
+            <HeroSectionForm
+              data={aboutData.hero}
+              onUpdate={(data) => handleUpdateAbout({ hero: data })}
             />
           )}
           {activeTab === 'professional' && (
-            <ProfessionalSectionForm 
-              data={aboutData.professional} 
-              onUpdate={(data) => handleUpdateAbout({ professional: data })} 
+            <ProfessionalSectionForm
+              data={aboutData.professional}
+              onUpdate={(data) => handleUpdateAbout({ professional: data })}
             />
           )}
           {activeTab === 'softSkills' && (
-            <SoftSkillsSectionForm 
-              data={aboutData.softSkills} 
-              onUpdate={(data) => handleUpdateAbout({ softSkills: data })} 
+            <SoftSkillsSectionForm
+              data={aboutData.softSkills}
+              onUpdate={(data) => handleUpdateAbout({ softSkills: data })}
             />
           )}
           {activeTab === 'hardSkills' && (
@@ -314,6 +387,15 @@ export default function AdminAboutClient() {
               />
             </div>
           )}
+          {activeTab === 'runningText' && (
+            <RunningTextPanel
+              items={runningTexts}
+              loading={runningTextsLoading}
+              onCreate={handleCreateRunningText}
+              onUpdate={handleUpdateRunningText}
+              onDelete={handleDeleteRunningText}
+            />
+          )}
         </div>
       </div>
     </AdminLayout>
@@ -330,162 +412,221 @@ const normalizeUrlList = (raw: string) => {
 };
 
 // Hero Section Form
-function HeroSectionForm({ 
-  data, 
-  onUpdate 
-}: { 
+function HeroSectionForm({
+  data,
+  onUpdate
+}: {
   data: any;
   onUpdate: (data: any) => void;
 }) {
+  // Normalize initial data to TrailItem[]
+  const initialTrail: TrailItem[] = (data.backgroundTrail || []).map((item: string | TrailItem) => {
+    if (typeof item === 'string') {
+      return { src: item, isActive: true };
+    }
+    return item;
+  });
+
   const [formData, setFormData] = useState({
     title: data.title || '',
-    backgroundTrail: data.backgroundTrail?.join('\n') || ''
+    backgroundTrail: initialTrail
   });
   const [newTrailUrl, setNewTrailUrl] = useState('');
-
-  const trailList = normalizeUrlList(formData.backgroundTrail);
 
   const addTrailUrl = () => {
     const url = newTrailUrl.trim();
     if (!url) return;
-    if (trailList.includes(url)) {
+
+    // Check duplicates
+    if (formData.backgroundTrail.some(item => item.src === url)) {
       setNewTrailUrl('');
       return;
     }
-    setFormData({ ...formData, backgroundTrail: [...trailList, url].join('\n') });
+
+    const newItem: TrailItem = { src: url, isActive: true };
+    setFormData(prev => ({
+      ...prev,
+      backgroundTrail: [...prev.backgroundTrail, newItem]
+    }));
     setNewTrailUrl('');
   };
 
-  const removeTrailUrl = (url: string) => {
-    setFormData({
-      ...formData,
-      backgroundTrail: trailList.filter((u) => u !== url).join('\n')
-    });
+  const removeTrailUrl = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      backgroundTrail: prev.backgroundTrail.filter((_, i) => i !== index)
+    }));
+  };
+
+  const toggleTrailItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      backgroundTrail: prev.backgroundTrail.map((item, i) =>
+        i === index ? { ...item, isActive: !item.isActive } : item
+      )
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const submitData = {
+    onUpdate({
       title: formData.title,
-      backgroundTrail: formData.backgroundTrail.split('\n').filter(Boolean)
-    };
-
-    onUpdate(submitData);
+      backgroundTrail: formData.backgroundTrail
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <h3 className="text-lg font-medium text-gray-900">Hero Section</h3>
-      
+    <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700">Title</label>
-        <input
-          type="text"
-          required
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-        />
-      </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Hero Section</h3>
+        <p className="text-sm text-gray-600 mb-4">Atur judul utama dan efek trail di background.</p>
+        <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Background Trail Images</label>
-        <div className="flex gap-2">
-          <input
-            type="url"
-            value={newTrailUrl}
-            onChange={(e) => setNewTrailUrl(e.target.value)}
-            className="flex-1 mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            placeholder="https://res.cloudinary.com/demo/image/upload/v1234567890/trail1.jpg"
-          />
-          <button
-            type="button"
-            onClick={addTrailUrl}
-            className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            +
-          </button>
-        </div>
-        <p className="mt-1 text-sm text-gray-500">
-          {trailList.length} URL &middot; satu URL Cloudinary per item
-        </p>
-        {trailList.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {trailList.map((url) => (
-              <div key={url} className="relative w-full pb-[70%] rounded-md border bg-gray-50 overflow-hidden group">
-                <Image
-                  src={url}
-                  alt="Background preview"
-                  fill
-                  className="object-cover"
-                  sizes="160px"
-                  unoptimized
-                />
-                <button
-                  type="button"
-                  className="absolute top-1 right-1 bg-white/80 text-xs px-2 py-1 rounded shadow hover:bg-white"
-                  onClick={() => removeTrailUrl(url)}
-                >
-                  Hapus
-                </button>
-              </div>
-            ))}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Title</label>
+            <input
+              type="text"
+              required
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            />
           </div>
-        )}
-      </div>
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          Update Hero Section
-        </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Background Trail Images</label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={newTrailUrl}
+                onChange={(e) => setNewTrailUrl(e.target.value)}
+                className="flex-1 mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://res.cloudinary.com/demo/image/upload/v1234567890/trail1.jpg"
+              />
+              <button
+                type="button"
+                onClick={addTrailUrl}
+                className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                +
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-gray-500">
+              {formData.backgroundTrail.length} items. Supports On/Off toggle.
+            </p>
+            {formData.backgroundTrail.length > 0 && (
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {formData.backgroundTrail.map((item, index) => (
+                  <div key={`${item.src}-${index}`} className={`relative flex flex-col rounded-lg border overflow-hidden bg-white ${item.isActive !== false ? 'border-gray-200' : 'border-red-300 opacity-75'}`}>
+                    {/* Image Preview */}
+                    <div className="relative w-full aspect-[4/3] bg-gray-100 border-b border-gray-100">
+                      <Image
+                        src={item.src}
+                        alt="Background preview"
+                        fill
+                        className="object-cover"
+                        sizes="160px"
+                        unoptimized
+                      />
+                    </div>
+
+                    {/* Controls Footer */}
+                    <div className="p-2 flex items-center justify-between gap-2 bg-white">
+                      <StatusToggle
+                        isActive={item.isActive !== false}
+                        onClick={() => toggleTrailItem(index)}
+                        className="flex-1"
+                      />
+                      <button
+                        type="button"
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        onClick={() => removeTrailUrl(index)}
+                        title="Hapus"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium shadow-sm"
+            >
+              Update Hero Section
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }
 
 // Professional Section Form
-function ProfessionalSectionForm({ 
-  data, 
-  onUpdate 
-}: { 
+function ProfessionalSectionForm({
+  data,
+  onUpdate
+}: {
   data: any;
   onUpdate: (data: any) => void;
 }) {
+  // Normalize initial data to TrailItem[]
+  const initialGallery: TrailItem[] = (data.bio?.galleryImages || []).map((item: string | TrailItem) => {
+    if (typeof item === 'string') {
+      return { src: item, isActive: true };
+    }
+    return item;
+  });
+
   const [formData, setFormData] = useState({
     mottoBadge: data.motto?.badge || '',
     mottoQuote: data.motto?.quote || '',
     bioContent: data.bio?.content || '',
-    bioGalleryImages: data.bio?.galleryImages?.join('\n') || ''
+    bioGalleryImages: initialGallery
   });
   const [newBioUrl, setNewBioUrl] = useState('');
-
-  const bioList = normalizeUrlList(formData.bioGalleryImages);
 
   const addBioUrl = () => {
     const url = newBioUrl.trim();
     if (!url) return;
-    if (bioList.includes(url)) {
+
+    // Check duplicates
+    if (formData.bioGalleryImages.some(item => item.src === url)) {
       setNewBioUrl('');
       return;
     }
-    setFormData({ ...formData, bioGalleryImages: [...bioList, url].join('\n') });
+
+    const newItem: TrailItem = { src: url, isActive: true };
+    setFormData(prev => ({
+      ...prev,
+      bioGalleryImages: [...prev.bioGalleryImages, newItem]
+    }));
     setNewBioUrl('');
   };
 
-  const removeBioUrl = (url: string) => {
-    setFormData({
-      ...formData,
-      bioGalleryImages: bioList.filter((u) => u !== url).join('\n')
-    });
+  const removeBioUrl = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      bioGalleryImages: prev.bioGalleryImages.filter((_, i) => i !== index)
+    }));
+  };
+
+  const toggleBioItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      bioGalleryImages: prev.bioGalleryImages.map((item, i) =>
+        i === index ? { ...item, isActive: !item.isActive } : item
+      )
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const submitData = {
       motto: {
         badge: formData.mottoBadge,
@@ -493,7 +634,7 @@ function ProfessionalSectionForm({
       },
       bio: {
         content: formData.bioContent,
-        galleryImages: normalizeUrlList(formData.bioGalleryImages)
+        galleryImages: formData.bioGalleryImages
       }
     };
 
@@ -501,106 +642,124 @@ function ProfessionalSectionForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <h3 className="text-lg font-medium text-gray-900">Professional Information</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Motto Badge</label>
-          <input
-            type="text"
-            required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            value={formData.mottoBadge}
-            onChange={(e) => setFormData({ ...formData, mottoBadge: e.target.value })}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Motto Quote</label>
-          <input
-            type="text"
-            required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            value={formData.mottoQuote}
-            onChange={(e) => setFormData({ ...formData, mottoQuote: e.target.value })}
-          />
-        </div>
-      </div>
-
+    <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700">Bio Content</label>
-        <textarea
-          rows={4}
-          required
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          value={formData.bioContent}
-          onChange={(e) => setFormData({ ...formData, bioContent: e.target.value })}
-        />
-      </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Professional Information</h3>
+        <p className="text-sm text-gray-600 mb-4">Informasi tentang motto kerja dan biografi singkat.</p>
+        <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Bio Gallery Images (one per line)</label>
-        <div className="flex gap-2">
-          <input
-            type="url"
-            value={newBioUrl}
-            onChange={(e) => setNewBioUrl(e.target.value)}
-            className="flex-1 mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            placeholder="https://res.cloudinary.com/demo/image/upload/v123/gallery1.jpg"
-          />
-          <button
-            type="button"
-            onClick={addBioUrl}
-            className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            +
-          </button>
-        </div>
-        <p className="mt-1 text-sm text-gray-500">
-          {bioList.length} URL &middot; satu URL Cloudinary per item
-        </p>
-        {bioList.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {bioList.map((url) => (
-              <div key={url} className="relative w-full pb-[70%] rounded-md border bg-gray-50 overflow-hidden group">
-                <Image
-                  src={url}
-                  alt="Bio gallery preview"
-                  fill
-                  className="object-cover"
-                  sizes="160px"
-                  unoptimized
-                />
-                <button
-                  type="button"
-                  className="absolute top-1 right-1 bg-white/80 text-xs px-2 py-1 rounded shadow hover:bg-white"
-                  onClick={() => removeBioUrl(url)}
-                >
-                  Hapus
-                </button>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Motto Badge</label>
+              <input
+                type="text"
+                required
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                value={formData.mottoBadge}
+                onChange={(e) => setFormData({ ...formData, mottoBadge: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Motto Quote</label>
+              <input
+                type="text"
+                required
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                value={formData.mottoQuote}
+                onChange={(e) => setFormData({ ...formData, mottoQuote: e.target.value })}
+              />
+            </div>
           </div>
-        )}
-      </div>
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          Update Professional Info
-        </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Bio Content</label>
+            <textarea
+              rows={4}
+              required
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={formData.bioContent}
+              onChange={(e) => setFormData({ ...formData, bioContent: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Bio Gallery Images (one per line)</label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={newBioUrl}
+                onChange={(e) => setNewBioUrl(e.target.value)}
+                className="flex-1 mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://res.cloudinary.com/demo/image/upload/v123/gallery1.jpg"
+              />
+              <button
+                type="button"
+                onClick={addBioUrl}
+                className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                +
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-gray-500">
+              {formData.bioGalleryImages.length} items. Supports On/Off toggle.
+            </p>
+            {formData.bioGalleryImages.length > 0 && (
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {formData.bioGalleryImages.map((item, index) => (
+                  <div key={`${item.src}-${index}`} className={`relative flex flex-col rounded-lg border overflow-hidden bg-white ${item.isActive !== false ? 'border-gray-200' : 'border-red-300 opacity-75'}`}>
+                    {/* Image Preview */}
+                    <div className="relative w-full aspect-[4/3] bg-gray-100 border-b border-gray-100">
+                      <Image
+                        src={item.src}
+                        alt="Bio gallery preview"
+                        fill
+                        className="object-cover"
+                        sizes="160px"
+                        unoptimized
+                      />
+                    </div>
+
+                    {/* Controls Footer */}
+                    <div className="p-2 flex items-center justify-between gap-2 bg-white">
+                      <StatusToggle
+                        isActive={item.isActive !== false}
+                        onClick={() => toggleBioItem(index)}
+                        className="flex-1"
+                      />
+                      <button
+                        type="button"
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        onClick={() => removeBioUrl(index)}
+                        title="Hapus"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium shadow-sm"
+            >
+              Update Professional Info
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }
 
 // Soft Skills Section Form
-function SoftSkillsSectionForm({ 
-  data, 
-  onUpdate 
-}: { 
+function SoftSkillsSectionForm({
+  data,
+  onUpdate
+}: {
   data: any;
   onUpdate: (data: any) => void;
 }) {
@@ -611,7 +770,7 @@ function SoftSkillsSectionForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const submitData = {
       texts: formData.texts.split('\n').filter(Boolean),
       descriptions: formData.descriptions.split('\n').filter(Boolean)
@@ -621,43 +780,48 @@ function SoftSkillsSectionForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <h3 className="text-lg font-medium text-gray-900">Soft Skills</h3>
-      
+    <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700">Skill Texts (one per line)</label>
-        <textarea
-          rows={6}
-          required
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          value={formData.texts}
-          onChange={(e) => setFormData({ ...formData, texts: e.target.value })}
-          placeholder="Kreativitas & Inovasi&#10;Problem Solving&#10;Team Collaboration"
-        />
-      </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Soft Skills</h3>
+        <p className="text-sm text-gray-600 mb-4">Daftar soft skills yang ditampilkan dalam bentuk morphing text.</p>
+        <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Skill Descriptions (one per line)</label>
-        <textarea
-          rows={6}
-          required
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          value={formData.descriptions}
-          onChange={(e) => setFormData({ ...formData, descriptions: e.target.value })}
-          placeholder="Mampu menghasilkan ide-ide kreatif yang fresh dan inovatif untuk setiap project.&#10;Terbiasa menganalisis masalah dan menemukan solusi yang efektif dan efisien."
-        />
-        <p className="mt-1 text-sm text-gray-500">Make sure the number of descriptions matches the number of texts</p>
-      </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Skill Texts (one per line)</label>
+            <textarea
+              rows={6}
+              required
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={formData.texts}
+              onChange={(e) => setFormData({ ...formData, texts: e.target.value })}
+              placeholder="Kreativitas & Inovasi&#10;Problem Solving&#10;Team Collaboration"
+            />
+          </div>
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          Update Soft Skills
-        </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Skill Descriptions (one per line)</label>
+            <textarea
+              rows={6}
+              required
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={formData.descriptions}
+              onChange={(e) => setFormData({ ...formData, descriptions: e.target.value })}
+              placeholder="Mampu menghasilkan ide-ide kreatif yang fresh dan inovatif untuk setiap project.&#10;Terbiasa menganalisis masalah dan menemukan solusi yang efektif dan efisien."
+            />
+            <p className="mt-1 text-sm text-gray-500">Make sure the number of descriptions matches the number of texts</p>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium shadow-sm"
+            >
+              Update Soft Skills
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }
 
@@ -671,7 +835,7 @@ function HardSkillsPanel({
 }: {
   skills: HardSkill[];
   loading: boolean;
-  onCreate: (data: { name: string; iconUrl: string; level: HardSkillLevel; order?: number; description?: string }) => void;
+  onCreate: (data: { name: string; iconUrl: string; level: HardSkillLevel; order?: number; description?: string; isActive?: boolean }) => void;
   onUpdate: (id: string, data: Partial<HardSkill>) => void;
   onDelete: (id: string) => void;
 }) {
@@ -681,6 +845,7 @@ function HardSkillsPanel({
     level: 'Intermediate' as HardSkillLevel,
     order: '' as string | number,
     description: '',
+    isActive: true,
   });
 
   const sortedSkills = skills.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -693,8 +858,9 @@ function HardSkillsPanel({
       level: form.level,
       order: form.order === '' ? undefined : Number(form.order),
       description: form.description,
+      isActive: form.isActive,
     });
-    setForm({ name: '', iconUrl: '', level: 'Intermediate', order: '', description: '' });
+    setForm({ name: '', iconUrl: '', level: 'Intermediate', order: '', description: '', isActive: true });
   };
 
   return (
@@ -763,6 +929,17 @@ function HardSkillsPanel({
               placeholder="Penjelasan singkat skill ini..."
             />
           </div>
+          <div className="space-y-1 flex items-center pt-6">
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Aktifkan</span>
+            </label>
+          </div>
           <div className="space-y-1">
             <label className="block text-sm font-medium text-gray-700">Order (opsional)</label>
             <input
@@ -773,10 +950,10 @@ function HardSkillsPanel({
               placeholder={`${skills.length + 1}`}
             />
           </div>
-          <div className="flex items-end">
+          <div className="flex items-end justify-end md:col-span-2 md:col-start-2">
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium shadow-sm transition-colors"
             >
               Tambah
             </button>
@@ -784,114 +961,56 @@ function HardSkillsPanel({
         </form>
       </div>
 
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Daftar Hard Skill</h3>
-            {loading ? (
-              <p className="text-sm text-gray-500">Memuat...</p>
-            ) : sortedSkills.length === 0 ? (
-              <p className="text-sm text-gray-500">Belum ada hard skill. Tambahkan di atas.</p>
-            ) : (
-              <div className="space-y-4">
-                {sortedSkills.map((skill) => (
-                  <div key={skill.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-                    <div className="grid grid-cols-1 md:[grid-template-columns:1.1fr_0.9fr_1.5fr] gap-3 md:gap-4">
-                      <div className="space-y-1">
-                        <label className="block text-xs font-medium text-gray-700">Nama</label>
-                        <input
-                          type="text"
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      defaultValue={skill.name}
-                      onBlur={(e) => {
-                        if (e.target.value !== skill.name) {
-                          onUpdate(skill.id, { name: e.target.value });
-                        }
-                      }}
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-3">Daftar Hard Skill</h3>
+        {loading ? (
+          <p className="text-sm text-gray-500">Memuat...</p>
+        ) : sortedSkills.length === 0 ? (
+          <p className="text-sm text-gray-500">Belum ada hard skill. Tambahkan di atas.</p>
+        ) : (
+          <div className="space-y-4">
+            {sortedSkills.map((skill) => (
+              <div key={skill.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-start md:items-center gap-4">
+                  <div className="relative w-12 h-12 rounded border bg-gray-50 overflow-hidden flex-shrink-0">
+                    <Image
+                      src={skill.iconUrl}
+                      alt={skill.name}
+                      fill
+                      className="object-cover"
+                      sizes="48px"
+                      unoptimized
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-medium text-gray-700">Level</label>
-                    <select
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      defaultValue={skill.level}
-                      onChange={(e) => onUpdate(skill.id, { level: e.target.value as HardSkillLevel })}
-                    >
-                      {['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((lvl) => (
-                        <option key={lvl} value={lvl}>
-                          {lvl}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1 md:col-span-2">
-                    <label className="block text-xs font-medium text-gray-700">Icon URL (Cloudinary)</label>
-                    <input
-                      type="url"
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      defaultValue={skill.iconUrl}
-                      onBlur={(e) => {
-                        if (e.target.value !== skill.iconUrl) {
-                          onUpdate(skill.id, { iconUrl: e.target.value });
-                        }
-                      }}
-                    />
-                    {skill.iconUrl && (
-                      <div className="mt-2 flex items-start gap-3">
-                        <div className="relative w-12 h-12 rounded border bg-gray-50 overflow-hidden">
-                          <Image
-                            src={skill.iconUrl}
-                            alt={`${skill.name} icon`}
-                            fill
-                            className="object-cover"
-                            sizes="48px"
-                            unoptimized
-                          />
-                        </div>
-                        <div className="text-xs text-gray-600 break-all max-w-xs">{skill.iconUrl}</div>
-                      </div>
-                    )}
-                  </div>
-                      <div className="space-y-1 md:col-span-3">
-                        <label className="block text-xs font-medium text-gray-700">Deskripsi (opsional)</label>
-                        <textarea
-                          rows={2}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                          defaultValue={skill.description || ''}
-                          onBlur={(e) => {
-                            if (e.target.value !== (skill.description || '')) {
-                              onUpdate(skill.id, { description: e.target.value });
-                            }
-                          }}
-                          placeholder="Penjelasan singkat skill ini..."
-                        />
-                      </div>
+                  <div className="flex-1">
+                    <div className="flex flex-col md:flex-row md:items-center gap-2 mb-1">
+                      <h4 className="font-semibold text-gray-900">{skill.name}</h4>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800">
+                        {skill.level}
+                      </span>
+                      <span className="text-xs text-gray-500">Order: {skill.order}</span>
                     </div>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="text-xs text-gray-500">Order</div>
-                    <input
-                      type="number"
-                      className="w-20 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      defaultValue={skill.order}
-                      onBlur={(e) => {
-                        const val = Number(e.target.value);
-                        if (!Number.isNaN(val) && val !== skill.order) {
-                          onUpdate(skill.id, { order: val });
-                        }
-                      }}
-                    />
+                    {skill.description && (
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">{skill.description}</p>
+                    )}
+                    <div className="text-xs text-gray-400 truncate max-w-sm">{skill.iconUrl}</div>
                   </div>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2.5 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100"
-                    onClick={() => onDelete(skill.id)}
-                    aria-label="Hapus skill"
-                  >
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-red-600 text-white">
-                      <Trash2 className="h-3 w-3" aria-hidden />
-                    </span>
-                    <span className="hidden sm:inline">Hapus</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <StatusToggle
+                      isActive={skill.isActive !== false}
+                      onClick={() => onUpdate(skill.id, { isActive: !skill.isActive })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Hapus hard skill ini?')) onDelete(skill.id);
+                      }}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                      title="Hapus"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -902,6 +1021,7 @@ function HardSkillsPanel({
   );
 }
 
+// Hard Skill Concepts Panel
 function HardSkillConceptsPanel({
   concepts,
   loading,
@@ -911,7 +1031,7 @@ function HardSkillConceptsPanel({
 }: {
   concepts: HardSkillConcept[];
   loading: boolean;
-  onCreate: (data: { title: string; description: string; order?: number }) => void;
+  onCreate: (data: { title: string; description: string; order?: number; isActive?: boolean }) => void;
   onUpdate: (id: string, data: Partial<HardSkillConcept>) => void;
   onDelete: (id: string) => void;
 }) {
@@ -919,9 +1039,10 @@ function HardSkillConceptsPanel({
     title: '',
     description: '',
     order: '' as string | number,
+    isActive: true,
   });
 
-  const sorted = concepts.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  const sortedConcepts = concepts.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -929,17 +1050,18 @@ function HardSkillConceptsPanel({
       title: form.title,
       description: form.description,
       order: form.order === '' ? undefined : Number(form.order),
+      isActive: form.isActive,
     });
-    setForm({ title: '', description: '', order: '' });
+    setForm({ title: '', description: '', order: '', isActive: true });
   };
 
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Tambah Poin Hard Skill</h3>
-        <p className="text-sm text-gray-600 mb-4">Isi judul (mis. Tipografi) dan deskripsi singkat.</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Tambah Konsep/Metodologi</h3>
+        <p className="text-sm text-gray-600 mb-4">Tambahkan konsep tambahan atau metodologi yang Anda kuasai.</p>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <div className="space-y-1">
+          <div className="space-y-1 md:col-span-2">
             <label className="block text-sm font-medium text-gray-700">Judul</label>
             <input
               type="text"
@@ -947,6 +1069,17 @@ function HardSkillConceptsPanel({
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
+              placeholder="Contoh: Design Thinking"
+            />
+          </div>
+          <div className="space-y-1 md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
+            <textarea
+              rows={3}
+              required
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
           </div>
           <div className="space-y-1">
@@ -959,21 +1092,21 @@ function HardSkillConceptsPanel({
               placeholder={`${concepts.length + 1}`}
             />
           </div>
-          <div className="space-y-1 md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
-            <textarea
-              rows={3}
-              required
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Penjelasan singkat skill ini..."
-            />
+          <div className="space-y-1 flex items-center pt-6">
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Aktifkan</span>
+            </label>
           </div>
-          <div className="flex items-end">
+          <div className="flex items-end justify-end md:col-span-2">
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium shadow-sm transition-colors"
             >
               Tambah
             </button>
@@ -982,69 +1115,39 @@ function HardSkillConceptsPanel({
       </div>
 
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-3">Daftar Poin Hard Skill</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-3">Daftar Konsep</h3>
         {loading ? (
           <p className="text-sm text-gray-500">Memuat...</p>
-        ) : sorted.length === 0 ? (
-          <p className="text-sm text-gray-500">Belum ada poin. Tambahkan di atas.</p>
+        ) : sortedConcepts.length === 0 ? (
+          <p className="text-sm text-gray-500">Belum ada konsep. Tambahkan di atas.</p>
         ) : (
           <div className="space-y-4">
-            {sorted.map((item) => (
-              <div key={item.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            {sortedConcepts.map((concept) => (
+              <div key={concept.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start gap-4">
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-gray-700">Judul</label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      defaultValue={item.title}
-                      onBlur={(e) => {
-                        if (e.target.value !== item.title) {
-                          onUpdate(item.id, { title: e.target.value });
-                        }
-                      }}
-                    />
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-gray-900">{concept.title}</h4>
+                      <span className="text-xs text-gray-500">Order: {concept.order}</span>
+                    </div>
+                    <p className="text-sm text-gray-600">{concept.description}</p>
                   </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-medium text-gray-700">Order</label>
-                    <input
-                      type="number"
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      defaultValue={item.order}
-                      onBlur={(e) => {
-                        const val = Number(e.target.value);
-                        if (!Number.isNaN(val) && val !== item.order) {
-                          onUpdate(item.id, { order: val });
-                        }
-                      }}
+                  <div className="flex items-center gap-2">
+                    <StatusToggle
+                      isActive={concept.isActive !== false}
+                      onClick={() => onUpdate(concept.id, { isActive: !concept.isActive })}
                     />
-                  </div>
-                  <div className="space-y-1 md:col-span-3">
-                    <label className="block text-xs font-medium text-gray-700">Deskripsi</label>
-                    <textarea
-                      rows={2}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      defaultValue={item.description}
-                      onBlur={(e) => {
-                        if (e.target.value !== item.description) {
-                          onUpdate(item.id, { description: e.target.value });
-                        }
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Hapus konsep ini?')) onDelete(concept.id);
                       }}
-                    />
+                      className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                      title="Hapus"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
-                </div>
-                <div className="mt-3 flex items-center justify-end">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2.5 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100"
-                    onClick={() => onDelete(item.id)}
-                    aria-label="Hapus konsep"
-                  >
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-red-600 text-white">
-                      <Trash2 className="h-3 w-3" aria-hidden />
-                    </span>
-                    <span className="hidden sm:inline">Hapus</span>
-                  </button>
                 </div>
               </div>
             ))}

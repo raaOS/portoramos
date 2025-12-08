@@ -7,7 +7,8 @@
       "company": "PT. Bitlabs Academy",
       "content": "Jujurly, kerja bareng Ramos tuh vibes-nya asik parah! Skill desainnya no debat, selalu on point dan estetik abis. Dia juga cepet banget nangkep brief, jadi revisi minim banget. Pokoknya slay!",
       "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Bitlabs"
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Bitlabs",
+      "isActive": true
     },
     {
       "id": 2,
@@ -25,7 +26,7 @@
       "company": "PT. Duta Mode",
       "content": "Visual yang dibikin Ramos bener-bener bikin brand kita stand out. Dia ngerti banget selera pasar zaman now. Kerjanya sat-set tapi hasilnya tetep premium. Approved!",
       "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=DutaMode"
+      "avatar": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1765181842/17c1a817-8638-4931-b8aa-c27422fc0cae_vyf6ap.jpg"
     },
     {
       "id": 4,
@@ -55,5 +56,5 @@
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Wulan"
     }
   ],
-  "lastUpdated": "2025-11-23T07:26:29.175Z"
+  "lastUpdated": "2025-12-08T08:17:26.858Z"
 }

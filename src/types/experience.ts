@@ -1,3 +1,13 @@
+export interface WorkExperience {
+  year: string;
+  duration: string;
+  company: string;
+  position: string;
+  description: string[];
+  imageUrl: string;
+  isActive?: boolean;
+}
+
 export interface ExperienceData {
   statistics: {
     years: string;
@@ -5,14 +15,7 @@ export interface ExperienceData {
     designTools: string;
     clientSatisfaction: string;
   };
-  workExperience: Array<{
-    year: string;
-    duration: string;
-    company: string;
-    position: string;
-    description: string[];
-    imageUrl: string;
-  }>;
+  workExperience: WorkExperience[];
   lastUpdated: string;
 }
 
@@ -23,14 +26,7 @@ export interface CreateExperienceData {
     designTools: string;
     clientSatisfaction: string;
   };
-  workExperience: Array<{
-    year: string;
-    duration: string;
-    company: string;
-    position: string;
-    description: string[];
-    imageUrl: string;
-  }>;
+  workExperience: WorkExperience[];
 }
 
 export interface UpdateExperienceData {

@@ -5,6 +5,7 @@ export interface Testimonial {
   role: string;
   content: string;
   avatar: string;
+  isActive?: boolean;
 }
 
 export interface TestimonialData {

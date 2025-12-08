@@ -2,22 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { ExperienceData } from '@/types/experience';
-import AdminTable from '../components/AdminTable';
+import { ExperienceData, WorkExperience } from '@/types/experience';
 import AdminButton from '../components/AdminButton';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
-import { BriefcaseBusiness } from 'lucide-react';
+import { BriefcaseBusiness, Pencil, Save, X, Plus, Trash2 } from 'lucide-react';
+import StatusToggle from '../components/StatusToggle';
 
 export default function AdminExperienceClient() {
   const [experienceData, setExperienceData] = useState<ExperienceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<ExperienceData>>({});
+  const [editingStats, setEditingStats] = useState(false);
+
+  // Work Experience Edit State
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [workFormData, setWorkFormData] = useState<Partial<WorkExperience>>({});
+
+  // Stats Form Data
+  const [statsFormData, setStatsFormData] = useState<Partial<ExperienceData['statistics']>>({});
+
   const { showSuccess, showError } = useToast();
 
-  // Load experience data
   const loadExperienceData = async () => {
     try {
       const response = await fetch('/api/experience');
@@ -35,81 +42,145 @@ export default function AdminExperienceClient() {
 
   useEffect(() => {
     loadExperienceData();
-    // We intentionally run this only once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update statistics
-  const handleUpdateStatistics = async () => {
-    if (!experienceData) return;
+  // --- Statistics Handlers ---
 
+  const handleEditStats = () => {
+    if (!experienceData) return;
+    setStatsFormData({ ...experienceData.statistics });
+    setEditingStats(true);
+  };
+
+  const handleCancelStats = () => {
+    setEditingStats(false);
+    setStatsFormData({});
+  };
+
+  const handleSaveStats = async () => {
+    if (!experienceData) return;
     try {
       const response = await fetch('/api/experience', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          statistics: formData.statistics || experienceData.statistics
+          statistics: { ...experienceData.statistics, ...statsFormData }
         })
       });
 
       if (response.ok) {
-        setEditingField(null);
-        setFormData({});
+        setEditingStats(false);
         await loadExperienceData();
-        showSuccess('Experience statistics updated successfully.');
+        showSuccess('Statistics updated successfully.');
       } else {
         showError('Failed to update statistics.');
       }
     } catch (error) {
-      console.error('Error updating statistics:', error);
       showError('Failed to update statistics.');
     }
   };
 
-  // Update work experience
-  const handleUpdateWorkExperience = async () => {
+  // --- Work Experience Handlers ---
+
+  const handleAddNew = () => {
+    setWorkFormData({
+      position: '',
+      company: '',
+      year: '',
+      duration: '',
+      description: [],
+      imageUrl: '',
+      isActive: true
+    });
+    setIsAddingNew(true);
+    setEditingIndex(null);
+  };
+
+  const handleEditItem = (index: number) => {
     if (!experienceData) return;
+    const item = experienceData.workExperience[index];
+    setWorkFormData({ ...item });
+    setEditingIndex(index);
+    setIsAddingNew(false);
+  };
+
+  const handleCancelWorkEdit = () => {
+    setIsAddingNew(false);
+    setEditingIndex(null);
+    setWorkFormData({});
+  };
+
+  const handleSaveWorkItem = async () => {
+    if (!experienceData) return;
+
+    // Construct new array
+    let updatedList = [...experienceData.workExperience];
+
+    const newItem = {
+      position: workFormData.position || '',
+      company: workFormData.company || '',
+      year: workFormData.year || '',
+      duration: workFormData.duration || '',
+      description: workFormData.description || [],
+      imageUrl: workFormData.imageUrl || '',
+      isActive: workFormData.isActive !== undefined ? workFormData.isActive : true,
+    };
+
+    if (isAddingNew) {
+      updatedList.push(newItem);
+    } else if (editingIndex !== null) {
+      updatedList[editingIndex] = newItem;
+    } else {
+      return;
+    }
 
     try {
       const response = await fetch('/api/experience', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          workExperience: formData.workExperience || experienceData.workExperience
+          workExperience: updatedList
         })
       });
 
       if (response.ok) {
-        setEditingField(null);
-        setFormData({});
+        handleCancelWorkEdit();
         await loadExperienceData();
-        showSuccess('Work experience updated successfully.');
+        showSuccess(isAddingNew ? 'New experience added.' : 'Experience updated.');
       } else {
-        showError('Failed to update work experience.');
+        showError('Failed to save experience.');
       }
     } catch (error) {
-      console.error('Error updating work experience:', error);
-      showError('Failed to update work experience.');
+      showError('Failed to save experience.');
     }
   };
 
-  // Edit statistics
-  const handleEditStatistics = () => {
-    setEditingField('statistics');
-    setFormData({ statistics: experienceData?.statistics });
+  const handleDeleteItem = async (index: number) => {
+    if (!experienceData || !confirm('Are you sure you want to delete this experience entry?')) return;
+
+    const updatedList = experienceData.workExperience.filter((_, i) => i !== index);
+
+    try {
+      const response = await fetch('/api/experience', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workExperience: updatedList
+        })
+      });
+
+      if (response.ok) {
+        await loadExperienceData();
+        showSuccess('Experience deleted.');
+      } else {
+        showError('Failed to delete experience.');
+      }
+    } catch (error) {
+      showError('Failed to delete experience.');
+    }
   };
 
-  // Edit work experience
-  const handleEditWorkExperience = () => {
-    setEditingField('workExperience');
-    setFormData({ workExperience: experienceData?.workExperience });
-  };
-
-  // Cancel edit
-  const handleCancelEdit = () => {
-    setEditingField(null);
-    setFormData({});
-  };
+  // --- Render ---
 
   if (loading && !experienceData) {
     return (
@@ -121,7 +192,7 @@ export default function AdminExperienceClient() {
         titleAccent="bg-emerald-50 text-emerald-700"
       >
         <div className="flex items-center justify-center py-8">
-          <p className="text-gray-500">Loading experience data...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
         </div>
       </AdminLayout>
     );
@@ -151,335 +222,319 @@ export default function AdminExperienceClient() {
       titleIcon={<BriefcaseBusiness className="h-5 w-5" aria-hidden />}
       titleAccent="bg-emerald-50 text-emerald-700"
     >
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Statistics & Work History
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900">Overview</h2>
           <div className="text-sm text-gray-500">
-            Last updated:{' '}
-            {experienceData.lastUpdated
-              ? new Date(experienceData.lastUpdated).toLocaleString()
-              : 'Never'}
+            Last updated: {experienceData.lastUpdated ? new Date(experienceData.lastUpdated).toLocaleString() : 'Never'}
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
 
         {/* Statistics Section */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Statistics</h2>
-            <AdminButton
-              onClick={editingField === 'statistics' ? handleUpdateStatistics : handleEditStatistics}
-              variant="primary"
-            >
-              {editingField === 'statistics' ? 'Save' : 'Edit'}
-            </AdminButton>
+            <h3 className="text-lg font-semibold text-gray-9000">Global Statistics</h3>
+            {!editingStats && (
+              <button
+                onClick={handleEditStats}
+                className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Pencil className="w-4 h-4" />
+                Edit Stats
+              </button>
+            )}
           </div>
 
-          {editingField === 'statistics' ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Years of Experience
-                </label>
-                <input
-                type="text"
-                value={formData.statistics?.years || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  statistics: { 
-                    ...prev.statistics, 
-                    years: e.target.value,
-                    projects: prev.statistics?.projects || '',
-                    designTools: prev.statistics?.designTools || '',
-                    clientSatisfaction: prev.statistics?.clientSatisfaction || ''
-                  }
-                }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Projects Completed
-              </label>
-              <input
-                type="text"
-                value={formData.statistics?.projects || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  statistics: { 
-                    ...prev.statistics, 
-                    years: prev.statistics?.years || '',
-                    projects: e.target.value,
-                    designTools: prev.statistics?.designTools || '',
-                    clientSatisfaction: prev.statistics?.clientSatisfaction || ''
-                  }
-                }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Design Tools
-              </label>
-              <input
-                type="text"
-                value={formData.statistics?.designTools || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  statistics: { 
-                    ...prev.statistics, 
-                    years: prev.statistics?.years || '',
-                    projects: prev.statistics?.projects || '',
-                    designTools: e.target.value,
-                    clientSatisfaction: prev.statistics?.clientSatisfaction || ''
-                  }
-                }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Client Satisfaction
-              </label>
-              <input
-                type="text"
-                value={formData.statistics?.clientSatisfaction || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  statistics: { 
-                    ...prev.statistics, 
-                    years: prev.statistics?.years || '',
-                    projects: prev.statistics?.projects || '',
-                    designTools: prev.statistics?.designTools || '',
-                    clientSatisfaction: e.target.value
-                  }
-                }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="col-span-2 flex gap-2">
-              <AdminButton onClick={handleUpdateStatistics} variant="primary">
-                Save Changes
-              </AdminButton>
-              <AdminButton onClick={handleCancelEdit} variant="secondary">
-                Cancel
-              </AdminButton>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{experienceData.statistics.years}</div>
-              <div className="text-sm text-gray-600">Years of Experience</div>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{experienceData.statistics.projects}</div>
-              <div className="text-sm text-gray-600">Projects Completed</div>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{experienceData.statistics.designTools}</div>
-              <div className="text-sm text-gray-600">Design Tools</div>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{experienceData.statistics.clientSatisfaction}</div>
-              <div className="text-sm text-gray-600">Client Satisfaction</div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Work Experience Section */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Work Experience</h2>
-          <AdminButton
-            onClick={editingField === 'workExperience' ? handleUpdateWorkExperience : handleEditWorkExperience}
-            variant="primary"
-          >
-            {editingField === 'workExperience' ? 'Save' : 'Edit'}
-          </AdminButton>
-        </div>
-
-        {editingField === 'workExperience' ? (
-          <div className="space-y-4">
-            <div className="text-sm text-gray-600 mb-4">
-              Edit work experience entries. Each entry should have: position, company, year, and description array.
-            </div>
-            {formData.workExperience?.map((work, index) => (
-              <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-3">
-                <div className="text-sm font-medium text-gray-700">Work Experience #{index + 1}</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Position</label>
-                    <input
-                      type="text"
-                      value={work.position || ''}
-                      onChange={(e) => {
-                        const newWorkExperience = [...(formData.workExperience || [])];
-                        newWorkExperience[index] = { ...work, position: e.target.value };
-                        setFormData(prev => ({ ...prev, workExperience: newWorkExperience }));
-                      }}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Company</label>
-                    <input
-                      type="text"
-                      value={work.company || ''}
-                      onChange={(e) => {
-                        const newWorkExperience = [...(formData.workExperience || [])];
-                        newWorkExperience[index] = { ...work, company: e.target.value };
-                        setFormData(prev => ({ ...prev, workExperience: newWorkExperience }));
-                      }}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Year</label>
-                    <input
-                      type="text"
-                      value={work.year || ''}
-                      onChange={(e) => {
-                        const newWorkExperience = [...(formData.workExperience || [])];
-                        newWorkExperience[index] = { ...work, year: e.target.value };
-                        setFormData(prev => ({ ...prev, workExperience: newWorkExperience }));
-                      }}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Duration</label>
-                    <input
-                      type="text"
-                      value={work.duration || ''}
-                      onChange={(e) => {
-                        const newWorkExperience = [...(formData.workExperience || [])];
-                        newWorkExperience[index] = { ...work, duration: e.target.value };
-                        setFormData(prev => ({ ...prev, workExperience: newWorkExperience }));
-                      }}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="e.g., 2 years, 6 months"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Image URL</label>
-                    <input
-                      type="text"
-                      value={work.imageUrl || ''}
-                      onChange={(e) => {
-                        const newWorkExperience = [...(formData.workExperience || [])];
-                        newWorkExperience[index] = { ...work, imageUrl: e.target.value };
-                        setFormData(prev => ({ ...prev, workExperience: newWorkExperience }));
-                      }}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="https://example.com/image.jpg"
-                    />
-                    {work.imageUrl && (
-                      <div className="mt-2 flex items-start gap-3">
-                        <div className="relative w-14 h-14 rounded border bg-gray-50 overflow-hidden">
-                          <Image
-                            src={work.imageUrl}
-                            alt={`${work.position} preview`}
-                            fill
-                            className="object-cover"
-                            sizes="56px"
-                            unoptimized
-                          />
-                        </div>
-                        <div className="text-xs text-gray-600 break-all max-w-xs">{work.imageUrl}</div>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Description (comma-separated)</label>
-                    <input
-                      type="text"
-                      value={Array.isArray(work.description) ? work.description.join(', ') : work.description || ''}
-                      onChange={(e) => {
-                        const newWorkExperience = [...(formData.workExperience || [])];
-                        newWorkExperience[index] = { 
-                          ...work, 
-                          description: e.target.value.split(',').map(d => d.trim()).filter(d => d)
-                        };
-                        setFormData(prev => ({ ...prev, workExperience: newWorkExperience }));
-                      }}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="e.g., Led design team, Improved user experience, Managed projects"
-                    />
-                  </div>
+          {editingStats ? (
+            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-sm animate-in fade-in duration-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
+                  <input
+                    type="text"
+                    value={statsFormData.years || ''}
+                    onChange={(e) => setStatsFormData(prev => ({ ...prev, years: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
-                <div className="flex gap-2">
-                  <AdminButton
-                    onClick={() => {
-                      const newWorkExperience = formData.workExperience?.filter((_, i) => i !== index) || [];
-                      setFormData(prev => ({ ...prev, workExperience: newWorkExperience }));
-                    }}
-                    variant="secondary"
-                    className="text-xs px-2 py-1"
-                  >
-                    Remove
-                  </AdminButton>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Projects Completed</label>
+                  <input
+                    type="text"
+                    value={statsFormData.projects || ''}
+                    onChange={(e) => setStatsFormData(prev => ({ ...prev, projects: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Design Tools</label>
+                  <input
+                    type="text"
+                    value={statsFormData.designTools || ''}
+                    onChange={(e) => setStatsFormData(prev => ({ ...prev, designTools: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Client Satisfaction</label>
+                  <input
+                    type="text"
+                    value={statsFormData.clientSatisfaction || ''}
+                    onChange={(e) => setStatsFormData(prev => ({ ...prev, clientSatisfaction: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="col-span-1 md:col-span-2 flex justify-end gap-2 pt-2">
+                  <AdminButton onClick={handleCancelStats} variant="secondary">Cancel</AdminButton>
+                  <AdminButton onClick={handleSaveStats} variant="primary">Save Changes</AdminButton>
                 </div>
               </div>
-            ))}
-            <div className="flex gap-2">
-              <AdminButton
-                onClick={() => {
-                  const newWorkExperience = [
-                    ...(formData.workExperience || []),
-                    { position: '', company: '', year: '', duration: '', description: [], imageUrl: '' }
-                  ];
-                  setFormData(prev => ({ ...prev, workExperience: newWorkExperience }));
-                }}
-                variant="secondary"
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm text-center">
+                <div className="text-3xl font-bold text-emerald-600 mb-1">{experienceData.statistics.years}</div>
+                <div className="text-sm font-medium text-gray-500">Years Exp.</div>
+              </div>
+              <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm text-center">
+                <div className="text-3xl font-bold text-emerald-600 mb-1">{experienceData.statistics.projects}</div>
+                <div className="text-sm font-medium text-gray-500">Projects</div>
+              </div>
+              <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm text-center">
+                <div className="text-3xl font-bold text-emerald-600 mb-1">{experienceData.statistics.designTools}</div>
+                <div className="text-sm font-medium text-gray-500">Design Tools</div>
+              </div>
+              <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm text-center">
+                <div className="text-3xl font-bold text-emerald-600 mb-1">{experienceData.statistics.clientSatisfaction}</div>
+                <div className="text-sm font-medium text-gray-500">Satisfaction</div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Work Experience Section */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Work Experience History</h3>
+            {!isAddingNew && editingIndex === null && (
+              <button
+                onClick={handleAddNew}
+                className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
               >
-                Add New Entry
-              </AdminButton>
-            </div>
-            <div className="flex gap-2 pt-4 border-t">
-              <AdminButton onClick={handleUpdateWorkExperience} variant="primary">
-                Save Changes
-              </AdminButton>
-              <AdminButton onClick={handleCancelEdit} variant="secondary">
-                Cancel
-              </AdminButton>
-            </div>
+                <Plus className="w-4 h-4" />
+                Add New
+              </button>
+            )}
           </div>
-        ) : (
-          <div className="space-y-4">
-            {experienceData.workExperience.map((work, index) => (
-              <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                <div className="font-semibold text-lg">{work.position}</div>
-                <div className="text-sm text-gray-600">{work.company} • {work.year} • {work.duration}</div>
-                <div className="mt-2 text-sm">{work.description.join(', ')}</div>
-                {work.imageUrl && (
-                  <div className="mt-2">
-                    <div className="relative w-16 h-16">
-                      <Image
-                        src={work.imageUrl}
-                        alt={work.position}
-                        fill
-                        className="object-cover rounded"
-                        sizes="64px"
-                        unoptimized
-                      />
+
+          {(isAddingNew || editingIndex !== null) ? (
+            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-sm animate-in fade-in duration-200">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-md font-semibold text-gray-800">{isAddingNew ? 'Add New Position' : 'Edit Position'}</h4>
+                <button onClick={handleCancelWorkEdit} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Position</label>
+                  <input
+                    type="text"
+                    value={workFormData.position || ''}
+                    onChange={(e) => setWorkFormData(prev => ({ ...prev, position: e.target.value }))}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="e.g. Senior Designer"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Company</label>
+                  <input
+                    type="text"
+                    value={workFormData.company || ''}
+                    onChange={(e) => setWorkFormData(prev => ({ ...prev, company: e.target.value }))}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="e.g. Tech Corp"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Year</label>
+                  <input
+                    type="text"
+                    value={workFormData.year || ''}
+                    onChange={(e) => setWorkFormData(prev => ({ ...prev, year: e.target.value }))}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="e.g. 2020-2023"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Duration</label>
+                  <input
+                    type="text"
+                    value={workFormData.duration || ''}
+                    onChange={(e) => setWorkFormData(prev => ({ ...prev, duration: e.target.value }))}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="e.g. 3 years"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Image URL</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={workFormData.imageUrl || ''}
+                      onChange={(e) => setWorkFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      placeholder="https://example.com/company-logo.png"
+                    />
+                  </div>
+                  {workFormData.imageUrl && (
+                    <div className="mt-2 flex items-center gap-3 p-2 bg-white rounded border border-gray-200 max-w-xs">
+                      <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0 bg-gray-100">
+                        <Image
+                          src={workFormData.imageUrl}
+                          alt="Preview"
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                      <span className="text-xs text-gray-500 truncate">{workFormData.imageUrl}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="md:col-span-2">
+                  <label className="flex items-center space-x-2 cursor-pointer mt-2">
+                    <input
+                      type="checkbox"
+                      checked={workFormData.isActive ?? true}
+                      onChange={(e) => setWorkFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Aktifkan</span>
+                  </label>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Description (comma separated)</label>
+                  <textarea
+                    rows={3}
+                    value={Array.isArray(workFormData.description) ? workFormData.description.join(', ') : workFormData.description || ''}
+                    onChange={(e) => {
+                      setWorkFormData(prev => ({
+                        ...prev,
+                        description: e.target.value.split(',').map(d => d.trim()).filter(d => d)
+                      }));
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="Led design team, Improved UX by 20%, etc."
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Each comma creates a new bullet point.</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
+                <AdminButton onClick={handleCancelWorkEdit} variant="secondary">Cancel</AdminButton>
+                <AdminButton onClick={handleSaveWorkItem} variant="primary">{isAddingNew ? 'Add Position' : 'Update Position'}</AdminButton>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {experienceData.workExperience.map((work, index) => (
+                <div key={index} className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="relative w-16 h-16 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0">
+                      {work.imageUrl ? (
+                        <Image
+                          src={work.imageUrl}
+                          alt={work.company}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center w-full h-full text-gray-300">
+                          <BriefcaseBusiness className="w-8 h-8" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-lg font-bold text-gray-900 truncate">{work.position}</h4>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-600 mb-2">
+                        <span className="font-medium text-gray-800">{work.company}</span>
+                        <span className="text-gray-300">•</span>
+                        <span>{work.year}</span>
+                        <span className="text-gray-300">•</span>
+                        <span className="text-gray-500">{work.duration}</span>
+                        <span className="text-gray-300">•</span>
+                        <span className="text-gray-500">{work.duration}</span>
+                      </div>
+                      <ul className="list-disc list-outside pl-4 space-y-1">
+                        {work.description.slice(0, 3).map((desc, i) => (
+                          <li key={i} className="text-sm text-gray-600 leading-snug">{desc}</li>
+                        ))}
+                        {work.description.length > 3 && (
+                          <li className="text-xs text-gray-400 italic">+{work.description.length - 3} more items...</li>
+                        )}
+                      </ul>
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  </AdminLayout>
+
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end gap-2">
+                    <StatusToggle
+                      isActive={work.isActive !== false}
+                      onClick={() => {
+                        const updatedList = [...experienceData.workExperience];
+                        updatedList[index] = { ...work, isActive: work.isActive === false ? true : false };
+                        // Direct save
+                        fetch('/api/experience', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ workExperience: updatedList })
+                        }).then(res => {
+                          if (res.ok) {
+                            loadExperienceData();
+                            showSuccess('Experience status updated.');
+                          } else {
+                            showError('Failed to update status.');
+                          }
+                        });
+                      }}
+                      className="mr-auto"
+                    />
+                    <button
+                      onClick={() => handleEditItem(index)}
+                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                      title="Edit"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteItem(index)}
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {experienceData.workExperience.length === 0 && (
+                <div className="col-span-1 lg:col-span-2 text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-300 text-gray-500">
+                  No work experience added yet.
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      </div >
+    </AdminLayout >
   );
 }

@@ -2,17 +2,14 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
-import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
+import { Project, CreateProjectData, UpdateProjectData, GalleryItem } from '@/types/projects';
 import { isVideoLink } from '@/lib/images';
-import { Pencil, Trash2, CheckCircle2, Clock4 } from 'lucide-react';
+import { Pencil, Trash2, CheckCircle2, Clock4, Plus, Search, X } from 'lucide-react';
 
 // Import design system components
-import AdminCard from '../components/AdminCard';
 import AdminButton from '../components/AdminButton';
-import AdminTable from '../components/AdminTableResponsive';
 import AdminModal from '../components/AdminModal';
-import AdminInput from '../components/AdminInput';
-import AdminTextarea from '../components/AdminTextarea';
+import StatusToggle from '../components/StatusToggle';
 import { useToast } from '@/contexts/ToastContext';
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/400x300/CCCCCC/666666?text=No+Image';
@@ -24,10 +21,8 @@ export default function AdminProjectsClient() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<string>('title');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const { showSuccess: success, showError } = useToast();
 
   // Load projects on mount
@@ -132,235 +127,124 @@ export default function AdminProjectsClient() {
     }
   };
 
-  const handleSort = (key: string, direction: 'asc' | 'desc') => {
-    setSortKey(key);
-    setSortDirection(direction);
-  };
-
-  // Filter and sort projects
+  // Filter projects
   const filteredProjects = projects
-    .filter(project => 
+    .filter(project =>
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       project.description.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => {
-      const aValue = (a as any)[sortKey] ?? '';
-      const bValue = (b as any)[sortKey] ?? '';
-      
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc' 
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-      }
-      
-      return 0;
-    });
-
-  const columns = [
-    {
-      key: 'cover',
-      label: 'Preview',
-      priority: 'high' as const,
-      render: (cover: string) => (
-        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-100 relative">
-          {isVideoLink(cover) ? (
-            <video
-              src={cover}
-              className="w-full h-full object-cover"
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              onError={(e) => {
-                const target = e.target as HTMLVideoElement;
-                target.style.display = 'none';
-                const img = document.createElement('img');
-                img.src = cover;
-                img.className = 'w-full h-full object-cover';
-                img.onerror = () => {
-                  img.src = 'https://via.placeholder.com/400x300/CCCCCC/666666?text=No+Image';
-                };
-                target.parentNode?.appendChild(img);
-              }}
-            />
-          ) : (
-            <Image
-              src={cover || FALLBACK_IMAGE}
-              alt="Project cover"
-              fill
-              className="object-cover"
-              sizes="64px"
-              loading="lazy"
-              onError={(e) => {
-                const target = e.currentTarget;
-                target.src = FALLBACK_IMAGE;
-              }}
-              unoptimized
-            />
-          )}
-          {isVideoLink(cover) && (
-            <div className="absolute top-0.5 right-0.5 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded">
-              VIDEO
-            </div>
-          )}
-        </div>
-      )
-    },
-    {
-      key: 'title',
-      label: 'Title',
-      sortable: true,
-      priority: 'high' as const,
-      render: (title: string, project: Project) => (
-        <div>
-          <div className="font-medium text-gray-900 truncate">{title}</div>
-          <div className="text-xs sm:text-sm text-gray-500 truncate">{project.slug}</div>
-        </div>
-      )
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      sortable: true,
-      priority: 'high' as const,
-      render: (status: Project['status'], project: Project) => {
-        const published = status === 'published';
-        const isLoadingToggle = togglingId === project.id;
-        return (
-          <button
-            type="button"
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition ${
-              published
-                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 hover:bg-emerald-100'
-                : 'bg-amber-50 text-amber-700 ring-1 ring-amber-100 hover:bg-amber-100'
-            } ${isLoadingToggle ? 'opacity-70 cursor-not-allowed' : ''}`}
-            title="Toggle status"
-            aria-label={published ? 'Set as Draft' : 'Set as Published'}
-            onClick={() => !isLoadingToggle && handleToggleProjectStatus(project)}
-            disabled={isLoadingToggle}
-            aria-busy={isLoadingToggle}
-          >
-            {isLoadingToggle ? (
-              <span className="inline-flex h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden />
-            ) : published ? (
-              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
-            ) : (
-              <Clock4 className="h-3.5 w-3.5" aria-hidden />
-            )}
-            {isLoadingToggle ? 'Saving...' : published ? 'Published' : 'Draft'}
-          </button>
-        );
-      }
-    },
-    {
-      key: 'description',
-      label: 'Description',
-      hideOnMobile: true,
-      priority: 'medium' as const,
-      render: (description: string) => (
-        <div className="max-w-xs truncate text-sm text-gray-600">
-          {description}
-        </div>
-      )
-    },
-    {
-      key: 'createdAt',
-      label: 'Created',
-      sortable: true,
-      hideOnMobile: true,
-      priority: 'low' as const,
-      render: (createdAt: string) => (
-        <div className="text-sm text-gray-500">
-          {new Date(createdAt).toLocaleDateString()}
-        </div>
-      )
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      priority: 'high' as const,
-      render: (_: any, project: Project) => (
-        <div className="flex items-center space-x-1 sm:space-x-2">
-          <button
-            type="button"
-            onClick={() => setEditingProject(project)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition"
-            aria-label="Edit project"
-          >
-            <Pencil className="h-4 w-4" aria-hidden />
-            <span className="hidden sm:inline">Edit</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDeleteProject(project.id)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition"
-            aria-label="Delete project"
-          >
-            <Trash2 className="h-4 w-4" aria-hidden />
-            <span className="hidden sm:inline">Delete</span>
-          </button>
-        </div>
-      )
-    }
-  ];
+    );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
-        <div className="flex items-center space-x-2 sm:space-x-4">
-          <AdminInput
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-violet-500 focus:border-violet-500 sm:text-sm transition duration-150 ease-in-out"
             placeholder="Search projects..."
             value={searchTerm}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-            className="w-full sm:w-64"
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <AdminButton
+        <button
           onClick={() => setShowCreateForm(true)}
-          icon={
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          }
-          className="w-full sm:w-auto"
+          className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors"
         >
-          <span className="hidden sm:inline">Add Project</span>
-          <span className="sm:hidden">Add New</span>
-        </AdminButton>
+          <Plus className="-ml-1 mr-2 h-5 w-5" />
+          Add Project
+        </button>
       </div>
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <div className="mt-2 text-sm text-red-700">{error}</div>
-            </div>
-          </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <X className="h-5 w-5 text-red-500" />
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
-      {/* Projects Table */}
-      <AdminTable
-        columns={columns}
-        data={filteredProjects}
-        loading={loading}
-        emptyMessage="No projects found. Create your first project to get started."
-        onSort={handleSort}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-      />
+      {/* Projects Grid */}
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
+        </div>
+      ) : filteredProjects.length === 0 ? (
+        <div className="text-center py-20 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <p className="text-gray-500 text-lg mb-2">No projects found</p>
+          <p className="text-gray-400 text-sm">Create your first project to get started</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProjects.map((project) => {
+            const isPublished = project.status === 'published';
+            const isToggling = togglingId === project.id;
+
+            return (
+              <div key={project.id} className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col overflow-hidden">
+                {/* Cover Image/Video */}
+                <div className="relative aspect-video bg-gray-100 overflow-hidden">
+                  {isVideoLink(project.cover) ? (
+                    <video
+                      src={project.cover}
+                      className="w-full h-full object-cover"
+                      muted
+                      loop
+                      playsInline
+                    />
+                  ) : (
+                    <Image
+                      src={project.cover || FALLBACK_IMAGE}
+                      alt={project.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      unoptimized
+                    />
+                  )}
+
+                </div>
+
+                {/* Content */}
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">{project.title}</h3>
+                    <p className="text-sm text-violet-600 font-medium mb-2">{project.client} • {project.year}</p>
+                    <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
+                  </div>
+
+                  <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-end gap-2">
+                    <StatusToggle
+                      isActive={isPublished}
+                      onClick={() => handleToggleProjectStatus(project)}
+                      className={isToggling ? 'opacity-50 cursor-not-allowed' : ''}
+                      labelActive="Published"
+                      labelInactive="Draft"
+                    />
+                    <button
+                      onClick={() => setEditingProject(project)}
+                      className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                      title="Edit Project"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProject(project.id)}
+                      className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="Delete Project"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Create Project Modal */}
       {showCreateForm && (
@@ -370,7 +254,6 @@ export default function AdminProjectsClient() {
           title="Create New Project"
         />
       )}
-      
 
       {/* Edit Project Modal */}
       {editingProject && (
@@ -402,7 +285,12 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
     cover: project?.cover || '',
     coverWidth: project?.coverWidth || 800,
     coverHeight: project?.coverHeight || 600,
-    gallery: project?.gallery?.join('\n') || '',
+    gallery: project?.gallery?.join('\\n') || '',
+    galleryItems: project?.galleryItems || (project?.gallery || []).map(url => ({
+      kind: isVideoLink(url) ? 'video' : 'image',
+      src: url,
+      isActive: true
+    })) as GalleryItem[],
     tags: project?.tags?.join(', ') || '',
     external_link: project?.external_link || '',
     autoplay: project?.autoplay ?? true,
@@ -421,7 +309,12 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
       cover: project?.cover || '',
       coverWidth: project?.coverWidth || 800,
       coverHeight: project?.coverHeight || 600,
-      gallery: project?.gallery?.join('\n') || '',
+      gallery: project?.gallery?.join('\\n') || '',
+      galleryItems: project?.galleryItems || (project?.gallery || []).map(url => ({
+        kind: isVideoLink(url) ? 'video' : 'image',
+        src: url,
+        isActive: true
+      })) as GalleryItem[],
       tags: project?.tags?.join(', ') || '',
       external_link: project?.external_link || '',
       autoplay: project?.autoplay ?? true,
@@ -431,7 +324,7 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
     });
   }, [project]);
 
-  const [imageDimensions, setImageDimensions] = useState<{width: number, height: number} | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number, height: number } | null>(null);
   const [isDetectingDimensions, setIsDetectingDimensions] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -439,30 +332,30 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
   // Function to detect image/video dimensions
   const detectImageDimensions = async (url: string) => {
     if (!url || !url.startsWith('http')) return;
-    
+
     setIsDetectingDimensions(true);
     setImageDimensions(null);
-    
+
     try {
       // Check if it's a video URL
-      const isVideo = url.includes('/video/') || 
-                     url.endsWith('.mp4') || 
-                     url.endsWith('.mov') || 
-                     url.endsWith('.webm') ||
-                     url.includes('player.cloudinary.com');
-      
+      const isVideo = url.includes('/video/') ||
+        url.endsWith('.mp4') ||
+        url.endsWith('.mov') ||
+        url.endsWith('.webm') ||
+        url.includes('player.cloudinary.com');
+
       if (isVideo) {
         // For video, we need to create a video element to get dimensions
         const video = document.createElement('video');
         video.crossOrigin = 'anonymous';
         video.preload = 'metadata';
-        
+
         await new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
             setIsDetectingDimensions(false);
             reject(new Error('Video loading timeout'));
           }, 10000); // 10 second timeout
-          
+
           video.onloadedmetadata = () => {
             clearTimeout(timeout);
             const dimensions = {
@@ -470,18 +363,18 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
               height: video.videoHeight
             };
             setImageDimensions(dimensions);
-            
+
             // Auto-update form data with detected dimensions
             setFormData(prev => ({
               ...prev,
               coverWidth: dimensions.width,
               coverHeight: dimensions.height
             }));
-            
+
             setIsDetectingDimensions(false);
             resolve(true);
           };
-          
+
           video.onerror = (e) => {
             clearTimeout(timeout);
             console.warn('Video loading failed, trying fallback method:', e);
@@ -503,7 +396,7 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
               reject(new Error('Failed to load video'));
             }
           };
-          
+
           video.src = url;
           video.load();
         });
@@ -516,7 +409,7 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
 
         const img = new window.Image();
         img.crossOrigin = 'anonymous';
-        
+
         await new Promise((resolve, reject) => {
           img.onload = () => {
             const dimensions = {
@@ -524,23 +417,23 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
               height: img.naturalHeight
             };
             setImageDimensions(dimensions);
-            
+
             // Auto-update form data with detected dimensions
             setFormData(prev => ({
               ...prev,
               coverWidth: dimensions.width,
               coverHeight: dimensions.height
             }));
-            
+
             setIsDetectingDimensions(false);
             resolve(true);
           };
-          
+
           img.onerror = () => {
             setIsDetectingDimensions(false);
             reject(new Error('Failed to load image'));
           };
-          
+
           img.src = url;
         });
       }
@@ -589,10 +482,10 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const validationErrors = validateForm();
     setErrors(validationErrors);
-    
+
     if (Object.keys(validationErrors).length > 0) {
       return;
     }
@@ -600,7 +493,8 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
     const submitData = {
       ...formData,
       tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      gallery: formData.gallery.split('\n').map(url => url.trim()).filter(url => url),
+      gallery: formData.galleryItems.map(item => item.src), // Support legacy
+      galleryItems: formData.galleryItems,
       ...(project && { id: project.id })
     };
 
@@ -610,7 +504,7 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
   const handleButtonClick = () => {
     // Create a synthetic event for handleSubmit
     const syntheticEvent = {
-      preventDefault: () => {},
+      preventDefault: () => { },
     } as React.FormEvent;
     handleSubmit(syntheticEvent);
   };
@@ -629,33 +523,45 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
     }
   };
 
-  const galleryList = useMemo(() => {
-    return formData.gallery
-      .split('\n')
-      .map((u) => u.trim())
-      .filter(Boolean);
-  }, [formData.gallery]);
-
-  const setGalleryList = (list: string[]) => {
-    setFormData((prev) => ({ ...prev, gallery: list.join('\n') }));
-  };
-
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
 
   const handleAddGalleryUrl = () => {
     const url = newGalleryUrl.trim();
     if (!url) return;
-    if (galleryList.includes(url)) {
+
+    // Check for duplicates
+    if (formData.galleryItems.some(item => item.src === url)) {
       setNewGalleryUrl('');
       return;
     }
-    setGalleryList([...galleryList, url]);
+
+    const newItem: GalleryItem = {
+      kind: isVideoLink(url) ? 'video' : 'image',
+      src: url,
+      isActive: true
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      galleryItems: [...prev.galleryItems, newItem]
+    }));
     setNewGalleryUrl('');
   };
 
-  const handleRemoveGalleryUrl = (url: string) => {
-    const current = galleryList.filter((item) => item !== url);
-    setGalleryList(current);
+  const handleRemoveGalleryItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      galleryItems: prev.galleryItems.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleToggleGalleryItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      galleryItems: prev.galleryItems.map((item, i) =>
+        i === index ? { ...item, isActive: !item.isActive } : item
+      )
+    }));
   };
 
   return (
@@ -669,7 +575,7 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
           <AdminButton variant="secondary" onClick={onCancel}>
             Cancel
           </AdminButton>
-          <AdminButton 
+          <AdminButton
             onClick={handleButtonClick}
             disabled={!isFormValid()}
           >
@@ -688,9 +594,8 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
               type="text"
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.title ? 'border-red-300' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.title ? 'border-red-300 ring-red-200' : 'border-gray-300'
+                }`}
               placeholder="Project title"
             />
             {errors.title && (
@@ -706,9 +611,8 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
               type="text"
               value={formData.client}
               onChange={(e) => handleInputChange('client', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.client ? 'border-red-300' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.client ? 'border-red-300' : 'border-gray-300'
+                }`}
               placeholder="Client name"
             />
             {errors.client && (
@@ -726,9 +630,8 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
               type="number"
               value={formData.year}
               onChange={(e) => handleInputChange('year', parseInt(e.target.value) || new Date().getFullYear())}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.year ? 'border-red-300' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.year ? 'border-red-300' : 'border-gray-300'
+                }`}
               min="2000"
               max={new Date().getFullYear() + 1}
             />
@@ -745,7 +648,7 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
               type="text"
               value={formData.tags}
               onChange={(e) => handleInputChange('tags', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
               placeholder="React, Next.js, TypeScript (comma separated)"
             />
           </div>
@@ -758,9 +661,8 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
           <textarea
             value={formData.description}
             onChange={(e) => handleInputChange('description', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.description ? 'border-red-300' : 'border-gray-300'
-            }`}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.description ? 'border-red-300' : 'border-gray-300'
+              }`}
             rows={3}
             placeholder="Project description"
           />
@@ -777,9 +679,8 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
             type="url"
             value={formData.cover}
             onChange={(e) => handleInputChange('cover', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.cover ? 'border-red-300' : 'border-gray-300'
-            }`}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.cover ? 'border-red-300' : 'border-gray-300'
+              }`}
             placeholder="https://res.cloudinary.com/your-cloud/video/upload/v1234567/video.mp4"
           />
           {errors.cover && (
@@ -813,7 +714,7 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
               <div className="text-xs text-gray-600 break-all max-w-xs">{formData.cover}</div>
             </div>
           )}
-          
+
           {/* Image Preview and Dimensions */}
           {formData.cover && (
             <div className="mt-3 p-3 bg-gray-50 rounded-md">
@@ -874,13 +775,10 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
               type="number"
               value={formData.coverWidth}
               onChange={(e) => handleInputChange('coverWidth', parseInt(e.target.value) || 800)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
               min="100"
               max="4000"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Auto-detected from image URL
-            </p>
           </div>
 
           <div>
@@ -891,13 +789,10 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
               type="number"
               value={formData.coverHeight}
               onChange={(e) => handleInputChange('coverHeight', parseInt(e.target.value) || 600)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
               min="100"
               max="4000"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Auto-detected from image URL
-            </p>
           </div>
         </div>
 
@@ -910,43 +805,52 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
               type="url"
               value={newGalleryUrl}
               onChange={(e) => setNewGalleryUrl(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Tambah URL lalu klik +"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+              placeholder="Tambah URL Cloudinary lalu klik +"
             />
             <AdminButton type="button" onClick={handleAddGalleryUrl}>
               +
             </AdminButton>
           </div>
           <p className="mt-1 text-sm text-gray-500">
-            {galleryList.length} URL unik - satu URL per item (image/video).
+            {formData.galleryItems.length} items. Supports On/Off toggle.
           </p>
-          {galleryList.length > 0 && (
+          {formData.galleryItems.length > 0 && (
             <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {galleryList.map((url) => (
-                <div key={url} className="relative w-full pb-[100%] rounded border bg-gray-50 overflow-hidden group">
-                  {isVideoLink(url) ? (
-                    <video src={url} className="absolute inset-0 w-full h-full object-cover" muted playsInline />
-                  ) : (
-                    <Image
-                      src={url}
-                      alt="Gallery preview"
-                      fill
-                      className="object-cover"
-                      sizes="120px"
-                      unoptimized
+              {formData.galleryItems.map((item, index) => (
+                <div key={`${item.src}-${index}`} className={`relative flex flex-col rounded-lg border overflow-hidden bg-white ${item.isActive !== false ? 'border-gray-200' : 'border-red-300 opacity-75'}`}>
+                  {/* Media Preview */}
+                  <div className="relative w-full pb-[75%] bg-gray-50 border-b border-gray-100">
+                    {item.kind === 'video' ? (
+                      <video src={item.src} className="absolute inset-0 w-full h-full object-cover" muted playsInline />
+                    ) : (
+                      <Image
+                        src={item.src}
+                        alt="Gallery preview"
+                        fill
+                        className="object-cover"
+                        sizes="120px"
+                        unoptimized
+                      />
+                    )}
+                  </div>
+
+                  {/* Controls Footer */}
+                  <div className="p-2 flex items-center justify-between gap-2 bg-white">
+                    <StatusToggle
+                      isActive={item.isActive !== false}
+                      onClick={() => handleToggleGalleryItem(index)}
+                      className="flex-1"
                     />
-                  )}
-                  <button
-                    type="button"
-                    className="absolute top-1 right-1 inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 shadow hover:bg-red-100"
-                    onClick={() => handleRemoveGalleryUrl(url)}
-                    aria-label="Hapus media"
-                  >
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-red-600 text-white">
-                      <Trash2 className="h-3 w-3" aria-hidden />
-                    </span>
-                    <span className="hidden sm:inline">Hapus</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveGalleryItem(index)}
+                      className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="Remove"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -961,7 +865,7 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
             type="url"
             value={formData.external_link}
             onChange={(e) => handleInputChange('external_link', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
             placeholder="https://example.com/live-demo"
           />
         </div>
@@ -976,46 +880,46 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
                 id="autoplay"
                 checked={formData.autoplay}
                 onChange={(e) => handleInputChange('autoplay', e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 rounded"
               />
               <label htmlFor="autoplay" className="ml-2 block text-sm text-gray-700">
                 Autoplay
               </label>
             </div>
-            
+
             <div className="flex items-center">
               <input
                 type="checkbox"
                 id="muted"
                 checked={formData.muted}
                 onChange={(e) => handleInputChange('muted', e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 rounded"
               />
               <label htmlFor="muted" className="ml-2 block text-sm text-gray-700">
                 Muted
               </label>
             </div>
-            
+
             <div className="flex items-center">
               <input
                 type="checkbox"
                 id="loop"
                 checked={formData.loop}
                 onChange={(e) => handleInputChange('loop', e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 rounded"
               />
               <label htmlFor="loop" className="ml-2 block text-sm text-gray-700">
                 Loop
               </label>
             </div>
-            
+
             <div className="flex items-center">
               <input
                 type="checkbox"
                 id="playsInline"
                 checked={formData.playsInline}
                 onChange={(e) => handleInputChange('playsInline', e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 rounded"
               />
               <label htmlFor="playsInline" className="ml-2 block text-sm text-gray-700">
                 Plays Inline

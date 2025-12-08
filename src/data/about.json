@@ -2,9 +2,18 @@
   "hero": {
     "title": "Portofolio",
     "backgroundTrail": [
-      "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png",
-      "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg",
-      "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg"
+      {
+        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png",
+        "isActive": true
+      },
+      {
+        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg",
+        "isActive": true
+      },
+      {
+        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg",
+        "isActive": true
+      }
     ]
   },
   "professional": {
@@ -38,5 +47,5 @@
       "Cepat nyambung sama teknologi dan tren baru."
     ]
   },
-  "lastUpdated": "2025-11-25T15:00:00.000Z"
+  "lastUpdated": "2025-12-08T08:03:42.867Z"
 }

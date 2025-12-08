@@ -3,6 +3,7 @@ export interface HardSkillConcept {
   title: string;
   description: string;
   order: number;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }

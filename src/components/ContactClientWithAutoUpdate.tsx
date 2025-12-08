@@ -3,6 +3,33 @@
 import { useState, useEffect } from 'react';
 import { useAutoUpdate } from '@/hooks/useAutoUpdate';
 import { ContactData } from '@/types/contact';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useInView } from 'framer-motion';
+import {
+  ArrowRight,
+  Mail,
+  MapPin,
+  Phone,
+  Send,
+  Linkedin,
+  Instagram,
+  Twitter,
+  Github,
+  ArrowUpRight
+} from 'lucide-react';
+
+const Reveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
+  return (
+    <motion.div
+      initial={{ y: 20, opacity: 0 }}
+      whileInView={{ y: 0, opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay, ease: "easeOut" }}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 export default function ContactClientWithAutoUpdate() {
   const [initialData, setInitialData] = useState<ContactData | null>(null);
@@ -25,21 +52,18 @@ export default function ContactClientWithAutoUpdate() {
     loadInitialData();
   }, []);
 
-  // Auto-update data (lebih jarang, dan nonaktif secara default)
   const { data: updatedData } = useAutoUpdate<ContactData>(
     async () => {
       const response = await fetch('/api/contact');
       if (!response.ok) throw new Error('Failed to fetch contact data');
       return response.json();
     },
-    { interval: 60000, enabled: false } // Aktifkan jika data contact sering berubah
+    { interval: 60000, enabled: false }
   );
 
   const contactData = updatedData || initialData;
 
-  if (loading) {
-    return null;
-  }
+  if (loading) return null;
 
   if (!contactData) {
     return (
@@ -52,97 +76,108 @@ export default function ContactClientWithAutoUpdate() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 py-8 md:py-16">
-        <div className="text-center mb-8 md:mb-16">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6">
-            Get In Touch
-          </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-            Ready to work together? Let&apos;s discuss your project and bring your ideas to life.
-          </p>
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={`mailto:${contactData.info.email}`}
-              className="inline-flex items-center justify-center px-5 py-3 rounded-full bg-black text-white text-sm font-semibold hover:bg-gray-800 transition-colors"
-            >
-              Email langsung
-            </a>
-            <a
-              href={`https://wa.me/${contactData.info.phone?.replace(/\\D/g, '')}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center px-5 py-3 rounded-full border border-gray-300 text-sm font-semibold text-gray-800 hover:border-black hover:text-black transition-colors"
-            >
-              Chat via WhatsApp
-            </a>
-          </div>
-        </div>
+    <div className="min-h-screen bg-white text-black selection:bg-black selection:text-white">
+      {/* Decorative Background Elements */}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-30">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-b from-gray-100 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-t from-gray-50 to-transparent rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16">
-          {/* Contact Information */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">Contact Information</h2>
-            
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <div className="w-6 h-6 text-blue-600 mt-1">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Email</h3>
-                  <a href={`mailto:${contactData.info.email}`} className="text-blue-600 hover:text-blue-800">
-                    {contactData.info.email}
-                  </a>
-                </div>
-              </div>
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-24 md:py-32 lg:py-40">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
 
-              <div className="flex items-start space-x-4">
-                <div className="w-6 h-6 text-blue-600 mt-1">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Phone</h3>
-                  <a href={`tel:${contactData.info.phone}`} className="text-blue-600 hover:text-blue-800">
-                    {contactData.info.phone}
-                  </a>
-                </div>
+          {/* Header & Info Section (Left Col) */}
+          <div className="lg:col-span-5 space-y-16">
+            <Reveal>
+              <div>
+                <h1 className="text-6xl md:text-8xl lg:text-[7rem] font-bold tracking-tighter leading-[0.9] mb-8 font-display">
+                  LET'S<br />WORK<br />TOGETHER
+                </h1>
+                <p className="text-xl text-gray-600 font-serif italic max-w-md leading-relaxed">
+                  Have a project in mind? Let's combine our creativity and build something extraordinary.
+                </p>
               </div>
+            </Reveal>
 
-              <div className="flex items-start space-x-4">
-                <div className="w-6 h-6 text-blue-600 mt-1">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+            <div className="space-y-12">
+              <Reveal delay={0.2}>
+                <div className="space-y-6">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Contact Details</h3>
+                  <div className="space-y-4">
+                    <a href={`mailto:${contactData.info.email}`} className="group flex items-center gap-4 text-2xl font-medium hover:text-gray-600 transition-colors">
+                      <span className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center group-hover:bg-black group-hover:border-black group-hover:text-white transition-all duration-300">
+                        <Mail className="w-5 h-5" />
+                      </span>
+                      {contactData.info.email}
+                    </a>
+                    <a href={`tel:${contactData.info.phone}`} className="group flex items-center gap-4 text-2xl font-medium hover:text-gray-600 transition-colors">
+                      <span className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center group-hover:bg-black group-hover:border-black group-hover:text-white transition-all duration-300">
+                        <Phone className="w-5 h-5" />
+                      </span>
+                      {contactData.info.phone}
+                    </a>
+                    <div className="flex items-center gap-4 text-lg text-gray-500">
+                      <span className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-5 h-5" />
+                      </span>
+                      {contactData.info.address}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Location</h3>
-                  <p className="text-gray-600">{contactData.info.address}</p>
+              </Reveal>
+
+              <Reveal delay={0.3}>
+                <div className="space-y-6">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Socials</h3>
+                  <div className="flex flex-wrap gap-4">
+                    <SocialLink href={contactData.info.socialMedia?.linkedin} label="LinkedIn" icon={<Linkedin className="w-5 h-5" />} />
+                    <SocialLink href={contactData.info.socialMedia?.instagram} label="Instagram" icon={<Instagram className="w-5 h-5" />} />
+                    <SocialLink href={contactData.info.socialMedia?.github} label="GitHub" icon={<Github className="w-5 h-5" />} />
+                    <SocialLink href={contactData.info.socialMedia?.twitter} label="Twitter" icon={<Twitter className="w-5 h-5" />} />
+                  </div>
                 </div>
-              </div>
+              </Reveal>
             </div>
-
           </div>
 
-          {/* Contact Form */}
-          {contactData.formSettings.enabled && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-8">Send Message</h2>
-              <ContactForm formSettings={contactData.formSettings} />
-            </div>
-          )}
+          {/* Form Section (Right Col) */}
+          <div className="lg:col-span-7">
+            {contactData.formSettings.enabled && (
+              <Reveal delay={0.4}>
+                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-[0_0_50px_-12px_rgba(0,0,0,0.05)] border border-gray-100">
+                  <div className="mb-10">
+                    <h3 className="text-3xl font-bold mb-2">Send a Message</h3>
+                    <p className="text-gray-500">I usually respond within 24 hours.</p>
+                  </div>
+                  <ContactForm formSettings={contactData.formSettings} />
+                </div>
+              </Reveal>
+            )}
+          </div>
+
         </div>
       </div>
     </div>
   );
 }
 
-// Contact Form Component
+function SocialLink({ href, label, icon }: { href?: string; label: string; icon: React.ReactNode }) {
+  if (!href) return null;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex items-center gap-2 px-6 py-3 rounded-full border border-gray-200 hover:border-black hover:bg-black hover:text-white transition-all duration-300"
+    >
+      {icon}
+      <span className="font-medium">{label}</span>
+      <ArrowUpRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+    </a>
+  );
+}
+
+// Minimalist Form Component
 function ContactForm({ formSettings }: { formSettings: any }) {
   const [formData, setFormData] = useState({
     name: '',
@@ -161,16 +196,10 @@ function ContactForm({ formSettings }: { formSettings: any }) {
     setSubmitStatus('idle');
 
     try {
-      // Simulate form submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       setSubmitStatus('success');
       setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        company: '',
-        subject: '',
-        message: ''
+        name: '', email: '', phone: '', company: '', subject: '', message: ''
       });
     } catch (error) {
       setSubmitStatus('error');
@@ -187,127 +216,154 @@ function ContactForm({ formSettings }: { formSettings: any }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-            {formSettings.fields.name.label}
-            {formSettings.fields.name.required && <span className="text-red-500 ml-1">*</span>}
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            required={formSettings.fields.name.required}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={formData.name}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-            {formSettings.fields.email.label}
-            {formSettings.fields.email.required && <span className="text-red-500 ml-1">*</span>}
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            required={formSettings.fields.email.required}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={formData.email}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-            {formSettings.fields.phone.label}
-            {formSettings.fields.phone.required && <span className="text-red-500 ml-1">*</span>}
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            required={formSettings.fields.phone.required}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={formData.phone}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">
-            {formSettings.fields.company.label}
-            {formSettings.fields.company.required && <span className="text-red-500 ml-1">*</span>}
-          </label>
-          <input
-            type="text"
-            id="company"
-            name="company"
-            required={formSettings.fields.company.required}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={formData.company}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-          {formSettings.fields.subject.label}
-          {formSettings.fields.subject.required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-        <input
-          type="text"
-          id="subject"
-          name="subject"
-          required={formSettings.fields.subject.required}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          value={formData.subject}
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+        <Input
+          name="name"
+          label={formSettings.fields.name.label}
+          required={formSettings.fields.name.required}
+          value={formData.name}
           onChange={handleChange}
+          placeholder="John Doe"
+        />
+        <Input
+          name="email"
+          type="email"
+          label={formSettings.fields.email.label}
+          required={formSettings.fields.email.required}
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="john@example.com"
+        />
+        <Input
+          name="phone"
+          type="tel"
+          label={formSettings.fields.phone.label}
+          required={formSettings.fields.phone.required}
+          value={formData.phone}
+          onChange={handleChange}
+          placeholder="+62..."
+        />
+        <Input
+          name="company"
+          label={formSettings.fields.company.label}
+          required={formSettings.fields.company.required}
+          value={formData.company}
+          onChange={handleChange}
+          placeholder="Company Ltd."
         />
       </div>
 
-      <div>
-        <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+      <Input
+        name="subject"
+        label={formSettings.fields.subject.label}
+        required={formSettings.fields.subject.required}
+        value={formData.subject}
+        onChange={handleChange}
+        placeholder="Project Inquiry"
+      />
+
+      <div className="relative group">
+        <label htmlFor="message" className="block text-sm font-semibold uppercase tracking-wider text-gray-500 mb-2 group-focus-within:text-black transition-colors">
           {formSettings.fields.message.label}
           {formSettings.fields.message.required && <span className="text-red-500 ml-1">*</span>}
         </label>
         <textarea
           id="message"
           name="message"
-          rows={6}
+          rows={4}
           required={formSettings.fields.message.required}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full bg-transparent border-b-2 border-gray-200 py-3 text-lg focus:outline-none focus:border-black transition-colors resize-none placeholder-gray-300"
           value={formData.message}
           onChange={handleChange}
+          placeholder="Tell me about your project..."
         />
       </div>
 
-      {submitStatus === 'success' && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-          {formSettings.successMessage}
-        </div>
-      )}
+      <div className="pt-4">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="group w-full md:w-auto inline-flex items-center justify-center gap-3 bg-black text-white px-10 py-4 rounded-full text-lg font-medium hover:bg-gray-800 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+        >
+          {isSubmitting ? (
+            <span className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <>
+              {formSettings.submitButtonText}
+              <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </>
+          )}
+        </button>
 
-      {submitStatus === 'error' && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {formSettings.errorMessage}
-        </div>
-      )}
+        <AnimatePresence>
+          {submitStatus === 'success' && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, marginTop: 0 }}
+              animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
+              exit={{ height: 0, opacity: 0, marginTop: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="bg-emerald-50 text-emerald-900 px-6 py-4 rounded-xl border border-emerald-100 flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                {formSettings.successMessage}
+              </div>
+            </motion.div>
+          )}
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        {isSubmitting ? 'Sending...' : formSettings.submitButtonText}
-      </button>
+          {submitStatus === 'error' && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, marginTop: 0 }}
+              animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
+              exit={{ height: 0, opacity: 0, marginTop: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="bg-red-50 text-red-900 px-6 py-4 rounded-xl border border-red-100 flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-red-500" />
+                {formSettings.errorMessage}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </form>
+  );
+}
+
+function Input({
+  name,
+  label,
+  required,
+  value,
+  onChange,
+  type = 'text',
+  placeholder
+}: {
+  name: string;
+  label: string;
+  required: boolean;
+  value: string;
+  onChange: any;
+  type?: string;
+  placeholder?: string;
+}) {
+  return (
+    <div className="relative group">
+      <label htmlFor={name} className="block text-sm font-semibold uppercase tracking-wider text-gray-500 mb-2 group-focus-within:text-black transition-colors">
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
+      <input
+        type={type}
+        id={name}
+        name={name}
+        required={required}
+        className="w-full bg-transparent border-b-2 border-gray-200 py-3 text-lg focus:outline-none focus:border-black transition-colors placeholder-gray-300"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+      />
+    </div>
   );
 }
 

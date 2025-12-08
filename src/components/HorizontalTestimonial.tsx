@@ -28,7 +28,7 @@ export default function HorizontalTestimonial() {
     refetchInterval: 60_000,
   });
 
-  const testimonials = data?.testimonials ?? [];
+  const testimonials = (data?.testimonials ?? []).filter(t => t.isActive !== false);
 
   // Auto-scroll animation with seamless looping (left to right)
   useEffect(() => {
