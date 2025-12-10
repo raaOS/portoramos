@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Project, CreateProjectData, UpdateProjectData, GalleryItem } from '@/types/projects';
 import { isVideoLink } from '@/lib/images';
-import { Pencil, Trash2, CheckCircle2, Clock4, Plus, Search, X } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, X, Loader2, Settings, CheckCircle2, AlertCircle } from 'lucide-react';
 
 // Import design system components
 import AdminButton from '../components/AdminButton';
@@ -14,6 +14,17 @@ import { useToast } from '@/contexts/ToastContext';
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/400x300/CCCCCC/666666?text=No+Image';
 
+// Helper for UTF-8 Safe Base64
+const utf8_to_b64 = (str: string) => {
+  return window.btoa(unescape(encodeURIComponent(str)));
+};
+
+interface GitHubConfig {
+  token: string;
+  owner: string;
+  repo: string;
+}
+
 export default function AdminProjectsClient() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,16 +33,96 @@ export default function AdminProjectsClient() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSavingToGithub, setIsSavingToGithub] = useState(false);
+
+  // GitHub Settings State
+  const [showSettings, setShowSettings] = useState(false);
+  const [githubConfig, setGithubConfig] = useState<GitHubConfig | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error' | 'disconnected'>('disconnected');
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+
+  // Deployment Tracking State
+  const [deployProgress, setDeployProgress] = useState(0);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [lastServerTime, setLastServerTime] = useState<string | null>(null);
+  const [deployStatus, setDeployStatus] = useState<'idle' | 'pushing' | 'building' | 'live'>('idle');
 
   const { showSuccess: success, showError } = useToast();
+
+  const verifyConnection = useCallback(async (config: GitHubConfig) => {
+    setConnectionStatus('checking');
+    setConnectionError(null);
+    try {
+      // Attempt to fetch file metadata (lightweight check)
+      const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/src/data/projects.json`, {
+        method: 'HEAD',
+        headers: {
+          'Authorization': `Bearer ${config.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+        }
+      });
+
+      if (res.ok) {
+        setConnectionStatus('connected');
+      } else {
+        setConnectionStatus('error');
+        if (res.status === 404) {
+          setConnectionError('Repo not found (check Owner/Repo)');
+        } else if (res.status === 401) {
+          setConnectionError('Invalid Token');
+        } else {
+          setConnectionError(`Error: ${res.status}`);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      setConnectionStatus('error');
+      setConnectionError('Network Error');
+    }
+  }, []);
 
   // Load projects on mount
   const loadProjects = useCallback(async () => {
     try {
       setLoading(true);
+
+      // Load GitHub Config
+      const savedConfig = localStorage.getItem('github_config');
+      if (savedConfig) {
+        const parsed = JSON.parse(savedConfig);
+        setGithubConfig(parsed);
+        verifyConnection(parsed);
+      }
+
       const response = await fetch('/api/projects');
       const data = await response.json();
-      setProjects(data.projects || []);
+
+      // LocalStorage Persistence Logic (Fix for "Revert on Refresh")
+      // We check if we have a local cache that is NEWER or "pending" compared to server
+      const localCache = localStorage.getItem('admin_projects_cache');
+      let finalProjects = data.projects || [];
+
+      if (localCache) {
+        try {
+          const parsedCache = JSON.parse(localCache);
+          const localProjects = parsedCache?.projects || [];
+          const timestamp = parsedCache?.timestamp || 0;
+
+          const serverTime = data.lastUpdated ? new Date(data.lastUpdated).getTime() : 0;
+
+          // If local cache is newer than server data (meaning Vercel hasn't finished deploy yet)
+          if (timestamp > serverTime) {
+            console.log('Using local cache because Vercel build is pending...');
+            finalProjects = localProjects;
+          }
+        } catch (e) {
+          console.error('Failed to parse local cache:', e);
+          localStorage.removeItem('admin_projects_cache'); // Clear corrupted cache
+        }
+      }
+
+      setProjects(finalProjects);
+      setLastServerTime(data.lastUpdated);
       setError(null);
     } catch (err) {
       setError('Failed to load projects');
@@ -39,13 +130,119 @@ export default function AdminProjectsClient() {
     } finally {
       setLoading(false);
     }
-  }, [showError]);
+  }, [showError, verifyConnection]);
 
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
 
+  const saveGithubSettings = (config: GitHubConfig) => {
+    localStorage.setItem('github_config', JSON.stringify(config));
+    setGithubConfig(config);
+    setShowSettings(false);
+    verifyConnection(config); // Verify immediately
+    success('GitHub settings saved!');
+  };
+
+  const triggerGithubSync = async (silent = false, projectsToSave: Project[] = projects) => {
+    if (!githubConfig) {
+      if (!silent) showError('Please configure GitHub settings first (click the gear icon).');
+      setShowSettings(true);
+      return;
+    }
+
+    if (!silent && !confirm('Save all changes to GitHub? This will trigger a deploy.')) return;
+
+    setIsSavingToGithub(true);
+    setDeployStatus('pushing');
+    setDeployProgress(10);
+
+    try {
+      // 1. Fetch current SHA
+      // We assume the file is at src/data/projects.json based on repo structure
+      const getUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/src/data/projects.json`;
+      const getRes = await fetch(getUrl, {
+        headers: {
+          'Authorization': `Bearer ${githubConfig.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+        cache: 'no-store'
+      });
+
+      if (!getRes.ok) {
+        if (getRes.status === 404) {
+          throw new Error(`Repo or file not found. Check Owner/Repo names.`);
+        }
+        throw new Error(`Failed to fetch repo info: ${getRes.status} ${getRes.statusText}`);
+      }
+
+      const fileData = await getRes.json();
+      const sha = fileData.sha;
+
+      // 2. Prepare new content
+      const newContent = JSON.stringify({
+        projects: projectsToSave,
+        lastUpdated: new Date().toISOString()
+      }, null, 2);
+
+      const encodedContent = utf8_to_b64(newContent);
+
+      // 3. Push Update
+      const putRes = await fetch(getUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${githubConfig.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'Update projects via CMS (Client Direct)',
+          content: encodedContent,
+          sha: sha
+        })
+      });
+
+      if (!putRes.ok) {
+        const errData = await putRes.json();
+        throw new Error(`GitHub Update Failed: ${errData.message || putRes.statusText}`);
+      }
+
+      if (!silent) success('Changes pushed to GitHub successfully!');
+      startDeploymentTracking();
+
+    } catch (err: any) {
+      console.error(err);
+      showError(err.message || 'Failed to save to GitHub.');
+      setDeployStatus('idle');
+      setDeployProgress(0);
+    } finally {
+      setIsSavingToGithub(false);
+    }
+  };
+
   const handleCreateProject = async (projectData: CreateProjectData | UpdateProjectData) => {
+    // 1. Generate ID and optimistic object
+    const newId = `project-${Date.now()}`;
+    const newProject = {
+      ...(projectData as CreateProjectData),
+      id: newId,
+      order: projects.length + 1,
+      status: (projectData as CreateProjectData).status || 'published',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    } as Project;
+
+    // 2. Optimistic Update (Immediate Feedback)
+    const newProjects = [...projects, newProject];
+    setProjects(newProjects);
+
+    // Persist to localStorage immediately
+    const newState = { projects: newProjects, timestamp: Date.now() };
+    localStorage.setItem('admin_projects_cache', JSON.stringify(newState));
+    setShowCreateForm(false);
+    success('Project created (local)');
+
+    // 3. Try to update backend (Non-blocking)
     try {
       const response = await fetch('/api/projects', {
         method: 'POST',
@@ -53,19 +250,30 @@ export default function AdminProjectsClient() {
         body: JSON.stringify(projectData)
       });
 
-      if (response.ok) {
-        await loadProjects();
-        setShowCreateForm(false);
-        success('Project created successfully');
-      } else {
-        showError('Failed to create project. Please check your input and try again');
+      if (!response.ok) {
+        console.warn('Backend create failed (expected on Vercel), proceeding to sync.');
       }
     } catch (err) {
-      showError('Failed to create project. Please try again');
+      console.warn('Backend create error', err);
     }
+
+    // 4. Trigger GitHub Sync
+    triggerGithubSync(true, newProjects);
   };
 
   const handleUpdateProject = async (projectData: CreateProjectData | UpdateProjectData) => {
+    // 1. Optimistic Update
+    const updatedProjects = projects.map(p =>
+      p.id === (projectData as UpdateProjectData).id ? { ...p, ...projectData } as Project : p
+    ); // Simple merge for optimistic
+
+    setProjects(updatedProjects);
+    const newState = { projects: updatedProjects, timestamp: Date.now() };
+    localStorage.setItem('admin_projects_cache', JSON.stringify(newState));
+    setEditingProject(null);
+    success('Project updated (local)');
+
+    // 2. Try to update backend (Non-blocking)
     try {
       const response = await fetch(`/api/projects/${(projectData as UpdateProjectData).id}`, {
         method: 'PUT',
@@ -73,58 +281,70 @@ export default function AdminProjectsClient() {
         body: JSON.stringify(projectData)
       });
 
-      if (response.ok) {
-        await loadProjects();
-        setEditingProject(null);
-        success('Project updated successfully');
-      } else {
-        showError('Failed to update project. Please check your input and try again');
+      if (!response.ok) {
+        console.warn('Backend update failed (expected on Vercel), proceeding to sync.');
       }
     } catch (err) {
-      showError('Failed to update project. Please try again');
+      console.warn('Backend update error', err);
     }
+
+    // 3. Trigger GitHub Sync
+    triggerGithubSync(true, updatedProjects);
   };
 
   const handleToggleProjectStatus = async (project: Project) => {
     const nextStatus = project.status === 'published' ? 'draft' : 'published';
     setTogglingId(project.id);
+
+    // 1. Optimistic Update
+    const updatedProjects = projects.map(p =>
+      p.id === project.id ? { ...p, status: nextStatus } as Project : p
+    );
+    setProjects(updatedProjects);
+
+    // Persist
+    const newState = { projects: updatedProjects, timestamp: Date.now() };
+    localStorage.setItem('admin_projects_cache', JSON.stringify(newState));
+
+    // 2. Try backend (Non-blocking)
     try {
-      const response = await fetch(`/api/projects/${project.id}`, {
+      await fetch(`/api/projects/${project.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus }),
       });
-
-      if (response.ok) {
-        await loadProjects();
-        success(`Project marked as ${nextStatus}.`);
-      } else {
-        showError('Failed to update project status.');
-      }
     } catch (err) {
-      showError('Failed to update project status.');
+      console.warn('Backend status update failed (expected on Vercel).');
     } finally {
       setTogglingId(null);
+      // 3. Trigger Sync
+      triggerGithubSync(true, updatedProjects);
     }
   };
 
   const handleDeleteProject = async (id: string) => {
     if (!confirm('Are you sure you want to delete this project?')) return;
 
+    // 1. Optimistic Update
+    const updatedProjects = projects.filter(p => p.id !== id);
+    setProjects(updatedProjects);
+
+    // Persist
+    const newState = { projects: updatedProjects, timestamp: Date.now() };
+    localStorage.setItem('admin_projects_cache', JSON.stringify(newState));
+    success('Project deleted (local)');
+
+    // 2. Try backend (Non-blocking)
     try {
-      const response = await fetch(`/api/projects/${id}`, {
+      await fetch(`/api/projects/${id}`, {
         method: 'DELETE'
       });
-
-      if (response.ok) {
-        await loadProjects();
-        success('Project deleted successfully');
-      } else {
-        showError('Failed to delete project. Please try again');
-      }
     } catch (err) {
-      showError('Failed to delete project. Please try again');
+      console.warn('Backend delete failed (expected on Vercel).');
     }
+
+    // 3. Trigger Sync
+    triggerGithubSync(true, updatedProjects);
   };
 
   // Filter projects
@@ -134,21 +354,112 @@ export default function AdminProjectsClient() {
       project.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+  const startDeploymentTracking = () => {
+    setIsDeploying(true);
+    setDeployStatus('building');
+    setDeployProgress(20);
+
+    const simulationInterval = setInterval(() => {
+      setDeployProgress(prev => {
+        if (prev >= 90) return 90;
+        return prev + 2;
+      });
+    }, 1500);
+
+    const pollingInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/projects?t=${Date.now()}`);
+        const data = await res.json();
+        const serverTime = new Date(data.lastUpdated).getTime();
+        const localKnownTime = lastServerTime ? new Date(lastServerTime).getTime() : 0;
+
+        if (serverTime > localKnownTime) {
+          clearInterval(simulationInterval);
+          clearInterval(pollingInterval);
+
+          setDeployProgress(100);
+          setDeployStatus('live');
+          setLastServerTime(data.lastUpdated);
+          setIsDeploying(false);
+
+          success('🚀 Deployment Complete! Your changes are live.');
+
+          setTimeout(() => {
+            setDeployStatus('idle');
+            setDeployProgress(0);
+          }, 5000);
+        }
+      } catch (e) {
+        console.error('Polling failed', e);
+      }
+    }, 5000);
+
+    setTimeout(() => {
+      clearInterval(simulationInterval);
+      clearInterval(pollingInterval);
+      if (deployStatus !== 'live') {
+        setIsDeploying(false);
+        setDeployStatus('idle');
+      }
+    }, 180000);
+  };
+
+
   return (
     <div className="space-y-8">
       {/* Header Actions */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+        <div className="flex items-center gap-2">
+          {isSavingToGithub || isDeploying ? (
+            <div className="flex items-center text-sm text-violet-600 bg-violet-50 px-3 py-1 rounded-full border border-violet-100">
+              <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
+              {isSavingToGithub ? 'Syncing...' : 'Deploying...'}
+            </div>
+          ) : (
+            <>
+              {connectionStatus === 'connected' && (
+                <div className="flex items-center text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">
+                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                  Connected
+                </div>
+              )}
+              {connectionStatus === 'checking' && (
+                <div className="flex items-center text-sm text-yellow-600 bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100">
+                  <Loader2 className="animate-spin w-3 h-3 mr-2" />
+                  Checking...
+                </div>
+              )}
+              {connectionStatus === 'error' && (
+                <div className="flex items-center text-sm text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-100">
+                  <AlertCircle className="w-3 h-3 mr-2" />
+                  {connectionError || 'Connection Error'}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        <div className="relative flex-1 max-w-md flex gap-2">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-violet-500 focus:border-violet-500 sm:text-sm transition duration-150 ease-in-out"
+              placeholder="Search projects..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-violet-500 focus:border-violet-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder="Search projects..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+
+          <button
+            onClick={() => setShowSettings(true)}
+            className={`inline-flex items-center justify-center px-3 py-2 border text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors ${!githubConfig || connectionStatus === 'error' ? 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 ring-amber-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 ring-violet-500'
+              }`}
+            title="GitHub Settings"
+          >
+            <Settings className={`h-5 w-5 ${(!githubConfig || connectionStatus === 'error') ? 'animate-pulse' : ''}`} />
+          </button>
         </div>
         <button
           onClick={() => setShowCreateForm(true)}
@@ -246,6 +557,15 @@ export default function AdminProjectsClient() {
         </div>
       )}
 
+      {/* GitHub Settings Modal */}
+      {showSettings && (
+        <SettingsModal
+          initialConfig={githubConfig}
+          onSave={saveGithubSettings}
+          onCancel={() => setShowSettings(false)}
+        />
+      )}
+
       {/* Create Project Modal */}
       {showCreateForm && (
         <ProjectForm
@@ -268,6 +588,92 @@ export default function AdminProjectsClient() {
   );
 }
 
+// GitHub Settings Modal Component
+function SettingsModal({ initialConfig, onSave, onCancel }: {
+  initialConfig: GitHubConfig | null,
+  onSave: (config: GitHubConfig) => void,
+  onCancel: () => void
+}) {
+  const [config, setConfig] = useState<GitHubConfig>(initialConfig || {
+    token: '',
+    owner: 'raaos-projects', // default
+    repo: 'portfolio-shared' // default
+  });
+
+  const isComplete = config.token && config.owner && config.repo;
+
+  return (
+    <AdminModal
+      isOpen={true}
+      onClose={onCancel}
+      title="GitHub Connection Settings"
+      size="md"
+      actions={
+        <div className="flex space-x-3">
+          <AdminButton variant="secondary" onClick={onCancel}>
+            Cancel
+          </AdminButton>
+          <AdminButton
+            onClick={() => onSave(config)}
+            disabled={!isComplete}
+          >
+            Save Settings
+          </AdminButton>
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
+          <p className="text-sm text-blue-800">
+            To enable saving, you must provide a GitHub Personal Access Token.
+            This token is stored securely in your browser and used to push updates directly to GitHub.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            GitHub Personal Access Token *
+          </label>
+          <input
+            type="password"
+            value={config.token}
+            onChange={(e) => setConfig({ ...config, token: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+            placeholder="ghp_..."
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Owner / Username *
+            </label>
+            <input
+              type="text"
+              value={config.owner}
+              onChange={(e) => setConfig({ ...config, owner: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+              placeholder="e.g. raaos-projects"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Repo Name *
+            </label>
+            <input
+              type="text"
+              value={config.repo}
+              onChange={(e) => setConfig({ ...config, repo: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+              placeholder="e.g. portfolio-shared"
+            />
+          </div>
+        </div>
+      </div>
+    </AdminModal>
+  );
+}
+
 // Project Form Component
 interface ProjectFormProps {
   project?: Project;
@@ -285,7 +691,7 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
     cover: project?.cover || '',
     coverWidth: project?.coverWidth || 800,
     coverHeight: project?.coverHeight || 600,
-    gallery: project?.gallery?.join('\\n') || '',
+    gallery: project?.gallery?.join('\n') || '',
     galleryItems: project?.galleryItems || (project?.gallery || []).map(url => ({
       kind: isVideoLink(url) ? 'video' : 'image',
       src: url,
@@ -309,7 +715,7 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
       cover: project?.cover || '',
       coverWidth: project?.coverWidth || 800,
       coverHeight: project?.coverHeight || 600,
-      gallery: project?.gallery?.join('\\n') || '',
+      gallery: project?.gallery?.join('\n') || '',
       galleryItems: project?.galleryItems || (project?.gallery || []).map(url => ({
         kind: isVideoLink(url) ? 'video' : 'image',
         src: url,
@@ -577,7 +983,6 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
           </AdminButton>
           <AdminButton
             onClick={handleButtonClick}
-            disabled={!isFormValid()}
           >
             {project ? 'Update Project' : 'Create Project'}
           </AdminButton>
@@ -661,9 +1066,9 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
           <textarea
             value={formData.description}
             onChange={(e) => handleInputChange('description', e.target.value)}
+            rows={3}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.description ? 'border-red-300' : 'border-gray-300'
               }`}
-            rows={3}
             placeholder="Project description"
           />
           {errors.description && (
@@ -675,186 +1080,113 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Cover Image/Video URL *
           </label>
-          <input
-            type="url"
-            value={formData.cover}
-            onChange={(e) => handleInputChange('cover', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.cover ? 'border-red-300' : 'border-gray-300'
-              }`}
-            placeholder="https://res.cloudinary.com/your-cloud/video/upload/v1234567/video.mp4"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.cover}
+              onChange={(e) => handleInputChange('cover', e.target.value)}
+              className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.cover ? 'border-red-300' : 'border-gray-300'
+                }`}
+              placeholder="https://..."
+            />
+            {isDetectingDimensions && (
+              <div className="flex items-center px-2 text-violet-600">
+                <Loader2 className="w-5 h-5 animate-spin" />
+              </div>
+            )}
+          </div>
           {errors.cover && (
             <p className="mt-1 text-sm text-red-600">{errors.cover}</p>
           )}
-          <p className="mt-1 text-sm text-gray-500">
-            Use Cloudinary URL or direct image/video link. Supports .mp4, .mov, .webm for videos
-          </p>
-          {formData.cover && (
-            <div className="mt-3 flex items-start gap-3">
-              <div className="relative w-20 h-20 rounded border bg-gray-50 overflow-hidden">
-                {isVideoLink(formData.cover) ? (
-                  <video
-                    src={formData.cover}
-                    className="w-full h-full object-cover"
-                    muted
-                    loop
-                    playsInline
-                  />
-                ) : (
-                  <Image
-                    src={formData.cover || FALLBACK_IMAGE}
-                    alt="Cover preview"
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                    unoptimized
-                  />
-                )}
-              </div>
-              <div className="text-xs text-gray-600 break-all max-w-xs">{formData.cover}</div>
-            </div>
-          )}
-
-          {/* Image Preview and Dimensions */}
-          {formData.cover && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-md">
-              <div className="flex items-center space-x-3">
-                <div className="relative w-16 h-16">
-                  <Image
-                    src={formData.cover || FALLBACK_IMAGE}
-                    alt="Cover preview"
-                    fill
-                    className="object-cover rounded border"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      target.style.display = 'none';
-                    }}
-                    sizes="64px"
-                    unoptimized
-                  />
-                </div>
-                <div className="flex-1">
-                  {isDetectingDimensions ? (
-                    <p className="text-sm text-gray-500">
-                      Detecting {formData.cover.includes('/video/') || formData.cover.endsWith('.mp4') ? 'video' : 'image'} dimensions...
-                    </p>
-                  ) : imageDimensions ? (
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">
-                        Dimensions: {imageDimensions.width} × {imageDimensions.height}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Ratio: {(imageDimensions.width / imageDimensions.height).toFixed(2)}:1
-                      </p>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <p className="text-xs text-green-600">
-                          ✓ Auto-detected and saved to form
-                        </p>
-                        {formData.cover.includes('/video/') || formData.cover.endsWith('.mp4') ? (
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">Video</span>
-                        ) : (
-                          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Image</span>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500">Enter a valid URL to see dimensions</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cover Width (px)
-            </label>
+            <label className="block text-xs text-gray-500 mb-1">Cover Width</label>
             <input
               type="number"
               value={formData.coverWidth}
-              onChange={(e) => handleInputChange('coverWidth', parseInt(e.target.value) || 800)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
-              min="100"
-              max="4000"
+              readOnly
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-500 text-sm"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cover Height (px)
-            </label>
+            <label className="block text-xs text-gray-500 mb-1">Cover Height</label>
             <input
               type="number"
               value={formData.coverHeight}
-              onChange={(e) => handleInputChange('coverHeight', parseInt(e.target.value) || 600)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
-              min="100"
-              max="4000"
+              readOnly
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-500 text-sm"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Gallery URLs
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Gallery Items
           </label>
-          <div className="flex gap-2">
+
+          <div className="flex gap-2 mb-3">
             <input
-              type="url"
+              type="text"
               value={newGalleryUrl}
               onChange={(e) => setNewGalleryUrl(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
-              placeholder="Tambah URL Cloudinary lalu klik +"
+              placeholder="Add image or video URL..."
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddGalleryUrl();
+                }
+              }}
             />
-            <AdminButton type="button" onClick={handleAddGalleryUrl}>
-              +
-            </AdminButton>
+            <button
+              type="button"
+              onClick={handleAddGalleryUrl}
+              className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm font-medium"
+            >
+              Add
+            </button>
           </div>
-          <p className="mt-1 text-sm text-gray-500">
-            {formData.galleryItems.length} items. Supports On/Off toggle.
-          </p>
-          {formData.galleryItems.length > 0 && (
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {formData.galleryItems.map((item, index) => (
-                <div key={`${item.src}-${index}`} className={`relative flex flex-col rounded-lg border overflow-hidden bg-white ${item.isActive !== false ? 'border-gray-200' : 'border-red-300 opacity-75'}`}>
-                  {/* Media Preview */}
-                  <div className="relative w-full pb-[75%] bg-gray-50 border-b border-gray-100">
-                    {item.kind === 'video' ? (
-                      <video src={item.src} className="absolute inset-0 w-full h-full object-cover" muted playsInline />
-                    ) : (
-                      <Image
-                        src={item.src}
-                        alt="Gallery preview"
-                        fill
-                        className="object-cover"
-                        sizes="120px"
-                        unoptimized
-                      />
-                    )}
-                  </div>
 
-                  {/* Controls Footer */}
-                  <div className="p-2 flex items-center justify-between gap-2 bg-white">
-                    <StatusToggle
-                      isActive={item.isActive !== false}
-                      onClick={() => handleToggleGalleryItem(index)}
-                      className="flex-1"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveGalleryItem(index)}
-                      className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      title="Remove"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+          <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+            {formData.galleryItems.map((item, index) => (
+              <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200 group">
+                <div className="relative w-10 h-10 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                  {item.kind === 'video' ? (
+                    <video src={item.src} className="w-full h-full object-cover" />
+                  ) : (
+                    <Image src={item.src} alt="" fill className="object-cover" unoptimized />
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-600 truncate" title={item.src}>{item.src}</p>
+                  <span className="text-[10px] uppercase font-bold text-gray-400">{item.kind}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleGalleryItem(index)}
+                    className={`p-1 rounded ${item.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}
+                    title={item.isActive ? "Active" : "Hidden"}
+                  >
+                    <CheckCircle2 className="w-4 h-4 ml-auto" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveGalleryItem(index)}
+                    className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded"
+                    title="Remove"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            {formData.galleryItems.length === 0 && (
+              <p className="text-center text-sm text-gray-400 py-4 italic">No gallery items yet</p>
+            )}
+          </div>
         </div>
 
         <div>
@@ -862,73 +1194,12 @@ function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
             External Link
           </label>
           <input
-            type="url"
+            type="text"
             value={formData.external_link}
             onChange={(e) => handleInputChange('external_link', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
-            placeholder="https://example.com/live-demo"
+            placeholder="https://example.com"
           />
-        </div>
-
-        {/* Video Settings */}
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Video Settings</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="autoplay"
-                checked={formData.autoplay}
-                onChange={(e) => handleInputChange('autoplay', e.target.checked)}
-                className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 rounded"
-              />
-              <label htmlFor="autoplay" className="ml-2 block text-sm text-gray-700">
-                Autoplay
-              </label>
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="muted"
-                checked={formData.muted}
-                onChange={(e) => handleInputChange('muted', e.target.checked)}
-                className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 rounded"
-              />
-              <label htmlFor="muted" className="ml-2 block text-sm text-gray-700">
-                Muted
-              </label>
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="loop"
-                checked={formData.loop}
-                onChange={(e) => handleInputChange('loop', e.target.checked)}
-                className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 rounded"
-              />
-              <label htmlFor="loop" className="ml-2 block text-sm text-gray-700">
-                Loop
-              </label>
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="playsInline"
-                checked={formData.playsInline}
-                onChange={(e) => handleInputChange('playsInline', e.target.checked)}
-                className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 rounded"
-              />
-              <label htmlFor="playsInline" className="ml-2 block text-sm text-gray-700">
-                Plays Inline
-              </label>
-            </div>
-          </div>
-          <p className="mt-2 text-sm text-gray-500">
-            These settings apply to video content. Autoplay and muted are recommended for better user experience.
-          </p>
         </div>
       </form>
     </AdminModal>

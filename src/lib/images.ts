@@ -3,20 +3,17 @@ import type { Project, GalleryItem } from '@/types/projects'
 
 function toProxy(u: string) {
   u = (u || '').trim()
-  return `/api/img?u=${encodeURIComponent(u)}`
+  return u
 }
 
 export function toImageProxy(u: string) {
   u = (u || '').trim()
-  if (!u) return u
-  // Jangan proxy data URL (placeholder lokal)
-  if (u.startsWith('data:')) return u
-  return `/api/img?u=${encodeURIComponent(u)}`
+  return u
 }
 
 export function toMediaProxy(u: string) {
   u = (u || '').trim()
-  return `/api/img?u=${encodeURIComponent(u)}`
+  return u
 }
 
 function isCloudinary(url: URL) {

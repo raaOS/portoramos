@@ -25,19 +25,12 @@ const nextConfig = {
   trailingSlash: false,
   // Use default build ID generation
   // Disable experimental features to fix chunk loading issues
-  experimental: {
-    // Temporarily disabled to fix ChunkLoadError
-    // optimizePackageImports: ['framer-motion', 'gsap', 'three'],
-  },
-  // Optimize page loading and prevent hard refresh issues
-  onDemandEntries: {
-    maxInactiveAge: 25 * 1000,
-    pagesBufferLength: 2,
-  },
-  // Enable experimental features for better navigation
+  // Enable experimental features
   experimental: {
     // Enable modern bundling
     esmExternals: true,
+    // Temporarily disabled to fix ChunkLoadError
+    // optimizePackageImports: ['framer-motion', 'gsap', 'three'],
   },
   // Simplified webpack configuration - disabled to fix ChunkLoadError
   // webpack: (config, { dev, isServer }) => {
@@ -72,6 +65,35 @@ const nextConfig = {
     return [
       { source: '/index', destination: '/filter', permanent: true },
       { source: '/indeks', destination: '/filter', permanent: true }
+    ]
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-src 'self' https://vercel.live https://vercel.com;"
+          }
+        ]
+      }
     ]
   }
 }

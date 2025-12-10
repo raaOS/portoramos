@@ -21,9 +21,9 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 1,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-09-14T16:23:34.832Z",
-      "updatedAt": "2025-12-08T09:20:47.472Z"
+      "updatedAt": "2025-12-08T15:32:25.843Z"
     },
     {
       "title": "gantungan",
@@ -52,7 +52,32 @@
       "status": "published",
       "createdAt": "2025-09-14T16:45:24.869Z",
       "updatedAt": "2025-12-08T09:01:05.831Z"
+    },
+    {
+      "title": "ayam",
+      "client": "ramos`",
+      "year": 2025,
+      "description": "ayaaaaam",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg",
+      "coverWidth": 700,
+      "coverHeight": 700,
+      "gallery": [],
+      "galleryItems": [],
+      "tags": [
+        "gambar"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "id": "project-1765221995433",
+      "slug": "ayam",
+      "order": 3,
+      "status": "draft",
+      "createdAt": "2025-12-08T19:26:35.433Z",
+      "updatedAt": "2025-12-08T19:27:01.564Z"
     }
   ],
-  "lastUpdated": "2025-12-08T09:20:47.472Z"
+  "lastUpdated": "2025-12-08T19:27:01.564Z"
 }

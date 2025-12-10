@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
 import { ProjectsData, CreateProjectData, Project } from '@/types/projects';
 import { checkAdminAuth } from '@/lib/auth';
+import projectsData from '@/data/projects.json';
+import { githubService } from '@/lib/github';
 import path from 'path';
 
 const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'projects.json');
@@ -9,8 +11,30 @@ const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'projects.json');
 // GET - Read all projects
 export async function GET(request: NextRequest) {
   try {
-    await ensureDataDir();
-    const data = (await loadData(DATA_FILE)) as ProjectsData | null;
+    let data: ProjectsData | null = null;
+    const isDev = process.env.NODE_ENV === 'development';
+
+    // 1. Development: Try to read from FS
+    if (isDev) {
+      await ensureDataDir();
+      data = (await loadData(DATA_FILE)) as ProjectsData | null;
+    }
+    // 2. Production: Try to read from GitHub (for freshest data)
+    else {
+      try {
+        const ghData = await githubService.getFile();
+        if (ghData && ghData.content) {
+          data = ghData.content as ProjectsData;
+        }
+      } catch (error) {
+        console.warn('Failed to fetch from GitHub, falling back to static data:', error);
+      }
+    }
+
+    // 3. Fallback: Use the statically imported JSON
+    if (!data) {
+      data = projectsData as unknown as ProjectsData;
+    }
 
     if (!data) {
       return NextResponse.json({
@@ -23,7 +47,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
-    let projects = data.projects;
+    let projects = data.projects || [];
     if (status) {
       projects = projects.filter((project) => project.status === status);
     }
@@ -42,10 +66,12 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error loading projects:', error);
-    return NextResponse.json(
-      { error: 'Failed to load projects' },
-      { status: 500 }
-    );
+    // Final fallback to avoiding 500
+    const fallbackData = projectsData as unknown as ProjectsData;
+    return NextResponse.json({
+      projects: fallbackData?.projects || [],
+      lastUpdated: fallbackData?.lastUpdated || new Date().toISOString()
+    });
   }
 }
 
@@ -69,12 +95,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await ensureDataDir();
-    let data = (await loadData(DATA_FILE)) as ProjectsData | null;
+    const isDev = process.env.NODE_ENV === 'development';
+    let currentProjects: Project[] = [];
 
-    // If no data file yet, initialise empty dataset
-    if (!data) {
-      data = { projects: [], lastUpdated: new Date().toISOString() };
+    // FETCH EXISTING DATA
+    if (isDev) {
+      await ensureDataDir();
+      const localData = (await loadData(DATA_FILE)) as ProjectsData | null;
+      currentProjects = localData?.projects || [];
+    } else {
+      try {
+        const ghData = await githubService.getFile();
+        currentProjects = ghData.content.projects || [];
+      } catch (error) {
+        console.error('Error fetching current data from GitHub:', error);
+        return NextResponse.json(
+          { error: 'Failed to connect to storage (GitHub services)' },
+          { status: 502 }
+        );
+      }
+    }
+
+    // First run fallback for dev if file was empty/null
+    if (isDev && !currentProjects.length) {
+      const staticData = projectsData as unknown as ProjectsData;
+      if (staticData?.projects?.length) {
+        currentProjects = [...staticData.projects];
+      }
     }
 
     // Generate new project
@@ -95,24 +142,31 @@ export async function POST(request: NextRequest) {
       gallery: body.gallery || [],
       galleryItems: body.galleryItems || [],
       external_link: body.external_link || '',
-      order: data.projects.length + 1,
+      order: currentProjects.length + 1,
       status: body.status || 'published',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    // Add to data
-    data.projects.push(newProject);
-    data.lastUpdated = new Date().toISOString();
+    // Add to list
+    const updatedProjects = [...currentProjects, newProject];
+    const updatedData = {
+      projects: updatedProjects,
+      lastUpdated: new Date().toISOString()
+    };
 
-    // Save data
-    const success = await saveData(DATA_FILE, data);
-
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Failed to save project' },
-        { status: 500 }
-      );
+    // SAVE DATA
+    if (isDev) {
+      // Save local FS
+      const success = await saveData(DATA_FILE, updatedData);
+      if (!success) throw new Error('Failed to save to local filesystem');
+    } else {
+      // Save to GitHub
+      const success = await githubService.updateProjects({
+        projects: updatedProjects,
+        message: `Add project: ${newProject.title} (via Admin CMS)`
+      });
+      if (!success) throw new Error('Failed to save to GitHub');
     }
 
     return NextResponse.json({

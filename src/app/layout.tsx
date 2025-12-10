@@ -24,6 +24,8 @@ export const metadata: Metadata = generateMetadata({
   keywords: ['portfolio', 'desain grafis', 'UI/UX', 'creative design', 'visual design', 'Ramos']
 });
 
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const websiteStructuredData = generateStructuredData('website');
 
@@ -56,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     {/* Track page views and route changes */}
                     {/* Ensure any old service workers are removed */}
                     <UnregisterSW />
+                    <SpeedInsights />
                   </AppWrapper>
                 </ErrorBoundary>
               </NavbarVisibilityProvider>
