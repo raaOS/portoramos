@@ -54,29 +54,30 @@
       "updatedAt": "2025-12-08T09:01:05.831Z"
     },
     {
-      "title": "ayam1",
-      "client": "atmamsn`",
+      "title": "ayam",
+      "client": "ramos`",
       "year": 2025,
-      "description": "dasdas",
+      "description": "ayaaaaam",
       "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg",
       "coverWidth": 700,
       "coverHeight": 700,
       "gallery": [],
       "galleryItems": [],
       "tags": [
-        "sdfda"
+        "gambar"
       ],
       "external_link": "",
       "autoplay": true,
       "muted": true,
       "loop": true,
       "playsInline": true,
-      "id": "project-1765222294077",
+      "id": "project-1765221995433",
+      "slug": "ayam",
       "order": 3,
-      "status": "draft",
-      "createdAt": "2025-12-08T19:31:34.077Z",
-      "updatedAt": "2025-12-08T19:31:34.077Z"
+      "status": "published",
+      "createdAt": "2025-12-08T19:26:35.433Z",
+      "updatedAt": "2025-12-08T19:27:01.564Z"
     }
   ],
-  "lastUpdated": "2025-12-08T19:32:12.786Z"
+  "lastUpdated": "2025-12-10T15:31:03.288Z"
 }
