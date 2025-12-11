@@ -17,6 +17,7 @@ import {
   Github,
   ArrowUpRight
 } from 'lucide-react';
+import BlurTextLoop from '@/components/BlurTextLoop';
 
 const Reveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
   return (
@@ -88,15 +89,35 @@ export default function ContactClientWithAutoUpdate() {
 
           {/* Header & Info Section (Left Col) */}
           <div className="lg:col-span-5 space-y-16">
+
+
             <Reveal>
-              <div>
-                <h1 className="text-6xl md:text-8xl lg:text-[7rem] font-bold tracking-tighter leading-[0.9] mb-8 font-display">
-                  LET'S<br />WORK<br />TOGETHER
-                </h1>
-                <p className="text-xl text-gray-600 font-serif italic max-w-md leading-relaxed">
-                  Have a project in mind? Let's combine our creativity and build something extraordinary.
-                </p>
+              <div className="flex flex-col items-start leading-[0.85] font-bold font-display tracking-normal select-none mb-8">
+                <BlurTextLoop
+                  text="LET'S"
+                  className="text-[20vw] lg:text-[8rem] text-black"
+                  initialDelay={0.1}
+                  animateBy="letters"
+                  direction="top"
+                />
+                <BlurTextLoop
+                  text="WORK"
+                  className="text-[20vw] lg:text-[8rem] text-black"
+                  initialDelay={0.3}
+                  animateBy="letters"
+                  direction="top"
+                />
+                <BlurTextLoop
+                  text="TOGETHER"
+                  className="text-[20vw] lg:text-[8rem] text-black"
+                  initialDelay={0.5}
+                  animateBy="letters"
+                  direction="top"
+                />
               </div>
+              <p className="text-xl text-gray-600 font-serif italic max-w-md leading-relaxed">
+                Have a project in mind? Let's combine our creativity and build something extraordinary.
+              </p>
             </Reveal>
 
             <div className="space-y-12">

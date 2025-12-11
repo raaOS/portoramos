@@ -15,6 +15,8 @@ export interface Project {
   gallery: string[];
   galleryItems: GalleryItem[];
   description: string;
+  description_id?: string; // Indonesian description
+  title_id?: string;       // Indonesian title (optional)
   external_link: string;
   order: number;
   status: 'published' | 'draft';
@@ -44,6 +46,8 @@ export interface CreateProjectData {
   tags: string[];
   cover: string;
   description: string;
+  description_id?: string;
+  title_id?: string;
   gallery?: string[];
   external_link?: string;
   galleryItems?: GalleryItem[];

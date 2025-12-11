@@ -7,6 +7,7 @@ export interface HardSkill {
   level: HardSkillLevel;
   order: number;
   description?: string;
+  description_id?: string;
   isActive?: boolean;
   createdAt: string;
   updatedAt: string;

@@ -24,11 +24,11 @@ interface AdminLayoutProps {
   titleAccent?: string;
 }
 
-export default function AdminLayout({ 
-  children, 
-  title, 
-  subtitle, 
-  breadcrumbs = [], 
+export default function AdminLayout({
+  children,
+  title,
+  subtitle,
+  breadcrumbs = [],
   actions,
   titleIcon,
   titleAccent = 'bg-blue-50 text-blue-700'

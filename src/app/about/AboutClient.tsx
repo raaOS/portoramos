@@ -12,6 +12,7 @@ import AnimatedCounter from '@/components/AnimatedCounter';
 import HorizontalCounterAnimation from '@/components/HorizontalCounterAnimation';
 import HorizontalTestimonial from '@/components/HorizontalTestimonial';
 import { ExperienceData } from '@/types/experience';
+
 import { HardSkill } from '@/types/hardSkill';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
 import { useSmoothScroll } from '@/hooks/useSmoothScroll';
@@ -19,6 +20,7 @@ import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
 import { Reveal, StaggerContainer, StaggerItem } from '@/components/Reveal';
 import BlurTextLoop from '@/components/BlurTextLoop';
 import RunningTextSection from '@/components/RunningTextSection';
+import AITranslator from '@/components/AITranslator';
 
 const TextMorph = dynamic(() => import('@/components/TextMorph'), {
   ssr: false
@@ -133,15 +135,19 @@ interface AboutClientProps {
   initialData?: {
     hero?: {
       title: string | null;
+      title_id?: string | null;
       backgroundTrail: (string | TrailItem)[]; // Updated
     };
     professional?: {
       motto: {
         badge: string;
+        badge_id?: string;
         quote: string;
+        quote_id?: string;
       };
       bio: {
         content: string;
+        content_id?: string;
         galleryImages: (string | TrailItem)[]; // Updated
       };
     };
@@ -161,6 +167,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
   const fallbackData = {
     hero: {
       title: 'ABOUT ME',
+      title_id: 'TENTANG SAYA',
       backgroundTrail: [
         '/images/trail/trail1.jpg',
         '/images/trail/trail2.jpg',
@@ -171,11 +178,14 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     },
     professional: {
       motto: {
-        badge: 'Motto kerja',
-        quote: '"Desain adalah solusi visual, bukan sekadar estetika."'
+        badge: 'Work Motto',
+        badge_id: 'Motto Kerja',
+        quote: '"Design is a visual solution, not just aesthetics."',
+        quote_id: '"Desain adalah solusi visual, bukan sekadar estetika."'
       },
       bio: {
-        content: 'Desainer grafis dengan lebih dari 14 tahun pengalaman di brand dan kampanye digital. Fokus pada visual bersih, tipografi kuat, dan storytelling yang relevan bisnis.',
+        content: 'Graphic designer with over 14 years of experience in branding and digital campaigns. Focused on clean visuals, strong typography, and business-relevant storytelling.',
+        content_id: 'Desainer grafis dengan lebih dari 14 tahun pengalaman di brand dan kampanye digital. Fokus pada visual bersih, tipografi kuat, dan storytelling yang relevan bisnis.',
         galleryImages: [
           '/images/trail/trail1.jpg',
           '/images/trail/trail2.jpg',
@@ -296,7 +306,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     {
       id: 'concept-typography',
       title: 'Tipografi',
+      title_id: 'Tipografi',
       description: 'memahami jenis huruf, hierarki teks, dan readability',
+      description_id: 'memahami jenis huruf, hierarki teks, dan keterbacaan',
       order: 1,
       createdAt: '',
       updatedAt: '',
@@ -304,7 +316,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     {
       id: 'concept-color',
       title: 'Teori warna',
+      title_id: 'Teori Warna',
       description: 'color psychology, color harmony, kontras, dan palet warna',
+      description_id: 'psikologi warna, harmoni warna, kontras, dan palet warna',
       order: 2,
       createdAt: '',
       updatedAt: '',
@@ -312,7 +326,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     {
       id: 'concept-layout',
       title: 'Layout & Grid System',
+      title_id: 'Tata Letak & Sistem Grid',
       description: 'mengatur komposisi visual agar rapi, seimbang, dan mudah dibaca',
+      description_id: 'mengatur komposisi visual agar rapi, seimbang, dan mudah dibaca',
       order: 3,
       createdAt: '',
       updatedAt: '',
@@ -320,7 +336,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     {
       id: 'concept-branding',
       title: 'Branding & Identitas Visual',
+      title_id: 'Branding & Identitas Visual',
       description: 'membuat logo, guideline brand, desain konsisten untuk bisnis',
+      description_id: 'membuat logo, panduan merek, desain konsisten untuk bisnis',
       order: 4,
       createdAt: '',
       updatedAt: '',
@@ -332,7 +350,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       ? hardSkillConceptsData.concepts.filter((c) => c.isActive !== false)
       : fallbackConcepts;
 
-  const heroTitleRaw = currentAboutData.hero?.title || 'PORTOFOLIO';
+  const heroTitleRaw = (currentAboutData.hero?.title || 'PORTOFOLIO').toUpperCase();
   const heroStartsWithPorto = /^porto/i.test(heroTitleRaw);
   const heroTail = heroStartsWithPorto
     ? heroTitleRaw.replace(/^porto\s*/i, '').trim() || 'FOLIO'
@@ -364,7 +382,9 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     .sort((a, b) => (a.order || 0) - (b.order || 0))
     .map((concept) => ({
       category: concept.title,
+      category_id: concept.title_id,
       content: concept.description || '',
+      content_id: concept.description_id || '',
     }));
 
   // Get gallery images from currentAboutData or empty array
@@ -432,51 +452,47 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         <div className="min-h-[35vh] md:min-h-[50vh] flex items-center justify-center relative z-20 px-4 overflow-hidden">
           <div className="text-center w-full">
             <div className="w-full flex justify-center">
-              {isClient && (
-                <>
-                  {/* Mobile: paksa 2 baris PORTO + tail jika judul diawali PORTO, selain itu tetap satu baris */}
-                  {heroStartsWithPorto ? (
-                    <div className="block sm:hidden leading-[0.9] uppercase">
-                      <div className="flex flex-col items-start space-y-1">
-                        <BlurTextLoop
-                          text="PORTO"
-                          className="text-[32vw] tracking-normal text-black font-display font-bold select-none"
-                          initialDelay={0.1}
-                          animateBy="letters"
-                          direction="top"
-                        />
-                        <BlurTextLoop
-                          text={heroTailUpper}
-                          className="text-[32vw] tracking-normal text-black font-display font-bold select-none"
-                          initialDelay={1}
-                          animateBy="letters"
-                          direction="top"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="block sm:hidden">
-                      <BlurTextLoop
-                        text={heroTitleRaw}
-                        className="text-[32vw] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
-                        initialDelay={0.15}
-                        animateBy="letters"
-                        direction="top"
-                      />
-                    </div>
-                  )}
-                  {/* Tablet/desktop: tetap satu baris */}
-                  <div className="hidden sm:block">
+              {/* Mobile: paksa 2 baris PORTO + tail jika judul diawali PORTO, selain itu tetap satu baris */}
+              {heroStartsWithPorto ? (
+                <div className="block sm:hidden leading-[0.9] uppercase">
+                  <div className="flex flex-col items-start space-y-1">
                     <BlurTextLoop
-                      text={heroTitleRaw}
-                      className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
-                      initialDelay={0.15}
+                      text="PORTO"
+                      className="text-[32vw] tracking-normal text-black font-display font-bold select-none"
+                      initialDelay={0.1}
+                      animateBy="letters"
+                      direction="top"
+                    />
+                    <BlurTextLoop
+                      text={heroTailUpper}
+                      className="text-[32vw] tracking-normal text-black font-display font-bold select-none"
+                      initialDelay={1}
                       animateBy="letters"
                       direction="top"
                     />
                   </div>
-                </>
+                </div>
+              ) : (
+                <div className="block sm:hidden">
+                  <BlurTextLoop
+                    text={heroTitleRaw}
+                    className="text-[32vw] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
+                    initialDelay={0.15}
+                    animateBy="letters"
+                    direction="top"
+                  />
+                </div>
               )}
+              {/* Tablet/desktop: tetap satu baris */}
+              <div className="hidden sm:block">
+                <BlurTextLoop
+                  text={heroTitleRaw}
+                  className="text-[18vw] md:text-[15vw] lg:text-[12rem] leading-[0.9] tracking-normal text-black font-display font-bold uppercase select-none"
+                  initialDelay={0.15}
+                  animateBy="letters"
+                  direction="top"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -493,18 +509,17 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
 
-            {/* Grid Kiri - Motto Kerja */}
             <div className="space-y-6 md:space-y-8">
               {/* Motto Kerja */}
               <div>
                 <Reveal>
                   <div className="inline-block bg-gray-100 px-6 py-3 rounded-full text-sm font-medium mb-6">
-                    {currentAboutData.professional?.motto.badge || 'Motto kerja'}
+                    {currentAboutData.professional?.motto.badge}
                   </div>
                 </Reveal>
                 <Reveal delay={0.3}>
                   <p className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold italic text-gray-700 leading-tight">
-                    {currentAboutData.professional?.motto.quote || '"Desain adalah solusi visual, bukan sekadar estetika."'}
+                    {currentAboutData.professional?.motto.quote}
                   </p>
                 </Reveal>
               </div>
@@ -515,8 +530,11 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             <div className="space-y-8">
               <Reveal delay={0.4}>
                 <p className="text-base md:text-lg leading-relaxed text-gray-700 font-serif">
-                  {currentAboutData.professional?.bio.content || 'Desainer grafis dengan lebih dari 14 tahun pengalaman (bekerja & freelance). Terbiasa menghadapi deadline, mampu bekerja dalam tim, serta adaptif dengan tren industri kreatif yang selalu berubah.'}
+                  {currentAboutData.professional?.bio.content}
                 </p>
+                <div className="mt-3">
+                  <AITranslator text={currentAboutData.professional?.bio.content || ''} context="Professional Bio" />
+                </div>
               </Reveal>
 
               {/* Gallery Mini */}

@@ -1,13 +1,14 @@
 'use client';
 
 import type { Project, GalleryItem } from '@/types/projects';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import HeroShared from '@/components/HeroShared';
 import ReadMoreDescription from '@/components/ReadMoreDescription';
 import ShareButtons from '@/components/ShareButtons';
 import CommentSection from '@/components/CommentSection';
 import DetailMeta from './DetailMeta';
+import AITranslator from '@/components/AITranslator';
 
 const CoverFlowGallery = dynamic(() => import('@/components/CoverFlowGallery'), {
   ssr: false,
@@ -34,7 +35,11 @@ export default function ProjectDetailClient({
   layoutStrategy
 }: ProjectDetailClientProps) {
   const [videoRef, setVideoRef] = useState<React.RefObject<HTMLVideoElement> | null>(null);
-  const initialLikes = useMemo(() => Math.floor(Math.random() * 50) + 10, []);
+  const [initialLikes, setInitialLikes] = useState(0);
+
+  useEffect(() => {
+    setInitialLikes(Math.floor(Math.random() * 50) + 10);
+  }, []);
 
   // Create unified media array with hero as first item
   const unifiedMedia = [
@@ -87,11 +92,17 @@ export default function ProjectDetailClient({
 
           {/* Deskripsi */}
           {p.description && (
-            <ReadMoreDescription
-              text={p.description}
-              maxLines={2}
-              className="text-lg leading-relaxed text-gray-700"
-            />
+            <>
+              <ReadMoreDescription
+                text={p.description}
+                maxLines={2}
+                className="text-lg leading-relaxed text-gray-700"
+              />
+
+              <div className="mt-2 text-left">
+                <AITranslator text={p.description} context={`Project: ${p.title || ''}`} />
+              </div>
+            </>
           )}
 
           {/* Share, Love, and Comment Section */}

@@ -21,6 +21,7 @@
     "cloudinary:folders": "node scripts/setup-cloudinary-folders.mjs"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@playwright/test": "^1.55.0",
     "@tanstack/react-query": "^5.90.10",
     "@types/imagesloaded": "^4.1.7",

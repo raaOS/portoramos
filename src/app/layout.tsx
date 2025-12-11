@@ -1,30 +1,18 @@
-import type { Metadata } from 'next';
 import './globals.css';
+import { serifClassName, displayClassName } from '@/app/fonts';
+import { generateStructuredData } from '@/lib/seo';
 import Providers from '@/components/Providers';
-import Header from '@/components/Header';
-import BottomNavigation from '@/components/BottomNavigation';
-import { displayClassName, serifClassName } from './fonts';
-import Footer from '@/components/Footer';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import AppWrapper from '@/components/AppWrapper';
-import { generateMetadata, generateStructuredData } from '@/lib/seo';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { LastUpdatedProvider } from '@/contexts/LastUpdatedContext';
 import { NavbarVisibilityProvider } from '@/contexts/NavbarVisibilityContext';
-import UnregisterSW from '@/components/UnregisterSW';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import AppWrapper from '@/components/AppWrapper';
+import Header from '@/components/Header';
 import PageTransition from '@/components/PageTransition';
-
-
-
-export const metadata: Metadata = generateMetadata({
-  title: 'Ramos – Creative Portfolio',
-  description: 'Portofolio desain dan proyek kreatif Ramos dengan fokus pada visual yang bersih, tipografi kuat, dan transisi halus.',
-  path: '/',
-  image: '/og-image.jpg',
-  keywords: ['portfolio', 'desain grafis', 'UI/UX', 'creative design', 'visual design', 'Ramos']
-});
-
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import Footer from '@/components/Footer';
+import BottomNavigation from '@/components/BottomNavigation';
+import UnregisterSW from '@/components/UnregisterSW';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const websiteStructuredData = generateStructuredData('website');
@@ -33,7 +21,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData) }}
@@ -46,7 +33,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <NavbarVisibilityProvider>
                 <ErrorBoundary>
                   <AppWrapper>
-
                     <Header />
                     <main className="container pb-20">
                       <PageTransition>

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Media from './Media';
 import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
+import AITranslator from '@/components/AITranslator';
 
 interface GalleryImage {
   src: string;
@@ -207,6 +208,13 @@ export default function SwayingGallery({
                   <li key={itemIndex}>{item}</li>
                 ))}
               </ul>
+
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <AITranslator
+                  text={selectedJob.description.join('\n• ')}
+                  context={`${selectedJob.company} - ${selectedJob.position}`}
+                />
+              </div>
             </div>
           </div>
         </div>

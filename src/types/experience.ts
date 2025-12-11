@@ -3,7 +3,9 @@ export interface WorkExperience {
   duration: string;
   company: string;
   position: string;
+  position_id?: string;
   description: string[];
+  description_id?: string[];
   imageUrl: string;
   isActive?: boolean;
 }
@@ -35,7 +37,9 @@ export interface UpdateExperienceData {
   duration: string;
   company: string;
   position: string;
+  position_id?: string;
   description: string[];
+  description_id?: string[];
   imageUrl: string;
 }
 

@@ -24,11 +24,7 @@ export default function Header() {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
-  const navLinks = [
-    { name: 'About', href: '/about' },
-    { name: 'Works', href: '/works' },
-    { name: 'Contact', href: '/contact' },
-  ];
+
 
   return (
     <>
@@ -58,8 +54,8 @@ export default function Header() {
             </motion.span>
           </Link>
 
-          {/* Desktop Navigation - Removed as per user request */}
-          <div className="hidden md:block" />
+          {/* Desktop Navigation */}
+
 
           {/* Right Side: Last Updated (Desktop) & Mobile Menu Button */}
           <div className="flex items-center gap-3">
@@ -108,18 +104,7 @@ export default function Header() {
               className="md:hidden overflow-hidden bg-white border-t border-gray-100"
             >
               <nav className="container py-4 flex flex-col gap-4">
-                {navLinks.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`text-base font-medium px-2 py-1 rounded-md transition-colors ${pathname === item.href
-                      ? 'text-blue-600 bg-blue-50'
-                      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-                      }`}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+
                 {/* Mobile CV Button */}
                 <div className="pt-2 border-t border-gray-100 mt-2">
                   <Link

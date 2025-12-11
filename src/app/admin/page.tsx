@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import AdminDashboardClient from './AdminDashboardClient';
 
 export default function AdminPage() {
-  redirect('/admin/projects');
+  return <AdminDashboardClient />;
 }
