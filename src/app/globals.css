@@ -6,8 +6,10 @@
 /* Typography standardized from previous file */
 
 /* Headings */
-h1, .h1 {
-  font-size: 2rem; /* 32px */
+h1,
+.h1 {
+  font-size: 2rem;
+  /* 32px */
   line-height: 1.2;
   font-weight: 600;
   color: var(--text-primary);
@@ -16,13 +18,18 @@ h1, .h1 {
 }
 
 @media (min-width: 768px) {
-  h1, .h1 {
-    font-size: 2.5rem; /* 40px */
+
+  h1,
+  .h1 {
+    font-size: 2.5rem;
+    /* 40px */
   }
 }
 
-h2, .h2 {
-  font-size: 1.5rem; /* 24px */
+h2,
+.h2 {
+  font-size: 1.5rem;
+  /* 24px */
   line-height: 1.3;
   font-weight: 600;
   color: var(--text-primary);
@@ -30,13 +37,18 @@ h2, .h2 {
 }
 
 @media (min-width: 768px) {
-  h2, .h2 {
-    font-size: 1.875rem; /* 30px */
+
+  h2,
+  .h2 {
+    font-size: 1.875rem;
+    /* 30px */
   }
 }
 
-h3, .h3 {
-  font-size: 1.25rem; /* 20px */
+h3,
+.h3 {
+  font-size: 1.25rem;
+  /* 20px */
   line-height: 1.4;
   font-weight: 500;
   color: var(--text-primary);
@@ -44,43 +56,55 @@ h3, .h3 {
 }
 
 @media (min-width: 768px) {
-  h3, .h3 {
-    font-size: 1.5rem; /* 24px */
+
+  h3,
+  .h3 {
+    font-size: 1.5rem;
+    /* 24px */
   }
 }
 
-h4, .h4 {
-  font-size: 1.125rem; /* 18px */
+h4,
+.h4 {
+  font-size: 1.125rem;
+  /* 18px */
   line-height: 1.5;
   font-weight: 500;
 }
 
 /* Body text */
-body, p, .text-base {
-  font-size: 1rem; /* 16px */
+body,
+p,
+.text-base {
+  font-size: 1rem;
+  /* 16px */
   line-height: 1.5;
   color: var(--text-primary);
   transition: color 0.3s ease;
 }
 
 .text-sm {
-  font-size: 0.875rem; /* 14px */
+  font-size: 0.875rem;
+  /* 14px */
   line-height: 1.5;
 }
 
 .text-xs {
-  font-size: 0.75rem; /* 12px */
+  font-size: 0.75rem;
+  /* 12px */
   line-height: 1.5;
 }
 
 .text-lg {
-  font-size: 1.125rem; /* 18px */
+  font-size: 1.125rem;
+  /* 18px */
   line-height: 1.5;
 }
 
 /* Card titles */
 .card-title {
-  font-size: 1rem; /* 16px */
+  font-size: 1rem;
+  /* 16px */
   font-weight: 500;
   line-height: 1.4;
   color: var(--text-primary);
@@ -89,19 +113,23 @@ body, p, .text-base {
 }
 
 /* Button text */
-button, .button {
-  font-size: 0.875rem; /* 14px */
+button,
+.button {
+  font-size: 0.875rem;
+  /* 14px */
   font-weight: 500;
 }
 
 /* Filter tags */
 .filter-tag {
-  font-size: 0.875rem; /* 14px */
+  font-size: 0.875rem;
+  /* 14px */
 }
 
 /* Navigation */
 .nav-link {
-  font-size: 0.875rem; /* 14px */
+  font-size: 0.875rem;
+  /* 14px */
   font-weight: 500;
 }
 
@@ -313,9 +341,9 @@ a:active,
   }
 }
 
-.masonry > div {
+.masonry>div {
   break-inside: avoid;
-  margin-bottom: 16px; 
+  margin-bottom: 16px;
 }
 
 /* Dark mode variables */

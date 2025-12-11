@@ -14,7 +14,13 @@ import BottomNavigation from '@/components/BottomNavigation';
 import UnregisterSW from '@/components/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+  modal
+}: {
+  children: React.ReactNode;
+  modal: React.ReactNode;
+}) {
   const websiteStructuredData = generateStructuredData('website');
 
   return (
@@ -39,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                         {children}
                       </PageTransition>
                     </main>
+                    {modal}
                     <Footer />
                     <BottomNavigation />
                     {/* Track page views and route changes */}
