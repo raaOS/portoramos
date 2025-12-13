@@ -18,11 +18,13 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
 
   // Configure Fuse.js for fuzzy search
   const fuse = useMemo(() => {
-    return new Fuse(projects, {
+    // Handle Fuse.js import compatibility (some environments need .default, others direct)
+    const FuseConstructor = (Fuse as any).default || Fuse;
+    return new FuseConstructor(projects, {
       keys: ['title', 'description', 'client', 'tags'],
       threshold: 0.3,
       includeScore: true,
-    })
+    }) as Fuse<Project>
   }, [projects])
 
   // Filter projects by tag and search
