@@ -333,7 +333,7 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 13,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-12-13T19:11:56.801Z",
       "updatedAt": "2025-12-13T19:11:56.801Z"
     },
@@ -358,7 +358,7 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 14,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-12-13T19:11:56.801Z",
       "updatedAt": "2025-12-13T19:11:56.801Z"
     },
@@ -383,7 +383,7 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 15,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-12-13T19:11:56.801Z",
       "updatedAt": "2025-12-13T19:11:56.801Z"
     },
@@ -813,5 +813,5 @@
       "updatedAt": "2025-12-13T19:11:56.801Z"
     }
   ],
-  "lastUpdated": "2025-12-13T19:12:48.516Z"
+  "lastUpdated": "2025-12-13T19:12:51.217Z"
 }
