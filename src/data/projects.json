@@ -933,7 +933,7 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 37,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-12-13T19:13:54.231Z",
       "updatedAt": "2025-12-13T19:13:54.231Z"
     },
@@ -958,7 +958,7 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 38,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-12-13T19:13:54.231Z",
       "updatedAt": "2025-12-13T19:13:54.231Z"
     },
@@ -1319,5 +1319,5 @@
       "updatedAt": "2025-12-13T19:13:54.231Z"
     }
   ],
-  "lastUpdated": "2025-12-13T19:14:51.311Z"
+  "lastUpdated": "2025-12-13T19:15:00.266Z"
 }
