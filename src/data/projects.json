@@ -207,7 +207,7 @@
       "order": 8,
       "status": "published",
       "createdAt": "2025-12-13T19:07:33.013Z",
-      "updatedAt": "2025-12-13T19:07:33.013Z"
+      "updatedAt": "2025-12-13T19:08:25.035Z"
     },
     {
       "title": "sandal (Copy) (Copy)",
@@ -232,7 +232,7 @@
       "order": 9,
       "status": "published",
       "createdAt": "2025-12-13T19:07:55.606Z",
-      "updatedAt": "2025-12-13T19:07:55.606Z"
+      "updatedAt": "2025-12-13T19:08:24.390Z"
     },
     {
       "title": "ayam (Copy) (Copy)",
@@ -255,9 +255,9 @@
       "id": "project-1765652878331",
       "slug": "ayam-copy-copy",
       "order": 10,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-12-13T19:07:58.331Z",
-      "updatedAt": "2025-12-13T19:07:58.331Z"
+      "updatedAt": "2025-12-13T19:08:25.925Z"
     },
     {
       "title": "gantungan (Copy) (Copy)",
@@ -285,8 +285,33 @@
       "order": 11,
       "status": "published",
       "createdAt": "2025-12-13T19:08:00.666Z",
-      "updatedAt": "2025-12-13T19:08:00.666Z"
+      "updatedAt": "2025-12-13T19:08:23.396Z"
+    },
+    {
+      "title": "ayam (Copy)",
+      "client": "ramos`",
+      "year": 2025,
+      "description": "ayaaaaam",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg",
+      "coverWidth": 1500,
+      "coverHeight": 1500,
+      "gallery": [],
+      "galleryItems": [],
+      "tags": [
+        "gambar"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "id": "project-1765653004055",
+      "slug": "ayam",
+      "order": 12,
+      "status": "draft",
+      "createdAt": "2025-12-13T19:10:04.055Z",
+      "updatedAt": "2025-12-13T19:10:04.055Z"
     }
   ],
-  "lastUpdated": "2025-12-13T19:08:25.838Z"
+  "lastUpdated": "2025-12-13T19:10:05.395Z"
 }
