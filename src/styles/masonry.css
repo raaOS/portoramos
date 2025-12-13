@@ -1,0 +1,21 @@
+/* Masonry Grid Styles */
+.masonry-grid {
+  display: flex;
+  margin-left: -16px;
+  width: auto;
+}
+
+.masonry-grid-column {
+  padding-left: 16px;
+  background-clip: padding-box;
+}
+
+.masonry-grid-column > div {
+  margin-bottom: 16px;
+  break-inside: avoid;
+}
+
+/* Ensure smooth transitions */
+.masonry-grid-column > div {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}

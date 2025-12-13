@@ -2,6 +2,7 @@
 /* Import Tailwind components layer */
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+@import '../styles/masonry.css';
 
 /* Typography standardized from previous file */
 
