@@ -5,14 +5,14 @@
  */
 
 export function generateBlurDataURL(imageUrl: string): string {
-    // Check if it's a Cloudinary URL
-    if (imageUrl.includes('cloudinary.com')) {
-        // Use Cloudinary's blur transformation
-        return imageUrl.replace('/upload/', '/upload/e_blur:1000,q_1,f_auto/');
-    }
+  // Check if it's a Cloudinary URL
+  if (imageUrl.includes('cloudinary.com')) {
+    // Use Cloudinary's blur transformation
+    return imageUrl.replace('/upload/', '/upload/e_blur:1000,q_1,f_auto/');
+  }
 
-    // Default SVG blur placeholder
-    const shimmer = `
+  // Default SVG blur placeholder
+  const shimmer = `
     <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="g">
@@ -25,18 +25,22 @@ export function generateBlurDataURL(imageUrl: string): string {
     </svg>
   `;
 
-    const base64 = Buffer.from(shimmer).toString('base64');
-    return `data:image/svg+xml;base64,${base64}`;
+  // Use btoa for browser, Buffer for server
+  const base64 = typeof window !== 'undefined'
+    ? btoa(shimmer)
+    : Buffer.from(shimmer).toString('base64');
+
+  return `data:image/svg+xml;base64,${base64}`;
 }
 
 /**
  * Get optimized Cloudinary URL
  */
 export function getOptimizedImageUrl(imageUrl: string, width: number = 800): string {
-    if (!imageUrl.includes('cloudinary.com')) return imageUrl;
+  if (!imageUrl.includes('cloudinary.com')) return imageUrl;
 
-    return imageUrl.replace(
-        '/upload/',
-        `/upload/w_${width},f_auto,q_auto,c_limit/`
-    );
+  return imageUrl.replace(
+    '/upload/',
+    `/upload/w_${width},f_auto,q_auto,c_limit/`
+  );
 }
