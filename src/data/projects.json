@@ -130,7 +130,32 @@
       "status": "draft",
       "createdAt": "2025-12-13T19:06:36.999Z",
       "updatedAt": "2025-12-13T19:06:36.999Z"
+    },
+    {
+      "title": "sandal (Copy)",
+      "client": "amunra",
+      "year": 2025,
+      "description": "sendal selalu",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757859588/RA_12_SENDAL_IBU_FEED_1_ddkydg.png",
+      "coverWidth": 1080,
+      "coverHeight": 1350,
+      "gallery": [],
+      "tags": [
+        "manipulasi"
+      ],
+      "external_link": "",
+      "id": "project-1765652799215",
+      "slug": "sandal",
+      "autoplay": false,
+      "muted": true,
+      "loop": false,
+      "playsInline": true,
+      "galleryItems": [],
+      "order": 6,
+      "status": "draft",
+      "createdAt": "2025-12-13T19:06:39.215Z",
+      "updatedAt": "2025-12-13T19:06:39.215Z"
     }
   ],
-  "lastUpdated": "2025-12-13T19:06:38.037Z"
+  "lastUpdated": "2025-12-13T19:06:40.149Z"
 }
