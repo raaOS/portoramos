@@ -185,6 +185,31 @@
       "updatedAt": "2025-12-13T19:07:18.093Z"
     },
     {
+      "title": "ayam (Copy)",
+      "client": "ramos`",
+      "year": 2025,
+      "description": "ayaaaaam",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg",
+      "coverWidth": 1500,
+      "coverHeight": 1500,
+      "gallery": [],
+      "galleryItems": [],
+      "tags": [
+        "gambar"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "id": "project-1765652853013",
+      "slug": "ayam-copy",
+      "order": 8,
+      "status": "draft",
+      "createdAt": "2025-12-13T19:07:33.013Z",
+      "updatedAt": "2025-12-13T19:07:33.013Z"
+    },
+    {
       "title": "sandal (Copy) (Copy)",
       "client": "amunra",
       "year": 2025,
@@ -197,17 +222,17 @@
         "manipulasi"
       ],
       "external_link": "",
-      "id": "project-1765652875591",
-      "slug": "sandal-copy",
+      "id": "project-1765652875606",
+      "slug": "sandal-copy-copy",
       "autoplay": false,
       "muted": true,
       "loop": false,
       "playsInline": true,
       "galleryItems": [],
-      "order": 8,
+      "order": 9,
       "status": "draft",
-      "createdAt": "2025-12-13T19:07:55.591Z",
-      "updatedAt": "2025-12-13T19:07:55.591Z"
+      "createdAt": "2025-12-13T19:07:55.606Z",
+      "updatedAt": "2025-12-13T19:07:55.606Z"
     },
     {
       "title": "ayam (Copy) (Copy)",
@@ -227,12 +252,12 @@
       "muted": true,
       "loop": true,
       "playsInline": true,
-      "id": "project-1765652878311",
-      "slug": "ayam-copy",
-      "order": 9,
+      "id": "project-1765652878331",
+      "slug": "ayam-copy-copy",
+      "order": 10,
       "status": "draft",
-      "createdAt": "2025-12-13T19:07:58.311Z",
-      "updatedAt": "2025-12-13T19:07:58.311Z"
+      "createdAt": "2025-12-13T19:07:58.331Z",
+      "updatedAt": "2025-12-13T19:07:58.331Z"
     },
     {
       "title": "gantungan (Copy) (Copy)",
@@ -254,14 +279,14 @@
       "muted": true,
       "loop": true,
       "playsInline": true,
-      "id": "project-1765652880606",
-      "slug": "gantungan-copy",
+      "id": "project-1765652880666",
+      "slug": "gantungan-copy-copy",
       "galleryItems": [],
-      "order": 10,
-      "status": "draft",
-      "createdAt": "2025-12-13T19:08:00.606Z",
-      "updatedAt": "2025-12-13T19:08:00.606Z"
+      "order": 11,
+      "status": "published",
+      "createdAt": "2025-12-13T19:08:00.666Z",
+      "updatedAt": "2025-12-13T19:08:00.666Z"
     }
   ],
-  "lastUpdated": "2025-12-13T19:08:01.253Z"
+  "lastUpdated": "2025-12-13T19:08:24.445Z"
 }
