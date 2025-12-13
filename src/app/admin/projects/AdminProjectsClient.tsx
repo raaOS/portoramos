@@ -595,9 +595,9 @@ function SettingsModal({ initialConfig, onSave, onCancel }: {
   onCancel: () => void
 }) {
   const [config, setConfig] = useState<GitHubConfig>(initialConfig || {
-    token: '',
-    owner: 'raaos-projects', // default
-    repo: 'portfolio-shared' // default
+    token: process.env.NEXT_PUBLIC_GITHUB_TOKEN || '', // from .env.local
+    owner: 'raaOS', // default
+    repo: 'portoramos' // default
   });
 
   const isComplete = config.token && config.owner && config.repo;
