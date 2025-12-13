@@ -124,12 +124,12 @@
       "muted": true,
       "loop": true,
       "playsInline": true,
-      "id": "project-1765652796999",
-      "slug": "ayam",
+      "id": "project-1765652797016",
+      "slug": "ayam-copy",
       "order": 5,
-      "status": "draft",
-      "createdAt": "2025-12-13T19:06:36.999Z",
-      "updatedAt": "2025-12-13T19:06:36.999Z"
+      "status": "published",
+      "createdAt": "2025-12-13T19:06:37.016Z",
+      "updatedAt": "2025-12-13T19:06:37.016Z"
     },
     {
       "title": "sandal (Copy)",
@@ -144,8 +144,8 @@
         "manipulasi"
       ],
       "external_link": "",
-      "id": "project-1765652799215",
-      "slug": "sandal",
+      "id": "project-1765652799275",
+      "slug": "sandal-copy",
       "autoplay": false,
       "muted": true,
       "loop": false,
@@ -153,8 +153,8 @@
       "galleryItems": [],
       "order": 6,
       "status": "draft",
-      "createdAt": "2025-12-13T19:06:39.215Z",
-      "updatedAt": "2025-12-13T19:06:39.215Z"
+      "createdAt": "2025-12-13T19:06:39.275Z",
+      "updatedAt": "2025-12-13T19:06:39.275Z"
     },
     {
       "title": "gantungan (Copy)",
@@ -176,14 +176,14 @@
       "muted": true,
       "loop": true,
       "playsInline": true,
-      "id": "project-1765652802655",
-      "slug": "gantungan",
+      "id": "project-1765652802670",
+      "slug": "gantungan-copy",
       "galleryItems": [],
       "order": 7,
       "status": "draft",
-      "createdAt": "2025-12-13T19:06:42.655Z",
-      "updatedAt": "2025-12-13T19:06:42.655Z"
+      "createdAt": "2025-12-13T19:06:42.670Z",
+      "updatedAt": "2025-12-13T19:06:42.670Z"
     }
   ],
-  "lastUpdated": "2025-12-13T19:06:44.594Z"
+  "lastUpdated": "2025-12-13T19:07:16.499Z"
 }
