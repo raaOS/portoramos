@@ -6,7 +6,6 @@ import Fuse from 'fuse.js'
 import MasonryGrid from '@/components/MasonryGrid'
 import ProjectCardPinterest from '@/components/ProjectCardPinterest'
 import SearchBar from '@/components/SearchBar'
-import '@/styles/masonry.css'
 
 type Props = {
   projects: Project[]
