@@ -76,8 +76,36 @@
       "order": 3,
       "status": "published",
       "createdAt": "2025-12-08T19:26:35.433Z",
-      "updatedAt": "2025-12-08T19:27:01.564Z"
+      "updatedAt": "2025-12-13T17:00:11.851Z"
+    },
+    {
+      "title": "gantungan (Copy)",
+      "client": "ramos",
+      "year": 2025,
+      "description": "gantungan ituuu......",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1756500654/Provence_Beauty_Soft_Bisous_Animation_2_skincareanimation_3danimation_pjt31w.mp4",
+      "coverWidth": 1080,
+      "coverHeight": 1920,
+      "gallery": [
+        "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png",
+        "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757859588/RA_12_SENDAL_IBU_FEED_1_ddkydg.png"
+      ],
+      "tags": [
+        "video"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "id": "project-1765652102240",
+      "slug": "gantungan",
+      "galleryItems": [],
+      "order": 4,
+      "status": "draft",
+      "createdAt": "2025-12-13T18:55:02.240Z",
+      "updatedAt": "2025-12-13T18:55:02.240Z"
     }
   ],
-  "lastUpdated": "2025-12-13T17:00:12.479Z"
+  "lastUpdated": "2025-12-13T18:55:02.975Z"
 }
