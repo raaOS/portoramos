@@ -208,7 +208,32 @@
       "status": "draft",
       "createdAt": "2025-12-13T19:07:55.591Z",
       "updatedAt": "2025-12-13T19:07:55.591Z"
+    },
+    {
+      "title": "ayam (Copy) (Copy)",
+      "client": "ramos`",
+      "year": 2025,
+      "description": "ayaaaaam",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg",
+      "coverWidth": 1500,
+      "coverHeight": 1500,
+      "gallery": [],
+      "galleryItems": [],
+      "tags": [
+        "gambar"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "id": "project-1765652878311",
+      "slug": "ayam-copy",
+      "order": 9,
+      "status": "draft",
+      "createdAt": "2025-12-13T19:07:58.311Z",
+      "updatedAt": "2025-12-13T19:07:58.311Z"
     }
   ],
-  "lastUpdated": "2025-12-13T19:07:57.217Z"
+  "lastUpdated": "2025-12-13T19:07:59.564Z"
 }
