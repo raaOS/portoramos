@@ -17,7 +17,7 @@ export const Reveal = ({
     width = "fit-content",
     delay = 0.25,
     duration = 0.5,
-    yOffset = 75,
+    yOffset = 20, // Reduced from 75 to 20 to prevent CLS
     className = "",
 }: RevealProps) => {
     const ref = useRef(null);
@@ -40,6 +40,7 @@ export const Reveal = ({
                 initial="hidden"
                 animate={mainControls}
                 transition={{ duration, delay, ease: "easeOut" }}
+                style={{ willChange: "transform, opacity" }} // Optimize animations
             >
                 {children}
             </motion.div>

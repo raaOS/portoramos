@@ -65,7 +65,7 @@ const BlurTextLoop = ({
                         initial={{
                             filter: 'blur(10px)',
                             opacity: 0,
-                            y: direction === 'top' ? -30 : 30
+                            y: direction === 'top' ? -10 : 10 // Reduced from 30 to 10
                         }}
                         animate={{
                             // Entrance: blur in → Exit: blur out (synchronized)
@@ -88,12 +88,12 @@ const BlurTextLoop = ({
                             ],
                             // Y position: fall down → move up on exit
                             y: [
-                                direction === 'top' ? -30 : 30,  // 0: Above/below
-                                direction === 'top' ? -30 : 30,  // t1: Before entrance
-                                0,                                // t2: Center (entrance done)
-                                0,                                // t3: Still center (hold)
-                                direction === 'top' ? -15 : 15,  // t4: Move up/down slightly on exit
-                                direction === 'top' ? -30 : 30   // 1: Reset to start position
+                                direction === 'top' ? -10 : 10,  // Reduced from 30
+                                direction === 'top' ? -10 : 10,
+                                0,
+                                0,
+                                direction === 'top' ? -5 : 5,    // Reduced from 15
+                                direction === 'top' ? -10 : 10   // Reduced from 30
                             ],
                         }}
                         transition={{

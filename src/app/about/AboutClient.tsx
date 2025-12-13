@@ -23,10 +23,12 @@ import RunningTextSection from '@/components/RunningTextSection';
 import AITranslator from '@/components/AITranslator';
 
 const TextMorph = dynamic(() => import('@/components/TextMorph'), {
-  ssr: false
+  ssr: false,
+  loading: () => <div className="h-32 bg-gray-100 rounded animate-pulse" /> // Prevent CLS
 });
 const SimpleTrail = dynamic(() => import('@/components/SimpleTrail'), {
-  ssr: false
+  ssr: false,
+  loading: () => <div className="absolute inset-0 z-10" /> // Prevent CLS
 });
 
 // Soft Skills data untuk TextMorph
