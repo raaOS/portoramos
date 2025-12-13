@@ -480,8 +480,18 @@ export default function AdminProjectsClient() {
 
       {/* Projects Grid */}
       {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="animate-pulse bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="aspect-video bg-gray-200" />
+              <div className="p-5 space-y-3">
+                <div className="h-5 bg-gray-200 rounded w-3/4" />
+                <div className="h-4 bg-gray-200 rounded w-1/2" />
+                <div className="h-3 bg-gray-200 rounded w-full" />
+                <div className="h-3 bg-gray-200 rounded w-2/3" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : filteredProjects.length === 0 ? (
         <div className="text-center py-20 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
@@ -505,6 +515,7 @@ export default function AdminProjectsClient() {
                       muted
                       loop
                       playsInline
+                      preload="metadata"
                     />
                   ) : (
                     <Image
@@ -513,7 +524,7 @@ export default function AdminProjectsClient() {
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      unoptimized
+                      priority={filteredProjects.indexOf(project) < 3}
                     />
                   )}
 

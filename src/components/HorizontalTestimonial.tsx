@@ -146,7 +146,6 @@ export default function HorizontalTestimonial() {
                       fill
                       className="rounded-full object-cover"
                       sizes="40px"
-                      unoptimized
                     />
                   </div>
                   <div className="text-left">

@@ -355,7 +355,6 @@ export default function SimpleTrail({ backgroundTrail = [] }: SimpleTrailProps) 
               maxWidth: 'var(--img-maxwidth, 150px)',
               width: 'auto'
             }}
-            unoptimized
             priority={index < 3} // Prioritize first 3 images
             onError={(e) => {
               console.error('Trail image failed to load:', imageSrc);
