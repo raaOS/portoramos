@@ -64,7 +64,46 @@ export default function ContactClientWithAutoUpdate() {
 
   const contactData = updatedData || initialData;
 
-  if (loading) return null;
+  if (loading) {
+    // Loading skeleton to prevent CLS
+    return (
+      <div className="min-h-screen bg-white text-black">
+        <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-24 md:py-32 lg:py-40">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
+            {/* Left skeleton */}
+            <div className="lg:col-span-5 space-y-16 animate-pulse">
+              <div className="space-y-4">
+                <div className="h-24 bg-gray-200 rounded w-3/4" />
+                <div className="h-24 bg-gray-200 rounded w-2/3" />
+                <div className="h-24 bg-gray-200 rounded w-full" />
+                <div className="h-6 bg-gray-200 rounded w-5/6 mt-8" />
+              </div>
+              <div className="space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-32" />
+                <div className="h-12 bg-gray-200 rounded w-full" />
+                <div className="h-12 bg-gray-200 rounded w-full" />
+                <div className="h-12 bg-gray-200 rounded w-full" />
+              </div>
+            </div>
+            {/* Right skeleton */}
+            <div className="lg:col-span-7 animate-pulse">
+              <div className="bg-white rounded-3xl p-8 md:p-12 border border-gray-100">
+                <div className="h-8 bg-gray-200 rounded w-48 mb-8" />
+                <div className="space-y-8">
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="h-12 bg-gray-200 rounded" />
+                    <div className="h-12 bg-gray-200 rounded" />
+                  </div>
+                  <div className="h-32 bg-gray-200 rounded" />
+                  <div className="h-12 bg-gray-200 rounded w-48" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!contactData) {
     return (
