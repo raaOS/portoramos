@@ -408,7 +408,7 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 16,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-12-13T19:11:56.801Z",
       "updatedAt": "2025-12-13T19:11:56.801Z"
     },
@@ -433,7 +433,7 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 17,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-12-13T19:11:56.801Z",
       "updatedAt": "2025-12-13T19:11:56.801Z"
     },
@@ -813,5 +813,5 @@
       "updatedAt": "2025-12-13T19:11:56.801Z"
     }
   ],
-  "lastUpdated": "2025-12-13T19:12:51.217Z"
+  "lastUpdated": "2025-12-13T19:12:54.693Z"
 }
