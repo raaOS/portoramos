@@ -40,7 +40,7 @@ export default function RootLayout({
                 <ErrorBoundary>
                   <AppWrapper>
                     <Header />
-                    <main className="container pb-20">
+                    <main className="pb-20">
                       <PageTransition>
                         {children}
                       </PageTransition>

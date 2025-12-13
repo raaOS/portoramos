@@ -7,31 +7,38 @@ interface StatusToggleProps {
     className?: string;
     labelActive?: string;
     labelInactive?: string;
+    iconActive?: React.ReactNode;
+    iconInactive?: React.ReactNode;
 }
 
 export default function StatusToggle({
     isActive,
     onClick,
     className = '',
-    labelActive = 'Active',
-    labelInactive = 'Off'
+    labelActive,
+    labelInactive,
+    iconActive,
+    iconInactive
 }: StatusToggleProps) {
     return (
         <button
             type="button"
             onClick={onClick}
-            className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors border ${isActive
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                    : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
+            title={isActive ? (labelActive || 'Active') : (labelInactive || 'Inactive')}
+            className={`inline-flex items-center justify-center p-2 rounded-lg transition-colors border ${isActive
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                : 'border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100'
                 } ${className}`}
         >
             {isActive ? (
                 <>
-                    <CheckCircle2 className="w-3.5 h-3.5" /> {labelActive}
+                    {iconActive || <CheckCircle2 className="w-4 h-4" />}
+                    {labelActive && <span className="ml-1.5 text-xs font-medium">{labelActive}</span>}
                 </>
             ) : (
                 <>
-                    <Clock4 className="w-3.5 h-3.5" /> {labelInactive}
+                    {iconInactive || <Clock4 className="w-4 h-4" />}
+                    {labelInactive && <span className="ml-1.5 text-xs font-medium">{labelInactive}</span>}
                 </>
             )}
         </button>

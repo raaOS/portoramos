@@ -16,8 +16,10 @@ export default async function AboutPage() {
   const aboutData = await loadAboutData();
 
   return (
-    <AboutClientWithAutoUpdate
-      initialAboutData={aboutData ?? undefined}
-    />
+    <div className="container">
+      <AboutClientWithAutoUpdate
+        initialAboutData={aboutData ?? undefined}
+      />
+    </div>
   );
 }

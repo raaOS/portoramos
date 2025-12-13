@@ -7,9 +7,18 @@ type Props = {
   searchParams?: { tag?: string }
 }
 
-export default async function IndexClient({ searchParams }: Props) {
-  const projects = await allProjectsAsync()
-  const tag = searchParams?.tag || ''
+export default async function IndexClient(props: Props) {
+  const searchParams = await props.searchParams;
+  console.log('IndexClient: rendering', { searchParams });
 
-  return <IndexClientInner projects={projects} tag={tag} />
+  try {
+    const projects = await allProjectsAsync()
+    console.log('IndexClient: projects fetched', projects?.length);
+    const tag = searchParams?.tag || ''
+
+    return <IndexClientInner projects={projects} tag={tag} />
+  } catch (e) {
+    console.error('IndexClient: error', e);
+    throw e;
+  }
 }

@@ -19,5 +19,9 @@ export default async function WorksPage({ searchParams }: Props) {
   const page = Number(searchParams?.page || '1')
   const currentPage = isNaN(page) || page < 1 ? 1 : page
 
-  return <WorksClient projects={projects} currentPage={currentPage} />
+  return (
+    <div className="container">
+      <WorksClient projects={projects} currentPage={currentPage} />
+    </div>
+  );
 }

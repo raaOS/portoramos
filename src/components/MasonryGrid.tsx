@@ -9,9 +9,9 @@ interface MasonryGridProps {
 }
 
 const breakpointColumns = {
-    default: 5,    // Desktop XL (1536px+)
-    1536: 4,       // Desktop L
-    1280: 3,       // Desktop
+    default: 7,    // Desktop XL (1536px+)
+    1536: 5,       // Desktop L
+    1280: 4,       // Desktop
     1024: 3,       // Tablet L
     768: 2,        // Tablet
     640: 2         // Mobile L

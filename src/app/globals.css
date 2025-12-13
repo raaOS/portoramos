@@ -2,7 +2,7 @@
 /* Import Tailwind components layer */
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
-@import '../styles/masonry.css';
+
 
 /* Typography standardized from previous file */
 
@@ -638,4 +638,29 @@ body {
 /* Trail effect container - only visible in hero section */
 #hero {
   position: relative;
+}
+
+/* Masonry Grid Styles */
+.masonry-grid {
+  display: flex;
+  width: auto;
+}
+
+.masonry-grid-column {
+  padding-right: 16px;
+  background-clip: padding-box;
+}
+
+.masonry-grid-column:last-child {
+  padding-right: 0;
+}
+
+.masonry-grid-column>div {
+  margin-bottom: 16px;
+  break-inside: avoid;
+}
+
+/* Ensure smooth transitions */
+.masonry-grid-column>div {
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }

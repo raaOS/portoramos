@@ -12,5 +12,9 @@ export const metadata: Metadata = generateSEOMetadata({
 export const revalidate = 3600;
 
 export default function ContactPage() {
-  return <ContactClientWithAutoUpdate />;
+  return (
+    <div className="container">
+      <ContactClientWithAutoUpdate />
+    </div>
+  );
 }

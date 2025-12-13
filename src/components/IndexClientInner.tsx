@@ -55,7 +55,7 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
   }, [projects, tag, searchQuery, fuse])
 
   return (
-    <section className="py-8">
+    <section className="py-8 px-4">
       {/* Search Bar */}
       <SearchBar
         value={searchQuery}

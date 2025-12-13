@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Project, CreateProjectData, UpdateProjectData, GalleryItem } from '@/types/projects';
 import { isVideoLink } from '@/lib/images';
-import { Pencil, Trash2, Plus, Search, X, Loader2, Settings, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, X, Loader2, Settings, CheckCircle2, AlertCircle, Copy, Eye, EyeOff } from 'lucide-react';
 
 // Import design system components
 import AdminButton from '../components/AdminButton';
@@ -158,61 +158,78 @@ export default function AdminProjectsClient() {
     setDeployProgress(10);
 
     try {
-      // 1. Fetch current SHA
-      // We assume the file is at src/data/projects.json based on repo structure
-      const getUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/src/data/projects.json`;
-      const getRes = await fetch(getUrl, {
-        headers: {
-          'Authorization': `Bearer ${githubConfig.token}`,
-          'Accept': 'application/vnd.github.v3+json',
-        },
-        cache: 'no-store'
-      });
+      let lastError;
+      // Retry loop (Max 3 attempts)
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          // 1. Fetch current SHA
+          const getUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/src/data/projects.json`;
+          const getRes = await fetch(getUrl, {
+            headers: {
+              'Authorization': `Bearer ${githubConfig.token}`,
+              'Accept': 'application/vnd.github.v3+json',
+            },
+            cache: 'no-store'
+          });
 
-      if (!getRes.ok) {
-        if (getRes.status === 404) {
-          throw new Error(`Repo or file not found. Check Owner/Repo names.`);
+          if (!getRes.ok) {
+            if (getRes.status === 404) {
+              throw new Error(`Repo or file not found. Check Owner/Repo names.`);
+            }
+            throw new Error(`Failed to fetch repo info: ${getRes.status} ${getRes.statusText}`);
+          }
+
+          const fileData = await getRes.json();
+          const sha = fileData.sha;
+
+          // 2. Prepare new content
+          const newContent = JSON.stringify({
+            projects: projectsToSave,
+            lastUpdated: new Date().toISOString()
+          }, null, 2);
+
+          const encodedContent = utf8_to_b64(newContent);
+
+          // 3. Push Update
+          const putRes = await fetch(getUrl, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${githubConfig.token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: 'Update projects via CMS (Client Direct)',
+              content: encodedContent,
+              sha: sha
+            })
+          });
+
+          if (!putRes.ok) {
+            const errData = await putRes.json();
+            // If conflict (409) or validation error (422) related to SHA, throw to retry
+            if (putRes.status === 409 || errData.message.includes('match')) {
+              throw new Error('SHA Sync Conflict');
+            }
+            throw new Error(`GitHub Update Failed: ${errData.message || putRes.statusText}`);
+          }
+
+          // Success!
+          if (!silent) success('Changes pushed to GitHub successfully!');
+          startDeploymentTracking();
+          return; // Exit function on success
+
+        } catch (err: any) {
+          console.warn(`Attempt ${attempt} failed:`, err.message);
+          lastError = err;
+          // Wait before retry (exponential backoff safe-ish)
+          if (attempt < 3) await new Promise(r => setTimeout(r, 1000));
         }
-        throw new Error(`Failed to fetch repo info: ${getRes.status} ${getRes.statusText}`);
       }
 
-      const fileData = await getRes.json();
-      const sha = fileData.sha;
-
-      // 2. Prepare new content
-      const newContent = JSON.stringify({
-        projects: projectsToSave,
-        lastUpdated: new Date().toISOString()
-      }, null, 2);
-
-      const encodedContent = utf8_to_b64(newContent);
-
-      // 3. Push Update
-      const putRes = await fetch(getUrl, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${githubConfig.token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: 'Update projects via CMS (Client Direct)',
-          content: encodedContent,
-          sha: sha
-        })
-      });
-
-      if (!putRes.ok) {
-        const errData = await putRes.json();
-        throw new Error(`GitHub Update Failed: ${errData.message || putRes.statusText}`);
-      }
-
-      if (!silent) success('Changes pushed to GitHub successfully!');
-      startDeploymentTracking();
-
-    } catch (err: any) {
-      console.error(err);
-      showError(err.message || 'Failed to save to GitHub.');
+      // If loop runs out
+      console.error(lastError);
+      showError(lastError?.message || 'Failed to save to GitHub after 3 attempts.');
       setDeployStatus('idle');
       setDeployProgress(0);
     } finally {
@@ -347,6 +364,45 @@ export default function AdminProjectsClient() {
     triggerGithubSync(true, updatedProjects);
   };
 
+  const handleDuplicateProject = async (project: Project) => {
+    if (!confirm(`Duplicate project "${project.title}"?`)) return;
+
+    // 1. Generate ID and optimistic object
+    const newId = `project-${Date.now()}`;
+    const duplicateData: Project = {
+      ...project,
+      id: newId,
+      title: `${project.title} (Copy)`,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      order: projects.length + 1
+    };
+
+    // 2. Optimistic Update
+    const newProjects = [...projects, duplicateData];
+    setProjects(newProjects);
+
+    // Persist to localStorage immediately
+    const newState = { projects: newProjects, timestamp: Date.now() };
+    localStorage.setItem('admin_projects_cache', JSON.stringify(newState));
+    success('Project duplicated (local)');
+
+    // 3. Try to update backend (Non-blocking)
+    try {
+      await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(duplicateData)
+      });
+    } catch (err) {
+      console.warn('Backend duplicate failed (expected on Vercel), proceeding to sync.');
+    }
+
+    // 4. Trigger GitHub Sync
+    triggerGithubSync(true, newProjects);
+  };
+
   // Filter projects
   const filteredProjects = projects
     .filter(project =>
@@ -364,7 +420,7 @@ export default function AdminProjectsClient() {
         if (prev >= 90) return 90;
         return prev + 2;
       });
-    }, 1500);
+    }, 500);
 
     const pollingInterval = setInterval(async () => {
       try {
@@ -392,7 +448,7 @@ export default function AdminProjectsClient() {
       } catch (e) {
         console.error('Polling failed', e);
       }
-    }, 5000);
+    }, 2000);
 
     setTimeout(() => {
       clearInterval(simulationInterval);
@@ -543,8 +599,10 @@ export default function AdminProjectsClient() {
                       isActive={isPublished}
                       onClick={() => handleToggleProjectStatus(project)}
                       className={isToggling ? 'opacity-50 cursor-not-allowed' : ''}
-                      labelActive="Published"
-                      labelInactive="Draft"
+                      iconActive={<Eye className="w-4 h-4" />}
+                      iconInactive={<EyeOff className="w-4 h-4" />}
+                      labelActive=""
+                      labelInactive=""
                     />
                     <button
                       onClick={() => setEditingProject(project)}
@@ -552,6 +610,13 @@ export default function AdminProjectsClient() {
                       title="Edit Project"
                     >
                       <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDuplicateProject(project)}
+                      className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      title="Duplicate Project"
+                    >
+                      <Copy className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteProject(project.id)}
