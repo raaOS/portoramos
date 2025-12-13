@@ -51,7 +51,7 @@
       "order": 2,
       "status": "published",
       "createdAt": "2025-09-14T16:45:24.869Z",
-      "updatedAt": "2025-12-13T19:06:02.019Z"
+      "updatedAt": "2025-12-13T19:06:18.522Z"
     },
     {
       "title": "ayam",
@@ -76,7 +76,7 @@
       "order": 3,
       "status": "published",
       "createdAt": "2025-12-08T19:26:35.433Z",
-      "updatedAt": "2025-12-13T19:02:10.378Z"
+      "updatedAt": "2025-12-13T19:06:21.510Z"
     },
     {
       "title": "gantungan (Copy)",
@@ -104,8 +104,33 @@
       "order": 4,
       "status": "published",
       "createdAt": "2025-12-13T18:55:02.259Z",
-      "updatedAt": "2025-12-13T18:55:02.259Z"
+      "updatedAt": "2025-12-13T19:06:20.115Z"
+    },
+    {
+      "title": "ayam (Copy)",
+      "client": "ramos`",
+      "year": 2025,
+      "description": "ayaaaaam",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg",
+      "coverWidth": 1500,
+      "coverHeight": 1500,
+      "gallery": [],
+      "galleryItems": [],
+      "tags": [
+        "gambar"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "id": "project-1765652796999",
+      "slug": "ayam",
+      "order": 5,
+      "status": "draft",
+      "createdAt": "2025-12-13T19:06:36.999Z",
+      "updatedAt": "2025-12-13T19:06:36.999Z"
     }
   ],
-  "lastUpdated": "2025-12-13T19:06:22.097Z"
+  "lastUpdated": "2025-12-13T19:06:38.037Z"
 }
