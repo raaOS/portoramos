@@ -49,9 +49,9 @@
       "slug": "gantungan",
       "galleryItems": [],
       "order": 2,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-09-14T16:45:24.869Z",
-      "updatedAt": "2025-12-12T17:57:54.003Z"
+      "updatedAt": "2025-12-13T04:47:28.236Z"
     },
     {
       "title": "ayam",
@@ -79,5 +79,5 @@
       "updatedAt": "2025-12-08T19:27:01.564Z"
     }
   ],
-  "lastUpdated": "2025-12-13T04:47:29.162Z"
+  "lastUpdated": "2025-12-13T04:47:40.685Z"
 }
