@@ -152,7 +152,7 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 6,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-12-13T19:06:39.275Z",
       "updatedAt": "2025-12-13T19:06:39.275Z"
     },
@@ -185,5 +185,5 @@
       "updatedAt": "2025-12-13T19:06:42.670Z"
     }
   ],
-  "lastUpdated": "2025-12-13T19:07:16.499Z"
+  "lastUpdated": "2025-12-13T19:07:17.719Z"
 }
