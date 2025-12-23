@@ -1,0 +1,47 @@
+{
+  "hero": {
+    "title": "PORTOFOLIO",
+    "backgroundTrail": [
+      {
+        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png",
+        "isActive": true
+      },
+      {
+        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg",
+        "isActive": true
+      },
+      {
+        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg",
+        "isActive": true
+      }
+    ]
+  },
+  "professional": {
+    "motto": {
+      "badge": "Motto kerja",
+      "quote": "\"Desain adalah solusi visual, bukan sekadar estetika.\""
+    },
+    "bio": {
+      "content": "14+ tahun mainan desain. Dari korporat sampai freelance, deadline mepet udah jadi makanan sehari-hari. Fokus bikin visual yang nggak cuma cantik, tapi juga 'works' buat bisnis.",
+      "galleryImages": [
+        "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg",
+        "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png"
+      ]
+    }
+  },
+  "softSkills": {
+    "texts": [
+      "Kreativitas & Inovasi (Verified)",
+      "Problem Solving"
+    ],
+    "descriptions": [
+      "Selalu punya ide fresh yang nggak pasaran.",
+      "Mengemas pesan brand jadi visual yang berani, konsisten, dan mudah diingat.",
+      "Jago cari solusi praktis buat masalah desain yang rumit.",
+      "Asik diajak kerjasama, nggak baperan kalau dikasih feedback.",
+      "Deadline adalah teman, bukan musuh. Selalu on time.",
+      "Cepat nyambung sama teknologi dan tren baru."
+    ]
+  },
+  "lastUpdated": "2025-12-20T16:43:05.046Z"
+}

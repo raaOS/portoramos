@@ -1,0 +1,53 @@
+{
+  "projects": [
+    {
+      "title": "gantungan",
+      "client": "ramos",
+      "year": 2025,
+      "description": "gantungan ituuu......",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1756500654/Provence_Beauty_Soft_Bisous_Animation_2_skincareanimation_3danimation_pjt31w.mp4",
+      "coverWidth": 1080,
+      "coverHeight": 1920,
+      "gallery": [],
+      "tags": [
+        "video"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "id": "project-1757868324869",
+      "slug": "gantungan",
+      "galleryItems": [],
+      "order": 2,
+      "status": "published",
+      "createdAt": "2025-09-14T16:45:24.869Z",
+      "updatedAt": "2025-12-19T18:34:57.419Z"
+    },
+    {
+      "title": "Test Project Sync",
+      "client": "Test Project",
+      "year": 2025,
+      "description": "Test description for sync.",
+      "cover": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97",
+      "coverWidth": 6000,
+      "coverHeight": 4000,
+      "gallery": [],
+      "galleryItems": [],
+      "tags": [],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "id": "project-1766160875093",
+      "slug": "test-project-sync",
+      "order": 2,
+      "status": "draft",
+      "createdAt": "2025-12-19T16:14:35.094Z",
+      "updatedAt": "2025-12-22T14:51:36.897Z"
+    }
+  ],
+  "lastUpdated": "2025-12-22T14:51:36.897Z"
+}

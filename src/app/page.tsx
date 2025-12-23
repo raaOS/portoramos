@@ -1,0 +1,29 @@
+import type { Metadata } from 'next'
+import IndexClientWithAutoUpdate from '@/components/home/IndexClientWithAutoUpdate'
+import { allProjectsAsync } from '@/lib/projects'
+import { baseSEO } from '@/lib/seo'
+
+type Props = {
+  searchParams?: { tag?: string }
+}
+
+// Cache server-rendered home page
+export const revalidate = 0
+
+export const metadata: Metadata = {
+  title: baseSEO.title,
+  description: baseSEO.description,
+}
+
+export default async function Home({ searchParams }: Props) {
+  // Load projects server-side to avoid hydration issues
+  const projects = await allProjectsAsync()
+  const filteredProjects = (projects || [])
+    .filter(p => p.status !== 'draft');
+
+  return (
+    <main id="main-content" role="main">
+      <IndexClientWithAutoUpdate initialProjects={filteredProjects} searchParams={searchParams} />
+    </main>
+  );
+}

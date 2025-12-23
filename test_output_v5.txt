@@ -1,0 +1,80 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\e2e\crud-flow.spec.ts:17:9 › Project CRUD Flow › should login, create, update, and delete a project
+[1A[2K[chromium] › tests\e2e\crud-flow.spec.ts:17:9 › Project CRUD Flow › should login, create, update, and delete a project
+Project might be draft or not synced yet.
+
+[1A[2K  1) [chromium] › tests\e2e\crud-flow.spec.ts:17:9 › Project CRUD Flow › should login, create, update, and delete a project 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.group:has-text("UPDATED: Automated Test Project 1766259336265")').locator('button[title="Delete Project"]')[22m
+    [2m    - locator resolved to <button title="Delete Project" class="inline-flex items-center justify-center p-2 rounded-lg text-red-500 bg-red-50 hover:bg-red-100 border border-red-100 transition-colors ml-1">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m    - element is visible, enabled and stable[22m
+    [2m    - scrolling into view if needed[22m
+    [2m    - done scrolling[22m
+    [2m    - <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div> from <div class="fixed inset-0 z-50 overflow-y-auto">…</div> subtree intercepts pointer events[22m
+    [2m  - retrying click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m    - element is visible, enabled and stable[22m
+    [2m    - scrolling into view if needed[22m
+    [2m    - done scrolling[22m
+    [2m    - <div class="bg-white/90 backdrop-blur-xl border border-black rounded-full px-2 py-2">…</div> from <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 print:hidden">…</div> subtree intercepts pointer events[22m
+    [2m  - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div> from <div class="fixed inset-0 z-50 overflow-y-auto">…</div> subtree intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    11 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div> from <div class="fixed inset-0 z-50 overflow-y-auto">…</div> subtree intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+    [2m       - waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <div class="bg-white/90 backdrop-blur-xl border border-black rounded-full px-2 py-2">…</div> from <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 print:hidden">…</div> subtree intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+    [2m       - waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div> from <div class="fixed inset-0 z-50 overflow-y-auto">…</div> subtree intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+    [2m       - waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div> from <div class="fixed inset-0 z-50 overflow-y-auto">…</div> subtree intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      101 |
+      102 |         const updatedCard = page.locator(`.group:has-text("${updatedTitle}")`);
+    > 103 |         await updatedCard.locator('button[title="Delete Project"]').click();
+          |                                                                     ^
+      104 |
+      105 |         // Verify Deletion
+      106 |         await expect(page.locator(`h3:has-text("${updatedTitle}")`)).not.toBeVisible();
+        at C:\Users\USER\Documents\portfolio-shared\tests\e2e\crud-flow.spec.ts:103:69
+
+    Error Context: test-results\crud-flow-Project-CRUD-Flo-a3d99-update-and-delete-a-project-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests\e2e\crud-flow.spec.ts:17:9 › Project CRUD Flow › should login, create, update, and delete a project 

@@ -1,0 +1,83 @@
+{
+  "statistics": {
+    "years": "+15",
+    "projects": "+41",
+    "designTools": "+5",
+    "clientSatisfaction": "95%"
+  },
+  "workExperience": [
+    {
+      "year": "Nov 2019 - Sep 2025",
+      "duration": "5 tahun 10 bulan",
+      "company": "PT. Bitlabs Academy",
+      "position": "Graphic Designer",
+      "description": [
+        "Mengelola seluruh visual brand, dari konten sosmed sampai materi cetak.",
+        "Kolaborasi dengan tim UI/UX untuk memastikan konsistensi desain produk."
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg",
+      "isActive": true
+    },
+    {
+      "year": "Jan 2019 - Jan 2020",
+      "duration": "1 tahun 1 bulan",
+      "company": "Sekolah Desain",
+      "position": "Mentor Desain Grafis",
+      "description": [
+        "Mentoring mahasiswa dan sharing session rutin biar mereka makin jago desain.",
+        "Kasih feedback konstruktif buat ningkatin kualitas karya peserta."
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png"
+    },
+    {
+      "year": "Mar 2017 - Nov 2019",
+      "duration": "2 tahun 9 bulan",
+      "company": "PT. Duta Mode",
+      "position": "Graphic Designer",
+      "description": [
+        "Merancang strategi visual buat promosi perusahaan yang lebih nendang.",
+        "Handle semua kebutuhan desain, baik online maupun offline."
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg"
+    },
+    {
+      "year": "Agt 2016 - Mar 2017",
+      "duration": "8 bulan",
+      "company": "Sthal.Co",
+      "position": "Graphic Designer & Admin",
+      "description": [
+        "Mendesain produk t-shirt yang laku keras di pasaran.",
+        "Handle orderan customer dan pastiin pengiriman aman terkendali.",
+        "Kelola stok dan administrasi produk harian."
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg"
+    },
+    {
+      "year": "Okt 2012 - Agt 2015",
+      "duration": "2 tahun 11 bulan",
+      "company": "PT Sari Coffee Indonesia",
+      "position": "Barista Starbucks Coffee",
+      "description": [
+        "Certified Coffee Master. Belajar art of coffee langsung dari ahlinya.",
+        "Edukasi customer soal dunia kopi dengan cara yang fun.",
+        "Memberikan service terbaik buat setiap customer yang datang."
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png",
+      "isActive": true
+    },
+    {
+      "year": "Jan 2012 - Mar 2012",
+      "duration": "3 bulan",
+      "company": "Wulan Boutique",
+      "position": "Graphic Designer & Admin",
+      "description": [
+        "Bikin konten visual buat marketing online.",
+        "Handle chat customer dan proses orderan.",
+        "Quality control produk sebelum dikirim."
+      ],
+      "imageUrl": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg",
+      "isActive": true
+    }
+  ],
+  "lastUpdated": "2025-12-19T11:03:26.013Z"
+}

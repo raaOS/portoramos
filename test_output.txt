@@ -1,0 +1,19 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\e2e\crud-flow.spec.ts:17:9 › Project CRUD Flow › should login, create, update, and delete a project
+[1A[2K  1) [chromium] › tests\e2e\crud-flow.spec.ts:17:9 › Project CRUD Flow › should login, create, update, and delete a project 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\USER\AppData\Local\ms-playwright\chromium_headless_shell-1200\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+
+[1A[2K  1 failed
+    [chromium] › tests\e2e\crud-flow.spec.ts:17:9 › Project CRUD Flow › should login, create, update, and delete a project 

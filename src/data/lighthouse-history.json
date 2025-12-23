@@ -1,0 +1,92 @@
+{
+  "history": [
+    {
+      "id": "1766207415856",
+      "date": "2025-12-20T05:10:15.856Z",
+      "url": "https://portfolio-shared.vercel.app/",
+      "scores": {
+        "performance": 80,
+        "accessibility": 100,
+        "bestPractices": 100,
+        "seo": 100
+      }
+    },
+    {
+      "id": "1766207169216",
+      "date": "2025-12-20T05:06:09.216Z",
+      "url": "https://portofolio-ramos.vercel.app",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "bestPractices": 96,
+        "seo": 80
+      }
+    },
+    {
+      "id": "1766204369170",
+      "date": "2025-12-20T04:19:29.170Z",
+      "url": "https://portofolio-ramos.vercel.app",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "bestPractices": 96,
+        "seo": 80
+      }
+    },
+    {
+      "id": "1766194516430",
+      "date": "2025-12-20T01:35:16.430Z",
+      "url": "https://portofolio-ramos.vercel.app",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "bestPractices": 96,
+        "seo": 80
+      }
+    },
+    {
+      "id": "1766148856875",
+      "date": "2025-12-19T12:54:16.875Z",
+      "url": "https://www.shopify.com/editions/winter2026#online",
+      "scores": {
+        "performance": 85,
+        "accessibility": 90,
+        "bestPractices": 73,
+        "seo": 92
+      }
+    },
+    {
+      "id": "1766147998982",
+      "date": "2025-12-19T12:39:58.982Z",
+      "url": "https://vercel.com/raaos-projects",
+      "scores": {
+        "performance": 63,
+        "accessibility": 91,
+        "bestPractices": 96,
+        "seo": 92
+      }
+    },
+    {
+      "id": "1766147977918",
+      "date": "2025-12-19T12:39:37.918Z",
+      "url": "https://vercel.com/raaos-projects",
+      "scores": {
+        "performance": 67,
+        "accessibility": 91,
+        "bestPractices": 96,
+        "seo": 92
+      }
+    },
+    {
+      "id": "1766147905343",
+      "date": "2025-12-19T12:38:25.343Z",
+      "url": "https://portfolio-shared.vercel.app/",
+      "scores": {
+        "performance": 64,
+        "accessibility": 100,
+        "bestPractices": 100,
+        "seo": 100
+      }
+    }
+  ]
+}

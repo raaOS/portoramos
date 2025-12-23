@@ -1,0 +1,49 @@
+{
+  "skills": [
+    {
+      "id": "hard-ai",
+      "name": "Adobe Illustrator",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/illustrator/illustrator-plain.svg",
+      "level": "Expert",
+      "order": 1,
+      "description": "",
+      "isActive": false,
+      "createdAt": "2025-01-19T00:00:00.000Z",
+      "updatedAt": "2025-12-19T20:30:06.074Z"
+    },
+    {
+      "id": "hard-ps",
+      "name": "Adobe Photoshop",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/photoshop/photoshop-plain.svg",
+      "level": "Expert",
+      "order": 2,
+      "description": "",
+      "isActive": true,
+      "createdAt": "2025-01-19T00:00:00.000Z",
+      "updatedAt": "2025-12-19T11:33:42.161Z"
+    },
+    {
+      "id": "hard-figma",
+      "name": "Figma",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg",
+      "level": "Advanced",
+      "order": 3,
+      "description": "",
+      "isActive": true,
+      "createdAt": "2025-01-19T00:00:00.000Z",
+      "updatedAt": "2025-01-19T00:00:00.000Z"
+    },
+    {
+      "id": "hard-canva",
+      "name": "Canva",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/canva/canva-original.svg",
+      "level": "Intermediate",
+      "order": 4,
+      "description": "",
+      "isActive": true,
+      "createdAt": "2025-01-19T00:00:00.000Z",
+      "updatedAt": "2025-01-19T00:00:00.000Z"
+    }
+  ],
+  "lastUpdated": "2025-12-19T20:30:06.074Z"
+}

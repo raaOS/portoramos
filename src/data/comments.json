@@ -1,0 +1,68 @@
+{
+  "comments": {
+    "rooster-study": [
+      {
+        "id": "1",
+        "text": "Amazing work! The design system is so clean 🔥",
+        "author": "Sarah Chen",
+        "time": "2 jam yang lalu",
+        "likes": 12,
+        "replies": [
+          {
+            "id": "r1",
+            "text": "Thank you Sarah! Really appreciate the feedback.",
+            "author": "Mike Ross",
+            "time": "1 jam yang lalu",
+            "likes": 4
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "text": "What tech stack did you use for the backend?",
+        "author": "Alex Dev",
+        "time": "5 jam yang lalu",
+        "likes": 8
+      }
+    ],
+    "3d-hanger": [
+      {
+        "id": "1",
+        "text": "Amazing work! The design system is so clean 🔥",
+        "author": "Sarah Chen",
+        "time": "2 jam yang lalu",
+        "likes": 13,
+        "replies": [],
+        "likedByMe": true
+      },
+      {
+        "id": "2",
+        "text": "What tech stack did you use for the backend?",
+        "author": "Alex Dev",
+        "time": "5 jam yang lalu",
+        "likes": 9,
+        "likedByMe": true,
+        "replies": []
+      }
+    ],
+    "chicken-portrait": [],
+    "gantungan": [],
+    "sandal": [],
+    "ayam": [],
+    "beach-sandal": [],
+    "luxury-sandal": [],
+    "bird-photography": [],
+    "elegant-sandal": [],
+    "motion-hanger": [],
+    "sporty-sandal": [],
+    "farm-rooster": [],
+    "cinematic-hanger": [],
+    "designer-footwear": [],
+    "fluid-animation": [],
+    "feathered-friend": [],
+    "smooth-motion": [],
+    "artistic-sandal": [],
+    "comfort-sandal": [],
+    "test-project-sync": []
+  }
+}

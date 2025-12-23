@@ -1,0 +1,32 @@
+.vercel
+node_modules/
+.next/
+
+# Backup files
+src/data/*.backup.json
+src/data/backups/
+
+# System Files
+.DS_Store
+desktop.ini
+
+# Build artifacts
+tsconfig.tsbuildinfo
+
+# Local Environment
+.env
+.env.local
+.env.*
+
+# Editor
+.vscode/
+
+test-results/
+
+# Test scripts (may contain API keys/tokens)
+*-env.js
+test-*.js
+check-*.js
+verify-*.js
+add-*.js
+
