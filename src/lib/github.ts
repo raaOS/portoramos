@@ -146,6 +146,17 @@ export class GitHubService {
         };
         return this.updateFile(this.path, content, message);
     }
+
+    /**
+     * Update the gallery-featured.json file on GitHub
+     */
+    async updateGallery(featuredProjectIds: string[], message: string): Promise<boolean> {
+        const content = {
+            featuredProjectIds,
+            lastUpdated: new Date().toISOString()
+        };
+        return this.updateFile('src/data/gallery-featured.json', content, message);
+    }
 }
 
 export const githubService = new GitHubService();

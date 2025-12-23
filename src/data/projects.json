@@ -24,30 +24,7 @@
       "status": "published",
       "createdAt": "2025-09-14T16:45:24.869Z",
       "updatedAt": "2025-12-19T18:34:57.419Z"
-    },
-    {
-      "title": "Test Project Sync",
-      "client": "Test Project",
-      "year": 2025,
-      "description": "Test description for sync.",
-      "cover": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97",
-      "coverWidth": 6000,
-      "coverHeight": 4000,
-      "gallery": [],
-      "galleryItems": [],
-      "tags": [],
-      "external_link": "",
-      "autoplay": true,
-      "muted": true,
-      "loop": true,
-      "playsInline": true,
-      "id": "project-1766160875093",
-      "slug": "test-project-sync",
-      "order": 2,
-      "status": "draft",
-      "createdAt": "2025-12-19T16:14:35.094Z",
-      "updatedAt": "2025-12-22T14:51:36.897Z"
     }
   ],
-  "lastUpdated": "2025-12-22T14:51:36.897Z"
+  "lastUpdated": "2025-12-23T16:13:04.848Z"
 }

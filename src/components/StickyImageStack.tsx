@@ -120,7 +120,7 @@ export default function StickyImageStack({ items }: StickyImageStackProps) {
 
     useEffect(() => {
         const handleResize = () => {
-            setIsMobile(window.innerWidth < 1024); // lg breakpoint (match lg:grid-cols-12 logic in AboutClient)
+            setIsMobile(window.innerWidth < 1280); // xl breakpoint (match xl:grid-cols-12 logic in AboutClient)
         };
 
         // Initial check

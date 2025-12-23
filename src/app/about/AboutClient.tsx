@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import NextImage from 'next/image';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
@@ -12,7 +12,8 @@ import AnimatedCounter from '@/components/AnimatedCounter';
 import HorizontalCounterAnimation from '@/components/HorizontalCounterAnimation';
 import HorizontalTestimonial from '@/components/HorizontalTestimonial';
 import { ExperienceData } from '@/types/experience';
-import { Project } from '@/types/projects'; // Import Project type
+import { Project } from '@/types/projects';
+import { GalleryFeaturedData } from '@/types/gallery';
 
 import { HardSkill } from '@/types/hardSkill';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
@@ -493,6 +494,47 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     staleTime: 5 * 60 * 1000
   });
 
+  const { data: galleryFeatured } = useQuery<GalleryFeaturedData>({
+    queryKey: ['gallery', 'featured'],
+    queryFn: async () => {
+      const res = await fetch('/api/gallery/featured');
+      if (!res.ok) return { featuredProjectIds: [], lastUpdated: '' };
+      return res.json();
+    }
+  });
+
+  const stackItems = useMemo(() => {
+    const allProjects = projectsData?.projects || [];
+    const featuredIds = galleryFeatured?.featuredProjectIds || [];
+    const isVideoLink = (url: string) => /\.(mp4|webm|ogg)$/i.test(url);
+
+    if (featuredIds.length > 0) {
+      const featured = featuredIds
+        .map(id => allProjects.find(p => p.id === id))
+        .filter(Boolean) as Project[];
+
+      if (featured.length > 0) {
+        return featured.map(p => ({
+          id: p.id,
+          type: (isVideoLink(p.cover) ? 'video' : 'image') as 'video' | 'image',
+          src: p.cover,
+          alt: p.title
+        }));
+      }
+    }
+
+    return allProjects
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 10)
+      .map(p => ({
+        id: p.id,
+        type: (isVideoLink(p.cover) ? 'video' : 'image') as 'video' | 'image',
+        src: p.cover,
+        alt: p.title
+      }));
+  }, [galleryFeatured, projectsData]);
+
+
   // Create dynamic gallery items from recent projects
   const galleryImages = (projectsData?.projects || [])
     .filter(p => p.cover)
@@ -684,12 +726,12 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       {/* Sticky Gallery Stack Section with Side Text */}
       <div id="professional" ref={stackSectionRef} className="relative z-20 bg-[#131314] border-b border-gray-800">
         <div className="max-w-[1920px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12">
+          <div className="grid grid-cols-1 xl:grid-cols-12">
 
             {/* Left Column: Sticky Text Info */}
-            <div className="block lg:col-span-4 relative z-10 px-4 pt-12 pb-0 lg:p-0">
+            <div className="block xl:col-span-4 relative z-10 px-4 pt-12 pb-0 xl:p-0">
               <div
-                className="relative lg:sticky lg:top-0 lg:h-screen flex flex-col justify-start lg:justify-center lg:px-10 xl:px-16 text-white"
+                className="relative xl:sticky xl:top-0 xl:h-screen flex flex-col justify-start xl:justify-center xl:px-10 2xl:px-16 text-white"
               >
                 <Reveal>
                   <motion.div
@@ -700,16 +742,16 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                   />
                   <motion.h3
                     style={{ opacity: headerOpacity }}
-                    className="text-3xl xl:text-4xl font-serif font-bold leading-tight mb-8 text-white lg:opacity-[var(--header-opacity)] opacity-100"
+                    className="text-3xl xl:text-4xl font-serif font-bold leading-tight mb-8 text-white xl:opacity-[var(--header-opacity)] opacity-100"
                   >
                     "Desain adalah solusi visual, bukan sekadar estetika."
                   </motion.h3>
 
                   <div className="space-y-6 text-white text-sm leading-relaxed tracking-wide">
-                    <motion.p style={{ opacity: p1Opacity }} className="text-white lg:opacity-[var(--p1-opacity)] opacity-100">
+                    <motion.p style={{ opacity: p1Opacity }} className="text-white xl:opacity-[var(--p1-opacity)] opacity-100">
                       14+ tahun mainan desain. Dari korporat sampai freelance, deadline mepet udah jadi makanan sehari-hari.
                     </motion.p>
-                    <motion.p style={{ opacity: p2Opacity }} className="text-white lg:opacity-[var(--p2-opacity)] opacity-100">
+                    <motion.p style={{ opacity: p2Opacity }} className="text-white xl:opacity-[var(--p2-opacity)] opacity-100">
                       Fokus bikin visual yang nggak cuma cantik, tapi juga 'works' buat bisnis.
                     </motion.p>
                   </div>
@@ -725,8 +767,8 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             </div>
 
             {/* Right Column: The Gallery Stack */}
-            <div className="lg:col-span-8">
-              <StickyImageStack items={stackTestItems} />
+            <div className="xl:col-span-8 relative min-h-[50vh] xl:min-h-screen">
+              <StickyImageStack items={stackItems} />
             </div>
 
           </div>
@@ -972,65 +1014,3 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     </div >
   );
 }
-const stackTestItems: MediaItem[] = [
-  {
-    id: 'test-1',
-    type: 'image',
-    src: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80',
-    alt: 'Test Portrait 1'
-  },
-  {
-    id: 'test-2',
-    type: 'image',
-    src: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=80',
-    alt: 'Test Portrait 2'
-  },
-  {
-    id: 'test-3',
-    type: 'video',
-    src: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    alt: 'Big Buck Bunny Test'
-  },
-  {
-    id: 'test-4',
-    type: 'image',
-    src: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&q=80',
-    alt: 'Test Portrait 4'
-  },
-  {
-    id: 'test-5',
-    type: 'image',
-    src: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80',
-    alt: 'Test Portrait 5'
-  },
-  {
-    id: 'test-6',
-    type: 'image',
-    src: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=80',
-    alt: 'Test Portrait 6'
-  },
-  {
-    id: 'test-7',
-    type: 'image',
-    src: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80',
-    alt: 'Test Portrait 7'
-  },
-  {
-    id: 'test-8',
-    type: 'image',
-    src: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800&q=80',
-    alt: 'Test Portrait 8'
-  },
-  {
-    id: 'test-9',
-    type: 'image',
-    src: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80',
-    alt: 'Test Portrait 9'
-  },
-  {
-    id: 'test-10',
-    type: 'image',
-    src: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
-    alt: 'Test Portrait 10'
-  }
-];
