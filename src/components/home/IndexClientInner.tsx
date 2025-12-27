@@ -168,8 +168,8 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
                 <motion.div
                   key={`${project.slug}-${index}`}
                   // LCP Optimization: Do not animate the first 6 items (above the fold)
-                  // They should be visible immediately for better Performance score
-                  initial={index < 6 ? { opacity: 1, y: 0 } : { opacity: 0, y: 100 }}
+                  // They should be visible immediately. 'false' prevents Framer from resetting styles on hydration.
+                  initial={index < 6 ? false : { opacity: 0, y: 100 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.1 }}
                   transition={{

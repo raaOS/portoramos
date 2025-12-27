@@ -20,19 +20,32 @@ export const projectService = {
                 await ensureDataDir();
                 data = (await loadData(DATA_FILE)) as ProjectsData | null;
             }
-            // 2. Production: Try to read from GitHub (for freshest data)
+            // 2. Production: Prefer Static Import (Fastest, data embedded at build time)
+            // Since Vercel rebuilds on GitHub push, this data is up-to-date for the deployment.
             else {
-                try {
-                    const ghData = await githubService.getFile(fresh);
-                    if (ghData && ghData.content) {
-                        data = ghData.content as ProjectsData;
+                if (projectsData && (projectsData as any).projects) {
+                    data = projectsData as unknown as ProjectsData;
+                    // Optional: If 'fresh' is true, we could still force GitHub DB, but for LCP we want speed.
+                    // If fresh is requested (e.g. Admin panel sync), we might want to bypass this?
+                    // But getProjects() usually called by page.tsx (Server Component) for initial render.
+                    if (fresh) {
+                        try {
+                            const ghData = await githubService.getFile(true);
+                            if (ghData && ghData.content) data = ghData.content as ProjectsData;
+                        } catch (e) { console.warn('Fresh fetch failed, using static'); }
                     }
-                } catch (error) {
-                    console.warn('Failed to fetch from GitHub, falling back to static data:', error);
+                } else {
+                    // Fallback if import failed (unlikely)
+                    try {
+                        const ghData = await githubService.getFile();
+                        if (ghData && ghData.content) data = ghData.content as ProjectsData;
+                    } catch (error) {
+                        console.warn('Failed to fetch from GitHub:', error);
+                    }
                 }
             }
 
-            // 3. Fallback: Use the statically imported JSON
+            // 3. Fallback: Use the statically imported JSON (Duplicate check but safe)
             if (!data) {
                 data = projectsData as unknown as ProjectsData;
             }
