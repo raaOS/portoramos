@@ -15,11 +15,24 @@ const CONTACT_LINKS = [
 ];
 
 // Lightweight Card Component (No interaction logic, just visuals)
-const BackgroundCard = React.memo(({ project }: { project: Project }) => {
+const BackgroundCard = React.memo(({ project, index }: { project: Project, index: number }) => {
     const cover = resolveCover(project);
     const width = project.coverWidth || 800;
     const height = project.coverHeight || 600;
     const ratio = width / height;
+
+    // PERFORMANCE OPTIMIZATION:
+    // User requested 50-75% video density.
+    // Logic: index % 3 !== 0 results in indices 1, 2, 4, 5... allowing video.
+    // This gives exactly 66% video coverage (2 out of 3).
+    const allowVideo = index % 3 !== 0;
+    const effectiveKind = allowVideo ? cover.kind : 'image';
+
+    // CRITICAL FIX: If forcing image mode on a video item, use the POSTER as source.
+    // Otherwise passing a video URL to <Image/> will cause a load error.
+    const effectiveSrc = (effectiveKind === 'image' && cover.kind === 'video')
+        ? (cover.poster || cover.src)
+        : cover.src;
 
     return (
         <div className="mb-4 sm:mb-6 break-inside-avoid">
@@ -30,19 +43,19 @@ const BackgroundCard = React.memo(({ project }: { project: Project }) => {
                 }}
             >
                 <Media
-                    kind={cover.kind}
-                    src={cover.src}
+                    kind={effectiveKind}
+                    src={effectiveSrc}
                     poster={cover.poster}
-                    alt="" // Decorative only
-                    width={400} // Smaller resolution for background
+                    alt=""
+                    width={400}
                     height={Math.round(400 / ratio)}
-                    className="w-full h-full object-cover opacity-80" // Brighter opacity
-                    autoplay={true}
+                    className="w-full h-full object-cover opacity-80"
+                    autoplay={allowVideo}
                     loop={true}
                     muted={true}
                     playsInline={true}
                     controls={false}
-                    lazy={false} // Force load for background
+                    lazy={true}
                     priority={false}
                 />
             </div>
@@ -61,10 +74,10 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
     // Ensure we have enough items for the loop
     const filledProjects = React.useMemo(() => {
         if (projects.length === 0) return [];
-        // Duplicate list until we have enough items for a dense 7-column grid
-        // With 7 columns, we need MANY items to create vertical height
+        // Duplicate list until we have enough items for a dense grid.
+        // Reduced from 50 to 24 to prevent memory/CPU overload while still allowing smooth loop.
         let list = [...projects];
-        while (list.length < 50) {
+        while (list.length < 24) {
             list = [...list, ...projects];
         }
         return list;
@@ -100,13 +113,13 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
                     {/* First Set */}
                     <div className="css-masonry px-4">
                         {filledProjects.map((p, i) => (
-                            <BackgroundCard key={`p1-${i}`} project={p} />
+                            <BackgroundCard key={`p1-${i}`} project={p} index={i} />
                         ))}
                     </div>
                     {/* Duplicate Set for Loop */}
                     <div className="css-masonry px-4">
                         {filledProjects.map((p, i) => (
-                            <BackgroundCard key={`p2-${i}`} project={p} />
+                            <BackgroundCard key={`p2-${i}`} project={p} index={i + filledProjects.length} />
                         ))}
                     </div>
                 </div>

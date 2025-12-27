@@ -8,10 +8,10 @@
     "phone": "+628817472310",
     "address": "Jakarta, Indonesia",
     "socialMedia": {
-      "linkedin": "https://linkedin.com/in/yourname",
+      "linkedin": "",
       "instagram": "https://instagram.com/hallo.aufaly",
       "twitter": "",
-      "github": "https://github.com/yourname",
+      "github": "",
       "behance": ""
     }
   },
@@ -47,5 +47,5 @@
     "successMessage": "Terima kasih! Pesan Anda telah berhasil dikirim.",
     "errorMessage": "Maaf, terjadi kesalahan. Silakan coba lagi."
   },
-  "lastUpdated": "2025-12-26T15:23:25.168Z"
+  "lastUpdated": "2025-12-27T15:16:18.365Z"
 }

@@ -284,11 +284,11 @@ export default function ProjectDetailTwoColumn({
                 {/* COLUMN A: Big Box + Masonry Below */}
                 <div className="lg:w-1/2 space-y-3 sm:space-y-4">
                     {/* Big Box - Optimized for mobile */}
-                    <div className="bg-white dark:bg-black rounded-lg sm:rounded-xl shadow-none border border-black/10 dark:border-white/10 overflow-hidden transition-all duration-300 relative">
+                    <div className="bg-white dark:bg-black rounded-lg sm:rounded-xl shadow-none border border-black/10 dark:border-white/10 transition-all duration-300 relative">
 
 
                         {/* Gallery / Cover Media */}
-                        <div className="">
+                        <div className={`${ratio < 1 ? 'max-w-sm mx-auto' : ratio === 1 ? 'max-w-md mx-auto' : 'w-full'} py-4`}>
                             <CoverFlowGallery
                                 items={unifiedMedia}
                                 autoPlay={false}

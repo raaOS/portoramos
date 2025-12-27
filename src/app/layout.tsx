@@ -92,9 +92,7 @@ export default function RootLayout({
                   <AppWrapper>
                     <Header />
                     <main className="pb-20">
-                      <PageTransition>
-                        {children}
-                      </PageTransition>
+                      {children}
                     </main>
                     {modal}
                     <Footer />

@@ -7,7 +7,7 @@
       "client": "Personal Work",
       "year": 2025,
       "description": "Sebuah karya surealis yang mengubah piringan hitam menjadi hutan rimbun yang berbatasan dengan deburan ombak samudra biru.",
-      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766511430/AQMRJH0BtqJVJdw_PX1iLNUZuM7OjhI8KOt8dAx5yn6ryPif1yfQ7wrl9s7ZaP3J-J9oYFbOy8QKyVRA8dUAtzm738de-P5C_yuiotv.mp4",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766857273/AQMRJH0BtqJVJdw_PX1iLNUZuM7OjhI8KOt8dAx5yn6ryPif1yfQ7wrl9s7ZaP3J-J9oYFbOy8QKyVRA8dUAtzm738de-P5C_yuiotv.mp4",
       "coverWidth": 720,
       "coverHeight": 900,
       "gallery": [],
@@ -23,7 +23,7 @@
       "order": 2,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2025-12-27T17:41:53.472Z",
       "likes": 219,
       "shares": 45
     },
@@ -61,7 +61,7 @@
       "client": "Personal Work",
       "year": 2025,
       "description": "Sebuah komposit kontras tinggi yang memvisualisasikan perjalanan sendirian ke dunia bawah yang gelap dan dijaga gagak.",
-      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766511413/AQNL12DQap8xP2fa7STZrZzgcYQSinTXP4-S7GlNXMQMaG-wQbnb2UeuTe-vWQoxpkw8foMhAXdSgvRoo4fJkD-CTD3l4_o3_ug6xya.mp4",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766857161/AQNL12DQap8xP2fa7STZrZzgcYQSinTXP4-S7GlNXMQMaG-wQbnb2UeuTe-vWQoxpkw8foMhAXdSgvRoo4fJkD-CTD3l4_o3_ug6xya.mp4",
       "coverWidth": 720,
       "coverHeight": 900,
       "gallery": [],
@@ -77,7 +77,7 @@
       "order": 4,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2025-12-27T17:40:25.513Z",
       "likes": 138,
       "shares": 65
     },
@@ -118,7 +118,9 @@
       "cover": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766511408/71522407_2596255897107414_8216930195447611676_n._mvl94x.jpg",
       "coverWidth": 640,
       "coverHeight": 800,
-      "gallery": [],
+      "gallery": [
+        "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766857273/AQMRJH0BtqJVJdw_PX1iLNUZuM7OjhI8KOt8dAx5yn6ryPif1yfQ7wrl9s7ZaP3J-J9oYFbOy8QKyVRA8dUAtzm738de-P5C_yuiotv.mp4"
+      ],
       "tags": [
         "image"
       ],
@@ -127,11 +129,17 @@
       "muted": false,
       "loop": false,
       "playsInline": false,
-      "galleryItems": [],
+      "galleryItems": [
+        {
+          "kind": "video",
+          "src": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766857273/AQMRJH0BtqJVJdw_PX1iLNUZuM7OjhI8KOt8dAx5yn6ryPif1yfQ7wrl9s7ZaP3J-J9oYFbOy8QKyVRA8dUAtzm738de-P5C_yuiotv.mp4",
+          "isActive": true
+        }
+      ],
       "order": 6,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2025-12-27T17:42:53.880Z",
       "likes": 305,
       "shares": 84
     },
@@ -350,33 +358,6 @@
       "updatedAt": "2025-12-27T02:41:59.526Z",
       "likes": 187,
       "shares": 52
-    },
-    {
-      "id": "gen-1766512146544-13",
-      "title": "Tempat Perlindungan Sepatu Raksasa",
-      "slug": "tempat-perlindungan-sepatu-raksasa",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Manipulasi surealis ini menampilkan sepatu hiking besar yang dialihfungsikan menjadi rumah yang bermekaran dan diterangi matahari di padang rumput.",
-      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766506237/AQNM8Cym-onEgTSKuWvoiJiDrqDR7oHTHGJXY4CGGecGkXSDaYrR3lwUtWTQtjIUSwytkA-4Ax5itFsdFTHeTwC0d6evRsKA_oano3h.mp4",
-      "coverWidth": 720,
-      "coverHeight": 900,
-      "gallery": [],
-      "tags": [
-        "video"
-      ],
-      "external_link": "",
-      "autoplay": true,
-      "muted": true,
-      "loop": true,
-      "playsInline": true,
-      "galleryItems": [],
-      "order": 15,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
-      "likes": 123,
-      "shares": 80
     },
     {
       "id": "gen-1766512146544-14",
@@ -622,5 +603,5 @@
       "shares": 50
     }
   ],
-  "lastUpdated": "2025-12-27T02:41:59.526Z"
+  "lastUpdated": "2025-12-27T17:42:58.313Z"
 }
