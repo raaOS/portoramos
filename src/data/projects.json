@@ -166,7 +166,7 @@
       "order": 6,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2025-12-27T17:42:53.880Z",
       "likes": 305,
       "shares": 84
     },
@@ -387,33 +387,6 @@
       "shares": 52
     },
     {
-      "id": "gen-1766512146544-13",
-      "title": "Tempat Perlindungan Sepatu Raksasa",
-      "slug": "tempat-perlindungan-sepatu-raksasa",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Manipulasi surealis ini menampilkan sepatu hiking besar yang dialihfungsikan menjadi rumah yang bermekaran dan diterangi matahari di padang rumput.",
-      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766506237/AQNM8Cym-onEgTSKuWvoiJiDrqDR7oHTHGJXY4CGGecGkXSDaYrR3lwUtWTQtjIUSwytkA-4Ax5itFsdFTHeTwC0d6evRsKA_oano3h.mp4",
-      "coverWidth": 720,
-      "coverHeight": 900,
-      "gallery": [],
-      "tags": [
-        "video"
-      ],
-      "external_link": "",
-      "autoplay": true,
-      "muted": true,
-      "loop": true,
-      "playsInline": true,
-      "galleryItems": [],
-      "order": 15,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
-      "likes": 123,
-      "shares": 80
-    },
-    {
       "id": "gen-1766512146544-14",
       "title": "Kampanye Hadiah Digital Liburan",
       "slug": "kampanye-hadiah-digital-liburan",
@@ -630,5 +603,5 @@
       "shares": 83
     }
   ],
-  "lastUpdated": "2025-12-27T17:42:53.886Z"
+  "lastUpdated": "2025-12-27T17:42:58.353Z"
 }
