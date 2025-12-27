@@ -28,8 +28,8 @@ export default async function ContactPage() {
   const contactInfo = contactData ? {
     email: contactData.info.email,
     socialMedia: contactData.info.socialMedia,
-    headline: contactData.content.headline,
-    subtext: contactData.content.subtext
+    headline: contactData.content?.headline,
+    subtext: contactData.content?.subtext
   } : undefined;
 
   return (

@@ -104,7 +104,7 @@ export class GitHubService {
     /**
      * Update any file in the repo
      */
-    async updateFile(filePath: string, content: Record<string, unknown>, message: string): Promise<boolean> {
+    async updateFile(filePath: string, content: any, message: string): Promise<boolean> {
         try {
             // 1. Get current file to get the latest SHA (required for updates)
             let sha: string | undefined;
