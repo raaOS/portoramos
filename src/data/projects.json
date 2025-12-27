@@ -28,6 +28,33 @@
       "shares": 45
     },
     {
+      "title": "Gantungan Animasik",
+      "client": "Personal Work",
+      "year": 2025,
+      "description": "Animasi gantungan kunci 3D yang halus dengan pencahayaan sinematik, menampilkan detail tekstur dan gerakan yang dinamis.",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1756500654/Provence_Beauty_Soft_Bisous_Animation_2_skincareanimation_3danimation_pjt31w.mp4",
+      "coverWidth": 1080,
+      "coverHeight": 1920,
+      "gallery": [],
+      "tags": [
+        "video"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "id": "project-1757868324869",
+      "slug": "gantungan",
+      "galleryItems": [],
+      "order": 2,
+      "status": "published",
+      "createdAt": "2025-09-14T16:45:24.869Z",
+      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "likes": 350,
+      "shares": 50
+    },
+    {
       "id": "gen-1766512146544-1",
       "title": "Kolase Lanskap Menanjak",
       "slug": "kolase-lanskap-menanjak",
@@ -61,7 +88,7 @@
       "client": "Personal Work",
       "year": 2025,
       "description": "Sebuah komposit kontras tinggi yang memvisualisasikan perjalanan sendirian ke dunia bawah yang gelap dan dijaga gagak.",
-      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766511413/AQNL12DQap8xP2fa7STZrZzgcYQSinTXP4-S7GlNXMQMaG-wQbnb2UeuTe-vWQoxpkw8foMhAXdSgvRoo4fJkD-CTD3l4_o3_ug6xya.mp4",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766857161/AQNL12DQap8xP2fa7STZrZzgcYQSinTXP4-S7GlNXMQMaG-wQbnb2UeuTe-vWQoxpkw8foMhAXdSgvRoo4fJkD-CTD3l4_o3_ug6xya.mp4",
       "coverWidth": 720,
       "coverHeight": 900,
       "gallery": [],
@@ -593,34 +620,7 @@
       "updatedAt": "2025-12-27T02:41:59.526Z",
       "likes": 293,
       "shares": 83
-    },
-    {
-      "title": "Gantungan Animasik",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Animasi gantungan kunci 3D yang halus dengan pencahayaan sinematik, menampilkan detail tekstur dan gerakan yang dinamis.",
-      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1756500654/Provence_Beauty_Soft_Bisous_Animation_2_skincareanimation_3danimation_pjt31w.mp4",
-      "coverWidth": 1080,
-      "coverHeight": 1920,
-      "gallery": [],
-      "tags": [
-        "video"
-      ],
-      "external_link": "",
-      "autoplay": true,
-      "muted": true,
-      "loop": true,
-      "playsInline": true,
-      "id": "project-1757868324869",
-      "slug": "gantungan",
-      "galleryItems": [],
-      "order": 2,
-      "status": "published",
-      "createdAt": "2025-09-14T16:45:24.869Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
-      "likes": 350,
-      "shares": 50
     }
   ],
-  "lastUpdated": "2025-12-27T02:41:59.526Z"
+  "lastUpdated": "2025-12-27T17:40:25.521Z"
 }
