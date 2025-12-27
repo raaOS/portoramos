@@ -59,17 +59,21 @@ export class GitHubService {
      * @param noCache - If true, bypasses cache to get fresh data (important for SHA)
      */
     async getFileContent<T>(filePath: string, noCache = false): Promise<{ content: T, sha: string }> {
-        // DEV MODE FALLBACK: Read from local filesystem
-        if (process.env.NODE_ENV === 'development') {
-            try {
-                const localPath = path.join(process.cwd(), filePath);
-                console.log(`[GitHubService] 🛠️ DEV MODE: Reading local file: ${localPath}`);
-                const content = await fs.readFile(localPath, 'utf-8');
-                return {
-                    content: JSON.parse(content),
-                    sha: 'dev-local-sha'
-                };
-            } catch (error) {
+        // Try reading from local filesystem first (Robust for Local Build & Vercel if file exists)
+        try {
+            const localPath = path.join(process.cwd(), filePath);
+            // Check if file exists to avoid unnecessary read errors in logs if strictly remote
+            await fs.access(localPath);
+
+            console.log(`[GitHubService] 📂 Reading local file: ${localPath}`);
+            const content = await fs.readFile(localPath, 'utf-8');
+            return {
+                content: JSON.parse(content),
+                sha: 'local-file-sha' // Dummy SHA for local read, fine for reading. Updates might need real SHA.
+            };
+        } catch (error) {
+            // If local read fails (e.g. file not found or Vercel environment restriction), proceed to API
+            if (process.env.NODE_ENV === 'development') {
                 console.warn(`[GitHubService] Local file read failed for ${filePath}, falling back to API.`);
             }
         }

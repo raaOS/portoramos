@@ -70,18 +70,18 @@ const BlurTextLoop = ({
                         // Actually, framer motion 'initial' effectively only runs on mount.
                         // We use the 'animate' prop to control state switch.
                         initial={{
-                            filter: 'blur(10px)',
-                            opacity: 0,
-                            y: startY
+                            filter: 'blur(0px)',
+                            opacity: 1,
+                            y: 0
                         }}
                         animate={runAnimation ? {
-                            filter: ['blur(10px)', 'blur(10px)', 'blur(0px)', 'blur(0px)', 'blur(5px)', 'blur(5px)'],
-                            opacity: [0, 0, 1, 1, 0, 0],
-                            y: [startY, startY, 0, 0, endY, endY],
+                            filter: ['blur(0px)', 'blur(0px)', 'blur(5px)', 'blur(5px)', 'blur(10px)', 'blur(10px)', 'blur(0px)'],
+                            opacity: [1, 1, 0, 0, 0, 0, 1], // Start Visible -> Hold -> Exit -> Pause -> Enter
+                            y: [0, 0, endY, endY, startY, startY, 0],
                         } : {
-                            filter: 'blur(10px)',
-                            opacity: 0,
-                            y: startY
+                            filter: 'blur(0px)',
+                            opacity: 1,
+                            y: 0
                         }}
                         transition={runAnimation ? {
                             duration: cycleDuration,

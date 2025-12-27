@@ -101,28 +101,41 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
     const displayHeadline = contactInfo?.headline || "Bikin Project \nBareng?";
     const displaySubtext = contactInfo?.subtext || "Kita rancang pengalaman digital yang unik, detail, dan 'hidup'. \nSiap wujudin ide kamu?";
 
+    // Defer heavy background grid to prioritize LCP
+    const [isGridMounted, setIsGridMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        // Mount grid after main content is likely painted (0.1s delay is usually enough to unblock main thread)
+        const timer = setTimeout(() => setIsGridMounted(true), 100);
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
         <div className="fixed inset-0 z-40 h-[100dvh] w-full bg-[#0a0a0a] overflow-hidden flex flex-col items-center justify-center selection:bg-white/20">
 
 
 
-            {/* Background Layer with CSS Animation */}
-            <div className="absolute inset-0 z-0 opacity-50 pointer-events-none select-none overflow-hidden">
+            {/* Background Layer with CSS Animation - DEFERRED RENDER for Performance */}
+            <div className="absolute inset-0 z-0 opacity-50 pointer-events-none select-none overflow-hidden transition-opacity duration-1000 ease-in-out"
+                style={{ opacity: isGridMounted ? 0.5 : 0 }}
+            >
                 {/* Double loop container for smooth scrolling */}
-                <div className="w-full animate-scroll-vertical">
-                    {/* First Set */}
-                    <div className="css-masonry px-4">
-                        {filledProjects.map((p, i) => (
-                            <BackgroundCard key={`p1-${i}`} project={p} index={i} />
-                        ))}
+                {isGridMounted && (
+                    <div className="w-full animate-scroll-vertical">
+                        {/* First Set */}
+                        <div className="css-masonry px-4">
+                            {filledProjects.map((p, i) => (
+                                <BackgroundCard key={`p1-${i}`} project={p} index={i} />
+                            ))}
+                        </div>
+                        {/* Duplicate Set for Loop */}
+                        <div className="css-masonry px-4">
+                            {filledProjects.map((p, i) => (
+                                <BackgroundCard key={`p2-${i}`} project={p} index={i + filledProjects.length} />
+                            ))}
+                        </div>
                     </div>
-                    {/* Duplicate Set for Loop */}
-                    <div className="css-masonry px-4">
-                        {filledProjects.map((p, i) => (
-                            <BackgroundCard key={`p2-${i}`} project={p} index={i + filledProjects.length} />
-                        ))}
-                    </div>
-                </div>
+                )}
             </div>
 
             {/* Gradient Overlay - Lighter now */}
