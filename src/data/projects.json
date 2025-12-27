@@ -7,7 +7,7 @@
       "client": "Personal Work",
       "year": 2025,
       "description": "Sebuah karya surealis yang mengubah piringan hitam menjadi hutan rimbun yang berbatasan dengan deburan ombak samudra biru.",
-      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766511430/AQMRJH0BtqJVJdw_PX1iLNUZuM7OjhI8KOt8dAx5yn6ryPif1yfQ7wrl9s7ZaP3J-J9oYFbOy8QKyVRA8dUAtzm738de-P5C_yuiotv.mp4",
+      "cover": "https://res.cloudinary.com/dcb3dslfw/video/upload/v1766857273/AQMRJH0BtqJVJdw_PX1iLNUZuM7OjhI8KOt8dAx5yn6ryPif1yfQ7wrl9s7ZaP3J-J9oYFbOy8QKyVRA8dUAtzm738de-P5C_yuiotv.mp4",
       "coverWidth": 720,
       "coverHeight": 900,
       "gallery": [],
@@ -104,7 +104,7 @@
       "order": 4,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2025-12-27T17:40:25.513Z",
       "likes": 138,
       "shares": 65
     },
@@ -622,5 +622,5 @@
       "shares": 83
     }
   ],
-  "lastUpdated": "2025-12-27T17:40:25.521Z"
+  "lastUpdated": "2025-12-27T17:41:53.481Z"
 }
