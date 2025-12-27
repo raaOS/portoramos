@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Masonry from 'react-masonry-css';
 
 interface MasonryGridProps {
@@ -37,6 +37,31 @@ const bottomBreakpoints = {
 
 export default function MasonryGrid({ children, className = '', columns = 'default' }: MasonryGridProps) {
     const breakpointColumns = columns === 'sidebar' ? sidebarBreakpoints : columns === 'bottom' ? bottomBreakpoints : defaultBreakpoints;
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // SSR Fallback: Use CSS Columns to simulate Masonry structure immediately
+    // This allows the browser to paint images before React hydrates the Masonry library
+    if (!mounted) {
+        return (
+            <div
+                className={`w-full ${className}`}
+                style={{
+                    columnCount: columns === 'default' ? 4 : columns === 'sidebar' ? 3 : 4,
+                    columnGap: '16px'
+                }}
+            >
+                {React.Children.map(children, (child) => (
+                    <div className="mb-4 break-inside-avoid">
+                        {child}
+                    </div>
+                ))}
+            </div>
+        );
+    }
 
     return (
         <Masonry
