@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Media from '@/components/shared/Media';
 import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
-import AITranslator from '@/components/AITranslator';
+import AITranslator from '@/components/features/AITranslator';
 
 interface GalleryImage {
   src: string;
@@ -488,14 +488,14 @@ export default function SwayingGallery({
           left: 0;
           width: 100%;
           height: 100%;
-          background: rgba(255, 255, 255, 0.05); /* Hampir transparan, tidak ada hitam */
+          background: #ffffff; /* Putih Solid */
           z-index: 9999;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 1rem;
           animation: fadeIn 0.15s ease-out;
-          backdrop-filter: blur(12px); /* Blur lebih kuat untuk estetika */
+          /* backdrop-filter removed because background is solid */
         }
 
         .job-modal {
@@ -503,11 +503,10 @@ export default function SwayingGallery({
           width: 90%;
           max-width: 480px;
           border-radius: 16px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-            0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          box-shadow: none; /* Shadow Removed */
+          border: 1px solid #000000; /* Black Thin Border */
           overflow: hidden;
           animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          border: 1px solid #f3f4f6;
           max-height: 85vh;
           overflow-y: auto;
         }

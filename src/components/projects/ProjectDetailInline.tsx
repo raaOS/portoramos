@@ -63,7 +63,7 @@ export default function ProjectDetailInline({ project, onClose }: ProjectDetailI
 
                 {/* View Full Page Link */}
                 <Link
-                    href={`/work/${project.slug}`}
+                    href={`/works/${project.slug}`}
                     className="absolute top-4 right-16 z-50 p-2.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all shadow-lg"
                     aria-label="View full page"
                 >
@@ -111,7 +111,7 @@ export default function ProjectDetailInline({ project, onClose }: ProjectDetailI
                                 ))}
                                 {gallery.length > 5 && (
                                     <Link
-                                        href={`/work/${project.slug}`}
+                                        href={`/works/${project.slug}`}
                                         className="w-16 h-16 flex-shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 text-sm font-medium hover:bg-gray-300 transition-colors"
                                     >
                                         +{gallery.length - 5}
@@ -124,7 +124,7 @@ export default function ProjectDetailInline({ project, onClose }: ProjectDetailI
                     {/* Right: Details */}
                     <div className="p-6 lg:p-8 space-y-4 overflow-y-auto max-h-[70vh]">
                         {/* Title */}
-                        <h2 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900 dark:text-white">
+                        <h2 className="text-2xl lg:text-3xl font-sans font-bold text-gray-900 dark:text-white">
                             {project.title}
                         </h2>
 
@@ -168,7 +168,7 @@ export default function ProjectDetailInline({ project, onClose }: ProjectDetailI
                         {/* View Full Project Button */}
                         <div className="pt-4">
                             <Link
-                                href={`/work/${project.slug}`}
+                                href={`/works/${project.slug}`}
                                 className="inline-flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium hover:opacity-80 transition-opacity"
                             >
                                 View Full Project

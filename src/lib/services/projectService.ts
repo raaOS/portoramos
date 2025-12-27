@@ -110,6 +110,8 @@ export const projectService = {
             coverHeight: data.coverHeight || 600,
             gallery: data.gallery || [],
             galleryItems: data.galleryItems || [],
+            likes: data.likes || 0,
+            shares: data.shares || 0,
             external_link: data.external_link || '',
             order: currentProjects.length + 1,
             status: data.status || 'published',
@@ -225,6 +227,62 @@ export const projectService = {
             const success = await githubService.updateProjects({
                 projects: currentProjects,
                 message: `Delete project ID: ${id} (via Admin CMS)`
+            });
+            if (!success) throw new Error('Failed to save to GitHub');
+        }
+
+        return true;
+    },
+
+    /**
+     * Bulk update projects (Atomic operation)
+     */
+    async bulkUpdateProjects(updates: { ids: string[], status?: 'published' | 'draft', delete?: boolean }): Promise<boolean> {
+        const isDev = process.env.NODE_ENV === 'development';
+        let currentProjects: Project[] = [];
+
+        // FETCH EXISTING DATA (Read Once)
+        if (isDev) {
+            await ensureDataDir();
+            const localData = (await loadData(DATA_FILE)) as ProjectsData | null;
+            currentProjects = localData?.projects || [];
+        } else {
+            const ghData = await githubService.getFile();
+            currentProjects = ghData.content.projects || [];
+        }
+
+        let hasChanges = false;
+
+        // Apply Updates in Memory
+        if (updates.delete) {
+            const initialLen = currentProjects.length;
+            currentProjects = currentProjects.filter(p => !updates.ids.includes(p.id));
+            if (currentProjects.length !== initialLen) hasChanges = true;
+        } else if (updates.status) {
+            currentProjects = currentProjects.map(p => {
+                if (updates.ids.includes(p.id) && p.status !== updates.status) {
+                    hasChanges = true;
+                    return { ...p, status: updates.status!, updatedAt: new Date().toISOString() };
+                }
+                return p;
+            });
+        }
+
+        if (!hasChanges) return true; // Nothing to do
+
+        const updatedData = {
+            projects: currentProjects,
+            lastUpdated: new Date().toISOString()
+        };
+
+        // SAVE DATA (Write Once)
+        if (isDev) {
+            const success = await saveData(DATA_FILE, updatedData);
+            if (!success) throw new Error('Failed to save to local filesystem');
+        } else {
+            const success = await githubService.updateProjects({
+                projects: currentProjects,
+                message: `Bulk update ${updates.ids.length} projects (via Admin CMS)`
             });
             if (!success) throw new Error('Failed to save to GitHub');
         }

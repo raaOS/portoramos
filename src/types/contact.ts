@@ -8,7 +8,13 @@ export interface ContactInfo {
     twitter?: string;
     github?: string;
     behance?: string;
+    whatsapp?: string;
   };
+}
+
+export interface ContactContent {
+  headline: string;
+  subtext: string;
 }
 
 export interface ContactFormSettings {
@@ -27,12 +33,14 @@ export interface ContactFormSettings {
 }
 
 export interface ContactData {
+  content?: ContactContent;
   info: ContactInfo;
   formSettings: ContactFormSettings;
   lastUpdated: string;
 }
 
 export interface UpdateContactData {
+  content?: ContactContent;
   info?: Partial<ContactInfo>;
   formSettings?: Partial<ContactFormSettings>;
 }

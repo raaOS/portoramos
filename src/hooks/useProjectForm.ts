@@ -18,6 +18,10 @@ export interface ProjectFormData {
     muted: boolean;
     loop: boolean;
     playsInline: boolean;
+    id?: string;
+    slug?: string;
+    likes?: number;
+    shares?: number;
 }
 
 export const useProjectForm = (project?: Project) => {
@@ -40,7 +44,11 @@ export const useProjectForm = (project?: Project) => {
         autoplay: project?.autoplay ?? true,
         muted: project?.muted ?? true,
         loop: project?.loop ?? true,
-        playsInline: project?.playsInline ?? true
+        playsInline: project?.playsInline ?? true,
+        id: project?.id,
+        slug: project?.slug,
+        likes: project?.likes || 0,
+        shares: project?.shares || 0
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -66,7 +74,11 @@ export const useProjectForm = (project?: Project) => {
             autoplay: project?.autoplay ?? true,
             muted: project?.muted ?? true,
             loop: project?.loop ?? true,
-            playsInline: project?.playsInline ?? true
+            playsInline: project?.playsInline ?? true,
+            id: project?.id,
+            slug: project?.slug,
+            likes: project?.likes || 0,
+            shares: project?.shares || 0
         });
     }, [project]);
 
@@ -91,7 +103,7 @@ export const useProjectForm = (project?: Project) => {
         return newErrors;
     };
 
-    const updateField = (field: keyof ProjectFormData, value: any) => {
+    const updateField = <K extends keyof ProjectFormData>(field: K, value: ProjectFormData[K]) => {
         if (field === 'tags' && typeof value === 'string') {
             // Just store the string, don't lowercase it immediately to allow user typing
             // Transformation happens on submit or just stick to what it was

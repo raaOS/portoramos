@@ -1,5 +1,5 @@
-// Google Fonts: Six Caps, DM Sans, dan Merriweather
-import { Six_Caps, DM_Sans, Merriweather } from 'next/font/google'
+// Google Fonts: Six Caps, DM Sans
+import { Six_Caps, DM_Sans } from 'next/font/google'
 
 // Six Caps - Display font
 export const sixCaps = Six_Caps({
@@ -21,16 +21,5 @@ export const dmSans = DM_Sans({
   fallback: ['Arial', 'sans-serif'],
 })
 
-// Merriweather - Serif font (elegant, editorial)
-export const merriweather = Merriweather({
-  variable: '--font-serif', // Using font-serif for actual serif
-  subsets: ['latin'],
-  weight: ['300', '400', '700', '900'],
-  display: 'swap',
-  preload: true,
-  fallback: ['Georgia', 'serif'],
-})
-
 export const displayClassName = `${sixCaps.variable} ${sixCaps.className}`
 export const sansClassName = `${dmSans.variable} ${dmSans.className}`
-export const serifClassName = `${merriweather.variable} ${merriweather.className}`

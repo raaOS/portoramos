@@ -2,7 +2,7 @@ import { ProjectFormData } from '@/hooks/useProjectForm';
 
 interface ProjectExternalLinksProps {
     formData: ProjectFormData;
-    updateField: (field: keyof ProjectFormData, value: any) => void;
+    updateField: <K extends keyof ProjectFormData>(field: K, value: ProjectFormData[K]) => void;
 }
 
 export default function ProjectExternalLinks({ formData, updateField }: ProjectExternalLinksProps) {

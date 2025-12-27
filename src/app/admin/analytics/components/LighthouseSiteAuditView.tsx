@@ -39,7 +39,7 @@ export default function LighthouseSiteAuditView() {
 
                 const projectRoutes = projects
                     //.filter(p => !p.isHidden) // Optional: only scan public pages
-                    .map(p => `/work/${p.slug}`);
+                    .map(p => `/works/${p.slug}`);
 
                 const allRoutes = [...staticRoutes, ...projectRoutes];
 

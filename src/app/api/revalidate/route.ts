@@ -10,7 +10,7 @@ const ALLOWED_PATHS = new Set([
   '/cv',
 ])
 
-const ALLOWED_PREFIXES = ['/work/']
+const ALLOWED_PREFIXES = ['/works/']
 
 function isAllowedPath(path: string) {
   if (ALLOWED_PATHS.has(path)) return true
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   }
 
   const path = request.nextUrl.searchParams.get('path')
-  
+
   if (!path) {
     return NextResponse.json({ error: 'Path parameter is required' }, { status: 400 })
   }

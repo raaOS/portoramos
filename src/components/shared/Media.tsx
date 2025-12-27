@@ -77,7 +77,8 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     return () => setIsMounted(false)
   }, [])
 
-  const effectiveAutoplay = autoplay && shouldLoad && !prefersReducedMotion
+  // Force autoplay regardless of reduced motion preferences because the user explicitly requested it
+  const effectiveAutoplay = autoplay && shouldLoad
 
   // Merge forwarded ref (object or callback) with our internal ref so autoplay logic always has a handle
   const setVideoRef = useCallback((node: HTMLVideoElement | null) => {
@@ -219,23 +220,37 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           className={className || "w-full h-full object-cover"}
           src={shouldLoad ? src : undefined}
           poster={poster}
-          {...(effectiveAutoplay ? { autoPlay: true } : {})}
-          muted={muted}
+          autoPlay={effectiveAutoplay}
+          muted={effectiveAutoplay || muted} // Force muted if autoplay is on
           loop={loop}
           playsInline={playsInline}
           controls={controls}
-          preload={priority ? "auto" : (lazy ? "none" : "metadata")}
+          preload={priority ? "auto" : "metadata"} // Changed from "none" to "metadata" for better autoplay reliability
           webkit-playsinline="true"
           x5-playsinline="true"
           x5-video-player-type="h5"
           onCanPlay={() => {
             setCanPlay(true)
             setIsLoading(false)
+            setHasError(false) // Clear error on successful load
             // Immediate play attempt when video is ready
             playIfPossible()
           }}
-          onLoadStart={() => setIsLoading(true)}
-          onError={() => {
+          onLoadStart={() => {
+            setIsLoading(true)
+            setHasError(false)
+          }}
+          onError={(e) => {
+            const videoElement = e.currentTarget;
+            console.error(
+              "Video load error:",
+              {
+                src,
+                error: videoElement.error,
+                networkState: videoElement.networkState,
+                readyState: videoElement.readyState
+              }
+            );
             setIsLoading(false)
             setHasError(true)
           }}
@@ -243,6 +258,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
             setCanPlay(true)
             setIsLoading(false)
             setAutoplayBlocked(false) // Hide play button when playing
+            setHasError(false)
           }}
         />
 

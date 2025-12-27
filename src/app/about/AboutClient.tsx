@@ -5,12 +5,12 @@ import dynamic from 'next/dynamic';
 import NextImage from 'next/image';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import GalleryMini from '@/components/GalleryMini';
+import GalleryMini from '@/components/gallery/GalleryMini';
 import DesignSkillIcons from '@/components/DesignSkillIcons';
 import SwayingGallery from '@/components/home/SwayingGallery';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import HorizontalCounterAnimation from '@/components/HorizontalCounterAnimation';
-import HorizontalTestimonial from '@/components/HorizontalTestimonial';
+import HorizontalTestimonial from '@/components/gallery/HorizontalTestimonial';
 import { ExperienceData } from '@/types/experience';
 import { Project } from '@/types/projects';
 import { GalleryFeaturedData } from '@/types/gallery';
@@ -19,17 +19,17 @@ import { HardSkill } from '@/types/hardSkill';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
 import { useSmoothScroll } from '@/hooks/useSmoothScroll';
 import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
-import { Reveal, StaggerContainer, StaggerItem } from '@/components/Reveal';
-import BlurTextLoop from '@/components/BlurTextLoop';
+import { Reveal, StaggerContainer, StaggerItem } from '@/components/effects/Reveal';
+import BlurTextLoop from '@/components/effects/BlurTextLoop';
 import RunningTextSection from '@/components/RunningTextSection';
-import AITranslator from '@/components/AITranslator';
-import StickyImageStack, { MediaItem } from '@/components/StickyImageStack';
+import AITranslator from '@/components/features/AITranslator';
+import StickyImageStack, { MediaItem } from '@/components/gallery/StickyImageStack';
 
-const TextMorph = dynamic(() => import('@/components/TextMorph'), {
+const TextMorph = dynamic(() => import('@/components/effects/TextMorph'), {
   ssr: false,
   loading: () => <div className="h-[120px] w-full bg-transparent rounded animate-pulse" /> // Match TextMorph height
 });
-const SimpleTrail = dynamic(() => import('@/components/SimpleTrail'), {
+const SimpleTrail = dynamic(() => import('@/components/effects/SimpleTrail'), {
   ssr: false,
   loading: () => <div className="absolute inset-0 z-10" /> // Prevent CLS
 });
@@ -161,6 +161,7 @@ interface AboutClientProps {
       descriptions: string[];
     };
   };
+  initialProjects?: Project[];
   lastUpdated?: Date | null;
 }
 
@@ -179,7 +180,7 @@ const SectionWrapper = ({ children, id, className = "", style = {} }: { children
 };
 
 
-export default function AboutClient({ initialData, lastUpdated }: AboutClientProps) {
+export default function AboutClient({ initialData, initialProjects = [], lastUpdated }: AboutClientProps) {
   const [isClient, setIsClient] = useState(false);
   // Removed duplicate currentAboutData declaration here
   const [currentSoftSkillDescription, setCurrentSoftSkillDescription] = useState(
@@ -245,13 +246,8 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
     hero: {
       title: 'ABOUT ME',
       title_id: 'TENTANG SAYA',
-      backgroundTrail: [
-        '/images/trail/trail1.jpg',
-        '/images/trail/trail2.jpg',
-        '/images/trail/trail3.jpg',
-        '/images/trail/trail4.jpg',
-        '/images/trail/trail5.jpg'
-      ]
+      backgroundTrail: []
+
     },
     professional: {
       motto: {
@@ -491,6 +487,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       if (!response.ok) return { projects: [] };
       return response.json();
     },
+    initialData: { projects: initialProjects },
     staleTime: 5 * 60 * 1000
   });
 
@@ -518,7 +515,8 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
           id: p.id,
           type: (isVideoLink(p.cover) ? 'video' : 'image') as 'video' | 'image',
           src: p.cover,
-          alt: p.title
+          alt: p.title,
+          project: p
         }));
       }
     }
@@ -530,7 +528,8 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
         id: p.id,
         type: (isVideoLink(p.cover) ? 'video' : 'image') as 'video' | 'image',
         src: p.cover,
-        alt: p.title
+        alt: p.title,
+        project: p
       }));
   }, [galleryFeatured, projectsData]);
 
@@ -549,7 +548,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
   const finalGalleryImages = galleryImages;
 
   return (
-    <div className="min-h-screen bg-[#131314]">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Section Navigation dengan Nomor */}
       <motion.div
         className="fixed right-8 top-1/2 transform -translate-y-1/2 z-30 hidden lg:block"
@@ -596,7 +595,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
 
 
       {/* Section 1: ABOUT ME dengan Trail Effect */}
-      <div id="hero" className="relative min-h-screen bg-[#131314]">
+      <div id="hero" className="relative min-h-screen bg-[#0a0a0a]">
 
         <motion.div style={{ opacity: heroOpacity, scale: heroScale, y: heroY }} className="h-full">
 
@@ -683,7 +682,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                   </motion.div>
                 </Reveal>
                 <Reveal delay={0.3}>
-                  <p className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold italic text-gray-800 leading-tight">
+                  <p className="text-3xl md:text-4xl lg:text-5xl font-sans font-bold italic text-gray-800 leading-tight">
                     {currentAboutData.professional?.motto.quote}
                   </p>
                 </Reveal>
@@ -691,7 +690,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
 
               {/* Bio & Translator - Moved Here */}
               <Reveal delay={0.4}>
-                <p className="text-sm leading-relaxed text-gray-700 font-serif">
+                <p className="text-sm leading-relaxed text-gray-700 font-sans">
                   {currentAboutData.professional?.bio.content}
                 </p>
                 <div className="mt-3">
@@ -724,7 +723,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
       </SectionWrapper>
 
       {/* Sticky Gallery Stack Section with Side Text */}
-      <div id="professional" ref={stackSectionRef} className="relative z-20 bg-[#131314] border-b border-gray-800">
+      <div id="professional" ref={stackSectionRef} className="relative z-20 bg-[#0a0a0a] border-b border-gray-800">
         <div className="max-w-[1920px] mx-auto">
           <div className="grid grid-cols-1 xl:grid-cols-12">
 
@@ -742,7 +741,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                   />
                   <motion.h3
                     style={{ opacity: headerOpacity }}
-                    className="text-3xl xl:text-4xl font-serif font-bold leading-tight mb-8 text-white xl:opacity-[var(--header-opacity)] opacity-100"
+                    className="text-3xl xl:text-4xl font-sans font-bold leading-tight mb-8 text-white xl:opacity-[var(--header-opacity)] opacity-100"
                   >
                     "Desain adalah solusi visual, bukan sekadar estetika."
                   </motion.h3>
@@ -792,7 +791,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
               >
                 <Reveal overflowVisible={true}>
                   <div className="inline-block bg-black px-6 py-2 rounded-full mb-6">
-                    <h2 className="text-lg font-medium text-white font-serif italic">
+                    <h2 className="text-lg font-medium text-white font-sans italic">
                       Hard Skill
                     </h2>
                   </div>
@@ -853,7 +852,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                 <div className="flex justify-start w-full max-w-md">
                   <Reveal overflowVisible={true}>
                     <div className="inline-block bg-black px-6 py-2 rounded-full mb-8">
-                      <h2 className="text-lg font-medium text-white font-serif italic">
+                      <h2 className="text-lg font-medium text-white font-sans italic">
                         Soft Skill
                       </h2>
                     </div>
@@ -866,7 +865,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                     className="inline-block border border-gray-300 bg-white px-5 py-3 md:px-8 md:py-4 rounded-[30px] md:rounded-[50px] shadow-sm hover:shadow-md transition-shadow max-w-[90%] md:max-w-3xl"
                     whileHover={{ y: -5 }}
                   >
-                    <div className="text-sm md:text-base text-gray-600 font-serif italic text-left" style={{ fontFamily: 'Merriweather, serif' }}>
+                    <div className="text-sm md:text-base text-gray-600 font-sans italic text-left">
                       {currentSoftSkillDescription}
                     </div>
                   </motion.div>
@@ -905,10 +904,10 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
               transition={{ duration: 0.6 }}
             >
               <Reveal>
-                <h2 className="text-3xl md:text-4xl font-serif font-bold text-black mb-4">Experience</h2>
+                <h2 className="text-3xl md:text-4xl font-sans font-bold text-black mb-4">Experience</h2>
               </Reveal>
               <Reveal delay={0.3}>
-                <p className="text-sm md:text-base text-gray-600 font-serif">Perjalanan karir dan pengalaman profesional</p>
+                <p className="text-sm md:text-base text-gray-600 font-sans">Perjalanan karir dan pengalaman profesional</p>
               </Reveal>
             </motion.div>
           </div>
@@ -920,7 +919,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
             <div className="space-y-6">
               <div className="text-left">
                 <div className="inline-block bg-black px-4 py-2 rounded-full mb-4">
-                  <h3 className="text-lg font-medium text-white font-serif italic">
+                  <h3 className="text-lg font-medium text-white font-sans italic">
                     Freelance Experience
                   </h3>
                 </div>
@@ -943,7 +942,7 @@ export default function AboutClient({ initialData, lastUpdated }: AboutClientPro
                 <div className="text-left mb-4">
                   <Reveal>
                     <div className="inline-block bg-black px-4 py-2 rounded-full">
-                      <h3 className="text-lg font-medium text-white font-serif italic">
+                      <h3 className="text-lg font-medium text-white font-sans italic">
                         Work Experience
                       </h3>
                     </div>

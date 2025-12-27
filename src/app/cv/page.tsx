@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { generateMetadata as generateSEOMetadata } from '@/lib/seo';
-import CvPageClient from '@/components/CvPageClient';
+import CvPageClient from '@/app/cv/_components/CvPageClient';
 import { loadAboutData } from '@/lib/about';
 import { loadExperienceData } from '@/lib/experience';
 import { allProjectsAsync } from '@/lib/projects';

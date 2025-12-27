@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { AboutData, UpdateAboutData, TrailItem } from '@/types/about';
 import { HardSkill, HardSkillLevel } from '@/types/hardSkill';
+import { Project } from '@/types/projects';
+import TrailSelector from '@/components/admin/TrailSelector';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
@@ -20,6 +22,7 @@ export default function AdminAboutClient() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills' | 'hardSkills' | 'runningText'>('hero');
   const [hardSkills, setHardSkills] = useState<HardSkill[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [hardSkillConcepts, setHardSkillConcepts] = useState<HardSkillConcept[]>([]);
   const [runningTexts, setRunningTexts] = useState<RunningTextItem[]>([]);
   const [hardSkillsLoading, setHardSkillsLoading] = useState(true);
@@ -80,12 +83,27 @@ export default function AdminAboutClient() {
     }
   }, [showError]);
 
+  const loadProjects = useCallback(async () => {
+    try {
+      const response = await fetch('/api/projects');
+      const data = await response.json();
+      setProjects(data.projects || []);
+    } catch (err) {
+      console.error('Failed to load projects for selector', err);
+    }
+  }, []);
+
   useEffect(() => {
     loadAboutData();
     loadHardSkills();
     loadHardSkillConcepts();
     loadRunningTexts();
-  }, [loadAboutData, loadHardSkills, loadHardSkillConcepts, loadRunningTexts]);
+    loadAboutData();
+    loadHardSkills();
+    loadHardSkillConcepts();
+    loadRunningTexts();
+    loadProjects();
+  }, [loadAboutData, loadHardSkills, loadHardSkillConcepts, loadRunningTexts, loadProjects]);
 
   const handleUpdateAbout = async (updateData: UpdateAboutData) => {
     try {
@@ -353,12 +371,14 @@ export default function AdminAboutClient() {
           {activeTab === 'hero' && (
             <HeroSectionForm
               data={aboutData.hero}
+              projects={projects}
               onUpdate={(data) => handleUpdateAbout({ hero: data })}
             />
           )}
           {activeTab === 'professional' && (
             <ProfessionalSectionForm
               data={aboutData.professional}
+              projects={projects}
               onUpdate={(data) => handleUpdateAbout({ professional: data })}
             />
           )}
@@ -414,9 +434,11 @@ const normalizeUrlList = (raw: string) => {
 // Hero Section Form
 function HeroSectionForm({
   data,
+  projects,
   onUpdate
 }: {
   data: any;
+  projects: Project[];
   onUpdate: (data: any) => void;
 }) {
   // Normalize initial data to TrailItem[]
@@ -431,39 +453,11 @@ function HeroSectionForm({
     title: data.title || '',
     backgroundTrail: initialTrail
   });
-  const [newTrailUrl, setNewTrailUrl] = useState('');
 
-  const addTrailUrl = () => {
-    const url = newTrailUrl.trim();
-    if (!url) return;
-
-    // Check duplicates
-    if (formData.backgroundTrail.some(item => item.src === url)) {
-      setNewTrailUrl('');
-      return;
-    }
-
-    const newItem: TrailItem = { src: url, isActive: true };
+  const handleTrailChange = (items: TrailItem[]) => {
     setFormData(prev => ({
       ...prev,
-      backgroundTrail: [...prev.backgroundTrail, newItem]
-    }));
-    setNewTrailUrl('');
-  };
-
-  const removeTrailUrl = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      backgroundTrail: prev.backgroundTrail.filter((_, i) => i !== index)
-    }));
-  };
-
-  const toggleTrailItem = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      backgroundTrail: prev.backgroundTrail.map((item, i) =>
-        i === index ? { ...item, isActive: !item.isActive } : item
-      )
+      backgroundTrail: items
     }));
   };
 
@@ -494,62 +488,17 @@ function HeroSectionForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Background Trail Images</label>
-            <div className="flex gap-2">
-              <input
-                type="url"
-                value={newTrailUrl}
-                onChange={(e) => setNewTrailUrl(e.target.value)}
-                className="flex-1 mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder="https://res.cloudinary.com/demo/image/upload/v1234567890/trail1.jpg"
-              />
-              <button
-                type="button"
-                onClick={addTrailUrl}
-                className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                +
-              </button>
-            </div>
-            <p className="mt-1 text-sm text-gray-500">
-              {formData.backgroundTrail.length} items. Supports On/Off toggle.
+            <label className="block text-sm font-medium text-gray-700 mb-2">Background Trail Images</label>
+            <TrailSelector
+              projects={projects}
+              selectedItems={formData.backgroundTrail}
+              onChange={handleTrailChange}
+              maxItems={20}
+              allowedTypes={['image']}
+            />
+            <p className="mt-2 text-sm text-gray-500">
+              {formData.backgroundTrail.length} items.
             </p>
-            {formData.backgroundTrail.length > 0 && (
-              <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {formData.backgroundTrail.map((item, index) => (
-                  <div key={`${item.src}-${index}`} className={`relative flex flex-col rounded-lg border overflow-hidden bg-white ${item.isActive !== false ? 'border-gray-200' : 'border-red-300 opacity-75'}`}>
-                    {/* Image Preview */}
-                    <div className="relative w-full aspect-[4/3] bg-gray-100 border-b border-gray-100">
-                      <Image
-                        src={item.src}
-                        alt="Background preview"
-                        fill
-                        className="object-cover"
-                        sizes="160px"
-                        unoptimized
-                      />
-                    </div>
-
-                    {/* Controls Footer */}
-                    <div className="p-2 flex items-center justify-between gap-2 bg-white">
-                      <StatusToggle
-                        isActive={item.isActive !== false}
-                        onClick={() => toggleTrailItem(index)}
-                        className="flex-1"
-                      />
-                      <button
-                        type="button"
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        onClick={() => removeTrailUrl(index)}
-                        title="Hapus"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="flex justify-end pt-2">
@@ -569,9 +518,11 @@ function HeroSectionForm({
 // Professional Section Form
 function ProfessionalSectionForm({
   data,
+  projects,
   onUpdate
 }: {
   data: any;
+  projects: Project[];
   onUpdate: (data: any) => void;
 }) {
   // Normalize initial data to TrailItem[]
@@ -588,39 +539,11 @@ function ProfessionalSectionForm({
     bioContent: data.bio?.content || '',
     bioGalleryImages: initialGallery
   });
-  const [newBioUrl, setNewBioUrl] = useState('');
 
-  const addBioUrl = () => {
-    const url = newBioUrl.trim();
-    if (!url) return;
-
-    // Check duplicates
-    if (formData.bioGalleryImages.some(item => item.src === url)) {
-      setNewBioUrl('');
-      return;
-    }
-
-    const newItem: TrailItem = { src: url, isActive: true };
+  const handleGalleryChange = (items: TrailItem[]) => {
     setFormData(prev => ({
       ...prev,
-      bioGalleryImages: [...prev.bioGalleryImages, newItem]
-    }));
-    setNewBioUrl('');
-  };
-
-  const removeBioUrl = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      bioGalleryImages: prev.bioGalleryImages.filter((_, i) => i !== index)
-    }));
-  };
-
-  const toggleBioItem = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      bioGalleryImages: prev.bioGalleryImages.map((item, i) =>
-        i === index ? { ...item, isActive: !item.isActive } : item
-      )
+      bioGalleryImages: items
     }));
   };
 
@@ -683,62 +606,16 @@ function ProfessionalSectionForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Bio Gallery Images (one per line)</label>
-            <div className="flex gap-2">
-              <input
-                type="url"
-                value={newBioUrl}
-                onChange={(e) => setNewBioUrl(e.target.value)}
-                className="flex-1 mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder="https://res.cloudinary.com/demo/image/upload/v123/gallery1.jpg"
-              />
-              <button
-                type="button"
-                onClick={addBioUrl}
-                className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                +
-              </button>
-            </div>
-            <p className="mt-1 text-sm text-gray-500">
-              {formData.bioGalleryImages.length} items. Supports On/Off toggle.
+            <label className="block text-sm font-medium text-gray-700 mb-2">Bio Gallery Images</label>
+            <TrailSelector
+              projects={projects}
+              selectedItems={formData.bioGalleryImages}
+              onChange={handleGalleryChange}
+              maxItems={20}
+            />
+            <p className="mt-2 text-sm text-gray-500">
+              {formData.bioGalleryImages.length} items.
             </p>
-            {formData.bioGalleryImages.length > 0 && (
-              <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {formData.bioGalleryImages.map((item, index) => (
-                  <div key={`${item.src}-${index}`} className={`relative flex flex-col rounded-lg border overflow-hidden bg-white ${item.isActive !== false ? 'border-gray-200' : 'border-red-300 opacity-75'}`}>
-                    {/* Image Preview */}
-                    <div className="relative w-full aspect-[4/3] bg-gray-100 border-b border-gray-100">
-                      <Image
-                        src={item.src}
-                        alt="Bio gallery preview"
-                        fill
-                        className="object-cover"
-                        sizes="160px"
-                        unoptimized
-                      />
-                    </div>
-
-                    {/* Controls Footer */}
-                    <div className="p-2 flex items-center justify-between gap-2 bg-white">
-                      <StatusToggle
-                        isActive={item.isActive !== false}
-                        onClick={() => toggleBioItem(index)}
-                        className="flex-1"
-                      />
-                      <button
-                        type="button"
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        onClick={() => removeBioUrl(index)}
-                        title="Hapus"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="flex justify-end pt-2">

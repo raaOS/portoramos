@@ -180,7 +180,7 @@ export const SOFT_SKILLS = {
 export const FALLBACK_ABOUT_DATA = {
     hero: {
         title: 'ABOUT ME',
-        backgroundTrail: TRAIL_SRC_LIST.slice(0, 5)
+        backgroundTrail: []
     },
     professional: {
         motto: {
@@ -189,7 +189,7 @@ export const FALLBACK_ABOUT_DATA = {
         },
         bio: {
             content: 'Desainer grafis dengan lebih dari 14 tahun pengalaman di brand dan kampanye digital. Fokus pada visual bersih, tipografi kuat, dan storytelling yang relevan bisnis.',
-            galleryImages: TRAIL_SRC_LIST
+            galleryImages: []
         }
     }
 };

@@ -7,8 +7,6 @@ const config: Config = {
       fontFamily: {
         // Six Caps untuk display/title
         display: ['var(--font-display)', 'Six Caps', 'Arial Narrow', 'sans-serif'],
-        // Merriweather untuk serif/editorial
-        serif: ['var(--font-serif)', 'Merriweather', 'Georgia', 'serif'],
         // DM Sans untuk body/sans
         sans: ['var(--font-sans)', 'DM Sans', 'Arial', 'sans-serif']
       },

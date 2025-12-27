@@ -1,4 +1,8 @@
 {
+  "content": {
+    "headline": "MY CONTACT",
+    "subtext": "."
+  },
   "info": {
     "email": "ra.920710@gmail.com",
     "phone": "+628817472310",
@@ -43,5 +47,5 @@
     "successMessage": "Terima kasih! Pesan Anda telah berhasil dikirim.",
     "errorMessage": "Maaf, terjadi kesalahan. Silakan coba lagi."
   },
-  "lastUpdated": "2025-09-12T13:21:48.443Z"
+  "lastUpdated": "2025-12-26T15:23:25.168Z"
 }

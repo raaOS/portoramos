@@ -68,6 +68,10 @@ export default function AdminProjectsClient() {
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployStatus, setDeployStatus] = useState<'idle' | 'pushing' | 'synced' | 'failed'>('idle');
 
+  // Bulk Selection State
+  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set());
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+
   // --- React Query Hooks ---
 
   // 1. Fetch Projects
@@ -405,6 +409,67 @@ export default function AdminProjectsClient() {
     createMutation.mutate(duplicateData);
   };
 
+  const toggleProjectSelection = (id: string) => {
+    const newSelected = new Set(selectedProjectIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedProjectIds(newSelected);
+  };
+
+  const selectAllProjects = () => {
+    if (selectedProjectIds.size === filteredProjects.length) {
+      setSelectedProjectIds(new Set());
+    } else {
+      setSelectedProjectIds(new Set(filteredProjects.map(p => p.id)));
+    }
+  };
+
+  const handleBulkUpdate = async (action: 'publish' | 'draft' | 'delete') => {
+    if (selectedProjectIds.size === 0) return;
+    if (!confirm(`Are you sure you want to ${action} ${selectedProjectIds.size} projects?`)) return;
+
+    setIsBulkUpdating(true);
+    try {
+      // 1. Perform atomic bulk update via optimized API
+      const res = await fetch('/api/projects/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          ids: Array.from(selectedProjectIds)
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error('Bulk update API failed');
+      }
+
+      // 2. Clear selection
+      setSelectedProjectIds(new Set());
+      success(`Bulk ${action} complete`);
+
+      // 3. Invalidate queries to refresh UI
+      await queryClient.invalidateQueries({ queryKey: ['projects', 'admin'] });
+
+      // 4. Trigger ONE Github Sync with fresh data
+      // We need to fetch the fresh data first because existing 'projects' var is stale
+      const freshRes = await fetch('/api/projects?fresh=true');
+      const data = await freshRes.json();
+
+      if (data.projects) {
+        await triggerGithubSync(data.projects, true);
+      }
+
+    } catch (e) {
+      console.error(e);
+      showError('Bulk action failed');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
 
   const filteredProjects = projects
     .filter(project => {
@@ -447,7 +512,6 @@ export default function AdminProjectsClient() {
       {/* Header Actions - Only Show in Projects Tab */}
       {activeTab === 'projects' && (
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          {/* ... existing header content ... */}
           <div className="flex items-center gap-2">
             {isSavingToGithub ? (
               deployStatus === 'synced' ? (
@@ -489,19 +553,65 @@ export default function AdminProjectsClient() {
               </>
             )}
           </div>
-          <div className="relative flex-1 max-w-md flex gap-2">
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+          <div className="flex flex-1 max-w-2xl flex-col sm:flex-row gap-2">
+            {/* Bulk Actions Toolbar */}
+            {selectedProjectIds.size > 0 ? (
+              <div className="flex-1 flex items-center gap-2 bg-violet-50 p-1 rounded-lg border border-violet-100 animate-in fade-in slide-in-from-top-2">
+                <span className="text-sm font-medium text-violet-700 px-3 whitespace-nowrap">
+                  {selectedProjectIds.size} Selected
+                </span>
+                <div className="h-4 w-px bg-violet-200 mx-1" />
+                <button
+                  onClick={() => handleBulkUpdate('publish')}
+                  disabled={isBulkUpdating}
+                  className="flex items-center px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100 rounded-md transition-colors"
+                >
+                  <Eye className="w-4 h-4 mr-1.5" />
+                  Publish
+                </button>
+                <button
+                  onClick={() => handleBulkUpdate('draft')}
+                  disabled={isBulkUpdating}
+                  className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  <EyeOff className="w-4 h-4 mr-1.5" />
+                  Draft
+                </button>
+                <button
+                  onClick={() => handleBulkUpdate('delete')}
+                  disabled={isBulkUpdating}
+                  className="flex items-center px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 rounded-md transition-colors ml-auto"
+                >
+                  <Trash2 className="w-4 h-4 mr-1.5" />
+                  Delete
+                </button>
+                {isBulkUpdating && <Loader2 className="w-4 h-4 animate-spin text-violet-600 ml-2" />}
               </div>
-              <input
-                type="text"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-violet-500 focus:border-violet-500 sm:text-sm transition duration-150 ease-in-out"
-                placeholder="Search projects..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+            ) : (
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-violet-500 focus:border-violet-500 sm:text-sm transition duration-150 ease-in-out"
+                  placeholder="Search projects..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            )}
+
+            <button
+              onClick={selectAllProjects}
+              className={`inline-flex items-center justify-center px-3 py-2 border text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors ${selectedProjectIds.size > 0 && selectedProjectIds.size === filteredProjects.length
+                ? 'bg-violet-100 text-violet-700 border-violet-200 ring-violet-500'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 ring-violet-500'
+                }`}
+              title="Select All"
+            >
+              <CheckCircle2 className={`h-5 w-5 ${selectedProjectIds.size > 0 && selectedProjectIds.size === filteredProjects.length ? 'fill-violet-500 text-violet-100' : ''}`} />
+            </button>
 
             <button
               onClick={() => setShowOnlyCommented(!showOnlyCommented)}
@@ -569,6 +679,16 @@ export default function AdminProjectsClient() {
                 return (
                   <div key={project.id} className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col overflow-hidden">
                     <div className="relative aspect-video bg-gray-100 overflow-hidden">
+                      {/* Selection Checkbox Overlay */}
+                      <div className={`absolute top-2 left-2 z-10 transition-opacity duration-200 ${selectedProjectIds.has(project.id) || 'group-hover:opacity-100 opacity-0'}`}>
+                        <input
+                          type="checkbox"
+                          checked={selectedProjectIds.has(project.id)}
+                          onChange={() => toggleProjectSelection(project.id)}
+                          className="w-5 h-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500 cursor-pointer shadow-sm"
+                        />
+                      </div>
+
                       {isVideoLink(project.cover) ? (
                         <video src={project.cover} className="w-full h-full object-cover" muted loop playsInline preload="metadata" />
                       ) : (
@@ -578,7 +698,9 @@ export default function AdminProjectsClient() {
                     <div className="p-5 flex-1 flex flex-col">
                       <div className="mb-4">
                         <div className="flex justify-between items-center mb-1 gap-2">
-                          <h3 className="text-lg font-bold text-gray-900 line-clamp-1 flex-1" title={project.title}>{project.title}</h3>
+                          <h3 className="text-lg font-bold text-gray-900 line-clamp-1 flex-1 cursor-pointer hover:text-violet-600" title={project.title} onClick={() => toggleProjectSelection(project.id)}>
+                            {project.title}
+                          </h3>
                           <StatusToggle
                             isActive={isPublished}
                             onClick={() => handleToggleProjectStatus(project)}

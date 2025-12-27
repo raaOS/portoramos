@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     await ensureDataDir();
     const data = await loadData(DATA_FILE) as ContactData;
-    
+
     if (!data) {
       return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
     }
@@ -34,16 +34,17 @@ export async function PUT(request: NextRequest) {
     }
 
     const body: UpdateContactData = await request.json();
-    
+
     await ensureDataDir();
     const data = await loadData(DATA_FILE) as ContactData;
-    
+
     if (!data) {
       return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
     }
 
     // Update data with new content
     const updatedData: ContactData = {
+      content: { ...data.content, ...body.content } as any, // Cast to any to avoid strict type check if content was missing
       info: { ...data.info, ...body.info },
       formSettings: { ...data.formSettings, ...body.formSettings },
       lastUpdated: new Date().toISOString()
@@ -51,14 +52,14 @@ export async function PUT(request: NextRequest) {
 
     // Save data
     const success = await saveData(DATA_FILE, updatedData);
-    
+
     if (!success) {
       return NextResponse.json({ error: 'Failed to save contact data' }, { status: 500 });
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      data: updatedData 
+    return NextResponse.json({
+      success: true,
+      data: updatedData
     });
   } catch (error) {
     console.error('Error updating contact data:', error);

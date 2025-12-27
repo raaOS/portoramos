@@ -19,22 +19,18 @@ export default function HeroShared({ layoutId, src, alt, kind = 'image', poster,
 
     // Portrait videos (height > width) - use contain to keep original ratio
     if (ratio < 1) {
-      return 'object-contain'  // ← Kembali ke contain untuk tidak crop
+      return 'object-contain'
     }
 
     // Landscape/square videos - use cover for better visual
     return 'object-cover'
   }
 
-
-
-
   return (
     <div
-      className="w-full h-full project-detail-media"
+      className="w-full h-full max-h-[80vh] portrait:max-h-[85vh]"
       style={{
         aspectRatio: ratio || 16 / 9,
-        '--aspect-ratio': ratio || 16 / 9
       } as React.CSSProperties}
     >
       <Media

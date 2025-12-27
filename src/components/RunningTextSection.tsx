@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Marquee from '@/components/Marquee';
+import Marquee from '@/components/effects/Marquee';
 import { RunningTextItem, RunningTextData } from '@/types/runningText';
 
 export default function RunningTextSection() {

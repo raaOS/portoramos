@@ -1,24 +1,41 @@
-import type { Metadata } from 'next';
-import { generateMetadata as generateSEOMetadata } from '@/lib/seo';
-import ContactClientWithAutoUpdate from '@/components/ContactClientWithAutoUpdate';
-
-export const metadata: Metadata = generateSEOMetadata({
-  title: 'Contact',
-  description: 'Hubungi Ramos untuk kolaborasi, project desain baru, atau pertanyaan seputar karya dan proses kreatif.',
-  path: '/contact'
-});
-
+import { allProjectsAsync } from '@/lib/projects';
 import { getContactData } from '@/lib/contact';
+import ContactClient from './ContactClient';
+import type { Metadata } from 'next';
 
-// Set revalidate to 0 for real-time updates (SSR)
+export const metadata: Metadata = {
+  title: 'Contact | Ramos Portfolio',
+  description: 'Get in touch for collaborations and projects.',
+};
+
+// Force dynamic since we might want fresh data, or leave as default.
+// Given strict "instant" requirement, static is better, but portfolio usually needs fresh data.
+// Let's use revalidate 60 seconds (ISR) or 0 if we want strictly dynamic.
+// The user has explicit "real-time" needs for projects, so let's default to dynamic or 0 revalidate.
 export const revalidate = 0;
 
 export default async function ContactPage() {
-  const data = await getContactData();
+  // Parallel fetching for speed
+  const [projects, contactData] = await Promise.all([
+    allProjectsAsync(),
+    getContactData()
+  ]);
+
+  // Filter valid projects just in case
+  const validProjects = projects || [];
+
+  // Format contact info
+  const contactInfo = contactData ? {
+    email: contactData.info.email,
+    socialMedia: contactData.info.socialMedia,
+    headline: contactData.content.headline,
+    subtext: contactData.content.subtext
+  } : undefined;
 
   return (
-    <div className="pt-20">
-      <ContactClientWithAutoUpdate initialData={data} />
-    </div>
+    <ContactClient
+      projects={validProjects}
+      contactInfo={contactInfo}
+    />
   );
 }

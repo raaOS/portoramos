@@ -1,7 +1,0 @@
-Starting test...
-Testing: gemini-2.0-flash
-❌ Failed: gemini-2.0-flash - [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent: [403 Forbidden] Your API key was reported as leaked. Please use another API key.
-Testing: models/gemini-2.0-flash
-❌ Failed: models/gemini-2.0-flash - [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent: [403 Forbidden] Your API key was reported as leaked. Please use another API key.
-Testing: gemini-flash-latest
-❌ Failed: gemini-flash-latest - [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent: [403 Forbidden] Your API key was reported as leaked. Please use another API key.

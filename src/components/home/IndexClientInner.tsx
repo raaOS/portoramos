@@ -13,11 +13,23 @@ type Props = {
   lastUpdated?: Date | string | null
 }
 
+// Minimal typing for Fuse.js since it's dynamically imported
+interface FuseResult<T> {
+  item: T
+  refIndex: number
+  score?: number
+}
+
+interface FuseInstance<T> {
+  search: (query: string) => FuseResult<T>[]
+  setCollection: (collection: T[]) => void
+}
+
 export default function IndexClientInner({ projects, tag, lastUpdated }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [displayedProjects, setDisplayedProjects] = useState<Project[]>(projects || [])
   const [isLoading, setIsLoading] = useState(false)
-  const [fuseInstance, setFuseInstance] = useState<any>(null)
+  const [fuseInstance, setFuseInstance] = useState<FuseInstance<Project> | null>(null)
   const rafRef = useRef<number | null>(null)
 
   // Lazy load Fuse.js and update collection when projects change
@@ -28,11 +40,12 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
 
         if (!fuseInstance) {
           // Initialize new instance
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setFuseInstance(new Fuse(projects, {
             keys: ['title', 'description', 'client', 'tags'],
             threshold: 0.3,
             includeScore: true,
-          }))
+          }) as any as FuseInstance<Project>)
         } else {
           // Update collection if instance exists and projects changed
           fuseInstance.setCollection(projects)
@@ -55,7 +68,7 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
     // Then filter by search query (only if fuse is loaded)
     if (searchQuery && fuseInstance) {
       const searchResults = fuseInstance.search(searchQuery)
-      const searchedProjectIds = new Set(searchResults.map((r: any) => r.item.id))
+      const searchedProjectIds = new Set(searchResults.map((r) => r.item.id))
 
       // If tag filter is active, intersect the results using IDs
       if (tag) {
@@ -65,10 +78,10 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
         // (Visual order usually comes from search score, so we should map strictly from search results but ensure latest data)
         // However, standard fuse usage usually just returns the item. 
         // To be safe against stale item references in Fuse:
-        result = searchResults.map((r: any) => {
+        result = searchResults.map((r) => {
           const freshProject = projects.find(p => p.id === r.item.id)
           return freshProject || r.item
-        }).filter(Boolean)
+        }).filter(Boolean) as Project[]
       }
     }
 

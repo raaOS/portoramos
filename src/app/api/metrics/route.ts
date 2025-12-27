@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
 import { githubService } from '@/lib/github';
+import { projectService } from '@/lib/services/projectService';
 import path from 'path';
 
 const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'metrics.json');
@@ -37,6 +38,23 @@ async function getMetricsData(): Promise<MetricsData> {
     return data;
 }
 
+// Helper to get fallback metrics from main project data
+async function getFallbackMetrics(slug: string): Promise<ProjectMetrics> {
+    try {
+        const { projects } = await projectService.getProjects();
+        const project = projects.find(p => p.slug === slug);
+        if (project) {
+            return {
+                likes: project.likes || 0,
+                shares: project.shares || 0
+            };
+        }
+    } catch (e) {
+        console.error('Error fetching fallback metrics:', e);
+    }
+    return { likes: 0, shares: 0 };
+}
+
 export async function GET(request: NextRequest) {
     try {
         const data = await getMetricsData();
@@ -44,7 +62,13 @@ export async function GET(request: NextRequest) {
         const slug = searchParams.get('slug');
 
         if (slug) {
-            return NextResponse.json(data.metrics[slug] || { likes: 0, shares: 0 });
+            // If metric exists in dedicated file, use it
+            if (data.metrics[slug]) {
+                return NextResponse.json(data.metrics[slug]);
+            }
+            // Otherwise fallback to project data
+            const fallback = await getFallbackMetrics(slug);
+            return NextResponse.json(fallback);
         }
 
         return NextResponse.json(data);
@@ -66,9 +90,10 @@ export async function POST(request: NextRequest) {
         const isDev = process.env.NODE_ENV === 'development';
         let currentData = await getMetricsData();
 
-        // Initialize if not exists
+        // Initialize if not exists, using fallback data as baseline
         if (!currentData.metrics[slug]) {
-            currentData.metrics[slug] = { likes: 0, shares: 0 };
+            const fallback = await getFallbackMetrics(slug);
+            currentData.metrics[slug] = fallback;
         }
 
         // Update logic

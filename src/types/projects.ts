@@ -17,6 +17,8 @@ export interface Project {
   description: string;
   description_id?: string; // Indonesian description
   title_id?: string;       // Indonesian title (optional)
+  likes: number;           // Number of likes/loves
+  shares: number;          // Number of shares
   external_link: string;
   order: number;
   status: 'published' | 'draft';
@@ -58,6 +60,8 @@ export interface CreateProjectData {
   playsInline?: boolean;
   coverWidth?: number;
   coverHeight?: number;
+  likes?: number;
+  shares?: number;
 }
 
 export interface UpdateProjectData extends Partial<CreateProjectData> {

@@ -13,7 +13,7 @@ export default function PrevNext({ list, current }: { list: Project[]; current: 
         {prev && (
           <Link
             className="group flex items-center gap-3 text-gray-600 hover:text-gray-900 transition-colors"
-            href={`/work/${prev.slug}`}
+            href={`/works/${prev.slug}`}
           >
             <span className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,7 +32,7 @@ export default function PrevNext({ list, current }: { list: Project[]; current: 
         {next && (
           <Link
             className="group flex items-center gap-3 text-gray-600 hover:text-gray-900 transition-colors"
-            href={`/work/${next.slug}`}
+            href={`/works/${next.slug}`}
           >
             <span className="flex flex-col">
               <span className="text-xs text-gray-500 uppercase tracking-wide text-right">Next</span>

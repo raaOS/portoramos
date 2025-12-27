@@ -23,7 +23,7 @@ const sidebarBreakpoints = {
     1280: 3,       // Desktop
     1024: 2,       // Tablet L
     768: 2,        // Tablet
-    640: 1         // Mobile
+    640: 2         // Mobile
 };
 
 const bottomBreakpoints = {

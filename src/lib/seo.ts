@@ -121,13 +121,25 @@ export function generateProjectMetadata(project: Project): Metadata {
     ...(project.year ? [project.year.toString()] : [])
   ]
 
+  // Enhanced fallback description
+  const fallbackDesc = `${project.title} - A ${project.tags?.[0] || 'creative'} project by Ramos` +
+    (project.client ? ` for ${project.client}` : '') +
+    (project.year ? ` (${project.year})` : '') +
+    '. Explore the details, visuals, and story behind this work.';
+
+  const description = project.description
+    ? (project.description.length > 160 ? project.description.substring(0, 157) + '...' : project.description)
+    : fallbackDesc;
+
   return generateMetadata({
     title: project.title,
-    description: project.description || `${project.title} - A creative project showcasing innovative design and development.`,
+    description,
     keywords,
     image: project.cover,
-    path: `/projects/${project.slug}`,
-    type: 'article'
+    path: `/works/${project.slug}`,
+    type: 'article',
+    publishedTime: project.createdAt,
+    modifiedTime: project.updatedAt
   })
 }
 
@@ -178,7 +190,7 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
         '@type': 'CreativeWork',
         name: data.title,
         description: data.description,
-        url: `${baseSEO.siteUrl}/projects/${data.slug}`,
+        url: `${baseSEO.siteUrl}/works/${data.slug}`,
         image: data.cover,
         author: {
           '@type': 'Person',
@@ -246,7 +258,7 @@ export function generateSitemapUrls(projects: Project[]) {
   ]
 
   const projectUrls = projects.map(project => ({
-    url: `/projects/${project.slug}`,
+    url: `/works/${project.slug}`,
     priority: 0.9,
     changefreq: 'monthly'
   }))
@@ -288,7 +300,7 @@ export const seoUtils = {
     ]
 
     const projectPages = projects.map(project => ({
-      url: `/projects/${project.slug}`,
+      url: `/works/${project.slug}`,
       priority: 0.9,
       changefreq: 'monthly'
     }))

@@ -1,68 +1,3763 @@
 {
   "comments": {
-    "rooster-study": [
+    "manipulasi-foto-musik-alam": [
       {
-        "id": "1",
-        "text": "Amazing work! The design system is so clean 🔥",
-        "author": "Sarah Chen",
-        "time": "2 jam yang lalu",
-        "likes": 12,
+        "id": "c-manipulasi-foto-musik-alam-0-1766519097740",
+        "text": "Pakai software apa bang? Halus bgt motionnya ✨⚙️",
+        "author": "Oky",
+        "time": "1 jam yang lalu",
+        "likes": 80,
         "replies": [
           {
-            "id": "r1",
-            "text": "Thank you Sarah! Really appreciate the feedback.",
-            "author": "Mike Ross",
-            "time": "1 jam yang lalu",
-            "likes": 4
+            "id": "r-manipulasi-foto-musik-alam-0-admin",
+            "text": "Rata kanan bang! Pakai Photoshop fitur Timeline Animasi & Audio hehe 🙏",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 18
+          },
+          {
+            "id": "r-manipulasi-foto-musik-alam-0-0-1766519097740",
+            "text": "Masih pakai laptop kentang kok bang beneran 😂",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 11
+          },
+          {
+            "id": "r-manipulasi-foto-musik-alam-0-1-1766519097740",
+            "text": "PC dewa mah bebas ya bang 🙏",
+            "author": "Pandu",
+            "time": "1 hari yang lalu",
+            "likes": 10
           }
         ]
       },
       {
-        "id": "2",
-        "text": "What tech stack did you use for the backend?",
-        "author": "Alex Dev",
-        "time": "5 jam yang lalu",
-        "likes": 8
-      }
-    ],
-    "3d-hanger": [
-      {
-        "id": "1",
-        "text": "Amazing work! The design system is so clean 🔥",
-        "author": "Sarah Chen",
-        "time": "2 jam yang lalu",
-        "likes": 13,
-        "replies": [],
-        "likedByMe": true
+        "id": "c-manipulasi-foto-musik-alam-1-1766519097740",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Yanto",
+        "time": "30 menit yang lalu",
+        "likes": 81,
+        "replies": [
+          {
+            "id": "r-manipulasi-foto-musik-alam-1-0-1766519097740",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Tio",
+            "time": "30 menit yang lalu",
+            "likes": 0
+          }
+        ]
       },
       {
-        "id": "2",
-        "text": "What tech stack did you use for the backend?",
-        "author": "Alex Dev",
+        "id": "c-manipulasi-foto-musik-alam-2-1766519097740",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Zira",
+        "time": "10 jam yang lalu",
+        "likes": 47,
+        "replies": [
+          {
+            "id": "r-manipulasi-foto-musik-alam-2-0-1766519097740",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Luqman",
+            "time": "2 hari yang lalu",
+            "likes": 17
+          },
+          {
+            "id": "r-manipulasi-foto-musik-alam-2-1-1766519097740",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Reza",
+            "time": "2 hari yang lalu",
+            "likes": 17
+          },
+          {
+            "id": "rf-manipulasi-foto-musik-alam-10-1766519097740",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Joko",
+            "time": "1 hari yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-3-1766519097740",
+        "text": "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
+        "author": "Fathir",
+        "time": "10 jam yang lalu",
+        "likes": 92,
+        "replies": [
+          {
+            "id": "r-manipulasi-foto-musik-alam-3-0-1766519097740",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Doni",
+            "time": "1 jam yang lalu",
+            "likes": 6
+          }
+        ]
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-4-1766519097740",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Doni",
+        "time": "30 menit yang lalu",
+        "likes": 21,
+        "replies": []
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-5-1766519097740",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Oky",
+        "time": "10 jam yang lalu",
+        "likes": 84,
+        "replies": [
+          {
+            "id": "rf-manipulasi-foto-musik-alam-9-1766519097740",
+            "text": "Waduh jauh juga ya Cakung, ditunggu king! 😂🔥",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 19
+          }
+        ]
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-6-1766519097740",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Tio",
+        "time": "10 jam yang lalu",
+        "likes": 68,
+        "replies": []
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-7-1766519097740",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Luqman",
+        "time": "1 jam yang lalu",
+        "likes": 32,
+        "replies": []
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-8-1766519097740",
+        "text": "Renderingnya berapa lama nih puh? 🚀",
+        "author": "Qory",
+        "time": "2 menit yang lalu",
+        "likes": 55,
+        "replies": [
+          {
+            "id": "r-manipulasi-foto-musik-alam-8-0-1766519097740",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Maya",
+            "time": "1 jam yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-9-1766519097740",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Yanto",
+        "time": "1 jam yang lalu",
+        "likes": 55,
+        "replies": [
+          {
+            "id": "rf-manipulasi-foto-musik-alam-8-1766519097740",
+            "text": "Bisa aja, kebetulan lagi mood aja kemarin 🙏",
+            "author": "Admin",
+            "time": "2 jam yang lalu",
+            "likes": 6
+          }
+        ]
+      }
+    ],
+    "kolase-lanskap-menanjak": [
+      {
+        "id": "c-kolase-lanskap-menanjak-0-1766519097740",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Samsul",
         "time": "5 jam yang lalu",
-        "likes": 9,
-        "likedByMe": true,
+        "likes": 81,
+        "replies": [
+          {
+            "id": "r-kolase-lanskap-menanjak-0-admin",
+            "text": "Rendering seharian bang, sampai mau meledak PC-nya 😂🚀",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 11
+          },
+          {
+            "id": "r-kolase-lanskap-menanjak-0-0-1766519097740",
+            "text": "Masih pakai laptop kentang kok bang beneran 😂",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 11
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-lanskap-menanjak-1-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Nina",
+        "time": "30 menit yang lalu",
+        "likes": 26,
+        "replies": [
+          {
+            "id": "r-kolase-lanskap-menanjak-1-0-1766519097740",
+            "text": "Rata kanan bang! Pakai Photoshop fitur Timeline Animasi & Audio hehe 🙏",
+            "author": "Admin",
+            "time": "1 hari yang lalu",
+            "likes": 10
+          },
+          {
+            "id": "r-kolase-lanskap-menanjak-1-1-1766519097741",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Ghea",
+            "time": "2 jam yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-lanskap-menanjak-2-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Ica",
+        "time": "1 hari yang lalu",
+        "likes": 32,
+        "replies": []
+      },
+      {
+        "id": "c-kolase-lanskap-menanjak-3-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Husein",
+        "time": "1 jam yang lalu",
+        "likes": 71,
+        "replies": [
+          {
+            "id": "r-kolase-lanskap-menanjak-3-0-1766519097741",
+            "text": "PC dewa mah bebas ya bang 🙏",
+            "author": "Lutfi",
+            "time": "1 hari yang lalu",
+            "likes": 5
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-lanskap-menanjak-4-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Maya",
+        "time": "10 jam yang lalu",
+        "likes": 63,
+        "replies": [
+          {
+            "id": "r-kolase-lanskap-menanjak-4-0-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Yanto",
+            "time": "5 jam yang lalu",
+            "likes": 1
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-lanskap-menanjak-5-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Luqman",
+        "time": "2 hari yang lalu",
+        "likes": 24,
+        "replies": []
+      },
+      {
+        "id": "c-kolase-lanskap-menanjak-6-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Maya",
+        "time": "2 menit yang lalu",
+        "likes": 49,
+        "replies": [
+          {
+            "id": "r-kolase-lanskap-menanjak-6-0-1766519097741",
+            "text": "Siap bang, nanti coba dibuatkan tutorialnya ya! ✨",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 14
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-lanskap-menanjak-7-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Setiawan",
+        "time": "1 jam yang lalu",
+        "likes": 27,
+        "replies": [
+          {
+            "id": "r-kolase-lanskap-menanjak-7-0-1766519097741",
+            "text": "Laptop kentang aja begini, apalagi PC dewa 🔥",
+            "author": "Setiawan",
+            "time": "2 hari yang lalu",
+            "likes": 3
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-lanskap-menanjak-8-1766519097741",
+        "text": "Renderingnya berapa lama nih puh? 🚀",
+        "author": "Rina",
+        "time": "5 jam yang lalu",
+        "likes": 28,
+        "replies": []
+      },
+      {
+        "id": "c-kolase-lanskap-menanjak-9-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Yanto",
+        "time": "30 menit yang lalu",
+        "likes": 7,
         "replies": []
       }
     ],
-    "chicken-portrait": [],
-    "gantungan": [],
-    "sandal": [],
-    "ayam": [],
-    "beach-sandal": [],
-    "luxury-sandal": [],
-    "bird-photography": [],
-    "elegant-sandal": [],
-    "motion-hanger": [],
-    "sporty-sandal": [],
-    "farm-rooster": [],
-    "cinematic-hanger": [],
-    "designer-footwear": [],
-    "fluid-animation": [],
-    "feathered-friend": [],
-    "smooth-motion": [],
-    "artistic-sandal": [],
-    "comfort-sandal": [],
-    "test-project-sync": []
+    "komposit-gerbang-neraka": [
+      {
+        "id": "c-komposit-gerbang-neraka-0-1766519097741",
+        "text": "Warna-warnanya dapet bgt, estetik parah! ✨🌈",
+        "author": "Ulfa",
+        "time": "1 jam yang lalu",
+        "likes": 23,
+        "replies": [
+          {
+            "id": "r-komposit-gerbang-neraka-0-admin",
+            "text": "Thank you! Lowkey eksperimen aja ini hehe ✨",
+            "author": "Admin",
+            "time": "1 jam yang lalu",
+            "likes": 9
+          },
+          {
+            "id": "r-komposit-gerbang-neraka-0-0-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Xena",
+            "time": "2 jam yang lalu",
+            "likes": 14
+          }
+        ]
+      },
+      {
+        "id": "c-komposit-gerbang-neraka-1-1766519097741",
+        "text": "Pakai software apa bang? Halus bgt motionnya ✨⚙️",
+        "author": "Lutfi",
+        "time": "2 jam yang lalu",
+        "likes": 51,
+        "replies": []
+      },
+      {
+        "id": "c-komposit-gerbang-neraka-2-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Dinda",
+        "time": "10 jam yang lalu",
+        "likes": 94,
+        "replies": [
+          {
+            "id": "r-komposit-gerbang-neraka-2-0-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Budi",
+            "time": "10 menit yang lalu",
+            "likes": 14
+          }
+        ]
+      },
+      {
+        "id": "c-komposit-gerbang-neraka-3-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Husein",
+        "time": "10 menit yang lalu",
+        "likes": 33,
+        "replies": [
+          {
+            "id": "r-komposit-gerbang-neraka-3-0-1766519097741",
+            "text": "Masih belajar ini masku, gass terus! 🙏",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 9
+          }
+        ]
+      },
+      {
+        "id": "c-komposit-gerbang-neraka-4-1766519097741",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Siti",
+        "time": "2 hari yang lalu",
+        "likes": 56,
+        "replies": [
+          {
+            "id": "r-komposit-gerbang-neraka-4-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Adit",
+            "time": "2 menit yang lalu",
+            "likes": 14
+          },
+          {
+            "id": "r-komposit-gerbang-neraka-4-1-1766519097741",
+            "text": "Wahahaha kena tahan kurir itu mahkotanya 👑",
+            "author": "Admin",
+            "time": "10 menit yang lalu",
+            "likes": 13
+          }
+        ]
+      },
+      {
+        "id": "c-komposit-gerbang-neraka-5-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Budi",
+        "time": "1 hari yang lalu",
+        "likes": 51,
+        "replies": []
+      },
+      {
+        "id": "c-komposit-gerbang-neraka-6-1766519097741",
+        "text": "Warna-warnanya dapet bgt, estetik parah! ✨🌈",
+        "author": "Rizky",
+        "time": "1 jam yang lalu",
+        "likes": 35,
+        "replies": [
+          {
+            "id": "r-komposit-gerbang-neraka-6-0-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Fathir",
+            "time": "2 hari yang lalu",
+            "likes": 14
+          },
+          {
+            "id": "r-komposit-gerbang-neraka-6-1-1766519097741",
+            "text": "Gass terus jangan kasih kendor! 🔥🚩",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 2
+          }
+        ]
+      },
+      {
+        "id": "c-komposit-gerbang-neraka-7-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Ani",
+        "time": "10 jam yang lalu",
+        "likes": 45,
+        "replies": [
+          {
+            "id": "r-komposit-gerbang-neraka-7-0-1766519097741",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Qory",
+            "time": "1 hari yang lalu",
+            "likes": 13
+          }
+        ]
+      },
+      {
+        "id": "c-komposit-gerbang-neraka-8-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Luqman",
+        "time": "2 jam yang lalu",
+        "likes": 30,
+        "replies": [
+          {
+            "id": "r-komposit-gerbang-neraka-8-0-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Putri",
+            "time": "30 menit yang lalu",
+            "likes": 1
+          }
+        ]
+      },
+      {
+        "id": "c-komposit-gerbang-neraka-9-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Wira",
+        "time": "2 jam yang lalu",
+        "likes": 93,
+        "replies": [
+          {
+            "id": "r-komposit-gerbang-neraka-9-0-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Nina",
+            "time": "1 jam yang lalu",
+            "likes": 18
+          }
+        ]
+      }
+    ],
+    "politik-pop-digital": [
+      {
+        "id": "c-politik-pop-digital-0-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Adit",
+        "time": "10 menit yang lalu",
+        "likes": 83,
+        "replies": [
+          {
+            "id": "r-politik-pop-digital-0-admin",
+            "text": "Gass terus jangan kasih kendor! 🔥🚩",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 0
+          },
+          {
+            "id": "r-politik-pop-digital-0-0-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Rizky",
+            "time": "10 jam yang lalu",
+            "likes": 9
+          }
+        ]
+      },
+      {
+        "id": "c-politik-pop-digital-1-1766519097741",
+        "text": "Vaporwave vibes-nya dapet bgt, chill bgt liatnya 💜✨",
+        "author": "Ica",
+        "time": "2 menit yang lalu",
+        "likes": 82,
+        "replies": [
+          {
+            "id": "r-politik-pop-digital-1-0-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Budi",
+            "time": "1 jam yang lalu",
+            "likes": 1
+          }
+        ]
+      },
+      {
+        "id": "c-politik-pop-digital-2-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Kevin",
+        "time": "2 hari yang lalu",
+        "likes": 57,
+        "replies": [
+          {
+            "id": "r-politik-pop-digital-2-0-1766519097741",
+            "text": "Laptop kentang aja begini, apalagi PC dewa 🔥",
+            "author": "Putri",
+            "time": "30 menit yang lalu",
+            "likes": 11
+          }
+        ]
+      },
+      {
+        "id": "c-politik-pop-digital-3-1766519097741",
+        "text": "Renderingnya berapa lama nih puh? 🚀",
+        "author": "Lutfi",
+        "time": "1 hari yang lalu",
+        "likes": 70,
+        "replies": [
+          {
+            "id": "r-politik-pop-digital-3-0-1766519097741",
+            "text": "PC dewa mah bebas ya bang 🙏",
+            "author": "Qory",
+            "time": "5 jam yang lalu",
+            "likes": 11
+          }
+        ]
+      },
+      {
+        "id": "c-politik-pop-digital-4-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Gilang",
+        "time": "30 menit yang lalu",
+        "likes": 52,
+        "replies": []
+      },
+      {
+        "id": "c-politik-pop-digital-5-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Putri",
+        "time": "30 menit yang lalu",
+        "likes": 8,
+        "replies": [
+          {
+            "id": "r-politik-pop-digital-5-0-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Doni",
+            "time": "5 jam yang lalu",
+            "likes": 15
+          }
+        ]
+      },
+      {
+        "id": "c-politik-pop-digital-6-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Wira",
+        "time": "2 hari yang lalu",
+        "likes": 29,
+        "replies": []
+      },
+      {
+        "id": "c-politik-pop-digital-7-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Doni",
+        "time": "2 hari yang lalu",
+        "likes": 96,
+        "replies": []
+      },
+      {
+        "id": "c-politik-pop-digital-8-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Doni",
+        "time": "2 menit yang lalu",
+        "likes": 33,
+        "replies": []
+      },
+      {
+        "id": "c-politik-pop-digital-9-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Dinda",
+        "time": "10 jam yang lalu",
+        "likes": 2,
+        "replies": [
+          {
+            "id": "r-politik-pop-digital-9-0-1766519097741",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Sasa",
+            "time": "1 hari yang lalu",
+            "likes": 2
+          }
+        ]
+      }
+    ],
+    "tempat-perlindungan-sneaker-surealis": [
+      {
+        "id": "c-tempat-perlindungan-sneaker-surealis-0-1766519097741",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Kiki",
+        "time": "2 jam yang lalu",
+        "likes": 79,
+        "replies": [
+          {
+            "id": "r-tempat-perlindungan-sneaker-surealis-0-admin",
+            "text": "Wahahaha kena tahan kurir itu mahkotanya 👑",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 2
+          },
+          {
+            "id": "r-tempat-perlindungan-sneaker-surealis-0-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Samsul",
+            "time": "2 jam yang lalu",
+            "likes": 0
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sneaker-surealis-1-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Qory",
+        "time": "10 jam yang lalu",
+        "likes": 8,
+        "replies": []
+      },
+      {
+        "id": "c-tempat-perlindungan-sneaker-surealis-2-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Tiara",
+        "time": "5 jam yang lalu",
+        "likes": 22,
+        "replies": []
+      },
+      {
+        "id": "c-tempat-perlindungan-sneaker-surealis-3-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Fajri",
+        "time": "1 hari yang lalu",
+        "likes": 13,
+        "replies": [
+          {
+            "id": "rf-tempat-perlindungan-sneaker-surealis-9-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Putri",
+            "time": "10 menit yang lalu",
+            "likes": 1
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sneaker-surealis-4-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Samsul",
+        "time": "2 jam yang lalu",
+        "likes": 90,
+        "replies": [
+          {
+            "id": "r-tempat-perlindungan-sneaker-surealis-4-0-1766519097741",
+            "text": "Minimal kasih lawn lah bang jangan jago sendiri 😂",
+            "author": "Ulfa",
+            "time": "5 jam yang lalu",
+            "likes": 0
+          },
+          {
+            "id": "r-tempat-perlindungan-sneaker-surealis-4-1-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Yuda",
+            "time": "10 menit yang lalu",
+            "likes": 14
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sneaker-surealis-5-1766519097741",
+        "text": "Gak ada obat! Vibesnya gokil bgt parah ✨😎",
+        "author": "Ani",
+        "time": "1 hari yang lalu",
+        "likes": 48,
+        "replies": []
+      },
+      {
+        "id": "c-tempat-perlindungan-sneaker-surealis-6-1766519097741",
+        "text": "Renderingnya berapa lama nih puh? 🚀",
+        "author": "Samsul",
+        "time": "1 jam yang lalu",
+        "likes": 69,
+        "replies": [
+          {
+            "id": "r-tempat-perlindungan-sneaker-surealis-6-0-1766519097741",
+            "text": "Rendering seharian bang, sampai mau meledak PC-nya 😂🚀",
+            "author": "Admin",
+            "time": "10 menit yang lalu",
+            "likes": 14
+          },
+          {
+            "id": "r-tempat-perlindungan-sneaker-surealis-6-1-1766519097741",
+            "text": "Laptop kentang aja begini, apalagi PC dewa 🔥",
+            "author": "Siti",
+            "time": "10 menit yang lalu",
+            "likes": 5
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sneaker-surealis-7-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Lutfi",
+        "time": "2 jam yang lalu",
+        "likes": 0,
+        "replies": [
+          {
+            "id": "r-tempat-perlindungan-sneaker-surealis-7-0-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Qory",
+            "time": "1 hari yang lalu",
+            "likes": 14
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sneaker-surealis-8-1766519097741",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Lala",
+        "time": "2 menit yang lalu",
+        "likes": 81,
+        "replies": [
+          {
+            "id": "r-tempat-perlindungan-sneaker-surealis-8-0-1766519097741",
+            "text": "Iya woee, vibenya dapet bgt parah 🌈",
+            "author": "Togar",
+            "time": "2 menit yang lalu",
+            "likes": 6
+          },
+          {
+            "id": "r-tempat-perlindungan-sneaker-surealis-8-1-1766519097741",
+            "text": "Thank you! Lowkey eksperimen aja ini hehe ✨",
+            "author": "Admin",
+            "time": "10 menit yang lalu",
+            "likes": 10
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sneaker-surealis-9-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Ani",
+        "time": "2 jam yang lalu",
+        "likes": 26,
+        "replies": []
+      }
+    ],
+    "overlay-bunga-barok-digital": [
+      {
+        "id": "c-overlay-bunga-barok-digital-0-1766519097741",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Samsul",
+        "time": "10 menit yang lalu",
+        "likes": 8,
+        "replies": [
+          {
+            "id": "r-overlay-bunga-barok-digital-0-admin",
+            "text": "Wahahaha kena tahan kurir itu mahkotanya 👑",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 14
+          },
+          {
+            "id": "r-overlay-bunga-barok-digital-0-0-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Maya",
+            "time": "5 jam yang lalu",
+            "likes": 7
+          }
+        ]
+      },
+      {
+        "id": "c-overlay-bunga-barok-digital-1-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Doni",
+        "time": "5 jam yang lalu",
+        "likes": 43,
+        "replies": [
+          {
+            "id": "r-overlay-bunga-barok-digital-1-0-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Yuda",
+            "time": "1 hari yang lalu",
+            "likes": 14
+          }
+        ]
+      },
+      {
+        "id": "c-overlay-bunga-barok-digital-2-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Kiki",
+        "time": "2 hari yang lalu",
+        "likes": 35,
+        "replies": [
+          {
+            "id": "r-overlay-bunga-barok-digital-2-0-1766519097741",
+            "text": "PC dewa mah bebas ya bang 🙏",
+            "author": "Siti",
+            "time": "2 jam yang lalu",
+            "likes": 1
+          }
+        ]
+      },
+      {
+        "id": "c-overlay-bunga-barok-digital-3-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Wira",
+        "time": "2 jam yang lalu",
+        "likes": 70,
+        "replies": []
+      },
+      {
+        "id": "c-overlay-bunga-barok-digital-4-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Togar",
+        "time": "30 menit yang lalu",
+        "likes": 30,
+        "replies": [
+          {
+            "id": "r-overlay-bunga-barok-digital-4-0-1766519097741",
+            "text": "Minimal kasih lawn lah bang jangan jago sendiri 😂",
+            "author": "Togar",
+            "time": "30 menit yang lalu",
+            "likes": 6
+          }
+        ]
+      },
+      {
+        "id": "c-overlay-bunga-barok-digital-5-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Lutfi",
+        "time": "1 jam yang lalu",
+        "likes": 45,
+        "replies": []
+      },
+      {
+        "id": "c-overlay-bunga-barok-digital-6-1766519097741",
+        "text": "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
+        "author": "Yuda",
+        "time": "2 menit yang lalu",
+        "likes": 55,
+        "replies": []
+      },
+      {
+        "id": "c-overlay-bunga-barok-digital-7-1766519097741",
+        "text": "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
+        "author": "Maya",
+        "time": "10 menit yang lalu",
+        "likes": 46,
+        "replies": []
+      },
+      {
+        "id": "c-overlay-bunga-barok-digital-8-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Wawan",
+        "time": "5 jam yang lalu",
+        "likes": 9,
+        "replies": [
+          {
+            "id": "r-overlay-bunga-barok-digital-8-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Nina",
+            "time": "2 menit yang lalu",
+            "likes": 8
+          }
+        ]
+      },
+      {
+        "id": "c-overlay-bunga-barok-digital-9-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Kevin",
+        "time": "5 jam yang lalu",
+        "likes": 64,
+        "replies": [
+          {
+            "id": "r-overlay-bunga-barok-digital-9-0-1766519097741",
+            "text": "Siap bang, nanti coba dibuatkan tutorialnya ya! ✨",
+            "author": "Admin",
+            "time": "5 jam yang lalu",
+            "likes": 3
+          },
+          {
+            "id": "r-overlay-bunga-barok-digital-9-1-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Budi",
+            "time": "2 jam yang lalu",
+            "likes": 4
+          }
+        ]
+      }
+    ],
+    "narasi-visual-moodboard": [
+      {
+        "id": "c-narasi-visual-moodboard-0-1766519097741",
+        "text": "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
+        "author": "Kiki",
+        "time": "1 jam yang lalu",
+        "likes": 10,
+        "replies": [
+          {
+            "id": "r-narasi-visual-moodboard-0-admin",
+            "text": "Waduh jauh juga ya Cakung, ditunggu king! 😂🔥",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 14
+          },
+          {
+            "id": "r-narasi-visual-moodboard-0-0-1766519097741",
+            "text": "Hub Cakung emang boss level pengiriman bang 😂🙏",
+            "author": "Admin",
+            "time": "1 hari yang lalu",
+            "likes": 16
+          }
+        ]
+      },
+      {
+        "id": "c-narasi-visual-moodboard-1-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Deni",
+        "time": "2 hari yang lalu",
+        "likes": 68,
+        "replies": [
+          {
+            "id": "r-narasi-visual-moodboard-1-0-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Putri",
+            "time": "5 jam yang lalu",
+            "likes": 7
+          },
+          {
+            "id": "rf-narasi-visual-moodboard-7-1766519097741",
+            "text": "Masih belajar ini masku, gass terus! 🙏",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 0
+          }
+        ]
+      },
+      {
+        "id": "c-narasi-visual-moodboard-2-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Reza",
+        "time": "5 jam yang lalu",
+        "likes": 22,
+        "replies": [
+          {
+            "id": "r-narasi-visual-moodboard-2-0-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Putri",
+            "time": "10 menit yang lalu",
+            "likes": 5
+          }
+        ]
+      },
+      {
+        "id": "c-narasi-visual-moodboard-3-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Lala",
+        "time": "2 hari yang lalu",
+        "likes": 22,
+        "replies": []
+      },
+      {
+        "id": "c-narasi-visual-moodboard-4-1766519097741",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Tiara",
+        "time": "10 jam yang lalu",
+        "likes": 56,
+        "replies": [
+          {
+            "id": "r-narasi-visual-moodboard-4-0-1766519097741",
+            "text": "Iya woee, vibenya dapet bgt parah 🌈",
+            "author": "Zira",
+            "time": "1 hari yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-narasi-visual-moodboard-5-1766519097741",
+        "text": "Vaporwave vibes-nya dapet bgt, chill bgt liatnya 💜✨",
+        "author": "Ghea",
+        "time": "1 jam yang lalu",
+        "likes": 18,
+        "replies": []
+      },
+      {
+        "id": "c-narasi-visual-moodboard-6-1766519097741",
+        "text": "Pakai software apa bang? Halus bgt motionnya ✨⚙️",
+        "author": "Pandu",
+        "time": "1 hari yang lalu",
+        "likes": 80,
+        "replies": [
+          {
+            "id": "r-narasi-visual-moodboard-6-0-1766519097741",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Bagas",
+            "time": "2 jam yang lalu",
+            "likes": 11
+          }
+        ]
+      },
+      {
+        "id": "c-narasi-visual-moodboard-7-1766519097741",
+        "text": "Renderingnya berapa lama nih puh? 🚀",
+        "author": "Fajri",
+        "time": "2 menit yang lalu",
+        "likes": 27,
+        "replies": [
+          {
+            "id": "rf-narasi-visual-moodboard-8-1766519097741",
+            "text": "Rata kanan bang! Pakai Photoshop fitur Timeline Animasi & Audio hehe 🙏",
+            "author": "Admin",
+            "time": "1 hari yang lalu",
+            "likes": 17
+          }
+        ]
+      },
+      {
+        "id": "c-narasi-visual-moodboard-8-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Tio",
+        "time": "30 menit yang lalu",
+        "likes": 11,
+        "replies": []
+      },
+      {
+        "id": "c-narasi-visual-moodboard-9-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Adit",
+        "time": "5 jam yang lalu",
+        "likes": 66,
+        "replies": [
+          {
+            "id": "r-narasi-visual-moodboard-9-0-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Luqman",
+            "time": "2 hari yang lalu",
+            "likes": 13
+          }
+        ]
+      }
+    ],
+    "tipografi-alam-kontras-tinggi": [
+      {
+        "id": "c-tipografi-alam-kontras-tinggi-0-1766519097741",
+        "text": "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
+        "author": "Doni",
+        "time": "1 hari yang lalu",
+        "likes": 40,
+        "replies": [
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-0-admin",
+            "text": "Wahahaha kena tahan kurir itu mahkotanya 👑",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 0
+          },
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-0-0-1766519097741",
+            "text": "Minimal kasih lawn lah bang jangan jago sendiri 😂",
+            "author": "Maya",
+            "time": "10 jam yang lalu",
+            "likes": 19
+          },
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-0-1-1766519097741",
+            "text": "Waduh jauh juga ya Cakung, ditunggu king! 😂🔥",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 16
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-alam-kontras-tinggi-1-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Joko",
+        "time": "2 hari yang lalu",
+        "likes": 27,
+        "replies": []
+      },
+      {
+        "id": "c-tipografi-alam-kontras-tinggi-2-1766519097741",
+        "text": "Vaporwave vibes-nya dapet bgt, chill bgt liatnya 💜✨",
+        "author": "Rizky",
+        "time": "2 jam yang lalu",
+        "likes": 50,
+        "replies": []
+      },
+      {
+        "id": "c-tipografi-alam-kontras-tinggi-3-1766519097741",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Ghea",
+        "time": "10 jam yang lalu",
+        "likes": 28,
+        "replies": [
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-3-0-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Kiki",
+            "time": "1 hari yang lalu",
+            "likes": 15
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-alam-kontras-tinggi-4-1766519097741",
+        "text": "Vaporwave vibes-nya dapet bgt, chill bgt liatnya 💜✨",
+        "author": "Vina",
+        "time": "5 jam yang lalu",
+        "likes": 2,
+        "replies": [
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-4-0-1766519097741",
+            "text": "Iya woee, vibenya dapet bgt parah 🌈",
+            "author": "Adit",
+            "time": "10 menit yang lalu",
+            "likes": 5
+          },
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-4-1-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Ica",
+            "time": "30 menit yang lalu",
+            "likes": 8
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-alam-kontras-tinggi-5-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Rina",
+        "time": "2 jam yang lalu",
+        "likes": 17,
+        "replies": [
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-5-0-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Sasa",
+            "time": "10 menit yang lalu",
+            "likes": 16
+          },
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-5-1-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Wira",
+            "time": "10 menit yang lalu",
+            "likes": 16
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-alam-kontras-tinggi-6-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Bagas",
+        "time": "2 jam yang lalu",
+        "likes": 69,
+        "replies": [
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-6-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Gilang",
+            "time": "2 hari yang lalu",
+            "likes": 17
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-alam-kontras-tinggi-7-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Bagas",
+        "time": "1 jam yang lalu",
+        "likes": 90,
+        "replies": []
+      },
+      {
+        "id": "c-tipografi-alam-kontras-tinggi-8-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Tiara",
+        "time": "5 jam yang lalu",
+        "likes": 56,
+        "replies": [
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-8-0-1766519097741",
+            "text": "PC dewa mah bebas ya bang 🙏",
+            "author": "Maya",
+            "time": "2 jam yang lalu",
+            "likes": 0
+          },
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-8-1-1766519097741",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Zaki",
+            "time": "10 jam yang lalu",
+            "likes": 16
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-alam-kontras-tinggi-9-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Yanto",
+        "time": "2 jam yang lalu",
+        "likes": 84,
+        "replies": [
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-9-0-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Yanto",
+            "time": "1 hari yang lalu",
+            "likes": 10
+          },
+          {
+            "id": "r-tipografi-alam-kontras-tinggi-9-1-1766519097741",
+            "text": "Aman bang, menyala terus! 🚀",
+            "author": "Admin",
+            "time": "10 menit yang lalu",
+            "likes": 10
+          }
+        ]
+      }
+    ],
+    "desain-sampul-hijau-tua": [
+      {
+        "id": "c-desain-sampul-hijau-tua-0-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Xena",
+        "time": "2 menit yang lalu",
+        "likes": 45,
+        "replies": [
+          {
+            "id": "r-desain-sampul-hijau-tua-0-admin",
+            "text": "Wahahaha kena tahan kurir itu mahkotanya 👑",
+            "author": "Admin",
+            "time": "1 jam yang lalu",
+            "likes": 1
+          },
+          {
+            "id": "r-desain-sampul-hijau-tua-0-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Xena",
+            "time": "10 menit yang lalu",
+            "likes": 8
+          }
+        ]
+      },
+      {
+        "id": "c-desain-sampul-hijau-tua-1-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Luqman",
+        "time": "2 hari yang lalu",
+        "likes": 5,
+        "replies": [
+          {
+            "id": "r-desain-sampul-hijau-tua-1-0-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Adit",
+            "time": "1 jam yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-desain-sampul-hijau-tua-2-1766519097741",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Ica",
+        "time": "30 menit yang lalu",
+        "likes": 76,
+        "replies": []
+      },
+      {
+        "id": "c-desain-sampul-hijau-tua-3-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Tiara",
+        "time": "2 jam yang lalu",
+        "likes": 87,
+        "replies": [
+          {
+            "id": "r-desain-sampul-hijau-tua-3-0-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Yuda",
+            "time": "2 menit yang lalu",
+            "likes": 17
+          },
+          {
+            "id": "r-desain-sampul-hijau-tua-3-1-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Siti",
+            "time": "10 jam yang lalu",
+            "likes": 17
+          }
+        ]
+      },
+      {
+        "id": "c-desain-sampul-hijau-tua-4-1766519097741",
+        "text": "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
+        "author": "Lutfi",
+        "time": "1 jam yang lalu",
+        "likes": 2,
+        "replies": []
+      },
+      {
+        "id": "c-desain-sampul-hijau-tua-5-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Kevin",
+        "time": "5 jam yang lalu",
+        "likes": 79,
+        "replies": [
+          {
+            "id": "r-desain-sampul-hijau-tua-5-0-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Togar",
+            "time": "5 jam yang lalu",
+            "likes": 2
+          }
+        ]
+      },
+      {
+        "id": "c-desain-sampul-hijau-tua-6-1766519097741",
+        "text": "Gak ada obat! Vibesnya gokil bgt parah ✨😎",
+        "author": "Nina",
+        "time": "2 hari yang lalu",
+        "likes": 71,
+        "replies": [
+          {
+            "id": "r-desain-sampul-hijau-tua-6-0-1766519097741",
+            "text": "Bisa aja, kebetulan lagi mood aja kemarin 🙏",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 3
+          },
+          {
+            "id": "r-desain-sampul-hijau-tua-6-1-1766519097741",
+            "text": "Gass terus jangan kasih kendor! 🔥🚩",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 7
+          }
+        ]
+      },
+      {
+        "id": "c-desain-sampul-hijau-tua-7-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Fajri",
+        "time": "1 jam yang lalu",
+        "likes": 31,
+        "replies": [
+          {
+            "id": "r-desain-sampul-hijau-tua-7-0-1766519097741",
+            "text": "Iya woee, vibenya dapet bgt parah 🌈",
+            "author": "Oky",
+            "time": "1 jam yang lalu",
+            "likes": 2
+          }
+        ]
+      },
+      {
+        "id": "c-desain-sampul-hijau-tua-8-1766519097741",
+        "text": "Renderingnya berapa lama nih puh? 🚀",
+        "author": "Oky",
+        "time": "2 menit yang lalu",
+        "likes": 90,
+        "replies": [
+          {
+            "id": "r-desain-sampul-hijau-tua-8-0-1766519097741",
+            "text": "Laptop kentang aja begini, apalagi PC dewa 🔥",
+            "author": "Putri",
+            "time": "5 jam yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-desain-sampul-hijau-tua-9-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Adit",
+        "time": "2 hari yang lalu",
+        "likes": 60,
+        "replies": [
+          {
+            "id": "r-desain-sampul-hijau-tua-9-0-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Lutfi",
+            "time": "30 menit yang lalu",
+            "likes": 17
+          }
+        ]
+      }
+    ],
+    "identitas-monogram-hijau": [
+      {
+        "id": "c-identitas-monogram-hijau-0-1766519097741",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Yuda",
+        "time": "2 menit yang lalu",
+        "likes": 96,
+        "replies": []
+      },
+      {
+        "id": "c-identitas-monogram-hijau-1-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Oky",
+        "time": "10 jam yang lalu",
+        "likes": 6,
+        "replies": []
+      },
+      {
+        "id": "c-identitas-monogram-hijau-2-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Adit",
+        "time": "10 jam yang lalu",
+        "likes": 65,
+        "replies": [
+          {
+            "id": "r-identitas-monogram-hijau-2-0-1766519097741",
+            "text": "Laptop kentang aja begini, apalagi PC dewa 🔥",
+            "author": "Kiki",
+            "time": "10 menit yang lalu",
+            "likes": 0,
+            "replies": []
+          },
+          {
+            "id": "r-identitas-monogram-hijau-2-1-1766519097741",
+            "text": "PC dewa mah bebas ya bang 🙏",
+            "author": "Sasa",
+            "time": "30 menit yang lalu",
+            "likes": 7,
+            "replies": []
+          }
+        ]
+      },
+      {
+        "id": "c-identitas-monogram-hijau-3-1766519097741",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Luqman",
+        "time": "1 jam yang lalu",
+        "likes": 30,
+        "replies": [
+          {
+            "id": "r-identitas-monogram-hijau-3-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Putri",
+            "time": "30 menit yang lalu",
+            "likes": 9,
+            "replies": []
+          },
+          {
+            "id": "r-identitas-monogram-hijau-3-1-1766519097741",
+            "text": "Minimal kasih lawn lah bang jangan jago sendiri 😂",
+            "author": "Rina",
+            "time": "5 jam yang lalu",
+            "likes": 6,
+            "replies": []
+          }
+        ]
+      },
+      {
+        "id": "c-identitas-monogram-hijau-4-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Ica",
+        "time": "1 jam yang lalu",
+        "likes": 41,
+        "replies": []
+      },
+      {
+        "id": "c-identitas-monogram-hijau-5-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Kevin",
+        "time": "1 jam yang lalu",
+        "likes": 24,
+        "replies": []
+      },
+      {
+        "id": "c-identitas-monogram-hijau-6-1766519097741",
+        "text": "Pakai software apa bang? Halus bgt motionnya ✨⚙️",
+        "author": "Kevin",
+        "time": "5 jam yang lalu",
+        "likes": 14,
+        "replies": [
+          {
+            "id": "r-identitas-monogram-hijau-6-0-1766519097741",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Maman",
+            "time": "2 jam yang lalu",
+            "likes": 4,
+            "replies": []
+          }
+        ]
+      },
+      {
+        "id": "c-identitas-monogram-hijau-7-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Bagas",
+        "time": "1 jam yang lalu",
+        "likes": 51,
+        "replies": [
+          {
+            "id": "r-identitas-monogram-hijau-7-0-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Kevin",
+            "time": "2 hari yang lalu",
+            "likes": 15,
+            "replies": []
+          }
+        ]
+      },
+      {
+        "id": "c-identitas-monogram-hijau-8-1766519097741",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Jojo",
+        "time": "1 jam yang lalu",
+        "likes": 33,
+        "replies": [
+          {
+            "id": "r-identitas-monogram-hijau-8-0-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Wawan",
+            "time": "5 jam yang lalu",
+            "likes": 10,
+            "replies": []
+          }
+        ]
+      },
+      {
+        "id": "c-identitas-monogram-hijau-9-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Rina",
+        "time": "2 jam yang lalu",
+        "likes": 18,
+        "replies": [
+          {
+            "id": "r-identitas-monogram-hijau-9-0-1766519097741",
+            "text": "Aman bang, menyala terus! 🚀",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 15,
+            "replies": []
+          }
+        ]
+      }
+    ],
+    "montase-bunga-cantik": [
+      {
+        "id": "c-montase-bunga-cantik-0-1766519097741",
+        "text": "Warna-warnanya dapet bgt, estetik parah! ✨🌈",
+        "author": "Nina",
+        "time": "30 menit yang lalu",
+        "likes": 78,
+        "replies": [
+          {
+            "id": "r-montase-bunga-cantik-0-admin",
+            "text": "Bisa aja, kebetulan lagi mood aja kemarin 🙏",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 12
+          },
+          {
+            "id": "r-montase-bunga-cantik-0-0-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Xena",
+            "time": "2 hari yang lalu",
+            "likes": 5
+          },
+          {
+            "id": "r-montase-bunga-cantik-0-1-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Ghea",
+            "time": "2 hari yang lalu",
+            "likes": 9
+          }
+        ]
+      },
+      {
+        "id": "c-montase-bunga-cantik-1-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Zaki",
+        "time": "10 jam yang lalu",
+        "likes": 82,
+        "replies": [
+          {
+            "id": "r-montase-bunga-cantik-1-0-1766519097741",
+            "text": "Iya woee, vibenya dapet bgt parah 🌈",
+            "author": "Togar",
+            "time": "10 menit yang lalu",
+            "likes": 3
+          }
+        ]
+      },
+      {
+        "id": "c-montase-bunga-cantik-2-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Togar",
+        "time": "2 jam yang lalu",
+        "likes": 96,
+        "replies": [
+          {
+            "id": "rf-montase-bunga-cantik-9-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Jojo",
+            "time": "10 jam yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-montase-bunga-cantik-3-1766519097741",
+        "text": "Renderingnya berapa lama nih puh? 🚀",
+        "author": "Ica",
+        "time": "5 jam yang lalu",
+        "likes": 36,
+        "replies": [
+          {
+            "id": "r-montase-bunga-cantik-3-0-1766519097741",
+            "text": "Rata kanan bang! Pakai Photoshop fitur Timeline Animasi & Audio hehe 🙏",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 3
+          }
+        ]
+      },
+      {
+        "id": "c-montase-bunga-cantik-4-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Ulfa",
+        "time": "30 menit yang lalu",
+        "likes": 31,
+        "replies": []
+      },
+      {
+        "id": "c-montase-bunga-cantik-5-1766519097741",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Husein",
+        "time": "2 jam yang lalu",
+        "likes": 6,
+        "replies": []
+      },
+      {
+        "id": "c-montase-bunga-cantik-6-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Lala",
+        "time": "2 jam yang lalu",
+        "likes": 55,
+        "replies": [
+          {
+            "id": "r-montase-bunga-cantik-6-0-1766519097741",
+            "text": "Aman bang, menyala terus! 🚀",
+            "author": "Admin",
+            "time": "10 jam yang lalu",
+            "likes": 4
+          },
+          {
+            "id": "r-montase-bunga-cantik-6-1-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Putri",
+            "time": "30 menit yang lalu",
+            "likes": 15
+          }
+        ]
+      },
+      {
+        "id": "c-montase-bunga-cantik-7-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Sasa",
+        "time": "1 hari yang lalu",
+        "likes": 15,
+        "replies": []
+      },
+      {
+        "id": "c-montase-bunga-cantik-8-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Tiara",
+        "time": "5 jam yang lalu",
+        "likes": 31,
+        "replies": [
+          {
+            "id": "rf-montase-bunga-cantik-8-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Dinda",
+            "time": "1 hari yang lalu",
+            "likes": 6
+          }
+        ]
+      },
+      {
+        "id": "c-montase-bunga-cantik-9-1766519097741",
+        "text": "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
+        "author": "Togar",
+        "time": "30 menit yang lalu",
+        "likes": 78,
+        "replies": [
+          {
+            "id": "r-montase-bunga-cantik-9-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Jojo",
+            "time": "1 jam yang lalu",
+            "likes": 7
+          }
+        ]
+      }
+    ],
+    "komposisi-kinetik-mengalir": [
+      {
+        "id": "c-komposisi-kinetik-mengalir-0-1766519097741",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Siti",
+        "time": "10 jam yang lalu",
+        "likes": 58,
+        "replies": [
+          {
+            "id": "r-komposisi-kinetik-mengalir-0-admin",
+            "text": "Waduh jauh juga ya Cakung, ditunggu king! 😂🔥",
+            "author": "Admin",
+            "time": "5 jam yang lalu",
+            "likes": 2
+          },
+          {
+            "id": "r-komposisi-kinetik-mengalir-0-0-1766519097741",
+            "text": "Wahahaha kena tahan kurir itu mahkotanya 👑",
+            "author": "Admin",
+            "time": "1 hari yang lalu",
+            "likes": 1
+          },
+          {
+            "id": "r-komposisi-kinetik-mengalir-0-1-1766519097741",
+            "text": "Hub Cakung emang boss level pengiriman bang 😂🙏",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 8
+          }
+        ]
+      },
+      {
+        "id": "c-komposisi-kinetik-mengalir-1-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Gilang",
+        "time": "2 jam yang lalu",
+        "likes": 8,
+        "replies": []
+      },
+      {
+        "id": "c-komposisi-kinetik-mengalir-2-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Yanto",
+        "time": "2 hari yang lalu",
+        "likes": 31,
+        "replies": []
+      },
+      {
+        "id": "c-komposisi-kinetik-mengalir-3-1766519097741",
+        "text": "Gak ada obat! Vibesnya gokil bgt parah ✨😎",
+        "author": "Fajri",
+        "time": "1 hari yang lalu",
+        "likes": 99,
+        "replies": [
+          {
+            "id": "r-komposisi-kinetik-mengalir-3-0-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Dinda",
+            "time": "2 menit yang lalu",
+            "likes": 4
+          },
+          {
+            "id": "r-komposisi-kinetik-mengalir-3-1-1766519097741",
+            "text": "Thank you! Lowkey eksperimen aja ini hehe ✨",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-komposisi-kinetik-mengalir-4-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Ghea",
+        "time": "1 jam yang lalu",
+        "likes": 71,
+        "replies": []
+      },
+      {
+        "id": "c-komposisi-kinetik-mengalir-5-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Adit",
+        "time": "30 menit yang lalu",
+        "likes": 27,
+        "replies": []
+      },
+      {
+        "id": "c-komposisi-kinetik-mengalir-6-1766519097741",
+        "text": "Warna-warnanya dapet bgt, estetik parah! ✨🌈",
+        "author": "Tio",
+        "time": "1 hari yang lalu",
+        "likes": 12,
+        "replies": [
+          {
+            "id": "r-komposisi-kinetik-mengalir-6-0-1766519097741",
+            "text": "Gass terus jangan kasih kendor! 🔥🚩",
+            "author": "Admin",
+            "time": "5 jam yang lalu",
+            "likes": 11
+          },
+          {
+            "id": "r-komposisi-kinetik-mengalir-6-1-1766519097741",
+            "text": "Iya woee, vibenya dapet bgt parah 🌈",
+            "author": "Deni",
+            "time": "1 hari yang lalu",
+            "likes": 11
+          }
+        ]
+      },
+      {
+        "id": "c-komposisi-kinetik-mengalir-7-1766519097741",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Budi",
+        "time": "1 jam yang lalu",
+        "likes": 96,
+        "replies": [
+          {
+            "id": "r-komposisi-kinetik-mengalir-7-0-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Tio",
+            "time": "2 menit yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-komposisi-kinetik-mengalir-8-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Lala",
+        "time": "30 menit yang lalu",
+        "likes": 25,
+        "replies": [
+          {
+            "id": "r-komposisi-kinetik-mengalir-8-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Putri",
+            "time": "2 jam yang lalu",
+            "likes": 15
+          }
+        ]
+      },
+      {
+        "id": "c-komposisi-kinetik-mengalir-9-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Bagas",
+        "time": "2 menit yang lalu",
+        "likes": 72,
+        "replies": []
+      }
+    ],
+    "seni-poster-flatiron-neon": [
+      {
+        "id": "c-seni-poster-flatiron-neon-0-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Pandu",
+        "time": "5 jam yang lalu",
+        "likes": 96,
+        "replies": [
+          {
+            "id": "r-seni-poster-flatiron-neon-0-admin",
+            "text": "Siap bang, nanti coba dibuatkan tutorialnya ya! ✨",
+            "author": "Admin",
+            "time": "10 jam yang lalu",
+            "likes": 9
+          },
+          {
+            "id": "r-seni-poster-flatiron-neon-0-0-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Luqman",
+            "time": "30 menit yang lalu",
+            "likes": 2
+          },
+          {
+            "id": "r-seni-poster-flatiron-neon-0-1-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Xena",
+            "time": "2 menit yang lalu",
+            "likes": 7
+          }
+        ]
+      },
+      {
+        "id": "c-seni-poster-flatiron-neon-1-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Zira",
+        "time": "10 jam yang lalu",
+        "likes": 40,
+        "replies": []
+      },
+      {
+        "id": "c-seni-poster-flatiron-neon-2-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Putri",
+        "time": "2 hari yang lalu",
+        "likes": 6,
+        "replies": []
+      },
+      {
+        "id": "c-seni-poster-flatiron-neon-3-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Zaki",
+        "time": "10 jam yang lalu",
+        "likes": 63,
+        "replies": [
+          {
+            "id": "r-seni-poster-flatiron-neon-3-0-1766519097741",
+            "text": "Waduh jauh juga ya Cakung, ditunggu king! 😂🔥",
+            "author": "Admin",
+            "time": "10 menit yang lalu",
+            "likes": 12
+          }
+        ]
+      },
+      {
+        "id": "c-seni-poster-flatiron-neon-4-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Adit",
+        "time": "2 hari yang lalu",
+        "likes": 48,
+        "replies": [
+          {
+            "id": "r-seni-poster-flatiron-neon-4-0-1766519097741",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Deni",
+            "time": "5 jam yang lalu",
+            "likes": 15
+          }
+        ]
+      },
+      {
+        "id": "c-seni-poster-flatiron-neon-5-1766519097741",
+        "text": "Pakai software apa bang? Halus bgt motionnya ✨⚙️",
+        "author": "Ghea",
+        "time": "10 menit yang lalu",
+        "likes": 87,
+        "replies": [
+          {
+            "id": "r-seni-poster-flatiron-neon-5-0-1766519097741",
+            "text": "Laptop kentang aja begini, apalagi PC dewa 🔥",
+            "author": "Ulfa",
+            "time": "30 menit yang lalu",
+            "likes": 12
+          },
+          {
+            "id": "r-seni-poster-flatiron-neon-5-1-1766519097741",
+            "text": "Rendering seharian bang, sampai mau meledak PC-nya 😂🚀",
+            "author": "Admin",
+            "time": "1 hari yang lalu",
+            "likes": 16
+          }
+        ]
+      },
+      {
+        "id": "c-seni-poster-flatiron-neon-6-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Samsul",
+        "time": "30 menit yang lalu",
+        "likes": 26,
+        "replies": [
+          {
+            "id": "r-seni-poster-flatiron-neon-6-0-1766519097741",
+            "text": "PC dewa mah bebas ya bang 🙏",
+            "author": "Xena",
+            "time": "2 menit yang lalu",
+            "likes": 8
+          }
+        ]
+      },
+      {
+        "id": "c-seni-poster-flatiron-neon-7-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Setiawan",
+        "time": "2 hari yang lalu",
+        "likes": 81,
+        "replies": [
+          {
+            "id": "r-seni-poster-flatiron-neon-7-0-1766519097741",
+            "text": "Wahahaha kena tahan kurir itu mahkotanya 👑",
+            "author": "Admin",
+            "time": "5 jam yang lalu",
+            "likes": 3
+          }
+        ]
+      },
+      {
+        "id": "c-seni-poster-flatiron-neon-8-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Reza",
+        "time": "2 jam yang lalu",
+        "likes": 87,
+        "replies": [
+          {
+            "id": "r-seni-poster-flatiron-neon-8-0-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Jojo",
+            "time": "10 jam yang lalu",
+            "likes": 16
+          }
+        ]
+      },
+      {
+        "id": "c-seni-poster-flatiron-neon-9-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Wira",
+        "time": "2 hari yang lalu",
+        "likes": 11,
+        "replies": []
+      }
+    ],
+    "tempat-perlindungan-sepatu-raksasa": [
+      {
+        "id": "c-tempat-perlindungan-sepatu-raksasa-0-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Maman",
+        "time": "1 jam yang lalu",
+        "likes": 96,
+        "replies": [
+          {
+            "id": "r-tempat-perlindungan-sepatu-raksasa-0-admin",
+            "text": "Rata kanan bang! Pakai Photoshop fitur Timeline Animasi & Audio hehe 🙏",
+            "author": "Admin",
+            "time": "10 jam yang lalu",
+            "likes": 6
+          },
+          {
+            "id": "r-tempat-perlindungan-sepatu-raksasa-0-0-1766519097741",
+            "text": "PC dewa mah bebas ya bang 🙏",
+            "author": "Setiawan",
+            "time": "1 jam yang lalu",
+            "likes": 6
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sepatu-raksasa-1-1766519097741",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Zira",
+        "time": "1 jam yang lalu",
+        "likes": 6,
+        "replies": []
+      },
+      {
+        "id": "c-tempat-perlindungan-sepatu-raksasa-2-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Pandu",
+        "time": "2 menit yang lalu",
+        "likes": 94,
+        "replies": [
+          {
+            "id": "r-tempat-perlindungan-sepatu-raksasa-2-0-1766519097741",
+            "text": "Siap bang, nanti coba dibuatkan tutorialnya ya! ✨",
+            "author": "Admin",
+            "time": "2 jam yang lalu",
+            "likes": 13
+          },
+          {
+            "id": "r-tempat-perlindungan-sepatu-raksasa-2-1-1766519097741",
+            "text": "Aman bang, menyala terus! 🚀",
+            "author": "Admin",
+            "time": "1 hari yang lalu",
+            "likes": 6
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sepatu-raksasa-3-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Adit",
+        "time": "2 hari yang lalu",
+        "likes": 79,
+        "replies": []
+      },
+      {
+        "id": "c-tempat-perlindungan-sepatu-raksasa-4-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Ghea",
+        "time": "1 hari yang lalu",
+        "likes": 97,
+        "replies": [
+          {
+            "id": "r-tempat-perlindungan-sepatu-raksasa-4-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Putri",
+            "time": "10 menit yang lalu",
+            "likes": 12
+          },
+          {
+            "id": "rf-tempat-perlindungan-sepatu-raksasa-11-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Tiara",
+            "time": "1 hari yang lalu",
+            "likes": 17
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sepatu-raksasa-5-1766519097741",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Zira",
+        "time": "10 jam yang lalu",
+        "likes": 12,
+        "replies": [
+          {
+            "id": "r-tempat-perlindungan-sepatu-raksasa-5-0-1766519097741",
+            "text": "Iya woee, vibenya dapet bgt parah 🌈",
+            "author": "Tio",
+            "time": "1 hari yang lalu",
+            "likes": 14
+          },
+          {
+            "id": "r-tempat-perlindungan-sepatu-raksasa-5-1-1766519097741",
+            "text": "Bisa aja, kebetulan lagi mood aja kemarin 🙏",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 2
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sepatu-raksasa-6-1766519097741",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Rizky",
+        "time": "30 menit yang lalu",
+        "likes": 49,
+        "replies": [
+          {
+            "id": "r-tempat-perlindungan-sepatu-raksasa-6-0-1766519097741",
+            "text": "Gass terus jangan kasih kendor! 🔥🚩",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 19
+          },
+          {
+            "id": "r-tempat-perlindungan-sepatu-raksasa-6-1-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Wawan",
+            "time": "2 jam yang lalu",
+            "likes": 8
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sepatu-raksasa-7-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Jojo",
+        "time": "10 jam yang lalu",
+        "likes": 56,
+        "replies": [
+          {
+            "id": "r-tempat-perlindungan-sepatu-raksasa-7-0-1766519097741",
+            "text": "Waduh panggil sepuh pula, masih pemula bang 🙏😂",
+            "author": "Admin",
+            "time": "1 hari yang lalu",
+            "likes": 0
+          }
+        ]
+      },
+      {
+        "id": "c-tempat-perlindungan-sepatu-raksasa-8-1766519097741",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Ica",
+        "time": "1 hari yang lalu",
+        "likes": 54,
+        "replies": []
+      },
+      {
+        "id": "c-tempat-perlindungan-sepatu-raksasa-9-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Luqman",
+        "time": "10 jam yang lalu",
+        "likes": 29,
+        "replies": [
+          {
+            "id": "rf-tempat-perlindungan-sepatu-raksasa-10-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Husein",
+            "time": "2 hari yang lalu",
+            "likes": 16
+          }
+        ]
+      }
+    ],
+    "kampanye-hadiah-digital-liburan": [
+      {
+        "id": "c-kampanye-hadiah-digital-liburan-0-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Lutfi",
+        "time": "2 hari yang lalu",
+        "likes": 13,
+        "replies": [
+          {
+            "id": "r-kampanye-hadiah-digital-liburan-0-admin",
+            "text": "Rata kanan bang! Pakai Photoshop fitur Timeline Animasi & Audio hehe 🙏",
+            "author": "Admin",
+            "time": "2 jam yang lalu",
+            "likes": 6
+          },
+          {
+            "id": "r-kampanye-hadiah-digital-liburan-0-0-1766519097741",
+            "text": "Laptop kentang aja begini, apalagi PC dewa 🔥",
+            "author": "Bagas",
+            "time": "5 jam yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-kampanye-hadiah-digital-liburan-1-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Yanto",
+        "time": "10 menit yang lalu",
+        "likes": 86,
+        "replies": [
+          {
+            "id": "r-kampanye-hadiah-digital-liburan-1-0-1766519097741",
+            "text": "Minimal kasih lawn lah bang jangan jago sendiri 😂",
+            "author": "Maman",
+            "time": "5 jam yang lalu",
+            "likes": 0
+          }
+        ]
+      },
+      {
+        "id": "c-kampanye-hadiah-digital-liburan-2-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Wira",
+        "time": "10 menit yang lalu",
+        "likes": 53,
+        "replies": [
+          {
+            "id": "r-kampanye-hadiah-digital-liburan-2-0-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Gilang",
+            "time": "1 hari yang lalu",
+            "likes": 2
+          }
+        ]
+      },
+      {
+        "id": "c-kampanye-hadiah-digital-liburan-3-1766519097741",
+        "text": "Gak ada obat! Vibesnya gokil bgt parah ✨😎",
+        "author": "Ulfa",
+        "time": "5 jam yang lalu",
+        "likes": 88,
+        "replies": [
+          {
+            "id": "r-kampanye-hadiah-digital-liburan-3-0-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Siti",
+            "time": "2 menit yang lalu",
+            "likes": 9
+          },
+          {
+            "id": "r-kampanye-hadiah-digital-liburan-3-1-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Lutfi",
+            "time": "10 jam yang lalu",
+            "likes": 2
+          }
+        ]
+      },
+      {
+        "id": "c-kampanye-hadiah-digital-liburan-4-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Tio",
+        "time": "10 menit yang lalu",
+        "likes": 97,
+        "replies": []
+      },
+      {
+        "id": "c-kampanye-hadiah-digital-liburan-5-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Kevin",
+        "time": "10 jam yang lalu",
+        "likes": 23,
+        "replies": [
+          {
+            "id": "r-kampanye-hadiah-digital-liburan-5-0-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Putri",
+            "time": "2 menit yang lalu",
+            "likes": 2
+          },
+          {
+            "id": "r-kampanye-hadiah-digital-liburan-5-1-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Joko",
+            "time": "2 jam yang lalu",
+            "likes": 12
+          }
+        ]
+      },
+      {
+        "id": "c-kampanye-hadiah-digital-liburan-6-1766519097741",
+        "text": "Pakai software apa bang? Halus bgt motionnya ✨⚙️",
+        "author": "Nina",
+        "time": "1 hari yang lalu",
+        "likes": 81,
+        "replies": []
+      },
+      {
+        "id": "c-kampanye-hadiah-digital-liburan-7-1766519097741",
+        "text": "Gak capek ya jadi keren terus? 😂✨",
+        "author": "Fajri",
+        "time": "10 jam yang lalu",
+        "likes": 25,
+        "replies": [
+          {
+            "id": "r-kampanye-hadiah-digital-liburan-7-0-1766519097741",
+            "text": "Iya woee, vibenya dapet bgt parah 🌈",
+            "author": "Deni",
+            "time": "2 menit yang lalu",
+            "likes": 17
+          }
+        ]
+      },
+      {
+        "id": "c-kampanye-hadiah-digital-liburan-8-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Samsul",
+        "time": "2 hari yang lalu",
+        "likes": 50,
+        "replies": []
+      },
+      {
+        "id": "c-kampanye-hadiah-digital-liburan-9-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Lala",
+        "time": "2 jam yang lalu",
+        "likes": 59,
+        "replies": []
+      }
+    ],
+    "pastoral-kawanan-berhalo": [
+      {
+        "id": "c-pastoral-kawanan-berhalo-0-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Yuda",
+        "time": "5 jam yang lalu",
+        "likes": 97,
+        "replies": [
+          {
+            "id": "r-pastoral-kawanan-berhalo-0-admin",
+            "text": "Aman bang, menyala terus! 🚀",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 16
+          },
+          {
+            "id": "r-pastoral-kawanan-berhalo-0-0-1766519097741",
+            "text": "Siap bang, nanti coba dibuatkan tutorialnya ya! ✨",
+            "author": "Admin",
+            "time": "5 jam yang lalu",
+            "likes": 6
+          }
+        ]
+      },
+      {
+        "id": "c-pastoral-kawanan-berhalo-1-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Siti",
+        "time": "10 menit yang lalu",
+        "likes": 24,
+        "replies": [
+          {
+            "id": "r-pastoral-kawanan-berhalo-1-0-1766519097741",
+            "text": "Waduh panggil sepuh pula, masih pemula bang 🙏😂",
+            "author": "Admin",
+            "time": "10 menit yang lalu",
+            "likes": 17
+          },
+          {
+            "id": "r-pastoral-kawanan-berhalo-1-1-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Tiara",
+            "time": "1 jam yang lalu",
+            "likes": 9
+          }
+        ]
+      },
+      {
+        "id": "c-pastoral-kawanan-berhalo-2-1766519097741",
+        "text": "Gak ada obat! Vibesnya gokil bgt parah ✨😎",
+        "author": "Fajri",
+        "time": "30 menit yang lalu",
+        "likes": 64,
+        "replies": [
+          {
+            "id": "r-pastoral-kawanan-berhalo-2-0-1766519097741",
+            "text": "Iya woee, vibenya dapet bgt parah 🌈",
+            "author": "Yuda",
+            "time": "10 jam yang lalu",
+            "likes": 7
+          }
+        ]
+      },
+      {
+        "id": "c-pastoral-kawanan-berhalo-3-1766519097741",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Sasa",
+        "time": "1 jam yang lalu",
+        "likes": 20,
+        "replies": [
+          {
+            "id": "r-pastoral-kawanan-berhalo-3-0-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Jojo",
+            "time": "10 jam yang lalu",
+            "likes": 11
+          }
+        ]
+      },
+      {
+        "id": "c-pastoral-kawanan-berhalo-4-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Pandu",
+        "time": "5 jam yang lalu",
+        "likes": 32,
+        "replies": [
+          {
+            "id": "r-pastoral-kawanan-berhalo-4-0-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Kiki",
+            "time": "1 jam yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-pastoral-kawanan-berhalo-5-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Siti",
+        "time": "1 jam yang lalu",
+        "likes": 97,
+        "replies": [
+          {
+            "id": "r-pastoral-kawanan-berhalo-5-0-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Husein",
+            "time": "2 hari yang lalu",
+            "likes": 13
+          }
+        ]
+      },
+      {
+        "id": "c-pastoral-kawanan-berhalo-6-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Ani",
+        "time": "1 jam yang lalu",
+        "likes": 52,
+        "replies": [
+          {
+            "id": "r-pastoral-kawanan-berhalo-6-0-1766519097741",
+            "text": "Masih belajar ini masku, gass terus! 🙏",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 8
+          }
+        ]
+      },
+      {
+        "id": "c-pastoral-kawanan-berhalo-7-1766519097741",
+        "text": "Gak capek ya jadi keren terus? 😂✨",
+        "author": "Luqman",
+        "time": "30 menit yang lalu",
+        "likes": 52,
+        "replies": [
+          {
+            "id": "r-pastoral-kawanan-berhalo-7-0-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Ulfa",
+            "time": "2 hari yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-pastoral-kawanan-berhalo-8-1766519097741",
+        "text": "Renderingnya berapa lama nih puh? 🚀",
+        "author": "Budi",
+        "time": "2 jam yang lalu",
+        "likes": 57,
+        "replies": [
+          {
+            "id": "r-pastoral-kawanan-berhalo-8-0-1766519097741",
+            "text": "Masih pakai laptop kentang kok bang beneran 😂",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 19
+          },
+          {
+            "id": "r-pastoral-kawanan-berhalo-8-1-1766519097741",
+            "text": "Rendering seharian bang, sampai mau meledak PC-nya 😂🚀",
+            "author": "Admin",
+            "time": "2 jam yang lalu",
+            "likes": 7
+          }
+        ]
+      },
+      {
+        "id": "c-pastoral-kawanan-berhalo-9-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Lala",
+        "time": "10 menit yang lalu",
+        "likes": 18,
+        "replies": [
+          {
+            "id": "r-pastoral-kawanan-berhalo-9-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Husein",
+            "time": "2 jam yang lalu",
+            "likes": 7
+          }
+        ]
+      }
+    ],
+    "tipografi-mekar-gotik": [
+      {
+        "id": "c-tipografi-mekar-gotik-0-1766519097741",
+        "text": "Gak capek ya jadi keren terus? 😂✨",
+        "author": "Siti",
+        "time": "5 jam yang lalu",
+        "likes": 12,
+        "replies": [
+          {
+            "id": "r-tipografi-mekar-gotik-0-admin",
+            "text": "Bisa aja, kebetulan lagi mood aja kemarin 🙏",
+            "author": "Admin",
+            "time": "10 menit yang lalu",
+            "likes": 7
+          },
+          {
+            "id": "r-tipografi-mekar-gotik-0-0-1766519097741",
+            "text": "Gass terus jangan kasih kendor! 🔥🚩",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 13
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-mekar-gotik-1-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Yuda",
+        "time": "5 jam yang lalu",
+        "likes": 95,
+        "replies": []
+      },
+      {
+        "id": "c-tipografi-mekar-gotik-2-1766519097741",
+        "text": "Gak ada obat! Vibesnya gokil bgt parah ✨😎",
+        "author": "Deni",
+        "time": "2 menit yang lalu",
+        "likes": 46,
+        "replies": [
+          {
+            "id": "r-tipografi-mekar-gotik-2-0-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Gilang",
+            "time": "2 jam yang lalu",
+            "likes": 9
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-mekar-gotik-3-1766519097741",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Xena",
+        "time": "10 jam yang lalu",
+        "likes": 82,
+        "replies": []
+      },
+      {
+        "id": "c-tipografi-mekar-gotik-4-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Pandu",
+        "time": "10 jam yang lalu",
+        "likes": 46,
+        "replies": []
+      },
+      {
+        "id": "c-tipografi-mekar-gotik-5-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Maya",
+        "time": "1 jam yang lalu",
+        "likes": 39,
+        "replies": [
+          {
+            "id": "r-tipografi-mekar-gotik-5-0-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Yanto",
+            "time": "5 jam yang lalu",
+            "likes": 18
+          },
+          {
+            "id": "r-tipografi-mekar-gotik-5-1-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Vina",
+            "time": "10 menit yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-mekar-gotik-6-1766519097741",
+        "text": "Pakai software apa bang? Halus bgt motionnya ✨⚙️",
+        "author": "Husein",
+        "time": "10 menit yang lalu",
+        "likes": 89,
+        "replies": [
+          {
+            "id": "r-tipografi-mekar-gotik-6-0-1766519097741",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Doni",
+            "time": "1 jam yang lalu",
+            "likes": 1
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-mekar-gotik-7-1766519097741",
+        "text": "Gak capek ya jadi keren terus? 😂✨",
+        "author": "Husein",
+        "time": "10 jam yang lalu",
+        "likes": 22,
+        "replies": [
+          {
+            "id": "r-tipografi-mekar-gotik-7-0-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Zira",
+            "time": "10 menit yang lalu",
+            "likes": 19
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-mekar-gotik-8-1766519097741",
+        "text": "Renderingnya berapa lama nih puh? 🚀",
+        "author": "Qory",
+        "time": "1 jam yang lalu",
+        "likes": 72,
+        "replies": [
+          {
+            "id": "r-tipografi-mekar-gotik-8-0-1766519097741",
+            "text": "Rendering seharian bang, sampai mau meledak PC-nya 😂🚀",
+            "author": "Admin",
+            "time": "5 jam yang lalu",
+            "likes": 10
+          }
+        ]
+      },
+      {
+        "id": "c-tipografi-mekar-gotik-9-1766519097741",
+        "text": "Warna-warnanya dapet bgt, estetik parah! ✨🌈",
+        "author": "Tiara",
+        "time": "2 jam yang lalu",
+        "likes": 31,
+        "replies": []
+      }
+    ],
+    "kolase-dunia-ok-terfragmentasi": [
+      {
+        "id": "c-kolase-dunia-ok-terfragmentasi-0-1766519097741",
+        "text": "Vaporwave vibes-nya dapet bgt, chill bgt liatnya 💜✨",
+        "author": "Jojo",
+        "time": "10 jam yang lalu",
+        "likes": 12,
+        "replies": [
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-0-admin",
+            "text": "Bisa aja, kebetulan lagi mood aja kemarin 🙏",
+            "author": "Admin",
+            "time": "5 jam yang lalu",
+            "likes": 17
+          },
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-0-0-1766519097741",
+            "text": "Glad you like it bro! ✨🚀",
+            "author": "Admin",
+            "time": "10 menit yang lalu",
+            "likes": 17
+          },
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-0-1-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Adit",
+            "time": "1 jam yang lalu",
+            "likes": 10
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-dunia-ok-terfragmentasi-1-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Fathir",
+        "time": "10 menit yang lalu",
+        "likes": 16,
+        "replies": [
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-1-0-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Rizky",
+            "time": "10 menit yang lalu",
+            "likes": 10
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-dunia-ok-terfragmentasi-2-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Rizky",
+        "time": "2 jam yang lalu",
+        "likes": 30,
+        "replies": [
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-2-0-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Zira",
+            "time": "10 menit yang lalu",
+            "likes": 8
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-dunia-ok-terfragmentasi-3-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Putri",
+        "time": "2 menit yang lalu",
+        "likes": 84,
+        "replies": []
+      },
+      {
+        "id": "c-kolase-dunia-ok-terfragmentasi-4-1766519097741",
+        "text": "Vaporwave vibes-nya dapet bgt, chill bgt liatnya 💜✨",
+        "author": "Yanto",
+        "time": "2 menit yang lalu",
+        "likes": 39,
+        "replies": [
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-4-0-1766519097741",
+            "text": "Thank you! Lowkey eksperimen aja ini hehe ✨",
+            "author": "Admin",
+            "time": "5 jam yang lalu",
+            "likes": 0
+          },
+          {
+            "id": "rf-kolase-dunia-ok-terfragmentasi-13-1766519097741",
+            "text": "Gass terus jangan kasih kendor! 🔥🚩",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 17
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-dunia-ok-terfragmentasi-5-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Ica",
+        "time": "2 menit yang lalu",
+        "likes": 43,
+        "replies": [
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-5-0-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Bagas",
+            "time": "1 hari yang lalu",
+            "likes": 8
+          },
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-5-1-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Wawan",
+            "time": "10 jam yang lalu",
+            "likes": 13
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-dunia-ok-terfragmentasi-6-1766519097741",
+        "text": "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑",
+        "author": "Dinda",
+        "time": "1 hari yang lalu",
+        "likes": 93,
+        "replies": [
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-6-0-1766519097741",
+            "text": "Minimal kasih lawn lah bang jangan jago sendiri 😂",
+            "author": "Maya",
+            "time": "30 menit yang lalu",
+            "likes": 16
+          },
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-6-1-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Ulfa",
+            "time": "10 menit yang lalu",
+            "likes": 17
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-dunia-ok-terfragmentasi-7-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Adit",
+        "time": "10 jam yang lalu",
+        "likes": 39,
+        "replies": [
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-7-0-1766519097741",
+            "text": "PC dewa mah bebas ya bang 🙏",
+            "author": "Zaki",
+            "time": "10 menit yang lalu",
+            "likes": 10
+          },
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-7-1-1766519097741",
+            "text": "Laptop kentang aja begini, apalagi PC dewa 🔥",
+            "author": "Setiawan",
+            "time": "30 menit yang lalu",
+            "likes": 5
+          }
+        ]
+      },
+      {
+        "id": "c-kolase-dunia-ok-terfragmentasi-8-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Lala",
+        "time": "10 menit yang lalu",
+        "likes": 86,
+        "replies": []
+      },
+      {
+        "id": "c-kolase-dunia-ok-terfragmentasi-9-1766519097741",
+        "text": "Renderingnya berapa lama nih puh? 🚀",
+        "author": "Maya",
+        "time": "30 menit yang lalu",
+        "likes": 71,
+        "replies": [
+          {
+            "id": "r-kolase-dunia-ok-terfragmentasi-9-0-1766519097741",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Ghea",
+            "time": "2 menit yang lalu",
+            "likes": 11
+          }
+        ]
+      }
+    ],
+    "efek-poster-bunga-berkerut": [
+      {
+        "id": "c-efek-poster-bunga-berkerut-0-1766519097741",
+        "text": "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
+        "author": "Kiki",
+        "time": "2 hari yang lalu",
+        "likes": 74,
+        "replies": [
+          {
+            "id": "r-efek-poster-bunga-berkerut-0-admin",
+            "text": "Wahahaha kena tahan kurir itu mahkotanya 👑",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 7
+          },
+          {
+            "id": "r-efek-poster-bunga-berkerut-0-0-1766519097741",
+            "text": "Waduh jauh juga ya Cakung, ditunggu king! 😂🔥",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 6
+          }
+        ]
+      },
+      {
+        "id": "c-efek-poster-bunga-berkerut-1-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Tiara",
+        "time": "2 jam yang lalu",
+        "likes": 32,
+        "replies": [
+          {
+            "id": "r-efek-poster-bunga-berkerut-1-0-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Gilang",
+            "time": "1 hari yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-efek-poster-bunga-berkerut-2-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Zaki",
+        "time": "5 jam yang lalu",
+        "likes": 76,
+        "replies": [
+          {
+            "id": "r-efek-poster-bunga-berkerut-2-0-1766519097741",
+            "text": "Hub Cakung emang boss level pengiriman bang 😂🙏",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 7
+          },
+          {
+            "id": "rf-efek-poster-bunga-berkerut-11-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Vina",
+            "time": "10 menit yang lalu",
+            "likes": 12
+          },
+          {
+            "id": "rf-efek-poster-bunga-berkerut-12-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Yanto",
+            "time": "10 menit yang lalu",
+            "likes": 1
+          }
+        ]
+      },
+      {
+        "id": "c-efek-poster-bunga-berkerut-3-1766519097741",
+        "text": "Gak capek ya jadi keren terus? 😂✨",
+        "author": "Togar",
+        "time": "2 menit yang lalu",
+        "likes": 67,
+        "replies": [
+          {
+            "id": "rf-efek-poster-bunga-berkerut-10-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Qory",
+            "time": "1 jam yang lalu",
+            "likes": 0
+          }
+        ]
+      },
+      {
+        "id": "c-efek-poster-bunga-berkerut-4-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Zaki",
+        "time": "5 jam yang lalu",
+        "likes": 83,
+        "replies": [
+          {
+            "id": "r-efek-poster-bunga-berkerut-4-0-1766519097741",
+            "text": "Masih belajar ini masku, gass terus! 🙏",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 5
+          }
+        ]
+      },
+      {
+        "id": "c-efek-poster-bunga-berkerut-5-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Kiki",
+        "time": "2 menit yang lalu",
+        "likes": 55,
+        "replies": []
+      },
+      {
+        "id": "c-efek-poster-bunga-berkerut-6-1766519097741",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Tio",
+        "time": "2 menit yang lalu",
+        "likes": 81,
+        "replies": [
+          {
+            "id": "r-efek-poster-bunga-berkerut-6-0-1766519097741",
+            "text": "Gass terus jangan kasih kendor! 🔥🚩",
+            "author": "Admin",
+            "time": "10 jam yang lalu",
+            "likes": 7
+          }
+        ]
+      },
+      {
+        "id": "c-efek-poster-bunga-berkerut-7-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Ani",
+        "time": "2 menit yang lalu",
+        "likes": 4,
+        "replies": [
+          {
+            "id": "r-efek-poster-bunga-berkerut-7-0-1766519097741",
+            "text": "Waduh panggil sepuh pula, masih pemula bang 🙏😂",
+            "author": "Admin",
+            "time": "1 hari yang lalu",
+            "likes": 19
+          },
+          {
+            "id": "r-efek-poster-bunga-berkerut-7-1-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Tiara",
+            "time": "2 jam yang lalu",
+            "likes": 5
+          }
+        ]
+      },
+      {
+        "id": "c-efek-poster-bunga-berkerut-8-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Wawan",
+        "time": "5 jam yang lalu",
+        "likes": 79,
+        "replies": [
+          {
+            "id": "r-efek-poster-bunga-berkerut-8-0-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Wawan",
+            "time": "2 menit yang lalu",
+            "likes": 19
+          }
+        ]
+      },
+      {
+        "id": "c-efek-poster-bunga-berkerut-9-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Doni",
+        "time": "10 jam yang lalu",
+        "likes": 56,
+        "replies": [
+          {
+            "id": "r-efek-poster-bunga-berkerut-9-0-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Tio",
+            "time": "5 jam yang lalu",
+            "likes": 18
+          }
+        ]
+      }
+    ],
+    "belenggu-sandal-surgawi": [
+      {
+        "id": "c-belenggu-sandal-surgawi-0-1766519097741",
+        "text": "Gak capek ya jadi keren terus? 😂✨",
+        "author": "Rizky",
+        "time": "30 menit yang lalu",
+        "likes": 69,
+        "replies": [
+          {
+            "id": "r-belenggu-sandal-surgawi-0-admin",
+            "text": "Thank you! Lowkey eksperimen aja ini hehe ✨",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 13
+          },
+          {
+            "id": "r-belenggu-sandal-surgawi-0-0-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Kiki",
+            "time": "10 jam yang lalu",
+            "likes": 17
+          }
+        ]
+      },
+      {
+        "id": "c-belenggu-sandal-surgawi-1-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Kevin",
+        "time": "1 jam yang lalu",
+        "likes": 76,
+        "replies": [
+          {
+            "id": "r-belenggu-sandal-surgawi-1-0-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Maman",
+            "time": "1 hari yang lalu",
+            "likes": 8
+          }
+        ]
+      },
+      {
+        "id": "c-belenggu-sandal-surgawi-2-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Xena",
+        "time": "1 hari yang lalu",
+        "likes": 52,
+        "replies": []
+      },
+      {
+        "id": "c-belenggu-sandal-surgawi-3-1766519097741",
+        "text": "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
+        "author": "Nina",
+        "time": "2 menit yang lalu",
+        "likes": 87,
+        "replies": [
+          {
+            "id": "rf-belenggu-sandal-surgawi-12-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Wawan",
+            "time": "1 hari yang lalu",
+            "likes": 16
+          }
+        ]
+      },
+      {
+        "id": "c-belenggu-sandal-surgawi-4-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Sasa",
+        "time": "2 hari yang lalu",
+        "likes": 50,
+        "replies": [
+          {
+            "id": "r-belenggu-sandal-surgawi-4-0-1766519097741",
+            "text": "Aman bang, menyala terus! 🚀",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 3
+          },
+          {
+            "id": "r-belenggu-sandal-surgawi-4-1-1766519097741",
+            "text": "Masih belajar ini masku, gass terus! 🙏",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 11
+          }
+        ]
+      },
+      {
+        "id": "c-belenggu-sandal-surgawi-5-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Nina",
+        "time": "1 jam yang lalu",
+        "likes": 6,
+        "replies": [
+          {
+            "id": "r-belenggu-sandal-surgawi-5-0-1766519097741",
+            "text": "PC dewa mah bebas ya bang 🙏",
+            "author": "Dinda",
+            "time": "10 menit yang lalu",
+            "likes": 11
+          },
+          {
+            "id": "r-belenggu-sandal-surgawi-5-1-1766519097741",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Putri",
+            "time": "1 hari yang lalu",
+            "likes": 16
+          }
+        ]
+      },
+      {
+        "id": "c-belenggu-sandal-surgawi-6-1766519097741",
+        "text": "Vaporwave vibes-nya dapet bgt, chill bgt liatnya 💜✨",
+        "author": "Maman",
+        "time": "10 jam yang lalu",
+        "likes": 49,
+        "replies": [
+          {
+            "id": "r-belenggu-sandal-surgawi-6-0-1766519097741",
+            "text": "Iya woee, vibenya dapet bgt parah 🌈",
+            "author": "Doni",
+            "time": "2 jam yang lalu",
+            "likes": 14
+          }
+        ]
+      },
+      {
+        "id": "c-belenggu-sandal-surgawi-7-1766519097741",
+        "text": "Warna-warnanya dapet bgt, estetik parah! ✨🌈",
+        "author": "Togar",
+        "time": "1 hari yang lalu",
+        "likes": 64,
+        "replies": [
+          {
+            "id": "rf-belenggu-sandal-surgawi-11-1766519097741",
+            "text": "Bisa aja, kebetulan lagi mood aja kemarin 🙏",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 14
+          }
+        ]
+      },
+      {
+        "id": "c-belenggu-sandal-surgawi-8-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Deni",
+        "time": "2 jam yang lalu",
+        "likes": 52,
+        "replies": [
+          {
+            "id": "r-belenggu-sandal-surgawi-8-0-1766519097741",
+            "text": "Laptop kentang aja begini, apalagi PC dewa 🔥",
+            "author": "Putri",
+            "time": "2 menit yang lalu",
+            "likes": 13
+          }
+        ]
+      },
+      {
+        "id": "c-belenggu-sandal-surgawi-9-1766519097741",
+        "text": "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
+        "author": "Zira",
+        "time": "2 jam yang lalu",
+        "likes": 27,
+        "replies": [
+          {
+            "id": "r-belenggu-sandal-surgawi-9-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Joko",
+            "time": "2 menit yang lalu",
+            "likes": 8
+          },
+          {
+            "id": "r-belenggu-sandal-surgawi-9-1-1766519097741",
+            "text": "Minimal kasih lawn lah bang jangan jago sendiri 😂",
+            "author": "Setiawan",
+            "time": "5 jam yang lalu",
+            "likes": 4
+          }
+        ]
+      }
+    ],
+    "kaleidoskop-tipografi-gradien": [
+      {
+        "id": "c-kaleidoskop-tipografi-gradien-0-1766519097741",
+        "text": "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
+        "author": "Xena",
+        "time": "30 menit yang lalu",
+        "likes": 38,
+        "replies": [
+          {
+            "id": "r-kaleidoskop-tipografi-gradien-0-admin",
+            "text": "Rata kanan bang! Pakai Photoshop fitur Timeline Animasi & Audio hehe 🙏",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 9
+          },
+          {
+            "id": "r-kaleidoskop-tipografi-gradien-0-0-1766519097741",
+            "text": "Rendering seharian bang, sampai mau meledak PC-nya 😂🚀",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-kaleidoskop-tipografi-gradien-1-1766519097741",
+        "text": "Vaporwave vibes-nya dapet bgt, chill bgt liatnya 💜✨",
+        "author": "Maya",
+        "time": "2 hari yang lalu",
+        "likes": 57,
+        "replies": [
+          {
+            "id": "r-kaleidoskop-tipografi-gradien-1-0-1766519097741",
+            "text": "Gak bahaya ta? Ngeri kali bah ✨🚩",
+            "author": "Xena",
+            "time": "2 jam yang lalu",
+            "likes": 5
+          }
+        ]
+      },
+      {
+        "id": "c-kaleidoskop-tipografi-gradien-2-1766519097741",
+        "text": "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
+        "author": "Wawan",
+        "time": "2 menit yang lalu",
+        "likes": 40,
+        "replies": [
+          {
+            "id": "r-kaleidoskop-tipografi-gradien-2-0-1766519097741",
+            "text": "Kurirnya pasti terpana liat mahkotanya ✨",
+            "author": "Putri",
+            "time": "2 jam yang lalu",
+            "likes": 1
+          }
+        ]
+      },
+      {
+        "id": "c-kaleidoskop-tipografi-gradien-3-1766519097741",
+        "text": "Pakai software apa bang? Halus bgt motionnya ✨⚙️",
+        "author": "Doni",
+        "time": "2 jam yang lalu",
+        "likes": 28,
+        "replies": []
+      },
+      {
+        "id": "c-kaleidoskop-tipografi-gradien-4-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Tiara",
+        "time": "30 menit yang lalu",
+        "likes": 15,
+        "replies": [
+          {
+            "id": "r-kaleidoskop-tipografi-gradien-4-0-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Oky",
+            "time": "1 jam yang lalu",
+            "likes": 12
+          },
+          {
+            "id": "r-kaleidoskop-tipografi-gradien-4-1-1766519097741",
+            "text": "Siap bang, nanti coba dibuatkan tutorialnya ya! ✨",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 2
+          }
+        ]
+      },
+      {
+        "id": "c-kaleidoskop-tipografi-gradien-5-1766519097741",
+        "text": "Vaporwave vibes-nya dapet bgt, chill bgt liatnya 💜✨",
+        "author": "Kiki",
+        "time": "1 hari yang lalu",
+        "likes": 22,
+        "replies": [
+          {
+            "id": "r-kaleidoskop-tipografi-gradien-5-0-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Ani",
+            "time": "10 menit yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-kaleidoskop-tipografi-gradien-6-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Qory",
+        "time": "10 jam yang lalu",
+        "likes": 86,
+        "replies": [
+          {
+            "id": "rf-kaleidoskop-tipografi-gradien-11-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Rina",
+            "time": "5 jam yang lalu",
+            "likes": 2
+          }
+        ]
+      },
+      {
+        "id": "c-kaleidoskop-tipografi-gradien-7-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Kevin",
+        "time": "30 menit yang lalu",
+        "likes": 29,
+        "replies": [
+          {
+            "id": "r-kaleidoskop-tipografi-gradien-7-0-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Jojo",
+            "time": "2 hari yang lalu",
+            "likes": 7
+          }
+        ]
+      },
+      {
+        "id": "c-kaleidoskop-tipografi-gradien-8-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Adit",
+        "time": "2 hari yang lalu",
+        "likes": 80,
+        "replies": [
+          {
+            "id": "r-kaleidoskop-tipografi-gradien-8-0-1766519097741",
+            "text": "Waduh panggil sepuh pula, masih pemula bang 🙏😂",
+            "author": "Admin",
+            "time": "5 jam yang lalu",
+            "likes": 15
+          }
+        ]
+      },
+      {
+        "id": "c-kaleidoskop-tipografi-gradien-9-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Togar",
+        "time": "1 hari yang lalu",
+        "likes": 76,
+        "replies": [
+          {
+            "id": "r-kaleidoskop-tipografi-gradien-9-0-1766519097741",
+            "text": "Masih belajar ini masku, gass terus! 🙏",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 3
+          },
+          {
+            "id": "r-kaleidoskop-tipografi-gradien-9-1-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Putri",
+            "time": "10 menit yang lalu",
+            "likes": 16
+          }
+        ]
+      }
+    ],
+    "studi-visual-tekstur-digital": [
+      {
+        "id": "c-studi-visual-tekstur-digital-0-1766519097741",
+        "text": "Pakai software apa bang? Halus bgt motionnya ✨⚙️",
+        "author": "Putri",
+        "time": "10 jam yang lalu",
+        "likes": 36,
+        "replies": [
+          {
+            "id": "r-studi-visual-tekstur-digital-0-admin",
+            "text": "Masih pakai laptop kentang kok bang beneran 😂",
+            "author": "Admin",
+            "time": "10 menit yang lalu",
+            "likes": 12
+          },
+          {
+            "id": "r-studi-visual-tekstur-digital-0-0-1766519097741",
+            "text": "PC dewa mah bebas ya bang 🙏",
+            "author": "Yuda",
+            "time": "30 menit yang lalu",
+            "likes": 11
+          }
+        ]
+      },
+      {
+        "id": "c-studi-visual-tekstur-digital-1-1766519097741",
+        "text": "Warna-warnanya dapet bgt, estetik parah! ✨🌈",
+        "author": "Vina",
+        "time": "2 menit yang lalu",
+        "likes": 75,
+        "replies": [
+          {
+            "id": "r-studi-visual-tekstur-digital-1-0-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Budi",
+            "time": "2 hari yang lalu",
+            "likes": 12
+          }
+        ]
+      },
+      {
+        "id": "c-studi-visual-tekstur-digital-2-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Budi",
+        "time": "10 jam yang lalu",
+        "likes": 57,
+        "replies": [
+          {
+            "id": "r-studi-visual-tekstur-digital-2-0-1766519097741",
+            "text": "Thank you! Lowkey eksperimen aja ini hehe ✨",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 15
+          },
+          {
+            "id": "r-studi-visual-tekstur-digital-2-1-1766519097741",
+            "text": "Bisa aja, kebetulan lagi mood aja kemarin 🙏",
+            "author": "Admin",
+            "time": "2 menit yang lalu",
+            "likes": 19
+          }
+        ]
+      },
+      {
+        "id": "c-studi-visual-tekstur-digital-3-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Wawan",
+        "time": "30 menit yang lalu",
+        "likes": 1,
+        "replies": [
+          {
+            "id": "r-studi-visual-tekstur-digital-3-0-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Wira",
+            "time": "10 menit yang lalu",
+            "likes": 18
+          },
+          {
+            "id": "r-studi-visual-tekstur-digital-3-1-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Xena",
+            "time": "1 jam yang lalu",
+            "likes": 3
+          }
+        ]
+      },
+      {
+        "id": "c-studi-visual-tekstur-digital-4-1766519097741",
+        "text": "Renderingnya berapa lama nih puh? 🚀",
+        "author": "Oky",
+        "time": "10 menit yang lalu",
+        "likes": 10,
+        "replies": []
+      },
+      {
+        "id": "c-studi-visual-tekstur-digital-5-1766519097741",
+        "text": "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥",
+        "author": "Yanto",
+        "time": "5 jam yang lalu",
+        "likes": 0,
+        "replies": [
+          {
+            "id": "r-studi-visual-tekstur-digital-5-0-1766519097741",
+            "text": "Glad you like it bro! ✨🚀",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 16
+          }
+        ]
+      },
+      {
+        "id": "c-studi-visual-tekstur-digital-6-1766519097741",
+        "text": "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
+        "author": "Kiki",
+        "time": "1 jam yang lalu",
+        "likes": 63,
+        "replies": []
+      },
+      {
+        "id": "c-studi-visual-tekstur-digital-7-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Rizky",
+        "time": "1 jam yang lalu",
+        "likes": 97,
+        "replies": [
+          {
+            "id": "r-studi-visual-tekstur-digital-7-0-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Sasa",
+            "time": "1 hari yang lalu",
+            "likes": 12
+          }
+        ]
+      },
+      {
+        "id": "c-studi-visual-tekstur-digital-8-1766519097741",
+        "text": "Menyala abangku! 🔥 Detailnya gila bgt no debat",
+        "author": "Ulfa",
+        "time": "30 menit yang lalu",
+        "likes": 87,
+        "replies": []
+      },
+      {
+        "id": "c-studi-visual-tekstur-digital-9-1766519097741",
+        "text": "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
+        "author": "Togar",
+        "time": "2 jam yang lalu",
+        "likes": 86,
+        "replies": [
+          {
+            "id": "r-studi-visual-tekstur-digital-9-0-1766519097741",
+            "text": "Hub Cakung emang ngeri bang, sabar ya 😂",
+            "author": "Sasa",
+            "time": "2 jam yang lalu",
+            "likes": 17
+          }
+        ]
+      }
+    ],
+    "gantungan": [
+      {
+        "id": "c-gantungan-0-1766519097741",
+        "text": "Visualnya pecah bgt abangku! Menyala 🔥✨",
+        "author": "Rina",
+        "time": "2 menit yang lalu",
+        "likes": 81,
+        "replies": [
+          {
+            "id": "r-gantungan-0-admin",
+            "text": "Thank you! Lowkey eksperimen aja ini hehe ✨",
+            "author": "Admin",
+            "time": "1 hari yang lalu",
+            "likes": 4
+          },
+          {
+            "id": "r-gantungan-0-0-1766519097741",
+            "text": "Bisa aja, kebetulan lagi mood aja kemarin 🙏",
+            "author": "Admin",
+            "time": "1 hari yang lalu",
+            "likes": 2
+          },
+          {
+            "id": "r-gantungan-0-1-1766519097741",
+            "text": "Gass terus jangan kasih kendor! 🔥🚩",
+            "author": "Admin",
+            "time": "2 hari yang lalu",
+            "likes": 13
+          }
+        ]
+      },
+      {
+        "id": "c-gantungan-1-1766519097741",
+        "text": "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
+        "author": "Oky",
+        "time": "2 hari yang lalu",
+        "likes": 59,
+        "replies": [
+          {
+            "id": "r-gantungan-1-0-1766519097741",
+            "text": "Masih belajar ini masku, gass terus! 🙏",
+            "author": "Admin",
+            "time": "30 menit yang lalu",
+            "likes": 18
+          },
+          {
+            "id": "r-gantungan-1-1-1766519097741",
+            "text": "Info loker dong mumpung ada suhu di sini 🚩",
+            "author": "Maya",
+            "time": "30 menit yang lalu",
+            "likes": 5
+          }
+        ]
+      },
+      {
+        "id": "c-gantungan-2-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Wawan",
+        "time": "1 jam yang lalu",
+        "likes": 22,
+        "replies": []
+      },
+      {
+        "id": "c-gantungan-3-1766519097741",
+        "text": "Gak capek ya jadi keren terus? 😂✨",
+        "author": "Samsul",
+        "time": "5 jam yang lalu",
+        "likes": 61,
+        "replies": [
+          {
+            "id": "rf-gantungan-13-1766519097741",
+            "text": "Iya woee, vibenya dapet bgt parah 🌈",
+            "author": "Luqman",
+            "time": "1 jam yang lalu",
+            "likes": 1
+          }
+        ]
+      },
+      {
+        "id": "c-gantungan-4-1766519097741",
+        "text": "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
+        "author": "Fajri",
+        "time": "2 menit yang lalu",
+        "likes": 26,
+        "replies": [
+          {
+            "id": "rf-gantungan-12-1766519097741",
+            "text": "Minimal kasih lawn lah bang jangan jago sendiri 😂",
+            "author": "Zaki",
+            "time": "30 menit yang lalu",
+            "likes": 8
+          }
+        ]
+      },
+      {
+        "id": "c-gantungan-5-1766519097741",
+        "text": "Gak ada obat! Vibesnya gokil bgt parah ✨😎",
+        "author": "Ghea",
+        "time": "2 menit yang lalu",
+        "likes": 33,
+        "replies": [
+          {
+            "id": "r-gantungan-5-0-1766519097741",
+            "text": "Glad you like it bro! ✨🚀",
+            "author": "Admin",
+            "time": "5 jam yang lalu",
+            "likes": 13
+          },
+          {
+            "id": "rf-gantungan-10-1766519097741",
+            "text": "Doi emang gak pernah gagal sctipt-nya 🔥",
+            "author": "Ghea",
+            "time": "2 hari yang lalu",
+            "likes": 18
+          }
+        ]
+      },
+      {
+        "id": "c-gantungan-6-1766519097741",
+        "text": "Otw daftar jadi murid suhu 🙏🔥",
+        "author": "Tio",
+        "time": "2 hari yang lalu",
+        "likes": 18,
+        "replies": []
+      },
+      {
+        "id": "c-gantungan-7-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Deni",
+        "time": "1 jam yang lalu",
+        "likes": 20,
+        "replies": [
+          {
+            "id": "r-gantungan-7-0-1766519097741",
+            "text": "Gas puh, ajarin kita semua 🙏",
+            "author": "Deni",
+            "time": "30 menit yang lalu",
+            "likes": 1
+          },
+          {
+            "id": "r-gantungan-7-1-1766519097741",
+            "text": "Fix no debat, ini guru kita semua 🔥",
+            "author": "Reza",
+            "time": "10 jam yang lalu",
+            "likes": 3
+          },
+          {
+            "id": "rf-gantungan-11-1766519097741",
+            "text": "Waduh panggil sepuh pula, masih pemula bang 🙏😂",
+            "author": "Admin",
+            "time": "1 hari yang lalu",
+            "likes": 12
+          }
+        ]
+      },
+      {
+        "id": "c-gantungan-8-1766519097741",
+        "text": "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
+        "author": "Luqman",
+        "time": "1 jam yang lalu",
+        "likes": 65,
+        "replies": []
+      },
+      {
+        "id": "c-gantungan-9-1766519097741",
+        "text": "Info workshop dong, minat belajar serius nih 🙏",
+        "author": "Doni",
+        "time": "2 jam yang lalu",
+        "likes": 42,
+        "replies": [
+          {
+            "id": "r-gantungan-9-0-1766519097741",
+            "text": "Laptop kentang aja begini, apalagi PC dewa 🔥",
+            "author": "Sasa",
+            "time": "1 hari yang lalu",
+            "likes": 6
+          },
+          {
+            "id": "r-gantungan-9-1-1766519097741",
+            "text": "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥",
+            "author": "Rina",
+            "time": "2 menit yang lalu",
+            "likes": 1
+          }
+        ]
+      }
+    ]
   }
 }

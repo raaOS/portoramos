@@ -1,10 +1,10 @@
 'use client'
 
 import Card from '@/components/shared/Card'
-import AnimateItem from '@/components/AnimateItem'
+import AnimateItem from '@/components/effects/AnimateItem'
 import Link from 'next/link'
 
-import MainNav from '@/components/MainNav'
+import MainNav from '@/components/layout/MainNav'
 import type { Project } from '@/types/projects'
 import { useMemo } from 'react'
 

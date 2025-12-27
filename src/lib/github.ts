@@ -1,4 +1,6 @@
 import { Project } from '@/types/projects';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
@@ -19,8 +21,10 @@ export class GitHubService {
     // Lazy getters to ensure env vars are read at runtime, not build time
     private get token(): string {
         const token = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN || '';
+        // console.log('[GitHubService] Token length:', token.length); // Debug (don't log full token)
         if (!token) {
             console.error('[GitHubService] GITHUB_ACCESS_TOKEN or GITHUB_TOKEN is not set!');
+            console.log('[GitHubService] Env keys:', Object.keys(process.env).filter(k => k.startsWith('GITHUB')));
         }
         return token;
     }
@@ -29,6 +33,7 @@ export class GitHubService {
         const owner = process.env.GITHUB_OWNER || '';
         if (!owner) {
             console.error('[GitHubService] GITHUB_OWNER is not set!');
+            console.log('[GitHubService] Env keys:', Object.keys(process.env)); // Debug all envs to see if they are loaded at all
         }
         return owner;
     }
@@ -54,6 +59,21 @@ export class GitHubService {
      * @param noCache - If true, bypasses cache to get fresh data (important for SHA)
      */
     async getFileContent<T>(filePath: string, noCache = false): Promise<{ content: T, sha: string }> {
+        // DEV MODE FALLBACK: Read from local filesystem
+        if (process.env.NODE_ENV === 'development') {
+            try {
+                const localPath = path.join(process.cwd(), filePath);
+                console.log(`[GitHubService] 🛠️ DEV MODE: Reading local file: ${localPath}`);
+                const content = await fs.readFile(localPath, 'utf-8');
+                return {
+                    content: JSON.parse(content),
+                    sha: 'dev-local-sha'
+                };
+            } catch (error) {
+                console.warn(`[GitHubService] Local file read failed for ${filePath}, falling back to API.`);
+            }
+        }
+
         const url = `${GITHUB_API_URL}/repos/${this.owner}/${this.repo}/contents/${filePath}`;
         console.log(`[GitHubService] Fetching: ${url} (noCache: ${noCache})`);
 
@@ -81,7 +101,10 @@ export class GitHubService {
     /**
      * Update any file in the repo
      */
-    async updateFile(filePath: string, content: any, message: string): Promise<boolean> {
+    /**
+     * Update any file in the repo
+     */
+    async updateFile(filePath: string, content: Record<string, unknown>, message: string): Promise<boolean> {
         try {
             // 1. Get current file to get the latest SHA (required for updates)
             let sha: string | undefined;
@@ -102,7 +125,7 @@ export class GitHubService {
             const url = `${GITHUB_API_URL}/repos/${this.owner}/${this.repo}/contents/${filePath}`;
             console.log(`[GitHubService] Updating: ${url}`);
 
-            const body: any = {
+            const body: { message: string; content: string; sha?: string } = {
                 message: message,
                 content: encodedContent,
             };

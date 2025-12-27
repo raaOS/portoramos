@@ -5,7 +5,7 @@ interface ProjectMediaUploadProps {
     formData: ProjectFormData;
     errors: Record<string, string>;
     isDetectingDimensions: boolean;
-    updateField: (field: keyof ProjectFormData, value: any) => void;
+    updateField: <K extends keyof ProjectFormData>(field: K, value: ProjectFormData[K]) => void;
 }
 
 export default function ProjectMediaUpload({ formData, errors, isDetectingDimensions, updateField }: ProjectMediaUploadProps) {

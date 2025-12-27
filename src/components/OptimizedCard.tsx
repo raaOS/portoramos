@@ -67,7 +67,7 @@ const OptimizedCard = memo<OptimizedCardProps>(({ project, index }) => {
   }, [])
 
   return (
-    <Link href={`/work/${project.slug}`} className="block group" onClick={handleClick}>
+    <Link href={`/works/${project.slug}`} className="block group" onClick={handleClick}>
       <motion.div
         layoutId={id}
         className="overflow-hidden rounded-2xl"
