@@ -1,6 +1,17 @@
 {
   "history": [
     {
+      "id": "1766869932040",
+      "date": "2025-12-27T21:12:12.040Z",
+      "url": "https://portfolio-shared.vercel.app/about",
+      "scores": {
+        "performance": 94,
+        "accessibility": 100,
+        "bestPractices": 100,
+        "seo": 100
+      }
+    },
+    {
       "id": "1766869559796",
       "date": "2025-12-27T21:05:59.796Z",
       "url": "https://portfolio-shared.vercel.app/about",
