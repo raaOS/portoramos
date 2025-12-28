@@ -190,6 +190,7 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
                       <ProjectCardPinterest
                         project={project}
                         priority={true} // Always priority for LCP items
+                        videoEnabled={index !== 0} // LCP Optimization: Disable video for first item
                       />
                     </div>
                   )
