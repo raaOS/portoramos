@@ -88,12 +88,26 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
     return result
   }, [projects, tag, searchQuery, fuseInstance])
 
-  // Initialize displayed projects - NO duplication, infinite scroll will add more as needed
+  // Optimize Initial Load: Only render top 4 items first, then the rest
+  const [hasDeferredLoaded, setHasDeferredLoaded] = useState(false);
+
+  // Initialize displayed projects
+  // If we haven't deferred loaded yet, ONLY show top 4.
+  // Unless there is a search filter active, then show all (UX priority).
   useEffect(() => {
     if (filteredProjects.length > 0) {
-      setDisplayedProjects(filteredProjects)
+      if (!hasDeferredLoaded && !tag && !searchQuery) {
+        setDisplayedProjects(filteredProjects.slice(0, 4));
+        // Defer the rest by a small tick to allow painting
+        setTimeout(() => {
+          setHasDeferredLoaded(true);
+          setDisplayedProjects(filteredProjects);
+        }, 100);
+      } else {
+        setDisplayedProjects(filteredProjects);
+      }
     }
-  }, [filteredProjects])
+  }, [filteredProjects, tag, searchQuery, hasDeferredLoaded])
 
   // Optimized infinite scroll with requestAnimationFrame
   useEffect(() => {
@@ -164,26 +178,42 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
         {displayedProjects.length > 0 ? (
           <>
             <MasonryGrid>
-              {displayedProjects.map((project, index) => (
-                <motion.div
-                  key={`${project.slug}-${index}`}
-                  // LCP Optimization: Do not animate the first 6 items (above the fold)
-                  // They should be visible immediately. 'false' prevents Framer from resetting styles on hydration.
-                  initial={index < 6 ? false : { opacity: 0, y: 100 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.1 }}
-                  transition={{
-                    duration: 0.8,
-                    ease: [0.25, 0.46, 0.45, 0.94],
-                    delay: index < 8 ? index * 0.1 : 0
-                  }}
-                >
-                  <ProjectCardPinterest
-                    project={project}
-                    priority={index < 10}
-                  />
-                </motion.div>
-              ))}
+              {displayedProjects.map((project, index) => {
+                // AGGRESSIVE OPTIMIZATION:
+                // Top 4 items (Above the fold) are rendered STATICALLY without Framer Motion.
+                // This removes JS execution overhead during the critical LCP window.
+                const isLcpItem = index < 4;
+
+                if (isLcpItem) {
+                  return (
+                    <div key={`${project.slug}-${index}`} className="mb-6">
+                      <ProjectCardPinterest
+                        project={project}
+                        priority={true} // Always priority for LCP items
+                      />
+                    </div>
+                  )
+                }
+
+                return (
+                  <motion.div
+                    key={`${project.slug}-${index}`}
+                    initial={{ opacity: 0, y: 100 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.1 }}
+                    transition={{
+                      duration: 0.8,
+                      ease: [0.25, 0.46, 0.45, 0.94],
+                      delay: 0 // Remove staggered delay for faster perceived load of lower items
+                    }}
+                  >
+                    <ProjectCardPinterest
+                      project={project}
+                      priority={false}
+                    />
+                  </motion.div>
+                )
+              })}
             </MasonryGrid>
 
             {/* Subtle loading indicator */}

@@ -48,8 +48,10 @@ export default function ProjectCardPinterest({
                         src={cover.src}
                         poster={cover.poster}
                         alt={title}
-                        width={width}
-                        height={height}
+                        // LCP Optimization: detailed projects might use high-res, but card only needs ~800px even on desktop
+                        // For LCP (priority), we explicitly cap at 800 to ensure mobile doesn't download 1600+
+                        width={priority ? 800 : width}
+                        height={priority ? Math.round(800 / ratio) : height}
                         priority={priority}
                         lazy={!priority}
                         autoplay={shouldAutoplay}
@@ -57,7 +59,7 @@ export default function ProjectCardPinterest({
                         loop={project.loop ?? true}
                         playsInline={project.playsInline ?? true}
                         className="w-full h-full object-cover"
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                 </div>
             </div>
