@@ -613,6 +613,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
             <div className="text-center w-full h-full flex flex-col justify-center items-center -mt-16 md:-mt-32">
 
               {/* Mobile: paksa 2 baris PORTO + tail jika judul diawali PORTO, selain itu tetap satu baris */}
+              {/* Mobile: paksa 2 baris PORTO + tail jika judul diawali PORTO, selain itu tetap satu baris */}
               {heroStartsWithPorto ? (
                 <div className="block sm:hidden leading-[0.9] uppercase min-h-[64vw]">
                   <div className="flex flex-col items-start space-y-1">
@@ -621,14 +622,14 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                       className="text-[64vw] tracking-normal text-white font-display font-bold select-none h-[60vw]"
                       initialDelay={0.2}
                       animateBy="letters"
-                      direction="top"
+                      direction="bottom"
                     />
                     <BlurTextLoop
                       text={heroTailUpper}
                       className="text-[64vw] tracking-normal text-white font-display font-bold select-none h-[60vw]"
                       initialDelay={0.2}
                       animateBy="letters"
-                      direction="top"
+                      direction="bottom"
                     />
                   </div>
                 </div>
@@ -639,7 +640,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                     className="text-[64vw] leading-[0.9] tracking-normal text-white font-display font-bold uppercase select-none"
                     initialDelay={0.15}
                     animateBy="letters"
-                    direction="top"
+                    direction="bottom"
                   />
                 </div>
               )}
@@ -650,7 +651,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                   className="text-[36vw] md:text-[32vw] lg:text-[31vw] leading-[0.9] tracking-normal text-white font-display font-bold uppercase select-none"
                   initialDelay={0.15}
                   animateBy="letters"
-                  direction="top"
+                  direction="bottom"
                 />
               </div>
             </div>
