@@ -105,8 +105,8 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
     const [isGridMounted, setIsGridMounted] = React.useState(false);
 
     React.useEffect(() => {
-        // Mount grid after main content is likely painted (0.1s delay is usually enough to unblock main thread)
-        const timer = setTimeout(() => setIsGridMounted(true), 100);
+        // Mount grid after main content is likely painted (0.8s delay aligns with entrance animation duration)
+        const timer = setTimeout(() => setIsGridMounted(true), 800);
         return () => clearTimeout(timer);
     }, []);
 

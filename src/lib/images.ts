@@ -82,26 +82,32 @@ function cloudinaryImage(u: string, opts?: { width?: number }) {
   return insertCloudinaryTransform(u, `f_auto,q_auto${w}`)
 }
 
-function cloudinaryVideo(u: string) {
+function cloudinaryVideo(u: string, opts?: { width?: number, quality?: string }) {
   u = (u || '').trim()
   // Normalize embed player URL to direct video asset first
   u = fromPlayerToAsset(u)
-  // Jangan tambahkan transform video (menghindari Strict Transformations)
-  return u
+
+  const w = opts?.width ? `,w_${opts.width}` : ''
+  const q = opts?.quality ? `,q_auto:${opts.quality}` : ',q_auto'
+  // vc_auto (video codec auto) + quality + width
+  return insertCloudinaryTransform(u, `vc_auto${q}${w}`)
 }
 
-function cloudinaryPosterFromVideo(u: string) {
+function cloudinaryPosterFromVideo(u: string, opts?: { width?: number }) {
   u = (u || '').trim()
   try {
     // Normalize embed URL first
     u = fromPlayerToAsset(u)
     const url = new URL(u)
     if (!isCloudinary(url)) return undefined
+
+    // Default poster width for video thumbnails - 250px matches grid display
+    const w = opts?.width ? opts.width : 250
     // Keep resource as video, request jpg thumbnail at start (so_0) with optimization
-    const withSo = insertCloudinaryTransform(u, 'so_0,w_800,f_auto,q_auto')
-    // Change extension to .jpg
-    const jpg = withSo.replace(/\.(mp4|mov|webm)(\?.*)?$/i, '.jpg$2')
-    return jpg
+    const withSo = insertCloudinaryTransform(u, `so_0,w_${w},f_auto,q_auto`)
+    // Change extension to .webp for better compression and audit compliance
+    const webp = withSo.replace(/\.(mp4|mov|webm)(\?.*)?$/i, '.webp$2')
+    return webp
   } catch {
     return undefined
   }
@@ -126,14 +132,35 @@ export function resolveCover(p: Project): GalleryItem {
   const kind = (inferredVideo ? 'video' : 'image') as GalleryItem['kind']
   if (p.cover) {
     if (inferredVideo) {
-      const v = cloudinaryVideo(p.cover)
-      const poster = cloudinaryPosterFromVideo(p.cover)
+      // Grid video: Sweet Spot Optimization (w=400)
+      // w=400 provides 1.6x density. Clean enough, but lighter than 500px.
+      const v = cloudinaryVideo(p.cover, { width: 400, quality: 'eco' })
+      const poster = cloudinaryPosterFromVideo(p.cover, { width: 400 })
       return { kind, src: toMediaProxy(v), poster: poster ? toImageProxy(poster) : undefined, width: p.coverWidth, height: p.coverHeight }
     }
-    const img = cloudinaryImage(p.cover, { width: 1600 })
+    // Grid images: 512px balances mobile speed and desktop quality (2x density for ~250px card)
+    const img = cloudinaryImage(p.cover, { width: 512 })
     return { kind: 'image', src: toImageProxy(img), width: p.coverWidth, height: p.coverHeight }
   }
   // Tanpa cover: kembalikan placeholder lokal (bukan Picsum)
+  return { kind: 'image', src: coverUrl(p) }
+}
+
+export function resolveDetailCover(p: Project): GalleryItem {
+  const inferredVideo = isVideoLink(p.cover)
+  const kind = (inferredVideo ? 'video' : 'image') as GalleryItem['kind']
+  if (p.cover) {
+    if (inferredVideo) {
+      // Detail video: High Quality (w=1280) for hero display
+      // Standard q_auto to ensure good visual quality
+      const v = cloudinaryVideo(p.cover, { width: 1280 })
+      const poster = cloudinaryPosterFromVideo(p.cover, { width: 1280 })
+      return { kind, src: toMediaProxy(v), poster: poster ? toImageProxy(poster) : undefined, width: p.coverWidth, height: p.coverHeight }
+    }
+    // Detail images: 1600px for full hero quality
+    const img = cloudinaryImage(p.cover, { width: 1600 })
+    return { kind: 'image', src: toImageProxy(img), width: p.coverWidth, height: p.coverHeight }
+  }
   return { kind: 'image', src: coverUrl(p) }
 }
 
@@ -143,7 +170,8 @@ export function resolveGallery(p: Project): GalleryItem[] {
       .filter((it) => it.isActive !== false)
       .map((it) => {
         if (it.kind === 'video') {
-          const v = cloudinaryVideo(it.src)
+          // Gallery video: Higher quality (w=1600, standard q_auto)
+          const v = cloudinaryVideo(it.src, { width: 1600 })
           const poster = it.poster ? cloudinaryImage(it.poster) : cloudinaryPosterFromVideo(it.src)
           return { kind: 'video', src: toMediaProxy(v), poster: poster ? toImageProxy(poster) : undefined, width: it.width, height: it.height }
         }

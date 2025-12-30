@@ -58,9 +58,22 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   const [canPlay, setCanPlay] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [hasError, setHasError] = useState(false)
-  const [shouldLoad] = useState(true)
+  const [shouldLoad, setShouldLoad] = useState((kind === 'video' && !priority) ? false : (!lazy || priority))
   const [isMounted, setIsMounted] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const loadTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Mobile Optimization State
+  const [isMobile, setIsMobile] = useState(false)
+  const manualPlayRef = useRef(false)
+
+  // Detect Mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -77,8 +90,8 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     return () => setIsMounted(false)
   }, [])
 
-  // Force autoplay regardless of reduced motion preferences because the user explicitly requested it
-  const effectiveAutoplay = autoplay && shouldLoad
+  // Force autoplay only if not mobile
+  const effectiveAutoplay = autoplay && shouldLoad && !isMobile
 
   // Merge forwarded ref (object or callback) with our internal ref so autoplay logic always has a handle
   const setVideoRef = useCallback((node: HTMLVideoElement | null) => {
@@ -130,40 +143,71 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     }
   }, [kind, effectiveAutoplay, muted])
 
+  // Ref for the container to observe visibility even before video loads
+  const containerRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    if (kind !== 'video' || !effectiveAutoplay) return
-    const el = internalVideoRef.current
+    // If not a video or already forcibly loaded, skip lazy logic
+    // But we still need observer for AutoPlay logic!
+    if (kind !== 'video') return
+
+    const el = containerRef.current
     if (!el) return
 
     let isPlaying = false
 
     const onIntersect: IntersectionObserverCallback = (entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting && entry.intersectionRatio > 0) {
-          if (!isPlaying) {
-            isPlaying = true
-            playIfPossible()
+        if (entry.isIntersecting) {
+          // 1. Trigger Load if not loaded (with delay to save LCP)
+          // STRICT: On mobile, we NEVER auto-load. User must click.
+          if (!shouldLoad && !loadTimerRef.current && !isMobile) {
+            // Honey Spot Strategy: Staggered Loading
+            // Random delay between 1.5s and 4.5s
+            // This prevents all videos from hammering the network simultaneously
+            const jitter = Math.random() * 3000
+            loadTimerRef.current = setTimeout(() => {
+              setShouldLoad(true)
+            }, 1500 + jitter)
+          }
+
+          // 2. Play if loaded and visible
+          if (entry.intersectionRatio > 0 && effectiveAutoplay) {
+            if (!isPlaying && internalVideoRef.current) {
+              isPlaying = true;
+              playIfPossible();
+            }
           }
         } else {
-          if (isPlaying) {
+          // If scrolled away before loading, cancel the load
+          if (loadTimerRef.current) {
+            clearTimeout(loadTimerRef.current)
+            loadTimerRef.current = null
+          }
+
+          // Pause if completely invalid
+          if (isPlaying && internalVideoRef.current) {
             isPlaying = false
-            el.pause()
+            internalVideoRef.current.pause()
           }
         }
       })
     }
 
     const observer = new IntersectionObserver(onIntersect, {
-      threshold: [0, 0.25, 0.5, 0.75, 1],
-      rootMargin: '0px 0px 200px 0px'
+      threshold: 0.25,
+      rootMargin: '100px 0px 100px 0px' // Tighter margin to save resources
     })
 
     observer.observe(el)
 
     return () => {
       observer.disconnect()
+      if (loadTimerRef.current) {
+        clearTimeout(loadTimerRef.current)
+      }
     }
-  }, [kind, effectiveAutoplay, src, muted, playIfPossible, pathname])
+  }, [kind, effectiveAutoplay, src, muted, playIfPossible, pathname, shouldLoad, lazy, priority, isMobile])
 
   // Force autoplay on mount (critical for navigation)
   useEffect(() => {
@@ -214,27 +258,40 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
 
   if (kind === 'video') {
     return (
-      <div className="relative w-full h-full">
+      <div ref={containerRef} className="relative w-full h-full">
         <video
           ref={setVideoRef}
           className={className || "w-full h-full object-cover"}
           src={shouldLoad ? src : undefined}
-          poster={poster}
+          // poster={poster} -- Removed to prevent "double poster" effect (native vs overlay)
+          // We handle the poster via the absolute positioned Image overlay below
+          aria-label={controls ? (alt || 'Video content') : undefined}
+          title={controls ? (alt || 'Video content') : undefined}
+          aria-hidden={!controls ? "true" : undefined}
+          tabIndex={!controls ? -1 : undefined}
           autoPlay={effectiveAutoplay}
+          // @ts-ignore - React 18.3+ or custom typs
+          fetchPriority={priority ? "high" : "auto"}
           muted={effectiveAutoplay || muted} // Force muted if autoplay is on
           loop={loop}
           playsInline={playsInline}
           controls={controls}
-          preload={priority ? "auto" : "metadata"} // Changed from "none" to "metadata" for better autoplay reliability
+          preload="none" // Always none. Let autoplay or manual play trigger loading.
           webkit-playsinline="true"
           x5-playsinline="true"
           x5-video-player-type="h5"
           onCanPlay={() => {
             setCanPlay(true)
             setIsLoading(false)
-            setHasError(false) // Clear error on successful load
-            // Immediate play attempt when video is ready
-            playIfPossible()
+            setHasError(false)
+
+            // Immediate play attempt if manually requested OR if autoplay is effective
+            if (manualPlayRef.current) {
+              playIfPossible()
+              manualPlayRef.current = false
+            } else if (effectiveAutoplay) {
+              playIfPossible()
+            }
           }}
           onLoadStart={() => {
             setIsLoading(true)
@@ -262,11 +319,43 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           }}
         />
 
-        {/* Play Button Overlay - Shows when autoplay is blocked */}
-        {autoplayBlocked && !hasError && (
+        {/* Optimized Poster Image Overlay - Fades out when video plays */}
+        <div className={`absolute inset-0 z-10 transition-opacity duration-700 pointer-events-none ${canPlay ? 'opacity-0' : 'opacity-100'}`}>
+          <Image
+            src={poster || src}
+            alt={alt}
+            width={width}
+            height={height}
+            priority={priority}
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'auto'}
+            sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
+            className={className || "w-full h-full object-cover"}
+            placeholder="blur"
+            blurDataURL={blurDataURL || generateBlurDataURL()}
+            quality={75}
+            style={{
+              objectFit: objectFit,
+              width: '100%',
+              height: '100%'
+            }}
+          />
+        </div>
+
+        {/* Play Button Overlay - Shows when autoplay is blocked OR matches strictly lazy mobile state */}
+        {((autoplayBlocked && !hasError) || (isMobile && !shouldLoad)) && (
           <div
             className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer group hover:bg-black/50 transition-colors"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation() // Prevent parent clicks
+
+              // If not loaded, load it first
+              if (!shouldLoad) {
+                manualPlayRef.current = true
+                setShouldLoad(true)
+                return
+              }
+
               const video = internalVideoRef.current
               if (video) {
                 video.play()
@@ -280,9 +369,9 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
             }}
             title="Click to play video"
           >
-            <div className="bg-white/95 rounded-full p-5 shadow-2xl group-hover:scale-110 transition-transform">
+            <div className={`bg-white/95 rounded-full shadow-2xl transition-transform ${shouldLoad ? 'p-5 group-hover:scale-110' : 'p-6 scale-110'}`}>
               <svg
-                className="w-12 h-12 text-black"
+                className={`${shouldLoad ? 'w-12 h-12' : 'w-16 h-16'} text-black`}
                 fill="currentColor"
                 viewBox="0 0 24 24"
               >

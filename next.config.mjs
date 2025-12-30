@@ -12,6 +12,10 @@ const nextConfig = {
     qualities: [75, 90],
     // Enable image optimization for better performance (disabled in dev to avoid localPatterns issues)
     unoptimized: process.env.NODE_ENV !== 'production',
+    // Granular sizes for perfect mobile masonry grid (245px * 2 DPR = 490px -> 512px match)
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512],
+    // Modern image formats for better compression
+    formats: ['image/avif', 'image/webp'],
     localPatterns: [
       {
         pathname: '/api/img',
@@ -31,8 +35,21 @@ const nextConfig = {
   experimental: {
     // Enable modern bundling
     esmExternals: true,
+    // Optimize CSS for better performance (inline critical CSS) - requires 'critters' package
+    optimizeCss: true,
     // Optimize package imports to reduce bundle size
-    optimizePackageImports: ['framer-motion', 'lucide-react', '@tanstack/react-query'],
+    optimizePackageImports: [
+      'framer-motion',
+      'lucide-react',
+      '@tanstack/react-query',
+      'react-hot-toast',
+      'recharts',
+      'gsap',
+      'fuse.js',
+      'slate',
+      'slate-react',
+      'slate-history'
+    ],
   },
   // Simplified webpack configuration - disabled to fix ChunkLoadError
   // webpack: (config, { dev, isServer }) => {

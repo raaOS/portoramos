@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     default: baseSEO.title,
     template: `%s | ${baseSEO.title}`,
   },
-  description: baseSEO.description,
+  description: 'Portofolio kreatif Ramos berisi project desain digital, UI/UX, dan visual yang berfokus pada storytelling, detail, dan pengalaman pengguna yang halus.',
   keywords: baseSEO.keywords,
   authors: [{ name: baseSEO.author }],
   creator: baseSEO.author,
@@ -76,7 +76,7 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         {/* Preconnect to Cloudinary for faster resource loading */}
-        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <script
           type="application/ld+json"

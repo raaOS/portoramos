@@ -27,7 +27,20 @@ interface FuseInstance<T> {
 
 export default function IndexClientInner({ projects, tag, lastUpdated }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [displayedProjects, setDisplayedProjects] = useState<Project[]>(projects || [])
+  // Responsive Initial Count: Start small (6) for Mobile performance, scale up for Desktop
+  const [visibleCount, setVisibleCount] = useState(6)
+
+  // Set correct count on mount/resize based on screen width
+  useEffect(() => {
+    const updateCount = () => {
+      // Mobile: 6 projects balances speed and content above fold
+      // Desktop: 30 projects for rich above-fold content
+      setVisibleCount(window.innerWidth > 768 ? 30 : 6)
+    }
+    updateCount()
+
+    // Optional: Update on resize? No, usually not needed for initial load optimization.
+  }, [])
   const [isLoading, setIsLoading] = useState(false)
   const [fuseInstance, setFuseInstance] = useState<FuseInstance<Project> | null>(null)
   const rafRef = useRef<number | null>(null)
@@ -88,42 +101,45 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
     return result
   }, [projects, tag, searchQuery, fuseInstance])
 
-  // Optimize Initial Load: Only render top 4 items first, then the rest
-  const [hasDeferredLoaded, setHasDeferredLoaded] = useState(false);
+  // SAFE INFINITE LOOP:
+  // We use modulo logic to repeat projects effectively indefinitely but cap it at a safe limit
+  // to prevent browser crash. e.g. 5 loops or 150 items max.
+  const MAX_DISPLAY_COUNT = 150;
 
-  // Initialize displayed projects
-  // If we haven't deferred loaded yet, ONLY show top 4.
-  // Unless there is a search filter active, then show all (UX priority).
+  const displayedProjects = useMemo(() => {
+    if (!filteredProjects.length) return [];
+
+    // Create an array of length 'visibleCount'
+    // Map each index to a project from filteredProjects using modulo
+    return Array.from({ length: visibleCount }).map((_, i) => {
+      return filteredProjects[i % filteredProjects.length];
+    });
+  }, [filteredProjects, visibleCount]);
+
+  // Reset visible count when filters change - use smaller mobile count for faster LCP
   useEffect(() => {
-    if (filteredProjects.length > 0) {
-      if (!hasDeferredLoaded && !tag && !searchQuery) {
-        setDisplayedProjects(filteredProjects.slice(0, 4));
-        // Defer the rest by a small tick to allow painting
-        setTimeout(() => {
-          setHasDeferredLoaded(true);
-          setDisplayedProjects(filteredProjects);
-        }, 100);
-      } else {
-        setDisplayedProjects(filteredProjects);
-      }
-    }
-  }, [filteredProjects, tag, searchQuery, hasDeferredLoaded])
+    setVisibleCount(window.innerWidth > 768 ? 30 : 6)
+  }, [filteredProjects])
 
   // Optimized infinite scroll with requestAnimationFrame
   useEffect(() => {
     let ticking = false
 
     const checkScroll = () => {
+      // Stop infinite scroll if we hit the safe limit OR if there are no projects
+      if (visibleCount >= MAX_DISPLAY_COUNT || !filteredProjects.length) return
+
       const scrollPosition = window.innerHeight + window.scrollY
       const bottomPosition = document.documentElement.scrollHeight
       const distanceFromBottom = bottomPosition - scrollPosition
 
       // Trigger at 1000px for good UX
-      if (distanceFromBottom < 1000 && !isLoading && filteredProjects.length > 0) {
+      if (distanceFromBottom < 1000 && !isLoading) {
         setIsLoading(true)
 
         requestAnimationFrame(() => {
-          setDisplayedProjects(prev => [...prev, ...filteredProjects])
+          // Increase count for "infinite" feel
+          setVisibleCount(prev => Math.min(prev + 12, MAX_DISPLAY_COUNT))
 
           setTimeout(() => {
             setIsLoading(false)
@@ -141,6 +157,9 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
       }
     }
 
+    // Check immediately on load in case the content is shorter than the viewport
+    checkScroll();
+
     window.addEventListener('scroll', handleScroll, { passive: true })
 
     return () => {
@@ -149,7 +168,7 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
         cancelAnimationFrame(rafRef.current)
       }
     }
-  }, [filteredProjects, isLoading])
+  }, [filteredProjects.length, displayedProjects.length, isLoading, visibleCount])
 
   return (
     <section className="py-8 px-4">
@@ -179,38 +198,22 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
           <>
             <MasonryGrid>
               {displayedProjects.map((project, index) => {
-                // AGGRESSIVE OPTIMIZATION:
-                // Top 4 items (Above the fold) are rendered STATICALLY without Framer Motion.
-                // This removes JS execution overhead during the critical LCP window.
-                const isLcpItem = index < 4;
-
-                if (isLcpItem) {
-                  return (
-                    <div key={`${project.slug}-${index}`} className="mb-6">
-                      <ProjectCardPinterest
-                        project={project}
-                        priority={true} // Always priority for LCP items
-                        videoEnabled={index !== 0} // LCP Optimization: Disable video for first item
-                      />
-                    </div>
-                  )
-                }
-
                 return (
                   <motion.div
                     key={`${project.slug}-${index}`}
-                    initial={{ opacity: 0, y: 100 }}
+                    initial={{ opacity: 0, y: 50 }} // Reduced y offset for subtler entrance
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.1 }}
+                    viewport={{ once: true, margin: "50px" }} // Trigger slightly before
                     transition={{
-                      duration: 0.8,
-                      ease: [0.25, 0.46, 0.45, 0.94],
-                      delay: 0 // Remove staggered delay for faster perceived load of lower items
+                      duration: 0.5,
+                      ease: "easeOut",
+                      delay: (Math.floor(index / 7) % 5) * 0.1 // Row-by-row visual curtain effect (7 items per row)
                     }}
                   >
                     <ProjectCardPinterest
                       project={project}
-                      priority={false}
+                      priority={index < 4} // Mobile LCP: Only first 4 need priority
+                      videoEnabled={index !== 0} // Keep video logic
                     />
                   </motion.div>
                 )

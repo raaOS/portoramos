@@ -2,59 +2,64 @@
   "testimonials": [
     {
       "id": 1,
-      "name": "Rekan di PT. Bitlabs Academy",
-      "role": "Senior Designer",
-      "company": "PT. Bitlabs Academy",
-      "content": "Jujurly, kerja bareng Ramos tuh vibes-nya asik parah! Skill desainnya no debat, selalu on point dan estetik abis. Dia juga cepet banget nangkep brief, jadi revisi minim banget. Pokoknya slay!",
+      "name": "Siti Aminah",
+      "role": "Pemilik Toko",
+      "company": "Berkah Snack",
+      "content": "Ramos cekatan banget kerjanya. Desain stiker buat kemasan keripik saya jadi jauh lebih menarik. Alhamdulillah penjualan jadi nambah banyak yang beli.",
       "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Bitlabs",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Siti",
       "isActive": true
     },
     {
       "id": 2,
-      "name": "Student di Sekolah Desain",
-      "role": "Mentee",
-      "company": "Sekolah Desain",
-      "content": "Kak Ramos ngajarnya chill banget tapi daging semua materinya. Gak pelit ilmu dan sabar banget ngadepin kita yang masih newbie. Valid no debat, mentor ter-best!",
+      "name": "Budi Santoso",
+      "role": "Pemilik Kedai",
+      "company": "Kopi Susu Mas Budi",
+      "content": "Logo yang dibikin mas Ramos pas banget sama konsep warung kopi saya. Simpel tapi gampang diinget orang. Harganya juga bersahabat buat UMKM.",
       "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Student"
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Budi",
+      "isActive": true
     },
     {
       "id": 3,
-      "name": "Manager di PT. Duta Mode",
-      "role": "Marketing Manager",
-      "company": "PT. Duta Mode",
-      "content": "Visual yang dibikin Ramos bener-bener bikin brand kita stand out. Dia ngerti banget selera pasar zaman now. Kerjanya sat-set tapi hasilnya tetep premium. Approved!",
+      "name": "Agus Setiawan",
+      "role": "Staff Admin",
+      "company": "CV Maju Jaya",
+      "content": "Bantu banget buat ngerapihin feed IG kantor. Awalnya berantakan, sekarang jadi enak diliat. Revisi juga cepet dilayaninnya. Makasih mas!",
       "rating": 5,
-      "avatar": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1765181842/17c1a817-8638-4931-b8aa-c27422fc0cae_vyf6ap.jpg"
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Agus",
+      "isActive": true
     },
     {
       "id": 4,
-      "name": "Owner Sthal.Co",
-      "role": "Owner",
-      "company": "Sthal.Co",
-      "content": "Ramos tuh multitalenta banget! Gak cuma jago desain kaos yang hypebeast, tapi juga rapi banget ngurus admin. Bener-bener definisi karyawan idaman yang beyond expectation.",
+      "name": "Rina Kartika",
+      "role": "Marketing",
+      "company": "Butik Cantik",
+      "content": "Suka banget sama desain katalog yang baru. Customer jadi lebih gampang liat-liat model baju. Kerjanya rapi dan tepat waktu.",
       "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sthal"
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Rina",
+      "isActive": true
     },
     {
       "id": 5,
-      "name": "Supervisor Starbucks",
-      "role": "Store Manager",
-      "company": "PT Sari Coffee Indonesia",
-      "content": "Customer service skill-nya Ramos tuh next level. Dia bisa bikin customer happy cuma gara-gara ngobrolin kopi. Energinya positif banget, bikin shift pagi jadi gak ngantuk!",
+      "name": "Dedi Pratama",
+      "role": "Supervisor",
+      "company": "Distro Keren",
+      "content": "Desain kaos untuk event kemaren laku keras. Mas Ramos bisa nangkep selera anak muda jaman sekarang. Next order lagi ya mas.",
       "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Starbucks"
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Dedi",
+      "isActive": true
     },
     {
       "id": 6,
-      "name": "Owner Wulan Boutique",
-      "role": "Owner",
-      "company": "Wulan Boutique",
-      "content": "Desain feed IG yang dibikin Ramos bikin olshop aku jadi aesthetic parah. Penjualan naik gara-gara visualnya eye-catching. Fix bakal hire lagi sih kalo ada project baru.",
+      "name": "Linda Kusuma",
+      "role": "Online Shop Owner",
+      "company": "Hijab Style",
+      "content": "Template story yang dibikin bikin jualan jadi makin praktis. Tinggal ganti foto doang. Sangat membantu buat yang gak jago ngedit kayak saya.",
       "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Wulan"
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Linda",
+      "isActive": true
     }
   ],
-  "lastUpdated": "2025-12-08T08:17:26.858Z"
+  "lastUpdated": "2025-12-29T00:30:00.000Z"
 }

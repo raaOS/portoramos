@@ -48,10 +48,10 @@ export default function ProjectCardPinterest({
                         src={cover.src}
                         poster={cover.poster}
                         alt={title}
-                        // LCP Optimization: detailed projects might use high-res, but card only needs ~800px even on desktop
-                        // For LCP (priority), we explicitly cap at 800 to ensure mobile doesn't download 1600+
-                        width={priority ? 800 : width}
-                        height={priority ? Math.round(800 / ratio) : height}
+                        // Sweet Spot: Request 400px. 
+                        // Balances sharpness (1.6x density) with file size for Lighthouse.
+                        width={400}
+                        height={Math.round(400 / ratio)}
                         priority={priority}
                         lazy={!priority}
                         autoplay={shouldAutoplay}
@@ -59,7 +59,7 @@ export default function ProjectCardPinterest({
                         loop={project.loop ?? true}
                         playsInline={project.playsInline ?? true}
                         className="w-full h-full object-cover"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     />
                 </div>
             </div>
@@ -71,12 +71,12 @@ export default function ProjectCardPinterest({
                         {title}
                     </p>
                     {tags?.[0] && (
-                        <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 whitespace-nowrap shrink-0">{tags[0]}</p>
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-gray-500 whitespace-nowrap shrink-0">{tags[0]}</p>
                     )}
                 </div>
 
                 {/* Metrics bar */}
-                <div className="flex items-center gap-3 text-gray-400">
+                <div className="flex items-center gap-3 text-gray-500">
                     <div className="flex items-center gap-1">
                         <Heart className="w-3 h-3 fill-current text-rose-500" />
                         <span className="text-[10px] font-medium">{likes || 0}</span>

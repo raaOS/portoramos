@@ -36,8 +36,8 @@ const BlurTextLoop = ({
     }, [text, animateBy]);
 
     // Animation Config
-    const stagger = 0.05;
-    const totalCycle = 4.0;
+    const stagger = 0.1;
+    const totalCycle = 6.0;
 
     return (
         <span className={className}>

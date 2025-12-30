@@ -2,7 +2,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { githubService } from '@/lib/github';
-import { resolveCover, resolveGallery } from '@/lib/images';
+import { resolveGallery } from '@/lib/images';
 import { generateProjectMetadata, generateProjectStructuredData } from '@/lib/seo';
 import ProjectDetailTwoColumn from './ProjectDetailTwoColumn';
 
@@ -26,7 +26,9 @@ export default async function ProjectPage(props: { params: Promise<{ slug: strin
     const allProjects = projects.filter(proj => proj.status !== 'draft');
     const otherProjects = allProjects.filter(project => project.slug !== params.slug);
 
-    const cover = resolveCover(p);
+    // Use detail-specific resolver for high quality hero assets (1280px video / 1600px image)
+    const { resolveDetailCover } = await import('@/lib/images');
+    const cover = resolveDetailCover(p);
     const gallery = resolveGallery(p);
 
     // Transform gallery items to match what ProjectDetailTwoColumn expects

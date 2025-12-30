@@ -253,6 +253,7 @@ export default function CoverFlowGallery({
                     height={1200}
                     className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
                     objectFit="contain" // Critical: Overrides default 'cover' in Media component
+                    priority={true} // Immediate load for lightbox
                     autoplay={true}
                     muted={false} // Unmute in lightbox
                     loop={true}

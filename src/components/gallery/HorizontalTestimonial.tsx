@@ -42,11 +42,11 @@ export default function HorizontalTestimonial() {
     const speed = 0.5; // pixels per frame (adjust for speed)
 
     const animate = () => {
-      positionRef.current += speed;
+      positionRef.current -= speed;
 
-      // Reset position when we've scrolled through half (2 sets)
-      if (positionRef.current >= scrollWidth) {
-        positionRef.current = 0;
+      // Reset position when we've scrolled back to 0 (start of loop from right end)
+      if (positionRef.current <= 0) {
+        positionRef.current = scrollWidth;
       }
 
       container.style.transform = `translateX(-${positionRef.current}px)`;
