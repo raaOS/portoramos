@@ -16,9 +16,10 @@ export interface Project {
   galleryItems: GalleryItem[];
   description: string;
   description_id?: string; // Indonesian description
-  title_id?: string;       // Indonesian title (optional)
-  likes: number;           // Number of likes/loves
-  shares: number;          // Number of shares
+  title_id?: string;
+  likes?: number;           // Number of likes/loves
+  shares?: number;          // Number of shares
+  allowComments?: boolean;  // Toggle for comment section
   external_link: string;
   order: number;
   status: 'published' | 'draft';
@@ -62,6 +63,8 @@ export interface CreateProjectData {
   coverHeight?: number;
   likes?: number;
   shares?: number;
+  allowComments?: boolean;
+  initialCommentCount?: number;
 }
 
 export interface UpdateProjectData extends Partial<CreateProjectData> {

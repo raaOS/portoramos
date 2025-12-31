@@ -8,10 +8,13 @@ const GITHUB_PATH = 'src/data/comments.json'; // Relative path in repo
 
 interface Comment {
     id: string;
-    text: string;
-    author: string;
-    time: string;
-    likes: number;
+    text?: string;    // Legacy/Backend
+    comment?: string; // Frontend payload uses 'comment'
+    author?: string;  // Legacy/Backend
+    name?: string;    // Frontend uses this
+    time?: string;    // Legacy
+    createdAt?: string; // Frontend uses this
+    likes?: number;
     likedByMe?: boolean;
     replies?: Comment[];
 }
@@ -91,7 +94,16 @@ async function getBannedWords(): Promise<string[]> {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { slug, comments } = body;
+        const { slug, comments, website_url } = body;
+
+        // --- 1. HONEYPOT VALIDATION ---
+        if (website_url) {
+            console.warn(`Honeypot triggered for slug ${slug}`);
+            return NextResponse.json(
+                { error: 'Spam detected' },
+                { status: 400 }
+            );
+        }
 
         if (!slug || !comments) {
             return NextResponse.json(
@@ -100,14 +112,34 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // --- CONTENT MODERATION ---
-        // Validate the NEWEST comment (usually the last one added or check all)
-        // Since the client sends the WHOLE array, we should check the content of the payload.
-        // It's expensive to check everything, but safe.
-        // Or better: Just check if the payload string contains banned words before saving.
+        // --- 2. FLOOD CONTROL (RATE LIMITING) ---
+        // Verify against SERVER data, not the payload
+        let currentData = await getCommentsData();
+        const existingRaw = currentData.comments[slug] || [];
 
+        // Check the LAST top-level comment.
+        const lastComment = existingRaw[existingRaw.length - 1];
+        if (lastComment) {
+            // Check createdAt (ISO) first, then time (if parseable)
+            const lastTimeStr = lastComment.createdAt || lastComment.time;
+            if (lastTimeStr) {
+                const lastDate = new Date(lastTimeStr);
+                // Only enforcing if it's a valid date (ignores "1 jam yang lalu")
+                if (!isNaN(lastDate.getTime())) {
+                    const timeDiff = Date.now() - lastDate.getTime();
+                    // Limit: 10 seconds
+                    if (timeDiff < 10000) {
+                        return NextResponse.json(
+                            { error: 'Please wait 10 seconds before posting again.' },
+                            { status: 429 }
+                        );
+                    }
+                }
+            }
+        }
+
+        // --- 3. CONTENT MODERATION ---
         const bannedWords = await getBannedWords();
-
         const payloadString = JSON.stringify(comments).toLowerCase();
         const foundBadWord = bannedWords.find(word => payloadString.includes(word.toLowerCase()));
 
@@ -117,18 +149,11 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
-        // ---------------------------
 
-        // Fetch current data first to append/merge
-        // But since we are updating the entire list for a slug (to handle likes/replies state management on client easier),
-        // we will replace the list for this slug. 
-        // CAUTION: This causes race conditions if multiple users comment on same project exactly at same time.
-        // For a portfolio, this risk is acceptable.
-
+        // --- 4. SAVE ---
         const isDev = process.env.NODE_ENV === 'development';
-        let currentData = await getCommentsData();
 
-        // Update data
+        // Update data (currentData was already loaded above)
         currentData.comments[slug] = comments;
 
         // Save

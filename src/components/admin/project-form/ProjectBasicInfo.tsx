@@ -84,18 +84,18 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
     };
 
     return (
-        <div className="space-y-4 sm:space-y-6">
-            {/* AI Customization Bar */}
+        <div className="space-y-8">
+            {/* AI Customization Bar - Clean & Professional (No Gradients) */}
             {formData.cover && isValidMediaUrl(formData.cover) && (
-                <div className="bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 rounded-2xl p-4 mb-4 shadow-sm">
+                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
                     <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between border-b border-violet-100 pb-3">
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                             <div className="flex items-center gap-2">
                                 <Sparkles className="w-5 h-5 text-violet-600" />
-                                <h3 className="font-bold text-gray-900">Magic AI Complete</h3>
+                                <h3 className="font-bold text-gray-900">Magic AI Helper</h3>
                             </div>
                             <label className="flex items-center gap-2 cursor-pointer group">
-                                <span className="text-xs font-bold text-violet-600 uppercase tracking-widest">Viral Package</span>
+                                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest group-hover:text-violet-600 transition-colors">Include Viral Stats</span>
                                 <div className="relative inline-flex items-center">
                                     <input
                                         type="checkbox"
@@ -108,14 +108,14 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                             </label>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row items-end gap-4">
-                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+                        <div className="flex flex-col xl:flex-row items-end gap-4">
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
                                 <div>
-                                    <label className="block text-[10px] font-bold text-violet-400 uppercase tracking-wider mb-1">Gaya Bahasa</label>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tone of Voice</label>
                                     <select
                                         value={aiOptions.style}
                                         onChange={(e) => setAiOptions(prev => ({ ...prev, style: e.target.value }))}
-                                        className="w-full text-xs bg-white border border-violet-200 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-violet-400 outline-none shadow-sm"
+                                        className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                                     >
                                         <option value="estetik & profesional">Estetik & Profesional</option>
                                         <option value="minimalis & elegan">Minimalis & Elegan</option>
@@ -126,22 +126,22 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-violet-400 uppercase tracking-wider mb-1">Max Kata Judul</label>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Max Title Words</label>
                                     <input
                                         type="number"
                                         value={aiOptions.maxTitleWords}
                                         onChange={(e) => setAiOptions(prev => ({ ...prev, maxTitleWords: parseInt(e.target.value) || 5 }))}
-                                        className="w-full text-xs bg-white border border-violet-200 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-violet-400 outline-none shadow-sm"
+                                        className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                                         min="1" max="15"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-violet-400 uppercase tracking-wider mb-1">Jml Kalimat Deskripsi</label>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Sentences</label>
                                     <input
                                         type="number"
                                         value={aiOptions.sentenceCount}
                                         onChange={(e) => setAiOptions(prev => ({ ...prev, sentenceCount: parseInt(e.target.value) || 2 }))}
-                                        className="w-full text-xs bg-white border border-violet-200 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-violet-400 outline-none shadow-sm"
+                                        className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                                         min="1" max="5"
                                     />
                                 </div>
@@ -150,100 +150,160 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                                 type="button"
                                 onClick={handleAutoFill}
                                 disabled={isGenerating}
-                                className="w-full sm:w-auto h-[34px] flex items-center justify-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 px-6 rounded-lg transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                                className="w-full xl:w-auto h-[42px] flex items-center justify-center gap-2 text-sm font-bold text-white bg-violet-600 hover:bg-violet-700 px-6 rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
                             >
                                 {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                                {isGenerating ? 'BOOM!...' : 'Magic Complete'}
+                                {isGenerating ? 'Generating...' : 'Auto-Fill Details'}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1 flex justify-between items-center">
-                        Title *
-                    </label>
-                    <input
-                        type="text"
-                        value={formData.title}
-                        onChange={(e) => updateField('title', e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.title ? 'border-red-300 ring-red-200' : 'border-gray-300'
-                            }`}
-                        placeholder="Project title"
-                    />
-                    {errors.title && (
-                        <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-                    )}
+            <div className="grid grid-cols-1 gap-6">
+                {/* Basic Details Section */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                            Project Title <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.title}
+                            onChange={(e) => updateField('title', e.target.value)}
+                            className={`w-full px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all ${errors.title ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
+                            placeholder="e.g. Neon Cyberpunk City"
+                        />
+                        {errors.title && <p className="mt-1 text-sm text-red-600 font-medium">{errors.title}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                            Client Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.client}
+                            onChange={(e) => updateField('client', e.target.value)}
+                            className={`w-full px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all ${errors.client ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
+                            placeholder="e.g. Personal Work"
+                        />
+                        {errors.client && <p className="mt-1 text-sm text-red-600 font-medium">{errors.client}</p>}
+                    </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Client *
-                    </label>
-                    <input
-                        type="text"
-                        value={formData.client}
-                        onChange={(e) => updateField('client', e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.client ? 'border-red-300' : 'border-gray-300'
-                            }`}
-                        placeholder="Client name"
-                    />
-                    {errors.client && (
-                        <p className="mt-1 text-sm text-red-600">{errors.client}</p>
-                    )}
-                </div>
-            </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                            Year <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="number"
+                            value={formData.year}
+                            onChange={(e) => updateField('year', parseInt(e.target.value) || new Date().getFullYear())}
+                            className={`w-full px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all ${errors.year ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
+                            min="2000"
+                            max={new Date().getFullYear() + 1}
+                        />
+                        {errors.year && <p className="mt-1 text-sm text-red-600 font-medium">{errors.year}</p>}
+                    </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Year *
-                    </label>
-                    <input
-                        type="number"
-                        value={formData.year}
-                        onChange={(e) => updateField('year', parseInt(e.target.value) || new Date().getFullYear())}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.year ? 'border-red-300' : 'border-gray-300'
-                            }`}
-                        min="2000"
-                        max={new Date().getFullYear() + 1}
-                    />
-                    {errors.year && (
-                        <p className="mt-1 text-sm text-red-600">{errors.year}</p>
-                    )}
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                            Tags
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.tags}
+                            onChange={(e) => updateField('tags', e.target.value)}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                            placeholder="e.g. React, 3D, Motion (comma separated)"
+                        />
+                    </div>
                 </div>
 
+                {/* Description */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Tags
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Description <span className="text-red-500">*</span>
                     </label>
-                    <input
-                        type="text"
-                        value={formData.tags}
-                        onChange={(e) => updateField('tags', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
-                        placeholder="React, Next.js, TypeScript (comma separated)"
+                    <textarea
+                        value={formData.description}
+                        onChange={(e) => updateField('description', e.target.value)}
+                        rows={4}
+                        className={`w-full px-4 py-3 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all resize-none ${errors.description ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
+                        placeholder="Describe the project concept, tools used, and outcome..."
                     />
+                    {errors.description && <p className="mt-1 text-sm text-red-600 font-medium">{errors.description}</p>}
                 </div>
-            </div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description *
-                </label>
-                <textarea
-                    value={formData.description}
-                    onChange={(e) => updateField('description', e.target.value)}
-                    rows={3}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.description ? 'border-red-300' : 'border-gray-300'
-                        }`}
-                    placeholder="Project description"
-                />
-                {errors.description && (
-                    <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-                )}
+                {/* Engagement Settings Section */}
+                <div className="border-t border-gray-100 pt-6 mt-2">
+                    <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-violet-500 rounded-full"></span>
+                        Engagement Settings
+                    </h4>
+                    <div className={`grid grid-cols-1 ${!formData.id ? 'sm:grid-cols-4' : 'sm:grid-cols-3'} gap-6`}>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                Likes Count
+                            </label>
+                            <input
+                                type="number"
+                                value={formData.likes}
+                                onChange={(e) => updateField('likes', parseInt(e.target.value) || 0)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all font-mono"
+                                min="0"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                Shares Count
+                            </label>
+                            <input
+                                type="number"
+                                value={formData.shares}
+                                onChange={(e) => updateField('shares', parseInt(e.target.value) || 0)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all font-mono"
+                                min="0"
+                            />
+                        </div>
+
+                        {/* Initial Comment Count - Only for New Projects */}
+                        {!formData.id && (
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                    Initial Comments
+                                </label>
+                                <input
+                                    type="number"
+                                    value={formData.initialCommentCount ?? 2}
+                                    onChange={(e) => updateField('initialCommentCount', parseInt(e.target.value) || 0)}
+                                    className="w-full px-3 py-2 border border-blue-200 rounded-lg bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono text-blue-700"
+                                    min="0"
+                                    max="10"
+                                />
+                            </div>
+                        )}
+
+                        <div className="flex items-end pb-2">
+                            <label className="flex items-center gap-3 cursor-pointer group w-full p-2 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-200">
+                                <div className="relative inline-flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={formData.allowComments !== false} // Default true
+                                        onChange={(e) => updateField('allowComments', e.target.checked)}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                                </div>
+                                <span className="text-sm font-semibold text-gray-700 group-hover:text-gray-900">
+                                    Allow Public Comments
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

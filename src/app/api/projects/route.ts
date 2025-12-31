@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CreateProjectData } from '@/types/projects';
 import { checkAdminAuth } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
+import { generateGenZComments } from '@/lib/magic';
+import { loadData, saveData, ensureDataDir } from '@/lib/backup';
+import { githubService } from '@/lib/github';
+import path from 'path';
+
+const COMMENTS_DATA_FILE = path.join(process.cwd(), 'src', 'data', 'comments.json');
+const COMMENTS_GITHUB_PATH = 'src/data/comments.json';
+
+interface CommentsData {
+  comments: Record<string, any[]>;
+}
 
 // GET - Read all projects
 export async function GET(request: NextRequest) {
@@ -46,6 +57,45 @@ export async function POST(request: NextRequest) {
     }
 
     const newProject = await projectService.createProject(body);
+
+    // --- Auto-Generate Comments ---
+    try {
+      const generatedComments = generateGenZComments(newProject.slug, body.initialCommentCount);
+
+      const isDev = process.env.NODE_ENV === 'development';
+      let commentsData: CommentsData = { comments: {} };
+
+      // Load existing data
+      if (isDev) {
+        await ensureDataDir();
+        const loaded = await loadData(COMMENTS_DATA_FILE);
+        if (loaded) commentsData = loaded as CommentsData;
+      } else {
+        try {
+          const gh = await githubService.getFileContent<CommentsData>(COMMENTS_GITHUB_PATH);
+          commentsData = gh.content;
+        } catch (e) {
+          console.warn('Failed to load GitHub comments, starting fresh', e);
+        }
+      }
+
+      // Ensure structure
+      if (!commentsData.comments) commentsData.comments = {};
+
+      // Add new comments
+      commentsData.comments[newProject.slug] = generatedComments;
+
+      // Save data
+      if (isDev) {
+        await saveData(COMMENTS_DATA_FILE, commentsData);
+      } else {
+        await githubService.updateFile(COMMENTS_GITHUB_PATH, commentsData, `Auto-generated comments for ${newProject.slug}`);
+      }
+
+    } catch (commentError) {
+      console.error('Failed to auto-generate comments:', commentError);
+      // We continue even if comment generation fails
+    }
 
     return NextResponse.json({
       success: true,

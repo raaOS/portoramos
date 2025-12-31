@@ -6,21 +6,23 @@ import { Project } from '@/types/projects';
 export interface CommentReply {
     id?: string;
     text: string;
-    author: string;
+    name: string;
     time: string;
     createdAt?: string;
     likes: number;
+    avatar?: string;
 }
 
 export interface Comment {
     id?: string;
     text: string;
-    author: string;
-    time: string;
+    name: string;
+    time?: string;
     createdAt?: string;
     likes: number;
     likedByMe?: boolean;
     replies: CommentReply[];
+    avatar?: string;
 }
 
 export interface ViralMetrics {
@@ -40,8 +42,8 @@ interface Vibe {
  */
 export function generateViralMetrics(): ViralMetrics {
     return {
-        likes: Math.floor(Math.random() * 401) + 100, // 100-500
-        shares: Math.floor(Math.random() * 81) + 20   // 20-100
+        likes: Math.floor(Math.random() * 41) + 5, // 5-45
+        shares: Math.floor(Math.random() * 6)      // 0-5
     };
 }
 
@@ -50,90 +52,89 @@ export function generateViralMetrics(): ViralMetrics {
  */
 export const COMMENT_VIBES: Vibe[] = [
     {
-        type: "praise_suhu",
+        type: "praise_short",
         comments: [
-            "Tutor suhu 🙏 Kelas banget karyanya abangku 🔥",
-            "Ajarin dong puh (sepuh), ngeri banget visualnya 🙏✨",
-            "Menyala abangku! 🔥 Detailnya gila bgt no debat",
-            "Tutorialnya ditunggu suhu, butuh pencerahan ✨⚙️",
-            "Otw daftar jadi murid suhu 🙏🔥"
+            "Keren banget! 🔥",
+            "Suka banget sama warnanya ✨",
+            "Gokil sih ini 👏",
+            "Simple tapi ngena banget.",
+            "Visualnya manja di mata �",
+            "Favorit sih ini!",
+            "Kelas abangku �",
+            "Asli keren parah ✨",
+            "Defisini 'Art' sesungguhnya",
+            "Estetik parah! 🌈"
         ],
         admin_replies: [
-            "Aman bang, menyala terus! 🚀",
-            "Masih belajar ini masku, gass terus! 🙏",
-            "Waduh panggil sepuh pula, masih pemula bang 🙏😂",
-            "Siap bang, nanti coba dibuatkan tutorialnya ya! ✨"
+            "Makasih banyak! 🙏",
+            "Glad you like it! ✨",
+            "Thank you! �",
+            "Thanks for the support! 🔥"
+        ],
+        user_replies: [] // Usually no replies for short praise
+    },
+    {
+        type: "praise_detailed",
+        comments: [
+            "Detail teksturnya dapet banget, rapi! �",
+            "Komposisi warnanya juara sih ini, adem liatnya.",
+            "Transisinya halus banget bang, enak dimata.",
+            "Konsepnya out of the box banget, salut! 🧠",
+            "Mood-nya dapet banget, agak dark tapi elegan.",
+            "Pemilihan font-nya pas banget sama visualnya."
+        ],
+        admin_replies: [
+            "Thank you! Emang agak tricky di bagian itu hehe ✨",
+            "Makasih! Butuh waktu lama buat nemu mood yg pas ",
+            "Thanks! Glad you noticed the details �️",
         ],
         user_replies: [
-            "Gas puh, ajarin kita semua 🙏",
-            "Fix no debat, ini guru kita semua 🔥",
-            "Info loker dong mumpung ada suhu di sini 🚩"
+            "Setuju, mood-nya dapet banget emang.",
+            "Iya, warnanya itu lho yg bikin beda."
         ]
     },
     {
-        type: "praise_king",
+        type: "curious_tech",
         comments: [
-            "Mantap king! Mahkotanya otw JNE Cakung ya 👑🚩",
-            "Ini mahkotanya lagi transit di Hub Cakung bang 😂👑🚩",
-            "JNE Cakung sedang memproses mahkota emas anda 🚩🚩🚩",
-            "Gak ada obat emang ide-idenya, menyala abangku! 🔥👑"
+            "Pake software apa bang? Halus bgt.",
+            "Ini render berapa lama bang? Penasaran 😂",
+            "Workflow-nya gimana bang bisa sebersih ini?",
+            "Pake plugin tambahan gak bang buat efek itu?",
+            "Color grading-nya pake apa bang? Cakepp"
         ],
         admin_replies: [
-            "Waduh jauh juga ya Cakung, ditunggu king! 😂🔥",
-            "Hub Cakung emang boss level pengiriman bang 😂🙏",
-            "Wahahaha kena tahan kurir itu mahkotanya 👑"
+            "Pake AE + Photoshop aja kok bang 🙏",
+            "Render lumayan lama, ditinggal tidur semalem haha �",
+            "Grading manual di Premiere bang hehe"
         ],
         user_replies: [
-            "Hub Cakung emang ngeri bang, sabar ya 😂",
-            "Kurirnya pasti terpana liat mahkotanya ✨",
-            "Minimal kasih lawn lah bang jangan jago sendiri 😂"
+            "Kayaknya pake AE deh ini.",
+            "Biasanya sih Red Giant bang kalo look gini."
         ]
     },
     {
-        type: "gen_z_casual",
+        type: "joke_casual",
         comments: [
-            "Gak ada obat! Vibesnya gokil bgt parah ✨😎",
-            "Warna-warnanya dapet bgt, estetik parah! ✨🌈",
-            "Gak capek ya jadi keren terus? 😂✨",
-            "Visualnya pecah bgt abangku! Menyala 🔥✨",
-            "Vaporwave vibes-nya dapet bgt, chill bgt liatnya 💜✨",
-            "Gak pernah gagal kalau abang satu ini yang pegang ✨🔥"
+            "Info loker bang, mau berguru �",
+            "Mundur bang, gantengnya kelewatan (karyanya maksudnya) 🤣",
+            "Ajarin dong puh sepuh �",
+            "Spek PC NASA ya bang? 😂",
+            "Ginjal aman bang buat rakit PC ginian? 🤣"
         ],
         admin_replies: [
-            "Thank you! Lowkey eksperimen aja ini hehe ✨",
-            "Bisa aja, kebetulan lagi mood aja kemarin 🙏",
-            "Gass terus jangan kasih kendor! 🔥🚩",
-            "Glad you like it bro! ✨🚀"
+            "Waduh saya masih pemula bang 🙏😂",
+            "PC kentang kok bang, kipasnya aja yg kenceng ✈️",
+            "Aman bang, cuma makan mie instan sebulan 😂"
         ],
         user_replies: [
-            "Iya woee, vibenya dapet bgt parah 🌈",
-            "Gak bahaya ta? Ngeri kali bah ✨🚩",
-            "Doi emang gak pernah gagal sctipt-nya 🔥"
-        ]
-    },
-    {
-        type: "tech_question",
-        comments: [
-            "Info spek PC dong bang, pasti spek dewa ini 🙏💻",
-            "Pakai software apa bang? Halus bgt motionnya ✨⚙️",
-            "Renderingnya berapa lama nih puh? 🚀",
-            "Info workshop dong, minat belajar serius nih 🙏"
-        ],
-        admin_replies: [
-            "Rata kanan bang! Pakai Photoshop fitur Timeline Animasi & Audio hehe 🙏",
-            "Masih pakai laptop kentang kok bang beneran 😂",
-            "Rendering seharian bang, sampai mau meledak PC-nya 😂🚀"
-        ],
-        user_replies: [
-            "PC dewa mah bebas ya bang 🙏",
-            "Laptop kentang aja begini, apalagi PC dewa 🔥",
-            "Gak masuk akal kerennya, fix cheat ini mah! 😂🔥"
+            "Wkwk PC NASA valid �",
+            "Gas puh ajarin kita"
         ]
     }
 ];
 
 const TIMES = ["2 menit yang lalu", "10 menit yang lalu", "30 menit yang lalu", "1 jam yang lalu", "2 jam yang lalu", "5 jam yang lalu", "10 jam yang lalu", "1 hari yang lalu", "2 hari yang lalu"];
-const NAMES = ["Bagas", "Dinda", "Rizky", "Siti", "Adit", "Fajri", "Tiara", "Gilang", "Putri", "Zaki", "Budi", "Ani", "Joko", "Rina", "Setiawan", "Maya", "Kevin", "Lutfi", "Wawan", "Doni", "Togar", "Yanto", "Samsul", "Lala"];
+const NAMES = ["Bagas", "Dinda", "Rizky", "Siti", "Adit", "Fajri", "Tiara", "Gilang", "Putri", "Zaki", "Budi", "Ani", "Joko", "Rina", "Setiawan", "Maya", "Kevin", "Lutfi", "Wawan", "Doni", "Togar", "Yanto", "Samsul", "Lala", "Eka", "Fani", "Gilang", "Hana", "Indra"];
 
 function getRandom<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
@@ -142,72 +143,70 @@ function getRandom<T>(arr: T[]): T {
 /**
  * Generates a full thread of Gen-Z comments for a project
  */
-export function generateGenZComments(slug: string): Comment[] {
+export function generateGenZComments(slug: string, count?: number): Comment[] {
     const projectComments: Comment[] = [];
-    const commentCount = 10;
-    const targetTotalReplies = 20;
+
+    let commentCount = 2; // Default
+
+    if (typeof count === 'number') {
+        commentCount = count;
+    } else {
+        // Randomize comment count: 0, 1, or 2 (Weighted towards 1 or 2, rarely 0)
+        const seed = Math.random();
+        if (seed > 0.8) commentCount = 1;
+        if (seed > 0.95) commentCount = 0; // Rare: No comments
+    }
 
     let repliesMade = 0;
     const usedReplyTexts = new Set<string>();
 
+    // Pick different vibes for variety
+    // Don't just pick one vibe for all comments in a project, mix them up.
+
     for (let i = 0; i < commentCount; i++) {
         const vibe = getRandom(COMMENT_VIBES);
-        const commentText = getRandom(vibe.comments);
+        const text = getRandom(vibe.comments);
+
+        const hasReplies = Math.random() > 0.6; // 40% chance of having a reply
         const replies: CommentReply[] = [];
 
-        // Admin reply for first comment
-        if (i === 0) {
-            const replyText = getRandom(vibe.admin_replies);
-            replies.push({
-                id: `r-${slug}-${i}-admin`,
-                text: replyText,
-                author: "Admin",
-                time: getRandom(TIMES),
-                likes: Math.floor(Math.random() * 20)
-            });
-            usedReplyTexts.add(replyText);
-            repliesMade++;
-        }
-
-        // Random additional replies
-        if (repliesMade < targetTotalReplies) {
-            let subReplyCount = Math.floor(Math.random() * 3);
-            if (i === 0 && subReplyCount < 1) subReplyCount = 1;
-
-            for (let j = 0; j < subReplyCount; j++) {
-                if (repliesMade >= targetTotalReplies) break;
-
-                const isUserReply = Math.random() > 0.3;
-                const source = isUserReply ? vibe.user_replies : vibe.admin_replies;
-                let replyText = getRandom(source);
-
-                let attempts = 0;
-                while (usedReplyTexts.has(replyText) && attempts < 10) {
-                    replyText = getRandom(source);
-                    attempts++;
-                }
-
-                if (!usedReplyTexts.has(replyText)) {
-                    replies.push({
-                        id: `r-${slug}-${i}-${j}-${Date.now()}`,
-                        text: replyText,
-                        author: isUserReply ? getRandom(NAMES) : "Admin",
-                        time: getRandom(TIMES),
-                        likes: Math.floor(Math.random() * 20)
-                    });
-                    usedReplyTexts.add(replyText);
-                    repliesMade++;
-                }
+        if (hasReplies) {
+            const isOwnerReply = Math.random() > 0.3; // 70% chance it's admin replying
+            if (isOwnerReply && vibe.admin_replies.length > 0) {
+                const replyText = getRandom(vibe.admin_replies);
+                replies.push({
+                    id: `r-${slug}-${i}-admin`,
+                    text: replyText,
+                    name: "Ramos", // Owner name
+                    time: getRandom(TIMES),
+                    createdAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+                    likes: Math.floor(Math.random() * 20),
+                    avatar: `https://ui-avatars.com/api/?name=Ramos&background=000&color=fff`
+                });
+            } else if (!isOwnerReply && vibe.user_replies.length > 0) {
+                const replyText = getRandom(vibe.user_replies);
+                const replierName = getRandom(NAMES);
+                replies.push({
+                    id: `r-${slug}-${i}-user`,
+                    text: replyText,
+                    name: replierName,
+                    time: getRandom(TIMES),
+                    createdAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+                    likes: Math.floor(Math.random() * 20),
+                    avatar: `https://ui-avatars.com/api/?name=${replierName}&background=random`
+                });
             }
         }
 
+        const name = getRandom(NAMES);
         projectComments.push({
             id: `c-${slug}-${i}-${Date.now()}`,
-            text: commentText,
-            author: getRandom(NAMES),
-            time: getRandom(TIMES),
+            text: text,
+            name: name,
+            createdAt: new Date(Date.now() - Math.random() * 172800000).toISOString(), // Within last 2 days
             likes: Math.floor(Math.random() * 100),
-            replies: replies
+            replies: replies,
+            avatar: `https://ui-avatars.com/api/?name=${name}&background=random`
         });
     }
 

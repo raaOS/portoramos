@@ -349,7 +349,7 @@ function ModalContent({ item, onClose }: { item: MediaItem, onClose: () => void 
         const newComment: Comment = {
             id: Date.now().toString(),
             text: commentText,
-            author: guestName,
+            name: guestName,
             time: new Date().toISOString(), // Consistent with interface
             likes: 0,
             replies: []
@@ -535,13 +535,13 @@ function ModalContent({ item, onClose }: { item: MediaItem, onClose: () => void 
                                                 <div key={comment.id} className="group">
                                                     <div className="flex gap-4">
                                                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white text-[13px] font-bold uppercase shadow-lg">
-                                                            {comment.author[0]}
+                                                            {comment.name[0]}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-baseline gap-2 mb-1">
-                                                                <span className="text-sm font-bold text-gray-900 dark:text-white">{comment.author}</span>
+                                                                <span className="text-sm font-bold text-gray-900 dark:text-white">{comment.name}</span>
                                                                 <span className="text-[10px] text-gray-400">
-                                                                    {formatRelativeTime(comment.createdAt || comment.time)}
+                                                                    {formatRelativeTime(comment.createdAt || comment.time || '')}
                                                                 </span>
                                                             </div>
                                                             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -554,13 +554,13 @@ function ModalContent({ item, onClose }: { item: MediaItem, onClose: () => void 
                                                             {comment.replies.map((reply) => (
                                                                 <div key={reply.id} className="flex gap-3">
                                                                     <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center text-gray-600 dark:text-gray-400 text-[10px] font-bold uppercase ring-1 ring-gray-200 dark:ring-gray-700">
-                                                                        {reply.author[0]}
+                                                                        {reply.name[0]}
                                                                     </div>
                                                                     <div className="flex-1">
                                                                         <div className="flex items-baseline gap-2 mb-1">
-                                                                            <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{reply.author}</span>
+                                                                            <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{reply.name}</span>
                                                                             <span className="text-[9px] text-gray-400">
-                                                                                {formatRelativeTime(reply.createdAt || reply.time)}
+                                                                                {formatRelativeTime(reply.createdAt || reply.time || '')}
                                                                             </span>
                                                                         </div>
                                                                         <p className="text-xs text-gray-700 dark:text-gray-400">

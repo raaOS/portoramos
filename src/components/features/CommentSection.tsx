@@ -1,83 +1,80 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
-import LoveButton from '@/components/LoveButton';
-
-interface Comment {
-  id: string;
-  name: string;
-  email: string;
-  comment: string;
-  createdAt: string;
-  avatar?: string;
-}
+import { Comment } from '@/lib/magic';
 
 interface CommentSectionProps {
-  projectId: string;
+  slug: string;
+  comments: Comment[];
+  setComments: (comments: Comment[]) => void;
   className?: string;
-  initialLikes?: number;
-  initialLoved?: boolean;
+  isExpanded?: boolean;
 }
 
-export default function CommentSection({ projectId, className = '', initialLikes = 0, initialLoved = false }: CommentSectionProps) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState({
-    name: '',
-    email: '',
-    comment: '',
-    website_url: '' // Honeypot field
-  });
+export default function CommentSection({
+  slug,
+  comments,
+  setComments,
+  className = ''
+}: CommentSectionProps) {
+  // Guest Identity State
+  const [guestName, setGuestName] = useState('');
+  const [tempGuestName, setTempGuestName] = useState('');
+  const [isSettingName, setIsSettingName] = useState(false);
+
+  // Comment Input State
+  const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showForm, setShowForm] = useState(false);
 
-  // Load comments from localStorage
+  // Load Guest Name from localStorage (Client-side only)
   useEffect(() => {
-    const savedComments = localStorage.getItem(`comments-${projectId}`);
-    if (savedComments) {
-      setComments(JSON.parse(savedComments));
+    if (typeof window !== 'undefined') {
+      const savedName = localStorage.getItem('guest-name');
+      if (savedName) {
+        setGuestName(savedName);
+      } else {
+        setIsSettingName(true); // Prompt to set name if none exists
+      }
     }
-  }, [projectId]);
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveName = () => {
+    if (!tempGuestName.trim()) return;
+    const name = tempGuestName.trim();
+    setGuestName(name);
+    localStorage.setItem('guest-name', name);
+    setIsSettingName(false);
+  };
 
-    if (!newComment.name.trim() || !newComment.comment.trim()) {
-      return;
-    }
+  const handlePostComment = async () => {
+    if (!commentText.trim() || !guestName) return;
 
     setIsSubmitting(true);
 
-    const comment: Comment = {
+    const newComment: Comment = {
       id: Date.now().toString(),
-      name: newComment.name.trim(),
-      email: newComment.email.trim(),
-      comment: newComment.comment.trim(),
-      createdAt: new Date().toISOString(),
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newComment.name.trim())}&background=random`
+      text: commentText.trim(),
+      name: guestName,
+      time: new Date().toISOString(),
+      likes: 0,
+      replies: []
     };
 
-    const updatedComments = [comment, ...comments];
+    const updatedComments = [newComment, ...comments];
 
     // Optimistic Update
     setComments(updatedComments);
-    localStorage.setItem(`comments-${projectId}`, JSON.stringify(updatedComments));
-
-    // Reset form
-    setNewComment({ name: '', email: '', comment: '', website_url: '' });
-    setShowForm(false);
-    setIsSubmitting(false);
+    setCommentText(''); // Clear input immediately
 
     try {
-      // Send to API with security fields
+      // Send to API with security fields (Honeypot is empty string)
       const response = await fetch('/api/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          slug: projectId,
+          slug: slug,
           comments: updatedComments,
-          website_url: newComment.website_url // Send honeypot
+          website_url: '' // Anti-spam honeypot (must be empty)
         })
       });
 
@@ -85,188 +82,157 @@ export default function CommentSection({ projectId, className = '', initialLikes
         const errorData = await response.json();
         if (response.status === 429) {
           alert("Too many comments! Please wait 10 seconds.");
-          // Rollback logic could go here, but for now we keep the optimistic update locally
         } else {
           console.error('Server error:', errorData);
         }
       }
     } catch (error) {
       console.error('Failed to submit comment:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatRelativeTime = (dateString: string) => {
+    if (!dateString) return 'Baru saja';
     const date = new Date(dateString);
-    return date.toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'Baru saja';
+
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes} menit yang lalu`;
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} jam yang lalu`;
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays} hari yang lalu`;
+
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks < 4) return `${diffInWeeks} minggu yang lalu`;
+
+    const diffInMonths = Math.floor(diffInDays / 30);
+    if (diffInMonths < 12) return `${diffInMonths} bulan yang lalu`;
+
+    return `${Math.floor(diffInDays / 365)} tahun yang lalu`;
   };
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3 flex-wrap">
-          <LoveButton
-            projectId={projectId}
-            initialLikes={initialLikes}
-            initialLoved={initialLoved}
-            className="px-3 py-1 text-sm"
-          />
-          <h3 className="text-lg font-semibold text-gray-900">
-            Comments ({comments.length})
-          </h3>
-        </div>
-        <motion.button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          {showForm ? 'Cancel' : 'Add Comment'}
-        </motion.button>
-      </div>
-
-      {/* Comment Form */}
-      <AnimatePresence>
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-gray-50 rounded-lg p-6"
-          >
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Name *
-                  </label>
-
-                  {/* Honeypot Field - Invisible to humans */}
-                  <input
-                    type="text"
-                    name="website_url"
-                    value={newComment.website_url}
-                    onChange={(e) => setNewComment(prev => ({ ...prev, website_url: e.target.value }))}
-                    className="absolute opacity-0 -z-10 h-0 w-0"
-                    tabIndex={-1}
-                    autoComplete="off"
-                  />
-
-                  <input
-                    type="text"
-                    id="name"
-                    value={newComment.name}
-                    onChange={(e) => setNewComment(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={newComment.email}
-                    onChange={(e) => setNewComment(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-1">
-                  Comment *
-                </label>
-                <textarea
-                  id="comment"
-                  rows={4}
-                  value={newComment.comment}
-                  onChange={(e) => setNewComment(prev => ({ ...prev, comment: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Share your thoughts about this project..."
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-                <motion.button
-                  type="submit"
-                  disabled={isSubmitting || !newComment.name.trim() || !newComment.comment.trim()}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {isSubmitting ? 'Posting...' : 'Post Comment'}
-                </motion.button>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+    <div className={`space-y-8 ${className}`}>
       {/* Comments List */}
-      <div className="space-y-4">
-        <AnimatePresence>
-          {comments.map((comment, index) => (
-            <motion.div
-              key={comment.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-white border border-gray-200 rounded-lg p-4"
-            >
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="relative w-10 h-10">
-                    <Image
-                      src={comment.avatar || 'https://via.placeholder.com/80'}
-                      alt={comment.name}
-                      fill
-                      className="rounded-full object-cover"
-                      sizes="40px"
-                      unoptimized
-                    />
-                  </div>
+      <div className="flex-1 overflow-y-auto no-scrollbar pt-0 space-y-8 pb-4">
+        {comments.length === 0 ? (
+          <p className="text-center text-xs text-gray-400 py-4 italic">Belum ada komentar. Jadilah yang pertama! ✨</p>
+        ) : (
+          comments.map((comment) => (
+            <div key={comment.id} className="group">
+              <div className="flex gap-4">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white text-[13px] font-bold uppercase shadow-lg">
+                  {comment.name[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2">
-                    <h4 className="text-sm font-medium text-gray-900">
-                      {comment.name}
-                    </h4>
-                    <span className="text-xs text-gray-500">
-                      {formatDate(comment.createdAt)}
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">{comment.name}</span>
+                    <span className="text-[10px] text-gray-400">
+                      {formatRelativeTime(comment.createdAt || comment.time || '')}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
-                    {comment.comment}
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                    {comment.text}
                   </p>
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+              {/* Render Replies (Read-Only for now to match StickyImageStack) */}
+              {comment.replies && comment.replies.length > 0 && (
+                <div className="ml-13 mt-4 space-y-4 border-l-2 border-gray-100 dark:border-gray-800 pl-4">
+                  {comment.replies.map((reply) => (
+                    <div key={reply.id} className="flex gap-3">
+                      <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center text-gray-600 dark:text-gray-400 text-[10px] font-bold uppercase ring-1 ring-gray-200 dark:ring-gray-700">
+                        {reply.name[0]}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-2 mb-1">
+                          <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{reply.name}</span>
+                          <span className="text-[9px] text-gray-400">
+                            {formatRelativeTime(reply.createdAt || reply.time || '')}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-700 dark:text-gray-400">
+                          {reply.text}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
 
-        {comments.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <p>No comments yet. Be the first to share your thoughts!</p>
+      {/* Input Section - Sticky at bottom usually, but here just at bottom of list */}
+      <div className="pt-4 border-t border-black/10 dark:border-white/10">
+        {!guestName || isSettingName ? (
+          <div className="space-y-4">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              Isi namamu dulu untuk mulai berkomentar 😊
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                autoFocus
+                value={tempGuestName}
+                onChange={(e) => setTempGuestName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                placeholder="Ketik namamu..."
+                className="flex-1 bg-transparent border-none border-b border-black/10 dark:border-white/10 px-0 py-2.5 text-sm focus:border-red-500 dark:text-white transition-all outline-none focus:outline-none focus:ring-0"
+              />
+              <button
+                onClick={handleSaveName}
+                disabled={!tempGuestName.trim()}
+                className="bg-[#E60023] hover:bg-[#ad001b] text-white px-6 py-2.5 rounded-full text-sm font-bold transition-colors disabled:opacity-50 border-none outline-none shadow-sm"
+              >
+                Simpan
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">
+                Komentar sebagai <span className="text-red-500">{guestName}</span>
+              </p>
+              <button
+                onClick={() => {
+                  setTempGuestName(guestName);
+                  setIsSettingName(true);
+                }}
+                className="text-[11px] text-gray-300 hover:text-red-500 transition-colors underline decoration-dotted underline-offset-4"
+              >
+                Ganti nama
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
+                placeholder="Tulis komentar..."
+                className="w-full bg-transparent border-none border-b border-black/10 dark:border-white/10 px-0 py-3 text-sm focus:border-red-500 dark:text-white transition-all outline-none focus:outline-none focus:ring-0 pr-12"
+              />
+              <button
+                onClick={handlePostComment}
+                disabled={!commentText.trim() || isSubmitting}
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-red-500 hover:text-red-600 transition-colors disabled:opacity-30"
+              >
+                <svg className="w-5 h-5 rotate-90" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -22,6 +22,8 @@ export interface ProjectFormData {
     slug?: string;
     likes?: number;
     shares?: number;
+    allowComments?: boolean;
+    initialCommentCount?: number;
 }
 
 export const useProjectForm = (project?: Project) => {
@@ -47,8 +49,10 @@ export const useProjectForm = (project?: Project) => {
         playsInline: project?.playsInline ?? true,
         id: project?.id,
         slug: project?.slug,
-        likes: project?.likes || 0,
-        shares: project?.shares || 0
+        likes: project?.likes ?? 0,
+        shares: project?.shares ?? 0,
+        allowComments: project?.allowComments ?? true,
+        initialCommentCount: 2
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -77,8 +81,10 @@ export const useProjectForm = (project?: Project) => {
             playsInline: project?.playsInline ?? true,
             id: project?.id,
             slug: project?.slug,
-            likes: project?.likes || 0,
-            shares: project?.shares || 0
+            likes: project?.likes ?? 0,
+            shares: project?.shares ?? 0,
+            allowComments: project?.allowComments ?? true,
+            initialCommentCount: 2
         });
     }, [project]);
 
