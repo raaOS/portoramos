@@ -9,10 +9,18 @@ const FALLBACK_EXPERIENCE: ExperienceData = {
     lastUpdated: new Date().toISOString()
 };
 
-const service = new ContentService<ExperienceData>('experience.json', FALLBACK_EXPERIENCE);
+import experienceFixed from '@/data/experience.json';
+
+const service = new ContentService<ExperienceData>('experience.json', experienceFixed as unknown as ExperienceData);
 
 export const experienceService = {
     async getExperienceData() {
+        // In production, fallback to the bundled JSON (which contains the 404 fix)
+        // instead of fetching potentially stale data from GitHub.
+        // Admin updates will trigger a rebuild, updating this bundled file.
+        if (process.env.NODE_ENV === 'production') {
+            return experienceFixed as unknown as ExperienceData;
+        }
         return await service.getData();
     },
 

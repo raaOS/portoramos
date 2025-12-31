@@ -24,6 +24,7 @@ import BlurTextLoop from '@/components/effects/BlurTextLoop';
 import RunningTextSection from '@/components/RunningTextSection';
 import AITranslator from '@/components/features/AITranslator';
 import StickyImageStack, { MediaItem } from '@/components/gallery/StickyImageStack';
+import { resolveCover } from '@/lib/images';
 
 const TextMorph = dynamic(() => import('@/components/effects/TextMorph'), {
   ssr: false,
@@ -70,7 +71,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
       'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offline',
       'membantu UI/UX di Bitlabs'
     ],
-    imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg'
+    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
   },
   {
     year: 'Jan 2019 - Jan 2020',
@@ -80,7 +81,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
     description: [
       'Melakukan kegiatan pembelajaran/sharing session dengan mahasiswa sesuai jadwal yang ditetapkan perusahaan. Melakukan observasi, monitoring, memberikan masukan dan saran perbaikan terkait kinerja peserta dan memastikan paham tentang desain grafis.'
     ],
-    imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png'
+    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
   },
   {
     year: 'Mar 2017 - Nov 2019',
@@ -91,7 +92,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
       'Berperan dalam perancangan strategi untuk promosi perusahaan.',
       'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offline'
     ],
-    imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg'
+    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
   },
   {
     year: 'Agt 2016 - Mar 2017',
@@ -104,7 +105,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
       'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin',
       'Mengirim, Mengawasi, Mencatat Produk Sthal. Co'
     ],
-    imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg'
+    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
   },
   {
     year: 'Okt 2012 - Agt 2015',
@@ -116,7 +117,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
       'Berhasil dalam mengenalkan info seputar dunia kopi ke customer',
       'Melayani transaksi customer'
     ],
-    imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png'
+    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
   },
   {
     year: 'Jan 2012 - Mar 2012',
@@ -128,7 +129,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
       'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin',
       'Mengirim, Mengawasi, Mencatat Produk Wulan Butique'
     ],
-    imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg'
+    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
   }
 ];
 
@@ -503,7 +504,8 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
   const stackItems = useMemo(() => {
     const allProjects = projectsData?.projects || [];
     const featuredIds = galleryFeatured?.featuredProjectIds || [];
-    const isVideoLink = (url: string) => /\.(mp4|webm|ogg)$/i.test(url);
+
+    let projectsToShow: Project[] = [];
 
     if (featuredIds.length > 0) {
       const featured = featuredIds
@@ -511,26 +513,27 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
         .filter(Boolean) as Project[];
 
       if (featured.length > 0) {
-        return featured.map(p => ({
-          id: p.id,
-          type: (isVideoLink(p.cover) ? 'video' : 'image') as 'video' | 'image',
-          src: p.cover,
-          alt: p.title,
-          project: p
-        }));
+        projectsToShow = featured;
       }
     }
 
-    return allProjects
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 10)
-      .map(p => ({
+    if (projectsToShow.length === 0) {
+      projectsToShow = allProjects
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 10);
+    }
+
+    // MAP WITH OPTIMIZATION
+    return projectsToShow.map(p => {
+      const galleryItem = resolveCover(p);
+      return {
         id: p.id,
-        type: (isVideoLink(p.cover) ? 'video' : 'image') as 'video' | 'image',
-        src: p.cover,
+        type: (galleryItem.kind === 'video' ? 'video' : 'image') as 'video' | 'image', // Explicit cast
+        src: galleryItem.src,
         alt: p.title,
         project: p
-      }));
+      };
+    });
   }, [galleryFeatured, projectsData]);
 
 
@@ -538,11 +541,14 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
   const galleryImages = (projectsData?.projects || [])
     .filter(p => p.cover)
     .slice(0, 8)
-    .map(p => ({
-      src: p.cover,
-      isActive: true,
-      slug: p.slug
-    }));
+    .map(p => {
+      const galleryItem = resolveCover(p);
+      return {
+        src: galleryItem.src,
+        isActive: true,
+        slug: p.slug
+      };
+    });
 
   // Fallback to empty array if no projects loaded yet (no old static images)
   const finalGalleryImages = galleryImages;

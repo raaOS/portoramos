@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import NextImage from 'next/image'; // Added
 import { motion, useScroll, useTransform, useSpring, MotionValue, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Project } from '@/types/projects';
@@ -107,11 +108,16 @@ function Card({
                         className="w-full h-full object-cover"
                     />
                 ) : (
-                    <img
-                        src={item.src}
-                        alt={item.alt || ''}
-                        className="w-full h-full object-cover"
-                    />
+                    <div className="relative w-full h-full">
+                        <NextImage
+                            src={item.src}
+                            alt={item.alt || ''}
+                            fill
+                            sizes="(max-width: 768px) 80vw, (max-width: 1200px) 500px, 600px"
+                            className="object-cover"
+                            priority={index === 0} // Prioritize the first card
+                        />
+                    </div>
                 )}
 
                 {/* Overlay for index/decoration */}

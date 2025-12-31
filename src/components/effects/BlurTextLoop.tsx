@@ -52,7 +52,7 @@ const BlurTextLoop = ({
                     <motion.span
                         key={`${segment}-${index}`}
                         className="inline-block"
-                        style={{ display: 'inline-block', backfaceVisibility: 'hidden' }}
+                        style={{ display: 'inline-block', backfaceVisibility: 'hidden', willChange: 'filter, opacity, transform' }}
                         initial={{
                             filter: 'blur(10px)',
                             opacity: 0,

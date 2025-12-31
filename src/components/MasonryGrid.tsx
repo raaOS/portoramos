@@ -48,15 +48,15 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
     if (!mounted) {
         return (
             <div
-                className={`w-full ${className} ${columns === 'sidebar'
-                        ? 'columns-2 lg:columns-3 gap-4'
-                        : columns === 'bottom'
-                            ? 'columns-2 md:columns-3 lg:columns-4 xl:columns-6 gap-4'
-                            : 'columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-7 gap-4'
+                className={`w-full grid ${className} ${columns === 'sidebar'
+                    ? 'grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-min'
+                    : columns === 'bottom'
+                        ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 auto-rows-min'
+                        : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-4 auto-rows-min'
                     }`}
             >
                 {React.Children.map(children, (child) => (
-                    <div className="mb-4 break-inside-avoid">
+                    <div className="mb-4">
                         {child}
                     </div>
                 ))}

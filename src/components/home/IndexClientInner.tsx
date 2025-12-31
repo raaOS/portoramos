@@ -201,13 +201,13 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
                 return (
                   <motion.div
                     key={`${project.slug}-${index}`}
-                    initial={{ opacity: 0, y: 50 }} // Reduced y offset for subtler entrance
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "50px" }} // Trigger slightly before
+                    initial={index < 12 ? { opacity: 1, y: 30 } : { opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{
-                      duration: 0.5,
+                      duration: index < 12 ? 0.5 : 0.5,
                       ease: "easeOut",
-                      delay: (Math.floor(index / 7) % 5) * 0.1 // Row-by-row visual curtain effect (7 items per row)
+                      // Minimal stagger for slide-up to feel organic
+                      delay: index < 12 ? index * 0.03 : (Math.floor(index / 7) % 5) * 0.1
                     }}
                   >
                     <ProjectCardPinterest
