@@ -26,7 +26,8 @@ export default function CommentSection({ projectId, className = '', initialLikes
   const [newComment, setNewComment] = useState({
     name: '',
     email: '',
-    comment: ''
+    comment: '',
+    website_url: '' // Honeypot field
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -41,7 +42,7 @@ export default function CommentSection({ projectId, className = '', initialLikes
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newComment.name.trim() || !newComment.comment.trim()) {
       return;
     }
@@ -58,23 +59,37 @@ export default function CommentSection({ projectId, className = '', initialLikes
     };
 
     const updatedComments = [comment, ...comments];
+
+    // Optimistic Update
     setComments(updatedComments);
-    
-    // Save to localStorage
     localStorage.setItem(`comments-${projectId}`, JSON.stringify(updatedComments));
-    
+
     // Reset form
-    setNewComment({ name: '', email: '', comment: '' });
+    setNewComment({ name: '', email: '', comment: '', website_url: '' });
     setShowForm(false);
     setIsSubmitting(false);
 
-    // Here you could also send to your API
     try {
-      // await fetch(`/api/projects/${projectId}/comments`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(comment)
-      // });
+      // Send to API with security fields
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: projectId,
+          comments: updatedComments,
+          website_url: newComment.website_url // Send honeypot
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 429) {
+          alert("Too many comments! Please wait 10 seconds.");
+          // Rollback logic could go here, but for now we keep the optimistic update locally
+        } else {
+          console.error('Server error:', errorData);
+        }
+      }
     } catch (error) {
       console.error('Failed to submit comment:', error);
     }
@@ -95,7 +110,7 @@ export default function CommentSection({ projectId, className = '', initialLikes
     <div className={`space-y-6 ${className}`}>
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap">
-          <LoveButton 
+          <LoveButton
             projectId={projectId}
             initialLikes={initialLikes}
             initialLoved={initialLoved}
@@ -130,6 +145,18 @@ export default function CommentSection({ projectId, className = '', initialLikes
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                     Name *
                   </label>
+
+                  {/* Honeypot Field - Invisible to humans */}
+                  <input
+                    type="text"
+                    name="website_url"
+                    value={newComment.website_url}
+                    onChange={(e) => setNewComment(prev => ({ ...prev, website_url: e.target.value }))}
+                    className="absolute opacity-0 -z-10 h-0 w-0"
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+
                   <input
                     type="text"
                     id="name"
@@ -152,7 +179,7 @@ export default function CommentSection({ projectId, className = '', initialLikes
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-1">
                   Comment *
@@ -167,7 +194,7 @@ export default function CommentSection({ projectId, className = '', initialLikes
                   required
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
@@ -233,7 +260,7 @@ export default function CommentSection({ projectId, className = '', initialLikes
             </motion.div>
           ))}
         </AnimatePresence>
-        
+
         {comments.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
