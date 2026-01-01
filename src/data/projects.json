@@ -48,9 +48,9 @@
       "slug": "gantungan",
       "galleryItems": [],
       "order": 2,
-      "status": "published",
+      "status": "draft",
       "createdAt": "2025-09-14T16:45:24.869Z",
-      "updatedAt": "2026-01-01T15:16:37.285Z",
+      "updatedAt": "2026-01-01T15:57:41.535Z",
       "likes": 37,
       "shares": 5
     },
@@ -603,5 +603,5 @@
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-01T15:16:37.285Z"
+  "lastUpdated": "2026-01-01T15:57:41.535Z"
 }
