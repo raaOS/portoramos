@@ -1,28 +1,40 @@
 {
     "jobs": [
         {
-            "id": "job_1",
-            "company": "TechFlow Solutions",
-            "role": "Senior UI/UX Designer",
+            "id": "job_real_1",
+            "company": "Sprung Studios",
+            "role": "UX/UI Designer (Gamers)",
             "source": "LinkedIn",
-            "description": "Looking for a designer with experience in complex dashboard systems and a strong eye for detail.",
-            "matchScore": 94,
+            "description": "Create next-level user experiences for gamers. Focus on immersive interfaces and visual storytelling within gaming ecosystems.",
+            "matchScore": 96,
             "status": "pending",
             "timestamp": "2026-01-02T01:30:00Z",
-            "proposalDraft": "Hello TechFlow team! I noticed you are looking for a Senior UI/UX Designer. With my background in building high-performance portfolio systems and creative visualizations, I believe I can bring significant value to your dashboard project...",
-            "applyUrl": "https://linkedin.com/jobs/view/12345"
+            "proposalDraft": "Hello Sprung Studios! My portfolio at portfolio-shared.vercel.app features several immersive, high-motion interfaces that align perfectly with the gaming industry's demand for dynamic UX. I've highlighted my 'Visual Storytelling' projects which I believe are a direct match for this role...",
+            "applyUrl": "https://www.linkedin.com/jobs/view/sprung-studios-ux-ui"
         },
         {
-            "id": "job_2",
-            "company": "CreativePulse Agency",
-            "role": "Digital Art Director",
-            "source": "Upwork",
-            "description": "Art director needed for a series of high-end digital marketing campaigns.",
-            "matchScore": 88,
-            "status": "success",
-            "timestamp": "2026-01-02T00:15:00Z",
-            "proposalDraft": "Hi CreativePulse! My work often focuses on the intersection of art and technology...",
-            "applyUrl": "https://upwork.com/jobs/67890"
+            "id": "job_real_2",
+            "company": "Rippling People Center",
+            "role": "Associate Designer (Jan 2026)",
+            "source": "Zippia",
+            "description": "Support design initiatives for enterprise HR platforms. Focus on clean, consistent, and user-friendly interfaces.",
+            "matchScore": 89,
+            "status": "pending",
+            "timestamp": "2026-01-02T01:35:00Z",
+            "proposalDraft": "Hi Rippling Team! I specialize in creating consistent design systems for complex platforms. My recent work on enterprise-level dashboard components (viewable at portfolio-shared.vercel.app) demonstrates my ability to handle the scale and precision Rippling requires...",
+            "applyUrl": "https://www.zippia.com/rippling-jobs/"
+        },
+        {
+            "id": "job_real_3",
+            "company": "Digital Creative Agency",
+            "role": "Digital Creative Specialist (Remote)",
+            "source": "Zippia",
+            "description": "Lead visual and motion direction for core campaigns. Designing high-end animated assets and visual narratives.",
+            "matchScore": 92,
+            "status": "pending",
+            "timestamp": "2026-01-02T01:40:00Z",
+            "proposalDraft": "Hi there! Looking at your need for high-end animated assets, my 'Swaying Gallery' and 'Text Morph' experiments at portfolio-shared.vercel.app are testament to my expertise in motion-driven visual narratives. I'd love to bring this dynamic energy to your core campaigns...",
+            "applyUrl": "https://www.zippia.com/jobs/digital-creative-specialist-remote/"
         }
     ],
     "settings": {
@@ -31,10 +43,10 @@
             "LinkedIn",
             "Upwork",
             "Dribbble",
-            "X"
+            "Zippia"
         ],
         "minBudget": 2500,
         "voiceTone": "professional",
-        "lastHuntTimestamp": "2026-01-02T01:00:00Z"
+        "lastHuntTimestamp": "2026-01-02T01:40:00Z"
     }
 }
