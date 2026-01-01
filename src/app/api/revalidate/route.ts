@@ -39,8 +39,10 @@ export async function POST(req: NextRequest) {
 
     // Revalidate paths
     revalidatePath('/');
+    revalidatePath('/about');
+    revalidatePath('/contact');
 
-    console.log('[Revalidate] Webhook received & revalidated /');
+    console.log('[Revalidate] Webhook received & revalidated all paths');
 
     return NextResponse.json({ revalidated: true, now: Date.now() });
 

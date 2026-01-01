@@ -10,8 +10,8 @@ export const metadata: Metadata = generateSEOMetadata({
   path: '/about'
 });
 
-// Set revalidate to 0 for real-time updates (SSR)
-export const revalidate = 0;
+// Cache server-rendered about page (Static by default, revalidated via Webhook)
+// export const revalidate = 0;
 
 export default async function AboutPage() {
   const [aboutData, projects] = await Promise.all([
