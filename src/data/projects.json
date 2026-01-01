@@ -21,9 +21,9 @@
       "playsInline": true,
       "galleryItems": [],
       "order": 2,
-      "status": "draft",
+      "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-01T16:48:22.702Z",
+      "updatedAt": "2026-01-01T16:56:10.080Z",
       "likes": 33,
       "shares": 5
     },
@@ -603,5 +603,5 @@
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-01T16:55:54.553Z"
+  "lastUpdated": "2026-01-01T16:56:10.080Z"
 }
