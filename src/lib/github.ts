@@ -56,25 +56,27 @@ export class GitHubService {
 
     /**
      * Fetch file content from any path in the repo
-     * @param noCache - If true, bypasses cache to get fresh data (important for SHA)
+     * @param noCache - If true, bypasses local file system and cache to get fresh data from GitHub (important for SHA)
      */
     async getFileContent<T>(filePath: string, noCache = false): Promise<{ content: T, sha: string }> {
-        // Try reading from local filesystem first (Robust for Local Build & Vercel if file exists)
-        try {
-            const localPath = path.join(process.cwd(), filePath);
-            // Check if file exists to avoid unnecessary read errors in logs if strictly remote
-            await fs.access(localPath);
+        // If noCache is false, try reading from local filesystem first (Robust for Local Build & Vercel if file exists)
+        if (!noCache) {
+            try {
+                const localPath = path.join(process.cwd(), filePath);
+                // Check if file exists
+                await fs.access(localPath);
 
-            console.log(`[GitHubService] 📂 Reading local file: ${localPath}`);
-            const content = await fs.readFile(localPath, 'utf-8');
-            return {
-                content: JSON.parse(content),
-                sha: 'local-file-sha' // Dummy SHA for local read, fine for reading. Updates might need real SHA.
-            };
-        } catch (error) {
-            // If local read fails (e.g. file not found or Vercel environment restriction), proceed to API
-            if (process.env.NODE_ENV === 'development') {
-                console.warn(`[GitHubService] Local file read failed for ${filePath}, falling back to API.`);
+                console.log(`[GitHubService] 📂 Reading local file: ${localPath}`);
+                const content = await fs.readFile(localPath, 'utf-8');
+                return {
+                    content: JSON.parse(content),
+                    sha: 'local-file-sha' // Dummy SHA, only for read-only mode
+                };
+            } catch (error) {
+                // Determine if we should log warning
+                if (process.env.NODE_ENV === 'development') {
+                    console.warn(`[GitHubService] Local file read failed for ${filePath}, falling back to API.`);
+                }
             }
         }
 

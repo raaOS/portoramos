@@ -111,18 +111,25 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                         <div className="grid grid-cols-5 gap-3 items-end">
                             <div className="col-span-2">
                                 <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tone of Voice</label>
-                                <select
-                                    value={aiOptions.style}
-                                    onChange={(e) => setAiOptions(prev => ({ ...prev, style: e.target.value }))}
-                                    className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2.5 focus:border-violet-500 outline-none transition-all truncate hover:border-violet-300"
-                                >
-                                    <option value="estetik & profesional">Estetik & Profesional</option>
-                                    <option value="minimalis & elegan">Minimalis & Elegan</option>
-                                    <option value="kreatif & berapi-api">Kreatif & Berapi-api</option>
-                                    <option value="poetis & mendalam">Poetis & Mendalam</option>
-                                    <option value="santai & trendi">Santai & Trendi</option>
-                                    <option value="Gen-Z (Casual/Chill)">Gen-Z (Casual/Chill)</option>
-                                </select>
+                                <div className="relative">
+                                    <select
+                                        value={aiOptions.style}
+                                        onChange={(e) => setAiOptions(prev => ({ ...prev, style: e.target.value }))}
+                                        className="w-full text-sm bg-white border border-gray-200 rounded-lg pl-3 pr-10 py-2.5 focus:border-violet-500 outline-none transition-all truncate hover:border-violet-300 appearance-none cursor-pointer"
+                                    >
+                                        <option value="estetik & profesional">Estetik & Profesional</option>
+                                        <option value="minimalis & elegan">Minimalis & Elegan</option>
+                                        <option value="kreatif & berapi-api">Kreatif & Berapi-api</option>
+                                        <option value="poetis & mendalam">Poetis & Mendalam</option>
+                                        <option value="santai & trendi">Santai & Trendi</option>
+                                        <option value="Gen-Z (Casual/Chill)">Gen-Z (Casual/Chill)</option>
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
                             <div className="col-span-1">
                                 <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 truncate" title="Max Title Words">Max Words</label>
