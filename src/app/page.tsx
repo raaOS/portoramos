@@ -8,8 +8,8 @@ type Props = {
   searchParams?: { tag?: string }
 }
 
-// Cache server-rendered home page (0s for instant updates, relies on GitHub API)
-export const revalidate = 0
+// Cache server-rendered home page (Static by default, revalidated via Webhook)
+// export const revalidate = 0
 
 export const metadata: Metadata = {
   title: baseSEO.title,

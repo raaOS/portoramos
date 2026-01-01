@@ -1,50 +1,51 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
-import { checkAdminAuth } from '@/lib/auth'
 
-const ALLOWED_PATHS = new Set([
-  '/',
-  '/about',
-  '/contact',
-  '/works',
-  '/cv',
-])
+import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import crypto from 'crypto';
 
-const ALLOWED_PREFIXES = ['/works/']
-
-function isAllowedPath(path: string) {
-  if (ALLOWED_PATHS.has(path)) return true
-  return ALLOWED_PREFIXES.some((prefix) => path.startsWith(prefix))
-}
-
-export async function POST(request: NextRequest) {
-  if (!checkAdminAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const path = request.nextUrl.searchParams.get('path')
-
-  if (!path) {
-    return NextResponse.json({ error: 'Path parameter is required' }, { status: 400 })
-  }
-
-  if (!path.startsWith('/')) {
-    return NextResponse.json({ error: 'Path must start with "/"' }, { status: 400 })
-  }
-
-  if (!isAllowedPath(path)) {
-    return NextResponse.json({ error: 'Path not allowed' }, { status: 403 })
-  }
-
+export async function POST(req: NextRequest) {
   try {
-    revalidatePath(path)
-    return NextResponse.json({ revalidated: true, path })
-  } catch (error) {
-    console.error('Error revalidating path:', error)
-    return NextResponse.json({ error: 'Failed to revalidate' }, { status: 500 })
-  }
-}
+    const rawBody = await req.text();
+    const headers = req.headers;
+    const signature = headers.get('x-hub-signature-256');
+    const secret = process.env.REVALIDATION_TOKEN;
 
-export function GET() {
-  return NextResponse.json({ error: 'Use POST with auth' }, { status: 405 })
+    if (!secret) {
+      return NextResponse.json({ message: 'Secret not configured' }, { status: 500 });
+    }
+
+    if (!signature) {
+      return NextResponse.json({ message: 'No signature' }, { status: 401 });
+    }
+
+    // Verify Signature
+    const bodyBuffer = Buffer.from(rawBody, 'utf-8');
+    const hmac = crypto.createHmac('sha256', secret);
+    const digest = 'sha256=' + hmac.update(bodyBuffer).digest('hex');
+
+    // Use timingSafeEqual to prevent timing attacks
+    const signatureBuffer = Buffer.from(signature);
+    const digestBuffer = Buffer.from(digest);
+
+    if (signatureBuffer.length !== digestBuffer.length || !crypto.timingSafeEqual(signatureBuffer, digestBuffer)) {
+      return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
+    }
+
+    // Process Payload
+    const payload = JSON.parse(rawBody);
+
+    // We only care about pushes to main/master that touch data
+    // But for simplicity, we revalidate on any push for now.
+
+    // Revalidate paths
+    revalidatePath('/');
+
+    console.log('[Revalidate] Webhook received & revalidated /');
+
+    return NextResponse.json({ revalidated: true, now: Date.now() });
+
+  } catch (err: any) {
+    console.error('[Revalidate] Error:', err.message);
+    return NextResponse.json({ message: 'Error revalidating' }, { status: 500 });
+  }
 }
