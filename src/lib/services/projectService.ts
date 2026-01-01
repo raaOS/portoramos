@@ -35,6 +35,7 @@ export const projectService = {
                         } catch (e: any) {
                             console.error('[ProjectService] Fresh GitHub fetch failed:', e.message);
                             // If forbidden/unauthorized, it's likely Env Vars. If 404, might be private repo without token.
+                            console.warn('[ProjectService] Falling back to STATIC build-time data. Data may be stale.');
                         }
                     }
                 } else {

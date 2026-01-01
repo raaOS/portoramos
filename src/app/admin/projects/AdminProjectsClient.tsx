@@ -455,14 +455,10 @@ export default function AdminProjectsClient() {
       // 3. Invalidate queries to refresh UI
       await queryClient.invalidateQueries({ queryKey: ['projects', 'admin'] });
 
-      // 4. Trigger ONE Github Sync with fresh data
-      // We need to fetch the fresh data first because existing 'projects' var is stale
-      const freshRes = await fetch('/api/projects?fresh=true');
-      const data = await freshRes.json();
+      // 3. Invalidate queries to refresh UI
+      await queryClient.invalidateQueries({ queryKey: ['projects', 'admin'] });
 
-      if (data.projects) {
-        await triggerGithubSync(data.projects, true);
-      }
+      // No need to trigger manual sync, /api/projects/bulk already updates GitHub directly.
 
     } catch (e) {
       console.error(e);
