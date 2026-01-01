@@ -125,7 +125,7 @@ export const projectService = {
             galleryItems: data.galleryItems || [],
             likes: data.likes || 0,
             shares: data.shares || 0,
-            external_link: data.external_link || '',
+            allowComments: data.allowComments ?? true,
             order: currentProjects.length + 1,
             status: data.status || 'published',
             createdAt: new Date().toISOString(),
