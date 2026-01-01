@@ -87,7 +87,7 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
         <div className="space-y-8">
             {/* AI Customization Bar - Clean & Professional (No Gradients) */}
             {formData.cover && isValidMediaUrl(formData.cover) && (
-                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                <div className="bg-white border border-gray-200 rounded-xl p-5">
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                             <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                                 <select
                                     value={aiOptions.style}
                                     onChange={(e) => setAiOptions(prev => ({ ...prev, style: e.target.value }))}
-                                    className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all truncate"
+                                    className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2.5 focus:border-violet-500 outline-none transition-all truncate hover:border-violet-300"
                                 >
                                     <option value="estetik & profesional">Estetik & Profesional</option>
                                     <option value="minimalis & elegan">Minimalis & Elegan</option>
@@ -130,7 +130,7 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                                     type="number"
                                     value={aiOptions.maxTitleWords}
                                     onChange={(e) => setAiOptions(prev => ({ ...prev, maxTitleWords: parseInt(e.target.value) || 5 }))}
-                                    className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-center"
+                                    className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2.5 focus:border-violet-500 outline-none transition-all text-center hover:border-violet-300"
                                     min="1" max="15"
                                 />
                             </div>
@@ -140,7 +140,7 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                                     type="number"
                                     value={aiOptions.sentenceCount}
                                     onChange={(e) => setAiOptions(prev => ({ ...prev, sentenceCount: parseInt(e.target.value) || 2 }))}
-                                    className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-center"
+                                    className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2.5 focus:border-violet-500 outline-none transition-all text-center hover:border-violet-300"
                                     min="1" max="5"
                                 />
                             </div>
@@ -150,7 +150,7 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                                     onClick={handleAutoFill}
                                     disabled={isGenerating}
                                     title="Auto-Fill Details"
-                                    className="w-full h-[42px] flex items-center justify-center gap-2 text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                                    className="w-full h-[42px] flex items-center justify-center gap-2 text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
                                 >
                                     {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                                 </button>
