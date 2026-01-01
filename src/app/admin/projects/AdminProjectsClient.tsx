@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { isVideoLink } from '@/lib/media';
-import { Pencil, Trash2, Plus, Search, X, Loader2, Settings, CheckCircle2, AlertCircle, Copy, Eye, EyeOff, MessageCircle, Shield } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Loader2, Settings, CheckCircle2, AlertCircle, Copy, Eye, EyeOff, MessageCircle, Shield } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Import design system components
@@ -52,8 +52,8 @@ export default function AdminProjectsClient() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [managingCommentsProject, setManagingCommentsProject] = useState<Project | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showOnlyCommented, setShowOnlyCommented] = useState(false);
+
+  // showOnlyCommented removed
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [isSavingToGithub, setIsSavingToGithub] = useState(false);
 
@@ -420,10 +420,10 @@ export default function AdminProjectsClient() {
   };
 
   const selectAllProjects = () => {
-    if (selectedProjectIds.size === filteredProjects.length) {
+    if (selectedProjectIds.size === projects.length) {
       setSelectedProjectIds(new Set());
     } else {
-      setSelectedProjectIds(new Set(filteredProjects.map(p => p.id)));
+      setSelectedProjectIds(new Set(projects.map(p => p.id)));
     }
   };
 
@@ -471,14 +471,7 @@ export default function AdminProjectsClient() {
     }
   };
 
-  const filteredProjects = projects
-    .filter(project => {
-      const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const hasComments = (commentCounts[project.slug] || 0) > 0;
-      const matchesCommentFilter = showOnlyCommented ? hasComments : true;
-      return matchesSearch && matchesCommentFilter;
-    });
+
 
 
   return (
@@ -511,21 +504,22 @@ export default function AdminProjectsClient() {
 
       {/* Header Actions - Only Show in Projects Tab */}
       {activeTab === 'projects' && (
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+          {/* Status Indicators */}
+          <div className="flex-shrink-0 flex items-center">
             {isSavingToGithub ? (
               deployStatus === 'synced' ? (
-                <div className="flex items-center text-sm text-green-700 bg-green-100 px-3 py-1 rounded-full border border-green-200 font-medium">
+                <div className="h-10 px-4 flex items-center text-sm text-green-600 bg-white rounded-lg border border-green-200 font-medium whitespace-nowrap select-none shadow-sm">
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Synced to GitHub
+                  Synced
                 </div>
               ) : deployStatus === 'failed' ? (
-                <div className="flex items-center text-sm text-red-700 bg-red-100 px-3 py-1 rounded-full border border-red-200 font-medium">
+                <div className="h-10 px-4 flex items-center text-sm text-red-600 bg-white rounded-lg border border-red-200 font-medium whitespace-nowrap select-none">
                   <AlertCircle className="w-4 h-4 mr-2" />
-                  Sync failed
+                  Sync Failed
                 </div>
               ) : (
-                <div className="flex items-center text-sm text-violet-600 bg-violet-50 px-3 py-1 rounded-full border border-violet-100">
+                <div className="h-10 px-4 flex items-center text-sm text-violet-600 bg-white rounded-lg border border-violet-200 whitespace-nowrap select-none">
                   <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
                   Processing...
                 </div>
@@ -533,121 +527,109 @@ export default function AdminProjectsClient() {
             ) : (
               <>
                 {connectionStatus === 'connected' && (
-                  <div className="flex items-center text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">
+                  <div className="h-10 px-4 flex items-center text-sm text-green-600 bg-white rounded-lg border border-green-200 whitespace-nowrap select-none">
                     <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                    Connected
+                    GitHub Connected
                   </div>
                 )}
                 {connectionStatus === 'checking' && (
-                  <div className="flex items-center text-sm text-yellow-600 bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100">
+                  <div className="h-10 px-4 flex items-center text-sm text-yellow-600 bg-white rounded-lg border border-yellow-200 whitespace-nowrap select-none">
                     <Loader2 className="animate-spin w-3 h-3 mr-2" />
                     Checking...
                   </div>
                 )}
                 {connectionStatus === 'error' && (
-                  <div className="flex items-center text-sm text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-100">
+                  <div className="h-10 px-4 flex items-center text-sm text-red-600 bg-white rounded-lg border border-red-200 whitespace-nowrap select-none">
                     <AlertCircle className="w-3 h-3 mr-2" />
-                    {connectionError || 'Connection Error'}
+                    GitHub Error
                   </div>
                 )}
               </>
             )}
           </div>
-          <div className="flex flex-1 max-w-2xl flex-col sm:flex-row gap-2">
+
+          {/* Main Toolbar */}
+          <div className="flex-1 flex flex-col sm:flex-row gap-3 min-w-0">
             {/* Bulk Actions Toolbar */}
             {selectedProjectIds.size > 0 ? (
-              <div className="flex-1 flex items-center gap-2 bg-violet-50 p-1 rounded-lg border border-violet-100 animate-in fade-in slide-in-from-top-2">
-                <span className="text-sm font-medium text-violet-700 px-3 whitespace-nowrap">
+              <div className="flex-1 h-10 flex items-center gap-2 bg-white px-4 rounded-lg border border-violet-200 animate-in fade-in slide-in-from-top-1 overflow-hidden select-none">
+                <span className="text-sm font-bold text-violet-600 whitespace-nowrap mr-2">
                   {selectedProjectIds.size} Selected
                 </span>
-                <div className="h-4 w-px bg-violet-200 mx-1" />
-                <button
-                  onClick={() => handleBulkUpdate('publish')}
-                  disabled={isBulkUpdating}
-                  className="flex items-center px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100 rounded-md transition-colors"
-                >
-                  <Eye className="w-4 h-4 mr-1.5" />
-                  Publish
-                </button>
-                <button
-                  onClick={() => handleBulkUpdate('draft')}
-                  disabled={isBulkUpdating}
-                  className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                  <EyeOff className="w-4 h-4 mr-1.5" />
-                  Draft
-                </button>
-                <button
-                  onClick={() => handleBulkUpdate('delete')}
-                  disabled={isBulkUpdating}
-                  className="flex items-center px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 rounded-md transition-colors ml-auto"
-                >
-                  <Trash2 className="w-4 h-4 mr-1.5" />
-                  Delete
-                </button>
-                {isBulkUpdating && <Loader2 className="w-4 h-4 animate-spin text-violet-600 ml-2" />}
+                <div className="h-4 w-px bg-violet-100 mx-1 flex-shrink-0" />
+
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                  <button
+                    onClick={() => handleBulkUpdate('publish')}
+                    disabled={isBulkUpdating}
+                    className="flex items-center px-3 py-1 text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors whitespace-nowrap"
+                  >
+                    <Eye className="w-4 h-4 mr-1.5" />
+                    Publish
+                  </button>
+                  <button
+                    onClick={() => handleBulkUpdate('draft')}
+                    disabled={isBulkUpdating}
+                    className="flex items-center px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors whitespace-nowrap"
+                  >
+                    <EyeOff className="w-4 h-4 mr-1.5" />
+                    Draft
+                  </button>
+                  <button
+                    onClick={() => handleBulkUpdate('delete')}
+                    disabled={isBulkUpdating}
+                    className="flex items-center px-3 py-1 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors whitespace-nowrap"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1.5" />
+                    Delete
+                  </button>
+                </div>
+
+                {isBulkUpdating && <Loader2 className="w-4 h-4 animate-spin text-violet-600 ml-auto" />}
               </div>
             ) : (
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-violet-500 focus:border-violet-500 sm:text-sm transition duration-150 ease-in-out"
-                  placeholder="Search projects..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+              <div className="flex-1"></div>
             )}
 
-            <button
-              onClick={selectAllProjects}
-              className={`inline-flex items-center justify-center px-3 py-2 border text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors ${selectedProjectIds.size > 0 && selectedProjectIds.size === filteredProjects.length
-                ? 'bg-violet-100 text-violet-700 border-violet-200 ring-violet-500'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 ring-violet-500'
-                }`}
-              title="Select All"
-            >
-              <CheckCircle2 className={`h-5 w-5 ${selectedProjectIds.size > 0 && selectedProjectIds.size === filteredProjects.length ? 'fill-violet-500 text-violet-100' : ''}`} />
-            </button>
+            {/* Action Buttons Group */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={selectAllProjects}
+                className={`h-10 w-10 inline-flex items-center justify-center border rounded-lg focus:outline-none transition-all flex-shrink-0 ${selectedProjectIds.size > 0 && selectedProjectIds.size === projects.length
+                  ? 'bg-violet-600 border-violet-600 text-white' // Active: Solid
+                  : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600' // Inactive: Clean outline, no shadow
+                  }`}
+                title="Select All"
+              >
+                <CheckCircle2 className={`h-5 w-5 ${selectedProjectIds.size > 0 && selectedProjectIds.size === projects.length ? 'text-white' : ''}`} />
+              </button>
 
-            <button
-              onClick={() => setShowOnlyCommented(!showOnlyCommented)}
-              className={`inline-flex items-center justify-center px-3 py-2 border text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors ${showOnlyCommented
-                ? 'bg-green-50 text-green-700 border-green-200 ring-green-500'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 ring-violet-500'
-                }`}
-              title={showOnlyCommented ? "Show All Projects" : "Show Commented Only"}
-            >
-              <MessageCircle className={`h-5 w-5 ${showOnlyCommented ? 'fill-green-500 text-green-600' : ''}`} />
-            </button>
+              <button
+                onClick={() => setShowSecurityModal(true)}
+                className="h-10 w-10 inline-flex items-center justify-center border text-sm font-medium rounded-lg focus:outline-none transition-all bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600 flex-shrink-0"
+                title="Moderation Settings"
+              >
+                <Shield className="h-5 w-5" />
+              </button>
 
-            <button
-              onClick={() => setShowSecurityModal(true)}
-              className="inline-flex items-center justify-center px-3 py-2 border text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50 ring-violet-500"
-              title="Moderation Settings"
-            >
-              <Shield className="h-5 w-5" />
-            </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className={`h-10 w-10 inline-flex items-center justify-center border text-sm font-medium rounded-lg focus:outline-none transition-all flex-shrink-0 ${!githubConfig || connectionStatus === 'error' ? 'bg-white text-amber-500 border-amber-200 hover:border-amber-300' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600'
+                  }`}
+                title="GitHub Settings"
+              >
+                <Settings className={`h-5 w-5 ${(!githubConfig || connectionStatus === 'error') ? 'animate-pulse' : ''}`} />
+              </button>
 
-            <button
-              onClick={() => setShowSettings(true)}
-              className={`inline-flex items-center justify-center px-3 py-2 border text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors ${!githubConfig || connectionStatus === 'error' ? 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 ring-amber-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 ring-violet-500'
-                }`}
-              title="GitHub Settings"
-            >
-              <Settings className={`h-5 w-5 ${(!githubConfig || connectionStatus === 'error') ? 'animate-pulse' : ''}`} />
-            </button>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="h-10 inline-flex items-center justify-center px-6 border border-transparent text-sm font-bold rounded-lg text-white bg-violet-600 hover:bg-violet-700 focus:outline-none transition-all flex-shrink-0 whitespace-nowrap"
+              >
+                <Plus className="-ml-1 mr-2 h-5 w-5" />
+                Add Project
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors"
-          >
-            <Plus className="-ml-1 mr-2 h-5 w-5" />
-            Add Project
-          </button>
         </div>
       )}
 
@@ -667,14 +649,14 @@ export default function AdminProjectsClient() {
                 <ProjectCardSkeleton key={i} />
               ))}
             </div>
-          ) : filteredProjects.length === 0 ? (
+          ) : projects.length === 0 ? (
             <div className="text-center py-20 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
               <p className="text-gray-500 text-lg mb-2">No projects found</p>
               <p className="text-gray-400 text-sm">Create your first project to get started</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProjects.map((project) => {
+              {projects.map((project) => {
                 const isPublished = project.status === 'published';
                 return (
                   <div key={project.id} className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col overflow-hidden">

@@ -11,7 +11,7 @@ import AdminButton from '@/app/admin/components/AdminButton';
 import ProjectBasicInfo from './ProjectBasicInfo';
 import ProjectMediaUpload from './ProjectMediaUpload';
 import ProjectGalleryManager from './ProjectGalleryManager';
-import ProjectExternalLinks from './ProjectExternalLinks';
+// import ProjectExternalLinks from './ProjectExternalLinks'; // Removed
 
 interface ProjectFormProps {
     project?: Project;
@@ -53,7 +53,7 @@ export default function ProjectForm({ project, onSubmit, onCancel, title }: Proj
             isOpen={true}
             onClose={onCancel}
             title={title}
-            size="lg"
+            size="2xl" // Increased size for wider layout
             actions={
                 <div className="flex space-x-3">
                     <AdminButton variant="secondary" onClick={onCancel}>
@@ -65,31 +65,42 @@ export default function ProjectForm({ project, onSubmit, onCancel, title }: Proj
                 </div>
             }
         >
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <ProjectBasicInfo
-                    formData={formData}
-                    errors={errors}
-                    updateField={updateField}
-                />
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                <ProjectMediaUpload
-                    formData={formData}
-                    errors={errors}
-                    isDetectingDimensions={isDetectingDimensions}
-                    updateField={updateField}
-                />
+                {/* Left Column: Visuals & Media */}
+                <div className="space-y-6">
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
+                            Visual Assets
+                        </h3>
 
-                <ProjectGalleryManager
-                    formData={formData}
-                    addGalleryItem={addGalleryItem}
-                    removeGalleryItem={removeGalleryItem}
-                    toggleGalleryItem={toggleGalleryItem}
-                />
+                        <ProjectMediaUpload
+                            formData={formData}
+                            errors={errors}
+                            isDetectingDimensions={isDetectingDimensions}
+                            updateField={updateField}
+                        />
+                    </div>
 
-                <ProjectExternalLinks
-                    formData={formData}
-                    updateField={updateField}
-                />
+                    <ProjectGalleryManager
+                        formData={formData}
+                        addGalleryItem={addGalleryItem}
+                        removeGalleryItem={removeGalleryItem}
+                        toggleGalleryItem={toggleGalleryItem}
+                    />
+                </div>
+
+                {/* Right Column: Metadata & AI */}
+                <div className="space-y-6">
+                    <ProjectBasicInfo
+                        formData={formData}
+                        errors={errors}
+                        updateField={updateField}
+                    />
+
+                    {/* ProjectExternalLinks removed */}
+                </div>
             </form>
         </AdminModal>
     );

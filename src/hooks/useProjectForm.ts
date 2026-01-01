@@ -13,7 +13,7 @@ export interface ProjectFormData {
     gallery: string;
     galleryItems: GalleryItem[];
     tags: string;
-    external_link: string;
+    // external_link?: string; // Removed
     autoplay: boolean;
     muted: boolean;
     loop: boolean;
@@ -42,7 +42,7 @@ export const useProjectForm = (project?: Project) => {
             isActive: true
         })) as GalleryItem[],
         tags: project?.tags?.join(', ') || '',
-        external_link: project?.external_link || '',
+        // external_link removed
         autoplay: project?.autoplay ?? true,
         muted: project?.muted ?? true,
         loop: project?.loop ?? true,
@@ -74,7 +74,7 @@ export const useProjectForm = (project?: Project) => {
                 isActive: true
             })) as GalleryItem[],
             tags: project?.tags?.join(', ') || '',
-            external_link: project?.external_link || '',
+            // external_link removed
             autoplay: project?.autoplay ?? true,
             muted: project?.muted ?? true,
             loop: project?.loop ?? true,

@@ -108,53 +108,53 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                             </label>
                         </div>
 
-                        <div className="flex flex-col xl:flex-row items-end gap-4">
-                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tone of Voice</label>
-                                    <select
-                                        value={aiOptions.style}
-                                        onChange={(e) => setAiOptions(prev => ({ ...prev, style: e.target.value }))}
-                                        className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
-                                    >
-                                        <option value="estetik & profesional">Estetik & Profesional</option>
-                                        <option value="minimalis & elegan">Minimalis & Elegan</option>
-                                        <option value="kreatif & berapi-api">Kreatif & Berapi-api</option>
-                                        <option value="poetis & mendalam">Poetis & Mendalam</option>
-                                        <option value="santai & trendi">Santai & Trendi</option>
-                                        <option value="Gen-Z (Casual/Chill)">Gen-Z (Casual/Chill)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Max Title Words</label>
-                                    <input
-                                        type="number"
-                                        value={aiOptions.maxTitleWords}
-                                        onChange={(e) => setAiOptions(prev => ({ ...prev, maxTitleWords: parseInt(e.target.value) || 5 }))}
-                                        className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
-                                        min="1" max="15"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Sentences</label>
-                                    <input
-                                        type="number"
-                                        value={aiOptions.sentenceCount}
-                                        onChange={(e) => setAiOptions(prev => ({ ...prev, sentenceCount: parseInt(e.target.value) || 2 }))}
-                                        className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
-                                        min="1" max="5"
-                                    />
-                                </div>
+                        <div className="grid grid-cols-5 gap-3 items-end">
+                            <div className="col-span-2">
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tone of Voice</label>
+                                <select
+                                    value={aiOptions.style}
+                                    onChange={(e) => setAiOptions(prev => ({ ...prev, style: e.target.value }))}
+                                    className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all truncate"
+                                >
+                                    <option value="estetik & profesional">Estetik & Profesional</option>
+                                    <option value="minimalis & elegan">Minimalis & Elegan</option>
+                                    <option value="kreatif & berapi-api">Kreatif & Berapi-api</option>
+                                    <option value="poetis & mendalam">Poetis & Mendalam</option>
+                                    <option value="santai & trendi">Santai & Trendi</option>
+                                    <option value="Gen-Z (Casual/Chill)">Gen-Z (Casual/Chill)</option>
+                                </select>
                             </div>
-                            <button
-                                type="button"
-                                onClick={handleAutoFill}
-                                disabled={isGenerating}
-                                className="w-full xl:w-auto h-[42px] flex items-center justify-center gap-2 text-sm font-bold text-white bg-violet-600 hover:bg-violet-700 px-6 rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                            >
-                                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                                {isGenerating ? 'Generating...' : 'Auto-Fill Details'}
-                            </button>
+                            <div className="col-span-1">
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 truncate" title="Max Title Words">Max Words</label>
+                                <input
+                                    type="number"
+                                    value={aiOptions.maxTitleWords}
+                                    onChange={(e) => setAiOptions(prev => ({ ...prev, maxTitleWords: parseInt(e.target.value) || 5 }))}
+                                    className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-center"
+                                    min="1" max="15"
+                                />
+                            </div>
+                            <div className="col-span-1">
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 truncate">Sentences</label>
+                                <input
+                                    type="number"
+                                    value={aiOptions.sentenceCount}
+                                    onChange={(e) => setAiOptions(prev => ({ ...prev, sentenceCount: parseInt(e.target.value) || 2 }))}
+                                    className="w-full text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-center"
+                                    min="1" max="5"
+                                />
+                            </div>
+                            <div className="col-span-1">
+                                <button
+                                    type="button"
+                                    onClick={handleAutoFill}
+                                    disabled={isGenerating}
+                                    title="Auto-Fill Details"
+                                    className="w-full h-[42px] flex items-center justify-center gap-2 text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                                >
+                                    {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -243,51 +243,50 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                         <span className="w-1.5 h-1.5 bg-violet-500 rounded-full"></span>
                         Engagement Settings
                     </h4>
-                    <div className={`grid grid-cols-1 ${!formData.id ? 'sm:grid-cols-4' : 'sm:grid-cols-3'} gap-6`}>
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
                                 Likes Count
                             </label>
                             <input
                                 type="number"
                                 value={formData.likes}
                                 onChange={(e) => updateField('likes', parseInt(e.target.value) || 0)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all font-mono"
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all font-mono text-sm"
                                 min="0"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
                                 Shares Count
                             </label>
                             <input
                                 type="number"
                                 value={formData.shares}
                                 onChange={(e) => updateField('shares', parseInt(e.target.value) || 0)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all font-mono"
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all font-mono text-sm"
                                 min="0"
                             />
                         </div>
 
-                        {/* Initial Comment Count - Only for New Projects */}
-                        {!formData.id && (
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                                    Initial Comments
-                                </label>
-                                <input
-                                    type="number"
-                                    value={formData.initialCommentCount ?? 2}
-                                    onChange={(e) => updateField('initialCommentCount', parseInt(e.target.value) || 0)}
-                                    className="w-full px-3 py-2 border border-blue-200 rounded-lg bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono text-blue-700"
-                                    min="0"
-                                    max="10"
-                                />
-                            </div>
-                        )}
+                        {/* Initial / Add Comment Count */}
+                        <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                {formData.id ? 'Add More Comments' : 'Initial Comments'}
+                            </label>
+                            <input
+                                type="number"
+                                value={formData.initialCommentCount ?? (formData.id ? 0 : 2)}
+                                onChange={(e) => updateField('initialCommentCount', parseInt(e.target.value) || 0)}
+                                className="w-full px-3 py-2 border border-blue-200 rounded-lg bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono text-sm text-blue-700"
+                                min="0"
+                                max="10"
+                                placeholder={formData.id ? "0" : "2"}
+                            />
+                        </div>
 
-                        <div className="flex items-end pb-2">
-                            <label className="flex items-center gap-3 cursor-pointer group w-full p-2 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-200">
+                        <div className="flex items-end">
+                            <label className="flex items-center gap-3 cursor-pointer group w-full p-2 h-[38px] hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-200">
                                 <div className="relative inline-flex items-center">
                                     <input
                                         type="checkbox"
@@ -295,10 +294,10 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                                         checked={formData.allowComments !== false} // Default true
                                         onChange={(e) => updateField('allowComments', e.target.checked)}
                                     />
-                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
                                 </div>
-                                <span className="text-sm font-semibold text-gray-700 group-hover:text-gray-900">
-                                    Allow Public Comments
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-gray-600">
+                                    Allow Comments
                                 </span>
                             </label>
                         </div>

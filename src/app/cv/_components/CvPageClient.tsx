@@ -5,17 +5,20 @@ import Link from 'next/link';
 import type { AboutData } from '@/types/about';
 import type { ExperienceData } from '@/types/experience';
 import type { Project } from '@/types/projects';
+import type { HardSkillsData } from '@/types/hardSkill';
 
 type Props = {
   aboutData: AboutData | null;
   experienceData: ExperienceData | null;
   projects: Project[];
+  hardSkillsData: HardSkillsData | null;
 };
 
 export default function CvPageClient({
   aboutData,
   experienceData,
-  projects
+  projects,
+  hardSkillsData
 }: Props) {
   const chunkWords = (text: string, size = 10) => {
     const words = text.split(/\s+/).filter(Boolean);
@@ -30,13 +33,20 @@ export default function CvPageClient({
   const headline = aboutData?.professional?.motto?.quote ?? 'Graphic Designer & Visual Storyteller';
   const summary = aboutData?.professional?.bio?.content ?? 'Desainer grafis dengan fokus pada visual bersih, tipografi kuat, dan storytelling.';
   const softSkills = aboutData?.softSkills?.texts ?? [];
-  const hardSkills = [
-    { tool: 'Adobe Photoshop', level: 'Expert' },
-    { tool: 'Adobe Illustrator', level: 'Expert' },
-    { tool: 'Figma', level: 'Expert' },
-    { tool: 'Adobe Premiere Pro', level: 'Intermediate' },
-    { tool: 'Adobe After Effects', level: 'Intermediate' }
-  ];
+
+  // Use dynamic hard skills if available, otherwise fallback (or empty)
+  const hardSkills = useMemo(() => {
+    const skills = hardSkillsData?.skills || [];
+    return skills
+      .filter(s => s.isActive !== false) // Filter active only
+      .slice(0, 8) // Limit to top 8 to fit page
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(s => ({
+        tool: s.name,
+        level: s.level
+      }));
+  }, [hardSkillsData]);
+
   const workExperience = experienceData?.workExperience ?? [];
   const topProjects = useMemo(() => projects?.slice(0, 3) ?? [], [projects]);
 
@@ -172,7 +182,7 @@ export default function CvPageClient({
               )}
               {projects.length > 3 && (
                 <p className="text-xs text-gray-600">
-                  +{projects.length - 3} proyek lainnya, lihat <Link href="/work" className="text-blue-700 underline">/work</Link>.
+                  +{projects.length - 3} proyek lainnya, lihat <Link href="/" className="text-blue-700 underline">portfolio lengkap</Link>.
                 </p>
               )}
 

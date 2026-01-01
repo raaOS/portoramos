@@ -9,7 +9,7 @@ interface AdminModalProps {
   title: string;
   children: ReactNode;
   actions?: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
 export default function AdminModal({
@@ -44,7 +44,8 @@ export default function AdminModal({
     sm: 'max-w-md',
     md: 'max-w-lg',
     lg: 'max-w-2xl',
-    xl: 'max-w-4xl'
+    xl: 'max-w-4xl',
+    '2xl': 'max-w-6xl'
   };
 
   return (
@@ -90,16 +91,16 @@ export default function AdminModal({
               </AdminButton>
             </div>
           )) && (
-            <div className="bg-gray-50 px-4 sm:px-6 py-4 border-t border-gray-200">
-              {actions || (
-                <div className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-3">
-                  <AdminButton variant="secondary" onClick={onClose} className="w-full sm:w-auto">
-                    Cancel
-                  </AdminButton>
-                </div>
-              )}
-            </div>
-          )}
+              <div className="bg-gray-50 px-4 sm:px-6 py-4 border-t border-gray-200">
+                {actions || (
+                  <div className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+                    <AdminButton variant="secondary" onClick={onClose} className="w-full sm:w-auto">
+                      Cancel
+                    </AdminButton>
+                  </div>
+                )}
+              </div>
+            )}
         </div>
       </div>
     </div>

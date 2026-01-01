@@ -4,59 +4,86 @@ import { NextRequest, NextResponse } from 'next/server';
  * MOCK AI - Replaced Real Gemini AI as per user request.
  * Simulates intelligent analysis for demo purposes without external API dependencies.
  */
+const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_AI_API_KEY;
+
 export async function POST(req: NextRequest) {
-    // Simulate network delay for "AI thinking" effect
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    if (!API_KEY) {
+        return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
+    }
 
     try {
         const { imageUrl, style = 'estetik', maxTitleWords = 5, sentenceCount = 2 } = await req.json();
 
-        // Mock Logic: Pick random templates based on style
-        const titles = [
-            "Harmoni dalam Visual",
-            "Eksplorasi Dimensi Baru",
-            "Sentuhan Modern Minimalis",
-            "Refleksi Cahaya Malam",
-            "Dinamika Warna Alam"
-        ];
-
-        const aesthetics = [
-            "Karya ini menonjolkan keseimbangan antara warna dan ruang negatif yang memberikan kesan tenang.",
-            "Penggunaan elemen visual yang berani menciptakan fokus utama yang kuat dan memikat.",
-            "Detail tekstur yang halus memberikan kedalaman dimensi yang kaya pada komposisi ini.",
-            "Nuansa yang dihadirkan terasa sangat personal, menggugah emosi melalui palet warna yang hangat.",
-            "Sebuah representasi visual yang modern, menggabungkan estetika masa kini dengan sentuhan klasik."
-        ];
-
-        const genZ = [
-            "Vibe-nya dapet banget, chill tapi tetep estetik parah.",
-            "Lowkey keren sih ini, komposisinya gak berisik tapi ngena.",
-            "Mood-nya dapet, definisi visual yang calming buat mata.",
-            "Simple, clean, dan gak neko-neko. Asli keren.",
-            "Styling-nya on point, cocok banget buat referensi masa kini."
-        ];
-
-        const selectedDesc = style.includes('santai') || style.includes('Gen-Z')
-            ? genZ
-            : aesthetics;
-
-        // Random Selection
-        const title = titles[Math.floor(Math.random() * titles.length)];
-        const desc1 = selectedDesc[Math.floor(Math.random() * selectedDesc.length)];
-        let desc2 = selectedDesc[Math.floor(Math.random() * selectedDesc.length)];
-
-        // Ensure desc2 is different
-        while (desc1 === desc2) {
-            desc2 = selectedDesc[Math.floor(Math.random() * selectedDesc.length)];
+        if (!imageUrl) {
+            return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
         }
 
-        return NextResponse.json({
-            title: title + (Math.random() > 0.5 ? " Abadi" : ""), // Add slight variation
-            description: `${desc1} ${desc2}`
+        // Convert Cloudinary Video URL to Image (JPG) if necessary
+        let targetUrl = imageUrl;
+        if (imageUrl.includes('cloudinary') && (imageUrl.endsWith('.mp4') || imageUrl.endsWith('.webm'))) {
+            targetUrl = imageUrl.replace(/\.(mp4|webm)$/i, '.jpg');
+        }
+
+        // Download image to buffer with User-Agent to avoid blocks
+        const imageRes = await fetch(targetUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
+        if (!imageRes.ok) throw new Error(`Failed to fetch image: ${imageRes.statusText}`);
+        const arrayBuffer = await imageRes.arrayBuffer();
+        const base64Image = Buffer.from(arrayBuffer).toString('base64');
+
+        // Call Gemini API
+        // CRITICAL: Using 'gemini-flash-latest' as confirmed by scripts/magic-caption.js
+        const model = 'gemini-flash-latest';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+
+        const prompt = `Analisis gambar ini. Berikan JUDUL (max ${maxTitleWords} kata) dan DESKRIPSI (max ${sentenceCount} kalimat) dengan gaya bahasa ${style} untuk portofolio desain/kreatif. 
+      Catatan khusus untuk gaya Gen-Z: Gunakan bahasa santai yang sopan dan tidak berlebihan (lowkey/chill vibe).
+      WAJIB DALAM BAHASA INDONESIA. 
+      Output JSON murni: {"title": "...", "description": "..."}`;
+
+        const requestBody = {
+            contents: [{
+                parts: [
+                    { text: prompt },
+                    {
+                        inline_data: {
+                            mime_type: "image/jpeg",
+                            data: base64Image
+                        }
+                    }
+                ]
+            }]
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
         });
 
+        if (!response.ok) {
+            const txt = await response.text();
+            return NextResponse.json({ error: `Gemini API Error: ${txt}` }, { status: response.status });
+        }
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!text) {
+            return NextResponse.json({ error: 'No response from AI' }, { status: 500 });
+        }
+
+        // Clean markdown
+        const jsonText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(jsonText);
+
+        return NextResponse.json(parsed);
+
     } catch (error: any) {
-        console.error('Mock AI Error:', error);
-        return NextResponse.json({ error: 'Failed to generate mock response' }, { status: 500 });
+        console.error('AI Generate Error:', error);
+        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }

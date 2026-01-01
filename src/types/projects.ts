@@ -20,7 +20,7 @@ export interface Project {
   likes?: number;           // Number of likes/loves
   shares?: number;          // Number of shares
   allowComments?: boolean;  // Toggle for comment section
-  external_link: string;
+  // external_link: string; // Removed
   order: number;
   status: 'published' | 'draft';
   createdAt: string;
@@ -52,7 +52,7 @@ export interface CreateProjectData {
   description_id?: string;
   title_id?: string;
   gallery?: string[];
-  external_link?: string;
+  // external_link?: string; // Removed
   galleryItems?: GalleryItem[];
   status?: 'published' | 'draft';
   autoplay?: boolean;

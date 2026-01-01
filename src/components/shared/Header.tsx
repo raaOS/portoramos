@@ -70,10 +70,10 @@ export default function Header() {
               <Link
                 href="/cv?mode=ats"
                 className="inline-flex items-center gap-2 rounded-full bg-[#E60023] text-white px-6 py-2 font-semibold transition-all duration-300"
-                aria-label="Lihat CV versi ATS yang ramah screening"
+                aria-label="Lihat Resume versi ATS yang ramah screening"
               >
                 <Eye className="w-4 h-4" />
-                <span>Download CV</span>
+                <span>Resume</span>
               </Link>
             </motion.div>
 
@@ -112,7 +112,7 @@ export default function Header() {
                     className="flex items-center justify-center gap-2 w-full rounded-full bg-[#E60023] text-white px-6 py-2.5 font-semibold transition-all duration-300"
                   >
                     <Eye className="w-4 h-4" />
-                    <span>Download CV</span>
+                    <span>Resume</span>
                   </Link>
                 </div>
               </nav>
