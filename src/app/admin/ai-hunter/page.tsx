@@ -1,6 +1,6 @@
 import AdminLayout from '../components/AdminLayout';
 import { Bot } from 'lucide-react';
-import AIHunterClient from './AIHunterClient';
+import AIHunterClient from '@/app/admin/ai-hunter/AIHunterClient';
 
 export default function AIHunterPage() {
     return (
