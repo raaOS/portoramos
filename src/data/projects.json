@@ -601,33 +601,7 @@
       "updatedAt": "2025-12-27T02:41:59.526Z",
       "likes": 37,
       "shares": 5
-    },
-    {
-      "title": "Comment Count Test 1767211922560",
-      "client": "Test Client",
-      "year": 2025,
-      "description": "Testing initial comment count feature",
-      "cover": "https://via.placeholder.com/800x600",
-      "coverWidth": 800,
-      "coverHeight": 600,
-      "tags": "Test",
-      "status": "draft",
-      "initialCommentCount": 5,
-      "id": "project-1767211922583",
-      "slug": "comment-count-test-1767211922560",
-      "autoplay": false,
-      "muted": true,
-      "loop": false,
-      "playsInline": true,
-      "gallery": [],
-      "galleryItems": [],
-      "likes": 0,
-      "shares": 0,
-      "external_link": "",
-      "order": 24,
-      "createdAt": "2025-12-31T20:12:02.583Z",
-      "updatedAt": "2025-12-31T20:12:02.583Z"
     }
   ],
-  "lastUpdated": "2026-01-01T13:59:08.972Z"
+  "lastUpdated": "2026-01-01T13:59:11.566Z"
 }
