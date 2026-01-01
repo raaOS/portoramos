@@ -226,8 +226,8 @@ export default function AdminProjectsClient() {
 
       queryClient.invalidateQueries({ queryKey: ['projects', 'published'] });
 
+      // Stop loading state, but keep 'synced' status visible in the badge
       setTimeout(() => {
-        setDeployStatus('idle');
         setIsSavingToGithub(false);
       }, 1500);
 
@@ -236,7 +236,7 @@ export default function AdminProjectsClient() {
       showError(e.message || 'Sync failed');
       setDeployStatus('failed');
       setTimeout(() => {
-        setDeployStatus('idle');
+        setDeployStatus('idle'); // Reset failed status to allow retry
         setIsSavingToGithub(false);
       }, 2000);
     }
@@ -249,6 +249,7 @@ export default function AdminProjectsClient() {
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const getUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${filePath}`;
+        // Force bypass cache to avoid 409
         const getRes = await fetch(getUrl, {
           headers: {
             'Authorization': `Bearer ${githubConfig.token}`,
@@ -526,12 +527,19 @@ export default function AdminProjectsClient() {
               )
             ) : (
               <>
-                {connectionStatus === 'connected' && (
-                  <div className="h-10 px-4 flex items-center text-sm text-green-600 bg-white rounded-lg border border-green-200 whitespace-nowrap select-none">
-                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                    GitHub Connected
-                  </div>
-                )}
+                {connectionStatus === 'connected' ? (
+                  deployStatus === 'synced' ? (
+                    <div className="h-10 px-4 flex items-center text-sm text-green-700 bg-white rounded-lg border border-green-200 whitespace-nowrap select-none font-medium">
+                      <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
+                      Deployed to GitHub
+                    </div>
+                  ) : (
+                    <div className="h-10 px-4 flex items-center text-sm text-green-600 bg-white rounded-lg border border-green-200 whitespace-nowrap select-none">
+                      <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                      GitHub Connected
+                    </div>
+                  )
+                ) : null}
                 {connectionStatus === 'checking' && (
                   <div className="h-10 px-4 flex items-center text-sm text-yellow-600 bg-white rounded-lg border border-yellow-200 whitespace-nowrap select-none">
                     <Loader2 className="animate-spin w-3 h-3 mr-2" />
