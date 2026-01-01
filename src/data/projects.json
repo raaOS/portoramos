@@ -603,34 +603,6 @@
       "shares": 5
     },
     {
-      "title": "Auto Comment Valid Verification",
-      "client": "Verification Bot",
-      "year": 2025,
-      "description": "Verifying auto comments generation.",
-      "cover": "https://via.placeholder.com/800x600",
-      "tags": [
-        "Test",
-        "Verification"
-      ],
-      "id": "project-1767209910044",
-      "slug": "auto-comment-valid-verification",
-      "autoplay": false,
-      "muted": true,
-      "loop": false,
-      "playsInline": true,
-      "coverWidth": 800,
-      "coverHeight": 600,
-      "gallery": [],
-      "galleryItems": [],
-      "likes": 0,
-      "shares": 0,
-      "external_link": "",
-      "order": 23,
-      "status": "published",
-      "createdAt": "2025-12-31T19:38:30.044Z",
-      "updatedAt": "2025-12-31T19:38:30.044Z"
-    },
-    {
       "title": "Comment Count Test 1767211922560",
       "client": "Test Client",
       "year": 2025,
@@ -657,5 +629,5 @@
       "updatedAt": "2025-12-31T20:12:02.583Z"
     }
   ],
-  "lastUpdated": "2025-12-31T20:12:02.583Z"
+  "lastUpdated": "2026-01-01T13:59:08.972Z"
 }
