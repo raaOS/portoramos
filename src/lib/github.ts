@@ -47,11 +47,14 @@ export class GitHubService {
     }
 
     private getHeaders() {
-        return {
-            'Authorization': `Bearer ${this.token}`,
+        const headers: Record<string, string> = {
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json',
         };
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        return headers;
     }
 
     /**

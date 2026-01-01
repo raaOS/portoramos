@@ -32,7 +32,10 @@ export const projectService = {
                         try {
                             const ghData = await githubService.getFile(true);
                             if (ghData && ghData.content) data = ghData.content as ProjectsData;
-                        } catch (e) { console.warn('Fresh fetch failed, using static'); }
+                        } catch (e: any) {
+                            console.error('[ProjectService] Fresh GitHub fetch failed:', e.message);
+                            // If forbidden/unauthorized, it's likely Env Vars. If 404, might be private repo without token.
+                        }
                     }
                 } else {
                     // Fallback if import failed (unlikely)
