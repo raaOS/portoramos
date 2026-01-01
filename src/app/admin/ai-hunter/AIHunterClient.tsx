@@ -17,20 +17,23 @@ import {
     Eye,
     MessageSquare,
     Check,
-    Edit3
+    Edit3,
+    MapPin
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AdminCard from '../components/AdminCard';
 import AdminButton from '../components/AdminButton';
 import AdminModal from '../components/AdminModal';
 import { useToast } from '@/contexts/ToastContext';
-import { AIJob, AIHunterData } from '@/types/ai-hunter';
+import { AIJob, AIHunterData, AIHunterSettings } from '@/types/ai-hunter';
 
 export default function AIHunterClient() {
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useToast();
     const [reviewingJob, setReviewingJob] = useState<AIJob | null>(null);
     const [editedDraft, setEditedDraft] = useState('');
+    const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+    const [tempSettings, setTempSettings] = useState<AIHunterSettings | null>(null);
 
     // 1. Fetch AI Hunter Data
     const { data, isLoading } = useQuery<AIHunterData>({
@@ -44,21 +47,33 @@ export default function AIHunterClient() {
 
     // 2. Mutations
     const settingsMutation = useMutation({
-        mutationFn: async (action: 'startHunt' | 'stopHunt') => {
+        mutationFn: async ({ action, settings }: { action: 'startHunt' | 'stopHunt' | 'updateSettings', settings?: Partial<AIHunterSettings> }) => {
             const res = await fetch('/api/ai-hunter', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action })
+                body: JSON.stringify({ action, settings })
             });
             if (!res.ok) throw new Error('Action failed');
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['ai-hunter'] });
-            showSuccess('Hunting status updated');
+            showSuccess('Settings updated');
+            setIsConfigModalOpen(false);
         },
         onError: (err: any) => showError(err.message)
     });
+
+    const handleOpenConfig = () => {
+        if (!data?.settings) return;
+        setTempSettings(data.settings);
+        setIsConfigModalOpen(true);
+    };
+
+    const handleSaveSettings = () => {
+        if (!tempSettings) return;
+        settingsMutation.mutate({ action: 'updateSettings', settings: tempSettings });
+    };
 
     const jobMutation = useMutation({
         mutationFn: async ({ id, updates }: { id: string, updates: Partial<AIJob> }) => {
@@ -83,7 +98,7 @@ export default function AIHunterClient() {
 
     const handleToggleHunt = () => {
         const action = data?.settings.isHunting ? 'stopHunt' : 'startHunt';
-        settingsMutation.mutate(action);
+        settingsMutation.mutate({ action });
     };
 
     const handleOpenReview = (job: AIJob) => {
@@ -341,6 +356,143 @@ export default function AIHunterClient() {
                             <p className="text-[10px] text-gray-400">
                                 * Edit the message above to make it feel more authentic before sending.
                             </p>
+                        </div>
+                    </div>
+                )}
+            </AdminModal>
+
+            {/* Configure Rules Modal */}
+            <AdminModal
+                isOpen={isConfigModalOpen}
+                onClose={() => setIsConfigModalOpen(false)}
+                title="Configure Hunting Rules"
+                size="lg"
+                actions={
+                    <div className="flex gap-3 justify-end w-full">
+                        <AdminButton variant="secondary" onClick={() => setIsConfigModalOpen(false)}>
+                            Cancel
+                        </AdminButton>
+                        <AdminButton variant="primary" onClick={handleSaveSettings} disabled={settingsMutation.isPending}>
+                            {settingsMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Configuration'}
+                        </AdminButton>
+                    </div>
+                }
+            >
+                {tempSettings && (
+                    <div className="space-y-6 py-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Left Column */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-bold text-gray-700 block mb-2">Job Roles (Keywords)</label>
+                                    <input
+                                        type="text"
+                                        value={tempSettings.roles?.join(', ')}
+                                        onChange={(e) => setTempSettings({ ...tempSettings, roles: e.target.value.split(',').map(s => s.trim()) })}
+                                        className="w-full p-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                        placeholder="UI Designer, Art Director, etc."
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-bold text-gray-700 block mb-2">Location Preference</label>
+                                    <div className="relative">
+                                        <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={tempSettings.location}
+                                            onChange={(e) => setTempSettings({ ...tempSettings, location: e.target.value })}
+                                            className="w-full pl-10 p-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                            placeholder="e.g. Remote, Indonesia, Worldwide"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-bold text-gray-700 block mb-2">Employment Type</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {['Freelance', 'Remote', 'Full-time'].map(type => (
+                                            <button
+                                                key={type}
+                                                onClick={() => {
+                                                    const current = tempSettings.employmentTypes || [];
+                                                    const next = current.includes(type) ? current.filter(t => t !== type) : [...current, type];
+                                                    setTempSettings({ ...tempSettings, employmentTypes: next as any });
+                                                }}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${tempSettings.employmentTypes?.includes(type) ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-400'}`}
+                                            >
+                                                {type}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Column */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-bold text-gray-700 block mb-2">Minimum Budget / Salary</label>
+                                    <div className="flex gap-2">
+                                        <select
+                                            value={tempSettings.currency}
+                                            onChange={(e) => setTempSettings({ ...tempSettings, currency: e.target.value as 'USD' | 'IDR' })}
+                                            className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none"
+                                        >
+                                            <option value="USD">USD ($)</option>
+                                            <option value="IDR">IDR (Rp)</option>
+                                        </select>
+                                        <input
+                                            type="number"
+                                            value={tempSettings.minBudget}
+                                            onChange={(e) => setTempSettings({ ...tempSettings, minBudget: parseInt(e.target.value) || 0 })}
+                                            className="flex-1 p-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-bold text-gray-700 block mb-2">Pay Frequency</label>
+                                    <select
+                                        value={tempSettings.payFrequency}
+                                        onChange={(e) => setTempSettings({ ...tempSettings, payFrequency: e.target.value as any })}
+                                        className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none"
+                                    >
+                                        <option value="hourly">Hourly (Per Jam)</option>
+                                        <option value="daily">Daily (Per Hari)</option>
+                                        <option value="monthly">Monthly (Per Bulan)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-bold text-gray-700 block mb-2">Target Platforms</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {['LinkedIn', 'Upwork', 'Dribbble', 'X', 'Zippia'].map(p => (
+                                            <label key={p} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-gray-100 cursor-pointer hover:bg-white hover:border-indigo-200 transition-all">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={tempSettings.targetPlatforms?.includes(p)}
+                                                    onChange={(e) => {
+                                                        const current = tempSettings.targetPlatforms || [];
+                                                        const next = e.target.checked ? [...current, p] : current.filter(t => t !== p);
+                                                        setTempSettings({ ...tempSettings, targetPlatforms: next });
+                                                    }}
+                                                    className="rounded text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                <span className="text-[10px] font-bold text-gray-700 uppercase tracking-tight">{p}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 mt-6 border-t border-gray-100">
+                            <div className="flex items-center gap-3 text-indigo-600 bg-indigo-50 p-4 rounded-xl">
+                                <Bot className="h-5 w-5 shrink-0" />
+                                <p className="text-xs leading-relaxed font-medium">
+                                    "Saya akan menggunakan aturan ini untuk menyaring lowongan di internet. Semakin spesifik aturan Anda, semakin akurat hasil perburuan saya."
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}

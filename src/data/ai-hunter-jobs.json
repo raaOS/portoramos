@@ -46,6 +46,18 @@
             "Zippia"
         ],
         "minBudget": 2500,
+        "currency": "USD",
+        "roles": [
+            "UI Designer",
+            "Art Director"
+        ],
+        "location": "Remote",
+        "employmentTypes": [
+            "Freelance",
+            "Remote",
+            "Full-time"
+        ],
+        "payFrequency": "monthly",
         "voiceTone": "professional",
         "lastHuntTimestamp": "2026-01-02T01:40:00Z"
     }

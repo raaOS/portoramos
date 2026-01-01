@@ -18,6 +18,11 @@ export interface AIHunterSettings {
     isHunting: boolean;
     targetPlatforms: string[];
     minBudget: number;
+    currency: 'USD' | 'IDR';
+    roles: string[];
+    location: string;
+    employmentTypes: string[];
+    payFrequency: 'hourly' | 'daily' | 'monthly';
     voiceTone: string;
     lastHuntTimestamp: string | null;
 }

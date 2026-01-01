@@ -31,6 +31,11 @@ export const aiHunterService = {
             isHunting: false,
             targetPlatforms: ['LinkedIn', 'Upwork', 'Dribbble'],
             minBudget: 2500,
+            currency: 'USD',
+            roles: ['UI Designer', 'Art Director'],
+            location: 'Remote',
+            employmentTypes: ['Freelance', 'Remote', 'Full-time'],
+            payFrequency: 'monthly',
             voiceTone: 'professional',
             lastHuntTimestamp: null
         };
