@@ -1,0 +1,40 @@
+{
+    "jobs": [
+        {
+            "id": "job_1",
+            "company": "TechFlow Solutions",
+            "role": "Senior UI/UX Designer",
+            "source": "LinkedIn",
+            "description": "Looking for a designer with experience in complex dashboard systems and a strong eye for detail.",
+            "matchScore": 94,
+            "status": "pending",
+            "timestamp": "2026-01-02T01:30:00Z",
+            "proposalDraft": "Hello TechFlow team! I noticed you are looking for a Senior UI/UX Designer. With my background in building high-performance portfolio systems and creative visualizations, I believe I can bring significant value to your dashboard project...",
+            "applyUrl": "https://linkedin.com/jobs/view/12345"
+        },
+        {
+            "id": "job_2",
+            "company": "CreativePulse Agency",
+            "role": "Digital Art Director",
+            "source": "Upwork",
+            "description": "Art director needed for a series of high-end digital marketing campaigns.",
+            "matchScore": 88,
+            "status": "success",
+            "timestamp": "2026-01-02T00:15:00Z",
+            "proposalDraft": "Hi CreativePulse! My work often focuses on the intersection of art and technology...",
+            "applyUrl": "https://upwork.com/jobs/67890"
+        }
+    ],
+    "settings": {
+        "isHunting": false,
+        "targetPlatforms": [
+            "LinkedIn",
+            "Upwork",
+            "Dribbble",
+            "X"
+        ],
+        "minBudget": 2500,
+        "voiceTone": "professional",
+        "lastHuntTimestamp": "2026-01-02T01:00:00Z"
+    }
+}
