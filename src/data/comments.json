@@ -27,6 +27,52 @@
           }
         ],
         "avatar": "https://ui-avatars.com/api/?name=Rizky&background=random"
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-0-1767456789720",
+        "text": "Favorit sih ini!",
+        "name": "Maya",
+        "createdAt": "2026-01-02T22:08:38.186Z",
+        "likes": 54,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Maya&background=random"
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-1-1767456789720",
+        "text": "Pake plugin tambahan gak bang buat efek itu?",
+        "name": "Maya",
+        "createdAt": "2026-01-03T11:35:50.999Z",
+        "likes": 13,
+        "replies": [
+          {
+            "id": "r-manipulasi-foto-musik-alam-1-admin",
+            "text": "Grading manual di Premiere bang hehe",
+            "name": "Ramos",
+            "time": "30 menit yang lalu",
+            "createdAt": "2026-01-03T01:34:28.792Z",
+            "likes": 6,
+            "avatar": "https://ui-avatars.com/api/?name=Ramos&background=000&color=fff"
+          }
+        ],
+        "avatar": "https://ui-avatars.com/api/?name=Maya&background=random"
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-0-1767456814052",
+        "text": "Visualnya manja di mata �",
+        "name": "Tiara",
+        "createdAt": "2026-01-03T08:41:04.969Z",
+        "likes": 38,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Tiara&background=random"
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-1-1767456814052",
+        "text": "Gokil sih ini 👏",
+        "name": "Wawan",
+        "createdAt": "2026-01-03T07:26:14.501Z",
+        "likes": 89,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Wawan&background=random"
       }
     ],
     "kolase-lanskap-menanjak": [

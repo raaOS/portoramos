@@ -13,7 +13,6 @@ import {
   Eye,
   LogOut,
   Activity,
-  Bot,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -58,7 +57,6 @@ export default function AdminLayout({
     { href: '/admin/contact', label: 'Contact', icon: PhoneCall, color: 'text-amber-600' },
     { href: '/admin/testimonial', label: 'Testimonials', icon: Quote, color: 'text-pink-600' },
     { href: '/admin/analytics', label: 'Analytics', icon: Activity as any, color: 'text-orange-600' },
-    { href: '/admin/ai-hunter', label: 'AI Hunter', icon: Bot, color: 'text-indigo-600' },
   ];
 
   const isActive = (href: string) => {

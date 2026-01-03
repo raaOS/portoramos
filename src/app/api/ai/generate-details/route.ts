@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * MOCK AI - Replaced Real Gemini AI as per user request.
- * Simulates intelligent analysis for demo purposes without external API dependencies.
+ * Gemini AI Integration
+ * Generates project details using Google's Gemini API.
  */
 const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_AI_API_KEY;
 

@@ -6,6 +6,7 @@ import { generateGenZComments } from '@/lib/magic';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
 import { githubService } from '@/lib/github';
 import path from 'path';
+import { sendTelegramAlert } from '@/lib/telegram';
 
 const COMMENTS_DATA_FILE = path.join(process.cwd(), 'src', 'data', 'comments.json');
 const COMMENTS_GITHUB_PATH = 'src/data/comments.json';
@@ -106,6 +107,11 @@ export async function PUT(
       }
     }
 
+    // --- Telegram Notification ---
+    const changedFields = Object.keys(body).filter(k => k !== 'initialCommentCount').join(', ');
+    const updateMessage = `✏️ **PROJECT UPDATED**\n\n**Title:** ${updatedProject.title}\n**ID:** ${updatedProject.id}\n**Changes:** ${changedFields || 'No specific fields'}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
+    sendTelegramAlert(updateMessage);
+
     return NextResponse.json({
       success: true,
       project: updatedProject
@@ -141,6 +147,9 @@ export async function DELETE(
     if (!success) {
       return NextResponse.json({ error: 'Project not found or delete failed' }, { status: 404 });
     }
+
+    const successMessage = `🗑️ **PROJECT DELETED**\n\n**ID:** ${id}\n**By:** Admin\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
+    sendTelegramAlert(successMessage);
 
     return NextResponse.json({
       success: true,

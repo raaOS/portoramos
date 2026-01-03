@@ -6,6 +6,7 @@ import { generateGenZComments } from '@/lib/magic';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
 import { githubService } from '@/lib/github';
 import path from 'path';
+import { sendTelegramAlert } from '@/lib/telegram';
 
 const COMMENTS_DATA_FILE = path.join(process.cwd(), 'src', 'data', 'comments.json');
 const COMMENTS_GITHUB_PATH = 'src/data/comments.json';
@@ -96,6 +97,9 @@ export async function POST(request: NextRequest) {
       console.error('Failed to auto-generate comments:', commentError);
       // We continue even if comment generation fails
     }
+
+    const successMessage = `✨ **NEW PROJECT CREATED**\n\n**Title:** ${newProject.title}\n**Client:** ${newProject.client}\n**ID:** ${newProject.id}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
+    sendTelegramAlert(successMessage);
 
     return NextResponse.json({
       success: true,
