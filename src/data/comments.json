@@ -75,41 +75,31 @@
         "avatar": "https://ui-avatars.com/api/?name=Wawan&background=random"
       },
       {
-        "id": "c-manipulasi-foto-musik-alam-0-1767468135844",
-        "text": "Color grading-nya pake apa bang? Cakepp",
+        "id": "c-manipulasi-foto-musik-alam-0-1767468166589",
+        "text": "Kelas abangku �",
         "name": "Fajri",
-        "createdAt": "2026-01-03T08:09:15.474Z",
-        "likes": 53,
+        "createdAt": "2026-01-03T07:24:45.639Z",
+        "likes": 74,
         "replies": [
           {
             "id": "r-manipulasi-foto-musik-alam-0-admin",
-            "text": "Render lumayan lama, ditinggal tidur semalem haha �",
+            "text": "Thank you! �",
             "name": "Ramos",
-            "time": "2 hari yang lalu",
-            "createdAt": "2026-01-03T00:32:18.474Z",
-            "likes": 8,
+            "time": "2 jam yang lalu",
+            "createdAt": "2026-01-03T06:51:52.363Z",
+            "likes": 14,
             "avatar": "https://ui-avatars.com/api/?name=Ramos&background=000&color=fff"
           }
         ],
         "avatar": "https://ui-avatars.com/api/?name=Fajri&background=random"
       },
       {
-        "id": "c-manipulasi-foto-musik-alam-1-1767468135844",
-        "text": "Kelas abangku �",
+        "id": "c-manipulasi-foto-musik-alam-1-1767468166589",
+        "text": "Visualnya manja di mata �",
         "name": "Gilang",
-        "createdAt": "2026-01-03T17:00:59.744Z",
-        "likes": 64,
-        "replies": [
-          {
-            "id": "r-manipulasi-foto-musik-alam-1-admin",
-            "text": "Makasih banyak! 🙏",
-            "name": "Ramos",
-            "time": "2 jam yang lalu",
-            "createdAt": "2026-01-03T16:45:58.470Z",
-            "likes": 2,
-            "avatar": "https://ui-avatars.com/api/?name=Ramos&background=000&color=fff"
-          }
-        ],
+        "createdAt": "2026-01-02T14:30:45.066Z",
+        "likes": 51,
+        "replies": [],
         "avatar": "https://ui-avatars.com/api/?name=Gilang&background=random"
       }
     ],
