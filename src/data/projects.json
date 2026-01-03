@@ -2,7 +2,7 @@
   "projects": [
     {
       "id": "gen-1766512146544-0",
-      "title": "Manipulasi Foto Musik Alam",
+      "title": "Manipulasi Foto Musik",
       "slug": "manipulasi-foto-musik-alam",
       "client": "Personal Work",
       "year": 2025,
@@ -23,9 +23,11 @@
       "order": 2,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-03T15:11:22.254Z",
+      "updatedAt": "2026-01-03T15:11:32.927Z",
       "likes": 33,
-      "shares": 5
+      "shares": 5,
+      "allowComments": true,
+      "initialCommentCount": 2
     },
     {
       "title": "Gantungan Animasik",
@@ -603,5 +605,5 @@
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-03T15:11:32.934Z"
+  "lastUpdated": "2026-01-03T16:13:09.742Z"
 }
