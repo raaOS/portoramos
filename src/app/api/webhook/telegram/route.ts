@@ -31,8 +31,9 @@ export async function POST(request: Request) {
 
                 if (command === '/leads') {
                     // Read leads.json
+                    let leadsPath = '';
                     try {
-                        const leadsPath = path.join(process.cwd(), 'src/data/leads.json');
+                        leadsPath = path.join(process.cwd(), 'src/data/leads.json');
                         const fileContent = await fs.readFile(leadsPath, 'utf-8');
                         const leads = JSON.parse(fileContent);
 
@@ -49,8 +50,9 @@ export async function POST(request: Request) {
 
                             replyPayload.text = `📬 *5 Pesan Terakhir:*\n\n${formattedLeads}`;
                         }
-                    } catch (error) {
-                        replyPayload.text = "❌ Gagal membaca database pesan.";
+                    } catch (error: any) {
+                        console.error('Leads Read Error:', error);
+                        replyPayload.text = `❌ Gagal baca database.\nError: ${error.message}\nPath: ${leadsPath}`;
                     }
                 }
                 else if (command === '/help') {
