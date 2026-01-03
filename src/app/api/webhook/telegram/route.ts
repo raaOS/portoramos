@@ -35,10 +35,15 @@ export async function POST(request: Request) {
                     try {
                         leadsPath = path.join(process.cwd(), 'src/data/leads.json');
                         const fileContent = await fs.readFile(leadsPath, 'utf-8');
-                        const leads = JSON.parse(fileContent);
+                        let leads = JSON.parse(fileContent);
+
+                        // Fix: leads.json structure is { leads: [...] }, not just [...]
+                        if (!Array.isArray(leads) && leads.leads) {
+                            leads = leads.leads;
+                        }
 
                         // Get last 5 leads
-                        const lastLeads = leads.slice(-5).reverse();
+                        const lastLeads = Array.isArray(leads) ? leads.slice(-5).reverse() : [];
 
                         if (lastLeads.length === 0) {
                             replyPayload.text = "📭 *Belum ada pesan masuk.*";
