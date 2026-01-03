@@ -1,42 +1,91 @@
-
 import { NextResponse } from 'next/server';
 import { getTelegramConfig } from '@/lib/telegram';
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function POST(request: Request) {
     try {
-        const { botToken, chatId } = await getTelegramConfig();
+        const { botToken, chatId: adminChatId } = await getTelegramConfig();
         if (!botToken) {
             return NextResponse.json({ message: 'Bot not configured' }, { status: 500 });
         }
 
         const body = await request.json();
 
-        // Basic logging so we can see what's coming in Vercel logs
-        console.log('[Telegram Webhook] Received:', JSON.stringify(body, null, 2));
+        // Basic logging
+        // console.log('[Telegram Webhook] Received:', JSON.stringify(body, null, 2));
 
         if (body.message && body.message.text) {
-            const incomingChatId = body.message.chat.id;
-            const text = body.message.text;
+            const incomingChatId = body.message.chat.id.toString();
+            const text = body.message.text.trim();
+            const isAdmin = incomingChatId === adminChatId;
 
-            // PROFESSIONAL AUTO-REPLY
-            // Instead of echoing, we send a polite automated response.
+            let replyPayload: any = {
+                chat_id: incomingChatId,
+                parse_mode: 'Markdown'
+            };
 
-            const replyText = `👋 *Halo! Terima kasih sudah menghubungi.*\n\n` +
-                `Saya adalah asisten virtual dari **Ramos**. Pesan Anda telah diterima.\n\n` +
-                `Saat ini saya hanya bertugas mengirim notifikasi.\n` +
-                `Untuk respons cepat, silakan:\n` +
-                `🌐 Kunjungi Portofolio: [Klik Disini](https://portofolio-ramos.vercel.app)\n` +
-                `📩 Isi Form Kontak: [Halaman Kontak](https://portofolio-ramos.vercel.app/contact)\n\n` +
-                `_Have a nice day!_ ✨`;
+            // --- ADMIN LOGIC ---
+            if (isAdmin && text.startsWith('/')) {
+                const command = text.split(' ')[0];
 
+                if (command === '/leads') {
+                    // Read leads.json
+                    try {
+                        const leadsPath = path.join(process.cwd(), 'src/data/leads.json');
+                        const fileContent = await fs.readFile(leadsPath, 'utf-8');
+                        const leads = JSON.parse(fileContent);
+
+                        // Get last 5 leads
+                        const lastLeads = leads.slice(-5).reverse();
+
+                        if (lastLeads.length === 0) {
+                            replyPayload.text = "📭 *Belum ada pesan masuk.*";
+                        } else {
+                            const formattedLeads = lastLeads.map((l: any, i: number) =>
+                                `*${i + 1}. ${l.name}* (${l.email})\n` +
+                                `💬 _${l.message.substring(0, 50)}${l.message.length > 50 ? '...' : ''}_`
+                            ).join('\n\n');
+
+                            replyPayload.text = `📬 *5 Pesan Terakhir:*\n\n${formattedLeads}`;
+                        }
+                    } catch (error) {
+                        replyPayload.text = "❌ Gagal membaca database pesan.";
+                    }
+                }
+                else if (command === '/help') {
+                    replyPayload.text = `🛠 *Admin Commands*\n\n` +
+                        `/leads - Cek 5 pesan terakhir\n` +
+                        `/help - Tampilkan menu ini\n` +
+                        `/status - Cek status server`;
+                }
+                else {
+                    replyPayload.text = `❓ Command tidak dikenal. Coba /help`;
+                }
+            }
+
+            // --- GUEST LOGIC (Default) ---
+            else {
+                // If it's a guest (or admin typing regular text), give the professional menu
+                replyPayload.text = `👋 *Halo! Terima kasih sudah menghubungi.*\n\n` +
+                    `Saya adalah asisten virtual dari **Ramos**.\n` +
+                    `Saat ini saya hanya bertugas mengirim notifikasi. Silakan pilih menu di bawah:`;
+
+                replyPayload.reply_markup = {
+                    inline_keyboard: [
+                        [
+                            { text: "📂 Lihat Portfolio", url: "https://portofolio-ramos.vercel.app" },
+                            { text: "📩 Kontak Saya", url: "https://portofolio-ramos.vercel.app/contact" }
+                        ]
+                    ]
+                };
+            }
+
+            // Send Response
             await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: incomingChatId,
-                    text: replyText,
-                    parse_mode: 'Markdown'
-                })
+                body: JSON.stringify(replyPayload)
             });
         }
 
