@@ -75,22 +75,42 @@
         "avatar": "https://ui-avatars.com/api/?name=Wawan&background=random"
       },
       {
-        "id": "c-manipulasi-foto-musik-alam-0-1767468130492",
-        "text": "Simple tapi ngena banget.",
-        "name": "Hana",
-        "createdAt": "2026-01-02T07:14:44.163Z",
-        "likes": 74,
-        "replies": [],
-        "avatar": "https://ui-avatars.com/api/?name=Hana&background=random"
+        "id": "c-manipulasi-foto-musik-alam-0-1767468135844",
+        "text": "Color grading-nya pake apa bang? Cakepp",
+        "name": "Fajri",
+        "createdAt": "2026-01-03T08:09:15.474Z",
+        "likes": 53,
+        "replies": [
+          {
+            "id": "r-manipulasi-foto-musik-alam-0-admin",
+            "text": "Render lumayan lama, ditinggal tidur semalem haha �",
+            "name": "Ramos",
+            "time": "2 hari yang lalu",
+            "createdAt": "2026-01-03T00:32:18.474Z",
+            "likes": 8,
+            "avatar": "https://ui-avatars.com/api/?name=Ramos&background=000&color=fff"
+          }
+        ],
+        "avatar": "https://ui-avatars.com/api/?name=Fajri&background=random"
       },
       {
-        "id": "c-manipulasi-foto-musik-alam-1-1767468130492",
-        "text": "Suka banget sama warnanya ✨",
-        "name": "Dinda",
-        "createdAt": "2026-01-03T16:31:06.395Z",
-        "likes": 53,
-        "replies": [],
-        "avatar": "https://ui-avatars.com/api/?name=Dinda&background=random"
+        "id": "c-manipulasi-foto-musik-alam-1-1767468135844",
+        "text": "Kelas abangku �",
+        "name": "Gilang",
+        "createdAt": "2026-01-03T17:00:59.744Z",
+        "likes": 64,
+        "replies": [
+          {
+            "id": "r-manipulasi-foto-musik-alam-1-admin",
+            "text": "Makasih banyak! 🙏",
+            "name": "Ramos",
+            "time": "2 jam yang lalu",
+            "createdAt": "2026-01-03T16:45:58.470Z",
+            "likes": 2,
+            "avatar": "https://ui-avatars.com/api/?name=Ramos&background=000&color=fff"
+          }
+        ],
+        "avatar": "https://ui-avatars.com/api/?name=Gilang&background=random"
       }
     ],
     "kolase-lanskap-menanjak": [
