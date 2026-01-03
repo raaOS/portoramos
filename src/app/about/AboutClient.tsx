@@ -755,16 +755,13 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
 
                   <div className="space-y-6 text-white text-sm leading-relaxed tracking-wide">
                     <motion.p style={{ opacity: p1Opacity }} className="text-white xl:opacity-[var(--p1-opacity)] opacity-100">
-                      14+ tahun mainan desain. Dari korporat sampai freelance, deadline mepet udah jadi makanan sehari-hari.
-                    </motion.p>
-                    <motion.p style={{ opacity: p2Opacity }} className="text-white xl:opacity-[var(--p2-opacity)] opacity-100">
-                      Fokus bikin visual yang nggak cuma cantik, tapi juga 'works' buat bisnis.
+                      {currentAboutData.professional?.bio.content}
                     </motion.p>
                   </div>
 
                   <div className="mt-8">
                     <AITranslator
-                      text="Desain adalah solusi visual, bukan sekadar estetika. 14+ tahun mainan desain. Dari korporat sampai freelance, deadline mepet udah jadi makanan sehari-hari. Fokus bikin visual yang nggak cuma cantik, tapi juga 'works' buat bisnis."
+                      text={currentAboutData.professional?.bio.content || ''}
                       context="Gallery Sidebar"
                     />
                   </div>
