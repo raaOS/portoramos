@@ -75,32 +75,22 @@
         "avatar": "https://ui-avatars.com/api/?name=Wawan&background=random"
       },
       {
-        "id": "c-manipulasi-foto-musik-alam-0-1767468166589",
-        "text": "Kelas abangku �",
-        "name": "Fajri",
-        "createdAt": "2026-01-03T07:24:45.639Z",
-        "likes": 74,
-        "replies": [
-          {
-            "id": "r-manipulasi-foto-musik-alam-0-admin",
-            "text": "Thank you! �",
-            "name": "Ramos",
-            "time": "2 jam yang lalu",
-            "createdAt": "2026-01-03T06:51:52.363Z",
-            "likes": 14,
-            "avatar": "https://ui-avatars.com/api/?name=Ramos&background=000&color=fff"
-          }
-        ],
-        "avatar": "https://ui-avatars.com/api/?name=Fajri&background=random"
+        "id": "c-manipulasi-foto-musik-alam-0-1767468190580",
+        "text": "Pake plugin tambahan gak bang buat efek itu?",
+        "name": "Setiawan",
+        "createdAt": "2026-01-03T13:39:17.585Z",
+        "likes": 66,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Setiawan&background=random"
       },
       {
-        "id": "c-manipulasi-foto-musik-alam-1-1767468166589",
-        "text": "Visualnya manja di mata �",
-        "name": "Gilang",
-        "createdAt": "2026-01-02T14:30:45.066Z",
-        "likes": 51,
+        "id": "c-manipulasi-foto-musik-alam-1-1767468190580",
+        "text": "Info loker bang, mau berguru �",
+        "name": "Setiawan",
+        "createdAt": "2026-01-02T15:23:37.724Z",
+        "likes": 58,
         "replies": [],
-        "avatar": "https://ui-avatars.com/api/?name=Gilang&background=random"
+        "avatar": "https://ui-avatars.com/api/?name=Setiawan&background=random"
       }
     ],
     "kolase-lanskap-menanjak": [
