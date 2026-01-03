@@ -21,13 +21,7 @@ export async function POST(request: Request) {
             // PROFESSIONAL AUTO-REPLY
             // Instead of echoing, we send a polite automated response.
 
-            const replyText = `👋 *Halo! Terima kasih sudah menghubungi.*\n\n` +
-                `Saya adalah asisten virtual dari **Ramos**. Pesan Anda telah diterima.\n\n` +
-                `Saat ini saya hanya bertugas mengirim notifikasi.\n` +
-                `Untuk respons cepat, silakan:\n` +
-                `🌐 Kunjungi Portofolio: [Klik Disini](https://portofolio-ramos.vercel.app)\n` +
-                `📩 Isi Form Kontak: [Halaman Kontak](https://portofolio-ramos.vercel.app/contact)\n\n` +
-                `_Have a nice day!_ ✨`;
+            const replyText = `hallo`;
 
             await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: 'POST',
