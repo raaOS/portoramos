@@ -36,9 +36,20 @@ export default function TelegramClient() {
     const [copiedToken, setCopiedToken] = useState(false);
     const [copiedChatId, setCopiedChatId] = useState(false);
 
+    // Webhook State
+    const [webhookInfo, setWebhookInfo] = useState<any>(null);
+    const [webhookLoading, setWebhookLoading] = useState(false);
+
     useEffect(() => {
         fetchConfig();
     }, []);
+
+    useEffect(() => {
+        if (activeConfig?.botToken) {
+            checkStatus(activeConfig.botToken);
+            checkWebhook();
+        }
+    }, [activeConfig]);
 
     const fetchConfig = async () => {
         setLoading(true);
@@ -49,7 +60,6 @@ export default function TelegramClient() {
                 // If the response is empty/invalid, activeConfig stays null or default
                 if (data && (data.botToken || data.chatId)) {
                     setActiveConfig(data);
-                    checkStatus(data.botToken);
                 }
             }
         } catch (error) {
@@ -67,6 +77,59 @@ export default function TelegramClient() {
             setStatus(data);
         } catch (error) {
             setStatus({ ok: false, error: 'Connection failed' });
+        }
+    };
+
+    const checkWebhook = async () => {
+        try {
+            const res = await fetch('/api/admin/telegram/webhook');
+            const data = await res.json();
+            if (data.ok) {
+                setWebhookInfo(data.result);
+            }
+        } catch (e) {
+            console.error('Webhook check failed', e);
+        }
+    };
+
+    const handleSetWebhook = async () => {
+        setWebhookLoading(true);
+        try {
+            // Use current window location to determine the base URL
+            const url = window.location.origin;
+            const res = await fetch('/api/admin/telegram/webhook', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                alert('Webhook connected successfully!');
+                await checkWebhook();
+            } else {
+                alert(`Failed: ${data.description}`);
+            }
+        } catch (e) {
+            alert('Error setting webhook');
+        } finally {
+            setWebhookLoading(false);
+        }
+    };
+
+    const handleDeleteWebhook = async () => {
+        if (!confirm('Are you sure you want to disconnect the webhook? The bot will stop replying.')) return;
+        setWebhookLoading(true);
+        try {
+            const res = await fetch('/api/admin/telegram/webhook', { method: 'DELETE' });
+            const data = await res.json();
+            if (data.ok) {
+                alert('Webhook disconnected.');
+                await checkWebhook();
+            }
+        } catch (e) {
+            alert('Error deleting webhook');
+        } finally {
+            setWebhookLoading(false);
         }
     };
 
@@ -278,6 +341,39 @@ export default function TelegramClient() {
                                                 {copiedChatId ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
                                             </button>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <hr className="border-gray-100" />
+
+                                {/* Webhook Controls */}
+                                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-slate-800">Webhook Status</h4>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            {webhookInfo?.url
+                                                ? `Active: ${webhookInfo.url}`
+                                                : 'Not connected. Bot performs one-way alerts only.'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        {webhookInfo?.url ? (
+                                            <button
+                                                onClick={handleDeleteWebhook}
+                                                disabled={webhookLoading}
+                                                className="text-xs px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-md font-medium transition"
+                                            >
+                                                {webhookLoading ? 'Disconnecting...' : 'Disconnect Webhook'}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={handleSetWebhook}
+                                                disabled={webhookLoading}
+                                                className="text-xs px-3 py-1.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-md font-medium transition"
+                                            >
+                                                {webhookLoading ? 'Connecting...' : 'Connect Webhook'}
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
