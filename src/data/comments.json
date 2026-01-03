@@ -73,6 +73,34 @@
         "likes": 89,
         "replies": [],
         "avatar": "https://ui-avatars.com/api/?name=Wawan&background=random"
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-0-1767468092296",
+        "text": "Ajarin dong puh sepuh �",
+        "name": "Siti",
+        "createdAt": "2026-01-02T16:15:54.407Z",
+        "likes": 66,
+        "replies": [
+          {
+            "id": "r-manipulasi-foto-musik-alam-0-user",
+            "text": "Gas puh ajarin kita",
+            "name": "Togar",
+            "time": "5 jam yang lalu",
+            "createdAt": "2026-01-03T03:03:37.097Z",
+            "likes": 6,
+            "avatar": "https://ui-avatars.com/api/?name=Togar&background=random"
+          }
+        ],
+        "avatar": "https://ui-avatars.com/api/?name=Siti&background=random"
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-1-1767468092296",
+        "text": "Pemilihan font-nya pas banget sama visualnya.",
+        "name": "Bagas",
+        "createdAt": "2026-01-02T01:03:20.635Z",
+        "likes": 90,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Bagas&background=random"
       }
     ],
     "kolase-lanskap-menanjak": [
