@@ -75,32 +75,22 @@
         "avatar": "https://ui-avatars.com/api/?name=Wawan&background=random"
       },
       {
-        "id": "c-manipulasi-foto-musik-alam-0-1767468126540",
-        "text": "Spek PC NASA ya bang? 😂",
-        "name": "Gilang",
-        "createdAt": "2026-01-03T16:06:28.762Z",
-        "likes": 59,
+        "id": "c-manipulasi-foto-musik-alam-0-1767468130492",
+        "text": "Simple tapi ngena banget.",
+        "name": "Hana",
+        "createdAt": "2026-01-02T07:14:44.163Z",
+        "likes": 74,
         "replies": [],
-        "avatar": "https://ui-avatars.com/api/?name=Gilang&background=random"
+        "avatar": "https://ui-avatars.com/api/?name=Hana&background=random"
       },
       {
-        "id": "c-manipulasi-foto-musik-alam-1-1767468126540",
-        "text": "Pake software apa bang? Halus bgt.",
-        "name": "Gilang",
-        "createdAt": "2026-01-03T02:18:39.387Z",
-        "likes": 49,
-        "replies": [
-          {
-            "id": "r-manipulasi-foto-musik-alam-1-admin",
-            "text": "Render lumayan lama, ditinggal tidur semalem haha �",
-            "name": "Ramos",
-            "time": "5 jam yang lalu",
-            "createdAt": "2026-01-03T03:55:31.301Z",
-            "likes": 3,
-            "avatar": "https://ui-avatars.com/api/?name=Ramos&background=000&color=fff"
-          }
-        ],
-        "avatar": "https://ui-avatars.com/api/?name=Gilang&background=random"
+        "id": "c-manipulasi-foto-musik-alam-1-1767468130492",
+        "text": "Suka banget sama warnanya ✨",
+        "name": "Dinda",
+        "createdAt": "2026-01-03T16:31:06.395Z",
+        "likes": 53,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Dinda&background=random"
       }
     ],
     "kolase-lanskap-menanjak": [
