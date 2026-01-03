@@ -121,54 +121,36 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
     setVisibleCount(window.innerWidth > 768 ? 30 : 6)
   }, [filteredProjects])
 
-  // Optimized infinite scroll with requestAnimationFrame
+  // Optimized infinite scroll with IntersectionObserver
+  const observerTarget = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    let ticking = false
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoading && filteredProjects.length > 0 && visibleCount < MAX_DISPLAY_COUNT) {
+          setIsLoading(true)
 
-    const checkScroll = () => {
-      // Stop infinite scroll if we hit the safe limit OR if there are no projects
-      if (visibleCount >= MAX_DISPLAY_COUNT || !filteredProjects.length) return
+          // Append in batches of 24 for better performance during fast scrolling
+          setVisibleCount(prev => Math.min(prev + 24, MAX_DISPLAY_COUNT))
 
-      const scrollPosition = window.innerHeight + window.scrollY
-      const bottomPosition = document.documentElement.scrollHeight
-      const distanceFromBottom = bottomPosition - scrollPosition
-
-      // Trigger at 1000px for good UX
-      if (distanceFromBottom < 1000 && !isLoading) {
-        setIsLoading(true)
-
-        requestAnimationFrame(() => {
-          // Increase count for "infinite" feel
-          setVisibleCount(prev => Math.min(prev + 12, MAX_DISPLAY_COUNT))
-
+          // Small delay to prevent double-triggering before state propagates
           setTimeout(() => {
             setIsLoading(false)
-          }, 300)
-        })
+          }, 50)
+        }
+      },
+      {
+        rootMargin: '1200px 0px', // Pre-fetch content early
+        threshold: 0.1
       }
+    )
 
-      ticking = false
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current)
     }
 
-    const handleScroll = () => {
-      if (!ticking) {
-        rafRef.current = requestAnimationFrame(checkScroll)
-        ticking = true
-      }
-    }
-
-    // Check immediately on load in case the content is shorter than the viewport
-    checkScroll();
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current)
-      }
-    }
-  }, [filteredProjects.length, displayedProjects.length, isLoading, visibleCount])
+    return () => observer.disconnect()
+  }, [filteredProjects.length, isLoading, visibleCount])
 
   return (
     <section className="py-8 px-4">
@@ -220,10 +202,14 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
               })}
             </MasonryGrid>
 
+            {/* Infinite Scroll Sentinel */}
+            <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
+
             {/* Subtle loading indicator */}
             {isLoading && (
               <div className="text-center py-8 opacity-50">
                 <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
+                <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>
               </div>
             )}
           </>

@@ -36,6 +36,9 @@ export interface ContactData {
   content?: ContactContent;
   info: ContactInfo;
   formSettings: ContactFormSettings;
+  labels?: {
+    chatButtonText?: string;
+  };
   lastUpdated: string;
 }
 
@@ -43,4 +46,7 @@ export interface UpdateContactData {
   content?: ContactContent;
   info?: Partial<ContactInfo>;
   formSettings?: Partial<ContactFormSettings>;
+  labels?: Partial<{
+    chatButtonText: string;
+  }>;
 }

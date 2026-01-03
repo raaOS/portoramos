@@ -4,13 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { ContactData, UpdateContactData } from '@/types/contact';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
-import { PhoneCall, Type, Share2 } from 'lucide-react';
+import { PhoneCall, Type, Share2, Info } from 'lucide-react';
 
 export default function AdminContactClient() {
   const [contactData, setContactData] = useState<ContactData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'content' | 'socials'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'socials' | 'labels'>('content');
   const { showSuccess, showError } = useToast();
 
   const loadContactData = useCallback(async () => {
@@ -83,7 +83,8 @@ export default function AdminContactClient() {
           <nav className="flex space-x-1 px-4 py-2">
             {[
               { id: 'content', name: 'Page Content', icon: Type },
-              { id: 'socials', name: 'Social Media', icon: Share2 }
+              { id: 'socials', name: 'Social Media', icon: Share2 },
+              { id: 'labels', name: 'Settings', icon: Info }
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -117,6 +118,16 @@ export default function AdminContactClient() {
             </div>
           )}
 
+          {activeTab === 'labels' && contactData && (
+            <div className="max-w-2xl">
+              <h3 className="text-lg font-medium text-gray-900 mb-6">UI Labels & Settings</h3>
+              <ContactLabelsForm
+                labels={contactData.labels || {}}
+                onUpdate={(labels) => handleUpdateContact({ labels })}
+              />
+            </div>
+          )}
+
           {activeTab === 'socials' && contactData && (
             <div className="max-w-2xl">
               <h3 className="text-lg font-medium text-gray-900 mb-6">Manage Social Links</h3>
@@ -134,6 +145,41 @@ export default function AdminContactClient() {
 }
 
 // --- Subcomponents ---
+
+function ContactLabelsForm({ labels, onUpdate }: { labels: any, onUpdate: (l: any) => void }) {
+  const [form, setForm] = useState(labels || {});
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onUpdate(form);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Chat Button Text
+        </label>
+        <input
+          type="text"
+          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+          placeholder="Chat Langsung"
+          value={form.chatButtonText || ''}
+          onChange={(e) => setForm({ ...form, chatButtonText: e.target.value })}
+        />
+      </div>
+
+      <div className="pt-4">
+        <button
+          type="submit"
+          className="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-black transition-colors shadow-sm"
+        >
+          Save Settings
+        </button>
+      </div>
+    </form>
+  );
+}
 
 function ContactContentForm({ data, onUpdate }: { data: any, onUpdate: (d: any) => void }) {
   const [form, setForm] = useState(data);
@@ -201,7 +247,7 @@ function SocialMediaForm({ data, onUpdate }: { data: any, onUpdate: (d: any) => 
     { key: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/username' },
     { key: 'github', label: 'GitHub', placeholder: 'https://github.com/username' },
     { key: 'behance', label: 'Behance', placeholder: 'https://behance.net/username' },
-    { key: 'email', label: 'Email (Optional override)', placeholder: 'mailto:email@example.com' } // Actually email is separate in info, but user asked for "sosmednya dibawah". Let's stick to socialMedia object for now.
+    { key: 'email', label: 'Email (Optional override)', placeholder: 'mailto:email@example.com' }
   ];
 
   return (
@@ -232,5 +278,3 @@ function SocialMediaForm({ data, onUpdate }: { data: any, onUpdate: (d: any) => 
     </form>
   );
 }
-
-

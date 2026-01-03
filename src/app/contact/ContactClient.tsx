@@ -165,8 +165,7 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
                         className="group relative flex items-center gap-3 px-8 py-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-md overflow-hidden shadow-xl"
                     >
                         <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-blue-500 blur-xl" />
-                        <MessageCircle className="w-6 h-6 text-white/90 group-hover:text-white" />
-                        <span className="relative text-white/90 group-hover:text-white font-bold">Chat Langsung</span>
+                        <span className="relative text-white/90 group-hover:text-white font-bold">{contactInfo?.labels?.chatButtonText || 'Chat Langsung'}</span>
                     </button>
                 </motion.div>
 

@@ -162,13 +162,13 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           // 1. Trigger Load if not loaded (with delay to save LCP)
           // STRICT: On mobile, we NEVER auto-load. User must click.
           if (!shouldLoad && !loadTimerRef.current && !isMobile) {
-            // Honey Spot Strategy: Staggered Loading
-            // Random delay between 1.5s and 4.5s
-            // This prevents all videos from hammering the network simultaneously
-            const jitter = Math.random() * 3000
+            // Honey Spot Strategy: Tightened Staggered Loading
+            // Random delay between 0.8s and 2.0s (Reduced from 1.5s - 4.5s)
+            // This makes the UI feel more alive without hammering LCP.
+            const jitter = Math.random() * 1200
             loadTimerRef.current = setTimeout(() => {
               setShouldLoad(true)
-            }, 1500 + jitter)
+            }, 800 + jitter)
           }
 
           // 2. Play if loaded and visible

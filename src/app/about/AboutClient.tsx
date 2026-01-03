@@ -161,6 +161,13 @@ interface AboutClientProps {
       texts: string[];
       descriptions: string[];
     };
+    labels?: {
+      experienceTitle?: string;
+      experienceSubtitle?: string;
+      freelanceTitle?: string;
+      workExperienceTitle?: string;
+      portfolioPreviewTitle?: string;
+    };
   };
   initialProjects?: Project[];
   lastUpdated?: Date | null;
@@ -286,6 +293,13 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
         "Bekerja sama dengan tim dan klien untuk mencapai tujuan bersama.",
         "Selalu update dengan skill dan teknologi terbaru di bidang desain."
       ]
+    },
+    labels: {
+      experienceTitle: "Experience",
+      experienceSubtitle: "Perjalanan karir dan pengalaman profesional",
+      freelanceTitle: "Freelance Experience",
+      workExperienceTitle: "Work Experience",
+      portfolioPreviewTitle: "Portfolio Preview"
     }
   };
 
@@ -470,7 +484,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
 
   // Animasi hero mobile diatur lewat BlurTextLoop dengan delay berbeda per baris
 
-  const hardSkills = resolvedConcepts
+  const hardSkillsList = resolvedConcepts
     .slice()
     .sort((a, b) => (a.order || 0) - (b.order || 0))
     .map((concept) => ({
@@ -599,7 +613,6 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
       />
 
 
-
       {/* Section 1: ABOUT ME dengan Trail Effect */}
       <div id="hero" className="relative min-h-screen bg-[#0a0a0a]">
 
@@ -717,7 +730,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                   whileInView={{ x: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
                 >
-                  <h4 className="text-lg font-medium text-gray-600 mb-4">Portfolio Preview</h4>
+                  <h4 className="text-lg font-medium text-gray-600 mb-4">{currentAboutData.labels?.portfolioPreviewTitle || 'Portfolio Preview'}</h4>
                   <div className="relative group">
                     <GalleryMini images={finalGalleryImages} className="w-full max-w-none md:max-w-none" />
                   </div>
@@ -830,7 +843,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                       Menampilkan poin default (gagal memuat konsep dari server).
                     </p>
                   )}
-                  {hardSkills.map((skill, index) => (
+                  {hardSkillsList.map((skill, index) => (
                     <StaggerItem key={index}>
                       <div className="flex items-start group">
                         <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0 transition-transform group-hover:scale-150"></span>
@@ -908,10 +921,10 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
               transition={{ duration: 0.6 }}
             >
               <Reveal>
-                <h2 className="text-3xl md:text-4xl font-sans font-bold text-black mb-4">Experience</h2>
+                <h2 className="text-3xl md:text-4xl font-sans font-bold text-black mb-4">{currentAboutData.labels?.experienceTitle || 'Experience'}</h2>
               </Reveal>
               <Reveal delay={0.3}>
-                <p className="text-sm md:text-base text-gray-600 font-sans">Perjalanan karir dan pengalaman profesional</p>
+                <p className="text-sm md:text-base text-gray-600 font-sans">{currentAboutData.labels?.experienceSubtitle || 'Perjalanan karir dan pengalaman profesional'}</p>
               </Reveal>
             </motion.div>
           </div>
@@ -924,7 +937,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
               <div className="text-left">
                 <div className="inline-block bg-black px-4 py-2 rounded-full mb-4">
                   <h3 className="text-lg font-medium text-white font-sans italic">
-                    Freelance Experience
+                    {currentAboutData.labels?.freelanceTitle || 'Freelance Experience'}
                   </h3>
                 </div>
 
@@ -947,7 +960,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                   <Reveal>
                     <div className="inline-block bg-black px-4 py-2 rounded-full">
                       <h3 className="text-lg font-medium text-white font-sans italic">
-                        Work Experience
+                        {currentAboutData.labels?.workExperienceTitle || 'Work Experience'}
                       </h3>
                     </div>
                   </Reveal>

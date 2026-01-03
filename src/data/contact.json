@@ -47,5 +47,8 @@
     "successMessage": "Terima kasih! Pesan Anda telah berhasil dikirim.",
     "errorMessage": "Maaf, terjadi kesalahan. Silakan coba lagi."
   },
+  "labels": {
+    "chatButtonText": "Chat Langsung"
+  },
   "lastUpdated": "2026-01-03T17:44:58.795Z"
 }

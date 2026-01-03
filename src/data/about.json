@@ -72,7 +72,7 @@
   "professional": {
     "motto": {
       "badge": "Motto kerja",
-      "quote": "\"Desain adalah solusi visual, bukan sekadar estetika.\""
+      "quote": "Desain adalah Hook: Bikin mereka berhenti scroll, lalu mengerti."
     },
     "bio": {
       "content": "\"Berbekal pengalaman lebih dari 14 tahun di industri desain, saya telah mengasah keahlian di berbagai medan—mulai dari struktur korporasi yang disiplin hingga dinamika freelance yang adaptif. Terbiasa bekerja di bawah tekanan deadline yang ketat telah membentuk saya menjadi desainer yang solutif. Fokus utama saya bukan sekadar estetika, melainkan menciptakan solusi visual yang strategis dan berdampak nyata bagi pertumbuhan bisnis.\"",
@@ -93,5 +93,12 @@
       "Cepat nyambung sama teknologi dan tren baru."
     ]
   },
-  "lastUpdated": "2026-01-03T18:06:55.512Z"
+  "labels": {
+    "experienceTitle": "Experience",
+    "experienceSubtitle": "Perjalanan karir dan pengalaman profesional",
+    "freelanceTitle": "Freelance Experience",
+    "workExperienceTitle": "Work Experience",
+    "portfolioPreviewTitle": "Portfolio Preview"
+  },
+  "lastUpdated": "2026-01-03T18:13:53.068Z"
 }

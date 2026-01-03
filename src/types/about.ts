@@ -46,6 +46,13 @@ export interface AboutData {
   hero: AboutHero;
   professional: AboutProfessional;
   softSkills: AboutSoftSkills;
+  labels?: {
+    experienceTitle?: string;
+    experienceSubtitle?: string;
+    freelanceTitle?: string;
+    workExperienceTitle?: string;
+    portfolioPreviewTitle?: string;
+  };
   lastUpdated: string;
 }
 

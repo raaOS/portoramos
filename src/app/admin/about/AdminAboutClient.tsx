@@ -9,7 +9,7 @@ import TrailSelector from '@/components/admin/TrailSelector';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
-import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info, Trash2, Pencil } from 'lucide-react';
+import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info, Trash2, Pencil, Tag } from 'lucide-react';
 import RunningTextPanel from './components/RunningTextPanel';
 import StatusToggle from '../components/StatusToggle';
 
@@ -20,7 +20,7 @@ export default function AdminAboutClient() {
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills' | 'hardSkills' | 'runningText'>('hero');
+  const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'labels'>('hero');
   const [hardSkills, setHardSkills] = useState<HardSkill[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [hardSkillConcepts, setHardSkillConcepts] = useState<HardSkillConcept[]>([]);
@@ -349,6 +349,7 @@ export default function AdminAboutClient() {
               { id: 'hero', name: 'Hero', icon: Sparkles, color: 'text-blue-600' },
               { id: 'professional', name: 'Professional', icon: BriefcaseBusiness, color: 'text-emerald-600' },
               { id: 'runningText', name: 'Running Text', icon: Type, color: 'text-pink-600' },
+              { id: 'labels', name: 'Labels', icon: Tag, color: 'text-gray-600' },
               { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600' },
               { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600' },
             ].map((tab) => (
