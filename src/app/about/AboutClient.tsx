@@ -750,7 +750,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                     style={{ opacity: headerOpacity }}
                     className="text-3xl xl:text-4xl font-sans font-bold leading-tight mb-8 text-white xl:opacity-[var(--header-opacity)] opacity-100"
                   >
-                    "Desain adalah solusi visual, bukan sekadar estetika."
+                    {currentAboutData.professional?.motto.quote}
                   </motion.h3>
 
                   <div className="space-y-6 text-white text-sm leading-relaxed tracking-wide">
