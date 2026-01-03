@@ -81,7 +81,7 @@ export default function ChatWidget() {
                                         required
                                         type="text"
                                         placeholder="Nama Anda"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:!border-blue-500 focus:!ring-0 focus-visible:!ring-0 focus-visible:!outline-none transition text-sm text-gray-900 bg-white"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition text-sm text-gray-900 bg-white"
                                         value={form.name}
                                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                                     />
@@ -93,7 +93,7 @@ export default function ChatWidget() {
                                         required
                                         type="text"
                                         placeholder="0812..."
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:!border-blue-500 focus:!ring-0 focus-visible:!ring-0 focus-visible:!outline-none transition text-sm text-gray-900 bg-white"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition text-sm text-gray-900 bg-white"
                                         value={form.contact}
                                         onChange={(e) => setForm({ ...form, contact: e.target.value })}
                                     />
@@ -105,7 +105,7 @@ export default function ChatWidget() {
                                         required
                                         rows={3}
                                         placeholder="Tulis pesan..."
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:!border-blue-500 focus:!ring-0 focus-visible:!ring-0 focus-visible:!outline-none transition text-sm text-gray-900 bg-white resize-none"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition text-sm text-gray-900 bg-white resize-none"
                                         value={form.message}
                                         onChange={(e) => setForm({ ...form, message: e.target.value })}
                                     />
