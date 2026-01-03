@@ -1,11 +1,30 @@
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+import fs from 'fs/promises';
+import path from 'path';
+
+// Load config from JSON if exists, otherwise env
+async function getTelegramConfig() {
+    try {
+        const configFile = path.join(process.cwd(), 'src/data/telegram.json');
+        const fileContent = await fs.readFile(configFile, 'utf-8');
+        const config = JSON.parse(fileContent);
+        if (config.botToken && config.chatId) {
+            return { botToken: config.botToken, chatId: config.chatId, isCustom: true };
+        }
+    } catch (e) {
+        // Ignore file read errors, fallback to env
+    }
+
+    return {
+        botToken: process.env.TELEGRAM_BOT_TOKEN,
+        chatId: process.env.TELEGRAM_CHAT_ID,
+        isCustom: false
+    };
+}
 
 export async function sendTelegramAlert(message: string): Promise<void> {
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-        // Fail silently in development/production if not configured,
-        // to prevent blocking the main application flow.
-        // In dev, we might want to log a warning.
+    const { botToken, chatId } = await getTelegramConfig();
+
+    if (!botToken || !chatId) {
         if (process.env.NODE_ENV === 'development') {
             console.log('[Telegram] Config missing, skipping alert:', message);
         }
@@ -13,14 +32,14 @@ export async function sendTelegramAlert(message: string): Promise<void> {
     }
 
     try {
-        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
+                chat_id: chatId,
                 text: message,
                 parse_mode: 'Markdown',
             }),
@@ -34,3 +53,5 @@ export async function sendTelegramAlert(message: string): Promise<void> {
         console.error('[Telegram] Network error sending alert:', error);
     }
 }
+
+export { getTelegramConfig };

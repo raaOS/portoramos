@@ -31,3 +31,8 @@ check-*.js
 verify-*.js
 add-*.js
 
+
+.env*.local
+
+# Secrets
+src/data/telegram.json
