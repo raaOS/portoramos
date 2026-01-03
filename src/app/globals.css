@@ -205,25 +205,24 @@ html.dark {
 /* Enhanced project detail styling - Refactored to Tailwind */
 /* .project-detail-media and .project-detail-container removed */
 
-/* Focus-visible styles for accessibility */
+/* Focus-visible styles for accessibility - Minimalist version */
 button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25);
-  border-radius: 6px;
+  outline: 1px solid #2563eb;
+  outline-offset: 0;
+  box-shadow: none;
+  border-radius: inherit;
 }
 
 /* Utility: .focus-ring to apply consistent focus manually if needed */
 .focus-ring:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25);
-  border-radius: 6px;
+  outline: 1px solid #2563eb;
+  outline-offset: 0;
+  box-shadow: none;
 }
 
 /* Screen reader only utility */
