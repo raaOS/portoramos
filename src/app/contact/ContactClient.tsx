@@ -3,16 +3,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { MessageCircle } from 'lucide-react';
 import { Project } from '@/types/projects';
 import { resolveCover } from '@/lib/images';
 import Media from '@/components/shared/Media';
 
-const CONTACT_LINKS = [
-    { label: "Email", href: "mailto:hello@ramos.com", color: "bg-blue-500" },
-    { label: "Instagram", href: "https://instagram.com", color: "bg-purple-500" },
-    { label: "Twitter", href: "https://twitter.com", color: "bg-sky-500" },
-    { label: "LinkedIn", href: "https://linkedin.com", color: "bg-indigo-500" }
-];
+// No fallback links - only show what user has configured
+const CONTACT_LINKS: { label: string; href: string; color: string }[] = [];
 
 // Lightweight Card Component (No interaction logic, just visuals)
 const BackgroundCard = React.memo(({ project, index }: { project: Project, index: number }) => {
@@ -80,7 +77,12 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
         while (list.length < 24) {
             list = [...list, ...projects];
         }
-        return list;
+
+        // Shuffle the list to prevent column alignment issues (identical side-by-side images)
+        // especially on mobile where column-count is 2.
+        return list.map(value => ({ value, sort: Math.random() }))
+            .sort((a, b) => a.sort - b.sort)
+            .map(({ value }) => value);
     }, [projects]);
 
     // Social Links processing
@@ -88,7 +90,7 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
         if (!contactInfo?.socialMedia) return CONTACT_LINKS;
         const s = contactInfo.socialMedia;
         return [
-            { label: "Email", href: contactInfo.email ? `mailto:${contactInfo.email}` : undefined, color: "bg-blue-500" },
+            { label: "Email", href: s.email ? `mailto:${s.email}` : undefined, color: "bg-blue-500" },
             { label: "Instagram", href: s.instagram, color: "bg-purple-500" },
             { label: "WhatsApp", href: s.whatsapp, color: "bg-green-500" },
             { label: "Twitter", href: s.twitter, color: "bg-sky-500" },
@@ -147,10 +149,26 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="text-5xl md:text-7xl lg:text-9xl font-sans text-[#e5e5e5] tracking-tight leading-[1] text-center mb-8 drop-shadow-2xl whitespace-pre-line"
+                    className="text-5xl md:text-7xl lg:text-9xl font-black font-sans text-[#e5e5e5] tracking-tight leading-[1] text-center mb-8 drop-shadow-2xl whitespace-pre-line"
                 >
                     {displayHeadline}
                 </motion.h1>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
+                    className="mb-8"
+                >
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('open-chat'))}
+                        className="group relative flex items-center gap-3 px-8 py-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-md overflow-hidden shadow-xl"
+                    >
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-blue-500 blur-xl" />
+                        <MessageCircle className="w-6 h-6 text-white/90 group-hover:text-white" />
+                        <span className="relative text-white/90 group-hover:text-white font-bold">Chat Langsung</span>
+                    </button>
+                </motion.div>
 
                 <motion.p
                     initial={{ opacity: 0 }}

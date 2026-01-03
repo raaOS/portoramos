@@ -1,0 +1,13 @@
+{
+  "leads": [
+    {
+      "id": "lead-1767461926945",
+      "name": "ramos",
+      "contact": "08817472310",
+      "contactType": "WhatsApp",
+      "message": "hallooo\n",
+      "createdAt": "2026-01-03T17:38:46.945Z",
+      "status": "new"
+    }
+  ]
+}

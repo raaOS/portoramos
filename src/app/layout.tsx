@@ -15,6 +15,7 @@ import BottomNavigation from '@/components/layout/BottomNavigation';
 import UnregisterSW from '@/components/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import ScrollToTop from '@/components/layout/ScrollToTop';
+import ChatWidget from '@/components/ChatWidget';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseSEO.siteUrl),
@@ -102,6 +103,7 @@ export default function RootLayout({
                     <UnregisterSW />
                     <SpeedInsights />
                     <ScrollToTop />
+                    <ChatWidget />
                   </AppWrapper>
                 </ErrorBoundary>
               </NavbarVisibilityProvider>
