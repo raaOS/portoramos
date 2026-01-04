@@ -101,12 +101,14 @@ export default function SwayingGallery({
               key={index}
               className={`gallery-item ${image.jobDetails ? 'clickable' : ''}`}
               onClick={() => handlePhotoClick(image)}
-              onMouseEnter={() => {
+              onMouseEnter={(event) => {
                 if (image.jobDetails) {
                   setTooltip((prev) => ({
                     ...prev,
                     visible: true,
-                    content: image.duration || ''
+                    content: image.duration || '',
+                    x: event.clientX + 20,
+                    y: event.clientY + 30,
                   }));
                 }
               }}

@@ -916,7 +916,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                       Menampilkan data pengalaman bawaan karena: {experienceErrorDetail instanceof Error ? experienceErrorDetail.message : 'data tidak tersedia'}.
                     </p>
                   )}
-                  <Reveal delay={0.3}>
+                  <Reveal delay={0.3} overflowVisible={true}>
                     <SwayingGallery
                       images={workExperienceForGallery.map((experience, index) => ({
                         src: experience.imageUrl,
