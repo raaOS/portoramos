@@ -84,6 +84,24 @@ function Card({
     // Add slight rotation for "messy stack" feel on mobile only
     const randomRotate = isMobile ? (index % 2 === 0 ? 2 : -2) : 0;
 
+    // Force Autoplay Logic
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    useEffect(() => {
+        if (item.type === 'video' && videoRef.current) {
+            // Ensure muted is set before play to bypass browser policies
+            videoRef.current.defaultMuted = true;
+            videoRef.current.muted = true;
+
+            const playPromise = videoRef.current.play();
+            if (playPromise !== undefined) {
+                playPromise.catch((error) => {
+                    console.log("Autoplay prevented:", error);
+                });
+            }
+        }
+    }, [item.src, item.type]);
+
     return (
         <div
             className="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none"
@@ -100,13 +118,14 @@ function Card({
             >
                 {item.type === 'video' ? (
                     <video
+                        ref={videoRef}
                         key={item.src} // Force re-render on src change
                         src={item.src}
                         poster={item.poster} // Use high-quality poster
-                        autoPlay={true}
-                        muted={true}
-                        loop={true}
-                        playsInline={true}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
                         className="w-full h-full object-cover"
                     />
                 ) : (
