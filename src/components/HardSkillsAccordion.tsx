@@ -78,7 +78,7 @@ export default function HardSkillsAccordion() {
                         key={skill.id}
                         className={`
                             w-full overflow-hidden rounded-2xl border transition-colors duration-300
-                            ${isOpen ? 'bg-white border-black shadow-lg' : 'bg-gray-50 border-gray-100 hover:border-gray-300'}
+                            ${isOpen ? 'bg-white border-black' : 'bg-gray-50 border-gray-100 hover:border-gray-300'}
                         `}
                         initial={false}
                     >
@@ -90,7 +90,7 @@ export default function HardSkillsAccordion() {
                             <div className="flex items-center gap-4">
                                 <div className={`
                                     w-12 h-12 rounded-xl flex items-center justify-center p-2 transition-colors duration-300
-                                    ${isOpen ? 'bg-gray-100' : 'bg-white shadow-sm border border-gray-100'}
+                                    ${isOpen ? 'bg-gray-100' : 'bg-white border border-gray-100'}
                                 `}>
                                     <Image
                                         src={skill.icon}
@@ -137,6 +137,7 @@ export default function HardSkillsAccordion() {
                                     }}
                                     transition={{ duration: 0.4, ease: "easeInOut" }}
                                     style={{ willChange: "height" }}
+                                    className="overflow-hidden"
                                 >
                                     <div className="px-4 pb-5 pt-0 pl-[5.5rem]">
                                         <div className="h-px w-full bg-gray-100 mb-4" />
