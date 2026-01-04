@@ -21,7 +21,7 @@ async function getTelegramConfig() {
     };
 }
 
-export async function sendTelegramAlert(message: string): Promise<void> {
+export async function sendTelegramAlert(message: string, options?: { buttons?: { text: string; url: string }[][] }): Promise<void> {
     const { botToken, chatId } = await getTelegramConfig();
 
     if (!botToken || !chatId) {
@@ -33,16 +33,25 @@ export async function sendTelegramAlert(message: string): Promise<void> {
 
     try {
         const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+        const body: any = {
+            chat_id: chatId,
+            text: message,
+            parse_mode: 'Markdown',
+        };
+
+        if (options?.buttons) {
+            body.reply_markup = {
+                inline_keyboard: options.buttons
+            };
+        }
+
         const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: message,
-                parse_mode: 'Markdown',
-            }),
+            body: JSON.stringify(body),
         });
 
         if (!response.ok) {

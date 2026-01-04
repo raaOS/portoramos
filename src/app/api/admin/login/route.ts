@@ -129,8 +129,6 @@ export async function POST(request: NextRequest) {
       const geo = await getGeoInfo(clientKey);
       const uaStr = clientKey.split('|')[1] || '';
       const device = parseUserAgent(uaStr);
-      const mapLink = geo.mapLink ? `[Peta Lokasi](${geo.mapLink})` : 'Peta tidak tersedia';
-
       const message =
         `⚠️ **BLOCKED ATTEMPT** (Rate Limit)
 
@@ -138,13 +136,14 @@ export async function POST(request: NextRequest) {
 🌐 **Network:** ${geo.isp}
 📡 **IP:** \`${clientKey.split('|')[0]}\`
 📍 **Location:** ${geo.location}
-🗺️ ${mapLink}
 
 🕒 ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
       // Fire and forget is risky in Serverless if not awaited, but for blocking it's ok if occasional miss. 
       // Better to await to ensure specific block notice goes out.
-      await sendTelegramAlert(message);
+      await sendTelegramAlert(message, {
+        buttons: geo.mapLink ? [[{ text: '📍 Lihat Peta Lokasi', url: geo.mapLink }]] : undefined
+      });
 
       return NextResponse.json(
         { error: 'Too many attempts. Please try again later.' },
@@ -177,7 +176,6 @@ export async function POST(request: NextRequest) {
         topMapLink = `https://www.google.com/maps?q=${lat},${lng}`;
       }
 
-      const mapLink = topMapLink ? `[Peta Lokasi](${topMapLink})` : 'Peta tidak tersedia';
       const accStr = accuracy ? ` (±${Math.round(accuracy)}m)` : '';
       const sourceInfo = (lat && lng) ? `(GPS Akurat${accStr})` : `(Estimasi IP)`;
 
@@ -188,11 +186,12 @@ export async function POST(request: NextRequest) {
 🌐 **Network:** ${geo.isp}
 📡 **IP:** \`${clientKey.split('|')[0]}\`
 📍 **Location:** ${locationName} ${sourceInfo}
-🗺️ ${mapLink}
 
 🕒 ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
-      await sendTelegramAlert(message);
+      await sendTelegramAlert(message, {
+        buttons: topMapLink ? [[{ text: '📍 Lihat Peta Lokasi', url: topMapLink }]] : undefined
+      });
 
       registerLoginFailure(clientKey);
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
@@ -213,7 +212,6 @@ export async function POST(request: NextRequest) {
       topMapLink = `https://www.google.com/maps?q=${lat},${lng}`;
     }
 
-    const mapLink = topMapLink ? `[Peta Lokasi](${topMapLink})` : 'Peta tidak tersedia';
     const accStr = accuracy ? ` (±${Math.round(accuracy)}m)` : '';
     const sourceInfo = (lat && lng) ? `(GPS Akurat${accStr})` : `(Estimasi IP)`;
 
@@ -224,11 +222,12 @@ export async function POST(request: NextRequest) {
 🌐 **Network:** ${geo.isp}
 📡 **IP:** \`${clientKey.split('|')[0]}\`
 📍 **Location:** ${locationName} ${sourceInfo}
-🗺️ ${mapLink}
 
 🕒 ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
-    await sendTelegramAlert(successMessage);
+    await sendTelegramAlert(successMessage, {
+      buttons: topMapLink ? [[{ text: '📍 Lihat Peta Lokasi', url: topMapLink }]] : undefined
+    });
 
     const token = getAdminToken();
 
