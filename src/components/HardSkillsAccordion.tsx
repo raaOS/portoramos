@@ -135,27 +135,21 @@ export default function HardSkillsAccordion() {
                                         open: { opacity: 1, height: 'auto' },
                                         collapsed: { opacity: 0, height: 0 }
                                     }}
-                                    transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }} // Smooth easeOutCirc-ish
+                                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                                    style={{ willChange: "height" }}
                                 >
                                     <div className="px-4 pb-5 pt-0 pl-[5.5rem]">
-                                        <motion.div
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{ delay: 0.1 }}
-                                            className="h-px w-full bg-gray-100 mb-4"
-                                        />
+                                        <div className="h-px w-full bg-gray-100 mb-4" />
                                         <ul className="space-y-2">
                                             {skill.details.map((detail, idx) => (
-                                                <motion.li
+                                                <li
                                                     key={idx}
-                                                    initial={{ x: -10, opacity: 0 }}
-                                                    animate={{ x: 0, opacity: 1 }}
-                                                    transition={{ delay: 0.1 + (idx * 0.05) }}
-                                                    className="flex items-start text-sm text-gray-600"
+                                                    className="flex items-start text-sm text-gray-600 animate-fadeIn"
+                                                    style={{ animationDelay: `${idx * 50}ms`, opacity: 0, animationFillMode: 'forwards' }}
                                                 >
                                                     <span className="w-1.5 h-1.5 rounded-full bg-black mt-1.5 mr-2.5 flex-shrink-0" />
                                                     {detail}
-                                                </motion.li>
+                                                </li>
                                             ))}
                                         </ul>
                                     </div>
