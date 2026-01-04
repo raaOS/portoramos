@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { AboutData, UpdateAboutData, TrailItem } from '@/types/about';
-import { HardSkill, HardSkillLevel } from '@/types/hardSkill';
+
 import { Project } from '@/types/projects';
 import TrailSelector from '@/components/admin/TrailSelector';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
@@ -13,6 +13,7 @@ import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info, Trash2, Pencil, Tag
 import RunningTextPanel from './components/RunningTextPanel';
 import StatusToggle from '../components/StatusToggle';
 
+import HardSkillsManager from './components/HardSkillsManager';
 import { RunningTextItem } from '@/types/runningText';
 import { Type, ArrowUp, ArrowDown } from 'lucide-react';
 
@@ -21,11 +22,11 @@ export default function AdminAboutClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'labels'>('hero');
-  const [hardSkills, setHardSkills] = useState<HardSkill[]>([]);
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [hardSkillConcepts, setHardSkillConcepts] = useState<HardSkillConcept[]>([]);
   const [runningTexts, setRunningTexts] = useState<RunningTextItem[]>([]);
-  const [hardSkillsLoading, setHardSkillsLoading] = useState(true);
+
   const [hardSkillConceptsLoading, setHardSkillConceptsLoading] = useState(true);
   const [runningTextsLoading, setRunningTextsLoading] = useState(true);
   const { showSuccess, showError } = useToast();
@@ -44,18 +45,7 @@ export default function AdminAboutClient() {
     }
   }, [showError]);
 
-  const loadHardSkills = useCallback(async () => {
-    try {
-      setHardSkillsLoading(true);
-      const response = await fetch('/api/hard-skills');
-      const data = await response.json();
-      setHardSkills(data.skills || []);
-    } catch (err) {
-      showError('Failed to load hard skills.');
-    } finally {
-      setHardSkillsLoading(false);
-    }
-  }, [showError]);
+
 
   const loadHardSkillConcepts = useCallback(async () => {
     try {
@@ -95,15 +85,10 @@ export default function AdminAboutClient() {
 
   useEffect(() => {
     loadAboutData();
-    loadHardSkills();
-    loadHardSkillConcepts();
-    loadRunningTexts();
-    loadAboutData();
-    loadHardSkills();
     loadHardSkillConcepts();
     loadRunningTexts();
     loadProjects();
-  }, [loadAboutData, loadHardSkills, loadHardSkillConcepts, loadRunningTexts, loadProjects]);
+  }, [loadAboutData, loadHardSkillConcepts, loadRunningTexts, loadProjects]);
 
   const handleUpdateAbout = async (updateData: UpdateAboutData) => {
     try {
@@ -127,58 +112,7 @@ export default function AdminAboutClient() {
     }
   }
 
-  // Hard Skill Handlers...
-  const handleCreateHardSkill = async (payload: any) => { /* ... existing ... */
-    try {
-      const response = await fetch('/api/hard-skills', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        await loadHardSkills();
-        showSuccess('Hard skill berhasil ditambahkan.');
-      } else {
-        showError('Gagal menambahkan hard skill.');
-      }
-    } catch (err) {
-      showError('Gagal menambahkan hard skill.');
-    }
-  };
 
-  const handleUpdateHardSkill = async (id: string, payload: Partial<HardSkill>) => {
-    try {
-      const response = await fetch(`/api/hard-skills/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        await loadHardSkills();
-        showSuccess('Hard skill diperbarui.');
-      } else {
-        showError('Gagal memperbarui hard skill.');
-      }
-    } catch (err) {
-      showError('Gagal memperbarui hard skill.');
-    }
-  };
-
-  const handleDeleteHardSkill = async (id: string) => {
-    try {
-      const response = await fetch(`/api/hard-skills/${id}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        await loadHardSkills();
-        showSuccess('Hard skill dihapus.');
-      } else {
-        showError('Gagal menghapus hard skill.');
-      }
-    } catch (err) {
-      showError('Gagal menghapus hard skill.');
-    }
-  };
 
   // Hard Skill Concept Handlers...
   const handleCreateConcept = async (payload: any) => { /* ... existing ... */
@@ -391,13 +325,7 @@ export default function AdminAboutClient() {
           )}
           {activeTab === 'hardSkills' && (
             <div className="space-y-8">
-              <HardSkillsPanel
-                skills={hardSkills}
-                loading={hardSkillsLoading}
-                onCreate={handleCreateHardSkill}
-                onUpdate={handleUpdateHardSkill}
-                onDelete={handleDeleteHardSkill}
-              />
+              <HardSkillsManager />
               <div className="h-px bg-gray-200" />
               <HardSkillConceptsPanel
                 concepts={hardSkillConcepts}
@@ -703,264 +631,6 @@ function SoftSkillsSectionForm({
   );
 }
 
-// Hard Skills Panel
-function HardSkillsPanel({
-  skills,
-  loading,
-  onCreate,
-  onUpdate,
-  onDelete,
-}: {
-  skills: HardSkill[];
-  loading: boolean;
-  onCreate: (data: { name: string; iconUrl: string; level: HardSkillLevel; order?: number; description?: string; isActive?: boolean }) => void;
-  onUpdate: (id: string, data: Partial<HardSkill>) => void;
-  onDelete: (id: string) => void;
-}) {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    name: '',
-    iconUrl: '',
-    level: 'Intermediate' as HardSkillLevel,
-    order: '' as string | number,
-    description: '',
-    isActive: true,
-  });
-
-  const sortedSkills = skills.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingId) {
-      onUpdate(editingId, {
-        name: form.name,
-        iconUrl: form.iconUrl,
-        level: form.level,
-        order: form.order === '' ? undefined : Number(form.order),
-        description: form.description,
-        isActive: form.isActive,
-      });
-      setEditingId(null);
-    } else {
-      onCreate({
-        name: form.name,
-        iconUrl: form.iconUrl,
-        level: form.level,
-        order: form.order === '' ? undefined : Number(form.order),
-        description: form.description,
-        isActive: form.isActive,
-      });
-    }
-    setForm({ name: '', iconUrl: '', level: 'Intermediate', order: '', description: '', isActive: true });
-  };
-
-  const handleEdit = (skill: HardSkill) => {
-    setEditingId(skill.id);
-    setForm({
-      name: skill.name,
-      iconUrl: skill.iconUrl,
-      level: skill.level,
-      order: skill.order,
-      description: skill.description || '',
-      isActive: skill.isActive !== false,
-    });
-    // Scroll to form
-    const formElement = document.getElementById('hard-skill-form');
-    if (formElement) {
-      formElement.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setForm({ name: '', iconUrl: '', level: 'Intermediate', order: '', description: '', isActive: true });
-  };
-
-  return (
-    <div className="space-y-8">
-      <div id="hard-skill-form">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="text-lg font-medium text-gray-900">{editingId ? 'Edit Hard Skill' : 'Tambah Hard Skill'}</h3>
-          {editingId && (
-            <button
-              type="button"
-              onClick={cancelEdit}
-              className="text-sm text-gray-500 hover:text-gray-700 underline"
-            >
-              Batal Edit
-            </button>
-          )}
-        </div>
-        <p className="text-sm text-gray-600 mb-4">Gunakan URL ikon dari Cloudinary (disarankan SVG/PNG kecil).</p>
-        <form onSubmit={handleSubmit} className={`grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 p-4 rounded-lg border ${editingId ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Nama</label>
-            <input
-              type="text"
-              required
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Level</label>
-            <select
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={form.level}
-              onChange={(e) => setForm({ ...form, level: e.target.value as HardSkillLevel })}
-            >
-              {['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((lvl) => (
-                <option key={lvl} value={lvl}>
-                  {lvl}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1 md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Icon URL (Cloudinary)</label>
-            <input
-              type="url"
-              required
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={form.iconUrl}
-              onChange={(e) => setForm({ ...form, iconUrl: e.target.value })}
-              placeholder="https://res.cloudinary.com/xxx/image/upload/v123/icon.png"
-            />
-            {form.iconUrl && (
-              <div className="mt-2 flex items-start gap-3">
-                <div className="relative w-14 h-14 rounded bg-gray-50 overflow-hidden">
-                  <Image
-                    src={form.iconUrl}
-                    alt="Icon preview"
-                    fill
-                    className="object-cover"
-                    sizes="56px"
-                    unoptimized
-                  />
-                </div>
-                <div className="text-xs text-gray-600 break-all max-w-xs">{form.iconUrl}</div>
-              </div>
-            )}
-          </div>
-          <div className="space-y-1 md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Deskripsi (opsional)</label>
-            <textarea
-              rows={2}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Penjelasan singkat skill ini..."
-            />
-          </div>
-          <div className="space-y-1 flex items-center pt-6">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.isActive}
-                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
-              />
-              <span className="text-sm font-medium text-gray-700">Aktifkan</span>
-            </label>
-          </div>
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Order (opsional)</label>
-            <input
-              type="number"
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={form.order}
-              onChange={(e) => setForm({ ...form, order: e.target.value })}
-              placeholder={`${skills.length + 1}`}
-            />
-          </div>
-          <div className="flex items-end justify-end md:col-span-2 md:col-start-2 gap-2">
-            {editingId && (
-              <button
-                type="button"
-                onClick={cancelEdit}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium shadow-sm transition-colors"
-              >
-                Batal
-              </button>
-            )}
-            <button
-              type="submit"
-              className={`px-4 py-2 text-white rounded-md font-medium shadow-sm transition-colors ${editingId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-violet-600 hover:bg-violet-700'}`}
-            >
-              {editingId ? 'Simpan Perubahan' : 'Tambah'}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-3">Daftar Hard Skill</h3>
-        {loading ? (
-          <p className="text-sm text-gray-500">Memuat...</p>
-        ) : sortedSkills.length === 0 ? (
-          <p className="text-sm text-gray-500">Belum ada hard skill. Tambahkan di atas.</p>
-        ) : (
-          <div className="space-y-4">
-            {sortedSkills.map((skill) => (
-              <div key={skill.id} className={`border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow ${editingId === skill.id ? 'ring-2 ring-blue-500 border-transparent' : 'border-gray-200'}`}>
-                <div className="flex items-start md:items-center gap-4">
-                  <div className="relative w-12 h-12 rounded bg-gray-50 overflow-hidden flex-shrink-0">
-                    <Image
-                      src={skill.iconUrl}
-                      alt={skill.name}
-                      fill
-                      className="object-cover"
-                      sizes="48px"
-                      unoptimized
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex flex-col md:flex-row md:items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-gray-900">{skill.name}</h4>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800">
-                        {skill.level}
-                      </span>
-                      <span className="text-xs text-gray-500">Order: {skill.order}</span>
-                    </div>
-                    {skill.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">{skill.description}</p>
-                    )}
-                    <div className="text-xs text-gray-400 truncate max-w-sm">{skill.iconUrl}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(skill)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                      title="Edit"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <StatusToggle
-                      isActive={skill.isActive !== false}
-                      onClick={() => onUpdate(skill.id, { isActive: !skill.isActive })}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (confirm('Hapus hard skill ini?')) onDelete(skill.id);
-                      }}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
-                      title="Hapus"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // Hard Skill Concepts Panel
 function HardSkillConceptsPanel({
