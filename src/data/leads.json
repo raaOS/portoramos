@@ -1,6 +1,15 @@
 {
   "leads": [
     {
+      "id": "lead-1767498178882",
+      "name": "lillah",
+      "contact": "08817472310",
+      "contactType": "WhatsApp",
+      "message": "harga berapa?",
+      "createdAt": "2026-01-04T03:42:58.882Z",
+      "status": "new"
+    },
+    {
       "id": "lead-1767461926945",
       "name": "ramos",
       "contact": "08817472310",
