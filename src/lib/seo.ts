@@ -144,7 +144,7 @@ export function generateProjectMetadata(project: Project): Metadata {
 }
 
 // Generate structured data (JSON-LD)
-export function generateStructuredData(type: 'website' | 'portfolio' | 'project', data?: any) {
+export function generateStructuredData(type: 'website' | 'portfolio' | 'project' | 'person', data?: any) {
   const baseStructuredData = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -211,6 +211,26 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
         ...(data.year && {
           dateCreated: `${data.year}-01-01`
         })
+      }
+
+    case 'person':
+      return {
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: baseSEO.author,
+        url: baseSEO.siteUrl,
+        image: baseSEO.siteUrl + '/images/profile.jpg', // Assuming profile image path
+        sameAs: [
+          // Add links if available in data
+          ...(data?.socialLinks || [])
+        ],
+        jobTitle: 'Creative Designer & Visual Storyteller',
+        worksFor: {
+          '@type': 'Organization',
+          name: 'Freelance'
+        },
+        description: baseSEO.description,
+        knowsAbout: ['Graphic Design', 'UI/UX', 'Motion Graphics', 'Visual Identity']
       }
 
     default:
