@@ -47,7 +47,7 @@ export default function ChatWidget() {
     };
 
     return (
-        <div className="fixed bottom-24 right-6 md:bottom-6 md:right-6 z-50 flex flex-col items-end w-full max-w-[calc(100vw-2rem)] md:w-auto font-sans">
+        <div className="fixed bottom-24 right-6 md:bottom-6 md:right-6 z-50 flex flex-col items-end w-full max-w-[calc(100vw-2rem)] md:w-auto font-sans print:hidden">
             {/* Chat Box */}
             {isOpen && (
                 <div className="mb-4 w-80 rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 ease-in-out font-sans">
