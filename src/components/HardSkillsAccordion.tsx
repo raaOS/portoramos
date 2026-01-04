@@ -130,10 +130,11 @@ export default function HardSkillsAccordion() {
                                     key="content"
                                     initial="collapsed"
                                     animate="open"
-                                    exit="collapsed"
+                                    exit="collapsed-exit"
                                     variants={{
                                         open: { opacity: 1, height: 'auto' },
-                                        collapsed: { opacity: 0, height: 0 }
+                                        collapsed: { opacity: 0, height: 0 },
+                                        "collapsed-exit": { opacity: 1, height: 0 }
                                     }}
                                     transition={{ duration: 0.4, ease: "easeInOut" }}
                                     style={{ willChange: "height" }}
