@@ -24,6 +24,15 @@ export interface ProjectFormData {
     shares?: number;
     allowComments?: boolean;
     initialCommentCount?: number;
+    narrative: {
+        challenge: string;
+        solution: string;
+        result: string;
+    };
+    comparison: {
+        beforeImage: string;
+        afterImage: string;
+    };
 }
 
 export const useProjectForm = (project?: Project) => {
@@ -52,7 +61,16 @@ export const useProjectForm = (project?: Project) => {
         likes: project?.likes ?? 0,
         shares: project?.shares ?? 0,
         allowComments: project?.allowComments ?? true,
-        initialCommentCount: 2
+        initialCommentCount: 2,
+        narrative: {
+            challenge: project?.narrative?.challenge || '',
+            solution: project?.narrative?.solution || '',
+            result: project?.narrative?.result || ''
+        },
+        comparison: {
+            beforeImage: project?.comparison?.beforeImage || '',
+            afterImage: project?.comparison?.afterImage || ''
+        }
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -84,7 +102,16 @@ export const useProjectForm = (project?: Project) => {
             likes: project?.likes ?? 0,
             shares: project?.shares ?? 0,
             allowComments: project?.allowComments ?? true,
-            initialCommentCount: 2
+            initialCommentCount: 2,
+            narrative: {
+                challenge: project?.narrative?.challenge || '',
+                solution: project?.narrative?.solution || '',
+                result: project?.narrative?.result || ''
+            },
+            comparison: {
+                beforeImage: project?.comparison?.beforeImage || '',
+                afterImage: project?.comparison?.afterImage || ''
+            }
         });
     }, [project]);
 
@@ -111,19 +138,19 @@ export const useProjectForm = (project?: Project) => {
 
     const updateField = <K extends keyof ProjectFormData>(field: K, value: ProjectFormData[K]) => {
         if (field === 'tags' && typeof value === 'string') {
-            // Just store the string, don't lowercase it immediately to allow user typing
-            // Transformation happens on submit or just stick to what it was
-            // Although the original code lowercased it.
-            // Let's keep original behavior:
             setFormData(prev => ({ ...prev, tags: value.toLowerCase() }));
+        } else if (field === 'narrative') {
+            setFormData(prev => ({ ...prev, narrative: { ...prev.narrative, ...(value as any) } }));
+        } else if (field === 'comparison') {
+            setFormData(prev => ({ ...prev, comparison: { ...prev.comparison, ...(value as any) } }));
         } else {
             setFormData(prev => ({ ...prev, [field]: value }));
         }
 
-        if (errors[field]) {
+        if (typeof field === 'string' && errors[field as string]) {
             setErrors(prev => {
                 const newErrs = { ...prev };
-                delete newErrs[field];
+                delete newErrs[field as string];
                 return newErrs;
             });
         }
@@ -194,6 +221,8 @@ export const useProjectForm = (project?: Project) => {
             tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
             gallery: formData.galleryItems.map(item => item.src),
             galleryItems: formData.galleryItems,
+            narrative: formData.narrative,
+            comparison: formData.comparison.beforeImage ? formData.comparison : undefined,
             ...(project && { id: project.id })
         };
     };

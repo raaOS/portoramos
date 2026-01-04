@@ -13,6 +13,7 @@ import ShareButtons from '@/components/features/ShareButtons';
 import AITranslator from '@/components/features/AITranslator';
 import CommentSection from '@/components/features/CommentSection';
 import type { Comment } from '@/lib/magic';
+import ComparisonSlider from './components/ComparisonSlider';
 
 // Adjusted path for CoverFlowGallery - Assuming it exists here based on previous search
 const CoverFlowGallery = dynamic(() => import('@/components/gallery/CoverFlowGallery'), {
@@ -366,6 +367,55 @@ export default function ProjectDetailTwoColumn({
                                     )}
                                 </div>
                             </div>
+
+
+                            {/* Comparison Slider (Before-After) */}
+                            {project.comparison?.beforeImage && (
+                                <div className="mb-6 sm:mb-8">
+                                    <ComparisonSlider
+                                        beforeImage={project.comparison.beforeImage}
+                                        afterImage={project.comparison.afterImage || project.cover}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Creative Breakdown / Narrative */}
+                            {project.narrative && (project.narrative.challenge || project.narrative.solution || project.narrative.result) && (
+                                <div className="mb-6 sm:mb-8 space-y-4 font-sans border-b border-gray-100 dark:border-gray-800 pb-6">
+                                    {project.narrative.challenge && (
+                                        <div>
+                                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                                The Concept / Challenge
+                                            </h3>
+                                            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                {project.narrative.challenge}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {project.narrative.solution && (
+                                        <div>
+                                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                                The Technique
+                                            </h3>
+                                            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                {project.narrative.solution}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {project.narrative.result && (
+                                        <div>
+                                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                                The Impact
+                                            </h3>
+                                            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                {project.narrative.result}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {project.description && (
                                 <div className="mb-3 sm:mb-4">

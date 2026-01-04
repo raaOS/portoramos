@@ -20,6 +20,15 @@ export interface Project {
   likes?: number;           // Number of likes/loves
   shares?: number;          // Number of shares
   allowComments?: boolean;  // Toggle for comment section
+  narrative?: {
+    challenge?: string; // or "Concept"
+    solution?: string;  // or "Technique"
+    result?: string;    // optional impact
+  };
+  comparison?: {
+    beforeImage: string; // URL
+    afterImage: string;  // URL (usually the cover, but explicit here)
+  };
   // external_link: string; // Removed
   order: number;
   status: 'published' | 'draft';
@@ -65,6 +74,15 @@ export interface CreateProjectData {
   shares?: number;
   allowComments?: boolean;
   initialCommentCount?: number;
+  narrative?: {
+    challenge?: string;
+    solution?: string;
+    result?: string;
+  };
+  comparison?: {
+    beforeImage: string;
+    afterImage: string;
+  };
 }
 
 export interface UpdateProjectData extends Partial<CreateProjectData> {

@@ -11,6 +11,7 @@ import AdminButton from '@/app/admin/components/AdminButton';
 import ProjectBasicInfo from './ProjectBasicInfo';
 import ProjectMediaUpload from './ProjectMediaUpload';
 import ProjectGalleryManager from './ProjectGalleryManager';
+import ProjectNarrative from './ProjectNarrative';
 // import ProjectExternalLinks from './ProjectExternalLinks'; // Removed
 
 interface ProjectFormProps {
@@ -96,6 +97,11 @@ export default function ProjectForm({ project, onSubmit, onCancel, title }: Proj
                     <ProjectBasicInfo
                         formData={formData}
                         errors={errors}
+                        updateField={updateField}
+                    />
+
+                    <ProjectNarrative
+                        formData={formData}
                         updateField={updateField}
                     />
 
