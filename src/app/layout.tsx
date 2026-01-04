@@ -8,14 +8,9 @@ import { LastUpdatedProvider } from '@/contexts/LastUpdatedContext';
 import { NavbarVisibilityProvider } from '@/contexts/NavbarVisibilityContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import AppWrapper from '@/components/layout/AppWrapper';
-import Header from '@/components/shared/Header';
-import PageTransition from '@/components/shared/PageTransition';
-import Footer from '@/components/shared/Footer';
-import BottomNavigation from '@/components/layout/BottomNavigation';
+import ClientLayout from '@/components/layout/ClientLayout';
 import UnregisterSW from '@/components/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import ScrollToTop from '@/components/layout/ScrollToTop';
-import ChatWidget from '@/components/ChatWidget';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseSEO.siteUrl),
@@ -91,19 +86,13 @@ export default function RootLayout({
               <NavbarVisibilityProvider>
                 <ErrorBoundary>
                   <AppWrapper>
-                    <Header />
-                    <main className="pb-20">
+                    <ClientLayout modal={modal}>
                       {children}
-                    </main>
-                    {modal}
-                    <Footer />
-                    <BottomNavigation />
+                    </ClientLayout>
                     {/* Track page views and route changes */}
                     {/* Ensure any old service workers are removed */}
                     <UnregisterSW />
                     <SpeedInsights />
-                    <ScrollToTop />
-                    <ChatWidget />
                   </AppWrapper>
                 </ErrorBoundary>
               </NavbarVisibilityProvider>
