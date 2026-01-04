@@ -74,23 +74,26 @@ export default function HardSkillsAccordion() {
                 const isOpen = activeId === skill.id;
 
                 return (
-                    <div
+                    <motion.div
+                        layout
                         key={skill.id}
                         className={`
-              overflow-hidden rounded-2xl border transition-all duration-300
-              ${isOpen ? 'bg-white border-black shadow-lg' : 'bg-gray-50 border-gray-100 hover:border-gray-300'}
-            `}
+                            overflow-hidden rounded-2xl border transition-colors duration-300
+                            ${isOpen ? 'bg-white border-black shadow-lg' : 'bg-gray-50 border-gray-100 hover:border-gray-300'}
+                        `}
+                        initial={false}
                     >
                         {/* Header / Trigger */}
-                        <button
+                        <motion.button
+                            layout="position"
                             onClick={() => toggle(skill.id)}
                             className="w-full flex items-center justify-between p-4 text-left outline-none"
                         >
                             <div className="flex items-center gap-4">
                                 <div className={`
-                  w-12 h-12 rounded-xl flex items-center justify-center p-2 transition-colors duration-300
-                  ${isOpen ? 'bg-gray-100' : 'bg-white shadow-sm border border-gray-100'}
-                `}>
+                                    w-12 h-12 rounded-xl flex items-center justify-center p-2 transition-colors duration-300
+                                    ${isOpen ? 'bg-gray-100' : 'bg-white shadow-sm border border-gray-100'}
+                                `}>
                                     <Image
                                         src={skill.icon}
                                         alt={skill.name}
@@ -110,32 +113,46 @@ export default function HardSkillsAccordion() {
                                 </div>
                             </div>
 
-                            <div className={`
-                w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-300
-                ${isOpen ? 'bg-black text-white rotate-180' : 'bg-gray-200 text-gray-500 rotate-0'}
-              `}>
+                            <motion.div
+                                animate={{ rotate: isOpen ? 180 : 0 }}
+                                transition={{ duration: 0.2 }}
+                                className={`
+                                    w-8 h-8 rounded-full flex items-center justify-center
+                                    ${isOpen ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'}
+                                `}
+                            >
                                 <ChevronDown className="w-4 h-4" />
-                            </div>
-                        </button>
+                            </motion.div>
+                        </motion.button>
 
                         {/* Expanded Content */}
-                        <AnimatePresence>
+                        <AnimatePresence initial={false}>
                             {isOpen && (
                                 <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                                    key="content"
+                                    initial="collapsed"
+                                    animate="open"
+                                    exit="collapsed"
+                                    variants={{
+                                        open: { opacity: 1, height: 'auto' },
+                                        collapsed: { opacity: 0, height: 0 }
+                                    }}
+                                    transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }} // Smooth easeOutCirc-ish
                                 >
                                     <div className="px-4 pb-5 pt-0 pl-[5.5rem]">
-                                        <div className="h-px w-full bg-gray-100 mb-4" />
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ delay: 0.1 }}
+                                            className="h-px w-full bg-gray-100 mb-4"
+                                        />
                                         <ul className="space-y-2">
                                             {skill.details.map((detail, idx) => (
                                                 <motion.li
                                                     key={idx}
                                                     initial={{ x: -10, opacity: 0 }}
                                                     animate={{ x: 0, opacity: 1 }}
-                                                    transition={{ delay: idx * 0.1 }}
+                                                    transition={{ delay: 0.1 + (idx * 0.05) }}
                                                     className="flex items-start text-sm text-gray-600"
                                                 >
                                                     <span className="w-1.5 h-1.5 rounded-full bg-black mt-1.5 mr-2.5 flex-shrink-0" />
@@ -147,7 +164,7 @@ export default function HardSkillsAccordion() {
                                 </motion.div>
                             )}
                         </AnimatePresence>
-                    </div>
+                    </motion.div>
                 );
             })}
         </div>
