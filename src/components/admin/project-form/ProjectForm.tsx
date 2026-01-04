@@ -10,7 +10,7 @@ import AdminButton from '@/app/admin/components/AdminButton';
 // Sub-components
 import ProjectBasicInfo from './ProjectBasicInfo';
 import ProjectMediaUpload from './ProjectMediaUpload';
-import ProjectGalleryManager from './ProjectGalleryManager';
+// import ProjectGalleryManager from './ProjectGalleryManager'; // Removed
 import ProjectNarrative from './ProjectNarrative';
 // import ProjectExternalLinks from './ProjectExternalLinks'; // Removed
 
@@ -27,9 +27,7 @@ export default function ProjectForm({ project, onSubmit, onCancel, title }: Proj
         errors,
         isDetectingDimensions,
         updateField,
-        addGalleryItem,
-        removeGalleryItem,
-        toggleGalleryItem,
+
         getSubmitData
     } = useProjectForm(project);
 
@@ -84,12 +82,7 @@ export default function ProjectForm({ project, onSubmit, onCancel, title }: Proj
                         />
                     </div>
 
-                    <ProjectGalleryManager
-                        formData={formData}
-                        addGalleryItem={addGalleryItem}
-                        removeGalleryItem={removeGalleryItem}
-                        toggleGalleryItem={toggleGalleryItem}
-                    />
+                    {/* ProjectGalleryManager Removed */}
                 </div>
 
                 {/* Right Column: Metadata & AI */}

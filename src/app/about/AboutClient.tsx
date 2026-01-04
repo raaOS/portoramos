@@ -14,7 +14,7 @@ import HorizontalTestimonial from '@/components/gallery/HorizontalTestimonial';
 import { ExperienceData } from '@/types/experience';
 import { Project } from '@/types/projects';
 import { GalleryFeaturedData } from '@/types/gallery';
-
+import { AboutData } from '@/types/about';
 import { HardSkill } from '@/types/hardSkill';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
 import { useSmoothScroll } from '@/hooks/useSmoothScroll';
@@ -138,39 +138,14 @@ import { TrailItem } from '@/types/about';
 
 // ... (imports)
 
+// ... (imports)
+
 interface AboutClientProps {
-  initialData?: {
-    hero?: {
-      title: string | null;
-      title_id?: string | null;
-      backgroundTrail: (string | TrailItem)[]; // Updated
-    };
-    professional?: {
-      motto: {
-        badge: string;
-        badge_id?: string;
-        quote: string;
-        quote_id?: string;
-      };
-      bio: {
-        content: string;
-        content_id?: string;
-        galleryImages: (string | TrailItem)[]; // Updated
-      };
-    };
-    softSkills?: {
-      texts: string[];
-      descriptions: string[];
-    };
-    labels?: {
-      experienceTitle?: string;
-      experienceSubtitle?: string;
-      freelanceTitle?: string;
-      workExperienceTitle?: string;
-      portfolioPreviewTitle?: string;
-    };
-  };
+  initialData?: AboutData;
   initialProjects?: Project[];
+  initialGalleryFeatured?: GalleryFeaturedData;
+  initialHardSkills?: HardSkill[];
+  initialHardSkillConcepts?: HardSkillConcept[];
   lastUpdated?: Date | null;
 }
 
@@ -255,8 +230,8 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
     hero: {
       title: 'ABOUT ME',
       title_id: 'TENTANG SAYA',
-      backgroundTrail: []
-
+      backgroundTrail: [],
+      availability: null
     },
     professional: {
       motto: {
@@ -673,23 +648,11 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                   initialDelay={0.15}
                   animateBy="letters"
                   direction="bottom"
+                />
               </div>
             </div>
 
-            {/* Availability Badge */}
-            {currentAboutData.hero?.availability && (
-              <motion.div
-                className="absolute bottom-32 left-6 md:left-12 z-20 pointer-events-auto"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-              >
-                <AvailabilityBadge
-                  status={currentAboutData.hero.availability.status}
-                  text={currentAboutData.hero.availability.text}
-                />
-              </motion.div>
-            )}
+
           </div>
         </motion.div>
       </div>

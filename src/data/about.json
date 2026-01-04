@@ -67,7 +67,11 @@
         "isActive": true,
         "slug": "narasi-visual-moodboard"
       }
-    ]
+    ],
+    "availability": {
+      "status": "available",
+      "text": "Available for new projects"
+    }
   },
   "professional": {
     "motto": {
@@ -93,12 +97,5 @@
       "Cepat nyambung sama teknologi dan tren baru."
     ]
   },
-  "labels": {
-    "experienceTitle": "Experience",
-    "experienceSubtitle": "Perjalanan karir dan pengalaman profesional",
-    "freelanceTitle": "Freelance Experience",
-    "workExperienceTitle": "Work Experience",
-    "portfolioPreviewTitle": "Portfolio Preview"
-  },
-  "lastUpdated": "2026-01-03T18:13:53.068Z"
+  "lastUpdated": "2026-01-04T16:25:09.646Z"
 }

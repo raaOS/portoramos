@@ -12,23 +12,25 @@ export interface Project {
   playsInline: boolean;
   coverWidth: number;
   coverHeight: number;
-  gallery: string[];
-  galleryItems: GalleryItem[];
   description: string;
-  description_id?: string; // Indonesian description
+  description_id?: string;
   title_id?: string;
-  likes?: number;           // Number of likes/loves
-  shares?: number;          // Number of shares
-  allowComments?: boolean;  // Toggle for comment section
+  likes?: number;
+  shares?: number;
+  allowComments?: boolean;
   narrative?: {
-    challenge?: string; // or "Concept"
-    solution?: string;  // or "Technique"
-    result?: string;    // optional impact
+    challenge?: string;
+    solution?: string;
+    result?: string;
   };
   comparison?: {
     beforeImage: string; // URL
-    afterImage: string;  // URL (usually the cover, but explicit here)
+    beforeType?: 'image' | 'video';
+    afterImage: string;  // URL
+    afterType?: 'image' | 'video';
   };
+  // gallery: string[]; // Deprecated
+  // galleryItems: GalleryItem[]; // Deprecated
   // external_link: string; // Removed
   order: number;
   status: 'published' | 'draft';
@@ -81,7 +83,9 @@ export interface CreateProjectData {
   };
   comparison?: {
     beforeImage: string;
+    beforeType?: 'image' | 'video';
     afterImage: string;
+    afterType?: 'image' | 'video';
   };
 }
 

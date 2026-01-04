@@ -9,10 +9,27 @@ import { Menu, X, Eye } from 'lucide-react';
 import { SkipLink } from '@/components/ui/SkipLink'
 import { useLastUpdated } from '@/contexts/LastUpdatedContext'
 
+import AvailabilityBadge from '@/components/features/AvailabilityBadge';
+import { AboutData } from '@/types/about';
+
 export default function Header() {
   const pathname = usePathname();
   const { lastUpdated } = useLastUpdated();
+  const [availability, setAvailability] = useState<AboutData['hero']['availability']>(null);
   const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    // Fetch availability status
+    fetch('/api/about')
+      .then(res => res.json())
+      .then((data: AboutData) => {
+        if (data?.hero?.availability) {
+          setAvailability(data.hero.availability);
+        }
+      })
+      .catch(err => console.error('Failed to fetch availability:', err));
+  }, []);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -41,21 +58,38 @@ export default function Header() {
       >
         <div className="max-w-full px-8 flex items-center justify-between py-4 gap-8">
           {/* Logo/Name - Kiri */}
-          <Link
-            href="/"
-            className="flex items-center gap-3 font-medium focus:outline-none rounded-md group"
-            aria-label="Go to homepage"
-          >
-            <motion.span
-              className="text-white group-hover:text-blue-400 transition-colors duration-300"
-              whileHover={{ x: 2 }}
+          <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="flex items-center gap-3 font-medium focus:outline-none rounded-md group"
+              aria-label="Go to homepage"
             >
-              Portofolio Ramos
-            </motion.span>
-          </Link>
+              <motion.span
+                className="text-white group-hover:text-blue-400 transition-colors duration-300"
+                whileHover={{ x: 2 }}
+              >
+                Portofolio Ramos
+              </motion.span>
+            </Link>
 
-          {/* Desktop Navigation */}
-
+            {/* Availability Badge - Fetched Client Side */}
+            <AnimatePresence>
+              {isClient && availability && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <AvailabilityBadge
+                    status={availability.status}
+                    text={availability.text}
+                    className="!py-1 !px-2 scale-90 origin-left"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Right Side: Last Updated (Desktop) & Mobile Menu Button */}
           <div className="flex items-center gap-3">

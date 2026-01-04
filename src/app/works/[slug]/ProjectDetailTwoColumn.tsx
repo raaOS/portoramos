@@ -17,14 +17,7 @@ import ComparisonSlider from './components/ComparisonSlider';
 import ProjectCTA from './components/ProjectCTA';
 
 // Adjusted path for CoverFlowGallery - Assuming it exists here based on previous search
-const CoverFlowGallery = dynamic(() => import('@/components/gallery/CoverFlowGallery'), {
-    ssr: false,
-    loading: () => (
-        <div className="h-80 w-full rounded-2xl border border-dashed border-gray-200 bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 animate-pulse">
-            <span className="text-sm">Loading gallery...</span>
-        </div>
-    ),
-});
+// CoverFlowGallery removed - replaced by ComparisonSlider (Pro Player)
 
 interface ProjectDetailTwoColumnProps {
     project: Project;
@@ -43,7 +36,7 @@ export default function ProjectDetailTwoColumn({
 }: ProjectDetailTwoColumnProps) {
     const [videoRef, setVideoRef] = useState<React.RefObject<HTMLVideoElement> | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
-    const [showComments, setShowComments] = useState<boolean>(true);
+
     const [isProjectLiked, setIsProjectLiked] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
     const [metrics, setMetrics] = useState({ likes: 0, shares: 0 });
@@ -199,31 +192,7 @@ export default function ProjectDetailTwoColumn({
         return () => observer.disconnect();
     }, [otherProjects, isLoading, displayedProjects.length]);
 
-    const unifiedMedia = useMemo(() => [
-        {
-            id: `hero-${project.slug}`,
-            src: cover.src,
-            title: project.title,
-            alt: project.title,
-            type: (cover.kind === 'video' ? 'video' : 'image') as 'image' | 'video',
-            poster: cover.poster,
-            isHero: true,
-            ratio: ratio,
-            autoplay: project.autoplay ?? true,
-            muted: project.muted ?? true,
-            loop: project.loop ?? true,
-            playsInline: project.playsInline ?? true
-        },
-        ...(gallery || []).map((item, index) => ({
-            id: `gallery-${index}`,
-            src: item.src,
-            title: item.alt || project.title,
-            type: item.kind as 'image' | 'video',
-            poster: item.poster,
-            alt: item.alt || '',
-            aspectRatio: item.width && item.height ? item.width / item.height : 1
-        }))
-    ], [project.slug, project.title, project.autoplay, project.muted, project.loop, project.playsInline, cover.src, cover.kind, cover.poster, gallery, ratio]);
+    // Gallery logic removed
 
     // Split projects evenly between columns with memoization
     const { columnAProjects, columnBProjects } = useMemo(() => {
@@ -261,18 +230,45 @@ export default function ProjectDetailTwoColumn({
 
 
                         {/* Gallery / Cover Media */}
+
+                        {/* Hero Media: Comparison or Single Cover */}
                         <div className={`${ratio < 1 ? 'max-w-sm mx-auto' : ratio === 1 ? 'max-w-md mx-auto' : 'w-full'} py-4`}>
-                            <CoverFlowGallery
-                                items={unifiedMedia}
-                                autoPlay={false}
-                                showControls={true}
-                                autoPlayInterval={4000}
-                                onVideoRef={setVideoRef}
-                                videoRef={videoRef}
-                                coverKind={cover.kind}
-                                aspectRatio={ratio}
-                            />
+                            {project.comparison && project.comparison.beforeImage ? (
+                                <ComparisonSlider
+                                    beforeImage={project.comparison.beforeImage}
+                                    beforeType={project.comparison.beforeType}
+                                    afterImage={project.comparison.afterImage || cover.src}
+                                    afterType={project.comparison.afterImage ? project.comparison.afterType : (cover.kind === 'video' ? 'video' : 'image')}
+                                    labelBefore="Before"
+                                    labelAfter="After"
+                                    aspectRatio={ratio}
+                                />
+                            ) : (
+                                <div className="rounded-xl overflow-hidden shadow-lg border border-black/5 dark:border-white/5 bg-gray-100 dark:bg-gray-800">
+                                    {cover.kind === 'video' ? (
+                                        <video
+                                            ref={videoRef}
+                                            src={cover.src}
+                                            poster={cover.poster}
+                                            className="w-full h-auto"
+                                            autoPlay={project.autoplay ?? true}
+                                            muted={project.muted ?? true}
+                                            loop={project.loop ?? true}
+                                            playsInline={project.playsInline ?? true}
+                                            controls
+                                        />
+                                    ) : (
+                                        <img
+                                            src={cover.src}
+                                            alt={project.title}
+                                            className="w-full h-auto"
+                                            draggable={false}
+                                        />
+                                    )}
+                                </div>
+                            )}
                         </div>
+
 
                         {/* Content - Mobile optimized */}
                         <div className="p-4 sm:p-6">
@@ -307,7 +303,7 @@ export default function ProjectDetailTwoColumn({
                                             : 'text-gray-400 hover:text-green-600 dark:hover:text-green-500'
                                             }`}
                                         onClick={() => {
-                                            setShowComments(true);
+
                                             setTimeout(() => {
                                                 document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth' });
                                             }, 100);
@@ -370,15 +366,7 @@ export default function ProjectDetailTwoColumn({
                             </div>
 
 
-                            {/* Comparison Slider (Before-After) */}
-                            {project.comparison?.beforeImage && (
-                                <div className="mb-6 sm:mb-8">
-                                    <ComparisonSlider
-                                        beforeImage={project.comparison.beforeImage}
-                                        afterImage={project.comparison.afterImage || project.cover}
-                                    />
-                                </div>
-                            )}
+
 
                             {/* Creative Breakdown / Narrative */}
                             {project.narrative && (project.narrative.challenge || project.narrative.solution || project.narrative.result) && (
@@ -428,38 +416,15 @@ export default function ProjectDetailTwoColumn({
                                 </div>
                             )}
 
-                            {/* Comment Section */}
+                            {/* Comment Section (Self-Managed Accordion) */}
                             {project.allowComments !== false && (
                                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300" id="comments-section">
-                                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden mb-3">
-                                        {/* Header - Clickable */}
-                                        <button
-                                            onClick={() => setShowComments(!showComments)}
-                                            className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                                        >
-                                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                {comments.length} Komentar
-                                            </span>
-                                            <svg
-                                                className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform duration-200 ${showComments ? 'rotate-180' : ''}`}
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
-
-                                        {/* Comments List & Input */}
-                                        {showComments && (
-                                            <div className="p-4 bg-white dark:bg-gray-900">
-                                                <CommentSection
-                                                    slug={project.slug}
-                                                    comments={comments}
-                                                    setComments={setComments}
-                                                />
-                                            </div>
-                                        )}
+                                    <div className="bg-white dark:bg-gray-900 rounded-lg">
+                                        <CommentSection
+                                            slug={project.slug}
+                                            comments={comments}
+                                            setComments={setComments}
+                                        />
                                     </div>
                                 </div>
                             )}
@@ -473,15 +438,16 @@ export default function ProjectDetailTwoColumn({
                             <motion.div
                                 key={`col-a-${index}-${p.slug}`}
                                 initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, margin: "100px" }}
+                                animate={index < 2 ? { opacity: 1, y: 0 } : undefined}
+                                whileInView={index >= 2 ? { opacity: 1, y: 0 } : undefined}
+                                viewport={{ once: true, margin: "50px" }}
                                 transition={{
                                     duration: 0.4,
                                     ease: "easeOut",
-                                    delay: 0
+                                    delay: index < 2 ? 0 : 0.1 // Tiny delay for subsequent items
                                 }}
                             >
-                                <ProjectCardPinterest project={p} priority={index < 6} />
+                                <ProjectCardPinterest project={p} priority={index < 4} />
                             </motion.div>
                         ))}
                     </MasonryGrid>
@@ -494,15 +460,16 @@ export default function ProjectDetailTwoColumn({
                             <motion.div
                                 key={`col-b-${index}-${p.slug}`}
                                 initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, margin: "100px" }}
+                                animate={index < 2 ? { opacity: 1, y: 0 } : undefined}
+                                whileInView={index >= 2 ? { opacity: 1, y: 0 } : undefined}
+                                viewport={{ once: true, margin: "50px" }}
                                 transition={{
                                     duration: 0.4,
                                     ease: "easeOut",
-                                    delay: 0
+                                    delay: index < 2 ? 0 : 0.1
                                 }}
                             >
-                                <ProjectCardPinterest project={p} priority={index < 6} />
+                                <ProjectCardPinterest project={p} priority={index < 4} />
                             </motion.div>
                         ))}
                     </MasonryGrid>

@@ -91,6 +91,34 @@
         "likes": 58,
         "replies": [],
         "avatar": "https://ui-avatars.com/api/?name=Setiawan&background=random"
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-0-1767544324861",
+        "text": "Kelas abangku �",
+        "name": "Lala",
+        "createdAt": "2026-01-03T22:52:44.238Z",
+        "likes": 22,
+        "replies": [
+          {
+            "id": "r-manipulasi-foto-musik-alam-0-admin",
+            "text": "Glad you like it! ✨",
+            "name": "Ramos",
+            "time": "1 hari yang lalu",
+            "createdAt": "2026-01-04T05:54:40.760Z",
+            "likes": 14,
+            "avatar": "https://ui-avatars.com/api/?name=Ramos&background=000&color=fff"
+          }
+        ],
+        "avatar": "https://ui-avatars.com/api/?name=Lala&background=random"
+      },
+      {
+        "id": "c-manipulasi-foto-musik-alam-1-1767544324862",
+        "text": "Info loker bang, mau berguru �",
+        "name": "Joko",
+        "createdAt": "2026-01-03T20:52:40.494Z",
+        "likes": 23,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Joko&background=random"
       }
     ],
     "kolase-lanskap-menanjak": [

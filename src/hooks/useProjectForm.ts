@@ -31,7 +31,9 @@ export interface ProjectFormData {
     };
     comparison: {
         beforeImage: string;
+        beforeType: 'image' | 'video';
         afterImage: string;
+        afterType: 'image' | 'video';
     };
 }
 
@@ -44,12 +46,8 @@ export const useProjectForm = (project?: Project) => {
         cover: project?.cover || '',
         coverWidth: project?.coverWidth || 800,
         coverHeight: project?.coverHeight || 600,
-        gallery: project?.gallery?.join('\n') || '',
-        galleryItems: project?.galleryItems || (project?.gallery || []).map(url => ({
-            kind: isVideoLink(url) ? 'video' : 'image',
-            src: url,
-            isActive: true
-        })) as GalleryItem[],
+        gallery: '',
+        galleryItems: [],
         tags: project?.tags?.join(', ') || '',
         // external_link removed
         autoplay: project?.autoplay ?? true,
@@ -69,7 +67,9 @@ export const useProjectForm = (project?: Project) => {
         },
         comparison: {
             beforeImage: project?.comparison?.beforeImage || '',
-            afterImage: project?.comparison?.afterImage || ''
+            beforeType: project?.comparison?.beforeType || 'image',
+            afterImage: project?.comparison?.afterImage || '',
+            afterType: project?.comparison?.afterType || 'image'
         }
     });
 
@@ -77,42 +77,41 @@ export const useProjectForm = (project?: Project) => {
     const [isDetectingDimensions, setIsDetectingDimensions] = useState(false);
 
     useEffect(() => {
-        setFormData({
-            title: project?.title || '',
-            client: project?.client || '',
-            year: project?.year || new Date().getFullYear(),
-            description: project?.description || '',
-            cover: project?.cover || '',
-            coverWidth: project?.coverWidth || 800,
-            coverHeight: project?.coverHeight || 600,
-            gallery: project?.gallery?.join('\n') || '',
-            galleryItems: project?.galleryItems || (project?.gallery || []).map(url => ({
-                kind: isVideoLink(url) ? 'video' : 'image',
-                src: url,
-                isActive: true
-            })) as GalleryItem[],
-            tags: project?.tags?.join(', ') || '',
-            // external_link removed
-            autoplay: project?.autoplay ?? true,
-            muted: project?.muted ?? true,
-            loop: project?.loop ?? true,
-            playsInline: project?.playsInline ?? true,
-            id: project?.id,
-            slug: project?.slug,
-            likes: project?.likes ?? 0,
-            shares: project?.shares ?? 0,
-            allowComments: project?.allowComments ?? true,
-            initialCommentCount: 2,
-            narrative: {
-                challenge: project?.narrative?.challenge || '',
-                solution: project?.narrative?.solution || '',
-                result: project?.narrative?.result || ''
-            },
-            comparison: {
-                beforeImage: project?.comparison?.beforeImage || '',
-                afterImage: project?.comparison?.afterImage || ''
-            }
-        });
+        if (project) {
+            setFormData({
+                title: project.title,
+                client: project.client,
+                year: project.year,
+                description: project.description,
+                cover: project.cover,
+                coverWidth: project.coverWidth || 800,
+                coverHeight: project.coverHeight || 600,
+                gallery: '',
+                galleryItems: [],
+                tags: project.tags?.join(', ') || '',
+                autoplay: project.autoplay ?? true,
+                muted: project.muted ?? true,
+                loop: project.loop ?? true,
+                playsInline: project.playsInline ?? true,
+                id: project.id,
+                slug: project.slug,
+                likes: project.likes ?? 0,
+                shares: project.shares ?? 0,
+                allowComments: project.allowComments ?? true,
+
+                narrative: {
+                    challenge: project.narrative?.challenge || '',
+                    solution: project.narrative?.solution || '',
+                    result: project.narrative?.result || ''
+                },
+                comparison: {
+                    beforeImage: project.comparison?.beforeImage || '',
+                    beforeType: project.comparison?.beforeType || 'image',
+                    afterImage: project.comparison?.afterImage || '',
+                    afterType: project.comparison?.afterType || 'image'
+                }
+            });
+        }
     }, [project]);
 
     const validateForm = () => {

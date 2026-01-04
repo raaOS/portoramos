@@ -13,7 +13,7 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
         });
     };
 
-    const handleComparisonChange = (field: 'beforeImage' | 'afterImage', value: string) => {
+    const handleComparisonChange = (field: 'beforeImage' | 'afterImage' | 'beforeType' | 'afterType', value: string) => {
         updateField('comparison', {
             ...formData.comparison,
             [field]: value
@@ -80,13 +80,21 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
                 </h3>
 
                 <div className="space-y-4">
+                    {/* Before Media */}
                     <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            Before Image URL
-                        </label>
-                        <p className="text-[10px] text-gray-500 mb-2">
-                            Upload the raw/original image here.
-                        </p>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-xs font-semibold text-gray-700">
+                                Before Media
+                            </label>
+                            <select
+                                value={formData.comparison.beforeType}
+                                onChange={(e) => handleComparisonChange('beforeType', e.target.value as 'image' | 'video')}
+                                className="text-[10px] sm:text-xs border-gray-200 rounded-md focus:ring-orange-500 focus:border-orange-500 py-0.5 px-2"
+                            >
+                                <option value="image">Image</option>
+                                <option value="video">Video</option>
+                            </select>
+                        </div>
                         <input
                             type="text"
                             value={formData.comparison.beforeImage}
@@ -94,12 +102,26 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
                             className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
                             placeholder="https://..."
                         />
+                        <p className="text-[10px] text-gray-500 mt-1">
+                            Original state (Raw photo / Previous design)
+                        </p>
                     </div>
 
+                    {/* After Media */}
                     <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            After Image URL (Usually Cover)
-                        </label>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-xs font-semibold text-gray-700">
+                                After Media (Main)
+                            </label>
+                            <select
+                                value={formData.comparison.afterType}
+                                onChange={(e) => handleComparisonChange('afterType', e.target.value as 'image' | 'video')}
+                                className="text-[10px] sm:text-xs border-gray-200 rounded-md focus:ring-orange-500 focus:border-orange-500 py-0.5 px-2"
+                            >
+                                <option value="image">Image</option>
+                                <option value="video">Video</option>
+                            </select>
+                        </div>
                         <input
                             type="text"
                             value={formData.comparison.afterImage || formData.cover}
@@ -108,7 +130,7 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
                             placeholder="Leave empty to use Cover Image automatically"
                         />
                         <p className="text-[10px] text-gray-400 mt-1">
-                            If left empty, the main Cover Image will be used as the "After" state.
+                            Final result. If empty, uses Main Cover.
                         </p>
                     </div>
                 </div>

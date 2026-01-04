@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Comment } from '@/lib/magic';
 
 interface CommentSectionProps {
@@ -119,64 +120,108 @@ export default function CommentSection({
     return `${Math.floor(diffInDays / 365)} tahun yang lalu`;
   };
 
-  return (
-    <div className={`space-y-8 ${className}`}>
-      {/* Comments List */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pt-0 space-y-8 pb-4">
-        {comments.length === 0 ? (
-          <p className="text-center text-xs text-gray-400 py-4 italic">Belum ada komentar. Jadilah yang pertama! ✨</p>
-        ) : (
-          comments.map((comment) => (
-            <div key={comment.id} className="group">
-              <div className="flex gap-4">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white text-[13px] font-bold uppercase shadow-lg">
-                  {comment.name[0]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">{comment.name}</span>
-                    <span className="text-[10px] text-gray-400">
-                      {formatRelativeTime(comment.createdAt || comment.time || '')}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                    {comment.text}
-                  </p>
-                </div>
-              </div>
-              {/* Render Replies (Read-Only for now to match StickyImageStack) */}
-              {comment.replies && comment.replies.length > 0 && (
-                <div className="ml-13 mt-4 space-y-4 border-l-2 border-gray-100 dark:border-gray-800 pl-4">
-                  {comment.replies.map((reply) => (
-                    <div key={reply.id} className="flex gap-3">
-                      <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center text-gray-600 dark:text-gray-400 text-[10px] font-bold uppercase ring-1 ring-gray-200 dark:ring-gray-700">
-                        {reply.name[0]}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-baseline gap-2 mb-1">
-                          <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{reply.name}</span>
-                          <span className="text-[9px] text-gray-400">
-                            {formatRelativeTime(reply.createdAt || reply.time || '')}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-700 dark:text-gray-400">
-                          {reply.text}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
+  const [isOpen, setIsOpen] = useState(false);
 
-      {/* Input Section - Sticky at bottom usually, but here just at bottom of list */}
-      <div className="pt-4 border-t border-black/10 dark:border-white/10">
+  return (
+    <div className={`space-y-4 ${className}`}>
+
+      {/* Accordion Toggle */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between py-2 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors group"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-widest">
+            {comments.length} Komentar
+          </span>
+          {comments.length > 0 && !isOpen && (
+            <div className="flex -space-x-2">
+              {comments.slice(0, 3).map((c, i) => (
+                <div key={i} className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-800 border-2 border-white dark:border-gray-900 flex items-center justify-center text-[8px] font-bold uppercase text-gray-400">
+                  {c.name[0]}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <svg
+          className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Comments List (Collapsible / Smooth Accordion) */}
+      <motion.div
+        initial={false}
+        animate={{
+          height: isOpen ? 'auto' : 0,
+          opacity: isOpen ? 1 : 0,
+          marginBottom: isOpen ? 24 : 0
+        }}
+        transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+        className="overflow-hidden"
+      >
+        <div className="space-y-8 py-2">
+          {comments.length === 0 ? (
+            <p className="text-center text-[11px] text-gray-400 py-4 italic">Belum ada komentar. Jadilah yang pertama! ✨</p>
+          ) : (
+            comments.map((comment) => (
+              <div key={comment.id} className="group">
+                <div className="flex gap-4">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white text-[13px] font-bold uppercase shadow-lg">
+                    {comment.name[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">{comment.name}</span>
+                      <span className="text-[10px] text-gray-400">
+                        {formatRelativeTime(comment.createdAt || comment.time || '')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                      {comment.text}
+                    </p>
+                  </div>
+                </div>
+                {/* Render Replies (Read-Only) */}
+                {comment.replies && comment.replies.length > 0 && (
+                  <div className="ml-13 mt-4 space-y-4 border-l-2 border-gray-100 dark:border-gray-800 pl-4">
+                    {comment.replies.map((reply) => (
+                      <div key={reply.id} className="flex gap-3">
+                        <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center text-gray-600 dark:text-gray-400 text-[10px] font-bold uppercase ring-1 ring-gray-200 dark:ring-gray-700">
+                          {reply.name[0]}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-baseline gap-2 mb-1">
+                            <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{reply.name}</span>
+                            <span className="text-[9px] text-gray-400">
+                              {formatRelativeTime(reply.createdAt || reply.time || '')}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-700 dark:text-gray-400">
+                            {reply.text}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </motion.div>
+
+      {/* Input Section - Moved Below Toggle & List */}
+      <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
         {!guestName || isSettingName ? (
           <div className="space-y-4">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+            <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
               Isi namamu dulu untuk mulai berkomentar 😊
             </p>
             <div className="flex gap-2">
