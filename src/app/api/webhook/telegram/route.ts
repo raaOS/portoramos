@@ -48,10 +48,25 @@ export async function POST(request: Request) {
                         if (lastLeads.length === 0) {
                             replyPayload.text = "📭 *Belum ada pesan masuk.*";
                         } else {
-                            const formattedLeads = lastLeads.map((l: any, i: number) =>
-                                `*${i + 1}. ${l.name}* (${l.email})\n` +
-                                `💬 _${l.message.substring(0, 50)}${l.message.length > 50 ? '...' : ''}_`
-                            ).join('\n\n');
+                            const formattedLeads = lastLeads.map((l: any, i: number) => {
+                                // Format Phone & WA Link
+                                let phone = l.contact || '-';
+                                let waLink = '';
+                                if (phone !== '-') {
+                                    // Strip non-digits
+                                    let cleanPhone = phone.replace(/\D/g, '');
+                                    // Convert 08... to 628...
+                                    if (cleanPhone.startsWith('0')) {
+                                        cleanPhone = '62' + cleanPhone.slice(1);
+                                    }
+                                    waLink = `[Chat WA](https://wa.me/${cleanPhone})`;
+                                }
+
+                                return `*${i + 1}. ${l.name}*\n` +
+                                    `📱 ${phone} ${waLink ? '| ' + waLink : ''}\n` +
+                                    `📧 ${l.email}\n` +
+                                    `💬 _${l.message.trim().substring(0, 100)}${l.message.length > 100 ? '...' : ''}_`;
+                            }).join('\n\n-------------------\n\n');
 
                             replyPayload.text = `📬 *5 Pesan Terakhir:*\n\n${formattedLeads}`;
                         }
@@ -59,6 +74,15 @@ export async function POST(request: Request) {
                         console.error('Leads Read Error:', error);
                         replyPayload.text = `❌ Gagal baca database.\nError: ${error.message}\nPath: ${leadsPath}`;
                     }
+                }
+                else if (command === '/status') {
+                    const uptime = process.uptime();
+                    const hours = Math.floor(uptime / 3600);
+                    const minutes = Math.floor((uptime % 3600) / 60);
+
+                    replyPayload.text = `✅ *Server Online*\n` +
+                        `🕒 *Time:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}\n` +
+                        `⏱ *Uptime:* ${hours}j ${minutes}m`;
                 }
                 else if (command === '/help') {
                     replyPayload.text = `🛠 *Admin Commands*\n\n` +
