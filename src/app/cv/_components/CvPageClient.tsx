@@ -6,6 +6,7 @@ import type { AboutData } from '@/types/about';
 import type { ExperienceData } from '@/types/experience';
 import type { Project } from '@/types/projects';
 import type { HardSkillsData } from '@/types/hardSkill';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 type Props = {
   aboutData: AboutData | null;
@@ -51,7 +52,10 @@ export default function CvPageClient({
   const workExperience = experienceData?.workExperience ?? [];
   const topProjects = useMemo(() => projects?.slice(0, 3) ?? [], [projects]);
 
+  const { trackEvent } = useAnalytics();
+
   const handlePrint = () => {
+    trackEvent('CV_DOWNLOAD', { source: 'CvPage' });
     if (typeof window === 'undefined') return;
     window.print();
   };
