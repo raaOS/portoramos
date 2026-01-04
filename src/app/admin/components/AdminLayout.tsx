@@ -74,7 +74,7 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile Top Bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-30 flex items-center justify-between px-4">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50 flex items-center justify-between px-4">
         <span className="font-bold text-lg">Admin Panel</span>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-gray-600">
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -84,13 +84,13 @@ export default function AdminLayout({
       {/* Sidebar Overlay (Mobile) */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar Navigation */}
-      <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-gray-200 z-30 transform transition-transform duration-200 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-200 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full flex flex-col">
           {/* Sidebar Header */}
           <div className="h-16 flex items-center px-6 border-b border-gray-200">
