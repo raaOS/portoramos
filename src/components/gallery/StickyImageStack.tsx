@@ -319,20 +319,7 @@ function ModalContent({ item, onClose }: { item: MediaItem, onClose: () => void 
         initData();
     }, [project.slug]);
 
-    // Save comments logic
-    useEffect(() => {
-        if (!isLoaded) return;
-        const timer = setTimeout(async () => {
-            try {
-                await fetch('/api/comments', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ slug: project.slug, comments })
-                });
-            } catch (e) { }
-        }, 1000);
-        return () => clearTimeout(timer);
-    }, [comments, project.slug, isLoaded]);
+
 
     const handleLike = async () => {
         const newLike = !isProjectLiked;
@@ -376,8 +363,20 @@ function ModalContent({ item, onClose }: { item: MediaItem, onClose: () => void 
             replies: []
         };
 
-        setComments([newComment, ...comments]);
+        const updatedComments = [newComment, ...comments];
+        setComments(updatedComments);
         setCommentText('');
+
+        // Save to server immediately
+        try {
+            fetch('/api/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slug: project.slug, comments: updatedComments })
+            });
+        } catch (e) {
+            console.error('Failed to save comment:', e);
+        }
     };
 
     const handleSaveName = () => {
