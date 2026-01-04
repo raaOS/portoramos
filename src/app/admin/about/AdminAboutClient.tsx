@@ -336,7 +336,11 @@ function HeroSectionForm({
 
   const [formData, setFormData] = useState({
     title: data.title || '',
-    backgroundTrail: initialTrail
+    backgroundTrail: initialTrail,
+    availability: {
+      status: data.availability?.status || 'available',
+      text: data.availability?.text || 'Available for new projects'
+    }
   });
 
   const handleTrailChange = (items: TrailItem[]) => {
@@ -350,7 +354,8 @@ function HeroSectionForm({
     e.preventDefault();
     onUpdate({
       title: formData.title,
-      backgroundTrail: formData.backgroundTrail
+      backgroundTrail: formData.backgroundTrail,
+      availability: formData.availability
     });
   };
 
@@ -370,6 +375,40 @@ function HeroSectionForm({
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             />
+          </div>
+
+          <div className="bg-white p-4 rounded border border-gray-200">
+            <h4 className="text-sm font-medium text-gray-900 mb-3 block">Work Availability Status</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Status</label>
+                <select
+                  value={formData.availability.status}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    availability: { ...prev.availability, status: e.target.value as any }
+                  }))}
+                  className="w-full border-gray-300 rounded-md shadow-sm text-sm"
+                >
+                  <option value="available">🟢 Available (Green)</option>
+                  <option value="booked">🔴 Fully Booked (Red)</option>
+                  <option value="limited">🟡 Limited (Yellow)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Status Text</label>
+                <input
+                  type="text"
+                  value={formData.availability.text}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    availability: { ...prev.availability, text: e.target.value }
+                  }))}
+                  className="w-full border-gray-300 rounded-md shadow-sm text-sm"
+                  placeholder="e.g. Open for new projects"
+                />
+              </div>
+            </div>
           </div>
 
           <div>

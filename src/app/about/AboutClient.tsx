@@ -25,6 +25,7 @@ import RunningTextSection from '@/components/RunningTextSection';
 import AITranslator from '@/components/features/AITranslator';
 import StickyImageStack, { MediaItem } from '@/components/gallery/StickyImageStack';
 import { resolveCover } from '@/lib/images';
+import AvailabilityBadge from '@/components/features/AvailabilityBadge';
 
 const TextMorph = dynamic(() => import('@/components/effects/TextMorph'), {
   ssr: false,
@@ -672,13 +673,26 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                   initialDelay={0.15}
                   animateBy="letters"
                   direction="bottom"
-                />
               </div>
             </div>
+
+            {/* Availability Badge */}
+            {currentAboutData.hero?.availability && (
+              <motion.div
+                className="absolute bottom-32 left-6 md:left-12 z-20 pointer-events-auto"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+              >
+                <AvailabilityBadge
+                  status={currentAboutData.hero.availability.status}
+                  text={currentAboutData.hero.availability.text}
+                />
+              </motion.div>
+            )}
           </div>
         </motion.div>
       </div>
-
 
       {/* Running Text Section */}
       <RunningTextSection />

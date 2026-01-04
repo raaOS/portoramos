@@ -8,6 +8,11 @@ export interface AboutHero {
   title: string;
   title_id?: string;
   backgroundTrail: (string | TrailItem)[];
+  availability?: {
+    status: 'available' | 'booked' | 'limited';
+    text: string;     // e.g. "Available for new projects"
+    text_id?: string; // e.g. "Tersedia untuk proyek baru"
+  };
 }
 
 export interface AboutMotto {
