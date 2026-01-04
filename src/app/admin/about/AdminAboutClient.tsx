@@ -232,7 +232,6 @@ export default function AdminAboutClient() {
                 { id: 'softSkills', name: 'Soft Skills' },
                 { id: 'hardSkills', name: 'Hard Skills' },
                 { id: 'runningText', name: 'Running Text' },
-                { id: 'labels', name: 'Labels & Badges' },
               ].map((tab) => (
                 <option key={tab.id} value={tab.id}>
                   {tab.name}
@@ -251,7 +250,6 @@ export default function AdminAboutClient() {
               { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'bg-amber-50' },
               { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'bg-violet-50' },
               { id: 'runningText', name: 'Running Text', icon: Type, color: 'text-pink-600', bg: 'bg-pink-50' },
-              { id: 'labels', name: 'Labels', icon: Tag, color: 'text-gray-600', bg: 'bg-gray-50' },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -259,8 +257,8 @@ export default function AdminAboutClient() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
-                      ? `${tab.bg} ${tab.color} shadow-sm ring-1 ring-inset ring-gray-200`
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? `${tab.bg} ${tab.color} shadow-sm ring-1 ring-inset ring-gray-200`
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                 >
                   <tab.icon className={`h-5 w-5 flex-shrink-0 ${isActive ? tab.color : 'text-gray-400 group-hover:text-gray-500'}`} />
