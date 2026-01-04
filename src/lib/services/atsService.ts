@@ -118,12 +118,40 @@ export const atsService = {
 
         // Contact Info
         doc.setFontSize(9);
-        const contactLine = `${contacts.email} | ${contacts.whatsapp} | ${contacts.linkedin}`;
-        doc.text(contactLine, margin, y);
-        y += 5;
 
+        let currentX = margin;
+
+        // Email
         doc.setTextColor(0, 0, 255);
-        doc.text("Portfolio: https://portofolio-ramos.vercel.app", margin, y);
+        const emailText = contacts.email;
+        (doc as any).text(emailText, currentX, y, { url: `mailto:${contacts.email}` });
+        currentX += doc.getTextWidth(emailText) + 2;
+
+        // Separator
+        doc.setTextColor(0, 0, 0);
+        doc.text("|", currentX, y);
+        currentX += doc.getTextWidth("|") + 2;
+
+        // WhatsApp
+        doc.setTextColor(0, 0, 255);
+        const waText = contacts.whatsapp;
+        const cleanWa = contacts.whatsapp.replace(/\D/g, '').replace(/^0/, '62');
+        (doc as any).text(waText, currentX, y, { url: `https://wa.me/${cleanWa}` });
+        currentX += doc.getTextWidth(waText) + 2;
+
+        // Separator
+        doc.setTextColor(0, 0, 0);
+        doc.text("|", currentX, y);
+        currentX += doc.getTextWidth("|") + 2;
+
+        // LinkedIn
+        doc.setTextColor(0, 0, 255);
+        const liText = contacts.linkedin;
+        const liUrl = contacts.linkedin.startsWith('http') ? contacts.linkedin : `https://${contacts.linkedin}`;
+        (doc as any).text(liText, currentX, y, { url: liUrl });
+
+        y += 5;
+        (doc as any).text("Portfolio: https://portofolio-ramos.vercel.app", margin, y, { url: "https://portofolio-ramos.vercel.app" });
         doc.setTextColor(0, 0, 0);
         y += 12;
 
