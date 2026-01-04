@@ -132,14 +132,13 @@ export function resolveCover(p: Project): GalleryItem {
   const kind = (inferredVideo ? 'video' : 'image') as GalleryItem['kind']
   if (p.cover) {
     if (inferredVideo) {
-      // Grid video: Sweet Spot Optimization (w=400)
-      // w=400 provides 1.6x density. Clean enough, but lighter than 500px.
-      const v = cloudinaryVideo(p.cover, { width: 400, quality: 'eco' })
-      const poster = cloudinaryPosterFromVideo(p.cover, { width: 400 })
+      // Grid video: Upgrade to HD (720p) for better clarity
+      const v = cloudinaryVideo(p.cover, { width: 720 }) // Removed quality: 'eco'
+      const poster = cloudinaryPosterFromVideo(p.cover, { width: 720 })
       return { kind, src: toMediaProxy(v), poster: poster ? toImageProxy(poster) : undefined, width: p.coverWidth, height: p.coverHeight }
     }
-    // Grid images: 512px balances mobile speed and desktop quality (2x density for ~250px card)
-    const img = cloudinaryImage(p.cover, { width: 512 })
+    // Grid images: 800px for sharp Retina display (2x density)
+    const img = cloudinaryImage(p.cover, { width: 800 })
     return { kind: 'image', src: toImageProxy(img), width: p.coverWidth, height: p.coverHeight }
   }
   // Tanpa cover: kembalikan placeholder lokal (bukan Picsum)

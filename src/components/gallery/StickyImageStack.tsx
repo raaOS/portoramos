@@ -15,6 +15,7 @@ export type MediaItem = {
     id: string;
     type: 'image' | 'video';
     src: string;
+    poster?: string; // Added poster support
     alt?: string;
     project: Project; // Added full project data
 };
@@ -101,6 +102,7 @@ function Card({
                     <video
                         key={item.src} // Force re-render on src change
                         src={item.src}
+                        poster={item.poster} // Use high-quality poster
                         autoPlay={true}
                         muted={true}
                         loop={true}
@@ -113,7 +115,7 @@ function Card({
                             src={item.src}
                             alt={item.alt || ''}
                             fill
-                            sizes="(max-width: 768px) 80vw, (max-width: 1200px) 500px, 600px"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Sharper sizing logic
                             className="object-cover"
                             priority={index === 0} // Prioritize the first card
                         />

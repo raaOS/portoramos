@@ -544,6 +544,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
         id: p.id,
         type: (galleryItem.kind === 'video' ? 'video' : 'image') as 'video' | 'image', // Explicit cast
         src: galleryItem.src,
+        poster: galleryItem.poster, // Added poster
         alt: p.title,
         project: p
       };
