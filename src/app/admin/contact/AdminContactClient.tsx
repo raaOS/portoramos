@@ -243,11 +243,9 @@ function SocialMediaForm({ data, onUpdate }: { data: any, onUpdate: (d: any) => 
   const platforms = [
     { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/username' },
     { key: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/username' },
-    { key: 'whatsapp', label: 'WhatsApp', placeholder: 'https://wa.me/6281234567890' },
     { key: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/username' },
     { key: 'github', label: 'GitHub', placeholder: 'https://github.com/username' },
-    { key: 'behance', label: 'Behance', placeholder: 'https://behance.net/username' },
-    { key: 'email', label: 'Email (Optional override)', placeholder: 'mailto:email@example.com' }
+    { key: 'behance', label: 'Behance', placeholder: 'https://behance.net/username' }
   ];
 
   return (

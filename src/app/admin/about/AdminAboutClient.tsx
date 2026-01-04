@@ -461,7 +461,10 @@ function ProfessionalSectionForm({
     mottoBadge: data.motto?.badge || '',
     mottoQuote: data.motto?.quote || '',
     bioContent: data.bio?.content || '',
-    bioGalleryImages: initialGallery
+    bioGalleryImages: initialGallery,
+    email: data.contacts?.email || '',
+    whatsapp: data.contacts?.whatsapp || '',
+    linkedin: data.contacts?.linkedin || ''
   });
 
   const handleGalleryChange = (items: TrailItem[]) => {
@@ -482,6 +485,11 @@ function ProfessionalSectionForm({
       bio: {
         content: formData.bioContent,
         galleryImages: formData.bioGalleryImages
+      },
+      contacts: {
+        email: formData.email,
+        whatsapp: formData.whatsapp,
+        linkedin: formData.linkedin
       }
     };
 
@@ -492,8 +500,50 @@ function ProfessionalSectionForm({
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">Professional Information</h3>
-        <p className="text-sm text-gray-600 mb-4">Informasi tentang motto kerja dan biografi singkat.</p>
+        <p className="text-sm text-gray-600 mb-4">Informasi tentang motto kerja, biografi, dan kontak (Khusus untuk Resume AI).</p>
         <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
+
+          <div className="bg-white p-4 rounded border border-gray-200">
+            <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-500" />
+              Private Contact Info (for AI Resume)
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Email</label>
+                <input
+                  type="email"
+                  className="w-full border-gray-300 rounded-md shadow-sm text-sm"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="ra.920710@gmail.com"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">WhatsApp</label>
+                <input
+                  type="text"
+                  className="w-full border-gray-300 rounded-md shadow-sm text-sm"
+                  value={formData.whatsapp}
+                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                  placeholder="08817472310"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">LinkedIn Profile</label>
+                <input
+                  type="text"
+                  className="w-full border-gray-300 rounded-md shadow-sm text-sm"
+                  value={formData.linkedin}
+                  onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+                  placeholder="linkedin.com/in/username"
+                />
+              </div>
+            </div>
+            <p className="mt-2 text-[10px] text-amber-600 italic font-medium">
+              *Data ini tersembunyi dari web publik. Hanya digunakan Bot Telegram untuk mengisi Resume PDF.
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>

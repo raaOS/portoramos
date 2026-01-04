@@ -31,8 +31,10 @@ export default function CvPageClient({
   };
 
   const displayName = 'Ramos';
-  const headline = aboutData?.professional?.motto?.quote ?? 'Graphic Designer & Visual Storyteller';
-  const summary = aboutData?.professional?.bio?.content ?? 'Desainer grafis dengan fokus pada visual bersih, tipografi kuat, dan storytelling.';
+  const headline = 'Graphic Designer & Visual Strategist';
+  const summary = aboutData?.professional?.bio?.content ?? 'Desainer Grafis senior dengan fokus pada solusi visual yang strategis dan berdampak nyata.';
+  const contacts = (aboutData as any)?.professional?.contacts;
+
   const softSkills = aboutData?.softSkills?.texts ?? [];
 
   // Use dynamic hard skills if available, otherwise fallback (or empty)
@@ -69,12 +71,14 @@ export default function CvPageClient({
       `}</style>
 
       <div className="container max-w-5xl mx-auto px-4 py-10 space-y-6">
-        <div className="flex items-start justify-between flex-wrap gap-4">
+        <div className="flex items-start justify-between flex-wrap gap-4 pb-4 border-b border-gray-100">
           <div>
             <h1 className="text-3xl md:text-4xl font-semibold">{displayName}</h1>
-            <p className="text-lg text-gray-600">{headline}</p>
+            <p className="text-lg text-gray-600 font-medium">{headline}</p>
           </div>
-
+          <div className="text-right flex flex-col items-end">
+            <Link href="/" className="text-blue-700 underline text-sm">portofolio-ramos.vercel.app</Link>
+          </div>
         </div>
 
         <section className="border border-gray-200 rounded-2xl p-5 md:p-6 shadow-sm">

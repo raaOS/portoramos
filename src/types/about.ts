@@ -28,7 +28,14 @@ export interface AboutBio {
   galleryImages: (string | TrailItem)[];
 }
 
+export interface AboutContacts {
+  email: string;
+  whatsapp: string;
+  linkedin: string;
+}
+
 export interface AboutProfessional {
+  contacts?: AboutContacts;
   motto: AboutMotto;
   bio: AboutBio;
 }

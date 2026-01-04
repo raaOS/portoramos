@@ -15,7 +15,7 @@ import { AboutData } from '@/types/about';
 export default function Header() {
   const pathname = usePathname();
   const { lastUpdated } = useLastUpdated();
-  const [availability, setAvailability] = useState<AboutData['hero']['availability']>(null);
+  const [availability, setAvailability] = useState<AboutData['hero']['availability']>(undefined);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {

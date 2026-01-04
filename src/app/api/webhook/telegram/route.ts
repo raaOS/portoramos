@@ -92,10 +92,55 @@ export async function POST(request: Request) {
                             `⏱ *Uptime:* ${hours}j ${minutes}m`
                     });
                 }
+                else if (command === '/prop') {
+                    const jobContent = text.replace('/prop', '').trim();
+                    if (!jobContent) {
+                        await sendImmediate(incomingChatId, "❌ *Harap sertakan deskripsi atau link lowongan.*\nContoh: `/prop butuh editor video tiktok`", botToken);
+                    } else {
+                        await sendImmediate(incomingChatId, "🤖 *Sedang meracik proposal maut... (Sabar ya Bos, mikir dulu)*", botToken);
+
+                        try {
+                            const { aiProposalService } = await import('@/lib/services/aiProposalService');
+                            const proposal = await aiProposalService.generateProposalForJob(jobContent);
+                            await sendImmediate(incomingChatId, proposal, botToken);
+                        } catch (err: any) {
+                            await sendImmediate(incomingChatId, `❌ *Gagal generate:* ${err.message}`, botToken);
+                        }
+                    }
+                    return NextResponse.json({ ok: true });
+                }
+                else if (command === '/resume' || command === '/cv') {
+                    const jobContent = text.replace(command, '').trim();
+                    if (!jobContent) {
+                        await sendImmediate(incomingChatId, "❌ *Harap sertakan deskripsi atau link lowongan.*\nContoh: `/resume loker editor startup` ", botToken);
+                    } else {
+                        await sendImmediate(incomingChatId, "📑 *Menganalisa loker & meracik ATS Resume... (Sedang digodok Bos)*", botToken);
+
+                        try {
+                            const { atsService } = await import('@/lib/services/atsService');
+                            const { pdfBuffer, hrMessage, analysis } = await atsService.tailorResume(jobContent);
+
+                            // Send Analysis first
+                            await sendImmediate(incomingChatId, "🔍 *AI Strategy Analysis:*\n\n" + analysis, botToken);
+
+                            // Send the PDF
+                            const { sendTelegramDocument } = await import('@/lib/telegram');
+                            await sendTelegramDocument(`Resume_Ramos_ATS.pdf`, pdfBuffer, "📄 *Resume ATS-Friendly* sudah siap!");
+
+                            // Send the HR message
+                            await sendImmediate(incomingChatId, "💬 *Pesan Intro buat HRD (Tinggal Copy):*\n\n" + hrMessage, botToken);
+                        } catch (err: any) {
+                            await sendImmediate(incomingChatId, `❌ *Gagal:* ${err.message}`, botToken);
+                        }
+                    }
+                    return NextResponse.json({ ok: true });
+                }
                 else if (command === '/help') {
                     messagesToSend.push({
                         text: `🛠 *Admin Commands*\n\n` +
-                            `/leads - Cek 5 pesan terakhir (dengan tombol WA)\n` +
+                            `/resume [detail] - AI bikin Resume ATS (PDF) + Pesan HRD!\n` +
+                            `/prop [detail] - AI bikin Proposal Lamaran maut!\n` +
+                            `/leads - Cek 5 pesan terakhir\n` +
                             `/help - Tampilkan menu ini\n` +
                             `/status - Cek status server`
                     });
@@ -141,5 +186,24 @@ export async function POST(request: Request) {
     } catch (error) {
         console.error('[Telegram Webhook] Error:', error);
         return NextResponse.json({ ok: false }, { status: 500 });
+    }
+}
+
+/**
+ * Helper to send message immediately without waiting for the batch
+ */
+async function sendImmediate(chatId: string, text: string, botToken: string) {
+    try {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: text,
+                parse_mode: 'Markdown'
+            })
+        });
+    } catch (e) {
+        console.error('Immediate send failed:', e);
     }
 }

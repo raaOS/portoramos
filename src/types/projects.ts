@@ -29,9 +29,9 @@ export interface Project {
     afterImage: string;  // URL
     afterType?: 'image' | 'video';
   };
-  // gallery: string[]; // Deprecated
-  // galleryItems: GalleryItem[]; // Deprecated
-  // external_link: string; // Removed
+  gallery?: string[];
+  galleryItems?: GalleryItem[];
+  initialCommentCount?: number;
   order: number;
   status: 'published' | 'draft';
   createdAt: string;

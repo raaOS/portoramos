@@ -125,11 +125,15 @@ export const projectService = {
             playsInline: data.playsInline ?? true,
             coverWidth: data.coverWidth || 800,
             coverHeight: data.coverHeight || 600,
-            gallery: data.gallery || [],
-            galleryItems: data.galleryItems || [],
             likes: data.likes || 0,
             shares: data.shares || 0,
             allowComments: data.allowComments ?? true,
+            comparison: data.comparison || {
+                beforeImage: '',
+                beforeType: 'image',
+                afterImage: '',
+                afterType: 'image'
+            },
             order: currentProjects.length + 1,
             status: data.status || 'published',
             createdAt: new Date().toISOString(),

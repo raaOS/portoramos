@@ -74,12 +74,17 @@
     }
   },
   "professional": {
+    "contacts": {
+      "email": "ra.920710@gmail.com",
+      "whatsapp": "08817472310",
+      "linkedin": "linkedin.com/in/ramos-design"
+    },
     "motto": {
       "badge": "Motto kerja",
       "quote": "Desain adalah Hook: Bikin mereka berhenti scroll, lalu mengerti."
     },
     "bio": {
-      "content": "\"Berbekal pengalaman lebih dari 14 tahun di industri desain, saya telah mengasah keahlian di berbagai medan—mulai dari struktur korporasi yang disiplin hingga dinamika freelance yang adaptif. Terbiasa bekerja di bawah tekanan deadline yang ketat telah membentuk saya menjadi desainer yang solutif. Fokus utama saya bukan sekadar estetika, melainkan menciptakan solusi visual yang strategis dan berdampak nyata bagi pertumbuhan bisnis.\"",
+      "content": "\"Berbekal pengalaman lebih dari 14 tahun di industri desain, saya telah mengasah keahlian sebagai Desainer Visual yang strategis. Mulai dari struktur korporasi yang disiplin hingga dinamika freelance yang adaptif, saya terbiasa menciptakan solusi visual yang bukan sekadar estetika, melainkan berdampak nyata bagi pertumbuhan bisnis. Fokus utama saya adalah Graphic Design, Branding, dan Visual Storytelling.\"",
       "galleryImages": []
     }
   },
