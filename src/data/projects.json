@@ -27,7 +27,16 @@
       "likes": 33,
       "shares": 5,
       "allowComments": true,
-      "initialCommentCount": 2
+      "initialCommentCount": 2,
+      "narrative": {
+        "challenge": "",
+        "solution": "",
+        "result": ""
+      },
+      "comparison": {
+        "beforeImage": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766511410/71182738_1401283963356534_8000667800149668246_n._afmhq4.jpg",
+        "afterImage": ""
+      }
     },
     {
       "title": "Gantungan Animasik",
@@ -605,5 +614,5 @@
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-03T19:23:10.272Z"
+  "lastUpdated": "2026-01-04T16:32:05.094Z"
 }
