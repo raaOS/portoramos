@@ -213,68 +213,106 @@ export default function AdminAboutClient() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-3 px-6 overflow-x-auto py-2">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[600px] flex flex-col md:flex-row">
+        {/* Mobile Navigation (Dropdown) */}
+        <div className="md:hidden p-4 border-b border-gray-200 bg-gray-50">
+          <label htmlFor="tab-select" className="block text-sm font-medium text-gray-700 mb-2">
+            Pilih Bagian
+          </label>
+          <div className="relative">
+            <select
+              id="tab-select"
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value as any)}
+              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            >
+              {[
+                { id: 'hero', name: 'Hero Section' },
+                { id: 'professional', name: 'Professional Info' },
+                { id: 'softSkills', name: 'Soft Skills' },
+                { id: 'hardSkills', name: 'Hard Skills' },
+                { id: 'runningText', name: 'Running Text' },
+                { id: 'labels', name: 'Labels & Badges' },
+              ].map((tab) => (
+                <option key={tab.id} value={tab.id}>
+                  {tab.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Desktop Navigation (Sidebar) */}
+        <div className="hidden md:block w-64 border-r border-gray-200 bg-gray-50/50 flex-shrink-0">
+          <nav className="p-3 space-y-1">
             {[
-              { id: 'hero', name: 'Hero', icon: Sparkles, color: 'text-blue-600' },
-              { id: 'professional', name: 'Professional', icon: BriefcaseBusiness, color: 'text-emerald-600' },
-              { id: 'runningText', name: 'Running Text', icon: Type, color: 'text-pink-600' },
-              { id: 'labels', name: 'Labels', icon: Tag, color: 'text-gray-600' },
-              { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600' },
-              { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-3 py-2 transition ${activeTab === tab.id ? `${tab.color} font-semibold` : 'text-gray-800'
-                  }`}
-                title={tab.name}
-                aria-label={tab.name}
-              >
-                <tab.icon className={`h-4 w-4 ${activeTab === tab.id ? tab.color : 'text-gray-700'}`} aria-hidden />
-                <span className="font-semibold">{tab.name}</span>
-              </button>
-            ))}
+              { id: 'hero', name: 'Hero Section', icon: Sparkles, color: 'text-blue-600', bg: 'bg-blue-50' },
+              { id: 'professional', name: 'Professional', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+              { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'bg-amber-50' },
+              { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'bg-violet-50' },
+              { id: 'runningText', name: 'Running Text', icon: Type, color: 'text-pink-600', bg: 'bg-pink-50' },
+              { id: 'labels', name: 'Labels', icon: Tag, color: 'text-gray-600', bg: 'bg-gray-50' },
+            ].map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
+                      ? `${tab.bg} ${tab.color} shadow-sm ring-1 ring-inset ring-gray-200`
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                >
+                  <tab.icon className={`h-5 w-5 flex-shrink-0 ${isActive ? tab.color : 'text-gray-400 group-hover:text-gray-500'}`} />
+                  {tab.name}
+                  {isActive && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+                  )}
+                </button>
+              );
+            })}
           </nav>
         </div>
 
-        <div className="p-6">
-          {activeTab === 'hero' && (
-            <HeroSectionForm
-              data={aboutData.hero}
-              projects={projects}
-              onUpdate={(data) => handleUpdateAbout({ hero: data })}
-            />
-          )}
-          {activeTab === 'professional' && (
-            <ProfessionalSectionForm
-              data={aboutData.professional}
-              projects={projects}
-              onUpdate={(data) => handleUpdateAbout({ professional: data })}
-            />
-          )}
-          {activeTab === 'softSkills' && (
-            <SoftSkillsSectionForm
-              data={aboutData.softSkills}
-              onUpdate={(data) => handleUpdateAbout({ softSkills: data })}
-            />
-          )}
-          {activeTab === 'hardSkills' && (
-            <div className="space-y-8">
-              <HardSkillsManager />
-
-            </div>
-          )}
-          {activeTab === 'runningText' && (
-            <RunningTextPanel
-              items={runningTexts}
-              loading={runningTextsLoading}
-              onCreate={handleCreateRunningText}
-              onUpdate={handleUpdateRunningText}
-              onDelete={handleDeleteRunningText}
-            />
-          )}
+        {/* Content Area */}
+        <div className="flex-1 min-w-0 bg-white">
+          <div className="p-6 lg:p-8">
+            {activeTab === 'hero' && (
+              <HeroSectionForm
+                data={aboutData.hero}
+                projects={projects}
+                onUpdate={(data) => handleUpdateAbout({ hero: data })}
+              />
+            )}
+            {activeTab === 'professional' && (
+              <ProfessionalSectionForm
+                data={aboutData.professional}
+                projects={projects}
+                onUpdate={(data) => handleUpdateAbout({ professional: data })}
+              />
+            )}
+            {activeTab === 'softSkills' && (
+              <SoftSkillsSectionForm
+                data={aboutData.softSkills}
+                onUpdate={(data) => handleUpdateAbout({ softSkills: data })}
+              />
+            )}
+            {activeTab === 'hardSkills' && (
+              <div className="space-y-8">
+                <HardSkillsManager />
+              </div>
+            )}
+            {activeTab === 'runningText' && (
+              <RunningTextPanel
+                items={runningTexts}
+                loading={runningTextsLoading}
+                onCreate={handleCreateRunningText}
+                onUpdate={handleUpdateRunningText}
+                onDelete={handleDeleteRunningText}
+              />
+            )}
+            {/* Note: Labels panel content seems missing in original code, placeholder removed if not used or add placeholder if needed */}
+          </div>
         </div>
       </div>
     </AdminLayout>
