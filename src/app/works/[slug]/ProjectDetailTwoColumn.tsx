@@ -14,6 +14,7 @@ import AITranslator from '@/components/features/AITranslator';
 import CommentSection from '@/components/features/CommentSection';
 import type { Comment } from '@/lib/magic';
 import ComparisonSlider from './components/ComparisonSlider';
+import ProjectCTA from './components/ProjectCTA';
 
 // Adjusted path for CoverFlowGallery - Assuming it exists here based on previous search
 const CoverFlowGallery = dynamic(() => import('@/components/gallery/CoverFlowGallery'), {
@@ -518,6 +519,9 @@ export default function ProjectDetailTwoColumn({
                     <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>
                 </div>
             )}
+
+            {/* Aggressive Call to Action */}
+            <ProjectCTA />
         </motion.div>
     );
 }
