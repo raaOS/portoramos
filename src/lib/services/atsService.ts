@@ -120,12 +120,15 @@ export const atsService = {
         doc.setFontSize(9);
 
         let currentX = margin;
+        const textHeight = 4; // Approx height for hit area
 
         // Email
         doc.setTextColor(0, 0, 255);
         const emailText = contacts.email;
-        (doc as any).text(emailText, currentX, y, { url: `mailto:${contacts.email}` });
-        currentX += doc.getTextWidth(emailText) + 2;
+        const emailWidth = doc.getTextWidth(emailText);
+        doc.text(emailText, currentX, y);
+        (doc as any).link(currentX, y - 3, emailWidth, textHeight, { url: `mailto:${contacts.email}` });
+        currentX += emailWidth + 2;
 
         // Separator
         doc.setTextColor(0, 0, 0);
@@ -135,23 +138,24 @@ export const atsService = {
         // WhatsApp
         doc.setTextColor(0, 0, 255);
         const waText = contacts.whatsapp;
+        const waWidth = doc.getTextWidth(waText);
         const cleanWa = contacts.whatsapp.replace(/\D/g, '').replace(/^0/, '62');
-        (doc as any).text(waText, currentX, y, { url: `https://wa.me/${cleanWa}` });
-        currentX += doc.getTextWidth(waText) + 2;
-
-        // Separator
-        doc.setTextColor(0, 0, 0);
-        doc.text("|", currentX, y);
-        currentX += doc.getTextWidth("|") + 2;
-
-        // LinkedIn
-        doc.setTextColor(0, 0, 255);
-        const liText = contacts.linkedin;
-        const liUrl = contacts.linkedin.startsWith('http') ? contacts.linkedin : `https://${contacts.linkedin}`;
-        (doc as any).text(liText, currentX, y, { url: liUrl });
+        doc.text(waText, currentX, y);
+        (doc as any).link(currentX, y - 3, waWidth, textHeight, { url: `https://wa.me/${cleanWa}` });
 
         y += 5;
-        (doc as any).text("Portfolio: https://portofolio-ramos.vercel.app", margin, y, { url: "https://portofolio-ramos.vercel.app" });
+        // Portfolio
+        const pfLabel = "Portfolio: ";
+        const pfLink = "https://portofolio-ramos.vercel.app";
+        doc.setTextColor(0, 0, 0);
+        doc.text(pfLabel, margin, y);
+
+        doc.setTextColor(0, 0, 255);
+        const labelWidth = doc.getTextWidth(pfLabel);
+        const linkWidth = doc.getTextWidth(pfLink);
+        doc.text(pfLink, margin + labelWidth, y);
+        (doc as any).link(margin + labelWidth, y - 3, linkWidth, textHeight, { url: pfLink });
+
         doc.setTextColor(0, 0, 0);
         y += 12;
 
