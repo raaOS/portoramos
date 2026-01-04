@@ -6,7 +6,7 @@ import NextImage from 'next/image';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import GalleryMini from '@/components/gallery/GalleryMini';
-import DesignSkillIcons from '@/components/DesignSkillIcons';
+import HardSkillsAccordion from '@/components/HardSkillsAccordion';
 import SwayingGallery from '@/components/home/SwayingGallery';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import HorizontalCounterAnimation from '@/components/HorizontalCounterAnimation';
@@ -815,47 +815,12 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                   </div>
                 </Reveal>
 
-                {/* Design Software Icons */}
-                <div className="mb-6 w-full max-w-md">
+                {/* Hard Skills Accordion - New Design */}
+                <div className="w-full">
                   <Reveal delay={0.3}>
-                    <div className="flex items-start mb-3">
-                      <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                      <div className="flex-1">
-                        <strong className="text-sm">Software Desain:</strong>
-                      </div>
-                    </div>
+                    <HardSkillsAccordion />
                   </Reveal>
-                  <div className="w-full overflow-visible">
-                    {hardSkillsError && (
-                      <p className="text-xs text-amber-600 mb-2">
-                        Menampilkan ikon default (gagal memuat dari server).
-                      </p>
-                    )}
-                    <Reveal delay={0.4}>
-                      <DesignSkillIcons skills={resolvedHardSkills} />
-                    </Reveal>
-                  </div>
                 </div>
-
-                {/* Hard Skills List */}
-                <StaggerContainer className="space-y-3" staggerDelay={0.1}>
-                  {hardSkillConceptsError && (
-                    <p className="text-xs text-amber-600">
-                      Menampilkan poin default (gagal memuat konsep dari server).
-                    </p>
-                  )}
-                  {hardSkillsList.map((skill, index) => (
-                    <StaggerItem key={index}>
-                      <div className="flex items-start group">
-                        <span className="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-2 flex-shrink-0 transition-transform group-hover:scale-150"></span>
-                        <div className="flex-1">
-                          <strong className="text-sm group-hover:text-black transition-colors">{skill.category}:</strong>
-                          <span className="ml-1 text-gray-700 text-sm">{skill.content}</span>
-                        </div>
-                      </div>
-                    </StaggerItem>
-                  ))}
-                </StaggerContainer>
               </motion.div>
             </div>
 
