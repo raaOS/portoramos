@@ -140,43 +140,27 @@ export default function AdminLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 min-h-screen pt-16 md:pt-0">
-        {/* Breadcrumb Header */}
-        <div className="bg-white border-b border-gray-200 sticky top-16 md:top-0 z-10 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {titleIcon && (
-              <div className={`p-2 rounded-lg ${titleAccent}`}>
-                {titleIcon}
-              </div>
-            )}
-            <div>
-              <nav className="flex text-sm text-gray-500 mb-0.5">
-                {breadcrumbs.map((crumb, idx) => (
-                  <div key={idx} className="flex items-center">
-                    {idx > 0 && <span className="mx-2">/</span>}
-                    {crumb.href ? (
-                      <Link href={crumb.href} className="hover:text-gray-900 transition-colors">
-                        {crumb.label}
-                      </Link>
-                    ) : (
-                      <span className="font-medium text-gray-900">{crumb.label}</span>
-                    )}
-                  </div>
-                ))}
-              </nav>
+      <main className="flex-1 md:ml-64 min-h-screen pt-16 md:pt-0 bg-gray-50">
+        {/* Simple Page Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {titleIcon && (
+                <div className={`p-2 rounded-lg ${titleAccent} bg-opacity-10`}>
+                  {titleIcon}
+                </div>
+              )}
               <h1 className="text-xl font-bold text-gray-900 leading-tight">{title}</h1>
-              {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
             </div>
+            {actions && <div className="flex items-center gap-3">{actions}</div>}
           </div>
-          {actions && <div className="flex items-center gap-3">{actions}</div>}
         </div>
 
         {/* Page Content */}
-        <div className="p-6 md:p-8 max-w-7xl mx-auto">
+        <div className="p-6 md:p-8 w-full">
           {children}
         </div>
       </main>
     </div>
   );
 }
-
