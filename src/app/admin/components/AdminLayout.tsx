@@ -15,6 +15,7 @@ import {
   Activity,
   Users,
   Send,
+  Cpu,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -54,6 +55,7 @@ export default function AdminLayout({
 
   const navItems = [
     { href: '/admin/projects', label: 'Projects', icon: FolderKanban, color: 'text-purple-600' },
+    { href: '/admin/hard-skills', label: 'Hard Skills', icon: Cpu, color: 'text-cyan-600' },
     { href: '/admin/about', label: 'About', icon: Info, color: 'text-blue-600' },
     { href: '/admin/experience', label: 'Experience', icon: BriefcaseBusiness, color: 'text-emerald-600' },
     { href: '/admin/contact', label: 'Contact', icon: PhoneCall, color: 'text-amber-600' },

@@ -1,153 +1,58 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { ChevronDown } from 'lucide-react';
 
-// Hardcoded data for now, as requested
-const skills = [
-    {
-        id: 'ps',
-        name: 'Adobe Photoshop',
-        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/photoshop/photoshop-plain.svg',
-        level: 'Expert',
-        color: '#31A8FF',
-        details: [
-            'Advanced Photo Manipulation & Compositing',
-            'High-end Beauty Retouching & Color Grading',
-            'Complex Masking & Deep Etching',
-            'Digital Imaging for Advertising'
-        ]
-    },
-    {
-        id: 'ai',
-        name: 'Adobe Illustrator',
-        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/illustrator/illustrator-plain.svg',
-        level: 'Expert',
-        color: '#FF9A00',
-        details: [
-            'Vector Illustration & Iconography',
-            'Logo Design & Brand Identity Systems',
-            'Typography Layout & manipulation',
-            'Print-ready asset preparation (Pre-press)'
-        ]
-    },
-    {
-        id: 'figma',
-        name: 'Figma',
-        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg',
-        level: 'Advanced',
-        color: '#F24E1E',
-        details: [
-            'UI/UX Interface Design for Web & Mobile',
-            'Interactive Prototyping & Micro-interactions',
-            'Design System Management (Components, Variables)',
-            'Auto-layout Expert & Responsive Constraints'
-        ]
-    },
-    {
-        id: 'canva',
-        name: 'Canva',
-        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/canva/canva-original.svg',
-        level: 'Intermediate',
-        color: '#00C4CC',
-        details: [
-            'Rapid Social Media Content Creation',
-            'Professional Pitch Decks & Presentations',
-            'Team Collaboration & Template Management',
-            'Quick Visual Assets for Marketing'
-        ]
-    },
-    {
-        id: 'ae',
-        name: 'Adobe After Effects',
-        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/aftereffects/aftereffects-plain.svg',
-        level: 'Advanced',
-        color: '#9999FF',
-        details: [
-            'Motion Graphics & Visual Effects',
-            '2D/3D Animation Compositing',
-            'Rotoscoping & Keying',
-            'Expression Scripting for Automation'
-        ]
-    },
-    {
-        id: 'pr',
-        name: 'Adobe Premiere Pro',
-        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/premierepro/premierepro-plain.svg',
-        level: 'Advanced',
-        color: '#9999FF',
-        details: [
-            'Professional Video Editing & Sequencing',
-            'Color Correction & Grading (Lumetri)',
-            'Audio Mixing & Sound Design',
-            'Multi-camera Editing Workflow'
-        ]
-    },
-    {
-        id: 'blender',
-        name: 'Blender',
-        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/blender/blender-original.svg',
-        level: 'Intermediate',
-        color: '#E87D0D',
-        details: [
-            '3D Modeling & Sculpting',
-            'Texturing & UV Unwrapping',
-            'Cycles/Eevee Rendering & Lighting',
-            'Basic Animation & Rigging'
-        ]
-    },
-    {
-        id: 'id',
-        name: 'Adobe InDesign',
-        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/indesign/indesign-plain.svg',
-        level: 'Intermediate',
-        color: '#FF3366',
-        details: [
-            'Editorial Design & Layout',
-            'Digital Publishing (EPUB, Interactive PDF)',
-            'Master Pages & Style Sheets',
-            'Typography & Typesetting'
-        ]
-    },
-    {
-        id: 'xd',
-        name: 'Adobe XD',
-        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/xd/xd-plain.svg',
-        level: 'Intermediate',
-        color: '#FF26BE',
-        details: [
-            'Wireframing & UI Prototyping',
-            'User Flow Interaction Design',
-            'Auto-animate Transitions',
-            'Design Specs Handoff'
-        ]
-    },
-    {
-        id: 'c4d',
-        name: 'Cinema 4D',
-        icon: 'https://simpleicons.org/icons/cinema4d.svg', // Fallback or explicit URL if devicon missing
-        level: 'Basic',
-        color: '#004BB3',
-        details: [
-            '3D Motion Graphics (MoGraph)',
-            'Modeling & Deformers',
-            'Lighting & Materials',
-            'Redshift Integration Basics'
-        ]
-    }
-];
+interface HardSkill {
+    id: string;
+    name: string;
+    icon: string;
+    level: string;
+    color: string;
+    details: string[];
+}
 
 export default function HardSkillsAccordion() {
+    const [skills, setSkills] = useState<HardSkill[]>([]);
+    const [loading, setLoading] = useState(true);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [showAll, setShowAll] = useState(false);
+
+    useEffect(() => {
+        const fetchSkills = async () => {
+            try {
+                const res = await fetch('/api/hard-skills');
+                if (res.ok) {
+                    const data = await res.json();
+                    setSkills(data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch hard skills:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSkills();
+    }, []);
 
     const toggle = (id: string) => {
         setActiveId(activeId === id ? null : id);
     };
 
     const visibleSkills = showAll ? skills : skills.slice(0, 4);
+
+    if (loading) {
+        return (
+            <div className="w-full space-y-3">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="w-full h-20 rounded-2xl bg-gray-50 border border-gray-100 animate-pulse" />
+                ))}
+            </div>
+        );
+    }
 
     return (
         <div className="w-full space-y-4">
