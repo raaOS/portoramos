@@ -58,6 +58,84 @@ const skills = [
             'Team Collaboration & Template Management',
             'Quick Visual Assets for Marketing'
         ]
+    },
+    {
+        id: 'ae',
+        name: 'Adobe After Effects',
+        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/aftereffects/aftereffects-plain.svg',
+        level: 'Advanced',
+        color: '#9999FF',
+        details: [
+            'Motion Graphics & Visual Effects',
+            '2D/3D Animation Compositing',
+            'Rotoscoping & Keying',
+            'Expression Scripting for Automation'
+        ]
+    },
+    {
+        id: 'pr',
+        name: 'Adobe Premiere Pro',
+        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/premierepro/premierepro-plain.svg',
+        level: 'Advanced',
+        color: '#9999FF',
+        details: [
+            'Professional Video Editing & Sequencing',
+            'Color Correction & Grading (Lumetri)',
+            'Audio Mixing & Sound Design',
+            'Multi-camera Editing Workflow'
+        ]
+    },
+    {
+        id: 'blender',
+        name: 'Blender',
+        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/blender/blender-original.svg',
+        level: 'Intermediate',
+        color: '#E87D0D',
+        details: [
+            '3D Modeling & Sculpting',
+            'Texturing & UV Unwrapping',
+            'Cycles/Eevee Rendering & Lighting',
+            'Basic Animation & Rigging'
+        ]
+    },
+    {
+        id: 'id',
+        name: 'Adobe InDesign',
+        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/indesign/indesign-plain.svg',
+        level: 'Intermediate',
+        color: '#FF3366',
+        details: [
+            'Editorial Design & Layout',
+            'Digital Publishing (EPUB, Interactive PDF)',
+            'Master Pages & Style Sheets',
+            'Typography & Typesetting'
+        ]
+    },
+    {
+        id: 'xd',
+        name: 'Adobe XD',
+        icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/xd/xd-plain.svg',
+        level: 'Intermediate',
+        color: '#FF26BE',
+        details: [
+            'Wireframing & UI Prototyping',
+            'User Flow Interaction Design',
+            'Auto-animate Transitions',
+            'Design Specs Handoff'
+        ]
+    },
+    {
+        id: 'c4d',
+        name: 'Cinema 4D',
+        icon: 'https://simpleicons.org/icons/cinema4d.svg', // Fallback or explicit URL if devicon missing
+        level: 'Basic',
+        color: '#004BB3',
+        details: [
+            '3D Motion Graphics (MoGraph)',
+            'Modeling & Deformers',
+            'Lighting & Materials',
+            'Redshift Integration Basics'
+        ]
     }
 ];
 
@@ -69,7 +147,23 @@ export default function HardSkillsAccordion() {
     };
 
     return (
-        <div className="w-full space-y-3">
+        <div className="w-full space-y-3 max-h-[500px] md:max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+            <style jsx>{`
+                    .custom-scrollbar::-webkit-scrollbar {
+                        width: 6px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-track {
+                        background: rgba(0,0,0,0.05);
+                        border-radius: 4px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-thumb {
+                        background: rgba(0,0,0,0.2);
+                        border-radius: 4px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                        background: rgba(0,0,0,0.4);
+                    }
+                `}</style>
             {skills.map((skill) => {
                 const isOpen = activeId === skill.id;
 
