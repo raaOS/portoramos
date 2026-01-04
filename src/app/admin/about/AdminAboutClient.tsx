@@ -193,27 +193,17 @@ export default function AdminAboutClient() {
   }
 
   return (
+
     <AdminLayout
       title="About Content Management"
-      subtitle="Manage About page sections"
-      breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'About' }]}
-      titleIcon={<Info className="h-5 w-5" aria-hidden />}
-      titleAccent="bg-blue-50 text-blue-700"
     >
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-xl font-semibold text-gray-900">Content Overview</h2>
-        <div className="text-sm text-gray-500">
-          Last updated: {new Date(aboutData.lastUpdated).toLocaleString()}
-        </div>
-      </div>
-
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
           {error}
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[600px] flex flex-col md:flex-row">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[500px] flex flex-col md:flex-row w-full">
         {/* Mobile Navigation (Dropdown) */}
         <div className="md:hidden p-4 border-b border-gray-200 bg-gray-50">
           <label htmlFor="tab-select" className="block text-sm font-medium text-gray-700 mb-2">

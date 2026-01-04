@@ -157,7 +157,7 @@ export default function AdminLayout({
         </div>
 
         {/* Page Content */}
-        <div className="p-6 md:p-8 w-full">
+        <div className="p-4 w-full">
           {children}
         </div>
       </main>
