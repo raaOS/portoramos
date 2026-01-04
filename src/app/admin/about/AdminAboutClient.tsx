@@ -246,7 +246,7 @@ export default function AdminAboutClient() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
+                  className={`w-full flex items-center justify-start gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
                     ? `${tab.bg} ${tab.color} shadow-sm ring-1 ring-inset ring-gray-200`
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}

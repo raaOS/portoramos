@@ -107,7 +107,7 @@ export default function AdminLayout({
                   key={href}
                   href={href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active
+                  className={`flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active
                     ? 'bg-gray-100 text-gray-900 shadow-sm'
                     : `text-gray-600 ${bg} hover:text-gray-900`
                     }`}
@@ -123,14 +123,14 @@ export default function AdminLayout({
           <div className="p-4 border-t border-gray-200 space-y-2">
             <button
               onClick={() => router.push('/')}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              className="w-full flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
             >
               <Eye className="h-5 w-5" />
               View Site
             </button>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              className="w-full flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
             >
               <LogOut className="h-5 w-5" />
               Log Out
