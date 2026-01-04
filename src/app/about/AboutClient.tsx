@@ -817,7 +817,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
 
                 {/* Hard Skills Accordion - New Design */}
                 <div className="w-full">
-                  <Reveal delay={0.3}>
+                  <Reveal delay={0.3} width="100%">
                     <HardSkillsAccordion />
                   </Reveal>
                 </div>

@@ -77,7 +77,7 @@ export default function HardSkillsAccordion() {
                     <motion.div
                         key={skill.id}
                         className={`
-                            overflow-hidden rounded-2xl border transition-colors duration-300
+                            w-full overflow-hidden rounded-2xl border transition-colors duration-300
                             ${isOpen ? 'bg-white border-black shadow-lg' : 'bg-gray-50 border-gray-100 hover:border-gray-300'}
                         `}
                         initial={false}
