@@ -6,7 +6,7 @@ import { AboutData, UpdateAboutData, TrailItem } from '@/types/about';
 
 import { Project } from '@/types/projects';
 import TrailSelector from '@/components/admin/TrailSelector';
-import { HardSkillConcept } from '@/types/hardSkillConcept';
+
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
 import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info, Trash2, Pencil, Tag } from 'lucide-react';
@@ -24,10 +24,10 @@ export default function AdminAboutClient() {
   const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'labels'>('hero');
 
   const [projects, setProjects] = useState<Project[]>([]);
-  const [hardSkillConcepts, setHardSkillConcepts] = useState<HardSkillConcept[]>([]);
+
   const [runningTexts, setRunningTexts] = useState<RunningTextItem[]>([]);
 
-  const [hardSkillConceptsLoading, setHardSkillConceptsLoading] = useState(true);
+
   const [runningTextsLoading, setRunningTextsLoading] = useState(true);
   const { showSuccess, showError } = useToast();
 
@@ -47,18 +47,7 @@ export default function AdminAboutClient() {
 
 
 
-  const loadHardSkillConcepts = useCallback(async () => {
-    try {
-      setHardSkillConceptsLoading(true);
-      const response = await fetch('/api/hard-skills/concepts');
-      const data = await response.json();
-      setHardSkillConcepts(data.concepts || []);
-    } catch (err) {
-      showError('Failed to load hard skill concepts.');
-    } finally {
-      setHardSkillConceptsLoading(false);
-    }
-  }, [showError]);
+
 
   const loadRunningTexts = useCallback(async () => {
     try {
@@ -85,10 +74,9 @@ export default function AdminAboutClient() {
 
   useEffect(() => {
     loadAboutData();
-    loadHardSkillConcepts();
     loadRunningTexts();
     loadProjects();
-  }, [loadAboutData, loadHardSkillConcepts, loadRunningTexts, loadProjects]);
+  }, [loadAboutData, loadRunningTexts, loadProjects]);
 
   const handleUpdateAbout = async (updateData: UpdateAboutData) => {
     try {
@@ -114,58 +102,7 @@ export default function AdminAboutClient() {
 
 
 
-  // Hard Skill Concept Handlers...
-  const handleCreateConcept = async (payload: any) => { /* ... existing ... */
-    try {
-      const response = await fetch('/api/hard-skills/concepts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        await loadHardSkillConcepts();
-        showSuccess('Konsep hard skill berhasil ditambahkan.');
-      } else {
-        showError('Gagal menambahkan konsep hard skill.');
-      }
-    } catch (err) {
-      showError('Gagal menambahkan konsep hard skill.');
-    }
-  };
 
-  const handleUpdateConcept = async (id: string, payload: Partial<HardSkillConcept>) => {
-    try {
-      const response = await fetch(`/api/hard-skills/concepts/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        await loadHardSkillConcepts();
-        showSuccess('Konsep hard skill diperbarui.');
-      } else {
-        showError('Gagal memperbarui konsep hard skill.');
-      }
-    } catch (err) {
-      showError('Gagal memperbarui konsep hard skill.');
-    }
-  };
-
-  const handleDeleteConcept = async (id: string) => {
-    try {
-      const response = await fetch(`/api/hard-skills/concepts/${id}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        await loadHardSkillConcepts();
-        showSuccess('Konsep hard skill dihapus.');
-      } else {
-        showError('Gagal menghapus konsep hard skill.');
-      }
-    } catch (err) {
-      showError('Gagal menghapus konsep hard skill.');
-    }
-  };
 
   // Running Text Handlers
   const handleCreateRunningText = async (payload: { text: string; order?: number; isActive?: boolean }) => {
@@ -326,14 +263,7 @@ export default function AdminAboutClient() {
           {activeTab === 'hardSkills' && (
             <div className="space-y-8">
               <HardSkillsManager />
-              <div className="h-px bg-gray-200" />
-              <HardSkillConceptsPanel
-                concepts={hardSkillConcepts}
-                loading={hardSkillConceptsLoading}
-                onCreate={handleCreateConcept}
-                onUpdate={handleUpdateConcept}
-                onDelete={handleDeleteConcept}
-              />
+
             </div>
           )}
           {activeTab === 'runningText' && (
@@ -632,198 +562,4 @@ function SoftSkillsSectionForm({
 }
 
 
-// Hard Skill Concepts Panel
-function HardSkillConceptsPanel({
-  concepts,
-  loading,
-  onCreate,
-  onUpdate,
-  onDelete,
-}: {
-  concepts: HardSkillConcept[];
-  loading: boolean;
-  onCreate: (data: { title: string; description: string; order?: number; isActive?: boolean }) => void;
-  onUpdate: (id: string, data: Partial<HardSkillConcept>) => void;
-  onDelete: (id: string) => void;
-}) {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    order: '' as string | number,
-    isActive: true,
-  });
 
-  const sortedConcepts = concepts.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingId) {
-      onUpdate(editingId, {
-        title: form.title,
-        description: form.description,
-        order: form.order === '' ? undefined : Number(form.order),
-        isActive: form.isActive,
-      });
-      setEditingId(null);
-    } else {
-      onCreate({
-        title: form.title,
-        description: form.description,
-        order: form.order === '' ? undefined : Number(form.order),
-        isActive: form.isActive,
-      });
-    }
-    setForm({ title: '', description: '', order: '', isActive: true });
-  };
-
-  const handleEdit = (concept: HardSkillConcept) => {
-    setEditingId(concept.id);
-    setForm({
-      title: concept.title,
-      description: concept.description,
-      order: concept.order,
-      isActive: concept.isActive !== false,
-    });
-    // Scroll to form
-    const formElement = document.getElementById('concept-form');
-    if (formElement) {
-      formElement.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setForm({ title: '', description: '', order: '', isActive: true });
-  };
-
-  return (
-    <div className="space-y-8">
-      <div id="concept-form">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="text-lg font-medium text-gray-900">{editingId ? 'Edit Konsep/Metodologi' : 'Tambah Konsep/Metodologi'}</h3>
-          {editingId && (
-            <button
-              type="button"
-              onClick={cancelEdit}
-              className="text-sm text-gray-500 hover:text-gray-700 underline"
-            >
-              Batal Edit
-            </button>
-          )}
-        </div>
-        <p className="text-sm text-gray-600 mb-4">Tambahkan konsep tambahan atau metodologi yang Anda kuasai.</p>
-        <form onSubmit={handleSubmit} className={`grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 p-4 rounded-lg border ${editingId ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
-          <div className="space-y-1 md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Judul</label>
-            <input
-              type="text"
-              required
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="Contoh: Design Thinking"
-            />
-          </div>
-          <div className="space-y-1 md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
-            <textarea
-              rows={3}
-              required
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Order (opsional)</label>
-            <input
-              type="number"
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={form.order}
-              onChange={(e) => setForm({ ...form, order: e.target.value })}
-              placeholder={`${concepts.length + 1}`}
-            />
-          </div>
-          <div className="space-y-1 flex items-center pt-6">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.isActive}
-                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
-              />
-              <span className="text-sm font-medium text-gray-700">Aktifkan</span>
-            </label>
-          </div>
-          <div className="flex items-end justify-end md:col-span-2 gap-2">
-            {editingId && (
-              <button
-                type="button"
-                onClick={cancelEdit}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium shadow-sm transition-colors"
-              >
-                Batal
-              </button>
-            )}
-            <button
-              type="submit"
-              className={`px-4 py-2 text-white rounded-md font-medium shadow-sm transition-colors ${editingId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-violet-600 hover:bg-violet-700'}`}
-            >
-              {editingId ? 'Simpan Perubahan' : 'Tambah'}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-3">Daftar Konsep</h3>
-        {loading ? (
-          <p className="text-sm text-gray-500">Memuat...</p>
-        ) : sortedConcepts.length === 0 ? (
-          <p className="text-sm text-gray-500">Belum ada konsep. Tambahkan di atas.</p>
-        ) : (
-          <div className="space-y-4">
-            {sortedConcepts.map((concept) => (
-              <div key={concept.id} className={`border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow ${editingId === concept.id ? 'ring-2 ring-blue-500 border-transparent' : 'border-gray-200'}`}>
-                <div className="flex justify-between items-start gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-gray-900">{concept.title}</h4>
-                      <span className="text-xs text-gray-500">Order: {concept.order}</span>
-                    </div>
-                    <p className="text-sm text-gray-600">{concept.description}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(concept)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                      title="Edit"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <StatusToggle
-                      isActive={concept.isActive !== false}
-                      onClick={() => onUpdate(concept.id, { isActive: !concept.isActive })}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (confirm('Hapus konsep ini?')) onDelete(concept.id);
-                      }}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
-                      title="Hapus"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
