@@ -12,18 +12,13 @@ export async function POST(request: Request) {
 
         const body = await request.json();
 
-        // Basic logging
-        // console.log('[Telegram Webhook] Received:', JSON.stringify(body, null, 2));
-
         if (body.message && body.message.text) {
             const incomingChatId = body.message.chat.id.toString();
             const text = body.message.text.trim();
             const isAdmin = incomingChatId === adminChatId;
 
-            let replyPayload: any = {
-                chat_id: incomingChatId,
-                parse_mode: 'Markdown'
-            };
+            // Store messages to be sent (allows sending multiple bubbles)
+            const messagesToSend: { text: string; reply_markup?: any }[] = [];
 
             // --- ADMIN LOGIC ---
             if (isAdmin && text.startsWith('/')) {
@@ -46,33 +41,44 @@ export async function POST(request: Request) {
                         const lastLeads = Array.isArray(leads) ? leads.slice(-5).reverse() : [];
 
                         if (lastLeads.length === 0) {
-                            replyPayload.text = "📭 *Belum ada pesan masuk.*";
+                            messagesToSend.push({ text: "📭 *Belum ada pesan masuk.*" });
                         } else {
-                            const formattedLeads = lastLeads.map((l: any, i: number) => {
+                            messagesToSend.push({ text: "📬 *5 Pesan Terakhir:*" });
+
+                            lastLeads.forEach((l: any, i: number) => {
                                 // Format Phone & WA Link
                                 let phone = l.contact || '-';
-                                let waLink = '';
+                                let waUrl = null;
+
                                 if (phone !== '-') {
-                                    // Strip non-digits
                                     let cleanPhone = phone.replace(/\D/g, '');
-                                    // Convert 08... to 628...
                                     if (cleanPhone.startsWith('0')) {
                                         cleanPhone = '62' + cleanPhone.slice(1);
                                     }
-                                    waLink = `[Chat WA](https://wa.me/${cleanPhone})`;
+                                    waUrl = `https://wa.me/${cleanPhone}`;
                                 }
 
-                                return `*${i + 1}. ${l.name}*\n` +
-                                    `📱 ${phone} ${waLink ? '| ' + waLink : ''}\n` +
+                                // Cleaner message format for the card
+                                const msgText = `*${i + 1}. ${l.name}*\n` +
                                     `📧 ${l.email}\n` +
-                                    `💬 _${l.message.trim().substring(0, 100)}${l.message.length > 100 ? '...' : ''}_`;
-                            }).join('\n\n-------------------\n\n');
+                                    `📱 ${phone}\n` +
+                                    `💬 _"${l.message.trim().substring(0, 100)}${l.message.length > 100 ? '...' : ''}"_`;
 
-                            replyPayload.text = `📬 *5 Pesan Terakhir:*\n\n${formattedLeads}`;
+                                const msgPayload: any = { text: msgText };
+
+                                // Add Inline Button if WA is valid
+                                if (waUrl) {
+                                    msgPayload.reply_markup = {
+                                        inline_keyboard: [[{ text: "💬 Chat WhatsApp", url: waUrl }]]
+                                    };
+                                }
+
+                                messagesToSend.push(msgPayload);
+                            });
                         }
                     } catch (error: any) {
                         console.error('Leads Read Error:', error);
-                        replyPayload.text = `❌ Gagal baca database.\nError: ${error.message}\nPath: ${leadsPath}`;
+                        messagesToSend.push({ text: `❌ Gagal baca database.\nError: ${error.message}\nPath: ${leadsPath}` });
                     }
                 }
                 else if (command === '/status') {
@@ -80,44 +86,55 @@ export async function POST(request: Request) {
                     const hours = Math.floor(uptime / 3600);
                     const minutes = Math.floor((uptime % 3600) / 60);
 
-                    replyPayload.text = `✅ *Server Online*\n` +
-                        `🕒 *Time:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}\n` +
-                        `⏱ *Uptime:* ${hours}j ${minutes}m`;
+                    messagesToSend.push({
+                        text: `✅ *Server Online*\n` +
+                            `🕒 *Time:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}\n` +
+                            `⏱ *Uptime:* ${hours}j ${minutes}m`
+                    });
                 }
                 else if (command === '/help') {
-                    replyPayload.text = `🛠 *Admin Commands*\n\n` +
-                        `/leads - Cek 5 pesan terakhir\n` +
-                        `/help - Tampilkan menu ini\n` +
-                        `/status - Cek status server`;
+                    messagesToSend.push({
+                        text: `🛠 *Admin Commands*\n\n` +
+                            `/leads - Cek 5 pesan terakhir (dengan tombol WA)\n` +
+                            `/help - Tampilkan menu ini\n` +
+                            `/status - Cek status server`
+                    });
                 }
                 else {
-                    replyPayload.text = `❓ Command tidak dikenal. Coba /help`;
+                    messagesToSend.push({ text: `❓ Command tidak dikenal. Coba /help` });
                 }
             }
 
             // --- GUEST LOGIC (Default) ---
             else {
-                // If it's a guest (or admin typing regular text), give the professional menu
-                replyPayload.text = `👋 *Halo! Terima kasih sudah menghubungi.*\n\n` +
-                    `Saya adalah asisten virtual dari **Ramos**.\n` +
-                    `Saat ini saya hanya bertugas mengirim notifikasi. Silakan pilih menu di bawah:`;
-
-                replyPayload.reply_markup = {
-                    inline_keyboard: [
-                        [
-                            { text: "📂 Lihat Portfolio", url: "https://portofolio-ramos.vercel.app" },
-                            { text: "📩 Kontak Saya", url: "https://portofolio-ramos.vercel.app/contact" }
+                messagesToSend.push({
+                    text: `👋 *Halo! Terima kasih sudah menghubungi.*\n\n` +
+                        `Saya adalah asisten virtual dari **Ramos**.\n` +
+                        `Saat ini saya hanya bertugas mengirim notifikasi. Silakan pilih menu di bawah:`,
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: "📂 Lihat Portfolio", url: "https://portofolio-ramos.vercel.app" },
+                                { text: "📩 Kontak Saya", url: "https://portofolio-ramos.vercel.app/contact" }
+                            ]
                         ]
-                    ]
-                };
+                    }
+                });
             }
 
-            // Send Response
-            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(replyPayload)
-            });
+            // Send All Messages Sequentially
+            for (const msg of messagesToSend) {
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: incomingChatId,
+                        text: msg.text,
+                        parse_mode: 'Markdown',
+                        reply_markup: msg.reply_markup
+                    })
+                });
+            }
         }
 
         return NextResponse.json({ ok: true });
