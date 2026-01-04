@@ -39,11 +39,12 @@ export default function CvPageClient({
     const skills = hardSkillsData?.skills || [];
     return skills
       .filter(s => s.isActive !== false) // Filter active only
-      .slice(0, 8) // Limit to top 8 to fit page
+      .slice(0, 10) // Limit to top 10 to fit page
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .map(s => ({
         tool: s.name,
-        level: s.level
+        level: s.level,
+        details: s.details || [] // Fallback support for generic 'skills' field if used elsewhere
       }));
   }, [hardSkillsData]);
 
@@ -84,12 +85,19 @@ export default function CvPageClient({
                 <h2 className="text-lg font-semibold text-red-700 uppercase tracking-wide">Hard Skills</h2>
                 {hardSkills.length > 0 ? (
                   <ul className="mt-2 space-y-2 text-sm">
-                    {hardSkills.map(({ tool, level }) => (
-                      <li key={tool} className="px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-800 flex items-center justify-between gap-3">
-                        <span>{tool}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-800 border border-gray-300">
-                          {level}
-                        </span>
+                    {hardSkills.map(({ tool, level, details }) => (
+                      <li key={tool} className="px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-800">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-medium">{tool}</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-800 border border-gray-300">
+                            {level}
+                          </span>
+                        </div>
+                        {details && details.length > 0 && (
+                          <div className="mt-1 text-xs text-gray-500 italic">
+                            {details.join(', ')}
+                          </div>
+                        )}
                       </li>
                     ))}
                   </ul>

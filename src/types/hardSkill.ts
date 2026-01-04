@@ -9,6 +9,7 @@ export interface HardSkill {
   description?: string;
   description_id?: string;
   isActive?: boolean;
+  details?: string[];
   createdAt: string;
   updatedAt: string;
 }

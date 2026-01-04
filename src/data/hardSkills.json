@@ -7,6 +7,12 @@
       "level": "Expert",
       "order": 1,
       "description": "",
+      "details": [
+        "Vector Illustration",
+        "Typography Control",
+        "Brand Identity",
+        "Print Design"
+      ],
       "isActive": true,
       "createdAt": "2025-01-19T00:00:00.000Z",
       "updatedAt": "2025-12-27T02:43:29.766Z"
@@ -18,6 +24,12 @@
       "level": "Expert",
       "order": 2,
       "description": "",
+      "details": [
+        "Photo Manipulation",
+        "Digital Imaging",
+        "Color Grading",
+        "Mockup Creation"
+      ],
       "isActive": true,
       "createdAt": "2025-01-19T00:00:00.000Z",
       "updatedAt": "2025-12-19T11:33:42.161Z"
@@ -29,6 +41,12 @@
       "level": "Advanced",
       "order": 3,
       "description": "",
+      "details": [
+        "UI/UX System",
+        "Prototyping",
+        "Auto Layout",
+        "Wireframing"
+      ],
       "isActive": true,
       "createdAt": "2025-01-19T00:00:00.000Z",
       "updatedAt": "2025-01-19T00:00:00.000Z"
@@ -40,6 +58,11 @@
       "level": "Intermediate",
       "order": 4,
       "description": "",
+      "details": [
+        "Social Media Visuals",
+        "Presentation Design",
+        "Quick Templating"
+      ],
       "isActive": true,
       "createdAt": "2025-01-19T00:00:00.000Z",
       "updatedAt": "2025-01-19T00:00:00.000Z"
