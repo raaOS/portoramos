@@ -137,7 +137,7 @@ export default function HorizontalTestimonial() {
               <div className="h-full rounded-2xl border border-gray-100 bg-white p-5 transition-colors hover:border-black select-none cursor-pointer">
                 <div className="mb-3 flex items-center gap-3">
                   {/* Avatar with Initials */}
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-[#E60023] flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-sm font-bold">
                       {testimonial.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                     </span>
