@@ -75,7 +75,6 @@ export default function HardSkillsAccordion() {
 
                 return (
                     <motion.div
-                        layout
                         key={skill.id}
                         className={`
                             overflow-hidden rounded-2xl border transition-colors duration-300
@@ -84,8 +83,7 @@ export default function HardSkillsAccordion() {
                         initial={false}
                     >
                         {/* Header / Trigger */}
-                        <motion.button
-                            layout="position"
+                        <button
                             onClick={() => toggle(skill.id)}
                             className="w-full flex items-center justify-between p-4 text-left outline-none"
                         >
@@ -123,7 +121,7 @@ export default function HardSkillsAccordion() {
                             >
                                 <ChevronDown className="w-4 h-4" />
                             </motion.div>
-                        </motion.button>
+                        </button>
 
                         {/* Expanded Content */}
                         <AnimatePresence initial={false}>
