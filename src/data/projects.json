@@ -144,9 +144,21 @@
       "order": 5,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-05T18:20:13.758Z",
+      "updatedAt": "2026-01-05T18:20:24.556Z",
       "likes": 22,
-      "shares": 0
+      "shares": 0,
+      "allowComments": true,
+      "narrative": {
+        "challenge": "",
+        "solution": "",
+        "result": ""
+      },
+      "comparison": {
+        "beforeImage": "/assets/media/tempat-perlindungan-sneaker-surealis-cover.jpg",
+        "beforeType": "image",
+        "afterImage": "",
+        "afterType": "image"
+      }
     },
     {
       "id": "gen-1766512146544-4",
@@ -616,5 +628,5 @@
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-05T18:20:24.566Z"
+  "lastUpdated": "2026-01-05T18:28:16.621Z"
 }
