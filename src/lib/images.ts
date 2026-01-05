@@ -95,6 +95,12 @@ function cloudinaryVideo(u: string, opts?: { width?: number, quality?: string })
 
 function cloudinaryPosterFromVideo(u: string, opts?: { width?: number }) {
   u = (u || '').trim()
+  if (u.startsWith('/')) {
+    // For local videos, we can't auto-generate a poster easily without a server.
+    // Return the video URL itself or a generic placeholder if needed.
+    // Most browsers will show the first frame if poster is missing.
+    return undefined
+  }
   try {
     // Normalize embed URL first
     u = fromPlayerToAsset(u)

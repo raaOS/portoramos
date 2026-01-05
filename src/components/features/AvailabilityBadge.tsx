@@ -11,9 +11,9 @@ interface AvailabilityBadgeProps {
 export default function AvailabilityBadge({ status, text, className = '' }: AvailabilityBadgeProps) {
     const config = {
         available: {
-            color: 'bg-green-500',
-            glow: 'shadow-[0_0_10px_rgba(34,197,94,0.5)]',
-            containerStyle: 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400',
+            color: 'bg-emerald-400',
+            glow: 'shadow-[0_0_15px_rgba(52,211,153,0.6)]',
+            containerStyle: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 font-bold',
             defaultText: 'Available for Work'
         },
         booked: {

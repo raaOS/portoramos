@@ -3,67 +3,67 @@
     "title": "PORTOFOLIO",
     "backgroundTrail": [
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766511410/71182738_1401283963356534_8000667800149668246_n._afmhq4.jpg",
+        "src": "/assets/media/71182738_1401283963356534_8000667800149668246_n._afmhq4.jpg",
         "isActive": true,
         "slug": "politik-pop-digital"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766511404/56902586_131788281260049_7675610485611207784_n._knzgbz.jpg",
+        "src": "/assets/media/56902586_131788281260049_7675610485611207784_n._knzgbz.jpg",
         "isActive": true,
         "slug": "desain-sampul-hijau-tua"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766511404/65094109_447190742731823_8309721483532366025_n._i2ycll.jpg",
+        "src": "/assets/media/65094109_447190742731823_8309721483532366025_n._i2ycll.jpg",
         "isActive": true,
         "slug": "identitas-monogram-hijau"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766511408/71522407_2596255897107414_8216930195447611676_n._mvl94x.jpg",
+        "src": "/assets/media/71522407_2596255897107414_8216930195447611676_n._mvl94x.jpg",
         "isActive": true,
         "slug": "tempat-perlindungan-sneaker-surealis"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766511407/72464877_446364572670062_7682711504991266256_n._tzbict.jpg",
+        "src": "/assets/media/72464877_446364572670062_7682711504991266256_n._tzbict.jpg",
         "isActive": true,
         "slug": "overlay-bunga-barok-digital"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766511405/56691812_436664047104002_245358610139596179_n._mqghtw.jpg",
+        "src": "/assets/media/56691812_436664047104002_245358610139596179_n._mqghtw.jpg",
         "isActive": true,
         "slug": "tipografi-alam-kontras-tinggi"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766506231/107931191_1416602085192572_1750575611016893044_n._kcjgwo.jpg",
+        "src": "/assets/media/107931191_1416602085192572_1750575611016893044_n._kcjgwo.jpg",
         "isActive": true,
         "slug": "efek-poster-bunga-berkerut"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766506232/72789139_180503672996929_5231578228114234400_n._pp3mlc.jpg",
+        "src": "/assets/media/72789139_180503672996929_5231578228114234400_n._pp3mlc.jpg",
         "isActive": true,
         "slug": "tipografi-mekar-gotik"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766506233/115759441_123143202799951_1039615396094325450_n._juc6oq.jpg",
+        "src": "/assets/media/115759441_123143202799951_1039615396094325450_n._juc6oq.jpg",
         "isActive": true,
         "slug": "pastoral-kawanan-berhalo"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766506230/71525154_2498287263540385_2199075296045841127_n._duuq1o.jpg",
+        "src": "/assets/media/71525154_2498287263540385_2199075296045841127_n._duuq1o.jpg",
         "isActive": true,
         "slug": "studi-visual-tekstur-digital"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766506230/75358225_759371957898673_8301322125441100676_n._u57wpm.jpg",
+        "src": "/assets/media/75358225_759371957898673_8301322125441100676_n._u57wpm.jpg",
         "isActive": true,
         "slug": "kaleidoskop-tipografi-gradien"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766506230/90094173_1716712288467066_3601632931290688093_n._pewfoe.jpg",
+        "src": "/assets/media/90094173_1716712288467066_3601632931290688093_n._pewfoe.jpg",
         "isActive": true,
         "slug": "belenggu-sandal-surgawi"
       },
       {
-        "src": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766511406/97960042_171939960948096_3545717322637505399_n._aw7f0d.jpg",
+        "src": "/assets/media/97960042_171939960948096_3545717322637505399_n._aw7f0d.jpg",
         "isActive": true,
         "slug": "narasi-visual-moodboard"
       }
