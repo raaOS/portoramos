@@ -37,7 +37,7 @@
         "beforeImage": "https://res.cloudinary.com/dcb3dslfw/image/upload/v1766511410/71182738_1401283963356534_8000667800149668246_n._afmhq4.jpg",
         "beforeType": "image",
         "afterImage": "",
-        "afterType": "image"
+        "afterType": "video"
       }
     },
     {
@@ -616,5 +616,5 @@
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-04T17:09:47.807Z"
+  "lastUpdated": "2026-01-05T15:37:55.702Z"
 }
