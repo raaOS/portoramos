@@ -853,6 +853,86 @@
         ],
         "avatar": "https://ui-avatars.com/api/?name=Adit&background=random"
       }
+    ],
+    "synctest": [
+      {
+        "id": "c-synctest-0-1767633802826",
+        "text": "Visualnya manja di mata �",
+        "name": "Adit",
+        "createdAt": "2026-01-04T10:46:53.839Z",
+        "likes": 88,
+        "replies": [
+          {
+            "id": "r-synctest-0-admin",
+            "text": "Thanks for the support! 🔥",
+            "name": "Ramos",
+            "time": "2 menit yang lalu",
+            "createdAt": "2026-01-05T02:47:11.994Z",
+            "likes": 5,
+            "avatar": "https://ui-avatars.com/api/?name=Ramos&background=000&color=fff"
+          }
+        ],
+        "avatar": "https://ui-avatars.com/api/?name=Adit&background=random"
+      },
+      {
+        "id": "c-synctest-1-1767633802826",
+        "text": "Detail teksturnya dapet banget, rapi! �",
+        "name": "Rizky",
+        "createdAt": "2026-01-04T04:56:59.481Z",
+        "likes": 53,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Rizky&background=random"
+      }
+    ],
+    "synctest2": [
+      {
+        "id": "c-synctest2-0-1767634066372",
+        "text": "Komposisi warnanya juara sih ini, adem liatnya.",
+        "name": "Tiara",
+        "createdAt": "2026-01-05T13:49:32.361Z",
+        "likes": 50,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Tiara&background=random"
+      },
+      {
+        "id": "c-synctest2-1-1767634066372",
+        "text": "Keren banget! 🔥",
+        "name": "Fani",
+        "createdAt": "2026-01-05T01:51:07.272Z",
+        "likes": 39,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Fani&background=random"
+      }
+    ],
+    "self-portrait-muka-bangun-tidur": [
+      {
+        "id": "c-self-portrait-muka-bangun-tidur-0-1767642782753",
+        "text": "Color grading-nya pake apa bang? Cakepp",
+        "name": "Hana",
+        "createdAt": "2026-01-04T11:22:54.361Z",
+        "likes": 41,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Hana&background=random"
+      },
+      {
+        "id": "c-self-portrait-muka-bangun-tidur-1-1767642782753",
+        "text": "Color grading-nya pake apa bang? Cakepp",
+        "name": "Kevin",
+        "createdAt": "2026-01-04T23:03:50.056Z",
+        "likes": 94,
+        "replies": [
+          {
+            "id": "r-self-portrait-muka-bangun-tidur-1-user",
+            "text": "Biasanya sih Red Giant bang kalo look gini.",
+            "name": "Yanto",
+            "time": "2 menit yang lalu",
+            "createdAt": "2026-01-05T02:05:38.295Z",
+            "likes": 9,
+            "avatar": "https://ui-avatars.com/api/?name=Yanto&background=random"
+          }
+        ],
+        "avatar": "https://ui-avatars.com/api/?name=Kevin&background=random"
+      }
     ]
   }
 }
