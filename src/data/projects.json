@@ -142,7 +142,7 @@
       "playsInline": false,
       "galleryItems": [],
       "order": 5,
-      "status": "published",
+      "status": "draft",
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2025-12-27T02:41:59.526Z",
       "likes": 22,
@@ -159,7 +159,7 @@
       "coverWidth": 640,
       "coverHeight": 800,
       "gallery": [
-        "/assets/media/AQMRJH0BtqJVJdw_PX1iLNUZuM7OjhI8KOt8dAx5yn6ryPif1yfQ7wrl9s7ZaP3J-J9oYFbOy8QKyVRA8dUAtzm738de-P5C_yuiotv.mp4"
+        "/assets/media/tempat-perlindungan-sneaker-surealis-gallery-1.mp4"
       ],
       "tags": [
         "image"
@@ -172,7 +172,7 @@
       "galleryItems": [
         {
           "kind": "video",
-          "src": "/assets/media/AQMRJH0BtqJVJdw_PX1iLNUZuM7OjhI8KOt8dAx5yn6ryPif1yfQ7wrl9s7ZaP3J-J9oYFbOy8QKyVRA8dUAtzm738de-P5C_yuiotv.mp4",
+          "src": "/assets/media/tempat-perlindungan-sneaker-surealis-gallery-1.mp4",
           "isActive": true
         }
       ],
@@ -616,5 +616,5 @@
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-05T15:37:55.702Z"
+  "lastUpdated": "2026-01-05T18:20:14.059Z"
 }
