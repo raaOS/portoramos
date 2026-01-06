@@ -348,7 +348,7 @@ export default function SimpleTrail({ backgroundTrail = [] }: SimpleTrailProps) 
               width: 'auto'
             }}
             priority={index < 3} // Prioritize first 3 images
-            unoptimized={imageSrc.startsWith('http')}
+            unoptimized={true} // FORCE UNOPTIMIZED to fix Vercel 400 errors
           />
         ))}
       </div>
