@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import IndexClientWithAutoUpdate from '@/components/home/IndexClientWithAutoUpdate'
 import { allProjectsAsync } from '@/lib/projects'
 import { baseSEO } from '@/lib/seo'
@@ -22,7 +23,9 @@ export default async function Home() {
 
   return (
     <main id="main-content" role="main">
-      <IndexClientWithAutoUpdate initialProjects={filteredProjects} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <IndexClientWithAutoUpdate initialProjects={filteredProjects} />
+      </Suspense>
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { UpdateProjectData } from '@/types/projects';
 import { checkAdminAuth } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
@@ -112,6 +113,13 @@ export async function PUT(
     const updateMessage = `✏️ **PROJECT UPDATED**\n\n**Title:** ${updatedProject.title}\n**ID:** ${updatedProject.id}\n**Changes:** ${changedFields || 'No specific fields'}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
     sendTelegramAlert(updateMessage);
 
+    // Auto-revalidate paths so updates appear immediately
+    revalidatePath('/', 'layout');
+    revalidatePath('/works');
+    revalidatePath(`/works/${updatedProject.slug}`);
+    revalidatePath('/admin');
+
+
     return NextResponse.json({
       success: true,
       project: updatedProject
@@ -150,6 +158,12 @@ export async function DELETE(
 
     const successMessage = `🗑️ **PROJECT DELETED**\n\n**ID:** ${id}\n**By:** Admin\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
     sendTelegramAlert(successMessage);
+
+    // Auto-revalidate paths so deletion is reflected immediately
+    revalidatePath('/', 'layout');
+    revalidatePath('/works');
+    revalidatePath('/admin');
+
 
     return NextResponse.json({
       success: true,

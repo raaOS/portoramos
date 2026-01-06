@@ -36,8 +36,8 @@ const nextConfig = {
   experimental: {
     // Enable modern bundling
     esmExternals: true,
-    // Optimize CSS for better performance (inline critical CSS) - requires 'critters' package
-    optimizeCss: true,
+    // Optimize CSS disabled to prevent blocking issues reported by user
+    optimizeCss: false,
     // Optimize package imports to reduce bundle size
     optimizePackageImports: [
       'framer-motion',

@@ -20,32 +20,18 @@ export const projectService = {
                 await ensureDataDir();
                 data = (await loadData(DATA_FILE)) as ProjectsData | null;
             }
-            // 2. Production: Prefer Static Import (Fastest, data embedded at build time)
-            // Since Vercel rebuilds on GitHub push, this data is up-to-date for the deployment.
+            // 2. Production: Use GitHub Service (which now uses Next.js Data Cache)
+            // This allows us to Revalidate / Purge cache on demand (Admin functionality).
+            // Static import (projectsData) is too rigid and requires redeploy.
             else {
-                if (projectsData && (projectsData as any).projects) {
-                    data = projectsData as unknown as ProjectsData;
-                    // Optional: If 'fresh' is true, we could still force GitHub DB, but for LCP we want speed.
-                    // If fresh is requested (e.g. Admin panel sync), we might want to bypass this?
-                    // But getProjects() usually called by page.tsx (Server Component) for initial render.
-                    if (fresh) {
-                        try {
-                            const ghData = await githubService.getFile(true);
-                            if (ghData && ghData.content) data = ghData.content as ProjectsData;
-                        } catch (e: any) {
-                            console.error('[ProjectService] Fresh GitHub fetch failed:', e.message);
-                            // If forbidden/unauthorized, it's likely Env Vars. If 404, might be private repo without token.
-                            console.warn('[ProjectService] Falling back to STATIC build-time data. Data may be stale.');
-                        }
-                    }
-                } else {
-                    // Fallback if import failed (unlikely)
-                    try {
-                        const ghData = await githubService.getFile();
-                        if (ghData && ghData.content) data = ghData.content as ProjectsData;
-                    } catch (error) {
-                        console.warn('Failed to fetch from GitHub:', error);
-                    }
+                try {
+                    // getFile() calls githubService.getFileContent(local=false) in Prod
+                    // which uses fetch() -> cached by Next.js -> revalidatable via revalidatePath
+                    const ghData = await githubService.getFile();
+                    if (ghData && ghData.content) data = ghData.content as ProjectsData;
+                } catch (error) {
+                    console.warn('Failed to fetch from GitHub, falling back to static data:', error);
+                    // Fallback will be handled by step 3
                 }
             }
 

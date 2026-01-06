@@ -22,9 +22,9 @@ export const revalidate = 60;
 
 export default async function ProjectPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
-    // CRITICAL: Pass true to bypass local filesystem cache in production
-    // This ensures we fetch the latest projects.json from GitHub, which contains the newly added project
-    const { content: { projects } } = await githubService.getFile(true);
+    // Use cached data for instant page load (Performance Fix)
+    // Updates are handled via on-demand revalidation when Admin saves changes
+    const { content: { projects } } = await githubService.getFile(false);
     const p = projects.find(project => project.slug === params.slug);
 
     if (!p) return notFound();

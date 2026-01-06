@@ -2,8 +2,9 @@ import type { Project } from '@/types/projects';
 import { projectService } from '@/lib/services/projectService';
 
 export async function allProjectsAsync(): Promise<Project[]> {
-  // Always fetch FRESH data for homepage to ensure real-time updates (no cache)
-  const { projects } = await projectService.getProjects(undefined, true);
+  // Use cached data for homepage to ensure instant load (Performance Fix)
+  // Revalidation handles updates via standard Next.js ISR/On-Demand Revalidation
+  const { projects } = await projectService.getProjects(undefined, false);
   return (projects || [])
     .filter(p => p.status !== 'draft')
     .slice()

@@ -41,33 +41,6 @@
       }
     },
     {
-      "title": "Gantungan Animasik",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Animasi gantungan kunci 3D yang halus dengan pencahayaan sinematik, menampilkan detail tekstur dan gerakan yang dinamis.",
-      "cover": "/assets/media/gantungan-cover.mp4",
-      "coverWidth": 1080,
-      "coverHeight": 1920,
-      "gallery": [],
-      "tags": [
-        "video"
-      ],
-      "external_link": "",
-      "autoplay": true,
-      "muted": true,
-      "loop": true,
-      "playsInline": true,
-      "id": "project-1757868324869",
-      "slug": "gantungan",
-      "galleryItems": [],
-      "order": 2,
-      "status": "published",
-      "createdAt": "2025-09-14T16:45:24.869Z",
-      "updatedAt": "2026-01-01T17:12:14.283Z",
-      "likes": 37,
-      "shares": 5
-    },
-    {
       "id": "gen-1766512146544-1",
       "title": "Kolase Lanskap Menanjak",
       "slug": "kolase-lanskap-menanjak",
@@ -667,5 +640,5 @@
       "updatedAt": "2026-01-05T19:53:02.238Z"
     }
   ],
-  "lastUpdated": "2026-01-05T19:53:02.238Z"
+  "lastUpdated": "2026-01-06T19:37:30.920Z"
 }

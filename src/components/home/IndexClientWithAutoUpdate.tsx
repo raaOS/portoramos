@@ -19,8 +19,8 @@ interface ProjectsResponse {
 }
 
 const fetchProjects = async (): Promise<ProjectsResponse> => {
-  // Always fetch fresh data client-side to ensure draft/publish status is reflected immediately
-  const response = await fetch(`/api/projects?status=published&fresh=true&t=${Date.now()}`);
+  // Use cached data for instant load. Revalidation is handled by Admin actions.
+  const response = await fetch(`/api/projects?status=published`);
   if (!response.ok) {
     throw new Error('Failed to fetch projects');
   }

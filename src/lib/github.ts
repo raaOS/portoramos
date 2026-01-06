@@ -62,8 +62,10 @@ export class GitHubService {
      * @param noCache - If true, bypasses local file system and cache to get fresh data from GitHub (important for SHA)
      */
     async getFileContent<T>(filePath: string, noCache = false): Promise<{ content: T, sha: string }> {
-        // If noCache is false, try reading from local filesystem first (Robust for Local Build & Vercel if file exists)
-        if (!noCache) {
+        // If noCache is false, try reading from local filesystem first (Robust for Local Build)
+        // BUT in Production, we want to use Next.js Data Cache (fetch) so we can revalidate it on-demand.
+        // Local files in Vercel are static and won't reflect Admin updates until redeploy.
+        if (!noCache && process.env.NODE_ENV === 'development') {
             try {
                 const localPath = path.join(process.cwd(), filePath);
                 // Check if file exists

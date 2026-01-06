@@ -34,8 +34,8 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
   useEffect(() => {
     const updateCount = () => {
       // Mobile: 6 projects balances speed and content above fold
-      // Desktop: 30 projects for rich above-fold content
-      setVisibleCount(window.innerWidth > 768 ? 30 : 6)
+      // Desktop: 6 projects (2 Rows) - Optimal balance to prevent Network Choke (Video traffic jam).
+      setVisibleCount(window.innerWidth > 768 ? 6 : 6)
     }
     updateCount()
 
@@ -118,7 +118,7 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
 
   // Reset visible count when filters change - use smaller mobile count for faster LCP
   useEffect(() => {
-    setVisibleCount(window.innerWidth > 768 ? 30 : 6)
+    setVisibleCount(window.innerWidth > 768 ? 6 : 6)
   }, [filteredProjects])
 
   // Optimized infinite scroll with IntersectionObserver

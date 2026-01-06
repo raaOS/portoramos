@@ -399,9 +399,9 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   }
   const defaultBlurDataURL = blurDataURL || generateBlurDataURL()
 
-  // Fallback to standard <img> for GitHub Raw or if optimization fails (simple detection)
-  // ONLY for images. Videos are handled by the native <video> block above.
-  const useStandardImg = kind === 'image' && (src.includes('raw.githubusercontent.com') || src.startsWith('/assets/media'));
+  // Fallback to standard <img> for Local Assets (to prevent Vercel Optimization Timeouts on large files)
+  // We allow Cloudinary or Remote GitHub to use Next.js Image Optimization, but local files > 4MB tend to fail.
+  const useStandardImg = kind === 'image' && src.startsWith('/assets/media');
 
   if (useStandardImg) {
     return (
@@ -443,7 +443,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         className={className}
         placeholder="blur"
         blurDataURL={defaultBlurDataURL}
-        quality={75}
+        quality={90} // Increased from 75 to 90 for "Retina-like" sharpness
         style={{
           objectFit: objectFit,
           width: '100%',

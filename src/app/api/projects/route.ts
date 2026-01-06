@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { CreateProjectData } from '@/types/projects';
 import { checkAdminAuth } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
@@ -100,6 +101,12 @@ export async function POST(request: NextRequest) {
 
     const successMessage = `✨ **NEW PROJECT CREATED**\n\n**Title:** ${newProject.title}\n**Client:** ${newProject.client}\n**ID:** ${newProject.id}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
     sendTelegramAlert(successMessage);
+
+    // Auto-revalidate paths so the new project appears immediately on public pages
+    revalidatePath('/', 'layout'); // Revalidate everything (simplest and safest)
+    revalidatePath('/works');
+    revalidatePath('/admin');
+
 
     return NextResponse.json({
       success: true,

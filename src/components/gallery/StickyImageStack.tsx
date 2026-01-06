@@ -137,9 +137,8 @@ function Card({
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Sharper sizing logic
                             className="object-cover"
                             priority={index === 0} // Prioritize the first card
-                            // Vercel sometimes fails to optimize raw.githubusercontent.com (400 Bad Request).
-                            // We force unoptimized=true for external URLs to ensure they APPEAR, even if slower.
-                            unoptimized={item.src.startsWith('http')}
+                            // FORCE UNOPTIMIZED: Prevent Vercel 400 errors.
+                            unoptimized={true}
                         />
                     </div>
                 )}

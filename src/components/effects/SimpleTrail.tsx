@@ -348,8 +348,8 @@ export default function SimpleTrail({ backgroundTrail = [] }: SimpleTrailProps) 
               width: 'auto'
             }}
             priority={index < 3} // Prioritize first 3 images
-            // Force unoptimized for remote images to prevent 400 errors
-            unoptimized={imageSrc.startsWith('http')}
+            // FORCE UNOPTIMIZED: Ensure trail images always appear.
+            unoptimized={true}
           />
         ))}
       </div>
