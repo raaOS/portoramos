@@ -6,7 +6,8 @@ const nextConfig = {
       { protocol: 'https', hostname: 'plus.unsplash.com' },
       { protocol: 'https', hostname: 'picsum.photos' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
-      { protocol: 'https', hostname: 'via.placeholder.com' }
+      { protocol: 'https', hostname: 'via.placeholder.com' },
+      { protocol: 'https', hostname: 'raw.githubusercontent.com' }
     ],
     // Configure image qualities to support both 75 (default) and 90 (high quality)
     qualities: [75, 90],

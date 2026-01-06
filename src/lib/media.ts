@@ -8,7 +8,7 @@ export const isVideoLink = (url: string) => {
 };
 
 export const detectImageDimensions = async (url: string): Promise<{ width: number; height: number }> => {
-    if (!url || !url.startsWith('http')) {
+    if (!url || (!url.startsWith('http') && !url.startsWith('/'))) {
         throw new Error('Invalid URL');
     }
 

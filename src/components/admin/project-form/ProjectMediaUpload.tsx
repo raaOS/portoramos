@@ -1,5 +1,6 @@
 import { ProjectFormData } from '@/hooks/useProjectForm';
-import { Loader2 } from 'lucide-react';
+import { Loader2, UploadCloud } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 interface ProjectMediaUploadProps {
     formData: ProjectFormData;
@@ -9,6 +10,42 @@ interface ProjectMediaUploadProps {
 }
 
 export default function ProjectMediaUpload({ formData, errors, isDetectingDimensions, updateField }: ProjectMediaUploadProps) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // DETECT ENVIRONMENT via Hostname
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const endpoint = isLocal ? '/api/upload' : '/api/upload/github';
+
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!res.ok) throw new Error('Upload failed');
+
+            const data = await res.json();
+            if (data.url) {
+                updateField('cover', data.url);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Upload failed, check console');
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
     return (
         <div className="space-y-4">
             <div>
@@ -22,8 +59,28 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                         onChange={(e) => updateField('cover', e.target.value)}
                         className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.cover ? 'border-red-300' : 'border-gray-300'
                             }`}
-                        placeholder="https://..."
+                        placeholder="https://... or /assets/..."
                     />
+
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        onChange={handleFileChange}
+                        accept="image/*,video/*"
+                    />
+
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 flex items-center gap-2"
+                        title="Upload Local File"
+                    >
+                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                        <span className="hidden sm:inline">Upload</span>
+                    </button>
+
                     {isDetectingDimensions && (
                         <div className="flex items-center px-2 text-violet-600">
                             <Loader2 className="w-5 h-5 animate-spin" />
@@ -58,3 +115,4 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
         </div>
     );
 }
+

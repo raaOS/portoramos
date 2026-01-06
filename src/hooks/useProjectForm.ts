@@ -130,7 +130,7 @@ export const useProjectForm = (project?: Project) => {
         else if (formData.description.length < 5) newErrors.description = 'Description must be at least 5 characters';
 
         if (!formData.cover.trim()) newErrors.cover = 'Cover image/video URL is required';
-        else if (!formData.cover.startsWith('http')) newErrors.cover = 'Please enter a valid URL';
+        else if (!formData.cover.startsWith('http') && !formData.cover.startsWith('/')) newErrors.cover = 'Please enter a valid URL';
 
         return newErrors;
     };

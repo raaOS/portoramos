@@ -14,9 +14,17 @@ export async function generateStaticParams() {
     }));
 }
 
+// Allow new pages to be generated on demand
+export const dynamicParams = true;
+
+// Revalidate this page every 60 seconds (ISR)
+export const revalidate = 60;
+
 export default async function ProjectPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
-    const { content: { projects } } = await githubService.getFile();
+    // CRITICAL: Pass true to bypass local filesystem cache in production
+    // This ensures we fetch the latest projects.json from GitHub, which contains the newly added project
+    const { content: { projects } } = await githubService.getFile(true);
     const p = projects.find(project => project.slug === params.slug);
 
     if (!p) return notFound();

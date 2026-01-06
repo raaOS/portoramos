@@ -903,6 +903,7 @@
         "replies": [],
         "avatar": "https://ui-avatars.com/api/?name=Fani&background=random"
       }
+<<<<<<< Updated upstream
     ],
     "self-portrait-muka-bangun-tidur": [
       {
@@ -933,6 +934,8 @@
         ],
         "avatar": "https://ui-avatars.com/api/?name=Kevin&background=random"
       }
+=======
+>>>>>>> Stashed changes
     ]
   }
 }

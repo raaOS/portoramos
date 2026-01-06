@@ -170,63 +170,23 @@ export default function AdminProjectsClient() {
 
 
   const triggerGithubSync = async (projectsDataToSync?: Project[], skipConfirm = false, galleryIds?: string[]) => {
-    if (!githubConfig) {
-      if (!skipConfirm) showError('Please configure GitHub settings first (click the gear icon).');
-      setShowSettings(true);
-      return;
-    }
-
+    // If we have a connected status or just want to force sync
     if (!skipConfirm && !confirm('Save all changes to GitHub? This will trigger a deploy.')) return;
 
     setIsSavingToGithub(true);
-    // If multiple syncs happen, we might want a generalized message or status?
-    // For now 'pushing' is fine.
     setDeployStatus('pushing');
     setDeployProgress(10);
 
     try {
-      // --- 1. Sync Projects (if provided or if checking projects tab) ---
-      // We default to syncing projects if no specific galleryIds are provided, OR if projectsDataToSync IS provided.
-      // Actually, let's keep it robust:
-      // If galleryIds provided -> Sync Gallery
-      // If projectsDataToSync provided -> Sync Projects
-      // If neither -> Sync Projects (fallback default behavior)
+      const res = await fetch('/api/admin/sync', { method: 'POST' });
+      const data = await res.json();
 
-      const tasks: Promise<any>[] = [];
-
-      // Task A: Projects
-      if (projectsDataToSync || !galleryIds) { // Default to provided projects logic
-        const dataToUse = projectsDataToSync || projects;
-        tasks.push((async () => {
-          const filePath = 'src/data/projects.json';
-          const fileContent = JSON.stringify({
-            projects: dataToUse,
-            lastUpdated: new Date().toISOString()
-          }, null, 2);
-          return performGithubUpdate(filePath, fileContent, 'Update projects via CMS');
-        })());
-      }
-
-      // Task B: Gallery
-      if (galleryIds) {
-        tasks.push((async () => {
-          const filePath = 'src/data/gallery-featured.json';
-          const fileContent = JSON.stringify({
-            featuredProjectIds: galleryIds,
-            lastUpdated: new Date().toISOString()
-          }, null, 2);
-          return performGithubUpdate(filePath, fileContent, 'Update featured gallery via CMS');
-        })());
-      }
-
-      await Promise.all(tasks);
+      if (!res.ok) throw new Error(data.error || 'Msg failed');
 
       setDeployStatus('synced');
-      success('Synced to GitHub');
+      success('Synced to GitHub & Triggered Vercel!');
 
-      queryClient.invalidateQueries({ queryKey: ['projects', 'published'] });
-
-      // Stop loading state, but keep 'synced' status visible in the badge
+      // Stop loading state
       setTimeout(() => {
         setIsSavingToGithub(false);
       }, 1500);
@@ -313,6 +273,7 @@ export default function AdminProjectsClient() {
         ...old,
         projects: [...(old?.projects || []), newItem.project]
       }));
+      queryClient.invalidateQueries({ queryKey: ['projects', 'published'] }); // Immediate sync for local
       success('Project created');
       setShowCreateForm(false);
       // Determine what to sync
@@ -357,6 +318,7 @@ export default function AdminProjectsClient() {
     },
     onSuccess: (data, variables) => {
       setEditingProject(null);
+      queryClient.invalidateQueries({ queryKey: ['projects', 'published'] }); // Immediate sync for local
       const freshData = queryClient.getQueryData(['projects', 'admin']) as any;
       if (freshData?.projects) triggerGithubSync(freshData.projects, true);
     },
@@ -378,6 +340,7 @@ export default function AdminProjectsClient() {
         ...old,
         projects: old.projects.filter((p: Project) => p.id !== id)
       }));
+      queryClient.invalidateQueries({ queryKey: ['projects', 'published'] }); // Immediate sync for local
       success('Project deleted');
       const freshData = queryClient.getQueryData(['projects', 'admin']) as any;
       if (freshData?.projects) triggerGithubSync(freshData.projects, true);
@@ -750,9 +713,13 @@ export default function AdminProjectsClient() {
 
       {showCreateForm && (
         <ProjectForm
-          onSubmit={async (data) => handleCreateProject(data)}
-          onCancel={() => setShowCreateForm(false)}
           title="Create New Project"
+          allProjects={projectsData?.projects || []}
+          onSubmit={async (data) => {
+            createMutation.mutate(data);
+            setShowCreateForm(false);
+          }}
+          onCancel={() => setShowCreateForm(false)}
         />
       )}
 

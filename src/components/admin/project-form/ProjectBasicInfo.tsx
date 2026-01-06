@@ -1,29 +1,78 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ProjectFormData } from '@/hooks/useProjectForm';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, X, Plus } from 'lucide-react';
+import { Project } from '@/types/projects';
 
 interface ProjectBasicInfoProps {
     formData: ProjectFormData;
     errors: Record<string, string>;
     updateField: <K extends keyof ProjectFormData>(field: K, value: ProjectFormData[K]) => void;
+    allProjects?: Project[];
 }
 
-export default function ProjectBasicInfo({ formData, errors, updateField }: ProjectBasicInfoProps) {
+export default function ProjectBasicInfo({ formData, errors, updateField, allProjects = [] }: ProjectBasicInfoProps) {
     const [isGenerating, setIsGenerating] = useState(false);
+    const [tagInput, setTagInput] = useState('');
     const [aiOptions, setAiOptions] = useState({
         style: 'estetik & profesional',
         maxTitleWords: 5,
         sentenceCount: 2,
-        viralPackage: true // New option
+        viralPackage: true
     });
 
     const isValidMediaUrl = (url: string) => {
         if (!url) return false;
-        try {
-            new URL(url);
-            return true;
-        } catch {
-            return false;
+        return url.startsWith('http') || url.startsWith('/');
+    };
+
+    // Calculate unique existing tags from all projects
+    const availableTags = useMemo(() => {
+        const tags = new Set<string>();
+        allProjects.forEach(p => {
+            if (p.tags) {
+                p.tags.forEach(t => tags.add(t.trim()));
+            }
+        });
+        // Remove currently selected tags from the suggestion list
+        const currentTags = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+        currentTags.forEach(t => {
+            // Case insensitive removal
+            for (const existing of tags) {
+                if (existing.toLowerCase() === t) tags.delete(existing);
+            }
+        });
+        return Array.from(tags).sort();
+    }, [allProjects, formData.tags]);
+
+    const currentTagsList = useMemo(() => {
+        return formData.tags.split(',').map(t => t.trim()).filter(t => t);
+    }, [formData.tags]);
+
+    const handleAddTag = (tag: string) => {
+        const cleanTag = tag.trim();
+        if (!cleanTag) return;
+
+        const current = new Set(formData.tags.split(',').map(t => t.trim()).filter(t => t));
+        // Check case-insensitive existence
+        const exists = Array.from(current).some(t => t.toLowerCase() === cleanTag.toLowerCase());
+
+        if (!exists) {
+            current.add(cleanTag);
+            updateField('tags', Array.from(current).join(', '));
+        }
+        setTagInput('');
+    };
+
+    const handleRemoveTag = (tagToRemove: string) => {
+        const current = formData.tags.split(',').map(t => t.trim()).filter(t => t);
+        const filtered = current.filter(t => t.toLowerCase() !== tagToRemove.toLowerCase());
+        updateField('tags', filtered.join(', '));
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddTag(tagInput);
         }
     };
 
@@ -34,7 +83,6 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
         }
 
         setIsGenerating(true);
-        // 1. Generate Caption/Description (Try-Catch to be non-blocking)
         try {
             try {
                 const res = await fetch('/api/ai/generate-details', {
@@ -50,6 +98,8 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                     const data = await res.json();
                     if (data.title) updateField('title', data.title);
                     if (data.description) updateField('description', data.description);
+                    if (data.client) updateField('client', data.client);
+                    if (data.tags) updateField('tags', data.tags);
                 } else {
                     console.warn("AI Text Gen failed, skipping to Viral Package...");
                 }
@@ -57,11 +107,7 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                 console.warn("AI Text Gen Network error warning:", aiError);
             }
 
-            // 2. If Viral Package is enabled AND we have a project ID (edit mode) or after save
-            // NOTE: For NEW projects, we'll need to handle this after the project is actually created 
-            // OR we can generate them and send back to the form state if we add likes/shares to form.
             if (aiOptions.viralPackage) {
-                // For existing projects being edited:
                 if (formData.id) {
                     await fetch('/api/admin/projects/magic-complete', {
                         method: 'POST',
@@ -72,7 +118,6 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                         })
                     });
                 }
-                // Also update local form state for immediate feedback
                 updateField('likes', Math.floor(Math.random() * 401) + 100);
                 updateField('shares', Math.floor(Math.random() * 81) + 20);
             }
@@ -219,13 +264,55 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                         <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                             Tags
                         </label>
-                        <input
-                            type="text"
-                            value={formData.tags}
-                            onChange={(e) => updateField('tags', e.target.value)}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
-                            placeholder="e.g. React, 3D, Motion (comma separated)"
-                        />
+                        {/* New Tag Selector UI */}
+                        <div className="space-y-3">
+                            {/* Selected Tags */}
+                            <div className="flex flex-wrap gap-2 min-h-[38px] p-2 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-violet-500 transition-all">
+                                {currentTagsList.map((tag, idx) => (
+                                    <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-violet-100 text-violet-700 group">
+                                        {tag}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveTag(tag)}
+                                            className="hover:bg-violet-200 rounded-full p-0.5 transition-colors"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    </span>
+                                ))}
+                                <input
+                                    type="text"
+                                    value={tagInput}
+                                    onChange={(e) => setTagInput(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    className="flex-1 min-w-[100px] outline-none text-sm bg-transparent"
+                                    placeholder={currentTagsList.length === 0 ? "Type tag & Enter..." : ""}
+                                />
+                            </div>
+
+                            {/* Suggestion / Tag Bank */}
+                            {availableTags.length > 0 && (
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Suggested Tags</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {availableTags.slice(0, 10).map((tag, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => handleAddTag(tag)}
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+                                            >
+                                                <Plus className="w-3 h-3 text-gray-400" />
+                                                {tag}
+                                            </button>
+                                        ))}
+                                        {availableTags.length > 10 && (
+                                            <span className="text-[10px] text-gray-400 self-center">+{availableTags.length - 10} more</span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -285,7 +372,7 @@ export default function ProjectBasicInfo({ formData, errors, updateField }: Proj
                                 type="number"
                                 value={formData.initialCommentCount ?? (formData.id ? 0 : 2)}
                                 onChange={(e) => updateField('initialCommentCount', parseInt(e.target.value) || 0)}
-                                className="w-full px-3 py-2 border border-blue-200 rounded-lg bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono text-sm text-blue-700"
+                                className="w-full px-3 py-2 border border-blue-200 rounded-lg bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono text-blue-700"
                                 min="0"
                                 max="10"
                                 placeholder={formData.id ? "0" : "2"}

@@ -16,12 +16,13 @@ import ProjectNarrative from './ProjectNarrative';
 
 interface ProjectFormProps {
     project?: Project;
+    allProjects?: Project[];
     onSubmit: (data: CreateProjectData | UpdateProjectData) => Promise<void>;
     onCancel: () => void;
     title: string;
 }
 
-export default function ProjectForm({ project, onSubmit, onCancel, title }: ProjectFormProps) {
+export default function ProjectForm({ project, allProjects = [], onSubmit, onCancel, title }: ProjectFormProps) {
     const {
         formData,
         errors,
@@ -91,6 +92,7 @@ export default function ProjectForm({ project, onSubmit, onCancel, title }: Proj
                         formData={formData}
                         errors={errors}
                         updateField={updateField}
+                        allProjects={allProjects}
                     />
 
                     <ProjectNarrative

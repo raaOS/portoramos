@@ -3,13 +3,14 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Project } from '@/types/projects';
+import { useSearchParams } from 'next/navigation';
 import { useLastUpdated } from '@/contexts/LastUpdatedContext';
 import { POLLING } from '@/lib/constants';
 import IndexClientInner from './IndexClientInner';
 
 type Props = {
   initialProjects?: Project[];
-  searchParams?: { tag?: string }
+  // searchParams removed, using hook
 }
 
 interface ProjectsResponse {
@@ -19,15 +20,17 @@ interface ProjectsResponse {
 
 const fetchProjects = async (): Promise<ProjectsResponse> => {
   // Always fetch fresh data client-side to ensure draft/publish status is reflected immediately
-  const response = await fetch('/api/projects?status=published&fresh=true');
+  const response = await fetch(`/api/projects?status=published&fresh=true&t=${Date.now()}`);
   if (!response.ok) {
     throw new Error('Failed to fetch projects');
   }
   return response.json();
 };
 
-export default function IndexClientWithAutoUpdate({ initialProjects: serverProjects = [], searchParams }: Props) {
+export default function IndexClientWithAutoUpdate({ initialProjects: serverProjects = [] }: Props) {
   const { setLastUpdated } = useLastUpdated();
+  const searchParams = useSearchParams();
+  const tag = searchParams.get('tag') || '';
 
   const { data } = useQuery({
     queryKey: ['projects', 'published'],
@@ -57,8 +60,6 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
       }
     }
   }, [lastUpdatedStr, projects, setLastUpdated]);
-
-  const tag = searchParams?.tag || '';
 
   return (
     <div>

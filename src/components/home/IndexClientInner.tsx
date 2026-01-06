@@ -195,7 +195,7 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
                     <ProjectCardPinterest
                       project={project}
                       priority={index < 4} // Mobile LCP: Only first 4 need priority
-                      videoEnabled={index !== 0} // Keep video logic
+                      videoEnabled={true} // Enable video for all positions (handled by lazy load)
                     />
                   </motion.div>
                 )

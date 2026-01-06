@@ -90,8 +90,9 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     return () => setIsMounted(false)
   }, [])
 
-  // Force autoplay only if not mobile
-  const effectiveAutoplay = autoplay && shouldLoad && !isMobile
+  // Force autoplay generally if requested, but respect user motion preference
+  // Modern mobile browsers DO support muted autoplay, so we allow it.
+  const effectiveAutoplay = autoplay && shouldLoad;
 
   // Merge forwarded ref (object or callback) with our internal ref so autoplay logic always has a handle
   const setVideoRef = useCallback((node: HTMLVideoElement | null) => {
@@ -160,15 +161,15 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           // 1. Trigger Load if not loaded (with delay to save LCP)
-          // STRICT: On mobile, we NEVER auto-load. User must click.
-          if (!shouldLoad && !loadTimerRef.current && !isMobile) {
-            // Honey Spot Strategy: Tightened Staggered Loading
-            // Random delay between 0.8s and 2.0s (Reduced from 1.5s - 4.5s)
-            // This makes the UI feel more alive without hammering LCP.
-            const jitter = Math.random() * 1200
+          // Relaxed restriction: Allow mobile to auto-load if visible (muted autoplay usually works)
+          if (!shouldLoad && !loadTimerRef.current) {
+            // Honey Spot Strategy: Faster Loading (Reduced from 800+jitter)
+            // Random delay between 200ms and 500ms
+            // This makes the UI feel SNAPPY while still preventing instant hammer.
+            const jitter = Math.random() * 300
             loadTimerRef.current = setTimeout(() => {
               setShouldLoad(true)
-            }, 800 + jitter)
+            }, 200 + jitter)
           }
 
           // 2. Play if loaded and visible
@@ -261,7 +262,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
       <div ref={containerRef} className="relative w-full h-full">
         <video
           ref={setVideoRef}
-          className={className || "w-full h-full object-cover"}
+          className={`${className || "w-full h-full object-cover"} ${!controls ? 'pointer-events-none' : ''}`}
           src={shouldLoad ? src : undefined}
           // poster={poster} -- Removed to prevent "double poster" effect (native vs overlay)
           // We handle the poster via the absolute positioned Image overlay below
@@ -276,7 +277,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           loop={loop}
           playsInline={playsInline}
           controls={controls}
-          preload="none" // Always none. Let autoplay or manual play trigger loading.
+          preload="metadata" // Changed from 'none' to 'metadata' to ensure first frame and dimensions load
           webkit-playsinline="true"
           x5-playsinline="true"
           x5-video-player-type="h5"
@@ -320,27 +321,31 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         />
 
         {/* Optimized Poster Image Overlay - Fades out when video plays */}
-        <div className={`absolute inset-0 z-10 transition-opacity duration-700 pointer-events-none ${canPlay ? 'opacity-0' : 'opacity-100'}`}>
-          <Image
-            src={poster || src}
-            alt={alt}
-            width={width}
-            height={height}
-            priority={priority}
-            loading={priority ? 'eager' : 'lazy'}
-            fetchPriority={priority ? 'high' : 'auto'}
-            sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
-            className={className || "w-full h-full object-cover"}
-            placeholder="blur"
-            blurDataURL={blurDataURL || generateBlurDataURL()}
-            quality={75}
-            style={{
-              objectFit: objectFit,
-              width: '100%',
-              height: '100%'
-            }}
-          />
-        </div>
+        {/* Only render if we have a valid poster OR if it's NOT a video (to allow src fallback) */}
+        {/* If it's a video and no poster, we prefer showing the native video player (black/first frame) than a broken image */}
+        {(poster || kind !== 'video') && (
+          <div className={`absolute inset-0 z-10 transition-opacity duration-700 pointer-events-none ${canPlay ? 'opacity-0' : 'opacity-100'}`}>
+            <Image
+              src={poster || src}
+              alt={alt}
+              width={width}
+              height={height}
+              priority={priority}
+              loading={priority ? 'eager' : 'lazy'}
+              fetchPriority={priority ? 'high' : 'auto'}
+              sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
+              className={className || "w-full h-full object-cover"}
+              placeholder="blur"
+              blurDataURL={blurDataURL || generateBlurDataURL()}
+              quality={75}
+              style={{
+                objectFit: objectFit,
+                width: '100%',
+                height: '100%'
+              }}
+            />
+          </div>
+        )}
 
         {/* Play Button Overlay - Shows when autoplay is blocked OR matches strictly lazy mobile state */}
         {((autoplayBlocked && !hasError) || (isMobile && !shouldLoad)) && (
@@ -393,6 +398,36 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     )
   }
   const defaultBlurDataURL = blurDataURL || generateBlurDataURL()
+
+  // Fallback to standard <img> for GitHub Raw or if optimization fails (simple detection)
+  // ONLY for images. Videos are handled by the native <video> block above.
+  const useStandardImg = kind === 'image' && (src.includes('raw.githubusercontent.com') || src.startsWith('/assets/media'));
+
+  if (useStandardImg) {
+    return (
+      <div className="relative w-full h-full">
+        <img
+          src={src}
+          alt={alt}
+          className={className}
+          loading={priority ? 'eager' : 'lazy'}
+          style={{
+            objectFit: objectFit,
+            width: '100%',
+            height: '100%'
+          }}
+          onError={() => {
+            setHasError(true)
+          }}
+        />
+        {hasError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-500">
+            <span className="text-xs">Error</span>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="relative w-full h-full">

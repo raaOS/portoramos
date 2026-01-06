@@ -64,7 +64,8 @@ export function isVideoLink(u: string): boolean {
   try {
     const s = (u || '').trim()
     if (!s) return false
-    const url = new URL(s)
+    // Use a dummy base to handle relative paths (e.g. /assets/media/...)
+    const url = new URL(s, 'https://example.com')
     if (url.hostname === 'player.cloudinary.com') return true
     if (url.hostname === 'res.cloudinary.com') {
       // Check if it's a video resource in Cloudinary
@@ -138,10 +139,19 @@ export function resolveCover(p: Project): GalleryItem {
   const kind = (inferredVideo ? 'video' : 'image') as GalleryItem['kind']
   if (p.cover) {
     if (inferredVideo) {
-      // Grid video: Upgrade to HD (720p) for better clarity
-      const v = cloudinaryVideo(p.cover, { width: 720 }) // Removed quality: 'eco'
-      const poster = cloudinaryPosterFromVideo(p.cover, { width: 720 })
-      return { kind, src: toMediaProxy(v), poster: poster ? toImageProxy(poster) : undefined, width: p.coverWidth, height: p.coverHeight }
+      if (isCloudinary(new URL(p.cover, 'https://example.com'))) {
+        // Grid video: Upgrade to HD (720p) for better clarity
+        const v = cloudinaryVideo(p.cover, { width: 720 }) // Removed quality: 'eco'
+        const poster = cloudinaryPosterFromVideo(p.cover, { width: 720 })
+        return { kind, src: toMediaProxy(v), poster: poster ? toImageProxy(poster) : undefined, width: p.coverWidth, height: p.coverHeight }
+      } else {
+        // Local video: Try to guess poster path convention [slug]-cover.jpg or use video as is 
+        // Note: We cannot verify file existence here safely without node fs.
+        // Best bet: Return undefined for poster.
+        // Media.tsx will now handle "no poster" by showing the native video element (first frame).
+        // This avoids the "White Box" issue caused by BLANK_SVG overlay.
+        return { kind, src: toMediaProxy(p.cover), poster: undefined, width: p.coverWidth, height: p.coverHeight }
+      }
     }
     // Grid images: 800px for sharp Retina display (2x density)
     const img = cloudinaryImage(p.cover, { width: 800 })
@@ -156,11 +166,16 @@ export function resolveDetailCover(p: Project): GalleryItem {
   const kind = (inferredVideo ? 'video' : 'image') as GalleryItem['kind']
   if (p.cover) {
     if (inferredVideo) {
-      // Detail video: High Quality (w=1280) for hero display
-      // Standard q_auto to ensure good visual quality
-      const v = cloudinaryVideo(p.cover, { width: 1280 })
-      const poster = cloudinaryPosterFromVideo(p.cover, { width: 1280 })
-      return { kind, src: toMediaProxy(v), poster: poster ? toImageProxy(poster) : undefined, width: p.coverWidth, height: p.coverHeight }
+      if (isCloudinary(new URL(p.cover, 'https://example.com'))) {
+        // Detail video: High Quality (w=1280) for hero display
+        // Standard q_auto to ensure good visual quality
+        const v = cloudinaryVideo(p.cover, { width: 1280 })
+        const poster = cloudinaryPosterFromVideo(p.cover, { width: 1280 })
+        return { kind, src: toMediaProxy(v), poster: poster ? toImageProxy(poster) : undefined, width: p.coverWidth, height: p.coverHeight }
+      } else {
+        // Local video fallback
+        return { kind, src: toMediaProxy(p.cover), poster: BLANK_SVG, width: p.coverWidth, height: p.coverHeight }
+      }
     }
     // Detail images: 1600px for full hero quality
     const img = cloudinaryImage(p.cover, { width: 1600 })
@@ -175,10 +190,15 @@ export function resolveGallery(p: Project): GalleryItem[] {
       .filter((it) => it.isActive !== false)
       .map((it) => {
         if (it.kind === 'video') {
-          // Gallery video: Higher quality (w=1600, standard q_auto)
-          const v = cloudinaryVideo(it.src, { width: 1600 })
-          const poster = it.poster ? cloudinaryImage(it.poster) : cloudinaryPosterFromVideo(it.src)
-          return { kind: 'video', src: toMediaProxy(v), poster: poster ? toImageProxy(poster) : undefined, width: it.width, height: it.height }
+          if (isCloudinary(new URL(it.src, 'https://example.com'))) {
+            // Gallery video: Higher quality (w=1600, standard q_auto)
+            const v = cloudinaryVideo(it.src, { width: 1600 })
+            const poster = it.poster ? cloudinaryImage(it.poster) : cloudinaryPosterFromVideo(it.src)
+            return { kind: 'video', src: toMediaProxy(v), poster: poster ? toImageProxy(poster) : undefined, width: it.width, height: it.height }
+          } else {
+            // Local Gallery Video Fallback
+            return { kind: 'video', src: toMediaProxy(it.src), poster: it.poster ? toImageProxy(it.poster) : BLANK_SVG, width: it.width, height: it.height }
+          }
         }
         const img = cloudinaryImage(it.src, { width: 1600 })
         return { kind: 'image', src: toImageProxy(img), width: it.width, height: it.height }

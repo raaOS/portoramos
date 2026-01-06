@@ -137,6 +137,7 @@ function Card({
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Sharper sizing logic
                             className="object-cover"
                             priority={index === 0} // Prioritize the first card
+                            unoptimized={item.src.startsWith('http')}
                         />
                     </div>
                 )}

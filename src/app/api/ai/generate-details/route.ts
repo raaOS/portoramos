@@ -18,31 +18,54 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
         }
 
-        // Convert Cloudinary Video URL to Image (JPG) if necessary
-        let targetUrl = imageUrl;
-        if (imageUrl.includes('cloudinary') && (imageUrl.endsWith('.mp4') || imageUrl.endsWith('.webm'))) {
-            targetUrl = imageUrl.replace(/\.(mp4|webm)$/i, '.jpg');
-        }
+        // Check if local file or remote URL
+        let base64Image = '';
+        const isLocal = imageUrl.startsWith('/');
 
-        // Download image to buffer with User-Agent to avoid blocks
-        const imageRes = await fetch(targetUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        if (isLocal) {
+            // Read from local filesystem
+            const fs = await import('fs/promises');
+            const path = await import('path');
+            const localPath = path.join(process.cwd(), 'public', imageUrl);
+
+            try {
+                const buffer = await fs.readFile(localPath);
+                base64Image = buffer.toString('base64');
+            } catch (err) {
+                return NextResponse.json({ error: `File not found on server: ${imageUrl}` }, { status: 404 });
             }
-        });
-        if (!imageRes.ok) throw new Error(`Failed to fetch image: ${imageRes.statusText}`);
-        const arrayBuffer = await imageRes.arrayBuffer();
-        const base64Image = Buffer.from(arrayBuffer).toString('base64');
+        } else {
+            // Existing Logic: Convert Cloudinary Video URL to Image (JPG) if necessary
+            let targetUrl = imageUrl;
+            if (imageUrl.includes('cloudinary') && (imageUrl.endsWith('.mp4') || imageUrl.endsWith('.webm'))) {
+                targetUrl = imageUrl.replace(/\.(mp4|webm)$/i, '.jpg');
+            }
+
+            // Download image to buffer with User-Agent to avoid blocks
+            const imageRes = await fetch(targetUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                }
+            });
+            if (!imageRes.ok) throw new Error(`Failed to fetch image: ${imageRes.statusText}`);
+            const arrayBuffer = await imageRes.arrayBuffer();
+            base64Image = Buffer.from(arrayBuffer).toString('base64');
+        }
 
         // Call Gemini API
         // CRITICAL: Using 'gemini-flash-latest' as confirmed by scripts/magic-caption.js
         const model = 'gemini-flash-latest';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
 
-        const prompt = `Analisis gambar ini. Berikan JUDUL (max ${maxTitleWords} kata) dan DESKRIPSI (max ${sentenceCount} kalimat) dengan gaya bahasa ${style} untuk portofolio desain/kreatif. 
+        const prompt = `Analisis gambar ini. Berikan detail berikut untuk portofolio desain/kreatif:
+        1. JUDUL (max ${maxTitleWords} kata)
+        2. DESKRIPSI (max ${sentenceCount} kalimat) dengan gaya bahasa ${style}.
+        3. CLIENT (jika ada logo/teks merek, tulis namanya. Jika tidak, tulis "Personal Work" atau "Commission").
+        4. TAGS (3-5 kata kunci teknis/style, contoh: "3D, Motion, Branding, Illustration").
+        
       Catatan khusus untuk gaya Gen-Z: Gunakan bahasa santai yang sopan dan tidak berlebihan (lowkey/chill vibe).
       WAJIB DALAM BAHASA INDONESIA. 
-      Output JSON murni: {"title": "...", "description": "..."}`;
+      Output JSON murni: {"title": "...", "description": "...", "client": "...", "tags": "..."}`;
 
         const requestBody = {
             contents: [{
