@@ -41,33 +41,6 @@
       }
     },
     {
-      "id": "gen-1766512146544-14",
-      "title": "Kampanye Hadiah Digital Liburan",
-      "slug": "kampanye-hadiah-digital-liburan",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Grafis ritel liburan yang cerah menggunakan warna-warna meriah dan mockup produk untuk mempromosikan penjualan langganan digital.",
-      "cover": "/assets/media/kampanye-hadiah-digital-liburan-cover.mp4",
-      "coverWidth": 1080,
-      "coverHeight": 1920,
-      "gallery": [],
-      "tags": [
-        "video"
-      ],
-      "external_link": "",
-      "autoplay": true,
-      "muted": true,
-      "loop": true,
-      "playsInline": true,
-      "galleryItems": [],
-      "order": 2,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:56:24.729Z",
-      "likes": 8,
-      "shares": 5
-    },
-    {
       "id": "gen-1766512146544-1",
       "title": "Kolase Lanskap Menanjak",
       "slug": "kolase-lanskap-menanjak",
@@ -87,12 +60,39 @@
       "loop": true,
       "playsInline": true,
       "galleryItems": [],
+      "order": 2,
+      "status": "published",
+      "createdAt": "2025-12-23T17:49:06.544Z",
+      "updatedAt": "2026-01-06T20:06:26.983Z",
+      "likes": 37,
+      "shares": 1
+    },
+    {
+      "id": "gen-1766512146544-14",
+      "title": "Kampanye Hadiah Digital Liburan",
+      "slug": "kampanye-hadiah-digital-liburan",
+      "client": "Personal Work",
+      "year": 2025,
+      "description": "Grafis ritel liburan yang cerah menggunakan warna-warna meriah dan mockup produk untuk mempromosikan penjualan langganan digital.",
+      "cover": "/assets/media/kampanye-hadiah-digital-liburan-cover.mp4",
+      "coverWidth": 1080,
+      "coverHeight": 1920,
+      "gallery": [],
+      "tags": [
+        "video"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "galleryItems": [],
       "order": 3,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
-      "likes": 37,
-      "shares": 1
+      "updatedAt": "2026-01-06T20:06:26.983Z",
+      "likes": 8,
+      "shares": 5
     },
     {
       "id": "gen-1766512146544-2",
@@ -640,5 +640,5 @@
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-06T19:56:24.729Z"
+  "lastUpdated": "2026-01-06T20:06:26.983Z"
 }
