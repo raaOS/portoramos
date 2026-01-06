@@ -11,7 +11,7 @@ export const metadata: Metadata = generateSEOMetadata({
 });
 
 // Cache server-rendered about page (Static by default, revalidated via Webhook)
-// export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function AboutPage() {
   const [aboutData, projects] = await Promise.all([

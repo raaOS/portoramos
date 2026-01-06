@@ -137,8 +137,9 @@ function Card({
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Sharper sizing logic
                             className="object-cover"
                             priority={index === 0} // Prioritize the first card
-                        // Vercel handling: Remote patterns are configured, so we can let Next.js optimize.
-                        // If src is local (starts with /), it will work. If http, it works via remotePatterns.
+                            // Vercel sometimes fails to optimize raw.githubusercontent.com (400 Bad Request).
+                            // We force unoptimized=true for external URLs to ensure they APPEAR, even if slower.
+                            unoptimized={item.src.startsWith('http')}
                         />
                     </div>
                 )}
