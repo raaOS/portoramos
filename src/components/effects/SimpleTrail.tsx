@@ -348,7 +348,7 @@ export default function SimpleTrail({ backgroundTrail = [] }: SimpleTrailProps) 
               width: 'auto'
             }}
             priority={index < 3} // Prioritize first 3 images
-            unoptimized={true} // FORCE UNOPTIMIZED to fix Vercel 400 errors
+          // Vercel handling: Remote patterns are configured, so we can let Next.js optimize.
           />
         ))}
       </div>

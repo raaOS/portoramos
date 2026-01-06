@@ -11,7 +11,7 @@ const nextConfig = {
     ],
     // Configure image qualities to support both 75 (default) and 90 (high quality)
     qualities: [75, 90],
-    // Enable image optimization for better performance (disabled in dev to avoid localPatterns issues)
+    // Enable image optimization for better performance (disabled in dev to avoid localPatterns issues, ENABLED in prod)
     unoptimized: process.env.NODE_ENV !== 'production',
     // Granular sizes for perfect mobile masonry grid (245px * 2 DPR = 490px -> 512px match)
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512],
