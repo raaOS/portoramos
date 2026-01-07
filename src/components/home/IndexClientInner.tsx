@@ -186,10 +186,10 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
                     initial={index < 12 ? { opacity: 1, y: 30 } : { opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
-                      duration: index < 12 ? 0.5 : 0.5,
+                      duration: index < 12 ? 0.2 : 0.5, // Faster fade for initial batch
                       ease: "easeOut",
-                      // Minimal stagger for slide-up to feel organic
-                      delay: index < 12 ? index * 0.03 : (Math.floor(index / 7) % 5) * 0.1
+                      // INSTANT LOAD FIX: No delay for first 12 items
+                      delay: index < 12 ? 0 : (Math.floor(index / 7) % 5) * 0.1
                     }}
                   >
                     <ProjectCardPinterest

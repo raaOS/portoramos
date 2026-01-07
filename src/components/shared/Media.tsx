@@ -401,6 +401,9 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
 
   const defaultBlurDataURL = blurDataURL || generateBlurDataURL()
 
+  // Fix: Bypass Vercel Optimization for local assets to prevent timeouts on large files
+  const isLocalAsset = src.startsWith('/assets/media')
+
   return (
     <div className="relative w-full h-full">
       <Image
@@ -411,6 +414,8 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         priority={priority}
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : 'auto'}
+        // Fix: Use unoptimized for local assets to ensure they load (even if slow) rather than error out
+        unoptimized={isLocalAsset}
         sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
         className={className}
         placeholder="blur"
