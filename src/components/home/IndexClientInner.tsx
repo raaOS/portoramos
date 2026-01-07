@@ -27,15 +27,15 @@ interface FuseInstance<T> {
 
 export default function IndexClientInner({ projects, tag, lastUpdated }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
-  // Responsive Initial Count: Start small (6) for Mobile performance, scale up for Desktop
-  const [visibleCount, setVisibleCount] = useState(6)
+  // Responsive Initial Count: Start with 12 to fill larger screens immediately
+  const [visibleCount, setVisibleCount] = useState(12)
 
   // Set correct count on mount/resize based on screen width
   useEffect(() => {
     const updateCount = () => {
-      // Mobile: 6 projects balances speed and content above fold
-      // Desktop: 6 projects (2 Rows) - Optimal balance to prevent Network Choke (Video traffic jam).
-      setVisibleCount(window.innerWidth > 768 ? 6 : 6)
+      // Mobile: 6 is fine for LCP, but 12 ensures smooth scrolling
+      // Desktop: 12 ensures full viewport coverage
+      setVisibleCount(window.innerWidth > 768 ? 12 : 8)
     }
     updateCount()
 
