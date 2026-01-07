@@ -27,15 +27,15 @@ interface FuseInstance<T> {
 
 export default function IndexClientInner({ projects, tag, lastUpdated }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
-  // Responsive Initial Count: Start with 12 to fill larger screens immediately
-  const [visibleCount, setVisibleCount] = useState(12)
+  // Responsive Initial Count: Start with 14 to fill larger screens immediately
+  const [visibleCount, setVisibleCount] = useState(14)
 
   // Set correct count on mount/resize based on screen width
   useEffect(() => {
     const updateCount = () => {
-      // Mobile: 6 is fine for LCP, but 12 ensures smooth scrolling
-      // Desktop: 12 ensures full viewport coverage
-      setVisibleCount(window.innerWidth > 768 ? 12 : 8)
+      // Mobile: 8 is fine for LCP
+      // Desktop: 14 ensures full viewport coverage (2 rows of 7 on ultra-wide)
+      setVisibleCount(window.innerWidth > 768 ? 14 : 8)
     }
     updateCount()
 
@@ -183,18 +183,18 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
                 return (
                   <motion.div
                     key={`${project.slug}-${index}`}
-                    initial={index < 12 ? { opacity: 1, y: 30 } : { opacity: 0, y: 50 }}
+                    initial={index < 14 ? { opacity: 1, y: 30 } : { opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
-                      duration: index < 12 ? 0.2 : 0.5, // Faster fade for initial batch
+                      duration: index < 14 ? 0.2 : 0.5, // Faster fade for initial batch
                       ease: "easeOut",
-                      // INSTANT LOAD FIX: No delay for first 12 items
-                      delay: index < 12 ? 0 : (Math.floor(index / 7) % 5) * 0.1
+                      // INSTANT LOAD FIX: No delay for first 14 items
+                      delay: index < 14 ? 0 : (Math.floor(index / 7) % 5) * 0.1
                     }}
                   >
                     <ProjectCardPinterest
                       project={project}
-                      priority={index < 4} // Mobile LCP: Only first 4 need priority
+                      priority={index < 14} // INSTANT FIX: Prioritize ALL 14 items
                       videoEnabled={true} // Enable video for all positions (handled by lazy load)
                     />
                   </motion.div>
