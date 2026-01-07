@@ -22,13 +22,21 @@ const BackgroundCard = React.memo(({ project, index }: { project: Project, index
     // User requested 50-75% video density.
     // Logic: index % 3 !== 0 results in indices 1, 2, 4, 5... allowing video.
     // This gives exactly 66% video coverage (2 out of 3).
-    const allowVideo = index % 3 !== 0;
+    const allowVideoPreference = index % 3 !== 0; // Renamed to preference
+
+    // CRITICAL FIX: If we want to show an Image but the source is a Video with NO POSTER,
+    // we MUST fallback to showing the video (muted/autoplay) because <Image> cannot render a video file.
+    const mustShowVideo = cover.kind === 'video' && !cover.poster;
+
+    // Final logic: Allow video if preferred OR if we have no choice (missing poster)
+    const allowVideo = allowVideoPreference || mustShowVideo;
+
     const effectiveKind = allowVideo ? cover.kind : 'image';
 
-    // CRITICAL FIX: If forcing image mode on a video item, use the POSTER as source.
-    // Otherwise passing a video URL to <Image/> will cause a load error.
+    // If we are forcing image mode (allowVideo is false), use poster.
+    // Note: If we reached here with effectiveKind='image' and cover.kind='video', we guaranteed have a poster due to logic above.
     const effectiveSrc = (effectiveKind === 'image' && cover.kind === 'video')
-        ? (cover.poster || cover.src)
+        ? (cover.poster || cover.src) // Fallback to src shouldn't happen but keeps TS happy
         : cover.src;
 
     return (
