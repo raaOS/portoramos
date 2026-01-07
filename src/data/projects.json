@@ -1,46 +1,6 @@
 {
   "projects": [
     {
-      "id": "gen-1766512146544-0",
-      "title": "Manipulasi Foto Musik Alam",
-      "slug": "manipulasi-foto-musik-alam",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Sebuah karya surealis yang mengubah piringan hitam menjadi hutan rimbun yang berbatasan dengan deburan ombak samudra biru.",
-      "cover": "/assets/media/manipulasi-foto-musik-alam-cover.mp4",
-      "coverWidth": 720,
-      "coverHeight": 900,
-      "gallery": [],
-      "tags": [
-        "video"
-      ],
-      "external_link": "",
-      "autoplay": true,
-      "muted": true,
-      "loop": true,
-      "playsInline": true,
-      "galleryItems": [],
-      "order": 1,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:51:22.832Z",
-      "likes": 33,
-      "shares": 5,
-      "allowComments": true,
-      "initialCommentCount": 2,
-      "narrative": {
-        "challenge": "",
-        "solution": "",
-        "result": ""
-      },
-      "comparison": {
-        "beforeImage": "/assets/media/politik-pop-digital-cover.jpg",
-        "beforeType": "image",
-        "afterImage": "",
-        "afterType": "video"
-      }
-    },
-    {
       "id": "gen-1766512146544-14",
       "title": "Kampanye Hadiah Digital Liburan",
       "slug": "kampanye-hadiah-digital-liburan",
@@ -60,12 +20,52 @@
       "loop": true,
       "playsInline": true,
       "galleryItems": [],
+      "order": 1,
+      "status": "published",
+      "createdAt": "2025-12-23T17:49:06.544Z",
+      "updatedAt": "2026-01-06T20:18:03.057Z",
+      "likes": 8,
+      "shares": 5
+    },
+    {
+      "id": "gen-1766512146544-0",
+      "title": "Manipulasi Foto Musik Alam",
+      "slug": "manipulasi-foto-musik-alam",
+      "client": "Personal Work",
+      "year": 2025,
+      "description": "Sebuah karya surealis yang mengubah piringan hitam menjadi hutan rimbun yang berbatasan dengan deburan ombak samudra biru.",
+      "cover": "/assets/media/manipulasi-foto-musik-alam-cover.mp4",
+      "coverWidth": 720,
+      "coverHeight": 900,
+      "gallery": [],
+      "tags": [
+        "video"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "galleryItems": [],
       "order": 2,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:51:22.832Z",
-      "likes": 8,
-      "shares": 5
+      "updatedAt": "2026-01-06T20:18:03.057Z",
+      "likes": 33,
+      "shares": 5,
+      "allowComments": true,
+      "initialCommentCount": 2,
+      "narrative": {
+        "challenge": "",
+        "solution": "",
+        "result": ""
+      },
+      "comparison": {
+        "beforeImage": "/assets/media/politik-pop-digital-cover.jpg",
+        "beforeType": "image",
+        "afterImage": "",
+        "afterType": "video"
+      }
     },
     {
       "id": "gen-1766512146544-1",
@@ -90,7 +90,7 @@
       "order": 3,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2026-01-06T20:18:03.057Z",
       "likes": 37,
       "shares": 1
     },
@@ -434,7 +434,7 @@
       "order": 15,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:51:22.832Z",
+      "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 21,
       "shares": 3
     },
@@ -461,7 +461,7 @@
       "order": 16,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:51:22.832Z",
+      "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 19,
       "shares": 4
     },
@@ -488,7 +488,7 @@
       "order": 17,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:51:22.832Z",
+      "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 37,
       "shares": 0
     },
@@ -515,7 +515,7 @@
       "order": 18,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:51:22.832Z",
+      "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 9,
       "shares": 2
     },
@@ -542,7 +542,7 @@
       "order": 19,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:51:22.832Z",
+      "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 13,
       "shares": 2
     },
@@ -569,7 +569,7 @@
       "order": 20,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:51:22.832Z",
+      "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 39,
       "shares": 5
     },
@@ -610,7 +610,7 @@
       "order": 21,
       "status": "published",
       "createdAt": "2026-01-05T19:53:02.238Z",
-      "updatedAt": "2026-01-06T19:51:22.832Z"
+      "updatedAt": "2026-01-06T19:56:24.729Z"
     },
     {
       "id": "gen-1766512146544-21",
@@ -635,10 +635,10 @@
       "order": 22,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:51:22.832Z",
+      "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 37,
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-06T19:51:22.832Z"
+  "lastUpdated": "2026-01-06T20:18:03.057Z"
 }
