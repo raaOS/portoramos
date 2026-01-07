@@ -3,6 +3,40 @@ import Image from 'next/image'
 import { useEffect, useRef, useState, forwardRef, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 
+// Shared Observer Manager to prevent memory leaks (1 observer instead of N)
+class SharedObserver {
+  private observer: IntersectionObserver | null = null;
+  private callbacks = new Map<Element, (entry: IntersectionObserverEntry) => void>();
+
+  constructor() {
+    if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
+      this.observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const cb = this.callbacks.get(entry.target);
+          if (cb) cb(entry);
+        });
+      }, {
+        threshold: 0.25,
+        rootMargin: '100px 0px 100px 0px'
+      });
+    }
+  }
+
+  observe(element: Element, callback: (entry: IntersectionObserverEntry) => void) {
+    if (!this.observer) return;
+    this.callbacks.set(element, callback);
+    this.observer.observe(element);
+  }
+
+  unobserve(element: Element) {
+    if (!this.observer) return;
+    this.callbacks.delete(element);
+    this.observer.unobserve(element);
+  }
+}
+
+// Singleton instance
+const sharedMediaObserver = new SharedObserver();
 
 export type MediaProps = {
   kind: 'image' | 'video'
@@ -30,7 +64,6 @@ export type MediaProps = {
 
 // Generate a simple blur placeholder
 const generateBlurDataURL = (width: number = 8, height: number = 6): string => {
-  // Always return fallback base64 blur for consistency
   return 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAGAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=='
 }
 
@@ -62,28 +95,35 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   const [hasError, setHasError] = useState(false)
   const [shouldLoad, setShouldLoad] = useState((kind === 'video' && !priority) ? false : (!lazy || priority))
   const [isMounted, setIsMounted] = useState(false)
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
-  const loadTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // No state for reduceMotion to avoid re-renders. Read direct if needed or just assume false for perf.
 
   // Mobile Optimization State
   const [isMobile, setIsMobile] = useState(false)
   const manualPlayRef = useRef(false)
+  const loadTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Detect Mobile
+  // Debounced Resize Listener (Fix #3: Layout Thrashing)
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+    let timeoutId: NodeJS.Timeout;
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(prev => prev === mobile ? prev : mobile); // Only update if changed
+    }
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const mediaQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)')
-    const handleMediaChange = () => setPrefersReducedMotion(mediaQuery?.matches ?? false)
-    handleMediaChange()
-    mediaQuery?.addEventListener('change', handleMediaChange)
-    return () => mediaQuery?.removeEventListener('change', handleMediaChange)
+    // Initial check
+    checkMobile();
+
+    const debouncedResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(checkMobile, 150); // 150ms debounce
+    };
+
+    window.addEventListener('resize', debouncedResize)
+    return () => {
+      window.removeEventListener('resize', debouncedResize)
+      clearTimeout(timeoutId)
+    }
   }, [])
 
   // Track mount state
@@ -92,11 +132,8 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     return () => setIsMounted(false)
   }, [])
 
-  // Force autoplay generally if requested, but respect user motion preference
-  // Modern mobile browsers DO support muted autoplay, so we allow it.
   const effectiveAutoplay = autoplay && shouldLoad;
 
-  // Merge forwarded ref (object or callback) with our internal ref so autoplay logic always has a handle
   const setVideoRef = useCallback((node: HTMLVideoElement | null) => {
     internalVideoRef.current = node
     if (!ref) return
@@ -112,46 +149,32 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   const playIfPossible = useCallback(() => {
     if (kind !== 'video' || !effectiveAutoplay) return
     const el = internalVideoRef.current
-    if (!el) return
-
-    // Check if element is connected to DOM
-    if (!el.isConnected) return
+    if (!el || !el.isConnected) return
 
     if (muted) {
       el.muted = true
       el.defaultMuted = true
     }
 
-    // Force load if not loaded
-    if (el.readyState < 2) {
-      el.load()
-    }
-
     const playPromise = el.play()
     if (playPromise !== undefined) {
       playPromise.catch((error) => {
-        // Only show blocked state if not AbortError (pause was called)
         if (error.name !== 'AbortError') {
-          setAutoplayBlocked(true)
-          // Show detailed error in development only if NOT AbortError AND NOT NotSupportedError
-          if (process.env.NODE_ENV === 'development' && error.name !== 'NotSupportedError') {
-            console.group('🎬 Video Autoplay Blocked')
-            console.error('Error Name:', error.name)
-            console.error('Error Message:', error.message)
-            console.log('Video Src:', el.src)
-            console.groupEnd()
+          // Only flag blocked if we really expected it to play (e.g. user interacting or muted)
+          // Silent fail is better for perf than state thrashing
+          if (error.name !== 'NotSupportedError') {
+            setAutoplayBlocked(true)
           }
         }
       })
     }
   }, [kind, effectiveAutoplay, muted])
 
-  // Ref for the container to observe visibility even before video loads
+  // Ref for the container to observe
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // Fix #1: Shared Intersection Observer
   useEffect(() => {
-    // If not a video or already forcibly loaded, skip lazy logic
-    // But we still need observer for AutoPlay logic!
     if (kind !== 'video') return
 
     const el = containerRef.current
@@ -159,105 +182,66 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
 
     let isPlaying = false
 
-    const onIntersect: IntersectionObserverCallback = (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          // 1. Trigger Load if not loaded (with delay to save LCP)
-          // Relaxed restriction: Allow mobile to auto-load if visible (muted autoplay usually works)
-          if (!shouldLoad && !loadTimerRef.current) {
-            // Honey Spot Strategy: Faster Loading (Reduced from 800+jitter)
-            // Random delay between 200ms and 500ms
-            // This makes the UI feel SNAPPY while still preventing instant hammer.
-            const jitter = Math.random() * 300
-            loadTimerRef.current = setTimeout(() => {
-              setShouldLoad(true)
-            }, 200 + jitter)
-          }
+    const handleIntersect = (entry: IntersectionObserverEntry) => {
+      if (entry.isIntersecting) {
+        // Trigger Load
+        if (!shouldLoad && !loadTimerRef.current) {
+          // Short random delay to smooth out network bursts
+          const jitter = Math.random() * 200
+          loadTimerRef.current = setTimeout(() => {
+            setShouldLoad(true)
+          }, 100 + jitter)
+        }
 
-          // 2. Play if loaded and visible
-          if (entry.intersectionRatio > 0 && effectiveAutoplay) {
-            if (!isPlaying && internalVideoRef.current) {
-              isPlaying = true;
-              playIfPossible();
-            }
-          }
-        } else {
-          // If scrolled away before loading, cancel the load
-          if (loadTimerRef.current) {
-            clearTimeout(loadTimerRef.current)
-            loadTimerRef.current = null
-          }
-
-          // Pause if completely invalid
-          if (isPlaying && internalVideoRef.current) {
-            isPlaying = false
-            internalVideoRef.current.pause()
+        // Play if visible
+        if (entry.intersectionRatio > 0 && effectiveAutoplay) {
+          if (!isPlaying && internalVideoRef.current) {
+            isPlaying = true;
+            playIfPossible();
           }
         }
-      })
+      } else {
+        // Cancel load if scrolled away rapidly
+        if (loadTimerRef.current) {
+          clearTimeout(loadTimerRef.current)
+          loadTimerRef.current = null
+        }
+
+        // Pause if offscreen
+        if (isPlaying && internalVideoRef.current) {
+          isPlaying = false;
+          internalVideoRef.current.pause();
+        }
+      }
     }
 
-    const observer = new IntersectionObserver(onIntersect, {
-      threshold: 0.25,
-      rootMargin: '100px 0px 100px 0px' // Tighter margin to save resources
-    })
-
-    observer.observe(el)
+    sharedMediaObserver.observe(el, handleIntersect);
 
     return () => {
-      observer.disconnect()
+      sharedMediaObserver.unobserve(el);
       if (loadTimerRef.current) {
         clearTimeout(loadTimerRef.current)
       }
     }
-  }, [kind, effectiveAutoplay, src, muted, playIfPossible, pathname, shouldLoad, lazy, priority, isMobile])
+  }, [kind, effectiveAutoplay, shouldLoad, playIfPossible])
 
-  // Force autoplay on mount (critical for navigation)
+  // Fix #2: Optimize Autoplay (Remove thrashing timers)
+  // Instead of 3 timers, rely on 'canPlay' event and single visibility check
   useEffect(() => {
     if (!isMounted || kind !== 'video' || !effectiveAutoplay) return
+    // One polite attempt after mount
+    const t = setTimeout(playIfPossible, 200);
+    return () => clearTimeout(t);
+  }, [isMounted, kind, effectiveAutoplay, playIfPossible])
 
-    // Multiple attempts with increasing delays
-    const timers = [
-      setTimeout(() => {
-        playIfPossible()
-      }, 50),
-      setTimeout(() => {
-        playIfPossible()
-      }, 200),
-      setTimeout(() => {
-        playIfPossible()
-      }, 500)
-    ]
-
-    return () => timers.forEach(t => clearTimeout(t))
-  }, [isMounted, kind, effectiveAutoplay, playIfPossible, src])
-
-  // Retry playback when source changes or when component mounts (helps after client-side navigation)
+  // Navigation recovery
   useEffect(() => {
-    playIfPossible()
-  }, [playIfPossible, src])
-
-  // Trigger autoplay when pathname changes (navigation between pages)
-  useEffect(() => {
-    if (kind !== 'video' || !effectiveAutoplay) return
-    // Small delay to ensure DOM is ready after navigation
-    const timer = setTimeout(() => {
-      playIfPossible()
-    }, 100)
-    return () => clearTimeout(timer)
+    if (kind === 'video' && effectiveAutoplay) {
+      // Checking visibilityState is cheap
+      if (document.visibilityState === 'visible') playIfPossible();
+    }
   }, [pathname, kind, effectiveAutoplay, playIfPossible])
 
-  // When returning to the page (tab focus/navigation back), re-attempt autoplay if needed
-  useEffect(() => {
-    if (kind !== 'video' || !effectiveAutoplay) return
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        playIfPossible()
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibility)
-    return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [kind, effectiveAutoplay, playIfPossible])
 
   if (kind === 'video') {
     return (
@@ -266,20 +250,18 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           ref={setVideoRef}
           className={`${className || "w-full h-full object-cover"} ${!controls ? 'pointer-events-none' : ''}`}
           src={shouldLoad ? src : undefined}
-          // poster={poster} -- Removed to prevent "double poster" effect (native vs overlay)
-          // We handle the poster via the absolute positioned Image overlay below
           aria-label={controls ? (alt || 'Video content') : undefined}
           title={controls ? (alt || 'Video content') : undefined}
           aria-hidden={!controls ? "true" : undefined}
           tabIndex={!controls ? -1 : undefined}
           autoPlay={effectiveAutoplay}
-          // @ts-ignore - React 18.3+ or custom typs
+          // @ts-ignore
           fetchPriority={priority ? "high" : "auto"}
-          muted={effectiveAutoplay || muted} // Force muted if autoplay is on
+          muted={effectiveAutoplay || muted}
           loop={loop}
           playsInline={playsInline}
           controls={controls}
-          preload="metadata" // Changed from 'none' to 'metadata' to ensure first frame and dimensions load
+          preload="metadata"
           webkit-playsinline="true"
           x5-playsinline="true"
           x5-video-player-type="h5"
@@ -288,7 +270,6 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
             setIsLoading(false)
             setHasError(false)
 
-            // Immediate play attempt if manually requested OR if autoplay is effective
             if (manualPlayRef.current) {
               playIfPossible()
               manualPlayRef.current = false
@@ -301,30 +282,17 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
             setHasError(false)
           }}
           onError={(e) => {
-            const videoElement = e.currentTarget;
-            console.error(
-              "Video load error:",
-              {
-                src,
-                error: videoElement.error,
-                networkState: videoElement.networkState,
-                readyState: videoElement.readyState
-              }
-            );
             setIsLoading(false)
             setHasError(true)
           }}
           onPlay={() => {
             setCanPlay(true)
             setIsLoading(false)
-            setAutoplayBlocked(false) // Hide play button when playing
+            setAutoplayBlocked(false)
             setHasError(false)
           }}
         />
 
-        {/* Optimized Poster Image Overlay - Fades out when video plays */}
-        {/* Only render if we have a valid poster OR if it's NOT a video (to allow src fallback) */}
-        {/* If it's a video and no poster, we prefer showing the native video player (black/first frame) than a broken image */}
         {(poster || kind !== 'video') && (
           <div className={`absolute inset-0 z-10 transition-opacity duration-700 pointer-events-none ${canPlay ? 'opacity-0' : 'opacity-100'}`}>
             <Image
@@ -339,7 +307,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
               className={className || "w-full h-full object-cover"}
               placeholder="blur"
               blurDataURL={blurDataURL || generateBlurDataURL()}
-              quality={75}
+              quality={quality || 75}
               style={{
                 objectFit: objectFit,
                 width: '100%',
@@ -349,39 +317,22 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           </div>
         )}
 
-        {/* Play Button Overlay - Shows when autoplay is blocked OR matches strictly lazy mobile state */}
         {((autoplayBlocked && !hasError) || (isMobile && !shouldLoad)) && (
           <div
             className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer group hover:bg-black/50 transition-colors"
             onClick={(e) => {
-              e.stopPropagation() // Prevent parent clicks
-
-              // If not loaded, load it first
+              e.stopPropagation()
               if (!shouldLoad) {
                 manualPlayRef.current = true
                 setShouldLoad(true)
                 return
               }
-
-              const video = internalVideoRef.current
-              if (video) {
-                video.play()
-                  .then(() => {
-                    setAutoplayBlocked(false)
-                  })
-                  .catch((err) => {
-                    console.error('Manual play failed:', err)
-                  })
-              }
+              playIfPossible()
             }}
             title="Click to play video"
           >
             <div className={`bg-white/95 rounded-full shadow-2xl transition-transform ${shouldLoad ? 'p-5 group-hover:scale-110' : 'p-6 scale-110'}`}>
-              <svg
-                className={`${shouldLoad ? 'w-12 h-12' : 'w-16 h-16'} text-black`}
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className={`${shouldLoad ? 'w-12 h-12' : 'w-16 h-16'} text-black`} fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
             </div>
@@ -390,21 +341,14 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
 
         {hasError && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-500">
-            <svg className="w-12 h-12 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            <span className="text-sm">Video tidak dapat dimuat</span>
+            <div className="text-xs">Error</div>
           </div>
         )}
       </div>
     )
   }
 
-
   const defaultBlurDataURL = blurDataURL || generateBlurDataURL()
-
-  // Reverted: We need optimization enabled to prevent massive bandwidth usage (10s delays).
-  // If Vercel timeouts occur, we unfortunately need to compress source images, not bypass optimization.
 
   return (
     <div className="relative w-full h-full">
@@ -434,10 +378,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
       />
       {hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-500">
-          <svg className="w-12 h-12 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <span className="text-sm">Gambar tidak dapat dimuat</span>
+          <div className="text-xs">Error</div>
         </div>
       )}
     </div>

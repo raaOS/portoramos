@@ -27,43 +27,38 @@ interface FuseInstance<T> {
 
 export default function IndexClientInner({ projects, tag, lastUpdated }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
-  // Responsive Initial Count: Start with 14 to fill larger screens immediately
+  // Responsive Initial Count: Start with 14 to fill larger screens immediately.
+  // We keep it stable to avoid mobile double-render/layout shift. 
+  // 14 items is not too heavy for modern mobile given our optimizations.
   const [visibleCount, setVisibleCount] = useState(14)
 
-  // Set correct count on mount/resize based on screen width
-  useEffect(() => {
-    const updateCount = () => {
-      // Mobile: 8 is fine for LCP
-      // Desktop: 14 ensures full viewport coverage (2 rows of 7 on ultra-wide)
-      setVisibleCount(window.innerWidth > 768 ? 14 : 8)
-    }
-    updateCount()
+  // REMOVED: useEffect that checked window width and reduced to 8.
+  // This blocked first paint and caused a re-render.
 
-    // Optional: Update on resize? No, usually not needed for initial load optimization.
-  }, [])
   const [isLoading, setIsLoading] = useState(false)
   const [fuseInstance, setFuseInstance] = useState<FuseInstance<Project> | null>(null)
-  const rafRef = useRef<number | null>(null)
 
   // Lazy load Fuse.js and update collection when projects change
   useEffect(() => {
+    // Only load Fuse if user actually types to save bundle size
     if (searchQuery) {
-      import('fuse.js').then((FuseModule) => {
-        const Fuse = FuseModule.default || FuseModule
+      // Small timeout to not block typing immediately
+      const id = setTimeout(() => {
+        import('fuse.js').then((FuseModule) => {
+          const Fuse = FuseModule.default || FuseModule
 
-        if (!fuseInstance) {
-          // Initialize new instance
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setFuseInstance(new Fuse(projects, {
-            keys: ['title', 'description', 'client', 'tags'],
-            threshold: 0.3,
-            includeScore: true,
-          }) as any as FuseInstance<Project>)
-        } else {
-          // Update collection if instance exists and projects changed
-          fuseInstance.setCollection(projects)
-        }
-      })
+          if (!fuseInstance) {
+            setFuseInstance(new Fuse(projects, {
+              keys: ['title', 'description', 'client', 'tags'],
+              threshold: 0.3,
+              includeScore: true,
+            }) as any as FuseInstance<Project>)
+          } else {
+            fuseInstance.setCollection(projects)
+          }
+        })
+      }, 100);
+      return () => clearTimeout(id)
     }
   }, [searchQuery, projects, fuseInstance])
 
@@ -87,10 +82,6 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
       if (tag) {
         result = result.filter(p => searchedProjectIds.has(p.id))
       } else {
-        // If no tag, return search results mapped from current projects to ensure freshness
-        // (Visual order usually comes from search score, so we should map strictly from search results but ensure latest data)
-        // However, standard fuse usage usually just returns the item. 
-        // To be safe against stale item references in Fuse:
         result = searchResults.map((r) => {
           const freshProject = projects.find(p => p.id === r.item.id)
           return freshProject || r.item
