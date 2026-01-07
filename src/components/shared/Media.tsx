@@ -22,6 +22,7 @@ export type MediaProps = {
   playsInline?: boolean
   controls?: boolean
   lazy?: boolean
+  quality?: number
   layoutId?: string
   objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down'
   ref?: React.Ref<HTMLVideoElement>
@@ -51,6 +52,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   controls = false,
   lazy = false,
   layoutId,
+  quality,
   objectFit = 'cover',
 }, ref) => {
   const pathname = usePathname()
@@ -401,8 +403,8 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
 
   const defaultBlurDataURL = blurDataURL || generateBlurDataURL()
 
-  // Fix: Bypass Vercel Optimization for local assets to prevent timeouts on large files
-  const isLocalAsset = src.startsWith('/assets/media')
+  // Reverted: We need optimization enabled to prevent massive bandwidth usage (10s delays).
+  // If Vercel timeouts occur, we unfortunately need to compress source images, not bypass optimization.
 
   return (
     <div className="relative w-full h-full">
@@ -414,13 +416,11 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         priority={priority}
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : 'auto'}
-        // Fix: Use unoptimized for local assets to ensure they load (even if slow) rather than error out
-        unoptimized={isLocalAsset}
         sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
         className={className}
         placeholder="blur"
         blurDataURL={defaultBlurDataURL}
-        quality={90} // Increased from 75 to 90 for "Retina-like" sharpness
+        quality={quality || 75}
         style={{
           objectFit: objectFit,
           width: '100%',

@@ -48,18 +48,19 @@ export default function ProjectCardPinterest({
                         src={cover.src}
                         poster={cover.poster}
                         alt={title}
-                        // Sweet Spot: Request 400px. 
-                        // Balances sharpness (1.6x density) with file size for Lighthouse.
-                        width={400}
-                        height={Math.round(400 / ratio)}
+                        // Sweet Spot: Request 384px (Matches next.config.mjs imageSizes)
+                        // Balances sharpness with file size.
+                        width={384}
+                        height={Math.round(384 / ratio)}
                         priority={priority}
                         lazy={!priority}
+                        quality={75}
                         autoplay={shouldAutoplay}
                         muted={project.muted ?? true}
                         loop={project.loop ?? true}
                         playsInline={project.playsInline ?? true}
                         className="w-full h-full object-cover"
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                 </div>
             </div>

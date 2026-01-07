@@ -122,7 +122,6 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
                     sizes="300px"
                     className="h-full w-auto object-contain bg-white"
                     style={{ width: 'auto', height: '100%' }}
-                    unoptimized={item.src.startsWith('/assets/media')}
                   />
                 )}
 
@@ -209,7 +208,6 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
                   className="object-contain drop-shadow-2xl"
                   priority
                   sizes="(min-width: 768px) 80vw, 100vw"
-                  unoptimized={activeImages[open.i].src.startsWith('/assets/media')}
                 />
               </div>
             </div>

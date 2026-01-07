@@ -12,17 +12,13 @@ const nextConfig = {
     // Configure image qualities to support both 75 (default) and 90 (high quality)
     qualities: [75, 90],
     // Enable image optimization for better performance (disabled in dev to avoid localPatterns issues, ENABLED in prod)
-    unoptimized: process.env.NODE_ENV !== 'production',
-    // Granular sizes for perfect mobile masonry grid (245px * 2 DPR = 490px -> 512px match)
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512],
+    // Enable image optimization for better performance
+    unoptimized: false,
+    // Limit generation to reasonable sizes to prevent Vercel timeout on 4k requests
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     // Modern image formats for better compression
     formats: ['image/avif', 'image/webp'],
-    localPatterns: [
-      {
-        pathname: '/api/img',
-        search: '?u=*',
-      },
-    ],
   },
   // Enable production source maps for better error tracking
   productionBrowserSourceMaps: true,
