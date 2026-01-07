@@ -114,11 +114,14 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
                     playsInline
                   />
                 ) : (
-                  <img
+                  <Image
                     src={item.src}
                     alt={`Gallery image ${index + 1}`}
+                    width={0}
+                    height={0}
+                    sizes="300px"
                     className="h-full w-auto object-contain bg-white"
-                    loading="lazy"
+                    style={{ width: 'auto', height: '100%' }}
                   />
                 )}
 

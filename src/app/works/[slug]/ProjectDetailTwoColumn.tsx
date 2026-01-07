@@ -15,6 +15,7 @@ import CommentSection from '@/components/features/CommentSection';
 import type { Comment } from '@/lib/magic';
 import ComparisonSlider from './components/ComparisonSlider';
 import ProjectCTA from './components/ProjectCTA';
+import Media from '@/components/shared/Media';
 
 // Adjusted path for CoverFlowGallery - Assuming it exists here based on previous search
 // CoverFlowGallery removed - replaced by ComparisonSlider (Pro Player)
@@ -245,26 +246,20 @@ export default function ProjectDetailTwoColumn({
                                 />
                             ) : (
                                 <div className="rounded-xl overflow-hidden shadow-lg border border-black/5 dark:border-white/5 bg-gray-100 dark:bg-gray-800">
-                                    {cover.kind === 'video' ? (
-                                        <video
-                                            ref={videoRef}
-                                            src={cover.src}
-                                            poster={cover.poster}
-                                            className="w-full h-auto"
-                                            autoPlay={project.autoplay ?? true}
-                                            muted={project.muted ?? true}
-                                            loop={project.loop ?? true}
-                                            playsInline={project.playsInline ?? true}
-                                            controls
-                                        />
-                                    ) : (
-                                        <img
-                                            src={cover.src}
-                                            alt={project.title}
-                                            className="w-full h-auto"
-                                            draggable={false}
-                                        />
-                                    )}
+                                    <Media
+                                        kind={cover.kind}
+                                        src={cover.src}
+                                        poster={cover.poster}
+                                        alt={project.title}
+                                        width={1600}
+                                        height={Math.round(1600 / ratio)}
+                                        priority={true}
+                                        className="w-full h-auto object-cover"
+                                        autoplay={project.autoplay ?? true}
+                                        muted={project.muted ?? true}
+                                        loop={project.loop ?? true}
+                                        playsInline={project.playsInline ?? true}
+                                    />
                                 </div>
                             )}
                         </div>
