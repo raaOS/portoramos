@@ -397,37 +397,9 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
       </div>
     )
   }
+
+
   const defaultBlurDataURL = blurDataURL || generateBlurDataURL()
-
-  // Fallback to standard <img> for Local Assets (to prevent Vercel Optimization Timeouts on large files)
-  // We allow Cloudinary or Remote GitHub to use Next.js Image Optimization, but local files > 4MB tend to fail.
-  const useStandardImg = kind === 'image' && src.startsWith('/assets/media');
-
-  if (useStandardImg) {
-    return (
-      <div className="relative w-full h-full">
-        <img
-          src={src}
-          alt={alt}
-          className={className}
-          loading={priority ? 'eager' : 'lazy'}
-          style={{
-            objectFit: objectFit,
-            width: '100%',
-            height: '100%'
-          }}
-          onError={() => {
-            setHasError(true)
-          }}
-        />
-        {hasError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-500">
-            <span className="text-xs">Error</span>
-          </div>
-        )}
-      </div>
-    )
-  }
 
   return (
     <div className="relative w-full h-full">
