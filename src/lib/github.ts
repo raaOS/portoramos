@@ -129,8 +129,15 @@ export class GitHubService {
             }
 
             // 2. Prepare new content
-            const newContent = JSON.stringify(content, null, 2);
-            const encodedContent = Buffer.from(newContent).toString('base64');
+            let encodedContent: string;
+            if (Buffer.isBuffer(content)) {
+                encodedContent = content.toString('base64');
+            } else if (typeof content === 'string') {
+                encodedContent = Buffer.from(content).toString('base64');
+            } else {
+                const newContent = JSON.stringify(content, null, 2);
+                encodedContent = Buffer.from(newContent).toString('base64');
+            }
 
             // 3. Push commit
             const url = `${GITHUB_API_URL}/repos/${this.owner}/${this.repo}/contents/${filePath}`;

@@ -27,7 +27,7 @@ export const projectService = {
                 try {
                     // getFile() calls githubService.getFileContent(local=false) in Prod
                     // which uses fetch() -> cached by Next.js -> revalidatable via revalidatePath
-                    const ghData = await githubService.getFile();
+                    const ghData = await githubService.getFile(fresh);
                     if (ghData && ghData.content) data = ghData.content as ProjectsData;
                 } catch (error) {
                     console.warn('Failed to fetch from GitHub, falling back to static data:', error);
@@ -244,7 +244,7 @@ export const projectService = {
     /**
      * Bulk update projects (Atomic operation)
      */
-    async bulkUpdateProjects(updates: { ids: string[], status?: 'published' | 'draft', delete?: boolean }): Promise<boolean> {
+    async bulkUpdateProjects(updates: { ids: string[], status?: 'published' | 'draft', delete?: boolean, reorder?: boolean }): Promise<boolean> {
         const isDev = process.env.NODE_ENV === 'development';
         let currentProjects: Project[] = [];
 
@@ -265,6 +265,27 @@ export const projectService = {
             const initialLen = currentProjects.length;
             currentProjects = currentProjects.filter(p => !updates.ids.includes(p.id));
             if (currentProjects.length !== initialLen) hasChanges = true;
+        } else if (updates.reorder) {
+            // Map IDs to their new index (1-based)
+            const orderMap = new Map(updates.ids.map((id, index) => [id, index + 1]));
+
+            currentProjects = currentProjects.map(p => {
+                if (orderMap.has(p.id)) {
+                    const newOrder = orderMap.get(p.id)!;
+                    if (p.order !== newOrder) {
+                        hasChanges = true;
+                        return { ...p, order: newOrder, updatedAt: new Date().toISOString() }; // Update order
+                    }
+                }
+                return p;
+            });
+
+            // Optional: Sort currentProjects by order to keep the array vaguely sorted, 
+            // though not strictly required as getProjects sorts them.
+            if (hasChanges) {
+                currentProjects.sort((a, b) => (a.order || 0) - (b.order || 0));
+            }
+
         } else if (updates.status) {
             currentProjects = currentProjects.map(p => {
                 if (updates.ids.includes(p.id) && p.status !== updates.status) {
@@ -289,7 +310,9 @@ export const projectService = {
         } else {
             const success = await githubService.updateProjects({
                 projects: currentProjects,
-                message: `Bulk update ${updates.ids.length} projects (via Admin CMS)`
+                message: updates.reorder
+                    ? `Reorder projects (via Admin CMS)`
+                    : `Bulk update ${updates.ids.length} projects (via Admin CMS)`
             });
             if (!success) throw new Error('Failed to save to GitHub');
         }

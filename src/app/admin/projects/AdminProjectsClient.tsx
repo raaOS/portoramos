@@ -6,6 +6,9 @@ import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects'
 import { isVideoLink } from '@/lib/media';
 import { Pencil, Trash2, Plus, X, Loader2, Settings, CheckCircle2, AlertCircle, Copy, Eye, EyeOff, MessageCircle, Shield } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Import design system components
 import dynamic from 'next/dynamic';
@@ -42,12 +45,42 @@ interface GitHubConfig {
 
 const GalleryManager = dynamic(() => import('@/components/admin/GalleryManager'), { loading: () => <Loader2 className="animate-spin" /> });
 
+function SortableProjectItem({ id, children }: { id: string, children: React.ReactNode }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 'auto',
+    position: 'relative' as const,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="h-full">
+      {children}
+    </div>
+  );
+}
+
 export default function AdminProjectsClient() {
   const queryClient = useQueryClient();
   const { showSuccess: success, showError } = useToast();
 
   // Tab State
   const [activeTab, setActiveTab] = useState<'projects' | 'gallery'>('projects');
+  const [orderedProjects, setOrderedProjects] = useState<Project[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -86,6 +119,45 @@ export default function AdminProjectsClient() {
   });
 
   const projects = (projectsData?.projects || []) as Project[];
+
+  // Sync projects to local state for DnD
+  useEffect(() => {
+    if (projectsData?.projects) {
+      setOrderedProjects(projectsData.projects as Project[]);
+    }
+  }, [projectsData]);
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setOrderedProjects((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over?.id);
+        const newItems = arrayMove(items, oldIndex, newIndex);
+
+        // Trigger Save Side Effect (fire and forget)
+        fetch('/api/projects/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'reorder', ids: newItems.map(p => p.id) })
+        }).then(async res => {
+          if (res.ok) {
+            success('Order updated');
+          } else {
+            const data = await res.json().catch(() => ({}));
+            const errorMessage = data.error || 'Failed to update order';
+            console.error('[Reorder Error]', errorMessage);
+            showError(errorMessage);
+          }
+        }).catch((e) => {
+          console.error('[Reorder Network Error]', e);
+          showError('Failed to update order (Network)');
+        });
+
+        return newItems;
+      });
+    }
+  };
 
   // 2. Fetch Comment Counts
   const { data: commentCounts } = useQuery({
@@ -320,7 +392,10 @@ export default function AdminProjectsClient() {
       setEditingProject(null);
       queryClient.invalidateQueries({ queryKey: ['projects', 'published'] }); // Immediate sync for local
       const freshData = queryClient.getQueryData(['projects', 'admin']) as any;
-      if (freshData?.projects) triggerGithubSync(freshData.projects, true);
+      if (freshData?.projects) {
+        triggerGithubSync(freshData.projects, true);
+        setOrderedProjects(freshData.projects);
+      }
     },
   });
 
@@ -384,10 +459,10 @@ export default function AdminProjectsClient() {
   };
 
   const selectAllProjects = () => {
-    if (selectedProjectIds.size === projects.length) {
+    if (selectedProjectIds.size === orderedProjects.length) {
       setSelectedProjectIds(new Set());
     } else {
-      setSelectedProjectIds(new Set(projects.map(p => p.id)));
+      setSelectedProjectIds(new Set(orderedProjects.map(p => p.id)));
     }
   };
 
@@ -562,13 +637,13 @@ export default function AdminProjectsClient() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={selectAllProjects}
-                className={`h-10 w-10 inline-flex items-center justify-center border rounded-lg focus:outline-none transition-all flex-shrink-0 ${selectedProjectIds.size > 0 && selectedProjectIds.size === projects.length
+                className={`h-10 w-10 inline-flex items-center justify-center border rounded-lg focus:outline-none transition-all flex-shrink-0 ${selectedProjectIds.size > 0 && selectedProjectIds.size === orderedProjects.length
                   ? 'bg-violet-600 border-violet-600 text-white' // Active: Solid
                   : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600' // Inactive: Clean outline, no shadow
                   }`}
                 title="Select All"
               >
-                <CheckCircle2 className={`h-5 w-5 ${selectedProjectIds.size > 0 && selectedProjectIds.size === projects.length ? 'text-white' : ''}`} />
+                <CheckCircle2 className={`h-5 w-5 ${selectedProjectIds.size > 0 && selectedProjectIds.size === orderedProjects.length ? 'text-white' : ''}`} />
               </button>
 
               <button
@@ -622,78 +697,89 @@ export default function AdminProjectsClient() {
               <p className="text-gray-400 text-sm">Create your first project to get started</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((project) => {
-                const isPublished = project.status === 'published';
-                return (
-                  <div key={project.id} className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col overflow-hidden">
-                    <div className="relative aspect-video bg-gray-100 overflow-hidden">
-                      {/* Selection Checkbox Overlay */}
-                      <div className={`absolute top-2 left-2 z-10 transition-opacity duration-200 ${selectedProjectIds.has(project.id) || 'group-hover:opacity-100 opacity-0'}`}>
-                        <input
-                          type="checkbox"
-                          checked={selectedProjectIds.has(project.id)}
-                          onChange={() => toggleProjectSelection(project.id)}
-                          className="w-5 h-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500 cursor-pointer shadow-sm"
-                        />
-                      </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={orderedProjects.map(p => p.id)} strategy={rectSortingStrategy}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {orderedProjects.map((project) => {
+                    const isPublished = project.status === 'published';
+                    return (
+                      <SortableProjectItem key={project.id} id={project.id}>
+                        <div className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col overflow-hidden h-full">
+                          <div className="relative aspect-video bg-gray-100 overflow-hidden">
+                            {/* Selection Checkbox Overlay */}
+                            <div className={`absolute top-2 left-2 z-10 transition-opacity duration-200 ${selectedProjectIds.has(project.id) || 'group-hover:opacity-100 opacity-0'}`}
+                              // Stop propagation for checkbox so it doesn't trigger drag
+                              onPointerDown={(e) => e.stopPropagation()}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedProjectIds.has(project.id)}
+                                onChange={() => toggleProjectSelection(project.id)}
+                                className="w-5 h-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500 cursor-pointer shadow-sm"
+                              />
+                            </div>
 
-                      {isVideoLink(project.cover) ? (
-                        <video src={project.cover} className="w-full h-full object-cover" muted loop playsInline preload="metadata" />
-                      ) : (
-                        <Image src={project.cover || FALLBACK_IMAGE} alt={project.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" loading="lazy" />
-                      )}
-                    </div>
-                    <div className="p-5 flex-1 flex flex-col">
-                      <div className="mb-4">
-                        <div className="flex justify-between items-center mb-1 gap-2">
-                          <h3 className="text-lg font-bold text-gray-900 line-clamp-1 flex-1 cursor-pointer hover:text-violet-600" title={project.title} onClick={() => toggleProjectSelection(project.id)}>
-                            {project.title}
-                          </h3>
-                          <StatusToggle
-                            isActive={isPublished}
-                            onClick={() => handleToggleProjectStatus(project)}
-                            className="flex-shrink-0"
-                            iconActive={<Eye className="w-4 h-4" />}
-                            iconInactive={<EyeOff className="w-4 h-4" />}
-                            labelActive=""
-                            labelInactive=""
-                          />
-                        </div>
-                        <p className="text-sm text-violet-600 font-medium mb-2">{project.client} • {project.year}</p>
-                        <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
-                      </div>
-                      <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-end gap-2">
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => setManagingCommentsProject(project)}
-                            className={`inline-flex items-center justify-center px-3 py-2 rounded-lg transition-colors gap-1.5 ${(commentCounts[project.slug] || 0) > 0
-                              ? 'text-green-600 bg-green-50 hover:bg-green-100'
-                              : 'text-gray-600 hover:text-green-600 hover:bg-green-50'
-                              }`}
-                            title="Manage Comments"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                            {(commentCounts[project.slug] || 0) > 0 && (
-                              <span className="text-xs font-bold">{commentCounts[project.slug]}</span>
+                            {isVideoLink(project.cover) ? (
+                              <video src={project.cover} className="w-full h-full object-cover" muted loop playsInline preload="metadata" />
+                            ) : (
+                              <Image src={project.cover || FALLBACK_IMAGE} alt={project.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" loading="lazy" />
                             )}
-                          </button>
-                          <button onClick={() => setEditingProject(project)} className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-violet-600 hover:bg-violet-50 transition-colors" title="Edit Project">
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => handleDuplicateProject(project)} className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Duplicate Project">
-                            <Copy className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => handleDeleteProject(project.id)} className="inline-flex items-center justify-center p-2 rounded-lg text-red-500 bg-red-50 hover:bg-red-100 border border-red-100 transition-colors ml-1" title="Delete Project">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          </div>
+                          <div className="p-5 flex-1 flex flex-col">
+                            <div className="mb-4">
+                              <div className="flex justify-between items-center mb-1 gap-2">
+                                <h3 className="text-lg font-bold text-gray-900 line-clamp-1 flex-1 cursor-pointer hover:text-violet-600" title={project.title} onClick={() => toggleProjectSelection(project.id)}>
+                                  {project.title}
+                                </h3>
+                                <div onPointerDown={(e) => e.stopPropagation()}>
+                                  <StatusToggle
+                                    isActive={isPublished}
+                                    onClick={() => handleToggleProjectStatus(project)}
+                                    className="flex-shrink-0"
+                                    iconActive={<Eye className="w-4 h-4" />}
+                                    iconInactive={<EyeOff className="w-4 h-4" />}
+                                    labelActive=""
+                                    labelInactive=""
+                                  />
+                                </div>
+                              </div>
+                              <p className="text-sm text-violet-600 font-medium mb-2">{project.client} • {project.year}</p>
+                              <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
+                            </div>
+                            <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-end gap-2" onPointerDown={(e) => e.stopPropagation()}>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => setManagingCommentsProject(project)}
+                                  className={`inline-flex items-center justify-center px-3 py-2 rounded-lg transition-colors gap-1.5 ${(commentCounts[project.slug] || 0) > 0
+                                    ? 'text-green-600 bg-green-50 hover:bg-green-100'
+                                    : 'text-gray-600 hover:text-green-600 hover:bg-green-50'
+                                    }`}
+                                  title="Manage Comments"
+                                >
+                                  <MessageCircle className="w-4 h-4" />
+                                  {(commentCounts[project.slug] || 0) > 0 && (
+                                    <span className="text-xs font-bold">{commentCounts[project.slug]}</span>
+                                  )}
+                                </button>
+                                <button onClick={() => setEditingProject(project)} className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-violet-600 hover:bg-violet-50 transition-colors" title="Edit Project">
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => handleDuplicateProject(project)} className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Duplicate Project">
+                                  <Copy className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => handleDeleteProject(project.id)} className="inline-flex items-center justify-center p-2 rounded-lg text-red-500 bg-red-50 hover:bg-red-100 border border-red-100 transition-colors ml-1" title="Delete Project">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                      </SortableProjectItem>
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </>
       ) : (

@@ -1,5 +1,5 @@
 import { ProjectFormData } from '@/hooks/useProjectForm';
-import { Loader2, UploadCloud } from 'lucide-react';
+import { Loader2, UploadCloud, Wand2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 interface ProjectMediaUploadProps {
@@ -81,6 +81,26 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                         <span className="hidden sm:inline">Upload</span>
                     </button>
 
+                    {/* Compress Button */}
+                    {formData.cover &&
+                        (formData.cover.endsWith('.mp4') || formData.cover.endsWith('.mov') || formData.cover.endsWith('.webm')) &&
+                        !formData.cover.startsWith('http') && (
+                            <CompressButton
+                                filePath={formData.cover}
+                                onSuccess={() => {
+                                    // Force refresh to show new file size if we displayed it, 
+                                    // but browsers cache video content heavily. 
+                                    // We might need to add timestamp query param to preview.
+                                    const timestamp = Date.now();
+                                    if (formData.cover.includes('?')) {
+                                        updateField('cover', formData.cover.split('?')[0] + `?t=${timestamp}`);
+                                    } else {
+                                        updateField('cover', formData.cover + `?t=${timestamp}`);
+                                    }
+                                }}
+                            />
+                        )}
+
                     {isDetectingDimensions && (
                         <div className="flex items-center px-2 text-violet-600">
                             <Loader2 className="w-5 h-5 animate-spin" />
@@ -112,6 +132,54 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                     />
                 </div>
             </div>
+        </div>
+    );
+}
+
+function CompressButton({ filePath, onSuccess }: { filePath: string, onSuccess: () => void }) {
+    const [isCompressing, setIsCompressing] = useState(false);
+    const [result, setResult] = useState<string | null>(null);
+
+    const handleCompress = async () => {
+        if (!confirm('Compress this video? This will overwrite the original file with a smaller version.')) return;
+
+        setIsCompressing(true);
+        setResult(null);
+
+        try {
+            const res = await fetch('/api/admin/compress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filePath })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || 'Compression failed');
+
+            setResult(`${data.originalSize} -> ${data.newSize} (-${data.saved})`);
+            onSuccess();
+        } catch (error) {
+            console.error(error);
+            alert(error instanceof Error ? error.message : 'Compression failed');
+        } finally {
+            setIsCompressing(false);
+        }
+    };
+
+    return (
+        <div className="flex items-center gap-2">
+            <button
+                type="button"
+                onClick={handleCompress}
+                disabled={isCompressing}
+                className="px-4 py-2 bg-pink-50 text-pink-700 border border-pink-200 rounded-md hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-300 flex items-center gap-2"
+                title="Compress Video"
+            >
+                {isCompressing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                <span className="hidden sm:inline">Compress</span>
+            </button>
+            {result && <span className="text-xs text-green-600 font-medium whitespace-nowrap">{result}</span>}
         </div>
     );
 }

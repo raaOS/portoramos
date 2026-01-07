@@ -20,10 +20,10 @@
       "loop": true,
       "playsInline": true,
       "galleryItems": [],
-      "order": 2,
+      "order": 1,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-05T18:30:13.469Z",
+      "updatedAt": "2026-01-06T19:51:22.832Z",
       "likes": 33,
       "shares": 5,
       "allowComments": true,
@@ -39,6 +39,33 @@
         "afterImage": "",
         "afterType": "video"
       }
+    },
+    {
+      "id": "gen-1766512146544-14",
+      "title": "Kampanye Hadiah Digital Liburan",
+      "slug": "kampanye-hadiah-digital-liburan",
+      "client": "Personal Work",
+      "year": 2025,
+      "description": "Grafis ritel liburan yang cerah menggunakan warna-warna meriah dan mockup produk untuk mempromosikan penjualan langganan digital.",
+      "cover": "/assets/media/kampanye-hadiah-digital-liburan-cover.mp4",
+      "coverWidth": 1080,
+      "coverHeight": 1920,
+      "gallery": [],
+      "tags": [
+        "video"
+      ],
+      "external_link": "",
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "galleryItems": [],
+      "order": 2,
+      "status": "published",
+      "createdAt": "2025-12-23T17:49:06.544Z",
+      "updatedAt": "2026-01-06T19:51:22.832Z",
+      "likes": 8,
+      "shares": 5
     },
     {
       "id": "gen-1766512146544-1",
@@ -385,33 +412,6 @@
       "shares": 5
     },
     {
-      "id": "gen-1766512146544-14",
-      "title": "Kampanye Hadiah Digital Liburan",
-      "slug": "kampanye-hadiah-digital-liburan",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Grafis ritel liburan yang cerah menggunakan warna-warna meriah dan mockup produk untuk mempromosikan penjualan langganan digital.",
-      "cover": "/assets/media/kampanye-hadiah-digital-liburan-cover.mp4",
-      "coverWidth": 1080,
-      "coverHeight": 1920,
-      "gallery": [],
-      "tags": [
-        "video"
-      ],
-      "external_link": "",
-      "autoplay": true,
-      "muted": true,
-      "loop": true,
-      "playsInline": true,
-      "galleryItems": [],
-      "order": 16,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
-      "likes": 8,
-      "shares": 5
-    },
-    {
       "id": "gen-1766512146544-15",
       "title": "Pastoral Kawanan Berhalo",
       "slug": "pastoral-kawanan-berhalo",
@@ -431,10 +431,10 @@
       "loop": false,
       "playsInline": false,
       "galleryItems": [],
-      "order": 17,
+      "order": 15,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2026-01-06T19:51:22.832Z",
       "likes": 21,
       "shares": 3
     },
@@ -458,10 +458,10 @@
       "loop": false,
       "playsInline": false,
       "galleryItems": [],
-      "order": 18,
+      "order": 16,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2026-01-06T19:51:22.832Z",
       "likes": 19,
       "shares": 4
     },
@@ -485,10 +485,10 @@
       "loop": true,
       "playsInline": true,
       "galleryItems": [],
-      "order": 19,
+      "order": 17,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2026-01-06T19:51:22.832Z",
       "likes": 37,
       "shares": 0
     },
@@ -512,10 +512,10 @@
       "loop": false,
       "playsInline": false,
       "galleryItems": [],
-      "order": 20,
+      "order": 18,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2026-01-06T19:51:22.832Z",
       "likes": 9,
       "shares": 2
     },
@@ -539,10 +539,10 @@
       "loop": false,
       "playsInline": false,
       "galleryItems": [],
-      "order": 21,
+      "order": 19,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2026-01-06T19:51:22.832Z",
       "likes": 13,
       "shares": 2
     },
@@ -566,38 +566,11 @@
       "loop": false,
       "playsInline": false,
       "galleryItems": [],
-      "order": 22,
+      "order": 20,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "updatedAt": "2026-01-06T19:51:22.832Z",
       "likes": 39,
-      "shares": 5
-    },
-    {
-      "id": "gen-1766512146544-21",
-      "title": "Studi Visual Tekstur Digital",
-      "slug": "studi-visual-tekstur-digital",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Sebuah eksplorasi visual tentang interaksi antara pencahayaan dinamis dan tekstur permukaan digital dalam lingkungan 3D.",
-      "cover": "/assets/media/studi-visual-tekstur-digital-cover.jpg",
-      "coverWidth": 640,
-      "coverHeight": 800,
-      "gallery": [],
-      "tags": [
-        "image"
-      ],
-      "external_link": "",
-      "autoplay": false,
-      "muted": false,
-      "loop": false,
-      "playsInline": false,
-      "galleryItems": [],
-      "order": 23,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
-      "likes": 37,
       "shares": 5
     },
     {
@@ -634,11 +607,38 @@
         "afterImage": "",
         "afterType": "image"
       },
-      "order": 23,
+      "order": 21,
       "status": "published",
       "createdAt": "2026-01-05T19:53:02.238Z",
-      "updatedAt": "2026-01-05T19:53:02.238Z"
+      "updatedAt": "2026-01-06T19:51:22.832Z"
+    },
+    {
+      "id": "gen-1766512146544-21",
+      "title": "Studi Visual Tekstur Digital",
+      "slug": "studi-visual-tekstur-digital",
+      "client": "Personal Work",
+      "year": 2025,
+      "description": "Sebuah eksplorasi visual tentang interaksi antara pencahayaan dinamis dan tekstur permukaan digital dalam lingkungan 3D.",
+      "cover": "/assets/media/studi-visual-tekstur-digital-cover.jpg",
+      "coverWidth": 640,
+      "coverHeight": 800,
+      "gallery": [],
+      "tags": [
+        "image"
+      ],
+      "external_link": "",
+      "autoplay": false,
+      "muted": false,
+      "loop": false,
+      "playsInline": false,
+      "galleryItems": [],
+      "order": 22,
+      "status": "published",
+      "createdAt": "2025-12-23T17:49:06.544Z",
+      "updatedAt": "2026-01-06T19:51:22.832Z",
+      "likes": 37,
+      "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-06T19:37:30.920Z"
+  "lastUpdated": "2026-01-06T19:51:22.832Z"
 }

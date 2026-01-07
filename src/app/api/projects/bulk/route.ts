@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { checkAdminAuth } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 
@@ -27,6 +28,8 @@ export async function POST(request: NextRequest) {
             success = await projectService.bulkUpdateProjects({ ids, delete: true });
         } else if (action === 'publish' || action === 'draft') {
             success = await projectService.bulkUpdateProjects({ ids, status: action === 'publish' ? 'published' : 'draft' });
+        } else if (action === 'reorder') {
+            success = await projectService.bulkUpdateProjects({ ids, reorder: true });
         } else {
             console.warn('[BulkUpdate] Invalid action:', action);
             return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
@@ -37,6 +40,10 @@ export async function POST(request: NextRequest) {
         if (!success) {
             return NextResponse.json({ error: 'Failed to perform bulk update' }, { status: 500 });
         }
+
+        revalidatePath('/', 'layout');
+        revalidatePath('/works');
+        revalidatePath('/admin');
 
         return NextResponse.json({ success: true, message: `Bulk ${action} successful` });
 
