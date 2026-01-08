@@ -43,20 +43,21 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         setMounted(true);
     }, []);
 
-    // SSR Fallback: Use CSS Columns to simulate Masonry structure immediately
-    // This allows the browser to paint images before React hydrates the Masonry library
+    // SSR Fallback: Use CSS Grid to simulate Masonry structure immediately
+    // Using grid-cols ensures items are visible instantly in the correct approximate position
+    // We match the gap to the actual masonry grid (gap-x-4 = 16px usually)
     if (!mounted) {
         return (
             <div
-                className={`w-full grid ${className} ${columns === 'sidebar'
-                    ? 'grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-min'
+                className={`w-full grid items-start content-start ${className} ${columns === 'sidebar'
+                    ? 'grid-cols-2 lg:grid-cols-3 gap-4'
                     : columns === 'bottom'
-                        ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 auto-rows-min'
-                        : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-4 auto-rows-min'
+                        ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4'
+                        : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-4'
                     }`}
             >
                 {React.Children.map(children, (child) => (
-                    <div className="mb-4">
+                    <div className="mb-4 break-inside-avoid">
                         {child}
                     </div>
                 ))}
@@ -67,8 +68,8 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
     return (
         <Masonry
             breakpointCols={breakpointColumns}
-            className={`masonry-grid ${className}`}
-            columnClassName="masonry-grid-column"
+            className={`masonry-grid -ml-4 w-auto flex ${className}`}
+            columnClassName="masonry-grid-column pl-4 bg-clip-padding"
         >
             {children}
         </Masonry>

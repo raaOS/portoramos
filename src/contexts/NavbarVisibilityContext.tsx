@@ -14,8 +14,8 @@ export function NavbarVisibilityProvider({ children }: { children: ReactNode }) 
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
 
   // Memoize callback functions to prevent re-creating them on every render
-  const hideNavbar = useCallback(() => setIsNavbarVisible(false), []);
-  const showNavbar = useCallback(() => setIsNavbarVisible(true), []);
+  const hideNavbar = useCallback(() => setIsNavbarVisible(prev => prev ? false : prev), []);
+  const showNavbar = useCallback(() => setIsNavbarVisible(prev => !prev ? true : prev), []);
 
   // Memoize value to prevent unnecessary re-renders
   const value = useMemo(

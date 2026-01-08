@@ -170,7 +170,7 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
                 >
                     <button
                         onClick={() => window.dispatchEvent(new CustomEvent('open-chat'))}
-                        className="group relative flex items-center gap-3 px-8 py-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-md overflow-hidden shadow-xl"
+                        className="group relative flex items-center gap-3 px-8 py-4 rounded-full bg-white/10 border border-white/5 hover:bg-white/15 hover:border-white/20 transition-all duration-300 overflow-hidden shadow-xl"
                     >
                         <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-blue-500 blur-xl" />
                         <span className="relative text-white/90 group-hover:text-white font-bold">{contactInfo?.labels?.chatButtonText || 'Chat Langsung'}</span>
@@ -197,7 +197,7 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
                             key={i}
                             href={link.href!}
                             target={link.href!.startsWith('http') ? "_blank" : undefined}
-                            className="group relative px-6 py-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-md overflow-hidden"
+                            className="group relative px-6 py-3 rounded-full bg-white/10 border border-white/5 hover:bg-white/15 hover:border-white/20 transition-all duration-300 overflow-hidden"
                         >
                             <div className={`absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${link.color} blur-xl`} />
                             <span className="relative text-white/90 group-hover:text-white font-medium">{link.label}</span>

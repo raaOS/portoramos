@@ -17,6 +17,12 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // 100MB Limit
+        if (file.size > 100 * 1024 * 1024) {
+            alert('File too large. Maximum size is 100MB.');
+            return;
+        }
+
         setIsUploading(true);
         const formData = new FormData();
         formData.append('file', file);

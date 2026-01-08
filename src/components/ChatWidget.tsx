@@ -50,9 +50,9 @@ export default function ChatWidget() {
         <div className="fixed bottom-24 right-6 md:bottom-6 md:right-6 z-50 flex flex-col items-end w-full max-w-[calc(100vw-2rem)] md:w-auto font-sans print:hidden">
             {/* Chat Box */}
             {isOpen && (
-                <div className="mb-4 w-80 rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 ease-in-out font-sans">
+                <div className="mb-4 w-80 rounded-2xl overflow-hidden transform transition-all duration-300 ease-in-out font-sans border border-gray-200">
                     {/* WA Header */}
-                    <div className="bg-[#075E54] p-3 flex justify-between items-center text-white shadow-md">
+                    <div className="bg-[#075E54] p-3 flex justify-between items-center text-white">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
                                 <img src="/profile.jpg" alt="Admin" className="w-full h-full object-cover"
@@ -152,7 +152,7 @@ export default function ChatWidget() {
             {!isContactPage && (
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className={`${isOpen ? 'bg-gray-600 rotate-90' : 'bg-[#25D366] hover:bg-[#20bd5a]'} text-white p-3.5 rounded-full shadow-[0_4px_12px_rgba(37,211,102,0.4)] transition-all duration-300 hover:scale-110 focus:outline-none group flex items-center justify-center`}
+                    className={`${isOpen ? 'bg-gray-600 rotate-90' : 'bg-[#25D366] hover:bg-[#20bd5a]'} text-white p-3.5 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none group flex items-center justify-center`}
                 >
                     {isOpen ? (
                         <X className="w-6 h-6" />

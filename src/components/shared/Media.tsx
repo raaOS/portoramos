@@ -340,8 +340,8 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         )}
 
         {hasError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-500">
-            <div className="text-xs">Error</div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400 p-4 text-center">
+            <span className="text-[10px] uppercase font-bold tracking-wider opacity-50">{alt || 'Media Unavailable'}</span>
           </div>
         )}
       </div>
@@ -377,8 +377,8 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         }}
       />
       {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-500">
-          <div className="text-xs">Error</div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400 p-4 text-center">
+          <span className="text-[10px] uppercase font-bold tracking-wider opacity-50">{alt || 'Image Unavailable'}</span>
         </div>
       )}
     </div>

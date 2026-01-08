@@ -117,22 +117,37 @@ export async function POST(request: NextRequest) {
         let currentData = await getCommentsData();
         const existingRaw = currentData.comments[slug] || [];
 
-        // Check the LAST top-level comment.
-        const lastComment = existingRaw[existingRaw.length - 1];
-        if (lastComment) {
-            // Check createdAt (ISO) first, then time (if parseable)
-            const lastTimeStr = lastComment.createdAt || lastComment.time;
-            if (lastTimeStr) {
-                const lastDate = new Date(lastTimeStr);
-                // Only enforcing if it's a valid date (ignores "1 jam yang lalu")
-                if (!isNaN(lastDate.getTime())) {
-                    const timeDiff = Date.now() - lastDate.getTime();
-                    // Limit: 10 seconds
-                    if (timeDiff < 10000) {
-                        return NextResponse.json(
-                            { error: 'Please wait 10 seconds before posting again.' },
-                            { status: 429 }
-                        );
+        // Identify the *new* comment to determine Author
+        if (Array.isArray(comments) && comments.length > 0) {
+            const newLastComment = comments[comments.length - 1];
+            const authorName = newLastComment.name || newLastComment.author;
+
+            if (authorName) {
+                // Find last comment by THIS author in the existing DB
+                // Search backwards for performance
+                let lastUserComment = null;
+                for (let i = existingRaw.length - 1; i >= 0; i--) {
+                    const c = existingRaw[i];
+                    if ((c.name === authorName) || (c.author === authorName)) {
+                        lastUserComment = c;
+                        break;
+                    }
+                }
+
+                if (lastUserComment) {
+                    const lastTimeStr = lastUserComment.createdAt || lastUserComment.time;
+                    if (lastTimeStr) {
+                        const lastDate = new Date(lastTimeStr);
+                        if (!isNaN(lastDate.getTime())) {
+                            const timeDiff = Date.now() - lastDate.getTime();
+                            // Limit: 5 seconds per user
+                            if (timeDiff < 5000) {
+                                return NextResponse.json(
+                                    { error: 'Please wait 5 seconds before posting again.' },
+                                    { status: 429 }
+                                );
+                            }
+                        }
                     }
                 }
             }

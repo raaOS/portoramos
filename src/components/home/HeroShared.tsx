@@ -28,7 +28,7 @@ export default function HeroShared({ layoutId, src, alt, kind = 'image', poster,
 
   return (
     <div
-      className="w-full h-full max-h-[80vh] portrait:max-h-[85vh]"
+      className="w-full h-full"
       style={{
         aspectRatio: ratio || 16 / 9,
       } as React.CSSProperties}

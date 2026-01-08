@@ -16,6 +16,14 @@ interface CommentsData {
   comments: Record<string, any[]>;
 }
 
+// Simple In-Memory Cache
+let cache: {
+  data: any;
+  lastUpdated: string | null;
+  timestamp: number;
+} | null = null;
+const CACHE_TTL = 60 * 1000; // 60 seconds
+
 // GET - Read all projects
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +31,24 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || undefined;
     const fresh = searchParams.get('fresh') === 'true';
 
+    // Return cached data if available, fresh not requested, and cache is valid
+    if (!fresh && !status && cache && (Date.now() - cache.timestamp < CACHE_TTL)) {
+      return NextResponse.json({
+        projects: cache.data,
+        lastUpdated: cache.lastUpdated
+      });
+    }
+
     const { projects, lastUpdated } = await projectService.getProjects(status, fresh);
+
+    // Update cache if this is a standard request (no status filter)
+    if (!status) {
+      cache = {
+        data: projects,
+        lastUpdated,
+        timestamp: Date.now()
+      };
+    }
 
     return NextResponse.json({
       projects,

@@ -11,13 +11,15 @@ interface ProjectCardPinterestProps {
     priority?: boolean;
     videoEnabled?: boolean;
     interactive?: boolean;
+    highlightedTag?: string;
 }
 
 export default function ProjectCardPinterest({
     project,
     priority = false,
     videoEnabled = true,
-    interactive = true
+    interactive = true,
+    highlightedTag
 }: ProjectCardPinterestProps) {
     const { slug, title, tags, likes, shares } = project;
     const cover = resolveCover(project);
@@ -25,8 +27,15 @@ export default function ProjectCardPinterest({
 
     // Calculate aspect ratio for the image/video container
     const width = project.coverWidth || 800;
-    const height = project.coverHeight || 600;
-    const ratio = width / height;
+    const height = (project.coverHeight && project.coverHeight > 0) ? project.coverHeight : 600;
+    const ratio = (width > 0 && height > 0) ? (width / height) : (4 / 3);
+
+    // Determines which tag to show:
+    // If we are filtering by a tag (highlightedTag), show that one if this project has it.
+    // Otherwise show the first tag.
+    const displayTag = highlightedTag && tags?.some(t => t.toLowerCase() === highlightedTag.toLowerCase())
+        ? tags.find(t => t.toLowerCase() === highlightedTag.toLowerCase())
+        : tags?.[0];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Component: any = interactive ? Link : 'div';
@@ -71,8 +80,8 @@ export default function ProjectCardPinterest({
                     <p className="font-medium text-sm text-gray-900 dark:text-gray-100 leading-tight group-hover:underline decoration-1 underline-offset-2 truncate">
                         {title}
                     </p>
-                    {tags?.[0] && (
-                        <p className="text-[10px] uppercase tracking-wider font-bold text-gray-500 whitespace-nowrap shrink-0">{tags[0]}</p>
+                    {displayTag && (
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-gray-500 whitespace-nowrap shrink-0">{displayTag}</p>
                     )}
                 </div>
 

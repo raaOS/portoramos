@@ -45,7 +45,7 @@ export default function ProjectDetailTwoColumn({
     // Initialize Data
     useEffect(() => {
         const initData = async () => {
-            // 1. Load User Preference (Local)
+            // 1. Load User Preference (Local) - Sync
             if (typeof window !== 'undefined') {
                 const savedLike = localStorage.getItem(`like-${project.slug}`);
                 if (savedLike === 'true') {
@@ -53,37 +53,40 @@ export default function ProjectDetailTwoColumn({
                 }
             }
 
-            // 2. Load Global Metrics (API)
+            // 2. Load Global Metrics & Comments (API) - Parallel
             try {
-                const res = await fetch(`/api/metrics?slug=${project.slug}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setMetrics(data);
-                }
-            } catch (error) {
-                console.error('Failed to load metrics:', error);
-            }
+                const [metricsRes, commentsRes] = await Promise.all([
+                    fetch(`/api/metrics?slug=${project.slug}`),
+                    fetch(`/api/comments?slug=${project.slug}`)
+                ]);
 
-            // 3. Load Comments (API)
-            try {
-                const res = await fetch(`/api/comments?slug=${project.slug}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.comments && Array.isArray(data.comments)) {
-                        setComments(data.comments);
+                if (metricsRes.ok) {
+                    const metricsData = await metricsRes.json();
+                    setMetrics(metricsData);
+                }
+
+                if (commentsRes.ok) {
+                    const commentsData = await commentsRes.json();
+                    if (commentsData.comments && Array.isArray(commentsData.comments)) {
+                        setComments(commentsData.comments);
                     } else {
                         setComments([]);
                     }
                 }
             } catch (error) {
-                console.error('Failed to load comments:', error);
-                setComments([]);
+                console.error('Failed to load project data:', error);
+                // Fail gracefully, content is already hydrated from props
             } finally {
                 setIsLoaded(true);
             }
         };
 
-        initData();
+        // requestIdleCallback to defer heavy JS execution if supported
+        if ('requestIdleCallback' in window) {
+            (window as any).requestIdleCallback(initData);
+        } else {
+            setTimeout(initData, 0);
+        }
     }, [project.slug]);
 
 

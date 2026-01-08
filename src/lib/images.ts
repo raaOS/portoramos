@@ -121,7 +121,7 @@ function cloudinaryPosterFromVideo(u: string, opts?: { width?: number }) {
 }
 
 const BLANK_SVG = `data:image/svg+xml;utf8,` +
-  encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000"><rect width="100%" height="100%" fill="#f2f2f2"/></svg>')
+  encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="24" fill="#9ca3af">PREVIEW</text></svg>')
 
 export function coverUrl(_p: Project) {
   // Tidak pakai Picsum; gunakan placeholder lokal data URI

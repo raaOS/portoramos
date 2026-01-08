@@ -27,13 +27,9 @@ interface FuseInstance<T> {
 
 export default function IndexClientInner({ projects, tag, lastUpdated }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
-  // Responsive Initial Count: Start with 14 to fill larger screens immediately.
-  // We keep it stable to avoid mobile double-render/layout shift. 
-  // 14 items is not too heavy for modern mobile given our optimizations.
+  // Start with a reasonable number that fills the screen but isn't too heavy.
+  // 14 items allows for full screen coverage immediately
   const [visibleCount, setVisibleCount] = useState(14)
-
-  // REMOVED: useEffect that checked window width and reduced to 8.
-  // This blocked first paint and caused a re-render.
 
   const [isLoading, setIsLoading] = useState(false)
   const [fuseInstance, setFuseInstance] = useState<FuseInstance<Project> | null>(null)
@@ -92,10 +88,11 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
     return result
   }, [projects, tag, searchQuery, fuseInstance])
 
-  // SAFE INFINITE LOOP:
-  // We use modulo logic to repeat projects effectively indefinitely but cap it at a safe limit
-  // to prevent browser crash. e.g. 5 loops or 150 items max.
-  const MAX_DISPLAY_COUNT = 150;
+  // SAFE INFINITE LOOP check:
+  // User requested "No Limit" but 1000 is sufficient.
+  // We set a practical limit of 1,000 items.
+  // This allows reasonable scrolling without being excessive.
+  const MAX_DISPLAY_COUNT = 1000;
 
   const displayedProjects = useMemo(() => {
     if (!filteredProjects.length) return [];
@@ -107,10 +104,10 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
     });
   }, [filteredProjects, visibleCount]);
 
-  // Reset visible count when filters change - use smaller mobile count for faster LCP
+  // Reset visible count when filters change
   useEffect(() => {
-    setVisibleCount(window.innerWidth > 768 ? 6 : 6)
-  }, [filteredProjects])
+    setVisibleCount(14)
+  }, [filteredProjects.length, searchQuery, tag])
 
   // Optimized infinite scroll with IntersectionObserver
   const observerTarget = useRef<HTMLDivElement>(null)
@@ -121,17 +118,18 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
         if (entries[0].isIntersecting && !isLoading && filteredProjects.length > 0 && visibleCount < MAX_DISPLAY_COUNT) {
           setIsLoading(true)
 
-          // Append in batches of 24 for better performance during fast scrolling
-          setVisibleCount(prev => Math.min(prev + 24, MAX_DISPLAY_COUNT))
+          // Append in batches of 14 for smoother updates
+          setVisibleCount(prev => Math.min(prev + 14, MAX_DISPLAY_COUNT))
 
           // Small delay to prevent double-triggering before state propagates
-          setTimeout(() => {
+          // Using requestAnimationFrame for smoother UI update
+          requestAnimationFrame(() => {
             setIsLoading(false)
-          }, 50)
+          })
         }
       },
       {
-        rootMargin: '1200px 0px', // Pre-fetch content early
+        rootMargin: '800px 0px', // Pre-fetch content reasonably early
         threshold: 0.1
       }
     )
@@ -166,27 +164,40 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
       )}
 
       {/* Projects Grid */}
-      <div className="min-h-[80vh]">
+      <div className="min-h-screen">
         {displayedProjects.length > 0 ? (
           <>
             <MasonryGrid>
               {displayedProjects.map((project, index) => {
+                // Determine priority based on index (first 14 items get priority)
+                const isPriority = index < 14;
+
+                // Animation Logic:
+                // First 14 items: NO ANIMATION STATE CHANGE to prevent blink.
+                // Next items: Animate only when scrolled into view
+                const animationProps = isPriority
+                  ? {
+                    animate: { opacity: 1, y: 0 },
+                    initial: { opacity: 1, y: 0 }, // MATCH FINAL STATE = NO BLINK
+                    transition: { duration: 0 }    // INSTANT
+                  }
+                  : {
+                    initial: { opacity: 0, y: 60 }, // Slightly more dramatic for scroll
+                    whileInView: { opacity: 1, y: 0 },
+                    viewport: { once: true, margin: "50px" },
+                    transition: { duration: 0.6, ease: "easeOut" }
+                  };
+
                 return (
                   <motion.div
                     key={`${project.slug}-${index}`}
-                    initial={index < 14 ? { opacity: 1, y: 30 } : { opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      duration: index < 14 ? 0.2 : 0.5, // Faster fade for initial batch
-                      ease: "easeOut",
-                      // INSTANT LOAD FIX: No delay for first 14 items
-                      delay: index < 14 ? 0 : (Math.floor(index / 7) % 5) * 0.1
-                    }}
+                    {...animationProps}
                   >
                     <ProjectCardPinterest
                       project={project}
-                      priority={index < 14} // INSTANT FIX: Prioritize ALL 14 items
-                      videoEnabled={true} // Enable video for all positions (handled by lazy load)
+                      priority={isPriority}
+                      videoEnabled={true}
+                      highlightedTag={tag}
                     />
                   </motion.div>
                 )
