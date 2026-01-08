@@ -223,33 +223,6 @@
       "shares": 1
     },
     {
-      "id": "gen-1766512146544-6",
-      "title": "Narasi Visual & Moodboard",
-      "slug": "narasi-visual-moodboard",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Desain digital multi-panel yang memadukan manipulasi foto surealis dengan fotografi perjalanan dan studi warna.",
-      "cover": "/assets/media/narasi-visual-moodboard-cover.jpg",
-      "coverWidth": 640,
-      "coverHeight": 800,
-      "gallery": [],
-      "tags": [
-        "image"
-      ],
-      "external_link": "",
-      "autoplay": false,
-      "muted": false,
-      "loop": false,
-      "playsInline": false,
-      "galleryItems": [],
-      "order": 8,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
-      "likes": 34,
-      "shares": 4
-    },
-    {
       "id": "gen-1766512146544-7",
       "title": "Tipografi Alam Kontras Tinggi",
       "slug": "tipografi-alam-kontras-tinggi",
@@ -269,12 +242,39 @@
       "loop": false,
       "playsInline": false,
       "galleryItems": [],
+      "order": 8,
+      "status": "published",
+      "createdAt": "2025-12-23T17:49:06.544Z",
+      "updatedAt": "2026-01-08T14:36:18.218Z",
+      "likes": 43,
+      "shares": 1
+    },
+    {
+      "id": "gen-1766512146544-6",
+      "title": "Narasi Visual & Moodboard",
+      "slug": "narasi-visual-moodboard",
+      "client": "Personal Work",
+      "year": 2025,
+      "description": "Desain digital multi-panel yang memadukan manipulasi foto surealis dengan fotografi perjalanan dan studi warna.",
+      "cover": "/assets/media/narasi-visual-moodboard-cover.jpg",
+      "coverWidth": 640,
+      "coverHeight": 800,
+      "gallery": [],
+      "tags": [
+        "image"
+      ],
+      "external_link": "",
+      "autoplay": false,
+      "muted": false,
+      "loop": false,
+      "playsInline": false,
+      "galleryItems": [],
       "order": 9,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
-      "likes": 43,
-      "shares": 1
+      "updatedAt": "2026-01-08T14:36:18.218Z",
+      "likes": 34,
+      "shares": 4
     },
     {
       "id": "gen-1766512146544-8",
@@ -304,33 +304,6 @@
       "shares": 2
     },
     {
-      "id": "gen-1766512146544-9",
-      "title": "Identitas Monogram Hijau",
-      "slug": "identitas-monogram-hijau",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Monogram putih bergaya yang memadukan kaligrafi klasik dengan latar belakang alam yang gelap dan kaya tekstur.",
-      "cover": "/assets/media/identitas-monogram-hijau-cover.jpg",
-      "coverWidth": 640,
-      "coverHeight": 640,
-      "gallery": [],
-      "tags": [
-        "image"
-      ],
-      "external_link": "",
-      "autoplay": false,
-      "muted": false,
-      "loop": false,
-      "playsInline": false,
-      "galleryItems": [],
-      "order": 11,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
-      "likes": 36,
-      "shares": 3
-    },
-    {
       "id": "gen-1766512146544-10",
       "title": "Montase Bunga Cantik",
       "slug": "montase-bunga-cantik",
@@ -350,12 +323,39 @@
       "loop": true,
       "playsInline": true,
       "galleryItems": [],
+      "order": 11,
+      "status": "published",
+      "createdAt": "2025-12-23T17:49:06.544Z",
+      "updatedAt": "2026-01-08T14:36:19.676Z",
+      "likes": 42,
+      "shares": 5
+    },
+    {
+      "id": "gen-1766512146544-9",
+      "title": "Identitas Monogram Hijau",
+      "slug": "identitas-monogram-hijau",
+      "client": "Personal Work",
+      "year": 2025,
+      "description": "Monogram putih bergaya yang memadukan kaligrafi klasik dengan latar belakang alam yang gelap dan kaya tekstur.",
+      "cover": "/assets/media/identitas-monogram-hijau-cover.jpg",
+      "coverWidth": 640,
+      "coverHeight": 640,
+      "gallery": [],
+      "tags": [
+        "image"
+      ],
+      "external_link": "",
+      "autoplay": false,
+      "muted": false,
+      "loop": false,
+      "playsInline": false,
+      "galleryItems": [],
       "order": 12,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
-      "likes": 42,
-      "shares": 5
+      "updatedAt": "2026-01-08T14:36:19.676Z",
+      "likes": 36,
+      "shares": 3
     },
     {
       "id": "gen-1766512146544-11",
@@ -640,5 +640,5 @@
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-06T20:18:03.057Z"
+  "lastUpdated": "2026-01-08T14:36:19.676Z"
 }
