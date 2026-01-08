@@ -638,44 +638,7 @@
       "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 37,
       "shares": 5
-    },
-    {
-      "title": "Test Project Bot",
-      "client": "Antigravity",
-      "year": 2024,
-      "description": "Automated test.",
-      "cover": "/assets/media/1767642732971-1000103729.jpg",
-      "coverWidth": 1080,
-      "coverHeight": 1440,
-      "gallery": [],
-      "galleryItems": [],
-      "tags": [],
-      "autoplay": true,
-      "muted": true,
-      "loop": true,
-      "playsInline": true,
-      "likes": 0,
-      "shares": 0,
-      "allowComments": true,
-      "initialCommentCount": 2,
-      "narrative": {
-        "challenge": "",
-        "solution": "",
-        "result": ""
-      },
-      "id": "project-1767893705666",
-      "slug": "test-project-bot",
-      "comparison": {
-        "beforeImage": "",
-        "beforeType": "image",
-        "afterImage": "",
-        "afterType": "image"
-      },
-      "order": 23,
-      "status": "published",
-      "createdAt": "2026-01-08T17:35:05.666Z",
-      "updatedAt": "2026-01-08T17:35:05.666Z"
     }
   ],
-  "lastUpdated": "2026-01-08T17:35:05.666Z"
+  "lastUpdated": "2026-01-08T17:45:02.519Z"
 }
