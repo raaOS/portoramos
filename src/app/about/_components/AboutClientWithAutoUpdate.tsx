@@ -15,6 +15,12 @@ export default function AboutClientWithAutoUpdate({
   initialAboutData,
   initialProjects = []
 }: Props) {
+  // [STICKY NOTE] WRAPPER COMPONENT
+  // Komponen ini bertugas sebagai "Bungkus Pelindung".
+  // Fungsinya sederhana:
+  // 1. Menerima data dari Server (initialAboutData).
+  // 2. [Optional] Mengecek update data baru di background (Auto-Update).
+  // 3. Mengirim data yang sudah pasti aman ke komponen tampilan utama (AboutClient).
   const [clientInitialAbout] = useState<AboutData | null>(initialAboutData ?? null);
 
   // Auto-update data (lebih jarang karena konten jarang berubah)

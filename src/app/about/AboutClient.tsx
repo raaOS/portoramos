@@ -207,7 +207,11 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
   });
 
 
-  // Hero parallax
+  // [STICKY NOTE] SCROLL ANIMATION LOGIC
+  // Mengatur interaksi saat user scroll halaman.
+  // - heroOpacity: Text hero menghilang pelan-pelan saat discroll.
+  // - heroScale: Text hero mengecil sedikit agar terlihat menjauh.
+  // - activeSection: Mendeteksi user sedang melihat bagian mana (Hero/About/Skills).
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
   const heroY = useTransform(scrollYProgress, [0, 0.2], [0, -100]);
@@ -225,7 +229,11 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
   const p2Opacity = useTransform(stackScrollProgress, [0.4, 0.6], [0.2, 1]); // Lights up later
 
 
-  // Fallback data jika initialData tidak ada
+  // [STICKY NOTE] DATA FALLBACK (DATA CADANGAN)
+  // Ini adalah data darurat.
+  // Jika database/API error, halaman tidak akan kosong (blank),
+  // tapi akan menampilkan data hardcoded di bawah ini.
+  // "Safety First!"
   const fallbackData = {
     hero: {
       title: 'ABOUT ME',

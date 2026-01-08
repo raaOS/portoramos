@@ -88,28 +88,39 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
     return result
   }, [projects, tag, searchQuery, fuseInstance])
 
-  // SAFE INFINITE LOOP check:
-  // User requested "No Limit" but 1000 is sufficient.
-  // We set a practical limit of 1,000 items.
-  // This allows reasonable scrolling without being excessive.
+  // SAFETY LIMIT FOR INFINITE SCROLL
+  // User requested "No Limit" behavior (looping forever).
+  // However, technically arrays cannot be infinite.
+  // We set a Safe Limit of 1,000 items.
+  // - This allows scrolling for a very long time (repeating projects ~20-50 times).
+  // - It prevents the browser from crashing due to too many DOM elements.
+  // - Combined with Lazy Loading in Media.tsx, this is bandwidth-safe.
   const MAX_DISPLAY_COUNT = 1000;
 
   const displayedProjects = useMemo(() => {
     if (!filteredProjects.length) return [];
 
-    // Create an array of length 'visibleCount'
-    // Map each index to a project from filteredProjects using modulo
+    // INFINITE LOOP LOGIC:
+    // We create a virtual array of length 'visibleCount'.
+    // We use the modulo operator (%) to wrap around the project list.
+    // Example: If we have 10 projects, item #11 will be project #1.
     return Array.from({ length: visibleCount }).map((_, i) => {
       return filteredProjects[i % filteredProjects.length];
     });
   }, [filteredProjects, visibleCount]);
 
-  // Reset visible count when filters change
+  // RESET HANDLER:
+  // When the user types a search or changes a tag, we must reset the scroll
+  // back to the top (14 items) so they don't get lost.
   useEffect(() => {
     setVisibleCount(14)
   }, [filteredProjects.length, searchQuery, tag])
 
-  // Optimized infinite scroll with IntersectionObserver
+  // OPTIMIZED SCROLL OBSERVER:
+  // This watches the bottom of the page. When the user reaches it:
+  // 1. It checks if we haven't hit the MAX_DISPLAY_COUNT (1000).
+  // 2. It loads 14 more items.
+  // 3. It uses 'rootMargin' to preload content before the user actually hits the bottom.
   const observerTarget = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -118,18 +129,17 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
         if (entries[0].isIntersecting && !isLoading && filteredProjects.length > 0 && visibleCount < MAX_DISPLAY_COUNT) {
           setIsLoading(true)
 
-          // Append in batches of 14 for smoother updates
+          // Load next batch
           setVisibleCount(prev => Math.min(prev + 14, MAX_DISPLAY_COUNT))
 
-          // Small delay to prevent double-triggering before state propagates
-          // Using requestAnimationFrame for smoother UI update
+          // Use Animation Frame to ensure the UI updates smoothly without stutter
           requestAnimationFrame(() => {
             setIsLoading(false)
           })
         }
       },
       {
-        rootMargin: '800px 0px', // Pre-fetch content reasonably early
+        rootMargin: '800px 0px', // Load more when user is 800px away from bottom
         threshold: 0.1
       }
     )

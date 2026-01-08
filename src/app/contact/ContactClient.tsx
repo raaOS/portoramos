@@ -18,10 +18,10 @@ const BackgroundCard = React.memo(({ project, index }: { project: Project, index
     const height = project.coverHeight || 600;
     const ratio = width / height;
 
-    // PERFORMANCE OPTIMIZATION:
-    // User requested 50-75% video density.
-    // Logic: index % 3 !== 0 results in indices 1, 2, 4, 5... allowing video.
-    // This gives exactly 66% video coverage (2 out of 3).
+    // PERFORMANCE OPTIMIZATION (HEMAT RAM & KUOTA):
+    // User meminta agar video tidak terlalu banyak (50-75%).
+    // Logika: index % 3 !== 0 berarti item ke-1, 2, 4, 5... (bukan kelipatan 3).
+    // Hasilnya: 2 dari 3 item akan berupa video (66%), sisanya gambar statis.
     const allowVideoPreference = index % 3 !== 0; // Renamed to preference
 
     // CRITICAL FIX: If we want to show an Image but the source is a Video with NO POSTER,
@@ -111,7 +111,10 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
     const displayHeadline = contactInfo?.headline || "Bikin Project \nBareng?";
     const displaySubtext = contactInfo?.subtext || "Kita rancang pengalaman digital yang unik, detail, dan 'hidup'. \nSiap wujudin ide kamu?";
 
-    // Defer heavy background grid to prioritize LCP
+    // [STICKY NOTE] PERFORMANCE LCP (Largest Contentful Paint)
+    // Grid background sangat berat (banyak gambar/video).
+    // Agar loading awal cepat, kita "tunda" (defer) rendering grid ini.
+    // Grid baru muncul setelah 0.8 detik (setelah animasi teks selesai).
     const [isGridMounted, setIsGridMounted] = React.useState(false);
 
     React.useEffect(() => {

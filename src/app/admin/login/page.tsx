@@ -13,7 +13,10 @@ export default function AdminLoginPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const router = useRouter();
 
-  // Request location on mount
+  // [STICKY NOTE] LOCATION-BASED SECURITY
+  // Fitur keamanan tambahan: Admin hanya bisa login jika lokasi terdeteksi.
+  // Ini mencegah login sembarangan dari bot/device asing yang memblokir akses lokasi.
+  // Koordinat (lat/lng) dikirim ke server untuk diverifikasi (misal: hanya boleh login dari Indonesia/Rumah).
   useEffect(() => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -139,8 +142,8 @@ export default function AdminLoginPage() {
               type="submit"
               disabled={loading || !!locationError}
               className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${locationError
-                  ? 'bg-red-600 hover:bg-red-700 cursor-not-allowed focus:ring-red-500'
-                  : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 disabled:opacity-50'
+                ? 'bg-red-600 hover:bg-red-700 cursor-not-allowed focus:ring-red-500'
+                : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 disabled:opacity-50'
                 }`}
             >
               <span className="absolute left-4 flex items-center">

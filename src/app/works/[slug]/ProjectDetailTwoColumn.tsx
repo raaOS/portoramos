@@ -42,7 +42,10 @@ export default function ProjectDetailTwoColumn({
     const [isLoaded, setIsLoaded] = useState(false);
     const [metrics, setMetrics] = useState({ likes: 0, shares: 0 });
 
-    // Initialize Data
+    // [STICKY NOTE] CLIENT-SIDE HYDRATION
+    // Halaman ini awalnya Static (dari Server).
+    // Tapi kita perlu data Live seperti Likes & Comments.
+    // useEffect ini berjalan di browser untuk mengambil data terbaru itu tanpa melambatkan loading awal.
     useEffect(() => {
         const initData = async () => {
             // 1. Load User Preference (Local) - Sync

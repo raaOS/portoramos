@@ -10,7 +10,16 @@ export const metadata: Metadata = generateSEOMetadata({
   path: '/about'
 });
 
-// Cache server-rendered about page (Static by default, revalidated via Webhook)
+// [STICKY NOTE] ABOUT PAGE - SERVER COMPONENT
+// Ini adalah halaman utama "About" yang dijalankan di Server (bukan di browser user).
+// Fungsinya:
+// 1. Mengambil data awal (projects & about data) dari database/file saat "Build Time".
+// 2. Menyiapkan SEO (Metadata) agar mudah ditemukan Google.
+// 3. Mengirim data matang ke "Client Component" agar browser user tinggal tampilkan saja.
+
+// [STICKY NOTE] REVALIDATE = 60
+// Artinya: Halaman ini akan dibuat ulang di server paling cepat setiap 60 detik.
+// Jadi kalau Anda update konten di Admin, halaman public akan berubah setelah ~1 menit.
 export const revalidate = 60;
 
 export default async function AboutPage() {

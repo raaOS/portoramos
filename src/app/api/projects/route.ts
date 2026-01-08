@@ -31,7 +31,10 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || undefined;
     const fresh = searchParams.get('fresh') === 'true';
 
-    // Return cached data if available, fresh not requested, and cache is valid
+    // [STICKY NOTE] SERVER-SIDE CACHING
+    // Agar server tidak jebol saat ribuan user akses bersamaan.
+    // Kita simpan data projects di Memory (RAM) selama 60 detik.
+    // Jadi user ke-2 sampai ke-1000 akan dapat data dari Cache (sangat cepat), bukan baca file lagi.
     if (!fresh && !status && cache && (Date.now() - cache.timestamp < CACHE_TTL)) {
       return NextResponse.json({
         projects: cache.data,
@@ -86,6 +89,9 @@ export async function POST(request: NextRequest) {
     const newProject = await projectService.createProject(body);
 
     // --- Auto-Generate Comments ---
+    // [STICKY NOTE] GEN-Z BUZZ GENERATOR
+    // Setiap kali project baru dibuat, AI otomatis membuat "Komentar Palsu" ala Gen-Z.
+    // Tujuannya agar project terlihat ramai dan viral sejak detik pertama.
     try {
       const generatedComments = generateGenZComments(newProject.slug, body.initialCommentCount);
 

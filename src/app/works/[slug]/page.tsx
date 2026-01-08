@@ -6,7 +6,10 @@ import { resolveGallery } from '@/lib/images';
 import { generateProjectMetadata, generateProjectStructuredData } from '@/lib/seo';
 import ProjectDetailTwoColumn from './ProjectDetailTwoColumn';
 
-// Generate all project paths at build time
+// [STICKY NOTE] BUILD TIME GENERATION (SSG)
+// Fungsi ini memberi tahu Next.js daftar halaman yang harus dibuat saat build.
+// Contoh: /works/gojek, /works/tokopedia, dll.
+// Hasilnya: Loading halaman sangat cepat karena sudah jadi HTML statis.
 export async function generateStaticParams() {
     const { content: { projects } } = await githubService.getFile();
     return projects.map((project) => ({
@@ -17,7 +20,8 @@ export async function generateStaticParams() {
 // Allow new pages to be generated on demand
 export const dynamicParams = true;
 
-// Revalidate this page every 60 seconds (ISR)
+// [STICKY NOTE] REVALIDATE = 60
+// Jika ada update konten, halaman akan diperbarui di server setiap 60 detik.
 export const revalidate = 60;
 
 export default async function ProjectPage(props: { params: Promise<{ slug: string }> }) {

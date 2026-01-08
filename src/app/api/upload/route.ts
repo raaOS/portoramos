@@ -19,7 +19,10 @@ export async function POST(req: NextRequest) {
 
         const buffer = Buffer.from(await file.arrayBuffer());
 
-        // Sanitize filename
+        // [STICKY NOTE] LOCAL FILE STORAGE
+        // File yang diupload akan disimpan di dalam folder "public/assets/media".
+        // Kenapa public? Agar bisa langsung diakses browser via URL (contoh: domain.com/assets/media/gambar.jpg).
+        // Filename dibersihkan (sanitize) agar tidak ada karakter aneh yang bikin error.
         const cleanName = file.name.toLowerCase().replace(/[^a-z0-9.]/g, '-');
         const filename = `${Date.now()}-${cleanName}`;
         const uploadDir = path.join(process.cwd(), 'public/assets/media');

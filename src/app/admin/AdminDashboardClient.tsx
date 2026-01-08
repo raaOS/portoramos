@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 export default function AdminDashboardClient() {
   const router = useRouter();
 
+  // [STICKY NOTE] AUTH GUARD (PENJAGA PINTU)
+  // Memastikan hanya user yang sudah login (punya cookie sesi) yang bisa masuk sini.
+  // Jika server bilang "tidak authenticated", tendang balik ke halaman login.
   useEffect(() => {
     const checkAuth = async () => {
       try {

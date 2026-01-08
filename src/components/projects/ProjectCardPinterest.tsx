@@ -30,9 +30,12 @@ export default function ProjectCardPinterest({
     const height = (project.coverHeight && project.coverHeight > 0) ? project.coverHeight : 600;
     const ratio = (width > 0 && height > 0) ? (width / height) : (4 / 3);
 
-    // Determines which tag to show:
-    // If we are filtering by a tag (highlightedTag), show that one if this project has it.
-    // Otherwise show the first tag.
+    // SMART TAG DISPLAY LOGIC:
+    // This logic ensures that if the user is filtering by a specific tag (e.g., "Design"),
+    // that specific tag is the one displayed on the card, rather than just the first tag
+    // in the list. This provides better feedback to the user on why the card matches.
+    // - If highlightedTag matches one of the project's tags -> Show it.
+    // - Else -> Show the first tag (default).
     const displayTag = highlightedTag && tags?.some(t => t.toLowerCase() === highlightedTag.toLowerCase())
         ? tags.find(t => t.toLowerCase() === highlightedTag.toLowerCase())
         : tags?.[0];

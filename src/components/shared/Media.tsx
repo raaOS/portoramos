@@ -103,7 +103,10 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   const manualPlayRef = useRef(false)
   const loadTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Debounced Resize Listener (Fix #3: Layout Thrashing)
+  // [STICKY NOTE] MOBILE OPTIMIZATION
+  // Mendeteksi apakah user menggunakan HP (layar kecil < 768px).
+  // Gunanya: Kita bisa mematikan fitur berat (seperti auto-play video banyak) di HP agar tidak lag.
+  // Menggunakan "Debounce" agar tidak menghitung ulang terus-menerus saat layar diputar/diubah.
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     const checkMobile = () => {

@@ -8,7 +8,15 @@ export const metadata: Metadata = {
   description: 'Get in touch for collaborations and projects.',
 };
 
-// Cache server-rendered contact page (Static by default, revalidated via Webhook)
+// [STICKY NOTE] CONTACT PAGE - SERVER COMPONENT
+// Halaman Kontak ini dijalankan di Server.
+// Fungsinya:
+// 1. Mengambil data proyek (untuk background) dan data kontak dari CMS/File.
+// 2. Mengirim data tersebut ke Client Component (ContactClient).
+
+// [STICKY NOTE] REVALIDATE = 60
+// Halaman ini di-build ulang di server setiap 60 detik.
+// Perubahan konten di Admin Panel akan terlihat setelah satu menit.
 export const revalidate = 60;
 
 export default async function ContactPage() {

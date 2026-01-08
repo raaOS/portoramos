@@ -5,6 +5,11 @@ import clsx from 'clsx'
 
 export default function MainNav() {
   const pathname = usePathname()
+  // [STICKY NOTE] ACTIVE STATE LOGIC
+  // Menentukan menu mana yang sedang aktif (berwarna putih/terang).
+  // - Works: Aktif di halaman depan (/) dan /works.
+  // - About: Aktif di /about.
+  // - Contact: Aktif di /contact.
   const isWorks = pathname?.startsWith('/works') || pathname === '/'
   const isAbout = pathname?.startsWith('/about')
   const isContact = pathname?.startsWith('/contact')
