@@ -439,33 +439,6 @@
       "shares": 3
     },
     {
-      "id": "gen-1766512146544-16",
-      "title": "Tipografi Mekar Gotik",
-      "slug": "tipografi-mekar-gotik",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Botani gelap berlapis dan tipografi putih tebal menciptakan kolase digital yang dramatis dan moody di dalam hutan bayangan.",
-      "cover": "/assets/media/tipografi-mekar-gotik-cover.jpg",
-      "coverWidth": 640,
-      "coverHeight": 800,
-      "gallery": [],
-      "tags": [
-        "image"
-      ],
-      "external_link": "",
-      "autoplay": false,
-      "muted": false,
-      "loop": false,
-      "playsInline": false,
-      "galleryItems": [],
-      "order": 16,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:56:24.729Z",
-      "likes": 19,
-      "shares": 4
-    },
-    {
       "id": "gen-1766512146544-17",
       "title": "Kolase Dunia OK Terfragmentasi",
       "slug": "kolase-dunia-ok-terfragmentasi",
@@ -655,5 +628,5 @@
       "updatedAt": "2026-01-09T17:17:30.356Z"
     }
   ],
-  "lastUpdated": "2026-01-09T17:17:40.925Z"
+  "lastUpdated": "2026-01-09T18:27:33.277Z"
 }
