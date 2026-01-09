@@ -184,7 +184,7 @@
       "galleryItems": [
         {
           "kind": "video",
-          "src": "/assets/media/tempat-perlindungan-sneaker-surealis-gallery-1.mp4",
+          "src": "/assets/projects/tempat-perlindungan-sneaker-surealis-gallery.mp4",
           "isActive": true
         }
       ],
@@ -275,6 +275,33 @@
       "updatedAt": "2026-01-08T14:36:18.218Z",
       "likes": 34,
       "shares": 4
+    },
+    {
+      "id": "gen-1766512146544-8",
+      "title": "Desain Sampul Hijau Tua",
+      "slug": "desain-sampul-hijau-tua",
+      "client": "Personal Work",
+      "year": 2025,
+      "description": "Tipografi dramatis kontras dengan dedaunan hijau gelap yang kaya tekstur dan buah beri merah cerah.",
+      "cover": "/assets/projects/desain-sampul-hijau-tua.jpg",
+      "coverWidth": 640,
+      "coverHeight": 640,
+      "gallery": [],
+      "tags": [
+        "image"
+      ],
+      "external_link": "",
+      "autoplay": false,
+      "muted": false,
+      "loop": false,
+      "playsInline": false,
+      "galleryItems": [],
+      "order": 10,
+      "status": "published",
+      "createdAt": "2025-12-23T17:49:06.544Z",
+      "updatedAt": "2025-12-27T02:41:59.526Z",
+      "likes": 18,
+      "shares": 2
     },
     {
       "id": "gen-1766512146544-10",
@@ -412,6 +439,33 @@
       "shares": 3
     },
     {
+      "id": "gen-1766512146544-16",
+      "title": "Tipografi Mekar Gotik",
+      "slug": "tipografi-mekar-gotik",
+      "client": "Personal Work",
+      "year": 2025,
+      "description": "Botani gelap berlapis dan tipografi putih tebal menciptakan kolase digital yang dramatis dan moody di dalam hutan bayangan.",
+      "cover": "/assets/projects/tipografi-mekar-gotik.jpg",
+      "coverWidth": 640,
+      "coverHeight": 800,
+      "gallery": [],
+      "tags": [
+        "image"
+      ],
+      "external_link": "",
+      "autoplay": false,
+      "muted": false,
+      "loop": false,
+      "playsInline": false,
+      "galleryItems": [],
+      "order": 16,
+      "status": "published",
+      "createdAt": "2025-12-23T17:49:06.544Z",
+      "updatedAt": "2026-01-06T19:56:24.729Z",
+      "likes": 19,
+      "shares": 4
+    },
+    {
       "id": "gen-1766512146544-17",
       "title": "Kolase Dunia OK Terfragmentasi",
       "slug": "kolase-dunia-ok-terfragmentasi",
@@ -493,6 +547,72 @@
       "shares": 2
     },
     {
+      "id": "gen-1766512146544-20",
+      "title": "Kaleidoskop Tipografi Gradien",
+      "slug": "kaleidoskop-tipografi-gradien",
+      "client": "Personal Work",
+      "year": 2025,
+      "description": "Gradien ungu dan magenta yang cerah menciptakan ilusi optik tipografi yang simetris dan mendistorsi di atas latar belakang hitam.",
+      "cover": "/assets/projects/kaleidoskop-tipografi-gradien.jpg",
+      "coverWidth": 640,
+      "coverHeight": 800,
+      "gallery": [],
+      "tags": [
+        "image"
+      ],
+      "external_link": "",
+      "autoplay": false,
+      "muted": false,
+      "loop": false,
+      "playsInline": false,
+      "galleryItems": [],
+      "order": 20,
+      "status": "published",
+      "createdAt": "2025-12-23T17:49:06.544Z",
+      "updatedAt": "2026-01-06T19:56:24.729Z",
+      "likes": 39,
+      "shares": 5
+    },
+    {
+      "title": "Self Portrait: Muka Bangun Tidur",
+      "client": "Personal Work",
+      "year": 2026,
+      "description": "Ini potret yang fokus ke kejujuran ekspresi di pencahayaan ruang minimalis. Kontras kemeja hitam dan dinding krem menonjolkan tekstur rambut yang lagi effortlessly messy.",
+      "cover": "/assets/projects/self-portrait-muka-bangun-tidur.jpg",
+      "coverWidth": 1080,
+      "coverHeight": 1440,
+      "gallery": [],
+      "galleryItems": [],
+      "tags": [
+        "image"
+      ],
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "likes": 30,
+      "shares": 10,
+      "allowComments": true,
+      "initialCommentCount": 2,
+      "narrative": {
+        "challenge": "",
+        "solution": "",
+        "result": ""
+      },
+      "id": "project-1767642782238",
+      "slug": "self-portrait-muka-bangun-tidur",
+      "comparison": {
+        "beforeImage": "",
+        "beforeType": "image",
+        "afterImage": "",
+        "afterType": "image"
+      },
+      "order": 21,
+      "status": "published",
+      "createdAt": "2026-01-05T19:53:02.238Z",
+      "updatedAt": "2026-01-06T19:56:24.729Z"
+    },
+    {
       "title": "Joker Jomblo Kere +62",
       "client": "Personal Work",
       "year": 2026,
@@ -535,5 +655,5 @@
       "updatedAt": "2026-01-09T17:17:30.356Z"
     }
   ],
-  "lastUpdated": "2026-01-09T18:49:19.691Z"
+  "lastUpdated": "2026-01-09T17:17:40.925Z"
 }
