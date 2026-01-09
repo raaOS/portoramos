@@ -277,33 +277,6 @@
       "shares": 4
     },
     {
-      "id": "gen-1766512146544-8",
-      "title": "Desain Sampul Hijau Tua",
-      "slug": "desain-sampul-hijau-tua",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Tipografi dramatis kontras dengan dedaunan hijau gelap yang kaya tekstur dan buah beri merah cerah.",
-      "cover": "/assets/media/desain-sampul-hijau-tua-cover.jpg",
-      "coverWidth": 640,
-      "coverHeight": 640,
-      "gallery": [],
-      "tags": [
-        "image"
-      ],
-      "external_link": "",
-      "autoplay": false,
-      "muted": false,
-      "loop": false,
-      "playsInline": false,
-      "galleryItems": [],
-      "order": 10,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2025-12-27T02:41:59.526Z",
-      "likes": 18,
-      "shares": 2
-    },
-    {
       "id": "gen-1766512146544-10",
       "title": "Montase Bunga Cantik",
       "slug": "montase-bunga-cantik",
@@ -628,5 +601,5 @@
       "updatedAt": "2026-01-09T17:17:30.356Z"
     }
   ],
-  "lastUpdated": "2026-01-09T18:27:33.277Z"
+  "lastUpdated": "2026-01-09T18:48:43.863Z"
 }
