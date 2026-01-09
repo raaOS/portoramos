@@ -29,7 +29,12 @@ export async function POST(req: NextRequest) {
         // Filename dibersihkan (sanitize) agar tidak ada karakter aneh yang bikin error.
         const cleanName = file.name.toLowerCase().replace(/[^a-z0-9.]/g, '-');
         const filename = `${Date.now()}-${cleanName}`;
-        const uploadDir = path.join(process.cwd(), 'public/assets/media');
+
+        const { searchParams } = new URL(req.url);
+        const isTemp = searchParams.get('folder') === 'temp';
+        const targetDir = isTemp ? 'temp' : 'assets/media';
+
+        const uploadDir = path.join(process.cwd(), 'public', targetDir);
 
         // Ensure directory exists
         if (!fs.existsSync(uploadDir)) {
@@ -41,7 +46,7 @@ export async function POST(req: NextRequest) {
         await fs.promises.writeFile(filePath, buffer);
 
         return NextResponse.json({
-            url: `/assets/media/${filename}`,
+            url: `/${targetDir}/${filename}`,
             success: true
         });
     } catch (e: any) {

@@ -933,6 +933,36 @@
         "replies": [],
         "avatar": "https://ui-avatars.com/api/?name=Rizky&background=random"
       }
+    ],
+    "joker-jomblo-kere-62": [
+      {
+        "id": "c-joker-jomblo-kere-62-0-1767979050359",
+        "text": "Pake plugin tambahan gak bang buat efek itu?",
+        "name": "Hana",
+        "createdAt": "2026-01-09T11:04:14.052Z",
+        "likes": 21,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Hana&background=random"
+      },
+      {
+        "id": "c-joker-jomblo-kere-62-1-1767979050359",
+        "text": "Konsepnya out of the box banget, salut! 🧠",
+        "name": "Rina",
+        "createdAt": "2026-01-09T00:31:36.223Z",
+        "likes": 22,
+        "replies": [
+          {
+            "id": "r-joker-jomblo-kere-62-1-user",
+            "text": "Iya, warnanya itu lho yg bikin beda.",
+            "name": "Yanto",
+            "time": "30 menit yang lalu",
+            "createdAt": "2026-01-08T20:23:48.487Z",
+            "likes": 10,
+            "avatar": "https://ui-avatars.com/api/?name=Yanto&background=random"
+          }
+        ],
+        "avatar": "https://ui-avatars.com/api/?name=Rina&background=random"
+      }
     ]
   }
 }

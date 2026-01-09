@@ -16,6 +16,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
     const [status, setStatus] = useState<string>(''); // 'idle', 'loading-core', 'compressing', 'uploading'
     const [progress, setProgress] = useState(0); // 0-100
     const [compressionResult, setCompressionResult] = useState<string | null>(null);
+    const [quality, setQuality] = useState<'turbo' | 'high'>('turbo');
 
     // FFmpeg Ref
     const ffmpegRef = useRef<FFmpeg | null>(null);
@@ -78,13 +79,17 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
             }
         });
 
+        // Determine settings based on state
+        const crf = quality === 'high' ? '23' : '27';
+        const preset = quality === 'high' ? 'medium' : 'fast';
+
         // Run compression
         await ffmpeg.exec([
             '-i', inputName,
             '-vf', "scale='if(gt(iw,ih),-2,720)':'if(gt(iw,ih),720,-2)'",
             '-c:v', 'libx264',
-            '-crf', '27',
-            '-preset', 'fast',
+            '-crf', crf,
+            '-preset', preset,
             '-r', '30',
             '-an',
             '-movflags', '+faststart',
@@ -153,7 +158,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
             // and let the server decide based on ENV variables (GITHUB_TOKEN present?).
             // But let's respect existing logic for now to avoid breaking stuff.
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const endpoint = isLocal ? '/api/upload' : '/api/upload/github';
+            const endpoint = isLocal ? '/api/upload?folder=temp' : '/api/upload/github?folder=temp';
 
             // XHR for upload progress is complex with fetch.
             // Let's use fake progress or omitted for upload, OR standard fetch.
@@ -182,6 +187,32 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
 
     return (
         <div className="space-y-4">
+            {/* QUALITY SELECTOR */}
+            {!status && !formData.cover && (
+                <div className="flex gap-2 mb-4">
+                    <button
+                        type="button"
+                        onClick={() => setQuality('turbo')}
+                        className={`flex-1 flex justify-center items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border transition-all ${quality === 'turbo'
+                            ? 'bg-violet-50 border-violet-500 text-violet-700 shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-500 hover:border-violet-200'
+                            }`}
+                    >
+                        <span>🚀</span> Turbo (Web)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setQuality('high')}
+                        className={`flex-1 flex justify-center items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border transition-all ${quality === 'high'
+                            ? 'bg-violet-50 border-violet-500 text-violet-700 shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-500 hover:border-violet-200'
+                            }`}
+                    >
+                        <span>💎</span> High (Detail)
+                    </button>
+                </div>
+            )}
+
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                     Cover Image/Video URL *
