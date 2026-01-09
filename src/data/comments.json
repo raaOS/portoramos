@@ -963,6 +963,26 @@
         ],
         "avatar": "https://ui-avatars.com/api/?name=Rina&background=random"
       }
+    ],
+    "joker-jomblo-kere-konsep-lokal": [
+      {
+        "id": "c-joker-jomblo-kere-konsep-lokal-0-1767985543351",
+        "text": "Pemilihan font-nya pas banget sama visualnya.",
+        "name": "Wawan",
+        "createdAt": "2026-01-09T07:41:43.943Z",
+        "likes": 74,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Wawan&background=random"
+      },
+      {
+        "id": "c-joker-jomblo-kere-konsep-lokal-1-1767985543351",
+        "text": "Defisini 'Art' sesungguhnya",
+        "name": "Doni",
+        "createdAt": "2026-01-09T02:34:17.230Z",
+        "likes": 85,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Doni&background=random"
+      }
     ]
   }
 }
