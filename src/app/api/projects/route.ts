@@ -7,6 +7,7 @@ import { generateGenZComments } from '@/lib/magic';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
 import { githubService } from '@/lib/github';
 import path from 'path';
+import fs from 'fs';
 import { sendTelegramAlert } from '@/lib/telegram';
 
 const COMMENTS_DATA_FILE = path.join(process.cwd(), 'src', 'data', 'comments.json');
@@ -88,6 +89,16 @@ export async function POST(request: NextRequest) {
 
     const newProject = await projectService.createProject(body);
 
+    // [STICKY NOTE] SMART MOVE: Temp -> Permanent
+    // If cover image is in /temp/, move it to /assets/projects/ and rename it to [slug].ext
+    if (newProject.cover && newProject.cover.startsWith('/temp/')) {
+      const newCover = await finalizeMedia(newProject.cover, newProject.slug);
+      if (newCover !== newProject.cover) {
+        await projectService.updateProject(newProject.id, { id: newProject.id, cover: newCover });
+        newProject.cover = newCover; // Update response
+      }
+    }
+
     // --- Auto-Generate Comments ---
     // [STICKY NOTE] GEN-Z BUZZ GENERATOR
     // Setiap kali project baru dibuat, AI otomatis membuat "Komentar Palsu" ala Gen-Z.
@@ -149,5 +160,34 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to create project' },
       { status: 500 }
     );
+  }
+}
+
+async function finalizeMedia(url: string, slug: string): Promise<string> {
+  if (!url || !url.startsWith('/temp/')) return url;
+
+  try {
+    const publicDir = path.join(process.cwd(), 'public');
+    const relativeUrl = url.startsWith('/') ? url.slice(1) : url;
+    const oldPath = path.join(publicDir, relativeUrl);
+
+    if (!fs.existsSync(oldPath)) return url;
+
+    const ext = path.extname(url);
+    const newFilename = `${slug}${ext}`;
+    const targetDir = path.join(publicDir, 'assets', 'projects');
+
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    const newPath = path.join(targetDir, newFilename);
+
+    await fs.promises.rename(oldPath, newPath);
+
+    return `/assets/projects/${newFilename}`;
+  } catch (e) {
+    console.error('Finalize Media Error:', e);
+    return url;
   }
 }
