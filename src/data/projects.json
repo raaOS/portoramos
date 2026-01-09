@@ -572,7 +572,50 @@
       "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 39,
       "shares": 5
+    },
+    {
+      "title": "Joker Jomblo Kere Konsep Lokal",
+      "client": "Personal Work",
+      "year": 2026,
+      "description": "Gokil sih, ini kita rework konsep Joker versi lokal yang lagi *struggle* abis. Vibenya dark, estetik, tapi maknanya kena banget di anak muda, *no cap*.",
+      "cover": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/assets/media/1767985506805-video-siap-teks-tidak-terpotong.mp4",
+      "coverWidth": 720,
+      "coverHeight": 1280,
+      "gallery": [],
+      "galleryItems": [],
+      "tags": [
+        "photo manipulation",
+        "cinematic grading",
+        "conceptual art",
+        "dark aesthetic",
+        "typographic design"
+      ],
+      "autoplay": true,
+      "muted": true,
+      "loop": true,
+      "playsInline": true,
+      "likes": 185,
+      "shares": 27,
+      "allowComments": true,
+      "initialCommentCount": 2,
+      "narrative": {
+        "challenge": "",
+        "solution": "",
+        "result": ""
+      },
+      "id": "project-1767985542606",
+      "slug": "joker-jomblo-kere-konsep-lokal",
+      "comparison": {
+        "beforeImage": "",
+        "beforeType": "image",
+        "afterImage": "",
+        "afterType": "image"
+      },
+      "order": 21,
+      "status": "published",
+      "createdAt": "2026-01-09T19:05:42.607Z",
+      "updatedAt": "2026-01-09T19:05:42.607Z"
     }
   ],
-  "lastUpdated": "2026-01-09T19:03:50.049Z"
+  "lastUpdated": "2026-01-09T19:05:42.607Z"
 }
