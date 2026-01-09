@@ -80,6 +80,7 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                             errors={errors}
                             isDetectingDimensions={isDetectingDimensions}
                             updateField={updateField}
+                            slug={formData.slug}
                         />
                     </div>
 

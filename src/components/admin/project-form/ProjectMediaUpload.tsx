@@ -9,9 +9,10 @@ interface ProjectMediaUploadProps {
     errors: Record<string, string>;
     isDetectingDimensions: boolean;
     updateField: <K extends keyof ProjectFormData>(field: K, value: ProjectFormData[K]) => void;
+    slug?: string;
 }
 
-export default function ProjectMediaUpload({ formData, errors, isDetectingDimensions, updateField }: ProjectMediaUploadProps) {
+export default function ProjectMediaUpload({ formData, errors, isDetectingDimensions, updateField, slug }: ProjectMediaUploadProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [status, setStatus] = useState<string>(''); // 'idle', 'loading-core', 'compressing', 'uploading'
     const [progress, setProgress] = useState(0); // 0-100
@@ -158,7 +159,12 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
             // and let the server decide based on ENV variables (GITHUB_TOKEN present?).
             // But let's respect existing logic for now to avoid breaking stuff.
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const endpoint = isLocal ? '/api/upload?folder=temp' : '/api/upload/github?folder=temp';
+            let endpoint = isLocal ? '/api/upload?folder=temp' : '/api/upload/github?folder=temp';
+
+            // If we have a slug, we can suggest a filename to the backend
+            if (slug && slug.trim().length > 0) {
+                endpoint += `&filename=${encodeURIComponent(slug)}`;
+            }
 
             // XHR for upload progress is complex with fetch.
             // Let's use fake progress or omitted for upload, OR standard fetch.

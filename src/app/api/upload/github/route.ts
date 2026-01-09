@@ -33,11 +33,28 @@ export async function POST(req: NextRequest) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const contentBase64 = buffer.toString('base64');
 
-        // Clean filename and make unique
-        const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-').toLowerCase();
-        const timestamp = Date.now();
-        const filename = `${timestamp}-${cleanName}`;
-        const path = `public/assets/media/${filename}`;
+        const { searchParams } = new URL(req.url);
+        const customFilename = searchParams.get('filename');
+        const folderParam = searchParams.get('folder');
+
+        const ext = file.name.split('.').pop() || '';
+
+        let finalFilename: string;
+        let uploadFolder: string;
+
+        if (customFilename) {
+            // Smart Upload: Use slug and target projects folder directly (Skip temp/move/rename dance)
+            // This solves "Vercel can't rename files" issue.
+            finalFilename = `${customFilename}.${ext}`;
+            uploadFolder = 'public/assets/projects';
+        } else {
+            // Standard Upload
+            const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-').toLowerCase();
+            finalFilename = `${Date.now()}-${cleanName}`;
+            uploadFolder = folderParam === 'temp' ? 'public/temp' : 'public/assets/media';
+        }
+
+        const path = `${uploadFolder}/${finalFilename}`;
 
         // 2. Upload to GitHub
         const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`;
