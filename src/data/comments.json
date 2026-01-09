@@ -913,6 +913,26 @@
         ],
         "avatar": "https://ui-avatars.com/api/?name=Wawan&background=random"
       }
+    ],
+    "joker-jomblo-kere-digital-art": [
+      {
+        "id": "c-joker-jomblo-kere-digital-art-0-1767975143465",
+        "text": "Estetik parah! 🌈",
+        "name": "Maya",
+        "createdAt": "2026-01-09T14:28:44.702Z",
+        "likes": 42,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Maya&background=random"
+      },
+      {
+        "id": "c-joker-jomblo-kere-digital-art-1-1767975143465",
+        "text": "Color grading-nya pake apa bang? Cakepp",
+        "name": "Rizky",
+        "createdAt": "2026-01-07T17:28:54.659Z",
+        "likes": 43,
+        "replies": [],
+        "avatar": "https://ui-avatars.com/api/?name=Rizky&background=random"
+      }
     ]
   }
 }

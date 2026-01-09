@@ -67,13 +67,21 @@ export async function POST(req: NextRequest) {
       WAJIB DALAM BAHASA INDONESIA. 
       Output JSON murni: {"title": "...", "description": "...", "client": "...", "tags": "..."}`;
 
+        // Detect Mime Type
+        const ext = imageUrl.split('.').pop()?.toLowerCase();
+        let mimeType = "image/jpeg";
+        if (ext === 'mp4') mimeType = "video/mp4";
+        else if (ext === 'webm') mimeType = "video/webm";
+        else if (ext === 'png') mimeType = "image/png";
+        else if (ext === 'webp') mimeType = "image/webp";
+
         const requestBody = {
             contents: [{
                 parts: [
                     { text: prompt },
                     {
                         inline_data: {
-                            mime_type: "image/jpeg",
+                            mime_type: mimeType,
                             data: base64Image
                         }
                     }

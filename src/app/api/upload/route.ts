@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
+import { checkAdminAuth } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
+    if (!checkAdminAuth(req)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     try {
         const formData = await req.formData();
         const file = formData.get('file') as File | null;

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkAdminAuth } from '@/lib/auth';
 
 /**
  * GitHub Direct Upload API
@@ -13,6 +14,9 @@ const REPO_NAME = process.env.GITHUB_REPO;
 const BRANCH = 'main'; // Adjust if using 'master'
 
 export async function POST(req: NextRequest) {
+    if (!checkAdminAuth(req)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!GITHUB_TOKEN || !REPO_OWNER || !REPO_NAME) {
         return NextResponse.json({ error: 'GitHub Configuration Missing (Token/Owner/Repo)' }, { status: 500 });
     }

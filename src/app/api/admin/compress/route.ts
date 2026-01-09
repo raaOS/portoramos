@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Only local assets can be compressed' }, { status: 400 });
         }
 
-        const relativePath = cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath;
+        let relativePath = cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath;
         const isDev = process.env.NODE_ENV === 'development';
 
         let absolutePath = path.join(process.cwd(), 'public', relativePath);
@@ -65,49 +65,80 @@ export async function POST(request: NextRequest) {
 
         // 4. Compress
         // In Prod, write output to /tmp
-        const tempPath = isDev
-            ? absolutePath.replace(path.extname(absolutePath), '_temp' + path.extname(absolutePath))
-            : path.join('/tmp', 'compressed_' + path.basename(absolutePath));
 
-        await new Promise((resolve, reject) => {
-            ffmpeg(workPath)
-                // Resize to 720p (Balanced)
-                .outputOptions('-vf', 'scale=720:-2')
-                // Ensure yuv420p for web compatibility
-                .outputOptions('-pix_fmt', 'yuv420p')
-                // Codec
-                .videoCodec('libx264')
-                // CRF 28 (Balanced)
-                .outputOptions('-crf', '28')
-                // Mid preset for serverless execution time limits (veryslow might timeout 10s func)
-                .outputOptions('-preset', 'mid')
-                // No Audio (for covers)
-                .noAudio()
-                // Faststart for web
-                .outputOptions('-movflags', '+faststart')
-                .on('end', resolve)
-                .on('error', reject)
-                .save(tempPath);
-        });
+        const ext = path.extname(absolutePath).toLowerCase();
+        const isImage = ['.jpg', '.jpeg', '.png', '.webp', '.tiff', '.gif'].includes(ext);
+        const isVideo = ['.mp4', '.mov', '.webm', '.mkv'].includes(ext);
+
+        let tempPath = '';
+
+        if (isImage) {
+            // IMAGE COMPRESSION (Sharp)
+            tempPath = isDev
+                ? absolutePath.replace(ext, '_temp.webp') // Force webp
+                : path.join('/tmp', 'compressed_' + path.basename(absolutePath, ext) + '.webp');
+
+            const sharp = require('sharp');
+            await sharp(workPath)
+                .resize(1920, 1920, {
+                    fit: 'inside', // Resize to max 1920x1920, maintaining aspect ratio. Never upscales.
+                    withoutEnlargement: true
+                })
+                .webp({ quality: 80, effort: 4 }) // WebP High Quality
+                .toFile(tempPath);
+
+        } else if (isVideo) {
+            // VIDEO COMPRESSION: Removed from server-side.
+            // Client-side ffmpeg used instead to save bandwidth/resources.
+            return NextResponse.json({ error: 'Video compression should be done client-side.' }, { status: 400 });
+        } else {
+            return NextResponse.json({ error: 'Unsupported file type for compression' }, { status: 400 });
+        }
 
         const newSize = fs.statSync(tempPath).size;
         const newSizeMB = newSize / (1024 * 1024);
 
         // 5. Commit Changes
         if (isDev) {
-            // Local: Overwrite original directly
-            fs.unlinkSync(absolutePath);
-            fs.renameSync(tempPath, absolutePath);
+            // Local: Overwrite original
+            // Note: If image converted to webp, we might need to update the extension if we want to replaceStrict?
+            // Current login in AdminFileUpload expects the SAME url. 
+            // If we change ext, the URL changes.
+            // For now, let's keep it simple: Overwrite functionality is tricky if extension changes.
+            // But for WebP, we really want to change extension.
+
+            // Hack for now: If image, we prefer keeping original ext if we can? No, WebP is much better.
+            // Let's assume for now we might replace the file.
+
+            // WAIT: If we change extension, the 'relativePath' sent by client is invalid.
+            // We should return the NEW relative path.
+
+            if (isImage && ext !== '.webp') {
+                // If we changed extension, delete the old file and move the new one
+                fs.unlinkSync(absolutePath);
+                const newAbsolutePath = absolutePath.replace(ext, '.webp');
+                fs.renameSync(tempPath, newAbsolutePath);
+                relativePath = relativePath.replace(ext, '.webp'); // Update ref
+            } else {
+                fs.unlinkSync(absolutePath);
+                fs.renameSync(tempPath, absolutePath);
+            }
+
             console.log(`[CompressAPI] Local Update Success: ${originalSizeMB.toFixed(2)} MB -> ${newSizeMB.toFixed(2)} MB`);
         } else {
             // Production: Commit to GitHub
             console.log(`[CompressAPI] Syncing to GitHub...`);
             const fileBuffer = fs.readFileSync(tempPath);
 
-            // This path should match the repo structure. 'public/assets/...' is likely mapped to 'public/assets/...' in repo
-            const repoPath = `public/${relativePath.replace('public/', '')}`; // Ensure clean path
+            // Handle extension change for images
+            let targetRepoPath = `public/${relativePath.replace('public/', '')}`;
+            if (isImage && ext !== '.webp') {
+                targetRepoPath = targetRepoPath.replace(ext, '.webp');
+                // We should theoretically DELETE the old file on GitHub too, but having both is safe for now (or simpler logic).
+                // Ideally updateFile handles this? No.
+            }
 
-            await githubService.updateFile(repoPath, fileBuffer, `Compress video ${path.basename(relativePath)} (via Admin CMS)`);
+            await githubService.updateFile(targetRepoPath, fileBuffer, `Compress ${path.basename(relativePath)} (via Admin CMS)`);
 
             // Cleanup tmp
             fs.unlinkSync(tempPath);
@@ -121,9 +152,9 @@ export async function POST(request: NextRequest) {
             originalSize: originalSizeMB.toFixed(2) + ' MB',
             newSize: newSizeMB.toFixed(2) + ' MB',
             saved: ((1 - newSize / originalSize) * 100).toFixed(0) + '%',
-            note: isDev ? 'Saved locally' : 'Synced to GitHub (Redeploying...)'
+            note: isDev ? 'Saved locally' : 'Synced to GitHub (Redeploying...)',
+            newPath: relativePath.startsWith('/') ? relativePath : '/' + relativePath // Return new path in case of ext change
         });
-
     } catch (error) {
         console.error('[CompressAPI] Error:', error);
         return NextResponse.json(

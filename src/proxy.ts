@@ -5,9 +5,9 @@ if (!JWT_SECRET) {
     console.error('JWT_SECRET is not configured! Admin authentication will not work.');
 }
 
-// Protected admin routes
-const protectedAdminRoutes = ['/admin'];
-const publicAdminRoutes = ['/admin/login'];
+// Protected routes (Admin Pages + Upload API)
+const protectedRoutes = ['/admin', '/api/upload'];
+const publicRoutes = ['/admin/login'];
 
 // Rate limiting configuration (disabled in development to avoid local 429 spam)
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
@@ -61,8 +61,6 @@ function checkRateLimit(
     return { allowed: true, remaining: maxRequests - record.count, resetTime: record.resetTime };
 }
 
-// CSRF functions removed - not needed for portfolio website
-
 function isAPIRoute(pathname: string): boolean {
     return pathname.startsWith('/api/');
 }
@@ -97,7 +95,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: https: blob:",
         "font-src 'self' data:",
-        "connect-src 'self' https: http://localhost:* ws://localhost:*",
+        "connect-src 'self' https: http://localhost:* ws://localhost:* blob:",
         "media-src 'self' https: data:",
         "object-src 'none'",
         // Allow Vercel Live preview in development, block in production
@@ -119,10 +117,6 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     return response;
 }
 
-
-
-
-
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const isProd = process.env.NODE_ENV === 'production';
@@ -132,18 +126,21 @@ export async function proxy(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Admin authentication check
-    const isAdminRoute = pathname.startsWith('/admin');
-    const isPublicAdminRoute = publicAdminRoutes.some(route => pathname.startsWith(route));
-    const isProtectedAdminRoute = protectedAdminRoutes.some(route => pathname.startsWith(route));
+    // 1. Authentication Check
+    const isProtected = protectedRoutes.some(route => pathname.startsWith(route));
+    const isPublic = publicRoutes.some(route => pathname.startsWith(route));
 
-    if (isAdminRoute && !isPublicAdminRoute && isProtectedAdminRoute) {
+    if (isProtected && !isPublic) {
         const token =
             request.cookies.get('admin_token')?.value ||
             request.cookies.get('admin-token')?.value ||
             request.headers.get('authorization')?.replace('Bearer ', '');
 
         if (!token) {
+            // Check if it's an API call or Page visit
+            if (pathname.startsWith('/api/')) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
             const loginUrl = new URL('/admin/login', request.url);
             loginUrl.searchParams.set('redirect', pathname);
             return NextResponse.redirect(loginUrl);
@@ -209,13 +206,6 @@ export async function proxy(request: NextRequest) {
             );
         }
 
-        // CSRF protection disabled for portfolio website
-        // Only enable for admin operations if needed
-        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method) && pathname.startsWith('/api/admin')) {
-            // Add basic admin protection here if needed
-            // For now, skip CSRF for portfolio website
-        }
-
         // Add rate limit headers to response
         const response = NextResponse.next();
         response.headers.set('X-RateLimit-Limit', maxRequests.toString());
@@ -227,9 +217,6 @@ export async function proxy(request: NextRequest) {
 
     // For non-API routes, just add security headers
     const response = NextResponse.next();
-
-    // CSRF token generation removed - not needed for portfolio website
-
     return addSecurityHeaders(response);
 }
 

@@ -1,6 +1,8 @@
 import { ProjectFormData } from '@/hooks/useProjectForm';
-import { Loader2, UploadCloud, Wand2 } from 'lucide-react';
+import { Loader2, UploadCloud } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
 interface ProjectMediaUploadProps {
     formData: ProjectFormData;
@@ -11,26 +13,151 @@ interface ProjectMediaUploadProps {
 
 export default function ProjectMediaUpload({ formData, errors, isDetectingDimensions, updateField }: ProjectMediaUploadProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isUploading, setIsUploading] = useState(false);
+    const [status, setStatus] = useState<string>(''); // 'idle', 'loading-core', 'compressing', 'uploading'
+    const [progress, setProgress] = useState(0); // 0-100
+    const [compressionResult, setCompressionResult] = useState<string | null>(null);
+
+    // FFmpeg Ref
+    const ffmpegRef = useRef<FFmpeg | null>(null);
+
+    // Load FFmpeg
+    const loadFFmpeg = async () => {
+        if (ffmpegRef.current) return ffmpegRef.current;
+
+        setStatus('Loading Compression Core...');
+        const ffmpeg = new FFmpeg();
+
+        // Use toBlobURL + Local Files
+        // This bypasses "Expression too dynamic" (Bundler) errors.
+        // And works because we fixed CSP "Failed to fetch" (Blob blocking).
+        const baseURL = window.location.origin + '/ffmpeg';
+        try {
+            await ffmpeg.load({
+                coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+            });
+            console.log('✅ FFmpeg Loaded Successfully');
+        } catch (e) {
+            console.error('❌ FFmpeg Load Failed:', e);
+            throw new Error('Compression engine failed to load. Check console for details.');
+        }
+
+        ffmpegRef.current = ffmpeg;
+        return ffmpeg;
+    };
+
+    // Compress Video (Client Side)
+    const compressVideoClient = async (file: File, onProgress: (p: number) => void): Promise<File> => {
+        setStatus('Initializing Compressor...');
+        const ffmpeg = await loadFFmpeg();
+
+        setStatus('Compressing Video (Wait)...');
+
+        const inputName = 'input.mp4';
+        const outputName = 'output.mp4';
+        const startTime = Date.now();
+
+        // Write file
+        await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+        // Progress Handler
+        ffmpeg.on('progress', ({ progress }) => {
+            // progress is 0 to 1
+            const percent = Math.round(progress * 100);
+            onProgress(percent);
+
+            // Calculate ETA
+            if (progress > 0) {
+                const elapsed = (Date.now() - startTime) / 1000; // seconds
+                const estimatedTotal = elapsed / progress;
+                const remaining = Math.round(estimatedTotal - elapsed);
+
+                setStatus(`Compressing Video (${percent}%) - ~${remaining}s remaining...`);
+            } else {
+                setStatus(`Compressing Video (${percent}%)...`);
+            }
+        });
+
+        // Run compression
+        await ffmpeg.exec([
+            '-i', inputName,
+            '-vf', "scale='if(gt(iw,ih),-2,720)':'if(gt(iw,ih),720,-2)'",
+            '-c:v', 'libx264',
+            '-crf', '27',
+            '-preset', 'fast',
+            '-r', '30',
+            '-an',
+            '-movflags', '+faststart',
+            outputName
+        ]);
+
+        // Read output
+        const data = await ffmpeg.readFile(outputName);
+
+        // Create new file
+        const blob = new Blob([data as any], { type: 'video/mp4' });
+        return new File([blob], file.name, { type: 'video/mp4' });
+    };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // 100MB Limit
-        if (file.size > 100 * 1024 * 1024) {
-            alert('File too large. Maximum size is 100MB.');
+        // 100MB Limit for Video input (since we compress it)
+        // 10MB Limit for Image
+        const isVideo = file.type.startsWith('video/');
+        const limit = isVideo ? 100 : 10;
+
+        if (file.size > limit * 1024 * 1024) {
+            alert(`File too large. Maximum size is ${limit}MB.`);
             return;
         }
 
-        setIsUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
+        setStatus('Preparing...');
+        setProgress(0);
 
         try {
-            // DETECT ENVIRONMENT via Hostname
+            let fileToUpload = file;
+
+            // 1. COMPRESS (If Video)
+            if (isVideo) {
+                try {
+                    fileToUpload = await compressVideoClient(file, (p) => setProgress(p));
+                    if (fileToUpload) {
+                        const originalSize = (file.size / (1024 * 1024)).toFixed(1);
+                        const compressedSize = (fileToUpload.size / (1024 * 1024)).toFixed(1);
+                        const reduction = Math.round(((file.size - fileToUpload.size) / file.size) * 100);
+
+                        setCompressionResult(`${originalSize}MB → ${compressedSize}MB (-${reduction}%)`);
+                    }
+                } catch (err) {
+                    console.error('Compression critical error', err);
+                    alert('Compression Failed! Please check console. Upload aborted.');
+                    setStatus('');
+                    return; // Abort upload
+                }
+            }
+
+            // 2. UPLOAD
+            setStatus('Uploading...');
+            setProgress(0); // Reset for upload phase
+
+            const formData = new FormData();
+            formData.append('file', fileToUpload);
+
+            // DETECT ENVIRONMENT via Hostname (Simple heuristic)
+            // But actually, why distinguish? API routes handle logic.
+            // Wait, previous code checked localhost to decide endpoint?
+            // "const endpoint = isLocal ? '/api/upload' : '/api/upload/github';"
+            // This logic is fragile. Usually we always use one endpoint (e.g. /api/upload) 
+            // and let the server decide based on ENV variables (GITHUB_TOKEN present?).
+            // But let's respect existing logic for now to avoid breaking stuff.
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const endpoint = isLocal ? '/api/upload' : '/api/upload/github';
+
+            // XHR for upload progress is complex with fetch.
+            // Let's use fake progress or omitted for upload, OR standard fetch.
+            // Since we compressed it, it's small now.
 
             const res = await fetch(endpoint, {
                 method: 'POST',
@@ -40,14 +167,15 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
             if (!res.ok) throw new Error('Upload failed');
 
             const data = await res.json();
-            if (data.url) {
+            if (data.url) { // Local returns 'url', GitHub returns 'url'
                 updateField('cover', data.url);
             }
         } catch (error) {
             console.error(error);
             alert('Upload failed, check console');
         } finally {
-            setIsUploading(false);
+            setStatus('');
+            setProgress(0);
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
@@ -58,7 +186,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                     Cover Image/Video URL *
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                     <input
                         type="text"
                         value={formData.cover}
@@ -79,33 +207,13 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                     <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 flex items-center gap-2"
+                        disabled={!!status}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 flex items-center gap-2 min-w-[100px] justify-center"
                         title="Upload Local File"
                     >
-                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-                        <span className="hidden sm:inline">Upload</span>
+                        {status ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                        <span className="hidden sm:inline">{status ? 'Busy' : 'Upload'}</span>
                     </button>
-
-                    {/* Compress Button */}
-                    {formData.cover &&
-                        (formData.cover.endsWith('.mp4') || formData.cover.endsWith('.mov') || formData.cover.endsWith('.webm')) &&
-                        !formData.cover.startsWith('http') && (
-                            <CompressButton
-                                filePath={formData.cover}
-                                onSuccess={() => {
-                                    // Force refresh to show new file size if we displayed it, 
-                                    // but browsers cache video content heavily. 
-                                    // We might need to add timestamp query param to preview.
-                                    const timestamp = Date.now();
-                                    if (formData.cover.includes('?')) {
-                                        updateField('cover', formData.cover.split('?')[0] + `?t=${timestamp}`);
-                                    } else {
-                                        updateField('cover', formData.cover + `?t=${timestamp}`);
-                                    }
-                                }}
-                            />
-                        )}
 
                     {isDetectingDimensions && (
                         <div className="flex items-center px-2 text-violet-600">
@@ -113,6 +221,31 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                         </div>
                     )}
                 </div>
+
+                {/* Status Bar */}
+                {status && (
+                    <div className="mt-2 space-y-1">
+                        <div className="flex justify-between text-xs text-gray-600">
+                            <span>{status}</span>
+                            <span>{progress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                            <div
+                                className="bg-violet-600 h-1.5 rounded-full transition-all duration-300"
+                                style={{ width: `${progress}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Compression Result Banner */}
+                {compressionResult && !status && (
+                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700 font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                        <UploadCloud className="w-3 h-3" />
+                        <span>Saved: {compressionResult}</span>
+                    </div>
+                )}
+
                 {errors.cover && (
                     <p className="mt-1 text-sm text-red-600">{errors.cover}</p>
                 )}
@@ -138,54 +271,6 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                     />
                 </div>
             </div>
-        </div>
-    );
-}
-
-function CompressButton({ filePath, onSuccess }: { filePath: string, onSuccess: () => void }) {
-    const [isCompressing, setIsCompressing] = useState(false);
-    const [result, setResult] = useState<string | null>(null);
-
-    const handleCompress = async () => {
-        if (!confirm('Compress this video? This will overwrite the original file with a smaller version.')) return;
-
-        setIsCompressing(true);
-        setResult(null);
-
-        try {
-            const res = await fetch('/api/admin/compress', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filePath })
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) throw new Error(data.error || 'Compression failed');
-
-            setResult(`${data.originalSize} -> ${data.newSize} (-${data.saved})`);
-            onSuccess();
-        } catch (error) {
-            console.error(error);
-            alert(error instanceof Error ? error.message : 'Compression failed');
-        } finally {
-            setIsCompressing(false);
-        }
-    };
-
-    return (
-        <div className="flex items-center gap-2">
-            <button
-                type="button"
-                onClick={handleCompress}
-                disabled={isCompressing}
-                className="px-4 py-2 bg-pink-50 text-pink-700 border border-pink-200 rounded-md hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-300 flex items-center gap-2"
-                title="Compress Video"
-            >
-                {isCompressing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-                <span className="hidden sm:inline">Compress</span>
-            </button>
-            {result && <span className="text-xs text-green-600 font-medium whitespace-nowrap">{result}</span>}
         </div>
     );
 }
