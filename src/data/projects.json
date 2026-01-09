@@ -613,33 +613,6 @@
       "updatedAt": "2026-01-06T19:56:24.729Z"
     },
     {
-      "id": "gen-1766512146544-21",
-      "title": "Studi Visual Tekstur Digital",
-      "slug": "studi-visual-tekstur-digital",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Sebuah eksplorasi visual tentang interaksi antara pencahayaan dinamis dan tekstur permukaan digital dalam lingkungan 3D.",
-      "cover": "/assets/media/studi-visual-tekstur-digital-cover.jpg",
-      "coverWidth": 640,
-      "coverHeight": 800,
-      "gallery": [],
-      "tags": [
-        "image"
-      ],
-      "external_link": "",
-      "autoplay": false,
-      "muted": false,
-      "loop": false,
-      "playsInline": false,
-      "galleryItems": [],
-      "order": 22,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:56:24.729Z",
-      "likes": 37,
-      "shares": 5
-    },
-    {
       "title": "Joker Jomblo Kere Digital Art",
       "client": "Personal Work",
       "year": 2026,
@@ -683,5 +656,5 @@
       "updatedAt": "2026-01-09T16:12:23.462Z"
     }
   ],
-  "lastUpdated": "2026-01-09T16:12:23.462Z"
+  "lastUpdated": "2026-01-09T16:12:34.932Z"
 }
