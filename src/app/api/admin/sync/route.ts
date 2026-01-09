@@ -6,6 +6,15 @@ const execAsync = promisify(exec);
 
 export async function POST() {
     try {
+        // In production (Vercel), we don't have access to git CLI, nor should we commit local files.
+        // Data updates are handled directly via githubService (API).
+        if (process.env.NODE_ENV === 'production') {
+            return NextResponse.json({
+                success: true,
+                message: 'Sync handled via GitHub API (Git CLI skipped)'
+            });
+        }
+
         // 1. Add all changes
         await execAsync('git add .');
 
