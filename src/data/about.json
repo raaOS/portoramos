@@ -3,67 +3,62 @@
     "title": "PORTOFOLIO",
     "backgroundTrail": [
       {
-        "src": "/assets/media/politik-pop-digital-cover.jpg",
+        "src": "/assets/projects/politik-pop-digital.jpg",
         "isActive": true,
         "slug": "politik-pop-digital"
       },
       {
-        "src": "/assets/media/desain-sampul-hijau-tua-cover.jpg",
+        "src": "/assets/projects/desain-sampul-hijau-tua.jpg",
         "isActive": true,
         "slug": "desain-sampul-hijau-tua"
       },
       {
-        "src": "/assets/media/identitas-monogram-hijau-cover.jpg",
+        "src": "/assets/projects/identitas-monogram-hijau.jpg",
         "isActive": true,
         "slug": "identitas-monogram-hijau"
       },
       {
-        "src": "/assets/media/tempat-perlindungan-sneaker-surealis-cover.jpg",
+        "src": "/assets/projects/tempat-perlindungan-sneaker-surealis.jpg",
         "isActive": true,
         "slug": "tempat-perlindungan-sneaker-surealis"
       },
       {
-        "src": "/assets/media/overlay-bunga-barok-digital-cover.jpg",
+        "src": "/assets/projects/overlay-bunga-barok-digital.jpg",
         "isActive": true,
         "slug": "overlay-bunga-barok-digital"
       },
       {
-        "src": "/assets/media/tipografi-alam-kontras-tinggi-cover.jpg",
+        "src": "/assets/projects/tipografi-alam-kontras-tinggi.jpg",
         "isActive": true,
         "slug": "tipografi-alam-kontras-tinggi"
       },
       {
-        "src": "/assets/media/efek-poster-bunga-berkerut-cover.jpg",
+        "src": "/assets/projects/efek-poster-bunga-berkerut.jpg",
         "isActive": true,
         "slug": "efek-poster-bunga-berkerut"
       },
       {
-        "src": "/assets/media/tipografi-mekar-gotik-cover.jpg",
+        "src": "/assets/projects/tipografi-mekar-gotik.jpg",
         "isActive": true,
         "slug": "tipografi-mekar-gotik"
       },
       {
-        "src": "/assets/media/pastoral-kawanan-berhalo-cover.jpg",
+        "src": "/assets/projects/pastoral-kawanan-berhalo.jpg",
         "isActive": true,
         "slug": "pastoral-kawanan-berhalo"
       },
       {
-        "src": "/assets/media/studi-visual-tekstur-digital-cover.jpg",
-        "isActive": true,
-        "slug": "studi-visual-tekstur-digital"
-      },
-      {
-        "src": "/assets/media/kaleidoskop-tipografi-gradien-cover.jpg",
+        "src": "/assets/projects/kaleidoskop-tipografi-gradien.jpg",
         "isActive": true,
         "slug": "kaleidoskop-tipografi-gradien"
       },
       {
-        "src": "/assets/media/belenggu-sandal-surgawi-cover.jpg",
+        "src": "/assets/projects/belenggu-sandal-surgawi.jpg",
         "isActive": true,
         "slug": "belenggu-sandal-surgawi"
       },
       {
-        "src": "/assets/media/narasi-visual-moodboard-cover.jpg",
+        "src": "/assets/projects/narasi-visual-moodboard.jpg",
         "isActive": true,
         "slug": "narasi-visual-moodboard"
       }
