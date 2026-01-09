@@ -493,33 +493,6 @@
       "shares": 2
     },
     {
-      "id": "gen-1766512146544-20",
-      "title": "Kaleidoskop Tipografi Gradien",
-      "slug": "kaleidoskop-tipografi-gradien",
-      "client": "Personal Work",
-      "year": 2025,
-      "description": "Gradien ungu dan magenta yang cerah menciptakan ilusi optik tipografi yang simetris dan mendistorsi di atas latar belakang hitam.",
-      "cover": "/assets/media/kaleidoskop-tipografi-gradien-cover.jpg",
-      "coverWidth": 640,
-      "coverHeight": 800,
-      "gallery": [],
-      "tags": [
-        "image"
-      ],
-      "external_link": "",
-      "autoplay": false,
-      "muted": false,
-      "loop": false,
-      "playsInline": false,
-      "galleryItems": [],
-      "order": 20,
-      "status": "published",
-      "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T19:56:24.729Z",
-      "likes": 39,
-      "shares": 5
-    },
-    {
       "title": "Self Portrait: Muka Bangun Tidur",
       "client": "Personal Work",
       "year": 2026,
@@ -601,5 +574,5 @@
       "updatedAt": "2026-01-09T17:17:30.356Z"
     }
   ],
-  "lastUpdated": "2026-01-09T18:48:43.863Z"
+  "lastUpdated": "2026-01-09T18:49:07.402Z"
 }
