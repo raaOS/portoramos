@@ -613,49 +613,6 @@
       "updatedAt": "2026-01-06T19:56:24.729Z"
     },
     {
-      "title": "Joker Jomblo Kere Digital Art",
-      "client": "Personal Work",
-      "year": 2026,
-      "description": "Vibes-nya dark banget, kayak representasi kalau orang lagi serius malah dianggap jokes. Definisi Joker lokal yang lagi jomblo dan kere.",
-      "cover": "/assets/media/1767975117381-video-siap-teks-tidak-terpotong.mp4",
-      "coverWidth": 720,
-      "coverHeight": 1280,
-      "gallery": [],
-      "galleryItems": [],
-      "tags": [
-        "photo manipulation",
-        "dark art",
-        "portraiture",
-        "surrealism",
-        "digital imaging"
-      ],
-      "autoplay": true,
-      "muted": true,
-      "loop": true,
-      "playsInline": true,
-      "likes": 0,
-      "shares": 0,
-      "allowComments": true,
-      "initialCommentCount": 2,
-      "narrative": {
-        "challenge": "",
-        "solution": "",
-        "result": ""
-      },
-      "id": "project-1767975143462",
-      "slug": "joker-jomblo-kere-digital-art",
-      "comparison": {
-        "beforeImage": "",
-        "beforeType": "image",
-        "afterImage": "",
-        "afterType": "image"
-      },
-      "order": 23,
-      "status": "published",
-      "createdAt": "2026-01-09T16:12:23.462Z",
-      "updatedAt": "2026-01-09T16:12:23.462Z"
-    },
-    {
       "title": "Joker Jomblo Kere +62",
       "client": "Personal Work",
       "year": 2026,
@@ -698,5 +655,5 @@
       "updatedAt": "2026-01-09T17:17:30.356Z"
     }
   ],
-  "lastUpdated": "2026-01-09T17:17:30.356Z"
+  "lastUpdated": "2026-01-09T17:17:40.925Z"
 }
