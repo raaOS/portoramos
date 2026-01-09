@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
                 'User-Agent': 'Portfolio-Uploader' // GitHub requires User-Agent
             },
             body: JSON.stringify({
-                message: `Upload ${filename} via Admin Panel`,
+                message: `Upload ${finalFilename} via Admin Panel`,
                 content: contentBase64,
                 branch: BRANCH
             })
