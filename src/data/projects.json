@@ -611,49 +611,7 @@
       "status": "published",
       "createdAt": "2026-01-05T19:53:02.238Z",
       "updatedAt": "2026-01-06T19:56:24.729Z"
-    },
-    {
-      "title": "Joker Jomblo Kere +62",
-      "client": "Personal Work",
-      "year": 2026,
-      "description": "Artwork ini deep banget, kayak lagi nyindir realita hidup jomblo kere di +62. Split lighting sama ikan masnya itu lho, bikin vibenya makin epic dan dark.",
-      "cover": "/assets/projects/joker-jomblo-kere-62.mp4",
-      "coverWidth": 720,
-      "coverHeight": 1280,
-      "gallery": [],
-      "galleryItems": [],
-      "tags": [
-        "digital art",
-        "photo manipulation",
-        "dramatic lighting",
-        "social media content"
-      ],
-      "autoplay": true,
-      "muted": true,
-      "loop": true,
-      "playsInline": true,
-      "likes": 125,
-      "shares": 42,
-      "allowComments": true,
-      "initialCommentCount": 2,
-      "narrative": {
-        "challenge": "",
-        "solution": "",
-        "result": ""
-      },
-      "id": "project-1767979050356",
-      "slug": "joker-jomblo-kere-62",
-      "comparison": {
-        "beforeImage": "",
-        "beforeType": "image",
-        "afterImage": "",
-        "afterType": "image"
-      },
-      "order": 23,
-      "status": "published",
-      "createdAt": "2026-01-09T17:17:30.356Z",
-      "updatedAt": "2026-01-09T17:17:30.356Z"
     }
   ],
-  "lastUpdated": "2026-01-09T17:17:40.925Z"
+  "lastUpdated": "2026-01-09T19:03:44.168Z"
 }
