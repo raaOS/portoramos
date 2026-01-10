@@ -227,7 +227,6 @@ export default function CommentSection({
             <div className="flex gap-2">
               <input
                 type="text"
-                autoFocus
                 value={tempGuestName}
                 onChange={(e) => setTempGuestName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}

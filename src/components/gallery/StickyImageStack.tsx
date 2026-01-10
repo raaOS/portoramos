@@ -190,8 +190,8 @@ export default function StickyImageStack({ items }: StickyImageStackProps) {
 
     return (
         <>
-            {/* Height controls how long we scroll. Reduced extra buffer from 100vh to 50vh to minimize negative space */}
-            <div ref={containerRef} style={{ height: `${items.length * 90 + 50}vh` }} className="relative bg-[#0a0a0a]">
+            {/* Height controls how long we scroll. Reduced from 35vh to 20vh per item (Approx 200vh total for 10 items = ~2 scrolls) */}
+            <div ref={containerRef} style={{ height: `${items.length * 20 + 50}vh` }} className="relative bg-[#0a0a0a]">
                 <div className="sticky top-0 h-screen overflow-hidden flex items-center justify-center">
 
                     <div className="relative w-full h-full max-w-[1400px] mx-auto z-10">

@@ -11,6 +11,7 @@ interface RevealProps {
     yOffset?: number;
     className?: string;
     overflowVisible?: boolean;
+    fullHeight?: boolean;
 }
 
 export const Reveal = ({
@@ -21,6 +22,7 @@ export const Reveal = ({
     yOffset = 20, // Reduced from 75 to 20 to prevent CLS
     className = "",
     overflowVisible = false,
+    fullHeight = false,
 }: RevealProps) => {
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, margin: "-100px" });
@@ -42,7 +44,8 @@ export const Reveal = ({
                 initial="hidden"
                 animate={mainControls}
                 transition={{ duration, delay, ease: "easeOut" }}
-                style={{ willChange: "transform, opacity" }} // Optimize animations
+                style={{ willChange: "transform, opacity", height: fullHeight ? "100%" : "auto" }} // Optimize animations & layout
+                className={fullHeight ? "h-full" : ""}
             >
                 {children}
             </motion.div>

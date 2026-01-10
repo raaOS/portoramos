@@ -26,6 +26,7 @@ import AITranslator from '@/components/features/AITranslator';
 import StickyImageStack, { MediaItem } from '@/components/gallery/StickyImageStack';
 import { resolveCover } from '@/lib/images';
 import AvailabilityBadge from '@/components/features/AvailabilityBadge';
+import DesignPhilosophySection from './_components/DesignPhilosophySection';
 
 const TextMorph = dynamic(() => import('@/components/effects/TextMorph'), {
   ssr: false,
@@ -191,7 +192,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
     };
 
     const observer = new IntersectionObserver(handleIntersect, observerOptions);
-    const sections = ['hero', 'professional', 'skills', 'experience'];
+    const sections = ['hero', 'philosophy', 'professional', 'skills', 'experience'];
     sections.forEach(id => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
@@ -564,9 +565,10 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
         <div className="flex flex-col space-y-4">
           {[
             { id: 'hero', label: 'Hero', number: '01' },
-            { id: 'professional', label: 'About', number: '02' },
-            { id: 'skills', label: 'Skills', number: '03' },
-            { id: 'experience', label: 'Experience', number: '04' }
+            { id: 'philosophy', label: 'Approach', number: '02' },
+            { id: 'professional', label: 'About', number: '03' },
+            { id: 'skills', label: 'Skills', number: '04' },
+            { id: 'experience', label: 'Experience', number: '05' }
           ].map((section) => {
             const isActive = activeSection === section.id;
             return (
@@ -596,6 +598,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
         className="fixed top-0 left-0 right-0 h-1 bg-black origin-left z-[100] mix-blend-difference"
         style={{ scaleX: scrollYProgress }}
       />
+
 
 
       {/* Section 1: ABOUT ME dengan Trail Effect */}
@@ -728,6 +731,13 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
         </div>
       </SectionWrapper>
 
+      <SectionWrapper
+        id="philosophy"
+        className="block bg-white border-b border-gray-200"
+      >
+        <DesignPhilosophySection />
+      </SectionWrapper>
+
       {/* Sticky Gallery Stack Section with Side Text */}
       <div id="professional" ref={stackSectionRef} className="relative z-20 bg-[#0a0a0a] border-b border-gray-800">
         <div className="max-w-[1920px] mx-auto">
@@ -739,12 +749,6 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                 className="relative xl:sticky xl:top-0 xl:h-screen flex flex-col justify-start xl:justify-center xl:px-10 2xl:px-16 text-white"
               >
                 <Reveal>
-                  <motion.div
-                    className="w-16 h-1 bg-white mb-8"
-                    initial={{ width: 0 }}
-                    whileInView={{ width: 64 }}
-                    transition={{ duration: 0.8 }}
-                  />
                   <motion.h3
                     style={{ opacity: headerOpacity }}
                     className="text-3xl xl:text-4xl font-sans font-bold leading-tight mb-8 text-white xl:opacity-[var(--header-opacity)] opacity-100"

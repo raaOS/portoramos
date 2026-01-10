@@ -279,129 +279,183 @@ export default function ProjectDetailTwoColumn({
                             </h1>
 
                             {/* Actions & Metadata Row */}
-                            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                                {/* Left: Actions (Like, Comment, Share) */}
-                                <div className="flex items-center gap-2">
-                                    {/* LIKE BUTTON - Red if liked or has likes */}
-                                    <button
-                                        className={`p-1.5 flex items-center gap-1 rounded-full transition-all duration-200 ${isProjectLiked || metrics.likes > 0
-                                            ? 'text-red-500' // Red if functionality active
-                                            : 'text-gray-400 hover:text-red-500'
-                                            }`}
-                                        onClick={handleProjectLike}
-                                        aria-label={isProjectLiked ? "Unlike project" : "Like project"}
-                                    >
-                                        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill={isProjectLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                        </svg>
-                                        {metrics.likes > 0 && <span className="text-sm font-medium pr-1">{metrics.likes}</span>}
-                                    </button>
+                            <div className="flex flex-col gap-6 mb-8">
+                                {/* NEW: Metadata Grid (Role, Timeline, Team) */}
+                                {(project.role || project.timeline || project.team) && (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-4 border-y border-gray-100 dark:border-gray-800">
+                                        {project.role && (
+                                            <div>
+                                                <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Role</h3>
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white">{project.role}</p>
+                                            </div>
+                                        )}
+                                        {project.timeline && (
+                                            <div>
+                                                <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Timeline</h3>
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white">{project.timeline}</p>
+                                            </div>
+                                        )}
+                                        {project.team && (
+                                            <div>
+                                                <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Team</h3>
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white">{project.team}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
-                                    {/* COMMENT BUTTON - WhatsApp Green if has comments */}
-                                    <button
-                                        className={`p-1.5 flex items-center gap-1 rounded-full transition-all duration-200 ${comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0) > 0
-                                            ? 'text-green-600 dark:text-green-500'
-                                            : 'text-gray-400 hover:text-green-600 dark:hover:text-green-500'
-                                            }`}
-                                        onClick={() => {
+                                <div className="flex flex-wrap items-center justify-between gap-4">
+                                    {/* Left: Actions (Like, Comment, Share) */}
+                                    <div className="flex items-center gap-2">
+                                        {/* LIKE BUTTON - Red if liked or has likes */}
+                                        <button
+                                            className={`p-1.5 flex items-center gap-1 rounded-full transition-all duration-200 ${isProjectLiked || metrics.likes > 0
+                                                ? 'text-red-500' // Red if functionality active
+                                                : 'text-gray-400 hover:text-red-500'
+                                                }`}
+                                            onClick={handleProjectLike}
+                                            aria-label={isProjectLiked ? "Unlike project" : "Like project"}
+                                        >
+                                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill={isProjectLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                            </svg>
+                                            {metrics.likes > 0 && <span className="text-sm font-medium pr-1">{metrics.likes}</span>}
+                                        </button>
 
-                                            setTimeout(() => {
-                                                document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth' });
-                                            }, 100);
-                                        }}
-                                        aria-label="View comments"
-                                    >
-                                        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                        </svg>
-                                        {comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0) > 0 && (
-                                            <span className="text-sm font-medium pr-1">
-                                                {comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)}
+                                        {/* COMMENT BUTTON - WhatsApp Green if has comments */}
+                                        <button
+                                            className={`p-1.5 flex items-center gap-1 rounded-full transition-all duration-200 ${comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0) > 0
+                                                ? 'text-green-600 dark:text-green-500'
+                                                : 'text-gray-400 hover:text-green-600 dark:hover:text-green-500'
+                                                }`}
+                                            onClick={() => {
+
+                                                setTimeout(() => {
+                                                    document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                }, 100);
+                                            }}
+                                            aria-label="View comments"
+                                        >
+                                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                            </svg>
+                                            {comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0) > 0 && (
+                                                <span className="text-sm font-medium pr-1">
+                                                    {comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)}
+                                                </span>
+                                            )}
+                                        </button>
+
+                                        {/* SHARE BUTTON - Blue if has shares */}
+                                        <button
+                                            className={`p-1.5 flex items-center gap-1 rounded-full transition-all duration-200 ${metrics.shares > 0
+                                                ? 'text-blue-500'
+                                                : 'text-gray-400 hover:text-blue-500'
+                                                }`}
+                                            onClick={handleProjectShare}
+                                            aria-label="Share project"
+                                        >
+                                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                            </svg>
+                                            {metrics.shares > 0 && <span className="text-sm font-medium pr-1">{metrics.shares}</span>}
+                                        </button>
+
+                                        {/* AI TRANSLATOR */}
+                                        {project.description && (
+                                            <AITranslator text={project.description} context={`Project: ${project.title || ''}`} />
+                                        )}
+                                    </div>
+
+                                    {/* Right: Metadata (Year, Client, Tags) */}
+                                    <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-end">
+                                        {project.client && (
+                                            <span className="inline-flex items-center h-5 px-3 bg-gray-100 dark:bg-gray-800 rounded-full text-xs leading-none text-gray-600 dark:text-gray-400 transition-colors duration-300">
+                                                {project.client}
                                             </span>
                                         )}
-                                    </button>
-
-                                    {/* SHARE BUTTON - Blue if has shares */}
-                                    <button
-                                        className={`p-1.5 flex items-center gap-1 rounded-full transition-all duration-200 ${metrics.shares > 0
-                                            ? 'text-blue-500'
-                                            : 'text-gray-400 hover:text-blue-500'
-                                            }`}
-                                        onClick={handleProjectShare}
-                                        aria-label="Share project"
-                                    >
-                                        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                                        </svg>
-                                        {metrics.shares > 0 && <span className="text-sm font-medium pr-1">{metrics.shares}</span>}
-                                    </button>
-
-                                    {/* AI TRANSLATOR */}
-                                    {project.description && (
-                                        <AITranslator text={project.description} context={`Project: ${project.title || ''}`} />
-                                    )}
-                                </div>
-
-                                {/* Right: Metadata (Year, Client, Tags) */}
-                                <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-end">
-                                    {project.year && (
-                                        <span className="inline-flex items-center h-5 px-3 bg-gray-100 dark:bg-gray-800 rounded-full text-xs leading-none text-gray-600 dark:text-gray-400 transition-colors duration-300">
-                                            {project.year}
-                                        </span>
-                                    )}
-                                    {project.client && (
-                                        <span className="inline-flex items-center h-5 px-3 bg-gray-100 dark:bg-gray-800 rounded-full text-xs leading-none text-gray-600 dark:text-gray-400 transition-colors duration-300">
-                                            {project.client}
-                                        </span>
-                                    )}
-                                    {project.tags && project.tags.length > 0 && (
-                                        <>
-                                            {project.tags.map((tag: string, index: number) => (
-                                                <span key={index} className="inline-flex items-center h-5 px-3 bg-gray-100 dark:bg-gray-800 rounded-full text-xs leading-none text-gray-600 dark:text-gray-400 transition-colors duration-300">
-                                                    {tag}
-                                                </span>
-                                            ))}
-                                        </>
-                                    )}
+                                        {project.year && (
+                                            <span className="inline-flex items-center h-5 px-3 bg-gray-100 dark:bg-gray-800 rounded-full text-xs leading-none text-gray-600 dark:text-gray-400 transition-colors duration-300">
+                                                {project.year}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
 
 
 
-                            {/* Creative Breakdown / Narrative */}
-                            {project.narrative && (project.narrative.challenge || project.narrative.solution || project.narrative.result) && (
-                                <div className="mb-6 sm:mb-8 space-y-4 font-sans border-b border-gray-100 dark:border-gray-800 pb-6">
-                                    {project.narrative.challenge && (
-                                        <div>
-                                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
-                                                The Concept / Challenge
-                                            </h3>
-                                            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                {project.narrative.challenge}
-                                            </p>
+                            {/* Creative Breakdown / Narrative - ADAPTIVE LAYOUT */}
+                            {project.narrative && (
+                                <div className="mb-8 font-sans border-b border-gray-100 dark:border-gray-800 pb-8">
+                                    {/* COMMERCIAL LAYOUT (Strategy & Results) */}
+                                    {project.type === 'commercial' && (
+                                        <div className="space-y-8">
+                                            {project.narrative.context && (
+                                                <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
+                                                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Context</h3>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-300 italic">"{project.narrative.context}"</p>
+                                                </div>
+                                            )}
+
+                                            <div className="grid gap-6">
+                                                <div>
+                                                    <h3 className="text-xs font-bold uppercase tracking-wider text-red-500 mb-2">The Challenge</h3>
+                                                    <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                        {project.narrative.challenge}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xs font-bold uppercase tracking-wider text-blue-500 mb-2">The Solution</h3>
+                                                    <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                        {project.narrative.solution}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {project.narrative.impact && (
+                                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 p-5 rounded-xl border border-green-100 dark:border-green-900/30">
+                                                    <h3 className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 mb-2">The Impact</h3>
+                                                    <p className="text-base sm:text-lg font-medium text-gray-900 dark:text-white leading-relaxed">
+                                                        {project.narrative.impact}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
-                                    {project.narrative.solution && (
-                                        <div>
-                                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
-                                                The Technique
-                                            </h3>
-                                            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                {project.narrative.solution}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {project.narrative.result && (
-                                        <div>
-                                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
-                                                The Impact
-                                            </h3>
-                                            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                {project.narrative.result}
-                                            </p>
+                                    {/* VISUAL ART LAYOUT (Concept & Craft) - Placeholder for next step or fallback */}
+                                    {(!project.type || project.type === 'visual_art') && (
+                                        <div className="space-y-6">
+                                            {(project.narrative.challenge || project.narrative.concept) && (
+                                                <div>
+                                                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                                                        {project.narrative.concept ? 'The Concept' : 'The Challenge'}
+                                                    </h3>
+                                                    <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                        {project.narrative.concept || project.narrative.challenge}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {(project.narrative.solution || project.narrative.process) && (
+                                                <div>
+                                                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                                                        {project.narrative.process ? 'The Process' : 'The Solution'}
+                                                    </h3>
+                                                    <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                        {project.narrative.process || project.narrative.solution}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {project.narrative.result && (
+                                                <div>
+                                                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">The Result</h3>
+                                                    <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                        {project.narrative.result}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

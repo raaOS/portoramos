@@ -4,9 +4,19 @@
       "id": "gen-1766512146544-14",
       "title": "Kampanye Hadiah Digital Liburan",
       "slug": "kampanye-hadiah-digital-liburan",
-      "client": "Personal Work",
+      "client": "Tech Subscription Co.",
+      "role": "Lead Visual Designer",
+      "timeline": "3 Weeks",
+      "team": "Marketing Team Collab",
+      "type": "commercial",
       "year": 2025,
       "description": "Grafis ritel liburan yang cerah menggunakan warna-warna meriah dan mockup produk untuk mempromosikan penjualan langganan digital.",
+      "narrative": {
+        "context": "Klien ingin meningkatkan penjualan langganan digital menjelang musim liburan akhir tahun di tengah pasar yang sangat kompetitif.",
+        "challenge": "Pasar sudah jenuh dengan visual liburan klasik. Tantangannya adalah membuat visual yang 'fresh' dan 'digital-native' namun tetap festif, untuk menonjol di feed media sosial yang padat (Stop-Scroll Effect).",
+        "solution": "Mengembangkan konsep 'Digital Festivity' dengan palet warna cerah non-tradisional (neon + elemen klasik). Fokus pada animasi stop-motion produk untuk menarik perhatian dalam 3 detik pertama.",
+        "impact": "Meningkatkan CTR sebesar 40% dibandingkan tahun lalu dan mencapai target penjualan 2 minggu lebih awal."
+      },
       "cover": "/assets/projects/kampanye-hadiah-digital-liburan.mp4",
       "coverWidth": 1080,
       "coverHeight": 1920,
@@ -125,9 +135,18 @@
       "id": "gen-1766512146544-3",
       "title": "Politik Pop Digital",
       "slug": "politik-pop-digital",
-      "client": "Personal Work",
+      "client": "Personal Art",
+      "role": "Digital Artist",
+      "timeline": "5 Days",
+      "team": "Solo Project",
+      "type": "visual_art",
       "year": 2025,
       "description": "Desain grafis jenuh-hiper yang menggabungkan potret politik dengan tekstur bunga digital yang cerah.",
+      "narrative": {
+        "concept": "Eksplorasi visual tentang 'Kekuasaan vs Kealamian'. Menggabungkan figur otoritas yang kaku dengan elemen flora yang liar dan tak terprediksi, menyimbolkan bahwa alam selalu mengambil alih pada akhirnya.",
+        "process": "Teknik utama adalah 'Frequency Separation' untuk menjaga tekstur kulit subjek tetap tajam saat di-overlay. Saya menggunakan mode blending 'Difference' dan 'Exclusion' di Photoshop untuk mendapatkan warna neon yang tidak biasa, ditimpali dengan 15 layer tekstur glitch analog.",
+        "result": "Karya ini mendapatkan fitur 'Best of Digital Art' di Behance minggu pertama rilis dan dicetak sebagai merchandise limited edition."
+      },
       "cover": "/assets/projects/politik-pop-digital.jpg",
       "coverWidth": 640,
       "coverHeight": 800,
@@ -148,11 +167,6 @@
       "likes": 22,
       "shares": 0,
       "allowComments": true,
-      "narrative": {
-        "challenge": "",
-        "solution": "",
-        "result": ""
-      },
       "comparison": {
         "beforeImage": "/assets/media/tempat-perlindungan-sneaker-surealis-cover.jpg",
         "beforeType": "image",

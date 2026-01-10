@@ -24,10 +24,23 @@ export interface ProjectFormData {
     shares?: number;
     allowComments?: boolean;
     initialCommentCount?: number;
+    // Case Study Fields
+    role?: string;
+    timeline?: string;
+    team?: string;
+    type?: 'commercial' | 'visual_art';
     narrative: {
-        challenge: string;
-        solution: string;
-        result: string;
+        // Commercial
+        context?: string;
+        challenge?: string;
+        solution?: string;
+        impact?: string; // Replaces result
+        result?: string; // Legacy
+
+        // Visual Art
+        concept?: string;
+        process?: string;
+        detail?: string;
     };
     comparison: {
         beforeImage: string;
@@ -60,10 +73,25 @@ export const useProjectForm = (project?: Project) => {
         shares: project?.shares ?? 0,
         allowComments: project?.allowComments ?? true,
         initialCommentCount: 2,
+
+        // Case Study Fields
+        role: project?.role || '',
+        timeline: project?.timeline || '',
+        team: project?.team || '',
+        type: project?.type || 'commercial',
+
         narrative: {
+            // Commercial
+            context: project?.narrative?.context || '',
             challenge: project?.narrative?.challenge || '',
             solution: project?.narrative?.solution || '',
-            result: project?.narrative?.result || ''
+            impact: project?.narrative?.impact || '',
+            result: project?.narrative?.result || '',
+
+            // Visual Art
+            concept: project?.narrative?.concept || '',
+            process: project?.narrative?.process || '',
+            detail: project?.narrative?.detail || ''
         },
         comparison: {
             beforeImage: project?.comparison?.beforeImage || '',

@@ -199,7 +199,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                     <button
                         type="button"
                         onClick={() => setQuality('turbo')}
-                        className={`flex-1 flex justify-center items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border transition-all ${quality === 'turbo'
+                        className={`flex-1 flex justify-center items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-none border transition-all ${quality === 'turbo'
                             ? 'bg-violet-50 border-violet-500 text-violet-700 shadow-sm'
                             : 'bg-white border-gray-200 text-gray-500 hover:border-violet-200'
                             }`}
@@ -209,7 +209,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                     <button
                         type="button"
                         onClick={() => setQuality('high')}
-                        className={`flex-1 flex justify-center items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border transition-all ${quality === 'high'
+                        className={`flex-1 flex justify-center items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-none border transition-all ${quality === 'high'
                             ? 'bg-violet-50 border-violet-500 text-violet-700 shadow-sm'
                             : 'bg-white border-gray-200 text-gray-500 hover:border-violet-200'
                             }`}
@@ -228,7 +228,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                         type="text"
                         value={formData.cover}
                         onChange={(e) => updateField('cover', e.target.value)}
-                        className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.cover ? 'border-red-300' : 'border-gray-300'
+                        className={`flex-1 px-3 py-2 border rounded-none focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.cover ? 'border-red-300' : 'border-gray-300'
                             }`}
                         placeholder="https://... or /assets/..."
                     />
@@ -245,7 +245,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={!!status}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 flex items-center gap-2 min-w-[100px] justify-center"
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-none hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 flex items-center gap-2 min-w-[100px] justify-center"
                         title="Upload Local File"
                     >
                         {status ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
@@ -266,9 +266,9 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                             <span>{status}</span>
                             <span>{progress}%</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div className="w-full bg-gray-200 rounded-none h-1.5">
                             <div
-                                className="bg-violet-600 h-1.5 rounded-full transition-all duration-300"
+                                className="bg-violet-600 h-1.5 rounded-none transition-all duration-300"
                                 style={{ width: `${progress}%` }}
                             ></div>
                         </div>
@@ -277,7 +277,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
 
                 {/* Compression Result Banner */}
                 {compressionResult && !status && (
-                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700 font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-none text-xs text-green-700 font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
                         <UploadCloud className="w-3 h-3" />
                         <span>Saved: {compressionResult}</span>
                     </div>
@@ -295,7 +295,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                         type="number"
                         value={formData.coverWidth}
                         readOnly
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-500 text-sm"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-none text-gray-500 text-sm"
                     />
                 </div>
                 <div>
@@ -304,7 +304,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                         type="number"
                         value={formData.coverHeight}
                         readOnly
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-500 text-sm"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-none text-gray-500 text-sm"
                     />
                 </div>
             </div>

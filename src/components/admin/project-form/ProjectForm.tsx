@@ -69,7 +69,7 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
 
                 {/* Left Column: Visuals & Media */}
                 <div className="space-y-6">
-                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <div className="bg-gray-50 p-4 rounded-none border border-gray-100">
                         <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
                             <span className="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
                             Visual Assets

@@ -31,7 +31,7 @@ export default function ProjectGalleryManager({ formData, addGalleryItem, remove
                     value={newGalleryUrl}
                     onChange={(e) => setNewGalleryUrl(e.target.value)}
                     placeholder="Add image or video URL..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                             e.preventDefault();
@@ -42,7 +42,7 @@ export default function ProjectGalleryManager({ formData, addGalleryItem, remove
                 <button
                     type="button"
                     onClick={handleAddUrl}
-                    className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm font-medium"
+                    className="px-3 py-2 bg-gray-100 text-gray-700 rounded-none hover:bg-gray-200 text-sm font-medium"
                 >
                     Add
                 </button>
@@ -50,8 +50,8 @@ export default function ProjectGalleryManager({ formData, addGalleryItem, remove
 
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                 {formData.galleryItems.map((item, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200 group">
-                        <div className="relative w-10 h-10 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                    <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-none border border-gray-200 group">
+                        <div className="relative w-10 h-10 bg-gray-200 rounded-none overflow-hidden flex-shrink-0">
                             {item.kind === 'video' ? (
                                 <video src={item.src} className="w-full h-full object-cover" />
                             ) : (
@@ -66,7 +66,7 @@ export default function ProjectGalleryManager({ formData, addGalleryItem, remove
                             <button
                                 type="button"
                                 onClick={() => toggleGalleryItem(index)}
-                                className={`p-1 rounded ${item.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}
+                                className={`p-1 rounded-none ${item.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}
                                 title={item.isActive ? "Active" : "Hidden"}
                             >
                                 <CheckCircle2 className="w-4 h-4 ml-auto" />
@@ -74,7 +74,7 @@ export default function ProjectGalleryManager({ formData, addGalleryItem, remove
                             <button
                                 type="button"
                                 onClick={() => removeGalleryItem(index)}
-                                className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded"
+                                className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-none"
                                 title="Remove"
                             >
                                 <X className="w-4 h-4" />

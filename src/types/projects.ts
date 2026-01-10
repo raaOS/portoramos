@@ -18,10 +18,25 @@ export interface Project {
   likes?: number;
   shares?: number;
   allowComments?: boolean;
+
+  // New Case Study Fields
+  role?: string;
+  timeline?: string;
+  team?: string;
+  type?: 'commercial' | 'visual_art';
+
   narrative?: {
+    // Commercial
+    context?: string;
     challenge?: string;
     solution?: string;
-    result?: string;
+    impact?: string; // Replaces 'result' for commercial
+    result?: string; // Legacy support
+
+    // Visual Art
+    concept?: string;
+    process?: string;
+    detail?: string;
   };
   comparison?: {
     beforeImage: string; // URL
@@ -76,10 +91,25 @@ export interface CreateProjectData {
   shares?: number;
   allowComments?: boolean;
   initialCommentCount?: number;
+
+  // New Case Study Fields
+  role?: string;
+  timeline?: string;
+  team?: string;
+  type?: 'commercial' | 'visual_art';
+
   narrative?: {
+    // Commercial
+    context?: string;
     challenge?: string;
     solution?: string;
+    impact?: string;
     result?: string;
+
+    // Visual Art
+    concept?: string;
+    process?: string;
+    detail?: string;
   };
   comparison?: {
     beforeImage: string;
