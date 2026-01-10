@@ -159,7 +159,7 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
                         <div>
                             <div className="flex justify-between items-center mb-1">
                                 <label className="block text-xs font-semibold text-gray-700">
-                                    Before / Raw Media
+                                    Original (Before)
                                 </label>
                                 <select
                                     value={formData.comparison.beforeType}
@@ -205,7 +205,7 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
                         <div>
                             <div className="flex justify-between items-center mb-1">
                                 <label className="block text-xs font-semibold text-gray-700">
-                                    After / Final Media
+                                    Retouched (After)
                                 </label>
                                 <select
                                     value={formData.comparison.afterType}

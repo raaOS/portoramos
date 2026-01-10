@@ -246,8 +246,8 @@ export default function ProjectDetailTwoColumn({
                                     beforeType={project.comparison.beforeType}
                                     afterImage={project.comparison.afterImage || cover.src}
                                     afterType={project.comparison.afterImage ? project.comparison.afterType : (cover.kind === 'video' ? 'video' : 'image')}
-                                    labelBefore="Before"
-                                    labelAfter="After"
+                                    labelBefore="Original"
+                                    labelAfter="Retouched"
                                     aspectRatio={ratio}
                                 />
                             ) : (
