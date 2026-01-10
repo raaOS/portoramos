@@ -1,4 +1,6 @@
 import { ProjectFormData } from '@/hooks/useProjectForm';
+import { Loader2, UploadCloud } from 'lucide-react';
+import { useState, useRef } from 'react';
 
 interface ProjectNarrativeProps {
     formData: ProjectFormData;
@@ -6,6 +8,9 @@ interface ProjectNarrativeProps {
 }
 
 export default function ProjectNarrative({ formData, updateField }: ProjectNarrativeProps) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
     const handleNarrativeChange = (field: keyof ProjectFormData['narrative'], value: string) => {
         updateField('narrative', {
             ...formData.narrative,
@@ -20,7 +25,52 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
         });
     };
 
-    const isCommercial = formData.type === 'commercial' || !formData.type;
+    const handleBeforeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Basic Size Limit (50MB for raw methods)
+        if (file.size > 50 * 1024 * 1024) {
+            alert("File too large (>50MB). Please compress it first.");
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const data = new FormData();
+            data.append('file', file);
+
+            // Construct API URL
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            let endpoint = isLocal ? '/api/upload?folder=comparisons' : '/api/upload/github?folder=comparisons';
+
+            // Add Slug if available for naming
+            if (formData.slug) {
+                endpoint += `&slug=${encodeURIComponent(formData.slug)}`;
+            }
+
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                body: data
+            });
+
+            if (!res.ok) throw new Error('Upload Failed');
+
+            const result = await res.json();
+            if (result.url) {
+                handleComparisonChange('beforeImage', result.url);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to upload before media.");
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const isVisualArt = formData.type === 'visual_art';
+    const isCommercial = !isVisualArt;
 
     return (
         <div className="space-y-6">
@@ -97,7 +147,7 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
             </div>
 
             {/* Before-After Comparison - Only for Visual Art */}
-            {!isCommercial && (
+            {isVisualArt && (
                 <div className="bg-white p-4 rounded-none border border-gray-200 shadow-sm">
                     <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
@@ -120,15 +170,34 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
                                     <option value="video">Video</option>
                                 </select>
                             </div>
-                            <input
-                                type="text"
-                                value={formData.comparison.beforeImage}
-                                onChange={(e) => handleComparisonChange('beforeImage', e.target.value)}
-                                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                placeholder="https://..."
-                            />
+
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={formData.comparison.beforeImage}
+                                    onChange={(e) => handleComparisonChange('beforeImage', e.target.value)}
+                                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                    placeholder="https://... or Upload -->"
+                                />
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    onChange={handleBeforeUpload}
+                                    accept="image/*,video/*"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                    className="px-3 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-none border border-gray-300 transition-colors flex items-center gap-2"
+                                >
+                                    {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                                    <span className="text-xs font-bold hidden sm:inline">Upload</span>
+                                </button>
+                            </div>
                             <p className="text-[10px] text-gray-500 mt-1">
-                                Great for showing "Raw Photo" vs "Final Edit" or "Wireframe" vs "UI".
+                                Uploads to <code>/assets/projects/comparisons/</code>. Auto-renames to <code>[slug]-before</code>.
                             </p>
                         </div>
 

@@ -40,6 +40,11 @@ export async function POST(req: NextRequest) {
             // Smart Upload: Direct to projects folder with correct name
             finalFilename = `${customFilename}.${ext}`;
             targetDir = 'assets/projects';
+        } else if (folderParam === 'comparisons') {
+            // Comparisons Folder (Before/After)
+            const cleanName = searchParams.get('slug') ? `${searchParams.get('slug')}-before` : file.name.split('.')[0];
+            finalFilename = `${cleanName}.${ext}`;
+            targetDir = 'assets/projects/comparisons';
         } else {
             // Standard
             const cleanName = file.name.toLowerCase().replace(/[^a-z0-9.]/g, '-');
