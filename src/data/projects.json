@@ -2,19 +2,24 @@
   "projects": [
     {
       "id": "gen-1766512146544-14",
-      "title": "Promo Gila Akhir Tahun Digital Goods",
+      "title": "Promo Streaming Digital Penuh Semangat Natal",
       "slug": "kampanye-hadiah-digital-liburan",
       "client": "Rizky Akbar Store",
-      "role": "Visual Designer & Motion Artist",
-      "timeline": "1 Day",
+      "role": "Digital Promotion Designer & Motion Animator",
+      "timeline": "1 Hari Kerja (Fast turnaround)",
       "team": "Solo Project",
       "type": "commercial",
       "year": 2025,
-      "description": "Desain story Instagram dengan vibe Natal yang festive banget. Menggunakan palet hijau-merah klasik untuk menarik perhatian dan menonjolkan produk digital. Estetika yang dipilih bold, dinamis, dan click-bait abis buat nge-boost konversi.",
+      "description": "Visual vertikal dengan latar hijau tua ini menampilkan promo Natal, menonjolkan gift card layanan streaming populer (Netflix, Spotify, dll.) yang dibingkai menyerupai kado. Aksen hiasan Natal 3D digunakan untuk memperkuat suasana liburan. Desain ini bertujuan memberikan informasi diskon dan mengarahkan audiens ke tautan pembelian.",
       "narrative": {
-        "challenge": "Gimana caranya bikin story ad yang eye-catching di feed yang isinya kompetitor semua, sambil mastiin semua info promo (diskon dan tanggal) tersampaikan jelas dan bikin orang langsung 'KLIK LINK DI BIO.'",
-        "solution": "Membuat animasi vertikal dengan background hijau gelap yang kontras abis. Memanfaatkan elemen 3D/semi-3D ornamen Natal dan gift cards untuk kesan premium, fokus ke call-to-action (CTA) yang gede dan jelas.",
-        "result": ""
+        "challenge": "Tantangannya adalah membuat produk digital (kartu langganan) terasa 'hadiah' yang fisik dan menarik di tengah kebisingan promosi musiman. Selain itu, desain harus tetap mobile-first dan memastikan semua branding pihak ketiga (Netflix, dll.) tidak terdistorsi.",
+        "solution": "Saya menggunakan palet warna merah-hijau klasik dengan elemen 3D (ornamen, permen tongkat) untuk membangun suasana festive yang instan. Gift card ditata miring dan diberi efek bungkus kado untuk menonjolkan nilai gifting. Hierarki visual dibuat sangat jelas: Promo > CTA > Produk.",
+        "result": "",
+        "context": "Rizky Akbar Store perlu memanfaatkan momen puncak penjualan di akhir tahun (Natal dan Tahun Baru) untuk menggenjot traffic dan konversi layanan gift card digital mereka.",
+        "impact": "Didesain untuk mencapai rasio swipe-up atau klik tertinggi, memastikan audiens yang melihat di Story atau Reels langsung memahami penawaran dan jangka waktu promo tanpa perlu teks tambahan yang panjang.",
+        "concept": null,
+        "process": null,
+        "detail": null
       },
       "cover": "/assets/projects/kampanye-hadiah-digital-liburan.mp4",
       "coverWidth": 1080,
@@ -32,7 +37,7 @@
       "order": 1,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-12T05:23:04.918Z",
+      "updatedAt": "2026-01-12T05:39:27.589Z",
       "likes": 8,
       "shares": 5,
       "allowComments": true
@@ -43,7 +48,11 @@
       "slug": "manipulasi-foto-musik-alam",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Sebuah karya surealis yang mengubah piringan hitam menjadi hutan rimbun yang berbatasan dengan deburan ombak samudra biru.",
+      "role": "Digital Artist",
+      "timeline": "2 Days",
+      "team": "Solo Project",
+      "type": "visual_art",
+      "description": "Eksperimen surealis menggabungkan piringan hitam vinyl dengan elemen alam liar. Konsepnya visualisasi 'suara alam' secara harfiah.",
       "cover": "/assets/projects/manipulasi-foto-musik-alam.mp4",
       "coverWidth": 720,
       "coverHeight": 900,
@@ -66,9 +75,9 @@
       "allowComments": true,
       "initialCommentCount": 2,
       "narrative": {
-        "challenge": "",
-        "solution": "",
-        "result": ""
+        "concept": "Mendobrak batas antara objek mati (vinyl) dan kehidupan (hutan/ombak). Ide dasarnya adalah musik itu 'hidup' dan punya ekosistemnya sendiri.",
+        "process": "Teknik masking yang cukup rumit di Photoshop untuk blending transisi air ke piringan hitam biar gak kelihatan tempelan. Color grading-nya dibuat dreamy biar dapet nuansa fantasinya.",
+        "detail": "Perhatikan detail cipratan ombak yang menyatu dengan alur piringan hitam."
       },
       "comparison": {
         "beforeImage": "/assets/projects/politik-pop-digital-cover.jpg",
@@ -83,7 +92,11 @@
       "slug": "kolase-lanskap-menanjak",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Kolase digital surealis yang mengontraskan tangan raksasa yang menggapai langit biru tua dan hutan musim gugur yang membara.",
+      "role": "Visual Artist",
+      "timeline": "Weekend Project",
+      "team": "Solo Project",
+      "type": "visual_art",
+      "description": "Kolase digital yang mainin skala ekstrem. Tangan raksasa vs manusia kecil di lanskap musim gugur yang dramatis.",
       "cover": "/assets/projects/kolase-lanskap-menanjak.mp4",
       "coverWidth": 720,
       "coverHeight": 900,
@@ -102,7 +115,12 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2026-01-06T20:18:03.057Z",
       "likes": 37,
-      "shares": 1
+      "shares": 1,
+      "narrative": {
+        "concept": "Eksplorasi tentang ambisi manusia dan alam semesta. Tangan raksasa melambangkan takdir atau campur tangan ilahi.",
+        "process": "Komposisi full di Photoshop dengan stok foto vintage. Fokus utamanya di pencahayaan (lighting match) biar elemen-elemen potongannya kerasa satu dimensi.",
+        "detail": "Efek grain film-nya ditambah di akhir proses biar kesan retronya makin dapet."
+      }
     },
     {
       "id": "gen-1766512146544-2",
@@ -110,7 +128,11 @@
       "slug": "komposit-gerbang-neraka",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Sebuah komposit kontras tinggi yang memvisualisasikan perjalanan sendirian ke dunia bawah yang gelap dan dijaga gagak.",
+      "role": "Digital Artist",
+      "timeline": "1 Night",
+      "team": "Solo Project",
+      "type": "visual_art",
+      "description": "Visualisasi dark fantasy tentang perjalanan ke dunia bawah. Mood-nya gelap, gloomy, dengan gagak sebagai simbol mistis.",
       "cover": "/assets/projects/komposit-gerbang-neraka.mp4",
       "coverWidth": 720,
       "coverHeight": 900,
@@ -129,7 +151,12 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2025-12-27T17:40:25.513Z",
       "likes": 45,
-      "shares": 0
+      "shares": 0,
+      "narrative": {
+        "concept": "Terinspirasi dari film-film horor gothic klasik. Mencoba menangkap perasaan isolasi dan ketidakpastian saat melangkah ke tempat asing.",
+        "process": "Pencahayaan sangat minim (low-key lighting). Hampir 70% canvas adalah shadow/hitam untuk membangun suspense.",
+        "detail": "Siluet jembatan dan kabut tipis di kejauhan."
+      }
     },
     {
       "id": "gen-1766512146544-3",
@@ -141,11 +168,11 @@
       "team": "Solo Project",
       "type": "visual_art",
       "year": 2025,
-      "description": "Desain grafis jenuh-hiper yang menggabungkan potret politik dengan tekstur bunga digital yang cerah.",
+      "description": "Satire visual yang menggabungkan tokoh politik kaku dengan elemen bunga-bunga glitchy yang chaos. Tabrakan visual yang disengaja.",
       "narrative": {
-        "challenge": "",
-        "solution": "",
-        "result": "Karya ini mendapatkan fitur 'Best of Digital Art' di Behance minggu pertama rilis dan dicetak sebagai merchandise limited edition."
+        "concept": "Mengkritik formalitas politik dengan estetika internet/glitch art. Bunga melambangkan topeng keindahan di atas realita yang keras.",
+        "process": "Teknik datamoshing dan pixel sorting diaplikasikan ke foto asli, lalu di-overlay dengan ilustrasi bunga vintage.",
+        "detail": "Karya ini sempat viral di komunitas Glitch Art karena kontras warnanya yang 'nyolot'."
       },
       "cover": "/assets/projects/politik-pop-digital.jpg",
       "coverWidth": 640,
@@ -180,7 +207,11 @@
       "slug": "tempat-perlindungan-sneaker-surealis",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Manipulasi foto hiper-realis yang memadukan alas kaki industrial dan lanskap alam menjadi jalan pulang yang monumental.",
+      "role": "3D Artist",
+      "timeline": "3 Days",
+      "team": "Solo Project",
+      "type": "visual_art",
+      "description": "Imajinasi liar kalau sepatu itu bukan cuma alas kaki, tapi 'rumah' atau tempat berlindung. Manipulasi skala yang fun.",
       "cover": "/assets/projects/tempat-perlindungan-sneaker-surealis.jpg",
       "coverWidth": 640,
       "coverHeight": 800,
@@ -207,7 +238,12 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2025-12-27T17:42:53.880Z",
       "likes": 32,
-      "shares": 2
+      "shares": 2,
+      "narrative": {
+        "concept": "Sneaker culture meets architectural dreams. Mengubah struktur sepatu sneakers modern jadi bangunan monumen di tengah alam.",
+        "process": "Modeling dasar di Blender untuk referensi perspektif, lalu heavy photobashing di Photoshop untuk tekstur beton dan lumutnya.",
+        "detail": "Tekstur tali sepatu yang berubah jadi kabel baja raksasa."
+      }
     },
     {
       "id": "gen-1766512146544-5",
@@ -215,7 +251,11 @@
       "slug": "overlay-bunga-barok-digital",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Tipografi putih yang tegas melapisi bunga barok yang mewah dan gelap dalam bingkai merah yang intens.",
+      "role": "Graphic Designer",
+      "timeline": "1 Day",
+      "team": "Solo Project",
+      "type": "commercial",
+      "description": "Poster tipografi modern yang nabrakin gaya lukisan klasik Barok yang gelap dengan font sans-serif super clean.",
       "cover": "/assets/projects/overlay-bunga-barok-digital.jpg",
       "coverWidth": 640,
       "coverHeight": 800,
@@ -234,7 +274,13 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2025-12-27T02:41:59.526Z",
       "likes": 15,
-      "shares": 1
+      "shares": 1,
+      "narrative": {
+        "context": "Eksplorasi tren desain 'Modern Nostalgia' yang lagi hype. Pengen bikin poster event fiktif yang elegan tapi edgy.",
+        "challenge": "Gimana caranya naruh teks putih di atas background bunga yang super detail tanpa bikin pusing bacanya.",
+        "solution": "Mainin kontras dan hierarchy ukuran font. Bunga dijadikan tekstur background, bukan focal point utama.",
+        "impact": "Didesain untuk poster pameran seni atau cover majalah fashion indie."
+      }
     },
     {
       "id": "gen-1766512146544-7",
@@ -242,7 +288,11 @@
       "slug": "tipografi-alam-kontras-tinggi",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Teks sans-serif putih tebal melapisi daun merambat hijau yang sangat jenuh, menciptakan kontras visual modern.",
+      "role": "Graphic Designer",
+      "timeline": "1 Day",
+      "team": "Solo Project",
+      "type": "commercial",
+      "description": "Eksperimen layout majalah. Hijau daun yang nendang banget warnanya ketemu sama whitespace dan tipografi Swiss Style.",
       "cover": "/assets/projects/tipografi-alam-kontras-tinggi.jpg",
       "coverWidth": 640,
       "coverHeight": 640,
@@ -261,7 +311,13 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2026-01-08T14:36:18.218Z",
       "likes": 43,
-      "shares": 1
+      "shares": 1,
+      "narrative": {
+        "context": "Latihan komposisi grid sistem. Mencoba memecah kekakuan grid dengan elemen organik (daun).",
+        "challenge": "Menyeimbangkan area kosong (negative space) dengan area foto yang padat tekstur.",
+        "solution": "Menggunakan tipografi bold sans-serif sebagai 'jangkar' visual biar mata gak lari kemana-mana.",
+        "impact": "Cocok banget buat referensi layout lookbook fashion summer season."
+      }
     },
     {
       "id": "gen-1766512146544-6",
@@ -269,7 +325,11 @@
       "slug": "narasi-visual-moodboard",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Desain digital multi-panel yang memadukan manipulasi foto surealis dengan fotografi perjalanan dan studi warna.",
+      "role": "Art Director",
+      "timeline": "2 Days",
+      "team": "Solo Project",
+      "type": "visual_art",
+      "description": "Kumpulan potongan visual alias Moodboard untuk project film pendek sci-fi. Gabungan foto travel, tekstur, dan warna-warna dingin.",
       "cover": "/assets/projects/narasi-visual-moodboard.jpg",
       "coverWidth": 640,
       "coverHeight": 800,
@@ -288,7 +348,12 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2026-01-08T14:36:18.218Z",
       "likes": 34,
-      "shares": 4
+      "shares": 4,
+      "narrative": {
+        "concept": "Visual storytelling tanpa kata. Mengumpulkan fragmen-fragmen gambar untuk membangun 'dunia' dan 'rasa' sebelum syuting dimulai.",
+        "process": "Kurasi ratusan foto, color correction biar tone-nya nyambung semua, lalu layouting gaya grid sinematik.",
+        "detail": "Konsistensi palet warna biru-abu (cold tone) di setiap panel."
+      }
     },
     {
       "id": "gen-1766512146544-8",
@@ -296,7 +361,11 @@
       "slug": "desain-sampul-hijau-tua",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Tipografi dramatis kontras dengan dedaunan hijau gelap yang kaya tekstur dan buah beri merah cerah.",
+      "role": "Illustrator",
+      "timeline": "1 Day",
+      "team": "Solo Project",
+      "type": "commercial",
+      "description": "Mockup cover buku/majalah indie. Nuansanya misterius, deep forest green dengan aksen merah beri.",
       "cover": "/assets/projects/desain-sampul-hijau-tua.jpg",
       "coverWidth": 640,
       "coverHeight": 640,
@@ -315,7 +384,13 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2025-12-27T02:41:59.526Z",
       "likes": 18,
-      "shares": 2
+      "shares": 2,
+      "narrative": {
+        "context": "Bikin desain cover untuk buku puisi fiksi bertema alam dan kehilangan.",
+        "challenge": "Bikin visual yang 'sepi' tapi gak kosong.",
+        "solution": "Pakai satu foto makro yang kuat sebagai background, tipografi disimpen kecil dan rapi di tengah biar elegan.",
+        "impact": "Desain ini dirancang untuk menarik pembaca yang suka estetika minimalis dan melankolis."
+      }
     },
     {
       "id": "gen-1766512146544-10",
@@ -323,7 +398,11 @@
       "slug": "montase-bunga-cantik",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Buket bunga rimbun meledak dari lampu lalu lintas bergaya, dikelilingi oleh merpati putih yang terbang dan bentuk-bentuk geometris.",
+      "role": "Motion Designer",
+      "timeline": "3 Days",
+      "team": "Solo Project",
+      "type": "commercial",
+      "description": "Animasi pendek looping (GIF style) yang super colorful. Bunga meledak keluar dari lampu lalu lintas. Aneh? Iya. Keren? Pasti.",
       "cover": "/assets/projects/montase-bunga-cantik.mp4",
       "coverWidth": 720,
       "coverHeight": 900,
@@ -342,7 +421,13 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2026-01-08T14:36:19.676Z",
       "likes": 42,
-      "shares": 5
+      "shares": 5,
+      "narrative": {
+        "context": "Project iseng buat konten TikTok/Reels. Pengen bikin sesuatu yang satisfying buat ditonton ulang-ulang.",
+        "challenge": "Sinkronisasi gerakan 'ledakan' bunga biar kerasa natural tapi tetap kartunis.",
+        "solution": "Kombinasi 3D particle system ringan dan layering 2D asset bunga.",
+        "impact": "Potensial untuk aset social media brand fashion atau kosmetik yang playful."
+      }
     },
     {
       "id": "gen-1766512146544-9",
@@ -350,7 +435,11 @@
       "slug": "identitas-monogram-hijau",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Monogram putih bergaya yang memadukan kaligrafi klasik dengan latar belakang alam yang gelap dan kaya tekstur.",
+      "role": "Brand Designer",
+      "timeline": "2 Days",
+      "team": "Solo Project",
+      "type": "commercial",
+      "description": "Explorasi logo monogram yang 'classy'. Menggabungkan inisial huruf dengan style kaligrafi modern di atas background tekstur organik.",
       "cover": "/assets/projects/identitas-monogram-hijau.jpg",
       "coverWidth": 640,
       "coverHeight": 640,
@@ -369,7 +458,13 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2026-01-08T14:36:19.676Z",
       "likes": 36,
-      "shares": 3
+      "shares": 3,
+      "narrative": {
+        "context": "Konsep branding untuk luxury boutique hotel yang eco-friendly.",
+        "challenge": "Bikin logo yang kerasa mahal tapi tetap 'membumi' (nature-vibe).",
+        "solution": "Pilih jenis huruf serif yang tajam, dipadukan warna hijau lumut gelap (forest green) biar kesan eksklusifnya dapet.",
+        "impact": "Draft logo ini bisa dikembangkan jadi full brand identity kit."
+      }
     },
     {
       "id": "gen-1766512146544-11",
@@ -377,7 +472,11 @@
       "slug": "komposisi-kinetik-mengalir",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Komposisi grafis ini menggabungkan fotografi aksi dengan elemen abstrak kinetik dengan latar belakang kuning yang mencolok.",
+      "role": "Art Director",
+      "timeline": "1 Day",
+      "team": "Solo Project",
+      "type": "commercial",
+      "description": "Poster olahraga yang dinamis. Background kuning ngejreng + efek motion blur buat nampilin kecepatan dan energi.",
       "cover": "/assets/projects/komposisi-kinetik-mengalir.mp4",
       "coverWidth": 960,
       "coverHeight": 1198,
@@ -396,7 +495,13 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2025-12-27T02:41:59.526Z",
       "likes": 42,
-      "shares": 4
+      "shares": 4,
+      "narrative": {
+        "context": "Iklan sepatu lari urban. Target audiensnya anak muda kota yang aktif.",
+        "challenge": "Visual harus teriak 'CEPAT' dan 'ENERGIK' dalam sekilas pandang.",
+        "solution": "Pakai warna kuning safety (warning color) biar eye-catching, plus tipografi miring (italic) yang agresif.",
+        "impact": "Desain high-impact yang cocok buat billboard atau poster jalanan."
+      }
     },
     {
       "id": "gen-1766512146544-12",
@@ -404,7 +509,11 @@
       "slug": "seni-poster-flatiron-neon",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Tipografi tebal melapisi gedung pencakar langit monokrom yang kaku dengan latar belakang gradien warna vaporwave yang cerah.",
+      "role": "Visual Designer",
+      "timeline": "Weekend Project",
+      "team": "Solo Project",
+      "type": "visual_art",
+      "description": "Gedung Flatiron New York tapi versi Cyberpunk/Vaporwave. Gradien pink-cyan nabrak gedung tua yang hitam putih.",
       "cover": "/assets/projects/seni-poster-flatiron-neon.mp4",
       "coverWidth": 720,
       "coverHeight": 900,
@@ -423,7 +532,12 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2025-12-27T02:41:59.526Z",
       "likes": 29,
-      "shares": 5
+      "shares": 5,
+      "narrative": {
+        "concept": "Old meets New. Arsitektur klasik yang 'dijajah' oleh estetika digital neon.",
+        "process": "Seleksi gedung yang detail banget, lalu background diganti total dengan gradien vector.",
+        "detail": "Efek glow pada tipografinya bikin teksnya serasa lampu neon beneran."
+      }
     },
     {
       "id": "gen-1766512146544-15",
@@ -431,7 +545,11 @@
       "slug": "pastoral-kawanan-berhalo",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Manipulasi foto bernuansa moody yang menggambarkan sesosok figur kesepian yang dikelilingi oleh hewan ternak yang berhalo, surealis, dan melayang.",
+      "role": "Concept Artist",
+      "timeline": "4 Days",
+      "team": "Solo Project",
+      "type": "visual_art",
+      "description": "Scene pedesaan yang aneh dan creepy. Hewan ternak punya 'halo' suci, melayang di sekitar figur misterius. Moodnya seperti lukisan klasik tapi twist horor.",
       "cover": "/assets/projects/pastoral-kawanan-berhalo.jpg",
       "coverWidth": 640,
       "coverHeight": 798,
@@ -450,7 +568,12 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 21,
-      "shares": 3
+      "shares": 3,
+      "narrative": {
+        "concept": "Religious iconography meets rural horror. Apa jadinya kalau hewan ternak dianggap suci dengan cara yang salah?",
+        "process": "Digital painting di atas foto dasar (matte painting). Banyak main brush texture cat minyak biar kerasa 'old painting'.",
+        "detail": "Cahaya halo yang pudar dan tidak sempurna."
+      }
     },
     {
       "id": "gen-1766512146544-16",
@@ -458,7 +581,11 @@
       "slug": "tipografi-mekar-gotik",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Botani gelap berlapis dan tipografi putih tebal menciptakan kolase digital yang dramatis dan moody di dalam hutan bayangan.",
+      "role": "Graphic Designer",
+      "timeline": "2 Days",
+      "team": "Solo Project",
+      "type": "visual_art",
+      "description": "Tipografi yang 'tenggelam' di antara tanaman hutan gelap. Moody, atmospheric, dan sedikit gothic.",
       "cover": "/assets/projects/tipografi-mekar-gotik.jpg",
       "coverWidth": 640,
       "coverHeight": 800,
@@ -477,7 +604,12 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 19,
-      "shares": 4
+      "shares": 4,
+      "narrative": {
+        "concept": "Alam mengambil alih karya manusia. Teks (budaya) yang pelan-pelan tertutup semak belukar.",
+        "process": "Teknik masking layer per layer. Sebagian huruf di depan daun, sebagian di belakang, buat efek kedalaman (depth).",
+        "detail": "Shadow daun di atas huruf yang bikin efek realistis."
+      }
     },
     {
       "id": "gen-1766512146544-17",
@@ -485,7 +617,11 @@
       "slug": "kolase-dunia-ok-terfragmentasi",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Manipulasi digital kontras tinggi yang menggabungkan anatomi yang terfragmentasi, simbol-simbol global, dan warna-warna yang berani serta mencolok.",
+      "role": "Visual Artist",
+      "timeline": "1 Day",
+      "team": "Solo Project",
+      "type": "visual_art",
+      "description": "Kolase dadaisme modern. Potongan tubuh, globe, dan simbol tangan 'OK' yang random tapi estetik. Warna-warni pop art.",
       "cover": "/assets/projects/kolase-dunia-ok-terfragmentasi.mp4",
       "coverWidth": 960,
       "coverHeight": 1198,
@@ -504,7 +640,12 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 37,
-      "shares": 0
+      "shares": 0,
+      "narrative": {
+        "concept": "Kekacauan informasi di era digital. Semuanya terpotong-potong dan dicampur aduk.",
+        "process": "Metode 'Cut & Paste' digital. Sengaja dibuat kasar potongannya biar kerasa kayak zine punk.",
+        "detail": "Komposisi diagonal yang bikin visualnya kerasa dinamis/gerak."
+      }
     },
     {
       "id": "gen-1766512146544-18",
@@ -512,7 +653,11 @@
       "slug": "efek-poster-bunga-berkerut",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Mendemonstrasikan tekstur pasta gandum yang realistis di atas fotografi bunga yang cerah dan tipografi tebal yang terpusat.",
+      "role": "Graphic Designer",
+      "timeline": "3 Hours",
+      "team": "Solo Project",
+      "type": "commercial",
+      "description": "Simulasi poster jalanan yang udah agak rusak/lecek (wheatpaste texture). Visualnya bunga cantik tapi teksturnya kasar.",
       "cover": "/assets/projects/efek-poster-bunga-berkerut.jpg",
       "coverWidth": 640,
       "coverHeight": 800,
@@ -531,7 +676,13 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 9,
-      "shares": 2
+      "shares": 2,
+      "narrative": {
+        "context": "Pengen bikin desain digital yang gak kerasa 'terlalu digital' atau licin.",
+        "challenge": "Bikin efek kertas lecek yang realistis tanpa kelihatan maksa.",
+        "solution": "Pakai displacement map dari foto kertas kusut asli, di-blend mode 'Multiply' di atas artwork.",
+        "impact": "Memberikan kesan 'street' dan raw, cocok untuk brand streetwear atau event musik underground."
+      }
     },
     {
       "id": "gen-1766512146544-19",
@@ -539,7 +690,11 @@
       "slug": "belenggu-sandal-surgawi",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Surealisme komersial yang menggambarkan sandal bersayap yang dibelenggu, disentuh oleh keilahian di atas tumpukan emas.",
+      "role": "Concept Artist",
+      "timeline": "2 Days",
+      "team": "Solo Project",
+      "type": "visual_art",
+      "description": "Visual absurd: Sandal jepit tapi ada sayap malaikatnya, dirantai di atas tumpukan emas. Satire tentang komodifikasi hal suci.",
       "cover": "/assets/projects/belenggu-sandal-surgawi.jpg",
       "coverWidth": 640,
       "coverHeight": 800,
@@ -558,7 +713,12 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 13,
-      "shares": 2
+      "shares": 2,
+      "narrative": {
+        "concept": "Kritik sosial tentang materialisme. 'Surgawi' yang terikat oleh kekayaan duniawi (emas).",
+        "process": "Digital painting dengan referensi patung klasik Yunani.",
+        "detail": "Kilauan emas yang kontras dengan tekstur batu rantai yang kasar."
+      }
     },
     {
       "id": "gen-1766512146544-20",
@@ -566,7 +726,11 @@
       "slug": "kaleidoskop-tipografi-gradien",
       "client": "Personal Work",
       "year": 2025,
-      "description": "Gradien ungu dan magenta yang cerah menciptakan ilusi optik tipografi yang simetris dan mendistorsi di atas latar belakang hitam.",
+      "role": "Motion Graphics",
+      "timeline": "1 Day",
+      "team": "Solo Project",
+      "type": "visual_art",
+      "description": "Ilusi optik dari huruf-huruf yang diputar dan didistorsi. Warnanya ungu neon yang trippy banget.",
       "cover": "/assets/projects/kaleidoskop-tipografi-gradien.jpg",
       "coverWidth": 640,
       "coverHeight": 800,
@@ -585,8 +749,13 @@
       "createdAt": "2025-12-23T17:49:06.544Z",
       "updatedAt": "2026-01-06T19:56:24.729Z",
       "likes": 39,
-      "shares": 5
+      "shares": 5,
+      "narrative": {
+        "concept": "Eksplorasi bentuk huruf sebagai tekstur visual, bukan untuk dibaca.",
+        "process": "Pakai filter 'Polar Coordinates' dan 'Twirl' di Photoshop untuk mendistorsi teks biasa jadi bentuk abstrak.",
+        "detail": "Gradasi warna yang smooth banget transisinya."
+      }
     }
   ],
-  "lastUpdated": "2026-01-12T05:23:04.918Z"
+  "lastUpdated": "2026-01-12T05:39:27.589Z"
 }

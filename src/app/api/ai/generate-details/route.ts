@@ -60,33 +60,40 @@ export async function POST(req: NextRequest) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
 
         const prompt = `Analisis gambar ini secara mendalam. 
-        Tentukan apakah ini karya "Visual Art" (Poster, Digital Art, Manipulasi Foto) atau "Commercial Project" (Branding, App Design, Marketing Campaign).
+        BERTINDAK SEBAGAI: Senior Creative Designer yang sedang menulis case study portofolio sendiri.
         
-        Berikan detail berikut untuk portofolio:
-        1. JUDUL: (max ${maxTitleWords} kata, menarik & profesional)
-        2. DESKRIPSI: (max ${sentenceCount} kalimat) gaya ${style}.
+        GAYA BAHASA (PENTING):
+        - HINDARI bahasa robot/kaku seperti "Karya ini merupakan..." atau "Tujuannya adalah..."
+        - HINDARI kata-kata klise/berlebihan.
+        - Gunakan bahasa Indonesia yang NATURAL, lugas, dan to-the-point.
+        - Bayangkan kamu sedang menceritakan project ini ke teman sesama desainer: Jujur, Spesifik, dan Profesional tapi Santai.
+        
+        Tentukan apakah ini "Visual Art" atau "Commercial Project".
+        
+        Berikan detail berikut:
+        1. JUDUL: (max ${maxTitleWords} kata, catchy & singkat)
+        2. DESKRIPSI: (max ${sentenceCount} kalimat) Ceritakan apa yang ada di visual dengan bahasa deskriptif tapi tidak puitis berlebihan.
         3. CLIENT: (Jika ada logo/brand, sebutkan. Jika tidak, "Personal Work").
         4. TAGS: (3-5 kata kunci teknis).
         5. TYPE: "visual_art" atau "commercial".
         
         CASE STUDY DETAILS (Isi sesuai Type):
-        - ROLE: (Contoh: "Visual Designer", "Art Director", "3D Artist")
-        - TEAM: (Contoh: "Solo Project", "Collab with X", "Marketing Team")
-        - TIMELINE: (Contoh: "2 Days", "1 Week", "Sprint")
+        - ROLE: (Contoh spesifik: "Lead UI Designer", "3D Animator", bukan cuma "Designer")
+        - TEAM: (Jujur: "Solo Project", "Collab with @username", "Agency Team")
+        - TIMELINE: (Estimasi realistis: "2 Hari", "1 Sprint (2 Minggu)", "Weekend Project")
         
         NARRATIVE (Sesuaikan Type):
         Jika Commercial:
-        - context: (Latar belakang masalah)
-        - challenge: (Tantangan utama)
-        - solution: (Solusi desain)
-        - impact: (Dampak/Hasil - Gunakan kata "diharapkan", "berpotensi", atau "dirancang untuk" agar tidak klaim data angka palsu)
+        - context: (Kenapa project ini ada? Langsung ke inti masalah. Cth: "Brand X butuh rebranding karena engagement turun.")
+        - challenge: (Apa susahnya? Cth: "Deadline mepet 2 hari dan materi foto terbatas.")
+        - solution: (Apa yang kamu lakukan? Cth: "Saya pakai pendekatan tipografi besar untuk menutupi kurangnya foto bagus.")
+        - impact: (Dampak/Hasil - Gunakan kata prediksi yang humble seperti "Didesain untuk...", "Berpotensi...", jangan klaim angka palsu.)
         
         Jika Visual Art:
-        - concept: (Filosofi/Ide utama)
-        - process: (Teknik/Tools yang mungkin digunakan)
-        - detail: (Elemen unik yang perlu diperhatikan)
+        - concept: (Ide gila apa di baliknya? Cth: "Eksperimen menggabungkan tekstur plastik dengan layout majalah jadul.")
+        - process: (Teknik spesifik? Cth: "Scan kertas asli lalu di-layering di Photoshop, bukan full digital.")
+        - detail: (Apa yang harus orang perhatikan? Cth: "Perhatikan noise grain di bagian shadow.")
         
-        Catatan: Gunakan Bahasa Indonesia yang "Chill" & "Gen-Z" tapi tetap profesional.
         Output JSON murni validation key:
         {
           "title": "...",
