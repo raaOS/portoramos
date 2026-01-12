@@ -5,9 +5,9 @@ import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
 import { useState, useEffect, useRef } from 'react';
 
 const NAV_ITEMS = [
-  { name: 'Works', href: '/' },
-  { name: 'About', href: '/about' },
-  { name: 'Contact', href: '/contact' },
+  { label: 'Works', href: '/' },
+  { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' },
 ] as const;
 
 export default function BottomNavigation() {
@@ -57,7 +57,7 @@ export default function BottomNavigation() {
 
             return (
               <button
-                key={item.name}
+                key={item.label}
                 onClick={() => handleNavigation(item.href, index)}
                 className={`
                   relative px-5 py-3 rounded-full font-medium text-sm transition-all duration-200
@@ -71,7 +71,7 @@ export default function BottomNavigation() {
                   WebkitTapHighlightColor: 'transparent',
                 }}
               >
-                <span className="relative z-20">{item.name}</span>
+                <span className="relative z-20">{item.label}</span>
               </button>
             );
           })}

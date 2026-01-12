@@ -374,7 +374,7 @@ export default function SwayingGallery({
 
         .gallery-title {
           color: #333;
-          font-size: 10px;
+          font-size: 11px;
           font-weight: 600;
           margin: 0 0 4px 0;
           text-transform: none;
@@ -383,7 +383,7 @@ export default function SwayingGallery({
 
         .gallery-description {
           color: #666;
-          font-size: 8px;
+          font-size: 10px;
           margin: 0 0 4px 0;
           text-transform: none;
           line-height: 1.1;
@@ -391,7 +391,7 @@ export default function SwayingGallery({
 
         .gallery-click-hint {
           color: #2563eb;
-          font-size: 9px;
+          font-size: 10px;
           margin: 12px 0 0 0;
           font-weight: 500;
           text-transform: none;

@@ -4,18 +4,17 @@
       "id": "gen-1766512146544-14",
       "title": "Kampanye Hadiah Digital Liburan",
       "slug": "kampanye-hadiah-digital-liburan",
-      "client": "Tech Subscription Co.",
-      "role": "Lead Visual Designer",
+      "client": "AkbarStore",
+      "role": "Visual Designer",
       "timeline": "3 Weeks",
       "team": "Marketing Team Collab",
       "type": "commercial",
       "year": 2025,
       "description": "Grafis ritel liburan yang cerah menggunakan warna-warna meriah dan mockup produk untuk mempromosikan penjualan langganan digital.",
       "narrative": {
-        "context": "Klien ingin meningkatkan penjualan langganan digital menjelang musim liburan akhir tahun di tengah pasar yang sangat kompetitif.",
         "challenge": "Pasar sudah jenuh dengan visual liburan klasik. Tantangannya adalah membuat visual yang 'fresh' dan 'digital-native' namun tetap festif, untuk menonjol di feed media sosial yang padat (Stop-Scroll Effect).",
         "solution": "Mengembangkan konsep 'Digital Festivity' dengan palet warna cerah non-tradisional (neon + elemen klasik). Fokus pada animasi stop-motion produk untuk menarik perhatian dalam 3 detik pertama.",
-        "impact": "Meningkatkan CTR sebesar 40% dibandingkan tahun lalu dan mencapai target penjualan 2 minggu lebih awal."
+        "result": ""
       },
       "cover": "/assets/projects/kampanye-hadiah-digital-liburan.mp4",
       "coverWidth": 1080,
@@ -33,9 +32,10 @@
       "order": 1,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T20:18:03.057Z",
+      "updatedAt": "2026-01-12T01:39:43.382Z",
       "likes": 8,
-      "shares": 5
+      "shares": 5,
+      "allowComments": true
     },
     {
       "id": "gen-1766512146544-0",
@@ -588,5 +588,5 @@
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-10T20:42:07.299Z"
+  "lastUpdated": "2026-01-12T01:39:43.384Z"
 }

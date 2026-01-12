@@ -17,6 +17,7 @@ export const aboutService = {
             hero: { ...current.hero, ...(updates.hero || {}) },
             professional: { ...current.professional, ...(updates.professional || {}) },
             softSkills: { ...current.softSkills, ...(updates.softSkills || {}) },
+            designPhilosophy: { ...current.designPhilosophy!, ...(updates.designPhilosophy || {}) },
             lastUpdated: new Date().toISOString()
         };
 

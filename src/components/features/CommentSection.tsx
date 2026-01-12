@@ -82,7 +82,7 @@ export default function CommentSection({
       if (!response.ok) {
         const errorData = await response.json();
         if (response.status === 429) {
-          alert("Too many comments! Please wait 10 seconds.");
+          alert("Terlalu banyak komentar! Tunggu 10 detik.");
         } else {
           console.error('Server error:', errorData);
         }

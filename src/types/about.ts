@@ -54,10 +54,24 @@ export interface AboutSoftSkills {
   descriptions_id?: string[];
 }
 
+export interface PhilosophyStep {
+  number: string;
+  title: string;
+  desc: string;
+  quote: string;
+}
+
+export interface DesignPhilosophy {
+  heading: string;
+  subheading: string;
+  steps: PhilosophyStep[];
+}
+
 export interface AboutData {
   hero: AboutHero;
   professional: AboutProfessional;
   softSkills: AboutSoftSkills;
+  designPhilosophy?: DesignPhilosophy;
   labels?: {
     experienceTitle?: string;
     experienceSubtitle?: string;
@@ -72,4 +86,5 @@ export interface UpdateAboutData {
   hero?: Partial<AboutHero>;
   professional?: Partial<AboutProfessional>;
   softSkills?: Partial<AboutSoftSkills>;
+  designPhilosophy?: Partial<DesignPhilosophy>;
 }

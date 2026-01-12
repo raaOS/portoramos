@@ -12,6 +12,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info, Trash2, Pencil, Tag } from 'lucide-react';
 import RunningTextPanel from './components/RunningTextPanel';
 import StatusToggle from '../components/StatusToggle';
+import DesignPhilosophyForm from '@/components/admin/about/DesignPhilosophyForm';
 
 import HardSkillsManager from './components/HardSkillsManager';
 import { RunningTextItem } from '@/types/runningText';
@@ -21,7 +22,7 @@ export default function AdminAboutClient() {
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'labels'>('hero');
+  const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'labels'>('hero');
 
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -221,6 +222,7 @@ export default function AdminAboutClient() {
                 { id: 'professional', name: 'Professional Info' },
                 { id: 'softSkills', name: 'Soft Skills' },
                 { id: 'hardSkills', name: 'Hard Skills' },
+                { id: 'philosophy', name: 'Design Philosophy' },
                 { id: 'runningText', name: 'Running Text' },
               ].map((tab) => (
                 <option key={tab.id} value={tab.id}>
@@ -239,6 +241,7 @@ export default function AdminAboutClient() {
               { id: 'professional', name: 'Professional', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'bg-emerald-50' },
               { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'bg-amber-50' },
               { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'bg-violet-50' },
+              { id: 'philosophy', name: 'Philosophy', icon: Sparkles, color: 'text-orange-600', bg: 'bg-orange-50' },
               { id: 'runningText', name: 'Running Text', icon: Type, color: 'text-pink-600', bg: 'bg-pink-50' },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
@@ -289,6 +292,9 @@ export default function AdminAboutClient() {
               <div className="space-y-8">
                 <HardSkillsManager />
               </div>
+            )}
+            {activeTab === 'philosophy' && (
+              <DesignPhilosophyForm />
             )}
             {activeTab === 'runningText' && (
               <RunningTextPanel

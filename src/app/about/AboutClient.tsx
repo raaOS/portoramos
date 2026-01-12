@@ -281,7 +281,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
     },
     labels: {
       experienceTitle: "Experience",
-      experienceSubtitle: "Perjalanan karir dan pengalaman profesional",
+      experienceSubtitle: "Career journey and professional experience",
       freelanceTitle: "Freelance Experience",
       workExperienceTitle: "Work Experience",
       portfolioPreviewTitle: "Portfolio Preview"
@@ -735,7 +735,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
         id="philosophy"
         className="block bg-white border-b border-gray-200"
       >
-        <DesignPhilosophySection />
+        <DesignPhilosophySection data={currentAboutData.designPhilosophy} />
       </SectionWrapper>
 
       {/* Sticky Gallery Stack Section with Side Text */}

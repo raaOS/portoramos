@@ -58,6 +58,8 @@ export const metadata: Metadata = {
   },
 };
 
+import SmoothScroll from '@/components/layout/SmoothScroll';
+
 export default function RootLayout({
   children,
   modal
@@ -80,6 +82,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default" suppressHydrationWarning>
+        <SmoothScroll />
         <Providers>
           <ToastProvider>
             <LastUpdatedProvider>

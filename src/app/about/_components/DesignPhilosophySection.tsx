@@ -3,28 +3,38 @@
 import { motion } from 'framer-motion';
 import { Reveal } from '@/components/effects/Reveal';
 import { ArrowRight } from 'lucide-react';
+import { DesignPhilosophy } from '@/types/about';
 
-export default function DesignPhilosophySection() {
-    const steps = [
+interface DesignPhilosophySectionProps {
+    data?: DesignPhilosophy;
+}
+
+export default function DesignPhilosophySection({ data }: DesignPhilosophySectionProps) {
+    // Fallback data if API fails or data missing
+    const defaultSteps = [
         {
             number: "01",
-            title: "Konteks & Tujuan",
+            title: "Context & Purpose",
             desc: "Sebelum menyentuh kanvas digital, saya membedah masalah bisnisnya. Apa produknya? Siapa targetnya?",
             quote: "Pesan utama apa yang ingin disampaikan?"
         },
         {
             number: "02",
-            title: "Lingkup Strategis",
+            title: "Strategic Scope",
             desc: "Saya tidak sekadar mendekorasi. Saya fokus pada hierarki visual yang tepat untuk memastikan pesan tersampaikan.",
             quote: "Fokus pada esensi, bukan dekorasi."
         },
         {
             number: "03",
-            title: "Eksekusi & Hasil",
+            title: "Execution & Result",
             desc: "Estetika adalah penguat pesan. Saya menciptakan visual yang tajam, konsisten, dan mudah diingat audiens.",
-            quote: <>Apakah audiens paham?<br />Apakah mereka ingat?</>
+            quote: "Apakah audiens paham? Apakah mereka ingat?"
         }
     ];
+
+    const heading = data?.heading || "Design Philosophy";
+    const subheading = data?.subheading || "Strategic Thinking Framework";
+    const steps = data?.steps || defaultSteps;
 
     return (
         <section className="py-24 md:py-32 bg-gray-50 border-b border-gray-200 overflow-hidden">
@@ -35,14 +45,13 @@ export default function DesignPhilosophySection() {
                     <Reveal>
                         <div className="inline-flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-full text-xs font-semibold tracking-wider uppercase mb-8 shadow-sm">
                             <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-                            Pola Pikir Desain
+                            {heading}
                         </div>
                     </Reveal>
 
                     <Reveal delay={0.1}>
                         <h2 className="text-3xl md:text-5xl font-bold font-sans leading-tight mb-6 text-gray-900">
-                            Berikut kerangka berpikir saya<br />
-                            sebelum memulai desain
+                            {subheading}
                         </h2>
                     </Reveal>
 
@@ -88,7 +97,7 @@ export default function DesignPhilosophySection() {
                                     {/* Quote Box */}
                                     <div className="mt-auto pt-6 border-t border-gray-100">
                                         <p className="text-sm font-bold text-gray-900 italic">
-                                            {step.quote}
+                                            "{step.quote}"
                                         </p>
                                     </div>
                                 </div>
