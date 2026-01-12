@@ -49,7 +49,7 @@ export default function AdminModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="flex items-center justify-center min-h-screen pt-4 px-2 sm:px-4 pb-20 text-center sm:block sm:p-0">
         {/* Backdrop */}
         <div
@@ -59,11 +59,11 @@ export default function AdminModal({
 
         {/* Modal */}
         <div
-          className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full max-h-[90vh] overflow-y-auto ${sizeClasses[size]}`}
+          className={`inline-flex flex-col align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full max-h-[90vh] ${sizeClasses[size]}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="bg-white px-4 sm:px-6 py-4 border-b border-gray-200">
+          <div className="bg-white px-4 sm:px-6 py-4 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate pr-2">{title}</h3>
               <button
@@ -79,7 +79,7 @@ export default function AdminModal({
           </div>
 
           {/* Content */}
-          <div className="bg-white px-4 sm:px-6 py-4 max-h-[60vh] overflow-y-auto">
+          <div className="bg-white px-4 sm:px-6 py-4 flex-1 overflow-y-auto min-h-0 overscroll-contain" data-lenis-prevent>
             {children}
           </div>
 
@@ -91,7 +91,7 @@ export default function AdminModal({
               </AdminButton>
             </div>
           )) && (
-              <div className="bg-gray-50 px-4 sm:px-6 py-4 border-t border-gray-200">
+              <div className="bg-gray-50 px-4 sm:px-6 py-4 border-t border-gray-200 flex-shrink-0">
                 {actions || (
                   <div className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                     <AdminButton variant="secondary" onClick={onClose} className="w-full sm:w-auto">

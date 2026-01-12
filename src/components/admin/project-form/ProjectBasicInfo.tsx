@@ -149,7 +149,7 @@ export default function ProjectBasicInfo({ formData, errors, updateField, allPro
                                 <div className="relative inline-flex items-center">
                                     <input
                                         type="checkbox"
-                                        className="sr-only peer"
+                                        className="opacity-0 absolute w-0 h-0 peer"
                                         checked={aiOptions.viralPackage}
                                         onChange={(e) => setAiOptions(prev => ({ ...prev, viralPackage: e.target.checked }))}
                                     />
