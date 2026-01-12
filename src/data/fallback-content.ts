@@ -18,7 +18,7 @@ export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
             'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offline',
             'membantu UI/UX di Bitlabs'
         ],
-        imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg'
+        imageUrl: 'https://images.unsplash.com/photo-1572044162444-ad6021194360?auto=format&fit=crop&w=100&q=80'
     },
     {
         year: 'Jan 2019 - Jan 2020',
@@ -28,7 +28,7 @@ export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
         description: [
             'Melakukan kegiatan pembelajaran/sharing session dengan mahasiswa sesuai jadwal yang ditetapkan perusahaan. Melakukan observasi, monitoring, memberikan masukan dan saran perbaikan terkait kinerja peserta dan memastikan paham tentang desain grafis.'
         ],
-        imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png'
+        imageUrl: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=100&q=80'
     },
     {
         year: 'Mar 2017 - Nov 2019',
@@ -39,7 +39,7 @@ export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
             'Berperan dalam perancangan strategi untuk promosi perusahaan.',
             'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offline'
         ],
-        imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg'
+        imageUrl: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=100&q=80'
     },
     {
         year: 'Agt 2016 - Mar 2017',
@@ -52,7 +52,7 @@ export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
             'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin',
             'Mengirim, Mengawasi, Mencatat Produk Sthal. Co'
         ],
-        imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757670693/22135476_1681729415202235_8260990640991011189_o_ytzn9r.jpg'
+        imageUrl: 'https://images.unsplash.com/photo-1572044162444-ad6021194360?auto=format&fit=crop&w=100&q=80'
     },
     {
         year: 'Okt 2012 - Agt 2015',
@@ -64,7 +64,7 @@ export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
             'Berhasil dalam mengenalkan info seputar dunia kopi ke customer',
             'Melayani transaksi customer'
         ],
-        imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757669168/ChatGPT_Image_Apr_30_2025_01_45_08_AM_1_mkd574.png'
+        imageUrl: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=100&q=80'
     },
     {
         year: 'Jan 2012 - Mar 2012',
@@ -76,7 +76,7 @@ export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
             'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin',
             'Mengirim, Mengawasi, Mencatat Produk Wulan Butique'
         ],
-        imageUrl: 'https://res.cloudinary.com/dcb3dslfw/image/upload/v1757681229/CELENGAN_ylksyp.jpg'
+        imageUrl: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=100&q=80'
     }
 ];
 

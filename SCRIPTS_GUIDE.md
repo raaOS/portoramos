@@ -13,10 +13,7 @@ Utilitas pembersihan dan maintenance cache.
 - `ultra-clean.js`: Pembersihan total project.
 - `kill-browser-cache.js`: Bersihkan cache browser.
 
-## ⚙️ Setup (`scripts/setup/`)
-Script untuk inisialisasi layanan pihak ketiga.
-- `setup-cloudinary.mjs`: Setup kredensial Cloudinary.
-- `setup-cloudinary-folders.mjs`: Setup folder di Cloudinary.
+- `setup-*.mjs`: Script inisialisasi lainnya.
 
 ## ⚡ Generators (`scripts/generators/`)
 Script untuk generate data dummy dan konten otomatis.
@@ -44,4 +41,4 @@ Script pengolah media.
 Command `npm run` telah diupdate, jadi cara menjalankannya **tetap sama**:
 - `npm run dev`
 - `npm run ultra-clean`
-- `npm run cloudinary:setup`
+- `npm run ultra-clean`

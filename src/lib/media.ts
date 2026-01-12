@@ -3,8 +3,7 @@ export const isVideoLink = (url: string) => {
     return url.includes('/video/') ||
         url.endsWith('.mp4') ||
         url.endsWith('.mov') ||
-        url.endsWith('.webm') ||
-        url.includes('player.cloudinary.com');
+        url.endsWith('.webm');
 };
 
 export const detectImageDimensions = async (url: string): Promise<{ width: number; height: number }> => {
@@ -33,15 +32,8 @@ export const detectImageDimensions = async (url: string): Promise<{ width: numbe
 
             video.onerror = (e) => {
                 clearTimeout(timeout);
-                console.warn('Video loading failed, trying fallback method:', e);
-                // Fallback: try to extract dimensions from URL if it's Cloudinary
-                if (url.includes('res.cloudinary.com')) {
-                    // For Cloudinary videos, we can try to get dimensions from URL parameters
-                    // or use default video dimensions
-                    resolve({ width: 1080, height: 1920 }); // Common video ratio
-                } else {
-                    reject(new Error('Failed to load video'));
-                }
+                console.warn('Video loading failed');
+                reject(new Error('Failed to load video'));
             };
 
             video.src = url;

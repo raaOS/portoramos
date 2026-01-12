@@ -35,11 +35,11 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: `File not found on server: ${imageUrl}` }, { status: 404 });
             }
         } else {
-            // Existing Logic: Convert Cloudinary Video URL to Image (JPG) if necessary
+            // Existing Logic: Convert Video URL to Image (JPG) if necessary
             let targetUrl = imageUrl;
-            if (imageUrl.includes('cloudinary') && (imageUrl.endsWith('.mp4') || imageUrl.endsWith('.webm'))) {
-                targetUrl = imageUrl.replace(/\.(mp4|webm)$/i, '.jpg');
-            }
+            // Removed Cloudinary specific conversion logic.
+            // If raw video is passed, Gemini can handle it directly if mimeType is set correctly.
+            // Or we can rely on standard GitHub raw URLs.
 
             // Download image to buffer with User-Agent to avoid blocks
             const imageRes = await fetch(targetUrl, {

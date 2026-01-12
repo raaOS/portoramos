@@ -5,7 +5,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'plus.unsplash.com' },
       { protocol: 'https', hostname: 'picsum.photos' },
-      { protocol: 'https', hostname: 'res.cloudinary.com' },
+
       { protocol: 'https', hostname: 'via.placeholder.com' },
       { protocol: 'https', hostname: 'raw.githubusercontent.com' }
     ],

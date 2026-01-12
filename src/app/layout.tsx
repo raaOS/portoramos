@@ -73,9 +73,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        {/* Preconnect to Cloudinary for faster resource loading */}
-        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData) }}
