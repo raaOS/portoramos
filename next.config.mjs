@@ -107,7 +107,7 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             // Added connect-src blob: and script-src blob: for FFmpeg.wasm
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' https: http://localhost:* ws://localhost:* blob:; worker-src 'self' blob:; frame-src 'self' https://vercel.live https://vercel.com;"
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; media-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' https: http://localhost:* ws://localhost:* blob:; worker-src 'self' blob:; frame-src 'self' https://vercel.live https://vercel.com;"
           },
           {
             key: 'Cross-Origin-Embedder-Policy',

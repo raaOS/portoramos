@@ -12,7 +12,7 @@ function loadEnvFile() {
     const envPath = join(process.cwd(), '.env.local')
     const envContent = readFileSync(envPath, 'utf8')
     const envVars = {}
-    
+
     envContent.split('\n').forEach(line => {
       const trimmed = line.trim()
       if (trimmed && !trimmed.startsWith('#')) {
@@ -22,7 +22,7 @@ function loadEnvFile() {
         }
       }
     })
-    
+
     return envVars
   } catch (error) {
     console.warn('⚠️  Could not read .env.local file:', error.message)
@@ -45,26 +45,22 @@ function runCommand(command, description) {
 
 async function main() {
   console.log('🚀 Deploying to Vercel with Environment Variables\n')
-  
+
   const envVars = loadEnvFile()
-  
+
   // Environment variables yang diperlukan untuk production
   const requiredEnvVars = [
     'UPSTASH_REDIS_REST_URL',
     'UPSTASH_REDIS_REST_TOKEN',
-    'NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME',
-    'NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET',
-    'CLOUDINARY_API_KEY',
-    'CLOUDINARY_API_SECRET',
     'ADMIN_USERNAME',
     'ADMIN_PASSWORD'
   ]
-  
+
   console.log('📋 Checking Environment Variables:')
   console.log('='.repeat(50))
-  
+
   let missingVars = []
-  
+
   for (const varName of requiredEnvVars) {
     if (envVars[varName]) {
       console.log(`✅ ${varName}: Found`)
@@ -73,7 +69,7 @@ async function main() {
       missingVars.push(varName)
     }
   }
-  
+
   if (missingVars.length > 0) {
     console.log('\n⚠️  Missing environment variables:')
     missingVars.forEach(varName => {
@@ -82,18 +78,18 @@ async function main() {
     console.log('\nPlease add these variables to your .env.local file before deploying.')
     return
   }
-  
+
   console.log('\n🎯 All environment variables found!')
-  
+
   // Build environment variables command untuk Vercel
   const envFlags = requiredEnvVars
     .filter(varName => envVars[varName])
     .map(varName => `-e ${varName}="${envVars[varName]}"`)
     .join(' ')
-  
+
   console.log('\n📦 Starting Deployment Process:')
   console.log('='.repeat(50))
-  
+
   // Step 1: Login ke Vercel (jika belum)
   console.log('\n1️⃣ Checking Vercel authentication...')
   try {
@@ -104,16 +100,16 @@ async function main() {
     console.log('Run: vercel login')
     return
   }
-  
+
   // Step 2: Deploy dengan environment variables
   console.log('\n2️⃣ Deploying to Vercel...')
   const deployCommand = `vercel --prod ${envFlags}`
-  
+
   console.log('\n📝 Deployment command:')
   console.log('vercel --prod [with environment variables]')
-  
+
   const deploySuccess = runCommand(deployCommand, 'Vercel deployment')
-  
+
   if (deploySuccess) {
     console.log('\n🎉 Deployment Successful!')
     console.log('\n📋 What happens next:')
@@ -121,11 +117,11 @@ async function main() {
     console.log('2. ✅ Development data remains separate (with :dev suffix)')
     console.log('3. 🔄 Upload new content in production admin panel')
     console.log('4. ✅ Verify that dev and production data are completely separate')
-    
+
     console.log('\n🔗 Access your deployed application:')
     console.log('- Production URL will be shown above')
     console.log('- Admin panel: [your-url]/admin')
-    
+
     console.log('\n🎯 Environment Separation Status:')
     console.log('✅ Development: Uses keys with :dev suffix')
     console.log('✅ Production: Uses keys with :prod suffix')

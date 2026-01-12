@@ -2,19 +2,24 @@
   "projects": [
     {
       "id": "gen-1766512146544-14",
-      "title": "Kampanye Hadiah Digital Liburan",
+      "title": "Promo Gila Akhir Tahun Digital Goods",
       "slug": "kampanye-hadiah-digital-liburan",
-      "client": "AkbarStore",
-      "role": "Visual Designer",
-      "timeline": "3 Weeks",
-      "team": "Marketing Team Collab",
+      "client": "Rizky Akbar Store",
+      "role": "Visual Designer & Motion Artist",
+      "timeline": "1 Day",
+      "team": "Solo Project",
       "type": "commercial",
       "year": 2025,
-      "description": "Grafis ritel liburan yang cerah menggunakan warna-warna meriah dan mockup produk untuk mempromosikan penjualan langganan digital.",
+      "description": "Desain story Instagram dengan vibe Natal yang festive banget. Menggunakan palet hijau-merah klasik untuk menarik perhatian dan menonjolkan produk digital. Estetika yang dipilih bold, dinamis, dan click-bait abis buat nge-boost konversi.",
       "narrative": {
-        "challenge": "Pasar sudah jenuh dengan visual liburan klasik. Tantangannya adalah membuat visual yang 'fresh' dan 'digital-native' namun tetap festif, untuk menonjol di feed media sosial yang padat (Stop-Scroll Effect).",
-        "solution": "Mengembangkan konsep 'Digital Festivity' dengan palet warna cerah non-tradisional (neon + elemen klasik). Fokus pada animasi stop-motion produk untuk menarik perhatian dalam 3 detik pertama.",
-        "result": ""
+        "challenge": "Gimana caranya bikin story ad yang eye-catching di feed yang isinya kompetitor semua, sambil mastiin semua info promo (diskon dan tanggal) tersampaikan jelas dan bikin orang langsung 'KLIK LINK DI BIO.'",
+        "solution": "Membuat animasi vertikal dengan background hijau gelap yang kontras abis. Memanfaatkan elemen 3D/semi-3D ornamen Natal dan gift cards untuk kesan premium, fokus ke call-to-action (CTA) yang gede dan jelas.",
+        "result": "",
+        "context": "Rizky Akbar Store butuh konten killer buat closing akhir tahun, terutama momen Natal dan Tahun Baru, untuk ningkatin penjualan langganan digital mereka (Netflix, Spotify, dll).",
+        "impact": "Kampanye ini diharapkan bisa driving traffic tinggi ke link bio, meningkatkan konversi penjualan digital goods, dan memperkuat brand presence toko di musim liburan.",
+        "concept": "",
+        "process": "",
+        "detail": ""
       },
       "cover": "/assets/projects/kampanye-hadiah-digital-liburan.mp4",
       "coverWidth": 1080,
@@ -32,7 +37,7 @@
       "order": 1,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-12T01:39:43.382Z",
+      "updatedAt": "2026-01-12T05:20:16.960Z",
       "likes": 8,
       "shares": 5,
       "allowComments": true
@@ -71,7 +76,7 @@
         "result": ""
       },
       "comparison": {
-        "beforeImage": "/assets/media/politik-pop-digital-cover.jpg",
+        "beforeImage": "/assets/projects/politik-pop-digital-cover.jpg",
         "beforeType": "image",
         "afterImage": "",
         "afterType": "video"
@@ -588,5 +593,5 @@
       "shares": 5
     }
   ],
-  "lastUpdated": "2026-01-12T01:39:43.384Z"
+  "lastUpdated": "2026-01-12T05:20:16.960Z"
 }

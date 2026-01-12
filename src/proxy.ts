@@ -96,7 +96,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
         "img-src 'self' data: https: blob:",
         "font-src 'self' data:",
         "connect-src 'self' https: http://localhost:* ws://localhost:* blob:",
-        "media-src 'self' https: data:",
+        "media-src 'self' https: data: blob:",
         "object-src 'none'",
         // Allow Vercel Live preview in development, block in production
         isProd ? "frame-src 'none'" : "frame-src 'self' https://vercel.live",

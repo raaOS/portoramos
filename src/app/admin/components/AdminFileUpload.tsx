@@ -4,6 +4,8 @@ import { useState, useRef, useCallback } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { Loader2 } from 'lucide-react';
+
 
 interface AdminFileUploadProps {
   onUpload: (urls: string[]) => void;
@@ -22,29 +24,34 @@ export default function AdminFileUpload({
   maxFiles = 10,
   maxSize = 10,
   className = '',
-  disabled = false
-}: AdminFileUploadProps) {
+  disabled = false,
+  enableCrop = false,
+  enableVideoTrim = false,
+  autoUpload = true,
+  onFileSelect
+}: AdminFileUploadProps & { enableCrop?: boolean; enableVideoTrim?: boolean; autoUpload?: boolean; onFileSelect?: (file: File) => void }) {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [status, setStatus] = useState<string>(''); // 'idle', 'loading-core', 'compressing', 'uploading'
-  const [progress, setProgress] = useState(0); // 0-100
+  const [status, setStatus] = useState<string>('');
+  const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { showSuccess: success, showError, showWarning } = useToast();
+
+  // Cropping & Trimming State
+  const [activeCrop, setActiveCrop] = useState<{ src: string; file: File } | null>(null);
+  const [activeTrim, setActiveTrim] = useState<{ file: File } | null>(null);
 
   // FFmpeg Ref
   const ffmpegRef = useRef<FFmpeg | null>(null);
 
   const validateFile = useCallback((file: File): string | null => {
-    // Check file size (Pre-compression check)
-    // For video, we allow larger input because we will compress it.
-    // Let's say we allow up to 100MB input for video, and 10MB for images.
-    const isVideo = file.type.startsWith('video/');
-    const limit = isVideo ? 100 : maxSize; // 100MB for video input allowed
+    // limit video size to maxSize as well (default 10MB, but can be higher)
+    // Caller should pass appropriate maxSize (e.g. 200) for video contexts
+    const limit = maxSize;
 
     if (file.size > limit * 1024 * 1024) {
       return `File ${file.name} is too large. Max size is ${limit}MB.`;
     }
 
-    // Check file type
     const acceptedTypes = accept.split(',').map(type => type.trim());
     const fileType = file.type;
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
@@ -64,13 +71,10 @@ export default function AdminFileUpload({
     return null;
   }, [accept, maxSize]);
 
-  // Load FFmpeg
   const loadFFmpeg = async () => {
     if (ffmpegRef.current) return ffmpegRef.current;
-
     setStatus('Loading Compression Core...');
     const ffmpeg = new FFmpeg();
-
     try {
       const baseURL = window.location.origin + '/ffmpeg';
       await ffmpeg.load({
@@ -82,82 +86,89 @@ export default function AdminFileUpload({
       console.error('❌ FFmpeg Load Failed:', e);
       throw new Error('Compression engine failed to load.');
     }
-
     ffmpegRef.current = ffmpeg;
     return ffmpeg;
   };
 
-  // Compress Video (Client Side)
-  const compressVideoClient = async (file: File, onProgress: (p: number) => void): Promise<File> => {
+  const compressVideoClient = async (
+    file: File,
+    onProgress: (p: number) => void,
+    trimOptions?: { start: number; end: number; crop?: { x: number; y: number; width: number; height: number } }
+  ): Promise<File> => {
     setStatus('Initializing Compressor...');
     const ffmpeg = await loadFFmpeg();
-
     setStatus('Compressing Video (Wait)...');
 
     const inputName = 'input.mp4';
     const outputName = 'output.mp4';
     const startTime = Date.now();
 
-    // Write file
     await ffmpeg.writeFile(inputName, await fetchFile(file));
 
-    // Progress Handler
     ffmpeg.on('progress', ({ progress }) => {
-      // progress is 0 to 1
       const percent = Math.round(progress * 100);
       onProgress(percent);
-
-      // Calculate ETA
       if (progress > 0) {
-        const elapsed = (Date.now() - startTime) / 1000; // seconds
+        const elapsed = (Date.now() - startTime) / 1000;
         const estimatedTotal = elapsed / progress;
         const remaining = Math.round(estimatedTotal - elapsed);
-
         setStatus(`Compressing Video (${percent}%) - ~${remaining}s remaining...`);
       } else {
         setStatus(`Compressing Video (${percent}%)...`);
       }
     });
 
-    // Run compression
-    await ffmpeg.exec([
-      '-i', inputName,
-      '-vf', "scale='if(gt(iw,ih),-2,720)':'if(gt(iw,ih),720,-2)'",
-      '-c:v', 'libx264',
-      '-crf', '23',
-      '-preset', 'fast', // ultrafast might be better if user wants speed over size? 'fast' is good balance.
-      '-an',
-      '-movflags', '+faststart',
-      outputName
-    ]);
+    const ffmpegArgs: string[] = [];
 
-    // Cleanup listener (optional but good practice if reuse)
-    // ffmpeg.off('progress') // API might vary, but for ref usually ok.
+    // Trim (Fast Seek)
+    if (trimOptions) {
+      ffmpegArgs.push('-ss', trimOptions.start.toString());
+      ffmpegArgs.push('-to', trimOptions.end.toString());
+    }
 
-    // Read output
+    ffmpegArgs.push('-i', inputName);
+
+    // Filters (Crop + Scale)
+    const filters: string[] = [];
+
+    if (trimOptions?.crop) {
+      const { width, height, x, y } = trimOptions.crop;
+      // Ensure even dimensions
+      const w = Math.round(width / 2) * 2;
+      const h = Math.round(height / 2) * 2;
+      const px = Math.round(x / 2) * 2;
+      const py = Math.round(y / 2) * 2;
+      filters.push(`crop=${w}:${h}:${px}:${py}`);
+    }
+
+    // Scale logic: Scale to 720p (short side) if needed
+    // Only scale if not already cropped small
+    filters.push("scale='if(gt(iw,ih),-2,720)':'if(gt(iw,ih),720,-2)'");
+
+    ffmpegArgs.push('-vf', filters.join(','));
+
+    ffmpegArgs.push('-c:v', 'libx264');
+    ffmpegArgs.push('-crf', '23');
+    ffmpegArgs.push('-preset', 'fast');
+    ffmpegArgs.push('-an');
+    ffmpegArgs.push('-movflags', '+faststart');
+    ffmpegArgs.push(outputName);
+
+    await ffmpeg.exec(ffmpegArgs);
+
     const data = await ffmpeg.readFile(outputName);
-
-    // Create new file
     const blob = new Blob([data as any], { type: 'video/mp4' });
     return new File([blob], file.name, { type: 'video/mp4' });
   };
 
-  // [STICKY NOTE] GITHUB UPLOADER
-  // Fungsi ini menggantikan Cloudinary.
-  // File akan dikirim ke API `/api/upload/github` yang kemudian akan upload ke Repo.
-  // Hasilnya adalah "Raw URL" (sumber asli) yang bisa kita pakai selamanya.
-  // KEMBALIAN: { url, publicPath } untuk keperluan kompresi
   const uploadToGitHub = useCallback(async (file: File): Promise<{ url: string; publicPath?: string }> => {
     setStatus('Uploading to GitHub...');
     const formData = new FormData();
     formData.append('file', file);
-
-    // Kirim ke endpoint GitHub kita
     const response = await fetch('/api/upload/github', {
       method: 'POST',
       body: formData,
     });
-
     if (!response.ok) {
       const errorText = await response.text();
       try {
@@ -167,14 +178,10 @@ export default function AdminFileUpload({
         throw new Error(errorText || 'GitHub upload failed');
       }
     }
-
     const data = await response.json();
-
-    // Kita pakai public path atau url (tergantung kebutuhan, tapi rawUrl safer untuk bypass cache)
     return { url: data.url, publicPath: data.publicPath };
   }, []);
 
-  // Server-side Image Compression (Generic Asset)
   const compressImageServer = useCallback(async (filePath: string): Promise<{ success: boolean; stats?: any; newPath?: string }> => {
     try {
       setStatus('Optimizing Image (Server)...');
@@ -183,12 +190,10 @@ export default function AdminFileUpload({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filePath }),
       });
-
       if (!response.ok) {
         console.warn('Compression failed but file uploaded.');
         return { success: false };
       }
-
       const data = await response.json();
       console.log('Compression result:', data);
       return { success: true, stats: data, newPath: data.newPath };
@@ -198,18 +203,93 @@ export default function AdminFileUpload({
     }
   }, []);
 
+  const executeUpload = useCallback(async (files: File[], trimOptions?: { start: number; end: number; crop?: any }) => {
+    setStatus('starting');
+    setProgress(0);
+
+    try {
+      const uploadPromises = files.map(async (file, index) => {
+        let fileToUpload = file;
+
+        // VIDEO COMPRESSION / TRIM
+        if (file.type.startsWith('video/')) {
+          console.log('Video detected, compressing client-side...');
+          try {
+            const originalSize = file.size;
+            // setProgress(0); // Optional: reset for individual?
+            fileToUpload = await compressVideoClient(file, (p) => setProgress(p), trimOptions);
+            const newSize = fileToUpload.size;
+            success(`Video Processed! ${(originalSize / 1024 / 1024).toFixed(2)}MB -> ${(newSize / 1024 / 1024).toFixed(2)}MB`);
+          } catch (e) {
+            console.error('Client compression failed, falling back to original', e);
+            showWarning('Compression engine offline. Uploading original file...');
+          }
+        }
+
+        // DEFERRED UPLOAD MODE
+        if (autoUpload === false && onFileSelect) {
+          onFileSelect(fileToUpload);
+          // We return a fake URL-like string or just empty, 
+          // because the parent ProjectForm handles the Blob logic now.
+          // Or we can return a Blob URL so it renders in the UI immediately without callback complexity?
+          // Actually, validateFile logic expects onUpload to callback with URLs?
+          // AdminFileUploadProps calls onUpload(urls).
+          // If we are in manual mode, maybe we call onUpload with a Blob URL?
+          // Yes, let's create a Blob URL so the parent (ProjectMediaUpload) can display it immediately.
+          const blobUrl = URL.createObjectURL(fileToUpload);
+          return blobUrl;
+        }
+
+        // IMMEDIATE UPLOAD MODE
+        const { url, publicPath } = await uploadToGitHub(fileToUpload);
+        setProgress(((index + 1) / files.length) * 100);
+        let finalUrl = url;
+
+        if (file.type.startsWith('image/') && publicPath) {
+          const { success: compSuccess, stats, newPath } = await compressImageServer(publicPath);
+          if (compSuccess && stats) {
+            success(`${file.name} Optimized! (${stats.originalSize} -> ${stats.newSize}). Saved ${stats.saved}`);
+            if (newPath && newPath !== publicPath) {
+              const extOld = '.' + file.name.split('.').pop()?.toLowerCase();
+              if (finalUrl.includes(extOld) && newPath.endsWith('.webp')) {
+                finalUrl = finalUrl.replace(extOld, '.webp');
+              }
+            }
+          }
+        }
+        return finalUrl;
+      });
+
+      const results = await Promise.all(uploadPromises);
+
+      // If deferred mode, we might pass the blobUrls so ProjectMediaUpload can show preview
+      // But we also called onFileSelect(file) above.
+      // onUpload(results) might be confusing if results are blob URLs.
+      // But ProjectMediaUpload displays "cover" which is usually a string.
+      // So blob URL is fine for preview!
+      onUpload(results);
+
+      if (autoUpload !== false) {
+        success('All files processed successfully.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      showError(`Process failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setStatus('');
+      setProgress(0);
+    }
+  }, [uploadToGitHub, compressImageServer, compressVideoClient, onUpload, success, showError, showWarning, autoUpload, onFileSelect]);
+
   const handleFiles = useCallback(async (files: FileList) => {
     if (disabled) return;
-
     const fileArray = Array.from(files);
 
-    // Check file count
     if (fileArray.length > maxFiles) {
       showError(`Too many files. Maximum ${maxFiles} files allowed`);
       return;
     }
 
-    // Validate files
     const validationErrors: string[] = [];
     fileArray.forEach(file => {
       const error = validateFile(file);
@@ -221,186 +301,160 @@ export default function AdminFileUpload({
       return;
     }
 
-    setStatus('starting');
-    setProgress(0);
-
-    try {
-      const uploadPromises = fileArray.map(async (file, index) => {
-        let fileToUpload = file;
-        // 1. VIDEO COMPRESSION (Client Side)
-        if (file.type.startsWith('video/')) {
-          console.log('Video detected, compressing client-side...');
-          try {
-            const originalSize = file.size;
-            // Reset progress for compression phase
-            setProgress(0);
-            fileToUpload = await compressVideoClient(file, (p) => setProgress(p));
-            const newSize = fileToUpload.size;
-            success(`Video Compressed! ${(originalSize / 1024 / 1024).toFixed(2)}MB -> ${(newSize / 1024 / 1024).toFixed(2)}MB`);
-          } catch (e) {
-            console.error('Client compression failed, falling back to original', e);
-            showWarning('Compression engine offline. Uploading original file...');
-            // Proceed with original file
-          }
-        }
-
-        // 2. UPLOAD
-        const { url, publicPath } = await uploadToGitHub(fileToUpload);
-        setProgress(((index + 1) / fileArray.length) * 100);
-
-        let finalUrl = url;
-
-        // 3. IMAGE COMPRESSION (Server Side)
-        if (file.type.startsWith('image/') && publicPath) {
-          const { success: compSuccess, stats, newPath } = await compressImageServer(publicPath); // Use publicPath for compression
-
-          if (compSuccess && stats) {
-            success(`${file.name} Optimized! (${stats.originalSize} -> ${stats.newSize}). Saved ${stats.saved}`);
-            if (newPath && newPath !== publicPath) {
-              // Check if newPath is webp
-              const extOld = '.' + file.name.split('.').pop()?.toLowerCase();
-              if (finalUrl.includes(extOld) && newPath.endsWith('.webp')) {
-                finalUrl = finalUrl.replace(extOld, '.webp');
-              }
-            }
-          }
-        }
-
-        return finalUrl;
-      });
-
-      const urls = await Promise.all(uploadPromises);
-      onUpload(urls);
-      success('All files processed successfully.');
-    } catch (err: any) {
-      console.error(err);
-      showError(`Process failed: ${err.message || 'Unknown error'}`);
-    } finally {
-      setStatus('');
-      setProgress(0);
+    if (enableCrop && fileArray.length === 1 && fileArray[0].type.startsWith('image/')) {
+      const file = fileArray[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        setActiveCrop({ src: reader.result as string, file });
+      };
+      reader.readAsDataURL(file);
+      return;
     }
-  }, [disabled, maxFiles, validateFile, uploadToGitHub, compressImageServer, compressVideoClient, onUpload, success, showError]);
+
+    if (enableVideoTrim && fileArray.length === 1 && fileArray[0].type.startsWith('video/')) {
+      const file = fileArray[0];
+      setActiveTrim({ file });
+      return;
+    }
+
+    executeUpload(fileArray);
+
+  }, [disabled, maxFiles, validateFile, executeUpload, enableCrop, enableVideoTrim, showError]);
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!activeCrop) return;
+    const croppedFile = new File([croppedBlob], activeCrop.file.name, {
+      type: activeCrop.file.type,
+      lastModified: Date.now(),
+    });
+    setActiveCrop(null);
+    executeUpload([croppedFile]);
+  };
+  const handleCropCancel = () => { setActiveCrop(null); };
+
+  const handleTrimConfirm = (start: number, end: number, crop?: any) => {
+    if (!activeTrim) return;
+    const file = activeTrim.file;
+    setActiveTrim(null);
+    executeUpload([file], { start, end, crop });
+  };
+  const handleTrimCancel = () => { setActiveTrim(null); };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (!disabled) {
-      setIsDragOver(true);
-    }
+    e.preventDefault(); if (!disabled) setIsDragOver(true);
   }, [disabled]);
-
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
+    e.preventDefault(); setIsDragOver(false);
   }, []);
-
   const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-
-    if (disabled) return;
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      handleFiles(files);
-    }
+    e.preventDefault(); setIsDragOver(false);
+    if (!disabled && e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
   }, [disabled, handleFiles]);
-
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFiles(files);
-    }
+    if (e.target.files && e.target.files.length > 0) handleFiles(e.target.files);
   }, [handleFiles]);
-
   const handleClick = useCallback(() => {
-    if (!disabled && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    if (!disabled && fileInputRef.current) fileInputRef.current.click();
   }, [disabled]);
 
   return (
-    <div className={`w-full ${className}`}>
-      <div
-        className={`
+    <>
+      {activeCrop && (
+        <ImageCropperWrapper
+          src={activeCrop.src}
+          onConfirm={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
+
+      {activeTrim && (
+        <VideoTrimmerWrapper
+          file={activeTrim.file}
+          onConfirm={handleTrimConfirm}
+          onCancel={handleTrimCancel}
+        />
+      )}
+
+      <div className={`w-full ${className}`}>
+        <div
+          className={`
           relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
           ${isDragOver
-            ? 'border-blue-400 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
-          }
+              ? 'border-blue-400 bg-blue-50'
+              : 'border-gray-300 hover:border-gray-400'
+            }
           ${disabled
-            ? 'opacity-50 cursor-not-allowed'
-            : 'hover:bg-gray-50'
-          }
+              ? 'opacity-50 cursor-not-allowed'
+              : 'hover:bg-gray-50'
+            }
         `}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={handleClick}
-        role="button"
-        tabIndex={disabled ? -1 : 0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleClick();
-          }
-        }}
-        aria-label="File upload area"
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={accept}
-          multiple={multiple}
-          onChange={handleFileInput}
-          className="hidden"
-          disabled={disabled}
-        />
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={handleClick}
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); }
+          }}
+          aria-label="File upload area"
+        >
+          <input ref={fileInputRef} type="file" accept={accept} multiple={multiple} onChange={handleFileInput} className="hidden" disabled={disabled} />
 
-        {status ? (
-          <div className="space-y-4" aria-live="polite">
-            <div className="flex items-center justify-center">
-              <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></span>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-900">
-                {status}
-              </p>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                ></div>
+          {status ? (
+            <div className="space-y-4 w-full max-w-md mx-auto" aria-live="polite">
+              <div className="flex flex-col items-center justify-center space-y-3">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-violet-500 blur-xl opacity-20 rounded-full animate-pulse"></div>
+                  <div className="relative bg-white p-3 rounded-2xl shadow-sm border border-violet-100">
+                    <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
+                  </div>
+                </div>
+
+                <div className="space-y-1 text-center">
+                  <p className="text-sm font-semibold text-gray-900">{status}</p>
+                  <p className="text-xs text-gray-500 font-mono">{progress}% Complete</p>
+                </div>
+
+                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-violet-500 to-fuchsia-500 h-full rounded-full transition-all duration-300 ease-out shadow-[0_0_10px_rgba(139,92,246,0.3)]"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="mx-auto h-12 w-12 text-gray-400">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-900">
-                {isDragOver ? 'Drop files here' : 'Click to upload or drag and drop'}
-              </p>
-              <p className="text-xs text-gray-500">
-                {accept.includes('image') && accept.includes('video')
-                  ? 'Video (up to 100MB, auto-compressed) / Images'
-                  : accept.includes('image')
-                    ? 'Images up to 10MB'
-                    : 'Files up to 10MB'
-                }
-              </p>
-              {multiple && (
-                <p className="text-xs text-gray-500">
-                  Maximum {maxFiles} files
+          ) : (
+            <div className="space-y-4">
+              <div className="mx-auto h-12 w-12 text-gray-400">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-gray-900">
+                  {isDragOver ? 'Drop files here' : 'Click to upload or drag and drop'}
                 </p>
-              )}
+                <p className="text-xs text-gray-500">
+                  {accept.includes('image') && accept.includes('video') ? 'Video (up to 100MB, auto-compressed) / Images' : 'Files up to 10MB'}
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
+}
+
+// Wrappers for Lazy Loading
+import ImageCropper from '@/components/admin/ImageCropper';
+import VideoTrimmer from '@/components/admin/VideoTrimmer';
+
+function ImageCropperWrapper({ src, onConfirm, onCancel }: { src: string, onConfirm: (b: Blob) => void, onCancel: () => void }) {
+  return <ImageCropper imageSrc={src} onCropComplete={onConfirm} onCancel={onCancel} />;
+}
+
+function VideoTrimmerWrapper({ file, onConfirm, onCancel }: { file: File, onConfirm: (s: number, e: number, c?: any) => void, onCancel: () => void }) {
+  return <VideoTrimmer file={file} onConfirm={onConfirm} onCancel={onCancel} />;
 }

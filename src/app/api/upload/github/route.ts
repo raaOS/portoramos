@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
             // Standard Upload
             const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-').toLowerCase();
             finalFilename = `${Date.now()}-${cleanName}`;
-            uploadFolder = folderParam === 'temp' ? 'public/temp' : 'public/assets/media';
+            uploadFolder = folderParam === 'temp' ? 'public/temp' : 'public/assets/projects';
         }
 
         const path = `${uploadFolder}/${finalFilename}`;

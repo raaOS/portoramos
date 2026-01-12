@@ -12,44 +12,46 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const { imageUrl, style = 'estetik', maxTitleWords = 5, sentenceCount = 2 } = await req.json();
+        const { imageUrl, imageBase64, style = 'estetik', maxTitleWords = 5, sentenceCount = 2 } = await req.json();
 
-        if (!imageUrl) {
-            return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
+        if (!imageUrl && !imageBase64) {
+            return NextResponse.json({ error: 'Image URL or Base64 is required' }, { status: 400 });
         }
 
         // Check if local file or remote URL
-        let base64Image = '';
-        const isLocal = imageUrl.startsWith('/');
+        let base64Data = '';
 
-        if (isLocal) {
-            // Read from local filesystem
-            const fs = await import('fs/promises');
-            const path = await import('path');
-            const localPath = path.join(process.cwd(), 'public', imageUrl);
-
-            try {
-                const buffer = await fs.readFile(localPath);
-                base64Image = buffer.toString('base64');
-            } catch (err) {
-                return NextResponse.json({ error: `File not found on server: ${imageUrl}` }, { status: 404 });
-            }
+        if (imageBase64) {
+            // Direct base64 input (e.g. from Client FileReader)
+            // Remove prefix if present (data:image/jpeg;base64,)
+            base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
         } else {
-            // Existing Logic: Convert Video URL to Image (JPG) if necessary
-            let targetUrl = imageUrl;
-            // Removed Cloudinary specific conversion logic.
-            // If raw video is passed, Gemini can handle it directly if mimeType is set correctly.
-            // Or we can rely on standard GitHub raw URLs.
+            const isLocal = imageUrl.startsWith('/');
 
-            // Download image to buffer with User-Agent to avoid blocks
-            const imageRes = await fetch(targetUrl, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            if (isLocal) {
+                // Read from local filesystem
+                const fs = await import('fs/promises');
+                const path = await import('path');
+                const localPath = path.join(process.cwd(), 'public', imageUrl);
+
+                try {
+                    const buffer = await fs.readFile(localPath);
+                    base64Data = buffer.toString('base64');
+                } catch (err) {
+                    return NextResponse.json({ error: `File not found on server: ${imageUrl}` }, { status: 404 });
                 }
-            });
-            if (!imageRes.ok) throw new Error(`Failed to fetch image: ${imageRes.statusText}`);
-            const arrayBuffer = await imageRes.arrayBuffer();
-            base64Image = Buffer.from(arrayBuffer).toString('base64');
+            } else {
+                // Remote URL
+                // Download image to buffer with User-Agent to avoid blocks
+                const imageRes = await fetch(imageUrl, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    }
+                });
+                if (!imageRes.ok) throw new Error(`Failed to fetch image: ${imageRes.statusText}`);
+                const arrayBuffer = await imageRes.arrayBuffer();
+                base64Data = Buffer.from(arrayBuffer).toString('base64');
+            }
         }
 
         // Call Gemini API
@@ -57,15 +59,49 @@ export async function POST(req: NextRequest) {
         const model = 'gemini-flash-latest';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
 
-        const prompt = `Analisis gambar ini. Berikan detail berikut untuk portofolio desain/kreatif:
-        1. JUDUL (max ${maxTitleWords} kata)
-        2. DESKRIPSI (max ${sentenceCount} kalimat) dengan gaya bahasa ${style}.
-        3. CLIENT (jika ada logo/teks merek, tulis namanya. Jika tidak, tulis "Personal Work" atau "Commission").
-        4. TAGS (3-5 kata kunci teknis/style, contoh: "3D, Motion, Branding, Illustration").
+        const prompt = `Analisis gambar ini secara mendalam. 
+        Tentukan apakah ini karya "Visual Art" (Poster, Digital Art, Manipulasi Foto) atau "Commercial Project" (Branding, App Design, Marketing Campaign).
         
-      Catatan khusus untuk gaya Gen-Z: Gunakan bahasa santai yang sopan dan tidak berlebihan (lowkey/chill vibe).
-      WAJIB DALAM BAHASA INDONESIA. 
-      Output JSON murni: {"title": "...", "description": "...", "client": "...", "tags": "..."}`;
+        Berikan detail berikut untuk portofolio:
+        1. JUDUL: (max ${maxTitleWords} kata, menarik & profesional)
+        2. DESKRIPSI: (max ${sentenceCount} kalimat) gaya ${style}.
+        3. CLIENT: (Jika ada logo/brand, sebutkan. Jika tidak, "Personal Work").
+        4. TAGS: (3-5 kata kunci teknis).
+        5. TYPE: "visual_art" atau "commercial".
+        
+        CASE STUDY DETAILS (Isi sesuai Type):
+        - ROLE: (Contoh: "Visual Designer", "Art Director", "3D Artist")
+        - TEAM: (Contoh: "Solo Project", "Collab with X", "Marketing Team")
+        - TIMELINE: (Contoh: "2 Days", "1 Week", "Sprint")
+        
+        NARRATIVE (Sesuaikan Type):
+        Jika Commercial:
+        - context: (Latar belakang masalah)
+        - challenge: (Tantangan utama)
+        - solution: (Solusi desain)
+        - impact: (Dampak/Hasil - Gunakan kata "diharapkan", "berpotensi", atau "dirancang untuk" agar tidak klaim data angka palsu)
+        
+        Jika Visual Art:
+        - concept: (Filosofi/Ide utama)
+        - process: (Teknik/Tools yang mungkin digunakan)
+        - detail: (Elemen unik yang perlu diperhatikan)
+        
+        Catatan: Gunakan Bahasa Indonesia yang "Chill" & "Gen-Z" tapi tetap profesional.
+        Output JSON murni validation key:
+        {
+          "title": "...",
+          "description": "...",
+          "client": "...",
+          "tags": "...",
+          "type": "commercial | visual_art",
+          "role": "...",
+          "team": "...",
+          "timeline": "...",
+          "narrative": {
+             "context": "...", "challenge": "...", "solution": "...", "impact": "...",
+             "concept": "...", "process": "...", "detail": "..."
+          }
+        }`;
 
         // Detect Mime Type
         const ext = imageUrl.split('.').pop()?.toLowerCase();
@@ -82,11 +118,14 @@ export async function POST(req: NextRequest) {
                     {
                         inline_data: {
                             mime_type: mimeType,
-                            data: base64Image
+                            data: base64Data
                         }
                     }
                 ]
-            }]
+            }],
+            generationConfig: {
+                response_mime_type: "application/json"
+            }
         };
 
         const response = await fetch(url, {
