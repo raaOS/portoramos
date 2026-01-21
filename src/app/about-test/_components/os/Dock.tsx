@@ -10,9 +10,10 @@ interface DockItemProps {
     onClick: () => void;
     mouseX: any;
     isOpen?: boolean;
+    shouldBounceExternal?: boolean; // New prop
 }
 
-function DockItem({ id, icon, label, onClick, mouseX, isOpen = false }: DockItemProps) {
+function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBounceExternal = false }: DockItemProps) {
     const ref = React.useRef<HTMLDivElement>(null);
 
     const distance = useTransform(mouseX, (val: number) => {
@@ -31,7 +32,7 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false }: DockItem
         setTimeout(() => setIsBouncing(false), 2000);
     };
 
-    const shouldBounce = isOpen || isBouncing;
+    const shouldBounce = isOpen || isBouncing || shouldBounceExternal;
 
     return (
         <motion.div
@@ -42,8 +43,8 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false }: DockItem
             transition={shouldBounce
                 ? {
                     duration: isOpen ? 0.75 : 0.4,
-                    repeat: isOpen ? Infinity : 0,
-                    repeatDelay: isOpen ? 0.1 : 0,
+                    repeat: isOpen ? Infinity : (shouldBounceExternal ? 2 : 0), // Bounce twice if triggered externally
+                    repeatDelay: isOpen ? 0.1 : 0.05,
                     ease: "easeInOut"
                 }
                 : { type: "spring", mass: 0.1, stiffness: 150, damping: 12 }
@@ -65,9 +66,10 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false }: DockItem
 
 interface DockProps {
     items: { id: string; label: string; icon: React.ReactNode; onClick: () => void; isOpen?: boolean }[];
+    bouncingId?: string | null; // Accept external bounce trigger
 }
 
-export default function Dock({ items }: DockProps) {
+export default function Dock({ items, bouncingId }: DockProps) {
     const mouseX = useMotionValue(Infinity);
 
     return (
@@ -86,6 +88,7 @@ export default function Dock({ items }: DockProps) {
                         onClick={item.onClick}
                         mouseX={mouseX}
                         isOpen={item.isOpen}
+                        shouldBounceExternal={bouncingId === item.id}
                     />
                 ))}
             </div>

@@ -164,6 +164,33 @@ export const Compare = ({
     [slideMode, isDragging, x, width]
   );
 
+  const renderMedia = (src: string, className: string, alt: string) => {
+    const isVideo = src.toLowerCase().endsWith('.mp4') || src.toLowerCase().endsWith('.webm');
+
+    if (isVideo) {
+      return (
+        <video
+          src={src}
+          className={cn(className, "object-cover")}
+          autoPlay
+          loop
+          muted
+          playsInline
+          draggable={false}
+        />
+      );
+    }
+
+    return (
+      <img
+        alt={alt}
+        src={src}
+        className={className}
+        draggable={false}
+      />
+    );
+  };
+
   return (
     <div
       ref={sliderRef}
@@ -229,15 +256,14 @@ export const Compare = ({
                 clipPath: clipPathLeft, // USE SPRING
               }}
             >
-              <img
-                alt="first image"
-                src={firstImage}
-                className={cn(
+              {renderMedia(
+                firstImage,
+                cn(
                   "absolute inset-0 z-20 rounded-2xl shrink-0 w-full h-full select-none",
                   firstImageClassName
-                )}
-                draggable={false}
-              />
+                ),
+                "first image"
+              )}
               {/* Label for First Image (Visible when this layer is visible) */}
               {firstSlideLabel && (
                 <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-30">
@@ -253,15 +279,14 @@ export const Compare = ({
       <AnimatePresence initial={false}>
         {secondImage ? (
           <div className="absolute inset-0 w-full h-full z-[19]"> {/* Wrap in div to hold label relative to it */}
-            <motion.img
-              className={cn(
+            {renderMedia(
+              secondImage,
+              cn(
                 "absolute top-0 left-0 z-[19] rounded-2xl w-full h-full select-none",
                 secondImageClassname
-              )}
-              alt="second image"
-              src={secondImage}
-              draggable={false}
-            />
+              ),
+              "second image"
+            )}
             {/* Label for Second Image (Visible when overlay is clipped away) */}
             {secondSlideLabel && (
               <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-[20]">

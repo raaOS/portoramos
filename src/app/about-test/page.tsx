@@ -3,16 +3,20 @@ import DesktopEnvironment from './_components/os/DesktopEnvironment';
 import { loadAboutData } from '@/lib/about';
 import { loadExperienceData } from '@/lib/experience';
 import { loadHardSkillsData } from '@/lib/hardSkills';
+import { allProjectsAsync } from '@/lib/projects';
 
 // Force dynamic since we are fetching data
 export const revalidate = 0;
 
 export default async function AboutTestPage() {
-    const [aboutData, experienceData, hardSkillsData] = await Promise.all([
+    const [aboutData, experienceData, hardSkillsData, allProjects] = await Promise.all([
         loadAboutData(),
         loadExperienceData(),
-        loadHardSkillsData()
+        loadHardSkillsData(),
+        allProjectsAsync()
     ]);
+
+    const projects = (allProjects || []).filter(p => p.status !== 'draft');
 
     return (
         <main className="h-screen w-full bg-[#050505] overflow-hidden">
@@ -20,6 +24,7 @@ export default async function AboutTestPage() {
                 aboutData={aboutData}
                 experienceData={experienceData}
                 hardSkillsData={hardSkillsData}
+                projects={projects}
             >
                 {/* The Spline Scene as Background/Wallpaper */}
                 <div className="w-full h-full opacity-60">

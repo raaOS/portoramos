@@ -6,11 +6,13 @@ import OSWindow from "./Window";
 import DesktopIcon from "./DesktopIcon";
 import Dock from "./Dock";
 import AboutContent from "./AboutContent"; // Import the new component
+import IndexClientWithAutoUpdate from "@/components/home/IndexClientWithAutoUpdate";
 import { AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import type { AboutData } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
+import type { Project } from "@/types/projects";
 
 interface WindowState {
     id: string;
@@ -22,6 +24,8 @@ interface WindowState {
     noPadding?: boolean; // Added support
     content: React.ReactNode;
     initialPosition?: { x: number; y: number };
+    width?: number;
+    height?: number;
 }
 
 const AppIcon = ({ color, icon: Icon }: { color: string, icon: any }) => (
@@ -36,9 +40,10 @@ interface DesktopEnvironmentProps {
     aboutData?: AboutData | null;
     experienceData?: ExperienceData | null;
     hardSkillsData?: HardSkillsData | null;
+    projects: Project[];
 }
 
-export default function DesktopEnvironment({ children, aboutData, experienceData, hardSkillsData }: DesktopEnvironmentProps) {
+export default function DesktopEnvironment({ children, aboutData, experienceData, hardSkillsData, projects }: DesktopEnvironmentProps) {
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 });
@@ -78,31 +83,35 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
     }, []);
 
     const [topZIndex, setTopZIndex] = useState(20);
+    const [bouncingDocId, setBouncingDocId] = useState<string | null>(null);
 
     // -- Window Definitions --
-    const [windows, setWindows] = useState<WindowState[]>([
+    // We define them here to have access to props/router, but we only add them to state when opened.
+    const windowDefinitions: WindowState[] = [
         {
             id: "about",
-            title: "Information about: Me",
-            isOpen: true,
+            title: "Finder: About Me",
+            isOpen: false,
             zIndex: 10,
             noPadding: true,
-            initialPosition: { x: 100, y: 80 },
-            content: <AboutContent aboutData={aboutData} experienceData={experienceData} hardSkillsData={hardSkillsData} /> // New 2-column layout
+            initialPosition: { x: typeof window !== 'undefined' ? (window.innerWidth - 900) / 2 : 100, y: typeof window !== 'undefined' ? (window.innerHeight - 600) / 2 : 80 },
+            width: 900,
+            height: 600,
+            content: <AboutContent aboutData={aboutData} experienceData={experienceData} hardSkillsData={hardSkillsData} />
         },
         {
             id: "projects",
             title: "Finder: Projects",
             isOpen: false,
             zIndex: 9,
-            initialPosition: { x: 400, y: 150 },
+            noPadding: true, // Full width for content
+            initialPosition: { x: typeof window !== 'undefined' ? (window.innerWidth - 1000) / 2 : 150, y: typeof window !== 'undefined' ? (window.innerHeight - 700) / 2 : 100 },
+            width: 1000,
+            height: 700,
             content: (
-                <div className="grid grid-cols-2 gap-3">
-                    {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="aspect-video bg-white rounded-md border border-gray-200 hover:border-blue-400 transition-colors flex items-center justify-center cursor-pointer group shadow-sm">
-                            <span className="text-gray-400 text-xs font-medium group-hover:text-blue-500">Project {i}</span>
-                        </div>
-                    ))}
+                <div className="w-full h-full overflow-y-auto bg-white custom-scrollbar">
+                    {/* We pass the projects data directly to the component */}
+                    <IndexClientWithAutoUpdate initialProjects={projects} />
                 </div>
             )
         },
@@ -125,12 +134,21 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
                 </div>
             )
         }
-    ]);
+    ];
+
+    const [windows, setWindows] = useState<WindowState[]>(windowDefinitions);
 
     // Update positions once mounted
     useEffect(() => {
         if (mounted) {
             setWindows(prev => prev.map(w => {
+                // Dynamically center 'about' window on mount
+                if (w.id === 'about') {
+                    return { ...w, initialPosition: { x: (window.innerWidth - 900) / 2, y: (window.innerHeight - 600) / 2 } };
+                }
+                if (w.id === 'projects') {
+                    return { ...w, initialPosition: { x: (window.innerWidth - 1000) / 2, y: (window.innerHeight - 700) / 2 } };
+                }
                 if (w.id === 'error') {
                     return { ...w, initialPosition: { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 150 } };
                 }
@@ -168,6 +186,10 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             }
             return w;
         }));
+
+        // Trigger Dock Bounce
+        setBouncingDocId(id);
+        setTimeout(() => setBouncingDocId(null), 2000); // Reset after animation
     };
 
     const maximizeWindow = (id: string) => {
@@ -188,6 +210,24 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             return w;
         }));
         setTopZIndex(prev => prev + 1);
+    };
+
+    const updateWindowPosition = (id: string, x: number, y: number) => {
+        setWindows(prev => prev.map(w => {
+            if (w.id === id) {
+                return { ...w, initialPosition: { x, y } };
+            }
+            return w;
+        }));
+    };
+
+    const handleWindowResize = (id: string, width: number, height: number) => {
+        setWindows(prev => prev.map(w => {
+            if (w.id === id) {
+                return { ...w, width, height };
+            }
+            return w;
+        }));
     };
 
     const getMinimizeTarget = (id: string) => {
@@ -266,6 +306,10 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
                                 initialPosition={w.initialPosition}
                                 minimizeTarget={getMinimizeTarget(w.id)}
                                 noPadding={w.noPadding}
+                                onUpdatePosition={(x, y) => updateWindowPosition(w.id, x, y)}
+                                width={w.width}
+                                height={w.height}
+                                onResize={(wId, h) => handleWindowResize(w.id, wId, h)}
                             >
                                 {w.content}
                             </OSWindow>
@@ -275,7 +319,10 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             </div>
 
             {/* Layer 3: Dock */}
-            <Dock items={dockItems} />
+            <Dock
+                items={dockItems}
+                bouncingId={bouncingDocId}
+            />
 
         </div>
     );

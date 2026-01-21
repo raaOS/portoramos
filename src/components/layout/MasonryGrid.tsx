@@ -39,22 +39,58 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
     const breakpointColumns = columns === 'sidebar' ? sidebarBreakpoints : columns === 'bottom' ? bottomBreakpoints : defaultBreakpoints;
     const [mounted, setMounted] = useState(false);
 
+    // Container-aware responsive logic
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const [columnCount, setColumnCount] = useState(2);
+
     useEffect(() => {
         setMounted(true);
-    }, []);
 
-    // SSR Fallback: Use CSS Grid to simulate Masonry structure immediately
-    // Using grid-cols ensures items are visible instantly in the correct approximate position
-    // We match the gap to the actual masonry grid (gap-x-4 = 16px usually)
+        if (!containerRef.current) return;
+
+        const updateCallback = (width: number) => {
+            // Determine columns based on container width
+            let cols = breakpointColumns.default;
+
+            // Sort breakpoints descending (numeric keys)
+            const breakpoints = Object.keys(breakpointColumns)
+                .filter(k => k !== 'default')
+                .map(Number)
+                .sort((a, b) => b - a);
+
+            for (let bp of breakpoints) {
+                if (width <= bp) { // Changed to <= for inclusive
+                    // Typescript key access workaround
+                    cols = (breakpointColumns as any)[bp];
+                }
+            }
+            setColumnCount(cols);
+        };
+
+        const handleResize = (entries: ResizeObserverEntry[]) => {
+            for (let entry of entries) {
+                if (entry.contentRect.width > 0) {
+                    updateCallback(entry.contentRect.width);
+                }
+            }
+        };
+
+        const observer = new ResizeObserver(handleResize);
+        observer.observe(containerRef.current);
+
+        // Initial check using offsetWidth for reliability
+        if (containerRef.current) {
+            updateCallback(containerRef.current.offsetWidth);
+        }
+
+        return () => observer.disconnect();
+    }, [breakpointColumns]);
+
+    // SSR Fallback
     if (!mounted) {
         return (
             <div
-                className={`w-full grid items-start content-start ${className} ${columns === 'sidebar'
-                    ? 'grid-cols-2 lg:grid-cols-3 gap-4'
-                    : columns === 'bottom'
-                        ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4'
-                        : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-4'
-                    }`}
+                className={`w-full grid items-start content-start ${className} grid-cols-2 gap-4`}
             >
                 {React.Children.map(children, (child) => (
                     <div className="mb-4 break-inside-avoid">
@@ -66,13 +102,18 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
     }
 
     return (
-        <Masonry
-            breakpointCols={breakpointColumns}
-            className={`masonry-grid -ml-4 w-auto flex ${className}`}
-            columnClassName="masonry-grid-column pl-4 bg-clip-padding"
-        >
-            {children}
-        </Masonry>
+        <div ref={containerRef} className="w-full" style={{ width: '100%' }}>
+            <Masonry
+                key={columnCount} // Force re-render when columns change
+                breakpointCols={columnCount}
+                className={`masonry-grid -ml-4 w-auto flex ${className}`}
+                columnClassName="masonry-grid-column pl-4 bg-clip-padding"
+            >
+                {children}
+            </Masonry>
+        </div>
     );
 }
+
+
 
