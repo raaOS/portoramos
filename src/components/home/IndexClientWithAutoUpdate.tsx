@@ -11,6 +11,7 @@ import IndexClientInner from './IndexClientInner';
 type Props = {
   initialProjects?: Project[];
   // searchParams removed, using hook
+  windowWidth?: number;
 }
 
 interface ProjectsResponse {
@@ -27,7 +28,7 @@ const fetchProjects = async (): Promise<ProjectsResponse> => {
   return response.json();
 };
 
-export default function IndexClientWithAutoUpdate({ initialProjects: serverProjects = [] }: Props) {
+export default function IndexClientWithAutoUpdate({ initialProjects: serverProjects = [], windowWidth }: Props) {
   const { setLastUpdated } = useLastUpdated();
   const searchParams = useSearchParams();
   const tag = searchParams.get('tag') || '';
@@ -63,7 +64,7 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
 
   return (
     <div>
-      <IndexClientInner projects={projects} tag={tag} lastUpdated={lastUpdatedStr} />
+      <IndexClientInner projects={projects} tag={tag} lastUpdated={lastUpdatedStr} windowWidth={windowWidth} />
     </div>
   );
 }

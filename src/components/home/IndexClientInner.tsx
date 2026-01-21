@@ -11,6 +11,7 @@ type Props = {
   projects: Project[]
   tag: string
   lastUpdated?: Date | string | null
+  windowWidth?: number
 }
 
 // Minimal typing for Fuse.js since it's dynamically imported
@@ -25,7 +26,7 @@ interface FuseInstance<T> {
   setCollection: (collection: T[]) => void
 }
 
-export default function IndexClientInner({ projects, tag, lastUpdated }: Props) {
+export default function IndexClientInner({ projects, tag, lastUpdated, windowWidth }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
   // Start with a reasonable number that fills the screen but isn't too heavy.
   // 14 items allows for full screen coverage immediately
@@ -177,7 +178,7 @@ export default function IndexClientInner({ projects, tag, lastUpdated }: Props) 
       <div className="min-h-screen">
         {displayedProjects.length > 0 ? (
           <>
-            <MasonryGrid>
+            <MasonryGrid width={windowWidth}>
               {displayedProjects.map((project, index) => {
                 // Determine priority based on index (first 14 items get priority)
                 const isPriority = index < 14;

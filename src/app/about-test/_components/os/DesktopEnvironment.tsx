@@ -311,7 +311,14 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
                                 height={w.height}
                                 onResize={(wId, h) => handleWindowResize(w.id, wId, h)}
                             >
-                                {w.content}
+                                {/* Dynamic Content Injection for Projects to support live resizing props */}
+                                {w.id === 'projects' ? (
+                                    <div className="w-full h-full overflow-y-auto bg-white custom-scrollbar">
+                                        <IndexClientWithAutoUpdate initialProjects={projects} windowWidth={w.width} />
+                                    </div>
+                                ) : (
+                                    w.content
+                                )}
                             </OSWindow>
                         </div>
                     ))}

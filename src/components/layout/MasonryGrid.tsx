@@ -7,6 +7,7 @@ interface MasonryGridProps {
     children: React.ReactNode;
     className?: string;
     columns?: 'default' | 'sidebar' | 'bottom';
+    width?: number;
 }
 
 const defaultBreakpoints = {
@@ -17,7 +18,6 @@ const defaultBreakpoints = {
     768: 2,        // Tablet
     640: 2         // Mobile L
 };
-
 const sidebarBreakpoints = {
     default: 3,    // Max 3 columns for sidebar
     1280: 3,       // Desktop
@@ -35,7 +35,7 @@ const bottomBreakpoints = {
     640: 2         // Mobile L
 };
 
-export default function MasonryGrid({ children, className = '', columns = 'default' }: MasonryGridProps) {
+export default function MasonryGrid({ children, className = '', columns = 'default', width }: MasonryGridProps) {
     const breakpointColumns = columns === 'sidebar' ? sidebarBreakpoints : columns === 'bottom' ? bottomBreakpoints : defaultBreakpoints;
     const [mounted, setMounted] = useState(false);
 
@@ -43,29 +43,38 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
     const containerRef = React.useRef<HTMLDivElement>(null);
     const [columnCount, setColumnCount] = useState(2);
 
+    // Helper: calculate columns from a width
+    const getCols = (w: number) => {
+        let cols = breakpointColumns.default;
+        // Sort breakpoints descending (numeric keys)
+        const breakpoints = Object.keys(breakpointColumns)
+            .filter(k => k !== 'default')
+            .map(Number)
+            .sort((a, b) => b - a);
+        for (let bp of breakpoints) {
+            if (w <= bp) { // Changed to <= for inclusive
+                cols = (breakpointColumns as any)[bp];
+            }
+        }
+        return cols;
+    };
+
     useEffect(() => {
         setMounted(true);
 
-        if (!containerRef.current) return;
-
-        const updateCallback = (width: number) => {
-            // Determine columns based on container width
-            let cols = breakpointColumns.default;
-
-            // Sort breakpoints descending (numeric keys)
-            const breakpoints = Object.keys(breakpointColumns)
-                .filter(k => k !== 'default')
-                .map(Number)
-                .sort((a, b) => b - a);
-
-            for (let bp of breakpoints) {
-                if (width <= bp) { // Changed to <= for inclusive
-                    // Typescript key access workaround
-                    cols = (breakpointColumns as any)[bp];
-                }
-            }
-            setColumnCount(cols);
+        const updateCallback = (w: number) => {
+            setColumnCount(getCols(w));
         };
+
+        // IF width prop is provided, use it directly (stateless/controlled mode)
+        if (width !== undefined) {
+            console.log('MasonryGrid: Using explicit width prop:', width);
+            updateCallback(width);
+            // Return early to avoid setting up resize observer
+            return;
+        }
+
+        if (!containerRef.current) return;
 
         const handleResize = (entries: ResizeObserverEntry[]) => {
             for (let entry of entries) {
@@ -78,13 +87,27 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         const observer = new ResizeObserver(handleResize);
         observer.observe(containerRef.current);
 
-        // Initial check using offsetWidth for reliability
+        // Initial check
         if (containerRef.current) {
             updateCallback(containerRef.current.offsetWidth);
         }
 
-        return () => observer.disconnect();
-    }, [breakpointColumns]);
+        // AGGRESSIVE POLLING: Check repeatedly for 1s to catch any animation-related width changes
+        // This fixes the "grid error on re-open" bug where initial width might be reported as 0 or incorrect.
+        let checks = 0;
+        const interval = setInterval(() => {
+            if (containerRef.current && containerRef.current.offsetWidth > 0) {
+                updateCallback(containerRef.current.offsetWidth);
+            }
+            checks++;
+            if (checks > 10) clearInterval(interval); // Stop after 1s
+        }, 100);
+
+        return () => {
+            observer.disconnect();
+            clearInterval(interval);
+        };
+    }, [breakpointColumns, width]); // Added width as dependency
 
     // SSR Fallback
     if (!mounted) {
