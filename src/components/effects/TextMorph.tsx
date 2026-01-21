@@ -228,7 +228,7 @@ export default function TextMorph({
           font-weight: 700;
           text-align: left;
           user-select: none;
-          color: #000000;
+          color: #ffffff;
           text-transform: uppercase;
           letter-spacing: -2px;
           line-height: 0.8;

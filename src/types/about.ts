@@ -8,6 +8,10 @@ export interface AboutHero {
   title: string;
   title_id?: string;
   backgroundTrail: (string | TrailItem)[];
+  backgroundColor?: string;
+  textColor?: string;
+  ballColor?: string;
+  capColor?: string;
   availability?: {
     status: 'available' | 'booked' | 'limited';
     text: string;     // e.g. "Available for new projects"

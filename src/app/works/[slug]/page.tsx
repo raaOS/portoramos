@@ -33,6 +33,9 @@ export default async function ProjectPage(props: { params: Promise<{ slug: strin
 
     if (!p) return notFound();
 
+    // Security: Block access to Drafts in Production
+    if (process.env.NODE_ENV !== 'development' && p.status === 'draft') return notFound();
+
     // Get all projects for the sidebar grid (excluding current)
     // Filter out drafts if in production environment (optional, keeping consistent with allProjectsAsync)
     const allProjects = projects.filter(proj => proj.status !== 'draft');

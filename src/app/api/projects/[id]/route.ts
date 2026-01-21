@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 import { UpdateProjectData } from '@/types/projects';
 import { checkAdminAuth } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
@@ -7,6 +8,7 @@ import { generateGenZComments } from '@/lib/magic';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
 import { githubService } from '@/lib/github';
 import path from 'path';
+import fs from 'fs';
 import { sendTelegramAlert } from '@/lib/telegram';
 
 const COMMENTS_DATA_FILE = path.join(process.cwd(), 'src', 'data', 'comments.json');
@@ -14,6 +16,45 @@ const COMMENTS_GITHUB_PATH = 'src/data/comments.json';
 
 interface CommentsData {
   comments: Record<string, any[]>;
+}
+
+// Helper to finalize media (Move from temp to permanent)
+async function finalizeMedia(
+  url: string,
+  slug: string,
+  subDir: string = 'projects',
+  suffix: string = ''
+): Promise<string> {
+  if (!url || !url.startsWith('/temp/')) return url;
+
+  try {
+    const publicDir = path.join(process.cwd(), 'public');
+    const relativeUrl = url.startsWith('/') ? url.slice(1) : url;
+    const oldPath = path.join(publicDir, relativeUrl);
+
+    if (!fs.existsSync(oldPath)) return url;
+
+    // Use original extension
+    const ext = path.extname(url);
+    const newFilename = `${slug}${suffix}${ext}`;
+
+    // Construct target directory
+    const targetDir = path.join(publicDir, 'assets', subDir);
+
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    const newPath = path.join(targetDir, newFilename);
+
+    // Move/Rename
+    await fs.promises.rename(oldPath, newPath);
+
+    return `/assets/${subDir}/${newFilename}`;
+  } catch (e) {
+    console.error('Finalize Media Error:', e);
+    return url;
+  }
 }
 
 // GET - Read single project
@@ -57,6 +98,43 @@ export async function PUT(
     const { id } = params;
     const body: UpdateProjectData & { initialCommentCount?: number } = await request.json();
 
+    // 1. Fetch existing project to get 'slug' for renaming files
+    const { projects } = await projectService.getProjects();
+    const existingProject = projects.find(p => p.id === id);
+
+    if (!existingProject) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const targetSlug = body.slug || existingProject.slug;
+
+    // 2. Finalize Media (Move from /temp/ to /assets/...)
+    // Cover
+    if (body.cover && body.cover.startsWith('/temp/')) {
+      body.cover = await finalizeMedia(body.cover, targetSlug, 'projects', '');
+    }
+
+    // Comparison Images
+    if (body.comparison) {
+      if (body.comparison.beforeImage && body.comparison.beforeImage.startsWith('/temp/')) {
+        body.comparison.beforeImage = await finalizeMedia(
+          body.comparison.beforeImage,
+          targetSlug,
+          'projects/comparisons',
+          '-before'
+        );
+      }
+      if (body.comparison.afterImage && body.comparison.afterImage.startsWith('/temp/')) {
+        body.comparison.afterImage = await finalizeMedia(
+          body.comparison.afterImage,
+          targetSlug,
+          'projects',
+          '-after'
+        );
+      }
+    }
+
+    // 3. Update Project with finalized paths
     const updatedProject = await projectService.updateProject(id, body);
 
     if (!updatedProject) {
@@ -124,7 +202,15 @@ export async function PUT(
       success: true,
       project: updatedProject
     });
+
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.warn('Validation Error (Update):', error.format());
+      return NextResponse.json(
+        { error: 'Validation Failed', details: error.format() },
+        { status: 400 }
+      );
+    }
     console.error('Error updating project:', error);
     // Return actual error message for debugging
     return NextResponse.json(

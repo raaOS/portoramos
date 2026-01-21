@@ -1,11 +1,15 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import dynamic from 'next/dynamic'; // Added this import
 import Header from '@/components/shared/Header';
 import Footer from '@/components/shared/Footer';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import ScrollToTop from '@/components/layout/ScrollToTop';
-import ChatWidget from '@/components/ChatWidget';
+// Removed: import ChatWidget from '@/components/ChatWidget';
+const ChatWidget = dynamic(() => import('@/components/features/ChatWidget'), {
+    ssr: false,
+});
 import PageTransition from '@/components/shared/PageTransition';
 
 export default function ClientLayout({

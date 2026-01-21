@@ -15,6 +15,8 @@ interface AdminFileUploadProps {
   maxSize?: number; // in MB
   className?: string;
   disabled?: boolean;
+  folder?: string;        // 'temp', 'comparisons', or default 'projects'
+  customFilename?: string; // Optional custom filename (without extension)
 }
 
 export default function AdminFileUpload({
@@ -28,7 +30,9 @@ export default function AdminFileUpload({
   enableCrop = false,
   enableVideoTrim = false,
   autoUpload = true,
-  onFileSelect
+  onFileSelect,
+  folder,
+  customFilename
 }: AdminFileUploadProps & { enableCrop?: boolean; enableVideoTrim?: boolean; autoUpload?: boolean; onFileSelect?: (file: File) => void }) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [status, setStatus] = useState<string>('');
@@ -165,7 +169,13 @@ export default function AdminFileUpload({
     setStatus('Uploading to GitHub...');
     const formData = new FormData();
     formData.append('file', file);
-    const response = await fetch('/api/upload/github', {
+
+    // Construct Query Params
+    const params = new URLSearchParams();
+    if (folder) params.append('folder', folder);
+    if (customFilename) params.append('filename', customFilename);
+
+    const response = await fetch(`/api/upload/github?${params.toString()}`, {
       method: 'POST',
       body: formData,
     });
@@ -180,7 +190,7 @@ export default function AdminFileUpload({
     }
     const data = await response.json();
     return { url: data.url, publicPath: data.publicPath };
-  }, []);
+  }, [folder, customFilename]); // Add folder/filename to dependencies
 
   const compressImageServer = useCallback(async (filePath: string): Promise<{ success: boolean; stats?: any; newPath?: string }> => {
     try {

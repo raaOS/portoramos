@@ -8,7 +8,7 @@ import { X } from 'lucide-react';
 import { Project } from '@/types/projects';
 import { Comment } from '@/lib/magic';
 import AITranslator from '@/components/features/AITranslator';
-import ReadMoreDescription from '@/components/ReadMoreDescription';
+import ReadMoreDescription from '@/components/ui/ReadMoreDescription';
 import ShareButtons from '@/components/features/ShareButtons';
 
 export type MediaItem = {

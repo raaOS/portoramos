@@ -6,11 +6,12 @@ import NextImage from 'next/image';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import GalleryMini from '@/components/gallery/GalleryMini';
-import HardSkillsAccordion from '@/components/HardSkillsAccordion';
+import HardSkillsAccordion from '@/components/features/HardSkillsAccordion';
 import SwayingGallery from '@/components/home/SwayingGallery';
-import AnimatedCounter from '@/components/AnimatedCounter';
-import HorizontalCounterAnimation from '@/components/HorizontalCounterAnimation';
+import AnimatedCounter from '@/components/effects/AnimatedCounter';
+import HorizontalCounterAnimation from '@/components/effects/HorizontalCounterAnimation';
 import HorizontalTestimonial from '@/components/gallery/HorizontalTestimonial';
+import ExpandableCards, { Card } from '@/components/ui/expandable-cards';
 import { ExperienceData } from '@/types/experience';
 import { Project } from '@/types/projects';
 import { GalleryFeaturedData } from '@/types/gallery';
@@ -20,22 +21,20 @@ import { HardSkillConcept } from '@/types/hardSkillConcept';
 import { useSmoothScroll } from '@/hooks/useSmoothScroll';
 import { useNavbarVisibility } from '@/contexts/NavbarVisibilityContext';
 import { Reveal, StaggerContainer, StaggerItem } from '@/components/effects/Reveal';
-import BlurTextLoop from '@/components/effects/BlurTextLoop';
-import RunningTextSection from '@/components/RunningTextSection';
+
+import RunningTextSection from '@/components/effects/RunningTextSection';
 import AITranslator from '@/components/features/AITranslator';
 import StickyImageStack, { MediaItem } from '@/components/gallery/StickyImageStack';
 import { resolveCover } from '@/lib/images';
 import AvailabilityBadge from '@/components/features/AvailabilityBadge';
 import DesignPhilosophySection from './_components/DesignPhilosophySection';
+import PhysicsBaubles from '@/components/effects/PhysicsBaubles';
 
 const TextMorph = dynamic(() => import('@/components/effects/TextMorph'), {
   ssr: false,
   loading: () => <div className="h-[120px] w-full bg-transparent rounded animate-pulse" /> // Match TextMorph height
 });
-const SimpleTrail = dynamic(() => import('@/components/effects/SimpleTrail'), {
-  ssr: false,
-  loading: () => <div className="absolute inset-0 z-10" /> // Prevent CLS
-});
+
 
 // Soft Skills data untuk TextMorph
 const softSkills = {
@@ -73,7 +72,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
       'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offline',
       'membantu UI/UX di Bitlabs'
     ],
-    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+    imageUrl: '/assets/projects/politik-pop-digital.jpg'
   },
   {
     year: 'Jan 2019 - Jan 2020',
@@ -83,7 +82,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
     description: [
       'Melakukan kegiatan pembelajaran/sharing session dengan mahasiswa sesuai jadwal yang ditetapkan perusahaan. Melakukan observasi, monitoring, memberikan masukan dan saran perbaikan terkait kinerja peserta dan memastikan paham tentang desain grafis.'
     ],
-    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+    imageUrl: '/assets/projects/identitas-monogram-hijau.jpg'
   },
   {
     year: 'Mar 2017 - Nov 2019',
@@ -94,7 +93,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
       'Berperan dalam perancangan strategi untuk promosi perusahaan.',
       'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offline'
     ],
-    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+    imageUrl: '/assets/projects/narasi-visual-moodboard.jpg'
   },
   {
     year: 'Agt 2016 - Mar 2017',
@@ -107,7 +106,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
       'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin',
       'Mengirim, Mengawasi, Mencatat Produk Sthal. Co'
     ],
-    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+    imageUrl: '/assets/projects/tipografi-alam-kontras-tinggi.jpg'
   },
   {
     year: 'Okt 2012 - Agt 2015',
@@ -119,7 +118,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
       'Berhasil dalam mengenalkan info seputar dunia kopi ke customer',
       'Melayani transaksi customer'
     ],
-    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+    imageUrl: '/assets/projects/tipografi-mekar-gotik.jpg'
   },
   {
     year: 'Jan 2012 - Mar 2012',
@@ -131,7 +130,7 @@ const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
       'Bertanggung jawab atas semua konten visual desain dalam perusahaan secara online dan offlin',
       'Mengirim, Mengawasi, Mencatat Produk Wulan Butique'
     ],
-    imageUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+    imageUrl: '/assets/projects/overlay-bunga-barok-digital.jpg'
   }
 ];
 
@@ -240,7 +239,10 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
       title: 'ABOUT ME',
       title_id: 'TENTANG SAYA',
       backgroundTrail: [],
-      availability: null
+      availability: null,
+      ballColor: "#FEDDD8",
+      capColor: "#F6A77B",
+      textColor: "#ffffff"
     },
     professional: {
       motto: {
@@ -285,6 +287,30 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
       freelanceTitle: "Freelance Experience",
       workExperienceTitle: "Work Experience",
       portfolioPreviewTitle: "Portfolio Preview"
+    },
+    designPhilosophy: {
+      heading: "Design Philosophy",
+      subheading: "Creating meaningful experiences through thoughtful design",
+      steps: [
+        {
+          number: "01",
+          title: "Understand",
+          desc: "Analisis mendalam kebutuhan dan tujuan proyek",
+          quote: "Design is thinking made visual"
+        },
+        {
+          number: "02",
+          title: "Explore",
+          desc: "Eksplorasi ide dan solusi kreatif",
+          quote: "Creativity is intelligence having fun"
+        },
+        {
+          number: "03",
+          title: "Create",
+          desc: "Eksekusi desain dengan detail dan presisi",
+          quote: "Details make the design"
+        }
+      ]
     }
   };
 
@@ -310,7 +336,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
     ? experienceData.workExperience.filter((e) => e.isActive !== false)
     : FALLBACK_WORK_EXPERIENCE);
 
-  // Pastikan selalu ada 6 item untuk grid 3x2 / 2x3; isi kekurangan dengan fallback
+  // Pastikan selalu ada 6 item untuk grid 6x1; isi kekurangan dengan fallback
   const normalizedWorkExperience =
     resolvedWorkExperience.length >= 6
       ? resolvedWorkExperience
@@ -553,11 +579,46 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
   // Fallback to empty array if no projects loaded yet (no old static images)
   const finalGalleryImages = galleryImages;
 
+  // MEMOIZED DATA FOR EXPANDABLE CARDS
+  // Critical for animation performance: prevents recreating the array on every render
+  const expandableCardsData = useMemo(() => {
+    return workExperienceForGallery.map((exp, index) => {
+      // FORCE IMAGES: Map company names to specific project assets
+      let forcedImage = exp.imageUrl;
+      const companyLower = exp.company.toLowerCase();
+
+      if (companyLower.includes('bitlabs')) forcedImage = '/assets/projects/politik-pop-digital.jpg';
+      else if (companyLower.includes('sekolah desain')) forcedImage = '/assets/projects/identitas-monogram-hijau.jpg';
+      else if (companyLower.includes('duta mode')) forcedImage = '/assets/projects/narasi-visual-moodboard.jpg';
+      else if (companyLower.includes('sthal')) forcedImage = '/assets/projects/tipografi-alam-kontras-tinggi.jpg';
+      else if (companyLower.includes('sari coffee') || companyLower.includes('starbucks')) forcedImage = '/assets/projects/tipografi-mekar-gotik.jpg';
+      else if (companyLower.includes('wulan')) forcedImage = '/assets/projects/overlay-bunga-barok-digital.jpg';
+
+      return {
+        id: index,
+        title: exp.company,
+        image: forcedImage || '/placeholder.svg',
+        content: (
+          <ul className="list-disc pl-5 text-sm space-y-1">
+            {exp.description.map((desc, i) => (
+              <li key={i}>{desc}</li>
+            ))}
+          </ul>
+        ),
+        author: {
+          name: exp.position,
+          role: `${exp.year} (${exp.duration})`,
+          image: exp.imageUrl || '/placeholder.svg'
+        }
+      };
+    });
+  }, [workExperienceForGallery]);
+
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* Section Navigation dengan Nomor */}
       <motion.div
-        className="fixed right-8 top-1/2 transform -translate-y-1/2 z-30 hidden lg:block"
+        className="fixed right-8 top-1/2 transform -translate-y-1/2 z-50 hidden lg:block"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 1 }}
@@ -566,9 +627,9 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
           {[
             { id: 'hero', label: 'Hero', number: '01' },
             { id: 'philosophy', label: 'Approach', number: '02' },
-            { id: 'professional', label: 'About', number: '03' },
+            { id: 'experience', label: 'Experience', number: '03' },
             { id: 'skills', label: 'Skills', number: '04' },
-            { id: 'experience', label: 'Experience', number: '05' }
+            { id: 'professional', label: 'About', number: '05' }
           ].map((section) => {
             const isActive = activeSection === section.id;
             return (
@@ -579,8 +640,8 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
                   scrollToSection(section.id, 100);
                 }}
                 className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400 ${isActive
-                  ? 'bg-black text-white'
-                  : 'bg-white text-black border border-black hover:bg-gray-100'
+                  ? 'bg-white text-black'
+                  : 'bg-black/50 text-white border border-white/20 hover:bg-white/10'
                   } `}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
@@ -593,83 +654,30 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
         </div>
       </motion.div>
 
-      {/* Scroll Progress Indicator */}
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-black origin-left z-[100] mix-blend-difference"
-        style={{ scaleX: scrollYProgress }}
-      />
 
 
 
-      {/* Section 1: ABOUT ME dengan Trail Effect */}
+
+      {/* Section 1: ABOUT ME dengan Physics Baubles */}
       <div id="hero" className="relative min-h-screen bg-[#0a0a0a]">
 
-        <motion.div style={{ opacity: heroOpacity, scale: heroScale, y: heroY }} className="h-full">
+        <motion.div style={{ opacity: heroOpacity }} className="h-full">
 
-          {/* Trail Effect - hanya di section 1 */}
-          <div className="absolute inset-0 z-10">
-            {isClient ? (
-              <SimpleTrail backgroundTrail={currentAboutData.hero?.backgroundTrail} />
-            ) : (
-              <div className="absolute inset-0 z-10" />
-            )}
+          {/* Physics Baubles with Static Text */}
+          {/* Menggantikan SimpleTrail dan BlurTextLoop */}
+          <div className="absolute inset-0 z-0">
+            <PhysicsBaubles
+              textColor={currentAboutData.hero?.textColor || "#ffffff"}
+              ballColor={currentAboutData.hero?.ballColor || "#FEDDD8"}
+              capColor={currentAboutData.hero?.capColor || "#F6A77B"}
+            />
           </div>
 
-          {/* Hero Section */}
-          <div className="min-h-screen flex items-center justify-center relative z-20 px-4 overflow-hidden pb-12 md:pb-24">
-            <div className="text-center w-full h-full flex flex-col justify-center items-center -mt-16 md:-mt-32">
-
-              {/* Mobile: paksa 2 baris PORTO + tail jika judul diawali PORTO, selain itu tetap satu baris */}
-              {/* Mobile: paksa 2 baris PORTO + tail jika judul diawali PORTO, selain itu tetap satu baris */}
-              {heroStartsWithPorto ? (
-                <div className="block sm:hidden leading-[0.9] uppercase min-h-[64vw]">
-                  <div className="flex flex-col items-start space-y-1">
-                    <BlurTextLoop
-                      text="PORTO"
-                      className="text-[64vw] tracking-normal text-white font-display font-bold select-none h-[60vw]"
-                      initialDelay={0.2}
-                      animateBy="letters"
-                      direction="bottom"
-                    />
-                    <BlurTextLoop
-                      text={heroTailUpper}
-                      className="text-[64vw] tracking-normal text-white font-display font-bold select-none h-[60vw]"
-                      initialDelay={0.2}
-                      animateBy="letters"
-                      direction="bottom"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="block sm:hidden min-h-[32vw]">
-                  <BlurTextLoop
-                    text={heroTitleRaw}
-                    className="text-[64vw] leading-[0.9] tracking-normal text-white font-display font-bold uppercase select-none"
-                    initialDelay={0.15}
-                    animateBy="letters"
-                    direction="bottom"
-                  />
-                </div>
-              )}
-              {/* Tablet/desktop: tetap satu baris */}
-              <div className="hidden sm:block min-h-[15vw]">
-                <BlurTextLoop
-                  text={heroTitleRaw}
-                  className="text-[36vw] md:text-[32vw] lg:text-[31vw] leading-[0.9] tracking-normal text-white font-display font-bold uppercase select-none"
-                  initialDelay={0.15}
-                  animateBy="letters"
-                  direction="bottom"
-                />
-              </div>
-            </div>
-
-
-          </div>
         </motion.div>
       </div>
 
       {/* Running Text Section */}
-      <RunningTextSection />
+
 
       <SectionWrapper
         id="hidden-professional"
@@ -733,13 +741,177 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
 
       <SectionWrapper
         id="philosophy"
-        className="block bg-white border-b border-gray-200"
+        className="block bg-[#0a0a0a]"
       >
         <DesignPhilosophySection data={currentAboutData.designPhilosophy} />
       </SectionWrapper>
 
+
+
+      <SectionWrapper
+        id="experience"
+        className="pt-8 pb-8 md:pt-12 md:pb-12 lg:pt-14 lg:pb-16 bg-[#0a0a0a]"
+      >
+        <div className="w-full max-w-7xl mx-auto px-4">
+          <div className="text-center flex flex-col items-center mb-12">
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6 }}
+            >
+              <Reveal>
+                <h2 className="text-3xl md:text-4xl font-sans font-bold text-white mb-4">{currentAboutData.labels?.experienceTitle || 'Experience'}</h2>
+              </Reveal>
+              <Reveal delay={0.3}>
+                <p className="text-sm md:text-base text-gray-400 font-sans">{currentAboutData.labels?.experienceSubtitle || 'Perjalanan karir dan pengalaman profesional'}</p>
+              </Reveal>
+            </motion.div>
+          </div>
+
+          {/* Stats & Testimonials Section */}
+          <div className="mb-0">
+            <div className="space-y-6">
+              <div className="text-center flex flex-col items-center">
+                <Reveal>
+                  <div className="inline-block bg-white/10 px-4 py-2 rounded-full mb-4 border border-white/10">
+                    <h3 className="text-lg font-medium text-white font-sans italic">
+                      {currentAboutData.labels?.freelanceTitle || 'Freelance Experience'}
+                    </h3>
+                  </div>
+                </Reveal>
+
+                {/* Horizontal Counter Animation */}
+                <div className="mb-8">
+                  <HorizontalCounterAnimation />
+                </div>
+
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </SectionWrapper>
+
+      {/* Work Experience Section - Full Width Container */}
+      <SectionWrapper
+        id="experience-gallery"
+        className="pb-20 md:pb-32 lg:pb-40 bg-[#0a0a0a]"
+      >
+        <div className="w-full px-4 md:px-8">
+          <div className="text-center flex flex-col items-center mb-8 max-w-7xl mx-auto">
+            <Reveal>
+              <div className="inline-block bg-white/10 px-4 py-2 rounded-full border border-white/10">
+                <h3 className="text-lg font-medium text-white font-sans italic">
+                  {currentAboutData.labels?.workExperienceTitle || 'Work Experience'}
+                </h3>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* Work Experience - Expandable Cards */}
+          <div className="w-full">
+            <ExpandableCards
+              cards={expandableCardsData}
+            />
+          </div>
+
+          {/* Testimoni Horizontal - Moved Here */}
+          <div className="w-full max-w-7xl mx-auto px-4 mt-20 md:mt-32">
+            <Reveal delay={0.2}>
+              <HorizontalTestimonial />
+            </Reveal>
+          </div>
+        </div>
+      </SectionWrapper>
+
+      <SectionWrapper
+        id="skills"
+        className="pt-12 pb-6 md:pt-16 md:pb-8 lg:pt-20 lg:pb-12 flex items-center justify-center lg:min-h-[60vh] bg-[#0a0a0a]"
+      >
+        <div className="w-full max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 xl:gap-20 items-start">
+
+            {/* Grid Kiri - Hard Skills */}
+            <div className="space-y-6">
+              <motion.div
+                className="text-left w-full flex flex-col items-center md:items-start"
+                initial={{ x: -100, opacity: 0 }}
+                whileInView={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
+                <Reveal overflowVisible={true}>
+                  <div className="inline-block bg-white/10 px-6 py-2 rounded-full mb-6 border border-white/10">
+                    <h2 className="text-lg font-medium text-white font-sans italic">
+                      Hard Skill
+                    </h2>
+                  </div>
+                </Reveal>
+
+                {/* Hard Skills Accordion - New Design */}
+                <div className="w-full">
+                  <Reveal delay={0.3} width="100%">
+                    <HardSkillsAccordion />
+                  </Reveal>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Grid Kanan - Soft Skills (Standard Width) */}
+            <div className="space-y-8 mt-8 md:mt-10 lg:mt-0">
+              <motion.div
+                className="text-left w-full flex flex-col items-center md:items-start"
+                initial={{ x: 100, opacity: 0 }}
+                whileInView={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
+                <div className="flex justify-start w-full max-w-md">
+                  <Reveal overflowVisible={true}>
+                    <div className="inline-block bg-white/10 px-6 py-2 rounded-full mb-8 border border-white/10">
+                      <h2 className="text-lg font-medium text-white font-sans italic">
+                        Soft Skill
+                      </h2>
+                    </div>
+                  </Reveal>
+                </div>
+
+                {/* Soft Skills Description */}
+                <div className="mb-6 flex justify-start">
+                  <motion.div
+                    className="inline-block border border-gray-800 bg-white/5 px-5 py-3 md:px-8 md:py-4 rounded-[30px] md:rounded-[50px] shadow-sm hover:shadow-md transition-shadow max-w-[90%] md:max-w-3xl hover:bg-white/10"
+                    whileHover={{ y: -5 }}
+                  >
+                    <div className="text-sm md:text-base text-gray-300 font-sans italic text-left">
+                      {currentSoftSkillDescription}
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* TextMorph - has its own animation, no Reveal needed */}
+                <div className="w-full overflow-hidden flex justify-start">
+                  <div className="origin-left transform scale-[0.85] md:scale-100 w-[115%] md:w-full">
+                    <TextMorph
+                      texts={currentAboutData.softSkills?.texts || softSkills.texts}
+                      descriptions={currentAboutData.softSkills?.descriptions || softSkills.descriptions}
+                      className=""
+                      morphTime={1}
+                      cooldownTime={0.25}
+                      onDescriptionChange={setCurrentSoftSkillDescription}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+          </div>
+        </div>
+      </SectionWrapper>
+
+      {/* Running Text Section - Moved Here */}
+      <RunningTextSection />
+
       {/* Sticky Gallery Stack Section with Side Text */}
-      <div id="professional" ref={stackSectionRef} className="relative z-20 bg-[#0a0a0a] border-b border-gray-800">
+      <div id="professional" ref={stackSectionRef} className="relative z-20 bg-[#0a0a0a]">
         <div className="max-w-[1920px] mx-auto">
           <div className="grid grid-cols-1 xl:grid-cols-12">
 
@@ -780,175 +952,6 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
           </div>
         </div>
       </div>
-
-      <SectionWrapper
-        id="skills"
-        className="pt-12 pb-6 md:pt-16 md:pb-8 lg:pt-20 lg:pb-12 flex items-center justify-center lg:min-h-[60vh] bg-white border-b border-gray-200"
-      >
-        <div className="w-full max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 xl:gap-20 items-start">
-
-            {/* Grid Kiri - Hard Skills */}
-            <div className="space-y-6">
-              <motion.div
-                className="text-left w-full flex flex-col items-center md:items-start"
-                initial={{ x: -100, opacity: 0 }}
-                whileInView={{ x: 0, opacity: 1 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              >
-                <Reveal overflowVisible={true}>
-                  <div className="inline-block bg-black px-6 py-2 rounded-full mb-6">
-                    <h2 className="text-lg font-medium text-white font-sans italic">
-                      Hard Skill
-                    </h2>
-                  </div>
-                </Reveal>
-
-                {/* Hard Skills Accordion - New Design */}
-                <div className="w-full">
-                  <Reveal delay={0.3} width="100%">
-                    <HardSkillsAccordion />
-                  </Reveal>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Grid Kanan - Soft Skills (Standard Width) */}
-            <div className="space-y-8 mt-8 md:mt-10 lg:mt-0">
-              <motion.div
-                className="text-left w-full flex flex-col items-center md:items-start"
-                initial={{ x: 100, opacity: 0 }}
-                whileInView={{ x: 0, opacity: 1 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              >
-                <div className="flex justify-start w-full max-w-md">
-                  <Reveal overflowVisible={true}>
-                    <div className="inline-block bg-black px-6 py-2 rounded-full mb-8">
-                      <h2 className="text-lg font-medium text-white font-sans italic">
-                        Soft Skill
-                      </h2>
-                    </div>
-                  </Reveal>
-                </div>
-
-                {/* Soft Skills Description */}
-                <div className="mb-6 flex justify-start">
-                  <motion.div
-                    className="inline-block border border-gray-300 bg-white px-5 py-3 md:px-8 md:py-4 rounded-[30px] md:rounded-[50px] shadow-sm hover:shadow-md transition-shadow max-w-[90%] md:max-w-3xl"
-                    whileHover={{ y: -5 }}
-                  >
-                    <div className="text-sm md:text-base text-gray-600 font-sans italic text-left">
-                      {currentSoftSkillDescription}
-                    </div>
-                  </motion.div>
-                </div>
-
-                {/* TextMorph - has its own animation, no Reveal needed */}
-                <div className="w-full overflow-hidden flex justify-start">
-                  <div className="origin-left transform scale-[0.85] md:scale-100 w-[115%] md:w-full">
-                    <TextMorph
-                      texts={currentAboutData.softSkills?.texts || softSkills.texts}
-                      descriptions={currentAboutData.softSkills?.descriptions || softSkills.descriptions}
-                      className=""
-                      morphTime={1}
-                      cooldownTime={0.25}
-                      onDescriptionChange={setCurrentSoftSkillDescription}
-                    />
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-          </div>
-        </div>
-      </SectionWrapper>
-
-
-      <SectionWrapper
-        id="experience"
-        className="pt-8 pb-20 md:pt-12 md:pb-32 lg:pt-14 lg:pb-40 bg-white"
-      >
-        <div className="w-full max-w-7xl mx-auto px-4">
-          <div className="text-left mb-12">
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Reveal>
-                <h2 className="text-3xl md:text-4xl font-sans font-bold text-black mb-4">{currentAboutData.labels?.experienceTitle || 'Experience'}</h2>
-              </Reveal>
-              <Reveal delay={0.3}>
-                <p className="text-sm md:text-base text-gray-600 font-sans">{currentAboutData.labels?.experienceSubtitle || 'Perjalanan karir dan pengalaman profesional'}</p>
-              </Reveal>
-            </motion.div>
-          </div>
-
-          {/* Experience Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-
-            {/* Grid Kiri - Statistics & Testimoni (No Reveal to prevent overlap) */}
-            <div className="space-y-6">
-              <div className="text-left">
-                <div className="inline-block bg-black px-4 py-2 rounded-full mb-4">
-                  <h3 className="text-lg font-medium text-white font-sans italic">
-                    {currentAboutData.labels?.freelanceTitle || 'Freelance Experience'}
-                  </h3>
-                </div>
-
-                {/* Horizontal Counter Animation */}
-                <div className="mb-6">
-                  <HorizontalCounterAnimation />
-                </div>
-
-                {/* Testimoni Horizontal */}
-                <div className="mt-6">
-                  <HorizontalTestimonial />
-                </div>
-              </div>
-            </div>
-
-            {/* Grid Kanan - Work Experience (Swaying Gallery) */}
-            <div className="space-y-6 mt-14 md:mt-16 lg:mt-0">
-              <div>
-                <div className="text-left mb-4">
-                  <Reveal>
-                    <div className="inline-block bg-black px-4 py-2 rounded-full">
-                      <h3 className="text-lg font-medium text-white font-sans italic">
-                        {currentAboutData.labels?.workExperienceTitle || 'Work Experience'}
-                      </h3>
-                    </div>
-                  </Reveal>
-                </div>
-
-                {/* Swaying Gallery - 6 photos with swing effect */}
-                <div className="space-y-3">
-                  {experienceError && (
-                    <p className="text-sm text-amber-600">
-                      Menampilkan data pengalaman bawaan karena: {experienceErrorDetail instanceof Error ? experienceErrorDetail.message : 'data tidak tersedia'}.
-                    </p>
-                  )}
-                  <Reveal delay={0.3} overflowVisible={true}>
-                    <SwayingGallery
-                      images={workExperienceForGallery.map((experience, index) => ({
-                        src: experience.imageUrl,
-                        alt: `Work Experience ${index + 1}`,
-                        title: experience.year,
-                        duration: experience.duration,
-                        description: `${experience.company} - ${experience.position}`,
-                        // Tampilkan maksimal 3 poin jobdesk agar lebih informatif
-                        jobDetails: experience.description?.slice(0, 3) ?? []
-                      }))}
-                      className="w-full h-auto min-h-[820px] md:min-h-0 md:h-auto"
-                    />
-                  </Reveal>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </SectionWrapper>
 
 
 

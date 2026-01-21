@@ -6,10 +6,10 @@ import Providers from '@/components/layout/Providers';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { LastUpdatedProvider } from '@/contexts/LastUpdatedContext';
 import { NavbarVisibilityProvider } from '@/contexts/NavbarVisibilityContext';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import AppWrapper from '@/components/layout/AppWrapper';
 import ClientLayout from '@/components/layout/ClientLayout';
-import UnregisterSW from '@/components/UnregisterSW';
+import UnregisterSW from '@/components/shared/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {

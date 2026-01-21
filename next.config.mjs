@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable React Compiler for automatic optimization
+  reactCompiler: false,
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
@@ -20,6 +22,14 @@ const nextConfig = {
     // Modern image formats for better compression
     formats: ['image/avif', 'image/webp'],
   },
+  // Transpile heavy 3D packages to avoid build errors
+  transpilePackages: [
+    'three',
+    '@react-three/fiber',
+    '@react-three/drei',
+    '@splinetool/r3f-spline',
+    '@splinetool/loader'
+  ],
   // Enable production source maps for better error tracking
   productionBrowserSourceMaps: true,
   // Optimize static assets
@@ -50,24 +60,9 @@ const nextConfig = {
   },
   // Simplified webpack configuration - disabled to fix ChunkLoadError
   // webpack: (config, { dev, isServer }) => {
-  //   // Only apply optimizations in production
-  //   if (!dev && !isServer) {
-  //     config.optimization.splitChunks = {
-  //       chunks: 'all',
-  //       cacheGroups: {
-  //         default: {
-  //           minChunks: 2,
-  //           priority: -20,
-  //           reuseExistingChunk: true,
-  //         },
-  //         vendor: {
-  //           test: /[\\/]node_modules[\\/]/,
-  //           name: 'vendors',
-  //           priority: -10,
-  //           chunks: 'all',
-  //         },
-  //       },
-  //     }
+  //   // Disable minification to fix Spline build issue
+  //   if (!dev) {
+  //     config.optimization.minimize = false;
   //   }
   //   return config
   // },

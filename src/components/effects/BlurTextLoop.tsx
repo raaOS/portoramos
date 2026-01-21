@@ -8,6 +8,7 @@ interface BlurTextLoopProps {
     initialDelay?: number;
     direction?: 'top' | 'bottom';
     totalSegmentCount?: number; // Prop for synchronization
+    style?: React.CSSProperties;
 }
 
 /**
@@ -21,6 +22,7 @@ const BlurTextLoop = ({
     initialDelay = 0,
     direction = 'top',
     totalSegmentCount,
+    style,
 }: BlurTextLoopProps) => {
     // State to trigger animation ONLY after mount
     const [runAnimation, setRunAnimation] = useState(false);
@@ -40,7 +42,7 @@ const BlurTextLoop = ({
     const totalCycle = 6.0;
 
     return (
-        <span className={className}>
+        <span className={className} style={style}>
             {segments.map((segment, index) => {
                 // Keyframes (Normalized 0-1)
                 // 0.0 -> 0.15: Enter (Fade In + Blur Out + Slide Up)

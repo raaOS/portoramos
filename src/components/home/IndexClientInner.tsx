@@ -4,8 +4,8 @@ import type { Project } from '@/types/projects'
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
-import SearchBar from '@/components/SearchBar'
-import MasonryGrid from '@/components/MasonryGrid'
+import SearchBar from '@/components/ui/SearchBar'
+import MasonryGrid from '@/components/layout/MasonryGrid'
 
 type Props = {
   projects: Project[]

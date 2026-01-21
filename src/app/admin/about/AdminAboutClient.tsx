@@ -343,6 +343,10 @@ function HeroSectionForm({
   const [formData, setFormData] = useState({
     title: data.title || '',
     backgroundTrail: initialTrail,
+    backgroundColor: data.backgroundColor || '',
+    textColor: data.textColor || '',
+    ballColor: data.ballColor || '',
+    capColor: data.capColor || '',
     availability: {
       status: data.availability?.status || 'available',
       text: data.availability?.text || 'Available for new projects'
@@ -361,6 +365,10 @@ function HeroSectionForm({
     onUpdate({
       title: formData.title,
       backgroundTrail: formData.backgroundTrail,
+      backgroundColor: formData.backgroundColor,
+      textColor: formData.textColor,
+      ballColor: formData.ballColor,
+      capColor: formData.capColor,
       availability: formData.availability
     });
   };
@@ -369,7 +377,7 @@ function HeroSectionForm({
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">Hero Section</h3>
-        <p className="text-sm text-gray-600 mb-4">Atur judul utama dan efek trail di background.</p>
+        <p className="text-sm text-gray-600 mb-4">Atur judul utama, warna, dan efek trail di background.</p>
         <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
 
           <div>
@@ -381,6 +389,84 @@ function HeroSectionForm({
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             />
+          </div>
+
+          <div className="bg-white p-4 rounded border border-gray-200">
+            <h4 className="text-sm font-medium text-gray-900 mb-4 block">Color Customization</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+              <div className="flex flex-col gap-2 min-w-0">
+                <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none">Background</label>
+                <div className="flex items-center gap-2 bg-white border border-gray-200 p-1.5 rounded-lg shadow-sm w-full overflow-hidden">
+                  <input
+                    type="color"
+                    value={formData.backgroundColor || '#e6eaf5'}
+                    onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
+                    className="h-7 w-7 flex-shrink-0 p-0 border-0 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={formData.backgroundColor}
+                    onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
+                    placeholder="Default"
+                    className="min-w-0 flex-1 text-[10px] border-0 focus:ring-0 p-0 text-gray-400 font-mono"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 min-w-0">
+                <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none">Text Color</label>
+                <div className="flex items-center gap-2 bg-white border border-gray-200 p-1.5 rounded-lg shadow-sm w-full overflow-hidden">
+                  <input
+                    type="color"
+                    value={formData.textColor || '#000000'}
+                    onChange={(e) => setFormData({ ...formData, textColor: e.target.value })}
+                    className="h-7 w-7 flex-shrink-0 p-0 border-0 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={formData.textColor}
+                    onChange={(e) => setFormData({ ...formData, textColor: e.target.value })}
+                    placeholder="#000000"
+                    className="min-w-0 flex-1 text-[10px] border-0 focus:ring-0 p-0 text-gray-400 font-mono"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 min-w-0">
+                <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none">Ball Color</label>
+                <div className="flex items-center gap-2 bg-white border border-gray-200 p-1.5 rounded-lg shadow-sm w-full overflow-hidden">
+                  <input
+                    type="color"
+                    value={formData.ballColor || '#FEDDD8'}
+                    onChange={(e) => setFormData({ ...formData, ballColor: e.target.value })}
+                    className="h-7 w-7 flex-shrink-0 p-0 border-0 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={formData.ballColor}
+                    onChange={(e) => setFormData({ ...formData, ballColor: e.target.value })}
+                    placeholder="#FEDDD8"
+                    className="min-w-0 flex-1 text-[10px] border-0 focus:ring-0 p-0 text-gray-400 font-mono"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 min-w-0">
+                <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none">Cap Color</label>
+                <div className="flex items-center gap-2 bg-white border border-gray-200 p-1.5 rounded-lg shadow-sm w-full overflow-hidden">
+                  <input
+                    type="color"
+                    value={formData.capColor || '#F6A77B'}
+                    onChange={(e) => setFormData({ ...formData, capColor: e.target.value })}
+                    className="h-7 w-7 flex-shrink-0 p-0 border-0 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={formData.capColor}
+                    onChange={(e) => setFormData({ ...formData, capColor: e.target.value })}
+                    placeholder="#F6A77B"
+                    className="min-w-0 flex-1 text-[10px] border-0 focus:ring-0 p-0 text-gray-400 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="bg-white p-4 rounded border border-gray-200">

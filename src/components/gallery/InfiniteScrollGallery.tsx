@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useInView } from 'react-intersection-observer';
-import OptimizedCard from '@/components/OptimizedCard';
+import OptimizedCard from '@/components/shared/OptimizedCard';
 import type { Project } from '@/types/projects';
 import { Loader2 } from 'lucide-react';
 

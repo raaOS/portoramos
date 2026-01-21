@@ -1,6 +1,7 @@
 import { ProjectFormData } from '@/hooks/useProjectForm';
 import { Loader2 } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
+import { useEffect, useRef } from 'react';
 
 interface ProjectMediaUploadProps {
     formData: ProjectFormData;
@@ -16,6 +17,33 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
             updateField('cover', urls[0]);
         }
     };
+
+    // [Deep Audit] Memory Leak Prevention
+    // Revoke Blob URLs when they are replaced or component unmounts
+    // This prevents memory bloat during heavy editing sessions.
+    const prevCover = useRef(formData.cover);
+    const prevBefore = useRef(formData.comparison?.beforeImage);
+    const prevAfter = useRef(formData.comparison?.afterImage);
+
+    useEffect(() => {
+        const checkAndRevoke = (current: string | undefined, prevRef: React.MutableRefObject<string | undefined>) => {
+            if (prevRef.current && prevRef.current !== current && prevRef.current.startsWith('blob:')) {
+                URL.revokeObjectURL(prevRef.current);
+            }
+            prevRef.current = current;
+        };
+
+        checkAndRevoke(formData.cover, prevCover);
+        checkAndRevoke(formData.comparison?.beforeImage, prevBefore);
+        checkAndRevoke(formData.comparison?.afterImage, prevAfter);
+
+        return () => {
+            // Cleanup on unmount (only if blob)
+            if (prevCover.current?.startsWith('blob:')) URL.revokeObjectURL(prevCover.current);
+            if (prevBefore.current?.startsWith('blob:')) URL.revokeObjectURL(prevBefore.current);
+            if (prevAfter.current?.startsWith('blob:')) URL.revokeObjectURL(prevAfter.current);
+        };
+    }, [formData.cover, formData.comparison?.beforeImage, formData.comparison?.afterImage]);
 
     return (
         <div className="space-y-4">
@@ -85,7 +113,99 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                     />
                 </div>
             </div>
+
+            {/* Comparison Media Section */}
+            <div className="pt-6 border-t border-gray-100">
+                <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                    Comparison Media (Before & After)
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Before Image */}
+                    <div>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-xs font-medium text-gray-700">Before Image (Original)</label>
+                            <select
+                                value={formData.comparison?.beforeType || 'image'}
+                                onChange={(e) => updateField('comparison', {
+                                    ...formData.comparison,
+                                    beforeType: e.target.value as 'image' | 'video'
+                                })}
+                                className="text-[10px] border-gray-300 rounded py-0.5 px-2 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            >
+                                <option value="image">Image</option>
+                                <option value="video">Video</option>
+                            </select>
+                        </div>
+                        <div className="flex gap-2 items-center mb-2">
+                            <input
+                                type="text"
+                                value={formData.comparison?.beforeImage || ''}
+                                onChange={(e) => updateField('comparison', { ...formData.comparison, beforeImage: e.target.value })}
+                                className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                placeholder="/assets/..."
+                            />
+                        </div>
+                        <AdminFileUpload
+                            onUpload={(urls) => {
+                                if (urls.length > 0) updateField('comparison', { ...formData.comparison, beforeImage: urls[0] });
+                            }}
+                            onFileSelect={(file) => {
+                                const url = URL.createObjectURL(file);
+                                updateField('comparison', { ...formData.comparison, beforeImage: url });
+                                if (onFileChange) onFileChange(file);
+                            }}
+                            autoUpload={true}
+                            multiple={false}
+                            accept="image/*,video/*"
+                            maxSize={500}
+                            className="mt-1"
+                            folder="comparisons"
+                            customFilename={slug ? `${slug}-before` : undefined}
+                        />
+                        {!slug && <p className="text-[10px] text-orange-500 mt-1">Enter title/slug first for auto-naming</p>}
+                    </div>
+
+                    {/* After Image */}
+                    <div>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-xs font-medium text-gray-700">After Image (Result)</label>
+                            <select
+                                value={formData.comparison?.afterType || 'image'}
+                                onChange={(e) => updateField('comparison', {
+                                    ...formData.comparison,
+                                    afterType: e.target.value as 'image' | 'video'
+                                })}
+                                className="text-[10px] border-gray-300 rounded py-0.5 px-2 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            >
+                                <option value="image">Image</option>
+                                <option value="video">Video</option>
+                            </select>
+                        </div>
+                        <div className="flex gap-2 items-center mb-2">
+                            <input
+                                type="text"
+                                value={formData.comparison?.afterImage || ''}
+                                onChange={(e) => updateField('comparison', { ...formData.comparison, afterImage: e.target.value })}
+                                className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                placeholder="/assets/..."
+                            />
+                        </div>
+                        <AdminFileUpload
+                            onUpload={(urls) => {
+                                if (urls.length > 0) updateField('comparison', { ...formData.comparison, afterImage: urls[0] });
+                            }}
+                            autoUpload={true}
+                            multiple={false}
+                            accept="image/*,video/*"
+                            maxSize={500}
+                            className="mt-1"
+                            customFilename={slug ? `${slug}-after` : undefined}
+                        />
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
-

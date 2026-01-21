@@ -121,4 +121,5 @@ export interface CreateProjectData {
 
 export interface UpdateProjectData extends Partial<CreateProjectData> {
   id: string;
+  slug?: string;
 }

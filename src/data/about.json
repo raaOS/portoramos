@@ -65,8 +65,12 @@
     ],
     "availability": {
       "status": "available",
-      "text": "Available for new projects"
-    }
+      "text": "Available for new Jobs"
+    },
+    "backgroundColor": "",
+    "textColor": "",
+    "ballColor": "#feb4b4",
+    "capColor": "#ff8080"
   },
   "professional": {
     "contacts": {
@@ -121,5 +125,5 @@
       }
     ]
   },
-  "lastUpdated": "2026-01-11T10:53:39.391Z"
+  "lastUpdated": "2026-01-15T14:45:20.095Z"
 }

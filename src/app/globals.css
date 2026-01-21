@@ -402,8 +402,9 @@ body {
 }
 
 /* Smooth scrolling behavior */
+/* Smooth scrolling behavior - Disabled to prevent conflict with Lenis and Layout Animations */
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 /* Masonry Grid Styles */
@@ -587,8 +588,15 @@ html {
 
 /* Base Fade In Animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fadeIn {
@@ -596,18 +604,23 @@ html {
 }
 
 /* Lenis Recommended CSS */
-html.lenis, html.lenis body {
+html.lenis,
+html.lenis body {
   height: auto;
 }
+
 .lenis.lenis-smooth {
   scroll-behavior: auto !important;
 }
+
 .lenis.lenis-smooth [data-lenis-prevent] {
   overscroll-behavior: contain;
 }
+
 .lenis.lenis-stopped {
   overflow: hidden;
 }
+
 .lenis.lenis-scrolling iframe {
   pointer-events: none;
 }

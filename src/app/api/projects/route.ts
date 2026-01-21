@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod'; // Import Zod
 import { CreateProjectData } from '@/types/projects';
 import { checkAdminAuth } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
@@ -92,11 +93,62 @@ export async function POST(request: NextRequest) {
     // [STICKY NOTE] SMART MOVE: Temp -> Permanent
     // If cover image is in /temp/, move it to /assets/projects/ and rename it to [slug].ext
     if (newProject.cover && newProject.cover.startsWith('/temp/')) {
-      const newCover = await finalizeMedia(newProject.cover, newProject.slug);
+      const newCover = await finalizeMedia(newProject.cover, newProject.slug, 'projects', '');
       if (newCover !== newProject.cover) {
-        await projectService.updateProject(newProject.id, { id: newProject.id, cover: newCover });
-        newProject.cover = newCover; // Update response
+        newProject.cover = newCover;
       }
+    }
+
+    // Process Comparison Images
+    if (newProject.comparison) {
+      let hasCompChanges = false;
+
+      // Before Image -> /assets/projects/comparisons/[slug]-before.ext
+      if (newProject.comparison.beforeImage && newProject.comparison.beforeImage.startsWith('/temp/')) {
+        const newBefore = await finalizeMedia(
+          newProject.comparison.beforeImage,
+          newProject.slug,
+          'projects/comparisons',
+          '-before'
+        );
+        if (newBefore !== newProject.comparison.beforeImage) {
+          newProject.comparison.beforeImage = newBefore;
+          hasCompChanges = true;
+        }
+      }
+
+      // After Image -> /assets/projects/[slug]-after.ext (Separate from main cover to avoid conflict)
+      if (newProject.comparison.afterImage && newProject.comparison.afterImage.startsWith('/temp/')) {
+        const newAfter = await finalizeMedia(
+          newProject.comparison.afterImage,
+          newProject.slug,
+          'projects',
+          '-after' // Suffix to distinguish from main cover if separate
+        );
+        if (newAfter !== newProject.comparison.afterImage) {
+          newProject.comparison.afterImage = newAfter;
+          hasCompChanges = true;
+        }
+      }
+
+      // We already have newProject object which we will return, but we need to ensure it's saved correctly.
+      // `createProject` handled the initial save.
+      // If we changed paths, we need to update the project again.
+      if (hasCompChanges || (newProject.cover !== body.cover)) { // check both
+        await projectService.updateProject(newProject.id, {
+          id: newProject.id,
+          cover: newProject.cover,
+          comparison: newProject.comparison
+        });
+      }
+    } else if (newProject.cover !== body.cover) {
+      // Case where only cover changed and no comparison (covered by if above logically but need separate update call execution structure)
+      // Actually `createProject` returns the object. We modify it here.
+      // We must save it.
+      await projectService.updateProject(newProject.id, {
+        id: newProject.id,
+        cover: newProject.cover
+      });
     }
 
     // --- Auto-Generate Comments ---
@@ -155,6 +207,13 @@ export async function POST(request: NextRequest) {
       project: newProject,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.warn('Validation Error:', error.format());
+      return NextResponse.json(
+        { error: 'Validation Failed', details: error.format() },
+        { status: 400 }
+      );
+    }
     console.error('Error creating project:', error);
     return NextResponse.json(
       { error: 'Failed to create project' },
@@ -163,7 +222,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function finalizeMedia(url: string, slug: string): Promise<string> {
+async function finalizeMedia(
+  url: string,
+  slug: string,
+  subDir: string = 'projects',
+  suffix: string = ''
+): Promise<string> {
   if (!url || !url.startsWith('/temp/')) return url;
 
   try {
@@ -173,9 +237,16 @@ async function finalizeMedia(url: string, slug: string): Promise<string> {
 
     if (!fs.existsSync(oldPath)) return url;
 
+    // Use original extension
     const ext = path.extname(url);
-    const newFilename = `${slug}${ext}`;
-    const targetDir = path.join(publicDir, 'assets', 'projects');
+    const newFilename = `${slug}${suffix}${ext}`;
+
+    // Construct target directory: public/assets/projects OR public/assets/projects/comparisons
+    // If subDir is "projects", it goes to public/assets/projects
+    // If subDir is "comparisons", it goes to public/assets/projects/comparisons
+    // Let's make subDir relative to public/assets/
+
+    const targetDir = path.join(publicDir, 'assets', subDir);
 
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true });
@@ -183,9 +254,12 @@ async function finalizeMedia(url: string, slug: string): Promise<string> {
 
     const newPath = path.join(targetDir, newFilename);
 
+    // If file exists, overwrite (or maybe backup? overwrite is fine for CRUD)
+    // Rename moves the file
     await fs.promises.rename(oldPath, newPath);
 
-    return `/assets/projects/${newFilename}`;
+    // Return relative path
+    return `/assets/${subDir}/${newFilename}`;
   } catch (e) {
     console.error('Finalize Media Error:', e);
     return url;

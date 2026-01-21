@@ -1,0 +1,77 @@
+/* Interactive Card Styles */
+.container-cards {
+    position: relative;
+    perspective: 1500px;
+    width: 280px;
+    height: 380px;
+    margin: 0 auto;
+    /* Ensure the container doesn't block hover events on children if needed, 
+       though mainly the card itself handles interaction now. */
+}
+
+/* Card Base */
+.card {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1rem;
+    color: #ffffff;
+    background-color: transparent;
+    box-shadow: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    overflow: hidden;
+    z-index: 10;
+    /* Transform is now handled by Framer Motion inline styles */
+    will-change: transform;
+}
+
+/* Background Effects */
+.card::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    background-color: #ffffff;
+    filter: blur(50px);
+    opacity: 0.05;
+    z-index: -1;
+    animation: animation-card-shadow 10s linear infinite;
+    transition: all 0.5s ease;
+}
+
+/* Removing inner white box */
+.card::after {
+    content: "";
+    position: absolute;
+    inset: 1.5px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 1rem;
+    z-index: -1;
+}
+
+/* Dynamic Glare/Shadow Overlay */
+.light-shadow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: 1rem;
+    z-index: 20;
+    /* Background gradient will be set dynamically via JS for the glare effect */
+    mix-blend-mode: overlay;
+    opacity: 0;
+    /* Default hidden, revealed by motion */
+    transition: opacity 0.2s ease;
+}
+
+@keyframes animation-card-shadow {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}

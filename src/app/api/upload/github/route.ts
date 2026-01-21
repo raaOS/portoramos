@@ -43,15 +43,27 @@ export async function POST(req: NextRequest) {
         let uploadFolder: string;
 
         if (customFilename) {
-            // Smart Upload: Use slug and target projects folder directly (Skip temp/move/rename dance)
-            // This solves "Vercel can't rename files" issue.
+            // Smart Upload: Use slug and target projects folder directly
             finalFilename = `${customFilename}.${ext}`;
-            uploadFolder = 'public/assets/projects';
+
+            // Determine folder based on param or default
+            if (folderParam === 'comparisons') {
+                uploadFolder = 'public/assets/projects/comparisons';
+            } else {
+                uploadFolder = 'public/assets/projects';
+            }
         } else {
             // Standard Upload
             const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-').toLowerCase();
             finalFilename = `${Date.now()}-${cleanName}`;
-            uploadFolder = folderParam === 'temp' ? 'public/temp' : 'public/assets/projects';
+
+            if (folderParam === 'temp') {
+                uploadFolder = 'public/temp';
+            } else if (folderParam === 'comparisons') {
+                uploadFolder = 'public/assets/projects/comparisons';
+            } else {
+                uploadFolder = 'public/assets/projects';
+            }
         }
 
         const path = `${uploadFolder}/${finalFilename}`;
@@ -100,7 +112,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             url: rawUrl,
-            publicPath: `/${path}`, // Helpful for storing in DB if we want relative
+            publicPath: path.replace(/^public/, ''), // Strip 'public' prefix to make it a valid Next.js asset path
             githubPath: data.content.path
         });
 

@@ -7,7 +7,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Media from '@/components/shared/Media';
 import { resolveCover, resolveGallery } from '@/lib/images';
-import ReadMoreDescription from '@/components/ReadMoreDescription';
+import ReadMoreDescription from '@/components/ui/ReadMoreDescription';
+import { Compare } from '@/components/ui/compare';
 
 interface ProjectDetailInlineProps {
     project: Project;
@@ -90,6 +91,23 @@ export default function ProjectDetailInline({ project, onClose }: ProjectDetailI
                                 className="w-full h-full object-cover"
                             />
                         </div>
+
+                        {/* Comparison View (Before/After) */}
+                        {project.comparison && (
+                            <div className="w-full p-4 bg-black/5 dark:bg-black/20">
+                                <h3 className="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider">Before & After</h3>
+                                <div className="w-full flex justify-center">
+                                    <Compare
+                                        firstImage={project.comparison.beforeImage}
+                                        secondImage={project.comparison.afterImage}
+                                        firstImageClassName="object-cover object-left-top"
+                                        secondImageClassname="object-cover object-left-top"
+                                        className="h-[250px] w-full md:h-[400px]"
+                                        slideMode="hover"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {/* Gallery thumbnails */}
                         {gallery && gallery.length > 0 && (

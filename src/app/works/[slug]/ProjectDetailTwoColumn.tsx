@@ -4,21 +4,16 @@ import type { Project, GalleryItem } from '@/types/projects';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
-import MasonryGrid from '@/components/MasonryGrid';
+import MasonryGrid from '@/components/layout/MasonryGrid';
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest';
-import ReadMoreDescription from '@/components/ReadMoreDescription';
-import ShareButtons from '@/components/features/ShareButtons';
+import ReadMoreDescription from '@/components/ui/ReadMoreDescription';
 import AITranslator from '@/components/features/AITranslator';
 import CommentSection from '@/components/features/CommentSection';
 import type { Comment } from '@/lib/magic';
-import ComparisonSlider from './components/ComparisonSlider';
 import ProjectCTA from './components/ProjectCTA';
 import Media from '@/components/shared/Media';
-
-// Adjusted path for CoverFlowGallery - Assuming it exists here based on previous search
-// CoverFlowGallery removed - replaced by ComparisonSlider (Pro Player)
+import { Compare } from '@/components/ui/compare';
 
 interface ProjectDetailTwoColumnProps {
     project: Project;
@@ -35,20 +30,13 @@ export default function ProjectDetailTwoColumn({
     ratio,
     otherProjects
 }: ProjectDetailTwoColumnProps) {
-    const [videoRef, setVideoRef] = useState<React.RefObject<HTMLVideoElement> | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
-
     const [isProjectLiked, setIsProjectLiked] = useState(false);
-    const [isLoaded, setIsLoaded] = useState(false);
     const [metrics, setMetrics] = useState({ likes: 0, shares: 0 });
+    const [isLoaded, setIsLoaded] = useState(false);
 
-    // [STICKY NOTE] CLIENT-SIDE HYDRATION
-    // Halaman ini awalnya Static (dari Server).
-    // Tapi kita perlu data Live seperti Likes & Comments.
-    // useEffect ini berjalan di browser untuk mengambil data terbaru itu tanpa melambatkan loading awal.
     useEffect(() => {
         const initData = async () => {
-            // 1. Load User Preference (Local) - Sync
             if (typeof window !== 'undefined') {
                 const savedLike = localStorage.getItem(`like-${project.slug}`);
                 if (savedLike === 'true') {
@@ -56,7 +44,6 @@ export default function ProjectDetailTwoColumn({
                 }
             }
 
-            // 2. Load Global Metrics & Comments (API) - Parallel
             try {
                 const [metricsRes, commentsRes] = await Promise.all([
                     fetch(`/api/metrics?slug=${project.slug}`),
@@ -78,13 +65,11 @@ export default function ProjectDetailTwoColumn({
                 }
             } catch (error) {
                 console.error('Failed to load project data:', error);
-                // Fail gracefully, content is already hydrated from props
             } finally {
                 setIsLoaded(true);
             }
         };
 
-        // requestIdleCallback to defer heavy JS execution if supported
         if ('requestIdleCallback' in window) {
             (window as any).requestIdleCallback(initData);
         } else {
@@ -92,23 +77,14 @@ export default function ProjectDetailTwoColumn({
         }
     }, [project.slug]);
 
-
-
-    // Handle Like Project Toggle
     const handleProjectLike = async () => {
         const newIsLiked = !isProjectLiked;
         setIsProjectLiked(newIsLiked);
-
-        // Optimistic UI update
         setMetrics(prev => ({
             ...prev,
             likes: newIsLiked ? prev.likes + 1 : Math.max(0, prev.likes - 1)
         }));
-
-        // Persist User Pref
         localStorage.setItem(`like-${project.slug}`, String(newIsLiked));
-
-        // Call API
         try {
             await fetch('/api/metrics', {
                 method: 'POST',
@@ -123,12 +99,8 @@ export default function ProjectDetailTwoColumn({
         }
     };
 
-    // Handle Share Project
     const handleProjectShare = async () => {
-        // Optimistic UI update
         setMetrics(prev => ({ ...prev, shares: prev.shares + 1 }));
-
-        // Call API
         try {
             fetch('/api/metrics', {
                 method: 'POST',
@@ -137,7 +109,6 @@ export default function ProjectDetailTwoColumn({
             });
         } catch (e) { }
 
-        // Native Share
         if (navigator.share) {
             navigator.share({
                 title: project.title,
@@ -146,20 +117,14 @@ export default function ProjectDetailTwoColumn({
             }).catch(() => { });
         } else {
             navigator.clipboard.writeText(window.location.href);
-            // Optional: Toast "Link copied!"
         }
     };
 
-    // Infinite scroll state - optimized for performance
     const INITIAL_COUNT = 12;
     const [displayedProjects, setDisplayedProjects] = useState<Project[]>(() => {
         return otherProjects.slice(0, INITIAL_COUNT);
     });
     const [isLoading, setIsLoading] = useState(false);
-    const rafRef = useRef<number | null>(null);
-
-
-    // Optimized infinite scroll with IntersectionObserver
     const observerTarget = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -167,27 +132,20 @@ export default function ProjectDetailTwoColumn({
             (entries) => {
                 if (entries[0].isIntersecting && !isLoading && otherProjects.length > 0) {
                     setIsLoading(true);
-
-                    // No RAF nesting needed, IntersectionObserver is already async-healthy
-                    // Append in batches of 24 for better performance during fast scrolling
                     const currentCount = displayedProjects.length;
                     const nextBatch: Project[] = [];
                     const BATCH_SIZE = 24;
-
                     for (let i = 0; i < BATCH_SIZE; i++) {
                         nextBatch.push(otherProjects[(currentCount + i) % otherProjects.length]);
                     }
-
                     setDisplayedProjects(prev => [...prev, ...nextBatch]);
-
-                    // Small delay to prevent double-triggering before state propagates
                     setTimeout(() => {
                         setIsLoading(false);
                     }, 50);
                 }
             },
             {
-                rootMargin: '1500px 0px', // Pre-fetch content early
+                rootMargin: '1500px 0px',
                 threshold: 0.1
             }
         );
@@ -199,9 +157,6 @@ export default function ProjectDetailTwoColumn({
         return () => observer.disconnect();
     }, [otherProjects, isLoading, displayedProjects.length]);
 
-    // Gallery logic removed
-
-    // Split projects evenly between columns with memoization
     const { columnAProjects, columnBProjects } = useMemo(() => {
         const halfIndex = Math.ceil(displayedProjects.length / 2);
         return {
@@ -215,10 +170,9 @@ export default function ProjectDetailTwoColumn({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} // Custom easing for premium feel
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="min-h-screen bg-white dark:bg-black p-3 sm:p-4 lg:p-6 transition-colors duration-300"
         >
-            {/* Back Button */}
             <Link
                 href="/"
                 className="inline-flex items-center gap-2 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white mb-4 sm:mb-6 transition-colors duration-200 touch-manipulation"
@@ -227,30 +181,23 @@ export default function ProjectDetailTwoColumn({
                 <span className="text-sm sm:text-base">Back to Projects</span>
             </Link>
 
-            {/* Two Column Layout - Responsive */}
             <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
-
-                {/* COLUMN A: Big Box + Masonry Below */}
                 <div className="lg:w-1/2 space-y-3 sm:space-y-4">
-                    {/* Big Box - Optimized for mobile */}
                     <div className="bg-white dark:bg-black rounded-lg sm:rounded-xl shadow-none border border-black/10 dark:border-white/10 transition-all duration-300 relative overflow-hidden">
-
-                        {/* New Flex Container for Horizontal Layout */}
                         <div className="flex flex-col lg:flex-row h-full">
-
-                            {/* LEFT SIDE: Media / Cover (45%) */}
                             <div className="w-full lg:w-[45%] border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-gray-900/20">
                                 <div className={`${ratio < 1 ? 'max-w-sm mx-auto' : ratio === 1 ? 'max-w-md mx-auto' : 'w-full'} p-4 lg:p-6 lg:sticky lg:top-0`}>
                                     {project.comparison && project.comparison.beforeImage ? (
-                                        <ComparisonSlider
-                                            beforeImage={project.comparison.beforeImage}
-                                            beforeType={project.comparison.beforeType}
-                                            afterImage={project.comparison.afterImage || cover.src}
-                                            afterType={project.comparison.afterImage ? project.comparison.afterType : (cover.kind === 'video' ? 'video' : 'image')}
-                                            labelBefore="Original"
-                                            labelAfter="Retouched"
-                                            aspectRatio={ratio}
-                                        />
+                                        <div className="w-full h-full relative rounded-xl overflow-hidden shadow-lg border border-black/5 dark:border-white/5 bg-gray-100 dark:bg-gray-800" style={{ aspectRatio: ratio }}>
+                                            <Compare
+                                                firstImage={project.comparison.beforeImage}
+                                                secondImage={project.comparison.afterImage || cover.src}
+                                                firstImageClassName="object-cover object-left-top"
+                                                secondImageClassname="object-cover object-left-top"
+                                                className="w-full h-full"
+                                                slideMode="hover"
+                                            />
+                                        </div>
                                     ) : (
                                         <div className="rounded-xl overflow-hidden shadow-lg border border-black/5 dark:border-white/5 bg-gray-100 dark:bg-gray-800">
                                             <Media
@@ -272,17 +219,13 @@ export default function ProjectDetailTwoColumn({
                                 </div>
                             </div>
 
-                            {/* RIGHT SIDE: Content (55%) */}
                             <div className="w-full lg:w-[55%] flex flex-col">
                                 <div className="p-4 sm:p-6 lg:p-8">
-                                    {/* Title Row */}
                                     <h1 className="text-xl sm:text-2xl lg:text-3xl font-serif font-bold text-gray-900 dark:text-white transition-colors duration-300 mb-4">
                                         {project.title}
                                     </h1>
 
-                                    {/* Actions & Metadata Row */}
                                     <div className="flex flex-col gap-6 mb-8">
-                                        {/* NEW: Metadata Grid (Role, Timeline, Team) */}
                                         {(project.role || project.timeline || project.team) && (
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4 border-y border-gray-100 dark:border-gray-800">
                                                 {project.role && (
@@ -307,12 +250,10 @@ export default function ProjectDetailTwoColumn({
                                         )}
 
                                         <div className="flex flex-wrap items-center justify-between gap-4">
-                                            {/* Left: Actions (Like, Comment, Share) */}
                                             <div className="flex items-center gap-2">
-                                                {/* LIKE BUTTON - Red if liked or has likes */}
                                                 <button
                                                     className={`p-1.5 flex items-center gap-1 rounded-full transition-all duration-200 ${isProjectLiked || metrics.likes > 0
-                                                        ? 'text-red-500' // Red if functionality active
+                                                        ? 'text-red-500'
                                                         : 'text-gray-400 hover:text-red-500'
                                                         }`}
                                                     onClick={handleProjectLike}
@@ -324,14 +265,12 @@ export default function ProjectDetailTwoColumn({
                                                     {metrics.likes > 0 && <span className="text-sm font-medium pr-1">{metrics.likes}</span>}
                                                 </button>
 
-                                                {/* COMMENT BUTTON - WhatsApp Green if has comments */}
                                                 <button
                                                     className={`p-1.5 flex items-center gap-1 rounded-full transition-all duration-200 ${comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0) > 0
                                                         ? 'text-green-600 dark:text-green-500'
                                                         : 'text-gray-400 hover:text-green-600 dark:hover:text-green-500'
                                                         }`}
                                                     onClick={() => {
-
                                                         setTimeout(() => {
                                                             document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth' });
                                                         }, 100);
@@ -348,7 +287,6 @@ export default function ProjectDetailTwoColumn({
                                                     )}
                                                 </button>
 
-                                                {/* SHARE BUTTON - Blue if has shares */}
                                                 <button
                                                     className={`p-1.5 flex items-center gap-1 rounded-full transition-all duration-200 ${metrics.shares > 0
                                                         ? 'text-blue-500'
@@ -358,18 +296,16 @@ export default function ProjectDetailTwoColumn({
                                                     aria-label="Share project"
                                                 >
                                                     <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                                                     </svg>
                                                     {metrics.shares > 0 && <span className="text-sm font-medium pr-1">{metrics.shares}</span>}
                                                 </button>
 
-                                                {/* AI TRANSLATOR */}
                                                 {project.description && (
                                                     <AITranslator text={project.description} context={`Project: ${project.title || ''}`} />
                                                 )}
                                             </div>
 
-                                            {/* Right: Metadata (Year, Client, Tags) */}
                                             <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-end">
                                                 {project.client && (
                                                     <span className="inline-flex items-center h-5 px-3 bg-gray-100 dark:bg-gray-800 rounded-full text-xs leading-none text-gray-600 dark:text-gray-400 transition-colors duration-300">
@@ -385,13 +321,8 @@ export default function ProjectDetailTwoColumn({
                                         </div>
                                     </div>
 
-
-
-
-                                    {/* Creative Breakdown / Narrative - ADAPTIVE LAYOUT */}
                                     {project.narrative && (
                                         <div className="mb-8 font-sans border-b border-gray-100 dark:border-gray-800 pb-8">
-                                            {/* COMMERCIAL LAYOUT (Strategy & Results) */}
                                             {project.type === 'commercial' && (
                                                 <div className="space-y-8">
                                                     {project.narrative.context && (
@@ -400,7 +331,6 @@ export default function ProjectDetailTwoColumn({
                                                             <p className="text-sm text-gray-600 dark:text-gray-300 italic">"{project.narrative.context}"</p>
                                                         </div>
                                                     )}
-
                                                     <div className="grid gap-6">
                                                         <div>
                                                             <h3 className="text-xs font-bold uppercase tracking-wider text-red-500 mb-2">The Challenge</h3>
@@ -415,7 +345,6 @@ export default function ProjectDetailTwoColumn({
                                                             </p>
                                                         </div>
                                                     </div>
-
                                                     {project.narrative.impact && (
                                                         <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 p-5 rounded-xl border border-green-100 dark:border-green-900/30">
                                                             <h3 className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 mb-2">The Impact</h3>
@@ -427,7 +356,6 @@ export default function ProjectDetailTwoColumn({
                                                 </div>
                                             )}
 
-                                            {/* VISUAL ART LAYOUT (Concept & Craft) - Placeholder for next step or fallback */}
                                             {(!project.type || project.type === 'visual_art') && (
                                                 <div className="space-y-6">
                                                     {(project.narrative.challenge || project.narrative.concept) && (
@@ -473,7 +401,6 @@ export default function ProjectDetailTwoColumn({
                                         </div>
                                     )}
 
-                                    {/* Comment Section (Self-Managed Accordion) */}
                                     {project.allowComments !== false && (
                                         <div className="pt-3 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300" id="comments-section">
                                             <div className="bg-white dark:bg-gray-900 rounded-lg">
@@ -490,7 +417,6 @@ export default function ProjectDetailTwoColumn({
                         </div>
                     </div>
 
-                    {/* Masonry grid below the big box (Column A) */}
                     <MasonryGrid columns="sidebar">
                         {columnAProjects.map((p: Project, index: number) => (
                             <motion.div
@@ -502,7 +428,7 @@ export default function ProjectDetailTwoColumn({
                                 transition={{
                                     duration: 0.4,
                                     ease: "easeOut",
-                                    delay: index < 2 ? 0 : 0.1 // Tiny delay for subsequent items
+                                    delay: index < 2 ? 0 : 0.1
                                 }}
                             >
                                 <ProjectCardPinterest project={p} priority={index < 4} />
@@ -511,7 +437,6 @@ export default function ProjectDetailTwoColumn({
                     </MasonryGrid>
                 </div>
 
-                {/* COLUMN B: Masonry beside the big box */}
                 <div className="lg:w-1/2">
                     <MasonryGrid columns="sidebar">
                         {columnBProjects.map((p: Project, index: number) => (
@@ -534,10 +459,8 @@ export default function ProjectDetailTwoColumn({
                 </div>
             </div>
 
-            {/* Infinite Scroll Sentinel */}
             <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
 
-            {/* Subtle loading indicator */}
             {isLoading && (
                 <div className="text-center py-6 sm:py-8 opacity-50">
                     <div className="inline-block animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-gray-400"></div>
@@ -545,7 +468,6 @@ export default function ProjectDetailTwoColumn({
                 </div>
             )}
 
-            {/* Aggressive Call to Action */}
             <ProjectCTA />
         </motion.div>
     );

@@ -1,4 +1,6 @@
 import { Project, ProjectsData, CreateProjectData, UpdateProjectData } from '@/types/projects';
+import { ProjectSchema, CreateProjectSchema, UpdateProjectSchema } from '@/lib/validations/project';
+import { z } from 'zod';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
 import { githubService } from '@/lib/github';
 import projectsData from '@/data/projects.json';
@@ -44,22 +46,45 @@ export const projectService = {
                 return { projects: [], lastUpdated: new Date().toISOString() };
             }
 
-            let projects = data.projects || [];
+            // 4. Zod Validation (Mission Critical)
+            // Even if data is loaded, we validate each project to ensure schema integrity.
+            // We use safeParse so one bad apple doesn't crash the whole app.
+            let projects = data?.projects || [];
+
+            // Filter by Status first (optimization)
             if (status) {
                 projects = projects.filter((project) => project.status === status);
             }
 
-            const sortedProjects = projects
+            // Validate and Filter Corrupt Data
+            const validProjects: Project[] = [];
+            const validationErrors: any[] = [];
+
+            projects.forEach(p => {
+                const result = ProjectSchema.safeParse(p);
+                if (result.success) {
+                    validProjects.push(result.data as unknown as Project);
+                } else {
+                    console.warn(`[ProjectService] Validation Failed for project ${p.id || 'unknown'}:`, result.error.format());
+                    validationErrors.push({ id: p.id, error: result.error });
+                }
+            });
+
+            if (validationErrors.length > 0) {
+                console.error(`[ProjectService] Skipped ${validationErrors.length} invalid projects during load.`);
+            }
+
+            const sortedProjects = validProjects
                 .slice()
                 .sort(
                     (a, b) =>
                         (a.order || 0) - (b.order || 0) ||
-                        (b.year || 0) - (a.year || 0)
+                        (b.year as number || 0) - (a.year as number || 0) // Handle string/number year
                 );
 
             return {
                 projects: sortedProjects,
-                lastUpdated: data.lastUpdated
+                lastUpdated: data?.lastUpdated || new Date().toISOString()
             };
         } catch (error) {
             console.error('Error loading projects:', error);
@@ -75,6 +100,11 @@ export const projectService = {
      * Create a new project
      */
     async createProject(data: CreateProjectData): Promise<Project> {
+        // [Zod] Validate Input (Strict)
+        // Checks 'CreateProjectData' against our Zod schema.
+        // If invalid, throws ZodError which API catches.
+        CreateProjectSchema.parse(data);
+
         const isDev = process.env.NODE_ENV === 'development';
         let currentProjects: Project[] = [];
 
@@ -96,14 +126,20 @@ export const projectService = {
             }
         }
 
+        // Generate unique slug
+        const baseSlug = data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        let slug = baseSlug;
+        let counter = 1;
+        while (currentProjects.some(p => p.slug === slug)) {
+            slug = `${baseSlug}-${counter}`;
+            counter++;
+        }
+
         // Generate new project
         const newProject: Project = {
             ...data,
             id: `project-${Date.now()}`,
-            slug: data.title
-                .toLowerCase()
-                .replace(/\s+/g, '-')
-                .replace(/[^a-z0-9-]/g, ''),
+            slug,
             cover: data.cover || 'https://via.placeholder.com/800x600',
             autoplay: data.autoplay ?? false,
             muted: data.muted ?? true,
@@ -154,6 +190,9 @@ export const projectService = {
      * Update an existing project
      */
     async updateProject(id: string, data: UpdateProjectData): Promise<Project | null> {
+        // [Zod] Validate Input (Partial)
+        UpdateProjectSchema.parse(data);
+
         const isDev = process.env.NODE_ENV === 'development';
         let currentProjects: Project[] = [];
 
@@ -172,6 +211,28 @@ export const projectService = {
         if (index === -1) return null;
 
         // Update
+        let finalSlug = currentProjects[index].slug;
+        if (data.title && data.title !== currentProjects[index].title) {
+            // If title changed, should we update slug? 
+            // Usually better to keep slug stable for SEO unless explicitly requested.
+            // But if data.slug is provided, we use it.
+            // Let's assume data.slug might be passed.
+        }
+
+        // Critical: Check Unique Slug if checking/changing slug
+        // Note: ProjectForm typically doesn't send slug, but if we derived it elsewhere...
+        // Actually, let's look at `data`. If `data.slug` exists:
+        if (data.slug && data.slug !== currentProjects[index].slug) {
+            const baseSlug = data.slug;
+            let newSlug = baseSlug;
+            let counter = 1;
+            while (currentProjects.some(p => p.slug === newSlug && p.id !== id)) {
+                newSlug = `${baseSlug}-${counter}`;
+                counter++;
+            }
+            data.slug = newSlug; // Override with safe slug
+        }
+
         const updatedProject = {
             ...currentProjects[index],
             ...data,
@@ -202,6 +263,11 @@ export const projectService = {
     /**
      * Delete a project
      */
+    // ... (imports) ...
+
+    /**
+     * Delete a project
+     */
     async deleteProject(id: string): Promise<boolean> {
         const isDev = process.env.NODE_ENV === 'development';
         let currentProjects: Project[] = [];
@@ -216,10 +282,11 @@ export const projectService = {
             currentProjects = ghData.content.projects || [];
         }
 
+        const projectToDelete = currentProjects.find(p => p.id === id);
+        if (!projectToDelete) return false; // Not found
+
         const initialLength = currentProjects.length;
         currentProjects = currentProjects.filter(p => p.id !== id);
-
-        if (currentProjects.length === initialLength) return false; // Not found
 
         const updatedData = {
             projects: currentProjects,
@@ -237,6 +304,9 @@ export const projectService = {
             });
             if (!success) throw new Error('Failed to save to GitHub');
         }
+
+        // AUTO-CLEANUP FILES (Best Effort)
+        await cleanupProjectFiles(projectToDelete);
 
         return true;
     },
@@ -262,9 +332,18 @@ export const projectService = {
 
         // Apply Updates in Memory
         if (updates.delete) {
-            const initialLen = currentProjects.length;
-            currentProjects = currentProjects.filter(p => !updates.ids.includes(p.id));
-            if (currentProjects.length !== initialLen) hasChanges = true;
+            const projectsToDelete = currentProjects.filter(p => updates.ids.includes(p.id));
+            if (projectsToDelete.length > 0) {
+                // Perform Cleanup for ALL deleted projects
+                console.log(`[BulkUpdate] Deleting ${projectsToDelete.length} projects. Starting cleanup...`);
+                // Process in parallel or serial? Serial is safer for API limits.
+                for (const p of projectsToDelete) {
+                    await cleanupProjectFiles(p);
+                }
+
+                currentProjects = currentProjects.filter(p => !updates.ids.includes(p.id));
+                hasChanges = true;
+            }
         } else if (updates.reorder) {
             // Map IDs to their new index (1-based)
             const orderMap = new Map(updates.ids.map((id, index) => [id, index + 1]));
@@ -320,3 +399,134 @@ export const projectService = {
         return true;
     }
 };
+
+/**
+ * Helper: Best Effort File Cleanup
+ * Handles both GitHub URLs (Prod/Dev hybrid) and Local Paths.
+ */
+async function cleanupProjectFiles(project: Project) {
+    const isDev = process.env.NODE_ENV === 'development';
+    const fs = isDev ? require('fs').promises : null;
+
+    const filesToDelete = [
+        project.cover,
+        project.comparison?.beforeImage,
+        project.comparison?.afterImage
+    ].filter((url): url is string => !!url && typeof url === 'string');
+
+    if (filesToDelete.length === 0) return;
+
+    console.log(`[ProjectService] Cleaning up ${filesToDelete.length} files for: ${project.slug} (Parallel)`);
+
+    // Parallelize deletions to avoid Vercel Timeouts
+    const deleteTasks = filesToDelete.map(async (url) => {
+        try {
+            let repoPath = '';
+            let isRemote = false;
+
+            if (url.includes('raw.githubusercontent.com')) {
+                const match = url.match(/(public\/assets\/.*)$/);
+                if (match) {
+                    repoPath = match[1];
+                    isRemote = true;
+                }
+            } else if (url.startsWith('/assets/')) {
+                repoPath = `public${url}`;
+            } else if (url.startsWith('public/')) {
+                repoPath = url;
+            }
+
+            if (!repoPath) return;
+
+            if (isDev) {
+                const localPath = path.join(process.cwd(), repoPath);
+                try {
+                    if (fs) await fs.unlink(localPath);
+                    console.log('[ProjectService] Deleted local:', localPath);
+                } catch (e) {
+                    // Ignore
+                }
+            } else {
+                await githubService.deleteFile(repoPath, `Cleanup: ${project.slug}`);
+            }
+        } catch (error) {
+            console.warn(`[ProjectService] Check failed for ${url}`, error);
+        }
+    });
+
+    await Promise.all(deleteTasks);
+}
+
+// Deprecated: Serial cleanup (kept for reference or fallback)
+async function cleanupProjectFiles_Serial(project: Project) {
+    const isDev = process.env.NODE_ENV === 'development';
+    const fs = isDev ? require('fs').promises : null;
+
+    const filesToDelete = [
+        project.cover,
+        project.comparison?.beforeImage,
+        project.comparison?.afterImage
+    ].filter((url): url is string => !!url && typeof url === 'string');
+
+    if (filesToDelete.length === 0) return;
+
+    console.log(`[ProjectService] Cleaning up ${filesToDelete.length} files for: ${project.slug}`);
+
+    for (const url of filesToDelete) {
+        try {
+            let repoPath = '';
+            let isRemote = false;
+
+            // 1. Identify Path & Type
+            if (url.includes('raw.githubusercontent.com')) {
+                const match = url.match(/(public\/assets\/.*)$/);
+                if (match) {
+                    repoPath = match[1];
+                    isRemote = true;
+                }
+            } else if (url.startsWith('/assets/')) {
+                repoPath = `public${url}`;
+                // Local path... but what if we are in Dev and it's missing?
+            } else if (url.startsWith('public/')) {
+                repoPath = url;
+            }
+
+            if (!repoPath) continue;
+
+            // 2. Delete Logic
+            // Priority: If it's explicitly Remote URL, try GitHub delete (even in Dev, if configured? No, usually safer to not touch Prod from Dev unless necessary).
+            // Actually, if I am in Dev but pointing to Prod images, deleting them might break Prod if shared?
+            // "Soft Delete" philosophy: Better to leave orphan than delete live asset?
+            // User requested "Auto Cleanup".
+            // Let's stick to Environment rules:
+            // Dev -> Delete Local.
+            // Prod -> Delete GitHub.
+            // EXCEPTION: If I am in Dev, and I know it's a GitHub URL, and I have credentials... 
+            // Current strict rule: Dev = FS, Prod = GitHub.
+
+            if (isDev) {
+                const localPath = path.join(process.cwd(), repoPath);
+                try {
+                    if (fs) await fs.unlink(localPath);
+                    console.log('[ProjectService] Deleted local:', localPath);
+                } catch (e) {
+                    // File might be remote-only (if created via AdminFileUpload to GitHub)
+                    // In that case, we can't delete it from FS. 
+                    // Should we try GitHub delete? 
+                    // Yes, if we have the service.
+                    if (isRemote) {
+                        // Optional: Try deleting remote file from Dev?
+                        // console.log('Attempting remote delete from Dev...');
+                        // await githubService.deleteFile(repoPath, ...);
+                        // Disabled for safety unless confirmed.
+                    }
+                }
+            } else {
+                // Production: Always delete from GitHub
+                await githubService.deleteFile(repoPath, `Cleanup: ${project.slug}`);
+            }
+        } catch (error) {
+            console.warn(`[ProjectService] Check failed for ${url}`, error);
+        }
+    }
+}

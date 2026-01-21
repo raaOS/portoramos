@@ -53,7 +53,7 @@ export default function Header() {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="sticky top-0 z-40 backdrop-blur transition-colors duration-300 bg-black/95"
+        className="sticky top-0 z-40 backdrop-blur transition-colors duration-300 bg-black"
         role="banner"
       >
         <div className="max-w-full px-8 flex items-center justify-between py-4 gap-8">

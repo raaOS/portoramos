@@ -198,6 +198,50 @@ export class GitHubService {
         };
         return this.updateFile('src/data/gallery-featured.json', content, message);
     }
+
+    /**
+     * Delete a file from the repo
+     */
+    async deleteFile(filePath: string, message: string): Promise<boolean> {
+        try {
+            // 1. Get current SHA
+            let sha: string;
+            try {
+                const current = await this.getFileContent(filePath, true);
+                sha = current.sha;
+            } catch (e) {
+                console.warn(`[GitHubService] File ${filePath} not found, skipping delete.`);
+                return true; // File doesn't exist, mission accomplished
+            }
+
+            const url = `${GITHUB_API_URL}/repos/${this.owner}/${this.repo}/contents/${filePath}`;
+            console.log(`[GitHubService] Deleting: ${url}`);
+
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: this.getHeaders(),
+                body: JSON.stringify({
+                    message,
+                    sha
+                })
+            });
+
+            if (!response.ok) {
+                // 404 is fine (already deleted, though getFileContent check covers this mostly)
+                if (response.status === 404) return true;
+
+                const error = await response.json();
+                console.error('[GitHubService] DELETE failed:', response.status, error);
+                throw new Error(`GitHub API Error: ${response.status}`);
+            }
+
+            console.log(`[GitHubService] Deleted ${filePath}`);
+            return true;
+        } catch (error) {
+            console.error('[GitHubService] Delete Error:', error);
+            return false;
+        }
+    }
 }
 
 export const githubService = new GitHubService();
