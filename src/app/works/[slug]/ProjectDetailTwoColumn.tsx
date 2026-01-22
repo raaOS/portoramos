@@ -21,6 +21,7 @@ interface ProjectDetailTwoColumnProps {
     gallery: GalleryItem[];
     ratio: number;
     otherProjects: Project[];
+    isWindowMode?: boolean; // New prop for OS integration
 }
 
 export default function ProjectDetailTwoColumn({
@@ -28,7 +29,8 @@ export default function ProjectDetailTwoColumn({
     cover,
     gallery,
     ratio,
-    otherProjects
+    otherProjects,
+    isWindowMode = false
 }: ProjectDetailTwoColumnProps) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [isProjectLiked, setIsProjectLiked] = useState(false);
@@ -171,18 +173,20 @@ export default function ProjectDetailTwoColumn({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="min-h-screen bg-white dark:bg-black p-3 sm:p-4 lg:p-6 transition-colors duration-300"
+            className={`${isWindowMode ? 'h-full overflow-y-auto' : 'min-h-screen'} bg-white dark:bg-black p-3 sm:p-4 lg:p-6 transition-colors duration-300`}
         >
-            <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white mb-4 sm:mb-6 transition-colors duration-200 touch-manipulation"
-            >
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="text-sm sm:text-base">Back to Projects</span>
-            </Link>
+            {!isWindowMode && (
+                <Link
+                    href="/"
+                    className="inline-flex items-center gap-2 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white mb-4 sm:mb-6 transition-colors duration-200 touch-manipulation"
+                >
+                    <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="text-sm sm:text-base">Back to Projects</span>
+                </Link>
+            )}
 
             <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
-                <div className="lg:w-1/2 space-y-3 sm:space-y-4">
+                <div className={`${isWindowMode ? 'w-full' : 'lg:w-1/2 space-y-3 sm:space-y-4'}`}>
                     <div className="bg-white dark:bg-black rounded-lg sm:rounded-xl shadow-none border border-black/10 dark:border-white/10 transition-all duration-300 relative overflow-hidden">
                         <div className="flex flex-col lg:flex-row h-full">
                             <div className="w-full lg:w-[45%] border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-gray-900/20">
@@ -417,58 +421,66 @@ export default function ProjectDetailTwoColumn({
                         </div>
                     </div>
 
-                    <MasonryGrid columns="sidebar">
-                        {columnAProjects.map((p: Project, index: number) => (
-                            <motion.div
-                                key={`col-a-${index}-${p.slug}`}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={index < 2 ? { opacity: 1, y: 0 } : undefined}
-                                whileInView={index >= 2 ? { opacity: 1, y: 0 } : undefined}
-                                viewport={{ once: true, margin: "50px" }}
-                                transition={{
-                                    duration: 0.4,
-                                    ease: "easeOut",
-                                    delay: index < 2 ? 0 : 0.1
-                                }}
-                            >
-                                <ProjectCardPinterest project={p} priority={index < 4} />
-                            </motion.div>
-                        ))}
-                    </MasonryGrid>
+                    {!isWindowMode && (
+                        <MasonryGrid columns="sidebar">
+                            {columnAProjects.map((p: Project, index: number) => (
+                                <motion.div
+                                    key={`col-a-${index}-${p.slug}`}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={index < 2 ? { opacity: 1, y: 0 } : undefined}
+                                    whileInView={index >= 2 ? { opacity: 1, y: 0 } : undefined}
+                                    viewport={{ once: true, margin: "50px" }}
+                                    transition={{
+                                        duration: 0.4,
+                                        ease: "easeOut",
+                                        delay: index < 2 ? 0 : 0.1
+                                    }}
+                                >
+                                    <ProjectCardPinterest project={p} priority={index < 4} />
+                                </motion.div>
+                            ))}
+                        </MasonryGrid>
+                    )}
                 </div>
 
-                <div className="lg:w-1/2">
-                    <MasonryGrid columns="sidebar">
-                        {columnBProjects.map((p: Project, index: number) => (
-                            <motion.div
-                                key={`col-b-${index}-${p.slug}`}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={index < 2 ? { opacity: 1, y: 0 } : undefined}
-                                whileInView={index >= 2 ? { opacity: 1, y: 0 } : undefined}
-                                viewport={{ once: true, margin: "50px" }}
-                                transition={{
-                                    duration: 0.4,
-                                    ease: "easeOut",
-                                    delay: index < 2 ? 0 : 0.1
-                                }}
-                            >
-                                <ProjectCardPinterest project={p} priority={index < 4} />
-                            </motion.div>
-                        ))}
-                    </MasonryGrid>
-                </div>
+                {!isWindowMode && (
+                    <div className="lg:w-1/2">
+                        <MasonryGrid columns="sidebar">
+                            {columnBProjects.map((p: Project, index: number) => (
+                                <motion.div
+                                    key={`col-b-${index}-${p.slug}`}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={index < 2 ? { opacity: 1, y: 0 } : undefined}
+                                    whileInView={index >= 2 ? { opacity: 1, y: 0 } : undefined}
+                                    viewport={{ once: true, margin: "50px" }}
+                                    transition={{
+                                        duration: 0.4,
+                                        ease: "easeOut",
+                                        delay: index < 2 ? 0 : 0.1
+                                    }}
+                                >
+                                    <ProjectCardPinterest project={p} priority={index < 4} />
+                                </motion.div>
+                            ))}
+                        </MasonryGrid>
+                    </div>
+                )}
             </div>
 
-            <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
-
-            {isLoading && (
-                <div className="text-center py-6 sm:py-8 opacity-50">
-                    <div className="inline-block animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-gray-400"></div>
-                    <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>
-                </div>
+            {/* Infinite loading trigger - Only for non-window mode */}
+            {!isWindowMode && (
+                <>
+                    <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
+                    {isLoading && (
+                        <div className="text-center py-6 sm:py-8 opacity-50">
+                            <div className="inline-block animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-gray-400"></div>
+                            <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>
+                        </div>
+                    )}
+                </>
             )}
 
-            <ProjectCTA />
+            {!isWindowMode && <ProjectCTA />}
         </motion.div>
     );
 }

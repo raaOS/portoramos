@@ -19,8 +19,9 @@ export default function ProjectCardPinterest({
     priority = false,
     videoEnabled = true,
     interactive = true,
-    highlightedTag
-}: ProjectCardPinterestProps) {
+    highlightedTag,
+    onClick
+}: ProjectCardPinterestProps & { onClick?: () => void }) {
     const { slug, title, tags, likes, shares } = project;
     const cover = resolveCover(project);
     const shouldAutoplay = videoEnabled && (project.autoplay ?? true);
@@ -41,14 +42,15 @@ export default function ProjectCardPinterest({
         : tags?.[0];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const Component: any = interactive ? Link : 'div';
-    const hrefProps = interactive ? { href: `/works/${slug}` } : {};
+    const Component: any = onClick ? 'div' : (interactive ? Link : 'div');
+    const hrefProps = (!onClick && interactive) ? { href: `/works/${slug}` } : {};
+    const isInteractive = interactive || !!onClick;
 
     return (
-        <Component {...hrefProps} className={`block mb-6 relative z-0 ${interactive ? 'group hover:z-10' : ''}`}>
+        <Component {...hrefProps} onClick={onClick} className={`block mb-6 relative z-0 ${isInteractive ? 'group hover:z-10 cursor-pointer' : ''}`}>
             {/* ... (keep media container) ... */}
             <div
-                className={`relative overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800 transition-transform duration-300 ${interactive ? 'hover:scale-[1.02]' : ''}`}
+                className={`relative overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800 transition-transform duration-300 ${isInteractive ? 'hover:scale-[1.02]' : ''}`}
                 style={{
                     aspectRatio: ratio,
                     contain: 'layout style paint'

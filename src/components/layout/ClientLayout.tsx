@@ -21,8 +21,9 @@ export default function ClientLayout({
 }) {
     const pathname = usePathname();
     const isAdminRequest = pathname?.startsWith('/admin');
+    const isOsMode = pathname?.startsWith('/about-test');
 
-    if (isAdminRequest) {
+    if (isAdminRequest || isOsMode) {
         return (
             <>
                 {children}

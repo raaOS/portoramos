@@ -11,12 +11,11 @@ interface MasonryGridProps {
 }
 
 const defaultBreakpoints = {
-    default: 7,    // Desktop XL (1536px+)
-    1536: 5,       // Desktop L
-    1280: 4,       // Desktop
-    1024: 3,       // Tablet L
-    768: 2,        // Tablet
-    640: 2         // Mobile L
+    default: 7,    // Desktop (> 1280px)
+    1280: 5,       // Laptop / Small Desktop
+    1024: 4,       // Tablet Landscape
+    768: 3,        // Tablet Portrait
+    640: 2         // Mobile
 };
 const sidebarBreakpoints = {
     default: 3,    // Max 3 columns for sidebar
@@ -41,18 +40,24 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
 
     // Container-aware responsive logic
     const containerRef = React.useRef<HTMLDivElement>(null);
-    const [columnCount, setColumnCount] = useState(2);
 
-    // Helper: calculate columns from a width
+    // Determine initial default based on the columns prop type
+    const initialDefault = columns === 'sidebar' ? 3 : (columns === 'bottom' ? 6 : 7);
+
+    const [columnCount, setColumnCount] = useState(initialDefault);
+
     const getCols = (w: number) => {
-        let cols = breakpointColumns.default;
+        if (!breakpointColumns) return 2; // Safety fallback
+        let cols = breakpointColumns.default || initialDefault;
+
         // Sort breakpoints descending (numeric keys)
         const breakpoints = Object.keys(breakpointColumns)
             .filter(k => k !== 'default')
             .map(Number)
             .sort((a, b) => b - a);
+
         for (let bp of breakpoints) {
-            if (w <= bp) { // Changed to <= for inclusive
+            if (w <= bp) {
                 cols = (breakpointColumns as any)[bp];
             }
         }
@@ -66,14 +71,13 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
             setColumnCount(getCols(w));
         };
 
-        // IF width prop is provided, use it directly (stateless/controlled mode)
+        // 1. Explicit Width Mode (Prop-based) - Preferred for OS Windows
         if (width !== undefined) {
-            console.log('MasonryGrid: Using explicit width prop:', width);
             updateCallback(width);
-            // Return early to avoid setting up resize observer
             return;
         }
 
+        // 2. Observer Mode (DOM-based) - Fallback for standard pages
         if (!containerRef.current) return;
 
         const handleResize = (entries: ResizeObserverEntry[]) => {
@@ -87,25 +91,16 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         const observer = new ResizeObserver(handleResize);
         observer.observe(containerRef.current);
 
-        // Initial check
-        if (containerRef.current) {
+        // Immediate check
+        if (containerRef.current.offsetWidth > 0) {
             updateCallback(containerRef.current.offsetWidth);
+        } else if (typeof window !== 'undefined') {
+            // Fallback to window width if container has no width yet
+            updateCallback(window.innerWidth);
         }
-
-        // AGGRESSIVE POLLING: Check repeatedly for 1s to catch any animation-related width changes
-        // This fixes the "grid error on re-open" bug where initial width might be reported as 0 or incorrect.
-        let checks = 0;
-        const interval = setInterval(() => {
-            if (containerRef.current && containerRef.current.offsetWidth > 0) {
-                updateCallback(containerRef.current.offsetWidth);
-            }
-            checks++;
-            if (checks > 10) clearInterval(interval); // Stop after 1s
-        }, 100);
 
         return () => {
             observer.disconnect();
-            clearInterval(interval);
         };
     }, [breakpointColumns, width]); // Added width as dependency
 
