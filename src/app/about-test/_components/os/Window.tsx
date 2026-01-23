@@ -153,7 +153,7 @@ export default function OSWindow({
                                     y: initialPosition.y,
                                     width: width || winWidth, // Use prop width if available
                                     height: height || "auto", // Use prop height if available
-                                    borderRadius: 14,
+                                    borderRadius: 10,
                                     // Solid, Premium Spring (No wobble)
                                     transition: isResizing ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 25 }
                                 }

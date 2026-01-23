@@ -4,9 +4,11 @@ import type { Project } from '@/types/projects';
 import { resolveCover } from '@/lib/images';
 import MasonryGrid from '@/components/layout/MasonryGrid';
 import Media from '@/components/shared/Media';
+import MacFolder from './MacFolder';
 
 interface GalleryWindowProps {
     projects: Project[];
+    onPreview?: (item: { src: string, kind: 'image' | 'video', title: string }) => void;
 }
 
 // Hardcoded Work Experience List (Ideally synced with Experience API)
@@ -19,7 +21,7 @@ const WORK_FOLDERS = [
     { id: 'wulan', name: 'Wulan Boutique', year: '2012', color: 'bg-pink-100 text-pink-600' },
 ];
 
-export default function GalleryWindow({ projects }: GalleryWindowProps) {
+export default function GalleryWindow({ projects, onPreview }: GalleryWindowProps) {
     const [currentPath, setCurrentPath] = useState<string | null>(null);
 
     // Group photos by "Company"
@@ -92,27 +94,20 @@ export default function GalleryWindow({ projects }: GalleryWindowProps) {
 
                 {/* VIEW: ROOT (FOLDERS) */}
                 {!currentPath && (
-                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <div
+                        className="grid gap-6 p-4"
+                        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))' }}
+                    >
                         {WORK_FOLDERS.map(folder => (
-                            <button
-                                key={folder.id}
-                                onClick={() => setCurrentPath(folder.id)}
-                                className="group flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-blue-50 transition-colors focus:bg-blue-100 outline-none"
-                            >
-                                <div className="relative">
-                                    <Folder size={64} className="fill-sky-400 text-sky-600 drop-shadow-sm group-hover:scale-105 transition-transform" />
-                                    {/* Badge count */}
-                                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-white">
-                                        {folderContent[folder.id]?.length || 0}
-                                    </div>
-                                </div>
-                                <div className="text-center">
-                                    <span className="text-xs font-medium text-gray-700 block group-hover:text-blue-600 truncate max-w-[100px]">
-                                        {folder.name}
-                                    </span>
-                                    <span className="text-[10px] text-gray-400">{folder.year}</span>
-                                </div>
-                            </button>
+                            <div key={folder.id} className="flex flex-col items-center">
+                                <MacFolder
+                                    label={folder.name}
+                                    subLabel={folder.year}
+                                    onClick={() => setCurrentPath(folder.id)}
+                                    count={folderContent[folder.id]?.length || 0}
+                                    color="#FFA629"
+                                />
+                            </div>
                         ))}
                     </div>
                 )}
@@ -124,7 +119,10 @@ export default function GalleryWindow({ projects }: GalleryWindowProps) {
                             <MasonryGrid columns="default">
                                 {folderContent[currentPath].map((photo, i) => (
                                     <div key={i} className="mb-4 break-inside-avoid">
-                                        <div className="relative group overflow-hidden rounded bg-gray-100 border border-gray-200 hover:shadow-md transition-all">
+                                        <div
+                                            className="group relative overflow-hidden rounded bg-gray-100 border border-gray-200 hover:shadow-md transition-all cursor-pointer active:scale-95 duration-200"
+                                            onClick={() => onPreview?.({ src: photo.src, kind: photo.kind, title: photo.title })}
+                                        >
                                             <Media
                                                 kind={photo.kind}
                                                 src={photo.src}
@@ -135,13 +133,12 @@ export default function GalleryWindow({ projects }: GalleryWindowProps) {
                                                 autoplay={false}
                                                 priority={i < 4}
                                             />
-                                            {/* Filename overlay */}
-                                            <div className="absolute bottom-0 inset-x-0 bg-white/90 p-1.5 border-t border-gray-100 translate-y-full group-hover:translate-y-0 transition-transform">
-                                                <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
-                                                    <ImageIcon size={10} />
-                                                    <span className="truncate">{photo.title}</span>
-                                                </div>
-                                            </div>
+                                        </div>
+                                        {/* Static Filename below */}
+                                        <div className="mt-1.5 flex justify-center text-center px-1">
+                                            <span className="text-[11px] font-medium text-gray-700 leading-tight">
+                                                {photo.title}
+                                            </span>
                                         </div>
                                     </div>
                                 ))}

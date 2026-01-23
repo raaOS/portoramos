@@ -1,4 +1,3 @@
-import SimpleSplineViewer from './_components/SimpleSplineViewer';
 import DesktopEnvironment from './_components/os/DesktopEnvironment';
 import { loadAboutData } from '@/lib/about';
 import { loadExperienceData } from '@/lib/experience';
@@ -26,10 +25,6 @@ export default async function AboutTestPage() {
                 hardSkillsData={hardSkillsData}
                 projects={projects}
             >
-                {/* The Spline Scene as Background/Wallpaper */}
-                <div className="w-full h-full opacity-60">
-                    <SimpleSplineViewer />
-                </div>
             </DesktopEnvironment>
         </main>
     );

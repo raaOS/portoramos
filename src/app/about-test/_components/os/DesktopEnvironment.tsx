@@ -6,9 +6,10 @@ import OSWindow from "./Window";
 import DesktopIcon from "./DesktopIcon";
 import Dock from "./Dock";
 import AboutContent from "./AboutContent"; // Import the new component
+import MenuBar from "./MenuBar";
 
 import IndexClientWithAutoUpdate from "@/components/home/IndexClientWithAutoUpdate";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import type { AboutData } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
@@ -20,6 +21,11 @@ import ContactWindow from "./ContactWindow";
 import TerminalWindow from "./TerminalWindow";
 import ChatWindow from "./ChatWindow";
 import GalleryWindow from "./GalleryWindow";
+import LockScreen from "./LockScreen";
+import Spotlight from "./Spotlight";
+import StickyNote from "./StickyNote";
+import { useSystemSound } from "@/hooks/useSystemSound";
+
 
 const isVideo = (url?: string) => url && /\.(mp4|webm|mov)$/i.test(url);
 
@@ -86,7 +92,7 @@ const AppIcon = ({ color, icon: Icon }: { color: string, icon: any }) => (
 );
 
 interface DesktopEnvironmentProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     aboutData?: AboutData | null;
     experienceData?: ExperienceData | null;
     hardSkillsData?: HardSkillsData | null;
@@ -97,6 +103,24 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 });
+    const [isLocked, setIsLocked] = useState(true);
+    const [showSpotlight, setShowSpotlight] = useState(false);
+    const { playOpen, playClose, playChime } = useSystemSound();
+
+    // -- Personalization State --
+    const [wallpaper, setWallpaper] = useState("https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop");
+    const [accentColor, setAccentColor] = useState("bg-blue-500");
+
+    const getCenterPosition = (w: number, h: number) => {
+        if (typeof window === 'undefined') return { x: 0, y: 0 };
+        const safeWidth = windowSize.width || window.innerWidth || 1200;
+        const safeHeight = windowSize.height || window.innerHeight || 800;
+
+        const x = Math.max(0, (safeWidth - w) / 2);
+        const y = Math.max(30, (safeHeight - h) / 2);
+
+        return { x, y };
+    };
 
     useEffect(() => {
         setMounted(true);
@@ -112,23 +136,58 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
         const originalBodyHeight = body.style.height;
 
         // Force lock
+        window.scrollTo(0, 0); // Fix for "black area" / shifted layout
         html.style.overflow = "hidden";
         body.style.overflow = "hidden";
         html.style.height = "100%";
         body.style.height = "100%";
         html.classList.add('lenis-stopped');
 
+        // Add a style tag to FORCE reset everything - The "Nuclear Option"
+        const style = document.createElement('style');
+        style.id = 'os-mode-reset';
+        style.innerHTML = `
+            html, body {
+                overflow: hidden !important;
+                height: 100vh !important;
+                width: 100vw !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                position: fixed !important; /* Locks the viewport */
+                top: 0 !important;
+                left: 0 !important;
+                overscroll-behavior: none !important;
+            }
+        `;
+        document.head.appendChild(style);
+
         const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setShowSpotlight(prev => !prev);
+            }
+            if (e.key === 'Escape') {
+                setShowSpotlight(false);
+            }
+        };
+
         window.addEventListener('resize', handleResize);
+        window.addEventListener('keydown', handleKeyDown);
 
         return () => {
             window.removeEventListener('resize', handleResize);
+            window.removeEventListener('keydown', handleKeyDown);
             // Restore
             html.style.overflow = originalHtmlOverflow;
             body.style.overflow = originalBodyOverflow;
             html.style.height = originalHtmlHeight;
             body.style.height = originalBodyHeight;
             html.classList.remove('lenis-stopped');
+
+            const styleTag = document.getElementById('os-mode-reset');
+            if (styleTag) styleTag.remove();
         };
     }, []);
 
@@ -192,17 +251,9 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
     useEffect(() => {
         if (mounted) {
             setWindows(prev => prev.map(w => {
-                // Dynamically center 'about' window on mount
-                if (w.id === 'about') {
-                    return { ...w, initialPosition: { x: (window.innerWidth - 900) / 2, y: (window.innerHeight - 600) / 2 } };
-                }
-                if (w.id === 'projects') {
-                    return { ...w, initialPosition: { x: (window.innerWidth - 1000) / 2, y: (window.innerHeight - 700) / 2 } };
-                }
-                if (w.id === 'error') {
-                    return { ...w, initialPosition: { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 150 } };
-                }
-                return w;
+                const width = w.width || 800;
+                const height = w.height || 600;
+                return { ...w, initialPosition: getCenterPosition(width, height) };
             }));
         }
     }, [mounted]);
@@ -210,14 +261,24 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
 
     // -- Actions --
 
-    const openWindow = (id: string) => {
+    const openWindow = (id: string, customWidth?: number, customHeight?: number) => {
         setWindows(prev => prev.map(w => {
             if (w.id === id) {
-                return { ...w, isOpen: true, isMinimized: false, zIndex: topZIndex + 1 };
+                const width = customWidth || w.width || 800;
+                const height = customHeight || w.height || 600;
+                const shouldCenter = !w.isOpen;
+                return {
+                    ...w,
+                    isOpen: true,
+                    isMinimized: false,
+                    zIndex: topZIndex + 1,
+                    initialPosition: shouldCenter ? getCenterPosition(width, height) : w.initialPosition
+                };
             }
             return w;
         }));
         setTopZIndex(prev => prev + 1);
+        playOpen();
     };
 
     const closeWindow = (id: string) => {
@@ -237,6 +298,7 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
                 return w;
             }));
         }
+        playClose();
     };
 
     const minimizeWindow = (id: string) => {
@@ -317,11 +379,18 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             // If found but closed, open it.
             setWindows(prev => prev.map(w => {
                 if (w.id === windowId) {
-                    return { ...w, isOpen: true, isMinimized: false, zIndex: topZIndex + 1 };
+                    return {
+                        ...w,
+                        isOpen: true,
+                        isMinimized: false,
+                        zIndex: topZIndex + 1,
+                        initialPosition: !w.isOpen ? getCenterPosition(1100, 700) : w.initialPosition
+                    };
                 }
                 return w;
             }));
             setTopZIndex(prev => prev + 1);
+            if (!isWindowOpen(windowId)) playOpen();
             return;
         }
 
@@ -331,13 +400,14 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             isOpen: true,
             zIndex: topZIndex + 1,
             noPadding: true,
-            initialPosition: { x: (windowSize.width - 1100) / 2, y: (windowSize.height - 700) / 2 },
+            initialPosition: getCenterPosition(1100, 700),
             width: 1100,
             height: 700,
             content: <ProjectsGridWindow projects={projects} onOpenProject={openProjectWindow} />
         };
         setWindows(prev => [...prev, newWindow]);
         setTopZIndex(prev => prev + 1);
+        playOpen();
     };
 
     // -- Mail Logic --
@@ -346,11 +416,18 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
         if (windows.find(w => w.id === windowId)) {
             setWindows(prev => prev.map(w => {
                 if (w.id === windowId) {
-                    return { ...w, isOpen: true, isMinimized: false, zIndex: topZIndex + 1 };
+                    return {
+                        ...w,
+                        isOpen: true,
+                        isMinimized: false,
+                        zIndex: topZIndex + 1,
+                        initialPosition: !w.isOpen ? getCenterPosition(500, 400) : w.initialPosition
+                    };
                 }
                 return w;
             }));
             setTopZIndex(prev => prev + 1);
+            if (!isWindowOpen(windowId)) playOpen();
             return;
         }
 
@@ -360,13 +437,14 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             isOpen: true,
             zIndex: topZIndex + 1,
             noPadding: true,
-            initialPosition: { x: typeof window !== 'undefined' ? window.innerWidth / 2 - 250 : 200, y: typeof window !== 'undefined' ? window.innerHeight / 2 - 200 : 200 },
+            initialPosition: getCenterPosition(500, 400),
             width: 500,
             height: 400,
             content: <ContactWindow />
         };
         setWindows(prev => [...prev, newWindow]);
         setTopZIndex(prev => prev + 1);
+        playOpen();
     };
 
     // -- Chat Logic --
@@ -375,11 +453,18 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
         if (windows.find(w => w.id === windowId)) {
             setWindows(prev => prev.map(w => {
                 if (w.id === windowId) {
-                    return { ...w, isOpen: true, isMinimized: false, zIndex: topZIndex + 1 };
+                    return {
+                        ...w,
+                        isOpen: true,
+                        isMinimized: false,
+                        zIndex: topZIndex + 1,
+                        initialPosition: !w.isOpen ? getCenterPosition(380, 600) : w.initialPosition
+                    };
                 }
                 return w;
             }));
             setTopZIndex(prev => prev + 1);
+            if (!isWindowOpen(windowId)) playOpen();
             return;
         }
 
@@ -389,26 +474,89 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             isOpen: true,
             zIndex: topZIndex + 1,
             noPadding: true,
-            initialPosition: { x: typeof window !== 'undefined' ? (window.innerWidth - 380) / 2 : 100, y: typeof window !== 'undefined' ? (window.innerHeight - 600) / 2 : 100 },
+            initialPosition: getCenterPosition(380, 600),
             width: 380,
             height: 600,
             content: <ChatWindow />
         };
         setWindows(prev => [...prev, newWindow]);
         setTopZIndex(prev => prev + 1);
+        playOpen();
     };
 
     // -- Gallery Logic --
+    const [previewItem, setPreviewItem] = useState<{ src: string, kind: 'image' | 'video', title: string } | null>(null);
+
+    const openPreview = (item: { src: string, kind: 'image' | 'video', title: string }) => {
+        const windowId = 'preview-viewer';
+
+        // Update item state first
+        setPreviewItem(item);
+
+        // Check if window exists
+        if (windows.find(w => w.id === windowId)) {
+            setWindows(prev => prev.map(w => {
+                if (w.id === windowId) {
+                    return {
+                        ...w,
+                        isOpen: true,
+                        isMinimized: false,
+                        zIndex: 9999,
+                        title: item.title,
+                        initialPosition: !w.isOpen ? getCenterPosition(800, 600) : w.initialPosition
+                    };
+                }
+                return w;
+            }));
+            // setTopZIndex(prev => prev + 100);
+            return;
+        }
+
+        const newWindow: WindowState = {
+            id: windowId,
+            title: item.title,
+            isOpen: true,
+            zIndex: 9999,
+            noPadding: true,
+            initialPosition: getCenterPosition(800, 600),
+            width: 800,
+            height: 600,
+            content: (
+                /* Content is dynamic based on previewItem, handled in render or we pass a component that reads state */
+                <div className="w-full h-full bg-white flex items-center justify-center p-0 overflow-hidden relative">
+                    {item.kind === 'video' ? (
+                        <video src={item.src} controls autoPlay className="max-w-full max-h-full w-auto h-auto object-contain mx-auto" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            {/* Improved Image Rendering for contain-fit */}
+                            <img src={item.src} alt={item.title} className="max-w-full max-h-full w-auto h-auto object-contain" />
+                        </div>
+                    )}
+                </div>
+            )
+        };
+        setWindows(prev => [...prev, newWindow]);
+        setTopZIndex(prev => prev + 100);
+        playOpen();
+    };
+
     const openGallery = () => {
         const windowId = 'gallery';
         if (windows.find(w => w.id === windowId)) {
             setWindows(prev => prev.map(w => {
                 if (w.id === windowId) {
-                    return { ...w, isOpen: true, isMinimized: false, zIndex: topZIndex + 1 };
+                    return {
+                        ...w,
+                        isOpen: true,
+                        isMinimized: false,
+                        zIndex: topZIndex + 1,
+                        initialPosition: !w.isOpen ? getCenterPosition(900, 600) : w.initialPosition
+                    };
                 }
                 return w;
             }));
             setTopZIndex(prev => prev + 1);
+            if (!isWindowOpen(windowId)) playOpen();
             return;
         }
 
@@ -418,43 +566,18 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             isOpen: true,
             zIndex: topZIndex + 1,
             noPadding: true,
-            initialPosition: { x: typeof window !== 'undefined' ? (window.innerWidth - 900) / 2 : 100, y: typeof window !== 'undefined' ? (window.innerHeight - 600) / 2 : 100 },
+            initialPosition: getCenterPosition(900, 600),
             width: 900,
             height: 600,
-            content: <GalleryWindow projects={projects} />
+            content: <GalleryWindow projects={projects} onPreview={openPreview} />
         };
         setWindows(prev => [...prev, newWindow]);
         setTopZIndex(prev => prev + 1);
     };
 
-    // -- Terminal Logic --
-    const openTerminal = () => {
-        const windowId = 'terminal';
-        if (windows.find(w => w.id === windowId)) {
-            setWindows(prev => prev.map(w => {
-                if (w.id === windowId) {
-                    return { ...w, isOpen: true, isMinimized: false, zIndex: topZIndex + 1 };
-                }
-                return w;
-            }));
-            setTopZIndex(prev => prev + 1);
-            return;
-        }
 
-        const newWindow: WindowState = {
-            id: windowId,
-            title: 'Terminal',
-            isOpen: true,
-            zIndex: topZIndex + 1,
-            noPadding: true, // Terminal style usually full
-            initialPosition: { x: typeof window !== 'undefined' ? (window.innerWidth - 600) / 2 : 100, y: typeof window !== 'undefined' ? (window.innerHeight - 400) / 2 : 100 },
-            width: 600,
-            height: 400,
-            content: <TerminalWindow />
-        };
-        setWindows(prev => [...prev, newWindow]);
-        setTopZIndex(prev => prev + 1);
-    };
+
+
 
     // -- Trash Logic --
     const openTrash = () => {
@@ -462,11 +585,18 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
         if (windows.find(w => w.id === windowId)) {
             setWindows(prev => prev.map(w => {
                 if (w.id === windowId) {
-                    return { ...w, isOpen: true, isMinimized: false, zIndex: topZIndex + 1 };
+                    return {
+                        ...w,
+                        isOpen: true,
+                        isMinimized: false,
+                        zIndex: topZIndex + 1,
+                        initialPosition: !w.isOpen ? getCenterPosition(400, 250) : w.initialPosition
+                    };
                 }
                 return w;
             }));
             setTopZIndex(prev => prev + 1);
+            if (!isWindowOpen(windowId)) playOpen();
             return;
         }
 
@@ -475,7 +605,7 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             title: 'Recycle Bin',
             isOpen: true,
             zIndex: topZIndex + 1,
-            initialPosition: { x: typeof window !== 'undefined' ? (window.innerWidth - 400) / 2 : 100, y: typeof window !== 'undefined' ? (window.innerHeight - 200) / 2 : 100 },
+            initialPosition: getCenterPosition(400, 250),
             width: 400,
             height: 250,
             content: (
@@ -488,18 +618,27 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
         };
         setWindows(prev => [...prev, newWindow]);
         setTopZIndex(prev => prev + 1);
+        playOpen();
     };
 
     const dockItems = [
-        { id: "finder", label: "Finder", icon: <AppIcon icon={Smile} color="from-sky-400 to-blue-500" />, onClick: resetDesktop }, // Finder acts as "Show Desktop"
+        { id: "finder", label: "Finder", icon: <AppIcon icon={Smile} color="from-sky-400 to-blue-500" />, onClick: resetDesktop },
         { id: "about", label: "Profile", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => openWindow("about"), isOpen: isWindowOpen("about") },
-        { id: "projects", label: "Launchpad", icon: <AppIcon icon={Rocket} color="from-red-400 to-pink-500" />, onClick: openLaunchpad },
-        { id: "gallery", label: "Photos", icon: <AppIcon icon={ImageIcon} color="from-indigo-400 to-blue-500" />, onClick: openGallery },
-        { id: "whatsapp", label: "WhatsApp", icon: <AppIcon icon={MessageCircle} color="from-green-400 to-green-600" />, onClick: openChatWindow },
-        { id: "instagram", label: "Instagram", icon: <AppIcon icon={Instagram} color="from-pink-500 to-purple-500" />, onClick: () => window.open("https://instagram.com", "_blank") },
-        { id: "terminal", label: "Terminal", icon: <AppIcon icon={Terminal} color="from-gray-700 to-black" />, onClick: openTerminal },
-        { id: "trash", label: "Trash", icon: <AppIcon icon={Trash2} color="from-gray-400 to-gray-500" />, onClick: openTrash },
+        { id: "projects", label: "Launchpad", icon: <AppIcon icon={Rocket} color="from-red-400 to-pink-500" />, onClick: openLaunchpad, isOpen: isWindowOpen("launchpad") },
+        { id: "gallery", label: "Photos", icon: <AppIcon icon={ImageIcon} color="from-indigo-400 to-blue-500" />, onClick: openGallery, isOpen: isWindowOpen("gallery") },
+        { id: "whatsapp", label: "WhatsApp", icon: <AppIcon icon={MessageCircle} color="from-green-400 to-green-600" />, onClick: openChatWindow, isOpen: isWindowOpen("chat") },
+        { id: "trash", label: "Trash", icon: <AppIcon icon={Trash2} color="from-gray-400 to-gray-500" />, onClick: openTrash, isOpen: isWindowOpen("trash-bin") },
     ];
+
+    // -- Sticky Notes Logic --
+    const [notes, setNotes] = useState<{ id: string, x: number, y: number, text: string, rotation: number, color: string }[]>([
+        { id: 'note-1', x: 100, y: 100, text: "Welcome to my OS! 🌟\n\nFeel free to drag me around.\n\n(Try changing my color!)", rotation: -2, color: 'bg-[#fef08a]' },
+        { id: 'note-2', x: 300, y: 150, text: "Don't forget to check the Launchpad for projects!", rotation: 3, color: 'bg-[#bfdbfe]' },
+    ]);
+
+    const deleteNote = (id: string) => {
+        setNotes(prev => prev.filter(n => n.id !== id));
+    };
 
     // -- Project Icons Logic --
     // Generate scattered positions for project icons
@@ -511,8 +650,8 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
         const generatedIcons = projects.filter(p => p.status !== 'draft').map((project, index) => {
             // Basic random scattering with some padding from edges
             // x: 50 to width-150, y: 50 to height-200 (avoid dock)
-            const x = 50 + Math.random() * (windowSize.width - 200);
-            const y = 50 + Math.random() * (windowSize.height - 250);
+            const x = Math.random() * (windowSize.width - 100);
+            const y = Math.random() * (windowSize.height - 160) + 60; // Offset for MenuBar + Dock
 
             // Video Detection Logic
             let videoUrl: string | undefined;
@@ -554,6 +693,7 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
                 label: project.title,
                 imageUrl: coverImage,
                 videoUrl,
+                icon: <FileText strokeWidth={1} />,
                 aspectRatio,
                 x,
                 y,
@@ -561,14 +701,7 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             };
         });
 
-        // Add standard icons
-        const standardIcons = [
-            { id: "file-1", label: "About.txt", icon: <FileText />, x: 40, y: 40, action: () => openWindow("about") },
-            { id: "link-1", label: "LinkedIn", icon: <Linkedin />, x: 40, y: 160, action: () => window.open("https://linkedin.com", "_blank") },
-            { id: "trash", label: "Recycle Bin", icon: <div className="text-white/50"><Terminal /></div>, x: windowSize.width - 100, y: windowSize.height - 120, action: () => { } },
-        ];
-
-        setProjectIcons([...generatedIcons, ...standardIcons]);
+        setProjectIcons([...generatedIcons]);
 
     }, [mounted, windowSize.width, windowSize.height, projects]); // Re-run if window size changes significantly or projects load
 
@@ -583,11 +716,18 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             // Just focus it
             setWindows(prev => prev.map(w => {
                 if (w.id === windowId) {
-                    return { ...w, isOpen: true, isMinimized: false, zIndex: topZIndex + 1 };
+                    return {
+                        ...w,
+                        isOpen: true,
+                        isMinimized: false,
+                        zIndex: topZIndex + 1,
+                        initialPosition: !w.isOpen ? getCenterPosition(1000, 700) : w.initialPosition
+                    };
                 }
                 return w;
             }));
             setTopZIndex(prev => prev + 1);
+            if (!isWindowOpen(windowId)) playOpen();
             return;
         }
 
@@ -598,7 +738,7 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
             isOpen: true,
             zIndex: topZIndex + 1,
             noPadding: true,
-            initialPosition: { x: (window.innerWidth - 1000) / 2, y: (window.innerHeight - 700) / 2 },
+            initialPosition: getCenterPosition(1000, 700),
             width: 1000,
             height: 700,
             content: (
@@ -608,17 +748,51 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
 
         setWindows(prev => [...prev, newWindow]);
         setTopZIndex(prev => prev + 1);
+        playOpen();
     };
 
 
 
 
-    // FORCE OVERLAY: fixed + z-[9999] to sit on top of everything
     return (
-        <div className="fixed inset-0 z-[9999] w-full h-screen overflow-hidden select-none bg-black">
+        <div className="fixed inset-0 z-[9999] w-full h-screen overflow-hidden select-none">
+            <LockScreen
+                isLocked={isLocked}
+                onUnlock={() => {
+                    setIsLocked(false);
+                    playChime();
+                }}
+            />
 
-            {/* Layer 0: Background (Spline) */}
-            <div className="absolute inset-0 z-0 pointer-events-none">
+            <AnimatePresence>
+                {showSpotlight && (
+                    <Spotlight
+                        isOpen={showSpotlight}
+                        onClose={() => setShowSpotlight(false)}
+                        projects={projects}
+                        onOpenProject={openProjectWindow}
+                        onOpenApp={(id: string) => {
+                            if (id === 'about') openWindow('about');
+                            if (id === 'projects') openLaunchpad();
+                            if (id === 'gallery') openGallery();
+                            // removed game and settings
+                            if (id === 'mail') openContactWindow();
+                            setShowSpotlight(false);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Top Menu Bar */}
+            <MenuBar onSearch={() => setShowSpotlight(true)} />
+
+            {/* Layer 0: Background (Wallpaper + Blur) */}
+            <div className="absolute inset-0 z-0 pointer-events-none bg-white">
+                <img
+                    src={wallpaper}
+                    alt="Wallpaper"
+                    className="w-full h-full object-cover scale-110 transition-all duration-700"
+                />
                 {children}
             </div>
 
@@ -639,12 +813,42 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
                         videoUrl={icon.videoUrl}
                     />
                 ))}
+
+                {/* Sticky Notes Layer */}
+                {notes.map(note => (
+                    <StickyNote
+                        key={note.id}
+                        id={note.id}
+                        initialX={note.x}
+                        initialY={note.y}
+                        text={note.text}
+                        rotation={note.rotation}
+                        color={note.color}
+                        onDelete={deleteNote}
+                    />
+                ))}
             </div>
+
+
 
             {/* Layer 2: Windows */}
             <div className="absolute inset-0 z-20 pointer-events-none">
+                {/* Focus Blur Overlay (Inside Layer 2 for correct Stacking) */}
                 <AnimatePresence>
-                    {mounted && windows.filter(w => w.isOpen).map(w => (
+                    {windows.find(w => w.id === 'preview-viewer' && w.isOpen && !w.isMinimized) && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/40 backdrop-blur-md pointer-events-auto transition-all duration-500"
+                            style={{ zIndex: (windows.find(w => w.id === 'preview-viewer')?.zIndex || 100) - 1 }}
+                            onClick={() => closeWindow('preview-viewer')}
+                        />
+                    )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {mounted && windows.filter(w => w.isOpen).filter((w, index, self) => index === self.findIndex(t => t.id === w.id)).map(w => (
                         <div key={w.id} className="pointer-events-auto contents">
                             <OSWindow
                                 id={w.id}
@@ -665,7 +869,18 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
                                 height={w.height}
                                 onResize={(wId, h) => handleWindowResize(w.id, wId, h)}
                             >
-                                {w.content}
+                                {/* Dynamic Content Injection for Preview to ensure state freshness */}
+                                {w.id === 'preview-viewer' && previewItem ? (
+                                    <div className="w-full h-full bg-white flex items-center justify-center p-0 overflow-hidden relative">
+                                        {previewItem.kind === 'video' ? (
+                                            <video src={previewItem.src} controls autoPlay className="max-w-full max-h-full w-auto h-auto object-contain mx-auto shadow-2xl" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <img src={previewItem.src} alt={previewItem.title} className="max-w-full max-h-full w-auto h-auto object-contain shadow-2xl" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : w.content}
                             </OSWindow>
                         </div>
                     ))}

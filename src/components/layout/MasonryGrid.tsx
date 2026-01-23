@@ -106,9 +106,22 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
 
     // SSR Fallback
     if (!mounted) {
+        let gridClasses = 'grid-cols-2'; // Base/Mobile
+
+        if (columns === 'default') {
+            // Logic: <640: 2, 640-768: 3, 768-1024: 4, 1024-1280: 5, >1280: 7
+            gridClasses = 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7';
+        } else if (columns === 'sidebar') {
+            // Logic: <1024: 2, >=1024: 3
+            gridClasses = 'grid-cols-2 lg:grid-cols-3';
+        } else if (columns === 'bottom') {
+            // Logic: <1024: 2, 1024-1280: 3, 1280-1536: 4, >1536: 6
+            gridClasses = 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6';
+        }
+
         return (
             <div
-                className={`w-full grid items-start content-start ${className} grid-cols-2 gap-4`}
+                className={`w-full grid items-start content-start ${className} ${gridClasses} gap-4`}
             >
                 {React.Children.map(children, (child) => (
                     <div className="mb-4 break-inside-avoid">
