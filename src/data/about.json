@@ -137,10 +137,10 @@
     "about": {
       "x": 100,
       "y": 80,
-      "width": 521,
-      "height": 497,
-      "isOpenByDefault": true
+      "width": 509,
+      "height": 489,
+      "isOpenByDefault": false
     }
   },
-  "lastUpdated": "2026-01-25T19:06:30.759Z"
+  "lastUpdated": "2026-01-25T19:17:04.221Z"
 }
