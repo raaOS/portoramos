@@ -135,12 +135,12 @@
   "chatSettings": {},
   "windowPreferences": {
     "about": {
-      "x": 311,
-      "y": 43,
+      "x": 333,
+      "y": 73,
       "width": 509,
       "height": 489,
-      "isOpenByDefault": false
+      "isOpenByDefault": true
     }
   },
-  "lastUpdated": "2026-01-25T19:17:18.930Z"
+  "lastUpdated": "2026-01-25T19:17:21.769Z"
 }
