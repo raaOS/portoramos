@@ -131,7 +131,11 @@
   },
   "desktopPreferences": {},
   "wallpaperConfig": {},
-  "dockConfig": {},
+  "dockConfig": {
+    "whatsapp": {
+      "iconUrl": "/assets/icons-library/1769265645729-icnsfile-bd87257a063e75f0f7d799a64ab43302-whatsapp-business.webp"
+    }
+  },
   "chatSettings": {},
   "windowPreferences": {
     "about": {
@@ -142,5 +146,5 @@
       "isOpenByDefault": true
     }
   },
-  "lastUpdated": "2026-01-25T19:46:34.338Z"
+  "lastUpdated": "2026-01-25T20:20:40.963Z"
 }
