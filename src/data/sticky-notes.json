@@ -8,8 +8,10 @@
     "isDeleted": false,
     "x": 1568,
     "y": 550,
-    "zIndex": 3,
+    "zIndex": 5,
     "fontFamily": "var(--font-ala-nanti), sans-serif",
-    "isPinned": false
+    "isPinned": false,
+    "width": 325,
+    "height": 272
   }
 ]
