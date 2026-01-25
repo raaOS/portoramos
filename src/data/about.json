@@ -133,5 +133,14 @@
   "wallpaperConfig": {},
   "dockConfig": {},
   "chatSettings": {},
-  "lastUpdated": "2026-01-25T18:55:37.180Z"
+  "windowPreferences": {
+    "about": {
+      "x": 100,
+      "y": 80,
+      "width": 900,
+      "height": 600,
+      "isOpenByDefault": true
+    }
+  },
+  "lastUpdated": "2026-01-25T19:00:28.179Z"
 }
