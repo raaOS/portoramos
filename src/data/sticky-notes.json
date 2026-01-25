@@ -8,7 +8,8 @@
     "isDeleted": false,
     "x": 1538,
     "y": 214,
-    "zIndex": 5,
-    "fontFamily": "\"Ala Nanti\", sans-serif"
+    "zIndex": 6,
+    "fontFamily": "\"Ala Nanti\", sans-serif",
+    "isPinned": true
   }
 ]
