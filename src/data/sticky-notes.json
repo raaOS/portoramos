@@ -9,7 +9,7 @@
     "x": 1568,
     "y": 550,
     "zIndex": 6,
-    "fontFamily": "\"Ala Nanti\", sans-serif",
+    "fontFamily": "var(--font-caveat), cursive",
     "isPinned": false
   }
 ]
