@@ -1,14 +1,14 @@
 [
   {
     "id": "1",
-    "text": "Welcome to Sticky Notes! 📝\\n\\nClick the Dock icon to add a new note.",
+    "text": "ini semua bisa di kil dan di geser geser yaaa...",
     "date": "2026-01-26T00:00:00.000Z",
     "color": "#fef08a",
     "isStarred": false,
     "isDeleted": false,
     "x": 1517,
     "y": 117,
-    "zIndex": 5,
+    "zIndex": 6,
     "fontFamily": "\"Ala Nanti\", sans-serif",
     "isPinned": false
   }
