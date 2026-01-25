@@ -8,9 +8,9 @@
     "isDeleted": false,
     "x": 1547,
     "y": 550,
-    "zIndex": 16,
+    "zIndex": 3,
     "fontFamily": "var(--font-ala-nanti), sans-serif",
-    "isPinned": false,
+    "isPinned": true,
     "width": 303,
     "height": 341,
     "fontSize": 30
