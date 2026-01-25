@@ -140,6 +140,9 @@
     },
     "finder": {
       "iconUrl": "/assets/icons-library/1769374118568-icnsfile-d7ac3a93471d5eaa0d43e730035de6eb-finder-beta-1-pink.webp"
+    },
+    "about": {
+      "iconUrl": "/assets/icons-library/1769373997954-icnsfile-922467ee2be0869b8e2164714aed0616-notes.webp"
     }
   },
   "chatSettings": {},
@@ -152,5 +155,5 @@
       "isOpenByDefault": true
     }
   },
-  "lastUpdated": "2026-01-25T20:48:47.195Z"
+  "lastUpdated": "2026-01-25T20:48:50.571Z"
 }
