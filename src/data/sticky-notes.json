@@ -11,7 +11,8 @@
     "zIndex": 6,
     "fontFamily": "var(--font-ala-nanti), sans-serif",
     "isPinned": false,
-    "width": 325,
-    "height": 272
+    "width": 303,
+    "height": 341,
+    "fontSize": 28
   }
 ]
