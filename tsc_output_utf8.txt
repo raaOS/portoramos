@@ -1,0 +1,7 @@
+﻿src/components/effects/PhysicsBaubles.tsx(44,27): error TS2345: Argument of type '{ x: number; y: number; z: number; }' is not assignable to parameter of type 'Vector3'.
+  Type '{ x: number; y: number; z: number; }' is missing the following properties from type 'Vector3': isVector3, set, setScalar, setX, and 73 more.
+src/components/effects/PhysicsBaubles.tsx(74,18): error TS2345: Argument of type '{ x: number; y: number; z: number; }' is not assignable to parameter of type 'Vector3'.
+  Type '{ x: number; y: number; z: number; }' is missing the following properties from type 'Vector3': isVector3, set, setScalar, setX, and 73 more.
+src/hooks/useWindowManager.ts(40,40): error TS2339: Property 'windowPreferences' does not exist on type 'AboutData'.
+src/hooks/useWindowManager.ts(86,44): error TS2339: Property 'windowPreferences' does not exist on type 'AboutData'.
+src/hooks/useWindowManager.ts(141,45): error TS2339: Property 'windowPreferences' does not exist on type 'AboutData'.

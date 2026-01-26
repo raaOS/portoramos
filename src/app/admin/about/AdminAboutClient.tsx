@@ -9,20 +9,24 @@ import TrailSelector from '@/components/admin/TrailSelector';
 
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
-import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info, Trash2, Pencil, Tag } from 'lucide-react';
+import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info, Trash2, Pencil, Tag, Globe, Terminal, Palette, Monitor, Layout, MessageSquare, Save, User, Type, Plus, Eye, EyeOff } from 'lucide-react';
 import RunningTextPanel from './components/RunningTextPanel';
 import StatusToggle from '../components/StatusToggle';
 import DesignPhilosophyForm from '@/components/admin/about/DesignPhilosophyForm';
 
 import HardSkillsManager from './components/HardSkillsManager';
 import { RunningTextItem } from '@/types/runningText';
-import { Type, ArrowUp, ArrowDown } from 'lucide-react';
+
+import WallpaperManager from './components/WallpaperManager';
+import DesktopProjectsForm from './components/DesktopProjectsForm';
+import DockConfigForm from './components/DockConfigForm';
+import ChatSettingsForm from './components/ChatSettingsForm';
 
 export default function AdminAboutClient() {
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'hero' | 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'labels'>('hero');
+  const [activeTab, setActiveTab] = useState<'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'labels' | 'desktop' | 'dock' | 'chat'>('professional');
 
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -218,12 +222,15 @@ export default function AdminAboutClient() {
               className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
             >
               {[
-                { id: 'hero', name: 'Hero Section' },
-                { id: 'professional', name: 'Professional Info' },
+
+                { id: 'professional', name: 'About Me (Finder)' },
                 { id: 'softSkills', name: 'Soft Skills' },
                 { id: 'hardSkills', name: 'Hard Skills' },
                 { id: 'philosophy', name: 'Design Philosophy' },
                 { id: 'runningText', name: 'Running Text' },
+                { id: 'desktop', name: 'Desktop Configuration' },
+                { id: 'dock', name: 'Dock System' },
+                { id: 'chat', name: 'Chat Settings' },
               ].map((tab) => (
                 <option key={tab.id} value={tab.id}>
                   {tab.name}
@@ -237,12 +244,15 @@ export default function AdminAboutClient() {
         <div className="hidden md:block w-64 border-r border-gray-200 bg-gray-50/50 flex-shrink-0">
           <nav className="p-3 space-y-1">
             {[
-              { id: 'hero', name: 'Hero Section', icon: Sparkles, color: 'text-blue-600', bg: 'bg-blue-50' },
-              { id: 'professional', name: 'Professional', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+
+              { id: 'professional', name: 'About Me (Finder)', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50' },
               { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'bg-amber-50' },
               { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'bg-violet-50' },
               { id: 'philosophy', name: 'Philosophy', icon: Sparkles, color: 'text-orange-600', bg: 'bg-orange-50' },
               { id: 'runningText', name: 'Running Text', icon: Type, color: 'text-pink-600', bg: 'bg-pink-50' },
+              { id: 'desktop', name: 'Desktop & OS', icon: Monitor, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+              { id: 'dock', name: 'Dock System', icon: Layout, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+              { id: 'chat', name: 'Chat Agent', icon: MessageSquare, color: 'text-green-600', bg: 'bg-green-50' },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -268,13 +278,7 @@ export default function AdminAboutClient() {
         {/* Content Area */}
         <div className="flex-1 min-w-0 bg-white">
           <div className="p-6 lg:p-8">
-            {activeTab === 'hero' && (
-              <HeroSectionForm
-                data={aboutData.hero}
-                projects={projects}
-                onUpdate={(data) => handleUpdateAbout({ hero: data })}
-              />
-            )}
+
             {activeTab === 'professional' && (
               <ProfessionalSectionForm
                 data={aboutData.professional}
@@ -305,6 +309,47 @@ export default function AdminAboutClient() {
                 onDelete={handleDeleteRunningText}
               />
             )}
+
+            {/* OS Configuration Sections */}
+            {activeTab === 'desktop' && (
+              <div className="space-y-8">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <h3 className="font-bold text-blue-800 flex items-center gap-2">
+                    <Monitor className="w-5 h-5" /> OS Desktop Configuration
+                  </h3>
+                  <p className="text-sm text-blue-600 mt-1">
+                    Start Menu, Desktop Icons, and Window behavior.
+                  </p>
+                </div>
+                <WallpaperManager
+                  data={aboutData.wallpaperConfig}
+                  onUpdate={(data) => handleUpdateAbout({ wallpaperConfig: data })}
+                />
+                <DesktopProjectsForm
+                  projects={projects}
+                  data={aboutData.desktopPreferences}
+                  onUpdate={(data) => handleUpdateAbout({ desktopPreferences: data })}
+                />
+              </div>
+            )}
+
+            {activeTab === 'dock' && (
+              <div className="space-y-8">
+                <DockConfigForm
+                  data={aboutData.dockConfig}
+                  onUpdate={(data) => handleUpdateAbout({ dockConfig: data })}
+                />
+              </div>
+            )}
+
+            {activeTab === 'chat' && (
+              <div className="space-y-8">
+                <ChatSettingsForm
+                  data={aboutData.chatSettings}
+                  onUpdate={(data) => handleUpdateAbout({ chatSettings: data })}
+                />
+              </div>
+            )}
             {/* Note: Labels panel content seems missing in original code, placeholder removed if not used or add placeholder if needed */}
           </div>
         </div>
@@ -322,215 +367,6 @@ const normalizeUrlList = (raw: string) => {
   return Array.from(new Set(urls));
 };
 
-// Hero Section Form
-function HeroSectionForm({
-  data,
-  projects,
-  onUpdate
-}: {
-  data: any;
-  projects: Project[];
-  onUpdate: (data: any) => void;
-}) {
-  // Normalize initial data to TrailItem[]
-  const initialTrail: TrailItem[] = (data.backgroundTrail || []).map((item: string | TrailItem) => {
-    if (typeof item === 'string') {
-      return { src: item, isActive: true };
-    }
-    return item;
-  });
-
-  const [formData, setFormData] = useState({
-    title: data.title || '',
-    backgroundTrail: initialTrail,
-    backgroundColor: data.backgroundColor || '',
-    textColor: data.textColor || '',
-    ballColor: data.ballColor || '',
-    capColor: data.capColor || '',
-    availability: {
-      status: data.availability?.status || 'available',
-      text: data.availability?.text || 'Available for new projects'
-    }
-  });
-
-  const handleTrailChange = (items: TrailItem[]) => {
-    setFormData(prev => ({
-      ...prev,
-      backgroundTrail: items
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onUpdate({
-      title: formData.title,
-      backgroundTrail: formData.backgroundTrail,
-      backgroundColor: formData.backgroundColor,
-      textColor: formData.textColor,
-      ballColor: formData.ballColor,
-      capColor: formData.capColor,
-      availability: formData.availability
-    });
-  };
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Hero Section</h3>
-        <p className="text-sm text-gray-600 mb-4">Atur judul utama, warna, dan efek trail di background.</p>
-        <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Title</label>
-            <input
-              type="text"
-              required
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            />
-          </div>
-
-          <div className="bg-white p-4 rounded border border-gray-200">
-            <h4 className="text-sm font-medium text-gray-900 mb-4 block">Color Customization</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
-              <div className="flex flex-col gap-2 min-w-0">
-                <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none">Background</label>
-                <div className="flex items-center gap-2 bg-white border border-gray-200 p-1.5 rounded-lg shadow-sm w-full overflow-hidden">
-                  <input
-                    type="color"
-                    value={formData.backgroundColor || '#e6eaf5'}
-                    onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
-                    className="h-7 w-7 flex-shrink-0 p-0 border-0 rounded cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={formData.backgroundColor}
-                    onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
-                    placeholder="Default"
-                    className="min-w-0 flex-1 text-[10px] border-0 focus:ring-0 p-0 text-gray-400 font-mono"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 min-w-0">
-                <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none">Text Color</label>
-                <div className="flex items-center gap-2 bg-white border border-gray-200 p-1.5 rounded-lg shadow-sm w-full overflow-hidden">
-                  <input
-                    type="color"
-                    value={formData.textColor || '#000000'}
-                    onChange={(e) => setFormData({ ...formData, textColor: e.target.value })}
-                    className="h-7 w-7 flex-shrink-0 p-0 border-0 rounded cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={formData.textColor}
-                    onChange={(e) => setFormData({ ...formData, textColor: e.target.value })}
-                    placeholder="#000000"
-                    className="min-w-0 flex-1 text-[10px] border-0 focus:ring-0 p-0 text-gray-400 font-mono"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 min-w-0">
-                <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none">Ball Color</label>
-                <div className="flex items-center gap-2 bg-white border border-gray-200 p-1.5 rounded-lg shadow-sm w-full overflow-hidden">
-                  <input
-                    type="color"
-                    value={formData.ballColor || '#FEDDD8'}
-                    onChange={(e) => setFormData({ ...formData, ballColor: e.target.value })}
-                    className="h-7 w-7 flex-shrink-0 p-0 border-0 rounded cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={formData.ballColor}
-                    onChange={(e) => setFormData({ ...formData, ballColor: e.target.value })}
-                    placeholder="#FEDDD8"
-                    className="min-w-0 flex-1 text-[10px] border-0 focus:ring-0 p-0 text-gray-400 font-mono"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 min-w-0">
-                <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none">Cap Color</label>
-                <div className="flex items-center gap-2 bg-white border border-gray-200 p-1.5 rounded-lg shadow-sm w-full overflow-hidden">
-                  <input
-                    type="color"
-                    value={formData.capColor || '#F6A77B'}
-                    onChange={(e) => setFormData({ ...formData, capColor: e.target.value })}
-                    className="h-7 w-7 flex-shrink-0 p-0 border-0 rounded cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={formData.capColor}
-                    onChange={(e) => setFormData({ ...formData, capColor: e.target.value })}
-                    placeholder="#F6A77B"
-                    className="min-w-0 flex-1 text-[10px] border-0 focus:ring-0 p-0 text-gray-400 font-mono"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded border border-gray-200">
-            <h4 className="text-sm font-medium text-gray-900 mb-3 block">Work Availability Status</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Status</label>
-                <select
-                  value={formData.availability.status}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    availability: { ...prev.availability, status: e.target.value as any }
-                  }))}
-                  className="w-full border-gray-300 rounded-md shadow-sm text-sm"
-                >
-                  <option value="available">🟢 Available (Green)</option>
-                  <option value="booked">🔴 Fully Booked (Red)</option>
-                  <option value="limited">🟡 Limited (Yellow)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Status Text</label>
-                <input
-                  type="text"
-                  value={formData.availability.text}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    availability: { ...prev.availability, text: e.target.value }
-                  }))}
-                  className="w-full border-gray-300 rounded-md shadow-sm text-sm"
-                  placeholder="e.g. Open for new projects"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Background Trail Images</label>
-            <TrailSelector
-              projects={projects}
-              selectedItems={formData.backgroundTrail}
-              onChange={handleTrailChange}
-              maxItems={20}
-              allowedTypes={['image']}
-            />
-            <p className="mt-2 text-sm text-gray-500">
-              {formData.backgroundTrail.length} items.
-            </p>
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium shadow-sm"
-            >
-              Update Hero Section
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 // Professional Section Form
 function ProfessionalSectionForm({
   data,
@@ -542,29 +378,16 @@ function ProfessionalSectionForm({
   onUpdate: (data: any) => void;
 }) {
   // Normalize initial data to TrailItem[]
-  const initialGallery: TrailItem[] = (data.bio?.galleryImages || []).map((item: string | TrailItem) => {
-    if (typeof item === 'string') {
-      return { src: item, isActive: true };
-    }
-    return item;
-  });
+
 
   const [formData, setFormData] = useState({
     mottoBadge: data.motto?.badge || '',
     mottoQuote: data.motto?.quote || '',
     bioContent: data.bio?.content || '',
-    bioGalleryImages: initialGallery,
-    email: data.contacts?.email || '',
-    whatsapp: data.contacts?.whatsapp || '',
-    linkedin: data.contacts?.linkedin || ''
+
   });
 
-  const handleGalleryChange = (items: TrailItem[]) => {
-    setFormData(prev => ({
-      ...prev,
-      bioGalleryImages: items
-    }));
-  };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -575,14 +398,9 @@ function ProfessionalSectionForm({
         quote: formData.mottoQuote
       },
       bio: {
-        content: formData.bioContent,
-        galleryImages: formData.bioGalleryImages
+        content: formData.bioContent
       },
-      contacts: {
-        email: formData.email,
-        whatsapp: formData.whatsapp,
-        linkedin: formData.linkedin
-      }
+
     };
 
     onUpdate(submitData);
@@ -591,51 +409,10 @@ function ProfessionalSectionForm({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Professional Information</h3>
-        <p className="text-sm text-gray-600 mb-4">Informasi tentang motto kerja, biografi, dan kontak (Khusus untuk Resume AI).</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">About Me (Finder Profile)</h3>
+        <p className="text-sm text-gray-600 mb-4">Konten ini muncul di window "Finder: About Me" pada halaman About OS.</p>
         <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
 
-          <div className="bg-white p-4 rounded border border-gray-200">
-            <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-500" />
-              Private Contact Info (for AI Resume)
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Email</label>
-                <input
-                  type="email"
-                  className="w-full border-gray-300 rounded-md shadow-sm text-sm"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="ra.920710@gmail.com"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">WhatsApp</label>
-                <input
-                  type="text"
-                  className="w-full border-gray-300 rounded-md shadow-sm text-sm"
-                  value={formData.whatsapp}
-                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                  placeholder="08817472310"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">LinkedIn Profile</label>
-                <input
-                  type="text"
-                  className="w-full border-gray-300 rounded-md shadow-sm text-sm"
-                  value={formData.linkedin}
-                  onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-                  placeholder="linkedin.com/in/username"
-                />
-              </div>
-            </div>
-            <p className="mt-2 text-[10px] text-amber-600 italic font-medium">
-              *Data ini tersembunyi dari web publik. Hanya digunakan Bot Telegram untuk mengisi Resume PDF.
-            </p>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -671,18 +448,7 @@ function ProfessionalSectionForm({
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Bio Gallery Images</label>
-            <TrailSelector
-              projects={projects}
-              selectedItems={formData.bioGalleryImages}
-              onChange={handleGalleryChange}
-              maxItems={20}
-            />
-            <p className="mt-2 text-sm text-gray-500">
-              {formData.bioGalleryImages.length} items.
-            </p>
-          </div>
+
 
           <div className="flex justify-end pt-2">
             <button
@@ -706,17 +472,69 @@ function SoftSkillsSectionForm({
   data: any;
   onUpdate: (data: any) => void;
 }) {
-  const [formData, setFormData] = useState({
-    texts: data.texts?.join('\n') || '',
-    descriptions: data.descriptions?.join('\n') || ''
-  });
+  // Initialize items by zipping texts and descriptions OR using new items array
+  const initializeItems = () => {
+    if (data.items && Array.isArray(data.items)) {
+      return data.items.map((i: any) => ({
+        text: i.text || '',
+        description: i.description || '',
+        isDraft: i.isDraft || false
+      }));
+    }
+
+    // Fallback migration for old data
+    const texts = data.texts || [];
+    const descriptions = data.descriptions || [];
+    const maxLength = Math.max(texts.length, descriptions.length);
+    const items = [];
+
+    for (let i = 0; i < maxLength; i++) {
+      items.push({
+        text: texts[i] || '',
+        description: descriptions[i] || '',
+        isDraft: false // Default to published for migrated items
+      });
+    }
+
+    if (items.length === 0) {
+      items.push({ text: '', description: '', isDraft: false });
+    }
+
+    return items;
+  };
+
+  const [items, setItems] = useState<{ text: string; description: string; isDraft: boolean }[]>(initializeItems);
+
+  const handleItemChange = (index: number, field: 'text' | 'description', value: string) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
+  };
+
+  const toggleDraft = (index: number) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], isDraft: !newItems[index].isDraft };
+    setItems(newItems);
+  };
+
+  const handleAddItem = () => {
+    setItems([...items, { text: '', description: '', isDraft: true }]); // Default new items to Draft
+  };
+
+  const handleRemoveItem = (index: number) => {
+    const newItems = items.filter((_, i) => i !== index);
+    setItems(newItems);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Filter out empty items
+    const validItems = items.filter(item => item.text.trim() || item.description.trim());
+
+    // Save as new 'items' structure
     const submitData = {
-      texts: formData.texts.split('\n').filter(Boolean),
-      descriptions: formData.descriptions.split('\n').filter(Boolean)
+      items: validItems
     };
 
     onUpdate(submitData);
@@ -729,35 +547,90 @@ function SoftSkillsSectionForm({
         <p className="text-sm text-gray-600 mb-4">Daftar soft skills yang ditampilkan dalam bentuk morphing text.</p>
         <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Skill Texts (one per line)</label>
-            <textarea
-              rows={6}
-              required
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={formData.texts}
-              onChange={(e) => setFormData({ ...formData, texts: e.target.value })}
-              placeholder="Kreativitas & Inovasi&#10;Problem Solving&#10;Team Collaboration"
-            />
+          <div className="space-y-4">
+            {items.map((item, index) => (
+              <div
+                key={index}
+                className={`flex gap-4 items-start p-3 border rounded-md shadow-sm group transition-colors relative ${item.isDraft ? 'bg-gray-50 border-dashed border-gray-300 opacity-75' : 'bg-white border-gray-200'
+                  }`}
+              >
+                <div className="flex-1 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <label className="block text-xs font-medium text-gray-500 mb-1">
+                        Skill Name (Text)
+                      </label>
+                      <input
+                        type="text"
+                        value={item.text}
+                        onChange={(e) => handleItemChange(index, 'text', e.target.value)}
+                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        placeholder="e.g. Kreativitas & Inovasi"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleDraft(index)}
+                      className={`p-2 rounded-lg mt-5 transition-colors ${item.isDraft
+                          ? 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                          : 'bg-green-50 text-green-600 hover:bg-green-100'
+                        }`}
+                      title={item.isDraft ? "Currently Draft (Hidden)" : "Currently Published (Visible)"}
+                    >
+                      {item.isDraft ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={item.description}
+                      onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                      className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="Jelaskan skill ini..."
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleRemoveItem(index)}
+                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors mt-8"
+                  title="Remove Skill"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+
+                {/* Visual Badge for Draft status */}
+                <div className="absolute top-2 right-2 pointer-events-none">
+                  {item.isDraft && (
+                    <span className="text-[10px] uppercase font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded">Draft</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Skill Descriptions (one per line)</label>
-            <textarea
-              rows={6}
-              required
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={formData.descriptions}
-              onChange={(e) => setFormData({ ...formData, descriptions: e.target.value })}
-              placeholder="Mampu menghasilkan ide-ide kreatif yang fresh dan inovatif untuk setiap project.&#10;Terbiasa menganalisis masalah dan menemukan solusi yang efektif dan efisien."
-            />
-            <p className="mt-1 text-sm text-gray-500">Make sure the number of descriptions matches the number of texts</p>
-          </div>
-
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-between items-center pt-2">
+            <button
+              type="button"
+              onClick={handleAddItem}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add New Skill
+            </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium shadow-sm"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium shadow-sm transition-colors"
             >
               Update Soft Skills
             </button>
@@ -767,6 +640,3 @@ function SoftSkillsSectionForm({
     </div>
   );
 }
-
-
-

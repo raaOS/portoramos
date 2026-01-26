@@ -1,5 +1,5 @@
-// Google Fonts: Six Caps, DM Sans
-import { Six_Caps, DM_Sans } from 'next/font/google'
+import { Six_Caps, DM_Sans, Caveat, Indie_Flower, Patrick_Hand } from 'next/font/google'
+import localFont from 'next/font/local'
 
 // Six Caps - Display font
 export const sixCaps = Six_Caps({
@@ -11,7 +11,6 @@ export const sixCaps = Six_Caps({
   fallback: ['Arial Narrow', 'sans-serif'],
 })
 
-// DM Sans - Body font (clean, geometric, modern)
 export const dmSans = DM_Sans({
   variable: '--font-sans', // Renamed to font-sans to be accurate
   subsets: ['latin'],
@@ -21,5 +20,31 @@ export const dmSans = DM_Sans({
   fallback: ['Arial', 'sans-serif'],
 })
 
+export const caveat = Caveat({
+  variable: '--font-caveat',
+  subsets: ['latin'],
+  display: 'swap',
+})
+
+export const indieFlower = Indie_Flower({
+  variable: '--font-indie',
+  subsets: ['latin'],
+  weight: '400',
+  display: 'swap',
+})
+
+export const patrickHand = Patrick_Hand({
+  variable: '--font-patrick',
+  subsets: ['latin'],
+  weight: '400',
+  display: 'swap',
+})
+
+// Local Fonts
+export const alaNanti = localFont({
+  src: '../../public/font/AlaNkcthi.otf',
+  variable: '--font-ala-nanti',
+})
+
 export const displayClassName = `${sixCaps.variable} ${sixCaps.className}`
-export const sansClassName = `${dmSans.variable} ${dmSans.className}`
+export const sansClassName = `${dmSans.variable} ${dmSans.className} ${caveat.variable} ${indieFlower.variable} ${patrickHand.variable} ${alaNanti.variable}`

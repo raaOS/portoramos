@@ -1,0 +1,623 @@
+"use client";
+
+import React, { useState, useRef, useEffect } from 'react';
+import { Star, Trash2, Edit, Palette, RotateCcw, Pin, Eye, EyeOff, Bold, Italic, List, ListOrdered, CheckSquare, Check, Type, Download, X, Search, Plus, Minus } from 'lucide-react';
+import { motion, AnimatePresence, DragControls } from 'framer-motion';
+import * as htmlToImage from 'html-to-image';
+import PasswordModal from './PasswordModal';
+
+export interface NoteData {
+    id: string;
+    text: string;
+    date: string;
+    color: string; // Hex code
+    isStarred: boolean;
+    isDeleted: boolean;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    isPinned?: boolean;
+    isCollapsed?: boolean;
+    opacity?: number;
+    zIndex?: number;
+    fontFamily?: string;
+    fontSize?: number;
+}
+
+interface StickyNoteItemProps {
+    note: NoteData;
+    onUpdate: (id: string, updates: Partial<NoteData>) => void;
+    onDelete: (id: string) => void; // Soft delete
+    onPermanentDelete: (id: string) => void;
+    onRestore: (id: string) => void;
+    dragControls: DragControls;
+}
+
+const COLORS = [
+    '#fef08a', // Yellow
+    '#bfdbfe', // Blue
+    '#bbf7d0', // Green
+    '#fbcfe8', // Pink
+    '#f5f5f4', // White
+    '#ddd6fe', // Purple
+];
+
+const HANDWRITING_FONTS = [
+    { name: 'Standard (Sans)', value: 'inherit' },
+    { name: 'Ala Nanti', value: 'var(--font-ala-nanti), sans-serif' },
+    { name: 'Caveat', value: 'var(--font-caveat), cursive' },
+    { name: 'Indie Flower', value: 'var(--font-indie), cursive' },
+    { name: 'Patrick Hand', value: 'var(--font-patrick), cursive' },
+];
+
+export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, dragControls }: StickyNoteItemProps) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [isUnlocked, setIsUnlocked] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [showFontPicker, setShowFontPicker] = useState(false);
+    const [fontSearchTerm, setFontSearchTerm] = useState('');
+    const textAreaRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isResizing, setIsResizing] = useState(false);
+    const [localSize, setLocalSize] = useState({ width: note.width || 280, height: note.height || 280 });
+
+    // Sync local size when prop changes (external update)
+    useEffect(() => {
+        if (!isResizing) {
+            setLocalSize({ width: note.width || 280, height: note.height || 280 });
+        }
+    }, [note.width, note.height, isResizing]);
+
+    const width = localSize.width;
+    const height = localSize.height;
+
+    // Handle Resize
+    useEffect(() => {
+        if (!isResizing) return;
+        // Effect hook for resizing if needed in future
+    }, [isResizing]);
+
+    // We'll use a direct pointer down handler on the resize handle
+    const handleResizeStart = (e: React.PointerEvent) => {
+        e.preventDefault();
+        e.stopPropagation(); // Prevent drag of the note itself
+        setIsResizing(true);
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startWidth = localSize.width;
+        const startHeight = localSize.height;
+
+        let lastWidth = startWidth;
+        let lastHeight = startHeight;
+
+        const handlePointerMove = (moveEvent: PointerEvent) => {
+            lastWidth = Math.max(200, startWidth + (moveEvent.clientX - startX));
+            lastHeight = Math.max(200, startHeight + (moveEvent.clientY - startY));
+            setLocalSize({ width: lastWidth, height: lastHeight });
+        };
+
+        const handlePointerUp = () => {
+            setIsResizing(false);
+            onUpdate(note.id, { width: lastWidth, height: lastHeight });
+            document.removeEventListener('pointermove', handlePointerMove);
+            document.removeEventListener('pointerup', handlePointerUp);
+        };
+
+        document.addEventListener('pointermove', handlePointerMove);
+        document.addEventListener('pointerup', handlePointerUp);
+    };
+
+    const handleEditClick = () => {
+        if (isEditing) {
+            setIsEditing(false);
+            return;
+        }
+
+        if (isUnlocked) {
+            setIsEditing(true);
+            // Clear placeholder if it's there
+            if (textAreaRef.current && note.text === '') {
+                textAreaRef.current.innerHTML = '';
+            }
+        } else {
+            setShowPasswordModal(true);
+        }
+    };
+
+    // We'll use a ref to track the inner content without triggering re-renders while typing
+    const innerContentRef = useRef(note.text);
+
+    // Sync only when not editing or when note.text changes externally
+    useEffect(() => {
+        if (textAreaRef.current) {
+            const currentDOM = textAreaRef.current.innerHTML;
+            // Case 1: External update (when not editing)
+            if (!isEditing && currentDOM !== note.text) {
+                textAreaRef.current.innerHTML = note.text || '<span class="text-gray-400 italic">Empty note...</span>';
+                innerContentRef.current = note.text;
+            }
+            // Case 2: Newly mounted (e.g. after uncollapse) while editing
+            else if (isEditing && (currentDOM === '' || currentDOM === '<br>')) {
+                textAreaRef.current.innerHTML = innerContentRef.current || '';
+            }
+        }
+    }, [note.text, isEditing, note.isCollapsed]); // Added isCollapsed to trigger on mount/uncollapse
+
+    const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
+        const newHtml = e.currentTarget.innerHTML;
+        innerContentRef.current = newHtml;
+        // DO NOT call onUpdate here, it causes parent re-renders and cursor jumps
+    };
+
+    const handleBlur = () => {
+        // Only sync with parent when user stops interacting
+        onUpdate(note.id, { text: innerContentRef.current });
+    };
+
+    const execFormat = (command: string, value?: string) => {
+        if (textAreaRef.current) {
+            textAreaRef.current.focus();
+            document.execCommand(command, false, value);
+            handleContentChange({ currentTarget: textAreaRef.current } as any);
+            // After formatting, sync immediately so toolbar changes are saved
+            onUpdate(note.id, { text: textAreaRef.current.innerHTML });
+        }
+    };
+
+    const insertChecklist = () => {
+        // Wrap in a div to ensure block level (vertical)
+        const html = '<div style="display: flex; align-items: flex-start; gap: 8px; margin: 4px 0;"><input type="checkbox" style="margin-top: 6px; accent-color: black; width: 16px; height: 16px;" /> <span>&nbsp;</span></div>';
+        execFormat('insertHTML', html);
+    };
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        // Handle images
+        if (e.clipboardData && e.clipboardData.files.length > 0) {
+            const file = e.clipboardData.files[0];
+            if (file.type.startsWith('image/')) {
+                e.preventDefault();
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    if (event.target?.result) {
+                        const imgHtml = `<img src="${event.target.result}" style="max-width: 100%; border-radius: 4px; margin: 8px 0; display: block;" />`;
+                        execFormat('insertHTML', imgHtml);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    };
+
+    const formatDate = (dateStr: string) => {
+        // Simple formatter, can be improved
+        return new Date(dateStr).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    const handleDownload = async () => {
+        if (!containerRef.current) return;
+        try {
+            const dataUrl = await htmlToImage.toPng(containerRef.current, {
+                quality: 0.95,
+                backgroundColor: 'transparent', // Preserve transparency/shape
+                style: {
+                    transform: 'scale(1)', // Normalize scale just in case
+                }
+            });
+            const link = document.createElement('a');
+            link.download = `sticky-note-${note.id.slice(0, 8)}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (err) {
+            console.error('Failed to export note:', err);
+            alert('Failed to save image.');
+        }
+    };
+
+    return (
+        <>
+            <motion.div
+                ref={containerRef}
+                // layout={!isResizing} // Removed to prevent jitter and unwanted flying animations
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className={`absolute rounded-lg flex flex-col shadow-md hover:shadow-xl group ${!isResizing ? 'transition-shadow duration-300' : ''}`}
+                style={{
+                    backgroundColor: note.color,
+                    width: width,
+                    height: note.isCollapsed ? '60px' : height,
+                    // opacity handling moved to parent wrapper in DesktopEnvironment
+                    // zIndex handling moved to parent wrapper in DesktopEnvironment
+                    overflow: 'hidden'
+                }}
+            >
+                {/* Red Pin Visual (Visible when pinned) - 3D Ball Style */}
+                {note.isPinned && (
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+                        <div
+                            style={{
+                                width: '16px',
+                                height: '16px',
+                                borderRadius: '50%',
+                                // 3D Gradient: Highlight (Top Left) -> Mid Red -> Dark Red (Bottom Right)
+                                background: 'radial-gradient(circle at 35% 30%, #ffcfcf, #ef4444 30%, #991b1b)',
+                                // Shadows: Drop shadow + slight inset for rim separation
+                                boxShadow: '0px 4px 5px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                            }}
+                        >
+                            {/* Specular Highlight (The shiny white reflection) */}
+                            <div className="absolute top-[12%] left-[12%] w-[30%] h-[20%] bg-white rounded-[50%] opacity-90 blur-[0.5px]" />
+                        </div>
+                    </div>
+                )}
+
+                {/* Header: Color Picker & Date (Double click to collapse) */}
+                <div
+                    className="absolute top-0 left-0 right-0 h-[60px] px-4 z-20 flex items-center justify-between cursor-grab active:cursor-grabbing"
+                    onPointerDown={(e) => dragControls.start(e)}
+                    onDoubleClick={() => {
+                        // Save text before collapsing to prevent loss
+                        onUpdate(note.id, {
+                            isCollapsed: !note.isCollapsed,
+                            text: innerContentRef.current
+                        });
+                    }}
+                >
+                    {/* Color Picker */}
+                    <div className="flex gap-1.5" onPointerDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                        {COLORS.map(c => (
+                            <button
+                                key={c}
+                                onClick={() => onUpdate(note.id, { color: c })}
+                                className={`w-[14px] h-[14px] rounded-full border border-black/10 hover:scale-125 transition-transform flex items-center justify-center`}
+                                style={{ backgroundColor: c, minWidth: '14px', minHeight: '14px', width: '14px', height: '14px', padding: 0 }}
+                                title="Set Color"
+                            >
+                                {note.color === c && <Check size={10} className="text-black/60" strokeWidth={3} />}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Date */}
+                    <span className="text-xs font-semibold text-gray-500/60 select-none">
+                        {formatDate(note.date)}
+                    </span>
+                </div>
+
+                {/* Main Content Area (Hidden if collapsed) */}
+                {!note.isCollapsed && (
+                    <div className="flex-grow p-4 pt-16 overflow-hidden relative group flex flex-col">
+                        {/* Formatting Toolbar (Visible only when editing) */}
+                        {isEditing && (
+                            <div
+                                className="flex items-center gap-1 mb-2 p-1 bg-black/5 rounded-md self-start flex-wrap"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                            >
+                                <button onClick={() => execFormat('bold')} className="p-1 hover:text-black text-gray-600 transition-colors" title="Bold">
+                                    <Bold size={14} />
+                                </button>
+                                <button onClick={() => execFormat('italic')} className="p-1 hover:text-black text-gray-600 transition-colors" title="Italic">
+                                    <Italic size={14} />
+                                </button>
+                                <button onClick={() => execFormat('insertUnorderedList')} className="p-1 hover:text-black text-gray-600 transition-colors" title="Bulleted List">
+                                    <List size={14} />
+                                </button>
+                                <button onClick={() => execFormat('insertOrderedList')} className="p-1 hover:text-black text-gray-600 transition-colors" title="Numbered List">
+                                    <ListOrdered size={14} />
+                                </button>
+                                <button onClick={insertChecklist} className="p-1 hover:text-black text-gray-600 transition-colors" title="Checklist">
+                                    <CheckSquare size={14} />
+                                </button>
+                                <div className="w-[1px] h-4 bg-black/10 mx-1" />
+                                <button onClick={() => execFormat('formatBlock', 'P')} className="p-1 hover:text-black text-gray-600 transition-colors text-xs font-bold w-6 text-center" title="Paragraph">
+                                    P
+                                </button>
+                                <button onClick={() => execFormat('formatBlock', 'H1')} className="p-1 hover:text-black text-gray-600 transition-colors text-xs font-bold w-6 text-center" title="Heading 1">
+                                    H1
+                                </button>
+                                <div className="w-[1px] h-4 bg-black/10 mx-1" />
+                                <button
+                                    onClick={() => setShowFontPicker(true)}
+                                    className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/5 hover:bg-black/10 text-[10px] font-semibold text-gray-700 transition-colors"
+                                    title="Choose Font"
+                                >
+                                    <Type size={12} />
+                                    <span>Font</span>
+                                </button>
+                                <div className="w-[1px] h-4 bg-black/10 mx-1" />
+                                <div className="flex items-center bg-black/5 rounded px-1 gap-1">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const currentSize = note.fontSize || 18;
+                                            onUpdate(note.id, { fontSize: Math.max(10, currentSize - 2) });
+                                        }}
+                                        className="p-1 hover:bg-black/10 rounded transition-colors text-gray-600"
+                                        title="Decrease font size"
+                                    >
+                                        <Minus size={12} />
+                                    </button>
+                                    <span className="text-[10px] font-bold text-gray-500 w-4 text-center select-none">
+                                        {note.fontSize || 18}
+                                    </span>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const currentSize = note.fontSize || 18;
+                                            onUpdate(note.id, { fontSize: Math.min(72, currentSize + 2) });
+                                        }}
+                                        className="p-1 hover:bg-black/10 rounded transition-colors text-gray-600"
+                                        title="Increase font size"
+                                    >
+                                        <Plus size={12} />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Text Display / Input */}
+                        <div
+                            ref={textAreaRef}
+                            contentEditable={isEditing}
+                            onInput={handleContentChange}
+                            onBlur={handleBlur}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onDragStart={(e) => e.preventDefault()}
+                            onPaste={handlePaste}
+                            className={`w-full h-full bg-transparent border-none outline-none resize-none text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto ${isEditing ? 'cursor-text' : 'cursor-default pointer-events-none'}`}
+                            style={{
+                                minHeight: '100px',
+                                outline: 'none',
+                                fontFamily: note.fontFamily || 'inherit',
+                                fontSize: `${note.fontSize || 18}px`,
+                            }}
+                        />
+
+                        {/* Lists and layout styling is now handled globally in globals.css to prevent re-render flickering */}
+                    </div>
+                )}
+
+                {/* Internal Font Picker Overlay - Fixes clipping/visibility issues */}
+                <AnimatePresence>
+                    {showFontPicker && (
+                        <motion.div
+                            initial={{ y: '100%', opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: '100%', opacity: 0 }}
+                            className="absolute inset-x-0 bottom-0 top-[60px] bg-white z-[60] flex flex-col shadow-2xl border-t border-gray-100 rounded-t-2xl"
+                            onPointerDown={(e) => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 bg-white rounded-t-2xl">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Handwriting Style</span>
+                                <button
+                                    onClick={() => setShowFontPicker(false)}
+                                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-black"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            {/* Search */}
+                            <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/30">
+                                <div className="relative">
+                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search fonts..."
+                                        className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-black/5 transition-all font-sans"
+                                        value={fontSearchTerm}
+                                        onChange={(e) => setFontSearchTerm(e.target.value)}
+                                        onPointerDown={(e) => e.stopPropagation()}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Font Size Slider */}
+                            <div className="px-4 py-4 border-b border-gray-100 bg-gray-50/20">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Font Size: {note.fontSize || 18}px</span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => onUpdate(note.id, { fontSize: 18 })}
+                                            className="text-[10px] font-bold text-blue-500 hover:text-blue-600"
+                                        >
+                                            Reset
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Minus size={14} className="text-gray-400" />
+                                    <input
+                                        type="range"
+                                        min="10"
+                                        max="72"
+                                        step="1"
+                                        value={note.fontSize || 18}
+                                        onChange={(e) => onUpdate(note.id, { fontSize: parseInt(e.target.value) })}
+                                        className="flex-grow accent-black h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        onPointerDown={(e) => e.stopPropagation()}
+                                    />
+                                    <Plus size={14} className="text-gray-400" />
+                                </div>
+                            </div>
+
+                            {/* Font List - Grid Mode */}
+                            <div className="flex-grow overflow-y-auto p-3 custom-scrollbar bg-white">
+                                <div className="grid grid-cols-2 gap-2">
+                                    {HANDWRITING_FONTS.filter(f =>
+                                        f.name.toLowerCase().includes(fontSearchTerm.toLowerCase())
+                                    ).map((f) => (
+                                        <button
+                                            key={f.name}
+                                            onClick={() => {
+                                                onUpdate(note.id, { fontFamily: f.value });
+                                                setShowFontPicker(false);
+                                            }}
+                                            className={`
+                                                relative p-4 rounded-xl border transition-all text-left flex flex-col items-center justify-center gap-2 group
+                                                ${note.fontFamily === f.value
+                                                    ? 'bg-black border-black text-white shadow-lg scale-[0.98]'
+                                                    : 'bg-gray-50 border-gray-100 hover:border-gray-300 hover:bg-white text-gray-800'
+                                                }
+                                            `}
+                                        >
+                                            <span
+                                                className={`text-2xl leading-none text-center ${note.fontFamily === f.value ? 'text-white' : 'text-gray-900'}`}
+                                                style={{ fontFamily: f.value }}
+                                            >
+                                                Aa
+                                            </span>
+                                            <span className={`text-[10px] font-medium text-center truncate w-full ${note.fontFamily === f.value ? 'text-gray-300' : 'text-gray-500'}`}>
+                                                {f.name}
+                                            </span>
+
+                                            {note.fontFamily === f.value && (
+                                                <div className="absolute top-2 right-2">
+                                                    <Check size={10} className="text-white" strokeWidth={4} />
+                                                </div>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {HANDWRITING_FONTS.filter(f =>
+                                    f.name.toLowerCase().includes(fontSearchTerm.toLowerCase())
+                                ).length === 0 && (
+                                        <div className="flex flex-col items-center justify-center py-10 opacity-40">
+                                            <Type size={32} className="mb-2" />
+                                            <p className="italic text-xs">No fonts found...</p>
+                                        </div>
+                                    )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Footer / Toolbar (Hidden if collapsed) */}
+                {!note.isCollapsed && (
+                    <div className="h-14 px-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2 ml-auto">
+                            {/* Action Icons */}
+                            {!note.isDeleted ? (
+                                <>
+                                    {/* Edit Toggle */}
+                                    <button
+                                        onClick={handleEditClick}
+                                        className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isEditing ? 'text-blue-600 font-bold' : 'text-gray-700 hover:text-blue-600'}`}
+                                        title="Edit Note"
+                                        style={{ minWidth: '36px', minHeight: '36px' }}
+                                    >
+                                        <Edit size={18} />
+                                    </button>
+
+                                    {/* Pin Toggle */}
+                                    <button
+                                        onClick={() => onUpdate(note.id, { isPinned: !note.isPinned })}
+                                        className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${note.isPinned ? 'text-orange-600' : 'text-gray-700 hover:text-orange-600'}`}
+                                        title={note.isPinned ? "Unlock Position" : "Lock Position (Pin)"}
+                                        style={{ minWidth: '36px', minHeight: '36px' }}
+                                    >
+                                        <Pin size={18} className={note.isPinned ? "fill-current" : ""} />
+                                    </button>
+
+                                    {/* Opacity Cycle */}
+                                    <button
+                                        onClick={() => {
+                                            const current = note.opacity || 1;
+                                            const next = current === 1 ? 0.75 : current === 0.75 ? 0.5 : 1;
+                                            onUpdate(note.id, { opacity: next });
+                                        }}
+                                        className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors text-gray-700 hover:text-purple-600`}
+                                        title="Toggle Transparency"
+                                        style={{ minWidth: '36px', minHeight: '36px' }}
+                                    >
+                                        {note.opacity && note.opacity < 1 ? (
+                                            <EyeOff size={18} className="text-purple-600" />
+                                        ) : (
+                                            <Eye size={18} />
+                                        )}
+                                    </button>
+
+                                    {/* Star Toggle */}
+                                    <button
+                                        onClick={() => onUpdate(note.id, { isStarred: !note.isStarred })}
+                                        className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${note.isStarred ? 'text-black' : 'text-gray-700 hover:text-yellow-600'}`}
+                                        title="Star Note"
+                                        style={{ minWidth: '36px', minHeight: '36px' }}
+                                    >
+                                        <Star size={18} fill={note.isStarred ? "currentColor" : "none"} />
+                                    </button>
+
+                                    {/* Delete (Soft) */}
+                                    <button
+                                        onClick={() => onDelete(note.id)}
+                                        className="w-9 h-9 flex items-center justify-center rounded-full text-gray-700 transition-colors hover:text-red-600"
+                                        title="Delete Note"
+                                        style={{ minWidth: '36px', minHeight: '36px' }}
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+
+                                    {/* Download / Export */}
+                                    <button
+                                        onClick={handleDownload}
+                                        className="w-9 h-9 flex items-center justify-center rounded-full text-gray-700 transition-colors hover:text-blue-600"
+                                        title="Download as PNG"
+                                        style={{ minWidth: '36px', minHeight: '36px' }}
+                                    >
+                                        <Download size={18} />
+                                    </button>
+                                </>
+                            ) : (
+                                /* Deleted State Options */
+                                <>
+                                    <button
+                                        onClick={() => onRestore(note.id)}
+                                        className="w-9 h-9 flex items-center justify-center rounded-full text-gray-700 hover:text-green-600 transition-colors"
+                                        title="Restore Note"
+                                    >
+                                        <RotateCcw size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => onPermanentDelete(note.id)}
+                                        className="w-9 h-9 flex items-center justify-center rounded-full text-gray-700 hover:text-red-600 transition-colors"
+                                        title="Delete Permanently"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Resize Handle (Hidden if collapsed) */}
+                {!note.isCollapsed && (
+                    <div
+                        className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        onPointerDown={handleResizeStart}
+                    >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-50">
+                            <path d="M10 0L0 10V10H10V0Z" fill="black" />
+                        </svg>
+                    </div>
+                )}
+            </motion.div>
+
+            <PasswordModal
+                isOpen={showPasswordModal}
+                onClose={() => setShowPasswordModal(false)}
+                onSuccess={() => {
+                    setIsUnlocked(true);
+                    setIsEditing(true);
+                    setShowPasswordModal(false);
+                }}
+            />
+        </>
+    );
+}

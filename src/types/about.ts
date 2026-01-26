@@ -29,7 +29,7 @@ export interface AboutMotto {
 export interface AboutBio {
   content: string;
   content_id?: string;
-  galleryImages: (string | TrailItem)[];
+
 }
 
 export interface AboutContacts {
@@ -51,10 +51,17 @@ export interface AboutSoftSkill {
   description_id?: string;
 }
 
+export interface SoftSkillItem {
+  text: string;
+  description: string;
+  isDraft?: boolean;
+}
+
 export interface AboutSoftSkills {
-  texts: string[];
+  items?: SoftSkillItem[];
+  texts?: string[]; // Deprecated
   texts_id?: string[];
-  descriptions: string[];
+  descriptions?: string[]; // Deprecated
   descriptions_id?: string[];
 }
 
@@ -71,11 +78,76 @@ export interface DesignPhilosophy {
   steps: PhilosophyStep[];
 }
 
+
+// OS Configuration Types
+export interface Wallpaper {
+  id: string;
+  url: string;
+  name?: string;
+}
+
+export interface WallpaperConfig {
+  activeWallpaperId: string;
+  collection: Wallpaper[];
+}
+
+export interface DesktopPreferences {
+  visibleProjectIds: string[];
+  maxIcons: number;
+  layout: 'grid' | 'scattered';
+}
+
+export interface DockItemConfig {
+  label?: string;
+  iconUrl?: string;
+  isHidden?: boolean;
+}
+
+export interface DockPreferences {
+  [key: string]: DockItemConfig;
+}
+
+export interface ChatSettings {
+  autoReplyText: string;
+  contactEmail: string;
+  contactPhone: string;
+  avatarUrl?: string;
+}
+
+export interface WindowPreference {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  isOpenByDefault?: boolean;
+}
+
+export interface WindowPreferences {
+  [key: string]: WindowPreference;
+}
+
 export interface AboutData {
   hero: AboutHero;
   professional: AboutProfessional;
   softSkills: AboutSoftSkills;
   designPhilosophy?: DesignPhilosophy;
+
+  // OS Configuration
+  desktopPreferences?: DesktopPreferences;
+  wallpaperConfig?: WallpaperConfig;
+  dockConfig?: DockPreferences;
+  chatSettings?: ChatSettings;
+  windowPreferences?: WindowPreferences;
+  lockScreenPreferences?: {
+    title: string;
+    showProfile: boolean;
+    backgroundTrail: (string | TrailItem)[];
+    backgroundColor?: string;
+    textColor?: string;
+    ballColor?: string;
+    capColor?: string;
+  };
+
   labels?: {
     experienceTitle?: string;
     experienceSubtitle?: string;
@@ -91,4 +163,12 @@ export interface UpdateAboutData {
   professional?: Partial<AboutProfessional>;
   softSkills?: Partial<AboutSoftSkills>;
   designPhilosophy?: Partial<DesignPhilosophy>;
+
+  // OS Configuration
+  desktopPreferences?: DesktopPreferences;
+  wallpaperConfig?: WallpaperConfig;
+  dockConfig?: DockPreferences;
+  chatSettings?: ChatSettings;
+  windowPreferences?: WindowPreferences;
+  lockScreenPreferences?: Partial<AboutData['lockScreenPreferences']>;
 }

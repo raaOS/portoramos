@@ -16,9 +16,9 @@
   --text-primary: #111111;
   --text-secondary: #6b7280;
   --text-muted: #9ca3af;
-  --border: #e5e7eb;
   --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
 }
+
 
 .dark {
   --bg: #000000;

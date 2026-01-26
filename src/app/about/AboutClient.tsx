@@ -254,7 +254,7 @@ export default function AboutClient({ initialData, initialProjects = [], lastUpd
       bio: {
         content: 'Graphic designer with over 14 years of experience in branding and digital campaigns. Focused on clean visuals, strong typography, and business-relevant storytelling.',
         content_id: 'Desainer grafis dengan lebih dari 14 tahun pengalaman di brand dan kampanye digital. Fokus pada visual bersih, tipografi kuat, dan storytelling yang relevan bisnis.',
-        galleryImages: [] // No fallback images - only show project data
+
       }
     },
     softSkills: {

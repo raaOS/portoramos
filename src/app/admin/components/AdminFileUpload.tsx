@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 
 
 interface AdminFileUploadProps {
@@ -255,7 +255,9 @@ export default function AdminFileUpload({
         setProgress(((index + 1) / files.length) * 100);
         let finalUrl = url;
 
-        if (file.type.startsWith('image/') && publicPath) {
+        const isImageFile = file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.icns');
+
+        if (isImageFile && publicPath) {
           const { success: compSuccess, stats, newPath } = await compressImageServer(publicPath);
           if (compSuccess && stats) {
             success(`${file.name} Optimized! (${stats.originalSize} -> ${stats.newSize}). Saved ${stats.saved}`);
@@ -282,6 +284,14 @@ export default function AdminFileUpload({
       if (autoUpload !== false) {
         success('All files processed successfully.');
       }
+
+      // UX Improvement: Show Success State
+      setStatus('Upload Complete!');
+      setProgress(100);
+
+      // Wait 2 seconds before resetting
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
     } catch (err: any) {
       console.error(err);
       showError(`Process failed: ${err.message || 'Unknown error'}`);
@@ -415,14 +425,22 @@ export default function AdminFileUpload({
             <div className="space-y-4 w-full max-w-md mx-auto" aria-live="polite">
               <div className="flex flex-col items-center justify-center space-y-3">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-violet-500 blur-xl opacity-20 rounded-full animate-pulse"></div>
-                  <div className="relative bg-white p-3 rounded-2xl shadow-sm border border-violet-100">
-                    <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
-                  </div>
+                  {status === 'Upload Complete!' ? (
+                    <div className="relative bg-white p-3 rounded-2xl shadow-sm border border-green-100 animate-in zoom-in duration-300">
+                      <CheckCircle2 className="w-8 h-8 text-green-600" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 bg-violet-500 blur-xl opacity-20 rounded-full animate-pulse"></div>
+                      <div className="relative bg-white p-3 rounded-2xl shadow-sm border border-violet-100">
+                        <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-1 text-center">
-                  <p className="text-sm font-semibold text-gray-900">{status}</p>
+                  <p className={`text-sm font-semibold ${status === 'Upload Complete!' ? 'text-green-600' : 'text-gray-900'}`}>{status}</p>
                   <p className="text-xs text-gray-500 font-mono">{progress}% Complete</p>
                 </div>
 

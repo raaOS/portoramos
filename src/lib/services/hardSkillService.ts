@@ -106,7 +106,17 @@ export const hardSkillService = {
         };
 
         if (isDev) {
-            return await saveData(DATA_FILE, data);
+            const result = await saveData(DATA_FILE, data);
+
+            // Auto-Sync
+            if (process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN) {
+                try {
+                    await githubService.updateFile(GITHUB_PATH, data, message + ' (Dev Auto-Sync)');
+                } catch (error) {
+                    console.warn('[HardSkillService] Failed to auto-sync to GitHub in dev:', error);
+                }
+            }
+            return result;
         } else {
             return await githubService.updateFile(GITHUB_PATH, data, message + ' (via Admin CMS)');
         }

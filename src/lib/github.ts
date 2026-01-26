@@ -115,7 +115,7 @@ export class GitHubService {
     /**
      * Update any file in the repo
      */
-    async updateFile(filePath: string, content: any, message: string): Promise<boolean> {
+    async updateFile(filePath: string, content: any, message: string, retryCount = 0): Promise<boolean> {
         try {
             // 1. Get current file to get the latest SHA (required for updates)
             let sha: string | undefined;
@@ -157,6 +157,30 @@ export class GitHubService {
 
             if (!response.ok) {
                 const error = await response.json();
+
+                // Handle 409 Conflict (SHA mismatch) with a retry
+                if (response.status === 409 && retryCount < 2) {
+                    console.warn(`[GitHubService] Conflict (409) detected for ${filePath}. Retrying (${retryCount + 1}/2)...`);
+                    await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
+                    return this.updateFile(filePath, content, message, retryCount + 1);
+                }
+
+                // Handle 422 Unprocessable Entity (Missing SHA for existing file)
+                // This happens if we thought file didn't exist (getFileContent failed/404) but it actually does.
+                if (response.status === 422 && retryCount < 2 && (error.message?.includes('sha') || error.message?.includes('SHA'))) {
+                    console.warn(`[GitHubService] Missing SHA for existing file (422). Fetching SHA and retrying...`);
+                    // Force fetch SHA, ignoring previous failure grounded assumption
+                    try {
+                        const fresh = await this.getFileContent(filePath, true);
+                        if (fresh && fresh.sha) {
+                            // Recursive retry works because next call will successfully get SHA from getFileContent
+                            return this.updateFile(filePath, content, message, retryCount + 1);
+                        }
+                    } catch (e) {
+                        console.error('[GitHubService] Failed to recover SHA for 422 retry:', e);
+                    }
+                }
+
                 console.error('[GitHubService] PUT failed:', response.status, error);
                 throw new Error(`GitHub API Error: ${response.status} - ${error.message || JSON.stringify(error)}`);
             }

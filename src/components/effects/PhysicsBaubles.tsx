@@ -37,16 +37,13 @@ function Bauble({ scale, material, capMaterial }: { scale: number, material: THR
     useFrame((state, delta) => {
         delta = Math.min(0.1, delta);
         if (!api.current) return;
-        api.current.applyImpulse(
-            vec
-                .copy(api.current.translation())
-                .normalize()
-                .multiply({
-                    x: -50 * delta * (scale * scale * scale),
-                    y: -150 * delta * (scale * scale * scale),
-                    z: -50 * delta * (scale * scale * scale)
-                }),
-        );
+        const translation = api.current.translation();
+        const forceScale = delta * (scale ** 3);
+        vec.copy(translation).normalize();
+        vec.x *= -50 * forceScale;
+        vec.y *= -150 * forceScale;
+        vec.z *= -50 * forceScale;
+        api.current.applyImpulse(vec);
     });
 
     return (
@@ -70,8 +67,10 @@ function Pointer() {
     const ref = useRef<any>();
     const vec = useMemo(() => new THREE.Vector3(), []);
 
+    const target = useMemo(() => new THREE.Vector3(), []);
     useFrame(({ mouse, viewport }) => {
-        vec.lerp({ x: (mouse.x * viewport.width) / 2, y: (mouse.y * viewport.height) / 2, z: 0 }, 0.2);
+        target.set((mouse.x * viewport.width) / 2, (mouse.y * viewport.height) / 2, 0);
+        vec.lerp(target, 0.2);
         ref.current?.setNextKinematicTranslation(vec);
     });
 

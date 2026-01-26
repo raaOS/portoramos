@@ -174,6 +174,19 @@ export const projectService = {
             // Save local FS
             const success = await saveData(DATA_FILE, updatedData);
             if (!success) throw new Error('Failed to save to local filesystem');
+
+            // Auto-Sync to GitHub
+            if (process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN) {
+                try {
+                    await githubService.updateProjects({
+                        projects: updatedProjects,
+                        message: `Add project: ${newProject.title} (Dev Auto-Sync)`
+                    });
+                    console.log('[ProjectService] Auto-synced to GitHub');
+                } catch (error) {
+                    console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
+                }
+            }
         } else {
             // Save to GitHub
             const success = await githubService.updateProjects({
@@ -249,6 +262,19 @@ export const projectService = {
         if (isDev) {
             const success = await saveData(DATA_FILE, updatedData);
             if (!success) throw new Error('Failed to save to local filesystem');
+
+            // Auto-Sync to GitHub
+            if (process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN) {
+                try {
+                    await githubService.updateProjects({
+                        projects: currentProjects,
+                        message: `Update project: ${updatedProject.title} (Dev Auto-Sync)`
+                    });
+                    console.log('[ProjectService] Auto-synced to GitHub');
+                } catch (error) {
+                    console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
+                }
+            }
         } else {
             const success = await githubService.updateProjects({
                 projects: currentProjects,
@@ -297,6 +323,19 @@ export const projectService = {
         if (isDev) {
             const success = await saveData(DATA_FILE, updatedData);
             if (!success) throw new Error('Failed to save to local filesystem');
+
+            // Auto-Sync to GitHub
+            if (process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN) {
+                try {
+                    await githubService.updateProjects({
+                        projects: currentProjects,
+                        message: `Delete project ID: ${id} (Dev Auto-Sync)`
+                    });
+                    console.log('[ProjectService] Auto-synced to GitHub');
+                } catch (error) {
+                    console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
+                }
+            }
         } else {
             const success = await githubService.updateProjects({
                 projects: currentProjects,
@@ -386,6 +425,21 @@ export const projectService = {
         if (isDev) {
             const success = await saveData(DATA_FILE, updatedData);
             if (!success) throw new Error('Failed to save to local filesystem');
+
+            // Auto-Sync to GitHub
+            if (process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN) {
+                try {
+                    await githubService.updateProjects({
+                        projects: currentProjects,
+                        message: updates.reorder
+                            ? `Reorder projects (Dev Auto-Sync)`
+                            : `Bulk update ${updates.ids.length} projects (Dev Auto-Sync)`
+                    });
+                    console.log('[ProjectService] Auto-synced to GitHub');
+                } catch (error) {
+                    console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
+                }
+            }
         } else {
             const success = await githubService.updateProjects({
                 projects: currentProjects,

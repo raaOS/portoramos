@@ -50,11 +50,25 @@ export class ContentService<T> {
 
     async saveData(data: T, message: string): Promise<boolean> {
         const isDev = process.env.NODE_ENV === 'development';
+        const hasGitHubToken = !!(process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN);
 
+        // Always update local file in dev for immediate feedback/preview
         if (isDev) {
             await ensureDataDir();
-            return await saveData(this.localPath, data);
+            await saveData(this.localPath, data);
+
+            // If user wants avoiding "double work", we try to sync to GitHub even in dev
+            if (hasGitHubToken) {
+                try {
+                    await githubService.updateFile(this.githubPath, data, message + ' (Dev Auto-Sync)');
+                    console.log(`[ContentService] Auto-synced ${this.githubPath} to GitHub`);
+                } catch (error) {
+                    console.warn('[ContentService] Failed to auto-sync to GitHub in dev (continuing with local only):', error);
+                }
+            }
+            return true;
         } else {
+            // Production: GitHub only
             return await githubService.updateFile(this.githubPath, data, message + ' (via Admin CMS)');
         }
     }
