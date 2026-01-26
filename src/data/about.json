@@ -153,6 +153,9 @@
     },
     "trash": {
       "iconUrl": "/assets/icons-library/1769428714793-icnsfile-1543ba06906d6ac6721964ac3bfcc511-pearcleaner-alt-big-sur-5.webp"
+    },
+    "home": {
+      "iconUrl": "/assets/icons-library/1769430464470-icnsfile-4ec6cb84cd46ec05462df321c07583a4-6cjat8gosq.webp"
     }
   },
   "chatSettings": {},
@@ -165,5 +168,5 @@
       "isOpenByDefault": true
     }
   },
-  "lastUpdated": "2026-01-26T12:15:51.987Z"
+  "lastUpdated": "2026-01-26T12:28:10.404Z"
 }
