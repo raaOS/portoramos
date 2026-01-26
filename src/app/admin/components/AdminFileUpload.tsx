@@ -165,7 +165,7 @@ export default function AdminFileUpload({
     return new File([blob], file.name, { type: 'video/mp4' });
   };
 
-  const uploadToGitHub = useCallback(async (file: File): Promise<{ url: string; publicPath?: string }> => {
+  const uploadToGitHub = useCallback(async (file: File): Promise<{ url: string; publicPath?: string; warning?: string }> => {
     setStatus('Uploading to GitHub...');
     const formData = new FormData();
     formData.append('file', file);
@@ -189,7 +189,7 @@ export default function AdminFileUpload({
       }
     }
     const data = await response.json();
-    return { url: data.url, publicPath: data.publicPath };
+    return { url: data.url, publicPath: data.publicPath, warning: data.warning };
   }, [folder, customFilename]); // Add folder/filename to dependencies
 
   const compressImageServer = useCallback(async (filePath: string): Promise<{ success: boolean; stats?: any; newPath?: string }> => {
@@ -251,7 +251,10 @@ export default function AdminFileUpload({
         }
 
         // IMMEDIATE UPLOAD MODE
-        const { url, publicPath } = await uploadToGitHub(fileToUpload);
+        const { url, publicPath, warning } = await uploadToGitHub(fileToUpload);
+        if (warning) {
+          showWarning(warning);
+        }
         setProgress(((index + 1) / files.length) * 100);
         let finalUrl = url;
 

@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
                     // Filter junk and temp files
                     if (file.startsWith('.')) return false;
                     if (file.includes('_temp')) return false;
-                    return /\.(webp|png|jpg|jpeg|svg|icns)$/i.test(file);
+                    return /\.(webp|png|jpg|jpeg|svg)$/i.test(file);
                 })
                 .sort((a, b) => b.localeCompare(a)) // Newest (higher timestamp) first
                 .map(file => `/${folderPath}/${file}`);
@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
                             if (file.type !== 'file') return false;
                             if (file.name.startsWith('.')) return false;
                             if (file.name.includes('_temp')) return false;
-                            return /\.(webp|png|jpg|jpeg|svg|icns)$/i.test(file.name);
+                            return /\.(webp|png|jpg|jpeg|svg)$/i.test(file.name);
                         })
                         .sort((a, b) => b.name.localeCompare(a.name)) // Descending order
                         .map(file => {
@@ -131,25 +131,43 @@ export async function DELETE(req: NextRequest) {
 
         const isDev = process.env.NODE_ENV === 'development';
         const absolutePath = path.join(process.cwd(), relativePath);
+        const dir = path.dirname(absolutePath);
+        const filename = path.basename(absolutePath);
+        const ext = path.extname(filename);
+        const baseName = filename.substring(0, filename.length - ext.length); // e.g. "123-file"
 
-        // 2. Delete Locally (In Dev) - Robust retry
-        if (isDev && fs.existsSync(absolutePath)) {
-            try {
-                await safeUnlink(absolutePath);
-                console.log(`[IconsAPI] Deleted local file: ${absolutePath}`);
-            } catch (err: any) {
-                console.error(`[IconsAPI] Failed to delete local file: ${err.message}`);
-                throw err;
-            }
-        }
+        // Smart Delete: Target all variants (original, webp, temp)
+        // We know our naming convention preserves the basename.
+        const variants = ['.icns', '.webp', '.png', '.jpg', '.jpeg', '.svg'];
+        const suffixes = ['', '_temp']; // Check normal and _temp versions
 
-        // 3. Delete from GitHub
-        const hasGitHubToken = !!(process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN);
-        if (hasGitHubToken) {
-            try {
-                await githubService.deleteFile(relativePath, `Delete icon ${path.basename(relativePath)} via Admin CMS`);
-            } catch (error) {
-                console.warn('[IconsAPI] GitHub deletion failed (might already be gone):', error);
+        for (const suffix of suffixes) {
+            for (const variantExt of variants) {
+                const targetName = `${baseName}${suffix}${variantExt}`;
+                const targetRelPath = path.join(path.dirname(relativePath), targetName).replace(/\\/g, '/');
+                const targetAbsPath = path.join(dir, targetName);
+
+                // 2. Delete Locally
+                if (isDev && fs.existsSync(targetAbsPath)) {
+                    try {
+                        await safeUnlink(targetAbsPath);
+                        console.log(`[IconsAPI] Deleted variant: ${targetName}`);
+                    } catch (err: any) {
+                        console.warn(`[IconsAPI] Failed to delete variant ${targetName}:`, err.message);
+                    }
+                }
+
+                // 3. Delete from GitHub
+                const hasGitHubToken = !!(process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN);
+                if (hasGitHubToken) {
+                    try {
+                        // We iterate blindly, but githubService handles 404 gracefully
+                        // Don't await each sequentially if speed matters, but safer to do so.
+                        await githubService.deleteFile(targetRelPath, `Delete icon variant ${targetName}`);
+                    } catch (error) {
+                        // ignore 
+                    }
+                }
             }
         }
 

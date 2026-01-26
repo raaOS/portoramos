@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
+import path from 'path';
 
 /**
  * GitHub Direct Upload API
@@ -12,6 +13,8 @@ const GITHUB_TOKEN = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN
 const REPO_OWNER = process.env.GITHUB_OWNER;
 const REPO_NAME = process.env.GITHUB_REPO;
 const BRANCH = 'main'; // Adjust if using 'master'
+
+
 
 export async function POST(req: NextRequest) {
     if (!checkAdminAuth(req)) {
@@ -40,6 +43,7 @@ export async function POST(req: NextRequest) {
         const ext = file.name.split('.').pop()?.toLowerCase() || '';
 
         let uploadFolder: string;
+        let warning: string | undefined;
 
         if (folderParam) {
             // Respect folder param if provided, ensuring public prefix
@@ -54,7 +58,10 @@ export async function POST(req: NextRequest) {
             finalFilename = `${customFilename}.${ext}`;
         } else {
             const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-').toLowerCase();
-            finalFilename = `${Date.now()}-${cleanName}`;
+            // Add random suffix to prevent collisions during parallel uploads (409 errors)
+            const randomId = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 6);
+            finalFilename = `${Date.now()}-${randomId}-${cleanName}`;
+            console.log(`[UploadAPI] Generated unique filename: ${finalFilename}`);
         }
 
         let processedBuffer = buffer;
@@ -168,7 +175,11 @@ export async function POST(req: NextRequest) {
                     }
 
                     if (!converted) {
-                        console.warn(`[UploadAPI] No valid/supported PNG/JP2 blocks found in ICNS. Using original file.`);
+                        console.warn(`[UploadAPI] ICNS format unsupported (JP2/Legacy). Rejecting.`);
+                        return NextResponse.json(
+                            { error: 'Format ICNS Legacy (JP2) tidak didukung. Mohon convert ke PNG manual.' },
+                            { status: 422 }
+                        );
                     }
                 }
             } catch (err) {
@@ -196,19 +207,31 @@ export async function POST(req: NextRequest) {
         // 2. Upload to GitHub
         const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`;
 
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `token ${GITHUB_TOKEN}`,
-                'Content-Type': 'application/json',
-                'User-Agent': 'Portfolio-Uploader' // GitHub requires User-Agent
-            },
-            body: JSON.stringify({
-                message: `Upload ${finalFilename} via Admin Panel`,
-                content: finalContentBase64,
-                branch: BRANCH
-            })
-        });
+        const uploadFileWithRetry = async (retryCount = 0): Promise<Response> => {
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Portfolio-Uploader'
+                },
+                body: JSON.stringify({
+                    message: `Upload ${finalFilename} via Admin Panel`,
+                    content: finalContentBase64,
+                    branch: BRANCH
+                })
+            });
+
+            if (response.status === 409 && retryCount < 3) {
+                console.warn(`[UploadAPI] 409 Conflict. Retrying ${retryCount + 1}/3...`);
+                // Wait slightly longer each time
+                await new Promise(r => setTimeout(r, 500 * (retryCount + 1)));
+                return uploadFileWithRetry(retryCount + 1);
+            }
+            return response;
+        };
+
+        const response = await uploadFileWithRetry();
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -238,7 +261,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             url: rawUrl,
             publicPath: path.replace(/^public/, ''), // Strip 'public' prefix to make it a valid Next.js asset path
-            githubPath: data.content.path
+            githubPath: data.content.path,
+            warning
         });
 
     } catch (error: any) {

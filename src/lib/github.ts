@@ -96,6 +96,13 @@ export class GitHubService {
 
         if (!response.ok) {
             const errorText = await response.text();
+
+            // 404 is common when checking existence, suppress error log
+            if (response.status === 404) {
+                // console.log(`[GitHubService] File not found (404): ${filePath}`);
+                throw new Error('Not Found');
+            }
+
             console.error(`[GitHubService] GET failed: ${response.status} ${response.statusText}`, errorText);
             throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
         }

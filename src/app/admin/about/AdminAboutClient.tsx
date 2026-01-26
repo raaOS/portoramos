@@ -573,8 +573,8 @@ function SoftSkillsSectionForm({
                       type="button"
                       onClick={() => toggleDraft(index)}
                       className={`p-2 rounded-lg mt-5 transition-colors ${item.isDraft
-                          ? 'bg-gray-200 text-gray-500 hover:bg-gray-300'
-                          : 'bg-green-50 text-green-600 hover:bg-green-100'
+                        ? 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                        : 'bg-green-50 text-green-600 hover:bg-green-100'
                         }`}
                       title={item.isDraft ? "Currently Draft (Hidden)" : "Currently Published (Visible)"}
                     >
@@ -583,6 +583,15 @@ function SoftSkillsSectionForm({
                       ) : (
                         <Eye className="w-5 h-5" />
                       )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(index)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-5 h-fit"
+                      title="Remove Skill"
+                    >
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
                   <div>
@@ -599,15 +608,6 @@ function SoftSkillsSectionForm({
                     />
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleRemoveItem(index)}
-                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors mt-8"
-                  title="Remove Skill"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
 
                 {/* Visual Badge for Draft status */}
                 <div className="absolute top-2 right-2 pointer-events-none">

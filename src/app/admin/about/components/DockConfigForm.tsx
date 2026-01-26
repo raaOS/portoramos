@@ -116,10 +116,10 @@ export default function DockConfigForm({ data, onUpdate }: DockConfigFormProps) 
                                 {/* Visibility Toggle (Top Right) */}
                                 <button
                                     onClick={() => handleUpdateItem(item.id, { isHidden: !isHidden })}
-                                    className={`absolute top-2 right-2 p-1.5 rounded-full transition-all z-10
+                                    className={`absolute top-3 right-3 p-1.5 rounded-full transition-all z-10
                                         ${isHidden
-                                            ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-200'
-                                            : 'text-gray-300 hover:text-blue-500 hover:bg-blue-50 opacity-0 group-hover:opacity-100'
+                                            ? 'text-gray-400 hover:text-gray-600 bg-gray-100'
+                                            : 'text-gray-300 hover:text-blue-500 hover:bg-gray-50 opacity-0 group-hover:opacity-100'
                                         }
                                     `}
                                     title={isHidden ? "Show in Dock" : "Hide from Dock"}
@@ -179,6 +179,6 @@ export default function DockConfigForm({ data, onUpdate }: DockConfigFormProps) 
                 onSelect={handleSelectIcon}
                 currentIcon={activeItemId ? preferences[activeItemId]?.iconUrl : undefined}
             />
-        </div>
+        </div >
     );
 }

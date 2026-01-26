@@ -179,11 +179,11 @@ export default function IconPickerModal({ isOpen, onClose, onSelect, currentIcon
                                             {/* Delete Button */}
                                             <button
                                                 onClick={(e) => handleDelete(e, iconUrl)}
-                                                className="absolute -bottom-1 -right-1 bg-red-500 text-white rounded-full p-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+                                                className="absolute top-2 right-2 text-gray-400 hover:text-red-600 bg-white/90 hover:bg-red-50 rounded-full p-1.5 shadow-sm opacity-0 group-hover:opacity-100 transition-all z-10"
                                                 title="Hapus ikon"
                                                 type="button"
                                             >
-                                                <X size={12} strokeWidth={3} />
+                                                <X size={14} strokeWidth={2.5} />
                                             </button>
 
                                             <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/5 rounded-2xl transition-colors" />
