@@ -163,10 +163,10 @@
     "about": {
       "x": 1343,
       "y": 57,
-      "width": 509,
-      "height": 489,
-      "isOpenByDefault": false
+      "width": 551,
+      "height": 567,
+      "isOpenByDefault": true
     }
   },
-  "lastUpdated": "2026-01-26T12:30:21.643Z"
+  "lastUpdated": "2026-01-26T12:31:57.901Z"
 }
