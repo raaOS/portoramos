@@ -6,7 +6,6 @@ export default async function sitemap() {
   const now = new Date()
   const staticPages = [
     { url: `${base}/`, lastModified: now },
-    { url: `${base}/works`, lastModified: now },
     { url: `${base}/about`, lastModified: now },
     { url: `${base}/contact`, lastModified: now },
     { url: `${base}/cv`, lastModified: now }

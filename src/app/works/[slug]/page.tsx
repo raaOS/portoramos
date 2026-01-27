@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { githubService } from '@/lib/github';
 import { resolveGallery } from '@/lib/images';
 import { generateProjectMetadata, generateProjectStructuredData } from '@/lib/seo';
-import ProjectDetailTwoColumn from './ProjectDetailTwoColumn';
+import ProjectDetailTwoColumn from '@/components/projects/ProjectDetailTwoColumn';
 
 // [STICKY NOTE] BUILD TIME GENERATION (SSG)
 // Fungsi ini memberi tahu Next.js daftar halaman yang harus dibuat saat build.

@@ -282,8 +282,9 @@ export default function AdminAboutClient() {
             {activeTab === 'professional' && (
               <ProfessionalSectionForm
                 data={aboutData.professional}
+                heroData={aboutData.hero}
                 projects={projects}
-                onUpdate={(data) => handleUpdateAbout({ professional: data })}
+                onUpdate={(data) => handleUpdateAbout(data)}
               />
             )}
             {activeTab === 'softSkills' && (
@@ -370,37 +371,43 @@ const normalizeUrlList = (raw: string) => {
 // Professional Section Form
 function ProfessionalSectionForm({
   data,
+  heroData,
   projects,
   onUpdate
 }: {
   data: any;
+  heroData: any;
   projects: Project[];
   onUpdate: (data: any) => void;
 }) {
-  // Normalize initial data to TrailItem[]
-
-
   const [formData, setFormData] = useState({
     mottoBadge: data.motto?.badge || '',
     mottoQuote: data.motto?.quote || '',
     bioContent: data.bio?.content || '',
-
+    // Availability
+    availStatus: heroData?.availability?.status || 'available',
+    availText: heroData?.availability?.text || 'Available for new projects'
   });
-
-
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     const submitData = {
-      motto: {
-        badge: formData.mottoBadge,
-        quote: formData.mottoQuote
+      professional: {
+        motto: {
+          badge: formData.mottoBadge,
+          quote: formData.mottoQuote
+        },
+        bio: {
+          content: formData.bioContent
+        }
       },
-      bio: {
-        content: formData.bioContent
-      },
-
+      hero: {
+        availability: {
+          status: formData.availStatus,
+          text: formData.availText
+        }
+      }
     };
 
     onUpdate(submitData);
@@ -409,10 +416,37 @@ function ProfessionalSectionForm({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">About Me (Finder Profile)</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">About Me & Header Status</h3>
         <p className="text-sm text-gray-600 mb-4">Konten ini muncul di window "Finder: About Me" pada halaman About OS.</p>
         <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
 
+          {/* Availability Status Section */}
+          <div className="bg-white p-4 rounded border border-gray-200">
+            <h4 className="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Availability Status</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select
+                  value={formData.availStatus}
+                  onChange={(e) => setFormData({ ...formData, availStatus: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="available">Available (Green)</option>
+                  <option value="booked">Booked (Red)</option>
+                  <option value="limited">Limited (Red)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status Text</label>
+                <input
+                  type="text"
+                  value={formData.availText}
+                  onChange={(e) => setFormData({ ...formData, availText: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -448,14 +482,12 @@ function ProfessionalSectionForm({
             />
           </div>
 
-
-
           <div className="flex justify-end pt-2">
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium shadow-sm"
             >
-              Update Professional Info
+              Update Info & Status
             </button>
           </div>
         </form>

@@ -7,9 +7,13 @@ interface MenuBarProps {
     onSearch?: () => void;
     activeWindow?: string;
     onAbout?: () => void;
+    availability?: {
+        status: string;
+        text: string;
+    };
 }
 
-export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout }: MenuBarProps) {
+export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, availability }: MenuBarProps) {
     const [time, setTime] = useState(new Date());
 
     useEffect(() => {
@@ -58,6 +62,16 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout }: 
 
             {/* Right Side */}
             <div className="flex items-center gap-3 sm:gap-5">
+                {/* Availability Status */}
+                {availability && (
+                    <div className={`hidden md:flex items-center gap-2 px-2 py-0.5 rounded-full transition-colors ${availability.status === 'available' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                        }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${availability.status === 'available' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
+                            }`} />
+                        <span className="font-medium text-[10px] tracking-wide uppercase">{availability.text}</span>
+                    </div>
+                )}
+
                 {/* Icons */}
                 <div className="flex items-center gap-3">
                     <Search

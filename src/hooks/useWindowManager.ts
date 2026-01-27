@@ -73,6 +73,17 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
         }
     }, [aboutData, isInitialized]);
 
+    // Content Sync Effect: Update window content when initialWindows (and underlying data) changes
+    useEffect(() => {
+        setWindows(prev => prev.map(w => {
+            const fresh = initialWindows.find(fw => fw.id === w.id);
+            if (fresh && fresh.content !== w.content) {
+                return { ...w, content: fresh.content };
+            }
+            return w;
+        }));
+    }, [initialWindows]);
+
     // Bounce cleanup
     useEffect(() => {
         if (!bouncingDocId) return;

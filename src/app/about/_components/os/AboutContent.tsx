@@ -99,6 +99,22 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                             <p className="text-gray-500 font-medium mb-4">
                                 {aboutData?.professional.motto.badge || "Creative Developer"}
                             </p>
+
+                            {/* Availability Badge */}
+                            {aboutData?.hero?.availability && (
+                                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${aboutData.hero.availability.status === 'available'
+                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                        : 'bg-red-50 text-red-700 border border-red-100'
+                                    }`}>
+                                    <span className={`relative flex h-2 w-2`}>
+                                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${aboutData.hero.availability.status === 'available' ? 'bg-emerald-400' : 'bg-red-400'
+                                            }`}></span>
+                                        <span className={`relative inline-flex rounded-full h-2 w-2 ${aboutData.hero.availability.status === 'available' ? 'bg-emerald-500' : 'bg-red-500'
+                                            }`}></span>
+                                    </span>
+                                    {aboutData.hero.availability.text}
+                                </div>
+                            )}
                             <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-wrap">
                                 {aboutData?.professional.bio.content || "Loading..."}
                             </p>

@@ -17,7 +17,7 @@ export default function MainNav() {
     <div className="rounded-full bg-black/[.04] border border-gray-200 px-1.5 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-black/[.04] transition-colors duration-300">
       <nav className="flex items-center gap-2">
         <Link
-          href="/works"
+          href="/"
           className={clsx(
             'px-4 md:px-5 py-2 md:py-2.5 text-sm md:text-base rounded-full transition text-gray-900',
             isWorks ? 'bg-white' : 'hover:bg-white/60'

@@ -22,7 +22,7 @@ import LockScreen from "./LockScreen";
 import MacFolder from "./MacFolder";
 
 import IndexClientWithAutoUpdate from "@/components/home/IndexClientWithAutoUpdate";
-import ProjectDetailTwoColumn from "@/app/works/[slug]/ProjectDetailTwoColumn";
+import ProjectDetailTwoColumn from "@/components/projects/ProjectDetailTwoColumn";
 
 // Hooks & Types
 import { useSystemSound } from "@/hooks/useSystemSound";
@@ -490,6 +490,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                     <MenuBar
                         activeWindow={windows.find(w => w.zIndex === Math.max(...windows.map(yw => yw.zIndex)))?.title || "Finder"}
                         onAbout={() => openWindow("about")}
+                        availability={aboutData?.hero?.availability}
                     />
                 </div>
 

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import type { Project, GalleryItem } from '@/types/projects';
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -11,7 +11,7 @@ import ReadMoreDescription from '@/components/ui/ReadMoreDescription';
 import AITranslator from '@/components/features/AITranslator';
 import CommentSection from '@/components/features/CommentSection';
 import type { Comment } from '@/lib/magic';
-import ProjectCTA from './components/ProjectCTA';
+import ProjectCTA from './ProjectCTA';
 import Media from '@/components/shared/Media';
 import { Compare } from '@/components/ui/compare';
 

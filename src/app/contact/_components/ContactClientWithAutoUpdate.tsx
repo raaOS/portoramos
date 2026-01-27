@@ -163,11 +163,7 @@ export default function ContactClientWithAutoUpdate({ initialData: serverData }:
                 Have a project in mind? Let's combine our creativity and build something extraordinary.
               </p>
 
-              {/* Availability Badge */}
-              <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-4 py-2 mt-6">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-green-700">Available for new projects</span>
-              </div>
+              {/* Availability Badge Removed */}
 
               {/* CTA Buttons */}
               <div className="flex flex-wrap gap-4 mt-8">
