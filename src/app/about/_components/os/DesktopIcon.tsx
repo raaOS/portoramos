@@ -40,7 +40,7 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
             whileTap={{ scale: 0.9 }}
             dragTransition={{ power: 0, timeConstant: 200 }}
             style={{ position: "absolute", left: x, top: y }}
-            className="flex flex-col items-center gap-2 w-auto group cursor-pointer pointer-events-auto"
+            className="flex flex-col items-center gap-3 w-auto group cursor-pointer pointer-events-auto"
         >
             {children ? (
                 <div className="relative">

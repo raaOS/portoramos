@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { CheckCircle2, User, FileText, Heart, Lightbulb, Archive } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, User, FileText, Heart, Lightbulb, Archive, ExternalLink } from "lucide-react";
 import type { AboutData } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
@@ -70,6 +71,17 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                     Works
                 </div>
                 <MenuButton id="archive" label="Archive" count={String(archiveProjects.length)} icon={Archive} />
+
+                <div className="mt-auto pt-4">
+                    <Link
+                        href="/cv?mode=ats&print=true"
+                        target="_blank"
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors text-gray-600 hover:bg-red-600 hover:text-white active:bg-red-700 active:text-white"
+                    >
+                        <FileText size={16} />
+                        <span>Download CV</span>
+                    </Link>
+                </div>
             </div>
 
             {/* Content Area (Right) */}

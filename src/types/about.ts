@@ -146,6 +146,11 @@ export interface AboutData {
     textColor?: string;
     ballColor?: string;
     capColor?: string;
+    profileUrl?: string;
+    profileType?: 'image' | 'video';
+    profileScale?: number;
+    profileX?: number;
+    profileY?: number;
   };
 
   labels?: {
@@ -171,4 +176,5 @@ export interface UpdateAboutData {
   chatSettings?: ChatSettings;
   windowPreferences?: WindowPreferences;
   lockScreenPreferences?: Partial<AboutData['lockScreenPreferences']>;
+  labels?: Partial<AboutData['labels']>;
 }

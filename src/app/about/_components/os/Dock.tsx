@@ -84,11 +84,8 @@ export default function Dock({ items, bouncingId, config }: DockProps) {
     const visibleItems = items.filter(item => {
         if (!config) return true;
         const itemConfig = config[item.id];
-        // If config exists and isHidden is true, hide it. 
-        // Default is visible.
         return !itemConfig?.isHidden;
     }).map(item => {
-        // Apply custom label if exists
         if (config && config[item.id]?.label) {
             return { ...item, label: config[item.id].label! };
         }

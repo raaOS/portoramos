@@ -43,7 +43,7 @@ interface ToastProviderProps {
 export function ToastProvider({
   children,
   maxToasts = 5,
-  position = 'bottom-left'
+  position = 'top-right'
 }: ToastProviderProps) {
   const [toasts, setToasts] = useState<ToastData[]>([]);
 

@@ -129,44 +129,90 @@
       }
     ]
   },
-  "desktopPreferences": {},
-  "wallpaperConfig": {},
+  "desktopPreferences": {
+    "visibleProjectIds": [
+      "gen-1766512146544-14",
+      "gen-1766512146544-0",
+      "gen-1766512146544-10",
+      "gen-1766512146544-3",
+      "gen-1766512146544-16",
+      "gen-1766512146544-20",
+      "gen-1766512146544-19"
+    ],
+    "maxIcons": 7,
+    "layout": "grid"
+  },
+  "wallpaperConfig": {
+    "activeWallpaperId": "w-1769442664696-ixgx78cet",
+    "collection": [
+      {
+        "id": "default",
+        "url": "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070",
+        "name": "Cyberpunk"
+      },
+      {
+        "id": "minimal",
+        "url": "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=2070",
+        "name": "Alps"
+      },
+      {
+        "id": "w-1769442664696-ixgx78cet",
+        "url": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/wallpapers/1769442661067-hmvi6jxo8h7i-wallaper.png",
+        "name": "Custom Wallpaper"
+      }
+    ]
+  },
   "dockConfig": {
     "whatsapp": {
-      "iconUrl": "/assets/icons-library/1769265645729-icnsfile-bd87257a063e75f0f7d799a64ab43302-whatsapp-business.webp"
+      "iconUrl": "/assets/icons-library/1769437234538-aby9pkc1wahu-icnsfile-bd87257a063e75f0f7d799a64ab43302-whatsapp-business.webp"
     },
     "gallery": {
-      "iconUrl": "/assets/icons-library/1769265651877-icnsfile-44662d2fce53144bec4612af170242c3-photos.webp"
+      "iconUrl": "/assets/icons-library/1769437234458-ke2xv30027cl-icnsfile-44662d2fce53144bec4612af170242c3-photos.webp"
     },
     "finder": {
-      "iconUrl": "/assets/icons-library/1769435155694-icnsfile-9ea7fee60ee0da380e761089e7589b73-1tcifnge2a.webp"
+      "iconUrl": "/assets/icons-library/1769438534198-ketlrnlmryw1-icnsfile-0b7ca518d18f6e20ce3fe6a9a8979397-thug-life-finder.webp"
     },
     "about": {
-      "iconUrl": "/assets/icons-library/1769374689694-icnsfile-ca52dc8679e2709366550576131c5747-bob.webp"
+      "iconUrl": "/assets/icons-library/1769438534391-8jzxtsb8p9mp-icnsfile-ca52dc8679e2709366550576131c5747-bob.webp"
     },
     "notes": {
-      "iconUrl": "/assets/icons-library/1769373997954-icnsfile-922467ee2be0869b8e2164714aed0616-notes.webp"
+      "iconUrl": "/assets/icons-library/1769437234492-st4egtv1o8tm-icnsfile-922467ee2be0869b8e2164714aed0616-notes.webp"
     },
     "projects": {
-      "iconUrl": "/assets/icons-library/1769429733294-icnsfile-0b7ca518d18f6e20ce3fe6a9a8979397-thug-life-finder.webp",
+      "iconUrl": "/assets/icons-library/1769437234524-tjesnahojuxs-icnsfile-a7181b3ed7f1a02b7f9256db3147a2d1-nano-banana--google-gemini-2.5-flash--yellow-banana--fruit--food--liquid-glass-.webp",
       "isHidden": false
     },
     "trash": {
-      "iconUrl": "/assets/icons-library/1769428714793-icnsfile-1543ba06906d6ac6721964ac3bfcc511-pearcleaner-alt-big-sur-5.webp"
+      "iconUrl": "/assets/icons-library/1769437234429-0y2s1lgqkmlf-icnsfile-1543ba06906d6ac6721964ac3bfcc511-pearcleaner-alt-big-sur-5.webp"
     },
     "home": {
-      "iconUrl": "/assets/icons-library/1769430464470-icnsfile-4ec6cb84cd46ec05462df321c07583a4-6cjat8gosq.webp"
+      "iconUrl": "/assets/icons-library/1769437234483-fjer70ujri1t-icnsfile-4ec6cb84cd46ec05462df321c07583a4-6cjat8gosq.webp"
     }
   },
   "chatSettings": {},
   "windowPreferences": {
     "about": {
-      "x": 1343,
-      "y": 57,
+      "x": 1324,
+      "y": 43,
       "width": 551,
       "height": 567,
       "isOpenByDefault": true
     }
   },
-  "lastUpdated": "2026-01-26T14:01:49.271Z"
+  "lockScreenPreferences": {
+    "title": "Ramos",
+    "showProfile": true,
+    "backgroundTrail": [],
+    "backgroundColor": "",
+    "textColor": "",
+    "ballColor": "#ffc1b8",
+    "capColor": "#ff772e",
+    "profileUrl": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/assets/profile/1769442548119-lr39396zt6ul-inspo-copy-image-20260124-010908.png",
+    "profileType": "image",
+    "profileScale": 1.5,
+    "profileX": -6.018518518518522,
+    "profileY": 10.532407407407398
+  },
+  "labels": {},
+  "lastUpdated": "2026-01-27T16:40:59.780Z"
 }

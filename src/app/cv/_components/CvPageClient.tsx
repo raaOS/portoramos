@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import type { AboutData } from '@/types/about';
 import type { ExperienceData } from '@/types/experience';
 import type { Project } from '@/types/projects';
@@ -21,6 +22,19 @@ export default function CvPageClient({
   projects,
   hardSkillsData
 }: Props) {
+  const searchParams = useSearchParams();
+  const shouldAutoPrint = searchParams.get('print') === 'true';
+
+  useEffect(() => {
+    if (shouldAutoPrint) {
+      // Small timeout to ensure DOM is fully ready
+      const timer = setTimeout(() => {
+        window.print();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldAutoPrint]);
+
   const chunkWords = (text: string, size = 10) => {
     const words = text.split(/\s+/).filter(Boolean);
     const chunks: string[] = [];
@@ -102,8 +116,8 @@ export default function CvPageClient({
                           </span>
                         </div>
                         {details && details.length > 0 && (
-                          <div className="mt-1 text-xs text-gray-500 italic">
-                            {details.join(', ')}
+                          <div className="mt-1 text-xs text-gray-700 print:text-black">
+                            {details.join(' • ')}
                           </div>
                         )}
                       </li>

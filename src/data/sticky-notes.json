@@ -6,13 +6,14 @@
     "color": "#bbf7d0",
     "isStarred": false,
     "isDeleted": false,
-    "x": 1032,
-    "y": 52,
-    "zIndex": 7,
+    "x": 1566,
+    "y": 630,
+    "zIndex": 70,
     "fontFamily": "var(--font-ala-nanti), sans-serif",
     "isPinned": true,
-    "width": 303,
-    "height": 341,
-    "fontSize": 30
+    "width": 299,
+    "height": 227,
+    "fontSize": 30,
+    "isCollapsed": false
   }
 ]

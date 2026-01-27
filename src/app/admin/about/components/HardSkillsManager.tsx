@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Edit2, Save, X, MoveUp, MoveDown } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, MoveUp, MoveDown, Sparkles, Loader2, Search } from 'lucide-react';
 
 interface HardSkill {
     id: string;
@@ -19,6 +19,69 @@ export default function HardSkillsManager() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<HardSkill | null>(null);
     const [isAdding, setIsAdding] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [isSearchingIcon, setIsSearchingIcon] = useState(false);
+
+    const handleAutoIcon = async () => {
+        if (!editForm?.name) {
+            alert('Please enter a Skill Name first!');
+            return;
+        }
+
+        setIsSearchingIcon(true);
+        try {
+            const res = await fetch('/api/utils/search-icon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: editForm.name })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.iconUrl) {
+                    setEditForm(prev => prev ? { ...prev, icon: data.iconUrl } : null);
+                }
+            } else {
+                alert('Icon not found. Please try manually or check the name.');
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsSearchingIcon(false);
+        }
+    };
+
+    const handleAiGenerate = async () => {
+        if (!editForm?.name) {
+            alert('Please enter a Skill Name first!');
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            const res = await fetch('/api/ai/suggest-skills', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ skillName: editForm.name })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.details && Array.isArray(data.details)) {
+                    // Ensure exactly 4 items
+                    const newDetails = [...data.details, '', '', '', ''].slice(0, 4);
+                    setEditForm(prev => prev ? { ...prev, details: newDetails } : null);
+                }
+            } else {
+                alert('Failed to generate suggestions. Please try again.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error connecting to AI.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     // Initial fetch
     useEffect(() => {
@@ -163,7 +226,17 @@ export default function HardSkillsManager() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Icon URL (SVG)</label>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium">Icon URL (SVG)</label>
+                                    <button
+                                        onClick={handleAutoIcon}
+                                        disabled={isSearchingIcon || !editForm.name}
+                                        className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium bg-blue-50 px-2 py-1 rounded-md"
+                                    >
+                                        {isSearchingIcon ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
+                                        {isSearchingIcon ? 'Searching...' : 'Find Icon'}
+                                    </button>
+                                </div>
                                 <input
                                     type="text"
                                     value={editForm.icon}
@@ -192,7 +265,17 @@ export default function HardSkillsManager() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">Capabilities (4 Points)</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-medium">Capabilities (4 Points)</label>
+                                <button
+                                    onClick={handleAiGenerate}
+                                    disabled={isGenerating || !editForm.name}
+                                    className="text-xs flex items-center gap-1 text-purple-600 hover:text-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium bg-purple-50 px-2 py-1 rounded-md"
+                                >
+                                    {isGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                    {isGenerating ? 'Thinking...' : 'AI Auto-Fill'}
+                                </button>
+                            </div>
                             <div className="space-y-2">
                                 {editForm.details.map((detail, idx) => (
                                     <input

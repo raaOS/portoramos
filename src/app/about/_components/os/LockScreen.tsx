@@ -26,6 +26,11 @@ export default function LockScreen({ onUnlock, isLocked, preferences }: LockScre
     const textColor = preferences?.textColor || "#ffffff";
     const ballColor = preferences?.ballColor || "#FEDDD8";
     const capColor = preferences?.capColor || "#F6A77B";
+    const profileUrl = preferences?.profileUrl;
+    const profileType = preferences?.profileType || "image";
+    const profileScale = preferences?.profileScale ?? 1;
+    const profileX = preferences?.profileX ?? 0;
+    const profileY = preferences?.profileY ?? 0;
 
     useEffect(() => {
         setMounted(true);
@@ -111,7 +116,30 @@ export default function LockScreen({ onUnlock, isLocked, preferences }: LockScre
                         {/* Avatar */}
                         {showProfile && (
                             <div className="w-24 h-24 rounded-full bg-gray-200/20 backdrop-blur-md border border-white/20 shadow-2xl flex items-center justify-center overflow-hidden">
-                                <div className="text-4xl">👨‍💻</div>
+                                {profileUrl ? (
+                                    <div className="w-full h-full relative">
+                                        {profileType === 'video' ? (
+                                            <video
+                                                src={profileUrl}
+                                                className="w-full h-full object-cover"
+                                                style={{ transform: `scale(${profileScale}) translate(${profileX}%, ${profileY}%)` }}
+                                                muted
+                                                autoPlay
+                                                loop
+                                                playsInline
+                                            />
+                                        ) : (
+                                            <img
+                                                src={profileUrl}
+                                                alt="Profile"
+                                                className="w-full h-full object-cover"
+                                                style={{ transform: `scale(${profileScale}) translate(${profileX}%, ${profileY}%)` }}
+                                            />
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-4xl">👨‍💻</div>
+                                )}
                             </div>
                         )}
 

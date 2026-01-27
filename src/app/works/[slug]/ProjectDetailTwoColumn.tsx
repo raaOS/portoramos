@@ -3,7 +3,7 @@
 import type { Project, GalleryItem } from '@/types/projects';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import MasonryGrid from '@/components/layout/MasonryGrid';
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest';
@@ -225,9 +225,22 @@ export default function ProjectDetailTwoColumn({
 
                             <div className="w-full lg:w-[55%] flex flex-col">
                                 <div className="p-4 sm:p-6 lg:p-8">
-                                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-serif font-bold text-gray-900 dark:text-white transition-colors duration-300 mb-4">
-                                        {project.title}
-                                    </h1>
+                                    <div className="flex items-start justify-between gap-4 mb-4">
+                                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-serif font-bold text-gray-900 dark:text-white transition-colors duration-300">
+                                            {project.title}
+                                        </h1>
+                                        {isWindowMode && (
+                                            <a
+                                                href={`/works/${project.slug}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-2 text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
+                                                title="Open Full Page"
+                                            >
+                                                <ExternalLink size={20} />
+                                            </a>
+                                        )}
+                                    </div>
 
                                     <div className="flex flex-col gap-6 mb-8">
                                         {(project.role || project.timeline || project.team) && (

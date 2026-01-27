@@ -6,7 +6,8 @@ import { Project } from '@/types/projects';
 import TrailSelector from '@/components/admin/TrailSelector';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
-import { Lock, Sparkles } from 'lucide-react';
+import { Lock, Sparkles, User } from 'lucide-react';
+import ProfileMediaEditor from '@/components/admin/ProfileMediaEditor';
 
 export default function LockScreenClient() {
     const [aboutData, setAboutData] = useState<AboutData | null>(null);
@@ -109,7 +110,12 @@ export default function LockScreenClient() {
         backgroundColor: '',
         textColor: '',
         ballColor: '',
-        capColor: ''
+        capColor: '',
+        profileUrl: '',
+        profileType: 'image' as const,
+        profileScale: 1,
+        profileX: 0,
+        profileY: 0
     };
 
     return (
@@ -156,7 +162,35 @@ function LockScreenForm({
         textColor: data.textColor || '',
         ballColor: data.ballColor || '',
         capColor: data.capColor || '',
+        profileUrl: data.profileUrl || '',
+        profileType: data.profileType || 'image',
+        profileScale: data.profileScale ?? 1,
+        profileX: data.profileX ?? 0,
+        profileY: data.profileY ?? 0,
     });
+
+    // Update form when server data changes WITHOUT unmounting
+    useEffect(() => {
+        const trail: TrailItem[] = (data.backgroundTrail || []).map((item: string | TrailItem) => {
+            if (typeof item === 'string') return { src: item, isActive: true };
+            return item;
+        });
+
+        setFormData({
+            title: data.title || 'Ramos',
+            showProfile: data.showProfile ?? true,
+            backgroundTrail: trail,
+            backgroundColor: data.backgroundColor || '',
+            textColor: data.textColor || '',
+            ballColor: data.ballColor || '',
+            capColor: data.capColor || '',
+            profileUrl: data.profileUrl || '',
+            profileType: data.profileType || 'image',
+            profileScale: data.profileScale ?? 1,
+            profileX: data.profileX ?? 0,
+            profileY: data.profileY ?? 0,
+        });
+    }, [data]);
 
     const handleTrailChange = (items: TrailItem[]) => {
         setFormData(prev => ({
@@ -175,6 +209,11 @@ function LockScreenForm({
             textColor: formData.textColor,
             ballColor: formData.ballColor,
             capColor: formData.capColor,
+            profileUrl: formData.profileUrl,
+            profileType: formData.profileType,
+            profileScale: formData.profileScale,
+            profileX: formData.profileX,
+            profileY: formData.profileY,
         });
     };
 
@@ -183,7 +222,7 @@ function LockScreenForm({
             <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Lock Screen Configuration</h3>
                 <p className="text-sm text-gray-600 mb-4">Customize the text, 3D ball colors, and background trail for the lock screen.</p>
-                <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Display Name / Title</label>
@@ -206,6 +245,28 @@ function LockScreenForm({
                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
                         <label htmlFor="showProfile" className="text-sm font-medium text-gray-700">Show Profile Avatar</label>
+                    </div>
+
+                    <div className="bg-white p-4 rounded border border-gray-200">
+                        <div className="flex items-center gap-2 mb-4">
+                            <User className="text-blue-600" size={18} />
+                            <h4 className="text-sm font-medium text-gray-900 block">Profile Media</h4>
+                        </div>
+                        <ProfileMediaEditor
+                            initialUrl={formData.profileUrl}
+                            initialType={formData.profileType}
+                            initialScale={formData.profileScale}
+                            initialX={formData.profileX}
+                            initialY={formData.profileY}
+                            onSave={(p) => setFormData({
+                                ...formData,
+                                profileUrl: p.url,
+                                profileType: p.type,
+                                profileScale: p.scale,
+                                profileX: p.x,
+                                profileY: p.y
+                            })}
+                        />
                     </div>
 
                     <div className="bg-white p-4 rounded border border-gray-200">
@@ -309,14 +370,15 @@ function LockScreenForm({
 
                     <div className="flex justify-end pt-2">
                         <button
-                            type="submit"
+                            type="button"
+                            onClick={handleSubmit}
                             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium shadow-sm flex items-center gap-2"
                         >
                             <Lock size={16} />
                             Update Lock Screen
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     );
