@@ -135,7 +135,6 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
     return (
         <div ref={containerRef} className="w-full" style={{ width: '100%' }}>
             <Masonry
-                key={columnCount} // Force re-render when columns change
                 breakpointCols={columnCount}
                 className={`masonry-grid -ml-4 w-auto flex ${className}`}
                 columnClassName="masonry-grid-column pl-4 bg-clip-padding"

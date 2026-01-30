@@ -53,7 +53,6 @@ export default function ProjectCardPinterest({
                 className={`relative overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800 transition-transform duration-300 ${isInteractive ? 'hover:scale-[1.02]' : ''}`}
                 style={{
                     aspectRatio: ratio,
-                    contain: 'layout style paint'
                 }}
             >
                 <div className="absolute inset-0">
