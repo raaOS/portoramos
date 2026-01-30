@@ -25,7 +25,6 @@ export const aboutService = {
             dockConfig: { ...current.dockConfig, ...(updates.dockConfig || {}) } as any,
             chatSettings: { ...current.chatSettings, ...(updates.chatSettings || {}) } as any,
             windowPreferences: { ...current.windowPreferences, ...(updates.windowPreferences || {}) } as any,
-            lockScreenPreferences: { ...current.lockScreenPreferences, ...(updates.lockScreenPreferences || {}) } as any,
             labels: { ...current.labels, ...(updates.labels || {}) } as any,
 
             lastUpdated: new Date().toISOString()

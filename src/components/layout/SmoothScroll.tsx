@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import Lenis from 'lenis';
 
 export default function SmoothScroll() {
     const pathname = usePathname();
@@ -11,25 +10,34 @@ export default function SmoothScroll() {
     useEffect(() => {
         if (isOsMode) return;
 
-        const lenis = new Lenis({
-            duration: 1.5, // Slightly "heavier" for premium feel
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            orientation: 'vertical',
-            gestureOrientation: 'vertical',
-            smoothWheel: true,
-            wheelMultiplier: 0.9, // Lower multiplier for more controlled scrolling
-            touchMultiplier: 2,
+        let lenis: any = null;
+        let rafId: number;
+
+        // Lazy-load Lenis to reduce initial bundle size (~12KB savings)
+        import('lenis').then((LenisModule) => {
+            const Lenis = LenisModule.default;
+
+            lenis = new Lenis({
+                duration: 1.5, // Slightly "heavier" for premium feel
+                easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+                orientation: 'vertical',
+                gestureOrientation: 'vertical',
+                smoothWheel: true,
+                wheelMultiplier: 0.9, // Lower multiplier for more controlled scrolling
+                touchMultiplier: 2,
+            });
+
+            function raf(time: number) {
+                lenis?.raf(time);
+                rafId = requestAnimationFrame(raf);
+            }
+
+            rafId = requestAnimationFrame(raf);
         });
 
-        function raf(time: number) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
-        }
-
-        requestAnimationFrame(raf);
-
         return () => {
-            lenis.destroy();
+            if (rafId) cancelAnimationFrame(rafId);
+            lenis?.destroy();
         };
     }, [isOsMode]);
 

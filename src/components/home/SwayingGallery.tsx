@@ -1,7 +1,7 @@
 'use client';
 
 import Media from '@/components/shared/Media';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 interface GalleryImage {
   src: string;

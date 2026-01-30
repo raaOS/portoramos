@@ -22,16 +22,10 @@ const nextConfig = {
     // Modern image formats for better compression
     formats: ['image/avif', 'image/webp'],
   },
-  // Transpile heavy 3D packages to avoid build errors
-  transpilePackages: [
-    'three',
-    '@react-three/fiber',
-    '@react-three/drei',
-    '@splinetool/r3f-spline',
-    '@splinetool/loader'
-  ],
-  // Enable production source maps for better error tracking
-  productionBrowserSourceMaps: true,
+  // Transpile packages (empty - Three.js removed as unused)
+  transpilePackages: [],
+  // Disable production source maps for smaller bundle (enable for debugging)
+  productionBrowserSourceMaps: false,
   // Optimize static assets
   assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
   // Improve static asset handling
