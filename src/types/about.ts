@@ -138,20 +138,7 @@ export interface AboutData {
   dockConfig?: DockPreferences;
   chatSettings?: ChatSettings;
   windowPreferences?: WindowPreferences;
-  lockScreenPreferences?: {
-    title: string;
-    showProfile: boolean;
-    backgroundTrail: (string | TrailItem)[];
-    backgroundColor?: string;
-    textColor?: string;
-    ballColor?: string;
-    capColor?: string;
-    profileUrl?: string;
-    profileType?: 'image' | 'video';
-    profileScale?: number;
-    profileX?: number;
-    profileY?: number;
-  };
+
 
   labels?: {
     experienceTitle?: string;
@@ -175,6 +162,6 @@ export interface UpdateAboutData {
   dockConfig?: DockPreferences;
   chatSettings?: ChatSettings;
   windowPreferences?: WindowPreferences;
-  lockScreenPreferences?: Partial<AboutData['lockScreenPreferences']>;
+
   labels?: Partial<AboutData['labels']>;
 }
