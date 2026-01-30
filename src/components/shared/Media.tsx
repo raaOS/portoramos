@@ -248,7 +248,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
 
   if (kind === 'video') {
     return (
-      <div ref={containerRef} className="relative w-full h-full">
+      <div ref={containerRef} className="relative w-full h-full bg-gray-200 dark:bg-gray-800">
         <video
           ref={setVideoRef}
           className={`${className || "w-full h-full object-cover"} ${!controls ? 'pointer-events-none' : ''}`}
@@ -351,10 +351,12 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
     )
   }
 
-  const defaultBlurDataURL = blurDataURL || generateBlurDataURL()
+  // Fix White Glitch: Don't use the hardcoded bright blur image.
+  // Instead, rely on the container's background color (theme-aware) for loading state.
+  const effectiveBlurDataURL = blurDataURL;
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
       <Image
         src={src}
         alt={alt}
@@ -364,9 +366,9 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : 'auto'}
         sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
-        className={className}
-        placeholder="blur"
-        blurDataURL={defaultBlurDataURL}
+        className={`${className} transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        placeholder={effectiveBlurDataURL ? "blur" : "empty"}
+        blurDataURL={effectiveBlurDataURL}
         quality={quality || 75}
         style={{
           objectFit: objectFit,
@@ -379,6 +381,11 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           setHasError(true)
         }}
       />
+      {/* Show simple skeleton while loading if not priority */}
+      {isLoading && !priority && (
+        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-800 animate-pulse" />
+      )}
+
       {hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400 p-4 text-center">
           <span className="text-[10px] uppercase font-bold tracking-wider opacity-50">{alt || 'Image Unavailable'}</span>
