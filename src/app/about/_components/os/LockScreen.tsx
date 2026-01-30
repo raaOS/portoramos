@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Lock } from "lucide-react";
-import PhysicsBaubles from "@/components/effects/PhysicsBaubles";
+
 
 import { AboutData } from "@/types/about";
 
@@ -24,8 +24,6 @@ export default function LockScreen({ onUnlock, isLocked, preferences }: LockScre
     const showProfile = preferences?.showProfile ?? true;
     const backgroundColor = preferences?.backgroundColor;
     const textColor = preferences?.textColor || "#ffffff";
-    const ballColor = preferences?.ballColor || "#FEDDD8";
-    const capColor = preferences?.capColor || "#F6A77B";
     const profileUrl = preferences?.profileUrl;
     const profileType = preferences?.profileType || "image";
     const profileScale = preferences?.profileScale ?? 1;
@@ -102,13 +100,9 @@ export default function LockScreen({ onUnlock, isLocked, preferences }: LockScre
                     className="fixed inset-0 z-[10001] flex flex-col items-center justify-start pt-32 text-white bg-black/40 backdrop-blur-3xl"
                 >
                     {/* Background Effect */}
-                    <div className="absolute inset-0 -z-10 overflow-hidden" style={{ backgroundColor: backgroundColor || undefined }}>
-                        <PhysicsBaubles
-                            hideText={true}
-                            ballColor={ballColor}
-                            capColor={capColor}
-                            textColor={textColor}
-                        />
+                    <div className="absolute inset-0 -z-10 overflow-hidden" style={{ backgroundColor: backgroundColor || '#050505' }}>
+                        {/* Static Gradient Fallback for aesthetics */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80" />
                         <div className="absolute inset-0 bg-black/30 pointer-events-none" />
                     </div>
 

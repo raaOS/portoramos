@@ -64,7 +64,7 @@ export default function AdminLayout({
     { href: '/admin/testimonial', label: 'Testimonials', icon: Quote, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
     { href: '/admin/leads', label: 'Leads', icon: Users, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
     { href: '/admin/telegram', label: 'Telegram Bot', icon: Send, color: 'text-sky-500', bg: 'hover:bg-sky-50' },
-    { href: '/admin/lock-screen', label: 'Lock Screen', icon: Lock as any, color: 'text-red-600', bg: 'hover:bg-red-50' },
+
     { href: '/admin/analytics', label: 'Analytics', icon: Activity as any, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
   ];
 
