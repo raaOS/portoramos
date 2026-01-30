@@ -45,17 +45,23 @@ export const useStickyNotes = (mounted: boolean) => {
         if (mounted && notes.length > 0) {
             const saveNotes = async () => {
                 try {
-                    await fetch('/api/sticky-notes', {
+                    const response = await fetch('/api/sticky-notes', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(notes)
                     });
+
+                    if (response.status === 401 || response.status === 403) {
+                        // User is not admin, stop syncing to avoid spamming 401s
+                        console.warn("Sticky Notes sync skipped: Read-only mode (Unauthorized).");
+                        return;
+                    }
                 } catch (e) {
                     console.error("Failed to sync notes to server", e);
                 }
             };
 
-            const timer = setTimeout(saveNotes, 1000);
+            const timer = setTimeout(saveNotes, 1000); // Debounce 1s
             return () => clearTimeout(timer);
         }
     }, [notes, mounted]);

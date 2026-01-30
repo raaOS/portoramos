@@ -18,7 +18,7 @@ import ContactWindow from "./ContactWindow";
 import ChatWindow from "./ChatWindow";
 import GalleryWindow from "./GalleryWindow";
 import Spotlight from "./Spotlight";
-import LockScreen from "./LockScreen";
+
 import MacFolder from "./MacFolder";
 
 import IndexClientWithAutoUpdate from "@/components/home/IndexClientWithAutoUpdate";
@@ -124,7 +124,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     const [mounted, setMounted] = useState(false);
     const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
     const [showSpotlight, setShowSpotlight] = useState(false);
-    const [isLocked, setIsLocked] = useState(true);
+
 
     // Hooks
     const {
@@ -515,15 +515,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
             </div>
 
             {/* Lock Screen */}
-            <AnimatePresence>
-                {isLocked && (
-                    <LockScreen
-                        onUnlock={() => setIsLocked(false)}
-                        isLocked={isLocked}
-                        preferences={aboutData?.lockScreenPreferences}
-                    />
-                )}
-            </AnimatePresence>
+
         </div>
     );
 }
