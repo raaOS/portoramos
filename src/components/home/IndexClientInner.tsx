@@ -180,8 +180,8 @@ export default function IndexClientInner({ projects, tag, lastUpdated, windowWid
           <>
             <MasonryGrid width={windowWidth}>
               {displayedProjects.map((project, index) => {
-                // Determine priority based on index (first 14 items get priority)
-                const isPriority = index < 14;
+                // Determine priority based on index (first 4 items get priority)
+                const isPriority = index < 4;
 
                 // Animation Logic:
                 // First 14 items: NO ANIMATION STATE CHANGE to prevent blink.

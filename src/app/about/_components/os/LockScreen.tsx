@@ -88,7 +88,7 @@ export default function LockScreen({ onUnlock, isLocked, preferences }: LockScre
                     {/* Background Effect */}
                     <div className="absolute inset-0 -z-10 overflow-hidden" style={{ backgroundColor: backgroundColor || undefined }}>
                         <PhysicsBaubles
-                            hideText={false}
+                            hideText={true}
                             ballColor={ballColor}
                             capColor={capColor}
                             textColor={textColor}

@@ -520,7 +520,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                     <LockScreen
                         onUnlock={() => setIsLocked(false)}
                         isLocked={isLocked}
-                    // wallpaper={wallpaper} // Removed as it does not exist in LockScreenProps
+                        preferences={aboutData?.lockScreenPreferences}
                     />
                 )}
             </AnimatePresence>
