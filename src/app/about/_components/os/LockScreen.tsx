@@ -65,17 +65,33 @@ export default function LockScreen({ onUnlock, isLocked, preferences }: LockScre
     }, [error]);
 
 
-    const formattedTime = time.toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-    });
+    let formattedTime = "00:00";
+    let formattedDate = "-- --";
 
-    const formattedDate = time.toLocaleDateString("id-ID", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-    });
+    try {
+        formattedTime = time.toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        });
+        formattedDate = time.toLocaleDateString("id-ID", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+        });
+    } catch (e) {
+        // Fallback for environments with missing locale data
+        formattedTime = time.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        });
+        formattedDate = time.toLocaleDateString("en-US", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+        });
+    }
 
     return (
         <AnimatePresence>

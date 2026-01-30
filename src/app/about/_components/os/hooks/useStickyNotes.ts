@@ -62,7 +62,7 @@ export const useStickyNotes = (mounted: boolean) => {
 
     const addNote = useCallback(() => {
         const newNote: NoteData = {
-            id: crypto.randomUUID(),
+            id: 'note-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
             text: '',
             date: new Date().toISOString(),
             color: '#fef08a',
