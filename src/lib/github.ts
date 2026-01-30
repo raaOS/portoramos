@@ -88,32 +88,46 @@ export class GitHubService {
         const url = `${GITHUB_API_URL}/repos/${this.owner}/${this.repo}/contents/${filePath}`;
         console.log(`[GitHubService] Fetching: ${url} (noCache: ${noCache})`);
 
-        const response = await fetch(url, {
-            headers: this.getHeaders(),
-            cache: noCache ? 'no-store' : undefined,
-            next: noCache ? undefined : { revalidate: 60 }
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-        if (!response.ok) {
-            const errorText = await response.text();
+        try {
+            const response = await fetch(url, {
+                headers: this.getHeaders(),
+                cache: noCache ? 'no-store' : undefined,
+                next: noCache ? undefined : { revalidate: 60 },
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
 
-            // 404 is common when checking existence, suppress error log
-            if (response.status === 404) {
-                // console.log(`[GitHubService] File not found (404): ${filePath}`);
-                throw new Error('Not Found');
+            if (!response.ok) {
+                const errorText = await response.text();
+
+                // 404 is common when checking existence, suppress error log
+                if (response.status === 404) {
+                    // console.log(`[GitHubService] File not found (404): ${filePath}`);
+                    throw new Error('Not Found');
+                }
+
+                console.error(`[GitHubService] GET failed: ${response.status} ${response.statusText}`, errorText);
+                throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
             }
 
-            console.error(`[GitHubService] GET failed: ${response.status} ${response.statusText}`, errorText);
-            throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+            const data = (await response.json()) as GitHubFileResponse;
+            const content = Buffer.from(data.content, 'base64').toString('utf-8');
+
+            return {
+                content: JSON.parse(content),
+                sha: data.sha
+            };
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error instanceof Error && error.name === 'AbortError') {
+                console.error(`[GitHubService] Fetch timed out for ${filePath} after 5000ms`);
+                throw new Error('Timeout');
+            }
+            throw error;
         }
-
-        const data = (await response.json()) as GitHubFileResponse;
-        const content = Buffer.from(data.content, 'base64').toString('utf-8');
-
-        return {
-            content: JSON.parse(content),
-            sha: data.sha
-        };
     }
 
     /**

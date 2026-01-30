@@ -4,8 +4,8 @@ import { loadExperienceData } from '@/lib/experience';
 import { loadHardSkillsData } from '@/lib/hardSkills';
 import { allProjectsAsync } from '@/lib/projects';
 
-// Force dynamic since we are fetching data
-export const revalidate = 0;
+// Cache for 60 seconds (ISR) to improve performance and prevent Vercel timeouts
+export const revalidate = 60;
 
 export default async function AboutTestPage() {
   const [aboutData, experienceData, hardSkillsData, allProjects] = await Promise.all([
