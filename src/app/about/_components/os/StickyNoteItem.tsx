@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Star, Trash2, Edit, Palette, RotateCcw, Pin, Eye, EyeOff, Bold, Italic, List, ListOrdered, CheckSquare, Check, Type, Download, X, Search, Plus, Minus } from 'lucide-react';
 import { motion, AnimatePresence, DragControls } from 'framer-motion';
-import * as htmlToImage from 'html-to-image';
+// html-to-image is lazy loaded in handleDownload to reduce bundle size
 import PasswordModal from './PasswordModal';
 
 export interface NoteData {
@@ -198,6 +198,8 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
     const handleDownload = async () => {
         if (!containerRef.current) return;
         try {
+            // Lazy load html-to-image only when needed (~50KB saved from initial bundle)
+            const htmlToImage = await import('html-to-image');
             const dataUrl = await htmlToImage.toPng(containerRef.current, {
                 quality: 0.95,
                 backgroundColor: 'transparent', // Preserve transparency/shape
