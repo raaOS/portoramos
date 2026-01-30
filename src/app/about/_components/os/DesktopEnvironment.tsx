@@ -4,22 +4,41 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { User, ArrowLeft, Grid, Smile, Rocket, Mail, Trash2, MessageCircle, Image as ImageIcon, FileText } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 
-// Internal Components
+// Internal Components (always loaded)
 import OSWindow from "./Window";
-import DesktopIcon from "./DesktopIcon"; // Ensure this handles 'folder' | 'project'
+import DesktopIcon from "./DesktopIcon";
 import Dock from "./Dock";
 import MenuBar from "./MenuBar";
-
-// Window Content Components
-import AboutContent from "./AboutContent";
-import ProjectsGridWindow from "./ProjectsGridWindow";
-import ContactWindow from "./ContactWindow";
-import ChatWindow from "./ChatWindow";
-import GalleryWindow from "./GalleryWindow";
 import Spotlight from "./Spotlight";
-
 import MacFolder from "./MacFolder";
+
+// Window Content Components - Lazy loaded for faster initial paint
+const AboutContent = dynamic(() => import("./AboutContent"), {
+    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
+    ssr: false
+});
+
+const ChatWindow = dynamic(() => import("./ChatWindow"), {
+    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
+    ssr: false
+});
+
+const GalleryWindow = dynamic(() => import("./GalleryWindow"), {
+    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
+    ssr: false
+});
+
+const ContactWindow = dynamic(() => import("./ContactWindow"), {
+    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
+    ssr: false
+});
+
+const ProjectsGridWindow = dynamic(() => import("./ProjectsGridWindow"), {
+    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
+    ssr: false
+});
 
 import IndexClientWithAutoUpdate from "@/components/home/IndexClientWithAutoUpdate";
 import ProjectDetailTwoColumn from "@/components/projects/ProjectDetailTwoColumn";

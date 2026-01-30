@@ -5,15 +5,25 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import MasonryGrid from '@/components/layout/MasonryGrid';
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest';
 import ReadMoreDescription from '@/components/ui/ReadMoreDescription';
-import AITranslator from '@/components/features/AITranslator';
-import CommentSection from '@/components/features/CommentSection';
 import type { Comment } from '@/lib/magic';
 import ProjectCTA from './ProjectCTA';
 import Media from '@/components/shared/Media';
 import { Compare } from '@/components/ui/compare';
+
+// Lazy load heavy components to reduce initial bundle
+const CommentSection = dynamic(() => import('@/components/features/CommentSection'), {
+    loading: () => <div className="animate-pulse h-32 bg-gray-100 dark:bg-gray-800 rounded-lg" />,
+    ssr: false
+});
+
+const AITranslator = dynamic(() => import('@/components/features/AITranslator'), {
+    loading: () => <div className="w-6 h-6" />,
+    ssr: false
+});
 
 interface ProjectDetailTwoColumnProps {
     project: Project;
@@ -37,15 +47,20 @@ export default function ProjectDetailTwoColumn({
     const [metrics, setMetrics] = useState({ likes: 0, shares: 0 });
     const [isLoaded, setIsLoaded] = useState(false);
 
+    // Load like status immediately (local storage only)
     useEffect(() => {
-        const initData = async () => {
-            if (typeof window !== 'undefined') {
-                const savedLike = localStorage.getItem(`like-${project.slug}`);
-                if (savedLike === 'true') {
-                    setIsProjectLiked(true);
-                }
+        if (typeof window !== 'undefined') {
+            const savedLike = localStorage.getItem(`like-${project.slug}`);
+            if (savedLike === 'true') {
+                setIsProjectLiked(true);
             }
+        }
+        setIsLoaded(true);
+    }, [project.slug]);
 
+    // Defer non-critical API calls to improve initial load time
+    useEffect(() => {
+        const timer = setTimeout(async () => {
             try {
                 const [metricsRes, commentsRes] = await Promise.all([
                     fetch(`/api/metrics?slug=${project.slug}`),
@@ -61,22 +76,14 @@ export default function ProjectDetailTwoColumn({
                     const commentsData = await commentsRes.json();
                     if (commentsData.comments && Array.isArray(commentsData.comments)) {
                         setComments(commentsData.comments);
-                    } else {
-                        setComments([]);
                     }
                 }
             } catch (error) {
                 console.error('Failed to load project data:', error);
-            } finally {
-                setIsLoaded(true);
             }
-        };
+        }, 1500); // Defer 1.5s to prioritize first paint
 
-        if ('requestIdleCallback' in window) {
-            (window as any).requestIdleCallback(initData);
-        } else {
-            setTimeout(initData, 0);
-        }
+        return () => clearTimeout(timer);
     }, [project.slug]);
 
     const handleProjectLike = async () => {
@@ -122,7 +129,7 @@ export default function ProjectDetailTwoColumn({
         }
     };
 
-    const INITIAL_COUNT = 12;
+    const INITIAL_COUNT = 6; // Reduced from 12 for faster initial load
     const [displayedProjects, setDisplayedProjects] = useState<Project[]>(() => {
         return otherProjects.slice(0, INITIAL_COUNT);
     });
