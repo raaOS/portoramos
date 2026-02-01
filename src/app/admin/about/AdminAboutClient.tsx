@@ -21,12 +21,13 @@ import WallpaperManager from './components/WallpaperManager';
 import DesktopProjectsForm from './components/DesktopProjectsForm';
 import DockConfigForm from './components/DockConfigForm';
 import ChatSettingsForm from './components/ChatSettingsForm';
+import StickyNotesManager from './components/StickyNotesManager';
 
 export default function AdminAboutClient() {
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'labels' | 'desktop' | 'dock' | 'chat'>('professional');
+  const [activeTab, setActiveTab] = useState<'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'labels' | 'desktop' | 'dock' | 'chat' | 'stickyNotes'>('professional');
 
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -231,6 +232,7 @@ export default function AdminAboutClient() {
                 { id: 'desktop', name: 'Desktop Configuration' },
                 { id: 'dock', name: 'Dock System' },
                 { id: 'chat', name: 'Chat Settings' },
+                { id: 'stickyNotes', name: 'Sticky Notes' },
               ].map((tab) => (
                 <option key={tab.id} value={tab.id}>
                   {tab.name}
@@ -253,6 +255,7 @@ export default function AdminAboutClient() {
               { id: 'desktop', name: 'Desktop & OS', icon: Monitor, color: 'text-cyan-600', bg: 'bg-cyan-50' },
               { id: 'dock', name: 'Dock System', icon: Layout, color: 'text-indigo-600', bg: 'bg-indigo-50' },
               { id: 'chat', name: 'Chat Agent', icon: MessageSquare, color: 'text-green-600', bg: 'bg-green-50' },
+              { id: 'stickyNotes', name: 'Sticky Notes', icon: Smile, color: 'text-yellow-600', bg: 'bg-yellow-50' },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -349,6 +352,12 @@ export default function AdminAboutClient() {
                   data={aboutData.chatSettings}
                   onUpdate={(data) => handleUpdateAbout({ chatSettings: data })}
                 />
+              </div>
+            )}
+
+            {activeTab === 'stickyNotes' && (
+              <div className="space-y-8">
+                <StickyNotesManager />
               </div>
             )}
             {/* Note: Labels panel content seems missing in original code, placeholder removed if not used or add placeholder if needed */}

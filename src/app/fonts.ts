@@ -40,14 +40,8 @@ export const patrickHand = Patrick_Hand({
   display: 'swap',
 })
 
-// Local Fonts
-export const alaNanti = localFont({
-  src: '../../public/font/AlaNkcthi.otf',
-  variable: '--font-ala-nanti',
-  display: 'swap',
-  preload: false,
-})
+
 
 export const displayClassName = `${sixCaps.variable} ${sixCaps.className}`
-// alaNanti has preload: false, so it will only load when used
-export const sansClassName = `${dmSans.variable} ${dmSans.className} ${caveat.variable} ${indieFlower.variable} ${patrickHand.variable} ${alaNanti.variable}`
+// alaNanti removed for performance
+export const sansClassName = `${dmSans.variable} ${dmSans.className} ${caveat.variable} ${indieFlower.variable} ${patrickHand.variable}`

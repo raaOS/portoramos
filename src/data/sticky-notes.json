@@ -1,19 +1,18 @@
 [
   {
-    "id": "1",
-    "text": "ini semua bisa di kil dan di geser geser yaaa...",
-    "date": "2026-01-26T00:00:00.000Z",
-    "color": "#bbf7d0",
+    "id": "fcbe74e0-943d-4f11-825c-3742de3214f9",
+    "text": "semua icon di bisa diklik\ndrag $ drop yaa 🙂‍↕️🫡🫠",
+    "date": "2026-02-01T20:30:45.941Z",
+    "color": "#fef08a",
     "isStarred": false,
     "isDeleted": false,
-    "x": 1566,
-    "y": 630,
-    "zIndex": 70,
-    "fontFamily": "var(--font-ala-nanti), sans-serif",
-    "isPinned": true,
-    "width": 299,
-    "height": 227,
-    "fontSize": 30,
-    "isCollapsed": false
+    "x": 120,
+    "y": 120,
+    "width": 279,
+    "height": 200,
+    "zIndex": 102,
+    "fontFamily": "var(--font-caveat), sans-serif",
+    "fontSize": 24,
+    "isPinned": true
   }
 ]

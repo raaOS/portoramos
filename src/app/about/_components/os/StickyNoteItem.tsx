@@ -49,7 +49,7 @@ const COLORS = [
 ];
 
 // Default font is Ala Nanti
-const DEFAULT_FONT = 'var(--font-ala-nanti), sans-serif';
+const DEFAULT_FONT = 'var(--font-caveat), sans-serif';
 
 export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, dragControls }: StickyNoteItemProps) {
     const [isEditing, setIsEditing] = useState(false);

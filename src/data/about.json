@@ -137,9 +137,12 @@
       "gen-1766512146544-3",
       "gen-1766512146544-16",
       "gen-1766512146544-20",
-      "gen-1766512146544-19"
+      "gen-1766512146544-19",
+      "gen-1766512146544-17",
+      "gen-1766512146544-8",
+      "gen-1766512146544-5"
     ],
-    "maxIcons": 7,
+    "maxIcons": 10,
     "layout": "grid"
   },
   "wallpaperConfig": {
@@ -199,20 +202,6 @@
       "isOpenByDefault": true
     }
   },
-  "lockScreenPreferences": {
-    "title": "Ramos",
-    "showProfile": true,
-    "backgroundTrail": [],
-    "backgroundColor": "",
-    "textColor": "",
-    "ballColor": "#ffc1b8",
-    "capColor": "#ff772e",
-    "profileUrl": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/assets/profile/1769442548119-lr39396zt6ul-inspo-copy-image-20260124-010908.png",
-    "profileType": "image",
-    "profileScale": 1.5,
-    "profileX": -6.018518518518522,
-    "profileY": 10.532407407407398
-  },
   "labels": {},
-  "lastUpdated": "2026-01-27T17:50:43.457Z"
+  "lastUpdated": "2026-02-01T20:28:29.475Z"
 }

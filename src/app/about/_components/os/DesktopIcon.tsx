@@ -31,12 +31,28 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
         large: 96
     }[size];
 
+    const [isDragging, setIsDragging] = useState(false);
+
+    const handleDragStart = () => {
+        setIsDragging(true);
+    };
+
+    const handleDragEnd = () => {
+        setTimeout(() => setIsDragging(false), 50); // Small delay to prevent click firing immediately after drag
+    };
+
     return (
         <motion.div
             drag
             dragMomentum={false}
             dragElastic={0.1}
-            onTap={onClick}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onClick={(e) => {
+                if (!isDragging) {
+                    onClick();
+                }
+            }}
             whileHover={{ scale: 1.1, zIndex: 100 }}
             whileTap={{ scale: 0.9 }}
             dragTransition={{ power: 0, timeConstant: 200 }}

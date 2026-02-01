@@ -450,7 +450,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                     ))}
                 </div>
                 {/* Fake Dock */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-16 w-96 bg-white/10 backdrop-blur-xl rounded-2xl" />
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-[88px] w-[544px] bg-white/10 backdrop-blur-xl rounded-[24px] border border-white/20" />
             </div>
         );
     }
@@ -458,10 +458,16 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     return (
         <div className="relative w-full h-full overflow-hidden select-none bg-black">
             {/* Wallpaper */}
-            <div
-                className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-700"
-                style={{ backgroundImage: `url(${wallpaper})` }}
-            >
+            <div className="absolute inset-0 z-0">
+                <Image
+                    src={wallpaper}
+                    alt="Desktop Wallpaper"
+                    fill
+                    priority
+                    quality={85}
+                    sizes="100vw"
+                    className="object-cover transition-all duration-700"
+                />
                 <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]" />
             </div>
 
