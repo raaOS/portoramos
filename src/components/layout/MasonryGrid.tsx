@@ -42,15 +42,24 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
     const containerRef = React.useRef<HTMLDivElement>(null);
 
     // Determine initial default based on the columns prop type
-    // [STICKY NOTE] PERF FIX: Default to 2 (Mobile) to prevent CLS on mobile devices.
-    // Desktop users will see a hydration adjustment, but Mobile score is prioritized.
-    const initialDefault = 2;
+    // Use window width if available to prevent desktop showing as mobile initially
+    const getInitialCols = () => {
+        if (typeof window === 'undefined') return 2; // SSR fallback
+        const w = window.innerWidth;
+        if (w >= 1280) return breakpointColumns.default || 7;
+        if (w >= 1024) return (breakpointColumns as any)[1024] || 4;
+        if (w >= 768) return (breakpointColumns as any)[768] || 3;
+        return 2; // Mobile
+    };
 
-    const [columnCount, setColumnCount] = useState(initialDefault);
+    const [columnCount, setColumnCount] = useState(() => {
+        if (typeof window === 'undefined') return 2;
+        return getInitialCols();
+    });
 
     const getCols = (w: number) => {
         if (!breakpointColumns) return 2; // Safety fallback
-        let cols = breakpointColumns.default || initialDefault;
+        let cols = breakpointColumns.default || 2;
 
         // Sort breakpoints descending (numeric keys)
         const breakpoints = Object.keys(breakpointColumns)
