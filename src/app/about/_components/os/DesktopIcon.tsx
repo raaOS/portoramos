@@ -14,9 +14,10 @@ interface DesktopIconProps {
     size?: "small" | "medium" | "large";
     aspectRatio?: number;
     children?: React.ReactNode;
+    priority?: boolean; // For LCP optimization
 }
 
-export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children }: DesktopIconProps) {
+export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false }: DesktopIconProps) {
     const [mediaError, setMediaError] = useState(false);
 
     // Reset error state when media changes
@@ -50,8 +51,9 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
                 <div
                     style={{
                         height: baseHeight,
-                        width: "auto",
-                        aspectRatio: aspectRatio,
+                        width: baseHeight * aspectRatio,
+                        minWidth: baseHeight * aspectRatio,
+                        minHeight: baseHeight,
                     }}
                     className={`relative shadow-lg border-2 border-white/40 group-hover:border-white/60 transition-colors bg-white/20`}
                 >
@@ -63,6 +65,7 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
                             muted
                             loop
                             playsInline
+                            preload="metadata"
                             className="object-cover w-full h-full pointer-events-none rounded-none"
                             draggable={false}
                             onError={() => setMediaError(true)}
@@ -76,6 +79,8 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
                             sizes="(max-width: 768px) 150px, 200px"
                             draggable={false}
                             onError={() => setMediaError(true)}
+                            priority={priority}
+                            loading={priority ? "eager" : "lazy"}
                         />
                     )}
                 </div>

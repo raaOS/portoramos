@@ -103,8 +103,8 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                             {/* Availability Badge */}
                             {aboutData?.hero?.availability && (
                                 <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${aboutData.hero.availability.status === 'available'
-                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                        : 'bg-red-50 text-red-700 border border-red-100'
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                    : 'bg-red-50 text-red-700 border border-red-100'
                                     }`}>
                                     <span className={`relative flex h-2 w-2`}>
                                         <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${aboutData.hero.availability.status === 'available' ? 'bg-emerald-400' : 'bg-red-400'
@@ -121,7 +121,7 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                         </div>
 
                         <div>
-                            <h3 className="text-sm font-bold text-black mb-3">I can do...</h3>
+                            <h2 className="text-sm font-bold text-black mb-3">I can do...</h2>
                             <ul className="space-y-2">
                                 {hardSkillsData?.skills?.map((skill, idx) => (
                                     <li key={idx} className="flex items-center gap-2 text-sm text-gray-700">
@@ -286,11 +286,13 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                                             muted
                                             loop
                                             playsInline
+                                            preload="none"
                                         />
                                     ) : (
                                         <img
                                             src={project.cover}
                                             alt={project.title}
+                                            loading="lazy"
                                             className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                         />
                                     )}

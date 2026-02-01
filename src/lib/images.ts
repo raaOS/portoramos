@@ -1,20 +1,41 @@
 // [STICKY NOTE] IMAGES UTILITY
-// File ini sekarang bersih dari Cloudinary.
-// Fungsi utamanya hanya memastikan URL valid (trimming) dan mengembalikan URL asli (Raw).
-// Karena kita pakai GitHub Storage, tidak ada transformasi/kompresi otomatis.
+// File ini menggunakan JSDelivr CDN untuk mempercepat loading aset dari GitHub.
+// JSDelivr cache GitHub files dengan CDN global - gratis dan cepat.
 
 import type { Project, GalleryItem } from '@/types/projects';
 
+/**
+ * Convert raw.githubusercontent.com URLs to JSDelivr CDN for faster loading
+ * Format: https://raw.githubusercontent.com/OWNER/REPO/BRANCH/PATH
+ *      → https://cdn.jsdelivr.net/gh/OWNER/REPO@BRANCH/PATH
+ */
+function convertToJSDelivr(url: string): string {
+  const trimmed = (url || '').trim();
+  if (!trimmed) return trimmed;
+
+  // Check if it's a GitHub raw URL
+  if (trimmed.includes('raw.githubusercontent.com')) {
+    const match = trimmed.match(/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)/);
+    if (match) {
+      const [, owner, repo, branch, path] = match;
+      // JSDelivr CDN format
+      return `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/${path}`;
+    }
+  }
+
+  return trimmed;
+}
+
 function toProxy(u: string) {
-  return (u || '').trim();
+  return convertToJSDelivr(u);
 }
 
 export function toImageProxy(u: string) {
-  return (u || '').trim();
+  return convertToJSDelivr(u);
 }
 
 export function toMediaProxy(u: string) {
-  return (u || '').trim();
+  return convertToJSDelivr(u);
 }
 
 export function isVideoLink(u: string): boolean {
@@ -47,11 +68,18 @@ export function resolveCover(p: Project): GalleryItem {
   const kind = (inferredVideo ? 'video' : 'image') as GalleryItem['kind'];
 
   if (p.cover) {
+    // Auto-generate poster for videos: /path/to/video.mp4 -> /path/to/video.jpg
+    // This allows Next/Image to show a fast-loading poster while video loads
+    let posterUrl: string | undefined = undefined;
+    if (inferredVideo) {
+      posterUrl = p.cover.replace(/\.(mp4|webm|mov)$/i, '.jpg');
+    }
+
     // Return RAW URL (Local or GitHub)
     return {
       kind,
       src: toMediaProxy(p.cover),
-      poster: undefined, // Browser will show first frame for video
+      poster: posterUrl ? toImageProxy(posterUrl) : undefined,
       width: p.coverWidth,
       height: p.coverHeight
     };

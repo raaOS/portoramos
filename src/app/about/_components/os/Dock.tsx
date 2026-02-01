@@ -60,6 +60,10 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
             }
             onClick={handleClick}
             className="aspect-square rounded-[12px] flex items-center justify-center cursor-pointer relative group"
+            role="button"
+            aria-label={label}
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
         >
             {/* Tooltip */}
             <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-2 py-1 bg-white/80 backdrop-blur-sm text-black text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-black/5 shadow-sm z-50">
@@ -93,15 +97,19 @@ export default function Dock({ items, bouncingId, config }: DockProps) {
     });
 
     return (
-        <div
+        <nav
             className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
+            role="navigation"
+            aria-label="Application dock"
             onMouseMove={(e) => mouseX.set(e.pageX)}
             onMouseLeave={() => mouseX.set(Infinity)}
         >
             <div
                 className="flex items-end gap-3 px-3 py-2.5 bg-gradient-to-b from-white/25 to-white/10 backdrop-blur-2xl border border-white/40 rounded-[24px] shadow-2xl shadow-black/20 h-[88px]"
                 style={{
-                    boxShadow: "0 20px 50px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.2), inset 0 0 20px rgba(255,255,255,0.1)"
+                    boxShadow: "0 20px 50px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.2), inset 0 0 20px rgba(255,255,255,0.1)",
+                    minWidth: visibleItems.length * 64 + (visibleItems.length - 1) * 12 + 24,
+                    minHeight: 88,
                 }}
             >
                 {visibleItems.map((item) => (
@@ -117,6 +125,6 @@ export default function Dock({ items, bouncingId, config }: DockProps) {
                     />
                 ))}
             </div>
-        </div>
+        </nav>
     );
 }

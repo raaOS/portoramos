@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable React Compiler for automatic optimization
-  reactCompiler: false,
+  reactCompiler: true,
+  compress: true,
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },

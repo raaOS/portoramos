@@ -44,7 +44,10 @@ export const patrickHand = Patrick_Hand({
 export const alaNanti = localFont({
   src: '../../public/font/AlaNkcthi.otf',
   variable: '--font-ala-nanti',
+  display: 'swap',
+  preload: false,
 })
 
 export const displayClassName = `${sixCaps.variable} ${sixCaps.className}`
-export const sansClassName = `${dmSans.variable} ${dmSans.className} ${caveat.variable} ${indieFlower.variable} ${patrickHand.variable} ${alaNanti.variable}`
+// Note: alaNanti.variable removed from global - loaded only in StickyNoteItem
+export const sansClassName = `${dmSans.variable} ${dmSans.className} ${caveat.variable} ${indieFlower.variable} ${patrickHand.variable}`

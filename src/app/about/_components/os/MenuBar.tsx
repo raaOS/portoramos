@@ -82,9 +82,9 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
                     <Wifi size={14} className="cursor-pointer hover:text-gray-600" />
 
                     {/* Custom Battery 100% Green */}
-                    <div className="flex items-center gap-[1px] cursor-pointer" title="Battery Full (100%)">
+                    <div className="flex items-center gap-[1px] cursor-pointer" title="Battery Full (100%)" aria-label="Battery 100%">
                         <div className="w-[22px] h-[11px] bg-[#22c55e] rounded-[2.5px] border border-[#16a34a] flex items-center justify-center shadow-sm">
-                            <span className="text-[7px] font-bold text-white leading-none pt-[0.5px]">100</span>
+                            <span className="text-[7px] font-bold text-black leading-none pt-[0.5px]" aria-hidden="true">100</span>
                         </div>
                         <div className="w-[1.5px] h-[3.5px] bg-[#16a34a] rounded-r-[1px] opacity-80" />
                     </div>

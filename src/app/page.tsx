@@ -23,7 +23,23 @@ export default async function Home() {
 
   return (
     <main id="main-content" role="main">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={
+        <section className="py-8 px-4">
+          {/* Skeleton Search Bar */}
+          <div className="max-w-md mx-auto mb-8">
+            <div className="h-12 bg-gray-100 rounded-full animate-pulse" />
+          </div>
+          {/* Skeleton Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="bg-gray-200 rounded-md animate-pulse" style={{ aspectRatio: '4/5' }} />
+                <div className="h-3 bg-gray-100 rounded w-3/4 animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </section>
+      }>
         <IndexClientWithAutoUpdate initialProjects={filteredProjects} />
       </Suspense>
     </main>

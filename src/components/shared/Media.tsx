@@ -91,7 +91,9 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   const pathname = usePathname()
   const internalVideoRef = useRef<HTMLVideoElement | null>(null)
   const [canPlay, setCanPlay] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  // For images: start with isLoading=true so they fade in smoothly when loaded
+  // For videos: isLoading is controlled by onLoadStart/onCanPlay events
+  const [isLoading, setIsLoading] = useState(kind === 'image' && !priority)
   const [hasError, setHasError] = useState(false)
   const [shouldLoad, setShouldLoad] = useState((kind === 'video' && !priority) ? false : (!lazy || priority))
   const [isMounted, setIsMounted] = useState(false)
@@ -248,7 +250,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
 
   if (kind === 'video') {
     return (
-      <div ref={containerRef} className="relative w-full h-full bg-gray-200 dark:bg-gray-800">
+      <div ref={containerRef} className="relative w-full h-full bg-neutral-200 dark:bg-neutral-900">
         <video
           ref={setVideoRef}
           className={`${className || "w-full h-full object-cover"} ${!controls ? 'pointer-events-none' : ''}`}
@@ -343,7 +345,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         )}
 
         {hasError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400 p-4 text-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-200 dark:bg-neutral-900 text-gray-400 p-4 text-center">
             <span className="text-[10px] uppercase font-bold tracking-wider opacity-50">{alt || 'Media Unavailable'}</span>
           </div>
         )}
@@ -356,7 +358,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   const effectiveBlurDataURL = blurDataURL;
 
   return (
-    <div className="relative w-full h-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
+    <div className="relative w-full h-full bg-neutral-200 dark:bg-neutral-900 overflow-hidden">
       <Image
         src={src}
         alt={alt}
@@ -383,11 +385,11 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
       />
       {/* Show simple skeleton while loading if not priority */}
       {isLoading && !priority && (
-        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-800 animate-pulse" />
+        <div className="absolute inset-0 bg-neutral-200 dark:bg-neutral-900 animate-pulse" />
       )}
 
       {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400 p-4 text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-200 dark:bg-neutral-900 text-gray-400 p-4 text-center">
           <span className="text-[10px] uppercase font-bold tracking-wider opacity-50">{alt || 'Image Unavailable'}</span>
         </div>
       )}

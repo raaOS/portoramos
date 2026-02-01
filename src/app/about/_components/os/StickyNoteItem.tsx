@@ -1,10 +1,16 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, Trash2, Edit, Palette, RotateCcw, Pin, Eye, EyeOff, Bold, Italic, List, ListOrdered, CheckSquare, Check, Type, Download, X, Search, Plus, Minus } from 'lucide-react';
+import { Star, Trash2, Edit, Palette, RotateCcw, Pin, Eye, EyeOff, Bold, Italic, List, ListOrdered, CheckSquare, Check, Download, X, Plus, Minus } from 'lucide-react';
 import { motion, AnimatePresence, DragControls } from 'framer-motion';
-// html-to-image is lazy loaded in handleDownload to reduce bundle size
-import PasswordModal from './PasswordModal';
+import dynamic from 'next/dynamic';
+import { alaNanti } from '@/app/fonts'; // Lazy loaded font - only loads when StickyNotes are rendered
+
+// Lazy load PasswordModal - only needed when editing locked notes
+const PasswordModal = dynamic(() => import('./PasswordModal'), {
+    loading: () => null,
+    ssr: false
+});
 
 export interface NoteData {
     id: string;
@@ -43,20 +49,13 @@ const COLORS = [
     '#ddd6fe', // Purple
 ];
 
-const HANDWRITING_FONTS = [
-    { name: 'Standard (Sans)', value: 'inherit' },
-    { name: 'Ala Nanti', value: 'var(--font-ala-nanti), sans-serif' },
-    { name: 'Caveat', value: 'var(--font-caveat), cursive' },
-    { name: 'Indie Flower', value: 'var(--font-indie), cursive' },
-    { name: 'Patrick Hand', value: 'var(--font-patrick), cursive' },
-];
+// Default font is Ala Nanti
+const DEFAULT_FONT = 'var(--font-ala-nanti), sans-serif';
 
 export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, dragControls }: StickyNoteItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isUnlocked, setIsUnlocked] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
-    const [showFontPicker, setShowFontPicker] = useState(false);
-    const [fontSearchTerm, setFontSearchTerm] = useState('');
     const textAreaRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isResizing, setIsResizing] = useState(false);
@@ -225,7 +224,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className={`absolute rounded-lg flex flex-col shadow-md hover:shadow-xl group ${!isResizing ? 'transition-shadow duration-300' : ''}`}
+                className={`absolute rounded-lg flex flex-col shadow-md hover:shadow-xl group ${!isResizing ? 'transition-shadow duration-300' : ''} ${alaNanti.variable}`}
                 style={{
                     backgroundColor: note.color,
                     width: width,
@@ -321,15 +320,6 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                                     H1
                                 </button>
                                 <div className="w-[1px] h-4 bg-black/10 mx-1" />
-                                <button
-                                    onClick={() => setShowFontPicker(true)}
-                                    className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/5 hover:bg-black/10 text-[10px] font-semibold text-gray-700 transition-colors"
-                                    title="Choose Font"
-                                >
-                                    <Type size={12} />
-                                    <span>Font</span>
-                                </button>
-                                <div className="w-[1px] h-4 bg-black/10 mx-1" />
                                 <div className="flex items-center bg-black/5 rounded px-1 gap-1">
                                     <button
                                         onClick={(e) => {
@@ -374,7 +364,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                             style={{
                                 minHeight: '100px',
                                 outline: 'none',
-                                fontFamily: note.fontFamily || 'inherit',
+                                fontFamily: DEFAULT_FONT,
                                 fontSize: `${note.fontSize || 18}px`,
                             }}
                         />
@@ -383,122 +373,6 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                     </div>
                 )}
 
-                {/* Internal Font Picker Overlay - Fixes clipping/visibility issues */}
-                <AnimatePresence>
-                    {showFontPicker && (
-                        <motion.div
-                            initial={{ y: '100%', opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: '100%', opacity: 0 }}
-                            className="absolute inset-x-0 bottom-0 top-[60px] bg-white z-[60] flex flex-col shadow-2xl border-t border-gray-100 rounded-t-2xl"
-                            onPointerDown={(e) => e.stopPropagation()}
-                        >
-                            {/* Header */}
-                            <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 bg-white rounded-t-2xl">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Handwriting Style</span>
-                                <button
-                                    onClick={() => setShowFontPicker(false)}
-                                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-black"
-                                >
-                                    <X size={16} />
-                                </button>
-                            </div>
-
-                            {/* Search */}
-                            <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/30">
-                                <div className="relative">
-                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search fonts..."
-                                        className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-black/5 transition-all font-sans"
-                                        value={fontSearchTerm}
-                                        onChange={(e) => setFontSearchTerm(e.target.value)}
-                                        onPointerDown={(e) => e.stopPropagation()}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Font Size Slider */}
-                            <div className="px-4 py-4 border-b border-gray-100 bg-gray-50/20">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Font Size: {note.fontSize || 18}px</span>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => onUpdate(note.id, { fontSize: 18 })}
-                                            className="text-[10px] font-bold text-blue-500 hover:text-blue-600"
-                                        >
-                                            Reset
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Minus size={14} className="text-gray-400" />
-                                    <input
-                                        type="range"
-                                        min="10"
-                                        max="72"
-                                        step="1"
-                                        value={note.fontSize || 18}
-                                        onChange={(e) => onUpdate(note.id, { fontSize: parseInt(e.target.value) })}
-                                        className="flex-grow accent-black h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        onPointerDown={(e) => e.stopPropagation()}
-                                    />
-                                    <Plus size={14} className="text-gray-400" />
-                                </div>
-                            </div>
-
-                            {/* Font List - Grid Mode */}
-                            <div className="flex-grow overflow-y-auto p-3 custom-scrollbar bg-white">
-                                <div className="grid grid-cols-2 gap-2">
-                                    {HANDWRITING_FONTS.filter(f =>
-                                        f.name.toLowerCase().includes(fontSearchTerm.toLowerCase())
-                                    ).map((f) => (
-                                        <button
-                                            key={f.name}
-                                            onClick={() => {
-                                                onUpdate(note.id, { fontFamily: f.value });
-                                                setShowFontPicker(false);
-                                            }}
-                                            className={`
-                                                relative p-4 rounded-xl border transition-all text-left flex flex-col items-center justify-center gap-2 group
-                                                ${note.fontFamily === f.value
-                                                    ? 'bg-black border-black text-white shadow-lg scale-[0.98]'
-                                                    : 'bg-gray-50 border-gray-100 hover:border-gray-300 hover:bg-white text-gray-800'
-                                                }
-                                            `}
-                                        >
-                                            <span
-                                                className={`text-2xl leading-none text-center ${note.fontFamily === f.value ? 'text-white' : 'text-gray-900'}`}
-                                                style={{ fontFamily: f.value }}
-                                            >
-                                                Aa
-                                            </span>
-                                            <span className={`text-[10px] font-medium text-center truncate w-full ${note.fontFamily === f.value ? 'text-gray-300' : 'text-gray-500'}`}>
-                                                {f.name}
-                                            </span>
-
-                                            {note.fontFamily === f.value && (
-                                                <div className="absolute top-2 right-2">
-                                                    <Check size={10} className="text-white" strokeWidth={4} />
-                                                </div>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {HANDWRITING_FONTS.filter(f =>
-                                    f.name.toLowerCase().includes(fontSearchTerm.toLowerCase())
-                                ).length === 0 && (
-                                        <div className="flex flex-col items-center justify-center py-10 opacity-40">
-                                            <Type size={32} className="mb-2" />
-                                            <p className="italic text-xs">No fonts found...</p>
-                                        </div>
-                                    )}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
 
                 {/* Footer / Toolbar (Hidden if collapsed) */}
                 {!note.isCollapsed && (

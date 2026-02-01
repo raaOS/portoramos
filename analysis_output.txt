@@ -1,0 +1,58 @@
+
+========================================
+REPORT FOR: https://portofolio-ramos.vercel.app/
+========================================
+
+--- SCORES ---
+performance     : 76
+accessibility   : 90
+best-practices  : 96
+seo             : 92
+
+--- PERFORMANCE METRICS ---
+First Contentful Paint: 1.5 s (Score: 0.96)
+Largest Contentful Paint: 3.5 s (Score: 0.64)
+Total Blocking Time: 270 ms (Score: 0.82)
+Cumulative Layout Shift: 0.046 (Score: 0.99)
+Speed Index: 9.9 s (Score: 0.1)
+
+--- FAILING AUDITS (A11y, SEO, BP) ---
+[accessibility] Buttons do not have an accessible name (Score: 0)
+   -> When a button doesn't have an accessible name, screen readers announce it as "button", making it unusable for users who rely on screen readers.
+[accessibility] Background and foreground colors do not have a sufficient contrast ratio. (Score: 0)
+   -> Low-contrast text is difficult or impossible for many users to read.
+[best-practices] Browser errors were logged to the console (Score: 0)
+   -> Errors logged to the console indicate unresolved problems.
+[seo] robots.txt is not valid (Score: 0)
+   -> If your robots.
+
+--- OPPORTUNITIES ---
+- Reduce unused CSS: Est savings of 17 KiB (LCP Savings: 150ms) Save 16.87 KiB
+- Reduce unused JavaScript: Est savings of 20 KiB (LCP Savings: 150ms) Save 20.44 KiB
+
+========================================
+REPORT FOR: https://portofolio-ramos.vercel.app/about
+========================================
+
+--- SCORES ---
+performance     : 61
+accessibility   : 96
+best-practices  : 96
+seo             : 100
+
+--- PERFORMANCE METRICS ---
+First Contentful Paint: 1.1 s (Score: 0.99)
+Largest Contentful Paint: 11.4 s (Score: 0)
+Total Blocking Time: 100 ms (Score: 0.98)
+Cumulative Layout Shift: 0.177 (Score: 0.68)
+Speed Index: 5.9 s (Score: 0.47)
+
+--- FAILING AUDITS (A11y, SEO, BP) ---
+[accessibility] Elements use prohibited ARIA attributes (Score: 0)
+   -> Using ARIA attributes in roles where they are prohibited can mean that important information is not communicated to users of assistive technologies.
+[best-practices] Browser errors were logged to the console (Score: 0)
+   -> Errors logged to the console indicate unresolved problems.
+
+--- OPPORTUNITIES ---
+- Reduce unused CSS: Est savings of 16 KiB (LCP Savings: 150ms) Save 15.87 KiB
+- Reduce unused JavaScript: Est savings of 22 KiB (LCP Savings: 150ms) Save 21.88 KiB

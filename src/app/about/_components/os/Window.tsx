@@ -204,6 +204,7 @@ export default function OSWindow({
                                 onClick={(e) => { e.stopPropagation(); onClose(); }}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 className="w-[12px] h-[12px] min-w-[12px] min-h-[12px] p-0 border-[0.5px] border-[#D6443F] rounded-full bg-[#FF5F57] hover:bg-[#FF5F57] transition-all shadow-sm flex items-center justify-center group-hover:brightness-90 active:brightness-75"
+                                aria-label="Close window"
                             >
                                 <X size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
                             </button>
@@ -211,6 +212,7 @@ export default function OSWindow({
                                 onClick={(e) => { e.stopPropagation(); onMinimize && onMinimize(); }}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 className="w-[12px] h-[12px] min-w-[12px] min-h-[12px] p-0 border-[0.5px] border-[#DDA335] rounded-full bg-[#FEBC2E] hover:bg-[#FEBC2E] transition-all shadow-sm flex items-center justify-center group-hover:brightness-90 active:brightness-75"
+                                aria-label="Minimize window"
                             >
                                 <Minus size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
                             </button>
@@ -218,6 +220,7 @@ export default function OSWindow({
                                 onClick={(e) => { e.stopPropagation(); onMaximize && onMaximize(); }}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 className="w-[12px] h-[12px] min-w-[12px] min-h-[12px] p-0 border-[0.5px] border-[#22AA32] rounded-full bg-[#28C840] hover:bg-[#28C840] transition-all shadow-sm flex items-center justify-center group-hover:brightness-90 active:brightness-75"
+                                aria-label="Maximize window"
                             >
                                 {/* Outline Square for Expand */}
                                 <div className="w-[6px] h-[6px] bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rotate-45 transform scale-[0.8]" style={{ clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" }} />

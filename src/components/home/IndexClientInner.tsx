@@ -2,7 +2,7 @@
 
 import type { Project } from '@/types/projects'
 import { useMemo, useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { LazyMotion, domAnimation, m } from 'framer-motion'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
 import SearchBar from '@/components/ui/SearchBar'
 import MasonryGrid from '@/components/layout/MasonryGrid'
@@ -28,9 +28,8 @@ interface FuseInstance<T> {
 
 export default function IndexClientInner({ projects, tag, lastUpdated, windowWidth }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
-  // Start with a reasonable number that fills the screen but isn't too heavy.
-  // 14 items allows for full screen coverage immediately
-  const [visibleCount, setVisibleCount] = useState(14)
+  // Start with a smaller number to improve initial load performance (LCP)
+  const [visibleCount, setVisibleCount] = useState(8)
 
   const [isLoading, setIsLoading] = useState(false)
   const [fuseInstance, setFuseInstance] = useState<FuseInstance<Project> | null>(null)
@@ -175,77 +174,83 @@ export default function IndexClientInner({ projects, tag, lastUpdated, windowWid
       )}
 
       {/* Projects Grid */}
-      <div className="min-h-screen">
-        {displayedProjects.length > 0 ? (
-          <>
-            <MasonryGrid width={windowWidth}>
-              {displayedProjects.map((project, index) => {
-                // Determine priority based on index (first 4 items get priority)
-                const isPriority = index < 4;
+      <LazyMotion features={domAnimation}>
+        <div className="min-h-screen">
+          {displayedProjects.length > 0 ? (
+            <>
+              <MasonryGrid width={windowWidth}>
+                {displayedProjects.map((project, index) => {
+                  // Determine priority based on index (first 2 items get priority for faster LCP)
+                  const isPriority = index < 2;
 
-                // Animation Logic:
-                // First 14 items: NO ANIMATION STATE CHANGE to prevent blink.
-                // Next items: Animate only when scrolled into view
-                const animationProps = isPriority
-                  ? {
-                    animate: { opacity: 1, y: 0 },
-                    initial: { opacity: 1, y: 0 }, // MATCH FINAL STATE = NO BLINK
-                    transition: { duration: 0 }    // INSTANT
-                  }
-                  : {
-                    initial: { opacity: 0, y: 60 }, // Slightly more dramatic for scroll
-                    whileInView: { opacity: 1, y: 0 },
-                    viewport: { once: true, margin: "50px" },
-                    transition: { duration: 0.6, ease: "easeOut" }
-                  };
+                  // Animation Logic:
+                  // Priority items (first 4): No animation at all - instant display
+                  // Non-priority items: Slide up ONLY (no opacity) to prevent white flicker
+                  // The white flicker was caused by opacity:0 showing the container bg before image loads
+                  const animationProps = isPriority
+                    ? {} // No animation for priority items - they're already visible
+                    : {
+                      initial: { y: 30 }, // Slide up only, NO OPACITY CHANGE
+                      whileInView: { y: 0 },
+                      viewport: { once: true, margin: "100px" },
+                      transition: { duration: 0.4, ease: "easeOut" }
+                    };
 
-                return (
-                  <motion.div
-                    key={`${project.slug}-${index}`}
-                    {...animationProps}
-                  >
-                    <ProjectCardPinterest
-                      project={project}
-                      priority={isPriority}
-                      videoEnabled={true}
-                      highlightedTag={tag}
-                    />
-                  </motion.div>
-                )
-              })}
-            </MasonryGrid>
+                  return (
+                    <m.div
+                      key={`${project.slug}-${index}`}
+                      {...animationProps}
+                      // GPU acceleration + content-visibility for scroll performance
+                      style={{
+                        willChange: 'transform, opacity',
+                        contentVisibility: 'auto',
+                        containIntrinsicSize: 'auto 300px',
+                      }}
+                      layoutId={`project-card-${project.slug}-${index}`}
+                    >
+                      <ProjectCardPinterest
+                        project={project}
+                        priority={isPriority}
+                        videoEnabled={true}
+                        highlightedTag={tag}
+                      />
+                    </m.div>
+                  )
+                })}
+              </MasonryGrid>
 
-            {/* Infinite Scroll Sentinel */}
-            <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
+              {/* Infinite Scroll Sentinel */}
+              <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
 
-            {/* Subtle loading indicator */}
-            {isLoading && (
-              <div className="text-center py-8 opacity-50">
-                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
-                <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="p-12 border-2 border-dashed border-gray-300 rounded-lg text-center">
-            <p className="text-gray-600 text-lg mb-2">
-              {searchQuery
-                ? `No projects found for "${searchQuery}"`
-                : tag
-                  ? `No projects with tag "${tag}"`
-                  : 'No projects available'}
-            </p>
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="text-black underline hover:no-underline"
-              >
-                Clear search
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+              {/* Subtle loading indicator */}
+              {isLoading && (
+                <div className="text-center py-8 opacity-50">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
+                  <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="p-12 border-2 border-dashed border-gray-300 rounded-lg text-center">
+              <p className="text-gray-600 text-lg mb-2">
+                {searchQuery
+                  ? `No projects found for "${searchQuery}"`
+                  : tag
+                    ? `No projects with tag "${tag}"`
+                    : 'No projects available'}
+              </p>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-black underline hover:no-underline"
+                >
+                  Clear search
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </LazyMotion>
     </section>
   )
 }

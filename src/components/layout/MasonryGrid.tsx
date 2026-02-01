@@ -42,7 +42,9 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
     const containerRef = React.useRef<HTMLDivElement>(null);
 
     // Determine initial default based on the columns prop type
-    const initialDefault = columns === 'sidebar' ? 3 : (columns === 'bottom' ? 6 : 7);
+    // [STICKY NOTE] PERF FIX: Default to 2 (Mobile) to prevent CLS on mobile devices.
+    // Desktop users will see a hydration adjustment, but Mobile score is prioritized.
+    const initialDefault = 2;
 
     const [columnCount, setColumnCount] = useState(initialDefault);
 
@@ -104,32 +106,41 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         };
     }, [breakpointColumns, width]); // Added width as dependency
 
-    // SSR Fallback
-    if (!mounted) {
+    // Helper to determine grid classes based on props
+    const getGridClasses = () => {
         let gridClasses = 'grid-cols-2'; // Base/Mobile
 
         if (columns === 'default') {
-            // Logic: <640: 2, 640-768: 3, 768-1024: 4, 1024-1280: 5, >1280: 7
             gridClasses = 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7';
         } else if (columns === 'sidebar') {
-            // Logic: <1024: 2, >=1024: 3
             gridClasses = 'grid-cols-2 lg:grid-cols-3';
         } else if (columns === 'bottom') {
-            // Logic: <1024: 2, 1024-1280: 3, 1280-1536: 4, >1536: 6
             gridClasses = 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6';
         }
+        return gridClasses;
+    };
 
-        return (
-            <div
-                className={`w-full grid items-start content-start ${className} ${gridClasses} gap-4`}
-            >
-                {React.Children.map(children, (child) => (
-                    <div className="mb-4 break-inside-avoid">
-                        {child}
-                    </div>
-                ))}
-            </div>
-        );
+    const renderNativeGrid = () => (
+        <div
+            className={`w-full grid items-start content-start ${className} ${getGridClasses()} gap-4`}
+        >
+            {React.Children.map(children, (child) => (
+                <div className="mb-4 break-inside-avoid">
+                    {child}
+                </div>
+            ))}
+        </div>
+    );
+
+    // SSR Fallback
+    if (!mounted) {
+        return renderNativeGrid();
+    }
+
+    // Optimization: If 2 columns (Mobile), use Native Grid to avoid Layout Shift from Masonry lib
+    // This matches the SSR fallback structure for mobile users (Lighthouse) 
+    if (columnCount <= 2) {
+        return renderNativeGrid();
     }
 
     return (

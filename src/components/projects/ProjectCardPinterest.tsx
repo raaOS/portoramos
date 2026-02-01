@@ -50,7 +50,7 @@ export default function ProjectCardPinterest({
         <Component {...hrefProps} onClick={onClick} className={`block mb-6 relative z-0 ${isInteractive ? 'group hover:z-10 cursor-pointer' : ''}`}>
             {/* ... (keep media container) ... */}
             <div
-                className={`relative overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800 transition-transform duration-300 ${isInteractive ? 'hover:scale-[1.02]' : ''}`}
+                className={`relative overflow-hidden rounded-md bg-neutral-200 dark:bg-neutral-900 transition-transform duration-300 ${isInteractive ? 'hover:scale-[1.02]' : ''}`}
                 style={{
                     aspectRatio: ratio,
                 }}

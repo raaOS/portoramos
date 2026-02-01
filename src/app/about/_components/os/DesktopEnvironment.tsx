@@ -1,18 +1,28 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { User, ArrowLeft, Grid, Smile, Rocket, Mail, Trash2, MessageCircle, Image as ImageIcon, FileText } from "lucide-react";
+import { User, ArrowLeft, Grid, Smile, Rocket, Mail, Trash2, MessageCircle, FileText } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 
-// Internal Components (always loaded)
+// Internal Components (always loaded - core UI)
 import OSWindow from "./Window";
 import DesktopIcon from "./DesktopIcon";
 import Dock from "./Dock";
 import MenuBar from "./MenuBar";
-import Spotlight from "./Spotlight";
-import MacFolder from "./MacFolder";
+
+// UI Components - Lazy loaded (not needed immediately)
+const Spotlight = dynamic(() => import("./Spotlight"), {
+    loading: () => null,
+    ssr: false
+});
+
+const MacFolder = dynamic(() => import("./MacFolder"), {
+    loading: () => <div className="w-16 h-16 bg-gray-200/50 rounded-lg animate-pulse" />,
+    ssr: false
+});
 
 // Window Content Components - Lazy loaded for faster initial paint
 const AboutContent = dynamic(() => import("./AboutContent"), {
@@ -25,10 +35,6 @@ const ChatWindow = dynamic(() => import("./ChatWindow"), {
     ssr: false
 });
 
-const GalleryWindow = dynamic(() => import("./GalleryWindow"), {
-    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
-    ssr: false
-});
 
 const ContactWindow = dynamic(() => import("./ContactWindow"), {
     loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
@@ -40,8 +46,16 @@ const ProjectsGridWindow = dynamic(() => import("./ProjectsGridWindow"), {
     ssr: false
 });
 
-import IndexClientWithAutoUpdate from "@/components/home/IndexClientWithAutoUpdate";
-import ProjectDetailTwoColumn from "@/components/projects/ProjectDetailTwoColumn";
+// Heavy components - Lazy loaded to improve initial load time
+const IndexClientWithAutoUpdate = dynamic(() => import("@/components/home/IndexClientWithAutoUpdate"), {
+    loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
+    ssr: false
+});
+
+const ProjectDetailTwoColumn = dynamic(() => import("@/components/projects/ProjectDetailTwoColumn"), {
+    loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
+    ssr: false
+});
 
 // Hooks & Types
 import { useSystemSound } from "@/hooks/useSystemSound";
@@ -96,11 +110,16 @@ const AppIcon = ({ color, icon: Icon, imageUrl }: { color?: string, icon?: any, 
     if (imageUrl) {
         return (
             <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-xl">
-                <img
+                <Image
                     src={imageUrl}
                     alt="icon"
+                    width={128}
+                    height={128}
                     className="w-full h-full object-cover scale-[1.01]"
-                    style={{ imageRendering: 'auto', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden' }}
+                    style={{ imageRendering: 'auto', backfaceVisibility: 'hidden' }}
+                    quality={75}
+                    priority={false}
+                    loading="lazy"
                 />
             </div>
         );
@@ -284,24 +303,6 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         });
     };
 
-    const openGallery = () => {
-        openWindow('gallery', {
-            title: 'Photos',
-            noPadding: true,
-            width: 900,
-            height: 600,
-            content: <GalleryWindow projects={projects} onPreview={(item) => {
-                openWindow('preview-viewer', {
-                    title: item.title,
-                    zIndex: 9999,
-                    noPadding: true,
-                    width: 800,
-                    height: 600,
-                    content: null
-                });
-            }} />
-        });
-    };
 
     // Dock Configuration
     const dockItems = useMemo(() => {
@@ -310,7 +311,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
             { id: "finder", label: "Finder", icon: <AppIcon icon={Smile} color="from-sky-400 to-blue-500" />, onClick: resetDesktopAndClose },
             { id: "about", label: "Profile", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => openWindow("about"), isOpen: isWindowOpen("about") },
             { id: "projects", label: "Launchpad", icon: <AppIcon icon={Rocket} color="from-red-400 to-pink-500" />, onClick: openLaunchpad, isOpen: isWindowOpen("launchpad") },
-            { id: "gallery", label: "Photos", icon: <AppIcon icon={ImageIcon} color="from-indigo-400 to-blue-500" />, onClick: openGallery, isOpen: isWindowOpen("gallery") },
+
             { id: "whatsapp", label: "WhatsApp", icon: <AppIcon icon={MessageCircle} color="from-green-400 to-green-600" />, onClick: openChatWindow, isOpen: isWindowOpen("chat") },
             { id: "notes", label: "Notes", icon: <AppIcon icon={FileText} color="from-yellow-300 to-orange-400" />, onClick: addNote, isOpen: isWindowOpen("sticky-notes") },
             { id: "trash", label: "Trash", icon: <AppIcon icon={Trash2} color="from-gray-400 to-gray-500" />, onClick: () => openWindow("trash-bin"), isOpen: isWindowOpen("trash-bin") },
@@ -332,7 +333,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                 icon
             };
         });
-    }, [aboutData, isWindowOpen, addNote, openWindow, openLaunchpad, openGallery, openChatWindow, handleGoHome]);
+    }, [aboutData, isWindowOpen, addNote, openWindow, openLaunchpad, openChatWindow, handleGoHome]);
 
     // Icons Layout
     // Optimized Layout: Only trigger reshuffle if "Obstacles" change.
@@ -429,7 +430,30 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         };
     }, []);
 
-    if (!mounted) return null;
+    // SSR Skeleton: Show a basic visual immediately to improve LCP
+    // Before: `return null` caused 17s LCP (blank screen until JS hydrates)
+    if (!mounted) {
+        return (
+            <div className="relative w-full h-screen overflow-hidden select-none bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+                {/* Fake Menu Bar */}
+                <div className="absolute top-0 left-0 right-0 h-7 bg-black/60 backdrop-blur-xl z-50 flex items-center px-4">
+                    <div className="w-4 h-4 bg-white/80 rounded-full mr-2" />
+                    <div className="w-16 h-3 bg-white/30 rounded" />
+                </div>
+                {/* Skeleton Grid */}
+                <div className="absolute inset-0 pt-10 pb-20 px-4 grid grid-cols-4 gap-4 opacity-50">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2">
+                            <div className="w-16 h-16 bg-white/10 rounded-xl animate-pulse" />
+                            <div className="w-12 h-2 bg-white/20 rounded" />
+                        </div>
+                    ))}
+                </div>
+                {/* Fake Dock */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-16 w-96 bg-white/10 backdrop-blur-xl rounded-2xl" />
+            </div>
+        );
+    }
 
     return (
         <div className="relative w-full h-full overflow-hidden select-none bg-black">

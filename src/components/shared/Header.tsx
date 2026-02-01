@@ -10,7 +10,7 @@ import { AboutData } from '@/types/about';
 export default function Header() {
   const pathname = usePathname();
   const [availability, setAvailability] = useState<AboutData['hero']['availability']>(undefined);
-  const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState<Date | null>(null);
 
   // Update time for the clock
   useEffect(() => {
@@ -34,17 +34,18 @@ export default function Header() {
   }, []);
 
   // Format Time & Date
-  const formattedTime = time.toLocaleTimeString("id-ID", {
+  const formattedTime = time ? time.toLocaleTimeString("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  });
+  }) : '';
 
-  const formattedDate = time.toLocaleDateString("id-ID", {
+  const formattedDate = time ? time.toLocaleDateString("id-ID", {
     weekday: "short",
     day: "numeric",
     month: "short",
-  });
+  }) : '';
+
 
   // Determine "App Name" based on route
   const getAppName = () => {
@@ -85,7 +86,7 @@ export default function Header() {
       <div className="flex items-center gap-3 sm:gap-5">
         {/* Availability Status */}
         {availability && (
-          <div className={`hidden md:flex items-center gap-2 px-2 py-0.5 rounded-full transition-colors ${availability.status === 'available' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+          <div className={`hidden md:flex items-center gap-2 px-2 py-0.5 rounded-full transition-colors min-w-[85px] justify-center ${availability.status === 'available' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
             }`}>
             <div className={`w-1.5 h-1.5 rounded-full ${availability.status === 'available' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
               }`} />
@@ -101,7 +102,7 @@ export default function Header() {
           {/* Battery */}
           <div className="flex items-center gap-[1px] cursor-pointer" title="Battery Full (100%)">
             <div className="w-[22px] h-[11px] bg-[#22c55e] rounded-[2.5px] border border-[#16a34a] flex items-center justify-center shadow-sm">
-              <span className="text-[7px] font-bold text-white leading-none pt-[0.5px]">100</span>
+              <span className="text-[7px] font-bold text-black leading-none pt-[0.5px]">100</span>
             </div>
             <div className="w-[1.5px] h-[3.5px] bg-[#16a34a] rounded-r-[1px] opacity-80" />
           </div>
