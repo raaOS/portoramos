@@ -49,5 +49,5 @@ export const alaNanti = localFont({
 })
 
 export const displayClassName = `${sixCaps.variable} ${sixCaps.className}`
-// Note: alaNanti.variable removed from global - loaded only in StickyNoteItem
-export const sansClassName = `${dmSans.variable} ${dmSans.className} ${caveat.variable} ${indieFlower.variable} ${patrickHand.variable}`
+// alaNanti has preload: false, so it will only load when used
+export const sansClassName = `${dmSans.variable} ${dmSans.className} ${caveat.variable} ${indieFlower.variable} ${patrickHand.variable} ${alaNanti.variable}`

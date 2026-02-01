@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Star, Trash2, Edit, Palette, RotateCcw, Pin, Eye, EyeOff, Bold, Italic, List, ListOrdered, CheckSquare, Check, Download, X, Plus, Minus } from 'lucide-react';
 import { motion, AnimatePresence, DragControls } from 'framer-motion';
 import dynamic from 'next/dynamic';
-import { alaNanti } from '@/app/fonts'; // Lazy loaded font - only loads when StickyNotes are rendered
 
 // Lazy load PasswordModal - only needed when editing locked notes
 const PasswordModal = dynamic(() => import('./PasswordModal'), {
@@ -224,7 +223,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className={`absolute rounded-lg flex flex-col shadow-md hover:shadow-xl group ${!isResizing ? 'transition-shadow duration-300' : ''} ${alaNanti.variable}`}
+                className={`absolute rounded-lg flex flex-col shadow-md hover:shadow-xl group ${!isResizing ? 'transition-shadow duration-300' : ''}`}
                 style={{
                     backgroundColor: note.color,
                     width: width,
