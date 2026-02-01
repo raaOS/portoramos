@@ -140,13 +140,24 @@ export const generateDesktopIcons = (
             videoUrl = project.galleryItems.find((i) => i.kind === "video")?.src;
         }
 
+        // Calculate aspect ratio from project dimensions, default to 4:5 (portrait poster)
+        const aspectRatio = project.coverWidth && project.coverHeight
+            ? project.coverWidth / project.coverHeight
+            : 0.8; // Default 4:5 portrait
+
+        // Generate poster URL for video (swap .mp4/.webm to .jpg for faster load)
+        const posterUrl = videoUrl
+            ? videoUrl.replace(/\.(mp4|webm|mov)$/i, '.jpg')
+            : project.cover;
+
         return {
             id: project.id,
             type: "project",
             data: project,
             label: project.title,
             videoUrl: videoUrl,
-            imageUrl: project.cover,
+            imageUrl: posterUrl, // Use poster image for faster initial load
+            aspectRatio: aspectRatio,
             x: finalX,
             y: finalY,
         };
