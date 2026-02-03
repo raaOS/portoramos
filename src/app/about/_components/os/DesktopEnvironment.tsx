@@ -7,6 +7,9 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 
+// Admin Auth Hook
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+
 // Internal Components (always loaded - core UI)
 import OSWindow from "./Window";
 import DesktopIcon from "./DesktopIcon";
@@ -163,6 +166,13 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
     const [showSpotlight, setShowSpotlight] = useState(false);
 
+    // Mobile detection for UX differences
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Notes visibility toggle (not auto-show by default)
+    const [notesVisible, setNotesVisible] = useState(false);
+    const [notesDockBouncing, setNotesDockBouncing] = useState(false);
+
 
     // Hooks
     const {
@@ -174,6 +184,9 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         restoreNote,
         bringToFrontNote
     } = useStickyNotes(mounted);
+
+    // Admin auth check for showing Pin button
+    const { isAdmin } = useAdminAuth();
 
     // Forces a re-render of layout if needed (e.g. after drag)
     const [manualRefreshSeed, setManualRefreshSeed] = useState(0);
@@ -247,6 +260,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         maximizeWindow,
         focusWindow,
         updateWindowPosition: internalUpdateWindowPosition,
+        handleWindowResize,
+        handleWindowResizeEnd, // Add this
         togglePin,
         bouncingDocId,
         resetWindows
@@ -303,6 +318,13 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         });
     };
 
+    // Toggle notes visibility (dock icon bounces when notes are shown)
+    const toggleNotesVisibility = () => {
+        setNotesVisible(prev => !prev);
+        // Trigger bounce animation on notes dock icon
+        setNotesDockBouncing(true);
+        setTimeout(() => setNotesDockBouncing(false), 600);
+    };
 
     // Dock Configuration
     const dockItems = useMemo(() => {
@@ -313,7 +335,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
             { id: "projects", label: "Launchpad", icon: <AppIcon icon={Rocket} color="from-red-400 to-pink-500" />, onClick: openLaunchpad, isOpen: isWindowOpen("launchpad") },
 
             { id: "whatsapp", label: "WhatsApp", icon: <AppIcon icon={MessageCircle} color="from-green-400 to-green-600" />, onClick: openChatWindow, isOpen: isWindowOpen("chat") },
-            { id: "notes", label: "Notes", icon: <AppIcon icon={FileText} color="from-yellow-300 to-orange-400" />, onClick: addNote, isOpen: isWindowOpen("sticky-notes") },
+            { id: "notes", label: "Notes", icon: <AppIcon icon={FileText} color="from-yellow-300 to-orange-400" />, onClick: () => toggleNotesVisibility(), isOpen: notesVisible },
             { id: "trash", label: "Trash", icon: <AppIcon icon={Trash2} color="from-gray-400 to-gray-500" />, onClick: () => openWindow("trash-bin"), isOpen: isWindowOpen("trash-bin") },
         ];
 
@@ -412,7 +434,15 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
             document.head.appendChild(style);
         }
 
-        const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+        const handleResize = () => {
+            const width = window.innerWidth;
+            setWindowSize({ width, height: window.innerHeight });
+            setIsMobile(width < 768);
+        };
+
+        // Initial mobile check
+        setIsMobile(window.innerWidth < 768);
+
         window.addEventListener('resize', handleResize);
 
         return () => {
@@ -467,6 +497,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                     quality={85}
                     sizes="100vw"
                     className="object-cover transition-all duration-700"
+                    style={{ filter: `blur(${aboutData?.wallpaperConfig?.blur || 0}px)` }}
                 />
                 <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]" />
             </div>
@@ -481,6 +512,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                             key={icon.id}
                             {...icon}
                             icon={!isFolder ? icon.icon : undefined}
+                            isMobile={isMobile}
                             onClick={() => {
                                 if (isFolder && icon.action) icon.action();
                                 else if (icon.type === 'project') openProjectWindow(icon.data);
@@ -491,17 +523,24 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                     );
                 })}
 
-                {notes.filter(n => !n.isDeleted).map(note => (
-                    <DraggableStickyNote
-                        key={note.id}
-                        note={note}
-                        updateNote={updateNote}
-                        bringToFrontNote={bringToFrontNote}
-                        deleteNote={deleteNote}
-                        permanentDeleteNote={permanentDeleteNote}
-                        restoreNote={restoreNote}
-                    />
-                ))}
+                {/* Sticky Notes - Only show when toggled visible */}
+                {notesVisible && (
+                    <>
+                        {notes.filter(n => !n.isDeleted).map(note => (
+                            <DraggableStickyNote
+                                key={note.id}
+                                note={note}
+                                updateNote={updateNote}
+                                bringToFrontNote={bringToFrontNote}
+                                deleteNote={deleteNote}
+                                permanentDeleteNote={permanentDeleteNote}
+                                restoreNote={restoreNote}
+                            />
+                        ))}
+
+
+                    </>
+                )}
             </div>
 
             {/* Layer 2: Windows */}
@@ -520,6 +559,11 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                 onMaximize={() => maximizeWindow(w.id)}
                                 onFocus={() => focusWindow(w.id)}
                                 onUpdatePosition={(x, y) => handleUpdateWindowPosition(w.id, x, y)}
+                                onResize={(width, height) => handleWindowResize(w.id, width, height)}
+                                onResizeEnd={(width, height) => handleWindowResizeEnd(w.id, width, height)}
+                                isPinned={w.isPinned}
+                                onTogglePin={isAdmin ? () => togglePin(w.id) : undefined}
+                                isAdmin={isAdmin}
                                 initialPosition={w.initialPosition}
                                 width={w.width || 800}
                                 height={w.height || 600}
@@ -546,7 +590,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-auto pb-safe">
                     <Dock
                         items={dockItems}
-                        bouncingId={bouncingDocId}
+                        bouncingId={notesDockBouncing ? 'notes' : bouncingDocId}
+                        isMobile={isMobile}
                     />
                 </div>
 

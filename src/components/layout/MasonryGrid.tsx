@@ -131,10 +131,10 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
 
     const renderNativeGrid = () => (
         <div
-            className={`w-full grid items-start content-start ${className} ${getGridClasses()} gap-4`}
+            className={`w-full grid items-start content-start ${className} ${getGridClasses()} gap-2 md:gap-4`}
         >
             {React.Children.map(children, (child) => (
-                <div className="mb-4 break-inside-avoid">
+                <div className="mb-2 md:mb-4 break-inside-avoid">
                     {child}
                 </div>
             ))}
@@ -146,18 +146,22 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         return renderNativeGrid();
     }
 
-    // Optimization: If 2 columns (Mobile), use Native Grid to avoid Layout Shift from Masonry lib
-    // This matches the SSR fallback structure for mobile users (Lighthouse) 
+    // Optimization removed: User requested true masonry layout. 
+    // Native Grid causes gaps with varying heights.
+    // We will use react-masonry-css for all sizes.
+
+    /* 
     if (columnCount <= 2) {
         return renderNativeGrid();
-    }
+    } 
+    */
 
     return (
         <div ref={containerRef} className="w-full" style={{ width: '100%' }}>
             <Masonry
                 breakpointCols={columnCount}
-                className={`masonry-grid -ml-4 w-auto flex ${className}`}
-                columnClassName="masonry-grid-column pl-4 bg-clip-padding"
+                className={`masonry-grid -ml-2 md:-ml-4 w-auto flex ${className}`}
+                columnClassName="masonry-grid-column pl-2 md:pl-4 bg-clip-padding"
             >
                 {children}
             </Masonry>

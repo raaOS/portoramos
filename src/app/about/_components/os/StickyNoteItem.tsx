@@ -220,9 +220,9 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
             <motion.div
                 ref={containerRef}
                 // layout={!isResizing} // Removed to prevent jitter and unwanted flying animations
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 className={`absolute rounded-lg flex flex-col shadow-md hover:shadow-xl group ${!isResizing ? 'transition-shadow duration-300' : ''}`}
                 style={{
                     backgroundColor: note.color,
@@ -235,7 +235,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
             >
                 {/* Red Pin Visual (Visible when pinned) - 3D Ball Style */}
                 {note.isPinned && (
-                    <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+                    <div className="absolute top-1 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
                         <div
                             style={{
                                 width: '16px',
@@ -244,7 +244,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                                 // 3D Gradient: Highlight (Top Left) -> Mid Red -> Dark Red (Bottom Right)
                                 background: 'radial-gradient(circle at 35% 30%, #ffcfcf, #ef4444 30%, #991b1b)',
                                 // Shadows: Drop shadow + slight inset for rim separation
-                                boxShadow: '0px 4px 5px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)'
                             }}
                         >
                             {/* Specular Highlight (The shiny white reflection) */}
@@ -255,7 +255,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
 
                 {/* Header: Color Picker & Date (Double click to collapse) */}
                 <div
-                    className="absolute top-0 left-0 right-0 h-[60px] px-4 z-20 flex items-center justify-between cursor-grab active:cursor-grabbing"
+                    className="absolute top-0 left-0 right-0 h-[60px] px-4 z-20 flex items-end justify-between pb-6 border-b border-black/5 cursor-grab active:cursor-grabbing"
                     onPointerDown={(e) => dragControls.start(e)}
                     onDoubleClick={() => {
                         // Save text before collapsing to prevent loss
@@ -266,7 +266,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                     }}
                 >
                     {/* Color Picker */}
-                    <div className="flex gap-1.5" onPointerDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-2" onPointerDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
                         {COLORS.map(c => (
                             <button
                                 key={c}

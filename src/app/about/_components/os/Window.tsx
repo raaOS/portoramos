@@ -23,8 +23,10 @@ interface WindowProps {
     width?: number;
     height?: number;
     onResize?: (width: number, height: number) => void;
+    onResizeEnd?: (width: number, height: number) => void;
     isPinned?: boolean;
     onTogglePin?: () => void;
+    isAdmin?: boolean;
     animationVariant?: 'genie' | 'scale' | 'tv' | 'snap';
 }
 
@@ -47,8 +49,10 @@ export default function OSWindow({
     width,
     height,
     onResize,
+    onResizeEnd,
     isPinned = false,
     onTogglePin,
+    isAdmin = false,
     animationVariant = 'genie',
 }: WindowProps) {
     const winWidth = typeof window !== 'undefined' && window.innerWidth < 768 ? 350 : 600;
@@ -56,6 +60,14 @@ export default function OSWindow({
 
     // Internal state for resizing
     const [isResizing, setIsResizing] = React.useState(false);
+    const [dynamicSize, setDynamicSize] = React.useState({ width, height });
+
+    // Sync props to state (when not resizing)
+    useEffect(() => {
+        if (!isResizing) {
+            setDynamicSize({ width, height });
+        }
+    }, [width, height, isResizing]);
 
     // "Premium Solid" Mode (Snappy, No Bounce, Direct)
     const getMinimizeState = () => {
@@ -69,8 +81,16 @@ export default function OSWindow({
     };
 
     // Resize Handlers
-    // Resize Handlers
     const resizeStartRef = useRef<{ x: number, y: number, w: number, h: number, dir: 'e' | 's' | 'se' } | null>(null);
+
+    // Refs for callbacks to avoid stale closures
+    const onResizeRef = useRef(onResize);
+    const onResizeEndRef = useRef(onResizeEnd);
+    useEffect(() => { onResizeRef.current = onResize; }, [onResize]);
+    useEffect(() => { onResizeEndRef.current = onResizeEnd; }, [onResizeEnd]);
+
+    // Separate ref for final size (to avoid mutating start values)
+    const finalSizeRef = useRef({ w: 0, h: 0 });
 
     const handleResizeStart = (e: React.MouseEvent, direction: 'e' | 's' | 'se') => {
         e.preventDefault();
@@ -79,8 +99,8 @@ export default function OSWindow({
         resizeStartRef.current = {
             x: e.clientX,
             y: e.clientY,
-            w: width || 0,
-            h: height || 0,
+            w: dynamicSize.width || 0, // USE DYNAMIC SIZE
+            h: dynamicSize.height || 0, // USE DYNAMIC SIZE
             dir: direction
         };
     };
@@ -89,7 +109,7 @@ export default function OSWindow({
         if (!isResizing) return;
 
         const handleMouseMove = (moveEvent: MouseEvent) => {
-            if (!onResize || !resizeStartRef.current) return;
+            if (!resizeStartRef.current) return;
 
             const { x: startX, y: startY, w: startWidth, h: startHeight, dir: direction } = resizeStartRef.current;
             const deltaX = moveEvent.clientX - startX;
@@ -105,10 +125,22 @@ export default function OSWindow({
                 newHeight = Math.max(200, startHeight + deltaY);
             }
 
-            onResize(newWidth, newHeight);
+            // Update LOCAL state only (super fast, no parent re-render)
+            setDynamicSize({ width: newWidth, height: newHeight });
+
+            // Store final size in separate ref (DO NOT mutate resizeStartRef.w/.h!)
+            finalSizeRef.current = { w: newWidth, h: newHeight };
         };
 
         const handleMouseUp = () => {
+            if (isResizing) {
+                const finalW = finalSizeRef.current.w;
+                const finalH = finalSizeRef.current.h;
+
+                // Sync to parent ONCE at the end via refs
+                if (onResizeRef.current) onResizeRef.current(finalW, finalH);
+                if (onResizeEndRef.current) onResizeEndRef.current(finalW, finalH);
+            }
             setIsResizing(false);
             resizeStartRef.current = null;
         };
@@ -120,7 +152,8 @@ export default function OSWindow({
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [isResizing, onResize]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isResizing]); // ONLY depend on isResizing, NOT dynamicSize
 
 
     return (
@@ -169,8 +202,8 @@ export default function OSWindow({
                                     opacity: 1,
                                     x: initialPosition.x,
                                     y: initialPosition.y,
-                                    width: width || winWidth, // Use prop width if available
-                                    height: height || "auto", // Use prop height if available
+                                    width: dynamicSize.width || width || winWidth, // USE DYNAMIC SIZE
+                                    height: dynamicSize.height || height || "auto", // USE DYNAMIC SIZE
                                     borderRadius: 10,
                                     // Solid, Premium Spring (No wobble)
                                     transition: isResizing ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 25 }
@@ -228,21 +261,23 @@ export default function OSWindow({
                         </div>
 
                         {/* Title Indicator */}
-                        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 opacity-80 pointer-events-none">
-                            <span className="text-xs font-semibold text-gray-700 tracking-wide drop-shadow-sm">{title}</span>
+                        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-1.5 opacity-80 pointer-events-none w-[60%]">
+                            <span className="text-xs font-semibold text-gray-700 tracking-wide drop-shadow-sm truncate block text-center w-full">{title}</span>
                         </div>
 
-                        {/* Top Right Pin/Lock Button */}
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onTogglePin && onTogglePin(); }}
-                                onPointerDown={(e) => e.stopPropagation()}
-                                className={`p-1 rounded transition-colors ${isPinned ? 'text-orange-600' : 'text-gray-400'}`}
-                                title={isPinned ? "Unlock Position" : "Pin/Lock Position"}
-                            >
-                                {isPinned ? <Lock size={12} /> : <Pin size={12} />}
-                            </button>
-                        </div>
+                        {/* Top Right Pin/Lock Button - Admin Only */}
+                        {isAdmin && onTogglePin && (
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    className={`p-1 rounded transition-colors ${isPinned ? 'text-orange-600' : 'text-gray-400'}`}
+                                    title={isPinned ? "Unlock Position" : "Pin/Lock Position"}
+                                >
+                                    {isPinned ? <Lock size={12} /> : <Pin size={12} />}
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Window Content */}
@@ -260,16 +295,19 @@ export default function OSWindow({
                                 <div
                                     className="absolute top-0 right-0 w-1.5 h-full cursor-ew-resize z-[60] hover:bg-blue-500/20 active:bg-blue-500/40 transition-colors"
                                     onMouseDown={(e) => handleResizeStart(e, 'e')}
+                                    onPointerDown={(e) => e.stopPropagation()}
                                 />
                                 {/* Bottom Handle */}
                                 <div
                                     className="absolute bottom-0 left-0 w-full h-1.5 cursor-ns-resize z-[60] hover:bg-blue-500/20 active:bg-blue-500/40 transition-colors"
                                     onMouseDown={(e) => handleResizeStart(e, 's')}
+                                    onPointerDown={(e) => e.stopPropagation()}
                                 />
                                 {/* Corner Handle */}
                                 <div
                                     className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize z-[70] hover:bg-blue-500/20 active:bg-blue-500/40 transition-colors rounded-tl"
                                     onMouseDown={(e) => handleResizeStart(e, 'se')}
+                                    onPointerDown={(e) => e.stopPropagation()}
                                 />
                             </>
                         )}

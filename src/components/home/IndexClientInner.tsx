@@ -152,7 +152,7 @@ export default function IndexClientInner({ projects, tag, lastUpdated, windowWid
   }, [filteredProjects.length, isLoading, visibleCount])
 
   return (
-    <section className="py-8 px-4">
+    <section className="pt-24 pb-8 px-4">
       {/* Hidden H1 for SEO */}
       <h1 className="sr-only">Portfolio - Creative Works & Projects</h1>
 
@@ -184,16 +184,15 @@ export default function IndexClientInner({ projects, tag, lastUpdated, windowWid
                   const isPriority = index < 2;
 
                   // Animation Logic:
-                  // Priority items (first 4): No animation at all - instant display
-                  // Non-priority items: Slide up ONLY (no opacity) to prevent white flicker
-                  // The white flicker was caused by opacity:0 showing the container bg before image loads
+                  // Priority items (first 2): No animation at all - instant display for LCP
+                  // Non-priority items: Fade in only (no Y movement to prevent CLS)
                   const animationProps = isPriority
                     ? {} // No animation for priority items - they're already visible
                     : {
-                      initial: { y: 30 }, // Slide up only, NO OPACITY CHANGE
-                      whileInView: { y: 0 },
+                      initial: { opacity: 0 }, // Fade only, NO Y MOVEMENT to prevent CLS
+                      whileInView: { opacity: 1 },
                       viewport: { once: true, margin: "100px" },
-                      transition: { duration: 0.4, ease: "easeOut" }
+                      transition: { duration: 0.3, ease: "easeOut" }
                     };
 
                   return (

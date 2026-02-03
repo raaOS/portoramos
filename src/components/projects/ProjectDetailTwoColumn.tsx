@@ -251,7 +251,7 @@ export default function ProjectDetailTwoColumn({
 
                                     <div className="flex flex-col gap-6 mb-8">
                                         {(project.role || project.timeline || project.team) && (
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4 border-y border-gray-100 dark:border-gray-800">
+                                            <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:gap-x-12 gap-y-6 py-5 border-y border-gray-100 dark:border-gray-800">
                                                 {project.role && (
                                                     <div>
                                                         <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Role</h3>
@@ -270,6 +270,12 @@ export default function ProjectDetailTwoColumn({
                                                         <p className="text-sm font-medium text-gray-900 dark:text-white">{project.team}</p>
                                                     </div>
                                                 )}
+                                                <div>
+                                                    <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Type</h3>
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {project.type === 'commercial' ? 'Commercial Project' : 'Visual Art'}
+                                                    </p>
+                                                </div>
                                             </div>
                                         )}
 
@@ -345,73 +351,55 @@ export default function ProjectDetailTwoColumn({
                                         </div>
                                     </div>
 
+                                    {/* NARRATIVE SECTION - ROBUST CONTENT-BASED RENDERING */}
                                     {project.narrative && (
                                         <div className="mb-8 font-sans border-b border-gray-100 dark:border-gray-800 pb-8">
-                                            {project.type === 'commercial' && (
-                                                <div className="space-y-8">
-                                                    {project.narrative.context && (
-                                                        <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
-                                                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Context</h3>
-                                                            <p className="text-sm text-gray-600 dark:text-gray-300 italic">"{project.narrative.context}"</p>
-                                                        </div>
-                                                    )}
-                                                    <div className="grid gap-6">
-                                                        <div>
-                                                            <h3 className="text-xs font-bold uppercase tracking-wider text-red-500 mb-2">The Challenge</h3>
-                                                            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                                {project.narrative.challenge}
-                                                            </p>
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="text-xs font-bold uppercase tracking-wider text-blue-500 mb-2">The Solution</h3>
-                                                            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                                {project.narrative.solution}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    {project.narrative.impact && (
-                                                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 p-5 rounded-xl border border-green-100 dark:border-green-900/30">
-                                                            <h3 className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 mb-2">The Impact</h3>
-                                                            <p className="text-base sm:text-lg font-medium text-gray-900 dark:text-white leading-relaxed">
-                                                                {project.narrative.impact}
-                                                            </p>
-                                                        </div>
-                                                    )}
+
+                                            {/* Context (Commercial/General) */}
+                                            {project.narrative.context && (
+                                                <div className="mb-8 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
+                                                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Context</h3>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-300 italic">"{project.narrative.context}"</p>
                                                 </div>
                                             )}
 
-                                            {(!project.type || project.type === 'visual_art') && (
-                                                <div className="space-y-6">
-                                                    {(project.narrative.challenge || project.narrative.concept) && (
-                                                        <div>
-                                                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                                                                {project.narrative.concept ? 'The Concept' : 'The Challenge'}
-                                                            </h3>
-                                                            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                                {project.narrative.concept || project.narrative.challenge}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    {(project.narrative.solution || project.narrative.process) && (
-                                                        <div>
-                                                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                                                                {project.narrative.process ? 'The Process' : 'The Solution'}
-                                                            </h3>
-                                                            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                                {project.narrative.process || project.narrative.solution}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    {project.narrative.result && (
-                                                        <div>
-                                                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">The Result</h3>
-                                                            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                                {project.narrative.result}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
+                                            <div className="space-y-8">
+                                                {/* Challenge (Commercial) OR Concept (Visual Art) */}
+                                                {(project.narrative.challenge || project.narrative.concept) && (
+                                                    <div>
+                                                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${project.narrative.concept ? 'text-gray-500' : 'text-red-500'}`}>
+                                                            {project.narrative.concept ? 'The Concept' : 'The Challenge'}
+                                                        </h3>
+                                                        <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                            {project.narrative.challenge || project.narrative.concept}
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {/* Solution (Commercial) OR Process (Visual Art) */}
+                                                {(project.narrative.solution || project.narrative.process) && (
+                                                    <div>
+                                                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${project.narrative.process ? 'text-gray-500' : 'text-blue-500'}`}>
+                                                            {project.narrative.process ? 'The Process' : 'The Solution'}
+                                                        </h3>
+                                                        <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                            {project.narrative.solution || project.narrative.process}
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {/* Impact (Commercial) OR Result/Detail (Visual Art) */}
+                                                {(project.narrative.impact || project.narrative.result || project.narrative.detail) && (
+                                                    <div className={project.narrative.impact ? "bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 p-5 rounded-xl border border-green-100 dark:border-green-900/30" : ""}>
+                                                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${project.narrative.impact ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+                                                            {project.narrative.impact ? 'The Impact' : (project.narrative.detail ? 'The Detail' : 'The Result')}
+                                                        </h3>
+                                                        <p className={`leading-relaxed ${project.narrative.impact ? 'text-base sm:text-lg font-medium text-gray-900 dark:text-white' : 'text-sm sm:text-base text-gray-800 dark:text-gray-200'}`}>
+                                                            {project.narrative.impact || project.narrative.result || project.narrative.detail}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
 
@@ -443,22 +431,28 @@ export default function ProjectDetailTwoColumn({
 
                     {!isWindowMode && (
                         <MasonryGrid columns="sidebar">
-                            {columnAProjects.map((p: Project, index: number) => (
-                                <motion.div
-                                    key={`col-a-${index}-${p.slug}`}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={index < 2 ? { opacity: 1, y: 0 } : undefined}
-                                    whileInView={index >= 2 ? { opacity: 1, y: 0 } : undefined}
-                                    viewport={{ once: true, margin: "50px" }}
-                                    transition={{
-                                        duration: 0.4,
-                                        ease: "easeOut",
-                                        delay: index < 2 ? 0 : 0.1
-                                    }}
-                                >
-                                    <ProjectCardPinterest project={p} priority={index < 4} />
-                                </motion.div>
-                            ))}
+                            {columnAProjects.map((p: Project, index: number) => {
+                                const isPriority = index < 2;
+                                // Animation Logic: No opacity change to prevent flicker. Slide up only.
+                                const animationProps = isPriority ? {} : {
+                                    initial: { y: 30 },
+                                    whileInView: { y: 0 },
+                                    viewport: { once: true, margin: "100px" },
+                                    transition: { duration: 0.4, ease: "easeOut" }
+                                };
+                                return (
+                                    <motion.div
+                                        key={`col-a-${index}-${p.slug}`}
+                                        {...animationProps}
+                                        style={{
+                                            willChange: 'transform',
+                                            // contentVisibility removed to prevent layout shifting/empty columns
+                                        }}
+                                    >
+                                        <ProjectCardPinterest project={p} priority={isPriority} />
+                                    </motion.div>
+                                );
+                            })}
                         </MasonryGrid>
                     )}
                 </div>
@@ -466,22 +460,27 @@ export default function ProjectDetailTwoColumn({
                 {!isWindowMode && (
                     <div className="lg:w-1/2">
                         <MasonryGrid columns="sidebar">
-                            {columnBProjects.map((p: Project, index: number) => (
-                                <motion.div
-                                    key={`col-b-${index}-${p.slug}`}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={index < 2 ? { opacity: 1, y: 0 } : undefined}
-                                    whileInView={index >= 2 ? { opacity: 1, y: 0 } : undefined}
-                                    viewport={{ once: true, margin: "50px" }}
-                                    transition={{
-                                        duration: 0.4,
-                                        ease: "easeOut",
-                                        delay: index < 2 ? 0 : 0.1
-                                    }}
-                                >
-                                    <ProjectCardPinterest project={p} priority={index < 4} />
-                                </motion.div>
-                            ))}
+                            {columnBProjects.map((p: Project, index: number) => {
+                                const isPriority = index < 2;
+                                const animationProps = isPriority ? {} : {
+                                    initial: { y: 30 },
+                                    whileInView: { y: 0 },
+                                    viewport: { once: true, margin: "100px" },
+                                    transition: { duration: 0.4, ease: "easeOut" }
+                                };
+                                return (
+                                    <motion.div
+                                        key={`col-b-${index}-${p.slug}`}
+                                        {...animationProps}
+                                        style={{
+                                            willChange: 'transform',
+                                            // contentVisibility removed to prevent layout shifting/empty columns
+                                        }}
+                                    >
+                                        <ProjectCardPinterest project={p} priority={isPriority} />
+                                    </motion.div>
+                                );
+                            })}
                         </MasonryGrid>
                     </div>
                 )}

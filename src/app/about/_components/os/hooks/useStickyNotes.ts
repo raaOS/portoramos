@@ -25,7 +25,23 @@ export const useStickyNotes = (mounted: boolean) => {
                 const response = await fetch('/api/sticky-notes');
                 const data = await response.json();
                 if (Array.isArray(data)) {
-                    setNotes(data);
+                    // Mobile adjustment: pull notes to visible area
+                    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+                    const adjustedData = data.map((n, i) => {
+                        if (isMobile) {
+                            const w = n.width || 280;
+                            const h = n.height || 280;
+                            // Stack with slight offset
+                            return {
+                                ...n,
+                                x: Math.max(0, (window.innerWidth - w) / 2) + (i * 10),
+                                y: Math.max(50, (window.innerHeight - h) / 2) + (i * 10)
+                            };
+                        }
+                        return n;
+                    });
+
+                    setNotes(adjustedData);
                     // Find max z-index to initialize counter
                     const maxZ = Math.max(...data.map(n => n.zIndex || 0), 0);
                     setNoteZIndex(maxZ + 1);
@@ -74,8 +90,12 @@ export const useStickyNotes = (mounted: boolean) => {
             color: '#fef08a',
             isStarred: false,
             isDeleted: false,
-            x: Math.random() * (window.innerWidth - 300),
-            y: Math.random() * (window.innerHeight - 300),
+            x: window.innerWidth < 768
+                ? (window.innerWidth - 280) / 2
+                : Math.random() * (window.innerWidth - 300),
+            y: window.innerWidth < 768
+                ? (window.innerHeight - 280) / 2
+                : Math.random() * (window.innerHeight - 300),
             width: 280,
             height: 280,
             isPinned: false,

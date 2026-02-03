@@ -1,0 +1,38 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
+/**
+ * Hook to check if current user is authenticated as admin
+ * Uses API call since admin_token cookie is HttpOnly and cannot be read by JS
+ */
+export function useAdminAuth() {
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        // Check for admin auth via API (cookie is HttpOnly, can't read directly)
+        const checkAuth = async () => {
+            try {
+                const res = await fetch('/api/admin/check-auth', {
+                    credentials: 'include' // Send cookies with request
+                });
+                const data = await res.json();
+                setIsAdmin(data.authenticated === true);
+            } catch (e) {
+                console.error('Failed to check admin auth:', e);
+                setIsAdmin(false);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        checkAuth();
+
+        // Re-check periodically in case of login/logout
+        const interval = setInterval(checkAuth, 30000); // Every 30 seconds
+        return () => clearInterval(interval);
+    }, []);
+
+    return { isAdmin, isLoading };
+}

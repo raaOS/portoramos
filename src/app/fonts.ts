@@ -24,6 +24,8 @@ export const caveat = Caveat({
   variable: '--font-caveat',
   subsets: ['latin'],
   display: 'swap',
+  preload: true,
+  fallback: ['cursive', 'sans-serif'],
 })
 
 export const indieFlower = Indie_Flower({

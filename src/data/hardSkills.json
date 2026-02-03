@@ -1,38 +1,36 @@
 {
   "skills": [
     {
-      "id": "hard-ai",
-      "name": "Adobe Illustrator",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/illustrator/illustrator-plain.svg",
-      "level": "Expert",
-      "order": 1,
-      "description": "",
-      "details": [
-        "Vector Illustration",
-        "Typography Control",
-        "Brand Identity",
-        "Print Design"
-      ],
-      "isActive": true,
-      "createdAt": "2025-01-19T00:00:00.000Z",
-      "updatedAt": "2025-12-27T02:43:29.766Z"
-    },
-    {
       "id": "hard-ps",
       "name": "Adobe Photoshop",
       "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/photoshop/photoshop-plain.svg",
       "level": "Expert",
-      "order": 2,
-      "description": "",
+      "order": 1,
+      "description": "Expert image manipulation tool",
       "details": [
-        "Photo Manipulation",
-        "Digital Imaging",
-        "Color Grading",
-        "Mockup Creation"
+        "Manipulasi foto",
+        "Compositing",
+        "Digital imaging"
       ],
       "isActive": true,
       "createdAt": "2025-01-19T00:00:00.000Z",
-      "updatedAt": "2025-12-19T11:33:42.161Z"
+      "updatedAt": "2026-02-02T13:30:00.000Z"
+    },
+    {
+      "id": "hard-ai",
+      "name": "Adobe Illustrator",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/illustrator/illustrator-plain.svg",
+      "level": "Expert",
+      "order": 2,
+      "description": "Vector graphics editor",
+      "details": [
+        "Ilustrasi Vektor",
+        "Tipografi",
+        "Identitas Brand"
+      ],
+      "isActive": true,
+      "createdAt": "2025-01-19T00:00:00.000Z",
+      "updatedAt": "2026-02-02T13:30:00.000Z"
     },
     {
       "id": "hard-figma",
@@ -40,11 +38,10 @@
       "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg",
       "level": "Advanced",
       "order": 3,
-      "description": "",
+      "description": "Interface design tool",
       "details": [
         "UI/UX System",
         "Prototyping",
-        "Auto Layout",
         "Wireframing"
       ],
       "isActive": true,
@@ -57,11 +54,10 @@
       "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/canva/canva-original.svg",
       "level": "Intermediate",
       "order": 4,
-      "description": "",
+      "description": "Graphic design platform",
       "details": [
         "Social Media Visuals",
-        "Presentation Design",
-        "Quick Templating"
+        "Presentation Design"
       ],
       "isActive": true,
       "createdAt": "2025-01-19T00:00:00.000Z",

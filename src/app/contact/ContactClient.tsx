@@ -157,18 +157,18 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
             {/* Content */}
             <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto">
                 <motion.h1
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
                     className="text-5xl md:text-7xl lg:text-9xl font-black font-sans text-[#e5e5e5] tracking-tight leading-[1] text-center mb-8 drop-shadow-2xl whitespace-pre-line"
                 >
                     {displayHeadline}
                 </motion.h1>
 
                 <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.5 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.15, duration: 0.4 }}
                     className="mb-8"
                 >
                     <button
@@ -190,9 +190,9 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
                 </motion.p>
 
                 <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
                     className="flex flex-wrap justify-center gap-4"
                 >
                     {socialLinks.map((link, i) => (

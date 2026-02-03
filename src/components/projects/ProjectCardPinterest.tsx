@@ -47,7 +47,7 @@ export default function ProjectCardPinterest({
     const isInteractive = interactive || !!onClick;
 
     return (
-        <Component {...hrefProps} onClick={onClick} className={`block mb-6 relative z-0 ${isInteractive ? 'group hover:z-10 cursor-pointer' : ''}`}>
+        <Component {...hrefProps} onClick={onClick} className={`block mb-2 md:mb-6 relative z-0 ${isInteractive ? 'group hover:z-10 cursor-pointer' : ''}`}>
             {/* ... (keep media container) ... */}
             <div
                 className={`relative overflow-hidden rounded-md bg-neutral-200 dark:bg-neutral-900 transition-transform duration-300 ${isInteractive ? 'hover:scale-[1.02]' : ''}`}
@@ -61,10 +61,9 @@ export default function ProjectCardPinterest({
                         src={cover.src}
                         poster={cover.poster}
                         alt={title}
-                        // Sweet Spot: Request 384px (Matches next.config.mjs imageSizes)
-                        // Balances sharpness with file size.
-                        width={384}
-                        height={Math.round(384 / ratio)}
+                        // Optimized: Request 256px for thumbnails (closer to actual display size ~170-200px)
+                        width={256}
+                        height={Math.round(256 / ratio)}
                         priority={priority}
                         lazy={!priority}
                         quality={75}
@@ -73,7 +72,7 @@ export default function ProjectCardPinterest({
                         loop={project.loop ?? true}
                         playsInline={project.playsInline ?? true}
                         className="w-full h-full object-cover"
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 20vw"
                     />
                 </div>
             </div>

@@ -15,9 +15,10 @@ interface DesktopIconProps {
     aspectRatio?: number;
     children?: React.ReactNode;
     priority?: boolean; // For LCP optimization
+    isMobile?: boolean;
 }
 
-export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false }: DesktopIconProps) {
+export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false, isMobile = false }: DesktopIconProps) {
     const [mediaError, setMediaError] = useState(false);
 
     // Reset error state when media changes
@@ -26,9 +27,9 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
     }, [imageUrl, videoUrl]);
 
     const baseHeight = {
-        small: 64,
-        medium: 80,
-        large: 96
+        small: isMobile ? 58 : 64, // ~10% smaller
+        medium: isMobile ? 72 : 80, // ~10% smaller
+        large: isMobile ? 86 : 96  // ~10% smaller
     }[size];
 
     const [isDragging, setIsDragging] = useState(false);
@@ -53,11 +54,10 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
                     onClick();
                 }
             }}
-            whileHover={{ scale: 1.1, zIndex: 100 }}
-            whileTap={{ scale: 0.9 }}
+            // Using CSS transforms instead of framer-motion scale to avoid CLS
             dragTransition={{ power: 0, timeConstant: 200 }}
             style={{ position: "absolute", left: x, top: y }}
-            className="flex flex-col items-center gap-3 w-auto group cursor-pointer pointer-events-auto"
+            className={`flex flex-col items-center gap-3 w-auto group cursor-pointer pointer-events-auto transition-transform duration-150 ${!isMobile ? 'hover:scale-110 active:scale-95' : ''}`}
         >
             {children ? (
                 <div className="relative">
@@ -108,9 +108,11 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
                 </div>
             )}
 
-            <span className="text-xs text-black font-medium text-center px-2 py-1 bg-white/40 rounded-[4px] backdrop-blur-md shadow-sm border border-white/30 opacity-0 group-hover:opacity-100 transition-all duration-200 max-w-[120px] truncate select-none mt-1 z-20">
-                {label}
-            </span>
+            {!isMobile && (
+                <span className={`text-xs text-black font-medium text-center px-2 py-1 bg-white/40 rounded-[4px] backdrop-blur-md shadow-sm border border-white/30 transition-all duration-200 max-w-[120px] truncate select-none mt-1 z-20 opacity-0 group-hover:opacity-100`}>
+                    {label}
+                </span>
+            )}
         </motion.div>
     );
 }

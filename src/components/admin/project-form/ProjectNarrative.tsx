@@ -134,10 +134,10 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
                                 : 'Penghargaan, fitur, atau detail untuk diperhatikan.'}
                         </p>
                         <textarea
-                            value={isCommercial ? formData.narrative.impact : formData.narrative.result}
+                            value={isCommercial ? formData.narrative.impact : formData.narrative.detail}
                             onChange={(e) => isCommercial
                                 ? handleNarrativeChange('impact', e.target.value)
-                                : handleNarrativeChange('result', e.target.value)
+                                : handleNarrativeChange('detail', e.target.value)
                             }
                             className="w-full px-3 py-2 text-sm border border-gray-200 rounded-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[60px]"
                             placeholder={isCommercial ? "cth. +40% Engagement user..." : "cth. Featured di Behance, Terbaik 2024..."}

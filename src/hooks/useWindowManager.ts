@@ -33,13 +33,16 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
     const { playOpen, playClose } = useSystemSound();
     const [isInitialized, setIsInitialized] = useState(false);
 
-    // Initialize windows based on aboutData preferences
+    // Initialize windows based on server preferences (aboutData.windowPreferences)
     useEffect(() => {
         if (aboutData && !isInitialized) {
             setWindows(prev => prev.map(w => {
                 const pref = aboutData?.windowPreferences?.[w.id];
-                const width = pref?.width || w.width || 800;
-                const height = pref?.height || w.height || 600;
+
+                // Use server preferences only
+                // Use server preferences only
+                let rawWidth = pref?.width || w.width || 800;
+                let rawHeight = pref?.height || w.height || 600;
                 const isPinned = pref?.isOpenByDefault || false;
 
                 const getCenterPosition = (w: number, h: number) => {
@@ -51,9 +54,19 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
                     return { x, y };
                 };
 
-                const initialPosition = (pref && pref.x !== undefined && pref.y !== undefined)
+                // Mobile logic
+                const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+                let width = rawWidth;
+                let height = rawHeight;
+
+                if (isMobile) {
+                    width = Math.min(rawWidth, window.innerWidth * 0.95);
+                    height = Math.min(rawHeight, window.innerHeight * 0.8);
+                }
+
+                const initialPosition = (pref && pref.x !== undefined && pref.y !== undefined && !isMobile)
                     ? { x: pref.x, y: pref.y }
-                    : w.initialPosition || getCenterPosition(width, height);
+                    : getCenterPosition(width, height);
 
                 let isOpen = w.isOpen;
                 if (!isInitialized) {
@@ -115,8 +128,13 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
         if (typeof window === 'undefined') return { x: 0, y: 0 };
         const safeWidth = window.innerWidth || 1200;
         const safeHeight = window.innerHeight || 800;
-        const x = Math.max(0, (safeWidth - w) / 2);
-        const y = Math.max(30, (safeHeight - h) / 2);
+
+        // Mobile override: use 90% of screen width if window is wider than screen
+        const effectiveW = safeWidth < 768 ? Math.min(w, safeWidth * 0.95) : w;
+        const effectiveH = safeWidth < 768 ? Math.min(h, safeHeight * 0.8) : h;
+
+        const x = Math.max(0, (safeWidth - effectiveW) / 2);
+        const y = Math.max(50, (safeHeight - effectiveH) / 2); // Start a bit lower on mobile
         return { x, y };
     };
 
@@ -124,19 +142,33 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
         setWindows(prev => {
             const existingWindow = prev.find(w => w.id === id);
 
+            // Calculate mobile-friendly dimensions
+            const getMobileDims = (w?: number, h?: number) => {
+                if (typeof window === 'undefined') return { width: w || 800, height: h || 600 };
+                const isMobile = window.innerWidth < 768;
+                if (!isMobile) return { width: w || 800, height: h || 600 };
+
+                return {
+                    width: Math.min(w || 800, window.innerWidth * 0.95),
+                    height: Math.min(h || 600, window.innerHeight * 0.70)
+                };
+            };
+
             // If window doesn't exist yet (dynamic windows provided via customConfig)
             if (!existingWindow && customConfig) {
+                const { width, height } = getMobileDims(customConfig.width, customConfig.height);
+
                 const newWindow: WindowState = {
+                    title: 'Window',
+                    noPadding: false,
+                    ...customConfig,
                     id,
-                    title: customConfig.title || 'Window',
                     isOpen: true,
                     zIndex: topZIndex + 1,
-                    noPadding: customConfig.noPadding || false,
-                    initialPosition: customConfig.initialPosition || getCenterPosition(customConfig.width || 800, customConfig.height || 600),
-                    width: customConfig.width || 800,
-                    height: customConfig.height || 600,
-                    content: customConfig.content,
-                    ...customConfig
+                    initialPosition: customConfig.initialPosition || getCenterPosition(width, height),
+                    width,
+                    height,
+                    content: customConfig.content
                 };
                 playOpen();
                 setTopZIndex(z => z + 1);
@@ -150,10 +182,14 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
                     }
 
                     const pref = aboutData?.windowPreferences?.[id];
-                    const width = customConfig?.width || pref?.width || w.width || 800;
-                    const height = customConfig?.height || pref?.height || w.height || 600;
+                    let rawWidth = customConfig?.width || pref?.width || w.width || 800;
+                    let rawHeight = customConfig?.height || pref?.height || w.height || 600;
 
-                    const initialPosition = (pref && pref.x !== undefined && pref.y !== undefined)
+                    // Apply mobile constraints
+                    const { width, height } = getMobileDims(rawWidth, rawHeight);
+                    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+                    const initialPosition = (pref && pref.x !== undefined && pref.y !== undefined && !isMobile)
                         ? { x: pref.x, y: pref.y }
                         : getCenterPosition(width, height);
 
@@ -222,12 +258,54 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
     const handleWindowResize = useCallback((id: string, width: number, height: number) => {
         setWindows(prev => prev.map(w => {
             if (w.id === id) {
-                if (w.isPinned) saveWindowPreference(id, { width, height });
+                // REMOVED: saveWindowPreference call - moved to handleWindowResizeEnd
                 return { ...w, width, height };
             }
             return w;
         }));
-    }, [aboutData]);
+    }, []);
+
+    const handleWindowResizeEnd = useCallback((id: string, width: number, height: number) => {
+        // Access latest state via setWindows callback to check isPinned
+        setWindows(prev => {
+            const win = prev.find(w => w.id === id);
+            if (win?.isPinned) {
+                // Save via authenticated API call (admin only - cookies sent automatically)
+                (async () => {
+                    try {
+                        // Fetch current preferences from server
+                        const res = await fetch('/api/about');
+                        const currentData = await res.json();
+                        const currentPrefs = currentData?.windowPreferences || {};
+
+                        // Merge new dimensions
+                        const newPrefs = {
+                            ...currentPrefs,
+                            [id]: { ...(currentPrefs[id] || {}), width, height }
+                        };
+
+                        // Save back with credentials (admin cookie sent automatically)
+                        const saveRes = await fetch('/api/about', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include', // Important: sends cookies for auth
+                            body: JSON.stringify({ windowPreferences: newPrefs })
+                        });
+
+                        if (saveRes.ok) {
+                            console.log('Window size saved to server:', { id, width, height });
+                        } else if (saveRes.status !== 401 && saveRes.status !== 403) {
+                            // Only log real errors, ignore auth errors for visitors
+                            console.error('Failed to save window size:', saveRes.status, await saveRes.text());
+                        }
+                    } catch (e) {
+                        console.error("Failed to save window size:", e);
+                    }
+                })();
+            }
+            return prev; // No state change, just side effect
+        });
+    }, []);
 
     const togglePin = useCallback((id: string) => {
         setWindows(prev => prev.map(w => {
@@ -272,6 +350,7 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
         focusWindow,
         updateWindowPosition,
         handleWindowResize,
+        handleWindowResizeEnd,
         togglePin,
         resetWindows
     };

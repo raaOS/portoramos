@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Check, Trash2 } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
-
-interface Wallpaper {
-    id: string;
-    url: string;
-    name?: string;
-}
-
-interface WallpaperConfig {
-    activeWallpaperId: string;
-    collection: Wallpaper[];
-}
+import { WallpaperConfig, Wallpaper } from '@/types/about';
 
 interface WallpaperManagerProps {
     data?: WallpaperConfig;
@@ -51,7 +41,8 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
 
         onUpdate({
             activeWallpaperId: newActiveId,
-            collection: newCollection
+            collection: newCollection,
+            blur: data?.blur
         });
     };
 
@@ -66,7 +57,8 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
         }
         onUpdate({
             activeWallpaperId: newActive,
-            collection: newCollection
+            collection: newCollection,
+            blur: data?.blur
         });
     };
 
@@ -74,7 +66,8 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
         setActiveId(id);
         onUpdate({
             activeWallpaperId: id,
-            collection: wallpapers
+            collection: wallpapers,
+            blur: data?.blur
         });
     };
 
@@ -85,6 +78,29 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
                 <p className="text-sm text-gray-600 mb-6">
                     Pilih wallpaper utama sistem. Klik untuk menerapkan (Auto-Save).
                 </p>
+
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                            Blur Intensity (0-20px)
+                        </label>
+                        <span className="text-sm px-2 py-1 bg-white rounded border border-gray-200 text-gray-600 font-mono">
+                            {data?.blur || 0}px
+                        </span>
+                    </div>
+                    <input
+                        type="range"
+                        min="0"
+                        max="20"
+                        step="1"
+                        value={data?.blur || 0}
+                        onChange={(e) => onUpdate({ ...data!, collection: wallpapers, activeWallpaperId: activeId, blur: parseInt(e.target.value) })}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                        Geser untuk mengatur tingkat keburaman wallpaper desktop. 0 = Tajam.
+                    </p>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Active Wallpaper Hero (Optional Visual Emphasis) */}
@@ -115,6 +131,9 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
                                     <p className="text-white font-medium text-lg drop-shadow-md transform translate-y-2 group-hover:translate-y-0 transition-transform">
                                         {isActive ? 'Active Wallpaper' : wp.name || 'Wallpaper'}
                                     </p>
+                                    <span className="text-[10px] text-white/80 font-mono mt-1 uppercase tracking-widest">
+                                        {isActive ? 'Applied' : 'Click to Apply'}
+                                    </span>
                                 </div>
 
                                 {/* Delete Action */}

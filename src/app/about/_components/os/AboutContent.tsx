@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, User, FileText, Heart, Lightbulb, Archive, ExternalLink } from "lucide-react";
+import { CheckCircle2, Check, User, FileText, Heart, Lightbulb, Archive, ExternalLink } from "lucide-react";
 import type { AboutData } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
@@ -15,23 +15,26 @@ interface AboutContentProps {
 
 export default function AboutContent({ aboutData, experienceData, hardSkillsData, projects = [] }: AboutContentProps) {
     const [activeTab, setActiveTab] = useState<'about' | 'cv' | 'philosophy' | 'interests' | 'archive'>('about');
-    const [activeInterest, setActiveInterest] = useState(0);
 
     const archiveProjects = projects.filter(p => p.type === 'visual_art');
 
     const MenuButton = ({ id, label, count, icon: Icon }: { id: typeof activeTab, label: string, count?: string, icon: any }) => (
         <button
             onClick={() => setActiveTab(id)}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === id
+            className={`w-full flex items-center justify-between py-2 rounded-md text-sm transition-colors whitespace-nowrap overflow-hidden ${activeTab === id
                 ? "bg-black/10 text-black font-semibold"
                 : "text-gray-600 hover:bg-black/5"
                 }`}
+            title={label}
         >
-            <div className="flex items-center gap-2">
-                <Icon size={16} />
-                <span>{label}</span>
+            <div className="flex items-center gap-0 shrink-0">
+                {/* Fixed width container to center icon completely in collapsed mode (68px - 24px padding = 44px content) -> Updated to 48px (72px - 24px) */}
+                <div className="w-[48px] flex justify-center shrink-0">
+                    <Icon size={16} />
+                </div>
+                <span className="opacity-0 md:opacity-100 transition-opacity duration-300 ml-1">{label}</span>
             </div>
-            {count && <span className="text-gray-400 text-xs">{count}</span>}
+            {count && <span className="text-gray-400 text-xs opacity-0 md:opacity-100 transition-opacity duration-300 ml-2 mr-3">{count}</span>}
         </button>
     );
 
@@ -56,8 +59,8 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
             `}</style>
 
             {/* Sidebar (Left) */}
-            <div className="w-[180px] shrink-0 bg-[#E3E3E3]/50 border-r border-[#D1D1D1] p-3 flex flex-col gap-1 pt-4">
-                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold px-3 mb-1">
+            <div className="w-[72px] md:w-[200px] shrink-0 bg-[#E3E3E3]/50 border-r border-[#D1D1D1] p-3 flex flex-col gap-1 pt-4 transition-[width] duration-300 ease-in-out overflow-hidden z-20 relative">
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold px-3 mb-1 opacity-0 md:opacity-100 transition-opacity duration-300 whitespace-nowrap">
                     Personal
                 </div>
                 <MenuButton id="about" label="About me" count="18" icon={User} />
@@ -65,21 +68,25 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                 <MenuButton id="philosophy" label="Philosophy" count="3" icon={Lightbulb} />
                 <MenuButton id="interests" label="Interests" count={(aboutData?.softSkills?.items?.length || aboutData?.softSkills?.texts?.length) ? "∞" : "0"} icon={Heart} />
 
-                <div className="h-px bg-gray-300 my-2 mx-1 opacity-50"></div>
+                <div className="h-px bg-gray-300 my-2 mx-1 opacity-0 md:opacity-50 transition-opacity duration-300"></div>
 
-                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold px-3 mb-1">
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold px-3 mb-1 opacity-0 md:opacity-100 transition-opacity duration-300 whitespace-nowrap">
                     Works
                 </div>
                 <MenuButton id="archive" label="Archive" count={String(archiveProjects.length)} icon={Archive} />
 
-                <div className="mt-auto pt-4">
+                <div className="mt-auto pt-4 overflow-hidden">
                     <Link
                         href="/cv?mode=ats&print=true"
                         target="_blank"
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors text-gray-600 hover:bg-red-600 hover:text-white active:bg-red-700 active:text-white"
+                        className="w-full flex items-center gap-0 py-2 rounded-md text-sm transition-colors text-gray-600 hover:bg-red-600 hover:text-white active:bg-red-700 active:text-white whitespace-nowrap"
+                        title="Download CV"
                     >
-                        <FileText size={16} />
-                        <span>Download CV</span>
+                        {/* Fixed width container matching MenuButton for alignment */}
+                        <div className="w-[48px] flex justify-center shrink-0">
+                            <FileText size={16} />
+                        </div>
+                        <span className="opacity-0 md:opacity-100 transition-opacity duration-300 ml-1">Download CV</span>
                     </Link>
                 </div>
             </div>
@@ -96,42 +103,54 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                             <h1 className="text-2xl font-bold text-black mb-2">
                                 {aboutData?.hero.title || "Fullstack Developer"}
                             </h1>
-                            <p className="text-gray-500 font-medium mb-4">
-                                {aboutData?.professional.motto.badge || "Creative Developer"}
-                            </p>
 
-                            {/* Availability Badge */}
-                            {aboutData?.hero?.availability && (
-                                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${aboutData.hero.availability.status === 'available'
-                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                    : 'bg-red-50 text-red-700 border border-red-100'
-                                    }`}>
-                                    <span className={`relative flex h-2 w-2`}>
-                                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${aboutData.hero.availability.status === 'available' ? 'bg-emerald-400' : 'bg-red-400'
-                                            }`}></span>
-                                        <span className={`relative inline-flex rounded-full h-2 w-2 ${aboutData.hero.availability.status === 'available' ? 'bg-emerald-500' : 'bg-red-500'
-                                            }`}></span>
-                                    </span>
-                                    {aboutData.hero.availability.text}
-                                </div>
-                            )}
+
+
                             <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-wrap">
                                 {aboutData?.professional.bio.content || "Loading..."}
                             </p>
                         </div>
 
                         <div>
-                            <h2 className="text-sm font-bold text-black mb-3">I can do...</h2>
-                            <ul className="space-y-2">
-                                {hardSkillsData?.skills?.map((skill, idx) => (
-                                    <li key={idx} className="flex items-center gap-2 text-sm text-gray-700">
-                                        <CheckCircle2 size={16} className="text-orange-400 fill-orange-400/20" />
-                                        <span>{skill.name}</span>
-                                    </li>
+                            <h2 className="text-sm font-bold text-black mb-4">I can do...</h2>
+                            <div className="space-y-6">
+                                {hardSkillsData?.skills?.filter(s => s.isActive !== false).map((skill, idx) => (
+                                    <div key={idx} className="flex flex-col gap-2">
+                                        {/* Skill Name */}
+                                        <div className="flex items-center gap-2">
+
+                                            {skill.iconUrl && (
+                                                <img
+                                                    src={skill.iconUrl}
+                                                    alt={skill.name}
+                                                    className="w-5 h-5 object-contain"
+                                                />
+                                            )}
+                                            <h3 className="font-bold text-gray-900 text-sm">{skill.name}</h3>
+                                        </div>
+
+                                        {/* Description Points */}
+                                        <div className="pl-7 space-y-1">
+                                            {skill.details && skill.details.length > 0 ? (
+                                                skill.details.map((detail, i) => (
+                                                    <div key={i} className="flex items-start gap-2">
+                                                        <div className="flex items-center justify-center w-4 h-4 rounded-full border border-[#42b549] bg-[#42b549]/10 mt-0.5 shrink-0">
+                                                            <Check size={8} className="text-[#42b549]" strokeWidth={3} />
+                                                        </div>
+                                                        <span className="text-sm text-gray-600 leading-tight">
+                                                            {detail}
+                                                        </span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="text-xs text-gray-400 italic">No details available</div>
+                                            )}
+                                        </div>
+                                    </div>
                                 )) || (
-                                        <li className="text-gray-400 text-xs italic">No skills data loaded.</li>
+                                        <div className="text-gray-400 text-xs italic">No skills data loaded.</div>
                                     )}
-                            </ul>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -196,7 +215,9 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                 )}
 
                 {activeTab === 'interests' && (
-                    <div className="h-full flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <h1 className="text-2xl font-bold text-black mb-6">Interests & Soft Skills</h1>
+
                         {/* Logic to prepare interests data */}
                         {(() => {
                             // Normalize data
@@ -212,48 +233,25 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
 
                             if (interests.length === 0) {
                                 return (
-                                    <div className="flex h-full items-center justify-center text-gray-400 text-sm">
+                                    <div className="text-gray-400 text-sm italic">
                                         No interests to display.
                                     </div>
                                 );
                             }
 
-                            // Safety check for active index
-                            const currentInterest = interests[activeInterest] || interests[0];
-
                             return (
-                                <>
-                                    <h2 className="text-xl font-bold text-black mb-6">Interests & Soft Skills</h2>
-                                    <div className="flex-1 flex gap-8 min-h-0">
-                                        {/* List */}
-                                        <div className="w-1/3 border-r border-gray-100 pr-4 overflow-y-auto about-scrollbar">
-                                            <div className="space-y-1">
-                                                {interests.map((item, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        onClick={() => setActiveInterest(idx)}
-                                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeInterest === idx
-                                                            ? "bg-black text-white font-medium shadow-md scale-105 origin-left"
-                                                            : "text-gray-600 hover:bg-gray-50"
-                                                            }`}
-                                                    >
-                                                        {item.text}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* Description */}
-                                        <div className="flex-1 pt-2 overflow-y-auto about-scrollbar">
-                                            <h3 className="text-lg font-semibold text-black mb-2">
-                                                {currentInterest?.text}
+                                <div className="space-y-8">
+                                    {interests.map((item, idx) => (
+                                        <div key={idx} className="group">
+                                            <h3 className="font-bold text-black text-lg mb-2 flex items-center gap-2">
+                                                {item.text}
                                             </h3>
-                                            <p className="text-gray-600 leading-relaxed text-sm">
-                                                {currentInterest?.description}
+                                            <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-wrap">
+                                                {item.description}
                                             </p>
                                         </div>
-                                    </div>
-                                </>
+                                    ))}
+                                </div>
                             );
                         })()}
                     </div>

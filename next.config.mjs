@@ -12,8 +12,8 @@ const nextConfig = {
       { protocol: 'https', hostname: 'via.placeholder.com' },
       { protocol: 'https', hostname: 'raw.githubusercontent.com' }
     ],
-    // Configure image qualities to support both 75 (default) and 90 (high quality)
-    qualities: [75, 90],
+    // Configure image qualities to support both 75 (default), 85 (wallpaper), and 90 (high quality)
+    qualities: [75, 85, 90],
     // Enable image optimization for better performance (disabled in dev to avoid localPatterns issues, ENABLED in prod)
     // Enable image optimization for better performance
     unoptimized: false,
@@ -37,8 +37,8 @@ const nextConfig = {
   experimental: {
     // Enable modern bundling
     esmExternals: true,
-    // Optimize CSS disabled to prevent blocking issues reported by user
-    optimizeCss: false,
+    // Enable CSS optimization for tree-shaking and inlining critical CSS
+    optimizeCss: true,
     // Optimize package imports to reduce bundle size
     optimizePackageImports: [
       'framer-motion',

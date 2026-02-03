@@ -36,9 +36,10 @@ export const generateDesktopIcons = (
     });
 
     // 2. Define Desktop Grid
-    const gridX = 110;
-    const gridY = 140;
-    const margin = 40;
+    const isMobile = windowSize.width < 768;
+    const gridX = isMobile ? 90 : 110; // Tighter grid on mobile
+    const gridY = isMobile ? 120 : 140; // Tighter grid on mobile
+    const margin = isMobile ? 20 : 40; // Smaller margin on mobile
     const topOffset = 60; // MenuBar
     const bottomOffset = 120; // Dock
 
@@ -52,8 +53,9 @@ export const generateDesktopIcons = (
             const x = margin + c * gridX;
             const y = topOffset + margin / 2 + r * gridY;
 
-            // Collision check (Box vs Box)
-            const isBlocked = obstacles.some((obs) => {
+            // Collision check (Box vs Box) -> Skip on Mobile (width < 768) to ensure icons render even if window covers screen
+            // On mobile, screen real estate is scarce, so we prize grid structure over avoiding overlap with a window that can be closed.
+            const isBlocked = !isMobile && obstacles.some((obs) => {
                 const bufferX = 20; // Spacing around windows horizontally
                 const bufferY = 20; // Spacing around windows vertically
                 return (
@@ -103,12 +105,14 @@ export const generateDesktopIcons = (
                     y: windowSize.height - bottomOffset - gridY + index * 10,
                 };
 
-        const jitterX = Math.random() * 20 - 10;
-        const jitterY = Math.random() * 20 - 10;
+        // Reduce jitter on mobile for cleaner look
+        const jitterRange = isMobile ? 5 : 20;
+        const jitterX = Math.random() * jitterRange - (jitterRange / 2);
+        const jitterY = Math.random() * jitterRange - (jitterRange / 2);
 
         const finalX = Math.max(
-            20,
-            Math.min(windowSize.width - 100, slot.x + jitterX)
+            10,
+            Math.min(windowSize.width - 80, slot.x + jitterX)
         );
         const finalY = Math.max(
             topOffset,

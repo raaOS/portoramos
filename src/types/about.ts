@@ -89,6 +89,7 @@ export interface Wallpaper {
 export interface WallpaperConfig {
   activeWallpaperId: string;
   collection: Wallpaper[];
+  blur?: number; // 0-20px
 }
 
 export interface DesktopPreferences {
