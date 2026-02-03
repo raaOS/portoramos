@@ -156,10 +156,15 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
     } 
     */
 
+    // Use manual column count ONLY if explicit width is provided (OS Window mode)
+    // Otherwise, let Masonry library handle responsiveness using the breakpoint object (Main Page mode)
+    // This fixes the issue where ResizeObserver might report incorrect width on mobile initial load.
+    const masonryCols = width !== undefined ? columnCount : breakpointColumns;
+
     return (
         <div ref={containerRef} className="w-full" style={{ width: '100%' }}>
             <Masonry
-                breakpointCols={columnCount}
+                breakpointCols={masonryCols}
                 className={`masonry-grid -ml-2 md:-ml-4 w-auto flex ${className}`}
                 columnClassName="masonry-grid-column pl-2 md:pl-4 bg-clip-padding"
             >
