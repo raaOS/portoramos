@@ -6,13 +6,13 @@
     "color": "#fef08a",
     "isStarred": false,
     "isDeleted": false,
-    "x": 659,
-    "y": 268,
+    "x": 512,
+    "y": 444,
     "width": 282,
     "height": 265,
-    "zIndex": 122,
+    "zIndex": 123,
     "fontFamily": "var(--font-caveat), sans-serif",
     "fontSize": 24,
-    "isPinned": false
+    "isPinned": true
   }
 ]
