@@ -8,7 +8,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 
 // Admin Auth Hook
-// import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 // Internal Components (always loaded - core UI)
 import OSWindow from "./Window";
@@ -55,14 +55,13 @@ const IndexClientWithAutoUpdate = dynamic(() => import("@/components/home/IndexC
     ssr: false
 });
 
-const ProjectDetailTwoColumn = dynamic(() => import("@/components/projects/ProjectDetailTwoColumn"), {
-    loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
-    ssr: false
-});
+// Project Detail Component moved to ProjectDetailWrapper to reduce bundle/file size
 
 // Hooks & Types
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { useWindowManager, WindowState } from "@/hooks/useWindowManager";
+import { useStickyNotes } from "./hooks/useStickyNotes";
+import { useDesktopLock } from "./hooks/useDesktopLock";
 import type { AboutData } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
@@ -70,70 +69,16 @@ import type { Project, GalleryItem } from "@/types/projects";
 
 // Refactored Imports
 import DesktopErrorBoundary from "./DesktopErrorBoundary";
-import { useStickyNotes } from "./hooks/useStickyNotes";
 import { generateDesktopIcons } from "./utils/desktopLayoutUtils";
 import { DraggableStickyNote } from "./DraggableStickyNote";
 
-// Helper
-const isVideo = (url?: string) => url && /\.(mp4|webm|mov)$/i.test(url);
+// UI Components (Extracted)
+import AppIcon from "./ui/AppIcon";
+import ProjectDetailWrapper from "./ui/ProjectDetailWrapper";
 
-// --- Sub-Components ---
-
-const ProjectDetailWrapper = ({ project, projects }: { project: Project, projects: Project[] }) => {
-    const coverSrc = project.cover || '/placeholder.jpg';
-    const cover: GalleryItem = {
-        kind: isVideo(coverSrc) ? 'video' : 'image',
-        src: coverSrc,
-        alt: project.title
-    };
-
-    let gallery: GalleryItem[] = [];
-    if (project.galleryItems && project.galleryItems.length > 0) {
-        gallery = project.galleryItems;
-    } else if (project.gallery && project.gallery.length > 0) {
-        gallery = project.gallery.map(src => ({ kind: 'image', src: src, alt: project.title }));
-    }
-
-    const otherProjects = projects.filter(p => p.id !== project.id);
-    const ratio = project.coverWidth && project.coverHeight ? project.coverWidth / project.coverHeight : 1.77;
-
-    return (
-        <ProjectDetailTwoColumn
-            project={project}
-            cover={cover}
-            gallery={gallery}
-            ratio={ratio}
-            otherProjects={otherProjects}
-            isWindowMode={true}
-        />
-    );
-};
-
-const AppIcon = ({ color, icon: Icon, imageUrl }: { color?: string, icon?: any, imageUrl?: string }) => {
-    if (imageUrl) {
-        return (
-            <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-xl">
-                <Image
-                    src={imageUrl}
-                    alt="icon"
-                    width={128}
-                    height={128}
-                    className="w-full h-full object-cover scale-[1.01]"
-                    style={{ imageRendering: 'auto', backfaceVisibility: 'hidden' }}
-                    quality={75}
-                    priority={false}
-                    loading="lazy"
-                />
-            </div>
-        );
-    }
-    return (
-        <div className={`w-full h-full rounded-xl bg-gradient-to-b ${color} flex items-center justify-center shadow-lg relative`}>
-            <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 inset-ring pointer-events-none" />
-            <Icon className="text-white drop-shadow-sm" size="65%" strokeWidth={2} />
-        </div>
-    );
-};
+// Sub-components moved to separate files:
+// - ProjectDetailWrapper -> ./ui/ProjectDetailWrapper.tsx
+// - AppIcon -> ./ui/AppIcon.tsx
 
 // --- Main Component ---
 
@@ -162,17 +107,18 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
 
 function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSkillsData, projects }: DesktopEnvironmentProps) {
     const router = useRouter();
-    const [mounted, setMounted] = useState(false);
-    const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+
+    // Screen Lock & Resize Hook (Handles mounted state, window size, and body lock)
+    const { mounted, windowSize, isMobile } = useDesktopLock();
+
     const [showSpotlight, setShowSpotlight] = useState(false);
 
-    // Mobile detection for UX differences
-    const [isMobile, setIsMobile] = useState(false);
-
-    // Notes visibility toggle (not auto-show by default)
-    const [notesVisible, setNotesVisible] = useState(false);
+    // Notes visibility toggle (visible by default as per request)
+    const [notesVisible, setNotesVisible] = useState(true);
     const [notesDockBouncing, setNotesDockBouncing] = useState(false);
 
+    // Admin auth check - now safe to use (API returns 200 for non-admins)
+    const { isAdmin } = useAdminAuth();
 
     // Hooks
     const {
@@ -183,11 +129,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         permanentDeleteNote,
         restoreNote,
         bringToFrontNote
-    } = useStickyNotes(mounted);
-
-    // Admin auth check removed for public view to avoid 401 logs
-    // const { isAdmin } = useAdminAuth();
-    const isAdmin = false;
+    } = useStickyNotes(mounted, isAdmin);
 
     // Forces a re-render of layout if needed (e.g. after drag)
     const [manualRefreshSeed, setManualRefreshSeed] = useState(0);
@@ -392,74 +334,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mounted, windowSize.width, windowSize.height, obstacleSignature, commercialProjects, aboutData, handleGoHome]);
 
-    // Effects for Lock & Cleanup
-    useEffect(() => {
-        setMounted(true);
-        setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    // Effects for Lock & Cleanup controlled by useDesktopLock hook now
 
-        const html = document.documentElement;
-        const body = document.body;
-        const originalStyles = {
-            htmlOverflow: html.style.overflow,
-            bodyOverflow: body.style.overflow,
-            htmlHeight: html.style.height,
-            bodyHeight: body.style.height
-        };
-
-        // Lock
-        window.scrollTo(0, 0);
-        html.style.overflow = "hidden";
-        body.style.overflow = "hidden";
-        html.style.height = "100%";
-        body.style.height = "100%";
-        html.classList.add('lenis-stopped');
-
-        // Style Injection (Safe)
-        const styleId = 'os-mode-reset';
-        if (!document.getElementById(styleId)) {
-            const style = document.createElement('style');
-            style.id = styleId;
-            style.textContent = `
-                html, body {
-                    overflow: hidden !important;
-                    height: 100vh !important;
-                    width: 100vw !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    position: fixed !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    overscroll-behavior: none !important;
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        const handleResize = () => {
-            const width = window.innerWidth;
-            setWindowSize({ width, height: window.innerHeight });
-            setIsMobile(width < 768);
-        };
-
-        // Initial mobile check
-        setIsMobile(window.innerWidth < 768);
-
-        window.addEventListener('resize', handleResize);
-
-        return () => {
-            window.removeEventListener('resize', handleResize);
-
-            // Restore
-            html.style.overflow = originalStyles.htmlOverflow;
-            body.style.overflow = originalStyles.bodyOverflow;
-            html.style.height = originalStyles.htmlHeight;
-            body.style.height = originalStyles.bodyHeight;
-            html.classList.remove('lenis-stopped');
-
-            const styleTag = document.getElementById(styleId);
-            if (styleTag) styleTag.remove();
-        };
-    }, []);
 
     // SSR Skeleton: Show a basic visual immediately to improve LCP
     // Before: `return null` caused 17s LCP (blank screen until JS hydrates)
@@ -537,6 +413,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                 deleteNote={deleteNote}
                                 permanentDeleteNote={permanentDeleteNote}
                                 restoreNote={restoreNote}
+                                isAdmin={isAdmin}
                             />
                         ))}
 

@@ -173,7 +173,7 @@
       "iconUrl": "/assets/icons-library/1769437234458-ke2xv30027cl-icnsfile-44662d2fce53144bec4612af170242c3-photos.webp"
     },
     "finder": {
-      "iconUrl": "/assets/icons-library/1769438534198-ketlrnlmryw1-icnsfile-0b7ca518d18f6e20ce3fe6a9a8979397-thug-life-finder.webp"
+      "iconUrl": "/assets/icons-library/1769438534400-hlte99042ytz-icnsfile-d7ac3a93471d5eaa0d43e730035de6eb-finder-beta-1-pink.webp"
     },
     "about": {
       "iconUrl": "/assets/icons-library/1769438534391-8jzxtsb8p9mp-icnsfile-ca52dc8679e2709366550576131c5747-bob.webp"
@@ -195,13 +195,13 @@
   "chatSettings": {},
   "windowPreferences": {
     "about": {
-      "x": 1324,
-      "y": 43,
-      "width": 551,
-      "height": 567,
+      "x": 1155,
+      "y": 56,
+      "width": 733,
+      "height": 562,
       "isOpenByDefault": true
     }
   },
   "labels": {},
-  "lastUpdated": "2026-02-03T11:38:35.612Z"
+  "lastUpdated": "2026-02-05T19:14:11.476Z"
 }

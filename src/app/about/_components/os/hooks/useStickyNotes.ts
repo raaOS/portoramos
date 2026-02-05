@@ -14,15 +14,26 @@ const INITIAL_NOTES: NoteData[] = [
     }
 ];
 
-export const useStickyNotes = (mounted: boolean) => {
+// Helper debounce function
+const debounce = (func: Function, wait: number) => {
+    let timeout: NodeJS.Timeout;
+    return (...args: any[]) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
+};
+
+export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false) => {
     const [notes, setNotes] = useState<NoteData[]>([]);
     const [noteZIndex, setNoteZIndex] = useState(1);
+    const [hasLoaded, setHasLoaded] = useState(false);
 
     // Load notes from server
     useEffect(() => {
         const loadNotes = async () => {
             try {
-                const response = await fetch('/api/sticky-notes');
+                // Add timestamp to prevent caching
+                const response = await fetch(`/api/sticky-notes?t=${Date.now()}`);
                 const data = await response.json();
                 if (Array.isArray(data)) {
                     // Mobile adjustment: pull notes to visible area
@@ -51,13 +62,41 @@ export const useStickyNotes = (mounted: boolean) => {
             } catch (e) {
                 console.error("Failed to load notes from server", e);
                 setNotes(INITIAL_NOTES);
+            } finally {
+                setHasLoaded(true);
             }
         };
         loadNotes();
     }, []);
 
-    // Auto-sync removed as per request. Visual changes (drag) are local-only for public users.
-    // CRUD is handled exclusively in the Admin Panel.
+    // Auto-sync for Admins ONLY
+    useEffect(() => {
+        if (!mounted || !hasLoaded || !isAdmin) return;
+
+        const saveNotes = async () => {
+            try {
+                // We need to strip out any potentially "mobile adjusted" coordinates if we were to support mobile-admin editing
+                // But for now, assuming Admin edits on Desktop primarily or accepts the mobile stack as new position if editing on mobile.
+                // Given the requirement "Mobile logic auto-tidy ignoring x,y", we should technically NOT save mobile positions if they are just visual overrides.
+                // However, the `notes` state currently HOLDS the overridden positions on mobile.
+                // RISK: If Admin opens on Mobile, notes stack. Auto-save triggers. Stacked positions overwrites correct Desktop positions.
+                // FIX: Only auto-save if NOT mobile OR be very careful.
+                const isMobile = window.innerWidth < 768;
+                if (isMobile) return; // Prevent overwriting desktop layout when viewing on mobile
+
+                await fetch('/api/sticky-notes', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(notes)
+                });
+            } catch (error) {
+                console.error("Failed to auto-save notes:", error);
+            }
+        };
+
+        const debouncedSave = setTimeout(saveNotes, 1000);
+        return () => clearTimeout(debouncedSave);
+    }, [notes, mounted, hasLoaded, isAdmin]);
 
     const addNote = useCallback(() => {
         const newNote: NoteData = {

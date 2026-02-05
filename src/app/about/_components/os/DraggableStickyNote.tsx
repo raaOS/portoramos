@@ -9,6 +9,7 @@ interface DraggableStickyNoteProps {
     deleteNote: (id: string) => void;
     permanentDeleteNote: (id: string) => void;
     restoreNote: (id: string) => void;
+    isAdmin?: boolean;
 }
 
 export const DraggableStickyNote = ({
@@ -17,14 +18,15 @@ export const DraggableStickyNote = ({
     bringToFrontNote,
     deleteNote,
     permanentDeleteNote,
-    restoreNote
+    restoreNote,
+    isAdmin = false
 }: DraggableStickyNoteProps) => {
     const dragControls = useDragControls();
 
     return (
         <motion.div
             key={note.id}
-            drag={!note.isPinned}
+            drag={isAdmin && !note.isPinned}
             dragControls={dragControls}
             dragListener={false}
             dragMomentum={false}
@@ -37,6 +39,7 @@ export const DraggableStickyNote = ({
             transition={{ type: "none" }}
             onDragStart={() => bringToFrontNote(note.id)}
             onDragEnd={(e, info) => {
+                if (!isAdmin) return;
                 const newX = (note.x || 100) + info.offset.x;
                 const newY = (note.y || 100) + info.offset.y;
                 updateNote(note.id, { x: newX, y: newY });
@@ -56,6 +59,7 @@ export const DraggableStickyNote = ({
                 onPermanentDelete={permanentDeleteNote}
                 onRestore={restoreNote}
                 dragControls={dragControls}
+                isAdmin={isAdmin}
             />
         </motion.div>
     );
