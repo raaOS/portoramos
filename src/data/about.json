@@ -195,13 +195,13 @@
   "chatSettings": {},
   "windowPreferences": {
     "about": {
-      "x": 721,
-      "y": 160,
-      "width": 551,
-      "height": 567,
-      "isOpenByDefault": false
+      "x": 1155,
+      "y": 56,
+      "width": 733,
+      "height": 562,
+      "isOpenByDefault": true
     }
   },
   "labels": {},
-  "lastUpdated": "2026-02-05T19:12:56.166Z"
+  "lastUpdated": "2026-02-05T19:14:11.476Z"
 }
