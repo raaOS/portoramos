@@ -391,7 +391,7 @@ export default function ProjectDetailTwoColumn({
                                                 {/* Challenge (Commercial) OR Concept (Visual Art) */}
                                                 {(project.narrative.challenge || project.narrative.concept) && (
                                                     <div>
-                                                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${project.narrative.concept ? 'text-gray-500' : 'text-red-500'}`}>
+                                                        <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-red-500">
                                                             {project.narrative.concept ? 'The Concept' : 'The Challenge'}
                                                         </h3>
                                                         <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
@@ -403,7 +403,7 @@ export default function ProjectDetailTwoColumn({
                                                 {/* Solution (Commercial) OR Process (Visual Art) */}
                                                 {(project.narrative.solution || project.narrative.process) && (
                                                     <div>
-                                                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${project.narrative.process ? 'text-gray-500' : 'text-blue-500'}`}>
+                                                        <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-blue-500">
                                                             {project.narrative.process ? 'The Process' : 'The Solution'}
                                                         </h3>
                                                         <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
@@ -414,8 +414,8 @@ export default function ProjectDetailTwoColumn({
 
                                                 {/* Impact (Commercial) OR Result/Detail (Visual Art) */}
                                                 {(project.narrative.impact || project.narrative.result || project.narrative.detail) && (
-                                                    <div className={project.narrative.impact ? "bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 p-5 rounded-xl border border-green-100 dark:border-green-900/30" : ""}>
-                                                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${project.narrative.impact ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+                                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 p-5 rounded-xl border border-green-100 dark:border-green-900/30">
+                                                        <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-green-600 dark:text-green-400">
                                                             {project.narrative.impact ? 'The Impact' : (project.narrative.detail ? 'The Detail' : 'The Result')}
                                                         </h3>
                                                         <p className={`leading-relaxed ${project.narrative.impact ? 'text-base sm:text-lg font-medium text-gray-900 dark:text-white' : 'text-sm sm:text-base text-gray-800 dark:text-gray-200'}`}>
