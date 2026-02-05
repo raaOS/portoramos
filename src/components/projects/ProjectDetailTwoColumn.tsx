@@ -197,7 +197,7 @@ export default function ProjectDetailTwoColumn({
                     <div className="bg-white dark:bg-black rounded-lg sm:rounded-xl shadow-none border border-black/10 dark:border-white/10 transition-all duration-300 relative overflow-hidden">
                         <div className="flex flex-col lg:flex-row h-full">
                             <div className="w-full lg:w-[45%] border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-gray-900/20">
-                                <div className={`${ratio < 1 ? 'max-w-sm mx-auto' : ratio === 1 ? 'max-w-md mx-auto' : 'w-full'} p-4 lg:p-6 lg:sticky lg:top-0`}>
+                                <div className={`${ratio < 1 ? 'max-w-sm mx-auto' : ratio === 1 ? 'max-w-md mx-auto' : 'w-full'} p-4 lg:p-6`}>
                                     {project.comparison && project.comparison.beforeImage ? (
                                         <div className="w-full h-full relative rounded-xl overflow-hidden shadow-lg border border-black/5 dark:border-white/5 bg-gray-100 dark:bg-gray-800" style={{ aspectRatio: ratio }}>
                                             <Compare
@@ -227,9 +227,32 @@ export default function ProjectDetailTwoColumn({
                                             />
                                         </div>
                                     )}
+
+                                    {/* Description & Comments in Left Column */}
+                                    <div className="mt-6 sm:mt-8 space-y-6 sm:space-y-8">
+                                        {project.description && (
+                                            <div>
+                                                <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-gray-500">About this Project</h3>
+                                                <ReadMoreDescription
+                                                    text={project.description}
+                                                    maxLines={6}
+                                                    className="text-sm leading-relaxed text-gray-700 dark:text-gray-300"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {project.allowComments !== false && (
+                                            <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
+                                                <CommentSection
+                                                    slug={project.slug}
+                                                    comments={comments}
+                                                    setComments={setComments}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-
                             <div className="w-full lg:w-[55%] flex flex-col">
                                 <div className="p-4 sm:p-6 lg:p-8">
                                     <div className="flex items-start justify-between gap-4 mb-4">
@@ -241,10 +264,11 @@ export default function ProjectDetailTwoColumn({
                                                 href={`/works/${project.slug}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="p-2 text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
+                                                className="flex items-center gap-1.5 hover:opacity-100 opacity-60 text-gray-400 hover:text-black dark:text-gray-500 dark:hover:text-white transition-all text-xs font-semibold tracking-wide group whitespace-nowrap shrink-0"
                                                 title="Open Full Page"
                                             >
-                                                <ExternalLink size={20} />
+                                                <span>Open Page</span>
+                                                <ExternalLink size={14} className="opacity-70 group-hover:opacity-100 transition-opacity" />
                                             </a>
                                         )}
                                     </div>
@@ -403,27 +427,7 @@ export default function ProjectDetailTwoColumn({
                                         </div>
                                     )}
 
-                                    {project.description && (
-                                        <div className="mb-3 sm:mb-4">
-                                            <ReadMoreDescription
-                                                text={project.description}
-                                                maxLines={4}
-                                                className="text-xs sm:text-sm leading-relaxed text-gray-700 dark:text-gray-300 transition-colors duration-300"
-                                            />
-                                        </div>
-                                    )}
 
-                                    {project.allowComments !== false && (
-                                        <div className="pt-3 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300" id="comments-section">
-                                            <div className="bg-white dark:bg-gray-900 rounded-lg">
-                                                <CommentSection
-                                                    slug={project.slug}
-                                                    comments={comments}
-                                                    setComments={setComments}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </div>
@@ -487,19 +491,21 @@ export default function ProjectDetailTwoColumn({
             </div>
 
             {/* Infinite loading trigger - Only for non-window mode */}
-            {!isWindowMode && (
-                <>
-                    <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
-                    {isLoading && (
-                        <div className="text-center py-6 sm:py-8 opacity-50">
-                            <div className="inline-block animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-gray-400"></div>
-                            <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>
-                        </div>
-                    )}
-                </>
-            )}
+            {
+                !isWindowMode && (
+                    <>
+                        <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
+                        {isLoading && (
+                            <div className="text-center py-6 sm:py-8 opacity-50">
+                                <div className="inline-block animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-gray-400"></div>
+                                <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>
+                            </div>
+                        )}
+                    </>
+                )
+            }
 
             {!isWindowMode && <ProjectCTA />}
-        </motion.div>
+        </motion.div >
     );
 }

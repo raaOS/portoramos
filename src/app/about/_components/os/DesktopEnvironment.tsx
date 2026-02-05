@@ -8,7 +8,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 
 // Admin Auth Hook
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+// import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 // Internal Components (always loaded - core UI)
 import OSWindow from "./Window";
@@ -185,8 +185,9 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         bringToFrontNote
     } = useStickyNotes(mounted);
 
-    // Admin auth check for showing Pin button
-    const { isAdmin } = useAdminAuth();
+    // Admin auth check removed for public view to avoid 401 logs
+    // const { isAdmin } = useAdminAuth();
+    const isAdmin = false;
 
     // Forces a re-render of layout if needed (e.g. after drag)
     const [manualRefreshSeed, setManualRefreshSeed] = useState(0);
@@ -464,7 +465,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     // Before: `return null` caused 17s LCP (blank screen until JS hydrates)
     if (!mounted) {
         return (
-            <div className="relative w-full h-screen overflow-hidden select-none bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+            <div className="fixed inset-0 w-full h-full overflow-hidden select-none bg-gradient-to-br from-gray-900 via-gray-800 to-black">
                 {/* Fake Menu Bar */}
                 <div className="absolute top-0 left-0 right-0 h-7 bg-black/60 backdrop-blur-xl z-50 flex items-center px-4">
                     <div className="w-4 h-4 bg-white/80 rounded-full mr-2" />
@@ -486,7 +487,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     }
 
     return (
-        <div className="relative w-full h-full overflow-hidden select-none bg-black">
+        <div className="fixed inset-0 w-full h-full overflow-hidden select-none bg-black">
             {/* Wallpaper */}
             <div className="absolute inset-0 z-0">
                 <Image
@@ -499,7 +500,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                     className="object-cover transition-all duration-700"
                     style={{ filter: `blur(${aboutData?.wallpaperConfig?.blur || 0}px)` }}
                 />
-                <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]" />
+                <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] backface-invisible will-change-transform" />
             </div>
 
             {/* Layer 1: Desktop Icons & Sticky Notes */}
@@ -513,6 +514,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                             {...icon}
                             icon={!isFolder ? icon.icon : undefined}
                             isMobile={isMobile}
+                            priority={icon.priority} // Pass LCP priority
                             onClick={() => {
                                 if (isFolder && icon.action) icon.action();
                                 else if (icon.type === 'project') openProjectWindow(icon.data);
@@ -610,6 +612,6 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
             {/* Lock Screen */}
 
-        </div>
+        </div >
     );
 }

@@ -56,31 +56,8 @@ export const useStickyNotes = (mounted: boolean) => {
         loadNotes();
     }, []);
 
-    // Save notes to server (Auto-Sync)
-    useEffect(() => {
-        if (mounted && notes.length > 0) {
-            const saveNotes = async () => {
-                try {
-                    const response = await fetch('/api/sticky-notes', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(notes)
-                    });
-
-                    if (response.status === 401 || response.status === 403) {
-                        // User is not admin, stop syncing to avoid spamming 401s
-                        console.warn("Sticky Notes sync skipped: Read-only mode (Unauthorized).");
-                        return;
-                    }
-                } catch (e) {
-                    console.error("Failed to sync notes to server", e);
-                }
-            };
-
-            const timer = setTimeout(saveNotes, 1000); // Debounce 1s
-            return () => clearTimeout(timer);
-        }
-    }, [notes, mounted]);
+    // Auto-sync removed as per request. Visual changes (drag) are local-only for public users.
+    // CRUD is handled exclusively in the Admin Panel.
 
     const addNote = useCallback(() => {
         const newNote: NoteData = {

@@ -255,13 +255,12 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
 
                 {/* Header: Color Picker & Date (Double click to collapse) */}
                 <div
-                    className="absolute top-0 left-0 right-0 h-[60px] px-4 z-20 flex items-end justify-between pb-6 border-b border-black/5 cursor-grab active:cursor-grabbing"
+                    className="absolute top-0 left-0 right-0 h-[60px] px-4 z-20 flex items-end justify-between pb-3 border-b border-black/5 cursor-grab active:cursor-grabbing"
                     onPointerDown={(e) => dragControls.start(e)}
                     onDoubleClick={() => {
-                        // Save text before collapsing to prevent loss
+                        // Collapse only, no text sync needed as it is read only
                         onUpdate(note.id, {
-                            isCollapsed: !note.isCollapsed,
-                            text: innerContentRef.current
+                            isCollapsed: !note.isCollapsed
                         });
                     }}
                 >
@@ -380,7 +379,8 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                             {/* Action Icons */}
                             {!note.isDeleted ? (
                                 <>
-                                    {/* Edit Toggle */}
+                                    {/* Edit Toggle - Removed for public view */}
+                                    {/* 
                                     <button
                                         onClick={handleEditClick}
                                         className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isEditing ? 'text-blue-600 font-bold' : 'text-gray-700 hover:text-blue-600'}`}
@@ -389,6 +389,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                                     >
                                         <Edit size={18} />
                                     </button>
+                                    */}
 
                                     {/* Pin Toggle */}
                                     <button
@@ -428,7 +429,8 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                                         <Star size={18} fill={note.isStarred ? "currentColor" : "none"} />
                                     </button>
 
-                                    {/* Delete (Soft) */}
+                                    {/* Delete (Soft) - Removed for public view */}
+                                    {/*
                                     <button
                                         onClick={() => onDelete(note.id)}
                                         className="w-9 h-9 flex items-center justify-center rounded-full text-gray-700 transition-colors hover:text-red-600"
@@ -437,6 +439,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                                     >
                                         <Trash2 size={18} />
                                     </button>
+                                    */}
 
                                     {/* Download / Export */}
                                     <button

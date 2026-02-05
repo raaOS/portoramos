@@ -164,8 +164,15 @@ export const generateDesktopIcons = (
             aspectRatio: aspectRatio,
             x: finalX,
             y: finalY,
+            priority: index < 4 // Prioritize the first 4 icons for LCP
         };
     });
 
-    return generatedIcons;
+    // Ensure the first few folders also get priority if they are at the top
+    const optimizedIcons = generatedIcons.map((icon, idx) => ({
+        ...icon,
+        priority: idx < 4
+    }));
+
+    return optimizedIcons;
 };

@@ -20,6 +20,7 @@ interface DesktopIconProps {
 
 export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false, isMobile = false }: DesktopIconProps) {
     const [mediaError, setMediaError] = useState(false);
+    const [hovering, setHovering] = useState(false);
 
     // Reset error state when media changes
     useEffect(() => {
@@ -42,6 +43,10 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
         setTimeout(() => setIsDragging(false), 50); // Small delay to prevent click firing immediately after drag
     };
 
+    // Poster is critical for layout stability and visual fallback
+    // If we have a videoUrl but no imageUrl, we might rely on the video poster, but better to have explicit image.
+    // In our Utils, we generated a poster URL.
+
     return (
         <motion.div
             drag
@@ -58,6 +63,8 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
             dragTransition={{ power: 0, timeConstant: 200 }}
             style={{ position: "absolute", left: x, top: y }}
             className={`flex flex-col items-center gap-3 w-auto group cursor-pointer pointer-events-auto transition-transform duration-150 ${!isMobile ? 'hover:scale-110 active:scale-95' : ''}`}
+            onMouseEnter={() => !isMobile && setHovering(true)}
+            onMouseLeave={() => !isMobile && setHovering(false)}
         >
             {children ? (
                 <div className="relative">
@@ -71,32 +78,35 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
                         minWidth: baseHeight * aspectRatio,
                         minHeight: baseHeight,
                     }}
-                    className={`relative shadow-lg border-2 border-white/40 group-hover:border-white/60 transition-colors bg-white/20`}
+                    className={`relative shadow-lg border-2 border-white/40 group-hover:border-white/60 transition-colors bg-white/20 overflow-hidden`}
                 >
-                    {videoUrl ? (
+                    {/* Always render Image as base layer */}
+                    {imageUrl && (
+                        <Image
+                            src={imageUrl}
+                            alt={label}
+                            fill
+                            className={`object-cover pointer-events-none transition-opacity duration-300 ${hovering && videoUrl ? 'opacity-0' : 'opacity-100'}`}
+                            sizes="(max-width: 768px) 96px, 128px"
+                            draggable={false}
+                            onError={() => setMediaError(true)}
+                            priority={priority} // Important for LCP
+                            loading={priority ? "eager" : "lazy"}
+                            quality={60} // Thumbnails don't need 100% quality
+                        />
+                    )}
+
+                    {/* Only render Video if hovering and video exists (and not mobile) */}
+                    {videoUrl && hovering && !isMobile && (
                         <video
                             src={videoUrl}
-                            poster={imageUrl}
                             autoPlay
                             muted
                             loop
                             playsInline
-                            preload="metadata"
-                            className="object-cover w-full h-full pointer-events-none rounded-none"
+                            className="absolute inset-0 object-cover w-full h-full pointer-events-none rounded-none"
                             draggable={false}
                             onError={() => setMediaError(true)}
-                        />
-                    ) : (
-                        <Image
-                            src={imageUrl!}
-                            alt={label}
-                            fill
-                            className="object-cover pointer-events-none"
-                            sizes="(max-width: 768px) 150px, 200px"
-                            draggable={false}
-                            onError={() => setMediaError(true)}
-                            priority={priority}
-                            loading={priority ? "eager" : "lazy"}
                         />
                     )}
                 </div>
