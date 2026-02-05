@@ -178,7 +178,13 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
             return prev.map(w => {
                 if (w.id === id) {
                     if (w.isOpen) {
-                        return { ...w, isMinimized: false, zIndex: topZIndex + 1 };
+                        return {
+                            ...w,
+                            isMinimized: false,
+                            zIndex: topZIndex + 1,
+                            content: customConfig?.content || w.content,
+                            title: customConfig?.title || w.title,
+                        };
                     }
 
                     const pref = aboutData?.windowPreferences?.[id];
@@ -202,7 +208,10 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
                         zIndex: topZIndex + 1,
                         initialPosition: w.initialPosition || initialPosition,
                         width,
-                        height
+                        height,
+                        // Allow updating content and title if provided
+                        content: customConfig?.content || w.content,
+                        title: customConfig?.title || w.title,
                     };
                 }
                 return w;

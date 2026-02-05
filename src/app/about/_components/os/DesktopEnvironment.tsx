@@ -76,6 +76,7 @@ import { DraggableStickyNote } from "./DraggableStickyNote";
 import AppIcon from "./ui/AppIcon";
 import ProjectDetailWrapper from "./ui/ProjectDetailWrapper";
 import BootSequence from "./ui/BootSequence";
+import DynamicIsland from "./ui/DynamicIsland";
 
 // Sub-components moved to separate files:
 // - ProjectDetailWrapper -> ./ui/ProjectDetailWrapper.tsx
@@ -258,14 +259,14 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         });
     };
 
-    const openChatWindow = () => {
+    const openChatWindow = (chatId?: string) => {
         openWindow('chat', {
             title: 'WhatsApp Live',
             noPadding: true,
             initialPosition: getCenterPosition(380, 600),
             width: 380,
             height: 600,
-            content: <ChatWindow settings={aboutData?.chatSettings} />
+            content: <ChatWindow key={chatId || 'default'} settings={aboutData?.chatSettings} activeChatId={chatId} />
         });
     };
 
@@ -285,7 +286,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
             { id: "about", label: "Profile", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => openWindow("about"), isOpen: isWindowOpen("about") },
             { id: "projects", label: "Launchpad", icon: <AppIcon icon={Rocket} color="from-red-400 to-pink-500" />, onClick: openLaunchpad, isOpen: isWindowOpen("launchpad") },
 
-            { id: "whatsapp", label: "WhatsApp", icon: <AppIcon icon={MessageCircle} color="from-green-400 to-green-600" />, onClick: openChatWindow, isOpen: isWindowOpen("chat") },
+            { id: "whatsapp", label: "WhatsApp", icon: <AppIcon icon={MessageCircle} color="from-green-400 to-green-600" />, onClick: () => openChatWindow(), isOpen: isWindowOpen("chat") },
             { id: "notes", label: "Notes", icon: <AppIcon icon={FileText} color="from-yellow-300 to-orange-400" />, onClick: () => toggleNotesVisibility(), isOpen: notesVisible },
             { id: "trash", label: "Trash", icon: <AppIcon icon={Trash2} color="from-gray-400 to-gray-500" />, onClick: () => openWindow("trash-bin"), isOpen: isWindowOpen("trash-bin") },
         ];
@@ -490,11 +491,18 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                     </AnimatePresence>
                 </div>
 
-                {/* Layer 3: UI Overlays (Dock, MenuBar, Spotlight) */}
+                {/* Layer 3: UI Overlays (Dock, MenuBar, Spotlight, DynamicIsland) */}
                 <div className="absolute inset-0 z-30 pointer-events-none">
+                    {/* Dynamic Island - High Z-index */}
+                    <DynamicIsland
+                        activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || null}
+                        isBooting={isBooting}
+                        onOpenChat={openChatWindow}
+                    />
+
                     <div className="pointer-events-auto">
                         <MenuBar
-                            activeWindow={windows.find(w => w.zIndex === Math.max(...windows.map(yw => yw.zIndex)))?.title || "Finder"}
+                            activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || "Finder"}
                             onAbout={() => openWindow("about")}
                             availability={aboutData?.hero?.availability}
                         />
