@@ -39,8 +39,6 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
             setWindows(prev => prev.map(w => {
                 const pref = aboutData?.windowPreferences?.[w.id];
 
-                // Use server preferences only
-                // Use server preferences only
                 let rawWidth = pref?.width || w.width || 800;
                 let rawHeight = pref?.height || w.height || 600;
                 const isPinned = pref?.isOpenByDefault || false;
@@ -97,11 +95,13 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
         }));
     }, [initialWindows]);
 
-    // Bounce cleanup
+    // Bounce cleanup - OPTIMIZED dengan cleanup yang benar
     useEffect(() => {
         if (!bouncingDocId) return;
         const timer = setTimeout(() => setBouncingDocId(null), 2000);
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(timer);
+        };
     }, [bouncingDocId]);
 
     const saveWindowPreference = async (id: string, updates: Partial<{ x: number, y: number, width: number, height: number, isOpenByDefault: boolean }>) => {
@@ -118,16 +118,30 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
                 body: JSON.stringify({ windowPreferences: newPrefs })
             });
         } catch (e) {
-            console.error("Failed to save window preference", e);
+            // Silently ignore window preference save errors
         }
     };
 
     const isWindowOpen = useCallback((id: string) => windows.find(w => w.id === id)?.isOpen ?? false, [windows]);
 
-    const getCenterPosition = (w: number, h: number) => {
-        if (typeof window === 'undefined') return { x: 0, y: 0 };
-        const safeWidth = window.innerWidth || 1200;
-        const safeHeight = window.innerHeight || 800;
+    // OPTIMIZED: Cache window dimensions untuk menghindari repeated DOM access
+    const [windowDimensions, setWindowDimensions] = useState({ width: 1200, height: 800 });
+    
+    useEffect(() => {
+        const updateDimensions = () => {
+            setWindowDimensions({
+                width: window.innerWidth,
+                height: window.innerHeight
+            });
+        };
+        
+        updateDimensions();
+        window.addEventListener('resize', updateDimensions);
+        return () => window.removeEventListener('resize', updateDimensions);
+    }, []);
+
+    const getCenterPosition = useCallback((w: number, h: number) => {
+        const { width: safeWidth, height: safeHeight } = windowDimensions;
 
         // Mobile override: use 90% of screen width if window is wider than screen
         const effectiveW = safeWidth < 768 ? Math.min(w, safeWidth * 0.95) : w;
@@ -136,7 +150,7 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
         const x = Math.max(0, (safeWidth - effectiveW) / 2);
         const y = Math.max(50, (safeHeight - effectiveH) / 2); // Start a bit lower on mobile
         return { x, y };
-    };
+    }, [windowDimensions]);
 
     const openWindow = useCallback((id: string, customConfig?: Partial<WindowState>) => {
         setWindows(prev => {
@@ -217,7 +231,11 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
                 return w;
             });
         });
-        setTopZIndex(prev => prev + 1);
+        setTopZIndex(prev => {
+            // Cap at 9000 to keep room for Spotlight (10002) and Dynamic Island
+            if (prev > 9000) return 20;
+            return prev + 1;
+        });
     }, [aboutData, playOpen, topZIndex]);
 
     const closeWindow = useCallback((id: string) => {
@@ -243,7 +261,7 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
             if (w.id === id) return { ...w, isMaximized: !w.isMaximized, zIndex: topZIndex + 1 };
             return w;
         }));
-        setTopZIndex(prev => prev + 1);
+        setTopZIndex(prev => (prev > 9000 ? 20 : prev + 1));
     }, [topZIndex]);
 
     const focusWindow = useCallback((id: string) => {
@@ -251,7 +269,7 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
             if (w.id === id) return { ...w, zIndex: topZIndex + 1 };
             return w;
         }));
-        setTopZIndex(prev => prev + 1);
+        setTopZIndex(prev => (prev > 9000 ? 20 : prev + 1));
     }, [topZIndex]);
 
     const updateWindowPosition = useCallback((id: string, x: number, y: number) => {
@@ -274,47 +292,50 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
         }));
     }, []);
 
+    // OPTIMIZED: Pisahkan logic async untuk menghindari memory leaks
+    const saveWindowSizeAsync = useCallback(async (id: string, width: number, height: number) => {
+        try {
+            // Fetch current preferences from server
+            const res = await fetch('/api/about');
+            const currentData = await res.json();
+            const currentPrefs = currentData?.windowPreferences || {};
+
+            // Merge new dimensions
+            const newPrefs = {
+                ...currentPrefs,
+                [id]: { ...(currentPrefs[id] || {}), width, height }
+            };
+
+            // Save back with credentials (admin cookie sent automatically)
+            const saveRes = await fetch('/api/about', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // Important: sends cookies for auth
+                body: JSON.stringify({ windowPreferences: newPrefs })
+            });
+
+            if (saveRes.ok) {
+                            // Window size saved successfully
+                        } else if (saveRes.status !== 401 && saveRes.status !== 403) {
+                            // Only log real errors, ignore auth errors for visitors
+                            console.error('Failed to save window size:', saveRes.status, await saveRes.text());
+                        }
+        } catch (error) {
+            console.error("Failed to save window size:", error instanceof Error ? error.message : error);
+        }
+    }, []);
+
     const handleWindowResizeEnd = useCallback((id: string, width: number, height: number) => {
         // Access latest state via setWindows callback to check isPinned
         setWindows(prev => {
             const win = prev.find(w => w.id === id);
             if (win?.isPinned) {
                 // Save via authenticated API call (admin only - cookies sent automatically)
-                (async () => {
-                    try {
-                        // Fetch current preferences from server
-                        const res = await fetch('/api/about');
-                        const currentData = await res.json();
-                        const currentPrefs = currentData?.windowPreferences || {};
-
-                        // Merge new dimensions
-                        const newPrefs = {
-                            ...currentPrefs,
-                            [id]: { ...(currentPrefs[id] || {}), width, height }
-                        };
-
-                        // Save back with credentials (admin cookie sent automatically)
-                        const saveRes = await fetch('/api/about', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            credentials: 'include', // Important: sends cookies for auth
-                            body: JSON.stringify({ windowPreferences: newPrefs })
-                        });
-
-                        if (saveRes.ok) {
-                            console.log('Window size saved to server:', { id, width, height });
-                        } else if (saveRes.status !== 401 && saveRes.status !== 403) {
-                            // Only log real errors, ignore auth errors for visitors
-                            console.error('Failed to save window size:', saveRes.status, await saveRes.text());
-                        }
-                    } catch (e) {
-                        console.error("Failed to save window size:", e);
-                    }
-                })();
+                saveWindowSizeAsync(id, width, height);
             }
             return prev; // No state change, just side effect
         });
-    }, []);
+    }, [saveWindowSizeAsync]);
 
     const togglePin = useCallback((id: string) => {
         setWindows(prev => prev.map(w => {

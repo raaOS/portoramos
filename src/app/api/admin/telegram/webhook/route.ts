@@ -1,8 +1,11 @@
-
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getTelegramConfig } from '@/lib/telegram';
+import { checkAdminAuth } from '@/lib/auth';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+    if (!checkAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     try {
         const { url } = await request.json(); // The public URL of the Vercel deployment
         const { botToken } = await getTelegramConfig();
@@ -30,7 +33,10 @@ export async function POST(request: Request) {
     }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
+    if (!checkAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     try {
         const { botToken } = await getTelegramConfig();
         if (!botToken) return NextResponse.json({ error: 'No token' }, { status: 400 });
@@ -44,7 +50,10 @@ export async function DELETE(request: Request) {
     }
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+    if (!checkAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     // Check webhook info
     try {
         const { botToken } = await getTelegramConfig();

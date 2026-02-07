@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, useMotionValue } from "framer-motion";
 import Image from "next/image";
 
 interface DesktopIconProps {
@@ -14,11 +14,12 @@ interface DesktopIconProps {
     size?: "small" | "medium" | "large";
     aspectRatio?: number;
     children?: React.ReactNode;
-    priority?: boolean; // For LCP optimization
+    priority?: boolean;
     isMobile?: boolean;
+    onPositionChange?: (id: string, x: number, y: number) => void;
 }
 
-export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false, isMobile = false }: DesktopIconProps) {
+export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false, isMobile = false, onPositionChange }: DesktopIconProps) {
     const [mediaError, setMediaError] = useState(false);
     const [hovering, setHovering] = useState(false);
 
@@ -26,6 +27,16 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
     useEffect(() => {
         setMediaError(false);
     }, [imageUrl, videoUrl]);
+
+    // Motion Values for smooth coordinate handling (avoids jump on drag end)
+    const iconX = useMotionValue(x);
+    const iconY = useMotionValue(y);
+
+    // Sync MotionValues with props when parent updates them (e.g. initial load or reset)
+    useEffect(() => {
+        iconX.set(x);
+        iconY.set(y);
+    }, [x, y, iconX, iconY]);
 
     const baseHeight = {
         small: isMobile ? 58 : 64, // ~10% smaller
@@ -41,11 +52,17 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
 
     const handleDragEnd = () => {
         setTimeout(() => setIsDragging(false), 50); // Small delay to prevent click firing immediately after drag
-    };
 
-    // Poster is critical for layout stability and visual fallback
-    // If we have a videoUrl but no imageUrl, we might rely on the video poster, but better to have explicit image.
-    // In our Utils, we generated a poster URL.
+        if (onPositionChange) {
+            // Because we are using useMotionValue mapped to x/y style, 
+            // the .get() value IS the absolute position relative to the nearest relative parent (Desktop container)
+            // provided that left/top are 0 (which they are in our style prop below)
+            const newX = iconX.get();
+            const newY = iconY.get();
+
+            onPositionChange(id, newX, newY);
+        }
+    };
 
     return (
         <motion.div
@@ -59,9 +76,14 @@ export default function DesktopIcon({ label, icon, imageUrl, videoUrl, onClick, 
                     onClick();
                 }
             }}
-            // Using CSS transforms instead of framer-motion scale to avoid CLS
-            dragTransition={{ power: 0, timeConstant: 200 }}
-            style={{ position: "absolute", left: x, top: y }}
+            // Use motion values for position instead of left/top to prevent "fighting" between Drag transform and React state
+            style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                x: iconX,
+                y: iconY
+            }}
             className={`flex flex-col items-center gap-3 w-auto group cursor-pointer pointer-events-auto transition-transform duration-150 ${!isMobile ? 'hover:scale-110 active:scale-95' : ''}`}
             onMouseEnter={() => !isMobile && setHovering(true)}
             onMouseLeave={() => !isMobile && setHovering(false)}

@@ -20,9 +20,10 @@ export async function generateStaticParams() {
 // Allow new pages to be generated on demand
 export const dynamicParams = true;
 
-// [STICKY NOTE] REVALIDATE = 60
-// Jika ada update konten, halaman akan diperbarui di server setiap 60 detik.
-export const revalidate = 60;
+// [STICKY NOTE] REVALIDATE = 3600 (1 Hour)
+// Jika ada update konten, halaman akan diperbarui di server setiap 1 jam.
+// Akan tetapi saat admin klik save, revalidateTag akan otomatis menghapus cache ini.
+export const revalidate = 3600;
 
 export default async function ProjectPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;

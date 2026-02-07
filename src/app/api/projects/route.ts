@@ -18,14 +18,6 @@ interface CommentsData {
   comments: Record<string, any[]>;
 }
 
-// Simple In-Memory Cache
-let cache: {
-  data: any;
-  lastUpdated: string | null;
-  timestamp: number;
-} | null = null;
-const CACHE_TTL = 60 * 1000; // 60 seconds
-
 // GET - Read all projects
 export async function GET(request: NextRequest) {
   try {
@@ -33,34 +25,14 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || undefined;
     const fresh = searchParams.get('fresh') === 'true';
 
-    // [STICKY NOTE] SERVER-SIDE CACHING
-    // Agar server tidak jebol saat ribuan user akses bersamaan.
-    // Kita simpan data projects di Memory (RAM) selama 60 detik.
-    // Jadi user ke-2 sampai ke-1000 akan dapat data dari Cache (sangat cepat), bukan baca file lagi.
-    if (!fresh && !status && cache && (Date.now() - cache.timestamp < CACHE_TTL)) {
-      return NextResponse.json({
-        projects: cache.data,
-        lastUpdated: cache.lastUpdated
-      });
-    }
-
     const { projects, lastUpdated } = await projectService.getProjects(status, fresh);
-
-    // Update cache if this is a standard request (no status filter)
-    if (!status) {
-      cache = {
-        data: projects,
-        lastUpdated,
-        timestamp: Date.now()
-      };
-    }
 
     return NextResponse.json({
       projects,
       lastUpdated,
     });
   } catch (error) {
-    console.error('Error loading projects:', error);
+    // Silently handle projects loading errors
     return NextResponse.json(
       { error: 'Failed to load projects' },
       { status: 500 }
@@ -189,7 +161,7 @@ export async function POST(request: NextRequest) {
       }
 
     } catch (commentError) {
-      console.error('Failed to auto-generate comments:', commentError);
+      // Silently handle comment generation errors
       // We continue even if comment generation fails
     }
 
@@ -214,7 +186,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    console.error('Error creating project:', error);
+    // Silently handle project creation errors
     return NextResponse.json(
       { error: 'Failed to create project' },
       { status: 500 }
@@ -261,7 +233,7 @@ async function finalizeMedia(
     // Return relative path
     return `/assets/${subDir}/${newFilename}`;
   } catch (e) {
-    console.error('Finalize Media Error:', e);
+    // Silently handle media finalization errors
     return url;
   }
 }

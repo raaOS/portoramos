@@ -153,16 +153,16 @@ export default function AdminProjectsClient() {
           body: JSON.stringify({ action: 'reorder', ids: newItems.map(p => p.id) })
         }).then(async res => {
           if (res.ok) {
-            success('Order updated');
+            success('Urutan diperbarui');
           } else {
             const data = await res.json().catch(() => ({}));
-            const errorMessage = data.error || 'Failed to update order';
+            const errorMessage = data.error || 'Gagal memperbarui urutan';
             console.error('[Reorder Error]', errorMessage);
             showError(errorMessage);
           }
         }).catch((e) => {
           console.error('[Reorder Network Error]', e);
-          showError('Failed to update order (Network)');
+          showError('Gagal memperbarui urutan (Jaringan)');
         });
 
         return newItems;
@@ -248,7 +248,7 @@ export default function AdminProjectsClient() {
     setGithubConfig(config);
     setShowSettings(false);
     verifyConnection(config);
-    success('GitHub settings saved!');
+    success('Konfigurasi GitHub disimpan!');
   };
 
 
@@ -267,7 +267,7 @@ export default function AdminProjectsClient() {
       if (!res.ok) throw new Error(data.error || 'Msg failed');
 
       setDeployStatus('synced');
-      success('Synced to GitHub & Triggered Vercel!');
+      success('Sinkronisasi ke GitHub berhasil & Triggered Vercel!');
 
       // Stop loading state
       setTimeout(() => {
@@ -357,7 +357,7 @@ export default function AdminProjectsClient() {
         projects: [...(old?.projects || []), newItem.project]
       }));
       queryClient.invalidateQueries({ queryKey: ['projects', 'published'] }); // Immediate sync for local
-      success('Project created');
+      success('Project berhasil dibuat');
       setShowCreateForm(false);
       // Determine what to sync
       const freshData = queryClient.getQueryData(['projects', 'admin']) as any;
@@ -427,7 +427,7 @@ export default function AdminProjectsClient() {
         projects: old.projects.filter((p: Project) => p.id !== id)
       }));
       queryClient.invalidateQueries({ queryKey: ['projects', 'published'] }); // Immediate sync for local
-      success('Project deleted');
+      success('Project dihapus');
       const freshData = queryClient.getQueryData(['projects', 'admin']) as any;
       if (freshData?.projects) triggerGithubSync(freshData.projects, true);
     },
@@ -533,7 +533,7 @@ export default function AdminProjectsClient() {
               }
             whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
-            Projects
+            Project
           </button>
           <button
             onClick={() => setActiveTab('gallery')}
@@ -543,7 +543,7 @@ export default function AdminProjectsClient() {
               }
             whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
-            About Gallery
+            Gallery About
           </button>
         </nav>
       </div>
@@ -557,17 +557,17 @@ export default function AdminProjectsClient() {
               deployStatus === 'synced' ? (
                 <div className="h-10 px-4 flex items-center text-sm text-green-600 bg-white rounded-lg border border-green-200 font-medium whitespace-nowrap select-none shadow-sm">
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Synced
+                  Tersinkron
                 </div>
               ) : deployStatus === 'failed' ? (
                 <div className="h-10 px-4 flex items-center text-sm text-red-600 bg-white rounded-lg border border-red-200 font-medium whitespace-nowrap select-none">
                   <AlertCircle className="w-4 h-4 mr-2" />
-                  Sync Failed
+                  Gagal Sinkron
                 </div>
               ) : (
                 <div className="h-10 px-4 flex items-center text-sm text-violet-600 bg-white rounded-lg border border-violet-200 whitespace-nowrap select-none">
                   <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                  Processing...
+                  Memproses...
                 </div>
               )
             ) : (
@@ -576,19 +576,19 @@ export default function AdminProjectsClient() {
                   deployStatus === 'synced' ? (
                     <div className="h-10 px-4 flex items-center text-sm text-green-700 bg-white rounded-lg border border-green-200 whitespace-nowrap select-none font-medium">
                       <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
-                      Deployed to GitHub
+                      Tersimpan di GitHub
                     </div>
                   ) : (
                     <div className="h-10 px-4 flex items-center text-sm text-green-600 bg-white rounded-lg border border-green-200 whitespace-nowrap select-none">
                       <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                      GitHub Connected
+                      GitHub Terhubung
                     </div>
                   )
                 ) : null}
                 {connectionStatus === 'checking' && (
                   <div className="h-10 px-4 flex items-center text-sm text-yellow-600 bg-white rounded-lg border border-yellow-200 whitespace-nowrap select-none">
                     <Loader2 className="animate-spin w-3 h-3 mr-2" />
-                    Checking...
+                    Mengecek...
                   </div>
                 )}
                 {connectionStatus === 'error' && (
@@ -607,7 +607,7 @@ export default function AdminProjectsClient() {
             {selectedProjectIds.size > 0 ? (
               <div className="flex-1 h-10 flex items-center gap-2 bg-white px-4 rounded-lg border border-violet-200 animate-in fade-in slide-in-from-top-1 overflow-hidden select-none">
                 <span className="text-sm font-bold text-violet-600 whitespace-nowrap mr-2">
-                  {selectedProjectIds.size} Selected
+                  {selectedProjectIds.size} Terpilih
                 </span>
                 <div className="h-4 w-px bg-violet-100 mx-1 flex-shrink-0" />
 
@@ -618,7 +618,7 @@ export default function AdminProjectsClient() {
                     className="flex items-center px-3 py-1 text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors whitespace-nowrap"
                   >
                     <Eye className="w-4 h-4 mr-1.5" />
-                    Publish
+                    Tayangkan
                   </button>
                   <button
                     onClick={() => handleBulkUpdate('draft')}
@@ -626,7 +626,7 @@ export default function AdminProjectsClient() {
                     className="flex items-center px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors whitespace-nowrap"
                   >
                     <EyeOff className="w-4 h-4 mr-1.5" />
-                    Draft
+                    Simpan Draft
                   </button>
                   <button
                     onClick={() => handleBulkUpdate('delete')}
@@ -634,7 +634,7 @@ export default function AdminProjectsClient() {
                     className="flex items-center px-3 py-1 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors whitespace-nowrap"
                   >
                     <Trash2 className="w-4 h-4 mr-1.5" />
-                    Delete
+                    Hapus
                   </button>
                 </div>
 
@@ -652,7 +652,7 @@ export default function AdminProjectsClient() {
                   ? 'bg-violet-600 border-violet-600 text-white' // Active: Solid
                   : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600' // Inactive: Clean outline, no shadow
                   }`}
-                title="Select All"
+                title="Pilih Semua"
               >
                 <CheckCircle2 className={`h-5 w-5 ${selectedProjectIds.size > 0 && selectedProjectIds.size === orderedProjects.length ? 'text-white' : ''}`} />
               </button>
@@ -660,7 +660,7 @@ export default function AdminProjectsClient() {
               <button
                 onClick={() => setShowSecurityModal(true)}
                 className="h-10 w-10 inline-flex items-center justify-center border text-sm font-medium rounded-lg focus:outline-none transition-all bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600 flex-shrink-0"
-                title="Moderation Settings"
+                title="Pengaturan Moderasi"
               >
                 <Shield className="h-5 w-5" />
               </button>
@@ -669,7 +669,7 @@ export default function AdminProjectsClient() {
                 onClick={() => setShowSettings(true)}
                 className={`h-10 w-10 inline-flex items-center justify-center border text-sm font-medium rounded-lg focus:outline-none transition-all flex-shrink-0 ${!githubConfig || connectionStatus === 'error' ? 'bg-white text-amber-500 border-amber-200 hover:border-amber-300' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600'
                   }`}
-                title="GitHub Settings"
+                title="Pengaturan GitHub"
               >
                 <Settings className={`h-5 w-5 ${(!githubConfig || connectionStatus === 'error') ? 'animate-pulse' : ''}`} />
               </button>
@@ -679,7 +679,7 @@ export default function AdminProjectsClient() {
                 className="h-10 inline-flex items-center justify-center px-6 border border-transparent text-sm font-bold rounded-lg text-white bg-violet-600 hover:bg-violet-700 focus:outline-none transition-all flex-shrink-0 whitespace-nowrap"
               >
                 <Plus className="-ml-1 mr-2 h-5 w-5" />
-                Add Project
+                Tambah Project
               </button>
               <button
                 onClick={() => {
@@ -716,8 +716,8 @@ export default function AdminProjectsClient() {
             </div>
           ) : projects.length === 0 ? (
             <div className="text-center py-20 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-              <p className="text-gray-500 text-lg mb-2">No projects found</p>
-              <p className="text-gray-400 text-sm">Create your first project to get started</p>
+              <p className="text-gray-500 text-lg mb-2">Project tidak ditemukan</p>
+              <p className="text-gray-400 text-sm">Buat project pertama Anda untuk memulai</p>
             </div>
           ) : (
             <>
@@ -778,7 +778,7 @@ export default function AdminProjectsClient() {
                                       ? 'text-green-600 bg-green-50 hover:bg-green-100'
                                       : 'text-gray-600 hover:text-green-600 hover:bg-green-50'
                                       }`}
-                                    title="Manage Comments"
+                                    title="Kelola Komentar"
                                   >
                                     <MessageCircle className="w-4 h-4" />
                                     {(commentCounts[project.slug] || 0) > 0 && (
@@ -788,10 +788,10 @@ export default function AdminProjectsClient() {
                                   <button onClick={() => setEditingProject(project)} className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-violet-600 hover:bg-violet-50 transition-colors" title="Edit Project">
                                     <Pencil className="w-4 h-4" />
                                   </button>
-                                  <button onClick={() => handleDuplicateProject(project)} className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Duplicate Project">
+                                  <button onClick={() => handleDuplicateProject(project)} className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Duplikasi Project">
                                     <Copy className="w-4 h-4" />
                                   </button>
-                                  <button onClick={() => handleDeleteProject(project.id)} className="inline-flex items-center justify-center p-2 rounded-lg text-red-500 bg-red-50 hover:bg-red-100 border border-red-100 transition-colors ml-1" title="Delete Project">
+                                  <button onClick={() => handleDeleteProject(project.id)} className="inline-flex items-center justify-center p-2 rounded-lg text-red-500 bg-red-50 hover:bg-red-100 border border-red-100 transition-colors ml-1" title="Hapus Project">
                                     <Trash2 className="w-4 h-4" />
                                   </button>
                                 </div>

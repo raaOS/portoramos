@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkAdminAuth } from '@/lib/auth';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
 import { githubService } from '@/lib/github';
 import path from 'path';
@@ -62,8 +63,11 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json(data);
     } catch (error) {
-        console.error('Error loading comments:', error);
-        return NextResponse.json({ comments: {} });
+        console.error('Error loading comments:', error instanceof Error ? error.message : error);
+        return NextResponse.json({ 
+            error: 'Failed to load comments',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
     }
 }
 
@@ -86,7 +90,7 @@ async function getBannedWords(): Promise<string[]> {
 
         return settings?.bannedWords || [];
     } catch (e) {
-        console.warn('Failed to load banned words, using fallback', e);
+        console.warn('Failed to load banned words, using fallback', e instanceof Error ? e.message : e);
         return ['judol', 'slot']; // Fallback minimum
     }
 }
@@ -183,9 +187,12 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, comments: comments });
     } catch (error) {
-        console.error('Error saving comments:', error);
+        console.error('Error saving comments:', error instanceof Error ? error.message : error);
         return NextResponse.json(
-            { error: 'Failed to save comments' },
+            { 
+                error: 'Failed to save comments',
+                details: error instanceof Error ? error.message : 'Unknown error'
+            },
             { status: 500 }
         );
     }
@@ -202,6 +209,10 @@ function removeCommentById(comments: Comment[], idToDelete: string): Comment[] {
 }
 
 export async function DELETE(request: NextRequest) {
+    if (!checkAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const body = await request.json();
         const { slug, commentId } = body;
@@ -233,9 +244,12 @@ export async function DELETE(request: NextRequest) {
 
         return NextResponse.json({ success: true, comments: updatedComments });
     } catch (error) {
-        console.error('Error deleting comment:', error);
+        console.error('Error deleting comment:', error instanceof Error ? error.message : error);
         return NextResponse.json(
-            { error: 'Failed to delete comment' },
+            { 
+                error: 'Failed to delete comment',
+                details: error instanceof Error ? error.message : 'Unknown error'
+            },
             { status: 500 }
         );
     }

@@ -14,6 +14,7 @@ import ProjectBasicInfo from './ProjectBasicInfo';
 import ProjectMediaUpload from './ProjectMediaUpload';
 import ProjectNarrative from './ProjectNarrative';
 import ProjectAIHelper from './ProjectAIHelper';
+import ProjectGalleryManager from './ProjectGalleryManager';
 
 interface ProjectFormProps {
     project?: Project;
@@ -29,7 +30,9 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
         errors,
         isDetectingDimensions,
         updateField,
-
+        addGalleryItem,
+        removeGalleryItem,
+        toggleGalleryItem,
         getSubmitData
     } = useProjectForm(project);
 
@@ -53,7 +56,7 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
             await onSubmit(submitData);
         } catch (error) {
             console.error("Upload failed", error);
-            alert("Failed to upload cover image. Please try again.");
+            alert("Gagal mengunggah gambar sampul. Silakan coba lagi.");
         } finally {
             setIsUploading(false);
         }
@@ -76,10 +79,10 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
             actions={
                 <div className="flex space-x-3">
                     <AdminButton variant="secondary" onClick={onCancel} disabled={isUploading}>
-                        Cancel
+                        Batal
                     </AdminButton>
                     <AdminButton onClick={handleButtonClick} disabled={isUploading}>
-                        {isUploading ? 'Uploading...' : (project ? 'Update Project' : 'Create Project')}
+                        {isUploading ? 'Mengunggah...' : (project ? 'Perbarui Project' : 'Buat Project')}
                     </AdminButton>
                 </div>
             }
@@ -90,7 +93,7 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                     <div className="bg-gray-50 p-4 rounded-none border border-gray-100">
                         <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
                             <span className="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
-                            Visual Assets
+                            Aset Visual
                         </h3>
 
                         <ProjectMediaUpload
@@ -102,10 +105,20 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                             onFileChange={setPendingCoverFile}
                         />
                     </div>
+
+                    <div className="bg-gray-50 p-4 rounded-none border border-gray-100">
+                        <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 bg-violet-500 rounded-full"></span>
+                            Gallery Project
+                        </h3>
+                        <ProjectGalleryManager
+                            formData={formData}
+                            addGalleryItem={addGalleryItem}
+                            removeGalleryItem={removeGalleryItem}
+                            toggleGalleryItem={toggleGalleryItem}
+                        />
+                    </div>
                 </div>
-
-                {/* ProjectGalleryManager Removed */}
-
 
                 {/* Right Column: Metadata & AI */}
                 <div className="space-y-6">

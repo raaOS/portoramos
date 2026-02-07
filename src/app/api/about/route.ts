@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const data = await aboutService.getAboutData();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error loading about data:', error);
+    // Silently handle about data loading errors
     return NextResponse.json({ error: 'Failed to load about data' }, { status: 500 });
   }
 }
@@ -31,7 +31,7 @@ export async function PUT(request: NextRequest) {
       data: updatedData
     });
   } catch (error) {
-    console.error('Error updating about data:', error);
+    // Silently handle about data update errors
     return NextResponse.json({ error: 'Failed to update about data' }, { status: 500 });
   }
 }

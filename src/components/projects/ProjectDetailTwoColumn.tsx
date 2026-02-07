@@ -232,7 +232,7 @@ export default function ProjectDetailTwoColumn({
                                     <div className="mt-6 sm:mt-8 space-y-6 sm:space-y-8">
                                         {project.description && (
                                             <div>
-                                                <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-gray-500">About this Project</h3>
+                                                <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-gray-500">Tentang Project Ini</h3>
                                                 <ReadMoreDescription
                                                     text={project.description}
                                                     maxLines={6}
@@ -278,26 +278,26 @@ export default function ProjectDetailTwoColumn({
                                             <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:gap-x-12 gap-y-6 py-5 border-y border-gray-100 dark:border-gray-800">
                                                 {project.role && (
                                                     <div>
-                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Role</h3>
+                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Peran</h3>
                                                         <p className="text-sm font-medium text-gray-900 dark:text-white">{project.role}</p>
                                                     </div>
                                                 )}
                                                 {project.timeline && (
                                                     <div>
-                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Timeline</h3>
+                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Waktu</h3>
                                                         <p className="text-sm font-medium text-gray-900 dark:text-white">{project.timeline}</p>
                                                     </div>
                                                 )}
                                                 {project.team && (
                                                     <div>
-                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Team</h3>
+                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Tim</h3>
                                                         <p className="text-sm font-medium text-gray-900 dark:text-white">{project.team}</p>
                                                     </div>
                                                 )}
                                                 <div>
-                                                    <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Type</h3>
+                                                    <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Tipe</h3>
                                                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {project.type === 'commercial' ? 'Commercial Project' : 'Visual Art'}
+                                                        {project.type === 'commercial' ? 'Project Komersial' : 'Karya Visual'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -382,7 +382,7 @@ export default function ProjectDetailTwoColumn({
                                             {/* Context (Commercial/General) */}
                                             {project.narrative.context && (
                                                 <div className="mb-8 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
-                                                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Context</h3>
+                                                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Konteks</h3>
                                                     <p className="text-sm text-gray-600 dark:text-gray-300 italic">"{project.narrative.context}"</p>
                                                 </div>
                                             )}
@@ -392,7 +392,7 @@ export default function ProjectDetailTwoColumn({
                                                 {(project.narrative.challenge || project.narrative.concept) && (
                                                     <div>
                                                         <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-red-500">
-                                                            {project.narrative.concept ? 'The Concept' : 'The Challenge'}
+                                                            {project.narrative.concept ? 'Konsep' : 'Tantangan'}
                                                         </h3>
                                                         <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
                                                             {project.narrative.challenge || project.narrative.concept}
@@ -404,7 +404,7 @@ export default function ProjectDetailTwoColumn({
                                                 {(project.narrative.solution || project.narrative.process) && (
                                                     <div>
                                                         <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-blue-500">
-                                                            {project.narrative.process ? 'The Process' : 'The Solution'}
+                                                            {project.narrative.process ? 'Proses' : 'Solusi'}
                                                         </h3>
                                                         <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
                                                             {project.narrative.solution || project.narrative.process}
@@ -416,7 +416,7 @@ export default function ProjectDetailTwoColumn({
                                                 {(project.narrative.impact || project.narrative.result || project.narrative.detail) && (
                                                     <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 p-5 rounded-xl border border-green-100 dark:border-green-900/30">
                                                         <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-green-600 dark:text-green-400">
-                                                            {project.narrative.impact ? 'The Impact' : (project.narrative.detail ? 'The Detail' : 'The Result')}
+                                                            {project.narrative.impact ? 'Dampak' : (project.narrative.detail ? 'Detail' : 'Hasil')}
                                                         </h3>
                                                         <p className={`leading-relaxed ${project.narrative.impact ? 'text-base sm:text-lg font-medium text-gray-900 dark:text-white' : 'text-sm sm:text-base text-gray-800 dark:text-gray-200'}`}>
                                                             {project.narrative.impact || project.narrative.result || project.narrative.detail}
@@ -428,6 +428,40 @@ export default function ProjectDetailTwoColumn({
                                     )}
 
 
+                                    {/* GALLERY SECTION */}
+                                    {gallery && gallery.length > 0 && (
+                                        <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
+                                            <h3 className="text-xs font-bold uppercase tracking-wider mb-6 text-gray-500">Project Gallery</h3>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                {gallery.map((item, idx) => (
+                                                    <div
+                                                        key={`gallery-item-${idx}`}
+                                                        className={`rounded-xl overflow-hidden shadow-md border border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-900/40 relative group ${item.width && item.height && item.width < item.height ? 'row-span-2' : ''
+                                                            }`}
+                                                        style={{
+                                                            aspectRatio: item.width && item.height ? `${item.width}/${item.height}` : undefined,
+                                                            minHeight: (!item.width || !item.height) ? '300px' : 'auto'
+                                                        }}
+                                                    >
+                                                        <Media
+                                                            kind={item.kind}
+                                                            src={item.src}
+                                                            poster={item.poster}
+                                                            alt={`${project.title} gallery ${idx + 1}`}
+                                                            width={1200}
+                                                            height={item.height && item.width ? Math.round(1200 / (item.width / item.height)) : 800}
+                                                            lazy={true}
+                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                            autoplay={true}
+                                                            muted={true}
+                                                            loop={true}
+                                                            playsInline={true}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -498,7 +532,7 @@ export default function ProjectDetailTwoColumn({
                         {isLoading && (
                             <div className="text-center py-6 sm:py-8 opacity-50">
                                 <div className="inline-block animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-gray-400"></div>
-                                <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>
+                                <p className="text-xs mt-2 text-gray-500">Memuat lebih banyak project...</p>
                             </div>
                         )}
                     </>

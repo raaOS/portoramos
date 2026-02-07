@@ -96,6 +96,7 @@ export interface DesktopPreferences {
   visibleProjectIds: string[];
   maxIcons: number;
   layout: 'grid' | 'scattered';
+  iconPositions?: Record<string, { x: number; y: number }>; // Saved positions
 }
 
 export interface DockItemConfig {

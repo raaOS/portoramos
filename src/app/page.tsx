@@ -5,8 +5,8 @@ import { allProjectsAsync } from '@/lib/projects'
 import { baseSEO } from '@/lib/seo'
 import { resolveCover } from '@/lib/images'
 
-// Cache server-rendered home page (ISR: Revalidate every 60 seconds)
-export const revalidate = 60
+// Cache server-rendered home page (ISR: Revalidate every 1 hour)
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: baseSEO.title,

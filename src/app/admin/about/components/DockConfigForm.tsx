@@ -57,7 +57,6 @@ export default function DockConfigForm({ data, onUpdate }: DockConfigFormProps) 
         if (currentString === lastSavedData.current) return; // No changes
 
         const handler = setTimeout(() => {
-            console.log('Auto-saving dock config...');
             onUpdate(preferences);
             lastSavedData.current = currentString;
         }, 1000); // 1 second debounce

@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { checkAdminAuth } from '@/lib/auth';
 
 const execAsync = promisify(exec);
 
-export async function POST() {
+export async function POST(request: any) {
+    if (!checkAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         // In production (Vercel), we don't have access to git CLI, nor should we commit local files.
         // Data updates are handled directly via githubService (API).
@@ -21,31 +26,34 @@ export async function POST() {
         // 2. Commit
         try {
             await execAsync('git commit -m "Content Update: new assets/data from Admin Panel"');
-        } catch (e: any) {
+        } catch (error) {
             // If nothing to commit (e.g. only untracked files were added, or no changes), standard git commit behavior might throw if clean.
             // If "nothing to commit" is in stdout, we can proceed. If it's a real error, rethrow.
-            if (e.stdout && !e.stdout.includes('nothing to commit')) {
-                console.log("Nothing to commit, creating empty commit to force trigger or just skipping?");
+            if (error instanceof Error && error.message.includes('nothing to commit')) {
+                // Nothing to commit, skipping commit
                 // If nothing to commit, we can still try to push if there are committed changes not pushed.
                 // Or just ignore.
+            } else {
+                throw error; // Re-throw real errors
             }
         }
 
         // 3. Push
         const { stdout, stderr } = await execAsync('git push');
-        console.log('Push Output:', stdout);
-        if (stderr) console.error('Push Stderr:', stderr); // git push writes to stderr sometimes even on success
+        // Silently handle git push output
+        // git push writes to stderr sometimes even on success
 
         return NextResponse.json({
             success: true,
             message: 'Synced to GitHub & Triggered Vercel!'
         });
 
-    } catch (error: any) {
-        console.error('Git Sync Error:', error);
+    } catch (error) {
+        // Silently handle git sync errors
         return NextResponse.json({
             success: false,
-            error: error.message || 'Sync failed'
+            error: error instanceof Error ? error.message : 'Sync failed',
+            details: error instanceof Error ? error.stack : 'Unknown error'
         }, { status: 500 });
     }
 }

@@ -46,7 +46,6 @@ export default function DebugTrimmerPage() {
                         <VideoTrimmer
                             file={file}
                             onConfirm={(s, e, c) => {
-                                console.log('Confirmed:', { s, e, c });
                                 alert(`Confirmed: ${s} - ${e}`);
                             }}
                             onCancel={() => setFile(null)}

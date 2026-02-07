@@ -1,12 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import { generateViralMetrics, generateGenZComments } from '@/lib/magic';
+import { checkAdminAuth } from '@/lib/auth';
 
 const projectsFile = path.join(process.cwd(), 'src/data/projects.json');
 const commentsFile = path.join(process.cwd(), 'src/data/comments.json');
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+    if (!checkAdminAuth(req)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const { projectId, slug } = await req.json();
 
@@ -42,8 +47,11 @@ export async function POST(req: Request) {
             commentCount: newComments.length
         });
 
-    } catch (e: any) {
-        console.error('Magic Complete Error:', e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+    } catch (error) {
+        console.error('Magic Complete Error:', error instanceof Error ? error.message : error);
+        return NextResponse.json({ 
+            error: error instanceof Error ? error.message : 'Failed to complete magic operation',
+            details: error instanceof Error ? error.stack : 'Unknown error'
+        }, { status: 500 });
     }
 }

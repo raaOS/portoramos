@@ -22,7 +22,7 @@ export default function ProjectGalleryManager({ formData, addGalleryItem, remove
     return (
         <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-                Gallery Items
+                Item Gallery (Gambar/Video)
             </label>
 
             <div className="flex gap-2 mb-3">
@@ -30,7 +30,7 @@ export default function ProjectGalleryManager({ formData, addGalleryItem, remove
                     type="text"
                     value={newGalleryUrl}
                     onChange={(e) => setNewGalleryUrl(e.target.value)}
-                    placeholder="Add image or video URL..."
+                    placeholder="Tambah URL gambar atau video..."
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -44,7 +44,7 @@ export default function ProjectGalleryManager({ formData, addGalleryItem, remove
                     onClick={handleAddUrl}
                     className="px-3 py-2 bg-gray-100 text-gray-700 rounded-none hover:bg-gray-200 text-sm font-medium"
                 >
-                    Add
+                    Tambah
                 </button>
             </div>
 
@@ -67,7 +67,7 @@ export default function ProjectGalleryManager({ formData, addGalleryItem, remove
                                 type="button"
                                 onClick={() => toggleGalleryItem(index)}
                                 className={`p-1 rounded-none ${item.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}
-                                title={item.isActive ? "Active" : "Hidden"}
+                                title={item.isActive ? "Aktif" : "Sembunyi"}
                             >
                                 <CheckCircle2 className="w-4 h-4 ml-auto" />
                             </button>
@@ -75,7 +75,7 @@ export default function ProjectGalleryManager({ formData, addGalleryItem, remove
                                 type="button"
                                 onClick={() => removeGalleryItem(index)}
                                 className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-none"
-                                title="Remove"
+                                title="Hapus"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -83,7 +83,7 @@ export default function ProjectGalleryManager({ formData, addGalleryItem, remove
                     </div>
                 ))}
                 {formData.galleryItems.length === 0 && (
-                    <p className="text-center text-sm text-gray-400 py-4 italic">No gallery items yet</p>
+                    <p className="text-center text-sm text-gray-400 py-4 italic">Belum ada item gallery</p>
                 )}
             </div>
         </div>

@@ -4,29 +4,68 @@ import { sendTelegramAlert } from '@/lib/telegram';
 
 export const dynamic = 'force-dynamic';
 
-type Attempt = { count: number; resetTime: number; blockedUntil?: number };
+// RATE LIMITING CONFIGURATION - STRICT!
+const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 menit
+const MAX_ATTEMPTS_PER_WINDOW = 3; // Hanya 3 percobaan
+const BLOCK_DURATION = 30 * 60 * 1000; // 30 menit block
 
-const LOGIN_WINDOW_MS = 10 * 60 * 1000; // 10 menit
-const LOGIN_MAX_ATTEMPTS = 5;
-const LOGIN_BLOCK_MS = 10 * 60 * 1000; // 10 menit blokir setelah gagal maksimal
-
-const globalForLogin = globalThis as typeof globalThis & {
-  __adminLoginAttempts?: Map<string, Attempt>;
+// Global rate limiting storage
+const globalRateLimit = globalThis as typeof globalThis & {
+  __rateLimitStore?: Map<string, { attempts: number; resetAt: number; blockedUntil?: number }>;
 };
 
-const loginAttempts =
-  globalForLogin.__adminLoginAttempts ||
-  new Map<string, Attempt>();
+const rateLimitStore = globalRateLimit.__rateLimitStore || new Map();
+globalRateLimit.__rateLimitStore = rateLimitStore;
 
-globalForLogin.__adminLoginAttempts = loginAttempts;
-
-function getClientKey(request: NextRequest) {
+function getClientIdentifier(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
-  // Safely access .ip which might be missing in some Next.js type definitions but exists at runtime
-  const requestIp = (request as unknown as { ip?: string }).ip;
-  const ip = forwarded ? forwarded.split(',')[0] : requestIp || 'unknown';
-  const ua = request.headers.get('user-agent') || 'unknown';
-  return `${ip}|${ua}`;
+  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+  return `${ip}|${userAgent}`;
+}
+
+function checkRateLimit(clientId: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const record = rateLimitStore.get(clientId);
+
+  // Jika sedang diblock
+  if (record?.blockedUntil && now < record.blockedUntil) {
+    return { 
+      allowed: false, 
+      retryAfter: Math.ceil((record.blockedUntil - now) / 1000) 
+    };
+  }
+
+  // Reset jika window sudah lewat
+  if (!record || now > record.resetAt) {
+    rateLimitStore.set(clientId, {
+      attempts: 0,
+      resetAt: now + RATE_LIMIT_WINDOW
+    });
+    return { allowed: true };
+  }
+
+  // Block jika sudah max attempts
+  if (record.attempts >= MAX_ATTEMPTS_PER_WINDOW) {
+    record.blockedUntil = now + BLOCK_DURATION;
+    return { 
+      allowed: false, 
+      retryAfter: Math.ceil(BLOCK_DURATION / 1000) 
+    };
+  }
+
+  return { allowed: true };
+}
+
+function incrementAttempts(clientId: string): void {
+  const record = rateLimitStore.get(clientId);
+  if (record) {
+    record.attempts += 1;
+  }
+}
+
+function clearAttempts(clientId: string): void {
+  rateLimitStore.delete(clientId);
 }
 
 function parseUserAgent(ua: string) {
@@ -42,192 +81,146 @@ function parseUserAgent(ua: string) {
   else if (ua.includes('Firefox')) browser = 'Firefox';
   else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
   else if (ua.includes('Edge')) browser = 'Edge';
-  else if (ua.includes('Opera') || ua.includes('OPR')) browser = 'Opera';
 
   return `${os} • ${browser}`;
 }
 
-async function getGeoInfo(ipRaw: string) {
-  // Extract pure IP if it contains port or UA (using pipe separator)
-  const ip = ipRaw.split('|')[0];
-
+async function getGeoInfo(ip: string) {
   if (ip === '::1' || ip === '127.0.0.1' || ip === 'localhost') {
-    return { location: 'Localhost', mapLink: '', isp: 'Local System' };
+    return { location: 'Localhost', isp: 'Local System' };
   }
 
   try {
-    const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,city,isp,lat,lon`);
+    const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,isp`);
     const data = await res.json();
 
     if (data.status === 'success') {
-      const mapLink = `https://www.google.com/maps?q=${data.lat},${data.lon}`;
       return {
         location: `${data.city}, ${data.country}`,
-        isp: data.isp,
-        mapLink: mapLink
+        isp: data.isp
       };
     }
-  } catch (e) {
-    console.error('Geo lookup failed:', e);
+  } catch {
+    // Silent fail untuk geo lookup
   }
-  return { location: 'Unknown', mapLink: '', isp: 'Unknown' };
-}
-
-function checkLoginAllowed(key: string) {
-  const now = Date.now();
-  const record = loginAttempts.get(key);
-
-  if (record?.blockedUntil && now < record.blockedUntil) {
-    return {
-      allowed: false,
-      retryAfter: Math.ceil((record.blockedUntil - now) / 1000),
-    };
-  }
-
-  if (!record || now > record.resetTime) {
-    loginAttempts.set(key, { count: 0, resetTime: now + LOGIN_WINDOW_MS });
-    return { allowed: true };
-  }
-
-  if (record.count >= LOGIN_MAX_ATTEMPTS) {
-    record.blockedUntil = now + LOGIN_BLOCK_MS;
-    return {
-      allowed: false,
-      retryAfter: Math.ceil(LOGIN_BLOCK_MS / 1000),
-    };
-  }
-
-  return { allowed: true };
-}
-
-function registerLoginFailure(key: string) {
-  const now = Date.now();
-  const record = loginAttempts.get(key) || {
-    count: 0,
-    resetTime: now + LOGIN_WINDOW_MS,
-  };
-  record.count += 1;
-
-  if (record.count >= LOGIN_MAX_ATTEMPTS) {
-    record.blockedUntil = now + LOGIN_BLOCK_MS;
-  }
-
-  loginAttempts.set(key, record);
-}
-
-function registerLoginSuccess(key: string) {
-  loginAttempts.delete(key);
+  
+  return { location: 'Unknown', isp: 'Unknown' };
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const clientKey = getClientKey(request);
-    const loginAllowed = checkLoginAllowed(clientKey);
+    const clientId = getClientIdentifier(request);
+    const rateLimit = checkRateLimit(clientId);
 
-    if (!loginAllowed.allowed) {
-      // Enrich with Geo Data
-      const geo = await getGeoInfo(clientKey);
-      const uaStr = clientKey.split('|')[1] || '';
-      const device = parseUserAgent(uaStr);
-      const message =
-        `⚠️ **BLOCKED ATTEMPT** (Rate Limit)
+    if (!rateLimit.allowed) {
+      const [ip, userAgent] = clientId.split('|');
+      const geo = await getGeoInfo(ip);
+      const device = parseUserAgent(userAgent);
+
+      await sendTelegramAlert(
+        `🚫 **BLOCKED BY RATE LIMIT**
 
 💻 **Device:** ${device}
 🌐 **Network:** ${geo.isp}
-📡 **IP:** \`${clientKey.split('|')[0]}\`
+📡 **IP:** \`${ip}\`
 📍 **Location:** ${geo.location}
+⏰ **Retry After:** ${rateLimit.retryAfter} seconds
 
-🕒 ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
-
-      // Fire and forget is risky in Serverless if not awaited, but for blocking it's ok if occasional miss. 
-      // Better to await to ensure specific block notice goes out.
-      await sendTelegramAlert(message, {
-        buttons: geo.mapLink ? [[{ text: '📍 Lihat Peta Lokasi', url: geo.mapLink }]] : undefined
-      });
+🕒 ${new Date().toLocaleString('id-ID')}`,
+        { priority: 'high' }
+      );
 
       return NextResponse.json(
-        { error: 'Too many attempts. Please try again later.' },
-        {
+        { 
+          error: 'Too many login attempts. Please try again later.',
+          retryAfter: rateLimit.retryAfter
+        },
+        { 
           status: 429,
-          headers: loginAllowed.retryAfter
-            ? { 'Retry-After': loginAllowed.retryAfter.toString() }
-            : undefined,
+          headers: { 'Retry-After': String(rateLimit.retryAfter) }
         }
       );
     }
 
-    const { password, lat, lng, accuracy } = await request.json();
+    const { password, lat, lng } = await request.json();
 
-    if (!password) {
-      return NextResponse.json({ error: 'Password required' }, { status: 400 });
+    // VALIDASI INPUT STRICT
+    if (!password || typeof password !== 'string') {
+      return NextResponse.json(
+        { error: 'Password is required' }, 
+        { status: 400 }
+      );
     }
 
-    if (!verifyAdminPassword(password)) {
-      const geo = await getGeoInfo(clientKey);
-      const uaStr = clientKey.split('|')[1] || '';
-      const device = parseUserAgent(uaStr);
+    if (password.length < 8) {
+      incrementAttempts(clientId);
+      return NextResponse.json(
+        { error: 'Invalid password' }, 
+        { status: 401 }
+      );
+    }
 
-      // Use GPS if available, otherwise IP location
-      const locationName = (lat && lng) ? `GPS Coordinates` : geo.location;
+    // VERIFY PASSWORD
+    let isValid = false;
+    try {
+      isValid = verifyAdminPassword(password);
+    } catch (error) {
+      // Jika auth config error, jangan expose ke user
+      return NextResponse.json(
+        { error: 'Authentication service error' }, 
+        { status: 500 }
+      );
+    }
 
-      // Map Link: Prefer GPS High Precision
-      let topMapLink = geo.mapLink;
-      if (lat && lng) {
-        topMapLink = `https://www.google.com/maps?q=${lat},${lng}`;
-      }
+    if (!isValid) {
+      incrementAttempts(clientId);
 
-      const accStr = accuracy ? ` (±${Math.round(accuracy)}m)` : '';
-      const sourceInfo = (lat && lng) ? `(GPS Akurat${accStr})` : `(Estimasi IP)`;
+      const [ip, userAgent] = clientId.split('|');
+      const geo = await getGeoInfo(ip);
+      const device = parseUserAgent(userAgent);
 
-      const message =
-        `🚫 **LOGIN FAILED** (Salah Password)
+      const remainingAttempts = MAX_ATTEMPTS_PER_WINDOW - (rateLimitStore.get(clientId)?.attempts || 0);
+
+      await sendTelegramAlert(
+        `❌ **LOGIN FAILED**
 
 💻 **Device:** ${device}
 🌐 **Network:** ${geo.isp}
-📡 **IP:** \`${clientKey.split('|')[0]}\`
-📍 **Location:** ${locationName} ${sourceInfo}
+📡 **IP:** \`${ip}\`
+📍 **Location:** ${geo.location}
+🎯 **Remaining Attempts:** ${remainingAttempts}
 
-🕒 ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
+🕒 ${new Date().toLocaleString('id-ID')}`,
+        { priority: remainingAttempts <= 1 ? 'high' : 'normal' }
+      );
 
-      await sendTelegramAlert(message, {
-        buttons: topMapLink ? [[{ text: '📍 Lihat Peta Lokasi', url: topMapLink }]] : undefined
-      });
-
-      registerLoginFailure(clientKey);
-      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+      return NextResponse.json(
+        { 
+          error: 'Invalid password',
+          remainingAttempts: Math.max(0, remainingAttempts)
+        }, 
+        { status: 401 }
+      );
     }
 
-    registerLoginSuccess(clientKey);
+    // SUCCESS - Clear attempts & issue token
+    clearAttempts(clientId);
 
-    const geo = await getGeoInfo(clientKey);
+    const [ip, userAgent] = clientId.split('|');
+    const geo = await getGeoInfo(ip);
+    const device = parseUserAgent(userAgent);
 
-    // GPS Logic for Success
-    const uaStr = clientKey.split('|')[1] || '';
-    const device = parseUserAgent(uaStr);
-
-    // GPS Logic for Success
-    const locationName = (lat && lng) ? `GPS Coordinates` : geo.location;
-    let topMapLink = geo.mapLink;
-    if (lat && lng) {
-      topMapLink = `https://www.google.com/maps?q=${lat},${lng}`;
-    }
-
-    const accStr = accuracy ? ` (±${Math.round(accuracy)}m)` : '';
-    const sourceInfo = (lat && lng) ? `(GPS Akurat${accStr})` : `(Estimasi IP)`;
-
-    const successMessage =
+    await sendTelegramAlert(
       `✅ **LOGIN SUCCESS**
 
 💻 **Device:** ${device}
 🌐 **Network:** ${geo.isp}
-📡 **IP:** \`${clientKey.split('|')[0]}\`
-📍 **Location:** ${locationName} ${sourceInfo}
+📡 **IP:** \`${ip}\`
+📍 **Location:** ${geo.location}
 
-🕒 ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
-
-    await sendTelegramAlert(successMessage, {
-      buttons: topMapLink ? [[{ text: '📍 Lihat Peta Lokasi', url: topMapLink }]] : undefined
-    });
+🕒 ${new Date().toLocaleString('id-ID')}`,
+      { priority: 'normal' }
+    );
 
     const token = getAdminToken();
 
@@ -236,22 +229,23 @@ export async function POST(request: NextRequest) {
       message: 'Login successful',
     });
 
-    const cookieOptions = {
+    // SECURE COOKIE SETTINGS
+    response.cookies.set('admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict' as const,
-      maxAge: 24 * 60 * 60, // 24 hours
+      sameSite: 'strict',
+      maxAge: 2 * 60 * 60, // 2 jam (sesuai JWT expiry)
       path: '/',
-    };
-
-    // Canonical cookie name for admin session
-    response.cookies.set('admin_token', token, cookieOptions);
-    // Backwards compatibility with old name (can be removed later)
-    response.cookies.set('admin-token', token, cookieOptions);
+      domain: process.env.NODE_ENV === 'production' ? '.ramos.my.id' : undefined
+    });
 
     return response;
+
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ error: 'Login failed' }, { status: 500 });
+    // Generic error - jangan expose detail
+    return NextResponse.json(
+      { error: 'Authentication failed' }, 
+      { status: 500 }
+    );
   }
 }

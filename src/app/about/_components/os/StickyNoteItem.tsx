@@ -260,38 +260,49 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                     </div>
                 )}
 
-                {/* Header: Color Picker & Date (Double click to collapse) */}
+                {/* Header: Color Picker & Close (Double click to collapse) */}
                 <div
-                    className="absolute top-0 left-0 right-0 h-[60px] px-4 z-20 flex items-end justify-between pb-3 border-b border-black/5 cursor-grab active:cursor-grabbing"
+                    className="absolute top-0 left-0 right-0 h-[50px] pl-3 pr-1 z-20 flex items-center justify-between border-b border-black/5 cursor-grab active:cursor-grabbing"
                     onPointerDown={(e) => {
                         if (isAdmin && !note.isPinned) dragControls.start(e);
                     }}
                     onDoubleClick={() => {
-                        // Collapse only, no text sync needed as it is read only
                         onUpdate(note.id, {
                             isCollapsed: !note.isCollapsed
                         });
                     }}
                 >
-                    {/* Color Picker - Public Access (Local Only) */}
-                    <div className="flex gap-2" onPointerDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                    {/* Color Picker */}
+                    <div className="flex gap-2" onPointerDown={(e) => e.stopPropagation()}>
                         {COLORS.map(c => (
                             <button
                                 key={c}
                                 onClick={() => onUpdate(note.id, { color: c })}
-                                className={`w-[14px] h-[14px] rounded-full border border-black/10 hover:scale-125 transition-transform flex items-center justify-center`}
-                                style={{ backgroundColor: c, minWidth: '14px', minHeight: '14px', width: '14px', height: '14px', padding: 0 }}
-                                title="Set Color"
+                                className="rounded-full border border-black/10 hover:scale-125 transition-transform flex items-center justify-center shrink-0"
+                                style={{
+                                    backgroundColor: c,
+                                    width: '12px',
+                                    height: '12px',
+                                    minWidth: '12px',
+                                    minHeight: '12px'
+                                }}
+                                title="Set Warna"
                             >
-                                {note.color === c && <Check size={10} className="text-black/60" strokeWidth={3} />}
+                                {note.color === c && <Check size={8} className="text-black/60" strokeWidth={3} />}
                             </button>
                         ))}
                     </div>
 
-                    {/* Date */}
-                    <span className="text-xs font-semibold text-gray-500/60 select-none">
-                        {formatDate(note.date)}
-                    </span>
+                    {/* Close Button */}
+                    <div onPointerDown={(e) => e.stopPropagation()}>
+                        <button
+                            onClick={() => onDelete(note.id)}
+                            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-black transition-colors"
+                            title="Tutup"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Main Content Area (Hidden if collapsed) */}
@@ -368,16 +379,22 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                             onDragStart={(e) => e.preventDefault()}
                             onPaste={handlePaste}
                             className={`w-full h-full bg-transparent border-none outline-none resize-none text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto ${isEditing && isAdmin ? 'cursor-text' : 'cursor-default'}`}
+                            data-lenis-prevent
                             style={{
                                 minHeight: '100px',
                                 outline: 'none',
                                 fontFamily: DEFAULT_FONT,
                                 fontSize: `${note.fontSize || 18}px`,
-                                pointerEvents: isEditing && isAdmin ? 'auto' : 'none'
+                                pointerEvents: 'auto'
                             }}
                         />
 
-                        {/* Lists and layout styling is now handled globally in globals.css to prevent re-render flickering */}
+                        {/* Date Display (Inside content, bottom right) */}
+                        <div className="absolute bottom-2 right-4 pointer-events-none select-none">
+                            <span className="text-[10px] font-bold text-gray-500/30 uppercase tracking-widest italic">
+                                {formatDate(note.date)}
+                            </span>
+                        </div>
                     </div>
                 )}
 

@@ -57,15 +57,15 @@ export default function AdminLayout({
   };
 
   const navItems = [
-    { href: '/admin/projects', label: 'Projects', icon: FolderKanban, color: 'text-purple-600', bg: 'hover:bg-purple-50' },
-    { href: '/admin/about', label: 'About', icon: Info, color: 'text-blue-600', bg: 'hover:bg-blue-50' },
-    { href: '/admin/experience', label: 'Experience', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
-    { href: '/admin/contact', label: 'Contact', icon: PhoneCall, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
-    { href: '/admin/testimonial', label: 'Testimonials', icon: Quote, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
-    { href: '/admin/leads', label: 'Leads', icon: Users, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
-    { href: '/admin/telegram', label: 'Telegram Bot', icon: Send, color: 'text-sky-500', bg: 'hover:bg-sky-50' },
+    { href: '/admin/projects', label: 'Project', icon: FolderKanban, color: 'text-purple-600', bg: 'hover:bg-purple-50' },
+    { href: '/admin/about', label: 'Tentang', icon: Info, color: 'text-blue-600', bg: 'hover:bg-blue-50' },
+    { href: '/admin/experience', label: 'Pengalaman', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
+    { href: '/admin/contact', label: 'Kontak', icon: PhoneCall, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
+    { href: '/admin/testimonial', label: 'Testimoni', icon: Quote, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
+    { href: '/admin/leads', label: 'Pesan Masuk', icon: Users, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
+    { href: '/admin/telegram', label: 'Bot Telegram', icon: Send, color: 'text-sky-500', bg: 'hover:bg-sky-50' },
 
-    { href: '/admin/analytics', label: 'Analytics', icon: Activity as any, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
+    { href: '/admin/analytics', label: 'Statistik', icon: Activity as any, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
   ];
 
   const isActive = (href: string) => {

@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkAdminAuth } from "@/lib/auth";
 import { join } from "path";
 import { mkdir, writeFile, readdir, stat, rm } from "fs/promises";
 import { existsSync } from "fs";
 
 export async function POST(request: NextRequest) {
+    if (!checkAdminAuth(request)) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     try {
         const formData = await request.formData();
         const files = formData.getAll("files") as File[];
@@ -42,9 +46,12 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error) {
-        console.error("Sequence upload error:", error);
+        console.error("Sequence upload error:", error instanceof Error ? error.message : error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { 
+                error: "Internal Server Error",
+                details: error instanceof Error ? error.message : 'Unknown error'
+            },
             { status: 500 }
         );
     }
@@ -91,6 +98,9 @@ export async function GET() {
 
 // DELETE: Remove a sequence folder
 export async function DELETE(request: NextRequest) {
+    if (!checkAdminAuth(request)) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     try {
         const { searchParams } = new URL(request.url);
         const folderName = searchParams.get("name");
@@ -121,6 +131,9 @@ export async function DELETE(request: NextRequest) {
 
 // PATCH: Activate a sequence
 export async function PATCH(request: NextRequest) {
+    if (!checkAdminAuth(request)) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     try {
         const { name } = await request.json();
 

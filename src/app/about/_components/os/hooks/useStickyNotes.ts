@@ -59,8 +59,8 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false) => {
                 } else {
                     setNotes(INITIAL_NOTES);
                 }
-            } catch (e) {
-                console.error("Failed to load notes from server", e);
+            } catch (error) {
+                console.error("Failed to load notes from server", error instanceof Error ? error.message : error);
                 setNotes(INITIAL_NOTES);
             } finally {
                 setHasLoaded(true);
@@ -90,7 +90,7 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false) => {
                     body: JSON.stringify(notes)
                 });
             } catch (error) {
-                console.error("Failed to auto-save notes:", error);
+                console.error("Failed to auto-save notes:", error instanceof Error ? error.message : error);
             }
         };
 
@@ -155,6 +155,7 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false) => {
         deleteNote,
         permanentDeleteNote,
         restoreNote,
-        bringToFrontNote
+        bringToFrontNote,
+        setNotes
     };
 };

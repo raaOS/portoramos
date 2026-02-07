@@ -182,7 +182,7 @@ export const projectService = {
                         projects: updatedProjects,
                         message: `Add project: ${newProject.title} (Dev Auto-Sync)`
                     });
-                    console.log('[ProjectService] Auto-synced to GitHub');
+                    // Auto-synced to GitHub
                 } catch (error) {
                     console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
                 }
@@ -270,7 +270,7 @@ export const projectService = {
                         projects: currentProjects,
                         message: `Update project: ${updatedProject.title} (Dev Auto-Sync)`
                     });
-                    console.log('[ProjectService] Auto-synced to GitHub');
+                    // Auto-synced to GitHub
                 } catch (error) {
                     console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
                 }
@@ -331,7 +331,7 @@ export const projectService = {
                         projects: currentProjects,
                         message: `Delete project ID: ${id} (Dev Auto-Sync)`
                     });
-                    console.log('[ProjectService] Auto-synced to GitHub');
+                    // Auto-synced to GitHub
                 } catch (error) {
                     console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
                 }
@@ -374,7 +374,7 @@ export const projectService = {
             const projectsToDelete = currentProjects.filter(p => updates.ids.includes(p.id));
             if (projectsToDelete.length > 0) {
                 // Perform Cleanup for ALL deleted projects
-                console.log(`[BulkUpdate] Deleting ${projectsToDelete.length} projects. Starting cleanup...`);
+                // Bulk delete starting cleanup
                 // Process in parallel or serial? Serial is safer for API limits.
                 for (const p of projectsToDelete) {
                     await cleanupProjectFiles(p);
@@ -435,7 +435,7 @@ export const projectService = {
                             ? `Reorder projects (Dev Auto-Sync)`
                             : `Bulk update ${updates.ids.length} projects (Dev Auto-Sync)`
                     });
-                    console.log('[ProjectService] Auto-synced to GitHub');
+                    // Auto-synced to GitHub
                 } catch (error) {
                     console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
                 }
@@ -470,7 +470,7 @@ async function cleanupProjectFiles(project: Project) {
 
     if (filesToDelete.length === 0) return;
 
-    console.log(`[ProjectService] Cleaning up ${filesToDelete.length} files for: ${project.slug} (Parallel)`);
+    // Cleaning up files for project (parallel)
 
     // Parallelize deletions to avoid Vercel Timeouts
     const deleteTasks = filesToDelete.map(async (url) => {
@@ -496,7 +496,7 @@ async function cleanupProjectFiles(project: Project) {
                 const localPath = path.join(process.cwd(), repoPath);
                 try {
                     if (fs) await fs.unlink(localPath);
-                    console.log('[ProjectService] Deleted local:', localPath);
+                    // Deleted local file
                 } catch (e) {
                     // Ignore
                 }
@@ -524,7 +524,7 @@ async function cleanupProjectFiles_Serial(project: Project) {
 
     if (filesToDelete.length === 0) return;
 
-    console.log(`[ProjectService] Cleaning up ${filesToDelete.length} files for: ${project.slug}`);
+    // Cleaning up files (serial mode)
 
     for (const url of filesToDelete) {
         try {
@@ -562,7 +562,7 @@ async function cleanupProjectFiles_Serial(project: Project) {
                 const localPath = path.join(process.cwd(), repoPath);
                 try {
                     if (fs) await fs.unlink(localPath);
-                    console.log('[ProjectService] Deleted local:', localPath);
+                    // Deleted local file
                 } catch (e) {
                     // File might be remote-only (if created via AdminFileUpload to GitHub)
                     // In that case, we can't delete it from FS. 

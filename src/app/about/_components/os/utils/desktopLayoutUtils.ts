@@ -1,13 +1,15 @@
 import { Project } from "@/types/projects";
 import { WindowState } from "@/hooks/useWindowManager";
 import { NoteData } from "../StickyNoteItem";
+import { getProxiedUrl } from "@/lib/utils";
+import { DesktopPreferences } from "@/types/about";
 
 export const generateDesktopIcons = (
     windowSize: { width: number; height: number },
     windows: WindowState[],
     notes: NoteData[],
     commercialProjects: Project[],
-    desktopPreferences?: { maxIcons?: number },
+    desktopPreferences?: DesktopPreferences,
     handleGoHome?: () => void
 ) => {
     if (!windowSize.width) return [];
@@ -15,15 +17,7 @@ export const generateDesktopIcons = (
     // 1. Identify "Forbidden Zones" (Obstacles)
     const obstacles: { x: number; y: number; w: number; h: number }[] = [];
 
-    // Add Profile Window ('about') to obstacles to avoid overlap
-    windows.filter((w) => w.id === 'about' && w.isOpen && !w.isMinimized).forEach((w) => {
-        obstacles.push({
-            x: w.initialPosition?.x || 0,
-            y: w.initialPosition?.y || 0,
-            w: (w.width || 900) + 20, // Add buffer
-            h: (w.height || 600) + 20,
-        });
-    });
+    // Windows are NO LONGER obstacles (Windows-style static icons)
 
     // Add sticky notes to obstacles
     notes.filter((n) => !n.isDeleted).forEach((n) => {
@@ -72,12 +66,10 @@ export const generateDesktopIcons = (
         }
     }
 
-    // 3. True Random Slot Assignment (Shuffle logic)
-    // Fisher-Yates shuffle for true randomness
-    for (let i = availableSlots.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [availableSlots[i], availableSlots[j]] = [availableSlots[j], availableSlots[i]];
-    }
+    // 3. Stable Slot Assignment (No Random Shuffle)
+    // We sort available slots by position (top-to-bottom, left-to-right)
+    // but we use item IDs to consistently pick a slot.
+    availableSlots.sort((a, b) => a.y - b.y || a.x - b.x);
 
     let visibleProjects = commercialProjects.filter((p) => p.status !== "draft");
 
@@ -97,27 +89,46 @@ export const generateDesktopIcons = (
     ];
 
     const generatedIcons = desktopItems.map((item: any, index: number) => {
-        const slot =
-            availableSlots.length > 0
-                ? availableSlots.pop()!
+        // 1. Check if we have a saved position for this ID (Admin Saved)
+        const savedPos = desktopPreferences?.iconPositions?.[item.id];
+
+        let slotIndex, slot, finalX, finalY;
+
+        if (savedPos) {
+            // USE SAVED POSITION (Override Grid)
+            finalX = savedPos.x;
+            finalY = savedPos.y;
+        } else {
+            // FALLBACK TO GRID
+            slotIndex = index % Math.max(1, availableSlots.length);
+            slot = availableSlots.length > 0
+                ? availableSlots[slotIndex] // STABLE PICK
                 : {
                     x: windowSize.width - margin - gridX + index * 10,
                     y: windowSize.height - bottomOffset - gridY + index * 10,
                 };
 
-        // Reduce jitter on mobile for cleaner look
-        const jitterRange = isMobile ? 5 : 20;
-        const jitterX = Math.random() * jitterRange - (jitterRange / 2);
-        const jitterY = Math.random() * jitterRange - (jitterRange / 2);
+            // Static jitter based on ID (to avoid moving icons but keep organic look)
+            const getSeededRandom = (id: string) => {
+                let hash = 0;
+                for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+                return (hash % 100) / 100;
+            };
 
-        const finalX = Math.max(
-            10,
-            Math.min(windowSize.width - 80, slot.x + jitterX)
-        );
-        const finalY = Math.max(
-            topOffset,
-            Math.min(windowSize.height - bottomOffset, slot.y + jitterY)
-        );
+            const seed = getSeededRandom(item.id);
+            const jitterRange = isMobile ? 5 : 20;
+            const jitterX = seed * jitterRange - (jitterRange / 2);
+            const jitterY = (1 - seed) * jitterRange - (jitterRange / 2);
+
+            finalX = Math.max(
+                10,
+                Math.min(windowSize.width - 80, slot.x + jitterX)
+            );
+            finalY = Math.max(
+                topOffset,
+                Math.min(windowSize.height - bottomOffset, slot.y + jitterY)
+            );
+        }
 
         if (item.type === "folder") {
             return {
@@ -151,15 +162,15 @@ export const generateDesktopIcons = (
 
         // Generate poster URL for video (swap .mp4/.webm to .jpg for faster load)
         const posterUrl = videoUrl
-            ? videoUrl.replace(/\.(mp4|webm|mov)$/i, '.jpg')
-            : project.cover;
+            ? getProxiedUrl(videoUrl.replace(/\.(mp4|webm|mov)$/i, '.jpg'))
+            : getProxiedUrl(project.cover);
 
         return {
             id: project.id,
             type: "project",
             data: project,
             label: project.title,
-            videoUrl: videoUrl,
+            videoUrl: videoUrl ? getProxiedUrl(videoUrl) : undefined,
             imageUrl: posterUrl, // Use poster image for faster initial load
             aspectRatio: aspectRatio,
             x: finalX,

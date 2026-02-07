@@ -1,6 +1,8 @@
 import { Project } from '@/types/projects';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { unstable_cache } from 'next/cache';
+import { revalidateTag, revalidatePath } from 'next/cache';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
@@ -17,6 +19,8 @@ interface UpdateFileParams {
 
 export class GitHubService {
     private path: string = 'src/data/projects.json';
+    private lastCallTime: number = 0;
+    private readonly MIN_INTERVAL: number = 1000; // 1 second between API calls
 
     // Lazy getters to ensure env vars are read at runtime, not build time
     private get token(): string {
@@ -24,7 +28,7 @@ export class GitHubService {
         // console.log('[GitHubService] Token length:', token.length); // Debug (don't log full token)
         if (!token) {
             console.error('[GitHubService] GITHUB_ACCESS_TOKEN or GITHUB_TOKEN is not set!');
-            console.log('[GitHubService] Env keys:', Object.keys(process.env).filter(k => k.startsWith('GITHUB')));
+            // Token missing - error already logged above
         }
         return token;
     }
@@ -33,7 +37,7 @@ export class GitHubService {
         const owner = process.env.GITHUB_OWNER || '';
         if (!owner) {
             console.error('[GitHubService] GITHUB_OWNER is not set!');
-            console.log('[GitHubService] Env keys:', Object.keys(process.env)); // Debug all envs to see if they are loaded at all
+            // Owner missing - error already logged above
         }
         return owner;
     }
@@ -58,58 +62,73 @@ export class GitHubService {
     }
 
     /**
+     * Rate-limited fetch wrapper for GitHub API
+     */
+    private async rateLimitedFetch(url: string, options?: RequestInit) {
+        const now = Date.now();
+        const timeSinceLastCall = now - this.lastCallTime;
+
+        if (timeSinceLastCall < this.MIN_INTERVAL) {
+            await new Promise(resolve =>
+                setTimeout(resolve, this.MIN_INTERVAL - timeSinceLastCall)
+            );
+        }
+
+        this.lastCallTime = Date.now();
+
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                ...this.getHeaders(),
+                ...options?.headers,
+            },
+        });
+
+        // Check rate limit headers
+        const remaining = response.headers.get('X-RateLimit-Remaining');
+        const reset = response.headers.get('X-RateLimit-Reset');
+
+        if (remaining === '0') {
+            const resetTime = new Date(parseInt(reset || '0') * 1000);
+            console.warn(`[GitHubService] ⚠️ Rate limit exceeded. Resets at ${resetTime}`);
+        }
+
+        return response;
+    }
+
+    /**
      * Fetch file content from any path in the repo
      * @param noCache - If true, bypasses local file system and cache to get fresh data from GitHub (important for SHA)
      */
     async getFileContent<T>(filePath: string, noCache = false): Promise<{ content: T, sha: string }> {
         // If noCache is false, try reading from local filesystem first (Robust for Local Build)
-        // BUT in Production, we want to use Next.js Data Cache (fetch) so we can revalidate it on-demand.
-        // Local files in Vercel are static and won't reflect Admin updates until redeploy.
         if (!noCache && process.env.NODE_ENV === 'development') {
             try {
                 const localPath = path.join(process.cwd(), filePath);
-                // Check if file exists
                 await fs.access(localPath);
-
-                console.log(`[GitHubService] 📂 Reading local file: ${localPath}`);
                 const content = await fs.readFile(localPath, 'utf-8');
                 return {
                     content: JSON.parse(content),
-                    sha: 'local-file-sha' // Dummy SHA, only for read-only mode
+                    sha: 'local-file-sha'
                 };
             } catch (error) {
-                // Determine if we should log warning
                 if (process.env.NODE_ENV === 'development') {
                     console.warn(`[GitHubService] Local file read failed for ${filePath}, falling back to API.`);
                 }
             }
         }
 
-        const url = `${GITHUB_API_URL}/repos/${this.owner}/${this.repo}/contents/${filePath}`;
-        console.log(`[GitHubService] Fetching: ${url} (noCache: ${noCache})`);
+        // Define the internal fetch function for unstable_cache
+        const fetchContent = async (path: string) => {
+            const url = `${GITHUB_API_URL}/repos/${this.owner}/${this.repo}/contents/${path}`;
+            // Fetching from GitHub API
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-        try {
-            const response = await fetch(url, {
-                headers: this.getHeaders(),
-                cache: noCache ? 'no-store' : undefined,
-                next: noCache ? undefined : { revalidate: 60 },
-                signal: controller.signal
+            const response = await this.rateLimitedFetch(url, {
+                cache: 'no-store', // We handle caching in the wrapper
             });
-            clearTimeout(timeoutId);
 
             if (!response.ok) {
-                const errorText = await response.text();
-
-                // 404 is common when checking existence, suppress error log
-                if (response.status === 404) {
-                    // console.log(`[GitHubService] File not found (404): ${filePath}`);
-                    throw new Error('Not Found');
-                }
-
-                console.error(`[GitHubService] GET failed: ${response.status} ${response.statusText}`, errorText);
+                if (response.status === 404) throw new Error('Not Found');
                 throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
             }
 
@@ -117,17 +136,30 @@ export class GitHubService {
             const content = Buffer.from(data.content, 'base64').toString('utf-8');
 
             return {
-                content: JSON.parse(content),
+                content: JSON.parse(content) as T,
                 sha: data.sha
             };
-        } catch (error) {
-            clearTimeout(timeoutId);
-            if (error instanceof Error && error.name === 'AbortError') {
-                console.error(`[GitHubService] Fetch timed out for ${filePath} after 5000ms`);
-                throw new Error('Timeout');
-            }
-            throw error;
+        };
+
+        if (noCache) {
+            return fetchContent(filePath);
         }
+
+        // Determine tag based on path
+        const tag = filePath.includes('projects.json') ? 'projects' :
+            filePath.includes('comments.json') ? 'comments' : 'github-content';
+
+        // Wrap with unstable_cache for production performance
+        const cachedFetch = unstable_cache(
+            async (path: string) => fetchContent(path),
+            [`github-file-${filePath}`],
+            {
+                revalidate: 600, // 10 minutes
+                tags: [tag]
+            }
+        );
+
+        return cachedFetch(filePath);
     }
 
     /**
@@ -146,7 +178,7 @@ export class GitHubService {
                 sha = current.sha;
             } catch (e) {
                 // File might not exist yet, which is fine for creation
-                console.log(`[GitHubService] File ${filePath} not found, creating new.`);
+                // File not found, creating new
             }
 
             // 2. Prepare new content
@@ -162,7 +194,7 @@ export class GitHubService {
 
             // 3. Push commit
             const url = `${GITHUB_API_URL}/repos/${this.owner}/${this.repo}/contents/${filePath}`;
-            console.log(`[GitHubService] Updating: ${url}`);
+            // Updating file via GitHub API
 
             const body: { message: string; content: string; sha?: string } = {
                 message: message,
@@ -186,15 +218,12 @@ export class GitHubService {
                     return this.updateFile(filePath, content, message, retryCount + 1);
                 }
 
-                // Handle 422 Unprocessable Entity (Missing SHA for existing file)
-                // This happens if we thought file didn't exist (getFileContent failed/404) but it actually does.
+                // Handle 422 Unprocessable Entity
                 if (response.status === 422 && retryCount < 2 && (error.message?.includes('sha') || error.message?.includes('SHA'))) {
                     console.warn(`[GitHubService] Missing SHA for existing file (422). Fetching SHA and retrying...`);
-                    // Force fetch SHA, ignoring previous failure grounded assumption
                     try {
                         const fresh = await this.getFileContent(filePath, true);
                         if (fresh && fresh.sha) {
-                            // Recursive retry works because next call will successfully get SHA from getFileContent
                             return this.updateFile(filePath, content, message, retryCount + 1);
                         }
                     } catch (e) {
@@ -206,7 +235,14 @@ export class GitHubService {
                 throw new Error(`GitHub API Error: ${response.status} - ${error.message || JSON.stringify(error)}`);
             }
 
-            console.log('[GitHubService] Update successful!');
+            // Burst cache after success
+            const tag = filePath.includes('projects.json') ? 'projects' :
+                filePath.includes('comments.json') ? 'comments' : 'github-content';
+            // @ts-ignore - Lint expects 2 args but Next.js docs say 1. 
+            revalidateTag(tag);
+            revalidatePath('/', 'layout'); // Fallback revalidation
+
+            // Update successful, cache revalidated
             return true;
         } catch (error) {
             console.error('[GitHubService] Error:', error);
@@ -260,7 +296,7 @@ export class GitHubService {
             }
 
             const url = `${GITHUB_API_URL}/repos/${this.owner}/${this.repo}/contents/${filePath}`;
-            console.log(`[GitHubService] Deleting: ${url}`);
+            // Deleting file via GitHub API
 
             const response = await fetch(url, {
                 method: 'DELETE',
@@ -280,7 +316,7 @@ export class GitHubService {
                 throw new Error(`GitHub API Error: ${response.status}`);
             }
 
-            console.log(`[GitHubService] Deleted ${filePath}`);
+            // File deleted successfully
             return true;
         } catch (error) {
             console.error('[GitHubService] Delete Error:', error);

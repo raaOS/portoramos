@@ -1,9 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import { getTelegramConfig } from '@/lib/telegram';
+import { checkAdminAuth } from '@/lib/auth';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+    if (!checkAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const tokenToCheck = searchParams.get('token');
 
@@ -23,7 +28,11 @@ export async function GET(request: Request) {
     return NextResponse.json(config);
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+    if (!checkAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const body = await request.json();
         const { botToken, chatId } = body;
@@ -45,7 +54,10 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error('Failed to save telegram config:', error);
-        return NextResponse.json({ error: 'Failed to save configuration' }, { status: 500 });
+        console.error('Failed to save telegram config:', error instanceof Error ? error.message : error);
+        return NextResponse.json({ 
+            error: 'Failed to save configuration',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
     }
 }

@@ -5,37 +5,21 @@
 import type { Project, GalleryItem } from '@/types/projects';
 
 /**
- * Convert raw.githubusercontent.com URLs to JSDelivr CDN for faster loading
- * Format: https://raw.githubusercontent.com/OWNER/REPO/BRANCH/PATH
- *      → https://cdn.jsdelivr.net/gh/OWNER/REPO@BRANCH/PATH
+ * Media proxy helper. 
+ * We now prefer using our local /api/media proxy for better caching control
+ * and to avoid cross-domain issues with videos.
+ * The Media component already uses getProxiedUrl which handles this.
  */
-function convertToJSDelivr(url: string): string {
-  const trimmed = (url || '').trim();
-  if (!trimmed) return trimmed;
-
-  // Check if it's a GitHub raw URL
-  if (trimmed.includes('raw.githubusercontent.com')) {
-    const match = trimmed.match(/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)/);
-    if (match) {
-      const [, owner, repo, branch, path] = match;
-      // JSDelivr CDN format
-      return `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/${path}`;
-    }
-  }
-
-  return trimmed;
-}
-
 function toProxy(u: string) {
-  return convertToJSDelivr(u);
+  return u;
 }
 
 export function toImageProxy(u: string) {
-  return convertToJSDelivr(u);
+  return u;
 }
 
 export function toMediaProxy(u: string) {
-  return convertToJSDelivr(u);
+  return u;
 }
 
 export function isVideoLink(u: string): boolean {

@@ -53,8 +53,15 @@ const BlurText = ({
     const elements = animateBy === 'words' ? text.split(' ') : text.split('');
     const [inView, setInView] = useState(false);
     const ref = useRef<HTMLParagraphElement>(null);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+
         const element = ref.current;
         if (!element) return;
         const observer = new IntersectionObserver(
@@ -67,9 +74,12 @@ const BlurText = ({
             { threshold, rootMargin }
         );
         observer.observe(element);
-        return () => observer.disconnect();
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', checkMobile);
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [threshold, rootMargin]);
+    }, [threshold, rootMargin, isMobile]);
 
     const defaultFrom = useMemo(
         () =>
@@ -95,6 +105,14 @@ const BlurText = ({
     const stepCount = toSnapshots.length + 1;
     const totalDuration = stepDuration * (stepCount - 1);
     const times = Array.from({ length: stepCount }, (_, i) => (stepCount === 1 ? 0 : i / (stepCount - 1)));
+
+    if (isMobile) {
+        return (
+            <p ref={ref} className={className} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+                {text}
+            </p>
+        );
+    }
 
     return (
         <p ref={ref} className={className} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>

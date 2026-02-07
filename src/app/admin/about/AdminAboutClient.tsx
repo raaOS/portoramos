@@ -43,8 +43,8 @@ export default function AdminAboutClient() {
       const response = await fetch('/api/about');
       const data = await response.json();
       setAboutData(data);
-    } catch (err) {
-      setError('Failed to load about data');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to load about data');
       showError('Failed to load about content.');
     } finally {
       setLoading(false);
@@ -61,7 +61,7 @@ export default function AdminAboutClient() {
       const response = await fetch('/api/running-text');
       const data = await response.json();
       setRunningTexts(data.items || []);
-    } catch (err) {
+    } catch (error) {
       showError('Failed to load running text.');
     } finally {
       setRunningTextsLoading(false);
@@ -168,14 +168,14 @@ export default function AdminAboutClient() {
     // ... same loading ...
     return (
       <AdminLayout
-        title="About Content Management"
-        subtitle="Manage About page sections"
+        title="Kelola Konten About"
+        subtitle="Kelola bagian halaman About"
         breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'About' }]}
         titleIcon={<Info className="h-5 w-5" aria-hidden />}
         titleAccent="bg-blue-50 text-blue-700"
       >
         <div className="flex items-center justify-center py-10 text-sm text-gray-600">
-          Loading about data...
+          Memuat data about...
         </div>
       </AdminLayout>
     );
@@ -185,14 +185,14 @@ export default function AdminAboutClient() {
     // ... same error ...
     return (
       <AdminLayout
-        title="About Content Management"
-        subtitle="Manage About page sections"
+        title="Kelola Konten About"
+        subtitle="Kelola bagian halaman About"
         breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'About' }]}
         titleIcon={<Info className="h-5 w-5" aria-hidden />}
         titleAccent="bg-blue-50 text-blue-700"
       >
         <div className="flex items-center justify-center py-8">
-          <p className="text-red-600">Failed to load about data</p>
+          <p className="text-red-600">Gagal memuat data about</p>
         </div>
       </AdminLayout>
     );
@@ -201,7 +201,7 @@ export default function AdminAboutClient() {
   return (
 
     <AdminLayout
-      title="About Content Management"
+      title="Kelola Konten About"
     >
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
@@ -224,15 +224,15 @@ export default function AdminAboutClient() {
             >
               {[
 
-                { id: 'professional', name: 'About Me (Finder)' },
+                { id: 'professional', name: 'Tentang Saya (Finder)' },
                 { id: 'softSkills', name: 'Soft Skills' },
                 { id: 'hardSkills', name: 'Hard Skills' },
-                { id: 'philosophy', name: 'Design Philosophy' },
-                { id: 'runningText', name: 'Running Text' },
-                { id: 'desktop', name: 'Desktop Configuration' },
-                { id: 'dock', name: 'Dock System' },
-                { id: 'chat', name: 'Chat Settings' },
-                { id: 'stickyNotes', name: 'Sticky Notes' },
+                { id: 'philosophy', name: 'Filosofi Desain' },
+                { id: 'runningText', name: 'Teks Berjalan' },
+                { id: 'desktop', name: 'Konfigurasi Desktop' },
+                { id: 'dock', name: 'Sistem Dock' },
+                { id: 'chat', name: 'Pengaturan Chat' },
+                { id: 'stickyNotes', name: 'Catatan Tempel' },
               ].map((tab) => (
                 <option key={tab.id} value={tab.id}>
                   {tab.name}
@@ -247,15 +247,15 @@ export default function AdminAboutClient() {
           <nav className="p-3 space-y-1">
             {[
 
-              { id: 'professional', name: 'About Me (Finder)', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+              { id: 'professional', name: 'Tentang Saya (Finder)', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50' },
               { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'bg-amber-50' },
               { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'bg-violet-50' },
-              { id: 'philosophy', name: 'Philosophy', icon: Sparkles, color: 'text-orange-600', bg: 'bg-orange-50' },
-              { id: 'runningText', name: 'Running Text', icon: Type, color: 'text-pink-600', bg: 'bg-pink-50' },
+              { id: 'philosophy', name: 'Filosofi', icon: Sparkles, color: 'text-orange-600', bg: 'bg-orange-50' },
+              { id: 'runningText', name: 'Teks Berjalan', icon: Type, color: 'text-pink-600', bg: 'bg-pink-50' },
               { id: 'desktop', name: 'Desktop & OS', icon: Monitor, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-              { id: 'dock', name: 'Dock System', icon: Layout, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-              { id: 'chat', name: 'Chat Agent', icon: MessageSquare, color: 'text-green-600', bg: 'bg-green-50' },
-              { id: 'stickyNotes', name: 'Sticky Notes', icon: Smile, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+              { id: 'dock', name: 'Sistem Dock', icon: Layout, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+              { id: 'chat', name: 'Pengaturan Chat', icon: MessageSquare, color: 'text-green-600', bg: 'bg-green-50' },
+              { id: 'stickyNotes', name: 'Catatan Tempel', icon: Smile, color: 'text-yellow-600', bg: 'bg-yellow-50' },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -319,10 +319,10 @@ export default function AdminAboutClient() {
               <div className="space-y-8">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                   <h3 className="font-bold text-blue-800 flex items-center gap-2">
-                    <Monitor className="w-5 h-5" /> OS Desktop Configuration
+                    <Monitor className="w-5 h-5" /> Konfigurasi Desktop OS
                   </h3>
                   <p className="text-sm text-blue-600 mt-1">
-                    Start Menu, Desktop Icons, and Window behavior.
+                    Start Menu, Icon Desktop, dan perilaku Window.
                   </p>
                 </div>
                 <WallpaperManager
@@ -425,13 +425,13 @@ function ProfessionalSectionForm({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">About Me & Header Status</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Tentang Saya & Status Header</h3>
         <p className="text-sm text-gray-600 mb-4">Konten ini muncul di window "Finder: About Me" pada halaman About OS.</p>
         <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
 
           {/* Availability Status Section */}
           <div className="bg-white p-4 rounded border border-gray-200">
-            <h4 className="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Availability Status</h4>
+            <h4 className="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Status Ketersediaan</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Status</label>
@@ -446,7 +446,7 @@ function ProfessionalSectionForm({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Status Text</label>
+                <label className="block text-sm font-medium text-gray-700">Teks Status</label>
                 <input
                   type="text"
                   value={formData.availText}
@@ -459,7 +459,7 @@ function ProfessionalSectionForm({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Motto Badge</label>
+              <label className="block text-sm font-medium text-gray-700">Badge Motto</label>
               <input
                 type="text"
                 required
@@ -469,7 +469,7 @@ function ProfessionalSectionForm({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Motto Quote</label>
+              <label className="block text-sm font-medium text-gray-700">Kutipan Motto</label>
               <input
                 type="text"
                 required
@@ -481,7 +481,7 @@ function ProfessionalSectionForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Bio Content</label>
+            <label className="block text-sm font-medium text-gray-700">Konten Bio</label>
             <textarea
               rows={4}
               required
@@ -496,7 +496,7 @@ function ProfessionalSectionForm({
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium shadow-sm"
             >
-              Update Info & Status
+              Perbarui Info & Status
             </button>
           </div>
         </form>
@@ -599,7 +599,7 @@ function SoftSkillsSectionForm({
                   <div className="flex items-center gap-2">
                     <div className="flex-1">
                       <label className="block text-xs font-medium text-gray-500 mb-1">
-                        Skill Name (Text)
+                        Nama Skill (Teks)
                       </label>
                       <input
                         type="text"
@@ -637,7 +637,7 @@ function SoftSkillsSectionForm({
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">
-                      Description
+                      Deskripsi
                     </label>
                     <textarea
                       rows={2}
@@ -667,13 +667,13 @@ function SoftSkillsSectionForm({
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Add New Skill
+              Tambah Skill Baru
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium shadow-sm transition-colors"
             >
-              Update Soft Skills
+              Perbarui Soft Skills
             </button>
           </div>
         </form>

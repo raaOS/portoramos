@@ -33,10 +33,6 @@ export default function WebVitals() {
             const { getCLS, getFID, getFCP, getLCP, getTTFB } = webVitals;
             // Report to console in development, could send to analytics in production
             const reportWebVital: ReportHandler = (metric) => {
-                if (process.env.NODE_ENV === 'development') {
-                    console.log('[Web Vitals]', metric);
-                }
-
                 // Send to analytics endpoint (optional)
                 if (process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT) {
                     fetch(process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT, {
@@ -48,9 +44,8 @@ export default function WebVitals() {
                             value: metric.value,
                             id: metric.id,
                             rating: metric.rating,
-                            timestamp: Date.now(),
                         }),
-                    }).catch(console.error);
+                    }).catch(() => { });
                 }
             };
 
@@ -62,9 +57,6 @@ export default function WebVitals() {
             getTTFB(reportWebVital);
         }).catch(() => {
             // Silently fail if web-vitals is not installed
-            if (process.env.NODE_ENV === 'development') {
-                console.warn('[Web Vitals] Package not installed. Run: npm install web-vitals');
-            }
         });
     }, []);
 

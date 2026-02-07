@@ -4,12 +4,66 @@ import fs from 'fs';
 import { checkAdminAuth } from '@/lib/auth';
 import { githubService } from '@/lib/github';
 
+// RATE LIMITING untuk compress API
+const compressAttempts = new Map<string, { count: number; resetTime: number }>();
+const COMPRESS_RATE_LIMIT_WINDOW = 10 * 60 * 1000; // 10 menit
+const MAX_COMPRESS_ATTEMPTS = 5; // Maksimal 5 kompresi per 10 menit
 
+
+
+function getClientIdentifier(request: NextRequest): string {
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded ? forwarded.split(',')[0].trim() : (request as any).ip || 'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+    return `${ip}-${userAgent}`.slice(0, 200); // Batasi panjang
+}
+
+function checkCompressRateLimit(identifier: string): { allowed: boolean; resetTime?: number } {
+    const now = Date.now();
+    const attemptData = compressAttempts.get(identifier);
+
+    if (!attemptData) {
+        compressAttempts.set(identifier, { count: 1, resetTime: now + COMPRESS_RATE_LIMIT_WINDOW });
+        return { allowed: true };
+    }
+
+    if (now > attemptData.resetTime) {
+        // Reset window baru
+        compressAttempts.set(identifier, { count: 1, resetTime: now + COMPRESS_RATE_LIMIT_WINDOW });
+        return { allowed: true };
+    }
+
+    if (attemptData.count >= MAX_COMPRESS_ATTEMPTS) {
+        return { allowed: false, resetTime: attemptData.resetTime };
+    }
+
+    // Tambah counter
+    attemptData.count++;
+    return { allowed: true };
+}
 
 export async function POST(request: NextRequest) {
     try {
         if (!checkAdminAuth(request)) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // RATE LIMITING
+        const clientId = getClientIdentifier(request);
+        const rateLimit = checkCompressRateLimit(clientId);
+
+        if (!rateLimit.allowed) {
+            const resetDate = new Date(rateLimit.resetTime!);
+            return NextResponse.json({
+                error: 'Too many compression requests',
+                message: `Rate limit exceeded. Try again after ${resetDate.toLocaleTimeString()}`,
+                retryAfter: Math.ceil((rateLimit.resetTime! - Date.now()) / 1000)
+            }, {
+                status: 429,
+                headers: {
+                    'Retry-After': String(Math.ceil((rateLimit.resetTime! - Date.now()) / 1000))
+                }
+            });
         }
 
         const { filePath } = await request.json();
@@ -18,14 +72,32 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No file path provided' }, { status: 400 });
         }
 
-        const cleanPath = filePath.split('?')[0];
-
-        if (!cleanPath.startsWith('/assets/') && !cleanPath.startsWith('assets/')) {
-            return NextResponse.json({ error: 'Only local assets can be compressed' }, { status: 400 });
+        // VALIDASI AMAN - cegah path traversal attack
+        if (filePath.includes('..') || filePath.includes('~') || filePath.includes('//')) {
+            return NextResponse.json({ error: 'Invalid file path - path traversal detected' }, { status: 400 });
         }
+
+        // Normalisasi path - hanya izinkan assets folder
+        const normalizedPath = path.normalize(filePath).replace(/^[\/\\]+/, '');
+
+        if (!normalizedPath.startsWith('assets/')) {
+            return NextResponse.json({ error: 'Only assets folder files can be compressed' }, { status: 400 });
+        }
+
+        // Validasi ekstensi file yang diizinkan
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.tiff', '.gif', '.icns', '.mp4', '.mov', '.webm', '.mkv'];
+        const inputExt = path.extname(normalizedPath).toLowerCase();
+        if (!allowedExtensions.includes(inputExt)) {
+            return NextResponse.json({ error: 'File type not supported for compression' }, { status: 400 });
+        }
+
+        const cleanPath = '/' + normalizedPath;
 
         let relativePath = cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath;
         const isDev = process.env.NODE_ENV === 'development';
+
+        // VALIDASI UKURAN FILE MAKSIMAL (50MB) - cegah DoS
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
         let absolutePath = path.join(process.cwd(), 'public', relativePath);
         let workPath = absolutePath;
@@ -33,12 +105,16 @@ export async function POST(request: NextRequest) {
 
         if (!isDev) {
             if (fs.existsSync(absolutePath)) {
+                const fileStats = fs.statSync(absolutePath);
+                if (fileStats.size > MAX_FILE_SIZE) {
+                    return NextResponse.json({ error: 'File too large - maximum 50MB allowed' }, { status: 400 });
+                }
+                originalSize = fileStats.size;
                 const tmpInput = path.join('/tmp', path.basename(absolutePath));
                 fs.copyFileSync(absolutePath, tmpInput);
                 workPath = tmpInput;
-                originalSize = fs.statSync(workPath).size;
             } else {
-                console.log(`[CompressAPI] File not found locally in Prod, fetching from GitHub: ${relativePath}`);
+                // Fetch from GitHub in production
                 try {
                     const owner = process.env.GITHUB_OWNER;
                     const repo = process.env.GITHUB_REPO;
@@ -66,14 +142,19 @@ export async function POST(request: NextRequest) {
 
                     const arrayBuffer = await ghResponse.arrayBuffer();
                     const buffer = Buffer.from(arrayBuffer);
-                    const tmpInput = path.join('/tmp', path.basename(absolutePath));
 
+                    // Validasi ukuran file dari GitHub
+                    if (buffer.length > MAX_FILE_SIZE) {
+                        return NextResponse.json({ error: 'File too large from GitHub - maximum 50MB allowed' }, { status: 400 });
+                    }
+
+                    const tmpInput = path.join('/tmp', path.basename(absolutePath));
                     fs.writeFileSync(tmpInput, buffer);
                     workPath = tmpInput;
                     originalSize = buffer.length;
-                    console.log(`[CompressAPI] Successfully fetched from GitHub (${originalSize} bytes)`);
+                    // Successfully fetched from GitHub
                 } catch (err) {
-                    console.error('[CompressAPI] GitHub Fetch Fallback Error:', err);
+                    // GitHub fetch fallback failed
                     return NextResponse.json({
                         error: 'File not found locally and GitHub fallback failed',
                         details: err instanceof Error ? err.message : String(err)
@@ -84,11 +165,15 @@ export async function POST(request: NextRequest) {
             if (!fs.existsSync(absolutePath)) {
                 return NextResponse.json({ error: 'File not found on server' }, { status: 404 });
             }
-            originalSize = fs.statSync(absolutePath).size;
+            const fileStats = fs.statSync(absolutePath);
+            if (fileStats.size > MAX_FILE_SIZE) {
+                return NextResponse.json({ error: 'File too large - maximum 50MB allowed' }, { status: 400 });
+            }
+            originalSize = fileStats.size;
         }
 
         const originalSizeMB = originalSize / (1024 * 1024);
-        console.log(`[CompressAPI] Processing: ${relativePath} (${originalSizeMB.toFixed(2)} MB)`);
+        // Processing file compression
 
         const ext = path.extname(absolutePath).toLowerCase();
         const isImage = ['.jpg', '.jpeg', '.png', '.webp', '.tiff', '.gif', '.icns'].includes(ext);
@@ -113,17 +198,23 @@ export async function POST(request: NextRequest) {
                     }
                 }
             }
-            try { fs.unlinkSync(p); } catch (e) { console.warn('Final unlink failed:', e); }
+            try { fs.unlinkSync(p); } catch (e) { /* Silently handle unlink failures */ }
         };
 
         const safeRename = async (src: string, dest: string) => {
             if (src === dest) return;
+
+            // Validasi path sebelum operasi
+            if (!src || !dest || src.includes('..') || dest.includes('..')) {
+                throw new Error('Invalid path for rename operation');
+            }
+
             await new Promise(r => setTimeout(r, 200));
             try {
                 if (fs.existsSync(dest)) await safeUnlink(dest);
                 await fs.promises.rename(src, dest);
             } catch (err: any) {
-                console.warn(`[CompressAPI] Rename failed (${err.code}), attempting Copy+Unlink fallback...`);
+                // Rename failed, attempting Copy+Unlink fallback
                 let attempts = 0;
                 while (attempts < 5) {
                     try {
@@ -134,7 +225,7 @@ export async function POST(request: NextRequest) {
                         }
                     } catch (copyErr: any) {
                         const code = copyErr.code || 'UNKNOWN';
-                        console.warn(`[CompressAPI] Copy attempt ${attempts + 1} failed: ${code}`);
+                        // Silently handle copy failures
                         attempts++;
                         await new Promise(r => setTimeout(r, 500 * attempts));
                     }
@@ -167,7 +258,7 @@ export async function POST(request: NextRequest) {
 
             try {
                 if (ext === '.icns') {
-                    console.log(`[CompressAPI] ICNS detected, parsing structure...`);
+                    // ICNS detected, parsing structure
                     const buffer = fs.readFileSync(workPath);
                     if (buffer.toString('utf8', 0, 4) !== 'icns') {
                         throw new Error('Invalid ICNS header');
@@ -204,11 +295,11 @@ export async function POST(request: NextRequest) {
                                 .webp({ quality: 85, effort: 4 })
                                 .toFile(tempPath);
 
-                            console.log(`[CompressAPI] Success with block ${candidate.type}!`);
+                            // Success with block conversion
                             converted = true;
                             break;
                         } catch (conversionErr) {
-                            console.warn(`[CompressAPI] Failed to convert block ${candidate.type}:`, conversionErr);
+                            // Failed to convert block - silently continue
                         }
                     }
 
@@ -218,15 +309,24 @@ export async function POST(request: NextRequest) {
                         throw new Error(`Could not find a valid/supported PNG or JPEG2000 block.`);
                     }
                 } else {
-                    const sharp = require('sharp');
-                    await sharp(workPath)
-                        .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
-                        .webp({ quality: 80, effort: 4 })
-                        .toFile(tempPath);
-                    compressionSuccess = true;
+                    try {
+                        const sharp = require('sharp');
+                        await sharp(workPath)
+                            .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
+                            .webp({ quality: 80, effort: 4 })
+                            .toFile(tempPath);
+                        compressionSuccess = true;
+                    } catch (sharpError) {
+                        // Sharp compression failed
+                        throw new Error(`Image compression failed: ${sharpError instanceof Error ? sharpError.message : 'Unknown error'}`);
+                    }
                 }
             } catch (err) {
-                console.error(`[CompressAPI] Compression failed for ${ext}:`, err);
+                // Compression failed for file type
+                // Hanya fallback copy untuk error non-kritis, bukan untuk error validasi
+                if (err instanceof Error && err.message.includes('compression failed')) {
+                    throw err; // Lempar kembali error kompresi yang spesifik
+                }
                 await safeCopy(workPath, tempPath);
                 compressionSuccess = false;
             }
@@ -254,7 +354,7 @@ export async function POST(request: NextRequest) {
                     try {
                         await githubService.deleteFile(oldRepoPath, `Delete original ${ext} after WebP conversion`);
                     } catch (e) {
-                        console.warn('[CompressAPI] Failed to delete original file from GitHub:', e);
+                        // Silently handle GitHub file deletion errors
                     }
                 }
 
@@ -267,38 +367,38 @@ export async function POST(request: NextRequest) {
             const hasGitHubToken = !!(process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN);
             if (hasGitHubToken && compressionSuccess) {
                 try {
-                    console.log(`[CompressAPI] Dev: Auto-syncing conversion to GitHub...`);
+                    // Auto-syncing conversion to GitHub
                     const fileBuffer = fs.readFileSync(absolutePath);
                     const targetRepoPath = `public/${relativePath.replace('public/', '')}`;
                     await githubService.updateFile(targetRepoPath, fileBuffer, `Sync converted/optimized ${path.basename(relativePath)}`);
                 } catch (err) {
-                    console.warn(`[CompressAPI] Dev: GitHub sync failed:`, err);
+                    // Silently handle GitHub sync failures
                 }
             } else if (!compressionSuccess && hasGitHubToken) {
-                console.log(`[CompressAPI] Dev: Skipping GitHub sync because compression failed.`);
+                // Skipping GitHub sync because compression failed
             }
-            console.log(`[CompressAPI] Local Update Success: ${originalSizeMB.toFixed(2)} MB -> ${newSizeMB.toFixed(2)} MB`);
+            // Local compression successful
         } else {
             if (compressionSuccess) {
-                console.log(`[CompressAPI] Syncing to GitHub...`);
+                // Syncing to GitHub
                 const fileBuffer = fs.readFileSync(tempPath);
                 let targetRepoPath = `public/${relativePath.replace('public/', '')}`;
                 if (isImage && ext !== '.webp') {
                     targetRepoPath = targetRepoPath.replace(ext, '.webp');
                 }
                 await githubService.updateFile(targetRepoPath, fileBuffer, `Compress ${path.basename(relativePath)} (via Admin CMS)`);
-                console.log(`[CompressAPI] GitHub Sync Success`);
+                // GitHub sync successful
 
                 if (isImage && ext !== '.webp') {
                     const oldRepoPath = `public/${relativePath.replace('public/', '')}`;
                     try {
                         await githubService.deleteFile(oldRepoPath, `Delete original ${path.basename(relativePath)} after WebP conversion`);
                     } catch (e) {
-                        console.warn('[CompressAPI] Failed to delete original source from GitHub:', e);
+                        // Silently handle GitHub deletion errors
                     }
                 }
             } else {
-                console.log(`[CompressAPI] Skipping GitHub sync because compression failed.`);
+                // Skipping GitHub sync because compression failed
             }
             await safeUnlink(tempPath);
             if (workPath.startsWith('/tmp')) await safeUnlink(workPath);
@@ -313,7 +413,7 @@ export async function POST(request: NextRequest) {
             newPath: relativePath.startsWith('/') ? relativePath : '/' + relativePath
         });
     } catch (error) {
-        console.error('[CompressAPI] Error:', error);
+        // Silently handle compression errors
         return NextResponse.json(
             { error: error instanceof Error ? error.message : 'Internal Server Error' },
             { status: 500 }

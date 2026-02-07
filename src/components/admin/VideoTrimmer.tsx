@@ -33,11 +33,9 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
     useEffect(() => {
         if (!file) return;
         const url = URL.createObjectURL(file);
-        console.log('[VideoTrimmer] Created ObjectURL:', url);
         setVideoSrc(url);
 
         return () => {
-            console.log('[VideoTrimmer] Revoking ObjectURL:', url);
             URL.revokeObjectURL(url);
         };
     }, [file]);
@@ -74,7 +72,6 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
         // Initialize Aspect Ratio
         if (mediaSize.naturalWidth && mediaSize.naturalHeight) {
             const natAspect = mediaSize.naturalWidth / mediaSize.naturalHeight;
-            console.log('[VideoTrimmer] Natural Aspect:', natAspect, `(${mediaSize.naturalWidth}x${mediaSize.naturalHeight})`);
             setNaturalAspect(natAspect);
 
             // Set initial aspect to Natural (Original) if not set

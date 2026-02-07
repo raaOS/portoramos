@@ -21,7 +21,7 @@ async function getTelegramConfig() {
     };
 }
 
-export async function sendTelegramAlert(message: string, options?: { buttons?: { text: string; url: string }[][] }): Promise<void> {
+export async function sendTelegramAlert(message: string, options?: { buttons?: { text: string; url: string }[][], priority?: string }): Promise<void> {
     const config = await getTelegramConfig();
     const { botToken, chatId } = config;
 

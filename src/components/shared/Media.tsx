@@ -67,6 +67,15 @@ const generateBlurDataURL = (width: number = 8, height: number = 6): string => {
   return 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAGAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=='
 }
 
+// Helper to proxy GitHub media
+const getProxiedUrl = (url: string): string => {
+  if (!url) return url;
+  if (url.includes('raw.githubusercontent.com')) {
+    return `/api/media?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   kind,
   src,
@@ -254,7 +263,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         <video
           ref={setVideoRef}
           className={`${className || "w-full h-full object-cover"} ${!controls ? 'pointer-events-none' : ''}`}
-          src={shouldLoad ? src : undefined}
+          src={shouldLoad ? getProxiedUrl(src) : undefined}
           aria-label={controls ? (alt || 'Video content') : undefined}
           title={controls ? (alt || 'Video content') : undefined}
           aria-hidden={!controls ? "true" : undefined}
@@ -301,7 +310,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         {(poster || kind !== 'video') && (
           <div className={`absolute inset-0 z-10 transition-opacity duration-700 pointer-events-none ${canPlay ? 'opacity-0' : 'opacity-100'}`}>
             <Image
-              src={poster || src}
+              src={getProxiedUrl(poster || src)}
               alt={alt}
               width={width}
               height={height}
@@ -360,7 +369,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   return (
     <div className="relative w-full h-full bg-neutral-200 dark:bg-neutral-900 overflow-hidden">
       <Image
-        src={src}
+        src={getProxiedUrl(src)}
         alt={alt}
         width={width}
         height={height}

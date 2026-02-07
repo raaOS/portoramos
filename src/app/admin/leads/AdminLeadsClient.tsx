@@ -30,16 +30,16 @@ export default function AdminLeadsClient() {
     const columns = [
         {
             key: 'createdAt',
-            label: 'Date',
+            label: 'Tanggal',
             sortable: true,
             render: (val: string) => new Date(val).toLocaleString('id-ID', {
                 day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
             })
         },
-        { key: 'name', label: 'Name', sortable: true, className: 'font-medium text-gray-900' },
+        { key: 'name', label: 'Nama', sortable: true, className: 'font-medium text-gray-900' },
         {
             key: 'contact',
-            label: 'Contact',
+            label: 'Kontak',
             render: (val: string, item: any) => {
                 let href = '#';
                 if (item.contactType === 'WhatsApp') {
@@ -67,7 +67,7 @@ export default function AdminLeadsClient() {
         },
         {
             key: 'message',
-            label: 'Message',
+            label: 'Pesan',
             render: (val: string) => (
                 <span title={val} className="block max-w-xs truncate text-gray-600">
                     {val}
@@ -78,15 +78,15 @@ export default function AdminLeadsClient() {
 
     return (
         <AdminLayout
-            title="Leads Database"
-            subtitle="Potential clients from Website Chat Widget"
+            title="Database Pesan Masuk"
+            subtitle="Pesan potensial dari Widget Chat Website"
             titleIcon={<MessageSquare className="w-6 h-6 text-indigo-600" />}
             titleAccent="bg-indigo-50 text-indigo-700"
         >
             <div className="space-y-6">
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-800">Recent Inquiries</h3>
+                        <h3 className="text-lg font-semibold text-gray-800">Inquiry Terbaru</h3>
                         <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">
                             {leads.length} Total
                         </span>

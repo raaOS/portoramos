@@ -48,11 +48,8 @@ export default function AdminForm({
           await onSubmit(form.values);
           lastSavedRef.current = currentValues;
           // Show subtle success indicator
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Auto-saved successfully');
-          }
         } catch (err) {
-          console.error('Auto-save failed:', err);
+          // Silently ignore auto-save errors
         }
       }, autoSaveDelay);
     }
@@ -85,7 +82,6 @@ export default function AdminForm({
     try {
       await onSubmit(form.values);
     } catch (err) {
-      console.error('Form submission failed:', err);
       showError('Failed to submit form. Please try again.');
     }
   };

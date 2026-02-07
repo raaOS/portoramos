@@ -58,11 +58,10 @@ const IndexClientWithAutoUpdate = dynamic(() => import("@/components/home/IndexC
 // Project Detail Component moved to ProjectDetailWrapper to reduce bundle/file size
 
 // Hooks & Types
-import { useSystemSound } from "@/hooks/useSystemSound";
 import { useWindowManager, WindowState } from "@/hooks/useWindowManager";
 import { useStickyNotes } from "./hooks/useStickyNotes";
 import { useDesktopLock } from "./hooks/useDesktopLock";
-import type { AboutData } from "@/types/about";
+import type { AboutData, DesktopPreferences } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
 import type { Project, GalleryItem } from "@/types/projects";
@@ -137,12 +136,31 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         deleteNote,
         permanentDeleteNote,
         restoreNote,
-        bringToFrontNote
+        bringToFrontNote,
+        setNotes
     } = useStickyNotes(mounted, isAdmin);
 
     // Forces a re-render of layout if needed (e.g. after drag)
     const [manualRefreshSeed, setManualRefreshSeed] = useState(0);
     const triggerReposition = () => setManualRefreshSeed(prev => prev + 1);
+
+    // Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Cmd+K or Ctrl+K for Spotlight
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setShowSpotlight(prev => !prev);
+            }
+            // Esc to close Spotlight
+            if (e.key === 'Escape' && showSpotlight) {
+                setShowSpotlight(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showSpotlight]);
 
     const commercialProjects = useMemo(() => {
         if (aboutData?.desktopPreferences?.visibleProjectIds) {
@@ -270,9 +288,20 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         });
     };
 
-    // Toggle notes visibility (dock icon bounces when notes are shown)
+    // Toggle notes visibility (dock icon indicator follows this)
     const toggleNotesVisibility = () => {
-        setNotesVisible(prev => !prev);
+        const nextState = !notesVisible;
+        setNotesVisible(nextState);
+
+        // If turning ON, and all notes are currently "deleted" (closed by visitor), restore them
+        if (nextState) {
+            const hasVisibleNotes = notes.some(n => !n.isDeleted);
+            if (!hasVisibleNotes && notes.length > 0) {
+                // Restore all notes for the visitor
+                notes.forEach(n => restoreNote(n.id));
+            }
+        }
+
         // Trigger bounce animation on notes dock icon
         setNotesDockBouncing(true);
         setTimeout(() => setNotesDockBouncing(false), 600);
@@ -309,27 +338,78 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         });
     }, [aboutData, isWindowOpen, addNote, openWindow, openLaunchpad, openChatWindow, handleGoHome]);
 
+    // --- ICON PERSISTENCE LOGIC START ---
+
+    // Local state for icon positions (Optimistic UI)
+    const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>({});
+
+    // Initialize from props
+    useEffect(() => {
+        if (aboutData?.desktopPreferences?.iconPositions) {
+            setIconPositions(aboutData.desktopPreferences.iconPositions);
+        }
+    }, [aboutData]);
+
+    const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+    const handleIconPositionChange = (id: string, x: number, y: number) => {
+        // 1. Optimistic Update
+        const newPositions = { ...iconPositions, [id]: { x, y } };
+        setIconPositions(newPositions);
+
+        // 2. Persist if Admin (Debounced)
+        if (isAdmin) {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+            saveTimeoutRef.current = setTimeout(async () => {
+                try {
+                    // Update layout preference with ALL current positions
+                    const payload = {
+                        desktopPreferences: {
+                            ...aboutData?.desktopPreferences,
+                            iconPositions: newPositions
+                        }
+                    };
+
+                    await fetch('/api/admin/about/desktop', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    // Optional: Toast notification here
+                } catch (error) {
+                    console.error("Failed to save icon position", error instanceof Error ? error.message : error);
+                }
+            }, 1000); // 1-second debounce
+        }
+    };
+    // --- ICON PERSISTENCE LOGIC END ---
+
     // Icons Layout
     // Optimized Layout: Only trigger reshuffle if "Obstacles" change.
     // We filter out irrelevant window changes (like project windows opening/closing).
     const obstacleSignature = useMemo(() => {
-        // 1. Profile Window State (Position & Visibility)
-        const profileWin = windows.find(w => w.id === 'about');
-        const profileState = profileWin
-            ? `${profileWin.initialPosition?.x},${profileWin.initialPosition?.y},${profileWin.isOpen},${profileWin.isMinimized}`
-            : 'closed';
+        // Optimized: Windows no longer affect icon layout (Static Layout)
 
-        // 2. Sticky Notes State (Position & Deletion)
+        // 1. Sticky Notes State (Position & Deletion)
         const notesState = notes
             .filter(n => !n.isDeleted)
             .map(n => `${n.id}:${n.x},${n.y}`)
             .join('|');
 
-        return `${profileState}|${notesState}`;
-    }, [windows, notes]);
+        return `static-windows|${notesState}`;
+    }, [notes]);
 
     const projectIcons = useMemo(() => {
         if (!mounted || !commercialProjects.length || !windowSize.width) return [];
+
+        // Merge props prefs with local state overrides
+        const mergedPreferences: DesktopPreferences = {
+            visibleProjectIds: aboutData?.desktopPreferences?.visibleProjectIds || [],
+            maxIcons: aboutData?.desktopPreferences?.maxIcons || 100,
+            layout: aboutData?.desktopPreferences?.layout || 'grid',
+            iconPositions: iconPositions
+        };
 
         // Pass to utility (it will filter internally again, but at least we control WHEN this runs)
         return generateDesktopIcons(
@@ -337,11 +417,11 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
             windows,
             notes,
             commercialProjects,
-            aboutData?.desktopPreferences,
+            mergedPreferences,
             handleGoHome
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [mounted, windowSize.width, windowSize.height, obstacleSignature, commercialProjects, aboutData, handleGoHome]);
+    }, [mounted, windowSize.width, windowSize.height, obstacleSignature, commercialProjects, aboutData, handleGoHome, iconPositions]); // Added iconPositions dependency
 
     // Effects for Lock & Cleanup controlled by useDesktopLock hook now
 
@@ -366,7 +446,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                     ))}
                 </div>
                 {/* Fake Dock */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-[88px] w-[544px] bg-white/10 backdrop-blur-xl rounded-[24px] border border-white/20" />
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-[88px] w-[544px] bg-white/10 backdrop-blur-xl rounded-[24px] border border-white/20 shadow-lg" />
             </div>
         );
     }
@@ -426,6 +506,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                 icon={!isFolder ? icon.icon : undefined}
                                 isMobile={isMobile}
                                 priority={icon.priority} // Pass LCP priority
+                                onPositionChange={handleIconPositionChange} // Pass persistence handler
                                 onClick={() => {
                                     if (isFolder && icon.action) icon.action();
                                     else if (icon.type === 'project') openProjectWindow(icon.data);
@@ -445,14 +526,19 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                     note={note}
                                     updateNote={updateNote}
                                     bringToFrontNote={bringToFrontNote}
-                                    deleteNote={deleteNote}
+                                    deleteNote={(id) => {
+                                        deleteNote(id);
+                                        // If this was the last visible note, turn off the dock indicator
+                                        const visibleCount = notes.filter(n => !n.isDeleted).length;
+                                        if (visibleCount <= 1) {
+                                            setNotesVisible(false);
+                                        }
+                                    }}
                                     permanentDeleteNote={permanentDeleteNote}
                                     restoreNote={restoreNote}
                                     isAdmin={isAdmin}
                                 />
                             ))}
-
-
                         </>
                     )}
                 </div>
@@ -475,7 +561,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                     onUpdatePosition={(x, y) => handleUpdateWindowPosition(w.id, x, y)}
                                     onResize={(width, height) => handleWindowResize(w.id, width, height)}
                                     onResizeEnd={(width, height) => handleWindowResizeEnd(w.id, width, height)}
-                                    isPinned={w.isPinned}
+                                    isPinned={isAdmin && w.isPinned}
                                     onTogglePin={isAdmin ? () => togglePin(w.id) : undefined}
                                     isAdmin={isAdmin}
                                     initialPosition={w.initialPosition}
@@ -504,6 +590,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                         <MenuBar
                             activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || "Finder"}
                             onAbout={() => openWindow("about")}
+                            onSearch={() => setShowSpotlight(true)}
                             availability={aboutData?.hero?.availability}
                         />
                     </div>

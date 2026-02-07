@@ -115,15 +115,8 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat }: DynamicIslandPro
             >
                 <div className="w-full h-full relative flex items-center justify-center text-white px-4">
 
-                    {/* Idle State */}
-                    {currentState === "idle" && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="bg-white/20 w-8 h-1 rounded-full"
-                        />
-                    )}
+                    {/* Idle State - Hidden */}
+                    {currentState === "idle" && null}
 
                     {/* Active Window State (Compact) */}
                     {currentState === "active-window" && (

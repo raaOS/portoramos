@@ -85,9 +85,7 @@ export default function AdminFileUpload({
         coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
         wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
       });
-      console.log('✅ FFmpeg Loaded Successfully');
     } catch (e) {
-      console.error('❌ FFmpeg Load Failed:', e);
       throw new Error('Compression engine failed to load.');
     }
     ffmpegRef.current = ffmpeg;
@@ -201,14 +199,11 @@ export default function AdminFileUpload({
         body: JSON.stringify({ filePath }),
       });
       if (!response.ok) {
-        console.warn('Compression failed but file uploaded.');
         return { success: false };
       }
       const data = await response.json();
-      console.log('Compression result:', data);
       return { success: true, stats: data, newPath: data.newPath };
     } catch (e) {
-      console.error('Compression request failed:', e);
       return { success: false };
     }
   }, []);
@@ -223,7 +218,6 @@ export default function AdminFileUpload({
 
         // VIDEO COMPRESSION / TRIM
         if (file.type.startsWith('video/')) {
-          console.log('Video detected, compressing client-side...');
           try {
             const originalSize = file.size;
             // setProgress(0); // Optional: reset for individual?

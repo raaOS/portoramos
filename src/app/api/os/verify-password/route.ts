@@ -20,9 +20,7 @@ export async function POST(request: Request) {
         const cleanPassword = password.toString().trim();
         const inputHash = crypto.createHash('sha256').update(cleanPassword).digest('hex');
 
-        console.log('[VerifyPassword] Input:', cleanPassword);
-        console.log('[VerifyPassword] Hash Generated:', inputHash);
-        console.log('[VerifyPassword] Hash Stored:', settings.passwordHash);
+        // Security: Never log password or hash values
 
         // 3. Compare (Case insensitive compare just in case)
         if (inputHash.toLowerCase() === settings.passwordHash.toLowerCase()) {

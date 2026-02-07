@@ -5,6 +5,7 @@ import type { AboutData } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
 import type { Project } from "@/types/projects";
+import { getProxiedUrl } from "@/lib/utils";
 
 interface AboutContentProps {
     aboutData?: AboutData | null;
@@ -121,7 +122,7 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
 
                                             {skill.iconUrl && (
                                                 <img
-                                                    src={skill.iconUrl}
+                                                    src={getProxiedUrl(skill.iconUrl)}
                                                     alt={skill.name}
                                                     className="w-5 h-5 object-contain"
                                                 />
@@ -278,7 +279,7 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                                     {/* Handle Image/Video */}
                                     {project.cover.endsWith('.mp4') ? (
                                         <video
-                                            src={project.cover}
+                                            src={getProxiedUrl(project.cover)}
                                             className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                             autoPlay
                                             muted
@@ -288,7 +289,7 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                                         />
                                     ) : (
                                         <img
-                                            src={project.cover}
+                                            src={getProxiedUrl(project.cover)}
                                             alt={project.title}
                                             loading="lazy"
                                             className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"

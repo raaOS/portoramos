@@ -18,7 +18,7 @@ export async function getSettingsData() {
             const ghData = await githubService.getFileContent(GITHUB_PATH);
             data = ghData.content;
         } catch (error) {
-            console.warn('Failed to fetch settings from GitHub:', error);
+            // Silently handle GitHub fetch errors
         }
     }
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, settings: body });
     } catch (error) {
-        console.error('Error saving settings:', error);
+        // Silently handle settings save errors
         return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });
     }
 }

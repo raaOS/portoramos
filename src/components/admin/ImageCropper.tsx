@@ -37,7 +37,7 @@ export default function ImageCropper({ imageSrc, onCropComplete, onCancel }: Ima
                 onCropComplete(croppedImage)
             }
         } catch (e) {
-            console.error(e)
+            // Silently ignore crop errors
         }
     }
 

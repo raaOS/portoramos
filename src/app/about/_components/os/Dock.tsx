@@ -31,36 +31,46 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
     const widthSync = useTransform(distance, [-150, 0, 150], [baseWidth, hoverWidth, baseWidth]);
     const width = useSpring(widthSync, { mass: 0.1, stiffness: 150, damping: 12 });
 
+    const [bounceKey, setBounceKey] = React.useState(0);
     const [isBouncing, setIsBouncing] = React.useState(false);
 
     const handleClick = () => {
         playPop();
         setIsBouncing(true);
+        setBounceKey(prev => prev + 1);
         onClick();
     };
 
     React.useEffect(() => {
         if (!isBouncing) return;
-        const timer = setTimeout(() => setIsBouncing(false), 2000);
+        const timer = setTimeout(() => setIsBouncing(false), 1000); // Shorter duration for snappier feel
         return () => clearTimeout(timer);
     }, [isBouncing]);
 
-    const shouldBounce = isOpen || isBouncing || shouldBounceExternal;
+    // macOS: Open apps don't bounce forever, they just have a dot.
+    // Bouncing only happens on click (isBouncing) or alert (shouldBounceExternal)
+    const activeBounce = isBouncing || shouldBounceExternal;
 
     return (
         <motion.div
+            key={`${id}-${bounceKey}`}
             id={`dock-item-${id}`}
             ref={ref}
             style={{ width, height: width }}
-            animate={shouldBounce ? { y: isMobile ? [0, -10, 0] : [0, -20, 0] } : { y: 0 }} // Smaller bounce on mobile
-            transition={shouldBounce
+            animate={activeBounce ? {
+                y: isMobile ? [0, -12, 0, -4, 0] : [0, -24, 0, -8, 0],
+                scaleX: [1, 0.9, 1.1, 1],
+                scaleY: [1, 1.2, 0.9, 1]
+            } : { y: 0, scaleX: 1, scaleY: 1 }}
+            transition={activeBounce
                 ? {
-                    duration: isOpen ? 0.75 : 0.4,
-                    repeat: isOpen ? Infinity : (shouldBounceExternal ? 2 : 0),
-                    repeatDelay: isOpen ? 0.1 : 0.05,
-                    ease: "easeInOut"
+                    duration: 0.6,
+                    times: [0, 0.2, 0.5, 0.8, 1],
+                    ease: ["easeOut", "easeIn", "easeOut", "easeIn"],
+                    repeat: isBouncing ? 0 : (shouldBounceExternal ? Infinity : 0),
+                    repeatDelay: 0.1,
                 }
-                : { type: "spring", mass: 0.1, stiffness: 150, damping: 12 }
+                : { type: "spring", mass: 0.1, stiffness: 250, damping: 18 }
             }
             onClick={handleClick}
             className="aspect-square rounded-[12px] flex items-center justify-center cursor-pointer relative group shrink-0"
@@ -75,7 +85,7 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
                     {label}
                 </div>
             )}
-            <div className="flex items-center justify-center w-full h-full">
+            <div className="flex items-center justify-center w-full h-full relative">
                 {React.cloneElement(icon as React.ReactElement, { className: "w-full h-full" })}
             </div>
         </motion.div>
@@ -112,11 +122,11 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
             onMouseLeave={() => !isMobile && mouseX.set(Infinity)}
         >
             <div
-                className={`flex items-end bg-gradient-to-b from-white/25 to-white/10 backdrop-blur-2xl border border-white/40 rounded-[24px] shadow-2xl shadow-black/20 ${isMobile
+                className={`flex items-end bg-gradient-to-b from-white/25 to-white/10 backdrop-blur-2xl border border-white/40 rounded-[24px] shadow-lg shadow-black/10 ${isMobile
                     ? 'h-[72px] overflow-x-auto scrollbar-hide gap-5 px-5 py-3'
                     : 'h-[88px] gap-3 px-3 py-2.5'}`}
                 style={{
-                    boxShadow: "0 20px 50px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.2), inset 0 0 20px rgba(255,255,255,0.1)",
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.2), inset 0 0 20px rgba(255,255,255,0.1)",
                     minWidth: isMobile ? 'auto' : visibleItems.length * 64 + (visibleItems.length - 1) * 12 + 24,
                     minHeight: isMobile ? 72 : 88,
                 }}
