@@ -142,7 +142,21 @@
       "gen-1766512146544-5"
     ],
     "maxIcons": 10,
-    "layout": "grid"
+    "layout": "grid",
+    "iconPositions": {
+      "gen-1766512146544-20": {
+        "x": 834.8,
+        "y": 346.2
+      },
+      "gen-1766512146544-10": {
+        "x": 437.6,
+        "y": 226.39999999999998
+      },
+      "gen-1766512146544-8": {
+        "x": 444.79999999999995,
+        "y": 411.2
+      }
+    }
   },
   "wallpaperConfig": {
     "activeWallpaperId": "w-1769442664696-ixgx78cet",
@@ -197,11 +211,11 @@
     "about": {
       "x": 1316,
       "y": 52,
-      "width": 577,
-      "height": 750,
+      "width": 587,
+      "height": 496,
       "isOpenByDefault": true
     }
   },
   "labels": {},
-  "lastUpdated": "2026-02-05T19:45:10.674Z"
+  "lastUpdated": "2026-02-07T16:34:10.858Z"
 }
