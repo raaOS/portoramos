@@ -10,9 +10,9 @@
     "y": 85,
     "width": 282,
     "height": 265,
-    "zIndex": 141,
+    "zIndex": 145,
     "fontFamily": "var(--font-caveat), sans-serif",
     "fontSize": 24,
-    "isPinned": true
+    "isPinned": false
   }
 ]
