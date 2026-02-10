@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
  */
 export function useAdminAuth() {
     const [isAdmin, setIsAdmin] = useState(false);
+    const [csrfToken, setCsrfToken] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -19,6 +20,7 @@ export function useAdminAuth() {
                 });
                 const data = await res.json();
                 setIsAdmin(data.authenticated === true);
+                if (data.csrfToken) setCsrfToken(data.csrfToken);
             } catch (e) {
                 console.error('Failed to check admin auth:', e);
                 setIsAdmin(false);
@@ -34,5 +36,5 @@ export function useAdminAuth() {
         return () => clearInterval(interval);
     }, []);
 
-    return { isAdmin, isLoading };
+    return { isAdmin, csrfToken, isLoading };
 }

@@ -11,6 +11,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [locationError, setLocationError] = useState('');
   const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
+  const [csrfToken, setCsrfToken] = useState<string>('');
   const router = useRouter();
 
   // [STICKY NOTE] LOCATION-BASED SECURITY
@@ -41,6 +42,20 @@ export default function AdminLoginPage() {
         }
       );
     }
+
+    // Fetch CSRF token on load
+    const fetchCSRF = async () => {
+      try {
+        const res = await fetch('/api/admin/login');
+        if (res.ok) {
+          const data = await res.json();
+          setCsrfToken(data.csrfToken);
+        }
+      } catch (e) {
+        console.error('Failed to fetch CSRF token');
+      }
+    };
+    fetchCSRF();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,7 +66,10 @@ export default function AdminLoginPage() {
     try {
       const response = await fetch('/api/admin/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
         body: JSON.stringify({ password, ...coords })
       });
 

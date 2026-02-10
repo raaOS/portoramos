@@ -31,7 +31,7 @@ const fetchProjects = async (): Promise<ProjectsResponse> => {
 export default function IndexClientWithAutoUpdate({ initialProjects: serverProjects = [], windowWidth }: Props) {
   const { setLastUpdated } = useLastUpdated();
   const searchParams = useSearchParams();
-  const tag = searchParams.get('tag') || '';
+  const tag = searchParams?.get('tag') || '';
 
   const { data } = useQuery({
     queryKey: ['projects', 'published'],

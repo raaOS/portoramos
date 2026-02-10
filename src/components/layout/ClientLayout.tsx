@@ -1,14 +1,13 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import dynamic from 'next/dynamic'; // Added this import
+import dynamic from 'next/dynamic';
 import Header from '@/components/shared/Header';
-import Footer from '@/components/shared/Footer';
-import BottomNavigation from '@/components/layout/BottomNavigation';
-import ScrollToTop from '@/components/layout/ScrollToTop';
-// Removed: import ChatWidget from '@/components/ChatWidget';
 
-import PageTransition from '@/components/shared/PageTransition';
+// Lazy-load below-fold components to reduce initial JS bundle (~30-50KB savings)
+const Footer = dynamic(() => import('@/components/shared/Footer'), { ssr: false });
+const BottomNavigation = dynamic(() => import('@/components/layout/BottomNavigation'), { ssr: false });
+const ScrollToTop = dynamic(() => import('@/components/layout/ScrollToTop'), { ssr: false });
 
 export default function ClientLayout({
     children,

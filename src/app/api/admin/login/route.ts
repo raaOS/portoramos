@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminPassword, getAdminToken } from '@/lib/auth';
 import { sendTelegramAlert } from '@/lib/telegram';
+import { generateCSRFToken, validateCSRFToken } from '@/lib/security';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,9 +32,9 @@ function checkRateLimit(clientId: string): { allowed: boolean; retryAfter?: numb
 
   // Jika sedang diblock
   if (record?.blockedUntil && now < record.blockedUntil) {
-    return { 
-      allowed: false, 
-      retryAfter: Math.ceil((record.blockedUntil - now) / 1000) 
+    return {
+      allowed: false,
+      retryAfter: Math.ceil((record.blockedUntil - now) / 1000)
     };
   }
 
@@ -48,9 +50,9 @@ function checkRateLimit(clientId: string): { allowed: boolean; retryAfter?: numb
   // Block jika sudah max attempts
   if (record.attempts >= MAX_ATTEMPTS_PER_WINDOW) {
     record.blockedUntil = now + BLOCK_DURATION;
-    return { 
-      allowed: false, 
-      retryAfter: Math.ceil(BLOCK_DURATION / 1000) 
+    return {
+      allowed: false,
+      retryAfter: Math.ceil(BLOCK_DURATION / 1000)
     };
   }
 
@@ -103,12 +105,43 @@ async function getGeoInfo(ip: string) {
   } catch {
     // Silent fail untuk geo lookup
   }
-  
+
   return { location: 'Unknown', isp: 'Unknown' };
+}
+
+/**
+ * GET Handler - Generates and provides a CSRF token.
+ * Sets a secure, httpOnly cookie with the token.
+ */
+export async function GET() {
+  const token = generateCSRFToken();
+  const response = NextResponse.json({ csrfToken: token });
+
+  response.cookies.set('csrf_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 3600, // 1 hour
+    path: '/'
+  });
+
+  return response;
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // 1. CSRF VALIDATION
+    const csrfToken = request.headers.get('x-csrf-token');
+    const cookieStore = await cookies();
+    const sessionCsrfToken = cookieStore.get('csrf_token')?.value;
+
+    if (!csrfToken || !sessionCsrfToken || !validateCSRFToken(csrfToken, sessionCsrfToken)) {
+      return NextResponse.json(
+        { error: 'Invalid or missing CSRF token' },
+        { status: 403 }
+      );
+    }
+
     const clientId = getClientIdentifier(request);
     const rateLimit = checkRateLimit(clientId);
 
@@ -131,11 +164,11 @@ export async function POST(request: NextRequest) {
       );
 
       return NextResponse.json(
-        { 
+        {
           error: 'Too many login attempts. Please try again later.',
           retryAfter: rateLimit.retryAfter
         },
-        { 
+        {
           status: 429,
           headers: { 'Retry-After': String(rateLimit.retryAfter) }
         }
@@ -147,7 +180,7 @@ export async function POST(request: NextRequest) {
     // VALIDASI INPUT STRICT
     if (!password || typeof password !== 'string') {
       return NextResponse.json(
-        { error: 'Password is required' }, 
+        { error: 'Password is required' },
         { status: 400 }
       );
     }
@@ -155,7 +188,7 @@ export async function POST(request: NextRequest) {
     if (password.length < 8) {
       incrementAttempts(clientId);
       return NextResponse.json(
-        { error: 'Invalid password' }, 
+        { error: 'Invalid password' },
         { status: 401 }
       );
     }
@@ -167,7 +200,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       // Jika auth config error, jangan expose ke user
       return NextResponse.json(
-        { error: 'Authentication service error' }, 
+        { error: 'Authentication service error' },
         { status: 500 }
       );
     }
@@ -195,10 +228,10 @@ export async function POST(request: NextRequest) {
       );
 
       return NextResponse.json(
-        { 
+        {
           error: 'Invalid password',
           remainingAttempts: Math.max(0, remainingAttempts)
-        }, 
+        },
         { status: 401 }
       );
     }
@@ -244,7 +277,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     // Generic error - jangan expose detail
     return NextResponse.json(
-      { error: 'Authentication failed' }, 
+      { error: 'Authentication failed' },
       { status: 500 }
     );
   }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { validateCSRFToken, generateCSRFToken } from '@/lib/security';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -21,7 +22,7 @@ const RATE_LIMIT_STRICT_ENDPOINTS = {
     '/api/contact': 500,  // Increase contact rate limit
 };
 
-// Simple in-memory rate limiting (in production, use Redis).
+// Simple in-memory rate limiting.
 // We also attach it to globalThis so the optional
 // /api/admin/clear-rate-limit endpoint can access the same map in development.
 const globalForRateLimit = globalThis as typeof globalThis & {
@@ -88,9 +89,11 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     response.headers.set('X-XSS-Protection', '1; mode=block');
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-    // Base CSP
+    // Base CSP - Hardened
     const cspBase = [
         "default-src 'self'",
+        // unsafe-eval is needed for ffmpeg.wasm / some framer-motion features
+        // unsafe-inline is needed for some critical styles/scripts in current architecture
         "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live blob:",
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: https: blob:",
@@ -98,6 +101,8 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
         "connect-src 'self' https: http://localhost:* ws://localhost:* blob:",
         "media-src 'self' https: data: blob:",
         "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
         // Allow Vercel Live preview in development, block in production
         isProd ? "frame-src 'none'" : "frame-src 'self' https://vercel.live",
         // Allow being embedded in iframe during development to support preview
@@ -124,6 +129,20 @@ export async function proxy(request: NextRequest) {
     // Skip middleware for static assets
     if (isStaticAsset(pathname)) {
         return NextResponse.next();
+    }
+
+    // 0. CSRF Protection for Mutations
+    const mutationMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
+    if (isAPIRoute(pathname) && mutationMethods.includes(request.method)) {
+        // Skip for login which has its own token generation/validation flow
+        if (pathname !== '/api/admin/login') {
+            const csrfToken = request.headers.get('x-csrf-token');
+            const sessionCsrfToken = request.cookies.get('csrf_token')?.value;
+
+            if (!csrfToken || !sessionCsrfToken || !validateCSRFToken(csrfToken, sessionCsrfToken)) {
+                return NextResponse.json({ error: 'Invalid or missing CSRF token' }, { status: 403 });
+            }
+        }
     }
 
     // 1. Authentication Check
@@ -217,7 +236,21 @@ export async function proxy(request: NextRequest) {
 
     // For non-API routes, just add security headers
     const response = NextResponse.next();
-    return addSecurityHeaders(response);
+    const finalResponse = addSecurityHeaders(response);
+
+    // Set CSRF token on GET requests to admin pages if not present
+    if (request.method === 'GET' && pathname.startsWith('/admin') && !request.cookies.has('csrf_token')) {
+        const token = generateCSRFToken();
+        finalResponse.cookies.set('csrf_token', token, {
+            httpOnly: true,
+            secure: isProd,
+            sameSite: 'strict',
+            maxAge: 3600,
+            path: '/'
+        });
+    }
+
+    return finalResponse;
 }
 
 export const config = {

@@ -24,9 +24,10 @@ interface UseWindowManagerProps {
     initialWindows: WindowState[];
     aboutData?: AboutData | null;
     projects: Project[];
+    csrfToken?: string;
 }
 
-export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManagerProps) => {
+export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWindowManagerProps) => {
     const [windows, setWindows] = useState<WindowState[]>(initialWindows);
     const [topZIndex, setTopZIndex] = useState(20);
     const [bouncingDocId, setBouncingDocId] = useState<string | null>(null);
@@ -104,6 +105,13 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
         };
     }, [bouncingDocId]);
 
+    /**
+     * Saves window position and default open state to the server.
+     * Only works for authenticated admins.
+     * 
+     * @param id - Window ID
+     * @param updates - Positional or state updates
+     */
     const saveWindowPreference = async (id: string, updates: Partial<{ x: number, y: number, width: number, height: number, isOpenByDefault: boolean }>) => {
         if (!aboutData) return;
         try {
@@ -114,7 +122,10 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
             };
             await fetch('/api/about', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken || ''
+                },
                 body: JSON.stringify({ windowPreferences: newPrefs })
             });
         } catch (e) {
@@ -126,7 +137,7 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
 
     // OPTIMIZED: Cache window dimensions untuk menghindari repeated DOM access
     const [windowDimensions, setWindowDimensions] = useState({ width: 1200, height: 800 });
-    
+
     useEffect(() => {
         const updateDimensions = () => {
             setWindowDimensions({
@@ -134,7 +145,7 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
                 height: window.innerHeight
             });
         };
-        
+
         updateDimensions();
         window.addEventListener('resize', updateDimensions);
         return () => window.removeEventListener('resize', updateDimensions);
@@ -309,17 +320,20 @@ export const useWindowManager = ({ initialWindows, aboutData }: UseWindowManager
             // Save back with credentials (admin cookie sent automatically)
             const saveRes = await fetch('/api/about', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken || ''
+                },
                 credentials: 'include', // Important: sends cookies for auth
                 body: JSON.stringify({ windowPreferences: newPrefs })
             });
 
             if (saveRes.ok) {
-                            // Window size saved successfully
-                        } else if (saveRes.status !== 401 && saveRes.status !== 403) {
-                            // Only log real errors, ignore auth errors for visitors
-                            console.error('Failed to save window size:', saveRes.status, await saveRes.text());
-                        }
+                // Window size saved successfully
+            } else if (saveRes.status !== 401 && saveRes.status !== 403) {
+                // Only log real errors, ignore auth errors for visitors
+                console.error('Failed to save window size:', saveRes.status, await saveRes.text());
+            }
         } catch (error) {
             console.error("Failed to save window size:", error instanceof Error ? error.message : error);
         }

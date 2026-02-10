@@ -126,7 +126,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     const [notesDockBouncing, setNotesDockBouncing] = useState(false);
 
     // Admin auth check - now safe to use (API returns 200 for non-admins)
-    const { isAdmin } = useAdminAuth();
+    // Admin auth check - now returns csrfToken
+    const { isAdmin, csrfToken } = useAdminAuth();
 
     // Hooks
     const {
@@ -235,7 +236,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         togglePin,
         bouncingDocId,
         resetWindows
-    } = useWindowManager({ initialWindows, aboutData, projects });
+    } = useWindowManager({ initialWindows, aboutData, projects, csrfToken });
 
     const handleUpdateWindowPosition = (id: string, x: number, y: number) => {
         internalUpdateWindowPosition(id, x, y);
@@ -373,7 +374,10 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
                     await fetch('/api/admin/about/desktop', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrfToken || ''
+                        },
                         body: JSON.stringify(payload)
                     });
                     // Optional: Toast notification here

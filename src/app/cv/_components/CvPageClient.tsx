@@ -23,7 +23,7 @@ export default function CvPageClient({
   hardSkillsData
 }: Props) {
   const searchParams = useSearchParams();
-  const shouldAutoPrint = searchParams.get('print') === 'true';
+  const shouldAutoPrint = searchParams?.get('print') === 'true';
 
   useEffect(() => {
     if (shouldAutoPrint) {

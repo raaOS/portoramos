@@ -167,3 +167,29 @@ export interface UpdateAboutData {
 
   labels?: Partial<AboutData['labels']>;
 }
+
+export interface ChatMessage {
+  id: number;
+  text: string;
+  isMe: boolean;
+  time: string;
+  status: 'sent' | 'read';
+}
+
+export interface AboutIslandNotification {
+  id: string;
+  name: string;
+  message: string;
+  avatar: string;
+  isActive: boolean;
+  conversation: ChatMessage[];
+  status: string;
+}
+
+export interface ContactProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  status: string;
+  conversation: ChatMessage[];
+}

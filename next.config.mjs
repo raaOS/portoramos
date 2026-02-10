@@ -22,6 +22,8 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     // Modern image formats for better compression
     formats: ['image/avif', 'image/webp'],
+    // Cache optimized images for 1 year on CDN
+    minimumCacheTTL: 31536000,
   },
   // Transpile packages (empty - Three.js removed as unused)
   transpilePackages: [],

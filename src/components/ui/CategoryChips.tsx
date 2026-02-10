@@ -10,18 +10,18 @@ function CategoryChipsInner() {
   const { navigate } = useNavigation();
   const pathname = usePathname();
   const search = useSearchParams();
-  const current = (search.get('tag') || 'everything').toLowerCase();
+  const current = (search?.get('tag') || 'everything').toLowerCase();
 
   useEffect(() => {
     let mounted = true
     fetch('/api/tags').then(r => r.json()).then((j) => {
       if (mounted && Array.isArray(j.tags)) setTags(j.tags)
-    }).catch(() => {})
+    }).catch(() => { })
     return () => { mounted = false }
   }, [])
 
   const go = (tag: string) => {
-    const sp = new URLSearchParams(search.toString());
+    const sp = new URLSearchParams(search?.toString() || '');
     if (!tag || tag === 'everything') sp.delete('tag');
     else sp.set('tag', tag);
     const qs = sp.toString();
@@ -34,8 +34,10 @@ function CategoryChipsInner() {
       <button
         key={t}
         onClick={() => go(t)}
+        aria-pressed={active}
+        aria-label={`Filter by ${t}`}
         className={clsx(
-          'px-4 py-2 rounded-full text-sm transition border whitespace-nowrap',
+          'px-4 py-2 rounded-full text-sm transition border whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2',
           active
             ? 'bg-orange-500 text-white border-orange-500'
             : 'bg-black/[.04] hover:bg-black/[.08] border-transparent text-gray-900'
@@ -47,12 +49,12 @@ function CategoryChipsInner() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full" role="group" aria-label="Project categories">
       <div className="hidden md:flex items-center justify-center gap-3">
         {tags.map((t) => <Chip key={t} t={t} />)}
       </div>
       <div className="md:hidden overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-2 pr-2">
+        <div className="flex items-center gap-2 pr-2 px-4">
           {tags.map((t) => <Chip key={t} t={t} />)}
         </div>
       </div>

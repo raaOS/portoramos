@@ -5,10 +5,23 @@ import aboutDataFallback from '@/data/about.json';
 const service = new ContentService<AboutData>('about.json', aboutDataFallback as unknown as AboutData);
 
 export const aboutService = {
+    /**
+     * Retrieves the current "About" page data.
+     * Uses ContentService for persistence and fallback logic.
+     * 
+     * @returns A promise that resolves to the AboutData.
+     */
     async getAboutData() {
         return await service.getData();
     },
 
+    /**
+     * Updates the "About" page data with partial updates.
+     * Performs an explicit deep merge for nested configuration objects.
+     * 
+     * @param updates - The partial data to update.
+     * @returns A promise that resolves to the updated merged data.
+     */
     async updateAboutData(updates: UpdateAboutData) {
         const current = await this.getAboutData();
 

@@ -12,6 +12,15 @@ export const projectService = {
     /**
      * Get all projects, optionally filtered by status
      */
+    /**
+     * Get all projects, optionally filtered by status.
+     * Uses a dual storage strategy: local FS for development and GitHub API for production.
+     * Implements Zod validation to ensure data integrity.
+     * 
+     * @param status - Optional status to filter by (e.g., 'published', 'draft')
+     * @param fresh - If true, bypasses the cache and fetches fresh data from GitHub
+     * @returns A promise that resolves to an object containing the sorted projects and last updated timestamp
+     */
     async getProjects(status?: string, fresh = false): Promise<{ projects: Project[], lastUpdated: string }> {
         try {
             let data: ProjectsData | null = null;
@@ -98,6 +107,15 @@ export const projectService = {
 
     /**
      * Create a new project
+     */
+    /**
+     * Create a new project.
+     * Validates input with Zod, generates a unique slug, and saves to the appropriate storage.
+     * Auto-syncs to GitHub in development if credentials are provided.
+     * 
+     * @param data - The project data to create
+     * @returns A promise that resolves to the newly created project
+     * @throws ZodError if validation fails
      */
     async createProject(data: CreateProjectData): Promise<Project> {
         // [Zod] Validate Input (Strict)
@@ -202,6 +220,15 @@ export const projectService = {
     /**
      * Update an existing project
      */
+    /**
+     * Update an existing project.
+     * Partially validates input with Zod and ensures slug uniqueness if changed.
+     * 
+     * @param id - The ID of the project to update
+     * @param data - The partial project data to update
+     * @returns A promise that resolves to the updated project, or null if not found
+     * @throws ZodError if validation fails
+     */
     async updateProject(id: string, data: UpdateProjectData): Promise<Project | null> {
         // [Zod] Validate Input (Partial)
         UpdateProjectSchema.parse(data);
@@ -294,6 +321,13 @@ export const projectService = {
     /**
      * Delete a project
      */
+    /**
+     * Delete a project by its ID.
+     * Also triggers an auto-cleanup of associated media files (best effort).
+     * 
+     * @param id - The ID of the project to delete
+     * @returns A promise that resolves to true if deleted, false if not found
+     */
     async deleteProject(id: string): Promise<boolean> {
         const isDev = process.env.NODE_ENV === 'development';
         let currentProjects: Project[] = [];
@@ -352,6 +386,13 @@ export const projectService = {
 
     /**
      * Bulk update projects (Atomic operation)
+     */
+    /**
+     * Bulk update projects as an atomic operation.
+     * Supports bulk deletion, status updates, and reordering.
+     * 
+     * @param updates - Object containing the IDs to update and the operations to perform
+     * @returns A promise that resolves to true if successful
      */
     async bulkUpdateProjects(updates: { ids: string[], status?: 'published' | 'draft', delete?: boolean, reorder?: boolean }): Promise<boolean> {
         const isDev = process.env.NODE_ENV === 'development';
