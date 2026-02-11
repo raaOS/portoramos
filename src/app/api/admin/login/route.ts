@@ -268,8 +268,8 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 2 * 60 * 60, // 2 jam (sesuai JWT expiry)
-      path: '/',
-      domain: process.env.NODE_ENV === 'production' ? '.ramos.my.id' : undefined
+      path: '/'
+      // Hapus domain untuk kompatibilitas Vercel
     });
 
     return response;
