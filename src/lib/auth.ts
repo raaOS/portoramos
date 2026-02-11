@@ -2,12 +2,11 @@ import { NextRequest } from 'next/server';
 import crypto from 'crypto';
 import { sign, verify } from 'jsonwebtoken';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+// Clean auth system - scrypt only (most secure)
 const ADMIN_PASSWORD_SCRYPT = process.env.ADMIN_PASSWORD_SCRYPT;
 const PASSWORD_SALT = process.env.PASSWORD_SALT;
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// HAPUS SHA256 support - hanya scrypt yang aman
 function hashPasswordScrypt(password: string, salt: string): string {
   const key = crypto.scryptSync(password, salt, 64);
   return key.toString('hex');
@@ -21,9 +20,8 @@ function timingSafeEqualString(a: string, b: string): boolean {
 }
 
 export const verifyAdminPassword = (password: string): boolean => {
-  // VALIDASI STRICT - tidak ada fallback ke plaintext
   if (!ADMIN_PASSWORD_SCRYPT || !PASSWORD_SALT) {
-    throw new Error('Admin password security not configured properly');
+    throw new Error('Admin password security not configured - please set ADMIN_PASSWORD_SCRYPT and PASSWORD_SALT in your environment variables');
   }
   
   if (!password || password.length < 8) {
@@ -43,7 +41,7 @@ export const getAdminToken = (): string => {
     { sub: 'admin', role: 'admin', iat: Math.floor(Date.now() / 1000) },
     JWT_SECRET,
     { 
-      expiresIn: '2h', // REDUCE dari 24h ke 2h untuk security
+      expiresIn: '2h',
       issuer: 'portfolio-admin',
       audience: 'admin-panel'
     }
