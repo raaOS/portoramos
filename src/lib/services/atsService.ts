@@ -146,7 +146,7 @@ export const atsService = {
         y += 5;
         // Portfolio
         const pfLabel = "Portfolio: ";
-        const pfLink = "https://portofolio-ramos.vercel.app";
+        const pfLink = process.env.NEXT_PUBLIC_SITE_URL || 'https://' + (process.env.VERCEL_URL || 'localhost:3000');
         doc.setTextColor(0, 0, 0);
         doc.text(pfLabel, margin, y);
 

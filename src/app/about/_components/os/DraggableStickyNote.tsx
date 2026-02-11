@@ -1,5 +1,5 @@
 import React from "react";
-import { motion, useDragControls } from "framer-motion";
+import { m, useDragControls } from "framer-motion";
 import StickyNoteItem, { NoteData } from "./StickyNoteItem";
 
 interface DraggableStickyNoteProps {
@@ -24,7 +24,7 @@ export const DraggableStickyNote = ({
     const dragControls = useDragControls();
 
     return (
-        <motion.div
+        <m.div
             key={note.id}
             drag={isAdmin && !note.isPinned}
             dragControls={dragControls}
@@ -61,6 +61,6 @@ export const DraggableStickyNote = ({
                 dragControls={dragControls}
                 isAdmin={isAdmin}
             />
-        </motion.div>
+        </m.div>
     );
 };

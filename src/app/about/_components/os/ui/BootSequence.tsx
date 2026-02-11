@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 
 interface BootSequenceProps {
     onComplete: () => void;
@@ -32,7 +32,7 @@ const BootSequence = ({ onComplete }: BootSequenceProps) => {
     return (
         <AnimatePresence>
             {step < 3 && (
-                <motion.div
+                <m.div
                     className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center select-none cursor-wait"
                     initial={{ opacity: 1 }}
                     exit={{
@@ -45,7 +45,7 @@ const BootSequence = ({ onComplete }: BootSequenceProps) => {
                     {/* Logo Container */}
                     <div className="relative">
                         {step >= 1 && (
-                            <motion.div
+                            <m.div
                                 initial={{ opacity: 0, scale: 0.9, y: 10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 transition={{ duration: 0.8 }}
@@ -60,7 +60,7 @@ const BootSequence = ({ onComplete }: BootSequenceProps) => {
                                 <div className="text-center space-y-2">
                                     <h1 className="text-white font-medium tracking-[0.2em] text-sm">RAMOS OS</h1>
                                     <div className="h-0.5 w-8 bg-white/20 mx-auto rounded-full overflow-hidden">
-                                        <motion.div
+                                        <m.div
                                             className="h-full bg-white"
                                             initial={{ width: "0%" }}
                                             animate={{ width: "100%" }}
@@ -68,29 +68,29 @@ const BootSequence = ({ onComplete }: BootSequenceProps) => {
                                         />
                                     </div>
                                 </div>
-                            </motion.div>
+                            </m.div>
                         )}
                     </div>
 
                     {/* Console Log Bottom Left */}
                     <div className="absolute bottom-12 left-12 font-mono text-[10px] text-gray-500 space-y-1">
                         {step >= 1 && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
+                            <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
                                 {'>'} BIOS_CHECK... OK
-                            </motion.div>
+                            </m.div>
                         )}
                         {step >= 1 && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
+                            <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
                                 {'>'} MEMORY_INIT... 64GB OK
-                            </motion.div>
+                            </m.div>
                         )}
                         {step >= 2 && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                            <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                                 {'>'} LOADING_KERNEL... DONE
-                            </motion.div>
+                            </m.div>
                         )}
                     </div>
-                </motion.div>
+                </m.div>
             )}
         </AnimatePresence>
     );

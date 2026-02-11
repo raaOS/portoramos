@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Star, Trash2, Edit, Palette, RotateCcw, Pin, Eye, EyeOff, Bold, Italic, List, ListOrdered, CheckSquare, Check, Download, X, Plus, Minus } from 'lucide-react';
-import { motion, AnimatePresence, DragControls } from 'framer-motion';
+import { m, AnimatePresence, DragControls } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 // Lazy load PasswordModal - only needed when editing locked notes
@@ -224,7 +224,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
 
     return (
         <>
-            <motion.div
+            <m.div
                 ref={containerRef}
                 // layout={!isResizing} // Removed to prevent jitter and unwanted flying animations
                 initial={{ opacity: 0 }}
@@ -520,7 +520,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                         </svg>
                     </div>
                 )}
-            </motion.div>
+            </m.div>
 
             <PasswordModal
                 isOpen={showPasswordModal}

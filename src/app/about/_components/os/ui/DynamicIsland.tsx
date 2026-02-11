@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { Maximize2, Minimize2, Music, AppWindow } from "lucide-react";
 
 interface DynamicIslandProps {
@@ -104,7 +104,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat }: DynamicIslandPro
 
     return (
         <div className="fixed top-[42px] left-0 right-0 flex justify-center z-[9999] pointer-events-none">
-            <motion.div
+            <m.div
                 className="bg-black shadow-2xl overflow-hidden pointer-events-auto cursor-default border border-white/10"
                 initial="idle"
                 animate={currentState === "active-window" ? "active" : currentState}
@@ -120,7 +120,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat }: DynamicIslandPro
 
                     {/* Active Window State (Compact) */}
                     {currentState === "active-window" && (
-                        <motion.div
+                        <m.div
                             className="flex items-center gap-3 w-full"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -130,12 +130,12 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat }: DynamicIslandPro
                                 {activeWindow}
                             </span>
                             <AppWindow size={14} className="text-white/60" />
-                        </motion.div>
+                        </m.div>
                     )}
 
                     {/* Notification State */}
                     {currentState === "notification" && notification && (
-                        <motion.div
+                        <m.div
                             className="flex items-center gap-3 w-full px-1 cursor-pointer"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -162,21 +162,20 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat }: DynamicIslandPro
                                     {notification.message}
                                 </span>
                             </div>
-                        </motion.div>
+                        </m.div>
                     )}
 
                     {/* Expanded State (Hovered) */}
                     <AnimatePresence>
                         {isHovered && currentState === "hovered" && (
-                            <motion.div
+                            <m.div
                                 className="absolute inset-0 p-4 flex flex-col justify-between"
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 transition={{ duration: 0.2 }}
                             >
-                                {/* ... existing hover content but maybe adapted? actually let's keep it generic for now or show active app info if active, or notification info if notification was prior state? For simplicity, we keep the generic 'Active App' view or we can make it smart later. */}
-                                {/* Reusing the Active App view for now as 'Control Center' */}
+                                {/* ... existing hover content */}
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
@@ -195,11 +194,11 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat }: DynamicIslandPro
                                     </div>
                                     <span className="text-[10px] font-mono opacity-50">RAMOS OS</span>
                                 </div>
-                            </motion.div>
+                            </m.div>
                         )}
                     </AnimatePresence>
                 </div>
-            </motion.div>
+            </m.div>
         </div>
     );
 };

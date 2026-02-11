@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
-import { motion, useDragControls, AnimatePresence } from "framer-motion";
+import { m, useDragControls, AnimatePresence } from "framer-motion";
 import { X, Minus, Square, Pin, Lock } from "lucide-react";
 
 interface WindowProps {
@@ -159,7 +159,7 @@ export default function OSWindow({
     return (
         <AnimatePresence>
             {isOpen && (
-                <motion.div
+                <m.div
                     drag={!isMaximized && !isResizing && !isPinned} // Disable drag when resizing OR pinned
                     dragControls={dragControls}
                     dragListener={false}
@@ -236,27 +236,33 @@ export default function OSWindow({
                             <button
                                 onClick={(e) => { e.stopPropagation(); onClose(); }}
                                 onPointerDown={(e) => e.stopPropagation()}
-                                className="w-[12px] h-[12px] min-w-[12px] min-h-[12px] p-0 border-[0.5px] border-[#D6443F] rounded-full bg-[#FF5F57] hover:bg-[#FF5F57] transition-all shadow-sm flex items-center justify-center group-hover:brightness-90 active:brightness-75"
+                                className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
                                 aria-label="Close window"
                             >
-                                <X size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
+                                <span className="w-[12px] h-[12px] rounded-full bg-[#FF5F57] border-[0.5px] border-[#D6443F] shadow-sm flex items-center justify-center">
+                                    <X size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
+                                </span>
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onMinimize && onMinimize(); }}
                                 onPointerDown={(e) => e.stopPropagation()}
-                                className="w-[12px] h-[12px] min-w-[12px] min-h-[12px] p-0 border-[0.5px] border-[#DDA335] rounded-full bg-[#FEBC2E] hover:bg-[#FEBC2E] transition-all shadow-sm flex items-center justify-center group-hover:brightness-90 active:brightness-75"
+                                className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
                                 aria-label="Minimize window"
                             >
-                                <Minus size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
+                                <span className="w-[12px] h-[12px] rounded-full bg-[#FEBC2E] border-[0.5px] border-[#DDA335] shadow-sm flex items-center justify-center">
+                                    <Minus size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
+                                </span>
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onMaximize && onMaximize(); }}
                                 onPointerDown={(e) => e.stopPropagation()}
-                                className="w-[12px] h-[12px] min-w-[12px] min-h-[12px] p-0 border-[0.5px] border-[#22AA32] rounded-full bg-[#28C840] hover:bg-[#28C840] transition-all shadow-sm flex items-center justify-center group-hover:brightness-90 active:brightness-75"
+                                className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
                                 aria-label="Maximize window"
                             >
-                                {/* Outline Square for Expand */}
-                                <div className="w-[6px] h-[6px] bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rotate-45 transform scale-[0.8]" style={{ clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" }} />
+                                <span className="w-[12px] h-[12px] rounded-full bg-[#28C840] border-[0.5px] border-[#22AA32] shadow-sm flex items-center justify-center">
+                                    {/* Outline Square for Expand */}
+                                    <span className="w-[6px] h-[6px] bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rotate-45 transform scale-[0.8] block" style={{ clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" }} />
+                                </span>
                             </button>
                         </div>
 
@@ -312,7 +318,7 @@ export default function OSWindow({
                             </>
                         )}
                     </div>
-                </motion.div>
+                </m.div>
             )}
         </AnimatePresence>
     );

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
+import { m, useMotionValue, useTransform, useSpring } from "framer-motion";
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { DockPreferences } from "@/types/about";
 
@@ -52,7 +52,7 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
     const activeBounce = isBouncing || shouldBounceExternal;
 
     return (
-        <motion.div
+        <m.div
             key={`${id}-${bounceKey}`}
             id={`dock-item-${id}`}
             ref={ref}
@@ -88,7 +88,7 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
             <div className="flex items-center justify-center w-full h-full relative">
                 {React.cloneElement(icon as React.ReactElement, { className: "w-full h-full" })}
             </div>
-        </motion.div>
+        </m.div>
     );
 }
 

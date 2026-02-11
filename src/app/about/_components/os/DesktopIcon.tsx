@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion, useMotionValue } from "framer-motion";
+import { m, useMotionValue } from "framer-motion";
 import Image from "next/image";
 
 interface DesktopIconProps {
@@ -65,7 +65,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
     };
 
     return (
-        <motion.div
+        <m.div
             drag
             dragMomentum={false}
             dragElastic={0.1}
@@ -145,6 +145,6 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                     {label}
                 </span>
             )}
-        </motion.div>
+        </m.div>
     );
 }

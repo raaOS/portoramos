@@ -11,31 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL != '' && secrets.NEXT_PUBLIC_SITE_URL || 'https://' }}
-      JWT_SECRET: ci-dummy-jwt-secret-key-min-32-chars-for-testing-only
-      ADMIN_PASSWORD_SCRYPT: ci-dummy-admin-scrypt-hash-for-testing-only
-      PASSWORD_SALT: ci-dummy-salt-for-testing-only
-      TELEGRAM_BOT_TOKEN: ci-dummy-telegram-token
-      TELEGRAM_CHAT_ID: ci-dummy-chat-id
+      NEXT_PUBLIC_SITE_URL: https://portofolio-ramos.vercel.app
+      # Core authentication - required
+      JWT_SECRET: ${{ secrets.JWT_SECRET != '' && secrets.JWT_SECRET || 'ci-dummy-jwt-secret-key-min-32-chars-for-testing-only' }}
+      ADMIN_PASSWORD_SCRYPT: ${{ secrets.ADMIN_PASSWORD_SCRYPT != '' && secrets.ADMIN_PASSWORD_SCRYPT || 'ci-dummy-admin-scrypt-hash-for-testing-only' }}
+      PASSWORD_SALT: ${{ secrets.PASSWORD_SALT != '' && secrets.PASSWORD_SALT || 'ci-dummy-salt-for-testing-only' }}
+      # Optional features - with fallbacks
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_BOT_TOKEN || 'ci-dummy-telegram-token' }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID != '' && secrets.TELEGRAM_CHAT_ID || 'ci-dummy-chat-id' }}
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Apply secrets
-      if: env.CI_SECRETS != ''
-      run: |
-        [ -n "$_JWT" ] && echo "JWT_SECRET=$_JWT" >> $GITHUB_ENV
-        [ -n "$_ADMIN_PW" ] && echo "ADMIN_PASSWORD_SCRYPT=$_ADMIN_PW" >> $GITHUB_ENV
-        [ -n "$_PW_SALT" ] && echo "PASSWORD_SALT=$_PW_SALT" >> $GITHUB_ENV
-        [ -n "$_TG_TOKEN" ] && echo "TELEGRAM_BOT_TOKEN=$_TG_TOKEN" >> $GITHUB_ENV
-        [ -n "$_TG_CHAT" ] && echo "TELEGRAM_CHAT_ID=$_TG_CHAT" >> $GITHUB_ENV
-      env:
-        CI_SECRETS: true
-        _JWT: ${{ secrets.JWT_SECRET }}
-        _ADMIN_PW: ${{ secrets.ADMIN_PASSWORD_SCRYPT }}
-        _PW_SALT: ${{ secrets.PASSWORD_SALT }}
-        _TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        _TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -82,9 +68,9 @@ jobs:
       uses: treosh/lighthouse-ci-action@v10
       with:
         urls: |
-          ${{ secrets.SITE_URL != '' && secrets.SITE_URL || 'https://' }}
-          ${{ secrets.SITE_URL != '' && secrets.SITE_URL || 'https://' }}/about
-          ${{ secrets.SITE_URL != '' && secrets.SITE_URL || 'https://' }}/works
+          https://portofolio-ramos.vercel.app
+          https://portofolio-ramos.vercel.app/about
+          https://portofolio-ramos.vercel.app/works
         configPath: './lighthouserc.js'
         uploadArtifacts: true
         temporaryPublicStorage: true

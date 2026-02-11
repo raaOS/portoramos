@@ -1,0 +1,31 @@
+module.exports = {
+  ci: {
+    collect: {
+      numberOfRuns: 3,
+      startServerCommand: 'npm start',
+      startServerReadyPattern: 'Ready',
+      startServerReadyTimeout: 30000,
+      url: [
+        'http://localhost:3000',
+        'http://localhost:3000/about',
+        'http://localhost:3000/works'
+      ]
+    },
+    assert: {
+      preset: 'lighthouse:no-pwa',
+      assertions: {
+        'categories:performance': ['error', { minScore: 0.9 }],
+        'categories:accessibility': ['error', { minScore: 0.9 }],
+        'categories:best-practices': ['error', { minScore: 0.9 }],
+        'categories:seo': ['error', { minScore: 0.9 }],
+        'first-contentful-paint': ['error', { maxNumericValue: 2000 }],
+        'largest-contentful-paint': ['error', { maxNumericValue: 3000 }],
+        'cumulative-layout-shift': ['error', { maxNumericValue: 0.1 }],
+        'total-blocking-time': ['error', { maxNumericValue: 300 }]
+      }
+    },
+    upload: {
+      target: 'temporary-public-storage'
+    }
+  }
+};
