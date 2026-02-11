@@ -6,7 +6,7 @@
     "dev": "node scripts/core/dev.js",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "clear-cache": "node scripts/utils/clear-cache.js",
     "fix-webpack": "node scripts/utils/fix-webpack-cache.js",
     "fresh-start": "npm run clear-cache && npm run dev",
