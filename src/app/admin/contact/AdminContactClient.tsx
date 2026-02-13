@@ -5,6 +5,7 @@ import { ContactData, UpdateContactData } from '@/types/contact';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
 import { PhoneCall, Type, Share2, Info } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 export default function AdminContactClient() {
   const [contactData, setContactData] = useState<ContactData | null>(null);
@@ -12,6 +13,7 @@ export default function AdminContactClient() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'content' | 'socials' | 'labels'>('content');
   const { showSuccess, showError } = useToast();
+  const { csrfToken } = useAdminAuth();
 
   const loadContactData = useCallback(async () => {
     try {
@@ -35,7 +37,10 @@ export default function AdminContactClient() {
     try {
       const response = await fetch('/api/contact', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify(updateData)
       });
 

@@ -210,7 +210,6 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
             </div>
 
             <style jsx global>{`
-                footer { display: none !important; }
                 html, body { overflow: hidden !important; height: 100%; }
             `}</style>
         </div>

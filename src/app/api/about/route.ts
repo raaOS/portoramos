@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     if (!checkAdminAuth(request)) {
+      console.warn('[API/About] Unauthorized update attempt (PUT)');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -30,8 +31,11 @@ export async function PUT(request: NextRequest) {
       success: true,
       data: updatedData
     });
-  } catch (error) {
-    // Silently handle about data update errors
-    return NextResponse.json({ error: 'Failed to update about data' }, { status: 500 });
+  } catch (error: any) {
+    console.error('[API/About] Update Error:', error);
+    return NextResponse.json({
+      error: 'Failed to update about data',
+      details: error.message || 'Unknown error'
+    }, { status: 500 });
   }
 }

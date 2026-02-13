@@ -6,6 +6,7 @@ import AdminModal from './AdminModal';
 import AdminButton from './AdminButton';
 import { useToast } from '@/contexts/ToastContext';
 import { Loader2, Trash2, MessageCircle } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface Comment {
     id: string;
@@ -27,6 +28,7 @@ export default function ManageCommentsModal({ project, onClose, onSyncTrigger }:
     const [loading, setLoading] = useState(true);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const { showSuccess, showError } = useToast();
+    const { csrfToken } = useAdminAuth();
 
     const fetchComments = useCallback(async () => {
         try {
@@ -55,7 +57,10 @@ export default function ManageCommentsModal({ project, onClose, onSyncTrigger }:
         try {
             const res = await fetch('/api/comments', {
                 method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
                 body: JSON.stringify({ slug: project.slug, commentId })
             });
 

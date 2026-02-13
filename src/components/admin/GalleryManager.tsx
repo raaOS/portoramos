@@ -6,6 +6,7 @@ import { Project } from '@/types/projects';
 import { GalleryFeaturedData } from '@/types/gallery';
 import { Check, Save, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface GalleryManagerProps {
     projects: Project[];
@@ -17,6 +18,7 @@ export default function GalleryManager({ projects, onSyncTrigger }: GalleryManag
     const [featuredIds, setFeaturedIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const { csrfToken } = useAdminAuth();
 
     // Fetch initial data
     useEffect(() => {
@@ -59,7 +61,10 @@ export default function GalleryManager({ projects, onSyncTrigger }: GalleryManag
             // 1. Save to local JSON API
             const res = await fetch('/api/gallery/featured', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
                 body: JSON.stringify({ featuredProjectIds: featuredIds })
             });
 

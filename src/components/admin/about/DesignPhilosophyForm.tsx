@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Save, Plus, Trash2, Loader2, Sparkles } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface PhilosophyStep {
     number: string;
@@ -21,6 +22,7 @@ export default function DesignPhilosophyForm() {
     const [formData, setFormData] = useState<DesignPhilosophyData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const { csrfToken } = useAdminAuth();
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     // Fetch initial data
@@ -64,7 +66,10 @@ export default function DesignPhilosophyForm() {
         try {
             const res = await fetch('/api/about/philosophy', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
                 body: JSON.stringify(formData)
             });
 
@@ -119,8 +124,8 @@ export default function DesignPhilosophyForm() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={`p-4 rounded-xl text-sm font-medium ${message.type === 'success'
-                            ? 'bg-green-50 text-green-700 border border-green-100'
-                            : 'bg-red-50 text-red-700 border border-red-100'
+                        ? 'bg-green-50 text-green-700 border border-green-100'
+                        : 'bg-red-50 text-red-700 border border-red-100'
                         }`}
                 >
                     {message.text}

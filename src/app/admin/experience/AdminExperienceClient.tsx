@@ -8,12 +8,14 @@ import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
 import { BriefcaseBusiness, Pencil, Save, X, Plus, Trash2 } from 'lucide-react';
 import StatusToggle from '../components/StatusToggle';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 export default function AdminExperienceClient() {
   const [experienceData, setExperienceData] = useState<ExperienceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingStats, setEditingStats] = useState(false);
+  const { csrfToken } = useAdminAuth();
 
   // Work Experience Edit State
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -62,7 +64,10 @@ export default function AdminExperienceClient() {
     try {
       const response = await fetch('/api/experience', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify({
           statistics: { ...experienceData.statistics, ...statsFormData }
         })
@@ -137,7 +142,10 @@ export default function AdminExperienceClient() {
     try {
       const response = await fetch('/api/experience', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify({
           workExperience: updatedList
         })
@@ -163,7 +171,10 @@ export default function AdminExperienceClient() {
     try {
       const response = await fetch('/api/experience', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify({
           workExperience: updatedList
         })
@@ -496,7 +507,10 @@ export default function AdminExperienceClient() {
                         // Direct save
                         fetch('/api/experience', {
                           method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'x-csrf-token': csrfToken
+                          },
                           body: JSON.stringify({ workExperience: updatedList })
                         }).then(res => {
                           if (res.ok) {

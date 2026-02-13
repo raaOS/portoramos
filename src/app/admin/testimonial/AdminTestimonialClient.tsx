@@ -10,6 +10,7 @@ import { useAutoUpdate } from '@/hooks/useAutoUpdate';
 import { useToast } from '@/contexts/ToastContext';
 import { Quote, Pencil, Trash2 } from 'lucide-react';
 import StatusToggle from '../components/StatusToggle';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const FALLBACK_AVATAR = 'https://ui-avatars.com/api/?background=random&color=fff&name=';
 
@@ -27,6 +28,7 @@ export default function AdminTestimonialClient() {
     isActive: true
   });
   const { showSuccess, showError } = useToast();
+  const { csrfToken } = useAdminAuth();
 
   // Load testimonials
   const loadTestimonials = useCallback(async () => {
@@ -58,7 +60,10 @@ export default function AdminTestimonialClient() {
     try {
       const response = await fetch('/api/testimonial', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify(formData)
       });
 
@@ -80,7 +85,10 @@ export default function AdminTestimonialClient() {
     try {
       const response = await fetch('/api/testimonial', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify({ id, ...formData })
       });
 
@@ -105,7 +113,10 @@ export default function AdminTestimonialClient() {
     try {
       const response = await fetch('/api/testimonial', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify({ id })
       });
 
@@ -342,7 +353,10 @@ export default function AdminTestimonialClient() {
                       onClick={() => {
                         fetch('/api/testimonial', {
                           method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'x-csrf-token': csrfToken
+                          },
                           body: JSON.stringify({ id: testimonial.id, isActive: testimonial.isActive === false ? true : false })
                         }).then(res => {
                           if (res.ok) {

@@ -23,27 +23,39 @@ export const aboutService = {
      * @returns A promise that resolves to the updated merged data.
      */
     async updateAboutData(updates: UpdateAboutData) {
-        const current = await this.getAboutData();
+        try {
+            const current = await this.getAboutData();
+            console.log('[AboutService] Updating data with:', JSON.stringify(updates).slice(0, 100) + '...');
 
-        // Explicit merging since updates contains Partials
-        const mergedData: AboutData = {
-            hero: { ...current.hero, ...(updates.hero || {}) },
-            professional: { ...current.professional, ...(updates.professional || {}) },
-            softSkills: { ...current.softSkills, ...(updates.softSkills || {}) },
-            designPhilosophy: { ...current.designPhilosophy!, ...(updates.designPhilosophy || {}) },
+            // Explicit merging since updates contains Partials
+            const mergedData: AboutData = {
+                ...current, // Preserve all base fields (notifications, etc)
+                hero: { ...current.hero, ...(updates.hero || {}) },
+                professional: { ...current.professional, ...(updates.professional || {}) },
+                softSkills: { ...current.softSkills, ...(updates.softSkills || {}) },
+                designPhilosophy: { ...(current.designPhilosophy || {}), ...(updates.designPhilosophy || {}) } as any,
 
-            // OS Configuration
-            desktopPreferences: { ...current.desktopPreferences, ...(updates.desktopPreferences || {}) } as any,
-            wallpaperConfig: { ...current.wallpaperConfig, ...(updates.wallpaperConfig || {}) } as any,
-            dockConfig: { ...current.dockConfig, ...(updates.dockConfig || {}) } as any,
-            chatSettings: { ...current.chatSettings, ...(updates.chatSettings || {}) } as any,
-            windowPreferences: { ...current.windowPreferences, ...(updates.windowPreferences || {}) } as any,
-            labels: { ...current.labels, ...(updates.labels || {}) } as any,
+                // OS Configuration
+                desktopPreferences: { ...current.desktopPreferences, ...(updates.desktopPreferences || {}) } as any,
+                wallpaperConfig: { ...current.wallpaperConfig, ...(updates.wallpaperConfig || {}) } as any,
+                dockConfig: { ...current.dockConfig, ...(updates.dockConfig || {}) } as any,
+                chatSettings: { ...current.chatSettings, ...(updates.chatSettings || {}) } as any,
+                windowPreferences: { ...current.windowPreferences, ...(updates.windowPreferences || {}) } as any,
+                labels: { ...(current.labels || {}), ...(updates.labels || {}) } as any,
 
-            lastUpdated: new Date().toISOString()
-        };
+                lastUpdated: new Date().toISOString()
+            };
 
-        await service.saveData(mergedData, 'Update about page content');
-        return mergedData;
+            const success = await service.saveData(mergedData, 'Update about page content');
+            if (!success) {
+                throw new Error('ContentService failed to save data');
+            }
+
+            console.log('[AboutService] Successfully updated about content');
+            return mergedData;
+        } catch (error) {
+            console.error('[AboutService] Update failed:', error);
+            throw error;
+        }
     }
 };

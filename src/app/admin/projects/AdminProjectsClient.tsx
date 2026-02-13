@@ -16,6 +16,7 @@ import AdminButton from '../components/AdminButton';
 import StatusToggle from '../components/StatusToggle';
 import { useToast } from '@/contexts/ToastContext';
 import ProjectCardSkeleton from '@/components/admin/ProjectCardSkeleton';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 // Lazy load heavy modals
 const ProjectForm = dynamic(() => import('@/components/admin/project-form/ProjectForm'), {
@@ -72,6 +73,7 @@ function SortableProjectItem({ id, children }: { id: string, children: React.Rea
 export default function AdminProjectsClient() {
   const queryClient = useQueryClient();
   const { showSuccess: success, showError } = useToast();
+  const { csrfToken } = useAdminAuth();
 
   // Tab State
   const [activeTab, setActiveTab] = useState<'projects' | 'gallery'>('projects');
@@ -149,7 +151,10 @@ export default function AdminProjectsClient() {
         // Trigger Save Side Effect (fire and forget)
         fetch('/api/projects/bulk', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-csrf-token': csrfToken
+          },
           body: JSON.stringify({ action: 'reorder', ids: newItems.map(p => p.id) })
         }).then(async res => {
           if (res.ok) {
@@ -261,7 +266,12 @@ export default function AdminProjectsClient() {
     setDeployProgress(10);
 
     try {
-      const res = await fetch('/api/admin/sync', { method: 'POST' });
+      const res = await fetch('/api/admin/sync', {
+        method: 'POST',
+        headers: {
+          'x-csrf-token': csrfToken
+        }
+      });
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || 'Msg failed');
@@ -342,7 +352,10 @@ export default function AdminProjectsClient() {
     mutationFn: async (data: CreateProjectData | UpdateProjectData) => {
       const response = await fetch('/api/projects', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify(data)
       });
       if (!response.ok) {
@@ -370,7 +383,10 @@ export default function AdminProjectsClient() {
     mutationFn: async (data: UpdateProjectData) => {
       const response = await fetch(`/api/projects/${data.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify(data)
       });
       if (!response.ok) {
@@ -413,7 +429,10 @@ export default function AdminProjectsClient() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/projects/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'x-csrf-token': csrfToken
+        }
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -486,7 +505,10 @@ export default function AdminProjectsClient() {
       // 1. Perform atomic bulk update via optimized API
       const res = await fetch('/api/projects/bulk', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify({
           action,
           ids: Array.from(selectedProjectIds)

@@ -18,14 +18,13 @@ interface DockConfigFormProps {
 }
 
 const DEFAULT_DOCK_ITEMS = [
-    { id: "finder", defaultLabel: "Finder" },
-    { id: "about", defaultLabel: "Profile" },
-    { id: "projects", defaultLabel: "Launchpad" },
+    { id: "about", defaultLabel: "About Me" },
+    { id: "projects_page", defaultLabel: "Projects" },
+    { id: "contact_page", defaultLabel: "Contact" },
     { id: "gallery", defaultLabel: "Photos" },
     { id: "whatsapp", defaultLabel: "WhatsApp" },
     { id: "notes", defaultLabel: "Notes" },
     { id: "trash", defaultLabel: "Trash" },
-    { id: "home", defaultLabel: "Exit OS" },
 ];
 
 export default function DockConfigForm({ data, onUpdate }: DockConfigFormProps) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Save, Type, GripHorizontal, Palette, Pin, Star, CheckSquare } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { NoteData } from '@/app/about/_components/os/StickyNoteItem';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const COLORS = [
     '#fef08a', // Yellow
@@ -21,6 +22,7 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
     const [loading, setLoading] = useState(true);
     const { showSuccess, showError } = useToast();
     const [saving, setSaving] = useState(false);
+    const { csrfToken } = useAdminAuth();
 
     useEffect(() => {
         loadNotes();
@@ -47,7 +49,10 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
             setSaving(true);
             const response = await fetch('/api/sticky-notes', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
                 body: JSON.stringify(notes)
             });
 

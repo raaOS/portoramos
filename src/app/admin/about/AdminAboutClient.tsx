@@ -22,11 +22,13 @@ import DesktopProjectsForm from './components/DesktopProjectsForm';
 import DockConfigForm from './components/DockConfigForm';
 import ChatSettingsForm from './components/ChatSettingsForm';
 import StickyNotesManager from './components/StickyNotesManager';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 export default function AdminAboutClient() {
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { csrfToken } = useAdminAuth();
   const [activeTab, setActiveTab] = useState<'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'labels' | 'desktop' | 'dock' | 'chat' | 'stickyNotes'>('professional');
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -88,7 +90,10 @@ export default function AdminAboutClient() {
     try {
       const response = await fetch('/api/about', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify(updateData)
       });
 
@@ -115,7 +120,10 @@ export default function AdminAboutClient() {
     try {
       const response = await fetch('/api/running-text', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify(payload),
       });
       if (response.ok) {
@@ -133,7 +141,10 @@ export default function AdminAboutClient() {
     try {
       const response = await fetch(`/api/running-text/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify(payload),
       });
       if (response.ok) {
@@ -151,6 +162,9 @@ export default function AdminAboutClient() {
     try {
       const response = await fetch(`/api/running-text/${id}`, {
         method: 'DELETE',
+        headers: {
+          'x-csrf-token': csrfToken
+        }
       });
       if (response.ok) {
         await loadRunningTexts();

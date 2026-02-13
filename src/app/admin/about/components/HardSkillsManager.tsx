@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Edit2, Save, X, MoveUp, MoveDown, Sparkles, Loader2, Search } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface HardSkill {
     id: string;
@@ -21,6 +22,7 @@ export default function HardSkillsManager() {
     const [isAdding, setIsAdding] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSearchingIcon, setIsSearchingIcon] = useState(false);
+    const { csrfToken } = useAdminAuth();
 
     const handleAutoIcon = async () => {
         if (!editForm?.name) {
@@ -32,7 +34,10 @@ export default function HardSkillsManager() {
         try {
             const res = await fetch('/api/utils/search-icon', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
                 body: JSON.stringify({ query: editForm.name })
             });
 
@@ -61,7 +66,10 @@ export default function HardSkillsManager() {
         try {
             const res = await fetch('/api/ai/suggest-skills', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
                 body: JSON.stringify({ skillName: editForm.name })
             });
 
@@ -107,7 +115,10 @@ export default function HardSkillsManager() {
         setSkills(newSkills);
         await fetch('/api/hard-skills', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'x-csrf-token': csrfToken
+            },
             body: JSON.stringify(newSkills),
         });
     };

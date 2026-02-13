@@ -45,7 +45,7 @@ export default function BottomNavigation() {
     router.push(href);
   };
 
-  if (!isNavbarVisible || pathname === '/about-test') return null;
+  if (!isNavbarVisible || pathname === '/about-test' || pathname === '/about' || pathname === '/projects' || pathname === '/contact') return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[9999] flex justify-center pb-6 px-4 pointer-events-none print:hidden" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>

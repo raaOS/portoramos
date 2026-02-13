@@ -5,6 +5,7 @@ import AdminModal from './AdminModal';
 import AdminButton from './AdminButton';
 import { useToast } from '@/contexts/ToastContext';
 import { Loader2, X } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface SecuritySettingsModalProps {
     onClose: () => void;
@@ -15,6 +16,7 @@ export default function SecuritySettingsModal({ onClose }: SecuritySettingsModal
     const [newWord, setNewWord] = useState('');
     const [loading, setLoading] = useState(true);
     const { showSuccess, showError } = useToast();
+    const { csrfToken } = useAdminAuth();
 
     useEffect(() => {
         fetch('/api/settings')
@@ -48,7 +50,10 @@ export default function SecuritySettingsModal({ onClose }: SecuritySettingsModal
         try {
             const res = await fetch('/api/settings', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
                 body: JSON.stringify({ bannedWords: updatedWords })
             });
             if (res.ok) {

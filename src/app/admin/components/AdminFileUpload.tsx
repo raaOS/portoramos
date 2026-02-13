@@ -5,6 +5,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { Loader2, CheckCircle2 } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 
 interface AdminFileUploadProps {
@@ -39,6 +40,7 @@ export default function AdminFileUpload({
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { showSuccess: success, showError, showWarning } = useToast();
+  const { csrfToken } = useAdminAuth();
 
   // Cropping & Trimming State
   const [activeCrop, setActiveCrop] = useState<{ src: string; file: File } | null>(null);
@@ -175,6 +177,9 @@ export default function AdminFileUpload({
 
     const response = await fetch(`/api/upload/github?${params.toString()}`, {
       method: 'POST',
+      headers: {
+        'x-csrf-token': csrfToken
+      },
       body: formData,
     });
     if (!response.ok) {
@@ -195,7 +200,10 @@ export default function AdminFileUpload({
       setStatus('Optimizing Image (Server)...');
       const response = await fetch('/api/admin/compress', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify({ filePath }),
       });
       if (!response.ok) {

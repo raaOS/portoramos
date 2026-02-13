@@ -318,10 +318,9 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     // Dock Configuration
     const dockItems = useMemo(() => {
         const defaultItems = [
-            { id: "home", label: "Exit OS", icon: <AppIcon icon={ArrowLeft} color="from-zinc-700 to-zinc-900" />, onClick: handleGoHome },
-            { id: "finder", label: "Finder", icon: <AppIcon icon={Smile} color="from-sky-400 to-blue-500" />, onClick: resetDesktopAndClose },
-            { id: "about", label: "Profile", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => openWindow("about"), isOpen: isWindowOpen("about") },
-            { id: "projects", label: "Launchpad", icon: <AppIcon icon={Rocket} color="from-red-400 to-pink-500" />, onClick: openLaunchpad, isOpen: isWindowOpen("launchpad") },
+            { id: "about", label: "About Me", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => openWindow("about"), isOpen: isWindowOpen("about") },
+            { id: "projects_page", label: "Projects", icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />, onClick: () => router.push('/projects') },
+            { id: "contact_page", label: "Contact", icon: <AppIcon icon={Mail} color="from-blue-400 to-indigo-500" />, onClick: () => router.push('/contact') },
 
             { id: "whatsapp", label: "WhatsApp", icon: <AppIcon icon={MessageCircle} color="from-green-400 to-green-600" />, onClick: () => openChatWindow(), isOpen: isWindowOpen("chat") },
             { id: "notes", label: "Notes", icon: <AppIcon icon={FileText} color="from-yellow-300 to-orange-400" />, onClick: () => toggleNotesVisibility(), isOpen: notesVisible },

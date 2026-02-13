@@ -19,6 +19,7 @@ export default function ClientLayout({
     const pathname = usePathname();
     const isAdminRequest = pathname?.startsWith('/admin');
     const isOsMode = pathname?.startsWith('/about-test') || pathname?.startsWith('/about');
+    const isSpecialPage = pathname === '/projects' || pathname === '/contact';
 
     if (isAdminRequest || isOsMode) {
         return (
@@ -32,13 +33,17 @@ export default function ClientLayout({
     return (
         <>
             <Header />
-            <main className="pb-20">
+            <main className={isSpecialPage ? "" : "pb-20"}>
                 {children}
             </main>
             {modal}
-            <Footer />
-            <BottomNavigation />
-            <ScrollToTop />
+            {!isSpecialPage && (
+                <>
+                    <Footer />
+                    <BottomNavigation />
+                    <ScrollToTop />
+                </>
+            )}
         </>
     );
 }
