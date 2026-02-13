@@ -236,6 +236,9 @@
     },
     "home": {
       "iconUrl": "/assets/icons-library/1769437234483-fjer70ujri1t-icnsfile-4ec6cb84cd46ec05462df321c07583a4-6cjat8gosq.webp"
+    },
+    "projects_page": {
+      "iconUrl": "/assets/icons-library/1769436122525-019w5pst1ugd-icnsfile-9a9794114b8e46d4e5061a0ca9f119c0-launchpad.webp"
     }
   },
   "chatSettings": {},
@@ -497,5 +500,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-10T10:23:41.575Z"
+  "lastUpdated": "2026-02-13T15:32:46.570Z"
 }
