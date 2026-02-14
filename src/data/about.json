@@ -228,7 +228,8 @@
       "iconUrl": "/assets/icons-library/1769437234492-st4egtv1o8tm-icnsfile-922467ee2be0869b8e2164714aed0616-notes.webp"
     },
     "projects": {
-      "iconUrl": "/assets/icons-library/1769436122525-019w5pst1ugd-icnsfile-9a9794114b8e46d4e5061a0ca9f119c0-launchpad.webp"
+      "iconUrl": "/assets/icons-library/1769436122525-019w5pst1ugd-icnsfile-9a9794114b8e46d4e5061a0ca9f119c0-launchpad.webp",
+      "isHidden": false
     },
     "trash": {
       "iconUrl": "/assets/icons-library/1769437234429-0y2s1lgqkmlf-icnsfile-1543ba06906d6ac6721964ac3bfcc511-pearcleaner-alt-big-sur-5.webp"
@@ -502,5 +503,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-14T10:33:15.236Z"
+  "lastUpdated": "2026-02-14T10:37:41.186Z"
 }
