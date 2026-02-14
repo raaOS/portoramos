@@ -228,8 +228,7 @@
       "iconUrl": "/assets/icons-library/1769437234492-st4egtv1o8tm-icnsfile-922467ee2be0869b8e2164714aed0616-notes.webp"
     },
     "projects": {
-      "iconUrl": "/assets/icons-library/1769437234524-tjesnahojuxs-icnsfile-a7181b3ed7f1a02b7f9256db3147a2d1-nano-banana--google-gemini-2.5-flash--yellow-banana--fruit--food--liquid-glass-.webp",
-      "isHidden": false
+      "iconUrl": "/assets/icons-library/1769436122525-019w5pst1ugd-icnsfile-9a9794114b8e46d4e5061a0ca9f119c0-launchpad.webp"
     },
     "trash": {
       "iconUrl": "/assets/icons-library/1769437234429-0y2s1lgqkmlf-icnsfile-1543ba06906d6ac6721964ac3bfcc511-pearcleaner-alt-big-sur-5.webp"
@@ -237,11 +236,11 @@
     "home": {
       "iconUrl": "/assets/icons-library/1769437234483-fjer70ujri1t-icnsfile-4ec6cb84cd46ec05462df321c07583a4-6cjat8gosq.webp"
     },
-    "projects_page": {
-      "iconUrl": "/assets/icons-library/1769436122525-019w5pst1ugd-icnsfile-9a9794114b8e46d4e5061a0ca9f119c0-launchpad.webp"
-    },
-    "contact_page": {
+    "contact": {
       "iconUrl": "/assets/icons-library/1769438534379-ei47dwdwdyd2-icnsfile-a7181b3ed7f1a02b7f9256db3147a2d1-nano-banana--google-gemini-2.5-flash--yellow-banana--fruit--food--liquid-glass-.webp"
+    },
+    "projects_page": {
+      "iconUrl": "/assets/icons-library/1769438534400-hlte99042ytz-icnsfile-d7ac3a93471d5eaa0d43e730035de6eb-finder-beta-1-pink.webp"
     }
   },
   "chatSettings": {},
@@ -503,5 +502,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-13T15:33:02.950Z"
+  "lastUpdated": "2026-02-14T10:19:07.914Z"
 }
