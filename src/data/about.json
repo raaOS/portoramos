@@ -238,7 +238,8 @@
       "iconUrl": "/assets/icons-library/1769437234483-fjer70ujri1t-icnsfile-4ec6cb84cd46ec05462df321c07583a4-6cjat8gosq.webp"
     },
     "contact": {
-      "iconUrl": "/assets/icons-library/1769436776539-vv9tt40b1e64-icnsfile-1dcc3c13dd2ba1a7d50f09dc8ee73ee4-folder---uppercut.webp"
+      "iconUrl": "/assets/icons-library/1769436776539-vv9tt40b1e64-icnsfile-1dcc3c13dd2ba1a7d50f09dc8ee73ee4-folder---uppercut.webp",
+      "label": "ConHubungi Sayatact"
     },
     "projects_page": {
       "iconUrl": "/assets/icons-library/1769436776561-pz742j5k05zj-icnsfile-44662d2fce53144bec4612af170242c3-photos.webp"
@@ -503,5 +504,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-14T10:47:50.517Z"
+  "lastUpdated": "2026-02-14T10:54:50.097Z"
 }
