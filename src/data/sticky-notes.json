@@ -14,5 +14,21 @@
     "fontFamily": "var(--font-caveat), sans-serif",
     "fontSize": 24,
     "isPinned": true
+  },
+  {
+    "id": "ab587830-093f-42d3-ac6a-c96485688888",
+    "text": "Catatan BaruTest Sticky Note by AI Agent",
+    "date": "2026-02-15T19:06:22.313Z",
+    "color": "#fef08a",
+    "isStarred": false,
+    "isDeleted": false,
+    "x": 120,
+    "y": 120,
+    "width": 280,
+    "height": 280,
+    "zIndex": 100,
+    "fontFamily": "var(--font-caveat), sans-serif",
+    "fontSize": 24,
+    "isPinned": false
   }
 ]
