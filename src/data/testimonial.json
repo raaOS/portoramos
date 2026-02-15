@@ -1,16 +1,6 @@
 {
   "testimonials": [
     {
-      "id": 1,
-      "name": "Siti Aminah",
-      "role": "Pemilik Toko",
-      "company": "Berkah Snack",
-      "content": "Ramos cekatan banget kerjanya. Desain stiker buat kemasan keripik saya jadi jauh lebih menarik. Alhamdulillah penjualan jadi nambah banyak yang beli.",
-      "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Siti",
-      "isActive": true
-    },
-    {
       "id": 2,
       "name": "Budi Santoso",
       "role": "Pemilik Kedai",
@@ -79,5 +69,5 @@
       "id": 8
     }
   ],
-  "lastUpdated": "2026-02-15T19:23:47.133Z"
+  "lastUpdated": "2026-02-15T19:25:06.325Z"
 }
