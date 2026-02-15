@@ -59,7 +59,16 @@
       "rating": 5,
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Linda",
       "isActive": true
+    },
+    {
+      "name": "Test User",
+      "company": "",
+      "role": "",
+      "content": "This is a verification testimonial.",
+      "avatar": "",
+      "isActive": true,
+      "id": 7
     }
   ],
-  "lastUpdated": "2025-12-29T00:30:00.000Z"
+  "lastUpdated": "2026-02-15T19:22:11.190Z"
 }
