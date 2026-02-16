@@ -51,15 +51,6 @@
       "isActive": true
     },
     {
-      "name": "Test User",
-      "company": "",
-      "role": "",
-      "content": "This is a verification testimonial.",
-      "avatar": "",
-      "isActive": false,
-      "id": 7
-    },
-    {
       "name": "AI Test",
       "company": "",
       "role": "",
@@ -69,5 +60,5 @@
       "id": 8
     }
   ],
-  "lastUpdated": "2026-02-15T19:25:06.325Z"
+  "lastUpdated": "2026-02-16T15:10:48.507Z"
 }
