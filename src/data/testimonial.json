@@ -49,16 +49,7 @@
       "rating": 5,
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Linda",
       "isActive": true
-    },
-    {
-      "name": "AI Test",
-      "company": "",
-      "role": "",
-      "content": "Verification",
-      "avatar": "",
-      "isActive": true,
-      "id": 8
     }
   ],
-  "lastUpdated": "2026-02-16T15:10:48.507Z"
+  "lastUpdated": "2026-02-16T15:11:03.569Z"
 }
