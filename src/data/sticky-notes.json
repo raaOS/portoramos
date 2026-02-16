@@ -21,7 +21,7 @@
     "date": "2026-02-15T19:06:22.313Z",
     "color": "#fef08a",
     "isStarred": false,
-    "isDeleted": false,
+    "isDeleted": true,
     "x": 120,
     "y": 120,
     "width": 280,
