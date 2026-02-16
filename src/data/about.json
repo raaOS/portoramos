@@ -105,7 +105,7 @@
     ]
   },
   "designPhilosophy": {
-    "heading": "Pola Berfikir",
+    "heading": "Philosophy of Design (Updated)",
     "subheading": "Strategic Thinking Framework",
     "steps": [
       {
@@ -213,7 +213,7 @@
   },
   "dockConfig": {
     "whatsapp": {
-      "iconUrl": "/assets/icons-library/1769437234538-aby9pkc1wahu-icnsfile-bd87257a063e75f0f7d799a64ab43302-whatsapp-business.webp"
+      "iconUrl": "/assets/icons-library/1769438534384-c2qoxrffhwv2-icnsfile-bd87257a063e75f0f7d799a64ab43302-whatsapp-business.webp"
     },
     "gallery": {
       "iconUrl": "/assets/icons-library/1769437234458-ke2xv30027cl-icnsfile-44662d2fce53144bec4612af170242c3-photos.webp"
@@ -502,5 +502,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-15T18:53:39.990Z"
+  "lastUpdated": "2026-02-16T06:21:12.466Z"
 }
