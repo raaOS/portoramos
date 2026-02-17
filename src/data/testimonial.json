@@ -155,7 +155,27 @@
         }
       ],
       "id": 6
+    },
+    {
+      "name": "Bagas Pratama - Kopi Sini",
+      "notificationText": "Mas Ramos, logonya mantap banget! Tim saya pada suka.",
+      "isActive": true,
+      "messages": [
+        {
+          "text": "Halo Mas RaLogonya keren banget!mos, file logo barusan saya cek sama tim. Suka banget sama konsepnya, clean dan sesuai brief awal kita.",
+          "isMe": true,
+          "time": "10:15",
+          "id": 1771343259438
+        },
+        {
+          "text": "Sama-sama Terima kasih sudah memesan!Mas Bagas. Senang dengarnya kalau tim suka. Untuk pilihan warnanya sudah pas ya Mas?",
+          "isMe": true,
+          "time": "10:18",
+          "id": 1771343259439
+        }
+      ],
+      "id": 7
     }
   ],
-  "lastUpdated": "2026-02-17T15:34:14.044Z"
+  "lastUpdated": "2026-02-17T15:48:04.893Z"
 }
