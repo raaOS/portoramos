@@ -46,7 +46,6 @@ export async function GET(req: NextRequest) {
                 fs.mkdirSync(publicFolderPath, { recursive: true });
             }
             const files = fs.readdirSync(publicFolderPath);
-            console.log(`[IconsAPI] Dev: Scanning ${publicFolderPath}, found ${files.length} files`);
             icons = files
                 .filter(file => {
                     // Filter junk and temp files
@@ -56,7 +55,6 @@ export async function GET(req: NextRequest) {
                 })
                 .sort((a, b) => b.localeCompare(a)) // Newest (higher timestamp) first
                 .map(file => `/${folderPath}/${file}`);
-            console.log(`[IconsAPI] Dev: Found ${icons.length} valid icons`);
         } else {
             // Production: Query GitHub API via existing fetch patterns
             const owner = process.env.GITHUB_OWNER;
@@ -108,11 +106,14 @@ export async function DELETE(req: NextRequest) {
         }
 
         const { searchParams } = new URL(req.url);
-        const iconUrl = searchParams.get('url');
+        let iconUrl = searchParams.get('url');
 
         if (!iconUrl) {
             return NextResponse.json({ error: 'No icon URL provided' }, { status: 400 });
         }
+
+        // Strip query parameters (cache busters)
+        iconUrl = iconUrl.split('?')[0];
 
         // 1. Resolve Path
         let relativePath = '';
@@ -150,10 +151,10 @@ export async function DELETE(req: NextRequest) {
                 // 2. Delete Locally
                 if (isDev && fs.existsSync(targetAbsPath)) {
                     try {
+                        console.log(`[IconsAPI] Attempting local delete: ${targetAbsPath}`);
                         await safeUnlink(targetAbsPath);
-                        console.log(`[IconsAPI] Deleted variant: ${targetName}`);
                     } catch (err: any) {
-                        console.warn(`[IconsAPI] Failed to delete variant ${targetName}:`, err.message);
+                        console.error(`[IconsAPI] Local delete failure for ${targetName}:`, err.message);
                     }
                 }
 
@@ -161,11 +162,10 @@ export async function DELETE(req: NextRequest) {
                 const hasGitHubToken = !!(process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN);
                 if (hasGitHubToken) {
                     try {
-                        // We iterate blindly, but githubService handles 404 gracefully
-                        // Don't await each sequentially if speed matters, but safer to do so.
+                        console.log(`[IconsAPI] Attempting GitHub delete: ${targetRelPath}`);
                         await githubService.deleteFile(targetRelPath, `Delete icon variant ${targetName}`);
-                    } catch (error) {
-                        // ignore 
+                    } catch (error: any) {
+                        console.warn(`[IconsAPI] GitHub delete failure (likely 404) for ${targetName}:`, error.message);
                     }
                 }
             }

@@ -68,6 +68,7 @@ export default function AdminExperienceClient() {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
+        credentials: 'include',
         body: JSON.stringify({
           statistics: { ...experienceData.statistics, ...statsFormData }
         })
@@ -78,10 +79,11 @@ export default function AdminExperienceClient() {
         await loadExperienceData();
         showSuccess('Statistics updated successfully.');
       } else {
-        showError('Failed to update statistics.');
+        const errorData = await response.json().catch(() => ({}));
+        showError(`Failed to update statistics: ${errorData.error || response.statusText} (${response.status})`);
       }
     } catch (error) {
-      showError('Failed to update statistics.');
+      showError(`Failed to update statistics: ${error instanceof Error ? error.message : 'Network error'}`);
     }
   };
 
@@ -146,6 +148,7 @@ export default function AdminExperienceClient() {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
+        credentials: 'include',
         body: JSON.stringify({
           workExperience: updatedList
         })
@@ -156,10 +159,11 @@ export default function AdminExperienceClient() {
         await loadExperienceData();
         showSuccess(isAddingNew ? 'New experience added.' : 'Experience updated.');
       } else {
-        showError('Failed to save experience.');
+        const errorData = await response.json().catch(() => ({}));
+        showError(`Failed to save experience: ${errorData.error || response.statusText} (${response.status})`);
       }
     } catch (error) {
-      showError('Failed to save experience.');
+      showError(`Failed to save experience: ${error instanceof Error ? error.message : 'Network error'}`);
     }
   };
 
@@ -175,6 +179,7 @@ export default function AdminExperienceClient() {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
+        credentials: 'include',
         body: JSON.stringify({
           workExperience: updatedList
         })
@@ -184,10 +189,11 @@ export default function AdminExperienceClient() {
         await loadExperienceData();
         showSuccess('Experience deleted.');
       } else {
-        showError('Failed to delete experience.');
+        const errorData = await response.json().catch(() => ({}));
+        showError(`Failed to delete experience: ${errorData.error || response.statusText} (${response.status})`);
       }
     } catch (error) {
-      showError('Failed to delete experience.');
+      showError(`Failed to delete experience: ${error instanceof Error ? error.message : 'Network error'}`);
     }
   };
 
@@ -511,6 +517,7 @@ export default function AdminExperienceClient() {
                             'Content-Type': 'application/json',
                             'x-csrf-token': csrfToken
                           },
+                          credentials: 'include',
                           body: JSON.stringify({ workExperience: updatedList })
                         }).then(res => {
                           if (res.ok) {

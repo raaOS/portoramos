@@ -3,23 +3,29 @@
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Header from '@/components/shared/Header';
+import { WindowProvider } from '@/contexts/WindowContext';
+import GlobalDock from './GlobalDock';
+import WindowRenderer from './WindowRenderer';
 
 // Lazy-load below-fold components to reduce initial JS bundle (~30-50KB savings)
 const Footer = dynamic(() => import('@/components/shared/Footer'), { ssr: false });
-const BottomNavigation = dynamic(() => import('@/components/layout/BottomNavigation'), { ssr: false });
 const ScrollToTop = dynamic(() => import('@/components/layout/ScrollToTop'), { ssr: false });
 
-export default function ClientLayout({
+export default function LayoutClient({
     children,
     modal,
+    dockConfig
 }: {
     children: React.ReactNode;
     modal: React.ReactNode;
+    dockConfig?: any;
 }) {
     const pathname = usePathname();
     const isAdminRequest = pathname?.startsWith('/admin');
-    const isOsMode = pathname?.startsWith('/about-test') || pathname?.startsWith('/about');
-    const isSpecialPage = pathname === '/projects' || pathname === '/contact';
+    const isOsMode = pathname === '/' || pathname?.startsWith('/about-test') || pathname?.startsWith('/about');
+
+    // We want the Dock on ALL pages except Admin and the OS Desktop itself (which has its own Dock)
+    const showGlobalDock = !isAdminRequest && !isOsMode;
 
     if (isAdminRequest || isOsMode) {
         return (
@@ -31,19 +37,16 @@ export default function ClientLayout({
     }
 
     return (
-        <>
+        <WindowProvider>
             <Header />
-            <main className={isSpecialPage ? "" : "pb-20"}>
+            <main className="pb-24">
                 {children}
             </main>
             {modal}
-            {!isSpecialPage && (
-                <>
-                    <Footer />
-                    <BottomNavigation />
-                    <ScrollToTop />
-                </>
-            )}
-        </>
-    );
+            <ScrollToTop />
+            {showGlobalDock && <GlobalDock dockConfig={dockConfig} />}
+            <WindowRenderer />
+        </WindowProvider>
+    )
 }
+

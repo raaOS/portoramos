@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
 
     // Auto-revalidate paths so the new project appears immediately on public pages
     revalidatePath('/', 'layout'); // Revalidate everything (simplest and safest)
-    revalidatePath('/works');
+    revalidatePath('/projects');
     revalidatePath('/admin');
 
 

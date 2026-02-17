@@ -25,7 +25,7 @@ test.describe('Grade A Public Experience', () => {
         const workLink = page.getByRole('link', { name: /Karya/i }).first();
         if (await workLink.isVisible()) {
             await workLink.click();
-            await expect(page).toHaveURL(/.*\/works/);
+            await expect(page).toHaveURL(/.*\/projects/);
         }
 
         // Navigate to About (Tentang)

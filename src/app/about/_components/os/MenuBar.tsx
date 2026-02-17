@@ -35,7 +35,7 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
     });
 
     return (
-        <div className="fixed top-0 left-0 right-0 h-8 bg-white flex items-center justify-between px-4 z-[10000] text-black text-xs select-none shadow-sm border-b border-gray-200">
+        <div className="fixed top-0 left-0 right-0 h-8 bg-white flex items-center justify-between px-4 z-[10000] text-black text-xs select-none shadow-sm border-b border-gray-200 pointer-events-auto">
             {/* Left Side */}
             <div className="flex items-center gap-4">
                 <div className="flex items-center hover:bg-black/5 px-2 py-1 rounded cursor-pointer transition-colors pb-1.5">

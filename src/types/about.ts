@@ -140,6 +140,7 @@ export interface AboutData {
   dockConfig?: DockPreferences;
   chatSettings?: ChatSettings;
   windowPreferences?: WindowPreferences;
+  islandNotifications?: AboutIslandNotification[];
 
 
   labels?: {
@@ -164,6 +165,7 @@ export interface UpdateAboutData {
   dockConfig?: DockPreferences;
   chatSettings?: ChatSettings;
   windowPreferences?: WindowPreferences;
+  islandNotifications?: AboutIslandNotification[];
 
   labels?: Partial<AboutData['labels']>;
 }

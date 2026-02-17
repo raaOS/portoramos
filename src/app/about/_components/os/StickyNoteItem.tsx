@@ -264,7 +264,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                 <div
                     className="absolute top-0 left-0 right-0 h-[50px] pl-3 pr-1 z-20 flex items-center justify-between border-b border-black/5 cursor-grab active:cursor-grabbing"
                     onPointerDown={(e) => {
-                        if (isAdmin && !note.isPinned) dragControls.start(e);
+                        if (!note.isPinned) dragControls.start(e);
                     }}
                     onDoubleClick={() => {
                         onUpdate(note.id, {

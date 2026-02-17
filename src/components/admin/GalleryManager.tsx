@@ -65,6 +65,7 @@ export default function GalleryManager({ projects, onSyncTrigger }: GalleryManag
                     'Content-Type': 'application/json',
                     'x-csrf-token': csrfToken
                 },
+                credentials: 'include',
                 body: JSON.stringify({ featuredProjectIds: featuredIds })
             });
 

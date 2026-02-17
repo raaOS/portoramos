@@ -180,6 +180,7 @@ export default function AdminFileUpload({
       headers: {
         'x-csrf-token': csrfToken
       },
+      credentials: 'include',
       body: formData,
     });
     if (!response.ok) {
@@ -193,7 +194,7 @@ export default function AdminFileUpload({
     }
     const data = await response.json();
     return { url: data.url, publicPath: data.publicPath, warning: data.warning };
-  }, [folder, customFilename]); // Add folder/filename to dependencies
+  }, [folder, customFilename, csrfToken]); // Add folder/filename and csrfToken to dependencies
 
   const compressImageServer = useCallback(async (filePath: string): Promise<{ success: boolean; stats?: any; newPath?: string }> => {
     try {
@@ -204,6 +205,7 @@ export default function AdminFileUpload({
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
+        credentials: 'include',
         body: JSON.stringify({ filePath }),
       });
       if (!response.ok) {
@@ -214,7 +216,7 @@ export default function AdminFileUpload({
     } catch (e) {
       return { success: false };
     }
-  }, []);
+  }, [csrfToken]);
 
   const executeUpload = useCallback(async (files: File[], trimOptions?: { start: number; end: number; crop?: any }) => {
     setStatus('starting');

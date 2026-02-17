@@ -30,7 +30,6 @@ export default function AdminLoginPage() {
           setLocationError('');
         },
         (err) => {
-          console.log('Location access denied or unavailable:', err);
           if (err.code === 1) { // PERMISSION_DENIED
             setLocationError('⚠️ Akses lokasi wajib diizinkan untuk verifikasi keamanan.');
           }

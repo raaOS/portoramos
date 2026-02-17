@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { Send, CheckCircle2, AlertCircle, RefreshCw, Save, Eye, EyeOff, Copy, Check, Plus, Shield, Sparkles } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface TelegramConfig {
     botToken: string;
@@ -20,6 +21,7 @@ interface BotStatus {
 export default function TelegramClient() {
     // State for the ACTIVE (saved) configuration
     const [activeConfig, setActiveConfig] = useState<TelegramConfig | null>(null);
+    const { csrfToken } = useAdminAuth();
 
     // State for the FORM (input) configuration
     const [formConfig, setFormConfig] = useState<{ botToken: string; chatId: string }>({ botToken: '', chatId: '' });
@@ -99,7 +101,11 @@ export default function TelegramClient() {
             const url = window.location.origin;
             const res = await fetch('/api/admin/telegram/webhook', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
+                credentials: 'include',
                 body: JSON.stringify({ url })
             });
             const data = await res.json();
@@ -120,7 +126,11 @@ export default function TelegramClient() {
         if (!confirm('Are you sure you want to disconnect the webhook? The bot will stop replying.')) return;
         setWebhookLoading(true);
         try {
-            const res = await fetch('/api/admin/telegram/webhook', { method: 'DELETE' });
+            const res = await fetch('/api/admin/telegram/webhook', {
+                method: 'DELETE',
+                headers: { 'x-csrf-token': csrfToken },
+                credentials: 'include'
+            });
             const data = await res.json();
             if (data.ok) {
                 alert('Webhook disconnected.');
@@ -141,7 +151,11 @@ export default function TelegramClient() {
         try {
             const res = await fetch('/api/admin/telegram/test', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
+                credentials: 'include',
                 body: JSON.stringify(activeConfig) // Test the ACTIVE config
             });
             const data = await res.json();
@@ -161,7 +175,11 @@ export default function TelegramClient() {
         try {
             const res = await fetch('/api/admin/telegram/config', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
+                credentials: 'include',
                 body: JSON.stringify(formConfig)
             });
 
@@ -393,6 +411,7 @@ function PrivateContactForm() {
         whatsapp: '',
         linkedin: ''
     });
+    const { csrfToken } = useAdminAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -438,7 +457,11 @@ function PrivateContactForm() {
 
             const res = await fetch('/api/about', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
+                credentials: 'include',
                 body: JSON.stringify(updateData)
             });
 

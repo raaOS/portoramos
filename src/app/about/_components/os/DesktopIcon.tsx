@@ -32,19 +32,20 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
     const iconX = useMotionValue(x);
     const iconY = useMotionValue(y);
 
+    const [isDragging, setIsDragging] = useState(false);
+
     // Sync MotionValues with props when parent updates them (e.g. initial load or reset)
     useEffect(() => {
+        if (isDragging) return; // Don't snap back mid-drag
         iconX.set(x);
         iconY.set(y);
-    }, [x, y, iconX, iconY]);
+    }, [x, y, iconX, iconY, isDragging]);
 
     const baseHeight = {
         small: isMobile ? 58 : 64, // ~10% smaller
         medium: isMobile ? 72 : 80, // ~10% smaller
         large: isMobile ? 86 : 96  // ~10% smaller
     }[size];
-
-    const [isDragging, setIsDragging] = useState(false);
 
     const handleDragStart = () => {
         setIsDragging(true);
@@ -70,7 +71,12 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
             dragMomentum={false}
             dragElastic={0.1}
             onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
+            onDragEnd={(e, info) => {
+                // Precision Fix: Use info.point which is relative to the viewport, 
+                // but since our style is absolute and top/left are 0, we can calculate delta or use internal values
+                handleDragEnd();
+            }}
+            data-lenis-prevent
             onClick={(e) => {
                 if (!isDragging) {
                     onClick();
@@ -84,7 +90,9 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                 x: iconX,
                 y: iconY
             }}
-            className={`flex flex-col items-center gap-3 w-auto group cursor-pointer pointer-events-auto transition-transform duration-150 ${!isMobile ? 'hover:scale-110 active:scale-95' : ''}`}
+            className={`flex flex-col items-center gap-3 w-auto group cursor-pointer pointer-events-auto`}
+            whileHover={!isMobile ? { scale: 1.1 } : undefined}
+            whileTap={!isMobile ? { scale: 0.95 } : undefined}
             onMouseEnter={() => !isMobile && setHovering(true)}
             onMouseLeave={() => !isMobile && setHovering(false)}
         >

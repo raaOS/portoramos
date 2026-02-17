@@ -8,9 +8,15 @@ import { LastUpdatedProvider } from '@/contexts/LastUpdatedContext';
 import { NavbarVisibilityProvider } from '@/contexts/NavbarVisibilityContext';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import AppWrapper from '@/components/layout/AppWrapper';
-import ClientLayout from '@/components/layout/ClientLayout';
+import LayoutClient from '@/components/layout/LayoutClient';
 import UnregisterSW from '@/components/shared/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { loadAboutData } from '@/lib/about';
+
+// Disable caching for the entire layout to ensure dock configuration (aboutData) 
+// updates propagate immediately across all pages.
+// Refresh trace: standardized dock IDs
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseSEO.siteUrl),
@@ -60,7 +66,7 @@ export const metadata: Metadata = {
 
 import SmoothScroll from '@/components/layout/SmoothScroll';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
   modal
 }: {
@@ -68,6 +74,9 @@ export default function RootLayout({
   modal: React.ReactNode;
 }) {
   const websiteStructuredData = generateStructuredData('website');
+
+  // Fetch generic data for global layout elements
+  const aboutData = await loadAboutData();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -94,9 +103,9 @@ export default function RootLayout({
               <NavbarVisibilityProvider>
                 <ErrorBoundary>
                   <AppWrapper>
-                    <ClientLayout modal={modal}>
+                    <LayoutClient modal={modal} dockConfig={aboutData?.dockConfig}>
                       {children}
-                    </ClientLayout>
+                    </LayoutClient>
                     {/* Track page views and route changes */}
                     {/* Ensure any old service workers are removed */}
                     <UnregisterSW />

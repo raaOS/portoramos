@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateCSRFToken, generateCSRFToken } from '@/lib/security';
 
+
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
     console.error('JWT_SECRET is not configured! Admin authentication will not work.');
@@ -124,6 +125,17 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
+
+    // Only log API calls for debugging
+    if (pathname.startsWith('/api/')) {
+        const csrfHeader = request.headers.get('x-csrf-token');
+        const csrfCookie = request.cookies.get('csrf_token')?.value;
+        const logEntry = `[Middleware/Log] ${request.method} ${pathname} | Header: ${csrfHeader ? csrfHeader.slice(0, 8) + '...' : 'MISSING'} | Cookie: ${csrfCookie ? csrfCookie.slice(0, 8) + '...' : 'MISSING'} | All Cookies: ${JSON.stringify(Object.fromEntries(request.cookies.getAll().map(c => [c.name, c.value])))}`;
+
+        // Log to terminal
+        console.warn(logEntry);
+    }
+
     const isProd = process.env.NODE_ENV === 'production';
 
     // Skip middleware for static assets
@@ -135,11 +147,18 @@ export async function proxy(request: NextRequest) {
     const mutationMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
     if (isAPIRoute(pathname) && mutationMethods.includes(request.method)) {
         // Skip for login which has its own token generation/validation flow
+        // Skip for login which has its own token generation/validation flow
         if (pathname !== '/api/admin/login') {
             const csrfToken = request.headers.get('x-csrf-token');
             const sessionCsrfToken = request.cookies.get('csrf_token')?.value;
 
             if (!csrfToken || !sessionCsrfToken || !validateCSRFToken(csrfToken, sessionCsrfToken)) {
+                console.warn('[Security] CSRF Validation Failed:', {
+                    path: pathname,
+                    method: request.method,
+                    hasHeaderToken: !!csrfToken,
+                    hasCookieToken: !!sessionCsrfToken
+                });
                 return NextResponse.json({ error: 'Invalid or missing CSRF token' }, { status: 403 });
             }
         }
@@ -236,21 +255,7 @@ export async function proxy(request: NextRequest) {
 
     // For non-API routes, just add security headers
     const response = NextResponse.next();
-    const finalResponse = addSecurityHeaders(response);
-
-    // Set CSRF token on GET requests to admin pages if not present
-    if (request.method === 'GET' && pathname.startsWith('/admin') && !request.cookies.has('csrf_token')) {
-        const token = generateCSRFToken();
-        finalResponse.cookies.set('csrf_token', token, {
-            httpOnly: true,
-            secure: isProd,
-            sameSite: 'strict',
-            maxAge: 3600,
-            path: '/'
-        });
-    }
-
-    return finalResponse;
+    return addSecurityHeaders(response);
 }
 
 export const config = {

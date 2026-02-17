@@ -26,10 +26,11 @@ export const DraggableStickyNote = ({
     return (
         <m.div
             key={note.id}
-            drag={isAdmin && !note.isPinned}
+            drag={!note.isPinned}
             dragControls={dragControls}
             dragListener={false}
             dragMomentum={false}
+            data-lenis-prevent
             animate={{
                 x: note.x || 100,
                 y: note.y || 100,
@@ -39,7 +40,6 @@ export const DraggableStickyNote = ({
             transition={{ type: "none" }}
             onDragStart={() => bringToFrontNote(note.id)}
             onDragEnd={(e, info) => {
-                if (!isAdmin) return;
                 const newX = (note.x || 100) + info.offset.x;
                 const newY = (note.y || 100) + info.offset.y;
                 updateNote(note.id, { x: newX, y: newY });

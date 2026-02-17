@@ -50,7 +50,7 @@ export default function ChatWidget() {
         <div className="fixed bottom-24 right-6 md:bottom-6 md:right-6 z-50 flex flex-col items-end w-full max-w-[calc(100vw-2rem)] md:w-auto font-sans print:hidden">
             {/* Chat Box */}
             {isOpen && (
-                <div className="mb-4 w-80 rounded-2xl overflow-hidden transform transition-all duration-300 ease-in-out font-sans border border-gray-200">
+                <div className="mb-4 w-96 rounded-2xl overflow-hidden transform transition-all duration-300 ease-in-out font-sans border border-gray-200">
                     {/* WA Header */}
                     <div className="bg-[#075E54] p-3 flex justify-between items-center text-white">
                         <div className="flex items-center gap-3">
@@ -92,7 +92,7 @@ export default function ChatWidget() {
                         ) : (
                             <div className="flex flex-col gap-2 relative z-10">
                                 {/* Admin Bubble */}
-                                <div className="self-start bg-white rounded-tr-lg rounded-bl-lg rounded-br-lg p-3 shadow-sm max-w-[85%] text-sm text-gray-800 border border-gray-200">
+                                <div className="self-start bg-white rounded-xl p-3 shadow-sm max-w-[95%] text-sm text-gray-800 border border-gray-200">
                                     <p>Halo! Ada yang bisa saya bantu?</p>
                                     <div className="text-[10px] text-right text-gray-400 mt-1">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                 </div>

@@ -41,20 +41,22 @@ export default function AdminContactClient() {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
+        credentials: 'include',
         body: JSON.stringify(updateData)
       });
 
       if (response.ok) {
-        await loadContactData();
+        await loadContactData(); // Re-fetch data on success
         setError(null);
         showSuccess('Contact updated successfully.');
       } else {
-        setError('Failed to update contact data');
-        showError('Failed to update contact data.');
+        const errorData = await response.json().catch(() => ({}));
+        setError(`Failed to update contact: ${errorData.error || response.statusText} (${response.status})`);
+        showError(`Failed to update contact: ${errorData.error || response.statusText} (${response.status})`);
       }
     } catch (err) {
-      setError('Failed to update contact data');
-      showError('Failed to update contact data.');
+      setError(`Failed to update contact: ${err instanceof Error ? err.message : 'Network error'}`);
+      showError(`Failed to update contact: ${err instanceof Error ? err.message : 'Network error'}`);
     }
   };
 

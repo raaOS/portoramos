@@ -13,6 +13,11 @@ export default async function sitemap() {
   const list = await allProjectsAsync()
   // Only include published projects in sitemap
   const publishedProjects = list.filter(p => p.status !== 'draft')
-  const works = publishedProjects.map((p) => ({ url: `${base}/works/${p.slug}`, lastModified: now }))
+  const works = publishedProjects.map((project) => ({
+    url: `${base}/projects/${project.slug}`,
+    lastModified: new Date(project.updatedAt || project.createdAt),
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }))
   return [...staticPages, ...works]
 }

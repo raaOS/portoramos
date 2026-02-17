@@ -261,7 +261,7 @@ export default function ProjectDetailTwoColumn({
                                         </h1>
                                         {isWindowMode && (
                                             <a
-                                                href={`/works/${project.slug}`}
+                                                href={`/projects/${project.slug}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="flex items-center gap-1.5 hover:opacity-100 opacity-60 text-gray-400 hover:text-black dark:text-gray-500 dark:hover:text-white transition-all text-xs font-semibold tracking-wide group whitespace-nowrap shrink-0"

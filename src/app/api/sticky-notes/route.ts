@@ -5,7 +5,13 @@ import { checkAdminAuth } from '@/lib/auth';
 export async function GET(request: NextRequest) {
     try {
         const data = await stickyNotesService.getNotes();
-        return NextResponse.json(data);
+        return NextResponse.json(data, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+            }
+        });
     } catch (error) {
         console.error('Error loading sticky notes:', error);
         return NextResponse.json({ error: 'Failed to load sticky notes' }, { status: 500 });

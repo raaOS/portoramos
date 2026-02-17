@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         }
 
         revalidatePath('/', 'layout');
-        revalidatePath('/works');
+        revalidatePath('/projects');
         revalidatePath('/admin');
 
         return NextResponse.json({ success: true, message: `Bulk ${action} successful` });

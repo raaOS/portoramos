@@ -1,5 +1,3 @@
-import { randomBytes, createHash } from 'crypto'
-
 // Input validation schemas
 export interface ValidationResult {
   isValid: boolean;
@@ -13,7 +11,14 @@ export interface ValidationResult {
  * @returns A 64-character hexadecimal string.
  */
 export function generateSecureToken(): string {
-  return randomBytes(32).toString('hex')
+  if (typeof window === 'undefined' && typeof globalThis.crypto === 'undefined') {
+    // Fallback for very old environments, though unlikely in Next.js
+    return Array.from({ length: 32 }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
+  }
+
+  const array = new Uint8Array(32);
+  globalThis.crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 // Rate limiting storage
@@ -144,7 +149,7 @@ export const sanitize = {
  * @returns A 64-character hexadecimal string.
  */
 export function generateCSRFToken(): string {
-  return randomBytes(32).toString('hex')
+  return generateSecureToken();
 }
 
 /**

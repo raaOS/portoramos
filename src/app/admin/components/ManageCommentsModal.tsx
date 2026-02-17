@@ -61,6 +61,7 @@ export default function ManageCommentsModal({ project, onClose, onSyncTrigger }:
                     'Content-Type': 'application/json',
                     'x-csrf-token': csrfToken
                 },
+                credentials: 'include',
                 body: JSON.stringify({ slug: project.slug, commentId })
             });
 

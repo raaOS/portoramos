@@ -120,6 +120,8 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
                 ...currentPrefs,
                 [id]: { ...(currentPrefs[id] || {}), ...updates }
             };
+            if (!csrfToken) return; // Only admins with a CSRF token can save preferences
+
             await fetch('/api/about', {
                 method: 'PUT',
                 headers: {
@@ -316,6 +318,8 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
                 ...currentPrefs,
                 [id]: { ...(currentPrefs[id] || {}), width, height }
             };
+
+            if (!csrfToken) return; // Only admins with a CSRF token can save preferences
 
             // Save back with credentials (admin cookie sent automatically)
             const saveRes = await fetch('/api/about', {

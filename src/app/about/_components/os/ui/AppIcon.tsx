@@ -8,7 +8,9 @@ interface AppIconProps {
 }
 
 const AppIcon = ({ color, icon: Icon, imageUrl }: AppIconProps) => {
-    if (imageUrl) {
+    const [imgError, setImgError] = React.useState(false);
+
+    if (imageUrl && !imgError) {
         return (
             <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-xl">
                 <Image
@@ -21,6 +23,7 @@ const AppIcon = ({ color, icon: Icon, imageUrl }: AppIconProps) => {
                     quality={75}
                     priority={false}
                     loading="lazy"
+                    onError={() => setImgError(true)}
                 />
             </div>
         );

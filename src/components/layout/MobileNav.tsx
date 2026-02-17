@@ -14,8 +14,8 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const router = useRouter();
 
   const navItems = [
-    { href: '/', label: 'Works' },
-    { href: '/about', label: 'About' },
+    { href: '/projects', label: 'Works' },
+    { href: '/', label: 'About' },
     { href: '/contact', label: 'Contact' }
   ];
 
@@ -65,9 +65,10 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
                     <m.button
                       key={item.href}
                       onClick={() => handleNavigation(item.href)}
-                      className={`w-full text-left p-4 rounded-lg transition-colors ${pathname === item.href
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'hover:bg-gray-50 text-gray-700'
+                      className={`w-full text-left p-4 rounded-lg transition-colors ${(item.href === '/' && pathname === '/') ||
+                          (item.href !== '/' && pathname.startsWith(item.href))
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'hover:bg-gray-50 text-gray-700'
                         }`}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}

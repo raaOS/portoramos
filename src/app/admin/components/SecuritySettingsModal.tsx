@@ -54,6 +54,7 @@ export default function SecuritySettingsModal({ onClose }: SecuritySettingsModal
                     'Content-Type': 'application/json',
                     'x-csrf-token': csrfToken
                 },
+                credentials: 'include',
                 body: JSON.stringify({ bannedWords: updatedWords })
             });
             if (res.ok) {

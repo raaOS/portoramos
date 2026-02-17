@@ -50,7 +50,7 @@ export default function Header() {
   // Determine "App Name" based on route
   const getAppName = () => {
     if (pathname === '/') return 'Portofolio';
-    if (pathname?.startsWith('/works')) return 'Works';
+    if (pathname?.startsWith('/projects')) return 'Works';
     if (pathname?.startsWith('/contact')) return 'Contact';
     if (pathname?.startsWith('/about')) return 'About';
     return 'Finder';
@@ -75,8 +75,8 @@ export default function Header() {
 
         {/* Menus (Nav Links Disguised as Menus) */}
         <nav className="hidden md:flex items-center gap-1 font-medium">
-          <Link href="/" className="px-3 py-1 rounded cursor-pointer transition-colors">Works</Link>
-          <Link href="/about" className="px-3 py-1 rounded cursor-pointer transition-colors">About</Link>
+          <Link href="/projects" className="px-3 py-1 rounded cursor-pointer transition-colors">Works</Link>
+          <Link href="/" className="px-3 py-1 rounded cursor-pointer transition-colors">About</Link>
           <Link href="/contact" className="px-3 py-1 rounded cursor-pointer transition-colors">Contact</Link>
           <Link href="/cv" className="px-3 py-1 rounded cursor-pointer transition-colors">Resume</Link>
         </nav>

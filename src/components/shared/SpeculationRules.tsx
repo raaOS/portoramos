@@ -22,7 +22,7 @@ export default function SpeculationRules() {
         const speculationRules = {
             "prerender": [{
                 "source": "list",
-                "urls": ["/about", "/contact", "/works"],
+                "urls": ["/about", "/contact", "/projects"],
                 "score": 0.5
             }, {
                 "source": "document",

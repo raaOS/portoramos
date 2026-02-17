@@ -23,7 +23,7 @@ const debounce = (func: Function, wait: number) => {
     };
 };
 
-export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false) => {
+export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfToken?: string) => {
     const [notes, setNotes] = useState<NoteData[]>([]);
     const [noteZIndex, setNoteZIndex] = useState(1);
     const [hasLoaded, setHasLoaded] = useState(false);
@@ -71,7 +71,7 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false) => {
 
     // Auto-sync for Admins ONLY
     useEffect(() => {
-        if (!mounted || !hasLoaded || !isAdmin) return;
+        if (!mounted || !hasLoaded || !isAdmin || !csrfToken) return;
 
         const saveNotes = async () => {
             try {
@@ -86,7 +86,10 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false) => {
 
                 await fetch('/api/sticky-notes', {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    },
                     body: JSON.stringify(notes)
                 });
             } catch (error) {
@@ -96,7 +99,7 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false) => {
 
         const debouncedSave = setTimeout(saveNotes, 1000);
         return () => clearTimeout(debouncedSave);
-    }, [notes, mounted, hasLoaded, isAdmin]);
+    }, [notes, mounted, hasLoaded, isAdmin, csrfToken]);
 
     const addNote = useCallback(() => {
         const newNote: NoteData = {

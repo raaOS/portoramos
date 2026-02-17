@@ -2,25 +2,32 @@ import React, { useState, useEffect, useRef } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { Maximize2, Minimize2, Music, AppWindow } from "lucide-react";
 
+import { ContactProfile } from "../data/mockChats";
+
 interface DynamicIslandProps {
     activeWindow: string | null;
     isBooting: boolean;
     onOpenChat?: (chatId?: string) => void;
+    customNotifications?: ContactProfile[];
+    // TODO: New tasks for AI Helper and UI overhaul
+    // - [x] Transition to Letter-based Avatars (Clean & Consistent) <!-- id: 6 -->
+    // - [/] AI-Powered Testimonial Generator <!-- id: 7 -->
+    //     - [/] Create `/api/ai/generate-testimonial` endpoint
+    //     - [ ] Design new "WA Preview" component for Admin Panel
+    //     - [ ] Rework `AdminTestimonialClient.tsx` UI (Split View + AI Magic Tool)
+    //     - [ ] Implement AI prompt logic (Friendly, Polite, Professional tone)
+    //     - [ ] Add "Number of Messages" selector for AI generation
+    //     - [ ] Verify AI-generated content follows the "No Gue/Lu" rule
 }
 
-const testimonials = [
-    { name: "Sari Rahmawati", message: "Mas, desain kemasannya udah dilihat tim. Suka!", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150&auto=format&fit=crop" },
-    { name: "Dodi Kurniawan", message: "Wih, web lu sekarang keren amat bro.", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=150&auto=format&fit=crop" },
-    { name: "Pak Bambang", message: "Siang Mas, proposal penawaran sudah saya baca.", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop" },
-    { name: "Rini (HRD)", message: "Halo Mas, bisa diskusi soal project redesign web?", avatar: "https://images.unsplash.com/photo-1624561172888-ac93c696e10c?q=80&w=150&auto=format&fit=crop" },
-    { name: "Andi Fotografer", message: "Mas, foto katalog kemarin udah saya edit ya.", avatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop" },
-];
+// WhatsApp Notif system now uses CRUD data from the Admin panel
+// Legacy hardcoded list removed as it is now in testimonial.json
 
-const DynamicIsland = ({ activeWindow, isBooting, onOpenChat }: DynamicIslandProps) => {
+const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotifications }: DynamicIslandProps) => {
     // Determine state based on props
     // "idle" | "active-window" | "booting" | "notification"
     const [isHovered, setIsHovered] = useState(false);
-    const [notification, setNotification] = useState<typeof testimonials[0] | null>(null);
+    const [notification, setNotification] = useState<{ name: string; message: string; avatar: string } | null>(null);
     const [isGracePeriod, setIsGracePeriod] = useState(false);
     const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -34,47 +41,77 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat }: DynamicIslandPro
     }, [activeWindow]);
 
     // Notification Interval Logic
+    const lastIndexRef = useRef(0);
+
     useEffect(() => {
         if (isBooting) return;
+        if (!customNotifications || customNotifications.length === 0) return;
 
-        // Custom interval: Wait 2s initial, then show every 8s cycle (5s show + 3s gap)
+        let interval: NodeJS.Timeout | null = null;
+
+        // Custom interval: Wait 3s initial, then show every 12s cycle (5s show + 7s gap)
+        // A longer gap feels more organic and less "spammy" than 8s
         const initialDelay = setTimeout(() => {
-            triggerNotification();
+            triggerNotification(lastIndexRef.current % customNotifications.length);
+            lastIndexRef.current++;
 
-            const interval = setInterval(() => {
-                triggerNotification();
-            }, 8000);
-
-            return () => {
-                clearInterval(interval);
-                if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
-            };
-        }, 2000);
+            interval = setInterval(() => {
+                triggerNotification(lastIndexRef.current % customNotifications.length);
+                lastIndexRef.current++;
+            }, 12000);
+        }, 3000);
 
         return () => {
             clearTimeout(initialDelay);
+            if (interval) clearInterval(interval);
             if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
         };
-    }, [isBooting]);
+    }, [isBooting, customNotifications]); // Re-run if customNotifications changes
 
-    const triggerNotification = () => {
+    const triggerNotification = (index?: number) => {
         // Clear existing timer if any
         if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
 
-        const randomTesti = testimonials[Math.floor(Math.random() * testimonials.length)];
-        setNotification(randomTesti);
+        let randomTesti;
 
-        // Hide after 5 seconds
-        notificationTimerRef.current = setTimeout(() => {
-            setNotification(null);
-            notificationTimerRef.current = null;
-        }, 5000);
+        if (customNotifications && customNotifications.length > 0) {
+            // Use sequential index if provided, otherwise random fallback
+            const actualIndex = index !== undefined ? index : Math.floor(Math.random() * customNotifications.length);
+            const randomContact = customNotifications[actualIndex];
+
+            // Prioritize the 'status' field (which now carries our 'notificationText')
+            // but fallback to the last message if status is a generic WhatsApp status
+            const isGenericStatus = !randomContact.status || ["Online", "Terakhir dilihat", "Akun Bisnis"].some(s => randomContact.status.includes(s));
+
+            const notificationMsg = (!isGenericStatus && randomContact.status)
+                ? randomContact.status
+                : (randomContact.conversation && randomContact.conversation.length > 0
+                    ? randomContact.conversation[randomContact.conversation.length - 1].text
+                    : "Mengirim pesan...");
+
+            randomTesti = {
+                name: randomContact.name,
+                message: notificationMsg,
+                // Ensure there's always an avatar, even if for some reason randomContact.avatar is missing
+                avatar: randomContact.avatar || `https://ui-avatars.com/api/?background=random&color=fff&name=${encodeURIComponent(randomContact.name)}`
+            };
+        }
+
+        if (randomTesti) {
+            setNotification(randomTesti);
+
+            // Hide after 5 seconds
+            notificationTimerRef.current = setTimeout(() => {
+                setNotification(null);
+                notificationTimerRef.current = null;
+            }, 5000);
+        }
     };
 
-    // Priority: Notification (highest) > Hover > Active Window > Idle
+    // Priority: Notification (highest) > Active Window > Idle
     const currentState = (notification && !isGracePeriod)
         ? "notification"
-        : (isHovered ? "hovered" : (activeWindow ? "active-window" : "idle"));
+        : (activeWindow ? "active-window" : "idle");
 
     // Animation Variants
     const variants = {
@@ -110,8 +147,6 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat }: DynamicIslandPro
                 animate={currentState === "active-window" ? "active" : currentState}
                 variants={variants}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
             >
                 <div className="w-full h-full relative flex items-center justify-center text-white px-4">
 
@@ -147,9 +182,11 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat }: DynamicIslandPro
                             }}
                         >
                             {/* Avatar */}
-                            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/20 shrink-0">
-                                <img src={notification.avatar} alt={notification.name} className="object-cover w-full h-full" />
-                                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black rounded-full"></div>
+                            <div className="relative shrink-0">
+                                <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20">
+                                    <img src={notification.avatar} alt={notification.name} className="object-cover w-full h-full" />
+                                </div>
+                                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-black rounded-full z-20 shadow-lg scale-110"></div>
                             </div>
 
                             {/* Text */}
@@ -164,39 +201,6 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat }: DynamicIslandPro
                             </div>
                         </m.div>
                     )}
-
-                    {/* Expanded State (Hovered) */}
-                    <AnimatePresence>
-                        {isHovered && currentState === "hovered" && (
-                            <m.div
-                                className="absolute inset-0 p-4 flex flex-col justify-between"
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                {/* ... existing hover content */}
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                                            <AppWindow size={20} className="text-white" />
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-xs text-white/50 uppercase tracking-wider">Control Center</span>
-                                            <span className="text-sm font-bold">{activeWindow || "System Ready"}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between gap-2 mt-2">
-                                    <div className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden">
-                                        <div className="h-full w-2/3 bg-white" />
-                                    </div>
-                                    <span className="text-[10px] font-mono opacity-50">RAMOS OS</span>
-                                </div>
-                            </m.div>
-                        )}
-                    </AnimatePresence>
                 </div>
             </m.div>
         </div>

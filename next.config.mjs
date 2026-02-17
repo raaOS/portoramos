@@ -1,5 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Allow development requests from multiple origins to avoid cross-origin warnings in Next.js 16
+  allowedDevOrigins: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://192.168.100.57:3000',
+    'localhost:3000',
+    '127.0.0.1:3000',
+    '192.168.100.57:3000',
+    '127.0.0.1',
+    'localhost'
+  ],
   // Enable React Compiler for automatic optimization
   reactCompiler: true,
   compress: true,
@@ -10,7 +21,12 @@ const nextConfig = {
       { protocol: 'https', hostname: 'plus.unsplash.com' },
       { protocol: 'https', hostname: 'picsum.photos' },
       { protocol: 'https', hostname: 'via.placeholder.com' },
-      { protocol: 'https', hostname: 'raw.githubusercontent.com' }
+      { protocol: 'https', hostname: 'raw.githubusercontent.com' },
+      { protocol: 'https', hostname: 'ui-avatars.com' },
+      { protocol: 'https', hostname: 'i.ibb.co' },
+      { protocol: 'https', hostname: 'postimg.cc' },
+      { protocol: 'https', hostname: 'i.postimg.cc' },
+      { protocol: 'https', hostname: 'images2.imgbox.com' }
     ],
     // Enable optimization in production only
     unoptimized: process.env.NODE_ENV === 'development',
@@ -127,6 +143,8 @@ const nextConfig = {
       { source: '/index', destination: '/', permanent: true },
       { source: '/indeks', destination: '/', permanent: true },
       { source: '/home', destination: '/', permanent: true },
+      // Redirect /works to /projects - permanent redirect
+      { source: '/works/:slug*', destination: '/projects/:slug*', permanent: true },
       // Note: trailing slash removal is handled by trailingSlash: false
     ]
   },
@@ -186,7 +204,9 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
+            value: process.env.NODE_ENV === 'development'
+              ? 'no-cache, no-store, must-revalidate'
+              : 'public, max-age=31536000, immutable'
           }
         ]
       },
@@ -220,4 +240,5 @@ const nextConfig = {
   },
 }
 
+// Next.js Restart: fix hydration mismatch v1
 export default nextConfig

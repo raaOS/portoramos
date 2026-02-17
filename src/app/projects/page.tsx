@@ -2,8 +2,10 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import IndexClientWithAutoUpdate from '@/components/home/IndexClientWithAutoUpdate'
 import { allProjectsAsync } from '@/lib/projects'
+import { loadAboutData } from '@/lib/about'
 
-export const revalidate = 3600
+// Disable caching for Projects page to ensure immediate dock/content updates
+export const revalidate = 0;
 
 export const metadata: Metadata = {
     title: 'Projects | Ramos Portfolio',
@@ -11,7 +13,11 @@ export const metadata: Metadata = {
 }
 
 export default async function ProjectsPage() {
-    const projects = await allProjectsAsync()
+    const [projects, aboutData] = await Promise.all([
+        allProjectsAsync(),
+        loadAboutData()
+    ]);
+
     const filteredProjects = (projects || [])
         .filter(p => p.status !== 'draft');
 

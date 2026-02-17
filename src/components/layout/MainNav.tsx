@@ -7,10 +7,10 @@ export default function MainNav() {
   const pathname = usePathname()
   // [STICKY NOTE] ACTIVE STATE LOGIC
   // Menentukan menu mana yang sedang aktif (berwarna putih/terang).
-  // - Works: Aktif di halaman depan (/) dan /works.
+  // - Works: Aktif di halaman depan (/) dan /projects.
   // - About: Aktif di /about.
   // - Contact: Aktif di /contact.
-  const isWorks = pathname?.startsWith('/works') || pathname === '/'
+  const isWorks = pathname?.startsWith('/projects') || pathname === '/'
   const isAbout = pathname?.startsWith('/about')
   const isContact = pathname?.startsWith('/contact')
   return (

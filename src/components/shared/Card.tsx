@@ -26,7 +26,7 @@ export default function Card({ p, animate = true }: { p: Project; animate?: bool
 
   return (
     <Link
-      href={`/works/${p.slug}`}
+      href={`/projects/${p.slug}`}
       className="block group relative mb-4 break-inside-avoid"
       aria-label={`View project: ${p.title}`}
     >

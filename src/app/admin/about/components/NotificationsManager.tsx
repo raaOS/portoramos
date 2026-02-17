@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Save, Bell, Eye, EyeOff, MessageSquare, Clock, User as UserIcon, Check, Pencil, X, Info, Sparkles, Wand2, Loader2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { AboutIslandNotification, ChatMessage } from '@/types/about';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface NotificationsManagerProps {
     notifications: AboutIslandNotification[];
@@ -12,6 +13,7 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
     const [localNotifications, setLocalNotifications] = useState<AboutIslandNotification[]>(notifications || []);
     const [selectedNotifId, setSelectedNotifId] = useState<string | null>(null);
     const { showSuccess, showError } = useToast();
+    const { csrfToken } = useAdminAuth();
     const [saving, setSaving] = useState(false);
     const [generatingAiId, setGeneratingAiId] = useState<string | null>(null);
     const [generatingNotifId, setGeneratingNotifId] = useState<string | null>(null);
@@ -59,7 +61,11 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
             setGeneratingNotifId(notif.id);
             const res = await fetch('/api/ai/generate-notif-message', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
+                credentials: 'include',
                 body: JSON.stringify({ senderName: notif.name })
             });
 
@@ -80,7 +86,11 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
             setGeneratingAiId(notif.id);
             const res = await fetch('/api/ai/generate-conversation', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
+                credentials: 'include',
                 body: JSON.stringify({
                     senderName: notif.name,
                     notifMessage: notif.message
@@ -215,7 +225,6 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
                                 </div>
                             </div>
 
-                            {/* Full Editor Section (Overhauled Stacked Layout) */}
                             {selectedNotifId === notif.id && (
                                 <div className="mt-6 border-t border-gray-100 pt-8 pb-4 animate-in fade-in slide-in-from-top-4 duration-500 ease-out">
                                     <div className="space-y-10">
@@ -361,13 +370,27 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
                                                         <div key={msg.id} className={`flex items-start gap-4 group/msg ${msg.isMe ? 'flex-row-reverse' : 'flex-row'} animate-in zoom-in-95 duration-300`}>
                                                             {/* Avatar icon in chat for Them */}
                                                             {!msg.isMe && (
-                                                                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md shrink-0 mt-1">
+                                                                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md shrink-0 mt-2">
                                                                     <img src={notif.avatar} className="w-full h-full object-cover" />
                                                                 </div>
                                                             )}
 
-                                                            <div className={`pt-3 pb-1 px-4 rounded-2xl max-w-[98%] transition-all border ${msg.isMe ? 'bg-indigo-600 text-white rounded-tr-none border-indigo-700' : 'bg-white text-gray-800 rounded-tl-none border-black/10'}`}>
-                                                                <div className="flex flex-col gap-0">
+                                                            <div className={`pt-3 pb-3 px-4 rounded-2xl flex-1 max-w-[100%] transition-all border ${msg.isMe ? 'bg-[#DCF8C6] text-gray-800 rounded-tr-none border-[#beddb0]' : 'bg-white text-gray-800 rounded-tl-none border-black/10'}`}>
+                                                                <div className="flex flex-col gap-2">
+                                                                    {/* Participant Label at the TOP */}
+                                                                    <div className={`flex items-center gap-1.5 ${msg.isMe ? 'flex-row' : 'flex-row'}`}>
+                                                                        {msg.isMe && <div className="w-2 h-2 rounded-full bg-green-500" />}
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                const newConv = [...(notif.conversation || [])];
+                                                                                newConv[idx] = { ...msg, isMe: !msg.isMe };
+                                                                                handleUpdate(notif.id, { conversation: newConv });
+                                                                            }}
+                                                                            className={`text-[9px] font-black uppercase tracking-widest transition-all border-none outline-none focus:outline-none ${msg.isMe ? 'text-green-700' : 'text-gray-400'} hover:opacity-100 flex items-center gap-1`}
+                                                                        >
+                                                                            {msg.isMe ? 'SAYA (DESIGNER)' : 'DIA (GUEST)'}
+                                                                        </button>
+                                                                    </div>
                                                                     <textarea
                                                                         value={msg.text}
                                                                         onChange={(e) => {
@@ -376,7 +399,7 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
                                                                             handleUpdate(notif.id, { conversation: newConv });
                                                                         }}
                                                                         rows={1}
-                                                                        className="chat-textarea w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-semibold md:text-base resize-none overflow-hidden placeholder:opacity-50 tracking-tight leading-tight"
+                                                                        className="chat-textarea w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-semibold md:text-base resize-none overflow-hidden placeholder:text-gray-400 tracking-tight leading-normal"
                                                                         placeholder="Tulis pesan..."
                                                                         onInput={(e) => {
                                                                             const target = e.target as HTMLTextAreaElement;
@@ -385,18 +408,7 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
                                                                         }}
                                                                     />
 
-                                                                    <div className={`flex items-center gap-1 -mt-1.5 ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                const newConv = [...(notif.conversation || [])];
-                                                                                newConv[idx] = { ...msg, isMe: !msg.isMe };
-                                                                                handleUpdate(notif.id, { conversation: newConv });
-                                                                            }}
-                                                                            className={`text-[8px] font-black uppercase tracking-widest transition-all border-none outline-none focus:outline-none ${msg.isMe ? 'text-white/70' : 'text-gray-400'} hover:opacity-100`}
-                                                                        >
-                                                                            {msg.isMe ? 'SAYA' : 'DIA'}
-                                                                        </button>
-
+                                                                    <div className={`flex items-center gap-3 border-t border-black/5 pt-2 mt-1 ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
                                                                         <div className={`flex items-center gap-1 ${msg.isMe ? 'opacity-60' : 'opacity-40'}`}>
                                                                             <Clock size={11} />
                                                                             <input
@@ -410,9 +422,9 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
                                                                                 className="w-10 bg-transparent border-none focus:ring-0 p-0 text-[10px] font-bold"
                                                                             />
                                                                         </div>
-                                                                        <div className={`flex -space-x-1.5 ${msg.isMe ? 'opacity-70 text-white' : 'opacity-40 text-blue-500'}`}>
-                                                                            <Check size={12} />
-                                                                            <Check size={12} />
+                                                                        <div className={`flex -space-x-1.5 ${msg.isMe ? 'text-blue-500' : 'opacity-40 text-blue-500'}`}>
+                                                                            <Check size={12} strokeWidth={3} />
+                                                                            <Check size={12} strokeWidth={3} />
                                                                         </div>
                                                                     </div>
                                                                 </div>

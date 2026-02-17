@@ -136,7 +136,7 @@ export function generateProjectMetadata(project: Project): Metadata {
     description,
     keywords,
     image: project.cover,
-    path: `/works/${project.slug}`,
+    path: `/projects/${project.slug}`,
     type: 'article',
     publishedTime: project.createdAt,
     modifiedTime: project.updatedAt
@@ -190,7 +190,7 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
         '@type': 'CreativeWork',
         name: data.title,
         description: data.description,
-        url: `${baseSEO.siteUrl}/works/${data.slug}`,
+        url: `${baseSEO.siteUrl}/projects/${data.slug}`,
         image: data.cover,
         author: {
           '@type': 'Person',
@@ -278,7 +278,7 @@ export function generateSitemapUrls(projects: Project[]) {
   ]
 
   const projectUrls = projects.map(project => ({
-    url: `/works/${project.slug}`,
+    url: `/projects/${project.slug}`,
     priority: 0.9,
     changefreq: 'monthly'
   }))
@@ -320,7 +320,7 @@ export const seoUtils = {
     ]
 
     const projectPages = projects.map(project => ({
-      url: `/works/${project.slug}`,
+      url: `/projects/${project.slug}`,
       priority: 0.9,
       changefreq: 'monthly'
     }))

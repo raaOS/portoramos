@@ -1,6 +1,9 @@
-import { proxy } from './security';
+import { NextRequest } from 'next/server';
+import { proxy as securityProxy } from './security';
 
-export default proxy;
+export default function proxy(request: NextRequest) {
+    return securityProxy(request);
+}
 
 export const config = {
     matcher: [

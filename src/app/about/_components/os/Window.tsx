@@ -221,6 +221,7 @@ export default function OSWindow({
                         top: 0,
                         left: 0,
                     }}
+                    data-lenis-prevent
                     className="flex flex-col bg-white/80 backdrop-blur-xl shadow-lg overflow-hidden border border-white/40 will-change-transform pointer-events-auto"
                 >
                     {/* Title Bar */}

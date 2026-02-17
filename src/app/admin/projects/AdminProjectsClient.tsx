@@ -140,6 +140,19 @@ export default function AdminProjectsClient() {
     currentPage * ITEMS_PER_PAGE
   );
 
+  // Debug logging
+  useEffect(() => {
+    console.log('Pagination Debug:', {
+      orderedProjectsLength: orderedProjects.length,
+      ITEMS_PER_PAGE,
+      totalPages,
+      currentPage,
+      paginatedProjectsLength: paginatedProjects.length,
+      startIndex: (currentPage - 1) * ITEMS_PER_PAGE,
+      endIndex: currentPage * ITEMS_PER_PAGE
+    });
+  }, [orderedProjects.length, totalPages, currentPage, paginatedProjects.length]);
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
@@ -155,19 +168,18 @@ export default function AdminProjectsClient() {
             'Content-Type': 'application/json',
             'x-csrf-token': csrfToken
           },
+          credentials: 'include',
           body: JSON.stringify({ action: 'reorder', ids: newItems.map(p => p.id) })
         }).then(async res => {
           if (res.ok) {
-            success('Urutan diperbarui');
-          } else {
             const data = await res.json().catch(() => ({}));
-            const errorMessage = data.error || 'Gagal memperbarui urutan';
+            const errorMessage = `Gagal memperbarui urutan: ${data.error || res.statusText} (${res.status})`;
             console.error('[Reorder Error]', errorMessage);
             showError(errorMessage);
           }
         }).catch((e) => {
           console.error('[Reorder Network Error]', e);
-          showError('Gagal memperbarui urutan (Jaringan)');
+          showError(`Gagal memperbarui urutan (Jaringan): ${e.message}`);
         });
 
         return newItems;
@@ -270,7 +282,8 @@ export default function AdminProjectsClient() {
         method: 'POST',
         headers: {
           'x-csrf-token': csrfToken
-        }
+        },
+        credentials: 'include',
       });
       const data = await res.json();
 
@@ -356,11 +369,12 @@ export default function AdminProjectsClient() {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
+        credentials: 'include',
         body: JSON.stringify(data)
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create project');
+        throw new Error(`${errorData.error || response.statusText} (${response.status})`);
       }
       return response.json();
     },
@@ -387,11 +401,12 @@ export default function AdminProjectsClient() {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
+        credentials: 'include',
         body: JSON.stringify(data)
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to update project');
+        throw new Error(`${errorData.error || response.statusText} (${response.status})`);
       }
       return response.json();
     },
@@ -432,11 +447,12 @@ export default function AdminProjectsClient() {
         method: 'DELETE',
         headers: {
           'x-csrf-token': csrfToken
-        }
+        },
+        credentials: 'include',
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to delete project');
+        throw new Error(`${errorData.error || response.statusText} (${response.status})`);
       }
       return id;
     },
@@ -509,6 +525,7 @@ export default function AdminProjectsClient() {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
+        credentials: 'include',
         body: JSON.stringify({
           action,
           ids: Array.from(selectedProjectIds)
@@ -832,7 +849,10 @@ export default function AdminProjectsClient() {
                 totalPages > 1 && (
                   <div className="flex justify-center items-center gap-4 mt-8 pb-8">
                     <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      onClick={() => {
+                        console.log('Previous button clicked, current page:', currentPage);
+                        setCurrentPage(p => Math.max(1, p - 1));
+                      }}
                       disabled={currentPage === 1}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -842,7 +862,10 @@ export default function AdminProjectsClient() {
                       Page {currentPage} of {totalPages}
                     </span>
                     <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      onClick={() => {
+                        console.log('Next button clicked, current page:', currentPage);
+                        setCurrentPage(p => Math.min(totalPages, p + 1));
+                      }}
                       disabled={currentPage === totalPages}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >

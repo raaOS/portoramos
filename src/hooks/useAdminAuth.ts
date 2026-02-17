@@ -19,7 +19,9 @@ export function useAdminAuth() {
                     credentials: 'include' // Send cookies with request
                 });
                 const data = await res.json();
-                setIsAdmin(data.authenticated === true);
+                const authed = data.authenticated === true;
+                setIsAdmin(authed);
+                console.log(`[Auth] Admin Session: ${authed ? 'ACTIVE (Saves Enabled)' : 'INACTIVE (Visitor Mode)'}`);
                 if (data.csrfToken) setCsrfToken(data.csrfToken);
             } catch (e) {
                 console.error('Failed to check admin auth:', e);

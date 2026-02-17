@@ -1,35 +1,47 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, MoreVertical, Phone, Video, CheckCheck, ArrowLeft } from 'lucide-react';
+import { Send, MoreVertical, Search, CheckCheck, Paperclip, Smile, Mic, ArrowLeft, BadgeCheck } from 'lucide-react';
+import Image from 'next/image';
 import { mockChats, ContactProfile } from './data/mockChats';
+
+// Placeholder images - Encoding spaces for safety
+const USER_AVATAR = "/foto%20profil%20live%20chat/inspo_copy_image_20260124_004840.png"; // User (Ramos)
+const CLIENT_AVATAR = "/foto%20profil%20live%20chat/ttn-image-2023-08-04-171651492.jpg"; // Client/Recruiter
 
 interface ChatWindowProps {
     settings?: any;
     activeChatId?: string | null;
+    customContacts?: Record<string, ContactProfile>;
 }
 
-export default function ChatWindow({ settings, activeChatId }: ChatWindowProps) {
-    const [activeContact, setActiveContact] = useState<ContactProfile | null>(null);
+export default function ChatWindow({ settings, activeChatId, customContacts }: ChatWindowProps) {
+    const [chats, setChats] = useState<Record<string, ContactProfile>>({});
     const [input, setInput] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
+    const [activeContact, setActiveContact] = useState<ContactProfile | null>(null);
 
-    // Load chat based on ID
+    // Initialize chats and select active contact
     useEffect(() => {
-        if (activeChatId && mockChats[activeChatId]) {
-            setActiveContact(mockChats[activeChatId]);
-        } else {
-            // Default to first chat or Recruiter if none selected
-            setActiveContact(mockChats["Rini (HRD)"]);
-        }
-    }, [activeChatId]);
+        const initialChats = customContacts || mockChats;
+        setChats(initialChats);
 
+        // Select active contact
+        const contactId = activeChatId || Object.keys(initialChats)[0];
+        if (contactId && initialChats[contactId]) {
+            setActiveContact(initialChats[contactId]);
+        } else if (Object.keys(initialChats).length > 0) {
+            setActiveContact(Object.values(initialChats)[0]);
+        }
+    }, [activeChatId, customContacts]);
+
+    // Scroll to bottom on new message
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [activeContact]);
 
-    const handleSend = (text: string) => {
-        if (!text.trim() || !activeContact) return;
+    const handleSend = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim() || !activeContact) return;
 
-        // Visual only - doesn't actually persist
         setActiveContact(prev => {
             if (!prev) return null;
             return {
@@ -38,10 +50,10 @@ export default function ChatWindow({ settings, activeChatId }: ChatWindowProps) 
                     ...prev.conversation,
                     {
                         id: Date.now(),
-                        text: text,
+                        text: input,
                         isMe: true,
                         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        status: 'sent'
+                        status: 'sent' as const
                     }
                 ]
             };
@@ -49,65 +61,98 @@ export default function ChatWindow({ settings, activeChatId }: ChatWindowProps) 
         setInput('');
     };
 
-    if (!activeContact) return <div className="h-full bg-[#E5DDD5]"></div>;
+    if (!activeContact) return <div className="h-full bg-[#efeae2]"></div>;
 
     return (
-        <div className="flex flex-col h-full bg-[#E5DDD5]">
-            {/* Header WhatsApp Style */}
-            <div className="bg-[#075E54] text-white p-3 flex items-center justify-between shrink-0 shadow-md">
+        <div key="chat-window-inner" className="flex flex-col h-full w-full bg-[#efeae2] relative overflow-hidden text-[#111b21]">
+            {/* Chat Background Pattern */}
+            <div
+                key="chat-bg-pattern-os-v2"
+                className="absolute inset-0 opacity-100 pointer-events-none z-0"
+                style={{
+                    backgroundImage: 'url("/assets/whatsapp-bg.png")',
+                    backgroundRepeat: 'repeat',
+                    backgroundSize: '400px'
+                }}
+            ></div>
+
+            {/* Header */}
+            <div className="bg-[#f0f2f5] py-2 px-4 flex items-center justify-between shrink-0 h-[60px] border-b border-[#d1d7db] z-10">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-300 overflow-hidden flex items-center justify-center relative shrink-0">
-                        <img src={activeContact.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                    <div className="w-10 h-10 rounded-full overflow-hidden cursor-pointer relative shrink-0">
+                        <Image src={activeContact.avatar || CLIENT_AVATAR} alt={activeContact.name} width={40} height={40} className="w-full h-full object-cover" />
                     </div>
-                    <div>
-                        <h3 className="font-semibold text-sm truncate max-w-[150px]">{activeContact.name}</h3>
-                        <p className="text-xs text-white/80 truncate">{activeContact.status}</p>
+                    <div className="flex flex-col justify-center min-w-0">
+                        <h3 className="text-[16px] text-[#111b21] font-semibold leading-none truncate">{activeContact.name}</h3>
+                        <span className="text-[11px] text-[#00a884] font-medium flex items-center gap-1 mt-0.5">
+                            <BadgeCheck size={14} fill="#00a884" className="text-white" /> Verified Client Testimonial
+                        </span>
                     </div>
                 </div>
-                <div className="flex items-center gap-4 text-white/80">
-                    <Video size={20} className="cursor-not-allowed opacity-70" />
-                    <Phone size={20} className="cursor-not-allowed opacity-70" />
-                    <MoreVertical size={20} />
+                <div className="flex items-center gap-5 text-[#54656f]">
+                    <Search size={20} className="cursor-pointer" />
+                    <MoreVertical size={20} className="cursor-pointer" />
                 </div>
             </div>
 
-            {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar relative" style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")', backgroundRepeat: 'repeat', backgroundSize: '400px' }}>
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 z-10 custom-scrollbar relative">
                 {activeContact.conversation.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] rounded-lg px-3 py-2 shadow-sm text-sm relative ${msg.isMe ? 'bg-[#DCF8C6] rounded-tr-none' : 'bg-white rounded-tl-none'}`}>
-                            <p className="text-gray-800 mb-1 leading-relaxed">{msg.text}</p>
-                            <div className="flex items-center justify-end gap-1 mt-1">
-                                <span className="text-[10px] text-gray-500">{msg.time}</span>
-                                {msg.isMe && (
-                                    <span className={`text-[10px] ${msg.status === 'read' ? 'text-blue-500' : 'text-gray-400'}`}>
-                                        <CheckCheck size={16} strokeWidth={2} />
-                                    </span>
-                                )}
+                    <div key={msg.id} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'} mb-3`}>
+                        <div className={`relative max-w-[85%] rounded-lg px-2 pt-1.5 pb-1 shadow-sm text-[14.2px] 
+                            ${msg.isMe ? 'bg-[#d9fdd3] rounded-tr-none' : 'bg-white rounded-tl-none'}`}
+                        >
+                            <div className="flex flex-col">
+                                <p className="text-[#111b21] leading-[19px] break-words whitespace-pre-wrap pr-1">
+                                    {msg.text}
+                                </p>
+                                <div className="flex justify-end items-center gap-1 select-none mt-1 h-3">
+                                    <span className="text-[11px] text-[#667781] leading-none">{msg.time}</span>
+                                    {msg.isMe && (
+                                        <span className="text-[#53bdeb]">
+                                            <CheckCheck size={16} strokeWidth={1.5} />
+                                        </span>
+                                    )}
+                                </div>
                             </div>
+                            {/* Triangle tip */}
+                            <div className={`absolute top-0 w-0 h-0 border-[6px] border-transparent 
+                                ${msg.isMe
+                                    ? 'right-[-6px] border-t-[#d9fdd3] border-l-[#d9fdd3]'
+                                    : 'left-[-6px] border-t-white border-r-white'
+                                }`}
+                            />
                         </div>
                     </div>
                 ))}
                 <div ref={bottomRef} />
             </div>
 
-            {/* Input Area */}
-            <form onSubmit={(e) => { e.preventDefault(); handleSend(input); }} className="bg-[#F0F0F0] p-3 flex items-center gap-2 shrink-0">
-                <input
-                    type="text"
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    placeholder="Ketik pesan..."
-                    className="flex-1 bg-white rounded-full px-4 py-2 text-sm outline-none border-none focus:ring-0 shadow-inner"
-                />
-                <button
-                    type="submit"
-                    className="p-2 bg-[#075E54] rounded-full text-white hover:bg-[#128C7E] transition-all transform hover:scale-105 shadow-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!input.trim()}
-                >
-                    <Send size={18} className="translate-x-0.5 translate-y-0.5" />
-                </button>
-            </form>
+            {/* Footer / Input Area */}
+            <div className="bg-[#f0f2f5] px-4 py-2 flex items-center gap-2 shrink-0 z-10 min-h-[62px]">
+                <div className="flex gap-4 text-[#54656f]">
+                    <Smile size={26} className="cursor-pointer hover:text-[#41525d]" />
+                    <Paperclip size={24} className="cursor-pointer hover:text-[#41525d]" />
+                </div>
+                <form onSubmit={handleSend} className="flex-1 mx-2">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={e => setInput(e.target.value)}
+                        placeholder="Ketik pesan"
+                        className="w-full bg-white rounded-lg px-4 py-[9px] text-[15px] text-[#111b21] placeholder:text-[#667781] focus:outline-none border border-transparent focus:border-white"
+                    />
+                </form>
+                <div className="flex gap-3 text-[#54656f]">
+                    {input.trim() ? (
+                        <button onClick={handleSend} className="text-[#54656f] hover:text-[#41525d]">
+                            <Send size={24} />
+                        </button>
+                    ) : (
+                        <Mic size={24} className="cursor-pointer hover:text-[#41525d]" />
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

@@ -19,8 +19,8 @@ interface DockConfigFormProps {
 
 const DEFAULT_DOCK_ITEMS = [
     { id: "about", defaultLabel: "About Me" },
-    { id: "projects_page", defaultLabel: "Projects" },
-    { id: "contact_page", defaultLabel: "Contact" },
+    { id: "projects", defaultLabel: "Projects" },
+    { id: "contact", defaultLabel: "Contact" },
     { id: "gallery", defaultLabel: "Photos" },
     { id: "whatsapp", defaultLabel: "WhatsApp" },
     { id: "notes", defaultLabel: "Notes" },

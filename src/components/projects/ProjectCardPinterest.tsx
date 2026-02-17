@@ -43,7 +43,7 @@ export default function ProjectCardPinterest({
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Component: any = onClick ? 'div' : (interactive ? Link : 'div');
-    const hrefProps = (!onClick && interactive) ? { href: `/works/${slug}` } : {};
+    const hrefProps = (!onClick && interactive) ? { href: `/projects/${slug}` } : {};
     const isInteractive = interactive || !!onClick;
 
     return (

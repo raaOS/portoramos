@@ -3,6 +3,7 @@ import { UpdateAboutData } from '@/types/about';
 import { checkAdminAuth } from '@/lib/auth';
 import { aboutService } from '@/lib/services/aboutService';
 
+
 // GET - Read about content
 export async function GET(request: NextRequest) {
   try {
@@ -18,14 +19,13 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     if (!checkAdminAuth(request)) {
-      console.warn('[API/About] Unauthorized update attempt (PUT)');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body: UpdateAboutData = await request.json();
+    const updates: UpdateAboutData = await request.json();
 
     // The service handles the merging logic now
-    const updatedData = await aboutService.updateAboutData(body);
+    const updatedData = await aboutService.updateAboutData(updates);
 
     return NextResponse.json({
       success: true,

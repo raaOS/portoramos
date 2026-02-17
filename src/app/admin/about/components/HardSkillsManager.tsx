@@ -38,6 +38,7 @@ export default function HardSkillsManager() {
                     'Content-Type': 'application/json',
                     'x-csrf-token': csrfToken
                 },
+                credentials: 'include',
                 body: JSON.stringify({ query: editForm.name })
             });
 
@@ -70,6 +71,7 @@ export default function HardSkillsManager() {
                     'Content-Type': 'application/json',
                     'x-csrf-token': csrfToken
                 },
+                credentials: 'include',
                 body: JSON.stringify({ skillName: editForm.name })
             });
 
@@ -119,6 +121,7 @@ export default function HardSkillsManager() {
                 'Content-Type': 'application/json',
                 'x-csrf-token': csrfToken
             },
+            credentials: 'include',
             body: JSON.stringify(newSkills),
         });
     };

@@ -193,8 +193,8 @@ export async function PUT(
 
     // Auto-revalidate paths so updates appear immediately
     revalidatePath('/', 'layout');
-    revalidatePath('/works');
-    revalidatePath(`/works/${updatedProject.slug}`);
+    revalidatePath('/projects');
+    revalidatePath(`/projects/${updatedProject.slug}`);
     revalidatePath('/admin');
 
 

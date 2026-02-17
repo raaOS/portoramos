@@ -70,12 +70,12 @@ const BackgroundCard = React.memo(({ project, index }: { project: Project, index
 
 BackgroundCard.displayName = 'BackgroundCard';
 
-interface ContactClientProps {
+interface ContactPageClientProps {
     projects: Project[];
     contactInfo?: any;
 }
 
-export default function ContactClient({ projects, contactInfo }: ContactClientProps) {
+export default function ContactPageClient({ projects, contactInfo }: ContactPageClientProps) {
     // Ensure we have enough items for the loop
     const filledProjects = React.useMemo(() => {
         if (projects.length === 0) return [];
@@ -121,6 +121,20 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
         // Mount grid after main content is likely painted (0.8s delay aligns with entrance animation duration)
         const timer = setTimeout(() => setIsGridMounted(true), 800);
         return () => clearTimeout(timer);
+    }, []);
+
+    React.useEffect(() => {
+        // Prevent scrolling on the body when this component is mounted
+        const originalOverflow = document.body.style.overflow;
+        const originalHeight = document.body.style.height;
+
+        document.body.style.overflow = 'hidden';
+        document.body.style.height = '100%';
+
+        return () => {
+            document.body.style.overflow = originalOverflow;
+            document.body.style.height = originalHeight;
+        };
     }, []);
 
     return (
@@ -209,9 +223,7 @@ export default function ContactClient({ projects, contactInfo }: ContactClientPr
                 </motion.div>
             </div>
 
-            <style jsx global>{`
-                html, body { overflow: hidden !important; height: 100%; }
-            `}</style>
+
         </div>
     );
 }

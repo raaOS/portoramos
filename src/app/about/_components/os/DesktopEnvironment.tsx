@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { User, ArrowLeft, Grid, Smile, Rocket, Mail, Trash2, MessageCircle, FileText } from "lucide-react";
-import { AnimatePresence, m, LazyMotion, domAnimation } from "framer-motion";
+import { User, ArrowLeft, Grid, Smile, Rocket, Mail, Trash2, MessageCircle, FileText, Image as ImageIcon, MessageSquare, StickyNote } from "lucide-react";
+import { AnimatePresence, m, LazyMotion, domMax } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -13,7 +13,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 // Internal Components (always loaded - core UI)
 import OSWindow from "./Window";
 import DesktopIcon from "./DesktopIcon";
-import Dock from "./Dock";
+import OSDock from "./OSDock";
 import MenuBar from "./MenuBar";
 
 // UI Components - Lazy loaded (not needed immediately)
@@ -38,16 +38,7 @@ const ChatWindow = dynamic(() => import("./ChatWindow"), {
     ssr: false
 });
 
-
-const ContactWindow = dynamic(() => import("./ContactWindow"), {
-    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
-    ssr: false
-});
-
-const ProjectsGridWindow = dynamic(() => import("./ProjectsGridWindow"), {
-    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
-    ssr: false
-});
+// Removed ProjectsGridWindow - now using direct navigation
 
 // Heavy components - Lazy loaded to improve initial load time
 const IndexClientWithAutoUpdate = dynamic(() => import("@/components/home/IndexClientWithAutoUpdate"), {
@@ -69,7 +60,11 @@ import type { Project, GalleryItem } from "@/types/projects";
 // Refactored Imports
 import DesktopErrorBoundary from "./DesktopErrorBoundary";
 import { generateDesktopIcons } from "./utils/desktopLayoutUtils";
+import { getDockItemConfig } from "./utils/dockUtils";
 import { DraggableStickyNote } from "./DraggableStickyNote";
+import { Testimonial, TestimonialData } from "@/types/testimonial";
+import { convertTestimonialToContact, mergeContacts } from "./utils/chatUtils";
+import { mockChats, ContactProfile } from "./data/mockChats";
 
 // UI Components (Extracted)
 import AppIcon from "./ui/AppIcon";
@@ -128,6 +123,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         // strict mode double-invoke is acceptable in dev
     }, []);
 
+
+
     // Notes visibility toggle (visible by default as per request)
     const [notesVisible, setNotesVisible] = useState(true);
     const [notesDockBouncing, setNotesDockBouncing] = useState(false);
@@ -146,7 +143,38 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         restoreNote,
         bringToFrontNote,
         setNotes
-    } = useStickyNotes(mounted, isAdmin);
+    } = useStickyNotes(mounted, isAdmin, csrfToken);
+
+    // Dynamic Contacts (Mock + Testimonials)
+    const [dynamicContacts, setDynamicContacts] = useState<Record<string, ContactProfile>>(mockChats);
+    const [allContactsList, setAllContactsList] = useState<ContactProfile[]>([]);
+    const [testimonialContacts, setTestimonialContacts] = useState<ContactProfile[]>([]);
+
+    useEffect(() => {
+        const fetchTestimonials = async () => {
+            try {
+                const res = await fetch('/api/testimonial');
+                if (res.ok) {
+                    const data: TestimonialData = await res.json();
+
+                    // 1. Convert only active testimonials to contacts for notifications
+                    const converted = (data.testimonials || [])
+                        .filter(t => t.isActive !== false)
+                        .map(convertTestimonialToContact);
+                    setTestimonialContacts(converted);
+
+                    // 2. Merge all contacts for the chat window
+                    const merged = mergeContacts(mockChats, data.testimonials);
+                    setDynamicContacts(merged);
+                    setAllContactsList(Object.values(merged));
+                }
+            } catch (error) {
+                console.error("Failed to fetch testimonials for chat", error);
+            }
+        };
+
+        fetchTestimonials();
+    }, []);
 
     // Forces a re-render of layout if needed (e.g. after drag)
     const [manualRefreshSeed, setManualRefreshSeed] = useState(0);
@@ -198,6 +226,17 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
             content: <AboutContent aboutData={aboutData} experienceData={experienceData} hardSkillsData={hardSkillsData} projects={projects} />
         },
         {
+            id: "whatsapp",
+            title: "WhatsApp",
+            isOpen: false,
+            zIndex: 11,
+            noPadding: true,
+            initialPosition: { x: 200, y: 120 },
+            width: 450,
+            height: 600,
+            content: <ChatWindow customContacts={dynamicContacts} />
+        },
+        {
             id: "projects",
             title: "Finder: Projects",
             isOpen: false,
@@ -228,7 +267,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                 </div>
             )
         }
-    ], [aboutData, commercialProjects, experienceData, hardSkillsData, projects]);
+    ], [aboutData, commercialProjects, experienceData, hardSkillsData, projects, dynamicContacts]);
 
     const {
         windows,
@@ -244,6 +283,30 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         bouncingDocId,
         resetWindows
     } = useWindowManager({ initialWindows, aboutData, projects, csrfToken });
+
+    // Auto-open app from query param (e.g. /?app=about)
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const params = new URLSearchParams(window.location.search);
+        const appToOpen = params.get('app');
+
+        if (appToOpen) {
+            // Wait for boot sequence to finish slightly
+            setTimeout(() => {
+                if (appToOpen === 'notes') {
+                    setNotesVisible(true);
+                    setNotesDockBouncing(true);
+                    setTimeout(() => setNotesDockBouncing(false), 600);
+                } else {
+                    openWindow(appToOpen);
+                }
+
+                // Clean URL without refresh
+                window.history.replaceState({}, '', '/');
+            }, 1500); // Wait for boot animation
+        }
+    }, [openWindow]);
 
     const handleUpdateWindowPosition = (id: string, x: number, y: number) => {
         internalUpdateWindowPosition(id, x, y);
@@ -265,36 +328,23 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     const handleGoHome = useCallback(() => router.push('/'), [router]);
     const resetDesktopAndClose = useCallback(() => resetWindows(), [resetWindows]);
 
-    const openProjectWindow = (project: Project) => {
-        openWindow(`project-${project.slug}`, {
-            title: `Project: ${project.title}`,
-            noPadding: true,
-            width: 1000,
-            height: 700,
-            content: <ProjectDetailWrapper project={project} projects={projects} />
-        });
-    };
+    // Navigation Helpers
+    const openProjectWindow = useCallback((project: Project) => {
+        router.push(`/projects/${project.slug}`);
+    }, [router]);
 
-    const openLaunchpad = () => {
-        openWindow('launchpad', {
-            title: 'Launchpad',
-            noPadding: true,
-            width: 1100,
-            height: 700,
-            content: <ProjectsGridWindow projects={commercialProjects} onOpenProject={openProjectWindow} />
-        });
-    };
-
-    const openChatWindow = (chatId?: string) => {
-        openWindow('chat', {
-            title: 'WhatsApp Live',
-            noPadding: true,
-            initialPosition: getCenterPosition(380, 600),
-            width: 380,
-            height: 600,
-            content: <ChatWindow key={chatId || 'default'} settings={aboutData?.chatSettings} activeChatId={chatId} />
-        });
-    };
+    const navToChat = useCallback((chatId?: string) => {
+        if (chatId) {
+            openWindow("whatsapp", {
+                // Pass the FULL contact list so chat window can resolve the ID
+                content: <ChatWindow activeChatId={chatId} customContacts={dynamicContacts} />
+            });
+        } else {
+            openWindow("whatsapp", {
+                content: <ChatWindow customContacts={dynamicContacts} />
+            });
+        }
+    }, [openWindow, dynamicContacts]);
 
     // Toggle notes visibility (dock icon indicator follows this)
     const toggleNotesVisibility = () => {
@@ -315,35 +365,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         setTimeout(() => setNotesDockBouncing(false), 600);
     };
 
-    // Dock Configuration
-    const dockItems = useMemo(() => {
-        const defaultItems = [
-            { id: "about", label: "About Me", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => openWindow("about"), isOpen: isWindowOpen("about") },
-            { id: "projects_page", label: "Projects", icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />, onClick: () => router.push('/projects') },
-            { id: "contact_page", label: "Contact", icon: <AppIcon icon={Mail} color="from-blue-400 to-indigo-500" />, onClick: () => router.push('/contact') },
-
-            { id: "whatsapp", label: "WhatsApp", icon: <AppIcon icon={MessageCircle} color="from-green-400 to-green-600" />, onClick: () => openChatWindow(), isOpen: isWindowOpen("chat") },
-            { id: "notes", label: "Notes", icon: <AppIcon icon={FileText} color="from-yellow-300 to-orange-400" />, onClick: () => toggleNotesVisibility(), isOpen: notesVisible },
-            { id: "trash", label: "Trash", icon: <AppIcon icon={Trash2} color="from-gray-400 to-gray-500" />, onClick: () => openWindow("trash-bin"), isOpen: isWindowOpen("trash-bin") },
-        ];
-
-        return defaultItems.filter(item => {
-            if (!aboutData?.dockConfig) return true;
-            const pref = aboutData.dockConfig[item.id];
-            return pref ? !pref.isHidden : true;
-        }).map(item => {
-            const pref = aboutData?.dockConfig?.[item.id];
-            let icon = item.icon;
-            if (pref && pref.iconUrl) {
-                icon = <AppIcon imageUrl={pref.iconUrl} />;
-            }
-            return {
-                ...item,
-                label: pref?.label || item.label,
-                icon
-            };
-        });
-    }, [aboutData, isWindowOpen, addNote, openWindow, openLaunchpad, openChatWindow, handleGoHome]);
+    // Dock Configuration - Now using OSDock component for centralized management
 
     // --- ICON PERSISTENCE LOGIC START ---
 
@@ -477,7 +499,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
     return (
         <DesktopErrorBoundary>
-            <LazyMotion features={domAnimation}>
+            <LazyMotion features={domMax}>
                 {/* Boot Sequence Overlay */}
                 <AnimatePresence>
                     {isBooting && (
@@ -599,10 +621,12 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                         <DynamicIsland
                             activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || null}
                             isBooting={isBooting}
-                            onOpenChat={openChatWindow}
+                            onOpenChat={navToChat}
+                            customNotifications={testimonialContacts}
                         />
 
-                        <div className="pointer-events-auto">
+                        {/* MenuBar Container - pointer-events-none to let icons through */}
+                        <div className="fixed top-0 left-0 right-0 z-[10000] pointer-events-none">
                             <MenuBar
                                 activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || "Finder"}
                                 onAbout={() => openWindow("about")}
@@ -611,12 +635,20 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                             />
                         </div>
 
-                        <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-auto pb-safe">
-                            <Dock
-                                items={dockItems}
-                                bouncingId={notesDockBouncing ? 'notes' : bouncingDocId}
-                                isMobile={isMobile}
-                            />
+                        {/* Dock Container - pointer-events-none to let icons through */}
+                        <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe">
+                            <div className="pointer-events-auto">
+                                {aboutData && (
+                                    <OSDock
+                                        aboutData={aboutData}
+                                        onOpenWindow={openWindow}
+                                        onOpenNotes={toggleNotesVisibility}
+                                        onOpenTrash={() => openWindow("trash-bin")}
+                                        isWindowOpen={isWindowOpen}
+                                        notesVisible={notesVisible}
+                                    />
+                                )}
+                            </div>
                         </div>
 
                         {showSpotlight && (
@@ -631,8 +663,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                             </div>
                         )}
                     </div>
-                </m.div>
-            </LazyMotion>
-        </DesktopErrorBoundary>
+                </m.div >
+            </LazyMotion >
+        </DesktopErrorBoundary >
     );
 }

@@ -64,7 +64,7 @@ export default function ProjectDetailInline({ project, onClose }: ProjectDetailI
 
                 {/* View Full Page Link */}
                 <Link
-                    href={`/works/${project.slug}`}
+                    href={`/projects/${project.slug}`}
                     className="absolute top-4 right-16 z-50 p-2.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all shadow-lg"
                     aria-label="View full page"
                 >
@@ -128,12 +128,14 @@ export default function ProjectDetailInline({ project, onClose }: ProjectDetailI
                                     </div>
                                 ))}
                                 {gallery.length > 5 && (
-                                    <Link
-                                        href={`/works/${project.slug}`}
+                                    <a
+                                        href={`/projects/${project.slug}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="w-16 h-16 flex-shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 text-sm font-medium hover:bg-gray-300 transition-colors"
                                     >
                                         +{gallery.length - 5}
-                                    </Link>
+                                    </a>
                                 )}
                             </div>
                         )}
@@ -186,7 +188,7 @@ export default function ProjectDetailInline({ project, onClose }: ProjectDetailI
                         {/* View Full Project Button */}
                         <div className="pt-4">
                             <Link
-                                href={`/works/${project.slug}`}
+                                href={`/projects/${project.slug}`}
                                 className="inline-flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-medium hover:opacity-80 transition-opacity"
                             >
                                 View Full Project

@@ -43,7 +43,7 @@ export const aiProposalService = {
             4. Jelaskan kenapa Ramos adalah pilihan terbaik (Hubungkan skill Desain Grafis Ramos dengan kebutuhan lowongan).
             5. Tambahkan Call to Action (CTA) yang kuat di akhir.
             6. Format output menggunakan Markdown agar enak dibaca di Telegram.
-            7. Pastikan Anda menyertakan link portfolio per project dengan format: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://' + (process.env.VERCEL_URL || 'localhost:3000')}/works/[slug]
+            7. Pastikan Anda menyertakan link portfolio per project dengan format: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://' + (process.env.VERCEL_URL || 'localhost:3000')}/projects/[slug]
 
             Buatlah proposal yang bikin klien berhenti scroll dan langsung ingin hire Ramos sebagai Desainer Visual andalan mereka!
         `;

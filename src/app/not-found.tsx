@@ -27,10 +27,10 @@ export default function NotFound() {
             </Link>
 
             <Link
-              href="/works"
+              href="/projects"
               className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              View All Works
+              View All Projects
             </Link>
           </div>
         </div>

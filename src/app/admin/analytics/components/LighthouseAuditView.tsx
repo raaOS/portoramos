@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Smartphone, Monitor, Play, Loader2, AlertCircle, AlertTriangle, ChevronDown, ChevronUp, CheckCircle, Circle, Square, Camera, Copy, Check } from 'lucide-react';
+import { Smartphone, Monitor, Play, Loader2, AlertCircle, AlertTriangle, ChevronDown, ChevronUp, CheckCircle, Circle, Square, Camera, Camera as CameraIcon, Copy, Check } from 'lucide-react';
 import Image from 'next/image';
 import { RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 // Reusing interfaces (should ideally be shared types, but defining here for speed)
 interface AuditItem {
@@ -48,6 +49,7 @@ export default function LighthouseAuditView() {
     const [loading, setLoading] = useState(false);
     const [strategy, setStrategy] = useState<'mobile' | 'desktop'>('mobile');
     const [scores, setScores] = useState<Scores | null>(null);
+    const { csrfToken } = useAdminAuth();
     const [error, setError] = useState('');
     const [copied, setCopied] = useState(false);
 
@@ -69,7 +71,9 @@ export default function LighthouseAuditView() {
         setCopied(false);
 
         try {
-            const res = await fetch(`/api/lighthouse?url=${encodeURIComponent(url)}&strategy=${strategy}`);
+            const res = await fetch(`/api/lighthouse?url=${encodeURIComponent(url)}&strategy=${strategy}`, {
+                credentials: 'include'
+            });
             const data = await res.json();
 
             if (data.error) {
@@ -92,7 +96,11 @@ export default function LighthouseAuditView() {
         try {
             await fetch('/api/lighthouse/history', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
+                credentials: 'include',
                 body: JSON.stringify({
                     url,
                     scores: {

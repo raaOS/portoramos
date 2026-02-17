@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react';
+import { AdminErrorBoundary } from '@/components/admin/AdminErrorBoundary';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
     return (
-        <div className="container">
-            {children}
-        </div>
+        <AdminErrorBoundary>
+            <div className="container">
+                {children}
+            </div>
+        </AdminErrorBoundary>
     );
 }

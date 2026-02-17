@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, ReactNode } from 'react';
+import { useState, ReactNode, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
   FolderKanban,
@@ -17,7 +17,18 @@ import {
   Send,
   Menu,
   X,
-  Lock
+  ChevronDown,
+  ChevronRight,
+  Monitor,
+  Layout,
+  MessageSquare,
+  Smile,
+  Zap,
+  Dumbbell,
+  Sparkles,
+  Type,
+  User,
+  Tag
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -28,6 +39,15 @@ interface AdminLayoutProps {
   actions?: ReactNode;
   titleIcon?: ReactNode;
   titleAccent?: string;
+}
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: any;
+  color: string;
+  bg: string;
+  children?: NavItem[];
 }
 
 export default function AdminLayout({
@@ -41,7 +61,26 @@ export default function AdminLayout({
 }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
+    '/admin/about': true // Default expanded
+  });
+
+  // Sync expanded state with active path
+  useEffect(() => {
+    if (pathname?.startsWith('/admin/about') || pathname?.startsWith('/admin/experience') || pathname?.startsWith('/admin/testimonial') || pathname?.startsWith('/admin/contact')) {
+      setExpandedMenus(prev => ({ ...prev, '/admin/about': true }));
+    }
+  }, [pathname]);
+
+  const toggleMenu = (href: string) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [href]: !prev[href]
+    }));
+  };
 
   const handleLogout = async () => {
     try {
@@ -56,21 +95,91 @@ export default function AdminLayout({
     }
   };
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { href: '/admin/projects', label: 'Project', icon: FolderKanban, color: 'text-purple-600', bg: 'hover:bg-purple-50' },
-    { href: '/admin/about', label: 'Tentang', icon: Info, color: 'text-blue-600', bg: 'hover:bg-blue-50' },
+    {
+      href: '/admin/about',
+      label: 'Tentang',
+      icon: Info,
+      color: 'text-blue-600',
+      bg: 'hover:bg-blue-50',
+      children: [
+        { href: '/admin/about?tab=professional', label: 'Info Utama', icon: User, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
+        { href: '/admin/about?tab=softSkills', label: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
+        { href: '/admin/about?tab=hardSkills', label: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'hover:bg-violet-50' },
+        { href: '/admin/about?tab=philosophy', label: 'Filosofi', icon: Sparkles, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
+        { href: '/admin/about?tab=runningText', label: 'Teks Berjalan', icon: Type, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
+        { href: '/admin/about?tab=desktop', label: 'Desktop & OS', icon: Monitor, color: 'text-cyan-600', bg: 'hover:bg-cyan-50' },
+        { href: '/admin/about?tab=dock', label: 'Sistem Dock', icon: Layout, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
+        { href: '/admin/about?tab=chat', label: 'Pengaturan Chat', icon: MessageSquare, color: 'text-green-600', bg: 'hover:bg-green-50' },
+        { href: '/admin/about?tab=stickyNotes', label: 'Catatan Tempel', icon: Smile, color: 'text-yellow-600', bg: 'hover:bg-yellow-50' },
+        { href: '/admin/about?tab=labels', label: 'Labels & Tag', icon: Tag, color: 'text-gray-600', bg: 'hover:bg-gray-50' },
+      ]
+    },
     { href: '/admin/experience', label: 'Pengalaman', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
+    { href: '/admin/testimonial', label: 'WhatsApp Notif', icon: Quote, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
     { href: '/admin/contact', label: 'Kontak', icon: PhoneCall, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
-    { href: '/admin/testimonial', label: 'Testimoni', icon: Quote, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
     { href: '/admin/leads', label: 'Pesan Masuk', icon: Users, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
     { href: '/admin/telegram', label: 'Bot Telegram', icon: Send, color: 'text-sky-500', bg: 'hover:bg-sky-50' },
-
     { href: '/admin/analytics', label: 'Statistik', icon: Activity as any, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
+    { href: '/admin/sequences', label: 'Bidikan Image', icon: Zap, color: 'text-yellow-500', bg: 'hover:bg-yellow-50' },
   ];
 
   const isActive = (href: string) => {
     if (href === '/admin') return pathname === '/admin';
+
+    // Support query params checking for tabs
+    if (href.includes('?')) {
+      const [path, query] = href.split('?');
+      const tab = query.split('=')[1];
+      return pathname === path && searchParams.get('tab') === tab;
+    }
+
     return pathname?.startsWith(href);
+  };
+
+  const renderNavItem = (item: NavItem, depth = 0) => {
+    const active = isActive(item.href);
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedMenus[item.href];
+    const Icon = item.icon;
+
+    return (
+      <div key={item.href} className="mb-0.5">
+        <div
+          className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${active && !hasChildren ? 'bg-blue-50 text-blue-700 shadow-sm' : `text-gray-600 ${item.bg} hover:text-gray-900`
+            }`}
+          style={{ paddingLeft: `${12 + (depth * 12)}px` }}
+          onClick={() => {
+            router.push(item.href);
+            if (hasChildren && !isExpanded) toggleMenu(item.href);
+            setIsMobileMenuOpen(false);
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <Icon className={`h-4.5 w-4.5 ${active ? item.color : 'text-gray-400 group-hover:text-gray-600'}`} aria-hidden />
+            <span>{item.label}</span>
+          </div>
+          {hasChildren && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleMenu(item.href);
+              }}
+              className="p-1 hover:bg-black/5 rounded-md transition-colors"
+            >
+              {isExpanded ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
+            </button>
+          )}
+        </div>
+
+        {hasChildren && isExpanded && (
+          <div className="mt-0.5 space-y-0.5">
+            {item.children!.map(child => renderNavItem(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -97,44 +206,30 @@ export default function AdminLayout({
           {/* Sidebar Header */}
           <div className="h-16 flex items-center px-6 border-b border-gray-200">
             <LayoutDashboard className="h-6 w-6 text-gray-800 mr-2" />
-            <span className="font-bold text-xl text-gray-900">Admin</span>
+            <span className="font-bold text-xl text-gray-900" suppressHydrationWarning>
+              {typeof window !== 'undefined' ? 'Admin Dashboard' : 'Admin Panel'}
+            </span>
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-            {navItems.map(({ href, label, icon: Icon, color, bg }) => {
-              const active = isActive(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active
-                    ? 'bg-gray-100 text-gray-900 shadow-sm'
-                    : `text-gray-600 ${bg} hover:text-gray-900`
-                    }`}
-                >
-                  <Icon className={`h-5 w-5 ${active ? color : 'text-gray-400'}`} aria-hidden />
-                  {label}
-                </Link>
-              );
-            })}
+          <nav className="flex-1 overflow-y-auto py-4 px-3">
+            {navItems.map(item => renderNavItem(item))}
           </nav>
 
           {/* Sidebar Footer */}
-          <div className="p-4 border-t border-gray-200 space-y-2">
+          <div className="p-4 border-t border-gray-200 space-y-1">
             <button
               onClick={() => router.push('/')}
-              className="w-full flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              className="w-full flex items-center justify-start gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
             >
-              <Eye className="h-5 w-5" />
+              <Eye className="h-4.5 w-4.5" />
               View Site
             </button>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              className="w-full flex items-center justify-start gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-4.5 w-4.5" />
               Log Out
             </button>
           </div>
@@ -142,7 +237,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 min-h-screen pt-16 md:pt-0 bg-gray-50">
+      <main className="flex-1 md:ml-64 min-h-screen pt-16 md:pt-0 bg-gray-50 flex flex-col">
         {/* Simple Page Header */}
         <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -159,7 +254,7 @@ export default function AdminLayout({
         </div>
 
         {/* Page Content */}
-        <div className="p-4 w-full">
+        <div className="p-6 flex-1">
           {children}
         </div>
       </main>

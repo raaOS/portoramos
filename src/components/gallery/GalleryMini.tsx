@@ -48,7 +48,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
   const handleImageClick = (index: number) => {
     const item = activeImages[index];
     if (item.slug) {
-      router.push(`/works/${item.slug}`);
+      router.push(`/projects/${item.slug}`);
     } else {
       hideNavbar();
       setOpen({ i: index });

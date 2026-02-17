@@ -9,6 +9,7 @@ import TrailSelector from '@/components/admin/TrailSelector';
 
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
+import { useSearchParams } from 'next/navigation';
 import { Sparkles, BriefcaseBusiness, Smile, Dumbbell, Info, Trash2, Pencil, Tag, Globe, Terminal, Palette, Monitor, Layout, MessageSquare, Save, User, Type, Plus, Eye, EyeOff } from 'lucide-react';
 import RunningTextPanel from './components/RunningTextPanel';
 import StatusToggle from '../components/StatusToggle';
@@ -22,14 +23,25 @@ import DesktopProjectsForm from './components/DesktopProjectsForm';
 import DockConfigForm from './components/DockConfigForm';
 import ChatSettingsForm from './components/ChatSettingsForm';
 import StickyNotesManager from './components/StickyNotesManager';
+import NotificationsManager from './components/NotificationsManager';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { AboutIslandNotification } from '@/types/about';
 
 export default function AdminAboutClient() {
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { csrfToken } = useAdminAuth();
-  const [activeTab, setActiveTab] = useState<'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'labels' | 'desktop' | 'dock' | 'chat' | 'stickyNotes'>('professional');
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'labels' | 'desktop' | 'dock' | 'chat' | 'stickyNotes' | 'notifications'>('professional');
+
+  // Sync tab with URL
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['professional', 'softSkills', 'hardSkills', 'runningText', 'philosophy', 'labels', 'desktop', 'dock', 'chat', 'stickyNotes', 'notifications'].includes(tab)) {
+      setActiveTab(tab as any);
+    }
+  }, [searchParams]);
 
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -94,6 +106,7 @@ export default function AdminAboutClient() {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
+        credentials: 'include', // Ensure cookies (admin_token) are sent
         body: JSON.stringify(updateData)
       });
 
@@ -102,12 +115,15 @@ export default function AdminAboutClient() {
         setError(null);
         showSuccess('About content updated successfully.');
       } else {
-        setError('Failed to update about data');
-        showError('Failed to update about content.');
+        const errorData = await response.json().catch(() => ({}));
+        const msg = `Failed to update: ${errorData.error || response.statusText} (${response.status})`;
+        setError(msg);
+        showError(msg);
       }
     } catch (err) {
-      setError('Failed to update about data');
-      showError('Failed to update about content.');
+      const msg = `Failed to update: ${err instanceof Error ? err.message : 'Network error'}`;
+      setError(msg);
+      showError(msg);
     }
   }
 
@@ -124,6 +140,7 @@ export default function AdminAboutClient() {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
       if (response.ok) {
@@ -145,6 +162,7 @@ export default function AdminAboutClient() {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
       if (response.ok) {
@@ -164,7 +182,8 @@ export default function AdminAboutClient() {
         method: 'DELETE',
         headers: {
           'x-csrf-token': csrfToken
-        }
+        },
+        credentials: 'include'
       });
       if (response.ok) {
         await loadRunningTexts();
@@ -223,77 +242,9 @@ export default function AdminAboutClient() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[500px] flex flex-col md:flex-row w-full">
-        {/* Mobile Navigation (Dropdown) */}
-        <div className="md:hidden p-4 border-b border-gray-200 bg-gray-50">
-          <label htmlFor="tab-select" className="block text-sm font-medium text-gray-700 mb-2">
-            Pilih Bagian
-          </label>
-          <div className="relative">
-            <select
-              id="tab-select"
-              value={activeTab}
-              onChange={(e) => setActiveTab(e.target.value as any)}
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-            >
-              {[
-
-                { id: 'professional', name: 'Tentang Saya (Finder)' },
-                { id: 'softSkills', name: 'Soft Skills' },
-                { id: 'hardSkills', name: 'Hard Skills' },
-                { id: 'philosophy', name: 'Filosofi Desain' },
-                { id: 'runningText', name: 'Teks Berjalan' },
-                { id: 'desktop', name: 'Konfigurasi Desktop' },
-                { id: 'dock', name: 'Sistem Dock' },
-                { id: 'chat', name: 'Pengaturan Chat' },
-                { id: 'stickyNotes', name: 'Catatan Tempel' },
-              ].map((tab) => (
-                <option key={tab.id} value={tab.id}>
-                  {tab.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Desktop Navigation (Sidebar) */}
-        <div className="hidden md:block w-64 border-r border-gray-200 bg-gray-50/50 flex-shrink-0">
-          <nav className="p-3 space-y-1">
-            {[
-
-              { id: 'professional', name: 'Tentang Saya (Finder)', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-              { id: 'softSkills', name: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'bg-amber-50' },
-              { id: 'hardSkills', name: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'bg-violet-50' },
-              { id: 'philosophy', name: 'Filosofi', icon: Sparkles, color: 'text-orange-600', bg: 'bg-orange-50' },
-              { id: 'runningText', name: 'Teks Berjalan', icon: Type, color: 'text-pink-600', bg: 'bg-pink-50' },
-              { id: 'desktop', name: 'Desktop & OS', icon: Monitor, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-              { id: 'dock', name: 'Sistem Dock', icon: Layout, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-              { id: 'chat', name: 'Pengaturan Chat', icon: MessageSquare, color: 'text-green-600', bg: 'bg-green-50' },
-              { id: 'stickyNotes', name: 'Catatan Tempel', icon: Smile, color: 'text-yellow-600', bg: 'bg-yellow-50' },
-            ].map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`w-full flex items-center justify-start gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
-                    ? `${tab.bg} ${tab.color} shadow-sm ring-1 ring-inset ring-gray-200`
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }`}
-                >
-                  <tab.icon className={`h-5 w-5 flex-shrink-0 ${isActive ? tab.color : 'text-gray-400 group-hover:text-gray-500'}`} />
-                  {tab.name}
-                  {isActive && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Content Area */}
-        <div className="flex-1 min-w-0 bg-white">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[500px] w-full">
+        {/* Content Area - Full Width */}
+        <div className="bg-white">
           <div className="p-6 lg:p-8">
 
             {activeTab === 'professional' && (
@@ -354,7 +305,7 @@ export default function AdminAboutClient() {
             {activeTab === 'dock' && (
               <div className="space-y-8">
                 <DockConfigForm
-                  data={aboutData.dockConfig}
+                  data={aboutData?.dockConfig || {}}
                   onUpdate={(data) => handleUpdateAbout({ dockConfig: data })}
                 />
               </div>
@@ -372,6 +323,15 @@ export default function AdminAboutClient() {
             {activeTab === 'stickyNotes' && (
               <div className="space-y-8">
                 <StickyNotesManager />
+              </div>
+            )}
+
+            {activeTab === 'notifications' && (
+              <div className="space-y-8">
+                <NotificationsManager
+                  notifications={aboutData?.islandNotifications || []}
+                  onUpdate={(data: AboutIslandNotification[]) => handleUpdateAbout({ islandNotifications: data })}
+                />
               </div>
             )}
             {/* Note: Labels panel content seems missing in original code, placeholder removed if not used or add placeholder if needed */}

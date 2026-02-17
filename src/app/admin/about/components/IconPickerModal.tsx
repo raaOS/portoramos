@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Upload, CheckCircle2, Loader2, Image as ImageIcon, RotateCcw } from 'lucide-react';
+import { X, Trash2, Search, Upload, CheckCircle2, Loader2, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface IconPickerModalProps {
     isOpen: boolean;
@@ -16,6 +17,7 @@ export default function IconPickerModal({ isOpen, onClose, onSelect, currentIcon
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+    const { csrfToken } = useAdminAuth();
 
     useEffect(() => {
         if (!isOpen) return;
@@ -61,12 +63,16 @@ export default function IconPickerModal({ isOpen, onClose, onSelect, currentIcon
 
         try {
             const res = await fetch(`/api/admin/icons?url=${encodeURIComponent(url)}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'x-csrf-token': csrfToken
+                }
             });
             if (res.ok) {
                 setRefreshTrigger(prev => prev + 1);
             } else {
-                alert('Gagal menghapus ikon');
+                const data = await res.json();
+                alert(`Gagal menghapus ikon: ${data.error || 'Permission Denied'}`);
             }
         } catch (e) {
             console.error('Delete error', e);
@@ -176,14 +182,18 @@ export default function IconPickerModal({ isOpen, onClose, onSelect, currentIcon
                                                 </div>
                                             )}
 
-                                            {/* Delete Button */}
+                                            {/* Delete Button - Using Trash icon now, bottom-right and subtle */}
                                             <button
                                                 onClick={(e) => handleDelete(e, iconUrl)}
-                                                className="absolute top-2 right-2 text-gray-400 hover:text-red-600 bg-white/90 hover:bg-red-50 rounded-full p-1.5 shadow-sm opacity-0 group-hover:opacity-100 transition-all z-10"
-                                                title="Hapus ikon"
+                                                onContextMenu={(e) => {
+                                                    e.preventDefault();
+                                                    handleDelete(e, iconUrl);
+                                                }}
+                                                className="absolute bottom-1 right-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all z-20 p-1.5 rounded-lg hover:bg-red-50"
+                                                title="Hapus ikon (Klik kanan juga bisa)"
                                                 type="button"
                                             >
-                                                <X size={14} strokeWidth={2.5} />
+                                                <Trash2 size={16} />
                                             </button>
 
                                             <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/5 rounded-2xl transition-colors" />
