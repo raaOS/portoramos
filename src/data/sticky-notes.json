@@ -10,10 +10,10 @@
     "y": 573.0463256835938,
     "width": 282,
     "height": 265,
-    "zIndex": 178,
+    "zIndex": 180,
     "fontFamily": "var(--font-caveat), sans-serif",
     "fontSize": 24,
-    "isPinned": true
+    "isPinned": false
   },
   {
     "id": "ab587830-093f-42d3-ac6a-c96485688888",
