@@ -8,8 +8,8 @@
       "messages": [
         {
           "id": 1600000000001,
-          "text": "Mas, desain kemasannya udah oke nih. Tim produksi juga bilang pas.",
-          "isMe": false,
+          "text": "Wah, gila sih ini! Hasilnya keren banget mas. Makasih ya!",
+          "isMe": true,
           "time": "09:41"
         },
         {
@@ -157,5 +157,5 @@
       "id": 6
     }
   ],
-  "lastUpdated": "2026-02-17T15:12:04.574Z"
+  "lastUpdated": "2026-02-17T15:34:14.044Z"
 }
