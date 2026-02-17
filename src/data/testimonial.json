@@ -1,55 +1,161 @@
 {
   "testimonials": [
     {
+      "id": 1,
+      "name": "Sari Rahmawati",
+      "notificationText": "Mas, desain kemasannya udah oke nih. Tim produksi juga bilang pas.",
+      "isActive": true,
+      "messages": [
+        {
+          "id": 1600000000001,
+          "text": "Mas, desain kemasannya udah oke nih. Tim produksi juga bilang pas.",
+          "isMe": false,
+          "time": "09:41"
+        },
+        {
+          "id": 1600000000002,
+          "text": "Alhamdulillah kalau gitu Mbak. Berarti fix ya warnanya?",
+          "isMe": true,
+          "time": "09:42"
+        },
+        {
+          "id": 1600000000003,
+          "text": "Iya fix Mas. Suka banget sama feel-nya. Makasih banyak ya!",
+          "isMe": false,
+          "time": "09:45"
+        }
+      ]
+    },
+    {
       "id": 2,
-      "name": "Budi Santoso",
-      "role": "Pemilik Kedai",
-      "company": "Kopi Susu Mas Budi",
-      "content": "Logo yang dibikin mas Ramos pas banget sama konsep warung kopi saya. Simpel tapi gampang diinget orang. Harganya juga bersahabat buat UMKM.",
-      "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Budi",
-      "isActive": true
+      "name": "Dodi Kurniawan",
+      "notificationText": "Bro, gokil hasil web-nya. Jauh lebih bersih dari yang lama.",
+      "isActive": true,
+      "messages": [
+        {
+          "id": 1600000000004,
+          "text": "Bro, gokil hasil web-nya. Jauh lebih bersih dari yang lama.",
+          "isMe": false,
+          "time": "10:15"
+        },
+        {
+          "id": 1600000000005,
+          "text": "Sip bro, emang gue bikin simpel biar orang gak pusing pas liat.",
+          "isMe": true,
+          "time": "10:20"
+        },
+        {
+          "id": 1600000000006,
+          "text": "Nah itu dia, pas banget. Puas gue. Nanti gue kenalin ke temen-temen gue ya.",
+          "isMe": false,
+          "time": "10:25"
+        }
+      ]
     },
     {
       "id": 3,
-      "name": "Agus Setiawan",
-      "role": "Staff Admin",
-      "company": "CV Maju Jaya",
-      "content": "Bantu banget buat ngerapihin feed IG kantor. Awalnya berantakan, sekarang jadi enak diliat. Revisi juga cepet dilayaninnya. Makasih mas!",
-      "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Agus",
-      "isActive": true
+      "name": "Pak Bambang",
+      "notificationText": "Siang Mas Ramos. Proposalnya sudah kami review. Desainnya sangat profesional.",
+      "isActive": true,
+      "messages": [
+        {
+          "id": 1600000000007,
+          "text": "Siang Mas Ramos. Proposalnya sudah kami review. Desainnya sangat profesional.",
+          "isMe": false,
+          "time": "08:00"
+        },
+        {
+          "id": 1600000000008,
+          "text": "Siang Pak Bambang. Terima kasih Pak. Ada bagian yang perlu disesuaikan lagi?",
+          "isMe": true,
+          "time": "08:15"
+        },
+        {
+          "id": 1600000000009,
+          "text": "Sepertinya sudah cukup. Kami puas dengan hasilnya. Kerja bagus Mas.",
+          "isMe": false,
+          "time": "08:35"
+        }
+      ]
     },
     {
       "id": 4,
-      "name": "Rina Kartika",
-      "role": "Marketing",
-      "company": "Butik Cantik",
-      "content": "Suka banget sama desain katalog yang baru. Customer jadi lebih gampang liat-liat model baju. Kerjanya rapi dan tepat waktu.",
-      "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Rina",
-      "isActive": true
+      "name": "Rini (HRD)",
+      "notificationText": "Halo Mas Ramos. Brief kemarin sudah dieksekusi dengan baik ya.",
+      "isActive": true,
+      "messages": [
+        {
+          "id": 1600000000010,
+          "text": "Halo Mas Ramos. Brief kemarin sudah dieksekusi dengan baik ya.",
+          "isMe": false,
+          "time": "09:00"
+        },
+        {
+          "id": 1600000000011,
+          "text": "Halo Mbak Rini. Syukurlah kalau sesuai ekspektasi kantor.",
+          "isMe": true,
+          "time": "09:05"
+        },
+        {
+          "id": 1600000000012,
+          "text": "Sangat sesuai Mas. User-nya juga happy liat progresnya. Thank you ya!",
+          "isMe": false,
+          "time": "09:15"
+        }
+      ]
     },
     {
       "id": 5,
-      "name": "Dedi Pratama",
-      "role": "Supervisor",
-      "company": "Distro Keren",
-      "content": "Desain kaos untuk event kemaren laku keras. Mas Ramos bisa nangkep selera anak muda jaman sekarang. Next order lagi ya mas.",
-      "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Dedi",
-      "isActive": true
+      "name": "Andi Fotografer",
+      "notificationText": "Mas, gila sih layout-nya. Foto gue jadi kelihatan lebih 'mahal' di situ.",
+      "isActive": true,
+      "messages": [
+        {
+          "id": 1600000000013,
+          "text": "Mas, gila sih layout-nya. Foto gue jadi kelihatan lebih 'mahal' di situ.",
+          "isMe": false,
+          "time": "11:00"
+        },
+        {
+          "id": 1600000000014,
+          "text": "Hehe, dasar fotonya emang udah bagus Mas Andi. Jadi gampang nata-nya.",
+          "isMe": true,
+          "time": "11:05"
+        },
+        {
+          "id": 1600000000015,
+          "text": "Bisa aja nih hhe. Cocok emang kita. Next project bareng lagi ya!",
+          "isMe": false,
+          "time": "11:12"
+        }
+      ]
     },
     {
-      "id": 6,
-      "name": "Linda Kusuma",
-      "role": "Online Shop Owner",
-      "company": "Hijab Style",
-      "content": "Template story yang dibikin bikin jualan jadi makin praktis. Tinggal ganti foto doang. Sangat membantu buat yang gak jago ngedit kayak saya.",
-      "rating": 5,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Linda",
-      "isActive": true
+      "name": "Andi - Marcomm Dept",
+      "notificationText": "Mas Ramos, hasil desain banner ads-nya sesuai brief dan keren banget!",
+      "isActive": true,
+      "messages": [
+        {
+          "text": "Halo Mas Ramos, baru aja saya cek final desain banner ads-nya. Sesuai banget sama brief yang kemarin saya kasih.",
+          "isMe": false,
+          "time": "10:15",
+          "id": 1771318651448
+        },
+        {
+          "text": "Siap Mas Andi, syukurlah kalau sudah cocok. Untuk komposisi warnanya gimana Mas? Sudah oke di mata tim?",
+          "isMe": true,
+          "time": "10:18",
+          "id": 1771318651449
+        },
+        {
+          "text": "Udah oke banget Mas, bersih dan pesannya dapet. Pengerjaannya juga cepet banget ternyata. Makasih banyak ya Mas Ramos!",
+          "isMe": false,
+          "time": "10:22",
+          "id": 1771318651450
+        }
+      ],
+      "id": 6
     }
   ],
-  "lastUpdated": "2026-02-16T15:11:03.569Z"
+  "lastUpdated": "2026-02-17T08:57:54.998Z"
 }
