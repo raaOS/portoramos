@@ -9,7 +9,7 @@
         {
           "id": 1600000000001,
           "text": "Wah, gila sih ini! Hasilnya keren banget mas. Makasih ya!",
-          "isMe": true,
+          "isMe": false,
           "time": "09:41"
         },
         {
@@ -177,5 +177,5 @@
       "id": 7
     }
   ],
-  "lastUpdated": "2026-02-17T15:48:04.893Z"
+  "lastUpdated": "2026-02-18T10:42:22.522Z"
 }
