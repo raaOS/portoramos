@@ -69,7 +69,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
         };
     }, [isBooting, customNotifications]); // Re-run if customNotifications changes
 
-    const triggerNotification = (index?: number) => {
+    const triggerNotification = async (index?: number) => {
         // Clear existing timer if any
         if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
 
@@ -81,7 +81,6 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
             const randomContact = customNotifications[actualIndex];
 
             // Prioritize the 'status' field (which now carries our 'notificationText')
-            // but fallback to the last message if status is a generic WhatsApp status
             const isGenericStatus = !randomContact.status || ["Online", "Terakhir dilihat", "Akun Bisnis"].some(s => randomContact.status.includes(s));
 
             const notificationMsg = (!isGenericStatus && randomContact.status)
@@ -93,7 +92,6 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
             randomTesti = {
                 name: randomContact.name,
                 message: notificationMsg,
-                // Ensure there's always an avatar, and fallback if it's not a valid external URL
                 avatar: (randomContact.avatar && randomContact.avatar.startsWith('http'))
                     ? randomContact.avatar
                     : getAvatarUrl(randomContact.name)
@@ -101,13 +99,19 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
         }
 
         if (randomTesti) {
-            setNotification(randomTesti);
+            // Show "Typing..." first for a more organic feel
+            setNotification({ ...randomTesti, message: "sedang mengetik..." });
 
-            // Hide after 2 seconds (As requested: "muncul 2 detik")
+            // After 1 second, show the actual message
             notificationTimerRef.current = setTimeout(() => {
-                setNotification(null);
-                notificationTimerRef.current = null;
-            }, 2000);
+                setNotification(randomTesti);
+
+                // Then hide after 2 seconds
+                notificationTimerRef.current = setTimeout(() => {
+                    setNotification(null);
+                    notificationTimerRef.current = null;
+                }, 2000);
+            }, 1000);
         }
     };
 

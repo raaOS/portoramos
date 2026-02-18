@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Testimonial, TestimonialData } from '@/types/testimonial';
+import { Testimonial, TestimonialData, ChatHistoryMessage } from '@/types/testimonial';
+import { Project } from '@/types/projects';
 import AdminButton from '../components/AdminButton';
 import AdminLayout from '../components/AdminLayout';
 import { useAutoUpdate } from '@/hooks/useAutoUpdate';
 import { useToast } from '@/contexts/ToastContext';
-import { Quote, Pencil, Trash2, MessageSquare, Plus, User, CheckCheck, Clock, Sparkles, Wand2, Loader2, Eye } from 'lucide-react';
+import { Quote, Pencil, Trash2, MessageSquare, Plus, User, CheckCheck, Clock, Sparkles, Wand2, Loader2, Eye, Image as ImageIcon, Link as LinkIcon } from 'lucide-react';
 import StatusToggle from '../components/StatusToggle';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -37,6 +38,7 @@ const AutoResizeTextarea = ({ value, onChange, className, placeholder }: { value
 
 export default function AdminTestimonialClient() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -55,8 +57,23 @@ export default function AdminTestimonialClient() {
     name: '',
     notificationText: '',
     isActive: true,
-    messages: []
+    messages: [],
+    projectId: ''
   });
+
+  // Load projects
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const response = await fetch('/api/projects');
+        const data = await response.json();
+        setProjects(data.projects || []);
+      } catch (err) {
+        console.error('Error loading projects:', err);
+      }
+    };
+    loadProjects();
+  }, []);
 
   const { showSuccess, showError } = useToast();
   const { csrfToken } = useAdminAuth();
@@ -315,6 +332,20 @@ export default function AdminTestimonialClient() {
                   />
                 </div>
 
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Link ke Project (Opsional)</label>
+                  <select
+                    value={formData.projectId || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-violet-500 outline-none transition-all text-sm"
+                  >
+                    <option value="">-- Pilih Project --</option>
+                    {projects.map(p => (
+                      <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Message List Editor */}
                 <div className="pt-4">
                   <div className="flex justify-between items-center mb-4">
@@ -322,11 +353,12 @@ export default function AdminTestimonialClient() {
                     <button
                       type="button"
                       onClick={() => {
-                        const newMsg = {
+                        const newMsg: ChatHistoryMessage = {
                           id: Date.now(),
                           text: '',
                           isMe: false,
-                          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                          type: 'text'
                         };
                         setFormData(prev => ({ ...prev, messages: [...(prev.messages || []), newMsg] }));
                       }}
@@ -372,6 +404,78 @@ export default function AdminTestimonialClient() {
                           <div className={`relative max-w-[70%] rounded-lg px-2 pt-1.5 pb-1 shadow-sm text-[14.2px] 
                             ${msg.isMe ? 'bg-[#d9fdd3] rounded-tr-none' : 'bg-white rounded-tl-none'}
                           `}>
+                            {/* Type Selector */}
+                            <div className="flex gap-2 mb-2 border-b border-black/5 pb-1.5">
+                              <button
+                                onClick={() => {
+                                  const newMessages = [...(formData.messages || [])];
+                                  newMessages[index].type = 'text';
+                                  setFormData(prev => ({ ...prev, messages: newMessages }));
+                                }}
+                                className={`p-1 rounded ${msg.type === 'text' || !msg.type ? 'bg-black/10' : 'hover:bg-black/5'}`}
+                                title="Text Message"
+                              >
+                                <MessageSquare size={14} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const newMessages = [...(formData.messages || [])];
+                                  newMessages[index].type = 'project';
+                                  newMessages[index].projectId = formData.projectId;
+                                  setFormData(prev => ({ ...prev, messages: newMessages }));
+                                }}
+                                className={`p-1 rounded ${msg.type === 'project' ? 'bg-black/10' : 'hover:bg-black/5'}`}
+                                title="Project Thumbnail"
+                              >
+                                <LinkIcon size={14} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const newMessages = [...(formData.messages || [])];
+                                  newMessages[index].type = 'image';
+                                  setFormData(prev => ({ ...prev, messages: newMessages }));
+                                }}
+                                className={`p-1 rounded ${msg.type === 'image' ? 'bg-black/10' : 'hover:bg-black/5'}`}
+                                title="Custom Image"
+                              >
+                                <ImageIcon size={14} />
+                              </button>
+                            </div>
+
+                            {msg.type === 'project' && (
+                              <div className="mb-2 p-2 bg-black/5 rounded-lg border border-black/10">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Linked Project</span>
+                                <select
+                                  value={msg.projectId || ''}
+                                  onChange={(e) => {
+                                    const newMessages = [...(formData.messages || [])];
+                                    newMessages[index].projectId = e.target.value;
+                                    setFormData(prev => ({ ...prev, messages: newMessages }));
+                                  }}
+                                  className="w-full bg-white/50 border-none text-xs rounded p-1 outline-none"
+                                >
+                                  <option value="">-- Pilih --</option>
+                                  {projects.map(p => (
+                                    <option key={p.id} value={p.id}>{p.title}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+
+                            {msg.type === 'image' && (
+                              <input
+                                type="text"
+                                value={msg.imageSrc || ''}
+                                onChange={(e) => {
+                                  const newMessages = [...(formData.messages || [])];
+                                  newMessages[index].imageSrc = e.target.value;
+                                  setFormData(prev => ({ ...prev, messages: newMessages }));
+                                }}
+                                placeholder="URL Gambar..."
+                                className="w-full bg-white/50 border-none text-xs rounded p-1 outline-none mb-2"
+                              />
+                            )}
+
                             {/* Text Input */}
                             <AutoResizeTextarea
                               value={msg.text}
@@ -381,7 +485,7 @@ export default function AdminTestimonialClient() {
                                 setFormData(prev => ({ ...prev, messages: newMessages }));
                               }}
                               className="w-full bg-transparent border-none focus:ring-0 p-0 text-[#111b21] resize-none overflow-hidden leading-[19px] min-w-[300px]"
-                              placeholder="Ketik pesan..."
+                              placeholder={msg.type === 'project' || msg.type === 'image' ? 'Ketik caption (opsional)...' : 'Ketik pesan...'}
                             />
 
                             {/* Meta & Controls */}

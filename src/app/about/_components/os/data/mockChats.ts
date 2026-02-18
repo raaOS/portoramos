@@ -6,6 +6,9 @@ export interface ChatMessage {
     isMe: boolean;
     time: string;
     status: 'sent' | 'read';
+    type?: 'text' | 'image' | 'project';
+    imageSrc?: string;
+    projectId?: string;
 }
 
 export interface ContactProfile {

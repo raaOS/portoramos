@@ -3,6 +3,9 @@ export interface ChatHistoryMessage {
   text: string;
   isMe: boolean;
   time: string;
+  type?: 'text' | 'image' | 'project';
+  imageSrc?: string;
+  projectId?: string;
 }
 
 export interface Testimonial {
@@ -11,6 +14,7 @@ export interface Testimonial {
   notificationText: string;
   isActive?: boolean;
   messages?: ChatHistoryMessage[];
+  projectId?: string; // Linked project ID
   // Keep legacy for backward compatibility during migration if needed
   company?: string;
   role?: string;
