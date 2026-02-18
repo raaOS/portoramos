@@ -169,8 +169,8 @@
         "y": 530.6
       },
       "gen-1766512146544-17": {
-        "x": 643.0103073120117,
-        "y": 219.1649627685547
+        "x": 641.0103073120117,
+        "y": 178.1649627685547
       },
       "gen-1766512146544-19": {
         "x": 473.4,
@@ -185,8 +185,8 @@
         "y": 437.8
       },
       "shortcut-home": {
-        "x": 751.6,
-        "y": 584.4
+        "x": 38.599999999999994,
+        "y": 326.4
       }
     }
   },
@@ -260,7 +260,7 @@
       "id": "notif-1",
       "name": "Sari Rahmawati",
       "message": "Mas, desain kemasannya udah dilihat tim. Suka!",
-      "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150&auto=format&fit=crop",
+      "avatar": "",
       "isActive": true,
       "status": "Online",
       "conversation": [
@@ -305,7 +305,7 @@
       "id": "notif-2",
       "name": "Dodi Kurniawan",
       "message": "Wih, web lu sekarang keren amat bro.",
-      "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=150&auto=format&fit=crop",
+      "avatar": "",
       "isActive": true,
       "status": "Terakhir dilihat 10:30",
       "conversation": [
@@ -357,7 +357,7 @@
       "id": "notif-3",
       "name": "Pak Bambang",
       "message": "Siang Mas, proposal penawaran sudah saya baca.",
-      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop",
+      "avatar": "",
       "isActive": true,
       "status": "Online",
       "conversation": [
@@ -409,7 +409,7 @@
       "id": "notif-4",
       "name": "Rini (HRD)",
       "message": "Halo Mas, bisa diskusi soal project redesign web?",
-      "avatar": "https://images.unsplash.com/photo-1624561172888-ac93c696e10c?q=80&w=150&auto=format&fit=crop",
+      "avatar": "",
       "isActive": true,
       "status": "Akun Bisnis",
       "conversation": [
@@ -461,7 +461,7 @@
       "id": "notif-5",
       "name": "Andi Fotografer",
       "message": "Mas, foto katalog kemarin udah saya edit ya.",
-      "avatar": "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop",
+      "avatar": "",
       "isActive": true,
       "status": "Online",
       "conversation": [
@@ -503,5 +503,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-18T11:00:05.260Z"
+  "lastUpdated": "2026-02-18T12:09:43.403Z"
 }
