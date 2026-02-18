@@ -1,3 +1,4 @@
+/* 
 @font-face {
     font-family: 'Chicago';
     src: url('/fonts/Chicago.woff2') format('woff2');
@@ -5,9 +6,10 @@
     font-style: normal;
     font-display: swap;
 }
+*/
 
 .retro-os-container {
-    font-family: 'Chicago', 'Courier New', Courier, monospace;
+    font-family: 'Monaco', 'Courier New', Courier, monospace;
     image-rendering: pixelated;
 }
 

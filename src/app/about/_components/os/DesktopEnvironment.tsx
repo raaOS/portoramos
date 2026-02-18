@@ -512,8 +512,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
     return (
         <DesktopErrorBoundary>
-            {isMobile && <RetroMobileOverlay />}
             <LazyMotion features={domMax}>
+                {isMobile && <RetroMobileOverlay />}
                 {/* Boot Sequence Overlay */}
                 <AnimatePresence>
                     {isBooting && (
