@@ -137,9 +137,11 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         </div>
     );
 
-    // SSR Fallback
+    // SSR / Hydration Stability
+    // We render the wrapper div immediately and only populate the Masonry 
+    // library once client-side hooks are ready. This prevents the "native -> masonry" jump.
     if (!mounted) {
-        return renderNativeGrid();
+        return <div ref={containerRef} className="w-full opacity-0" />;
     }
 
     // Optimization removed: User requested true masonry layout. 

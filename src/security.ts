@@ -143,7 +143,7 @@ export async function proxy(request: NextRequest) {
             const sessionCsrfToken = request.cookies.get('csrf_token')?.value;
 
             if (!csrfToken || !sessionCsrfToken || !validateCSRFToken(csrfToken, sessionCsrfToken)) {
-                console.warn('[Security] CSRF Validation Failed:', {
+                console.warn('[Security] CSRF Validation Failed. CSRF (Cross-Site Request Forgery), juga dikenal sebagai XSRF atau session riding, adalah jenis serangan keamanan web yang memaksa pengguna yang sudah terautentikasi (login) untuk melakukan tindakan yang tidak diinginkan pada aplikasi web tanpa sepengetahuan mereka.', {
                     path: pathname,
                     method: request.method,
                     hasHeaderToken: !!csrfToken,

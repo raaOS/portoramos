@@ -111,9 +111,15 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
   // RESET HANDLER:
   // When the user types a search or changes a tag, we must reset the scroll
   // back to the top (14 items) so they don't get lost.
+  const prevProjectIds = useRef<string>('');
+
   useEffect(() => {
-    setVisibleCount(14)
-  }, [filteredProjects.length, searchQuery, tag])
+    const currentIds = filteredProjects.map(p => p.id).join(',');
+    if (currentIds !== prevProjectIds.current) {
+      setVisibleCount(14);
+      prevProjectIds.current = currentIds;
+    }
+  }, [filteredProjects, searchQuery, tag])
 
   // OPTIMIZED SCROLL OBSERVER:
   // This watches the bottom of the page. When the user reaches it:

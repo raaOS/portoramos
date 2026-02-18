@@ -2,6 +2,14 @@
 
 import { useCallback } from 'react';
 
+const getCsrfToken = () => {
+    if (typeof document === 'undefined') return undefined;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; csrf_token=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift();
+    return undefined;
+};
+
 export const useAnalytics = () => {
     const trackEvent = useCallback(async (eventName: string, details?: any) => {
         try {
@@ -9,6 +17,7 @@ export const useAnalytics = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRF-Token': getCsrfToken() || '',
                 },
                 body: JSON.stringify({
                     event: eventName,
