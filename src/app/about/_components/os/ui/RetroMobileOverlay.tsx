@@ -195,24 +195,8 @@ export default function RetroMobileOverlay() {
                                             </p>
                                         </div>
 
-                                        {/* Warning Notice */}
-                                        <div className="mt-4 w-full max-w-[280px] bg-[#FFFFCC] border-2 border-black p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                                            <div className="flex items-start gap-2">
-                                                <span className="text-base leading-none">⚠️</span>
-                                                <div className="text-left">
-                                                    <p className="text-[11px] font-bold text-black uppercase tracking-tight leading-tight">
-                                                        {locale === 'en'
-                                                            ? "Desktop Only"
-                                                            : "Khusus Desktop"}
-                                                    </p>
-                                                    <p className="text-[10px] text-gray-700 leading-snug mt-1">
-                                                        {locale === 'en'
-                                                            ? "This website is designed exclusively for PC/Laptop. Please open it on a computer with a wider screen for the best experience."
-                                                            : "Website ini dirancang khusus untuk PC/Laptop. Silakan buka di komputer dengan layar lebih lebar untuk pengalaman terbaik."}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
+
+
                                     </div>
                                     <button
                                         onClick={() => setStep("details")}
