@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import { Trash2, FolderOpen, RefreshCw, Play } from "lucide-react";
-import { toast } from "sonner";
+import { useToast } from "@/contexts/ToastContext";
 import { format } from "date-fns";
 
 interface Sequence {
@@ -14,6 +14,7 @@ interface Sequence {
 }
 
 export default function SequenceList() {
+    const { showSuccess, showError } = useToast();
     const [sequences, setSequences] = useState<Sequence[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -30,10 +31,10 @@ export default function SequenceList() {
             if (!res.ok) throw new Error("Activation failed");
 
             const data = await res.json();
-            toast.success(`Active sequence set to: ${name}`);
+            showSuccess(`Active sequence set to: ${name}`);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to activate sequence");
+            showError("Failed to activate sequence");
         } finally {
             setActivatingId(null);
         }
@@ -50,7 +51,7 @@ export default function SequenceList() {
             setSequences(data);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to load sequences");
+            showError("Failed to load sequences");
         } finally {
             setIsLoading(false);
         }
@@ -74,10 +75,10 @@ export default function SequenceList() {
 
             if (!res.ok) throw new Error("Delete failed");
 
-            toast.success("Sequence deleted");
+            showSuccess("Sequence deleted");
             fetchSequences(); // Refresh list
         } catch (error) {
-            toast.error("Failed to delete");
+            showError("Failed to delete");
             console.error(error);
         } finally {
             setDeletingId(null);

@@ -3,10 +3,11 @@
 import React, { useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { toast } from "sonner";
+import { useToast } from "@/contexts/ToastContext";
 import { Loader2, Play, Upload } from "lucide-react";
 
 export default function SequenceGenerator() {
+    const { showSuccess, showError } = useToast();
     const [videoFile, setVideoFile] = useState<File | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -140,10 +141,10 @@ export default function SequenceGenerator() {
                 setProgress(uploadProgress);
             }
 
-            toast.success(`Success! Saved to: /assets/sequence/${sequenceName}`);
+            showSuccess(`Success! Saved to: /assets/sequence/${sequenceName}`);
             setStatus("Completed!");
         } catch (error) {
-            toast.error("Failed to upload sequence. Try shorter video?");
+            showError("Failed to upload sequence. Try shorter video?");
             console.error(error);
             setStatus("Error");
         } finally {
