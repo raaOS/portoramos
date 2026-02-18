@@ -21,25 +21,23 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
     const [input, setInput] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
     const [activeContact, setActiveContact] = useState<ContactProfile | null>(null);
-    const [isTyping, setIsTyping] = useState(false);
+    const [visibleMessages, setVisibleMessages] = useState<ChatMessage[]>([]);
+    const [isRemoteTyping, setIsRemoteTyping] = useState(false);
     const [projects, setProjects] = useState<Record<string, Project>>({});
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const sequencerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Initialize sound
     useEffect(() => {
-        // We'll use a generic notification sound or create a beep context
-        // for "WhatsApp" feel if a real asset is missing.
         if (typeof window !== 'undefined') {
-            audioRef.current = new Audio('/assets/sounds/whatsapp_notif.mp3'); // Fallback if exists
+            audioRef.current = new Audio('/assets/sounds/whatsapp_notif.mp3');
         }
     }, []);
 
     const playNotificationSound = () => {
         if (audioRef.current) {
             audioRef.current.volume = 0.5;
-            audioRef.current.play().catch(() => {
-                // Ignore autoplay restrictions
-            });
+            audioRef.current.play().catch(() => { });
         }
     };
 
@@ -61,24 +59,61 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
         loadProjects();
     }, []);
 
-    // Initialize chats and select active contact
+    // Sequencer Logic: Autoplay conversation
     useEffect(() => {
         const initialChats = customContacts || mockChats;
         setChats(initialChats);
 
-        // Select active contact
         const contactId = activeChatId || Object.keys(initialChats)[0];
-        if (contactId && initialChats[contactId]) {
-            setActiveContact(initialChats[contactId]);
-        } else if (Object.keys(initialChats).length > 0) {
-            setActiveContact(Object.values(initialChats)[0]);
+        const contact = contactId ? initialChats[contactId] : (Object.values(initialChats)[0] || null);
+
+        if (contact) {
+            setActiveContact(contact);
+            // Reset visibility
+            setVisibleMessages([]);
+            setIsRemoteTyping(false);
+            if (sequencerRef.current) clearTimeout(sequencerRef.current);
+
+            let currentIndex = 0;
+            const fullConversation = contact.conversation;
+
+            const nextStep = () => {
+                if (currentIndex >= fullConversation.length) return;
+
+                const msg = fullConversation[currentIndex];
+
+                // If the next message is from Client (Remote), show typing first
+                if (!msg.isMe) {
+                    setIsRemoteTyping(true);
+                    sequencerRef.current = setTimeout(() => {
+                        setIsRemoteTyping(false);
+                        setVisibleMessages(prev => [...prev, msg]);
+                        playNotificationSound();
+                        currentIndex++;
+                        // Wait 1.5s after a message before showing the next one
+                        sequencerRef.current = setTimeout(nextStep, 1500);
+                    }, 2000); // Typing duration
+                } else {
+                    // Internal messages appear faster
+                    setVisibleMessages(prev => [...prev, msg]);
+                    currentIndex++;
+                    sequencerRef.current = setTimeout(nextStep, 1000);
+                }
+            };
+
+            // Start after a small initial delay
+            sequencerRef.current = setTimeout(nextStep, 800);
         }
+
+        return () => {
+            if (sequencerRef.current) clearTimeout(sequencerRef.current);
+        };
     }, [activeChatId, customContacts]);
 
-    // Scroll to bottom on new message
+    // Scroll to bottom on visible messages change
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [activeContact]);
+    }, [visibleMessages, isRemoteTyping]);
 
     const handleSend = (e: React.FormEvent) => {
         e.preventDefault();
@@ -93,21 +128,8 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
             type: 'text'
         };
 
-        setActiveContact(prev => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                conversation: [...prev.conversation, newMessage]
-            };
-        });
+        setVisibleMessages(prev => [...prev, newMessage]);
         setInput('');
-
-        // Simulate "Typing..." and reply if it's a test/sim
-        setIsTyping(true);
-        setTimeout(() => {
-            setIsTyping(false);
-            playNotificationSound();
-        }, 2000);
     };
 
     if (!activeContact) return <div className="h-full bg-[#efeae2]"></div>;
@@ -140,7 +162,7 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
                     </div>
                     <div className="flex flex-col justify-center min-w-0">
                         <h3 className="text-[16px] text-[#111b21] font-semibold leading-none truncate">{activeContact.name}</h3>
-                        {isTyping ? (
+                        {isRemoteTyping ? (
                             <span className="text-[11px] text-[#00a884] font-medium mt-0.5 animate-pulse">sedang mengetik...</span>
                         ) : (
                             <span className="text-[11px] text-[#00a884] font-medium flex items-center gap-1 mt-0.5">
@@ -157,80 +179,87 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-y-5 z-10 custom-scrollbar relative">
-                {activeContact.conversation.map((msg, idx) => (
-                    <m.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        key={msg.id}
-                        className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}
-                    >
-                        <div className={`relative max-w-[85%] rounded-lg px-2 pt-1.5 pb-1 shadow-sm text-[14.2px] 
-                            ${msg.isMe ? 'bg-[#d9fdd3] rounded-tr-none' : 'bg-white rounded-tl-none'}`}
+                <AnimatePresence mode="popLayout">
+                    {visibleMessages.map((msg) => (
+                        <m.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            key={msg.id}
+                            className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}
                         >
-                            <div className="flex flex-col">
-                                {/* Project Thumbnail Bubble */}
-                                {msg.type === 'project' && msg.projectId && projects[msg.projectId] && (
-                                    <div className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 group cursor-pointer relative">
-                                        <Image
-                                            src={projects[msg.projectId].cover}
-                                            alt={projects[msg.projectId].title}
-                                            width={300}
-                                            height={200}
-                                            className="w-full h-auto object-cover max-h-[180px]"
-                                        />
-                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                                            <p className="text-white text-[11px] font-bold truncate">{projects[msg.projectId].title}</p>
+                            <div className={`relative max-w-[85%] rounded-lg px-2 pt-1.5 pb-1 shadow-sm text-[14.2px] 
+                                ${msg.isMe ? 'bg-[#d9fdd3] rounded-tr-none' : 'bg-white rounded-tl-none'}`}
+                            >
+                                <div className="flex flex-col">
+                                    {/* Project Thumbnail Bubble */}
+                                    {msg.type === 'project' && msg.projectId && projects[msg.projectId] && (
+                                        <div className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 group cursor-pointer relative">
+                                            <Image
+                                                src={projects[msg.projectId].cover}
+                                                alt={projects[msg.projectId].title}
+                                                width={300}
+                                                height={200}
+                                                className="w-full h-auto object-cover max-h-[180px]"
+                                            />
+                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                                                <p className="text-white text-[11px] font-bold truncate">{projects[msg.projectId].title}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-
-                                {/* Image Bubble */}
-                                {msg.type === 'image' && msg.imageSrc && (
-                                    <div className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5">
-                                        <img
-                                            src={msg.imageSrc}
-                                            alt="Shared media"
-                                            className="w-full h-auto object-cover max-h-[250px]"
-                                        />
-                                    </div>
-                                )}
-
-                                <p className="text-[#111b21] leading-[19px] break-words whitespace-pre-wrap pr-1">
-                                    {msg.text}
-                                </p>
-                                <div className="flex justify-end items-center gap-1 select-none mt-1 h-3">
-                                    <span className="text-[11px] text-[#667781] leading-none">{msg.time}</span>
-                                    {msg.isMe && (
-                                        <m.span
-                                            initial={{ color: "#667781" }}
-                                            animate={{ color: "#53bdeb" }}
-                                            transition={{ delay: 1.5 }}
-                                            className="text-[#53bdeb]"
-                                        >
-                                            <CheckCheck size={16} strokeWidth={1.5} />
-                                        </m.span>
                                     )}
+
+                                    {/* Image Bubble */}
+                                    {msg.type === 'image' && msg.imageSrc && (
+                                        <div className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5">
+                                            <img
+                                                src={msg.imageSrc}
+                                                alt="Shared media"
+                                                className="w-full h-auto object-cover max-h-[250px]"
+                                            />
+                                        </div>
+                                    )}
+
+                                    <p className="text-[#111b21] leading-[19px] break-words whitespace-pre-wrap pr-1">
+                                        {msg.text}
+                                    </p>
+                                    <div className="flex justify-end items-center gap-1 select-none mt-1 h-3">
+                                        <span className="text-[11px] text-[#667781] leading-none">{msg.time}</span>
+                                        {msg.isMe && (
+                                            <m.span
+                                                initial={{ color: "#667781" }}
+                                                animate={{ color: "#53bdeb" }}
+                                                transition={{ delay: 1 }}
+                                                className="text-[#53bdeb]"
+                                            >
+                                                <CheckCheck size={16} strokeWidth={1.5} />
+                                            </m.span>
+                                        )}
+                                    </div>
                                 </div>
+                                {/* Triangle tip */}
+                                <div className={`absolute top-0 w-0 h-0 border-[6px] border-transparent 
+                                    ${msg.isMe
+                                        ? 'right-[-6px] border-t-[#d9fdd3] border-l-[#d9fdd3]'
+                                        : 'left-[-6px] border-t-white border-r-white'
+                                    }`}
+                                />
                             </div>
-                            {/* Triangle tip */}
-                            <div className={`absolute top-0 w-0 h-0 border-[6px] border-transparent 
-                                ${msg.isMe
-                                    ? 'right-[-6px] border-t-[#d9fdd3] border-l-[#d9fdd3]'
-                                    : 'left-[-6px] border-t-white border-r-white'
-                                }`}
-                            />
-                        </div>
-                    </m.div>
-                ))}
-                {isTyping && (
-                    <div className="flex justify-start">
-                        <div className="bg-white rounded-lg rounded-tl-none px-3 py-2 shadow-sm flex gap-1 items-center">
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
-                        </div>
-                    </div>
-                )}
+                        </m.div>
+                    ))}
+                    {isRemoteTyping && (
+                        <m.div
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="flex justify-start"
+                        >
+                            <div className="bg-white rounded-lg rounded-tl-none px-3 py-2 shadow-sm flex gap-1 items-center">
+                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                            </div>
+                        </m.div>
+                    )}
+                </AnimatePresence>
                 <div ref={bottomRef} />
             </div>
 
