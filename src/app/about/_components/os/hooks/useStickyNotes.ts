@@ -3,14 +3,18 @@ import type { NoteData } from '../StickyNoteItem';
 
 const INITIAL_NOTES: NoteData[] = [
     {
-        id: '1',
-        text: 'Welcome to Sticky Notes! 📝\n\nClick the Dock icon to add a new note.',
+        id: 'welcome-note',
+        text: 'Halo! Selamat Datang di Ramos OS v2.0 🖥️✨\n\nSaya Ramos, seorang Graphic Designer & Visual Strategist.\n\nQuick Start:\n1. Buka folder "Projects" untuk lihat karya saya.\n2. Klik "Contact" di bawah untuk ngobrol.\n3. Drag note ini ke mana saja!\n\nSelamat mengeksplorasi!',
         date: new Date().toISOString(),
         color: '#fef08a',
-        isStarred: false,
+        isStarred: true,
         isDeleted: false,
-        x: 100,
-        y: 100
+        x: typeof window !== 'undefined' ? (window.innerWidth - 300) / 2 : 100,
+        y: typeof window !== 'undefined' ? (window.innerHeight - 350) / 2 : 100,
+        width: 300,
+        height: 350,
+        zIndex: 100,
+        isPinned: false
     }
 ];
 
@@ -35,7 +39,7 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                 // Add timestamp to prevent caching
                 const response = await fetch(`/api/sticky-notes?t=${Date.now()}`);
                 const data = await response.json();
-                if (Array.isArray(data)) {
+                if (Array.isArray(data) && data.length > 0) {
                     // Mobile adjustment: pull notes to visible area
                     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
                     const adjustedData = data.map((n, i) => {
@@ -57,7 +61,14 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                     const maxZ = Math.max(...data.map(n => n.zIndex || 0), 0);
                     setNoteZIndex(maxZ + 1);
                 } else {
-                    setNotes(INITIAL_NOTES);
+                    // Show welcome note ONLY if no notes exist AND it's a first-time view this session
+                    const hasSeenWelcome = sessionStorage.getItem('ramos_os_welcome_seen');
+                    if (!hasSeenWelcome) {
+                        setNotes(INITIAL_NOTES);
+                        sessionStorage.setItem('ramos_os_welcome_seen', 'true');
+                    } else {
+                        setNotes([]);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to load notes from server", error instanceof Error ? error.message : error);

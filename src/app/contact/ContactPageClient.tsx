@@ -7,6 +7,8 @@ import { MessageCircle } from 'lucide-react';
 import { Project } from '@/types/projects';
 import { resolveCover } from '@/lib/images';
 import Media from '@/components/shared/Media';
+import SystemNavFrame from '@/components/layout/SystemNavFrame';
+import { Power, Radio, ExternalLink } from 'lucide-react';
 
 // No fallback links - only show what user has configured
 const CONTACT_LINKS: { label: string; href: string; color: string }[] = [];
@@ -138,92 +140,106 @@ export default function ContactPageClient({ projects, contactInfo }: ContactPage
     }, []);
 
     return (
-        <div className="fixed inset-0 z-40 h-[100dvh] w-full bg-[#0a0a0a] overflow-hidden flex flex-col items-center justify-center selection:bg-white/20">
-
-
-
-            {/* Background Layer with CSS Animation - DEFERRED RENDER for Performance */}
-            <div className="absolute inset-0 z-0 opacity-50 pointer-events-none select-none overflow-hidden transition-opacity duration-1000 ease-in-out"
-                style={{ opacity: isGridMounted ? 0.5 : 0 }}
-            >
-                {/* Double loop container for smooth scrolling */}
-                {isGridMounted && (
-                    <div className="w-full animate-scroll-vertical">
-                        {/* First Set */}
-                        <div className="css-masonry px-4">
-                            {filledProjects.map((p, i) => (
-                                <BackgroundCard key={`p1-${i}`} project={p} index={i} />
-                            ))}
-                        </div>
-                        {/* Duplicate Set for Loop */}
-                        <div className="css-masonry px-4">
-                            {filledProjects.map((p, i) => (
-                                <BackgroundCard key={`p2-${i}`} project={p} index={i + filledProjects.length} />
-                            ))}
-                        </div>
+        <SystemNavFrame>
+            <div className="relative flex-1 bg-[#0a0a0a] overflow-hidden flex flex-col items-center justify-center selection:bg-white/20 py-20">
+                {/* Status Bar Backdrop (OS Style) */}
+                <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 no-print">
+                    <div className="flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span className="text-[10px] font-black text-green-500 uppercase tracking-[0.2em]">Ramos is Online</span>
                     </div>
-                )}
-            </div>
+                    <div className="w-[1px] h-3 bg-white/20" />
+                    <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Available for hire</div>
+                </div>
 
-            {/* Gradient Overlay - Lighter now */}
-            <div className="absolute inset-0 z-1 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a] pointer-events-none" />
 
-            {/* Content */}
-            <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto">
-                <motion.h1
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className="text-5xl md:text-7xl lg:text-9xl font-black font-sans text-[#e5e5e5] tracking-tight leading-[1] text-center mb-8 drop-shadow-2xl whitespace-pre-line"
+
+                {/* Background Layer with CSS Animation - DEFERRED RENDER for Performance */}
+                <div className="absolute inset-0 z-0 opacity-50 pointer-events-none select-none overflow-hidden transition-opacity duration-1000 ease-in-out"
+                    style={{ opacity: isGridMounted ? 0.5 : 0 }}
                 >
-                    {displayHeadline}
-                </motion.h1>
+                    {/* Double loop container for smooth scrolling */}
+                    {isGridMounted && (
+                        <div className="w-full animate-scroll-vertical">
+                            {/* First Set */}
+                            <div className="css-masonry px-4">
+                                {filledProjects.map((p, i) => (
+                                    <BackgroundCard key={`p1-${i}`} project={p} index={i} />
+                                ))}
+                            </div>
+                            {/* Duplicate Set for Loop */}
+                            <div className="css-masonry px-4">
+                                {filledProjects.map((p, i) => (
+                                    <BackgroundCard key={`p2-${i}`} project={p} index={i + filledProjects.length} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
 
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.15, duration: 0.4 }}
-                    className="mb-8"
-                >
-                    <button
-                        onClick={() => window.dispatchEvent(new CustomEvent('open-chat'))}
-                        className="group relative flex items-center gap-3 px-8 py-4 rounded-full bg-white/10 border border-white/5 hover:bg-white/15 hover:border-white/20 transition-all duration-300 overflow-hidden shadow-xl"
+                {/* Gradient Overlay - Lighter now */}
+                <div className="absolute inset-0 z-1 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a] pointer-events-none" />
+
+                {/* Content */}
+                <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto">
+                    <motion.h1
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                        className="text-5xl md:text-8xl lg:text-9xl font-black font-sans text-white tracking-tighter leading-[0.9] text-center mb-8 drop-shadow-2xl whitespace-pre-line overflow-visible"
                     >
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-blue-500 blur-xl" />
-                        <span className="relative text-white/90 group-hover:text-white font-bold">{contactInfo?.labels?.chatButtonText || "Let's Chat"}</span>
-                    </button>
-                </motion.div>
+                        {displayHeadline}
+                    </motion.h1>
 
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3, duration: 0.8 }}
-                    className="text-white/70 text-lg md:text-xl max-w-2xl mb-12 font-light drop-shadow-lg whitespace-pre-line"
-                >
-                    {displaySubtext}
-                </motion.p>
-
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3, duration: 0.5 }}
-                    className="flex flex-wrap justify-center gap-4"
-                >
-                    {socialLinks.map((link, i) => (
-                        <Link
-                            key={i}
-                            href={link.href!}
-                            target={link.href!.startsWith('http') ? "_blank" : undefined}
-                            className="group relative px-6 py-3 rounded-full bg-white/10 border border-white/5 hover:bg-white/15 hover:border-white/20 transition-all duration-300 overflow-hidden"
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.15, duration: 0.4 }}
+                        className="mb-8"
+                    >
+                        <button
+                            onClick={() => window.dispatchEvent(new CustomEvent('open-chat'))}
+                            className="group relative flex items-center gap-3 px-8 py-4 rounded-full bg-white/10 border border-white/5 hover:bg-white/15 hover:border-white/20 transition-all duration-300 overflow-hidden shadow-xl"
                         >
-                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${link.color} blur-xl`} />
-                            <span className="relative text-white/90 group-hover:text-white font-medium">{link.label}</span>
-                        </Link>
-                    ))}
-                </motion.div>
+                            <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-blue-500 blur-xl" />
+                            <span className="relative text-white/90 group-hover:text-white font-bold">{contactInfo?.labels?.chatButtonText || "Let's Chat"}</span>
+                        </button>
+                    </motion.div>
+
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3, duration: 0.8 }}
+                        className="text-white/70 text-lg md:text-xl max-w-2xl mb-12 font-light drop-shadow-lg whitespace-pre-line"
+                    >
+                        {displaySubtext}
+                    </motion.p>
+
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3, duration: 0.5 }}
+                        className="flex flex-wrap justify-center gap-4"
+                    >
+                        {socialLinks.map((link, i) => (
+                            <Link
+                                key={i}
+                                href={link.href!}
+                                target={link.href!.startsWith('http') ? "_blank" : undefined}
+                                className="group relative px-6 py-3 rounded-full bg-white/10 border border-white/5 hover:bg-white/15 hover:border-white/20 transition-all duration-300 overflow-hidden"
+                            >
+                                <div className={`absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${link.color} blur-xl`} />
+                                <span className="relative text-white/90 group-hover:text-white font-medium">{link.label}</span>
+                            </Link>
+                        ))}
+                    </motion.div>
+                </div>
+
+
             </div>
-
-
-        </div>
+        </SystemNavFrame>
     );
 }

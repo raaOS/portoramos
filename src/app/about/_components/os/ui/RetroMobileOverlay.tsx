@@ -174,27 +174,50 @@ export default function RetroMobileOverlay() {
                             <span className="retro-title-text">{t.title}</span>
                         </div>
                         <div className="retro-content flex flex-col items-center gap-4 text-center">
-                            <SadMacIcon />
-
-                            <div className="space-y-3">
-                                <p className="text-[14px] font-bold leading-tight">
-                                    {t.errorTitle}
-                                </p>
-                                <p className="text-[12px] leading-relaxed">
-                                    {t.errorMessage}
-                                </p>
-                                <p className="text-[11px] italic bg-black text-white p-1">
-                                    {t.errorCode}
-                                </p>
-                            </div>
-
                             {step === "error" ? (
-                                <button
-                                    onClick={() => setStep("details")}
-                                    className="retro-button mt-2 font-bold"
-                                >
-                                    {t.restartBtn}
-                                </button>
+                                <>
+                                    {/* Detail Error Message */}
+                                    <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
+                                        <div className="w-16 h-16 opacity-80">
+                                            <SadMacIcon />
+                                        </div>
+
+                                        <div className="text-center space-y-3 max-w-[280px]">
+                                            <p className="text-[14px] leading-tight text-black font-bold uppercase tracking-tight">
+                                                {locale === 'en'
+                                                    ? "The desktop experience is not compatible with this device."
+                                                    : "Pengalaman desktop tidak kompatibel dengan perangkat ini."}
+                                            </p>
+                                            <p className="text-[11px] leading-normal text-gray-700">
+                                                {locale === 'en'
+                                                    ? "Please switch to a desktop computer for the full interactive OS experience."
+                                                    : "Silakan gunakan komputer desktop untuk pengalaman OS interaktif sepenuhnya."}
+                                            </p>
+                                        </div>
+
+                                        {/* Mobile Escape Hatch */}
+                                        <div className="pt-4 flex flex-col items-center gap-4">
+                                            <button
+                                                onClick={() => window.location.href = '/projects'}
+                                                className="px-6 py-2.5 bg-white border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px] text-[11px] font-bold uppercase tracking-widest text-black hover:bg-gray-50 transition-all"
+                                            >
+                                                {locale === 'en' ? "View Simple Version" : "Lihat Versi Simpel"}
+                                            </button>
+
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-[1px] bg-black/10" />
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">or scan disk</span>
+                                                <div className="w-8 h-[1px] bg-black/10" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setStep("details")}
+                                        className="retro-button mt-2 font-bold"
+                                    >
+                                        {t.restartBtn}
+                                    </button>
+                                </>
                             ) : (
                                 <div className="w-full space-y-4">
                                     <div className="retro-progress-container">
