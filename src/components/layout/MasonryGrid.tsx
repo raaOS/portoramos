@@ -12,10 +12,11 @@ interface MasonryGridProps {
 
 const defaultBreakpoints = {
     default: 7,    // Desktop (> 1280px)
-    1280: 5,       // Laptop / Small Desktop
-    1024: 4,       // Tablet Landscape
-    768: 3,        // Tablet Portrait
-    640: 2         // Mobile
+    1280: 7,       // Desktop
+    1024: 5,       // Tablet L
+    768: 4,        // Match md:grid-cols-4
+    640: 3,        // Match sm:grid-cols-3
+    0: 2           // Base
 };
 const sidebarBreakpoints = {
     default: 3,    // Max 3 columns for sidebar
@@ -117,16 +118,11 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
 
     // Helper to determine grid classes based on props
     const getGridClasses = () => {
-        let gridClasses = 'grid-cols-2'; // Base/Mobile
+        if (columns === 'sidebar') return 'grid-cols-2 lg:grid-cols-3';
+        if (columns === 'bottom') return 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6';
 
-        if (columns === 'default') {
-            gridClasses = 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7';
-        } else if (columns === 'sidebar') {
-            gridClasses = 'grid-cols-2 lg:grid-cols-3';
-        } else if (columns === 'bottom') {
-            gridClasses = 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6';
-        }
-        return gridClasses;
+        // Match defaultBreakpoints EXACTLY
+        return 'grid-cols-2 xs:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7';
     };
 
     const renderNativeGrid = () => (

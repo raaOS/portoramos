@@ -128,13 +128,11 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
         if (entries[0].isIntersecting && !isLoading && filteredProjects.length > 0 && visibleCount < MAX_DISPLAY_COUNT) {
           setIsLoading(true)
 
-          // Load next batch
-          setVisibleCount(prev => Math.min(prev + 14, MAX_DISPLAY_COUNT))
-
-          // Use Animation Frame to ensure the UI updates smoothly without stutter
-          requestAnimationFrame(() => {
+          // Load next batch with a slight delay to prevent re-render loops
+          setTimeout(() => {
+            setVisibleCount(prev => Math.min(prev + 14, MAX_DISPLAY_COUNT))
             setIsLoading(false)
-          })
+          }, 500)
         }
       },
       {
@@ -179,14 +177,7 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
                   // Animation Logic:
                   // Priority items (first 2): No animation at all - instant display for LCP
                   // Non-priority items: Fade in only (no Y movement to prevent CLS)
-                  const animationProps = isPriority
-                    ? {} // No animation for priority items - they're already visible
-                    : {
-                      initial: { opacity: 0 }, // Fade only, NO Y MOVEMENT to prevent CLS
-                      whileInView: { opacity: 1 },
-                      viewport: { once: true, margin: "100px" },
-                      transition: { duration: 0.3, ease: "easeOut" }
-                    };
+                  const animationProps = {};
 
                   return (
                     <m.div
