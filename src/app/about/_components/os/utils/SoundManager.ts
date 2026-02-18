@@ -13,13 +13,13 @@ class SoundManager {
     private initialized: boolean = false;
 
     private soundPaths: Record<SoundType, string> = {
-        startup: '/sounds/startup.mp3',
-        click: '/sounds/click.mp3',
-        'window-open': '/sounds/window-open.mp3',
-        'window-close': '/sounds/window-close.mp3',
-        error: '/sounds/error.mp3',
-        notification: '/sounds/notification.mp3',
-        drag: '/sounds/drag.mp3'
+        startup: '/sounds/startup.wav',
+        click: '/sounds/click.wav',
+        'window-open': '/sounds/window-open.wav',
+        'window-close': '/sounds/window-close.wav',
+        error: '/sounds/error.wav',
+        notification: '/sounds/notification.wav',
+        drag: '/sounds/drag.wav'
     };
 
     private constructor() { }
