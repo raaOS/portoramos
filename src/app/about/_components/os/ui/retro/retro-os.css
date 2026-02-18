@@ -1,0 +1,93 @@
+@font-face {
+    font-family: 'Chicago';
+    src: url('/fonts/Chicago.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+.retro-os-container {
+    font-family: 'Chicago', 'Courier New', Courier, monospace;
+    image-rendering: pixelated;
+}
+
+.retro-window {
+    background: #c0c0c0;
+    border: 1px solid #000;
+    box-shadow: 1px 1px 0 #fff inset, -1px -1px 0 #808080 inset, 2px 2px 0 #fff inset, -2px -2px 0 #404040 inset;
+    padding: 2px;
+}
+
+.retro-title-bar {
+    background: repeating-linear-gradient(0deg,
+            #000,
+            #000 1px,
+            transparent 1px,
+            transparent 2px);
+    height: 18px;
+    border-bottom: 1px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+.retro-title-text {
+    background: #c0c0c0;
+    padding: 0 6px;
+    font-size: 12px;
+    color: #000;
+    font-weight: bold;
+}
+
+.retro-content {
+    padding: 20px;
+    background: #c0c0c0;
+    color: #000;
+}
+
+.retro-button {
+    background: #c0c0c0;
+    border: 1px solid #000;
+    box-shadow: 1px 1px 0 #fff inset, -1px -1px 0 #808080 inset;
+    padding: 4px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 12px;
+    color: #000;
+    transition: all 0.1s;
+}
+
+.retro-button:active {
+    box-shadow: -1px -1px 0 #fff inset, 1px 1px 0 #808080 inset;
+    transform: translate(1px, 1px);
+}
+
+.retro-progress-container {
+    width: 100%;
+    height: 16px;
+    border: 1px solid #000;
+    background: #fff;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.retro-progress-bar {
+    height: 100%;
+    background: repeating-linear-gradient(45deg,
+            #000,
+            #000 10px,
+            #fff 10px,
+            #fff 20px);
+    animation: retro-progress 2s linear infinite;
+}
+
+@keyframes retro-progress {
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: 28px 0;
+    }
+}

@@ -79,9 +79,13 @@ const DynamicIsland = dynamic(() => import("./ui/DynamicIsland"), {
     ssr: false
 });
 
-// Sub-components moved to separate files:
 // - ProjectDetailWrapper -> ./ui/ProjectDetailWrapper.tsx
 // - AppIcon -> ./ui/AppIcon.tsx
+
+const RetroMobileOverlay = dynamic(() => import("./ui/RetroMobileOverlay"), {
+    loading: () => <div className="fixed inset-0 bg-[#c0c0c0] z-[10000]" />,
+    ssr: false
+});
 
 // --- Main Component ---
 
@@ -508,6 +512,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
     return (
         <DesktopErrorBoundary>
+            {isMobile && <RetroMobileOverlay />}
             <LazyMotion features={domMax}>
                 {/* Boot Sequence Overlay */}
                 <AnimatePresence>
