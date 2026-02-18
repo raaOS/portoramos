@@ -260,6 +260,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                     </div>
                 )}
 
+
                 {/* Header: Color Picker & Close (Double click to collapse) */}
                 <div
                     className="absolute top-0 left-0 right-0 h-[50px] pl-3 pr-1 z-20 flex items-center justify-between border-b border-black/5 cursor-grab active:cursor-grabbing"
@@ -512,10 +513,11 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                 {/* Resize Handle - Admin Only */}
                 {!note.isCollapsed && isAdmin && (
                     <div
-                        className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute bottom-0 right-0 w-8 h-8 cursor-se-resize z-30 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"
                         onPointerDown={handleResizeStart}
+                        title="Resize Note"
                     >
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-50">
+                        <svg width="12" height="12" viewBox="0 0 10 10" fill="none">
                             <path d="M10 0L0 10V10H10V0Z" fill="black" />
                         </svg>
                     </div>

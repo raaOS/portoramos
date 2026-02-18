@@ -3,6 +3,7 @@ import { m, AnimatePresence } from "framer-motion";
 import { Maximize2, Minimize2, Music, AppWindow } from "lucide-react";
 
 import { ContactProfile } from "../data/mockChats";
+import { getAvatarUrl } from "@/lib/avatar";
 
 interface DynamicIslandProps {
     activeWindow: string | null;
@@ -58,8 +59,8 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
             interval = setInterval(() => {
                 triggerNotification(lastIndexRef.current % customNotifications.length);
                 lastIndexRef.current++;
-            }, 12000);
-        }, 3000);
+            }, 7000); // 2s show + 5s hide = 7s cycle
+        }, 1000);
 
         return () => {
             clearTimeout(initialDelay);
@@ -92,19 +93,21 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
             randomTesti = {
                 name: randomContact.name,
                 message: notificationMsg,
-                // Ensure there's always an avatar, even if for some reason randomContact.avatar is missing
-                avatar: randomContact.avatar || `https://ui-avatars.com/api/?background=random&color=fff&name=${encodeURIComponent(randomContact.name)}`
+                // Ensure there's always an avatar, and fallback if it's not a valid external URL
+                avatar: (randomContact.avatar && randomContact.avatar.startsWith('http'))
+                    ? randomContact.avatar
+                    : getAvatarUrl(randomContact.name)
             };
         }
 
         if (randomTesti) {
             setNotification(randomTesti);
 
-            // Hide after 5 seconds
+            // Hide after 2 seconds (As requested: "muncul 2 detik")
             notificationTimerRef.current = setTimeout(() => {
                 setNotification(null);
                 notificationTimerRef.current = null;
-            }, 5000);
+            }, 2000);
         }
     };
 

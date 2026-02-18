@@ -1,5 +1,6 @@
 import { Testimonial } from "@/types/testimonial";
 import { ContactProfile, ChatMessage } from "../data/mockChats";
+import { getAvatarUrl } from "@/lib/avatar";
 
 export const convertTestimonialToContact = (testimonial: Testimonial): ContactProfile => {
     // 1. Use real messages if available, otherwise generate legacy fallback
@@ -41,7 +42,7 @@ export const convertTestimonialToContact = (testimonial: Testimonial): ContactPr
         // Automatic Letter Avatar Generation:
         // Uses ui-avatars.com to create a clean single letter (e.g., "B" for Budi).
         // Background is a soft pastel green/gray (WhatsApp style), Bold font enabled.
-        avatar: `https://ui-avatars.com/api/?background=d9fdd3&color=128c7e&name=${encodeURIComponent(testimonial.name.charAt(0))}&size=128&bold=true&length=1`,
+        avatar: getAvatarUrl(testimonial.name),
         status: testimonial.notificationText || (testimonial.role ? `${testimonial.role} @ ${testimonial.company}` : 'Client'),
         conversation
     };

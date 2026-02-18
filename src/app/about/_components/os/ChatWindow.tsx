@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, MoreVertical, Search, CheckCheck, Paperclip, Smile, Mic, ArrowLeft, BadgeCheck } from 'lucide-react';
 import Image from 'next/image';
 import { mockChats, ContactProfile } from './data/mockChats';
+import { getAvatarUrl } from '@/lib/avatar';
 
-// Placeholder images - Encoding spaces for safety
-const USER_AVATAR = "/foto%20profil%20live%20chat/inspo_copy_image_20260124_004840.png"; // User (Ramos)
-const CLIENT_AVATAR = "/foto%20profil%20live%20chat/ttn-image-2023-08-04-171651492.jpg"; // Client/Recruiter
+// Letter Avatar Helper (Clean & Consistent)
+const USER_AVATAR = `https://ui-avatars.com/api/?background=00a884&color=ffffff&name=R&size=128&bold=true&length=1`; // User (Ramos) - Green background
+const CLIENT_AVATAR = `https://ui-avatars.com/api/?background=d9fdd3&color=128c7e&name=C&size=128&bold=true&length=1`; // Default Client Fallback
 
 interface ChatWindowProps {
     settings?: any;
@@ -80,7 +81,14 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
             <div className="bg-[#f0f2f5] py-2 px-4 flex items-center justify-between shrink-0 h-[60px] border-b border-[#d1d7db] z-10">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full overflow-hidden cursor-pointer relative shrink-0">
-                        <Image src={activeContact.avatar || CLIENT_AVATAR} alt={activeContact.name} width={40} height={40} className="w-full h-full object-cover" />
+                        <Image
+                            src={activeContact.avatar && activeContact.avatar.startsWith('http') ? activeContact.avatar : getAvatarUrl(activeContact.name)}
+                            alt={activeContact.name}
+                            width={40}
+                            height={40}
+                            unoptimized
+                            className="w-full h-full object-cover"
+                        />
                     </div>
                     <div className="flex flex-col justify-center min-w-0">
                         <h3 className="text-[16px] text-[#111b21] font-semibold leading-none truncate">{activeContact.name}</h3>
@@ -96,9 +104,9 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 z-10 custom-scrollbar relative">
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-y-5 z-10 custom-scrollbar relative">
                 {activeContact.conversation.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'} mb-3`}>
+                    <div key={msg.id} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
                         <div className={`relative max-w-[85%] rounded-lg px-2 pt-1.5 pb-1 shadow-sm text-[14.2px] 
                             ${msg.isMe ? 'bg-[#d9fdd3] rounded-tr-none' : 'bg-white rounded-tl-none'}`}
                         >

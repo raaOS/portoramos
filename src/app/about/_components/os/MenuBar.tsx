@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Wifi, Battery, Command } from "lucide-react";
+import { Search, Wifi, Battery, Command, LogOut, Lock } from "lucide-react";
 
 interface MenuBarProps {
     onSearch?: () => void;
@@ -11,9 +11,11 @@ interface MenuBarProps {
         status: string;
         text: string;
     };
+    isAdmin?: boolean;
+    onLogout?: () => void;
 }
 
-export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, availability }: MenuBarProps) {
+export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, availability, isAdmin, onLogout }: MenuBarProps) {
     const [time, setTime] = useState(new Date());
 
     useEffect(() => {
@@ -35,7 +37,7 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
     });
 
     return (
-        <div className="fixed top-0 left-0 right-0 h-8 bg-white flex items-center justify-between px-4 z-[10000] text-black text-xs select-none shadow-sm border-b border-gray-200 pointer-events-auto">
+        <div className="fixed top-0 left-0 right-0 h-9 sm:h-8 bg-white flex items-center justify-between px-3 sm:px-4 z-[10000] text-black text-xs select-none shadow-sm border-b border-gray-200 pointer-events-auto">
             {/* Left Side */}
             <div className="flex items-center gap-4">
                 <div className="flex items-center hover:bg-black/5 px-2 py-1 rounded cursor-pointer transition-colors pb-1.5">
@@ -60,6 +62,20 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
                 </div>
             </div>
 
+            {/* Center Area - Logout Button (Admin Only) */}
+            {isAdmin && (
+                <div className="absolute inset-x-0 flex justify-center items-center pointer-events-none h-full">
+                    <button
+                        onClick={onLogout}
+                        className="pointer-events-auto flex items-center gap-1.5 px-3 py-1 text-red-600 hover:text-red-700 transition-all active:scale-95 group"
+                        title="Sign Out from Admin Session"
+                    >
+                        <LogOut size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+                        <span className="font-bold text-[11px] uppercase tracking-tight">Exit Admin</span>
+                    </button>
+                </div>
+            )}
+
             {/* Right Side */}
             <div className="flex items-center gap-3 sm:gap-5">
                 {/* Availability Status */}
@@ -75,11 +91,11 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
                 {/* Icons */}
                 <div className="flex items-center gap-3">
                     <Search
-                        size={14}
-                        className="cursor-pointer hover:text-gray-600"
+                        size={18}
+                        className="cursor-pointer hover:text-gray-600 sm:w-[14px] sm:h-[14px]"
                         onClick={onSearch}
                     />
-                    <Wifi size={14} className="cursor-pointer hover:text-gray-600" />
+                    <Wifi size={18} className="cursor-pointer hover:text-gray-600 sm:w-[14px] sm:h-[14px] hidden sm:block" />
 
                     {/* Custom Battery 100% Green */}
                     <span className="flex items-center gap-[1px] cursor-pointer" title="Battery Full (100%)" role="img" aria-label="Battery 100%">

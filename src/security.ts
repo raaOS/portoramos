@@ -126,15 +126,6 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Only log API calls for debugging
-    if (pathname.startsWith('/api/')) {
-        const csrfHeader = request.headers.get('x-csrf-token');
-        const csrfCookie = request.cookies.get('csrf_token')?.value;
-        const logEntry = `[Middleware/Log] ${request.method} ${pathname} | Header: ${csrfHeader ? csrfHeader.slice(0, 8) + '...' : 'MISSING'} | Cookie: ${csrfCookie ? csrfCookie.slice(0, 8) + '...' : 'MISSING'} | All Cookies: ${JSON.stringify(Object.fromEntries(request.cookies.getAll().map(c => [c.name, c.value])))}`;
-
-        // Log to terminal
-        console.warn(logEntry);
-    }
 
     const isProd = process.env.NODE_ENV === 'production';
 
@@ -147,7 +138,7 @@ export async function proxy(request: NextRequest) {
     const mutationMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
     if (isAPIRoute(pathname) && mutationMethods.includes(request.method)) {
         // Skip for login which has its own token generation/validation flow
-        if (pathname !== '/api/admin/login') {
+        if (pathname !== '/api/admin/login' && pathname !== '/api/admin/logout') {
             const csrfToken = request.headers.get('x-csrf-token');
             const sessionCsrfToken = request.cookies.get('csrf_token')?.value;
 

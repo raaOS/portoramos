@@ -148,7 +148,11 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                 </div>
             )}
 
-            {!isMobile && (
+            {isMobile ? (
+                <span className="text-[10px] text-white font-medium text-center px-1.5 py-0.5 bg-black/30 rounded backdrop-blur-sm max-w-[80px] truncate select-none mt-1 z-20">
+                    {label}
+                </span>
+            ) : (
                 <span className={`text-xs text-black font-medium text-center px-2 py-1 bg-white/40 rounded-[4px] backdrop-blur-md shadow-sm border border-white/30 transition-all duration-200 max-w-[120px] truncate select-none mt-1 z-20 opacity-0 group-hover:opacity-100`}>
                     {label}
                 </span>

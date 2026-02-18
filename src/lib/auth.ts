@@ -23,7 +23,7 @@ export const verifyAdminPassword = (password: string): boolean => {
   if (!ADMIN_PASSWORD_SCRYPT || !PASSWORD_SALT) {
     throw new Error('Admin password security not configured - please set ADMIN_PASSWORD_SCRYPT and PASSWORD_SALT in your environment variables');
   }
-  
+
   if (!password || password.length < 8) {
     return false;
   }
@@ -40,7 +40,7 @@ export const getAdminToken = (): string => {
   return sign(
     { sub: 'admin', role: 'admin', iat: Math.floor(Date.now() / 1000) },
     JWT_SECRET,
-    { 
+    {
       expiresIn: '2h',
       issuer: 'portfolio-admin',
       audience: 'admin-panel'
@@ -58,7 +58,7 @@ export const verifyAdminToken = (token: string): boolean => {
       issuer: 'portfolio-admin',
       audience: 'admin-panel'
     });
-    
+
     if (typeof payload === 'object' && payload !== null && 'sub' in payload) {
       return (payload as { sub?: string }).sub === 'admin';
     }
@@ -71,7 +71,9 @@ export const verifyAdminToken = (token: string): boolean => {
 export const checkAdminAuth = (request: NextRequest): boolean => {
   try {
     const authHeader = request.headers.get('authorization');
-    const cookieToken = request.cookies.get('admin_token')?.value;
+    const cookieToken =
+      request.cookies.get('admin_token')?.value ||
+      request.cookies.get('admin-token')?.value;
 
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);

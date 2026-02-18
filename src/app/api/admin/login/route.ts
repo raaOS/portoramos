@@ -125,6 +125,11 @@ export async function GET() {
     path: '/'
   });
 
+  // Prevent browser caching of CSRF token
+  response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+  response.headers.set('Pragma', 'no-cache');
+  response.headers.set('Expires', '0');
+
   return response;
 }
 
@@ -133,6 +138,7 @@ export async function POST(request: NextRequest) {
     // 1. CSRF VALIDATION
     const csrfToken = request.headers.get('x-csrf-token');
     const cookieStore = await cookies();
+
     const sessionCsrfToken = cookieStore.get('csrf_token')?.value;
 
     if (!csrfToken || !sessionCsrfToken || !validateCSRFToken(csrfToken, sessionCsrfToken)) {
@@ -142,8 +148,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const isProd = process.env.NODE_ENV === 'production';
     const clientId = getClientIdentifier(request);
-    const rateLimit = checkRateLimit(clientId);
+
+    // Bypass rate limit in development mode for easier testing
+    const rateLimit = isProd ? checkRateLimit(clientId) : { allowed: true };
 
     if (!rateLimit.allowed) {
       const [ip, userAgent] = clientId.split('|');

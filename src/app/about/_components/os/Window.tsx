@@ -55,7 +55,10 @@ export default function OSWindow({
     isAdmin = false,
     animationVariant = 'genie',
 }: WindowProps) {
-    const winWidth = typeof window !== 'undefined' && window.innerWidth < 768 ? 350 : 600;
+    const isMobileWindow = typeof window !== 'undefined' && window.innerWidth < 768;
+    const isTabletWindow = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024;
+    const isSmallScreen = isMobileWindow || isTabletWindow;
+    const winWidth = isMobileWindow ? window.innerWidth : isTabletWindow ? Math.min(window.innerWidth - 32, 700) : 600;
     const dragControls = useDragControls();
 
     // Internal state for resizing
@@ -92,15 +95,17 @@ export default function OSWindow({
     // Separate ref for final size (to avoid mutating start values)
     const finalSizeRef = useRef({ w: 0, h: 0 });
 
-    const handleResizeStart = (e: React.MouseEvent, direction: 'e' | 's' | 'se') => {
+    const handleResizeStart = (e: React.MouseEvent | React.TouchEvent, direction: 'e' | 's' | 'se') => {
         e.preventDefault();
         e.stopPropagation();
         setIsResizing(true);
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
         resizeStartRef.current = {
-            x: e.clientX,
-            y: e.clientY,
-            w: dynamicSize.width || 0, // USE DYNAMIC SIZE
-            h: dynamicSize.height || 0, // USE DYNAMIC SIZE
+            x: clientX,
+            y: clientY,
+            w: dynamicSize.width || 0,
+            h: dynamicSize.height || 0,
             dir: direction
         };
     };
@@ -108,12 +113,15 @@ export default function OSWindow({
     useEffect(() => {
         if (!isResizing) return;
 
-        const handleMouseMove = (moveEvent: MouseEvent) => {
+        const handleMouseMove = (moveEvent: MouseEvent | TouchEvent) => {
             if (!resizeStartRef.current) return;
 
+            const clientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+            const clientY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+
             const { x: startX, y: startY, w: startWidth, h: startHeight, dir: direction } = resizeStartRef.current;
-            const deltaX = moveEvent.clientX - startX;
-            const deltaY = moveEvent.clientY - startY;
+            const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
 
             let newWidth = startWidth;
             let newHeight = startHeight;
@@ -147,10 +155,14 @@ export default function OSWindow({
 
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
+        window.addEventListener('touchmove', handleMouseMove, { passive: false });
+        window.addEventListener('touchend', handleMouseUp);
 
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener('touchmove', handleMouseMove);
+            window.removeEventListener('touchend', handleMouseUp);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isResizing]); // ONLY depend on isResizing, NOT dynamicSize
@@ -160,7 +172,7 @@ export default function OSWindow({
         <AnimatePresence>
             {isOpen && (
                 <m.div
-                    drag={!isMaximized && !isResizing && !isPinned} // Disable drag when resizing OR pinned
+                    drag={!isMaximized && !isResizing && !isPinned && !isSmallScreen}
                     dragControls={dragControls}
                     dragListener={false}
                     dragMomentum={false}
@@ -222,7 +234,10 @@ export default function OSWindow({
                         left: 0,
                     }}
                     data-lenis-prevent
-                    className="flex flex-col bg-white/80 backdrop-blur-xl shadow-lg overflow-hidden border border-white/40 will-change-transform pointer-events-auto"
+                    className={`flex flex-col shadow-lg overflow-hidden border border-white/40 will-change-transform pointer-events-auto ${isSmallScreen
+                            ? 'bg-white/95'
+                            : 'bg-white/80 backdrop-blur-xl'
+                        }`}
                 >
                     {/* Title Bar */}
                     <div
@@ -230,7 +245,7 @@ export default function OSWindow({
                             if (!isMaximized && !isPinned) dragControls.start(e);
                         }}
                         onDoubleClick={onMaximize}
-                        className="h-7 bg-[#EFEFEF] border-b border-[#D1D1D1] flex items-center justify-between px-3 shrink-0 cursor-default select-none relative z-50"
+                        className="h-8 sm:h-7 bg-[#EFEFEF] border-b border-[#D1D1D1] flex items-center justify-between px-3 shrink-0 cursor-default select-none relative z-50"
                     >
                         {/* Traffic Lights */}
                         <div className="flex gap-[8px] mr-3 items-center group">
@@ -296,24 +311,27 @@ export default function OSWindow({
                         {children}
 
                         {/* Safe Zone for Resize Overlays (Only if not maximized and resizable) */}
-                        {!isMaximized && onResize && (
+                        {!isMaximized && !isSmallScreen && onResize && (
                             <>
                                 {/* Right Handle */}
                                 <div
-                                    className="absolute top-0 right-0 w-1.5 h-full cursor-ew-resize z-[60] hover:bg-blue-500/20 active:bg-blue-500/40 transition-colors"
+                                    className="absolute top-0 right-0 w-2 h-full cursor-ew-resize z-[60] hover:bg-blue-500/20 active:bg-blue-500/40 transition-colors"
                                     onMouseDown={(e) => handleResizeStart(e, 'e')}
+                                    onTouchStart={(e) => handleResizeStart(e, 'e')}
                                     onPointerDown={(e) => e.stopPropagation()}
                                 />
                                 {/* Bottom Handle */}
                                 <div
-                                    className="absolute bottom-0 left-0 w-full h-1.5 cursor-ns-resize z-[60] hover:bg-blue-500/20 active:bg-blue-500/40 transition-colors"
+                                    className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize z-[60] hover:bg-blue-500/20 active:bg-blue-500/40 transition-colors"
                                     onMouseDown={(e) => handleResizeStart(e, 's')}
+                                    onTouchStart={(e) => handleResizeStart(e, 's')}
                                     onPointerDown={(e) => e.stopPropagation()}
                                 />
                                 {/* Corner Handle */}
                                 <div
-                                    className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize z-[70] hover:bg-blue-500/20 active:bg-blue-500/40 transition-colors rounded-tl"
+                                    className="absolute bottom-0 right-0 w-5 h-5 cursor-nwse-resize z-[70] hover:bg-blue-500/20 active:bg-blue-500/40 transition-colors rounded-tl"
                                     onMouseDown={(e) => handleResizeStart(e, 'se')}
+                                    onTouchStart={(e) => handleResizeStart(e, 'se')}
                                     onPointerDown={(e) => e.stopPropagation()}
                                 />
                             </>

@@ -117,6 +117,32 @@ a:active,
   .text-9xl {
     font-size: 5rem;
   }
+
+  /* Reduce backdrop-blur on mobile for GPU savings on low-end devices */
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-3xl {
+    --tw-backdrop-blur: blur(4px) !important;
+  }
+}
+
+/* Tablet-specific spacing (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .container {
+    padding: 20px;
+  }
+
+  .gap-16 {
+    gap: 1.25rem;
+  }
+
+  .gap-12 {
+    gap: 1rem;
+  }
+
+  .gap-8 {
+    gap: 0.625rem;
+  }
 }
 
 @media (max-width: 480px) {

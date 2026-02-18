@@ -720,17 +720,6 @@ export default function AdminProjectsClient() {
                 <Plus className="-ml-1 mr-2 h-5 w-5" />
                 Tambah Project
               </button>
-              <button
-                onClick={() => {
-                  document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-                  window.location.href = '/admin/login';
-                }}
-                className="h-10 inline-flex items-center justify-center px-4 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-all flex-shrink-0 whitespace-nowrap ml-2"
-                title="Sign Out"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="ml-2 hidden sm:inline">Logout</span>
-              </button>
 
             </div>
           </div>

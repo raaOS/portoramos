@@ -3,12 +3,19 @@ import { m, AnimatePresence } from 'framer-motion';
 
 interface BootSequenceProps {
     onComplete: () => void;
+    skipAnimation?: boolean;
 }
 
-const BootSequence = ({ onComplete }: BootSequenceProps) => {
+const BootSequence = ({ onComplete, skipAnimation = false }: BootSequenceProps) => {
     const [step, setStep] = useState(0);
 
     useEffect(() => {
+        // Skip boot animation on mobile for instant access
+        if (skipAnimation) {
+            onComplete();
+            return;
+        }
+
         // Timeline:
         // 0s: Black Screen
         // 0.5s: Logo Appears
@@ -27,7 +34,7 @@ const BootSequence = ({ onComplete }: BootSequenceProps) => {
             clearTimeout(timer2);
             clearTimeout(timer3);
         };
-    }, [onComplete]);
+    }, [onComplete, skipAnimation]);
 
     return (
         <AnimatePresence>

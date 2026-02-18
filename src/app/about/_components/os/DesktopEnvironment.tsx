@@ -131,7 +131,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
     // Admin auth check - now safe to use (API returns 200 for non-admins)
     // Admin auth check - now returns csrfToken
-    const { isAdmin, csrfToken } = useAdminAuth();
+    const { isAdmin, csrfToken, logout } = useAdminAuth();
 
     // Hooks
     const {
@@ -144,6 +144,14 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         bringToFrontNote,
         setNotes
     } = useStickyNotes(mounted, isAdmin, csrfToken);
+
+    // Logging for debug
+    useEffect(() => {
+        if (mounted) {
+            console.log(`[Desktop] Admin status: ${isAdmin ? 'AUTHORIZED' : 'VISITOR'}`);
+        }
+    }, [mounted, isAdmin]);
+
 
     // Dynamic Contacts (Mock + Testimonials)
     const [dynamicContacts, setDynamicContacts] = useState<Record<string, ContactProfile>>(mockChats);
@@ -267,7 +275,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                 </div>
             )
         }
-    ], [aboutData, commercialProjects, experienceData, hardSkillsData, projects, dynamicContacts]);
+    ], [aboutData, commercialProjects, experienceData, hardSkillsData, projects, dynamicContacts, isAdmin]);
+
 
     const {
         windows,
@@ -503,9 +512,12 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                 {/* Boot Sequence Overlay */}
                 <AnimatePresence>
                     {isBooting && (
-                        <BootSequence onComplete={() => {
-                            setIsBooting(false);
-                        }} />
+                        <BootSequence
+                            skipAnimation={isMobile}
+                            onComplete={() => {
+                                setIsBooting(false);
+                            }}
+                        />
                     )}
                 </AnimatePresence>
 
@@ -529,7 +541,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                             className="object-cover transition-all duration-700"
                             style={{ filter: `blur(${aboutData?.wallpaperConfig?.blur || 0}px)` }}
                         />
-                        <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] backface-invisible will-change-transform" />
+                        <div className={`absolute inset-0 backface-invisible will-change-transform ${isMobile ? 'bg-black/30' : 'bg-black/20 backdrop-blur-[1px]'}`} />
                     </div>
 
                     {/* Layer 1: Desktop Icons & Sticky Notes */}
@@ -625,15 +637,15 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                             customNotifications={testimonialContacts}
                         />
 
-                        {/* MenuBar Container - pointer-events-none to let icons through */}
-                        <div className="fixed top-0 left-0 right-0 z-[10000] pointer-events-none">
-                            <MenuBar
-                                activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || "Finder"}
-                                onAbout={() => openWindow("about")}
-                                onSearch={() => setShowSpotlight(true)}
-                                availability={aboutData?.hero?.availability}
-                            />
-                        </div>
+                        {/* MenuBar - high z-index, handles its own fixed positioning */}
+                        <MenuBar
+                            activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || "Finder"}
+                            onAbout={() => openWindow("about")}
+                            onSearch={() => setShowSpotlight(true)}
+                            availability={aboutData?.hero?.availability}
+                            isAdmin={isAdmin}
+                            onLogout={logout}
+                        />
 
                         {/* Dock Container - pointer-events-none to let icons through */}
                         <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe">
@@ -647,6 +659,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                         isWindowOpen={isWindowOpen}
                                         notesVisible={notesVisible}
                                         bouncingId={bouncingDocId}
+                                        isMobile={isMobile}
                                     />
                                 )}
                             </div>

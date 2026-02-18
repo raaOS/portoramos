@@ -30,6 +30,7 @@ import {
   User,
   Tag
 } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -82,17 +83,10 @@ export default function AdminLayout({
     }));
   };
 
+  const { logout } = useAdminAuth();
+
   const handleLogout = async () => {
-    try {
-      await fetch('/api/admin/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      router.push('/admin/login');
-    }
+    await logout();
   };
 
   const navItems: NavItem[] = [
@@ -249,7 +243,9 @@ export default function AdminLayout({
               )}
               <h1 className="text-xl font-bold text-gray-900 leading-tight">{title}</h1>
             </div>
-            {actions && <div className="flex items-center gap-3">{actions}</div>}
+            <div className="flex items-center gap-3">
+              {actions && <div className="flex items-center gap-3">{actions}</div>}
+            </div>
           </div>
         </div>
 

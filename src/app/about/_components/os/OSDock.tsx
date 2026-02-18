@@ -18,6 +18,7 @@ interface OSDockProps {
   notesVisible: boolean;
   bouncingId?: string | null;
   className?: string;
+  isMobile?: boolean;
 }
 
 export default function OSDock({
@@ -28,7 +29,8 @@ export default function OSDock({
   isWindowOpen,
   notesVisible,
   bouncingId,
-  className
+  className,
+  isMobile = false
 }: OSDockProps) {
   const router = useRouter();
 
@@ -47,7 +49,7 @@ export default function OSDock({
 
   return (
     <div className={className}>
-      <Dock items={dockItems} bouncingId={bouncingId} />
+      <Dock items={dockItems} bouncingId={bouncingId} isMobile={isMobile} />
     </div>
   );
 }

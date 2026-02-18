@@ -11,7 +11,7 @@ import StatusToggle from '../components/StatusToggle';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 
-const FALLBACK_AVATAR = 'https://ui-avatars.com/api/?background=random&color=fff&name=';
+import { getAvatarUrl, getAvatarColors } from '@/lib/avatar';
 
 const AutoResizeTextarea = ({ value, onChange, className, placeholder }: { value: string, onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void, className?: string, placeholder?: string }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -480,8 +480,14 @@ export default function AdminTestimonialClient() {
               <div key={t.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-xl transition-all hover:border-violet-200 group relative">
                 <div className="flex items-start justify-between gap-2 mb-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center font-bold text-violet-600 shrink-0">
-                      <img src={`${FALLBACK_AVATAR}${t.name}`} alt="" className="w-full h-full object-cover" />
+                    <div
+                      className="w-10 h-10 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center font-bold shrink-0"
+                      style={{
+                        backgroundColor: `#${getAvatarColors(t.name).bg}`,
+                        color: `#${getAvatarColors(t.name).text}`
+                      }}
+                    >
+                      <img src={getAvatarUrl(t.name)} alt="" className="w-full h-full object-cover" />
                     </div>
                     <div className="min-w-0">
                       <h4 className="font-bold text-gray-900 truncate text-sm">{t.name}</h4>
