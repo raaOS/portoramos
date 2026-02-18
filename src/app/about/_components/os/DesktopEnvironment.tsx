@@ -513,176 +513,180 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     return (
         <DesktopErrorBoundary>
             <LazyMotion features={domMax}>
-                {isMobile && <RetroMobileOverlay />}
-                {/* Boot Sequence Overlay */}
-                <AnimatePresence>
-                    {isBooting && (
-                        <BootSequence
-                            skipAnimation={isMobile}
-                            onComplete={() => {
-                                setIsBooting(false);
-                            }}
-                        />
-                    )}
-                </AnimatePresence>
-
-                {/* Main Desktop Content */}
-                <m.div
-                    className="relative w-full h-full overflow-hidden select-none"
-                    initial="booting"
-                    animate={isBooting ? "booting" : "ready"}
-                    variants={desktopVariants}
-                >
-                    {/* Wallpaper */}
-                    <div className="absolute inset-0 z-0">
-                        <Image
-                            src={wallpaper}
-                            alt="Desktop Wallpaper"
-                            fill
-                            priority
-                            loading="eager"
-                            quality={90} // High quality for LCP, balanced with size
-                            sizes="100vw"
-                            className="object-cover transition-all duration-700"
-                            style={{ filter: `blur(${aboutData?.wallpaperConfig?.blur || 0}px)` }}
-                        />
-                        <div className={`absolute inset-0 backface-invisible will-change-transform ${isMobile ? 'bg-black/30' : 'bg-black/20 backdrop-blur-[1px]'}`} />
-                    </div>
-
-                    {/* Layer 1: Desktop Icons & Sticky Notes */}
-                    <div className="absolute inset-0 z-10 pointer-events-auto">
-                        {projectIcons.map((icon: any) => {
-                            const isFolder = icon.type === 'folder';
-
-                            return (
-                                <DesktopIcon
-                                    key={icon.id}
-                                    {...icon}
-                                    icon={!isFolder ? icon.icon : undefined}
-                                    isMobile={isMobile}
-                                    priority={icon.priority} // Pass LCP priority
-                                    onPositionChange={handleIconPositionChange} // Pass persistence handler
-                                    onClick={() => {
-                                        if (isFolder && icon.action) icon.action();
-                                        else if (icon.type === 'project') openProjectWindow(icon.data);
-                                    }}
-                                >
-                                    {isFolder && <MacFolder size={0.85} isStatic={true} />}
-                                </DesktopIcon>
-                            );
-                        })}
-
-                        {/* Sticky Notes - Only show when toggled visible */}
-                        {notesVisible && (
-                            <>
-                                {notes.filter(n => !n.isDeleted).map(note => (
-                                    <DraggableStickyNote
-                                        key={note.id}
-                                        note={note}
-                                        updateNote={updateNote}
-                                        bringToFrontNote={bringToFrontNote}
-                                        deleteNote={(id) => {
-                                            deleteNote(id);
-                                            // If this was the last visible note, turn off the dock indicator
-                                            const visibleCount = notes.filter(n => !n.isDeleted).length;
-                                            if (visibleCount <= 1) {
-                                                setNotesVisible(false);
-                                            }
-                                        }}
-                                        permanentDeleteNote={permanentDeleteNote}
-                                        restoreNote={restoreNote}
-                                        isAdmin={isAdmin}
-                                    />
-                                ))}
-                            </>
-                        )}
-                    </div>
-
-                    {/* Layer 2: Windows */}
-                    <div className="absolute inset-0 z-20 pointer-events-none">
+                {isMobile ? (
+                    <RetroMobileOverlay />
+                ) : (
+                    <>
+                        {/* Boot Sequence Overlay */}
                         <AnimatePresence>
-                            {windows.map(w => (
-                                w.isOpen && !w.isMinimized && (
-                                    <OSWindow
-                                        key={w.id}
-                                        id={w.id}
-                                        isOpen={w.isOpen}
-                                        title={w.title}
-                                        isMinimized={w.isMinimized}
-                                        onClose={() => closeWindow(w.id)}
-                                        onMinimize={() => minimizeWindow(w.id)}
-                                        onMaximize={() => maximizeWindow(w.id)}
-                                        onFocus={() => focusWindow(w.id)}
-                                        onUpdatePosition={(x, y) => handleUpdateWindowPosition(w.id, x, y)}
-                                        onResize={(width, height) => handleWindowResize(w.id, width, height)}
-                                        onResizeEnd={(width, height) => handleWindowResizeEnd(w.id, width, height)}
-                                        isPinned={isAdmin && w.isPinned}
-                                        onTogglePin={isAdmin ? () => togglePin(w.id) : undefined}
-                                        isAdmin={isAdmin}
-                                        initialPosition={w.initialPosition}
-                                        width={w.width || 800}
-                                        height={w.height || 600}
-                                        zIndex={w.zIndex}
-                                        noPadding={w.noPadding}
-                                    >
-                                        {w.content}
-                                    </OSWindow>
-                                )
-                            ))}
+                            {isBooting && (
+                                <BootSequence
+                                    onComplete={() => {
+                                        setIsBooting(false);
+                                    }}
+                                />
+                            )}
                         </AnimatePresence>
-                    </div>
 
-                    {/* Layer 3: UI Overlays (Dock, MenuBar, Spotlight, DynamicIsland) */}
-                    <div className="absolute inset-0 z-30 pointer-events-none">
-                        {/* Dynamic Island - High Z-index */}
-                        <DynamicIsland
-                            activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || null}
-                            isBooting={isBooting}
-                            onOpenChat={navToChat}
-                            customNotifications={testimonialContacts}
-                        />
+                        {/* Main Desktop Content */}
+                        <m.div
+                            className="relative w-full h-full overflow-hidden select-none"
+                            initial="booting"
+                            animate={isBooting ? "booting" : "ready"}
+                            variants={desktopVariants}
+                        >
+                            {/* Wallpaper */}
+                            <div className="absolute inset-0 z-0">
+                                <Image
+                                    src={wallpaper}
+                                    alt="Desktop Wallpaper"
+                                    fill
+                                    priority
+                                    loading="eager"
+                                    quality={90} // High quality for LCP, balanced with size
+                                    sizes="100vw"
+                                    className="object-cover transition-all duration-700"
+                                    style={{ filter: `blur(${aboutData?.wallpaperConfig?.blur || 0}px)` }}
+                                />
+                                <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] backface-invisible will-change-transform" />
+                            </div>
 
-                        {/* MenuBar - high z-index, handles its own fixed positioning */}
-                        <MenuBar
-                            activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || "Finder"}
-                            onAbout={() => openWindow("about")}
-                            onSearch={() => setShowSpotlight(true)}
-                            availability={aboutData?.hero?.availability}
-                            isAdmin={isAdmin}
-                            onLogout={logout}
-                        />
+                            {/* Layer 1: Desktop Icons & Sticky Notes */}
+                            <div className="absolute inset-0 z-10 pointer-events-auto">
+                                {projectIcons.map((icon: any) => {
+                                    const isFolder = icon.type === 'folder';
 
-                        {/* Dock Container - pointer-events-none to let icons through */}
-                        <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe">
-                            <div className="pointer-events-auto">
-                                {aboutData && (
-                                    <OSDock
-                                        aboutData={aboutData}
-                                        onOpenWindow={openWindow}
-                                        onOpenNotes={toggleNotesVisibility}
-                                        onOpenTrash={() => openWindow("trash-bin")}
-                                        isWindowOpen={isWindowOpen}
-                                        notesVisible={notesVisible}
-                                        bouncingId={bouncingDocId}
-                                        isMobile={isMobile}
-                                    />
+                                    return (
+                                        <DesktopIcon
+                                            key={icon.id}
+                                            {...icon}
+                                            icon={!isFolder ? icon.icon : undefined}
+                                            isMobile={isMobile}
+                                            priority={icon.priority} // Pass LCP priority
+                                            onPositionChange={handleIconPositionChange} // Pass persistence handler
+                                            onClick={() => {
+                                                if (isFolder && icon.action) icon.action();
+                                                else if (icon.type === 'project') openProjectWindow(icon.data);
+                                            }}
+                                        >
+                                            {isFolder && <MacFolder size={0.85} isStatic={true} />}
+                                        </DesktopIcon>
+                                    );
+                                })}
+
+                                {/* Sticky Notes - Only show when toggled visible */}
+                                {notesVisible && (
+                                    <>
+                                        {notes.filter(n => !n.isDeleted).map(note => (
+                                            <DraggableStickyNote
+                                                key={note.id}
+                                                note={note}
+                                                updateNote={updateNote}
+                                                bringToFrontNote={bringToFrontNote}
+                                                deleteNote={(id) => {
+                                                    deleteNote(id);
+                                                    // If this was the last visible note, turn off the dock indicator
+                                                    const visibleCount = notes.filter(n => !n.isDeleted).length;
+                                                    if (visibleCount <= 1) {
+                                                        setNotesVisible(false);
+                                                    }
+                                                }}
+                                                permanentDeleteNote={permanentDeleteNote}
+                                                restoreNote={restoreNote}
+                                                isAdmin={isAdmin}
+                                            />
+                                        ))}
+                                    </>
                                 )}
                             </div>
-                        </div>
 
-                        {showSpotlight && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-auto z-[9999]">
-                                <Spotlight
-                                    isOpen={showSpotlight}
-                                    onClose={() => setShowSpotlight(false)}
-                                    projects={commercialProjects}
-                                    onOpenProject={openProjectWindow}
-                                    onOpenApp={(id) => openWindow(id)}
-                                />
+                            {/* Layer 2: Windows */}
+                            <div className="absolute inset-0 z-20 pointer-events-none">
+                                <AnimatePresence>
+                                    {windows.map(w => (
+                                        w.isOpen && !w.isMinimized && (
+                                            <OSWindow
+                                                key={w.id}
+                                                id={w.id}
+                                                isOpen={w.isOpen}
+                                                title={w.title}
+                                                isMinimized={w.isMinimized}
+                                                onClose={() => closeWindow(w.id)}
+                                                onMinimize={() => minimizeWindow(w.id)}
+                                                onMaximize={() => maximizeWindow(w.id)}
+                                                onFocus={() => focusWindow(w.id)}
+                                                onUpdatePosition={(x, y) => handleUpdateWindowPosition(w.id, x, y)}
+                                                onResize={(width, height) => handleWindowResize(w.id, width, height)}
+                                                onResizeEnd={(width, height) => handleWindowResizeEnd(w.id, width, height)}
+                                                isPinned={isAdmin && w.isPinned}
+                                                onTogglePin={isAdmin ? () => togglePin(w.id) : undefined}
+                                                isAdmin={isAdmin}
+                                                initialPosition={w.initialPosition}
+                                                width={w.width || 800}
+                                                height={w.height || 600}
+                                                zIndex={w.zIndex}
+                                                noPadding={w.noPadding}
+                                            >
+                                                {w.content}
+                                            </OSWindow>
+                                        )
+                                    ))}
+                                </AnimatePresence>
                             </div>
-                        )}
-                    </div>
-                </m.div >
+
+                            {/* Layer 3: UI Overlays (Dock, MenuBar, Spotlight, DynamicIsland) */}
+                            <div className="absolute inset-0 z-30 pointer-events-none">
+                                {/* Dynamic Island - High Z-index */}
+                                <DynamicIsland
+                                    activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || null}
+                                    isBooting={isBooting}
+                                    onOpenChat={navToChat}
+                                    customNotifications={testimonialContacts}
+                                />
+
+                                {/* MenuBar - high z-index, handles its own fixed positioning */}
+                                <MenuBar
+                                    activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || "Finder"}
+                                    onAbout={() => openWindow("about")}
+                                    onSearch={() => setShowSpotlight(true)}
+                                    availability={aboutData?.hero?.availability}
+                                    isAdmin={isAdmin}
+                                    onLogout={logout}
+                                />
+
+                                {/* Dock Container - pointer-events-none to let icons through */}
+                                <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe">
+                                    <div className="pointer-events-auto">
+                                        {aboutData && (
+                                            <OSDock
+                                                aboutData={aboutData}
+                                                onOpenWindow={openWindow}
+                                                onOpenNotes={toggleNotesVisibility}
+                                                onOpenTrash={() => openWindow("trash-bin")}
+                                                isWindowOpen={isWindowOpen}
+                                                notesVisible={notesVisible}
+                                                bouncingId={bouncingDocId}
+                                                isMobile={isMobile}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+
+                                {showSpotlight && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-auto z-[9999]">
+                                        <Spotlight
+                                            isOpen={showSpotlight}
+                                            onClose={() => setShowSpotlight(false)}
+                                            projects={commercialProjects}
+                                            onOpenProject={openProjectWindow}
+                                            onOpenApp={(id) => openWindow(id)}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </m.div >
+                    </>
+                )}
             </LazyMotion >
         </DesktopErrorBoundary >
     );

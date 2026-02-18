@@ -35,6 +35,8 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512],
     // Modern formats for best compression and performance
     formats: ['image/avif', 'image/webp'],
+    // Supported image qualities to match assets
+    qualities: [60, 75, 90],
     // Long cache time for CDN optimization (1 year)
     minimumCacheTTL: 31536000,
   },
