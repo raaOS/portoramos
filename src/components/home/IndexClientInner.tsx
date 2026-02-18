@@ -4,12 +4,12 @@ import type { Project } from '@/types/projects'
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { LazyMotion, domAnimation, m } from 'framer-motion'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
-import SearchBar from '@/components/ui/SearchBar'
 import MasonryGrid from '@/components/layout/MasonryGrid'
 
 type Props = {
   projects: Project[]
   tag: string
+  searchQuery: string
   lastUpdated?: Date | string | null
   windowWidth?: number
 }
@@ -26,8 +26,7 @@ interface FuseInstance<T> {
   setCollection: (collection: T[]) => void
 }
 
-export default function IndexClientInner({ projects, tag, lastUpdated, windowWidth }: Props) {
-  const [searchQuery, setSearchQuery] = useState('')
+export default function IndexClientInner({ projects, tag, searchQuery, lastUpdated, windowWidth }: Props) {
   // Start with a smaller number to improve initial load performance (LCP)
   const [visibleCount, setVisibleCount] = useState(8)
 
@@ -156,13 +155,7 @@ export default function IndexClientInner({ projects, tag, lastUpdated, windowWid
       {/* Hidden H1 for SEO */}
       <h1 className="sr-only">Portfolio - Creative Works & Projects</h1>
 
-      {/* Search Bar */}
-      <SearchBar
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder="Search projects by title, client, or tags..."
-        resultsCount={searchQuery ? filteredProjects.length : undefined}
-      />
+      {/* TAG FILTER INDICATOR REMOVED - NOW HANDLED BY FINDER HEADER OR URL STATE */}
 
       {/* Tag Filter Indicator */}
       {tag && (
@@ -239,12 +232,9 @@ export default function IndexClientInner({ projects, tag, lastUpdated, windowWid
                     : 'No projects available'}
               </p>
               {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="text-black underline hover:no-underline"
-                >
-                  Clear search
-                </button>
+                <p className="text-gray-500 mt-2 text-sm">
+                  Coba kata kunci lain atau bersihkan kotak pencarian di atas.
+                </p>
               )}
             </div>
           )}

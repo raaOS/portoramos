@@ -32,6 +32,7 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
   const { setLastUpdated } = useLastUpdated();
   const searchParams = useSearchParams();
   const tag = searchParams?.get('tag') || '';
+  const searchQuery = searchParams?.get('q') || '';
 
   const { data } = useQuery({
     queryKey: ['projects', 'published'],
@@ -64,7 +65,7 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
 
   return (
     <div>
-      <IndexClientInner projects={projects} tag={tag} lastUpdated={lastUpdatedStr} windowWidth={windowWidth} />
+      <IndexClientInner projects={projects} tag={tag} searchQuery={searchQuery} lastUpdated={lastUpdatedStr} windowWidth={windowWidth} />
     </div>
   );
 }
