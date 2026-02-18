@@ -198,7 +198,6 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
                         contentVisibility: 'auto',
                         containIntrinsicSize: 'auto 300px',
                       }}
-                      layoutId={`project-card-${project.slug}-${index}`}
                     >
                       <ProjectCardPinterest
                         project={project}

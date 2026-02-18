@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LayoutGrid, Grid, List, Filter, Search as SearchIcon, X } from 'lucide-react';
 
@@ -11,6 +11,7 @@ interface ProjectsFinderHeaderProps {
 export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeaderProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const [isPending, startTransition] = useTransition();
 
     const [searchQuery, setSearchQuery] = useState(searchParams?.get('q') || '');
 
@@ -23,7 +24,9 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
             } else {
                 params.delete('q');
             }
-            router.push(`/projects?${params.toString()}`, { scroll: false });
+            startTransition(() => {
+                router.push(`/projects?${params.toString()}`, { scroll: false });
+            });
         }, 300);
 
         return () => clearTimeout(timer);
@@ -47,14 +50,14 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
             </div>
 
             {/* Search Input Integrated into Header */}
-            <div className="relative w-full max-w-md mx-auto sm:mx-0 order-3 sm:order-2">
+            <div className={`relative w-full max-w-md mx-auto sm:mx-0 order-3 sm:order-2 transition-opacity duration-200 ${isPending ? 'opacity-70' : 'opacity-100'}`}>
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Cari project, klien, atau kategori..."
-                    className="w-full pl-9 pr-9 py-2 bg-gray-200/50 border border-gray-300 rounded-md text-sm text-gray-900 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-200"
+                    className="w-full pl-10 pr-9 py-2 bg-gray-200/50 border border-gray-300 rounded-md text-sm text-gray-900 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-200"
                 />
                 {searchQuery && (
                     <button
