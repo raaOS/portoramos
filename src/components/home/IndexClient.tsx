@@ -14,7 +14,7 @@ export default async function IndexClient(props: Props) {
     const projects = await allProjectsAsync()
     const tag = searchParams?.tag || ''
 
-    return <IndexClientInner projects={projects} tag={tag} />
+    return <IndexClientInner projects={projects} tag={tag} searchQuery="" />
   } catch (e) {
     console.error('IndexClient: error', e);
     throw e;

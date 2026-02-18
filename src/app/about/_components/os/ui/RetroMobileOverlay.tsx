@@ -195,19 +195,22 @@ export default function RetroMobileOverlay() {
                                             </p>
                                         </div>
 
-                                        {/* Mobile Escape Hatch */}
-                                        <div className="pt-4 flex flex-col items-center gap-4">
-                                            <button
-                                                onClick={() => window.location.href = '/projects'}
-                                                className="px-6 py-2.5 bg-white border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px] text-[11px] font-bold uppercase tracking-widest text-black hover:bg-gray-50 transition-all"
-                                            >
-                                                {locale === 'en' ? "View Simple Version" : "Lihat Versi Simpel"}
-                                            </button>
-
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-8 h-[1px] bg-black/10" />
-                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">or scan disk</span>
-                                                <div className="w-8 h-[1px] bg-black/10" />
+                                        {/* Warning Notice */}
+                                        <div className="mt-4 w-full max-w-[280px] bg-[#FFFFCC] border-2 border-black p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                            <div className="flex items-start gap-2">
+                                                <span className="text-base leading-none">⚠️</span>
+                                                <div className="text-left">
+                                                    <p className="text-[11px] font-bold text-black uppercase tracking-tight leading-tight">
+                                                        {locale === 'en'
+                                                            ? "Desktop Only"
+                                                            : "Khusus Desktop"}
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-700 leading-snug mt-1">
+                                                        {locale === 'en'
+                                                            ? "This website is designed exclusively for PC/Laptop. Please open it on a computer with a wider screen for the best experience."
+                                                            : "Website ini dirancang khusus untuk PC/Laptop. Silakan buka di komputer dengan layar lebih lebar untuk pengalaman terbaik."}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
