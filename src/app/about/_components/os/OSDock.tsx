@@ -16,6 +16,7 @@ interface OSDockProps {
   onOpenTrash: () => void;
   isWindowOpen: (windowId: string) => boolean;
   notesVisible: boolean;
+  bouncingId?: string | null;
   className?: string;
 }
 
@@ -26,6 +27,7 @@ export default function OSDock({
   onOpenTrash,
   isWindowOpen,
   notesVisible,
+  bouncingId,
   className
 }: OSDockProps) {
   const router = useRouter();
@@ -45,7 +47,7 @@ export default function OSDock({
 
   return (
     <div className={className}>
-      <Dock items={dockItems} />
+      <Dock items={dockItems} bouncingId={bouncingId} />
     </div>
   );
 }

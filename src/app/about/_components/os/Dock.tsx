@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { m, useMotionValue, useTransform, useSpring } from "framer-motion";
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { DockPreferences } from "@/types/about";
@@ -13,11 +13,11 @@ interface DockItemProps {
     mouseX: any;
     isOpen?: boolean;
     shouldBounceExternal?: boolean;
-    isMobile?: boolean; // Added prop
+    isMobile?: boolean;
 }
 
 function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBounceExternal = false, isMobile = false }: DockItemProps) {
-    const ref = React.useRef<HTMLDivElement>(null);
+    const ref = useRef<HTMLDivElement>(null);
     const { playPop } = useSystemSound();
 
     const distance = useTransform(mouseX, (val: number) => {
@@ -25,8 +25,8 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
         return val - bounds.x - bounds.width / 2;
     });
 
-    const baseWidth = isMobile ? 48 : 64; // Smaller base width on mobile
-    const hoverWidth = isMobile ? 48 : 128; // No magnification on mobile
+    const baseWidth = isMobile ? 48 : 64;
+    const hoverWidth = isMobile ? 48 : 128;
 
     const widthSync = useTransform(distance, [-150, 0, 150], [baseWidth, hoverWidth, baseWidth]);
     const width = useSpring(widthSync, { mass: 0.1, stiffness: 150, damping: 12 });
@@ -43,12 +43,10 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
 
     React.useEffect(() => {
         if (!isBouncing) return;
-        const timer = setTimeout(() => setIsBouncing(false), 1000); // Shorter duration for snappier feel
+        const timer = setTimeout(() => setIsBouncing(false), 1000);
         return () => clearTimeout(timer);
     }, [isBouncing]);
 
-    // macOS: Open apps don't bounce forever, they just have a dot.
-    // Bouncing only happens on click (isBouncing) or alert (shouldBounceExternal)
     const activeBounce = isBouncing || shouldBounceExternal;
 
     return (
@@ -114,37 +112,52 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
     });
 
     return (
-        <nav
-            className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-auto ${isMobile ? 'max-w-[90vw]' : ''}`}
-            role="navigation"
-            aria-label="Application dock"
-            onMouseMove={(e) => !isMobile && mouseX.set(e.pageX)}
-            onMouseLeave={() => !isMobile && mouseX.set(Infinity)}
-        >
-            <div
-                className={`flex items-end bg-gradient-to-b from-white/25 to-white/10 backdrop-blur-2xl border border-white/40 rounded-[24px] shadow-lg shadow-black/10 ${isMobile
-                    ? 'h-[72px] overflow-x-auto scrollbar-hide gap-5 px-5 py-3'
-                    : 'h-[88px] gap-3 px-3 py-2.5'}`}
-                style={{
-                    boxShadow: "0 10px 30px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.2), inset 0 0 20px rgba(255,255,255,0.1)",
-                    minWidth: isMobile ? 'auto' : visibleItems.length * 64 + (visibleItems.length - 1) * 12 + 24,
-                    minHeight: isMobile ? 72 : 88,
-                }}
+        <>
+            {/* Invisible hit area that sits above ALL page content to capture mouse events.
+                This transparent overlay covers just the dock area and forwards mouse position
+                to the dock's mouseX MotionValue, ensuring magnification works regardless of
+                CSS stacking context issues from page content (masonry grid etc.) */}
+            {!isMobile && (
+                <div
+                    className="fixed bottom-0 left-0 right-0 h-28 z-[99999] cursor-default"
+                    style={{ pointerEvents: 'auto', background: 'transparent' }}
+                    onMouseMove={(e) => mouseX.set(e.clientX)}
+                    onMouseLeave={() => mouseX.set(Infinity)}
+                    aria-hidden="true"
+                />
+            )}
+            <nav
+                className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[99999] pointer-events-auto ${isMobile ? 'max-w-[90vw]' : ''}`}
+                role="navigation"
+                aria-label="Application dock"
+                onMouseMove={(e) => !isMobile && mouseX.set(e.clientX)}
+                onMouseLeave={() => !isMobile && mouseX.set(Infinity)}
             >
-                {visibleItems.map((item) => (
-                    <DockItem
-                        key={item.id}
-                        id={item.id}
-                        icon={item.icon}
-                        label={item.label}
-                        onClick={item.onClick}
-                        mouseX={mouseX}
-                        isOpen={item.isOpen}
-                        shouldBounceExternal={bouncingId === item.id}
-                        isMobile={isMobile}
-                    />
-                ))}
-            </div>
-        </nav>
+                <div
+                    className={`flex items-end bg-gradient-to-b from-white/25 to-white/10 backdrop-blur-2xl border border-white/40 rounded-[24px] shadow-lg shadow-black/10 ${isMobile
+                        ? 'h-[72px] overflow-x-auto scrollbar-hide gap-5 px-5 py-3'
+                        : 'h-[88px] gap-3 px-3 py-2.5'}`}
+                    style={{
+                        boxShadow: "0 10px 30px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.2), inset 0 0 20px rgba(255,255,255,0.1)",
+                        minWidth: isMobile ? 'auto' : visibleItems.length * 64 + (visibleItems.length - 1) * 12 + 24,
+                        minHeight: isMobile ? 72 : 88,
+                    }}
+                >
+                    {visibleItems.map((item) => (
+                        <DockItem
+                            key={item.id}
+                            id={item.id}
+                            icon={item.icon}
+                            label={item.label}
+                            onClick={item.onClick}
+                            mouseX={mouseX}
+                            isOpen={item.isOpen}
+                            shouldBounceExternal={bouncingId === item.id}
+                            isMobile={isMobile}
+                        />
+                    ))}
+                </div>
+            </nav>
+        </>
     );
 }

@@ -71,7 +71,7 @@ function isStaticAsset(pathname: string): boolean {
     return (
         pathname.startsWith('/_next/') ||
         pathname.startsWith('/static/') ||
-        pathname.includes('.') // Files with extensions
+        /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|woff2?|ttf|eot|mp4|webm|json|xml|txt|map)$/i.test(pathname)
     );
 }
 
@@ -146,7 +146,6 @@ export async function proxy(request: NextRequest) {
     // 0. CSRF Protection for Mutations
     const mutationMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
     if (isAPIRoute(pathname) && mutationMethods.includes(request.method)) {
-        // Skip for login which has its own token generation/validation flow
         // Skip for login which has its own token generation/validation flow
         if (pathname !== '/api/admin/login') {
             const csrfToken = request.headers.get('x-csrf-token');

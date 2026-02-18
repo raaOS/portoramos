@@ -40,8 +40,7 @@ const nextConfig = {
   },
   // Transpile packages (empty - Three.js removed as unused)
   transpilePackages: [],
-  // Disable production source maps for smaller bundle (enable for debugging)
-  productionBrowserSourceMaps: false,
+
   // Optimize static assets
   assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
   // Improve static asset handling
@@ -58,7 +57,6 @@ const nextConfig = {
       'framer-motion',
       'lucide-react',
       '@tanstack/react-query',
-      'react-hot-toast',
       'recharts',
       'gsap',
       'fuse.js',
@@ -153,27 +151,6 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
-          // Security headers
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; media-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' https: http://localhost:* ws://localhost:* blob:; worker-src 'self' blob:; frame-src 'self' https://vercel.live https://vercel.com;"
-          },
           {
             key: 'Cross-Origin-Embedder-Policy',
             value: 'unsafe-none'

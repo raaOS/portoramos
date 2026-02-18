@@ -5,29 +5,17 @@ import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import Dock from '@/app/about/_components/os/Dock';
 import AppIcon from '@/app/about/_components/os/ui/AppIcon';
+import WhatsAppIcon from '@/app/about/_components/os/ui/WhatsAppIcon';
 import { useWindowContext } from '@/contexts/WindowContext';
-import { Grid, User, Mail, FileText, Trash2, MessageCircle } from 'lucide-react';
+import { Grid, User, Mail, FileText, Trash2 } from 'lucide-react';
 import { getDockItemConfig } from '@/app/about/_components/os/utils/dockUtils';
 
-// Note: Window content is created inline in the handlers below
-
-interface GlobalDockProps {
-  className?: string;
-}
-
-export default function GlobalDock({ className, dockConfig }: { className?: string; dockConfig?: any }) {
+export default function GlobalDock({ dockConfig }: { dockConfig?: any }) {
   const router = useRouter();
   const pathname = usePathname();
   const { isWindowOpen, bouncingDocId } = useWindowContext();
 
   const handleAppLaunch = (appId: string) => {
-    // If we are already on the desktop (shouldn't happen given the check below, but for safety)
-    if (pathname === '/') {
-      // Just open the window via context? No, GlobalDock shouldn't be valid here.
-      return;
-    }
-
-    // Redirect to home with app query param to auto-open
     router.push(`/?app=${appId}`);
   };
 
@@ -49,7 +37,7 @@ export default function GlobalDock({ className, dockConfig }: { className?: stri
       {
         id: "whatsapp",
         label: "WhatsApp",
-        icon: <AppIcon icon={MessageCircle} color="from-green-500 to-emerald-600" />,
+        icon: <WhatsAppIcon />,
         onClick: () => handleAppLaunch('whatsapp'),
         isOpen: isWindowOpen('whatsapp')
       },
@@ -75,21 +63,18 @@ export default function GlobalDock({ className, dockConfig }: { className?: stri
       },
     ];
 
-    // Apply custom configuration from DB (labels, hidden status, custom icons)
     return getDockItemConfig(defaultItems, dockConfig);
   }, [router, isWindowOpen, dockConfig]);
 
-  // Jangan tampilkan dock di halaman admin atau halaman about (yang sudah punya dock sendiri)
+  // Don't render on admin, home (OS desktop has its own), or about pages
   if (pathname?.startsWith('/admin') || pathname === '/' || pathname?.startsWith('/about')) {
     return null;
   }
 
   return (
-    <div className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-auto ${className || ''}`}>
-      <Dock
-        items={dockItems}
-        bouncingId={bouncingDocId}
-      />
-    </div>
+    <Dock
+      items={dockItems}
+      bouncingId={bouncingDocId}
+    />
   );
 }

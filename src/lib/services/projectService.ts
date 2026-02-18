@@ -10,9 +10,6 @@ const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'projects.json');
 
 export const projectService = {
     /**
-     * Get all projects, optionally filtered by status
-     */
-    /**
      * Get all projects, optionally filtered by status.
      * Uses a dual storage strategy: local FS for development and GitHub API for production.
      * Implements Zod validation to ensure data integrity.
@@ -105,9 +102,6 @@ export const projectService = {
         }
     },
 
-    /**
-     * Create a new project
-     */
     /**
      * Create a new project.
      * Validates input with Zod, generates a unique slug, and saves to the appropriate storage.
@@ -218,9 +212,6 @@ export const projectService = {
     },
 
     /**
-     * Update an existing project
-     */
-    /**
      * Update an existing project.
      * Partially validates input with Zod and ensures slug uniqueness if changed.
      * 
@@ -314,14 +305,6 @@ export const projectService = {
     },
 
     /**
-     * Delete a project
-     */
-    // ... (imports) ...
-
-    /**
-     * Delete a project
-     */
-    /**
      * Delete a project by its ID.
      * Also triggers an auto-cleanup of associated media files (best effort).
      * 
@@ -384,9 +367,6 @@ export const projectService = {
         return true;
     },
 
-    /**
-     * Bulk update projects (Atomic operation)
-     */
     /**
      * Bulk update projects as an atomic operation.
      * Supports bulk deletion, status updates, and reordering.
@@ -552,76 +532,3 @@ async function cleanupProjectFiles(project: Project) {
     await Promise.all(deleteTasks);
 }
 
-// Deprecated: Serial cleanup (kept for reference or fallback)
-async function cleanupProjectFiles_Serial(project: Project) {
-    const isDev = process.env.NODE_ENV === 'development';
-    const fs = isDev ? require('fs').promises : null;
-
-    const filesToDelete = [
-        project.cover,
-        project.comparison?.beforeImage,
-        project.comparison?.afterImage
-    ].filter((url): url is string => !!url && typeof url === 'string');
-
-    if (filesToDelete.length === 0) return;
-
-    // Cleaning up files (serial mode)
-
-    for (const url of filesToDelete) {
-        try {
-            let repoPath = '';
-            let isRemote = false;
-
-            // 1. Identify Path & Type
-            if (url.includes('raw.githubusercontent.com')) {
-                const match = url.match(/(public\/assets\/.*)$/);
-                if (match) {
-                    repoPath = match[1];
-                    isRemote = true;
-                }
-            } else if (url.startsWith('/assets/')) {
-                repoPath = `public${url}`;
-                // Local path... but what if we are in Dev and it's missing?
-            } else if (url.startsWith('public/')) {
-                repoPath = url;
-            }
-
-            if (!repoPath) continue;
-
-            // 2. Delete Logic
-            // Priority: If it's explicitly Remote URL, try GitHub delete (even in Dev, if configured? No, usually safer to not touch Prod from Dev unless necessary).
-            // Actually, if I am in Dev but pointing to Prod images, deleting them might break Prod if shared?
-            // "Soft Delete" philosophy: Better to leave orphan than delete live asset?
-            // User requested "Auto Cleanup".
-            // Let's stick to Environment rules:
-            // Dev -> Delete Local.
-            // Prod -> Delete GitHub.
-            // EXCEPTION: If I am in Dev, and I know it's a GitHub URL, and I have credentials... 
-            // Current strict rule: Dev = FS, Prod = GitHub.
-
-            if (isDev) {
-                const localPath = path.join(process.cwd(), repoPath);
-                try {
-                    if (fs) await fs.unlink(localPath);
-                    // Deleted local file
-                } catch (e) {
-                    // File might be remote-only (if created via AdminFileUpload to GitHub)
-                    // In that case, we can't delete it from FS. 
-                    // Should we try GitHub delete? 
-                    // Yes, if we have the service.
-                    if (isRemote) {
-                        // Optional: Try deleting remote file from Dev?
-                        // console.log('Attempting remote delete from Dev...');
-                        // await githubService.deleteFile(repoPath, ...);
-                        // Disabled for safety unless confirmed.
-                    }
-                }
-            } else {
-                // Production: Always delete from GitHub
-                await githubService.deleteFile(repoPath, `Cleanup: ${project.slug}`);
-            }
-        } catch (error) {
-            console.warn(`[ProjectService] Check failed for ${url}`, error);
-        }
-    }
-}

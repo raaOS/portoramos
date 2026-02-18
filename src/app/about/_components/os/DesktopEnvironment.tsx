@@ -646,6 +646,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                         onOpenTrash={() => openWindow("trash-bin")}
                                         isWindowOpen={isWindowOpen}
                                         notesVisible={notesVisible}
+                                        bouncingId={bouncingDocId}
                                     />
                                 )}
                             </div>

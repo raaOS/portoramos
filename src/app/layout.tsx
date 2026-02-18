@@ -11,6 +11,7 @@ import AppWrapper from '@/components/layout/AppWrapper';
 import LayoutClient from '@/components/layout/LayoutClient';
 import UnregisterSW from '@/components/shared/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import SmoothScroll from '@/components/layout/SmoothScroll';
 import { loadAboutData } from '@/lib/about';
 
 // Disable caching for the entire layout to ensure dock configuration (aboutData) 
@@ -63,8 +64,6 @@ export const metadata: Metadata = {
     },
   },
 };
-
-import SmoothScroll from '@/components/layout/SmoothScroll';
 
 export default async function RootLayout({
   children,

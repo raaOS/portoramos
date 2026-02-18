@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { LazyMotion, domAnimation } from 'framer-motion';
 import Header from '@/components/shared/Header';
 import { WindowProvider } from '@/contexts/WindowContext';
 import GlobalDock from './GlobalDock';
@@ -37,16 +38,18 @@ export default function LayoutClient({
     }
 
     return (
-        <WindowProvider>
-            <Header />
-            <main className="pb-24">
-                {children}
-            </main>
-            {modal}
-            <ScrollToTop />
-            {showGlobalDock && <GlobalDock dockConfig={dockConfig} />}
-            <WindowRenderer />
-        </WindowProvider>
+        <LazyMotion features={domAnimation}>
+            <WindowProvider>
+                <Header />
+                <main className="pb-24">
+                    {children}
+                </main>
+                {modal}
+                <ScrollToTop />
+                {showGlobalDock && <GlobalDock dockConfig={dockConfig} />}
+                <WindowRenderer />
+            </WindowProvider>
+        </LazyMotion>
     )
 }
 

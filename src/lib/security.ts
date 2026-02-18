@@ -108,16 +108,11 @@ export const sanitize = {
   html: (input: string): string => {
     if (typeof input !== 'string') return ''
     return input
-      .replace(/[<>"'&]/g, (char) => {
-        const entities: Record<string, string> = {
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#x27;',
-          '&': '&amp;'
-        }
-        return entities[char] || char
-      })
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
       .substring(0, 10000)
   },
 
