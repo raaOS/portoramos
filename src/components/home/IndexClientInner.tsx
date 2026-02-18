@@ -128,10 +128,17 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
   // 3. It uses 'rootMargin' to preload content before the user actually hits the bottom.
   const observerTarget = useRef<HTMLDivElement>(null)
 
+  // Use refs for values that change frequently to avoid recreating observer
+  const scrollStateRef = useRef({ isLoading, visibleCount, filteredCount: filteredProjects.length })
+  useEffect(() => {
+    scrollStateRef.current = { isLoading, visibleCount, filteredCount: filteredProjects.length }
+  })
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !isLoading && filteredProjects.length > 0 && visibleCount < MAX_DISPLAY_COUNT) {
+        const { isLoading: loading, visibleCount: count, filteredCount } = scrollStateRef.current;
+        if (entries[0].isIntersecting && !loading && filteredCount > 0 && count < MAX_DISPLAY_COUNT) {
           setIsLoading(true)
 
           // Load next batch with a slight delay to prevent re-render loops
@@ -152,7 +159,7 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
     }
 
     return () => observer.disconnect()
-  }, [filteredProjects.length, isLoading, visibleCount])
+  }, []) // Observer created once — reads current state via ref
 
   return (
     <section className="pt-24 pb-8 px-4">

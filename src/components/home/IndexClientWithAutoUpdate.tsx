@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Project } from '@/types/projects';
 import { useSearchParams } from 'next/navigation';
@@ -38,30 +38,24 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
     queryKey: ['projects', 'published'],
     queryFn: fetchProjects,
     refetchInterval: POLLING.UPDATE_INTERVAL,
-    // We don't stick strictly to initialData because the shape matches purely ProjectsResponse
-    // preventing a precise type match if we just threw serverProjects in.
-    // Instead we fallback to serverProjects in the render.
+    structuralSharing: true, // Prevent new references when data unchanged
+    staleTime: 2000, // Prevent immediate refetch on mount
+    initialData: serverProjects.length > 0
+      ? { projects: serverProjects, lastUpdated: '' }
+      : undefined,
   });
 
-  const projects = data?.projects || serverProjects;
+  const projects = data?.projects ?? serverProjects;
   const lastUpdatedStr = data?.lastUpdated;
 
-  // Sync lastUpdated context
+  // Sync lastUpdated context — guarded to prevent cascade re-renders
+  const prevLastUpdated = useRef<string>('');
   useEffect(() => {
-    if (lastUpdatedStr) {
+    if (lastUpdatedStr && lastUpdatedStr !== prevLastUpdated.current) {
+      prevLastUpdated.current = lastUpdatedStr;
       setLastUpdated(new Date(lastUpdatedStr));
-    } else if (projects.length > 0 && !lastUpdatedStr) {
-      // Estimate from projects if API hasn't returned yet (SSR state)
-      const latest = projects.reduce((acc, proj) => {
-        const updated = proj.updatedAt ? new Date(proj.updatedAt).getTime() : 0;
-        const created = proj.createdAt ? new Date(proj.createdAt).getTime() : 0;
-        return Math.max(acc, updated || created);
-      }, 0);
-      if (latest) {
-        setLastUpdated(new Date(latest));
-      }
     }
-  }, [lastUpdatedStr, projects, setLastUpdated]);
+  }, [lastUpdatedStr, setLastUpdated]);
 
   return (
     <div>

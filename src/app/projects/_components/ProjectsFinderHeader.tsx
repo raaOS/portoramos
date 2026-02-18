@@ -18,6 +18,10 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
     // Debounce search update to URL
     useEffect(() => {
         const timer = setTimeout(() => {
+            const currentQ = searchParams?.get('q') || '';
+            // Skip push if nothing actually changed (prevents init re-render)
+            if (searchQuery === currentQ) return;
+
             const params = new URLSearchParams(searchParams?.toString());
             if (searchQuery) {
                 params.set('q', searchQuery);

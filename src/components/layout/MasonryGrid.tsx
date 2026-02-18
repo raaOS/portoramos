@@ -141,7 +141,7 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
     // We render the wrapper div immediately and only populate the Masonry 
     // library once client-side hooks are ready. This prevents the "native -> masonry" jump.
     if (!mounted) {
-        return <div ref={containerRef} className="w-full opacity-0" />;
+        return <div ref={containerRef} className="w-full" style={{ visibility: 'hidden', minHeight: '50vh' }} />;
     }
 
     // Optimization removed: User requested true masonry layout. 
