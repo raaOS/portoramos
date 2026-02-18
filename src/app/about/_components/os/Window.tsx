@@ -3,6 +3,7 @@
 import React, { useRef, useEffect } from "react";
 import { m, useDragControls, AnimatePresence } from "framer-motion";
 import { X, Minus, Square, Pin, Lock } from "lucide-react";
+import { soundManager } from "./utils/SoundManager";
 
 interface WindowProps {
     id: string;
@@ -71,6 +72,13 @@ export default function OSWindow({
             setDynamicSize({ width, height });
         }
     }, [width, height, isResizing]);
+
+    // Sound effect on open
+    useEffect(() => {
+        if (isOpen) {
+            soundManager.play('window-open', 0.4);
+        }
+    }, [isOpen]);
 
     // "Premium Solid" Mode (Snappy, No Bounce, Direct)
     const getMinimizeState = () => {
@@ -235,8 +243,8 @@ export default function OSWindow({
                     }}
                     data-lenis-prevent
                     className={`flex flex-col shadow-lg overflow-hidden border border-white/40 will-change-transform pointer-events-auto ${isSmallScreen
-                            ? 'bg-white/95'
-                            : 'bg-white/80 backdrop-blur-xl'
+                        ? 'bg-white/95'
+                        : 'bg-white/80 backdrop-blur-xl'
                         }`}
                 >
                     {/* Title Bar */}
@@ -250,7 +258,11 @@ export default function OSWindow({
                         {/* Traffic Lights */}
                         <div className="flex gap-[8px] mr-3 items-center group">
                             <button
-                                onClick={(e) => { e.stopPropagation(); onClose(); }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    soundManager.play('window-close', 0.4);
+                                    onClose();
+                                }}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
                                 aria-label="Close window"

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
+import { soundManager } from "../utils/SoundManager";
 import "./retro/retro-os.css";
 
 // Sad Mac SVG - Pixelated Style
@@ -28,6 +29,28 @@ export default function RetroMobileOverlay() {
     const [locale, setLocale] = useState<"id" | "en">("en");
     const [copied, setCopied] = useState(false);
     const [siteUrl, setSiteUrl] = useState("");
+
+    // Sound effect on error
+    useEffect(() => {
+        if (step === "error") {
+            soundManager.play('error', 0.5);
+        }
+    }, [step]);
+
+    // Initial interaction listener for mobile as well
+    useEffect(() => {
+        const initAudio = () => {
+            soundManager.init();
+            window.removeEventListener('touchstart', initAudio);
+            window.removeEventListener('mousedown', initAudio);
+        };
+        window.addEventListener('touchstart', initAudio);
+        window.addEventListener('mousedown', initAudio);
+        return () => {
+            window.removeEventListener('touchstart', initAudio);
+            window.removeEventListener('mousedown', initAudio);
+        };
+    }, []);
 
     useEffect(() => {
         if (typeof window !== "undefined") {

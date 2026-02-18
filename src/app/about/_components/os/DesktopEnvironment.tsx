@@ -65,6 +65,7 @@ import { DraggableStickyNote } from "./DraggableStickyNote";
 import { Testimonial, TestimonialData } from "@/types/testimonial";
 import { convertTestimonialToContact, mergeContacts } from "./utils/chatUtils";
 import { mockChats, ContactProfile } from "./data/mockChats";
+import { soundManager } from "./utils/SoundManager";
 
 // UI Components (Extracted)
 import AppIcon from "./ui/AppIcon";
@@ -209,6 +210,17 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [showSpotlight]);
+
+    // Initialize sounds on first interaction
+    useEffect(() => {
+        const initAudio = () => {
+            soundManager.init();
+            window.removeEventListener('mousedown', initAudio);
+            window.removeEventListener('keydown', initAudio);
+        };
+        window.addEventListener('mousedown', initAudio);
+        window.addEventListener('keydown', initAudio);
+    }, []);
 
     const commercialProjects = useMemo(() => {
         if (aboutData?.desktopPreferences?.visibleProjectIds) {
@@ -523,6 +535,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                 <BootSequence
                                     onComplete={() => {
                                         setIsBooting(false);
+                                        soundManager.play('startup');
                                     }}
                                 />
                             )}

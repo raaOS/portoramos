@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { m, useMotionValue } from "framer-motion";
 import Image from "next/image";
+import { soundManager } from "./utils/SoundManager";
 
 interface DesktopIconProps {
     id: string;
@@ -49,6 +50,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
 
     const handleDragStart = () => {
         setIsDragging(true);
+        soundManager.play('click', 0.3);
     };
 
     const handleDragEnd = () => {
@@ -79,6 +81,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
             data-lenis-prevent
             onClick={(e) => {
                 if (!isDragging) {
+                    soundManager.play('click', 0.4);
                     onClick();
                 }
             }}
