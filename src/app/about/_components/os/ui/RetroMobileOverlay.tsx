@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { m, AnimatePresence } from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
 import "./retro/retro-os.css";
 
 // Sad Mac SVG - Pixelated Style
@@ -21,19 +22,18 @@ const SadMacIcon = () => (
     </svg>
 );
 
-// Apple Logo - Classic Rainbow
-const RainbowApple = () => (
-    <svg width="40" height="40" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-80">
-        <path d="M323.5 10c-30.8 1.8-62.1 20.8-78.5 40.5-16.1 19.3-25.5 49-20.7 76.5 32.1 2.2 60.1-18.4 75.3-38.3 14.8-19.1 23.4-51.5 23.9-78.7z" fill="#5EBD3E" />
-        <path d="M430.4 200.5c-44.5-2.7-72.2-26.7-72.2-26.7s-22.1 28.1-66.2 28.1c-40.4 0-66.1-26.6-66.1-26.6s-27.1 24-71.1 26.6c-48 2.8-85-28.1-105-64.8-10.4-19.1-34.6-96.1-34.6-135.2 0-36.2 13-63.4 34.6-81.9C15.3-102.7 44.9-122.9 83.9-122.9c37.4 0 63.8 24.1 63.8 24.1s27.2-24.1 77.2-24.1c48 0 77.2 26.2 77.2 26.2s34.8-26.2 81.3-26.2c40 0 71.9 22.1 91.8 54.7 10.4 17.5 15.6 39.5 15.6 63.2 0 46.8-19.4 135.2-19.4 135.2s-13.8 45.4-40.8 70.3z" fill="#F78200" transform="translate(0, 100)" />
-        {/* We'll use a simplified version for better loading */}
-    </svg>
-);
-
 export default function RetroMobileOverlay() {
     const [step, setStep] = useState<"boot" | "error" | "details">("boot");
     const [progress, setProgress] = useState(0);
     const [locale, setLocale] = useState<"id" | "en">("en");
+    const [copied, setCopied] = useState(false);
+    const [siteUrl, setSiteUrl] = useState("");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            setSiteUrl(window.location.origin);
+        }
+    }, []);
 
     // Language Detection (Timezone based)
     useEffect(() => {
@@ -58,7 +58,10 @@ export default function RetroMobileOverlay() {
             restartBtn: "Mulai Ulang di Desktop",
             loadingTrans: "Mencoba mengirimkan data ke Macintosh...",
             qrInstruction: "Pindai disket ini untuk mengirim tautan ke Desktop Anda.",
-            backBtn: "Kembali ke Beranda"
+            backBtn: "Kembali ke Beranda",
+            copyBtn: "Salin Tautan",
+            copied: "Tersalin!",
+            shareBtn: "Bagikan"
         },
         en: {
             boot: "Loading Macintosh OS...",
@@ -69,9 +72,34 @@ export default function RetroMobileOverlay() {
             restartBtn: "Restart in Desktop",
             loadingTrans: "Attempting to transmit data to Macintosh...",
             qrInstruction: "Scan this disk to sync with your Desktop.",
-            backBtn: "Back to Home"
+            backBtn: "Back to Home",
+            copyBtn: "Copy Link",
+            copied: "Copied!",
+            shareBtn: "Share"
         }
     }[locale];
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(siteUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Ramos Portfolio',
+                    text: 'Buka portfolio Ramos di Desktop untuk pengalaman OS penuh!',
+                    url: siteUrl,
+                });
+            } catch (err) {
+                console.error('Share failed', err);
+            }
+        } else {
+            handleCopy();
+        }
+    };
 
     useEffect(() => {
         if (step === "boot") {
@@ -157,13 +185,41 @@ export default function RetroMobileOverlay() {
                                             animate={{ opacity: 1, y: 0 }}
                                             className="bg-white p-4 border border-black flex flex-col items-center gap-2"
                                         >
-                                            {/* Placeholder for QR/Floppy disk UI */}
-                                            <div className="w-24 h-24 bg-gray-200 border-2 border-black flex items-center justify-center relative">
-                                                <div className="absolute top-0 right-0 w-4 h-4 bg-gray-300 border-l-2 border-b-2 border-black" />
-                                                <span className="text-[8px] font-bold text-center">SCAN DISK<br />TO SYNC</span>
+                                            {/* Interactive Floppy Disk UI */}
+                                            <div
+                                                onClick={handleCopy}
+                                                className="w-28 h-28 bg-[#9ca3af] border-2 border-black flex flex-col items-center justify-between p-1 relative cursor-pointer active:scale-95 transition-transform"
+                                            >
+                                                {/* Floppy Slider */}
+                                                <div className="w-full bg-[#f3f4f6] h-10 border border-black p-1 flex items-center justify-center">
+                                                    <QRCodeSVG value={siteUrl} size={32} level="L" />
+                                                </div>
+                                                {/* Label */}
+                                                <div className="flex-1 w-full bg-white border border-black mt-1 p-1 flex items-center justify-center">
+                                                    <span className="text-[8px] font-bold text-center uppercase tracking-tighter">PORTORAMOS<br />DISK 1</span>
+                                                </div>
+                                                {/* Write Protect Notch */}
+                                                <div className="absolute top-0 right-0 w-4 h-4 bg-gray-600 border-l-2 border-b-2 border-black" />
                                             </div>
-                                            <p className="text-[10px] font-bold">{t.qrInstruction}</p>
-                                            <a href="/" className="text-[10px] underline">{t.backBtn}</a>
+
+                                            <p className="text-[10px] font-bold mt-1 uppercase">{t.qrInstruction}</p>
+
+                                            <div className="flex gap-2 w-full">
+                                                <button
+                                                    onClick={handleCopy}
+                                                    className="retro-button flex-1 text-[10px] py-1"
+                                                >
+                                                    {copied ? t.copied : t.copyBtn}
+                                                </button>
+                                                <button
+                                                    onClick={handleShare}
+                                                    className="retro-button flex-1 text-[10px] py-1"
+                                                >
+                                                    {t.shareBtn}
+                                                </button>
+                                            </div>
+
+                                            <a href="/" className="text-[10px] underline mt-1">{t.backBtn}</a>
                                         </m.div>
                                     )}
                                 </div>
