@@ -33,6 +33,45 @@ const RainbowApple = () => (
 export default function RetroMobileOverlay() {
     const [step, setStep] = useState<"boot" | "error" | "details">("boot");
     const [progress, setProgress] = useState(0);
+    const [locale, setLocale] = useState<"id" | "en">("en");
+
+    // Language Detection (Timezone based)
+    useEffect(() => {
+        try {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const indonesianTz = ["Asia/Jakarta", "Asia/Pontianak", "Asia/Makassar", "Asia/Jayapura"];
+            if (indonesianTz.includes(tz)) {
+                setLocale("id");
+            }
+        } catch (e) {
+            console.error("Locale detection failed", e);
+        }
+    }, []);
+
+    const t = {
+        id: {
+            boot: "Memuat Macintosh OS...",
+            title: "Kesalahan Sistem",
+            errorTitle: "Maaf, terjadi kesalahan sistem.",
+            errorMessage: "Komputer ini kekurangan 'Creative RAM' yang diperlukan untuk menjalankan Desktop Ramos.",
+            errorCode: "Kode Kesalahan: PERANGKAT_TERLALU_KECIL_V1994",
+            restartBtn: "Mulai Ulang di Desktop",
+            loadingTrans: "Mencoba mengirimkan data ke Macintosh...",
+            qrInstruction: "Pindai disket ini untuk mengirim tautan ke Desktop Anda.",
+            backBtn: "Kembali ke Beranda"
+        },
+        en: {
+            boot: "Loading Macintosh OS...",
+            title: "System Error",
+            errorTitle: "Sorry, a system error occurred.",
+            errorMessage: "This device lacks the necessary 'Creative RAM' to run Ramos's Desktop OS.",
+            errorCode: "Error Code: DEVICE_TOO_SMALL_V1994",
+            restartBtn: "Restart in Desktop",
+            loadingTrans: "Attempting to transmit data to Macintosh...",
+            qrInstruction: "Scan this disk to sync with your Desktop.",
+            backBtn: "Back to Home"
+        }
+    }[locale];
 
     useEffect(() => {
         if (step === "boot") {
@@ -48,7 +87,7 @@ export default function RetroMobileOverlay() {
     }, [step]);
 
     return (
-        <div className="fixed inset-0 z-[10000] bg-[#c0c0c0] flex items-center justify-center p-6 retro-os-container touch-none select-none overflow-hidden">
+        <div className="fixed inset-0 z-[10000] bg-[#c0c0c0] flex items-center justify-center p-6 retro-os-container touch-none select-none overflow-hidden text-[#000]">
             <AnimatePresence mode="wait">
                 {step === "boot" && (
                     <m.div
@@ -69,7 +108,7 @@ export default function RetroMobileOverlay() {
                                 <div className="w-12 h-2 bg-[#009CDF]" />
                             </div>
                         </div>
-                        <p className="text-black font-bold tracking-widest text-sm uppercase">Loading Macintosh OS...</p>
+                        <p className="font-bold tracking-widest text-sm uppercase">{t.boot}</p>
                     </m.div>
                 )}
 
@@ -81,20 +120,20 @@ export default function RetroMobileOverlay() {
                         className="retro-window w-full max-w-[340px] shadow-2xl"
                     >
                         <div className="retro-title-bar">
-                            <span className="retro-title-text">System Error</span>
+                            <span className="retro-title-text">{t.title}</span>
                         </div>
                         <div className="retro-content flex flex-col items-center gap-4 text-center">
                             <SadMacIcon />
 
                             <div className="space-y-3">
                                 <p className="text-[14px] font-bold leading-tight">
-                                    Sorry, a system error occurred.
+                                    {t.errorTitle}
                                 </p>
                                 <p className="text-[12px] leading-relaxed">
-                                    This device lacks the necessary 'Creative RAM' to run Ramos's Desktop OS.
+                                    {t.errorMessage}
                                 </p>
                                 <p className="text-[11px] italic bg-black text-white p-1">
-                                    Error Code: DEVICE_TOO_SMALL_V1994
+                                    {t.errorCode}
                                 </p>
                             </div>
 
@@ -103,14 +142,14 @@ export default function RetroMobileOverlay() {
                                     onClick={() => setStep("details")}
                                     className="retro-button mt-2 font-bold"
                                 >
-                                    Restart in Desktop
+                                    {t.restartBtn}
                                 </button>
                             ) : (
                                 <div className="w-full space-y-4">
                                     <div className="retro-progress-container">
                                         <div className="retro-progress-bar" style={{ width: `${progress}%` }} />
                                     </div>
-                                    <p className="text-[10px]">Attempting to transmit data to Macintosh...</p>
+                                    <p className="text-[10px]">{t.loadingTrans}</p>
 
                                     {progress >= 100 && (
                                         <m.div
@@ -123,8 +162,8 @@ export default function RetroMobileOverlay() {
                                                 <div className="absolute top-0 right-0 w-4 h-4 bg-gray-300 border-l-2 border-b-2 border-black" />
                                                 <span className="text-[8px] font-bold text-center">SCAN DISK<br />TO SYNC</span>
                                             </div>
-                                            <p className="text-[10px] font-bold">Please switch to a Laptop or PC for the full experience.</p>
-                                            <a href="/" className="text-[10px] underline">Back to Home</a>
+                                            <p className="text-[10px] font-bold">{t.qrInstruction}</p>
+                                            <a href="/" className="text-[10px] underline">{t.backBtn}</a>
                                         </m.div>
                                     )}
                                 </div>
