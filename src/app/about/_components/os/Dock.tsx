@@ -75,7 +75,21 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
             role="button"
             aria-label={label}
             tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); }
+                // Arrow key navigation between dock items
+                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const current = ref.current;
+                    if (!current) return;
+                    const parent = current.parentElement;
+                    if (!parent) return;
+                    const items = Array.from(parent.querySelectorAll('[role="button"]')) as HTMLElement[];
+                    const idx = items.indexOf(current);
+                    const next = e.key === 'ArrowRight' ? items[idx + 1] : items[idx - 1];
+                    if (next) next.focus();
+                }
+            }}
         >
             {/* Tooltip - Disabled on Mobile */}
             {!isMobile && (
@@ -128,8 +142,9 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
             )}
             <nav
                 className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[99999] pointer-events-auto ${isMobile ? 'max-w-[90vw]' : ''}`}
-                role="navigation"
+                role="toolbar"
                 aria-label="Application dock"
+                aria-orientation="horizontal"
                 onMouseMove={(e) => !isMobile && mouseX.set(e.clientX)}
                 onMouseLeave={() => !isMobile && mouseX.set(Infinity)}
             >

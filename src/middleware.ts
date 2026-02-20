@@ -71,7 +71,7 @@ function isStaticAsset(pathname: string): boolean {
     return (
         pathname.startsWith('/_next/') ||
         pathname.startsWith('/static/') ||
-        /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|woff2?|ttf|eot|mp4|webm|json|xml|txt|map)$/i.test(pathname)
+        /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|woff2?|ttf|eot|mp4|webm|wav|mp3|json|xml|txt|map)$/i.test(pathname)
     );
 }
 
@@ -95,11 +95,11 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
         "default-src 'self'",
         // unsafe-eval is needed for ffmpeg.wasm / some framer-motion features
         // unsafe-inline is needed for some critical styles/scripts in current architecture
-        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live blob:",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com blob:",
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: https: blob:",
         "font-src 'self' data:",
-        "connect-src 'self' https: http://localhost:* ws://localhost:* blob:",
+        "connect-src 'self' https: http://localhost:* ws://localhost:* https://va.vercel-scripts.com blob:",
         "media-src 'self' https: data: blob:",
         "object-src 'none'",
         "base-uri 'self'",
@@ -123,7 +123,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     return response;
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
 
@@ -258,6 +258,6 @@ export const config = {
          * - public folder
          * - admin.html (static admin dashboard)
          */
-        '/((?!_next/static|_next/image|favicon.ico|public/|admin\.html).*)',
+        '/((?!_next/static|_next/image|favicon.ico|public/|admin\\.html).*)',
     ],
 };

@@ -3,6 +3,7 @@ import { Send, MoreVertical, Search, CheckCheck, Paperclip, Smile, Mic, ArrowLef
 import { m, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { mockChats, ContactProfile, ChatMessage } from './data/mockChats';
+import { soundManager } from "./utils/SoundManager";
 import { getAvatarUrl } from '@/lib/avatar';
 import { Project } from '@/types/projects';
 
@@ -24,21 +25,11 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
     const [visibleMessages, setVisibleMessages] = useState<ChatMessage[]>([]);
     const [isRemoteTyping, setIsRemoteTyping] = useState(false);
     const [projects, setProjects] = useState<Record<string, Project>>({});
-    const audioRef = useRef<HTMLAudioElement | null>(null);
     const sequencerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Initialize sound
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            audioRef.current = new Audio('/assets/sounds/whatsapp_notif.mp3');
-        }
-    }, []);
-
+    // Sound notification via centralized SoundManager
     const playNotificationSound = () => {
-        if (audioRef.current) {
-            audioRef.current.volume = 0.5;
-            audioRef.current.play().catch(() => { });
-        }
+        soundManager.play('notification', 0.6);
     };
 
     // Load projects for thumbnails
@@ -130,6 +121,7 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
 
         setVisibleMessages(prev => [...prev, newMessage]);
         setInput('');
+        soundManager.play('click', 0.4); // Subtle feedback for sending a message
     };
 
     if (!activeContact) return <div className="h-full bg-[#efeae2]"></div>;

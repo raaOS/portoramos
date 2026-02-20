@@ -52,6 +52,10 @@ const COLORS = [
 // Default font is Ala Nanti
 const DEFAULT_FONT = 'var(--font-caveat), sans-serif';
 
+import { NoteHeader } from './ui/NoteHeader';
+import { NoteToolbar } from './ui/NoteToolbar';
+import { NoteFooter } from './ui/NoteFooter';
+
 export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, dragControls, isAdmin = false }: StickyNoteItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isUnlocked, setIsUnlocked] = useState(false);
@@ -262,111 +266,27 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
 
 
                 {/* Header: Color Picker & Close (Double click to collapse) */}
-                <div
-                    className="absolute top-0 left-0 right-0 h-[50px] pl-3 pr-1 z-20 flex items-center justify-between border-b border-black/5 cursor-grab active:cursor-grabbing"
-                    onPointerDown={(e) => {
-                        if (!note.isPinned) dragControls.start(e);
-                    }}
-                    onDoubleClick={() => {
-                        onUpdate(note.id, {
-                            isCollapsed: !note.isCollapsed
-                        });
-                    }}
-                >
-                    {/* Color Picker */}
-                    <div className="flex gap-2" onPointerDown={(e) => e.stopPropagation()}>
-                        {COLORS.map(c => (
-                            <button
-                                key={c}
-                                onClick={() => onUpdate(note.id, { color: c })}
-                                className="rounded-full border border-black/10 hover:scale-125 transition-transform flex items-center justify-center shrink-0"
-                                style={{
-                                    backgroundColor: c,
-                                    width: '12px',
-                                    height: '12px',
-                                    minWidth: '12px',
-                                    minHeight: '12px'
-                                }}
-                                title="Set Warna"
-                            >
-                                {note.color === c && <Check size={8} className="text-black/60" strokeWidth={3} />}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Close Button */}
-                    <div onPointerDown={(e) => e.stopPropagation()}>
-                        <button
-                            onClick={() => onDelete(note.id)}
-                            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-black transition-colors"
-                            title="Tutup"
-                        >
-                            <X size={16} />
-                        </button>
-                    </div>
-                </div>
+                <NoteHeader
+                    color={note.color}
+                    colors={COLORS}
+                    onColorChange={(c) => onUpdate(note.id, { color: c })}
+                    onDelete={() => onDelete(note.id)}
+                    onToggleCollapse={() => onUpdate(note.id, { isCollapsed: !note.isCollapsed })}
+                    isPinned={!!note.isPinned}
+                    dragControls={dragControls}
+                />
 
                 {/* Main Content Area (Hidden if collapsed) */}
                 {!note.isCollapsed && (
                     <div className="flex-grow p-4 pt-16 overflow-hidden relative group flex flex-col">
                         {/* Formatting Toolbar (Visible only when editing) */}
                         {isEditing && isAdmin && (
-                            <div
-                                className="flex items-center gap-1 mb-2 p-1 bg-black/5 rounded-md self-start flex-wrap"
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                            >
-                                <button onClick={() => execFormat('bold')} className="p-1 hover:text-black text-gray-600 transition-colors" title="Bold">
-                                    <Bold size={14} />
-                                </button>
-                                <button onClick={() => execFormat('italic')} className="p-1 hover:text-black text-gray-600 transition-colors" title="Italic">
-                                    <Italic size={14} />
-                                </button>
-                                <button onClick={() => execFormat('insertUnorderedList')} className="p-1 hover:text-black text-gray-600 transition-colors" title="Bulleted List">
-                                    <List size={14} />
-                                </button>
-                                <button onClick={() => execFormat('insertOrderedList')} className="p-1 hover:text-black text-gray-600 transition-colors" title="Numbered List">
-                                    <ListOrdered size={14} />
-                                </button>
-                                <button onClick={insertChecklist} className="p-1 hover:text-black text-gray-600 transition-colors" title="Checklist">
-                                    <CheckSquare size={14} />
-                                </button>
-                                <div className="w-[1px] h-4 bg-black/10 mx-1" />
-                                <button onClick={() => execFormat('formatBlock', 'P')} className="p-1 hover:text-black text-gray-600 transition-colors text-xs font-bold w-6 text-center" title="Paragraph">
-                                    P
-                                </button>
-                                <button onClick={() => execFormat('formatBlock', 'H1')} className="p-1 hover:text-black text-gray-600 transition-colors text-xs font-bold w-6 text-center" title="Heading 1">
-                                    H1
-                                </button>
-                                <div className="w-[1px] h-4 bg-black/10 mx-1" />
-                                <div className="flex items-center bg-black/5 rounded px-1 gap-1">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const currentSize = note.fontSize || 18;
-                                            onUpdate(note.id, { fontSize: Math.max(10, currentSize - 2) });
-                                        }}
-                                        className="p-1 hover:bg-black/10 rounded transition-colors text-gray-600"
-                                        title="Decrease font size"
-                                    >
-                                        <Minus size={12} />
-                                    </button>
-                                    <span className="text-[10px] font-bold text-gray-500 w-4 text-center select-none">
-                                        {note.fontSize || 18}
-                                    </span>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const currentSize = note.fontSize || 18;
-                                            onUpdate(note.id, { fontSize: Math.min(72, currentSize + 2) });
-                                        }}
-                                        className="p-1 hover:bg-black/10 rounded transition-colors text-gray-600"
-                                        title="Increase font size"
-                                    >
-                                        <Plus size={12} />
-                                    </button>
-                                </div>
-                            </div>
+                            <NoteToolbar
+                                onFormat={execFormat}
+                                onInsertChecklist={insertChecklist}
+                                fontSize={note.fontSize || 18}
+                                onFontSizeChange={(newSize) => onUpdate(note.id, { fontSize: newSize })}
+                            />
                         )}
 
                         {/* Text Display / Input */}
@@ -402,112 +322,26 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
 
                 {/* Footer / Toolbar (Hidden if collapsed) */}
                 {!note.isCollapsed && (
-                    <div className="h-14 px-4 flex items-center justify-between">
-                        <div className="flex items-center gap-2 ml-auto">
-                            {/* Action Icons */}
-                            {!note.isDeleted ? (
-                                <>
-                                    {/* Edit Toggle - Admin Only */}
-                                    {isAdmin && (
-                                        <button
-                                            onClick={handleEditClick}
-                                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isEditing ? 'text-blue-600 font-bold' : 'text-gray-700 hover:text-blue-600'}`}
-                                            title="Edit Note"
-                                            style={{ minWidth: '36px', minHeight: '36px' }}
-                                        >
-                                            <Edit size={18} />
-                                        </button>
-                                    )}
-
-                                    {/* Pin Toggle - Admin Only */}
-                                    {isAdmin && (
-                                        <button
-                                            onClick={() => onUpdate(note.id, { isPinned: !note.isPinned })}
-                                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${note.isPinned ? 'text-orange-600' : 'text-gray-700 hover:text-orange-600'}`}
-                                            title={note.isPinned ? "Unlock Position" : "Lock Position (Pin)"}
-                                            style={{ minWidth: '36px', minHeight: '36px' }}
-                                        >
-                                            <Pin size={18} className={note.isPinned ? "fill-current" : ""} />
-                                        </button>
-                                    )}
-
-                                    {/* Opacity Cycle - Public OK? User requested logic same as windows, windows only admin has pin. Let's keep appearance settings public for now or hide? The request said 'logic same as windows'. Windows pin button is only for admin. Appearance settings usually personal/admin. Let's hide them for public to keep 'read only' promise strict, except maybe download. */}
-                                    {isAdmin && (
-                                        <button
-                                            onClick={() => {
-                                                const current = note.opacity || 1;
-                                                const next = current === 1 ? 0.75 : current === 0.75 ? 0.5 : 1;
-                                                onUpdate(note.id, { opacity: next });
-                                            }}
-                                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors text-gray-700 hover:text-purple-600`}
-                                            title="Toggle Transparency"
-                                            style={{ minWidth: '36px', minHeight: '36px' }}
-                                        >
-                                            {note.opacity && note.opacity < 1 ? (
-                                                <EyeOff size={18} className="text-purple-600" />
-                                            ) : (
-                                                <Eye size={18} />
-                                            )}
-                                        </button>
-                                    )}
-
-                                    {/* Star Toggle - Admin Only (Updates state) */}
-                                    {isAdmin && (
-                                        <button
-                                            onClick={() => onUpdate(note.id, { isStarred: !note.isStarred })}
-                                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${note.isStarred ? 'text-black' : 'text-gray-700 hover:text-yellow-600'}`}
-                                            title="Star Note"
-                                            style={{ minWidth: '36px', minHeight: '36px' }}
-                                        >
-                                            <Star size={18} fill={note.isStarred ? "currentColor" : "none"} />
-                                        </button>
-                                    )}
-
-                                    {/* Delete (Soft) - Admin Only */}
-                                    {isAdmin && (
-                                        <button
-                                            onClick={() => onDelete(note.id)}
-                                            className="w-9 h-9 flex items-center justify-center rounded-full text-gray-700 transition-colors hover:text-red-600"
-                                            title="Delete Note"
-                                            style={{ minWidth: '36px', minHeight: '36px' }}
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    )}
-
-                                    {/* Download / Export - Public OK */}
-                                    <button
-                                        onClick={handleDownload}
-                                        className="w-9 h-9 flex items-center justify-center rounded-full text-gray-700 transition-colors hover:text-blue-600"
-                                        title="Download as PNG"
-                                        style={{ minWidth: '36px', minHeight: '36px' }}
-                                    >
-                                        <Download size={18} />
-                                    </button>
-                                </>
-                            ) : (
-                                /* Deleted State Options - Admin Only */
-                                isAdmin && (
-                                    <>
-                                        <button
-                                            onClick={() => onRestore(note.id)}
-                                            className="w-9 h-9 flex items-center justify-center rounded-full text-gray-700 hover:text-green-600 transition-colors"
-                                            title="Restore Note"
-                                        >
-                                            <RotateCcw size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => onPermanentDelete(note.id)}
-                                            className="w-9 h-9 flex items-center justify-center rounded-full text-gray-700 hover:text-red-600 transition-colors"
-                                            title="Delete Permanently"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </>
-                                )
-                            )}
-                        </div>
-                    </div>
+                    <NoteFooter
+                        isAdmin={isAdmin}
+                        isDeleted={note.isDeleted}
+                        isEditing={isEditing}
+                        isPinned={!!note.isPinned}
+                        isStarred={note.isStarred}
+                        opacity={note.opacity || 1}
+                        onEditToggle={handleEditClick}
+                        onPinToggle={() => onUpdate(note.id, { isPinned: !note.isPinned })}
+                        onOpacityToggle={() => {
+                            const current = note.opacity || 1;
+                            const next = current === 1 ? 0.75 : current === 0.75 ? 0.5 : 1;
+                            onUpdate(note.id, { opacity: next });
+                        }}
+                        onStarToggle={() => onUpdate(note.id, { isStarred: !note.isStarred })}
+                        onDelete={() => onDelete(note.id)}
+                        onRestore={() => onRestore(note.id)}
+                        onPermanentDelete={() => onPermanentDelete(note.id)}
+                        onDownload={handleDownload}
+                    />
                 )}
 
                 {/* Resize Handle - Admin Only */}

@@ -261,12 +261,7 @@ export function generateSitemapUrls(projects: Project[]) {
       changefreq: 'weekly'
     },
     {
-      url: '/about',
-      priority: 0.8,
-      changefreq: 'monthly'
-    },
-    {
-      url: '/works',
+      url: '/projects',
       priority: 0.9,
       changefreq: 'weekly'
     },

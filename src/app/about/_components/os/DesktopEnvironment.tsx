@@ -16,16 +16,10 @@ import DesktopIcon from "./DesktopIcon";
 import OSDock from "./OSDock";
 import MenuBar from "./MenuBar";
 
-// UI Components - Lazy loaded (not needed immediately)
-const Spotlight = dynamic(() => import("./Spotlight"), {
-    loading: () => null,
-    ssr: false
-});
-
-const MacFolder = dynamic(() => import("./MacFolder"), {
-    loading: () => <div className="w-16 h-16 bg-gray-200/50 rounded-lg animate-pulse" />,
-    ssr: false
-});
+// Render Layer Components (extracted for readability)
+import DesktopIconsLayer from "./layers/DesktopIconsLayer";
+import WindowsLayer from "./layers/WindowsLayer";
+import UIOverlaysLayer from "./layers/UIOverlaysLayer";
 
 // Window Content Components - Lazy loaded for faster initial paint
 const AboutContent = dynamic(() => import("./AboutContent"), {
@@ -61,22 +55,17 @@ import type { Project, GalleryItem } from "@/types/projects";
 import DesktopErrorBoundary from "./DesktopErrorBoundary";
 import { generateDesktopIcons } from "./utils/desktopLayoutUtils";
 import { getDockItemConfig } from "./utils/dockUtils";
-import { DraggableStickyNote } from "./DraggableStickyNote";
 import { Testimonial, TestimonialData } from "@/types/testimonial";
 import { convertTestimonialToContact, mergeContacts } from "./utils/chatUtils";
 import { mockChats, ContactProfile } from "./data/mockChats";
 import { soundManager } from "./utils/SoundManager";
+import { createInitialWindows } from "./utils/windowFactory";
 
 // UI Components (Extracted)
 import AppIcon from "./ui/AppIcon";
 import ProjectDetailWrapper from "./ui/ProjectDetailWrapper";
 const BootSequence = dynamic(() => import("./ui/BootSequence"), {
     loading: () => <div className="fixed inset-0 bg-black flex items-center justify-center"><div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>,
-    ssr: false
-});
-
-const DynamicIsland = dynamic(() => import("./ui/DynamicIsland"), {
-    loading: () => null,
     ssr: false
 });
 
@@ -153,7 +142,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     // Logging for debug
     useEffect(() => {
         if (mounted) {
-            console.log(`[Desktop] Admin status: ${isAdmin ? 'AUTHORIZED' : 'VISITOR'}`);
+            console.log(`[Desktop v1.2] Admin status: ${isAdmin ? 'AUTHORIZED' : 'VISITOR'}`);
         }
     }, [mounted, isAdmin]);
 
@@ -237,61 +226,17 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     };
 
     // Windows Init
-    const initialWindows: WindowState[] = useMemo(() => [
-        {
-            id: "about",
-            title: "Finder: About Me",
-            isOpen: false,
-            zIndex: 10,
-            noPadding: true,
-            initialPosition: { x: 100, y: 80 },
-            width: 900,
-            height: 600,
-            content: <AboutContent aboutData={aboutData} experienceData={experienceData} hardSkillsData={hardSkillsData} projects={projects} />
-        },
-        {
-            id: "whatsapp",
-            title: "WhatsApp",
-            isOpen: false,
-            zIndex: 11,
-            noPadding: true,
-            initialPosition: { x: 200, y: 120 },
-            width: 450,
-            height: 600,
-            content: <ChatWindow customContacts={dynamicContacts} />
-        },
-        {
-            id: "projects",
-            title: "Finder: Projects",
-            isOpen: false,
-            zIndex: 9,
-            noPadding: true,
-            initialPosition: { x: 150, y: 100 },
-            width: 1000,
-            height: 700,
-            content: (
-                <div className="w-full h-full overflow-y-auto bg-white custom-scrollbar">
-                    <IndexClientWithAutoUpdate initialProjects={commercialProjects} />
-                </div>
-            )
-        },
-        {
-            id: "trash-bin",
-            title: "Recycle Bin",
-            isOpen: false,
-            zIndex: 1, // Default low z-index
-            initialPosition: { x: 400, y: 250 },
-            width: 400,
-            height: 250,
-            content: (
-                <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-                    <Trash2 size={48} className="text-gray-400 mb-2" />
-                    <h3 className="font-bold text-lg mb-1">Access Denied</h3>
-                    <p className="text-gray-500 text-sm">You cannot delete perfection.</p>
-                </div>
-            )
-        }
-    ], [aboutData, commercialProjects, experienceData, hardSkillsData, projects, dynamicContacts, isAdmin]);
+    const initialWindows: WindowState[] = useMemo(() =>
+        createInitialWindows({
+            aboutData,
+            experienceData,
+            hardSkillsData,
+            projects,
+            commercialProjects,
+            dynamicContacts
+        }),
+        [aboutData, experienceData, hardSkillsData, projects, commercialProjects, dynamicContacts]
+    );
 
 
     const {
@@ -565,138 +510,56 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                             </div>
 
                             {/* Layer 1: Desktop Icons & Sticky Notes */}
-                            <div className="absolute inset-0 z-10 pointer-events-auto">
-                                {projectIcons.map((icon: any) => {
-                                    const isFolder = icon.type === 'folder';
-
-                                    return (
-                                        <DesktopIcon
-                                            key={icon.id}
-                                            {...icon}
-                                            icon={!isFolder ? icon.icon : undefined}
-                                            isMobile={isMobile}
-                                            priority={icon.priority} // Pass LCP priority
-                                            onPositionChange={handleIconPositionChange} // Pass persistence handler
-                                            onClick={() => {
-                                                if (isFolder && icon.action) icon.action();
-                                                else if (icon.type === 'project') openProjectWindow(icon.data);
-                                            }}
-                                        >
-                                            {isFolder && <MacFolder size={0.85} isStatic={true} />}
-                                        </DesktopIcon>
-                                    );
-                                })}
-
-                                {/* Sticky Notes - Only show when toggled visible */}
-                                {notesVisible && (
-                                    <>
-                                        {notes.filter(n => !n.isDeleted).map(note => (
-                                            <DraggableStickyNote
-                                                key={note.id}
-                                                note={note}
-                                                updateNote={updateNote}
-                                                bringToFrontNote={bringToFrontNote}
-                                                deleteNote={(id) => {
-                                                    deleteNote(id);
-                                                    // If this was the last visible note, turn off the dock indicator
-                                                    const visibleCount = notes.filter(n => !n.isDeleted).length;
-                                                    if (visibleCount <= 1) {
-                                                        setNotesVisible(false);
-                                                    }
-                                                }}
-                                                permanentDeleteNote={permanentDeleteNote}
-                                                restoreNote={restoreNote}
-                                                isAdmin={isAdmin}
-                                            />
-                                        ))}
-                                    </>
-                                )}
-                            </div>
+                            <DesktopIconsLayer
+                                projectIcons={projectIcons}
+                                isMobile={isMobile}
+                                notesVisible={notesVisible}
+                                notes={notes}
+                                handleIconPositionChange={handleIconPositionChange}
+                                openProjectWindow={openProjectWindow}
+                                updateNote={updateNote}
+                                bringToFrontNote={bringToFrontNote}
+                                deleteNote={deleteNote}
+                                permanentDeleteNote={permanentDeleteNote}
+                                restoreNote={restoreNote}
+                                isAdmin={isAdmin}
+                                setNotesVisible={setNotesVisible}
+                            />
 
                             {/* Layer 2: Windows */}
-                            <div className="absolute inset-0 z-20 pointer-events-none">
-                                <AnimatePresence>
-                                    {windows.map(w => (
-                                        w.isOpen && !w.isMinimized && (
-                                            <OSWindow
-                                                key={w.id}
-                                                id={w.id}
-                                                isOpen={w.isOpen}
-                                                title={w.title}
-                                                isMinimized={w.isMinimized}
-                                                onClose={() => closeWindow(w.id)}
-                                                onMinimize={() => minimizeWindow(w.id)}
-                                                onMaximize={() => maximizeWindow(w.id)}
-                                                onFocus={() => focusWindow(w.id)}
-                                                onUpdatePosition={(x, y) => handleUpdateWindowPosition(w.id, x, y)}
-                                                onResize={(width, height) => handleWindowResize(w.id, width, height)}
-                                                onResizeEnd={(width, height) => handleWindowResizeEnd(w.id, width, height)}
-                                                isPinned={isAdmin && w.isPinned}
-                                                onTogglePin={isAdmin ? () => togglePin(w.id) : undefined}
-                                                isAdmin={isAdmin}
-                                                initialPosition={w.initialPosition}
-                                                width={w.width || 800}
-                                                height={w.height || 600}
-                                                zIndex={w.zIndex}
-                                                noPadding={w.noPadding}
-                                            >
-                                                {w.content}
-                                            </OSWindow>
-                                        )
-                                    ))}
-                                </AnimatePresence>
-                            </div>
+                            <WindowsLayer
+                                windows={windows}
+                                closeWindow={closeWindow}
+                                minimizeWindow={minimizeWindow}
+                                maximizeWindow={maximizeWindow}
+                                focusWindow={focusWindow}
+                                handleUpdateWindowPosition={handleUpdateWindowPosition}
+                                handleWindowResize={handleWindowResize}
+                                handleWindowResizeEnd={handleWindowResizeEnd}
+                                togglePin={togglePin}
+                                isAdmin={isAdmin}
+                            />
 
                             {/* Layer 3: UI Overlays (Dock, MenuBar, Spotlight, DynamicIsland) */}
-                            <div className="absolute inset-0 z-30 pointer-events-none">
-                                {/* Dynamic Island - High Z-index */}
-                                <DynamicIsland
-                                    activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || null}
-                                    isBooting={isBooting}
-                                    onOpenChat={navToChat}
-                                    customNotifications={testimonialContacts}
-                                />
-
-                                {/* MenuBar - high z-index, handles its own fixed positioning */}
-                                <MenuBar
-                                    activeWindow={windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex)[0]?.title || "Finder"}
-                                    onAbout={() => openWindow("about")}
-                                    onSearch={() => setShowSpotlight(true)}
-                                    availability={aboutData?.hero?.availability}
-                                    isAdmin={isAdmin}
-                                    onLogout={logout}
-                                />
-
-                                {/* Dock Container - pointer-events-none to let icons through */}
-                                <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe">
-                                    <div className="pointer-events-auto">
-                                        {aboutData && (
-                                            <OSDock
-                                                aboutData={aboutData}
-                                                onOpenWindow={openWindow}
-                                                onOpenNotes={toggleNotesVisibility}
-                                                onOpenTrash={() => openWindow("trash-bin")}
-                                                isWindowOpen={isWindowOpen}
-                                                notesVisible={notesVisible}
-                                                bouncingId={bouncingDocId}
-                                                isMobile={isMobile}
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-
-                                {showSpotlight && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-auto z-[9999]">
-                                        <Spotlight
-                                            isOpen={showSpotlight}
-                                            onClose={() => setShowSpotlight(false)}
-                                            projects={commercialProjects}
-                                            onOpenProject={openProjectWindow}
-                                            onOpenApp={(id) => openWindow(id)}
-                                        />
-                                    </div>
-                                )}
-                            </div>
+                            <UIOverlaysLayer
+                                windows={windows}
+                                isBooting={isBooting}
+                                navToChat={navToChat}
+                                testimonialContacts={testimonialContacts}
+                                openWindow={openWindow}
+                                showSpotlight={showSpotlight}
+                                setShowSpotlight={setShowSpotlight}
+                                aboutData={aboutData}
+                                isAdmin={isAdmin}
+                                logout={logout}
+                                toggleNotesVisibility={toggleNotesVisibility}
+                                isWindowOpen={isWindowOpen}
+                                notesVisible={notesVisible}
+                                bouncingDocId={bouncingDocId}
+                                isMobile={isMobile}
+                                commercialProjects={commercialProjects}
+                                openProjectWindow={openProjectWindow}
+                            />
                         </m.div >
                     </>
                 )}

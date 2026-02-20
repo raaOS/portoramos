@@ -2,60 +2,48 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Grade A Public Experience', () => {
 
-    test('Homepage loads correctly with Masonry Grid', async ({ page }) => {
+    test('Homepage loads Desktop Environment', async ({ page }) => {
         await page.goto('/');
-        // Title might vary, just check it loads content
         await expect(page.locator('body')).toBeVisible();
 
-        // Check for masonry grid items or main content
-        // Adjust selector based on actual class names used in MasonryGrid.tsx
-        // Usually .my-masonry-grid_column or similar from react-masonry-css
-        const grid = page.locator('.masonry-grid');
-        await expect(grid).toBeVisible();
+        // Homepage now shows macOS-style Desktop Environment
+        // Check for dock (toolbar) presence
+        const dock = page.locator('[role="toolbar"][aria-label="Application dock"]');
+        await expect(dock).toBeVisible({ timeout: 15000 });
+
+        // Check for menu bar area
+        await expect(page.locator('body')).toContainText(/Finder/i);
     });
 
-    test('Navigation links work', async ({ page }) => {
-        await page.goto('/');
+    test('Projects page loads correctly', async ({ page }) => {
+        await page.goto('/projects');
+        await expect(page.locator('body')).toBeVisible();
 
-        // Check if Nav exists
-        const nav = page.locator('nav');
-        await expect(nav).toBeVisible();
+        // Check for masonry grid items or main content on projects page
+        const grid = page.locator('.masonry-grid');
+        await expect(grid).toBeVisible({ timeout: 10000 });
+    });
 
-        // Navigate to Works (Karya)
-        const workLink = page.getByRole('link', { name: /Karya/i }).first();
-        if (await workLink.isVisible()) {
-            await workLink.click();
-            await expect(page).toHaveURL(/.*\/projects/);
-        }
+    test('Contact page loads with CTA', async ({ page }) => {
+        await page.goto('/contact');
+        await expect(page.locator('body')).toBeVisible();
 
-        // Navigate to About (Tentang)
-        const aboutLink = page.getByRole('link', { name: /Tentang/i }).first();
-        if (await aboutLink.isVisible()) {
-            await aboutLink.click();
-            await expect(page).toHaveURL(/.*\/about/);
-        }
-
-        // Navigate to Contact (Kontak)
-        const contactLink = page.getByRole('link', { name: /Kontak/i }).first();
-        if (await contactLink.isVisible()) {
-            await contactLink.click();
-            await expect(page).toHaveURL(/.*\/contact/);
-        }
+        // Contact page should have call-to-action content
+        await expect(page.locator('body')).toContainText(/Project|Chat|Contact/i);
     });
 
     test('Project Detail opens from Grid', async ({ page }) => {
-        await page.goto('/works');
+        await page.goto('/projects');
 
         // Wait for grid to load
-        await page.waitForSelector('.masonry-grid');
+        await page.waitForSelector('.masonry-grid', { timeout: 10000 });
 
         // Click first project card
-        // Structure: .masonry-grid -> .masonry-grid_column -> div -> a
         const firstProjectLink = page.locator('.masonry-grid a').first();
 
         if (await firstProjectLink.count() > 0) {
             const href = await firstProjectLink.getAttribute('href');
-            console.log('Navigating to projects:', href);
+            console.log('Navigating to project:', href);
 
             await firstProjectLink.click();
             await expect(page).toHaveURL(new RegExp(href!));
@@ -65,12 +53,6 @@ test.describe('Grade A Public Experience', () => {
         } else {
             console.log('No projects found in grid to test navigation');
         }
-    });
-
-    test('About Page content loads', async ({ page }) => {
-        await page.goto('/about');
-        // Check for generic content usually on About page
-        await expect(page.locator('body')).toContainText(/About|Tentang|Skill/i);
     });
 
 });

@@ -50,7 +50,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
 
     const handleDragStart = () => {
         setIsDragging(true);
-        soundManager.play('click', 0.3);
+        soundManager.play('drag', 0.5);
     };
 
     const handleDragEnd = () => {
@@ -94,6 +94,16 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                 y: iconY
             }}
             className={`flex flex-col items-center gap-3 w-auto group cursor-pointer pointer-events-auto`}
+            role="button"
+            aria-label={label}
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && !isDragging) {
+                    e.preventDefault();
+                    soundManager.play('click', 0.4);
+                    onClick();
+                }
+            }}
             whileHover={!isMobile ? { scale: 1.1 } : undefined}
             whileTap={!isMobile ? { scale: 0.95 } : undefined}
             onMouseEnter={() => !isMobile && setHovering(true)}

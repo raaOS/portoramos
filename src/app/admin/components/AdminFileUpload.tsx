@@ -2,8 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { useToast } from '@/contexts/ToastContext';
-import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
+// FFmpeg imports removed from top-level to improve bundle size
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -47,7 +46,7 @@ export default function AdminFileUpload({
   const [activeTrim, setActiveTrim] = useState<{ file: File } | null>(null);
 
   // FFmpeg Ref
-  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const ffmpegRef = useRef<any>(null);
 
   const validateFile = useCallback((file: File): string | null => {
     // limit video size to maxSize as well (default 10MB, but can be higher)
@@ -80,6 +79,11 @@ export default function AdminFileUpload({
   const loadFFmpeg = async () => {
     if (ffmpegRef.current) return ffmpegRef.current;
     setStatus('Loading Compression Core...');
+
+    // Dynamic import to save ~500KB from initial bundle
+    const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+    const { toBlobURL } = await import('@ffmpeg/util');
+
     const ffmpeg = new FFmpeg();
     try {
       const baseURL = window.location.origin + '/ffmpeg';
@@ -107,9 +111,10 @@ export default function AdminFileUpload({
     const outputName = 'output.mp4';
     const startTime = Date.now();
 
+    const { fetchFile } = await import('@ffmpeg/util');
     await ffmpeg.writeFile(inputName, await fetchFile(file));
 
-    ffmpeg.on('progress', ({ progress }) => {
+    ffmpeg.on('progress', ({ progress }: { progress: number }) => {
       const percent = Math.round(progress * 100);
       onProgress(percent);
       if (progress > 0) {

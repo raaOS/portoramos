@@ -73,10 +73,14 @@ export default function OSWindow({
         }
     }, [width, height, isResizing]);
 
-    // Sound effect on open
+    // Sound effect on open - delay until user interaction
     useEffect(() => {
         if (isOpen) {
-            soundManager.play('window-open', 0.4);
+            // Use setTimeout to ensure user interaction is detected first
+            const timer = setTimeout(() => {
+                soundManager.play('window-open', 0.4);
+            }, 100);
+            return () => clearTimeout(timer);
         }
     }, [isOpen]);
 

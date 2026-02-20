@@ -24,7 +24,7 @@ export const caveat = Caveat({
   variable: '--font-caveat',
   subsets: ['latin'],
   display: 'swap',
-  preload: true,
+  preload: false,
   fallback: ['cursive', 'sans-serif'],
 })
 
@@ -33,6 +33,7 @@ export const indieFlower = Indie_Flower({
   subsets: ['latin'],
   weight: '400',
   display: 'swap',
+  preload: false,
 })
 
 export const patrickHand = Patrick_Hand({
@@ -40,6 +41,7 @@ export const patrickHand = Patrick_Hand({
   subsets: ['latin'],
   weight: '400',
   display: 'swap',
+  preload: false,
 })
 
 

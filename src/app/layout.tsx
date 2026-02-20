@@ -14,10 +14,9 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import SmoothScroll from '@/components/layout/SmoothScroll';
 import { loadAboutData } from '@/lib/about';
 
-// Disable caching for the entire layout to ensure dock configuration (aboutData) 
-// updates propagate immediately across all pages.
-// Refresh trace: standardized dock IDs
-export const revalidate = 0;
+// ISR: Revalidate layout every 60 seconds to propagate dock configuration changes
+// while reducing server load vs revalidate = 0 (every request)
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseSEO.siteUrl),
@@ -78,7 +77,7 @@ export default async function RootLayout({
   const aboutData = await loadAboutData();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="id" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
@@ -95,6 +94,9 @@ export default async function RootLayout({
         />
       </head>
       <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default" suppressHydrationWarning>
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100000] focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-black">
+          Skip to main content
+        </a>
         <SmoothScroll />
         <Providers>
           <ToastProvider>

@@ -13,6 +13,7 @@ const nextConfig = {
   ],
   // Enable React Compiler for automatic optimization
   reactCompiler: true,
+  reactStrictMode: false,
   compress: true,
   // Optimize images for maximum performance
   images: {
@@ -60,11 +61,7 @@ const nextConfig = {
       'lucide-react',
       '@tanstack/react-query',
       'recharts',
-      'gsap',
       'fuse.js',
-      'slate',
-      'slate-react',
-      'slate-history',
       '@tabler/icons-react',
       '@tsparticles/react',
       'react-intersection-observer',
