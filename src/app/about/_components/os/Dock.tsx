@@ -54,7 +54,8 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
             key={`${id}-${bounceKey}`}
             id={`dock-item-${id}`}
             ref={ref}
-            style={{ width, height: width }}
+            // Optimization: If on mobile, bypass the heavy `useSpring` entirely and give it static sizing.
+            style={isMobile ? { width: 48, height: 48 } : { width, height: width }}
             animate={activeBounce ? {
                 y: isMobile ? [0, -12, 0, -4, 0] : [0, -24, 0, -8, 0],
                 scaleX: [1, 0.9, 1.1, 1],

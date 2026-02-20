@@ -4,32 +4,24 @@ import React from "react";
 import { AnimatePresence } from "framer-motion";
 import OSWindow from "../Window";
 import type { WindowState } from "@/hooks/useWindowManager";
+import { useWindowContext } from "../context/WindowContext";
 
 interface WindowsLayerProps {
-    windows: WindowState[];
-    closeWindow: (id: string) => void;
-    minimizeWindow: (id: string) => void;
-    maximizeWindow: (id: string) => void;
-    focusWindow: (id: string) => void;
-    handleUpdateWindowPosition: (id: string, x: number, y: number) => void;
-    handleWindowResize: (id: string, width: number, height: number) => void;
-    handleWindowResizeEnd: (id: string, width: number, height: number) => void;
-    togglePin: (id: string) => void;
     isAdmin: boolean;
 }
 
-export default function WindowsLayer({
-    windows,
-    closeWindow,
-    minimizeWindow,
-    maximizeWindow,
-    focusWindow,
-    handleUpdateWindowPosition,
-    handleWindowResize,
-    handleWindowResizeEnd,
-    togglePin,
-    isAdmin
-}: WindowsLayerProps) {
+export default function WindowsLayer({ isAdmin }: WindowsLayerProps) {
+    const {
+        windows,
+        closeWindow,
+        minimizeWindow,
+        maximizeWindow,
+        focusWindow,
+        updateWindowPosition,
+        handleWindowResize,
+        handleWindowResizeEnd,
+        togglePin
+    } = useWindowContext();
     return (
         <div className="absolute inset-0 z-20 pointer-events-none">
             <AnimatePresence>
@@ -45,7 +37,7 @@ export default function WindowsLayer({
                             onMinimize={() => minimizeWindow(w.id)}
                             onMaximize={() => maximizeWindow(w.id)}
                             onFocus={() => focusWindow(w.id)}
-                            onUpdatePosition={(x, y) => handleUpdateWindowPosition(w.id, x, y)}
+                            onUpdatePosition={(x, y) => updateWindowPosition(w.id, x, y)}
                             onResize={(width, height) => handleWindowResize(w.id, width, height)}
                             onResizeEnd={(width, height) => handleWindowResizeEnd(w.id, width, height)}
                             isPinned={isAdmin && w.isPinned}

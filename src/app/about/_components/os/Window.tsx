@@ -181,7 +181,7 @@ export default function OSWindow({
 
 
     return (
-        <AnimatePresence>
+        <>
             {isOpen && (
                 <m.div
                     drag={!isMaximized && !isResizing && !isPinned && !isSmallScreen}
@@ -355,6 +355,6 @@ export default function OSWindow({
                     </div>
                 </m.div>
             )}
-        </AnimatePresence>
+        </>
     );
 }

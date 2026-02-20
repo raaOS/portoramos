@@ -8,6 +8,7 @@ import type { WindowState } from "@/hooks/useWindowManager";
 import type { AboutData } from "@/types/about";
 import type { Project } from "@/types/projects";
 import type { ContactProfile } from "../data/mockChats";
+import { useWindowContext } from "../context/WindowContext";
 
 const Spotlight = dynamic(() => import("../Spotlight"), {
     loading: () => null,
@@ -20,44 +21,38 @@ const DynamicIsland = dynamic(() => import("../ui/DynamicIsland"), {
 });
 
 interface UIOverlaysLayerProps {
-    windows: WindowState[];
     isBooting: boolean;
     navToChat: (chatId?: string) => void;
     testimonialContacts: ContactProfile[];
-    openWindow: (id: string, options?: any) => void;
     showSpotlight: boolean;
     setShowSpotlight: React.Dispatch<React.SetStateAction<boolean>>;
     aboutData?: AboutData | null;
     isAdmin: boolean;
     logout: () => void;
     toggleNotesVisibility: () => void;
-    isWindowOpen: (id: string) => boolean;
     notesVisible: boolean;
-    bouncingDocId?: string | null;
     isMobile: boolean;
     commercialProjects: Project[];
     openProjectWindow: (project: Project) => void;
 }
 
 export default function UIOverlaysLayer({
-    windows,
     isBooting,
     navToChat,
     testimonialContacts,
-    openWindow,
     showSpotlight,
     setShowSpotlight,
     aboutData,
     isAdmin,
     logout,
     toggleNotesVisibility,
-    isWindowOpen,
     notesVisible,
-    bouncingDocId,
     isMobile,
     commercialProjects,
     openProjectWindow
 }: UIOverlaysLayerProps) {
+    const { windows, openWindow, bouncingDocId } = useWindowContext();
+    const isWindowOpen = (id: string) => windows.find(w => w.id === id)?.isOpen ?? false;
     const activeWindows = windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex);
     const topWindowTitle = activeWindows[0]?.title || null;
 

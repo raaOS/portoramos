@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { User, ArrowLeft, Grid, Smile, Rocket, Mail, Trash2, MessageCircle, FileText, Image as ImageIcon, MessageSquare, StickyNote } from "lucide-react";
 import { AnimatePresence, m, LazyMotion, domMax } from "framer-motion";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import dynamic from "next/dynamic";
 
 // Admin Auth Hook
@@ -46,6 +45,10 @@ const IndexClientWithAutoUpdate = dynamic(() => import("@/components/home/IndexC
 import { useWindowManager, WindowState } from "@/hooks/useWindowManager";
 import { useStickyNotes } from "./hooks/useStickyNotes";
 import { useDesktopLock } from "./hooks/useDesktopLock";
+import { useBootSequence } from "./hooks/useBootSequence";
+import { useDesktopShortcuts } from "./hooks/useDesktopShortcuts";
+import { useChatContacts } from "./hooks/useChatContacts";
+import { useDesktopLayout } from "./hooks/useDesktopLayout";
 import type { AboutData, DesktopPreferences } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
@@ -55,15 +58,16 @@ import type { Project, GalleryItem } from "@/types/projects";
 import DesktopErrorBoundary from "./DesktopErrorBoundary";
 import { generateDesktopIcons } from "./utils/desktopLayoutUtils";
 import { getDockItemConfig } from "./utils/dockUtils";
-import { Testimonial, TestimonialData } from "@/types/testimonial";
-import { convertTestimonialToContact, mergeContacts } from "./utils/chatUtils";
 import { mockChats, ContactProfile } from "./data/mockChats";
 import { soundManager } from "./utils/SoundManager";
 import { createInitialWindows } from "./utils/windowFactory";
+import { WindowContext } from "./context/WindowContext";
 
 // UI Components (Extracted)
+import DesktopBackground from "./ui/DesktopBackground";
 import AppIcon from "./ui/AppIcon";
 import ProjectDetailWrapper from "./ui/ProjectDetailWrapper";
+import DesktopSkeleton from "./ui/DesktopSkeleton";
 const BootSequence = dynamic(() => import("./ui/BootSequence"), {
     loading: () => <div className="fixed inset-0 bg-black flex items-center justify-center"><div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>,
     ssr: false
@@ -107,9 +111,9 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
     // Screen Lock & Resize Hook (Handles mounted state, window size, and body lock)
     const { mounted, windowSize, isMobile } = useDesktopLock();
-
-    const [isBooting, setIsBooting] = useState(true);
+    const { isBooting, finishBooting } = useBootSequence();
     const [showSpotlight, setShowSpotlight] = useState(false);
+    useDesktopShortcuts({ showSpotlight, setShowSpotlight });
 
     // Check if we've already booted in this session
     useEffect(() => {
@@ -148,68 +152,13 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
 
     // Dynamic Contacts (Mock + Testimonials)
-    const [dynamicContacts, setDynamicContacts] = useState<Record<string, ContactProfile>>(mockChats);
-    const [allContactsList, setAllContactsList] = useState<ContactProfile[]>([]);
-    const [testimonialContacts, setTestimonialContacts] = useState<ContactProfile[]>([]);
-
-    useEffect(() => {
-        const fetchTestimonials = async () => {
-            try {
-                const res = await fetch('/api/testimonial');
-                if (res.ok) {
-                    const data: TestimonialData = await res.json();
-
-                    // 1. Convert only active testimonials to contacts for notifications
-                    const converted = (data.testimonials || [])
-                        .filter(t => t.isActive !== false)
-                        .map(convertTestimonialToContact);
-                    setTestimonialContacts(converted);
-
-                    // 2. Merge all contacts for the chat window
-                    const merged = mergeContacts(mockChats, data.testimonials);
-                    setDynamicContacts(merged);
-                    setAllContactsList(Object.values(merged));
-                }
-            } catch (error) {
-                console.error("Failed to fetch testimonials for chat", error);
-            }
-        };
-
-        fetchTestimonials();
-    }, []);
+    const { dynamicContacts, testimonialContacts } = useChatContacts();
 
     // Forces a re-render of layout if needed (e.g. after drag)
     const [manualRefreshSeed, setManualRefreshSeed] = useState(0);
     const triggerReposition = () => setManualRefreshSeed(prev => prev + 1);
 
-    // Keyboard Shortcuts
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            // Cmd+K or Ctrl+K for Spotlight
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                setShowSpotlight(prev => !prev);
-            }
-            // Esc to close Spotlight
-            if (e.key === 'Escape' && showSpotlight) {
-                setShowSpotlight(false);
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [showSpotlight]);
-
-    // Initialize sounds on first interaction
-    useEffect(() => {
-        const initAudio = () => {
-            soundManager.init();
-            window.removeEventListener('mousedown', initAudio);
-            window.removeEventListener('keydown', initAudio);
-        };
-        window.addEventListener('mousedown', initAudio);
-        window.addEventListener('keydown', initAudio);
-    }, []);
+    // Forces a re-render of layout if needed (e.g. after drag)
 
     const commercialProjects = useMemo(() => {
         if (aboutData?.desktopPreferences?.visibleProjectIds) {
@@ -239,20 +188,12 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     );
 
 
+    const windowManager = useWindowManager({ initialWindows, aboutData, projects, csrfToken });
     const {
         windows,
         openWindow,
-        closeWindow,
-        minimizeWindow,
-        maximizeWindow,
-        focusWindow,
-        updateWindowPosition: internalUpdateWindowPosition,
-        handleWindowResize,
-        handleWindowResizeEnd, // Add this
-        togglePin,
-        bouncingDocId,
         resetWindows
-    } = useWindowManager({ initialWindows, aboutData, projects, csrfToken });
+    } = windowManager;
 
     // Auto-open app from query param (e.g. /?app=about)
     useEffect(() => {
@@ -278,21 +219,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         }
     }, [openWindow]);
 
-    const handleUpdateWindowPosition = (id: string, x: number, y: number) => {
-        internalUpdateWindowPosition(id, x, y);
-        triggerReposition();
-    };
-
-    const isWindowOpen = (id: string) => windows.find(w => w.id === id)?.isOpen ?? false;
-
-    // Wallpaper
-    const [wallpaper, setWallpaper] = useState(() => {
-        if (aboutData?.wallpaperConfig?.activeWallpaperId && aboutData?.wallpaperConfig?.collection) {
-            const active = aboutData.wallpaperConfig.collection.find(w => w.id === aboutData?.wallpaperConfig?.activeWallpaperId);
-            if (active) return active.url;
-        }
-        return "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop";
-    });
+    // Update position and isWindowOpen functions pushed to Context API.
 
     // Actions
     const handleGoHome = useCallback(() => router.push('/'), [router]);
@@ -338,53 +265,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     // Dock Configuration - Now using OSDock component for centralized management
 
     // --- ICON PERSISTENCE LOGIC START ---
-
-    // Local state for icon positions (Optimistic UI)
-    const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>({});
-
-    // Initialize from props
-    useEffect(() => {
-        if (aboutData?.desktopPreferences?.iconPositions) {
-            setIconPositions(aboutData.desktopPreferences.iconPositions);
-        }
-    }, [aboutData]);
-
-    const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-
-    const handleIconPositionChange = (id: string, x: number, y: number) => {
-        // 1. Optimistic Update
-        const newPositions = { ...iconPositions, [id]: { x, y } };
-        setIconPositions(newPositions);
-
-        // 2. Persist if Admin (Debounced)
-        if (isAdmin) {
-            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-
-            saveTimeoutRef.current = setTimeout(async () => {
-                try {
-                    // Update layout preference with ALL current positions
-                    const payload = {
-                        desktopPreferences: {
-                            ...aboutData?.desktopPreferences,
-                            iconPositions: newPositions
-                        }
-                    };
-
-                    await fetch('/api/admin/about/desktop', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-Token': csrfToken || ''
-                        },
-                        body: JSON.stringify(payload)
-                    });
-                    // Optional: Toast notification here
-                } catch (error) {
-                    console.error("Failed to save icon position", error instanceof Error ? error.message : error);
-                }
-            }, 1000); // 1-second debounce
-        }
-    };
+    const { iconPositions, handleIconPositionChange } = useDesktopLayout({ aboutData, isAdmin, csrfToken: csrfToken || null });
     // --- ICON PERSISTENCE LOGIC END ---
 
     // Icons Layout
@@ -431,30 +312,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     // SSR Skeleton: Show a basic visual immediately to improve LCP
     // Before: `return null` caused 17s LCP (blank screen until JS hydrates)
     if (!mounted) {
-        return (
-            <div className="fixed inset-0 w-full h-full overflow-hidden select-none bg-[#050505]">
-                {/* Wallpaper Blur Background Skeleton */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#1a1c2c] via-[#4a192c] to-[#121212] opacity-50" />
-
-                {/* Fake Menu Bar */}
-                <div className="absolute top-0 left-0 right-0 h-8 bg-white/10 backdrop-blur-xl z-50 flex items-center px-4 border-b border-white/10">
-                    <div className="w-16 h-3 bg-white/20 rounded" />
-                </div>
-
-                {/* Skeleton Grid (Desktop Icons) */}
-                <div className="absolute inset-0 pt-12 pb-24 px-6 grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-8 opacity-30">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                        <div key={i} className="flex flex-col items-center gap-3">
-                            <div className="w-16 h-16 bg-white/10 rounded-2xl animate-pulse shadow-2xl" />
-                            <div className="w-14 h-2 bg-white/20 rounded-full" />
-                        </div>
-                    ))}
-                </div>
-
-                {/* Fake Dock */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-20 w-[450px] bg-white/10 backdrop-blur-3xl rounded-[24px] border border-white/20 shadow-2xl" />
-            </div>
-        );
+        return <DesktopSkeleton />;
     }
     // Desktop Content Animation (Zoom In Effect after Boot)
     const desktopVariants = {
@@ -469,101 +327,74 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
     return (
         <DesktopErrorBoundary>
-            <LazyMotion features={domMax}>
-                {isMobile ? (
-                    <RetroMobileOverlay />
-                ) : (
-                    <>
-                        {/* Boot Sequence Overlay */}
-                        <AnimatePresence>
-                            {isBooting && (
-                                <BootSequence
-                                    onComplete={() => {
-                                        setIsBooting(false);
-                                        soundManager.play('startup');
-                                    }}
+            <WindowContext.Provider value={windowManager}>
+                <LazyMotion features={domMax}>
+                    {isMobile ? (
+                        <RetroMobileOverlay />
+                    ) : (
+                        <>
+                            {/* Boot Sequence Overlay */}
+                            <AnimatePresence>
+                                {isBooting && (
+                                    <BootSequence
+                                        onComplete={finishBooting}
+                                    />
+                                )}
+                            </AnimatePresence>
+
+                            {/* Main Desktop Content */}
+                            <m.div
+                                className="relative w-full h-full overflow-hidden select-none"
+                                initial="booting"
+                                animate={isBooting ? "booting" : "ready"}
+                                variants={desktopVariants}
+                            >
+                                {/* Wallpaper */}
+                                <DesktopBackground wallpaperConfig={aboutData?.wallpaperConfig} />
+
+                                {/* Layer 1: Desktop Icons & Sticky Notes */}
+                                <DesktopIconsLayer
+                                    projectIcons={projectIcons}
+                                    isMobile={isMobile}
+                                    notesVisible={notesVisible}
+                                    notes={notes}
+                                    handleIconPositionChange={handleIconPositionChange}
+                                    openProjectWindow={openProjectWindow}
+                                    updateNote={updateNote}
+                                    bringToFrontNote={bringToFrontNote}
+                                    deleteNote={deleteNote}
+                                    permanentDeleteNote={permanentDeleteNote}
+                                    restoreNote={restoreNote}
+                                    isAdmin={isAdmin}
+                                    setNotesVisible={setNotesVisible}
                                 />
-                            )}
-                        </AnimatePresence>
 
-                        {/* Main Desktop Content */}
-                        <m.div
-                            className="relative w-full h-full overflow-hidden select-none"
-                            initial="booting"
-                            animate={isBooting ? "booting" : "ready"}
-                            variants={desktopVariants}
-                        >
-                            {/* Wallpaper */}
-                            <div className="absolute inset-0 z-0">
-                                <Image
-                                    src={wallpaper}
-                                    alt="Desktop Wallpaper"
-                                    fill
-                                    priority
-                                    loading="eager"
-                                    quality={90} // High quality for LCP, balanced with size
-                                    sizes="100vw"
-                                    className="object-cover transition-all duration-700"
-                                    style={{ filter: `blur(${aboutData?.wallpaperConfig?.blur || 0}px)` }}
+                                {/* Layer 2: Windows */}
+                                <WindowsLayer
+                                    isAdmin={isAdmin}
                                 />
-                                <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] backface-invisible will-change-transform" />
-                            </div>
 
-                            {/* Layer 1: Desktop Icons & Sticky Notes */}
-                            <DesktopIconsLayer
-                                projectIcons={projectIcons}
-                                isMobile={isMobile}
-                                notesVisible={notesVisible}
-                                notes={notes}
-                                handleIconPositionChange={handleIconPositionChange}
-                                openProjectWindow={openProjectWindow}
-                                updateNote={updateNote}
-                                bringToFrontNote={bringToFrontNote}
-                                deleteNote={deleteNote}
-                                permanentDeleteNote={permanentDeleteNote}
-                                restoreNote={restoreNote}
-                                isAdmin={isAdmin}
-                                setNotesVisible={setNotesVisible}
-                            />
-
-                            {/* Layer 2: Windows */}
-                            <WindowsLayer
-                                windows={windows}
-                                closeWindow={closeWindow}
-                                minimizeWindow={minimizeWindow}
-                                maximizeWindow={maximizeWindow}
-                                focusWindow={focusWindow}
-                                handleUpdateWindowPosition={handleUpdateWindowPosition}
-                                handleWindowResize={handleWindowResize}
-                                handleWindowResizeEnd={handleWindowResizeEnd}
-                                togglePin={togglePin}
-                                isAdmin={isAdmin}
-                            />
-
-                            {/* Layer 3: UI Overlays (Dock, MenuBar, Spotlight, DynamicIsland) */}
-                            <UIOverlaysLayer
-                                windows={windows}
-                                isBooting={isBooting}
-                                navToChat={navToChat}
-                                testimonialContacts={testimonialContacts}
-                                openWindow={openWindow}
-                                showSpotlight={showSpotlight}
-                                setShowSpotlight={setShowSpotlight}
-                                aboutData={aboutData}
-                                isAdmin={isAdmin}
-                                logout={logout}
-                                toggleNotesVisibility={toggleNotesVisibility}
-                                isWindowOpen={isWindowOpen}
-                                notesVisible={notesVisible}
-                                bouncingDocId={bouncingDocId}
-                                isMobile={isMobile}
-                                commercialProjects={commercialProjects}
-                                openProjectWindow={openProjectWindow}
-                            />
-                        </m.div >
-                    </>
-                )}
-            </LazyMotion >
+                                {/* Layer 3: UI Overlays (Dock, MenuBar, Spotlight, DynamicIsland) */}
+                                <UIOverlaysLayer
+                                    isBooting={isBooting}
+                                    navToChat={navToChat}
+                                    testimonialContacts={testimonialContacts}
+                                    showSpotlight={showSpotlight}
+                                    setShowSpotlight={setShowSpotlight}
+                                    aboutData={aboutData}
+                                    isAdmin={isAdmin}
+                                    logout={logout}
+                                    toggleNotesVisibility={toggleNotesVisibility}
+                                    notesVisible={notesVisible}
+                                    isMobile={isMobile}
+                                    commercialProjects={commercialProjects}
+                                    openProjectWindow={openProjectWindow}
+                                />
+                            </m.div >
+                        </>
+                    )}
+                </LazyMotion >
+            </WindowContext.Provider>
         </DesktopErrorBoundary >
     );
 }

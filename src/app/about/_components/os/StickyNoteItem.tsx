@@ -356,7 +356,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                         </svg>
                     </div>
                 )}
-            </m.div>
+            </m.div >
 
             <PasswordModal
                 isOpen={showPasswordModal}

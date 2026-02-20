@@ -145,6 +145,22 @@ export async function POST(request: Request) {
                             `/status - Cek status server`
                     });
                 }
+                else if (body.message.reply_to_message) {
+                    // This is a reply to a previous message.
+                    // Route it to our chatStore so the web client can poll it.
+                    const replyToId = body.message.reply_to_message.message_id;
+                    const { chatStore } = await import('@/lib/chatStore');
+
+                    const routed = chatStore.addAdminReply(replyToId, text);
+                    if (routed) {
+                        // Success! The web client will pick this up via polling.
+                        // We can send a checkmark to the admin to confirm delivery.
+                        messagesToSend.push({ text: `✅ _Pesan terkirim ke web user_` });
+                    } else {
+                        // The session might have expired or the server restarted.
+                        messagesToSend.push({ text: `❌ _Sesi web user tidak ditemukan atau terputus. Balas langsung via kontak mereka._` });
+                    }
+                }
                 else {
                     messagesToSend.push({ text: `❓ Command tidak dikenal. Coba /help` });
                 }
