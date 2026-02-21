@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { chatStore } from '@/lib/chatStore';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
@@ -15,8 +17,11 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ success: true, messages });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('[Web Chat Sync Error]:', error);
-        return NextResponse.json({ error: 'Failed to sync messages' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Failed to sync messages',
+            details: error.message || String(error)
+        }, { status: 500 });
     }
 }

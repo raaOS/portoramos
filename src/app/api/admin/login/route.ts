@@ -283,10 +283,10 @@ export async function POST(request: NextRequest) {
 
     return response;
 
-  } catch (error) {
+  } catch (error: any) {
     // Generic error - jangan expose detail
     return NextResponse.json(
-      { error: 'Authentication failed' },
+      { error: 'Authentication failed', details: error.message || String(error) },
       { status: 500 }
     );
   }

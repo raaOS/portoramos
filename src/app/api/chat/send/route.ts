@@ -3,6 +3,8 @@ import { getTelegramConfig } from '@/lib/telegram';
 import { chatStore } from '@/lib/chatStore';
 import { aiChatService } from '@/lib/services/aiChatService';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
     try {
         const { botToken, chatId: adminChatId } = await getTelegramConfig();
@@ -123,8 +125,11 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true, message: chatMsg });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('[Web Chat Send Error]:', error);
-        return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Failed to send message',
+            details: error.message || String(error)
+        }, { status: 500 });
     }
 }
