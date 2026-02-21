@@ -236,7 +236,7 @@
       "iconUrl": "/assets/icons-library/1769437234483-fjer70ujri1t-icnsfile-4ec6cb84cd46ec05462df321c07583a4-6cjat8gosq.webp"
     },
     "contact": {
-      "iconUrl": "/assets/icons-library/1769438534250-fq8kofp6ihfy-icnsfile-4ec6cb84cd46ec05462df321c07583a4-6cjat8gosq.webp",
+      "iconUrl": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/assets/icons-library/1769438534228-eun38oh6xtba-icnsfile-1dcc3c13dd2ba1a7d50f09dc8ee73ee4-folder---uppercut.webp?v=1771710591970",
       "label": "Hubungi Saya"
     }
   },
@@ -499,5 +499,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-21T21:46:28.538Z"
+  "lastUpdated": "2026-02-21T21:50:05.820Z"
 }
