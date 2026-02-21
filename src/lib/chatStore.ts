@@ -1,5 +1,6 @@
 import 'server-only';
 import { db } from './firebaseAdmin';
+import * as crypto from 'crypto';
 
 export interface ChatMessage {
     id: string;
