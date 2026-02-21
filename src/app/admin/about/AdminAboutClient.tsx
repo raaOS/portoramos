@@ -400,7 +400,7 @@ function ProfessionalSectionForm({
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">Tentang Saya & Status Header</h3>
-        <p className="text-sm text-gray-600 mb-4">Konten ini muncul di window "Finder: About Me" pada halaman About OS.</p>
+        <p className="text-sm text-gray-600 mb-4">Konten ini muncul di window &quot;Finder: About Me&quot; pada halaman About OS.</p>
         <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
 
           {/* Availability Status Section */}

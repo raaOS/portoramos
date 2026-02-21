@@ -17,12 +17,15 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
     const [wallpapers, setWallpapers] = useState<Wallpaper[]>(DEFAULT_WALLPAPERS);
     const [activeId, setActiveId] = useState<string>('default');
 
-    useEffect(() => {
-        if (data && data.collection && data.collection.length > 0) {
+    // Sync state with props in render
+    const [lastData, setLastData] = useState(data);
+    if (data && data !== lastData) {
+        if (data.collection && data.collection.length > 0) {
             setWallpapers(data.collection);
             setActiveId(data.activeWallpaperId || 'default');
         }
-    }, [data]);
+        setLastData(data);
+    }
 
     const handleUpload = (urls: string[]) => {
         if (!urls || urls.length === 0) return;

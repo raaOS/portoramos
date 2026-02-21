@@ -14,12 +14,14 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
     const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>({});
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Initialize from props
-    useEffect(() => {
+    // Sync state with props in render (Alternative to useEffect to avoid cascading render)
+    const [lastAboutData, setLastAboutData] = useState(aboutData);
+    if (aboutData !== lastAboutData) {
         if (aboutData?.desktopPreferences?.iconPositions) {
             setIconPositions(aboutData.desktopPreferences.iconPositions);
         }
-    }, [aboutData]);
+        setLastAboutData(aboutData);
+    }
 
     const handleIconPositionChange = (id: string, x: number, y: number) => {
         // 1. Optimistic Update

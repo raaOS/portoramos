@@ -21,15 +21,16 @@ export default function DesktopProjectsForm({ data, projects, onUpdate }: Deskto
         layout: 'grid'
     });
 
-    useEffect(() => {
-        if (data) {
-            setPreferences({
-                visibleProjectIds: data.visibleProjectIds || [],
-                maxIcons: data.maxIcons || 5,
-                layout: data.layout || 'grid'
-            });
-        }
-    }, [data]);
+    // Sync state with props in render
+    const [lastData, setLastData] = useState(data);
+    if (data && data !== lastData) {
+        setPreferences({
+            visibleProjectIds: data.visibleProjectIds || [],
+            maxIcons: data.maxIcons || 5,
+            layout: data.layout || 'grid'
+        });
+        setLastData(data);
+    }
 
     const updatePrefs = (updates: Partial<DesktopPreferences>) => {
         const newData = { ...preferences, ...updates };

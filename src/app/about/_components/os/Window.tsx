@@ -69,7 +69,7 @@ export default function OSWindow({
     // Sync props to state (when not resizing)
     useEffect(() => {
         if (!isResizing) {
-            setDynamicSize({ width, height });
+            requestAnimationFrame(() => setDynamicSize({ width, height }));
         }
     }, [width, height, isResizing]);
 
@@ -176,7 +176,6 @@ export default function OSWindow({
             window.removeEventListener('touchmove', handleMouseMove);
             window.removeEventListener('touchend', handleMouseUp);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isResizing]); // ONLY depend on isResizing, NOT dynamicSize
 
 

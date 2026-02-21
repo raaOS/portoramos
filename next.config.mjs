@@ -48,7 +48,7 @@ const nextConfig = {
   assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
   // Improve static asset handling
   trailingSlash: false,
-  // Use default build ID generation
+
   // Enable experimental features for performance
   experimental: {
     // Enable modern bundling
@@ -66,10 +66,12 @@ const nextConfig = {
       '@tsparticles/react',
       'react-intersection-observer',
       'react-masonry-css',
-      'lenis',
-      'date-fns'
-    ],
+    ]
   },
+
+  // Externalize heavy server dependencies to fix Vercel lambda size limits
+  serverExternalPackages: ['firebase-admin'],
+
   // Turbopack configuration (Next.js 16 default bundler)
   turbopack: {},
   // Webpack optimization for performance (fallback when using --webpack flag)

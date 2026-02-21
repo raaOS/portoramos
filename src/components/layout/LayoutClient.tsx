@@ -24,6 +24,7 @@ export default function LayoutClient({
     const pathname = usePathname();
     const isAdminRequest = pathname?.startsWith('/admin');
     const isOsMode = pathname === '/' || pathname?.startsWith('/about-test') || pathname?.startsWith('/about');
+    const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
 
     // We want the Dock on ALL pages except Admin and the OS Desktop itself (which has its own Dock)
     const showGlobalDock = !isAdminRequest && !isOsMode;
@@ -41,7 +42,7 @@ export default function LayoutClient({
         <LazyMotion features={domAnimation}>
             <WindowProvider>
                 <Header />
-                <main className="pb-24">
+                <main className={isContact ? "" : "pb-24"}>
                     {children}
                 </main>
                 {modal}

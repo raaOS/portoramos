@@ -90,8 +90,8 @@ export default function ContactPageClient({ projects, contactInfo }: ContactPage
 
         // Shuffle the list to prevent column alignment issues (identical side-by-side images)
         // especially on mobile where column-count is 2.
-        return list.map(value => ({ value, sort: Math.random() }))
-            .sort((a, b) => a.sort - b.sort)
+        return list.map((value, idx) => ({ value, sort: idx }))
+            .sort((a, b) => (a.sort * 0.123456789 % 1) - (b.sort * 0.123456789 % 1))
             .map(({ value }) => value);
     }, [projects]);
 

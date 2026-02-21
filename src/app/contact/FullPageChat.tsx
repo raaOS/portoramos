@@ -20,6 +20,7 @@ interface ChatMessage {
 }
 
 export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
+    console.log('[FullPageChat] Rendered, contactInfo:', !!contactInfo);
     // Session state
     const [visitorId, setVisitorId] = useState<string>('');
     const [input, setInput] = useState('');
@@ -30,14 +31,16 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
 
     // Initialize visitor ID on mount
     useEffect(() => {
-        const storedId = sessionStorage.getItem('ramos_visitor_id');
+        document.body.setAttribute('data-page', 'contact');
+        const storedId = localStorage.getItem('ramos_visitor_id');
         if (storedId) {
             setVisitorId(storedId);
         } else {
             const newId = uuidv4();
-            sessionStorage.setItem('ramos_visitor_id', newId);
+            localStorage.setItem('ramos_visitor_id', newId);
             setVisitorId(newId);
         }
+        return () => document.body.removeAttribute('data-page');
     }, []);
 
     // Initial greeting if no messages
@@ -67,10 +70,22 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                 let hasNewAdminMessage = false;
 
                 syncData.messages.forEach((serverMsg: ChatMessage) => {
-                    // Check if we already have it
-                    if (!newMessages.find(m => m.id === serverMsg.id)) {
-                        newMessages.push(serverMsg);
-                        if (serverMsg.sender === 'admin') hasNewAdminMessage = true;
+                    // Try to find a temporary optimistic message that matches this server message
+                    const existingTempIndex = newMessages.findIndex(
+                        m => m.id.startsWith('temp-') && m.text === serverMsg.text && m.sender === serverMsg.sender
+                    );
+
+                    // Check if we already have the confirmed server message
+                    const hasConfirmed = newMessages.find(m => m.id === serverMsg.id);
+
+                    if (!hasConfirmed) {
+                        if (existingTempIndex >= 0) {
+                            // Replace temp message with server message to prevent visual duplicates during network race
+                            newMessages[existingTempIndex] = serverMsg;
+                        } else {
+                            newMessages.push(serverMsg);
+                            if (serverMsg.sender === 'admin') hasNewAdminMessage = true;
+                        }
                     }
                 });
 
@@ -78,8 +93,18 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                     soundManager.play('notification', 0.6);
                 }
 
-                // Sort by timestamp
-                return newMessages.sort((a, b) => a.timestamp - b.timestamp);
+                // Absolute deduplication by ID just in case state got tangled
+                const uniqueMsgs: ChatMessage[] = [];
+                const seenIds = new Set();
+
+                newMessages.sort((a, b) => a.timestamp - b.timestamp).forEach(m => {
+                    if (!seenIds.has(m.id)) {
+                        seenIds.add(m.id);
+                        uniqueMsgs.push(m);
+                    }
+                });
+
+                return uniqueMsgs;
             });
         }
     }, [syncData]);
@@ -122,7 +147,19 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
 
             if (data.success && data.message) {
                 // Replace temp message with server confirmed one
-                setMessages(prev => prev.map(m => m.id === tempId ? data.message : m));
+                setMessages(prev => {
+                    const mapped = prev.map(m => m.id === tempId ? data.message : m);
+                    // Absolute deduplication by ID
+                    const uniqueMsgs: ChatMessage[] = [];
+                    const seenIds = new Set();
+                    mapped.forEach(m => {
+                        if (!seenIds.has(m.id)) {
+                            seenIds.add(m.id);
+                            uniqueMsgs.push(m);
+                        }
+                    });
+                    return uniqueMsgs;
+                });
             }
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -140,7 +177,7 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
     };
 
     return (
-        <SystemNavFrame>
+        <SystemNavFrame hideFooter={true}>
             <div className="relative flex-1 bg-[#0a0a0a] overflow-hidden flex flex-col items-center justify-center pt-28 pb-32 px-4 h-full min-h-[100dvh]">
                 {/* Device Frame Constraint for Desktop */}
                 <div
@@ -218,17 +255,19 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                         <div ref={bottomRef} className="h-2 w-full" />
                     </div>
 
-                    {/* Chat Input Area */}
-                    <div className="bg-[#f0f2f5] dark:bg-[#202c33] px-3 py-3 md:px-4 md:py-4 flex items-end gap-2 shrink-0 z-20">
-                        <div className="flex-1 bg-white dark:bg-[#2a3942] rounded-2xl md:rounded-3xl min-h-[44px] flex items-center px-4 overflow-hidden border border-transparent dark:border-white/5 shadow-sm">
+                    <div className="bg-[#f0f2f5] dark:bg-[#202c33] px-3 py-3 md:px-4 md:py-4 flex items-end gap-2 shrink-0 z-20 no-ring">
+                        <div
+                            className="flex-1 bg-white dark:bg-[#2a3942] rounded-2xl md:rounded-3xl min-h-[44px] flex items-center px-4 overflow-hidden border border-transparent dark:border-white/5 shadow-sm no-ring focus-within:ring-0 focus-within:ring-offset-0"
+                            style={{ boxShadow: 'none', outline: 'none' }}
+                        >
                             <textarea
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 placeholder="Tulis pesan..."
-                                className="flex-1 max-h-[120px] py-3 bg-transparent border-none outline-none resize-none text-[15px] text-[#111b21] dark:text-[#d1d7db] placeholder:text-[#8696a0] scrollbar-hide"
+                                className="flex-1 max-h-[120px] py-3 bg-transparent border-none outline-none resize-none text-[15px] text-[#111b21] dark:text-[#d1d7db] placeholder:text-[#8696a0] scrollbar-hide no-ring"
                                 rows={1}
-                                style={{ minHeight: '44px' }}
+                                style={{ minHeight: '44px', boxShadow: 'none', outline: 'none' }}
                             />
                         </div>
 
@@ -240,7 +279,7 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                                 : 'bg-[#e9edef] dark:bg-[#2a3942] text-[#8696a0] dark:text-[#8696a0] pointer-events-none'
                                 }`}
                         >
-                            <Send className="w-5 h-5 ml-1" />
+                            <Send className="w-5 h-5 -translate-x-[2px] translate-y-[1px]" />
                         </button>
                     </div>
                 </div>

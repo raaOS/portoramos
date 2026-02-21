@@ -223,7 +223,7 @@ export default function LighthouseSiteAuditView() {
                                     <AlertCircle size={32} className="text-gray-300" />
                                 </div>
                                 <h3 className="text-lg font-medium text-gray-600 mb-2">Select a Page</h3>
-                                <p className="max-w-xs mx-auto">Click on any "Complete" row on the left to view the full detailed audit report for that page.</p>
+                                <p className="max-w-xs mx-auto">Click on any &quot;Complete&quot; row on the left to view the full detailed audit report for that page.</p>
                             </div>
                         )}
                     </div>

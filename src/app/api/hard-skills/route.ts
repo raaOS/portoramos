@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getHardSkills, saveHardSkills, HardSkill } from '@/lib/hard-skills';
 
 export async function GET() {
-  const skills = await getHardSkills();
+  const skills = await getHardSkills(true);
   return NextResponse.json(skills);
 }
 

@@ -32,10 +32,18 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
         ...projects.filter(p => p.title.toLowerCase().includes(query.toLowerCase())).map(p => ({ ...p, type: 'project' }))
     ].slice(0, 8);
 
+    // Reset index when opening
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+    if (isOpen && !prevIsOpen) {
+        setSelectedIndex(0);
+        setPrevIsOpen(true);
+    } else if (!isOpen && prevIsOpen) {
+        setPrevIsOpen(false);
+    }
+
     useEffect(() => {
         if (isOpen) {
             inputRef.current?.focus();
-            setSelectedIndex(0);
         }
     }, [isOpen]);
 
@@ -117,7 +125,7 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
                         ))
                     ) : (
                         <div className="px-4 py-8 text-center text-gray-400">
-                            No results for "{query}"
+                            No results for &quot;{query}&quot;
                         </div>
                     )}
                 </div>

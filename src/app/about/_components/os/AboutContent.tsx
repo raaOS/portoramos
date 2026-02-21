@@ -14,30 +14,38 @@ interface AboutContentProps {
     projects?: Project[];
 }
 
+interface MenuButtonProps {
+    id: 'about' | 'cv' | 'philosophy' | 'interests' | 'archive';
+    label: string;
+    count?: string;
+    icon: any;
+    activeTab: string;
+    setActiveTab: (id: any) => void;
+}
+
+const MenuButton = ({ id, label, count, icon: Icon, activeTab, setActiveTab }: MenuButtonProps) => (
+    <button
+        onClick={() => setActiveTab(id)}
+        className={`w-full flex items-center justify-between py-2 rounded-md text-sm transition-colors whitespace-nowrap overflow-hidden ${activeTab === id
+            ? "bg-black/10 text-black font-semibold"
+            : "text-gray-600 hover:bg-black/5"
+            }`}
+        title={label}
+    >
+        <div className="flex items-center gap-0 shrink-0">
+            <div className="w-[48px] flex justify-center shrink-0">
+                <Icon size={16} />
+            </div>
+            <span className="opacity-0 md:opacity-100 transition-opacity duration-300 ml-1">{label}</span>
+        </div>
+        {count && <span className="text-gray-400 text-xs opacity-0 md:opacity-100 transition-opacity duration-300 ml-2 mr-3">{count}</span>}
+    </button>
+);
+
 export default function AboutContent({ aboutData, experienceData, hardSkillsData, projects = [] }: AboutContentProps) {
     const [activeTab, setActiveTab] = useState<'about' | 'cv' | 'philosophy' | 'interests' | 'archive'>('about');
 
     const archiveProjects = projects.filter(p => p.type === 'visual_art');
-
-    const MenuButton = ({ id, label, count, icon: Icon }: { id: typeof activeTab, label: string, count?: string, icon: any }) => (
-        <button
-            onClick={() => setActiveTab(id)}
-            className={`w-full flex items-center justify-between py-2 rounded-md text-sm transition-colors whitespace-nowrap overflow-hidden ${activeTab === id
-                ? "bg-black/10 text-black font-semibold"
-                : "text-gray-600 hover:bg-black/5"
-                }`}
-            title={label}
-        >
-            <div className="flex items-center gap-0 shrink-0">
-                {/* Fixed width container to center icon completely in collapsed mode (68px - 24px padding = 44px content) -> Updated to 48px (72px - 24px) */}
-                <div className="w-[48px] flex justify-center shrink-0">
-                    <Icon size={16} />
-                </div>
-                <span className="opacity-0 md:opacity-100 transition-opacity duration-300 ml-1">{label}</span>
-            </div>
-            {count && <span className="text-gray-400 text-xs opacity-0 md:opacity-100 transition-opacity duration-300 ml-2 mr-3">{count}</span>}
-        </button>
-    );
 
     return (
         <div className="flex h-full w-full bg-[#ECECEC] font-sans">
@@ -64,17 +72,17 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                 <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold px-3 mb-1 opacity-0 md:opacity-100 transition-opacity duration-300 whitespace-nowrap">
                     Personal
                 </div>
-                <MenuButton id="about" label="About me" count="18" icon={User} />
-                <MenuButton id="cv" label="CV" count={experienceData?.workExperience.length ? String(experienceData.workExperience.length) : "0"} icon={FileText} />
-                <MenuButton id="philosophy" label="Philosophy" count="3" icon={Lightbulb} />
-                <MenuButton id="interests" label="Interests" count={(aboutData?.softSkills?.items?.length || aboutData?.softSkills?.texts?.length) ? "∞" : "0"} icon={Heart} />
+                <MenuButton id="about" label="About me" count="18" icon={User} activeTab={activeTab} setActiveTab={setActiveTab} />
+                <MenuButton id="cv" label="CV" count={experienceData?.workExperience.length ? String(experienceData.workExperience.length) : "0"} icon={FileText} activeTab={activeTab} setActiveTab={setActiveTab} />
+                <MenuButton id="philosophy" label="Philosophy" count="3" icon={Lightbulb} activeTab={activeTab} setActiveTab={setActiveTab} />
+                <MenuButton id="interests" label="Interests" count={(aboutData?.softSkills?.items?.length || aboutData?.softSkills?.texts?.length) ? "∞" : "0"} icon={Heart} activeTab={activeTab} setActiveTab={setActiveTab} />
 
                 <div className="h-px bg-gray-300 my-2 mx-1 opacity-0 md:opacity-50 transition-opacity duration-300"></div>
 
                 <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold px-3 mb-1 opacity-0 md:opacity-100 transition-opacity duration-300 whitespace-nowrap">
                     Works
                 </div>
-                <MenuButton id="archive" label="Archive" count={String(archiveProjects.length)} icon={Archive} />
+                <MenuButton id="archive" label="Archive" count={String(archiveProjects.length)} icon={Archive} activeTab={activeTab} setActiveTab={setActiveTab} />
 
                 <div className="mt-auto pt-4 overflow-hidden">
                     <Link
@@ -202,7 +210,7 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                                         {step.desc}
                                     </p>
                                     <div className="text-xs text-gray-500 italic border-l-2 border-orange-200 pl-2">
-                                        "{step.quote}"
+                                        &quot;{step.quote}&quot;
                                     </div>
                                 </div>
                             )) || (

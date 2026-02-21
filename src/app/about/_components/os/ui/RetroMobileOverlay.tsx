@@ -26,9 +26,22 @@ const SadMacIcon = () => (
 export default function RetroMobileOverlay() {
     const [step, setStep] = useState<"boot" | "error" | "details">("boot");
     const [progress, setProgress] = useState(0);
-    const [locale, setLocale] = useState<"id" | "en">("en");
+    const [locale, setLocale] = useState<"id" | "en">(() => {
+        // Safe check for locale during initialization if possible
+        if (typeof Intl !== 'undefined') {
+            try {
+                const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const indonesianTz = ["Asia/Jakarta", "Asia/Pontianak", "Asia/Makassar", "Asia/Jayapura"];
+                if (indonesianTz.includes(tz)) return "id";
+            } catch (e) { }
+        }
+        return "en";
+    });
     const [copied, setCopied] = useState(false);
-    const [siteUrl, setSiteUrl] = useState("");
+    const [siteUrl, setSiteUrl] = useState(() => {
+        if (typeof window !== 'undefined') return window.location.origin;
+        return "";
+    });
 
     // Sound effect on error
     useEffect(() => {
@@ -52,24 +65,8 @@ export default function RetroMobileOverlay() {
         };
     }, []);
 
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            setSiteUrl(window.location.origin);
-        }
-    }, []);
 
-    // Language Detection (Timezone based)
-    useEffect(() => {
-        try {
-            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const indonesianTz = ["Asia/Jakarta", "Asia/Pontianak", "Asia/Makassar", "Asia/Jayapura"];
-            if (indonesianTz.includes(tz)) {
-                setLocale("id");
-            }
-        } catch (e) {
-            console.error("Locale detection failed", e);
-        }
-    }, []);
+    // Locale is now initialized in useState to avoid cascading render
 
     const t = {
         id: {

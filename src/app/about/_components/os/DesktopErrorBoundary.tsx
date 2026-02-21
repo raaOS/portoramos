@@ -51,7 +51,7 @@ export default class DesktopErrorBoundary extends Component<Props, State> {
                             Your PC ran into a problem and needs to restart.
                         </h1>
                         <p className="text-xl mb-8">
-                            We're just collecting some error info, and then we'll restart for you.
+                            We&apos;re just collecting some error info, and then we&apos;ll restart for you.
                         </p>
 
                         <div className="bg-white/10 p-4 rounded-lg w-full mb-8 font-mono text-sm">

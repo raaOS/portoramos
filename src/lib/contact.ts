@@ -6,7 +6,7 @@ import { githubService } from '@/lib/github';
 const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'contact.json');
 const GITHUB_PATH = 'src/data/contact.json';
 
-export async function getContactData(): Promise<ContactData | null> {
+export async function getContactData(noCache = false): Promise<ContactData | null> {
     const isDev = process.env.NODE_ENV === 'development';
     let data: ContactData | null = null;
 
@@ -17,7 +17,7 @@ export async function getContactData(): Promise<ContactData | null> {
         } else {
             // Fallback or specific logic if needed for GitHub fetch
             try {
-                const ghData = await githubService.getFileContent<ContactData>(GITHUB_PATH, true);
+                const ghData = await githubService.getFileContent<ContactData>(GITHUB_PATH, noCache);
                 data = ghData.content;
             } catch (e) {
                 console.warn('Failed to fetch contact from GitHub via LIB, falling back or returning null', e);

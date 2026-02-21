@@ -15,7 +15,7 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
     const [pin, setPin] = useState(['', '', '', '']);
     const [isVerifying, setIsVerifying] = useState(false);
     const [error, setError] = useState(false);
-    const inputRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
+    const inputRefs = React.useMemo(() => [React.createRef<HTMLInputElement>(), React.createRef<HTMLInputElement>(), React.createRef<HTMLInputElement>(), React.createRef<HTMLInputElement>()], []);
 
     const [mounted, setMounted] = useState(false);
 
@@ -27,10 +27,13 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
         if (isOpen) {
             setPin(['', '', '', '']);
             setError(false);
-            const timer = setTimeout(() => inputRefs[0].current?.focus(), 100);
+            const timer = setTimeout(() => {
+                const firstInput = inputRefs[0].current;
+                if (firstInput) firstInput.focus();
+            }, 100);
             return () => clearTimeout(timer);
         }
-    }, [isOpen]);
+    }, [isOpen, inputRefs]);
 
     const handlePinChange = async (index: number, value: string) => {
         if (!/^\d*$/.test(value)) return;

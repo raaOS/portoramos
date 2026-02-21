@@ -11,8 +11,8 @@ export const aboutService = {
      * 
      * @returns A promise that resolves to the AboutData.
      */
-    async getAboutData() {
-        return await service.getData();
+    async getAboutData(noCache = false) {
+        return await service.getData(noCache);
     },
 
     /**

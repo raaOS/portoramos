@@ -35,65 +35,72 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
     const [isInitialized, setIsInitialized] = useState(false);
 
     // Initialize windows based on server preferences (aboutData.windowPreferences)
-    useEffect(() => {
-        if (aboutData && !isInitialized) {
-            setWindows(prev => prev.map(w => {
-                const pref = aboutData?.windowPreferences?.[w.id];
+    // Synchronous update in render to avoid cascading useEffect render
+    const [lastAboutData, setLastAboutData] = useState(aboutData);
+    if (aboutData && !isInitialized && aboutData !== lastAboutData) {
+        const initializedWindows = windows.map(w => {
+            const pref = aboutData?.windowPreferences?.[w.id];
 
-                let rawWidth = pref?.width || w.width || 800;
-                let rawHeight = pref?.height || w.height || 600;
-                const isPinned = pref?.isOpenByDefault || false;
+            let rawWidth = pref?.width || w.width || 800;
+            let rawHeight = pref?.height || w.height || 600;
+            const isPinned = pref?.isOpenByDefault || false;
 
-                const getCenterPosition = (w: number, h: number) => {
-                    if (typeof window === 'undefined') return { x: 0, y: 0 };
-                    const safeWidth = window.innerWidth || 1200;
-                    const safeHeight = window.innerHeight || 800;
-                    const x = Math.max(0, (safeWidth - w) / 2);
-                    const y = Math.max(30, (safeHeight - h) / 2);
-                    return { x, y };
-                };
-
-                // Mobile logic
-                const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-                let width = rawWidth;
-                let height = rawHeight;
-
-                if (isMobile) {
-                    width = Math.min(rawWidth, window.innerWidth * 0.95);
-                    height = Math.min(rawHeight, window.innerHeight * 0.8);
-                }
-
-                const initialPosition = (pref && pref.x !== undefined && pref.y !== undefined && !isMobile)
-                    ? { x: pref.x, y: pref.y }
-                    : getCenterPosition(width, height);
-
-                let isOpen = w.isOpen;
-                if (!isInitialized) {
-                    isOpen = pref?.isOpenByDefault || w.isOpen;
-                }
-
+            const getCenterPositionStatic = (width: number, height: number) => {
+                const safeWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+                const safeHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
                 return {
-                    ...w,
-                    isOpen,
-                    isPinned,
-                    width,
-                    height,
-                    initialPosition
+                    x: Math.max(0, (safeWidth - width) / 2),
+                    y: Math.max(30, (safeHeight - height) / 2)
                 };
-            }));
+            };
+
+            // Mobile logic
+            const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+            let width = rawWidth;
+            let height = rawHeight;
+
+            if (isMobile) {
+                width = Math.min(rawWidth, window.innerWidth * 0.95);
+                height = Math.min(rawHeight, window.innerHeight * 0.8);
+            }
+
+            const initialPosition = (pref && pref.x !== undefined && pref.y !== undefined && !isMobile)
+                ? { x: pref.x, y: pref.y }
+                : getCenterPositionStatic(width, height);
+
+            let isOpen = w.isOpen;
+            if (!isInitialized) {
+                isOpen = pref?.isOpenByDefault || w.isOpen;
+            }
+
+            return {
+                ...w,
+                isOpen,
+                isPinned,
+                width,
+                height,
+                initialPosition
+            };
+        });
+
+        requestAnimationFrame(() => {
+            setWindows(initializedWindows);
             setIsInitialized(true);
-        }
-    }, [aboutData, isInitialized]);
+            setLastAboutData(aboutData);
+        });
+    }
 
     // Content Sync Effect: Update window content when initialWindows (and underlying data) changes
     useEffect(() => {
-        setWindows(prev => prev.map(w => {
-            const fresh = initialWindows.find(fw => fw.id === w.id);
-            if (fresh && fresh.content !== w.content) {
-                return { ...w, content: fresh.content };
-            }
-            return w;
-        }));
+        requestAnimationFrame(() => {
+            setWindows(prev => prev.map(w => {
+                const fresh = initialWindows.find(fw => fw.id === w.id);
+                if (fresh && fresh.content !== w.content) {
+                    return { ...w, content: fresh.content };
+                }
+                return w;
+            }));
+        });
     }, [initialWindows]);
 
     // Bounce cleanup - OPTIMIZED dengan cleanup yang benar
@@ -112,7 +119,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
      * @param id - Window ID
      * @param updates - Positional or state updates
      */
-    const saveWindowPreference = async (id: string, updates: Partial<{ x: number, y: number, width: number, height: number, isOpenByDefault: boolean }>) => {
+    const saveWindowPreference = useCallback(async (id: string, updates: Partial<{ x: number, y: number, width: number, height: number, isOpenByDefault: boolean }>) => {
         if (!aboutData) return;
         try {
             const currentPrefs = aboutData.windowPreferences || {};
@@ -133,7 +140,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
         } catch (e) {
             // Silently ignore window preference save errors
         }
-    };
+    }, [aboutData, csrfToken]);
 
     const isWindowOpen = useCallback((id: string) => windows.find(w => w.id === id)?.isOpen ?? false, [windows]);
 
@@ -249,7 +256,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
             if (prev > 9000) return 20;
             return prev + 1;
         });
-    }, [aboutData, playOpen, topZIndex]);
+    }, [aboutData, playOpen, topZIndex, getCenterPosition]);
 
     const closeWindow = useCallback((id: string) => {
         setWindows(prev => prev.map(w => {
@@ -293,7 +300,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
             }
             return w;
         }));
-    }, [aboutData]);
+    }, [saveWindowPreference]);
 
     const handleWindowResize = useCallback((id: string, width: number, height: number) => {
         setWindows(prev => prev.map(w => {
@@ -341,7 +348,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
         } catch (error) {
             console.error("Failed to save window size:", error instanceof Error ? error.message : error);
         }
-    }, []);
+    }, [csrfToken]);
 
     const handleWindowResizeEnd = useCallback((id: string, width: number, height: number) => {
         // Access latest state via setWindows callback to check isPinned
@@ -374,7 +381,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
             }
             return w;
         }));
-    }, [aboutData]);
+    }, [saveWindowPreference]);
 
     const resetWindows = useCallback(() => {
         setWindows(prev => prev.map(w => ({ ...w, isOpen: false, isMinimized: false, isMaximized: false })));

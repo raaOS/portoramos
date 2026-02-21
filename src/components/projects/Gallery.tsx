@@ -73,7 +73,7 @@ export default function Gallery({
   }, [])
 
   useEffect(() => {
-    setIsClient(true)
+    requestAnimationFrame(() => setIsClient(true))
   }, [])
 
   useEffect(() => {

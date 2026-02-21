@@ -52,10 +52,10 @@ export default function ProjectDetailTwoColumn({
         if (typeof window !== 'undefined') {
             const savedLike = localStorage.getItem(`like-${project.slug}`);
             if (savedLike === 'true') {
-                setIsProjectLiked(true);
+                requestAnimationFrame(() => setIsProjectLiked(true));
             }
         }
-        setIsLoaded(true);
+        requestAnimationFrame(() => setIsLoaded(true));
     }, [project.slug]);
 
     // Defer non-critical API calls to improve initial load time
@@ -383,7 +383,7 @@ export default function ProjectDetailTwoColumn({
                                             {project.narrative.context && (
                                                 <div className="mb-8 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
                                                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Konteks</h3>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-300 italic">"{project.narrative.context}"</p>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-300 italic">&quot;{project.narrative.context}&quot;</p>
                                                 </div>
                                             )}
 

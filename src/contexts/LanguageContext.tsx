@@ -21,9 +21,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         // Load saved language or default to 'en'
         const savedLang = localStorage.getItem('pixel_portfolio_lang') as Language;
         if (savedLang && (savedLang === 'en' || savedLang === 'id')) {
-            setLanguage(savedLang);
+            requestAnimationFrame(() => setLanguage(savedLang));
         }
-        setMounted(true);
+        requestAnimationFrame(() => setMounted(true));
     }, []);
 
     const handleSetLanguage = (lang: Language) => {

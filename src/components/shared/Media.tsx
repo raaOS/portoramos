@@ -110,7 +110,10 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   // No state for reduceMotion to avoid re-renders. Read direct if needed or just assume false for perf.
 
   // Mobile Optimization State
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') return window.innerWidth < 768;
+    return false;
+  });
   const manualPlayRef = useRef(false)
   const loadTimerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -125,8 +128,6 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
       setIsMobile(prev => prev === mobile ? prev : mobile); // Only update if changed
     }
 
-    // Initial check
-    checkMobile();
 
     const debouncedResize = () => {
       clearTimeout(timeoutId);
@@ -142,7 +143,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
 
   // Track mount state
   useEffect(() => {
-    setIsMounted(true)
+    requestAnimationFrame(() => setIsMounted(true))
     return () => setIsMounted(false)
   }, [])
 

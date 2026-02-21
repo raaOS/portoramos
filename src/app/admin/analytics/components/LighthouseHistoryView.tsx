@@ -54,7 +54,7 @@ export default function LighthouseHistoryView() {
             <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
                 <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">No audit history found yet.</p>
-                <p className="text-sm text-gray-400">Run an audit in the "Audit" tab to start tracking.</p>
+                <p className="text-sm text-gray-400">Run an audit in the &quot;Audit&quot; tab to start tracking.</p>
             </div>
         );
     }
@@ -133,7 +133,7 @@ export default function LighthouseHistoryView() {
                                     <td className="px-6 py-4 text-gray-900 truncate max-w-[200px]" title={item.url}>{item.url}</td>
                                     <td className="px-6 py-4 text-center">
                                         <span className={`inline-flex items-center justify-center px-2 py-1 rounded-full text-xs font-bold ${item.scores.performance >= 90 ? 'bg-emerald-100 text-emerald-700' :
-                                                item.scores.performance >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                                            item.scores.performance >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
                                             }`}>
                                             {item.scores.performance}
                                         </span>

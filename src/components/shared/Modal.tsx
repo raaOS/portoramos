@@ -9,6 +9,14 @@ export default function Modal({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(true);
 
+    const handleClose = () => {
+        setIsOpen(false);
+        // Wait for animation to finish then navigate back
+        setTimeout(() => {
+            router.back();
+        }, 250);
+    };
+
     // Close modal on escape key
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -27,14 +35,6 @@ export default function Modal({ children }: { children: React.ReactNode }) {
             document.body.style.overflow = 'unset';
         };
     }, []);
-
-    const handleClose = () => {
-        setIsOpen(false);
-        // Wait for animation to finish then navigate back
-        setTimeout(() => {
-            router.back();
-        }, 250);
-    };
 
     return (
         <AnimatePresence>

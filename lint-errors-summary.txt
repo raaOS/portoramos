@@ -1,0 +1,330 @@
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\admin\VideoTrimmer.tsx
+  [react-hooks/set-state-in-effect] Line 36: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\components\admin\VideoTrimmer.tsx:36:9
+  34 |         if (!file) return;
+  35 |         const url = URL.createObjectURL(file);
+> 36 |         setVideoSrc(url);
+     |         ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  37 |
+  38 |         return () => {
+  39 |             URL.revokeObjectURL(url);
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\admin\about\DesignPhilosophyForm.tsx
+  [react/no-unescaped-entities] Line 111: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.
+  [react/no-unescaped-entities] Line 111: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\gallery\GalleryMini.tsx
+  [react-hooks/set-state-in-effect] Line 45: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\components\gallery\GalleryMini.tsx:45:5
+  43 |
+  44 |   useEffect(() => {
+> 45 |     setIsClient(true);
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  46 |   }, []);
+  47 |
+  48 |   const handleImageClick = (index: number) => {
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\layout\GlobalDock.tsx
+  [react-hooks/preserve-manual-memoization] Line 22: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `handleAppLaunch`, but the source dependencies were [router, isWindowOpen, dockConfig]. Inferred different dependency than source.
+
+C:\Users\USER\Documents\portfolio-shared\src\components\layout\GlobalDock.tsx:22:29
+  20 |   };
+  21 |
+> 22 |   const dockItems = useMemo(() => {
+     |                             ^^^^^^^
+> 23 |     const defaultItems = [
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |       {
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |     return getDockItemConfig(defaultItems, dockConfig);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |   }, [router, isWindowOpen, dockConfig]);
+     | ^^^^ Could not preserve existing manual memoization
+  68 |
+  69 |   // Don't render on admin, home (OS desktop has its own), or about pages
+  70 |   if (pathname?.startsWith('/admin') || pathname === '/' || pathname?.startsWith('/about')) {
+  [react-hooks/preserve-manual-memoization] Line 22: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `handleAppLaunch`, but the source dependencies were [router, isWindowOpen, dockConfig]. Inferred different dependency than source.
+
+C:\Users\USER\Documents\portfolio-shared\src\components\layout\GlobalDock.tsx:22:29
+  20 |   };
+  21 |
+> 22 |   const dockItems = useMemo(() => {
+     |                             ^^^^^^^
+> 23 |     const defaultItems = [
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |       {
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |     return getDockItemConfig(defaultItems, dockConfig);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |   }, [router, isWindowOpen, dockConfig]);
+     | ^^^^ Could not preserve existing manual memoization
+  68 |
+  69 |   // Don't render on admin, home (OS desktop has its own), or about pages
+  70 |   if (pathname?.startsWith('/admin') || pathname === '/' || pathname?.startsWith('/about')) {
+  [react-hooks/preserve-manual-memoization] Line 22: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `handleAppLaunch`, but the source dependencies were [router, isWindowOpen, dockConfig]. Inferred different dependency than source.
+
+C:\Users\USER\Documents\portfolio-shared\src\components\layout\GlobalDock.tsx:22:29
+  20 |   };
+  21 |
+> 22 |   const dockItems = useMemo(() => {
+     |                             ^^^^^^^
+> 23 |     const defaultItems = [
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |       {
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |     return getDockItemConfig(defaultItems, dockConfig);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |   }, [router, isWindowOpen, dockConfig]);
+     | ^^^^ Could not preserve existing manual memoization
+  68 |
+  69 |   // Don't render on admin, home (OS desktop has its own), or about pages
+  70 |   if (pathname?.startsWith('/admin') || pathname === '/' || pathname?.startsWith('/about')) {
+  [react-hooks/preserve-manual-memoization] Line 22: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `handleAppLaunch`, but the source dependencies were [router, isWindowOpen, dockConfig]. Inferred different dependency than source.
+
+C:\Users\USER\Documents\portfolio-shared\src\components\layout\GlobalDock.tsx:22:29
+  20 |   };
+  21 |
+> 22 |   const dockItems = useMemo(() => {
+     |                             ^^^^^^^
+> 23 |     const defaultItems = [
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |       {
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |     return getDockItemConfig(defaultItems, dockConfig);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |   }, [router, isWindowOpen, dockConfig]);
+     | ^^^^ Could not preserve existing manual memoization
+  68 |
+  69 |   // Don't render on admin, home (OS desktop has its own), or about pages
+  70 |   if (pathname?.startsWith('/admin') || pathname === '/' || pathname?.startsWith('/about')) {
+  [react-hooks/preserve-manual-memoization] Line 22: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `handleAppLaunch`, but the source dependencies were [router, isWindowOpen, dockConfig]. Inferred different dependency than source.
+
+C:\Users\USER\Documents\portfolio-shared\src\components\layout\GlobalDock.tsx:22:29
+  20 |   };
+  21 |
+> 22 |   const dockItems = useMemo(() => {
+     |                             ^^^^^^^
+> 23 |     const defaultItems = [
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |       {
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |     return getDockItemConfig(defaultItems, dockConfig);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |   }, [router, isWindowOpen, dockConfig]);
+     | ^^^^ Could not preserve existing manual memoization
+  68 |
+  69 |   // Don't render on admin, home (OS desktop has its own), or about pages
+  70 |   if (pathname?.startsWith('/admin') || pathname === '/' || pathname?.startsWith('/about')) {
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\layout\MasonryGrid.tsx
+  [react-hooks/set-state-in-effect] Line 80: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\components\layout\MasonryGrid.tsx:80:9
+  78 |
+  79 |     useEffect(() => {
+> 80 |         setMounted(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  81 |
+  82 |         const updateCallback = (w: number) => {
+  83 |             setColumnCount(getCols(w));
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\projects\Gallery.tsx
+  [react-hooks/set-state-in-effect] Line 76: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\components\projects\Gallery.tsx:76:5
+  74 |
+  75 |   useEffect(() => {
+> 76 |     setIsClient(true)
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  77 |   }, [])
+  78 |
+  79 |   useEffect(() => {
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\projects\ProjectDetailTwoColumn.tsx
+  [react-hooks/set-state-in-effect] Line 55: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\components\projects\ProjectDetailTwoColumn.tsx:55:17
+  53 |             const savedLike = localStorage.getItem(`like-${project.slug}`);
+  54 |             if (savedLike === 'true') {
+> 55 |                 setIsProjectLiked(true);
+     |                 ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  56 |             }
+  57 |         }
+  58 |         setIsLoaded(true);
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\shared\Media.tsx
+  [react-hooks/set-state-in-effect] Line 146: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\components\shared\Media.tsx:146:5
+  144 |   // Track mount state
+  145 |   useEffect(() => {
+> 146 |     setIsMounted(true)
+      |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  147 |     return () => setIsMounted(false)
+  148 |   }, [])
+  149 |
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\ui\AutoSaveStatus.tsx
+  [react-hooks/set-state-in-effect] Line 15: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\components\ui\AutoSaveStatus.tsx:15:7
+  13 |   useEffect(() => {
+  14 |     if (status === 'saved') {
+> 15 |       setShowSaved(true)
+     |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  16 |       const timer = setTimeout(() => setShowSaved(false), 2000)
+  17 |       return () => clearTimeout(timer)
+  18 |     }
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\ui\FastMarquee.tsx
+  [react-hooks/set-state-in-effect] Line 25: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\components\ui\FastMarquee.tsx:25:5
+  23 |
+  24 |   useEffect(() => {
+> 25 |     setReady(true);
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  26 |   }, []);
+  27 |
+  28 |   const animationClass = direction === 'left' ? 'animate-fast-marquee' : 'animate-fast-marquee-reverse';
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\ui\LoveButton.tsx
+  [react-hooks/set-state-in-effect] Line 28: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\components\ui\LoveButton.tsx:28:7
+  26 |     if (savedState) {
+  27 |       const { isLoved: savedLoved, likes: savedLikes } = JSON.parse(savedState);
+> 28 |       setIsLoved(savedLoved);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  29 |       setLikes(savedLikes);
+  30 |     }
+  31 |   }, [projectId]);
+FILE: C:\Users\USER\Documents\portfolio-shared\src\components\ui\Toast.tsx
+  [react-hooks/set-state-in-effect] Line 16: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\components\ui\Toast.tsx:16:5
+  14 |   
+  15 |   useEffect(()=>{
+> 16 |     setIsAnimating(true)
+     |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  17 |     const t = setTimeout(()=>{ 
+  18 |       setShow(false)
+  19 |       setTimeout(() => {
+FILE: C:\Users\USER\Documents\portfolio-shared\src\contexts\FeatureFlagsContext.tsx
+  [react-hooks/set-state-in-effect] Line 51: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\contexts\FeatureFlagsContext.tsx:51:17
+  49 |             try {
+  50 |                 const parsed = JSON.parse(savedFlags);
+> 51 |                 setFlags((prev) => ({ ...prev, ...parsed }));
+     |                 ^^^^^^^^ Avoid calling setState() directly within an effect
+  52 |             } catch (error) {
+  53 |                 console.error('Failed to parse feature flags:', error);
+  54 |             }
+FILE: C:\Users\USER\Documents\portfolio-shared\src\contexts\I18nContext.tsx
+  [react-hooks/set-state-in-effect] Line 24: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\contexts\I18nContext.tsx:24:13
+  22 |         const savedLocale = localStorage.getItem('locale') as Language;
+  23 |         if (savedLocale && (savedLocale === 'id' || savedLocale === 'en')) {
+> 24 |             setLocale(savedLocale);
+     |             ^^^^^^^^^ Avoid calling setState() directly within an effect
+  25 |         }
+  26 |     }, []);
+  27 |
+FILE: C:\Users\USER\Documents\portfolio-shared\src\contexts\LanguageContext.tsx
+  [react-hooks/set-state-in-effect] Line 24: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\USER\Documents\portfolio-shared\src\contexts\LanguageContext.tsx:24:13
+  22 |         const savedLang = localStorage.getItem('pixel_portfolio_lang') as Language;
+  23 |         if (savedLang && (savedLang === 'en' || savedLang === 'id')) {
+> 24 |             setLanguage(savedLang);
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  25 |         }
+  26 |         setMounted(true);
+  27 |     }, []);

@@ -1,35 +1,32 @@
-import { Metadata } from "next";
-import SequenceGenerator from "./_components/SequenceGenerator";
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import SequenceList from "./_components/SequenceList";
+import SequenceGenerator from "./_components/SequenceGenerator";
 
 export const metadata: Metadata = {
-    title: "Sequence Generator | Admin Dashboard",
+    title: 'Image Sequence Generator | Admin',
 };
 
 export default function SequencesPage() {
     return (
-        <div className="space-y-8 max-w-4xl">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Image Sequence Generator</h1>
-                <p className="text-muted-foreground mt-2">
-                    Convert Video files (.mp4) into optimized Image Sequences (.webp) for scroll animations.
-                </p>
-            </div>
-
-            <div className="grid gap-8">
-                {/* Generator Section */}
-                <div className="bg-card border rounded-xl p-6 shadow-sm">
-                    <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                        ✨ New Generation
-                    </h2>
-                    <SequenceGenerator />
+        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading sequence editor...</div>}>
+            <div className="space-y-8 max-w-4xl">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Image Sequence Generator</h1>
+                    <p className="text-gray-500 mt-2 text-lg">
+                        Upload zip file berisi sequence frame dan generate file konfigurasi JSON.
+                    </p>
                 </div>
 
-                {/* Manager Section */}
-                <div className="bg-card border rounded-xl p-6 shadow-sm">
-                    <SequenceList />
+                <div className="grid gap-8">
+                    <div className="bg-card border rounded-xl p-6 shadow-sm">
+                        <SequenceGenerator />
+                    </div>
+                    <div className="bg-card border rounded-xl p-6 shadow-sm">
+                        <SequenceList />
+                    </div>
                 </div>
             </div>
-        </div>
+        </Suspense>
     );
 }

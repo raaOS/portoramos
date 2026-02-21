@@ -9,10 +9,13 @@ import { usePathname } from 'next/navigation';
 interface SystemNavFrameProps {
     children: React.ReactNode;
     title?: string;
+    hideFooter?: boolean;
 }
 
-export default function SystemNavFrame({ children, title }: SystemNavFrameProps) {
+export default function SystemNavFrame({ children, title, hideFooter }: SystemNavFrameProps) {
     const pathname = usePathname();
+    const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
+    const effectiveHideFooter = hideFooter || isContact;
 
     // Generate Breadcrumbs from pathname
     const pathSegments = pathname.split('/').filter(Boolean);
@@ -73,18 +76,20 @@ export default function SystemNavFrame({ children, title }: SystemNavFrameProps)
             </motion.div>
 
             {/* Minimal Retro Footer (Print Hidden) */}
-            <footer className="w-full py-6 px-8 border-t border-gray-100 bg-gray-50/50 print:hidden mt-auto">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
-                        Handcrafted with passion & Precision
+            {!effectiveHideFooter && (
+                <footer className="w-full py-6 px-8 border-t border-gray-100 bg-gray-50/50 print:hidden mt-auto">
+                    <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
+                            Handcrafted with passion & Precision
+                        </div>
+                        <div className="flex gap-6">
+                            <Link href="/" className="text-[10px] text-gray-500 hover:text-black transition-colors uppercase tracking-widest font-bold">Back to OS</Link>
+                            <Link href="/cv" className="text-[10px] text-gray-500 hover:text-black transition-colors uppercase tracking-widest font-bold">Resume</Link>
+                            <Link href="/contact" className="text-[10px] text-gray-500 hover:text-black transition-colors uppercase tracking-widest font-bold">Contact</Link>
+                        </div>
                     </div>
-                    <div className="flex gap-6">
-                        <Link href="/" className="text-[10px] text-gray-500 hover:text-black transition-colors uppercase tracking-widest font-bold">Back to OS</Link>
-                        <Link href="/cv" className="text-[10px] text-gray-500 hover:text-black transition-colors uppercase tracking-widest font-bold">Resume</Link>
-                        <Link href="/contact" className="text-[10px] text-gray-500 hover:text-black transition-colors uppercase tracking-widest font-bold">Contact</Link>
-                    </div>
-                </div>
-            </footer>
+                </footer>
+            )}
         </div>
     );
 }

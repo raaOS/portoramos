@@ -24,10 +24,12 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
     const [mediaError, setMediaError] = useState(false);
     const [hovering, setHovering] = useState(false);
 
-    // Reset error state when media changes
-    useEffect(() => {
+    // Track URLs to reset error state when they change
+    const [lastUrls, setLastUrls] = useState({ imageUrl, videoUrl });
+    if (lastUrls.imageUrl !== imageUrl || lastUrls.videoUrl !== videoUrl) {
         setMediaError(false);
-    }, [imageUrl, videoUrl]);
+        setLastUrls({ imageUrl, videoUrl });
+    }
 
     // Motion Values for smooth coordinate handling (avoids jump on drag end)
     const iconX = useMotionValue(x);
@@ -74,8 +76,6 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
             dragElastic={0.1}
             onDragStart={handleDragStart}
             onDragEnd={(e, info) => {
-                // Precision Fix: Use info.point which is relative to the viewport, 
-                // but since our style is absolute and top/left are 0, we can calculate delta or use internal values
                 handleDragEnd();
             }}
             data-lenis-prevent

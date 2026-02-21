@@ -15,157 +15,173 @@ export async function POST(request: Request) {
         if (body.message && body.message.text) {
             const incomingChatId = body.message.chat.id.toString();
             const text = body.message.text.trim();
-            const isAdmin = incomingChatId === adminChatId;
+            const threadId = body.message.message_thread_id;
+            const groupId = process.env.TELEGRAM_GROUP_ID;
 
-            // Store messages to be sent (allows sending multiple bubbles)
-            const messagesToSend: { text: string; reply_markup?: any }[] = [];
+            const isAdmin = incomingChatId === adminChatId || (groupId && incomingChatId === groupId);
 
-            // --- ADMIN LOGIC ---
-            if (isAdmin && text.startsWith('/')) {
-                const command = text.split(' ')[0];
+            // Find visitorId context if we are in a Topic or Replying to an old DM
+            let currentVisitorId: string | null = null;
+            const { chatStore } = await import('@/lib/chatStore');
 
-                if (command === '/leads') {
-                    // Read leads.json
-                    let leadsPath = '';
-                    try {
-                        leadsPath = path.join(process.cwd(), 'src/data/leads.json');
-                        const fileContent = await fs.readFile(leadsPath, 'utf-8');
-                        let leads = JSON.parse(fileContent);
-
-                        // Fix: leads.json structure is { leads: [...] }, not just [...]
-                        if (!Array.isArray(leads) && leads.leads) {
-                            leads = leads.leads;
-                        }
-
-                        // Get last 5 leads
-                        const lastLeads = Array.isArray(leads) ? leads.slice(-5).reverse() : [];
-
-                        if (lastLeads.length === 0) {
-                            messagesToSend.push({ text: "📭 *Belum ada pesan masuk.*" });
-                        } else {
-                            messagesToSend.push({ text: "📬 *5 Pesan Terakhir:*" });
-
-                            lastLeads.forEach((l: any, i: number) => {
-                                // Format Phone & WA Link
-                                let phone = l.contact || '-';
-                                let waUrl = null;
-
-                                if (phone !== '-') {
-                                    let cleanPhone = phone.replace(/\D/g, '');
-                                    if (cleanPhone.startsWith('0')) {
-                                        cleanPhone = '62' + cleanPhone.slice(1);
-                                    }
-                                    waUrl = `https://wa.me/${cleanPhone}`;
-                                }
-
-                                // Cleaner message format for the card
-                                const msgText = `*${i + 1}. ${l.name}*\n` +
-                                    `📧 ${l.email}\n` +
-                                    `📱 ${phone}\n` +
-                                    `💬 _"${l.message.trim().substring(0, 100)}${l.message.length > 100 ? '...' : ''}"_`;
-
-                                const msgPayload: any = { text: msgText };
-
-                                // Add Inline Button if WA is valid
-                                if (waUrl) {
-                                    msgPayload.reply_markup = {
-                                        inline_keyboard: [[{ text: "💬 Chat WhatsApp", url: waUrl }]]
-                                    };
-                                }
-
-                                messagesToSend.push(msgPayload);
-                            });
-                        }
-                    } catch (error: any) {
-                        console.error('Leads Read Error:', error);
-                        messagesToSend.push({ text: `❌ Gagal baca database.\nError: ${error.message}\nPath: ${leadsPath}` });
-                    }
-                }
-                else if (command === '/status') {
-                    const uptime = process.uptime();
-                    const hours = Math.floor(uptime / 3600);
-                    const minutes = Math.floor((uptime % 3600) / 60);
-
-                    messagesToSend.push({
-                        text: `✅ *Server Online*\n` +
-                            `🕒 *Time:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}\n` +
-                            `⏱ *Uptime:* ${hours}j ${minutes}m`
-                    });
-                }
-                else if (command === '/prop') {
-                    const jobContent = text.replace('/prop', '').trim();
-                    if (!jobContent) {
-                        await sendImmediate(incomingChatId, "❌ *Harap sertakan deskripsi atau link lowongan.*\nContoh: `/prop butuh editor video tiktok`", botToken);
-                    } else {
-                        await sendImmediate(incomingChatId, "🤖 *Sedang meracik proposal maut... (Sabar ya Bos, mikir dulu)*", botToken);
-
-                        try {
-                            const { aiProposalService } = await import('@/lib/services/aiProposalService');
-                            const proposal = await aiProposalService.generateProposalForJob(jobContent);
-                            await sendImmediate(incomingChatId, proposal, botToken);
-                        } catch (err: any) {
-                            await sendImmediate(incomingChatId, `❌ *Gagal generate:* ${err.message}`, botToken);
-                        }
-                    }
-                    return NextResponse.json({ ok: true });
-                }
-                else if (command === '/resume' || command === '/cv') {
-                    const jobContent = text.replace(command, '').trim();
-                    if (!jobContent) {
-                        await sendImmediate(incomingChatId, "❌ *Harap sertakan deskripsi atau link lowongan.*\nContoh: `/resume loker editor startup` ", botToken);
-                    } else {
-                        await sendImmediate(incomingChatId, "📑 *Menganalisa loker & meracik ATS Resume... (Sedang digodok Bos)*", botToken);
-
-                        try {
-                            const { atsService } = await import('@/lib/services/atsService');
-                            const { pdfBuffer, hrMessage, analysis } = await atsService.tailorResume(jobContent);
-
-                            // Send Analysis first
-                            await sendImmediate(incomingChatId, "🔍 *AI Strategy Analysis:*\n\n" + analysis, botToken);
-
-                            // Send the PDF
-                            const { sendTelegramDocument } = await import('@/lib/telegram');
-                            await sendTelegramDocument(`Resume_Ramos_ATS.pdf`, pdfBuffer, "📄 *Resume ATS-Friendly* sudah siap!");
-
-                            // Send the HR message
-                            await sendImmediate(incomingChatId, "💬 *Pesan Intro buat HRD (Tinggal Copy):*\n\n" + hrMessage, botToken);
-                        } catch (err: any) {
-                            await sendImmediate(incomingChatId, `❌ *Gagal:* ${err.message}`, botToken);
-                        }
-                    }
-                    return NextResponse.json({ ok: true });
-                }
-                else if (command === '/help') {
-                    messagesToSend.push({
-                        text: `🛠 *Admin Commands*\n\n` +
-                            `/resume [detail] - AI bikin Resume ATS (PDF) + Pesan HRD!\n` +
-                            `/prop [detail] - AI bikin Proposal Lamaran maut!\n` +
-                            `/leads - Cek 5 pesan terakhir\n` +
-                            `/help - Tampilkan menu ini\n` +
-                            `/status - Cek status server`
-                    });
-                }
-                else if (body.message.reply_to_message) {
-                    // This is a reply to a previous message.
-                    // Route it to our chatStore so the web client can poll it.
-                    const replyToId = body.message.reply_to_message.message_id;
-                    const { chatStore } = await import('@/lib/chatStore');
-
-                    const routed = chatStore.addAdminReply(replyToId, text);
-                    if (routed) {
-                        // Success! The web client will pick this up via polling.
-                        // We can send a checkmark to the admin to confirm delivery.
-                        messagesToSend.push({ text: `✅ _Pesan terkirim ke web user_` });
-                    } else {
-                        // The session might have expired or the server restarted.
-                        messagesToSend.push({ text: `❌ _Sesi web user tidak ditemukan atau terputus. Balas langsung via kontak mereka._` });
-                    }
-                }
-                else {
-                    messagesToSend.push({ text: `❓ Command tidak dikenal. Coba /help` });
-                }
+            if (threadId) {
+                currentVisitorId = await chatStore.getVisitorByThreadId(threadId);
+            } else if (body.message.reply_to_message?.message_id) {
+                currentVisitorId = await chatStore.getVisitorByMessageId(body.message.reply_to_message.message_id);
             }
 
+            // Store messages to be sent (allows sending multiple bubbles)
+            const messagesToSend: { text: string; reply_markup?: any; message_thread_id?: number }[] = [];
+
+            // --- ADMIN LOGIC ---
+            if (isAdmin) {
+                if (text.startsWith('/')) {
+                    const command = text.split(' ')[0];
+
+                    if (command === '/leads') {
+                        // Read leads.json
+                        let leadsPath = '';
+                        try {
+                            leadsPath = path.join(process.cwd(), 'src/data/leads.json');
+                            const fileContent = await fs.readFile(leadsPath, 'utf-8');
+                            let leads = JSON.parse(fileContent);
+
+                            if (!Array.isArray(leads) && leads.leads) {
+                                leads = leads.leads;
+                            }
+
+                            const lastLeads = Array.isArray(leads) ? leads.slice(-5).reverse() : [];
+
+                            if (lastLeads.length === 0) {
+                                messagesToSend.push({ text: "📭 *Belum ada pesan masuk.*" });
+                            } else {
+                                messagesToSend.push({ text: "📬 *5 Pesan Terakhir:*" });
+
+                                lastLeads.forEach((l: any, i: number) => {
+                                    let phone = l.contact || '-';
+                                    let waUrl = null;
+
+                                    if (phone !== '-') {
+                                        let cleanPhone = phone.replace(/\D/g, '');
+                                        if (cleanPhone.startsWith('0')) {
+                                            cleanPhone = '62' + cleanPhone.slice(1);
+                                        }
+                                        waUrl = `https://wa.me/${cleanPhone}`;
+                                    }
+
+                                    const msgText = `*${i + 1}. ${l.name}*\n` +
+                                        `📧 ${l.email}\n` +
+                                        `📱 ${phone}\n` +
+                                        `💬 _"${l.message.trim().substring(0, 100)}${l.message.length > 100 ? '...' : ''}"_`;
+
+                                    const msgPayload: any = { text: msgText };
+
+                                    if (waUrl) {
+                                        msgPayload.reply_markup = {
+                                            inline_keyboard: [[{ text: "💬 Chat WhatsApp", url: waUrl }]]
+                                        };
+                                    }
+
+                                    messagesToSend.push(msgPayload);
+                                });
+                            }
+                        } catch (error: any) {
+                            console.error('Leads Read Error:', error);
+                            messagesToSend.push({ text: `❌ Gagal baca database.\nError: ${error.message}\nPath: ${leadsPath}` });
+                        }
+                    }
+                    else if (command === '/status') {
+                        const uptime = process.uptime();
+                        const hours = Math.floor(uptime / 3600);
+                        const minutes = Math.floor((uptime % 3600) / 60);
+
+                        messagesToSend.push({
+                            text: `✅ *Server Online*\n` +
+                                `🕒 *Time:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}\n` +
+                                `⏱ *Uptime:* ${hours}j ${minutes}m`
+                        });
+                    }
+                    else if (command === '/prop') {
+                        const jobContent = text.replace('/prop', '').trim();
+                        if (!jobContent) {
+                            await sendImmediate(incomingChatId, "❌ *Harap sertakan deskripsi atau link lowongan.*\nContoh: `/prop butuh editor video tiktok`", botToken);
+                        } else {
+                            await sendImmediate(incomingChatId, "🤖 *Sedang meracik proposal maut... (Sabar ya Bos, mikir dulu)*", botToken);
+
+                            try {
+                                const { aiProposalService } = await import('@/lib/services/aiProposalService');
+                                const proposal = await aiProposalService.generateProposalForJob(jobContent);
+                                await sendImmediate(incomingChatId, proposal, botToken);
+                            } catch (err: any) {
+                                await sendImmediate(incomingChatId, `❌ *Gagal generate:* ${err.message}`, botToken);
+                            }
+                        }
+                        return NextResponse.json({ ok: true });
+                    }
+                    else if (command === '/resume' || command === '/cv') {
+                        const jobContent = text.replace(command, '').trim();
+                        if (!jobContent) {
+                            await sendImmediate(incomingChatId, "❌ *Harap sertakan deskripsi atau link lowongan.*\nContoh: `/resume loker editor startup` ", botToken);
+                        } else {
+                            await sendImmediate(incomingChatId, "📑 *Menganalisa loker & meracik ATS Resume... (Sedang digodok Bos)*", botToken);
+
+                            try {
+                                const { atsService } = await import('@/lib/services/atsService');
+                                const { pdfBuffer, hrMessage, analysis } = await atsService.tailorResume(jobContent);
+
+                                await sendImmediate(incomingChatId, "🔍 *AI Strategy Analysis:*\n\n" + analysis, botToken);
+
+                                const { sendTelegramDocument } = await import('@/lib/telegram');
+                                await sendTelegramDocument(`Resume_Ramos_ATS.pdf`, pdfBuffer, "📄 *Resume ATS-Friendly* sudah siap!");
+
+                                await sendImmediate(incomingChatId, "💬 *Pesan Intro buat HRD (Tinggal Copy):*\n\n" + hrMessage, botToken);
+                            } catch (err: any) {
+                                await sendImmediate(incomingChatId, `❌ *Gagal:* ${err.message}`, botToken);
+                            }
+                        }
+                        return NextResponse.json({ ok: true });
+                    }
+                    else if (command === '/help') {
+                        messagesToSend.push({
+                            text: `🛠 *Admin Commands*\n\n` +
+                                `/resume [detail] - AI bikin Resume ATS (PDF) + Pesan HRD!\n` +
+                                `/prop [detail] - AI bikin Proposal Lamaran maut!\n` +
+                                `/leads - Cek 5 pesan terakhir\n` +
+                                `/help - Tampilkan menu ini\n` +
+                                `/status - Cek status server\n` +
+                                `/ai - Aktifkan ulang AI Auto-Responder di obrolan ini`
+                        });
+                    }
+                    else if (command === '/ai') {
+                        if (currentVisitorId) {
+                            const success = await chatStore.setAiMode(currentVisitorId, true);
+                            if (success) {
+                                messagesToSend.push({ text: `🤖 *Mode AI Aktif!*\nSistem akan kembali membalas pesan dari pengunjung ini secara otomatis.` });
+                            } else {
+                                messagesToSend.push({ text: `❌ _Sesi klien tidak ditemukan atau sudah kadaluarsa._` });
+                            }
+                        } else {
+                            messagesToSend.push({ text: `❌ _Mohon gunakan perintah ini di dalam Topik pengunjung (Forum), atau Reply pesan pengunjung._` });
+                        }
+                    }
+                    else {
+                        messagesToSend.push({ text: `❓ Command tidak dikenal. Coba /help` });
+                    }
+                } else if (currentVisitorId && !text.startsWith('/')) {
+                    // Admin manual reply
+                    const routed = await chatStore.addAdminReply(currentVisitorId, text);
+                    if (routed) {
+                        // Only send confirmation if we are in legacy DM mode, to avoid spamming a Forum Topic.
+                        if (!threadId) {
+                            messagesToSend.push({ text: `✅ _Pesan terkirim ke web._\n👤 Mode AI dimatikan permanen.` });
+                        }
+                    } else {
+                        if (!threadId) {
+                            messagesToSend.push({ text: `❌ _Sesi web user tidak ditemukan atau terputus._` });
+                        }
+                    }
+                }
+            }
             // --- GUEST LOGIC (Default) ---
             else {
                 messagesToSend.push({
@@ -185,15 +201,20 @@ export async function POST(request: Request) {
 
             // Send All Messages Sequentially
             for (const msg of messagesToSend) {
+                const payload: any = {
+                    chat_id: incomingChatId,
+                    text: msg.text,
+                    parse_mode: 'Markdown',
+                    reply_markup: msg.reply_markup
+                };
+                if (threadId) {
+                    payload.message_thread_id = threadId;
+                }
+
                 await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: incomingChatId,
-                        text: msg.text,
-                        parse_mode: 'Markdown',
-                        reply_markup: msg.reply_markup
-                    })
+                    body: JSON.stringify(payload)
                 });
             }
         }
@@ -204,7 +225,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false }, { status: 500 });
     }
 }
-
 /**
  * Helper to send message immediately without waiting for the batch
  */

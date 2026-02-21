@@ -12,7 +12,7 @@ export function AutoSaveStatus({ status, lastSaved, hasUnsavedChanges }: AutoSav
 
   useEffect(() => {
     if (status === 'saved') {
-      setShowSaved(true)
+      requestAnimationFrame(() => setShowSaved(true))
       const timer = setTimeout(() => setShowSaved(false), 2000)
       return () => clearTimeout(timer)
     }

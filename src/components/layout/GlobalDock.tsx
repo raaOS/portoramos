@@ -15,9 +15,9 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: any }) {
   const pathname = usePathname();
   const { isWindowOpen, bouncingDocId } = useWindowContext();
 
-  const handleAppLaunch = (appId: string) => {
+  const handleAppLaunch = React.useCallback((appId: string) => {
     router.push(`/?app=${appId}`);
-  };
+  }, [router]);
 
   const dockItems = useMemo(() => {
     const defaultItems = [
@@ -64,7 +64,7 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: any }) {
     ];
 
     return getDockItemConfig(defaultItems, dockConfig);
-  }, [router, isWindowOpen, dockConfig]);
+  }, [router, isWindowOpen, dockConfig, handleAppLaunch]);
 
   // Don't render on admin, home (OS desktop has its own), or about pages
   if (pathname?.startsWith('/admin') || pathname === '/' || pathname?.startsWith('/about')) {

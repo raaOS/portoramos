@@ -21,7 +21,7 @@ export default function ProjectCTA() {
                     </div>
 
                     <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
-                        Let's build something <br />
+                        Let&apos;s build something <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">extraordinary together.</span>
                     </h2>
 

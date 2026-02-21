@@ -35,7 +35,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
     // Handle Active Window Grace Period
     useEffect(() => {
         if (activeWindow) {
-            setIsGracePeriod(true);
+            requestAnimationFrame(() => setIsGracePeriod(true));
             const timer = setTimeout(() => setIsGracePeriod(false), 1000); // 1s grace period
             return () => clearTimeout(timer);
         }
@@ -44,32 +44,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
     // Notification Interval Logic
     const lastIndexRef = useRef(0);
 
-    useEffect(() => {
-        if (isBooting) return;
-        if (!customNotifications || customNotifications.length === 0) return;
-
-        let interval: NodeJS.Timeout | null = null;
-
-        // Custom interval: Wait 3s initial, then show every 12s cycle (5s show + 7s gap)
-        // A longer gap feels more organic and less "spammy" than 8s
-        const initialDelay = setTimeout(() => {
-            triggerNotification(lastIndexRef.current % customNotifications.length);
-            lastIndexRef.current++;
-
-            interval = setInterval(() => {
-                triggerNotification(lastIndexRef.current % customNotifications.length);
-                lastIndexRef.current++;
-            }, 7000); // 2s show + 5s hide = 7s cycle
-        }, 1000);
-
-        return () => {
-            clearTimeout(initialDelay);
-            if (interval) clearInterval(interval);
-            if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
-        };
-    }, [isBooting, customNotifications]); // Re-run if customNotifications changes
-
-    const triggerNotification = async (index?: number) => {
+    const triggerNotification = React.useCallback(async (index?: number) => {
         // Clear existing timer if any
         if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
 
@@ -113,7 +88,32 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                 }, 2000);
             }, 1000);
         }
-    };
+    }, [customNotifications]);
+
+    useEffect(() => {
+        if (isBooting) return;
+        if (!customNotifications || customNotifications.length === 0) return;
+
+        let interval: NodeJS.Timeout | null = null;
+
+        // Custom interval: Wait 3s initial, then show every 12s cycle (5s show + 7s gap)
+        // A longer gap feels more organic and less "spammy" than 8s
+        const initialDelay = setTimeout(() => {
+            triggerNotification(lastIndexRef.current % customNotifications.length);
+            lastIndexRef.current++;
+
+            interval = setInterval(() => {
+                triggerNotification(lastIndexRef.current % customNotifications.length);
+                lastIndexRef.current++;
+            }, 7000); // 2s show + 5s hide = 7s cycle
+        }, 1000);
+
+        return () => {
+            clearTimeout(initialDelay);
+            if (interval) clearInterval(interval);
+            if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+        };
+    }, [isBooting, customNotifications, triggerNotification]); // Re-run if customNotifications changes
 
     // Priority: Notification (highest) > Active Window > Idle
     const currentState = (notification && !isGracePeriod)

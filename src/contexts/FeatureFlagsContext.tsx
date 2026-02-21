@@ -48,7 +48,7 @@ export function FeatureFlagsProvider({ children, initialFlags = {} }: FeatureFla
         if (savedFlags) {
             try {
                 const parsed = JSON.parse(savedFlags);
-                setFlags((prev) => ({ ...prev, ...parsed }));
+                requestAnimationFrame(() => setFlags((prev) => ({ ...prev, ...parsed })));
             } catch (error) {
                 console.error('Failed to parse feature flags:', error);
             }
@@ -69,7 +69,7 @@ export function FeatureFlagsProvider({ children, initialFlags = {} }: FeatureFla
             });
 
             if (Object.keys(urlFlags).length > 0) {
-                setFlags((prev) => ({ ...prev, ...urlFlags }));
+                requestAnimationFrame(() => setFlags((prev) => ({ ...prev, ...urlFlags })));
             }
         }
     }, []);

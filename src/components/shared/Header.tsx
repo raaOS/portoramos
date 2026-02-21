@@ -15,7 +15,7 @@ export default function Header() {
   // Update time for the clock
   useEffect(() => {
     // Determine initial time (Hydration safe)
-    setTime(new Date());
+    requestAnimationFrame(() => setTime(new Date()));
 
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);

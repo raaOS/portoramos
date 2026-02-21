@@ -22,7 +22,7 @@ export default function FastMarquee({
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setReady(true);
+    requestAnimationFrame(() => setReady(true));
   }, []);
 
   const animationClass = direction === 'left' ? 'animate-fast-marquee' : 'animate-fast-marquee-reverse';

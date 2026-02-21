@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { generateMetadata as generateSEOMetadata } from '@/lib/seo';
 import AdminProjectsClient from './AdminProjectsClient';
 import AdminLayout from '../components/AdminLayout';
@@ -19,7 +20,9 @@ export default function AdminProjectsPage() {
       titleIcon={<FolderKanban className="h-5 w-5" aria-hidden />}
       titleAccent="bg-purple-50 text-purple-700"
     >
-      <AdminProjectsClient />
+      <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading projects data...</div>}>
+        <AdminProjectsClient />
+      </Suspense>
     </AdminLayout>
   );
 }

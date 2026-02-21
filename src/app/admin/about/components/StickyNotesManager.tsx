@@ -207,7 +207,7 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
                     <div className="col-span-full py-12 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
                         <CheckSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                         <h3 className="text-gray-500 font-medium">Tidak ada catatan tempel ditemukan</h3>
-                        <p className="text-gray-400 text-sm mt-1">Klik "Tambah Catatan" untuk membuat yang pertama.</p>
+                        <p className="text-gray-400 text-sm mt-1">Klik &quot;Tambah Catatan&quot; untuk membuat yang pertama.</p>
                     </div>
                 )}
             </div>

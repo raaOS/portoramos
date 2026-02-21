@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTelegramConfig } from '@/lib/telegram';
 import { chatStore } from '@/lib/chatStore';
+import { aiChatService } from '@/lib/services/aiChatService';
 
 export async function POST(request: Request) {
     try {
@@ -16,37 +17,100 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // 1. Add message to local store
-        const chatMsg = chatStore.addVisitorMessage(visitorId, message);
+        // 1. Add message to Firebase store
+        const chatMsg = await chatStore.addVisitorMessage(visitorId, message);
+
+        // 1b. Check Session and Topic Status
+        let session = await chatStore.getSession(visitorId);
+        if (!session) {
+            session = await chatStore.createOrUpdateSession(visitorId);
+        }
+
+        const isAiMode = session.aiMode !== false; // Defaults to true
 
         // 2. Format message for Admin
-        const text = `🌐 *New Web Chat Message*\n_ID: ${visitorId.substring(0, 6)}_\n\n💬 "${message}"\n\n_Reply to this message to chat back!_`;
+        let text = `🌐 *New Web Chat Message*\n_ID: ${visitorId.substring(0, 6)}_\n\n💬 "${message}"`;
+        if (isAiMode) {
+            text += `\n\n🤖 _AI is calculating a response..._\n_(Reply to take over manually)_`;
+        } else {
+            text += `\n\n_Reply to this message to chat back!_`;
+        }
 
-        // 3. Send to Telegram
+        // 3. Telegram Routing (Topics vs DM)
+        const groupId = process.env.TELEGRAM_GROUP_ID;
+        let targetChatId = groupId || adminChatId;
+        let threadId = session.telegramThreadId;
+
+        if (groupId) {
+            // Need to ensure visitor has a Topic created in the forum
+            if (!threadId) {
+                const topicRes = await fetch(`https://api.telegram.org/bot${botToken}/createForumTopic`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: groupId,
+                        name: `💬 Guest ${visitorId.substring(0, 4)}`
+                    })
+                });
+                const topicData = await topicRes.json();
+                if (topicData.ok && topicData.result?.message_thread_id) {
+                    threadId = topicData.result.message_thread_id;
+                    await chatStore.updateSessionThreadId(visitorId, threadId as number);
+                } else {
+                    console.error('Failed to create Telegram Topic:', topicData);
+                }
+            }
+        }
+
+        // Send to Telegram
+        const tgPayload: any = {
+            chat_id: targetChatId,
+            text: text,
+            parse_mode: 'Markdown'
+        };
+        if (threadId) {
+            tgPayload.message_thread_id = threadId;
+        }
+
         const tgResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: adminChatId,
-                text: text,
-                parse_mode: 'Markdown'
-            })
+            body: JSON.stringify(tgPayload)
         });
 
         const tgData = await tgResponse.json();
 
-        // 4. If successful, map the Telegram Message ID back to our local store
-        if (tgData.ok && tgData.result?.message_id) {
-            // We update the local message to map it to the TG message
-            // This is handled inside chatStore in a more robust way by directly updating the session.
-            // But for now, we just update the session's overall telegramMessageId.
-            const session = chatStore.getSession(visitorId);
-            if (session) {
-                session.telegramMessageId = tgData.result.message_id;
-                // Manually add the mapping since we didn't pass it in step 1
-                chatStore.addVisitorMessage(visitorId, "(hidden-sync)", tgData.result.message_id);
-                // We pop the hidden sync off, but the mapping is registered.
-                session.messages.pop();
+        // 4. Trigger AI if in AI mode
+        if (isAiMode) {
+            // Await AI response in the background for UX speed, or await it if UX needs instant reflection
+            // It's usually better to let NextJS finish the request and do background task, but Vercel might kill it.
+            // For safety, we block here, or Nextjs edge allows background if we set config.
+            try {
+                // Generate reply
+                const sessionWithMessages = await chatStore.getAllMessages(visitorId);
+                const aiResponseText = await aiChatService.generateResponse(sessionWithMessages);
+
+                // Add to Firebase store
+                const aiReplyMsg = await chatStore.addAiReply(visitorId, aiResponseText);
+
+                // Notify admin of AI reply inside the same topic
+                if (aiReplyMsg) {
+                    const aiPayload: any = {
+                        chat_id: targetChatId,
+                        text: `🤖 *AI Auto-Reply:*\n"${aiResponseText}"`,
+                        parse_mode: 'Markdown'
+                    };
+                    if (threadId) {
+                        aiPayload.message_thread_id = threadId;
+                    }
+                    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(aiPayload)
+                    });
+                }
+            } catch (aiErr) {
+                console.error("[Web Chat AI Error]:", aiErr);
             }
         }
 

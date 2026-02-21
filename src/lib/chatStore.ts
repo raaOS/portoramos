@@ -1,7 +1,5 @@
-// In-memory store to hold recent chat messages and active sessions
-// Note: In a Serverless environment like Vercel, in-memory state is NOT shared across instances
-// and will frequently be reset. However, for a simple portfolio contact feature with low traffic,
-// it is often sufficient for short-lived real-time sync.
+import 'server-only';
+import { db } from './firebaseAdmin';
 
 export interface ChatMessage {
     id: string;
@@ -14,107 +12,133 @@ export interface ChatMessage {
 export interface ChatSession {
     visitorId: string;
     telegramMessageId?: number; // The message ID in telegram to reply to
-    messages: ChatMessage[];
+    telegramThreadId?: number;  // The forum topic ID (message_thread_id)
     lastActive: number;
+    aiMode: boolean;
+    lastAdminReplyTime: number;
 }
 
-// Map visitorId -> ChatSession
-const activeSessions = new Map<string, ChatSession>();
-
-// Map Telegram Message ID -> visitorId (to route replies back)
-const telegramMessageMap = new Map<number, string>();
-
-const MAX_SESSIONS = 100;
-const SESSION_TIMEOUT = 1000 * 60 * 60; // 1 hour
+// In Phase 4, we use Firebase instead of local maps.
+// Firebase structure:
+// /sessions/{visitorId}: ChatSession
+// /messages/{visitorId}: Record<string, ChatMessage>
 
 export const chatStore = {
-    getSession(visitorId: string): ChatSession | undefined {
-        return activeSessions.get(visitorId);
+    async getSession(visitorId: string): Promise<ChatSession | null> {
+        const snap = await db.ref(`sessions/${visitorId}`).once('value');
+        if (!snap.exists()) return null;
+        return snap.val() as ChatSession;
     },
 
-    createOrUpdateSession(visitorId: string): ChatSession {
-        let session = activeSessions.get(visitorId);
+    async createOrUpdateSession(visitorId: string): Promise<ChatSession> {
+        let session = await this.getSession(visitorId);
+        const now = Date.now();
         if (!session) {
-            // Cleanup old sessions before adding new one
-            if (activeSessions.size >= MAX_SESSIONS) {
-                this.cleanup();
-            }
             session = {
                 visitorId,
-                messages: [],
-                lastActive: Date.now()
+                lastActive: now,
+                aiMode: true,
+                lastAdminReplyTime: 0
             };
-            activeSessions.set(visitorId, session);
         } else {
-            session.lastActive = Date.now();
+            session.lastActive = now;
         }
+        await db.ref(`sessions/${visitorId}`).update(session);
         return session;
     },
 
-    addVisitorMessage(visitorId: string, text: string, telegramMsgId?: number): ChatMessage {
-        const session = this.createOrUpdateSession(visitorId);
+    async addVisitorMessage(visitorId: string, text: string, telegramMsgId?: number): Promise<ChatMessage> {
+        await this.createOrUpdateSession(visitorId);
+
+        const msgId = crypto.randomUUID();
         const msg: ChatMessage = {
-            id: crypto.randomUUID(),
+            id: msgId,
             text,
             sender: 'visitor',
             timestamp: Date.now()
         };
-        session.messages.push(msg);
 
+        // Push message
+        await db.ref(`messages/${visitorId}/${msgId}`).set(msg);
+
+        // Update session tracking
         if (telegramMsgId) {
-            session.telegramMessageId = telegramMsgId;
-            telegramMessageMap.set(telegramMsgId, visitorId);
+            await db.ref(`sessions/${visitorId}`).update({ telegramMessageId: telegramMsgId });
+            await db.ref(`messageMap/${telegramMsgId}`).set(visitorId);
         }
 
         return msg;
     },
 
-    addAdminReply(replyToTelegramId: number, text: string): boolean {
-        // Find which visitor this reply belongs to
-        const visitorId = telegramMessageMap.get(replyToTelegramId);
-        if (!visitorId) return false;
+    async updateSessionThreadId(visitorId: string, threadId: number) {
+        await db.ref(`sessions/${visitorId}`).update({ telegramThreadId: threadId });
+        // Also map threadId to visitorId for fast webhook routing
+        await db.ref(`threadMap/${threadId}`).set(visitorId);
+    },
 
-        const session = activeSessions.get(visitorId);
+    async getVisitorByThreadId(threadId: number): Promise<string | null> {
+        const snap = await db.ref(`threadMap/${threadId}`).once('value');
+        if (!snap.exists()) return null;
+        return snap.val();
+    },
+
+    async getVisitorByMessageId(msgId: number): Promise<string | null> {
+        const snap = await db.ref(`messageMap/${msgId}`).once('value');
+        if (!snap.exists()) return null;
+        return snap.val();
+    },
+
+    async addAdminReply(visitorId: string, text: string): Promise<boolean> {
+        const session = await this.getSession(visitorId);
         if (!session) return false;
 
-        session.messages.push({
-            id: crypto.randomUUID(),
+        const msgId = crypto.randomUUID();
+        await db.ref(`messages/${visitorId}/${msgId}`).set({
+            id: msgId,
             text,
             sender: 'admin',
             timestamp: Date.now()
         });
-        session.lastActive = Date.now();
+
+        await db.ref(`sessions/${visitorId}`).update({
+            lastActive: Date.now(),
+            lastAdminReplyTime: Date.now(),
+            aiMode: false // Admin Takes over forever until /ai is called again
+        });
+
         return true;
     },
 
-    // Gets all messages since a specific timestamp (for polling)
-    getMessagesSince(visitorId: string, since: number): ChatMessage[] {
-        const session = activeSessions.get(visitorId);
-        if (!session) return [];
-
-        session.lastActive = Date.now();
-        return session.messages.filter(m => m.timestamp > since);
+    async setAiMode(visitorId: string, enabled: boolean): Promise<boolean> {
+        const session = await this.getSession(visitorId);
+        if (!session) return false;
+        await db.ref(`sessions/${visitorId}`).update({ aiMode: enabled });
+        return true;
     },
 
-    // Gets all messages for a session (initial load)
-    getAllMessages(visitorId: string): ChatMessage[] {
-        const session = activeSessions.get(visitorId);
-        if (!session) return [];
-        return session.messages;
+    async addAiReply(visitorId: string, text: string): Promise<ChatMessage | null> {
+        const session = await this.getSession(visitorId);
+        if (!session) return null;
+
+        const msgId = crypto.randomUUID();
+        const msg: ChatMessage = {
+            id: msgId,
+            text,
+            sender: 'admin',
+            timestamp: Date.now()
+        };
+
+        await db.ref(`messages/${visitorId}/${msgId}`).set(msg);
+        await db.ref(`sessions/${visitorId}`).update({ lastActive: Date.now() });
+        return msg;
     },
 
-    cleanup() {
-        const now = Date.now();
-        for (const [visitorId, session] of activeSessions.entries()) {
-            if (now - session.lastActive > SESSION_TIMEOUT) {
-                // Delete associated telegram mappings
-                for (const [msgId, vId] of telegramMessageMap.entries()) {
-                    if (vId === visitorId) {
-                        telegramMessageMap.delete(msgId);
-                    }
-                }
-                activeSessions.delete(visitorId);
-            }
-        }
+    async getAllMessages(visitorId: string): Promise<ChatMessage[]> {
+        const snap = await db.ref(`messages/${visitorId}`).once('value');
+        if (!snap.exists()) return [];
+        const messagesMap = snap.val();
+        // Convert object to sorted array
+        return Object.values(messagesMap)
+            .sort((a: any, b: any) => a.timestamp - b.timestamp) as ChatMessage[];
     }
 };

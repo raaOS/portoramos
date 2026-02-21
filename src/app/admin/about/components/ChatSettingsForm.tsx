@@ -21,16 +21,17 @@ export default function ChatSettingsForm({ data, onUpdate }: ChatSettingsFormPro
         avatarUrl: ''
     });
 
-    useEffect(() => {
-        if (data) {
-            setFormData({
-                autoReplyText: data.autoReplyText || '',
-                contactEmail: data.contactEmail || '',
-                contactPhone: data.contactPhone || '',
-                avatarUrl: data.avatarUrl || ''
-            });
-        }
-    }, [data]);
+    // Sync state with props in render
+    const [lastData, setLastData] = useState(data);
+    if (data && data !== lastData) {
+        setFormData({
+            autoReplyText: data.autoReplyText || '',
+            contactEmail: data.contactEmail || '',
+            contactPhone: data.contactPhone || '',
+            avatarUrl: data.avatarUrl || ''
+        });
+        setLastData(data);
+    }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

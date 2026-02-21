@@ -26,7 +26,7 @@ const ensureDataDir = () => {
     }
 };
 
-export async function getHardSkills(): Promise<HardSkill[]> {
+export async function getHardSkills(noCache = false): Promise<HardSkill[]> {
     ensureDataDir();
     try {
         const fileContents = fs.readFileSync(dataPath, 'utf8');

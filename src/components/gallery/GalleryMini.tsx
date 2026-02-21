@@ -42,7 +42,7 @@ export default function GalleryMini({ images, className = '' }: GalleryMiniProps
   }, [activeImages.length]);
 
   useEffect(() => {
-    setIsClient(true);
+    requestAnimationFrame(() => setIsClient(true));
   }, []);
 
   const handleImageClick = (index: number) => {

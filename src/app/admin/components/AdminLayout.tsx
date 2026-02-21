@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ReactNode, useEffect } from 'react';
+import { useState, ReactNode, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -51,7 +51,7 @@ interface NavItem {
   children?: NavItem[];
 }
 
-export default function AdminLayout({
+function AdminLayoutContent({
   children,
   title,
   subtitle,
@@ -65,16 +65,28 @@ export default function AdminLayout({
   const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
-    '/admin/about': true // Default expanded
+  /* 
+     We initialize based on the current pathname if possible to avoid unnecessary effects.
+     However, pathname might be null initially in some environments.
+  */
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
+    // We can't use pathname here safely because it's from a hook, but we can set the default.
+    return { '/admin/about': true };
   });
 
-  // Sync expanded state with active path
-  useEffect(() => {
-    if (pathname?.startsWith('/admin/about') || pathname?.startsWith('/admin/experience') || pathname?.startsWith('/admin/testimonial') || pathname?.startsWith('/admin/contact')) {
+  // Sync expanded state with active path in render
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (pathname !== lastPathname) {
+    const shouldExpandAbout = pathname?.startsWith('/admin/about') ||
+      pathname?.startsWith('/admin/experience') ||
+      pathname?.startsWith('/admin/testimonial') ||
+      pathname?.startsWith('/admin/contact');
+
+    if (shouldExpandAbout && !expandedMenus['/admin/about']) {
       setExpandedMenus(prev => ({ ...prev, '/admin/about': true }));
     }
-  }, [pathname]);
+    setLastPathname(pathname);
+  }
 
   const toggleMenu = (href: string) => {
     setExpandedMenus(prev => ({
@@ -255,5 +267,13 @@ export default function AdminLayout({
         </div>
       </main>
     </div>
+  );
+}
+
+export default function AdminLayout(props: AdminLayoutProps) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center text-sm text-gray-500">Loading admin...</div>}>
+      <AdminLayoutContent {...props} />
+    </Suspense>
   );
 }

@@ -137,8 +137,9 @@ export async function middleware(request: NextRequest) {
     // 0. CSRF Protection for Mutations
     const mutationMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
     if (isAPIRoute(pathname) && mutationMethods.includes(request.method)) {
-        // Skip for login which has its own token generation/validation flow
-        if (pathname !== '/api/admin/login' && pathname !== '/api/admin/logout') {
+        // Skip for login which has its own token flow, and public mutation routes like contact chat
+        const allowlistPaths = ['/api/admin/login', '/api/admin/logout', '/api/chat/send', '/api/webhook/telegram'];
+        if (!allowlistPaths.includes(pathname)) {
             const csrfToken = request.headers.get('x-csrf-token');
             const sessionCsrfToken = request.cookies.get('csrf_token')?.value;
 

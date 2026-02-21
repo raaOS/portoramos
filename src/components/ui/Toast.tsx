@@ -8,19 +8,19 @@ type Props = {
   onClose?: () => void
 }
 
-export default function Toast({ message, type = 'info', duration = 3000, onClose }: Props){
+export default function Toast({ message, type = 'info', duration = 3000, onClose }: Props) {
   const [show, setShow] = useState(true)
   const [isAnimating, setIsAnimating] = useState(false)
-  
-  useEffect(()=>{
-    setIsAnimating(true)
-    const t = setTimeout(()=>{ 
+
+  useEffect(() => {
+    requestAnimationFrame(() => setIsAnimating(true))
+    const t = setTimeout(() => {
       setShow(false)
       setTimeout(() => {
         onClose && onClose()
       }, 300) // Wait for animation to complete
     }, duration)
-    return ()=> clearTimeout(t)
+    return () => clearTimeout(t)
   }, [duration, onClose])
 
   const getToastStyles = () => {
@@ -84,16 +84,14 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
   const ariaLive = (type === 'error' || type === 'warning') ? 'assertive' : 'polite'
 
   return (
-    <div 
+    <div
       role={ariaRole}
       aria-live={ariaLive}
-      className={`fixed bottom-4 right-4 z-50 transition-all duration-300 ease-in-out ${
-      show ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
-    }`}
+      className={`fixed bottom-4 right-4 z-50 transition-all duration-300 ease-in-out ${show ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
+        }`}
     >
-      <div className={`px-4 py-3 rounded-lg shadow-xl ${styles.bg} max-w-sm text-sm flex items-center gap-3 ${
-        isAnimating ? styles.animation : ''
-      }`}>
+      <div className={`px-4 py-3 rounded-lg shadow-xl ${styles.bg} max-w-sm text-sm flex items-center gap-3 ${isAnimating ? styles.animation : ''
+        }`}>
         <div className="flex-shrink-0">
           {styles.icon}
         </div>

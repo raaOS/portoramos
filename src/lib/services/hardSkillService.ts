@@ -16,7 +16,7 @@ function normaliseLevel(level?: string): HardSkillLevel {
 }
 
 export const hardSkillService = {
-    async getHardSkills(): Promise<HardSkillsData> {
+    async getHardSkills(noCache = false): Promise<HardSkillsData> {
         try {
             let data: HardSkillsData | null = null;
             const isDev = process.env.NODE_ENV === 'development';
@@ -26,7 +26,7 @@ export const hardSkillService = {
                 data = (await loadData(DATA_FILE)) as HardSkillsData | null;
             } else {
                 try {
-                    const ghData = await githubService.getFileContent<HardSkillsData>(GITHUB_PATH, true);
+                    const ghData = await githubService.getFileContent<HardSkillsData>(GITHUB_PATH, noCache);
                     if (ghData && ghData.content) {
                         data = ghData.content;
                     }

@@ -106,8 +106,9 @@ export default function DesignPhilosophyForm() {
                         <Sparkles className="w-5 h-5 text-blue-500" />
                         Design Philosophy
                     </h2>
+                    <p className="text-gray-400 text-sm mt-1">Gunakan tab &quot;Bidikan Image&quot; untuk mengupload foto baru.</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Edit bagian "Filosofi Desain" pada halaman About.
+                        Edit bagian &quot;Filosofi Desain&quot; pada halaman About.
                     </p>
                 </div>
                 <button

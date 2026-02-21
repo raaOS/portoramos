@@ -202,7 +202,7 @@ function ContactContentForm({ data, onUpdate }: { data: any, onUpdate: (d: any) 
         <label className="block text-sm font-semibold text-gray-700 mb-2">
           Headline (Judul Utama)
         </label>
-        <p className="text-xs text-gray-500 mb-2">Gunakan Enter untuk baris baru (seperti "Create \n Universe").</p>
+        <p className="text-sm text-gray-500 mb-6">Kelola link media sosial dan kontak yang muncul di folder &quot;Contact&quot; pada About OS.</p>
         <textarea
           required
           rows={3}

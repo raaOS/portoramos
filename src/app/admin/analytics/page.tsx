@@ -1,5 +1,17 @@
+import { Suspense } from 'react';
 import AdminAnalyticsClient from './AdminAnalyticsClient';
 
+
+
 export default function AnalyticsPage() {
-    return <AdminAnalyticsClient />;
+    return (
+        <Suspense fallback={<div>Loading analytics data...</div>}>
+            <AdminAnalyticsClient />
+        </Suspense>
+    );
 }
+
+
+
+
+

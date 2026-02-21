@@ -7,7 +7,7 @@ import { aboutService } from '@/lib/services/aboutService';
 // GET - Read about content
 export async function GET(request: NextRequest) {
   try {
-    const data = await aboutService.getAboutData();
+    const data = await aboutService.getAboutData(true);
     return NextResponse.json(data);
   } catch (error) {
     // Silently handle about data loading errors

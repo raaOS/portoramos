@@ -44,6 +44,44 @@ interface LighthouseReportProps {
     scores: LighthouseScores;
 }
 
+const getScoreColor = (score: number) => {
+    if (score >= 90) return { text: 'text-emerald-600', bg: 'bg-emerald-600', ring: 'text-emerald-100', bgSoft: 'bg-emerald-50' };
+    if (score >= 50) return { text: 'text-amber-600', bg: 'bg-amber-600', ring: 'text-amber-100', bgSoft: 'bg-amber-50' };
+    return { text: 'text-red-600', bg: 'bg-red-600', ring: 'text-red-100', bgSoft: 'bg-red-50' };
+};
+
+const Gauge = ({ score, label }: { score: number; label: string }) => {
+    const { text, ring } = getScoreColor(score);
+    const radius = 40;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (score / 100) * circumference;
+
+    return (
+        <div className="flex flex-col items-center">
+            <div className="relative w-32 h-32 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90">
+                    <circle cx="64" cy="64" r={radius} fill="none" stroke="currentColor" strokeWidth="8" className={ring} />
+                    <circle cx="64" cy="64" r={radius} fill="none" stroke="currentColor" strokeWidth="8" strokeDasharray={circumference} strokeDashoffset={offset} className={`${text} transition-all duration-1000 ease-out`} strokeLinecap="round" />
+                </svg>
+                <div className={`absolute inset-0 flex items-center justify-center text-4xl font-bold ${text}`}>
+                    {score}
+                </div>
+            </div>
+            <span className="mt-2 font-medium text-gray-700">{label}</span>
+        </div>
+    );
+};
+
+const MetricCard = ({ label, value, icon }: { label: string; value: string; icon: any }) => (
+    <div className="flex items-center justify-between p-3 border-b border-gray-100 last:border-0 sm:border sm:rounded-lg sm:p-4 hover:bg-gray-50 transition-colors">
+        <div className="flex items-center gap-3">
+            {icon}
+            <span className="text-sm text-gray-600 font-medium">{label}</span>
+        </div>
+        <span className="text-lg font-bold text-gray-900 font-mono">{value || '-'}</span>
+    </div>
+);
+
 export default function LighthouseReport({ scores }: LighthouseReportProps) {
     const [expandedAudits, setExpandedAudits] = useState<Record<string, boolean>>({});
     const [showScreenshot, setShowScreenshot] = useState(false);
@@ -59,44 +97,6 @@ export default function LighthouseReport({ scores }: LighthouseReportProps) {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
-
-    const getScoreColor = (score: number) => {
-        if (score >= 90) return { text: 'text-emerald-600', bg: 'bg-emerald-600', ring: 'text-emerald-100', bgSoft: 'bg-emerald-50' };
-        if (score >= 50) return { text: 'text-amber-600', bg: 'bg-amber-600', ring: 'text-amber-100', bgSoft: 'bg-amber-50' };
-        return { text: 'text-red-600', bg: 'bg-red-600', ring: 'text-red-100', bgSoft: 'bg-red-50' };
-    };
-
-    const Gauge = ({ score, label }: { score: number; label: string }) => {
-        const { text, ring } = getScoreColor(score);
-        const radius = 40;
-        const circumference = 2 * Math.PI * radius;
-        const offset = circumference - (score / 100) * circumference;
-
-        return (
-            <div className="flex flex-col items-center">
-                <div className="relative w-32 h-32 flex items-center justify-center">
-                    <svg className="w-full h-full transform -rotate-90">
-                        <circle cx="64" cy="64" r={radius} fill="none" stroke="currentColor" strokeWidth="8" className={ring} />
-                        <circle cx="64" cy="64" r={radius} fill="none" stroke="currentColor" strokeWidth="8" strokeDasharray={circumference} strokeDashoffset={offset} className={`${text} transition-all duration-1000 ease-out`} strokeLinecap="round" />
-                    </svg>
-                    <div className={`absolute inset-0 flex items-center justify-center text-4xl font-bold ${text}`}>
-                        {score}
-                    </div>
-                </div>
-                <span className="mt-2 font-medium text-gray-700">{label}</span>
-            </div>
-        );
-    };
-
-    const MetricCard = ({ label, value, icon }: { label: string; value: string; icon: any }) => (
-        <div className="flex items-center justify-between p-3 border-b border-gray-100 last:border-0 sm:border sm:rounded-lg sm:p-4 hover:bg-gray-50 transition-colors">
-            <div className="flex items-center gap-3">
-                {icon}
-                <span className="text-sm text-gray-600 font-medium">{label}</span>
-            </div>
-            <span className="text-lg font-bold text-gray-900 font-mono">{value || '-'}</span>
-        </div>
-    );
 
     const AuditRow = ({ audit, type }: { audit: AuditItem, type: 'opportunity' | 'diagnostic' }) => {
         const isExpanded = expandedAudits[audit.id];
@@ -261,7 +261,7 @@ export default function LighthouseReport({ scores }: LighthouseReportProps) {
                 <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                     <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
                         <h3 className="text-base font-bold text-gray-900">OPPORTUNITIES</h3>
-                        <p className="text-sm text-gray-500 mt-1">These suggestions can help your page load faster. They don't directly affect the Performance score.</p>
+                        <p className="text-gray-400 mt-2 mb-6 max-w-sm mx-auto">This page doesn&apos;t have any lighthouse audit history yet. Start one to see the results here.</p>
                     </div>
                     <div className="divide-y divide-gray-200">
                         {scores.audits.opportunities.map((audit) => (

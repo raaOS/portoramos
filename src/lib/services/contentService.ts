@@ -17,7 +17,7 @@ export class ContentService<T> {
         this.fallbackData = fallbackData;
     }
 
-    async getData(): Promise<T> {
+    async getData(noCache = false): Promise<T> {
         try {
             const isDev = process.env.NODE_ENV === 'development';
             let data: T | null = null;
@@ -28,7 +28,7 @@ export class ContentService<T> {
                 data = (await loadData(this.localPath)) as T | null;
             } else {
                 try {
-                    const ghData = await githubService.getFileContent<T>(this.githubPath, true);
+                    const ghData = await githubService.getFileContent<T>(this.githubPath, noCache);
                     if (ghData && ghData.content) {
                         data = ghData.content;
                     }

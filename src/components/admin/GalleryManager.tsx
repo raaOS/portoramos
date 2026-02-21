@@ -107,7 +107,7 @@ export default function GalleryManager({ projects, onSyncTrigger }: GalleryManag
                 <div>
                     <h3 className="font-semibold text-blue-800">Gallery Management</h3>
                     <p className="text-sm text-blue-700 mt-1">
-                        Select up to 10 projects to feature in the "About" page Sticky Gallery.
+                        Select up to 10 projects to feature in the &quot;About&quot; page Sticky Gallery.
                         <br />
                         <strong>Order matters!</strong> The number badge (1, 2, 3...) indicates the stacking order.
                         Uncheck a project to remove it from the list.

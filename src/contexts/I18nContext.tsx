@@ -21,7 +21,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const savedLocale = localStorage.getItem('locale') as Language;
         if (savedLocale && (savedLocale === 'id' || savedLocale === 'en')) {
-            setLocale(savedLocale);
+            requestAnimationFrame(() => setLocale(savedLocale));
         }
     }, []);
 

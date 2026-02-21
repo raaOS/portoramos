@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { generateMetadata as generateSEOMetadata } from '@/lib/seo';
+import { Suspense } from 'react';
 import AdminAboutClient from './AdminAboutClient';
 
 export const metadata: Metadata = generateSEOMetadata({
@@ -8,6 +9,16 @@ export const metadata: Metadata = generateSEOMetadata({
   path: '/admin/about'
 });
 
+
+
 export default function AdminAboutPage() {
-  return <AdminAboutClient />;
+  return (
+    <Suspense fallback={<div>Loading about data...</div>}>
+      <AdminAboutClient />
+    </Suspense>
+  );
 }
+
+
+
+

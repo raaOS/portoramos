@@ -11,7 +11,7 @@ export async function GET(request: Request) {
         }
 
         // Fetch all messages for this visitor
-        const messages = chatStore.getAllMessages(visitorId);
+        const messages = await chatStore.getAllMessages(visitorId);
 
         return NextResponse.json({ success: true, messages });
 

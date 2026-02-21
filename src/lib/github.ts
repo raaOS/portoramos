@@ -119,12 +119,15 @@ export class GitHubService {
         }
 
         // Define the internal fetch function for unstable_cache
-        const fetchContent = async (path: string) => {
+        const fetchContent = async (path: string, fresh = false) => {
             const url = `${GITHUB_API_URL}/repos/${this.owner}/${this.repo}/contents/${path}`;
             // Fetching from GitHub API
 
             const response = await this.rateLimitedFetch(url, {
-                cache: 'no-store', // We handle caching in the wrapper
+                // IMPORTANT: During SSG, 'no-store' causes a bailout.
+                // We use 'force-cache' for the background fetch when noCache=false (wrapped in unstable_cache)
+                // and 'no-store' only when explicit fresh data is requested (e.g. for SHA in updates).
+                cache: fresh ? 'no-store' : 'force-cache',
             });
 
             if (!response.ok) {
@@ -142,7 +145,7 @@ export class GitHubService {
         };
 
         if (noCache) {
-            return fetchContent(filePath);
+            return fetchContent(filePath, true);
         }
 
         // Determine tag based on path
@@ -151,7 +154,7 @@ export class GitHubService {
 
         // Wrap with unstable_cache for production performance
         const cachedFetch = unstable_cache(
-            async (path: string) => fetchContent(path),
+            async (path: string) => fetchContent(path, false),
             [`github-file-${filePath}`],
             {
                 revalidate: 600, // 10 minutes

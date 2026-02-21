@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import VideoTrimmer from '@/components/admin/VideoTrimmer';
 
+
+
 export default function DebugTrimmerPage() {
     const [file, setFile] = useState<File | null>(null);
 
@@ -56,3 +58,7 @@ export default function DebugTrimmerPage() {
         </div>
     );
 }
+
+
+
+

@@ -77,7 +77,7 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
     };
 
     useEffect(() => {
-        setMounted(true);
+        requestAnimationFrame(() => setMounted(true));
 
         const updateCallback = (w: number) => {
             setColumnCount(getCols(w));

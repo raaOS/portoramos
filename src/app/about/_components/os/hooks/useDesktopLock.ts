@@ -2,12 +2,19 @@ import { useState, useEffect } from 'react';
 
 export const useDesktopLock = () => {
     const [mounted, setMounted] = useState(false);
-    const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-    const [isMobile, setIsMobile] = useState(false);
+    const [windowSize, setWindowSize] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return { width: window.innerWidth, height: window.innerHeight };
+        }
+        return { width: 0, height: 0 };
+    });
+    const [isMobile, setIsMobile] = useState(() => {
+        if (typeof window !== 'undefined') return window.innerWidth < 768;
+        return false;
+    });
 
     useEffect(() => {
-        setMounted(true);
-        setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+        requestAnimationFrame(() => setMounted(true));
 
         const html = document.documentElement;
         const body = document.body;
@@ -54,7 +61,7 @@ export const useDesktopLock = () => {
         };
 
         // Initial mobile check
-        setIsMobile(window.innerWidth < 768);
+        requestAnimationFrame(() => setIsMobile(window.innerWidth < 768));
 
         window.addEventListener('resize', handleResize);
 

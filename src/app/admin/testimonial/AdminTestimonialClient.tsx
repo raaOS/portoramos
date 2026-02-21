@@ -616,7 +616,7 @@ export default function AdminTestimonialClient() {
                 </div>
 
                 <div className="bg-gray-50 p-3 rounded-xl mb-4 text-xs italic text-gray-600 border border-gray-100 line-clamp-2">
-                  "{t.notificationText}"
+                  &quot;{t.notificationText}&quot;
                 </div>
 
                 <div className="flex items-center justify-end gap-2 border-t border-gray-50 pt-4">

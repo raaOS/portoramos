@@ -33,7 +33,7 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
     useEffect(() => {
         if (!file) return;
         const url = URL.createObjectURL(file);
-        setVideoSrc(url);
+        requestAnimationFrame(() => setVideoSrc(url));
 
         return () => {
             URL.revokeObjectURL(url);
@@ -47,12 +47,15 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
             if (videoEl) {
                 videoRef.current = videoEl;
                 if (!Number.isNaN(videoEl.duration)) {
-                    setDuration(videoEl.duration);
-                    if (range[1] === 10 && videoEl.duration > 0) setRange([0, videoEl.duration]);
+                    const dur = videoEl.duration;
+                    requestAnimationFrame(() => {
+                        setDuration(dur);
+                        if (range[1] === 10 && dur > 0) setRange([0, dur]);
+                    });
                 }
             }
         }
-    });
+    }, [range]); // Run when range changes to check if we need to expand it to full duration
 
     const onMediaLoaded = (mediaSize: { width: number, height: number, naturalWidth: number, naturalHeight: number }) => {
         // Ensure ref is captured

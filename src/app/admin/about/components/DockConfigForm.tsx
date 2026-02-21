@@ -34,14 +34,11 @@ export default function DockConfigForm({ data, onUpdate }: DockConfigFormProps) 
     const isInitialMount = React.useRef(true);
     const lastSavedData = React.useRef<string>('');
 
+    // Sync state with props in useEffect to avoid ref access during render
     useEffect(() => {
-        if (data) {
-            // Only update local state if it's the first load OR if we want to support external updates
-            // For now, to avoid fighting with user typing, we assume data only comes initially or after save.
-            if (isInitialMount.current) {
-                setPreferences(data);
-                lastSavedData.current = JSON.stringify(data);
-            }
+        if (data && isInitialMount.current) {
+            requestAnimationFrame(() => setPreferences(data));
+            lastSavedData.current = JSON.stringify(data);
         }
     }, [data]);
 

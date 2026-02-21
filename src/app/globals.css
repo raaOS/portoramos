@@ -233,12 +233,25 @@ button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible,
 input:focus-visible,
-textarea:focus-visible,
+textarea:focus-visible:not(.no-ring),
 select:focus-visible {
   outline: 1px solid #2563eb;
   outline-offset: 0;
   box-shadow: none;
   border-radius: inherit;
+}
+
+/* Force hide footer on contact page via CSS as backup */
+body[data-page="contact"] footer {
+  display: none !important;
+}
+
+.no-ring:focus,
+.no-ring:focus-visible,
+.no-ring:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
 }
 
 /* Utility: .focus-ring to apply consistent focus manually if needed */
