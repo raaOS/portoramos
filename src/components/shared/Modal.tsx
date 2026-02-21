@@ -3,19 +3,19 @@
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export default function Modal({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(true);
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         setIsOpen(false);
         // Wait for animation to finish then navigate back
         setTimeout(() => {
             router.back();
         }, 250);
-    };
+    }, [router]);
 
     // Close modal on escape key
     useEffect(() => {
@@ -34,7 +34,7 @@ export default function Modal({ children }: { children: React.ReactNode }) {
             document.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'unset';
         };
-    }, []);
+    }, [handleClose]);
 
     return (
         <AnimatePresence>

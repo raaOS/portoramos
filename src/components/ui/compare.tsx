@@ -182,6 +182,7 @@ export const Compare = ({
     }
 
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         alt={alt}
         src={src}

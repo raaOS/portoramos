@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { m, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { soundManager } from "../utils/SoundManager";
 import "./retro/retro-os.css";
@@ -249,7 +250,7 @@ export default function RetroMobileOverlay() {
                                                 </button>
                                             </div>
 
-                                            <a href="/" className="text-[10px] underline mt-1">{t.backBtn}</a>
+                                            <Link href="/" className="text-[10px] underline mt-1">{t.backBtn}</Link>
                                         </m.div>
                                     )}
                                 </div>

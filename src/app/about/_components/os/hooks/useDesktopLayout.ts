@@ -11,16 +11,19 @@ interface UseDesktopLayoutProps {
 
 export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLayoutProps) {
     // Local state for icon positions (Optimistic UI)
-    const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>({});
+    const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>(
+        aboutData?.desktopPreferences?.iconPositions || {}
+    );
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Sync state with props in render (Alternative to useEffect to avoid cascading render)
-    const [lastAboutData, setLastAboutData] = useState(aboutData);
-    if (aboutData !== lastAboutData) {
+    // Sync state with props during render if props changed
+    // This avoids useEffect cascading renders
+    const [prevAboutData, setPrevAboutData] = useState(aboutData);
+    if (aboutData !== prevAboutData) {
+        setPrevAboutData(aboutData);
         if (aboutData?.desktopPreferences?.iconPositions) {
             setIconPositions(aboutData.desktopPreferences.iconPositions);
         }
-        setLastAboutData(aboutData);
     }
 
     const handleIconPositionChange = (id: string, x: number, y: number) => {

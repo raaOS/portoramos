@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Button from "@/components/ui/Button";
 import { Trash2, FolderOpen, RefreshCw, Play } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
@@ -40,7 +40,7 @@ export default function SequenceList() {
         }
     };
 
-    const fetchSequences = async () => {
+    const fetchSequences = useCallback(async () => {
         setIsLoading(true);
         try {
             const res = await fetch("/api/upload/sequence");
@@ -55,11 +55,11 @@ export default function SequenceList() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [showError]);
 
     useEffect(() => {
         fetchSequences();
-    }, []);
+    }, [fetchSequences]);
 
     // Expose refresh method to parent if needed, or just use button
     // For now, simple auto-refresh on mount.

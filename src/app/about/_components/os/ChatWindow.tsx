@@ -202,6 +202,7 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
                                     {/* Image Bubble */}
                                     {msg.type === 'image' && msg.imageSrc && (
                                         <div className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
                                                 src={msg.imageSrc}
                                                 alt="Shared media"

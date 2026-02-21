@@ -35,60 +35,64 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
     const [isInitialized, setIsInitialized] = useState(false);
 
     // Initialize windows based on server preferences (aboutData.windowPreferences)
-    // Synchronous update in render to avoid cascading useEffect render
-    const [lastAboutData, setLastAboutData] = useState(aboutData);
-    if (aboutData && !isInitialized && aboutData !== lastAboutData) {
-        const initializedWindows = windows.map(w => {
-            const pref = aboutData?.windowPreferences?.[w.id];
+    useEffect(() => {
+        // We wait until aboutData is present AND contains windowPreferences
+        // to ensure we don't mark as initialized with empty/loading state.
+        if (!aboutData?.windowPreferences || isInitialized) return;
 
-            let rawWidth = pref?.width || w.width || 800;
-            let rawHeight = pref?.height || w.height || 600;
-            const isPinned = pref?.isOpenByDefault || false;
+        const performInitialization = () => {
+            setWindows(prev => {
+                return prev.map(w => {
+                    const pref = aboutData?.windowPreferences?.[w.id];
+                    if (!pref) return w;
 
-            const getCenterPositionStatic = (width: number, height: number) => {
-                const safeWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
-                const safeHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
-                return {
-                    x: Math.max(0, (safeWidth - width) / 2),
-                    y: Math.max(30, (safeHeight - height) / 2)
-                };
-            };
+                    let rawWidth = pref.width || w.width || 800;
+                    let rawHeight = pref.height || w.height || 600;
+                    const isPinned = pref.isOpenByDefault || false;
 
-            // Mobile logic
-            const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-            let width = rawWidth;
-            let height = rawHeight;
+                    const getCenterPositionStatic = (width: number, height: number) => {
+                        const safeWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+                        const safeHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+                        return {
+                            x: Math.max(0, (safeWidth - width) / 2),
+                            y: Math.max(30, (safeHeight - height) / 2)
+                        };
+                    };
 
-            if (isMobile) {
-                width = Math.min(rawWidth, window.innerWidth * 0.95);
-                height = Math.min(rawHeight, window.innerHeight * 0.8);
-            }
+                    // Mobile logic
+                    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+                    let width = rawWidth;
+                    let height = rawHeight;
 
-            const initialPosition = (pref && pref.x !== undefined && pref.y !== undefined && !isMobile)
-                ? { x: pref.x, y: pref.y }
-                : getCenterPositionStatic(width, height);
+                    if (isMobile) {
+                        width = Math.min(rawWidth, window.innerWidth * 0.95);
+                        height = Math.min(rawHeight, window.innerHeight * 0.8);
+                    }
 
-            let isOpen = w.isOpen;
-            if (!isInitialized) {
-                isOpen = pref?.isOpenByDefault || w.isOpen;
-            }
+                    const initialPosition = (pref.x !== undefined && pref.y !== undefined && !isMobile)
+                        ? { x: pref.x, y: pref.y }
+                        : getCenterPositionStatic(width, height);
 
-            return {
-                ...w,
-                isOpen,
-                isPinned,
-                width,
-                height,
-                initialPosition
-            };
-        });
+                    // Set isOpen true ONLY if pref says so and it's not already open
+                    const isOpen = pref.isOpenByDefault || w.isOpen;
 
-        requestAnimationFrame(() => {
-            setWindows(initializedWindows);
+                    return {
+                        ...w,
+                        isOpen,
+                        isPinned,
+                        width,
+                        height,
+                        initialPosition
+                    };
+                });
+            });
             setIsInitialized(true);
-            setLastAboutData(aboutData);
-        });
-    }
+        };
+
+        // Using queueMicrotask to avoid synchronous setState in effect body warning
+        // but still ensuring it happens immediately after mount/data arrival.
+        queueMicrotask(performInitialization);
+    }, [aboutData, isInitialized]);
 
     // Content Sync Effect: Update window content when initialWindows (and underlying data) changes
     useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Save, Type, GripHorizontal, Palette, Pin, Star, CheckSquare } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { NoteData } from '@/app/about/_components/os/StickyNoteItem';
@@ -24,11 +24,7 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
     const [saving, setSaving] = useState(false);
     const { csrfToken } = useAdminAuth();
 
-    useEffect(() => {
-        loadNotes();
-    }, []);
-
-    const loadNotes = async () => {
+    const loadNotes = useCallback(async () => {
         try {
             setLoading(true);
             const response = await fetch('/api/sticky-notes');
@@ -42,7 +38,11 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showError]);
+
+    useEffect(() => {
+        loadNotes();
+    }, [loadNotes]);
 
     const handleSave = async () => {
         try {

@@ -343,6 +343,7 @@ export default function HardSkillsManager() {
                                     <MoveDown size={16} />
                                 </button>
                             </div>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={skill.icon} alt="" className="w-8 h-8 object-contain" />
                             <div>
                                 <h4 className="font-bold">{skill.name}</h4>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { ExperienceData, WorkExperience } from '@/types/experience';
 import AdminButton from '../components/AdminButton';
@@ -27,7 +27,7 @@ export default function AdminExperienceClient() {
 
   const { showSuccess, showError } = useToast();
 
-  const loadExperienceData = async () => {
+  const loadExperienceData = useCallback(async () => {
     try {
       const response = await fetch('/api/experience');
       const data: ExperienceData = await response.json();
@@ -40,11 +40,11 @@ export default function AdminExperienceClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
 
   useEffect(() => {
     loadExperienceData();
-  }, []);
+  }, [loadExperienceData]);
 
   // --- Statistics Handlers ---
 

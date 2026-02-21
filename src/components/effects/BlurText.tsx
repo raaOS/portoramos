@@ -78,7 +78,6 @@ const BlurText = ({
             observer.disconnect();
             window.removeEventListener('resize', checkMobile);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [threshold, rootMargin, isMobile]);
 
     const defaultFrom = useMemo(

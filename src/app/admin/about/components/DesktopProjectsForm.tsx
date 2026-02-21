@@ -148,6 +148,7 @@ export default function DesktopProjectsForm({ data, projects, onUpdate }: Deskto
                                                 playsInline
                                             />
                                         ) : (
+                                            /* eslint-disable-next-line @next/next/no-img-element */
                                             <img src={p.cover} className="w-full h-full object-cover" alt="" />
                                         )
                                     ) : (

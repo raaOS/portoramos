@@ -191,6 +191,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                             {/* Avatar */}
                             <div className="relative shrink-0">
                                 <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={notification.avatar} alt={notification.name} className="object-cover w-full h-full" />
                                 </div>
                                 <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-black rounded-full z-20 shadow-lg scale-110"></div>

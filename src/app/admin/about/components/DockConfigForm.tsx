@@ -130,6 +130,7 @@ export default function DockConfigForm({ data, onUpdate }: DockConfigFormProps) 
                                     >
                                         <div className="w-full h-full bg-gray-50 flex items-center justify-center">
                                             {config.iconUrl ? (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
                                                 <img
                                                     src={config.iconUrl}
                                                     alt={label}

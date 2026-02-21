@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Masonry from 'react-masonry-css';
 
 interface MasonryGridProps {
@@ -58,7 +58,7 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         return getInitialCols();
     });
 
-    const getCols = (w: number) => {
+    const getCols = useCallback((w: number) => {
         if (!breakpointColumns) return 2; // Safety fallback
         let cols = breakpointColumns.default || 2;
 
@@ -74,7 +74,7 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
             }
         }
         return cols;
-    };
+    }, [breakpointColumns]);
 
     useEffect(() => {
         requestAnimationFrame(() => setMounted(true));
@@ -114,7 +114,7 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         return () => {
             observer.disconnect();
         };
-    }, [breakpointColumns, width]); // Added width as dependency
+    }, [getCols, width]); // Using getCols (which depends on breakpointColumns) and width
 
     // Helper to determine grid classes based on props
     const getGridClasses = () => {

@@ -129,6 +129,7 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                                         <div className="flex items-center gap-2">
 
                                             {skill.iconUrl && (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
                                                 <img
                                                     src={getProxiedUrl(skill.iconUrl)}
                                                     alt={skill.name}
@@ -296,6 +297,7 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                                             preload="none"
                                         />
                                     ) : (
+                                        /* eslint-disable-next-line @next/next/no-img-element */
                                         <img
                                             src={getProxiedUrl(project.cover)}
                                             alt={project.title}

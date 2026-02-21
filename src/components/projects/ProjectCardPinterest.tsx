@@ -41,7 +41,6 @@ export default function ProjectCardPinterest({
         ? tags.find(t => t.toLowerCase() === highlightedTag.toLowerCase())
         : tags?.[0];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Component: any = onClick ? 'div' : (interactive ? Link : 'div');
     const hrefProps = (!onClick && interactive) ? { href: `/projects/${slug}` } : {};
     const isInteractive = interactive || !!onClick;

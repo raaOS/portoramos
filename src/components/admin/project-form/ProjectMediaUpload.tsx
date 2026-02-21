@@ -37,11 +37,16 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
         checkAndRevoke(formData.comparison?.beforeImage, prevBefore);
         checkAndRevoke(formData.comparison?.afterImage, prevAfter);
 
+        // Capture values for cleanup
+        const coverToRevoke = prevCover.current;
+        const beforeToRevoke = prevBefore.current;
+        const afterToRevoke = prevAfter.current;
+
         return () => {
             // Cleanup on unmount (only if blob)
-            if (prevCover.current?.startsWith('blob:')) URL.revokeObjectURL(prevCover.current);
-            if (prevBefore.current?.startsWith('blob:')) URL.revokeObjectURL(prevBefore.current);
-            if (prevAfter.current?.startsWith('blob:')) URL.revokeObjectURL(prevAfter.current);
+            if (coverToRevoke?.startsWith('blob:')) URL.revokeObjectURL(coverToRevoke);
+            if (beforeToRevoke?.startsWith('blob:')) URL.revokeObjectURL(beforeToRevoke);
+            if (afterToRevoke?.startsWith('blob:')) URL.revokeObjectURL(afterToRevoke);
         };
     }, [formData.cover, formData.comparison?.beforeImage, formData.comparison?.afterImage]);
 

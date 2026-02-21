@@ -98,7 +98,7 @@ export default function AdminFileUpload({
     return ffmpeg;
   };
 
-  const compressVideoClient = async (
+  const compressVideoClient = useCallback(async (
     file: File,
     onProgress: (p: number) => void,
     trimOptions?: { start: number; end: number; crop?: { x: number; y: number; width: number; height: number } }
@@ -168,7 +168,7 @@ export default function AdminFileUpload({
     const data = await ffmpeg.readFile(outputName);
     const blob = new Blob([data as any], { type: 'video/mp4' });
     return new File([blob], file.name, { type: 'video/mp4' });
-  };
+  }, []); // ffmpegRef is persistent
 
   const uploadToGitHub = useCallback(async (file: File): Promise<{ url: string; publicPath?: string; warning?: string }> => {
     setStatus('Uploading to GitHub...');
