@@ -7,8 +7,8 @@ module.exports = {
       startServerReadyTimeout: 30000,
       url: [
         'http://localhost:3000',
-        'http://localhost:3000/about',
-        'http://localhost:3000/works'
+        'http://localhost:3000/projects',
+        'http://localhost:3000/contact'
       ]
     },
     assert: {
