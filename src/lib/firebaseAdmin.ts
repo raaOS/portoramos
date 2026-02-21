@@ -9,12 +9,18 @@ export const getFirebaseDb = (): admin.database.Database => {
 
     const projectId = process.env.FIREBASE_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    let privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-    // Clean up accidental quotes from Vercel dashboard copy-paste
     if (privateKey) {
+        // Remove leading/trailing whitespaces and invisible characters
+        privateKey = privateKey.trim();
+
+        // Clean up accidental quotes from Vercel dashboard copy-paste
         if (privateKey.startsWith('"') && privateKey.endsWith('"')) privateKey = privateKey.slice(1, -1);
         else if (privateKey.startsWith("'") && privateKey.endsWith("'")) privateKey = privateKey.slice(1, -1);
+
+        // Handle both actual newlines and escaped newlines (\n)
+        privateKey = privateKey.replace(/\\n/g, '\n');
     }
 
     if (!projectId || !clientEmail || !privateKey) {
