@@ -17,6 +17,17 @@ interface UpdateFileParams {
     message: string;
 }
 
+// Helper to clean environment variables (removes quotes and trims)
+const cleanEnvVar = (name: string): string | undefined => {
+    let val = process.env[name];
+    if (!val) return undefined;
+    val = val.trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+    }
+    return val;
+};
+
 export class GitHubService {
     private path: string = 'src/data/projects.json';
     private lastCallTime: number = 0;
@@ -24,7 +35,7 @@ export class GitHubService {
 
     // Lazy getters to ensure env vars are read at runtime, not build time
     private get token(): string {
-        const token = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN || '';
+        const token = cleanEnvVar('GITHUB_ACCESS_TOKEN') || cleanEnvVar('GITHUB_TOKEN') || '';
         // console.log('[GitHubService] Token length:', token.length); // Debug (don't log full token)
         if (!token) {
             console.error('[GitHubService] GITHUB_ACCESS_TOKEN or GITHUB_TOKEN is not set!');
@@ -34,7 +45,7 @@ export class GitHubService {
     }
 
     private get owner(): string {
-        const owner = process.env.GITHUB_OWNER || '';
+        const owner = cleanEnvVar('GITHUB_OWNER') || '';
         if (!owner) {
             console.error('[GitHubService] GITHUB_OWNER is not set!');
             // Owner missing - error already logged above
@@ -43,7 +54,7 @@ export class GitHubService {
     }
 
     private get repo(): string {
-        const repo = process.env.GITHUB_REPO || '';
+        const repo = cleanEnvVar('GITHUB_REPO') || '';
         if (!repo) {
             console.error('[GitHubService] GITHUB_REPO is not set!');
         }

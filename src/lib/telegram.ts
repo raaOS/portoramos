@@ -1,6 +1,17 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+// Helper to clean environment variables (removes quotes and trims)
+const cleanEnvVar = (name: string): string | undefined => {
+    let val = process.env[name];
+    if (!val) return undefined;
+    val = val.trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+    }
+    return val;
+};
+
 // Load config from JSON if exists, otherwise env
 async function getTelegramConfig() {
     try {
@@ -15,8 +26,8 @@ async function getTelegramConfig() {
     }
 
     return {
-        botToken: process.env.TELEGRAM_BOT_TOKEN,
-        chatId: process.env.TELEGRAM_CHAT_ID,
+        botToken: cleanEnvVar('TELEGRAM_BOT_TOKEN'),
+        chatId: cleanEnvVar('TELEGRAM_CHAT_ID'),
         isCustom: false
     };
 }

@@ -2,10 +2,21 @@ import { NextRequest } from 'next/server';
 import crypto from 'crypto';
 import { sign, verify } from 'jsonwebtoken';
 
+// Helper to clean environment variables (removes quotes and trims)
+const cleanEnvVar = (name: string): string | undefined => {
+  let val = process.env[name];
+  if (!val) return undefined;
+  val = val.trim();
+  if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+    val = val.slice(1, -1);
+  }
+  return val;
+};
+
 // Clean auth system - scrypt only (most secure)
-const ADMIN_PASSWORD_SCRYPT = process.env.ADMIN_PASSWORD_SCRYPT;
-const PASSWORD_SALT = process.env.PASSWORD_SALT;
-const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_PASSWORD_SCRYPT = cleanEnvVar('ADMIN_PASSWORD_SCRYPT');
+const PASSWORD_SALT = cleanEnvVar('PASSWORD_SALT');
+const JWT_SECRET = cleanEnvVar('JWT_SECRET');
 
 function hashPasswordScrypt(password: string, salt: string): string {
   const key = crypto.scryptSync(password, salt, 64);
