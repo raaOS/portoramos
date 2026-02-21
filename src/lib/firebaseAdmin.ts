@@ -9,7 +9,13 @@ export const getFirebaseDb = (): admin.database.Database => {
 
     const projectId = process.env.FIREBASE_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+    // Clean up accidental quotes from Vercel dashboard copy-paste
+    if (privateKey) {
+        if (privateKey.startsWith('"') && privateKey.endsWith('"')) privateKey = privateKey.slice(1, -1);
+        else if (privateKey.startsWith("'") && privateKey.endsWith("'")) privateKey = privateKey.slice(1, -1);
+    }
 
     if (!projectId || !clientEmail || !privateKey) {
         console.warn('[Firebase Admin] Initialization skipped: Missing credentials (expected during build).');
@@ -42,7 +48,8 @@ export const getFirebaseDb = (): admin.database.Database => {
 export const db = new Proxy({} as admin.database.Database, {
     get: function (target, prop) {
         const actualDb = getFirebaseDb();
-        return Reflect.get(actualDb, prop);
+        const value = Reflect.get(actualDb, prop);
+        return typeof value === 'function' ? value.bind(actualDb) : value;
     }
 });
 
