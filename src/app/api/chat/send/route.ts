@@ -44,20 +44,27 @@ export async function POST(request: Request) {
         if (groupId) {
             // Need to ensure visitor has a Topic created in the forum
             if (!threadId) {
-                const topicRes = await fetch(`https://api.telegram.org/bot${botToken}/createForumTopic`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: groupId,
-                        name: `💬 Guest ${visitorId.substring(0, 4)}`
-                    })
-                });
-                const topicData = await topicRes.json();
-                if (topicData.ok && topicData.result?.message_thread_id) {
-                    threadId = topicData.result.message_thread_id;
-                    await chatStore.updateSessionThreadId(visitorId, threadId as number);
-                } else {
-                    console.error('Failed to create Telegram Topic:', topicData);
+                try {
+                    const topicRes = await fetch(`https://api.telegram.org/bot${botToken}/createForumTopic`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: groupId,
+                            name: `💬 Guest ${visitorId.substring(0, 4)}`
+                        })
+                    });
+                    const topicData = await topicRes.json();
+                    if (topicData.ok && topicData.result?.message_thread_id) {
+                        threadId = topicData.result.message_thread_id;
+                        await chatStore.updateSessionThreadId(visitorId, threadId as number);
+                    } else {
+                        console.error('Failed to create Telegram Topic (Fallback to DM):', topicData);
+                        // Fallback to sending to admin DM instead of group topic
+                        targetChatId = adminChatId;
+                    }
+                } catch (topicErr) {
+                    console.error('Network Error creating Telegram Topic (Fallback to DM):', topicErr);
+                    targetChatId = adminChatId;
                 }
             }
         }

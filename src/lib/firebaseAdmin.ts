@@ -1,10 +1,10 @@
 import 'server-only';
 import * as admin from 'firebase-admin';
 
-// Initialize the app only if it hasn't been initialized already to avoid duplicate app errors in HMR
-const initFirebase = () => {
+// Initialize the app lazily to allow Vercel to inject env vars at runtime
+export const getFirebaseDb = (): admin.database.Database => {
     if (admin.apps.length > 0) {
-        return admin.app();
+        return admin.app().database();
     }
 
     const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -13,10 +13,20 @@ const initFirebase = () => {
 
     if (!projectId || !clientEmail || !privateKey) {
         console.warn('[Firebase Admin] Initialization skipped: Missing credentials (expected during build).');
-        return null;
+        // Return a proxy so it doesn't crash during Next.js static generation, but will throw on real usage
+        return new Proxy({} as admin.database.Database, {
+            get: function (target, prop) {
+                if (prop === 'ref') {
+                    return () => {
+                        throw new Error('Firebase Admin database accessed but not initialized due to missing credentials.');
+                    };
+                }
+                return Reflect.get(target, prop);
+            }
+        });
     }
 
-    return admin.initializeApp({
+    const app = admin.initializeApp({
         credential: admin.credential.cert({
             projectId,
             clientEmail,
@@ -24,19 +34,15 @@ const initFirebase = () => {
         }),
         databaseURL: process.env.FIREBASE_DATABASE_URL,
     });
+
+    return app.database();
 };
 
-const app = initFirebase();
-
-// Proxy the database to avoid null reference exceptions if accessed before initialization
-// At runtime, Vercel provides env vars, so app will be valid. During build, it's null.
-export const db = app ? app.database() : new Proxy({} as admin.database.Database, {
+// Export db as an object with a getter for backward compatibility with `chatStore.ts`
+export const db = new Proxy({} as admin.database.Database, {
     get: function (target, prop) {
-        if (prop === 'ref') {
-            return () => {
-                throw new Error('Firebase Admin database accessed but not initialized due to missing credentials.');
-            };
-        }
-        return Reflect.get(target, prop);
+        const actualDb = getFirebaseDb();
+        return Reflect.get(actualDb, prop);
     }
 });
+
