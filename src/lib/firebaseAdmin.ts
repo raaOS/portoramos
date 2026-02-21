@@ -7,30 +7,44 @@ export const getFirebaseDb = (): admin.database.Database => {
         return admin.app().database();
     }
 
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    // Helper to clean environment variables (removes quotes and trims)
+    const cleanEnvVar = (name: string): string | undefined => {
+        let val = process.env[name];
+        if (!val) return undefined;
+        val = val.trim();
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.slice(1, -1);
+        }
+        return val;
+    };
+
+    const projectId = cleanEnvVar('FIREBASE_PROJECT_ID');
+    const clientEmail = cleanEnvVar('FIREBASE_CLIENT_EMAIL');
+    const dbUrl = cleanEnvVar('FIREBASE_DATABASE_URL');
     let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
     if (privateKey) {
-        // Remove leading/trailing whitespaces and invisible characters
         privateKey = privateKey.trim();
-
-        // Clean up accidental quotes from Vercel dashboard copy-paste
-        if (privateKey.startsWith('"') && privateKey.endsWith('"')) privateKey = privateKey.slice(1, -1);
-        else if (privateKey.startsWith("'") && privateKey.endsWith("'")) privateKey = privateKey.slice(1, -1);
-
-        // Handle both actual newlines and escaped newlines (\n)
+        if ((privateKey.startsWith('"') && privateKey.endsWith('"')) || (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+            privateKey = privateKey.slice(1, -1);
+        }
         privateKey = privateKey.replace(/\\n/g, '\n');
     }
 
-    if (!projectId || !clientEmail || !privateKey) {
-        console.warn('[Firebase Admin] Initialization skipped: Missing credentials (expected during build).');
-        // Return a proxy so it doesn't crash during Next.js static generation, but will throw on real usage
+    const missingVars: string[] = [];
+    if (!projectId) missingVars.push('FIREBASE_PROJECT_ID');
+    if (!clientEmail) missingVars.push('FIREBASE_CLIENT_EMAIL');
+    if (!privateKey) missingVars.push('FIREBASE_PRIVATE_KEY');
+    if (!dbUrl) missingVars.push('FIREBASE_DATABASE_URL');
+
+    if (missingVars.length > 0) {
+        console.warn(`[Firebase Admin] Initialization deferred. Missing: ${missingVars.join(', ')}`);
+
         return new Proxy({} as admin.database.Database, {
             get: function (target, prop) {
                 if (prop === 'ref') {
-                    return () => {
-                        throw new Error('Firebase Admin database accessed but not initialized due to missing credentials.');
+                    return (path?: string) => {
+                        throw new Error(`Firebase Error: Missing environment variables [${missingVars.join(', ')}]. Path: ${path || 'root'}`);
                     };
                 }
                 return Reflect.get(target, prop);
@@ -44,7 +58,7 @@ export const getFirebaseDb = (): admin.database.Database => {
             clientEmail,
             privateKey,
         }),
-        databaseURL: process.env.FIREBASE_DATABASE_URL,
+        databaseURL: dbUrl,
     });
 
     return app.database();
