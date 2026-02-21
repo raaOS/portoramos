@@ -11,14 +11,31 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        console.log('[Telegram Webhook] Incoming:', JSON.stringify(body));
 
         if (body.message && body.message.text) {
             const incomingChatId = body.message.chat.id.toString();
             const text = body.message.text.trim();
             const threadId = body.message.message_thread_id;
-            const groupId = process.env.TELEGRAM_GROUP_ID;
+
+            // Fix: Clean TELEGRAM_GROUP_ID to prevent quote mismatch in Vercel
+            let groupId = process.env.TELEGRAM_GROUP_ID;
+            if (groupId) {
+                groupId = groupId.trim();
+                if ((groupId.startsWith('"') && groupId.endsWith('"')) || (groupId.startsWith("'") && groupId.endsWith("'"))) {
+                    groupId = groupId.slice(1, -1);
+                }
+            }
 
             const isAdmin = incomingChatId === adminChatId || (groupId && incomingChatId === groupId);
+            console.log('[Telegram Webhook] Routing:', {
+                incomingChatId,
+                adminChatId,
+                groupId,
+                isAdmin,
+                threadId,
+                replyTo: body.message.reply_to_message?.message_id
+            });
 
             // Find visitorId context if we are in a Topic or Replying to an old DM
             let currentVisitorId: string | null = null;
@@ -29,6 +46,8 @@ export async function POST(request: Request) {
             } else if (body.message.reply_to_message?.message_id) {
                 currentVisitorId = await chatStore.getVisitorByMessageId(body.message.reply_to_message.message_id);
             }
+
+            console.log('[Telegram Webhook] Context:', { currentVisitorId });
 
             // Store messages to be sent (allows sending multiple bubbles)
             const messagesToSend: { text: string; reply_markup?: any; message_thread_id?: number }[] = [];
@@ -157,6 +176,27 @@ export async function POST(request: Request) {
                             const success = await chatStore.setAiMode(currentVisitorId, true);
                             if (success) {
                                 messagesToSend.push({ text: `🤖 *Mode AI Aktif!*\nSistem akan kembali membalas pesan dari pengunjung ini secara otomatis.` });
+
+                                // --- SMART CATCH-UP LOGIC ---
+                                // Check if the last message was from visitor and needs a reply
+                                const allMessages = await chatStore.getAllMessages(currentVisitorId);
+                                const lastMessage = allMessages[allMessages.length - 1];
+
+                                if (lastMessage && lastMessage.sender === 'visitor') {
+                                    messagesToSend.push({ text: `🔍 _Menarik nafas... membalas pesan terakhir pengunjung._` });
+
+                                    try {
+                                        const { aiChatService } = await import('@/lib/services/aiChatService');
+                                        const aiResponse = await aiChatService.generateResponse(allMessages);
+                                        const aiReplyMsg = await chatStore.addAiReply(currentVisitorId, aiResponse);
+
+                                        if (aiReplyMsg) {
+                                            messagesToSend.push({ text: `🤖 *AI:* "${aiResponse}"` });
+                                        }
+                                    } catch (err) {
+                                        console.error('[Smart Catch-up Error]:', err);
+                                    }
+                                }
                             } else {
                                 messagesToSend.push({ text: `❌ _Sesi klien tidak ditemukan atau sudah kadaluarsa._` });
                             }

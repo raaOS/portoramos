@@ -89,6 +89,11 @@ export async function POST(request: Request) {
 
         const tgData = await tgResponse.json();
 
+        // 3b. Map the Telegram message ID to the visitor ID for future manual replies
+        if (tgData.ok && tgData.result?.message_id) {
+            await chatStore.mapTelegramMessage(visitorId, tgData.result.message_id);
+        }
+
         // 4. Trigger AI if in AI mode
         if (isAiMode) {
             // Await AI response in the background for UX speed, or await it if UX needs instant reflection
@@ -112,11 +117,15 @@ export async function POST(request: Request) {
                     if (threadId) {
                         aiPayload.message_thread_id = threadId;
                     }
-                    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    const aiTgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(aiPayload)
                     });
+                    const aiTgData = await aiTgRes.json();
+                    if (aiTgData.ok && aiTgData.result?.message_id) {
+                        await chatStore.mapTelegramMessage(visitorId, aiTgData.result.message_id);
+                    }
                 }
             } catch (aiErr) {
                 console.error("[Web Chat AI Error]:", aiErr);

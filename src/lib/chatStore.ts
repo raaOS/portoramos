@@ -71,6 +71,11 @@ export const chatStore = {
         return msg;
     },
 
+    async mapTelegramMessage(visitorId: string, telegramMsgId: number) {
+        await db.ref(`sessions/${visitorId}`).update({ telegramMessageId: telegramMsgId });
+        await db.ref(`messageMap/${telegramMsgId}`).set(visitorId);
+    },
+
     async updateSessionThreadId(visitorId: string, threadId: number) {
         await db.ref(`sessions/${visitorId}`).update({ telegramThreadId: threadId });
         // Also map threadId to visitorId for fast webhook routing
