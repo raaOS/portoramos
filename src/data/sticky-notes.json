@@ -1,34 +1,7 @@
-[
-  {
-    "id": "fcbe74e0-943d-4f11-825c-3742de3214f9",
-    "text": "<b>semua icon di bisa diklik\ndrag $ drop yaa 🫠</b><div><b>buka di PC atau laptop</b><div><b>🙂‍↕️🫡🫠</b></div></div>",
-    "date": "2026-02-01T20:30:45.941Z",
-    "color": "#fef08a",
-    "isStarred": false,
-    "isDeleted": false,
-    "x": 50.90721130371094,
-    "y": 68.04632568359375,
-    "width": 291,
-    "height": 269,
-    "zIndex": 276,
-    "fontFamily": "var(--font-caveat), sans-serif",
-    "fontSize": 24,
-    "isPinned": false
-  },
-  {
-    "id": "ab587830-093f-42d3-ac6a-c96485688888",
-    "text": "Catatan BaruTest Sticky Note by AI Agent",
-    "date": "2026-02-15T19:06:22.313Z",
-    "color": "#fef08a",
-    "isStarred": false,
-    "isDeleted": true,
-    "x": 120,
-    "y": 120,
-    "width": 280,
-    "height": 280,
-    "zIndex": 100,
-    "fontFamily": "var(--font-caveat), sans-serif",
-    "fontSize": 24,
-    "isPinned": false
+{
+  "id": "sticky-1",
+  "position": {
+    "x": 300,
+    "y": 300
   }
-]
+}
