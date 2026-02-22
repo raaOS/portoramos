@@ -1,0 +1,127 @@
+import React from 'react';
+import Image from 'next/image';
+import { Pencil, Trash2, Copy, Eye, EyeOff, MessageCircle } from 'lucide-react';
+import { Project } from '@/types/projects';
+import { isVideoLink } from '@/lib/media';
+import StatusToggle from '../../components/StatusToggle';
+
+const FALLBACK_IMAGE = 'https://via.placeholder.com/400x300/CCCCCC/666666?text=No+Image';
+
+interface ProjectCardProps {
+    project: Project;
+    selectedProjectIds: Set<string>;
+    toggleProjectSelection: (id: string) => void;
+    handleToggleProjectStatus: (project: Project) => void;
+    setEditingProject: (project: Project) => void;
+    handleDeleteProject: (id: string) => void;
+    handleDuplicateProject: (project: Project) => void;
+    setManagingCommentsProject: (project: Project) => void;
+    commentCount?: number;
+}
+
+export const ProjectCard = ({
+    project,
+    selectedProjectIds,
+    toggleProjectSelection,
+    handleToggleProjectStatus,
+    setEditingProject,
+    handleDeleteProject,
+    handleDuplicateProject,
+    setManagingCommentsProject,
+    commentCount = 0
+}: ProjectCardProps) => {
+    const isPublished = project.status === 'published';
+
+    return (
+        <div className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col overflow-hidden h-full">
+            <div className="relative aspect-video bg-gray-100 overflow-hidden">
+                {/* Selection Checkbox Overlay */}
+                <div
+                    className={`absolute top-2 left-2 z-10 transition-opacity duration-200 ${selectedProjectIds.has(project.id) || 'group-hover:opacity-100 opacity-0'}`}
+                    onPointerDown={(e) => e.stopPropagation()}
+                >
+                    <input
+                        type="checkbox"
+                        checked={selectedProjectIds.has(project.id)}
+                        onChange={() => toggleProjectSelection(project.id)}
+                        className="w-5 h-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500 cursor-pointer shadow-sm"
+                    />
+                </div>
+
+                {isVideoLink(project.cover) ? (
+                    <video src={project.cover} className="w-full h-full object-cover" muted loop playsInline preload="metadata" />
+                ) : (
+                    <Image
+                        src={project.cover || FALLBACK_IMAGE}
+                        alt={project.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        loading="lazy"
+                    />
+                )}
+            </div>
+
+            <div className="p-5 flex-1 flex flex-col">
+                <div className="mb-4">
+                    <div className="flex justify-between items-center mb-1 gap-2">
+                        <h3
+                            className="text-lg font-bold text-gray-900 line-clamp-1 flex-1 cursor-pointer hover:text-violet-600"
+                            title={project.title}
+                            onClick={() => toggleProjectSelection(project.id)}
+                        >
+                            {project.title}
+                        </h3>
+                        <div onPointerDown={(e) => e.stopPropagation()}>
+                            <StatusToggle
+                                isActive={isPublished}
+                                onClick={() => handleToggleProjectStatus(project)}
+                                className="flex-shrink-0"
+                                iconActive={<Eye className="w-4 h-4" />}
+                                iconInactive={<EyeOff className="w-4 h-4" />}
+                                labelActive=""
+                                labelInactive=""
+                            />
+                        </div>
+                    </div>
+                    <p className="text-sm text-violet-600 font-medium mb-2">{project.client} • {project.year}</p>
+                    <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
+                </div>
+
+                <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-100 pt-4" onPointerDown={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setEditingProject(project)}
+                            className="p-2 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                            title="Edit"
+                        >
+                            <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => handleDuplicateProject(project)}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Duplicate"
+                        >
+                            <Copy className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => handleDeleteProject(project.id)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={() => setManagingCommentsProject(project)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                    >
+                        <MessageCircle className="w-4 h-4" />
+                        {commentCount > 0 ? `${commentCount} Komentar` : 'Komentar'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
