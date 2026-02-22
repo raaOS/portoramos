@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { User, ArrowLeft, Grid, Smile, Rocket, Mail, Trash2, MessageCircle, FileText, Image as ImageIcon, MessageSquare, StickyNote } from "lucide-react";
-import { AnimatePresence, m, LazyMotion, domMax } from "framer-motion";
+import { AnimatePresence, m, LazyMotion, domAnimation } from "framer-motion";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
@@ -15,10 +15,10 @@ import DesktopIcon from "./DesktopIcon";
 import OSDock from "./OSDock";
 import MenuBar from "./MenuBar";
 
-// Render Layer Components (extracted for readability)
-import DesktopIconsLayer from "./layers/DesktopIconsLayer";
-import WindowsLayer from "./layers/WindowsLayer";
-import UIOverlaysLayer from "./layers/UIOverlaysLayer";
+// Render Layer Components (Dynamic Imports for Bundle Optimization)
+const DesktopIconsLayer = dynamic(() => import("./layers/DesktopIconsLayer"), { ssr: false });
+const WindowsLayer = dynamic(() => import("./layers/WindowsLayer"), { ssr: false });
+const UIOverlaysLayer = dynamic(() => import("./layers/UIOverlaysLayer"), { ssr: false });
 
 // Window Content Components - Lazy loaded for faster initial paint
 const AboutContent = dynamic(() => import("./AboutContent"), {
@@ -328,7 +328,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     return (
         <DesktopErrorBoundary>
             <WindowContext.Provider value={windowManager}>
-                <LazyMotion features={domMax}>
+                <LazyMotion features={domAnimation}>
                     {isMobile ? (
                         <RetroMobileOverlay />
                     ) : (
@@ -369,10 +369,12 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                     setNotesVisible={setNotesVisible}
                                 />
 
-                                {/* Layer 2: Windows */}
-                                <WindowsLayer
-                                    isAdmin={isAdmin}
-                                />
+                                {/* Layer 2: Windows (Load ONLY when at least one window is open) */}
+                                {windows.some(w => w.isOpen) && (
+                                    <WindowsLayer
+                                        isAdmin={isAdmin}
+                                    />
+                                )}
 
                                 {/* Layer 3: UI Overlays (Dock, MenuBar, Spotlight, DynamicIsland) */}
                                 <UIOverlaysLayer

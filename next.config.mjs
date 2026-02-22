@@ -219,4 +219,10 @@ const nextConfig = {
 }
 
 // Next.js Restart: fix hydration mismatch v1
-export default nextConfig
+import createBundleAnalyzer from '@next/bundle-analyzer';
+
+const withBundleAnalyzer = createBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+export default withBundleAnalyzer(nextConfig);

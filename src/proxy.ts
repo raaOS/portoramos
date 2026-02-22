@@ -68,11 +68,8 @@ function isAPIRoute(pathname: string): boolean {
 }
 
 function isStaticAsset(pathname: string): boolean {
-    return (
-        pathname.startsWith('/_next/') ||
-        pathname.startsWith('/static/') ||
-        /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|woff2?|ttf|eot|mp4|webm|wav|mp3|json|xml|txt|map)$/i.test(pathname)
-    );
+    return (pathname.startsWith('/_next/') ||
+    pathname.startsWith('/static/') || /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|woff2?|ttf|eot|mp4|webm|wav|mp3|json|xml|txt|map)$/i.test(pathname));
 }
 
 function addSecurityHeaders(response: NextResponse): NextResponse {
@@ -123,7 +120,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     return response;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
 
