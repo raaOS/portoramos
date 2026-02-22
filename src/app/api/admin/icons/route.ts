@@ -138,38 +138,72 @@ export async function DELETE(req: NextRequest) {
         const baseName = filename.substring(0, filename.length - ext.length); // e.g. "123-file"
 
         // Smart Delete: Target all variants (original, webp, temp)
-        // We know our naming convention preserves the basename.
         const variants = ['.icns', '.webp', '.png', '.jpg', '.jpeg', '.svg'];
-        const suffixes = ['', '_temp']; // Check normal and _temp versions
+        const suffixes = ['', '_temp'];
 
-        for (const suffix of suffixes) {
-            for (const variantExt of variants) {
-                const targetName = `${baseName}${suffix}${variantExt}`;
-                const targetRelPath = path.join(path.dirname(relativePath), targetName).replace(/\\/g, '/');
-                const targetAbsPath = path.join(dir, targetName);
+        const folderRelPath = path.dirname(relativePath).replace(/\\/g, '/');
 
-                // 2. Delete Locally
-                if (isDev && fs.existsSync(targetAbsPath)) {
-                    try {
-                        console.log(`[IconsAPI] Attempting local delete: ${targetAbsPath}`);
-                        await safeUnlink(targetAbsPath);
-                    } catch (err: any) {
-                        console.error(`[IconsAPI] Local delete failure for ${targetName}:`, err.message);
-                    }
+        // OPTIMIZATION: Fetch existing files first to avoid unnecessary sequential checks
+        let existingFiles: string[] = [];
+        if (isDev) {
+            const publicDir = path.join(process.cwd(), folderRelPath);
+            if (fs.existsSync(publicDir)) {
+                existingFiles = fs.readdirSync(publicDir);
+            }
+        } else {
+            const owner = process.env.GITHUB_OWNER;
+            const repo = process.env.GITHUB_REPO;
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${folderRelPath}`;
+            const response = await fetch(url, {
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Authorization': `Bearer ${process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN}`
                 }
-
-                // 3. Delete from GitHub
-                const hasGitHubToken = !!(process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN);
-                if (hasGitHubToken) {
-                    try {
-                        console.log(`[IconsAPI] Attempting GitHub delete: ${targetRelPath}`);
-                        await githubService.deleteFile(targetRelPath, `Delete icon variant ${targetName}`);
-                    } catch (error: any) {
-                        console.warn(`[IconsAPI] GitHub delete failure (likely 404) for ${targetName}:`, error.message);
-                    }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    existingFiles = data.map(f => f.name);
                 }
             }
         }
+
+        // Collect all potential targets that actually exist
+        const targetsToDelete: string[] = [];
+        for (const suffix of suffixes) {
+            for (const variantExt of variants) {
+                const targetName = `${baseName}${suffix}${variantExt}`;
+                if (existingFiles.includes(targetName)) {
+                    targetsToDelete.push(targetName);
+                }
+            }
+        }
+
+        // 2. Execute Deletions (Parallelized to save time on Vercel)
+        await Promise.all(targetsToDelete.map(async (targetName) => {
+            const targetRelPath = `${folderRelPath}/${targetName}`;
+            const targetAbsPath = path.join(dir, targetName);
+
+            // Local Delete
+            if (isDev && fs.existsSync(targetAbsPath)) {
+                try {
+                    await safeUnlink(targetAbsPath);
+                } catch (err: any) {
+                    console.error(`[IconsAPI] Local delete failure for ${targetName}:`, err.message);
+                }
+            }
+
+            // GitHub Delete
+            const hasGitHubToken = !!(process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN);
+            if (hasGitHubToken) {
+                try {
+                    // githubService.deleteFile handles fetching current SHA internally
+                    await githubService.deleteFile(targetRelPath, `Delete icon variant ${targetName}`);
+                } catch (error: any) {
+                    console.warn(`[IconsAPI] GitHub delete failure for ${targetName}:`, error.message);
+                }
+            }
+        }));
 
         return NextResponse.json({ success: true });
     } catch (error) {

@@ -15,13 +15,16 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
         aboutData?.desktopPreferences?.iconPositions || {}
     );
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    // Persistence Lock: Prevents server data (props) from overwriting local 
+    // optimistic state while a save is in progress or pending.
+    const isPersistingRef = useRef(false);
 
     // Sync state with props during render if props changed
     // This avoids useEffect cascading renders
     const [prevAboutData, setPrevAboutData] = useState(aboutData);
     if (aboutData !== prevAboutData) {
         setPrevAboutData(aboutData);
-        if (aboutData?.desktopPreferences?.iconPositions) {
+        if (aboutData?.desktopPreferences?.iconPositions && !isPersistingRef.current) {
             setIconPositions(aboutData.desktopPreferences.iconPositions);
         }
     }
@@ -33,6 +36,7 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
 
         // 2. Persist if Admin (Debounced)
         if (isAdmin) {
+            isPersistingRef.current = true; // Lock incoming syncs
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
             saveTimeoutRef.current = setTimeout(async () => {
@@ -55,6 +59,11 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
                     });
                 } catch (error) {
                     console.error("Failed to save icon position", error instanceof Error ? error.message : error);
+                } finally {
+                    // Unlock sync after a grace period to allow server state to stabilize
+                    setTimeout(() => {
+                        isPersistingRef.current = false;
+                    }, 2000);
                 }
             }, 1000); // 1-second debounce
         }

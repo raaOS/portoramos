@@ -44,7 +44,7 @@ export default function DesktopIconsLayer({
     setNotesVisible
 }: DesktopIconsLayerProps) {
     return (
-        <div className="absolute inset-0 z-10 pointer-events-auto">
+        <div className="absolute inset-0 z-10 pointer-events-none">
             {projectIcons.map((icon: any) => {
                 const isFolder = icon.type === 'folder';
 
