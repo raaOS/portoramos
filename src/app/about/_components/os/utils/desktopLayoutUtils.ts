@@ -1,33 +1,14 @@
 import { Project } from "@/types/projects";
-import { WindowState } from "@/hooks/useWindowManager";
-import { NoteData } from "../StickyNoteItem";
 import { getProxiedUrl } from "@/lib/utils";
 import { DesktopPreferences } from "@/types/about";
 
 export const generateDesktopIcons = (
     windowSize: { width: number; height: number },
-    windows: WindowState[],
-    notes: NoteData[],
     commercialProjects: Project[],
     desktopPreferences?: DesktopPreferences,
     handleGoHome?: () => void
 ) => {
     if (!windowSize.width) return [];
-
-    // 1. Identify "Forbidden Zones" (Obstacles)
-    const obstacles: { x: number; y: number; w: number; h: number }[] = [];
-
-    // Windows are NO LONGER obstacles (Windows-style static icons)
-
-    // Add sticky notes to obstacles
-    notes.filter((n) => !n.isDeleted).forEach((n) => {
-        obstacles.push({
-            x: n.x || 100,
-            y: n.y || 100,
-            w: n.width || 280,
-            h: n.height || 280,
-        });
-    });
 
     // 2. Define Desktop Grid
     const isMobile = windowSize.width < 768;
@@ -47,22 +28,7 @@ export const generateDesktopIcons = (
             const x = margin + c * gridX;
             const y = topOffset + margin / 2 + r * gridY;
 
-            // Collision check (Box vs Box) -> Skip on Mobile (width < 768) to ensure icons render even if window covers screen
-            // On mobile, screen real estate is scarce, so we prize grid structure over avoiding overlap with a window that can be closed.
-            const isBlocked = !isMobile && obstacles.some((obs) => {
-                const bufferX = 20; // Spacing around windows horizontally
-                const bufferY = 20; // Spacing around windows vertically
-                return (
-                    x + 80 > obs.x - bufferX && // Icon width is approx 80
-                    x < obs.x + obs.w + bufferX &&
-                    y + 100 > obs.y - bufferY && // Icon height is approx 100
-                    y < obs.y + obs.h + bufferY
-                );
-            });
-
-            if (!isBlocked) {
-                availableSlots.push({ x, y });
-            }
+            availableSlots.push({ x, y });
         }
     }
 

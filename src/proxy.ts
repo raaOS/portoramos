@@ -1,3 +1,11 @@
+/**
+ * 🚨 ATURAN EMAS - JANGAN DIHAPUS / JANGAN DIGANTI NAMA 🚨
+ * 
+ * JANGAN PERNAH mengganti nama file ini menjadi 'middleware.ts'.
+ * Project ini menggunakan Next.js 16/Kustom yang mewajibkan konvensi 'proxy.ts'.
+ * Mengubahnya ke 'middleware.ts' akan merusak sistem dan memicu peringatan deprecation.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { validateCSRFToken, generateCSRFToken } from '@/lib/security';
 
@@ -69,7 +77,7 @@ function isAPIRoute(pathname: string): boolean {
 
 function isStaticAsset(pathname: string): boolean {
     return (pathname.startsWith('/_next/') ||
-    pathname.startsWith('/static/') || /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|woff2?|ttf|eot|mp4|webm|wav|mp3|json|xml|txt|map)$/i.test(pathname));
+        pathname.startsWith('/static/') || /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|woff2?|ttf|eot|mp4|webm|wav|mp3|json|xml|txt|map)$/i.test(pathname));
 }
 
 function addSecurityHeaders(response: NextResponse): NextResponse {
@@ -141,13 +149,21 @@ export async function proxy(request: NextRequest) {
             const sessionCsrfToken = request.cookies.get('csrf_token')?.value;
 
             if (!csrfToken || !sessionCsrfToken || !validateCSRFToken(csrfToken, sessionCsrfToken)) {
-                console.warn('[Security] CSRF Validation Failed. CSRF (Cross-Site Request Forgery), juga dikenal sebagai XSRF atau session riding, adalah jenis serangan keamanan web yang memaksa pengguna yang sudah terautentikasi (login) untuk melakukan tindakan yang tidak diinginkan pada aplikasi web tanpa sepengetahuan mereka.', {
-                    path: pathname,
-                    method: request.method,
-                    hasHeaderToken: !!csrfToken,
-                    hasCookieToken: !!sessionCsrfToken
-                });
-                return NextResponse.json({ error: 'Invalid or missing CSRF token' }, { status: 403 });
+                console.warn(`[Security] CSRF Validation Failed for ${pathname}. header: ${!!csrfToken}, cookie: ${!!sessionCsrfToken}`);
+
+                // Detailed debug info (Internal only)
+                if (process.env.NODE_ENV === 'development') {
+                    console.debug('CSRF Debug:', {
+                        headerToken: csrfToken,
+                        cookieToken: sessionCsrfToken,
+                        allCookies: request.cookies.getAll().map(c => c.name)
+                    });
+                }
+
+                return NextResponse.json({
+                    error: 'Invalid or missing CSRF token',
+                    details: 'CSRF (Cross-Site Request Forgery) validation failed. Ensure cookies are enabled.'
+                }, { status: 403 });
             }
         }
     }

@@ -134,7 +134,6 @@ const nextConfig = {
   async rewrites() {
     return [
       // Swallow legacy Vite HMR client requests (harmless 404s in Next dev)
-      { source: '/@vite/:path*', destination: '/api/dev/vite-client' },
     ]
   },
   async redirects() {

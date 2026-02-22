@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { User, ArrowLeft, Grid, Smile, Rocket, Mail, Trash2, MessageCircle, FileText, Image as ImageIcon, MessageSquare, StickyNote } from "lucide-react";
-import { AnimatePresence, m, LazyMotion, domAnimation } from "framer-motion";
+import { AnimatePresence, m, LazyMotion, domMax } from "framer-motion";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
@@ -175,7 +175,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     );
 
 
-    const windowManager = useWindowManager({ initialWindows, aboutData, projects, csrfToken });
+    const windowManager = useWindowManager({ initialWindows, aboutData, projects, csrfToken, isAdmin });
     const {
         windows,
         openWindow,
@@ -233,8 +233,6 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     const { projectIcons } = useDesktopIcons({
         mounted,
         windowSize,
-        windows,
-        notes,
         commercialProjects,
         aboutData,
         handleGoHome,
@@ -263,7 +261,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     return (
         <DesktopErrorBoundary>
             <WindowContext.Provider value={windowManager}>
-                <LazyMotion features={domAnimation}>
+                <LazyMotion features={domMax}>
                     {isMobile ? (
                         <RetroMobileOverlay />
                     ) : (

@@ -25,9 +25,10 @@ interface UseWindowManagerProps {
     aboutData?: AboutData | null;
     projects: Project[];
     csrfToken?: string;
+    isAdmin?: boolean;
 }
 
-export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWindowManagerProps) => {
+export const useWindowManager = ({ initialWindows, aboutData, projects, csrfToken, isAdmin = false }: UseWindowManagerProps) => {
     const [windows, setWindows] = useState<WindowState[]>(initialWindows);
     const [topZIndex, setTopZIndex] = useState(20);
     const [bouncingDocId, setBouncingDocId] = useState<string | null>(null);
@@ -299,12 +300,12 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
     const updateWindowPosition = useCallback((id: string, x: number, y: number) => {
         setWindows(prev => prev.map(w => {
             if (w.id === id) {
-                if (w.isPinned) saveWindowPreference(id, { x, y });
+                if (isAdmin || w.isPinned) saveWindowPreference(id, { x, y });
                 return { ...w, initialPosition: { x, y } };
             }
             return w;
         }));
-    }, [saveWindowPreference]);
+    }, [saveWindowPreference, isAdmin]);
 
     const handleWindowResize = useCallback((id: string, width: number, height: number) => {
         setWindows(prev => prev.map(w => {
@@ -358,13 +359,13 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken }: UseWi
         // Access latest state via setWindows callback to check isPinned
         setWindows(prev => {
             const win = prev.find(w => w.id === id);
-            if (win?.isPinned) {
+            if (isAdmin || win?.isPinned) {
                 // Save via authenticated API call (admin only - cookies sent automatically)
                 saveWindowSizeAsync(id, width, height);
             }
             return prev; // No state change, just side effect
         });
-    }, [saveWindowSizeAsync]);
+    }, [saveWindowSizeAsync, isAdmin]);
 
     const togglePin = useCallback((id: string) => {
         setWindows(prev => prev.map(w => {

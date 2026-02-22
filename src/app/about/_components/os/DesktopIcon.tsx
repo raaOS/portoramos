@@ -73,7 +73,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
         <m.div
             drag
             dragMomentum={false}
-            dragElastic={0.1}
+            dragElastic={0.05}
             onDragStart={handleDragStart}
             onDragEnd={(e, info) => {
                 handleDragEnd();
@@ -85,7 +85,6 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                     onClick();
                 }
             }}
-            // Use motion values for position instead of left/top to prevent "fighting" between Drag transform and React state
             style={{
                 position: "absolute",
                 left: 0,

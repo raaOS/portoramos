@@ -19,16 +19,15 @@ export async function GET(request: NextRequest) {
     csrfToken: csrfToken
   });
 
-  // Only set cookie if it's new or missing to avoid unnecessary cookie churn
-  if (isNewToken) {
-    response.cookies.set('csrf_token', csrfToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 3600, // 1 hour
-      path: '/'
-    });
-  }
+  // Aggressively set/refresh the CSRF cookie to ensure persistence sync
+  // We use a manual header as a fallback to ensure Next.js App Router doesn't strip it
+  response.cookies.set('csrf_token', csrfToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    path: '/'
+  });
 
   // Prevent browser caching of the auth status
   response.headers.set('Cache-Control', 'no-store, max-age=0');
