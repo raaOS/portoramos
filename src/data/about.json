@@ -225,7 +225,7 @@
       "iconUrl": "/assets/icons-library/1769437234492-st4egtv1o8tm-icnsfile-922467ee2be0869b8e2164714aed0616-notes.webp"
     },
     "projects": {
-      "iconUrl": "/assets/icons-library/1769438534391-8jzxtsb8p9mp-icnsfile-ca52dc8679e2709366550576131c5747-bob.webp",
+      "iconUrl": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/assets/icons-library/1771773099304-ayvjblj21goq-icnsfile-d8f361ddd357476fc58d4f437de52ff4-adobecreativecloud--tahoe-default-.webp?v=1771773138145",
       "isHidden": false,
       "label": "Projects"
     },
@@ -499,5 +499,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-22T15:06:45.881Z"
+  "lastUpdated": "2026-02-22T15:12:21.613Z"
 }
