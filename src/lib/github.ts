@@ -252,8 +252,7 @@ export class GitHubService {
             // Burst cache after success
             const tag = filePath.includes('projects.json') ? 'projects' :
                 filePath.includes('comments.json') ? 'comments' : 'github-content';
-            // @ts-ignore - Lint expects 2 args but Next.js docs say 1. 
-            revalidateTag(tag);
+            revalidateTag(tag, 'max');
             revalidatePath('/', 'layout'); // Fallback revalidation
 
             // Update successful, cache revalidated
