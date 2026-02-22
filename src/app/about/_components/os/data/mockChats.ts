@@ -9,6 +9,7 @@ export interface ChatMessage {
     type?: 'text' | 'image' | 'project';
     imageSrc?: string;
     projectId?: string;
+    isEncrypting?: boolean;
 }
 
 export interface ContactProfile {
