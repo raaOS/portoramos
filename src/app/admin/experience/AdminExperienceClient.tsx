@@ -12,7 +12,7 @@ import ExperienceCard from './components/ExperienceCard';
 import ExperienceForm from './components/ExperienceForm';
 
 export default function AdminExperienceClient() {
-  const { csrfToken } = useAdminAuth();
+  const { csrfToken, isAdmin, isLoading: authLoading } = useAdminAuth();
   const {
     experienceData,
     loading,
@@ -24,7 +24,7 @@ export default function AdminExperienceClient() {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
-  if (loading && !experienceData) {
+  if (authLoading || (loading && !experienceData)) {
     return (
       <AdminLayout
         title="Experience Management"
@@ -34,7 +34,26 @@ export default function AdminExperienceClient() {
         titleAccent="bg-emerald-50 text-emerald-700"
       >
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mr-3"></div>
+          Memuat data...
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <AdminLayout
+        title="Unauthorized"
+        subtitle="Access Denied"
+        breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Experience' }]}
+        titleIcon={<BriefcaseBusiness className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-red-50 text-red-700"
+      >
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Akses Terbatas</h2>
+          <p className="text-gray-600 mb-6">Silakan login terlebih dahulu untuk mengelola Experience.</p>
+          <a href="/admin/login" className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700">Login</a>
         </div>
       </AdminLayout>
     );

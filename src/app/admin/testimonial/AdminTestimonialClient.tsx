@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, MessageSquare } from 'lucide-react';
+import { Pencil, MessageSquare, X } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import AdminButton from '../components/AdminButton';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -14,7 +14,7 @@ import ChatEditor from './components/ChatEditor';
 import TestimonialCard from './components/TestimonialCard';
 
 export default function AdminTestimonialClient() {
-  const { csrfToken } = useAdminAuth();
+  const { csrfToken, isAdmin, isLoading: authLoading } = useAdminAuth();
   const {
     testimonials,
     projects,
@@ -36,6 +36,41 @@ export default function AdminTestimonialClient() {
     messages: [],
     projectId: ''
   });
+
+  if (authLoading || (loading && testimonials.length === 0)) {
+    return (
+      <AdminLayout
+        title="WhatsApp Testimonial"
+        subtitle="Memuat data..."
+        breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Testimonial' }]}
+        titleIcon={<MessageSquare className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-green-50 text-green-700"
+      >
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mr-3"></div>
+          Memuat data...
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <AdminLayout
+        title="Unauthorized"
+        subtitle="Access Denied"
+        breadcrumbs={[{ label: 'Dashboard', href: '/admin' }]}
+        titleIcon={<X size={20} />}
+        titleAccent="bg-red-50 text-red-700"
+      >
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Akses Terbatas</h2>
+          <p className="text-gray-600 mb-6">Silakan login terlebih dahulu untuk mengelola Testimonial.</p>
+          <a href="/admin/login" className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">Login Sekarang</a>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   const handleAiFill = async (topic: string, count: number) => {
     const data = await generateAITestimonial(topic, count);
