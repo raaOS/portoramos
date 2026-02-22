@@ -243,11 +243,11 @@
   "chatSettings": {},
   "windowPreferences": {
     "about": {
-      "x": 1217.75,
-      "y": 69,
-      "width": 550,
-      "height": 538,
-      "isOpenByDefault": false
+      "x": 1197.75,
+      "y": 50,
+      "width": 693,
+      "height": 643,
+      "isOpenByDefault": true
     }
   },
   "labels": {},
@@ -499,5 +499,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-22T01:25:42.773Z"
+  "lastUpdated": "2026-02-22T01:26:18.625Z"
 }
