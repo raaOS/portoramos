@@ -30,7 +30,13 @@ const DesignPhilosophyForm = dynamic(() => import('@/components/admin/about/Desi
 export default function AdminAboutClient() {
   const { csrfToken } = useAdminAuth();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'desktop' | 'dock' | 'chat' | 'stickyNotes' | 'notifications'>('professional');
+
+  // Derive active tab from URL search parameters (Source of Truth)
+  const tabParam = searchParams.get('tab');
+  const validTabs = ['professional', 'softSkills', 'hardSkills', 'runningText', 'philosophy', 'desktop', 'dock', 'chat', 'stickyNotes', 'notifications'];
+  const activeTab = (tabParam && validTabs.includes(tabParam))
+    ? (tabParam as any)
+    : 'professional';
 
   // Custom Hook for Data management
   const {
@@ -48,13 +54,6 @@ export default function AdminAboutClient() {
 
   const { isAdmin, isLoading: authLoading } = useAdminAuth();
 
-  // Sync tab with URL
-  useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab && ['professional', 'softSkills', 'hardSkills', 'runningText', 'philosophy', 'labels', 'desktop', 'dock', 'chat', 'stickyNotes', 'notifications'].includes(tab)) {
-      setActiveTab(tab as any);
-    }
-  }, [searchParams]);
 
   if (authLoading || (loading && !aboutData)) {
     return (

@@ -1,5 +1,6 @@
 import React from "react";
 import { getProxiedUrl } from "@/lib/utils";
+import Image from "next/image";
 import type { Project } from "@/types/projects";
 
 interface ArchiveTabProps {
@@ -35,11 +36,12 @@ export const ArchiveTab = ({ archiveProjects }: ArchiveTabProps) => (
                             preload="none"
                         />
                     ) : (
-                        <img
+                        <Image
                             src={getProxiedUrl(project.cover)}
                             alt={project.title}
-                            loading="lazy"
-                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                            fill
+                            sizes="(max-width: 768px) 50vw, 25vw"
+                            className="object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                         />
                     )}
                     <div className="absolute bottom-0 left-0 w-full p-3 bg-gradient-to-t from-black/80 to-transparent pt-8">

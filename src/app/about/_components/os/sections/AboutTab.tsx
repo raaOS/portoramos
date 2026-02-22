@@ -1,5 +1,6 @@
 import React from "react";
 import { Check } from "lucide-react";
+import Image from "next/image";
 import { getProxiedUrl } from "@/lib/utils";
 import type { AboutData } from "@/types/about";
 import type { HardSkillsData } from "@/types/hardSkill";
@@ -27,10 +28,12 @@ export const AboutTab = ({ aboutData, hardSkillsData }: AboutTabProps) => (
                     <div key={idx} className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                             {skill.iconUrl && (
-                                <img
+                                <Image
                                     src={getProxiedUrl(skill.iconUrl)}
                                     alt={skill.name}
-                                    className="w-5 h-5 object-contain"
+                                    width={20}
+                                    height={20}
+                                    className="object-contain"
                                 />
                             )}
                             <h3 className="font-bold text-gray-900 text-sm">{skill.name}</h3>
