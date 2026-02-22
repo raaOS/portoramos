@@ -215,23 +215,28 @@ export default function AdminProjectsClient() {
           )}
         </>
       ) : (
-        <GalleryManager />
+        <GalleryManager
+          projects={orderedProjects}
+          onSyncTrigger={() => triggerGithubSync(true)}
+        />
       )}
 
       {/* Modals */}
       {(showCreateForm || editingProject) && (
         <ProjectForm
           project={editingProject || undefined}
-          onClose={() => { setShowCreateForm(false); setEditingProject(null); }}
-          onSubmit={(data) => {
+          allProjects={orderedProjects}
+          title={editingProject ? 'Edit Proyek' : 'Buat Proyek Baru'}
+          onCancel={() => { setShowCreateForm(false); setEditingProject(null); }}
+          onSubmit={async (data) => {
             if (editingProject) {
-              updateMutation.mutate(data as UpdateProjectData, {
-                onSuccess: () => { setEditingProject(null); triggerGithubSync(true); }
-              });
+              await updateMutation.mutateAsync(data as UpdateProjectData);
+              await triggerGithubSync(true);
+              setEditingProject(null);
             } else {
-              createMutation.mutate(data as CreateProjectData, {
-                onSuccess: () => { setShowCreateForm(false); triggerGithubSync(true); }
-              });
+              await createMutation.mutateAsync(data as CreateProjectData);
+              await triggerGithubSync(true);
+              setShowCreateForm(false);
             }
           }}
         />
@@ -239,15 +244,16 @@ export default function AdminProjectsClient() {
 
       {showSettings && (
         <SettingsModal
-          config={githubConfig || { token: '', owner: '', repo: '' }}
+          initialConfig={githubConfig}
           onSave={saveGithubSettings}
-          onClose={() => setShowSettings(false)}
+          onCancel={() => setShowSettings(false)}
         />
       )}
 
       {managingCommentsProject && (
         <ManageCommentsModal
           project={managingCommentsProject}
+          onSyncTrigger={() => triggerGithubSync(true)}
           onClose={() => setManagingCommentsProject(null)}
         />
       )}
