@@ -6,7 +6,7 @@ import { mockChats, ContactProfile, ChatMessage } from './data/mockChats';
 import { soundManager } from "./utils/SoundManager";
 import { getAvatarUrl } from '@/lib/avatar';
 import { Project } from '@/types/projects';
-import ScrambleText from './ui/ScrambleText';
+import ScrambleText from '@/components/ui/ScrambleText';
 
 // Letter Avatar Helper (Clean & Consistent)
 const USER_AVATAR = `https://ui-avatars.com/api/?background=00a884&color=ffffff&name=R&size=128&bold=true&length=1`; // User (Ramos) - Green background
@@ -79,7 +79,7 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
                     setIsRemoteTyping(true);
                     sequencerRef.current = setTimeout(() => {
                         setIsRemoteTyping(false);
-                        setVisibleMessages(prev => [...prev, msg]);
+                        setVisibleMessages(prev => [...prev, { ...msg, isEncrypting: true }]);
                         playNotificationSound();
                         currentIndex++;
                         // Wait 1.5s after a message before showing the next one
@@ -128,9 +128,9 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
         soundManager.play('click', 0.4);
     };
 
-    const handleEncryptionComplete = (msgId: number) => {
+    const handleEncryptionComplete = (msgId: string | number) => {
         setVisibleMessages(prev => prev.map(m =>
-            m.id === msgId ? { ...m, isEncrypting: false } : m
+            String(m.id) === String(msgId) ? { ...m, isEncrypting: false } : m
         ));
     };
 
@@ -222,7 +222,7 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
                                     )}
 
                                     <p className="text-[#111b21] leading-[19px] break-words whitespace-pre-wrap pr-1">
-                                        {msg.isMe && msg.isEncrypting ? (
+                                        {msg.isEncrypting ? (
                                             <ScrambleText
                                                 text={msg.text}
                                                 onComplete={() => handleEncryptionComplete(msg.id)}

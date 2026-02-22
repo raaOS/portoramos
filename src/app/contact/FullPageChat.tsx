@@ -8,6 +8,7 @@ import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
 import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
+import ScrambleText from '@/components/ui/ScrambleText';
 
 // Helper for fetching
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -17,6 +18,7 @@ interface ChatMessage {
     text: string;
     sender: 'visitor' | 'admin';
     timestamp: number;
+    isEncrypting?: boolean;
 }
 
 export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
@@ -50,7 +52,8 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                 id: 'greeting',
                 text: contactInfo?.subtext || "👋 Halo! Ada project menarik yang bisa saya bantu? Ketik pesanmu di bawah ini, langsung masuk ke HP saya loh!",
                 sender: 'admin',
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                isEncrypting: true
             }]);
         }
     }, [visitorId, contactInfo?.subtext, messages.length]);
@@ -83,7 +86,7 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                             // Replace temp message with server message to prevent visual duplicates during network race
                             newMessages[existingTempIndex] = serverMsg;
                         } else {
-                            newMessages.push(serverMsg);
+                            newMessages.push({ ...serverMsg, isEncrypting: true });
                             if (serverMsg.sender === 'admin') hasNewAdminMessage = true;
                         }
                     }
@@ -109,6 +112,12 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
         }
     }, [syncData]);
 
+    const handleEncryptionComplete = (msgId: string) => {
+        setMessages(prev => prev.map(m =>
+            m.id === msgId ? { ...m, isEncrypting: false } : m
+        ));
+    };
+
     // Auto-scroll to bottom
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -128,7 +137,8 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
             id: tempId,
             text: messageText,
             sender: 'visitor',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            isEncrypting: true
         }]);
 
         soundManager.play('click', 0.3);
@@ -239,7 +249,16 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                                                 <path d="M5.188 1H0v11.191L8 1.733V1h-2.812z"></path>
                                             </svg>
 
-                                            <div className="whitespace-pre-wrap">{msg.text}</div>
+                                            <div className="whitespace-pre-wrap">
+                                                {msg.isEncrypting ? (
+                                                    <ScrambleText
+                                                        text={msg.text}
+                                                        onComplete={() => handleEncryptionComplete(msg.id)}
+                                                    />
+                                                ) : (
+                                                    msg.text
+                                                )}
+                                            </div>
 
                                             <div className={`flex items-center justify-end gap-1 mt-1 -mb-1 ${isMe ? 'text-[#667781] dark:text-white/60' : 'text-[#667781] dark:text-white/50'}`}>
                                                 <span className="text-[10px] uppercase">
