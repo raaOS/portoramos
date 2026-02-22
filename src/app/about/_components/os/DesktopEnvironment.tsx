@@ -49,6 +49,8 @@ import { useBootSequence } from "./hooks/useBootSequence";
 import { useDesktopShortcuts } from "./hooks/useDesktopShortcuts";
 import { useChatContacts } from "./hooks/useChatContacts";
 import { useDesktopLayout } from "./hooks/useDesktopLayout";
+import { useDesktopIcons } from "./hooks/useDesktopIcons";
+import { useDesktopNavigation } from "./hooks/useDesktopNavigation";
 import type { AboutData, DesktopPreferences } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
@@ -56,9 +58,6 @@ import type { Project, GalleryItem } from "@/types/projects";
 
 // Refactored Imports
 import DesktopErrorBoundary from "./DesktopErrorBoundary";
-import { generateDesktopIcons } from "./utils/desktopLayoutUtils";
-import { getDockItemConfig } from "./utils/dockUtils";
-import { mockChats, ContactProfile } from "./data/mockChats";
 import { soundManager } from "./utils/SoundManager";
 import { createInitialWindows } from "./utils/windowFactory";
 import { WindowContext } from "./context/WindowContext";
@@ -154,12 +153,6 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     // Dynamic Contacts (Mock + Testimonials)
     const { dynamicContacts, testimonialContacts } = useChatContacts();
 
-    // Forces a re-render of layout if needed (e.g. after drag)
-    const [manualRefreshSeed, setManualRefreshSeed] = useState(0);
-    const triggerReposition = () => setManualRefreshSeed(prev => prev + 1);
-
-    // Forces a re-render of layout if needed (e.g. after drag)
-
     const commercialProjects = useMemo(() => {
         if (aboutData?.desktopPreferences?.visibleProjectIds) {
             return projects.filter(p => aboutData.desktopPreferences?.visibleProjectIds.includes(p.id));
@@ -167,12 +160,6 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         return projects.filter(p => p.type !== 'visual_art');
     }, [projects, aboutData]);
 
-    const getCenterPosition = (w: number, h: number) => {
-        if (typeof window === 'undefined') return { x: 0, y: 0 };
-        const safeWidth = windowSize.width || window.innerWidth || 1200;
-        const safeHeight = windowSize.height || window.innerHeight || 800;
-        return { x: Math.max(0, (safeWidth - w) / 2), y: Math.max(30, (safeHeight - h) / 2) };
-    };
 
     // Windows Init
     const initialWindows: WindowState[] = useMemo(() =>
@@ -221,90 +208,38 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
     // Update position and isWindowOpen functions pushed to Context API.
 
-    // Actions
-    const handleGoHome = useCallback(() => router.push('/'), [router]);
-    const resetDesktopAndClose = useCallback(() => resetWindows(), [resetWindows]);
+    // Navigation & Desktop Actions (Extracted)
+    const {
+        handleGoHome,
+        resetDesktopAndClose,
+        openProjectWindow,
+        navToChat,
+        toggleNotesVisibility
+    } = useDesktopNavigation({
+        openWindow,
+        resetWindows,
+        dynamicContacts,
+        ChatWindow,
+        notesVisible,
+        setNotesVisible,
+        notes,
+        restoreNote,
+        setNotesDockBouncing
+    });
 
-    // Navigation Helpers
-    const openProjectWindow = useCallback((project: Project) => {
-        router.push(`/projects/${project.slug}`);
-    }, [router]);
-
-    const navToChat = useCallback((chatId?: string) => {
-        if (chatId) {
-            openWindow("whatsapp", {
-                // Pass the FULL contact list so chat window can resolve the ID
-                content: <ChatWindow activeChatId={chatId} customContacts={dynamicContacts} />
-            });
-        } else {
-            openWindow("whatsapp", {
-                content: <ChatWindow customContacts={dynamicContacts} />
-            });
-        }
-    }, [openWindow, dynamicContacts]);
-
-    // Toggle notes visibility (dock icon indicator follows this)
-    const toggleNotesVisibility = () => {
-        const nextState = !notesVisible;
-        setNotesVisible(nextState);
-
-        // If turning ON, and all notes are currently "deleted" (closed by visitor), restore them
-        if (nextState) {
-            const hasVisibleNotes = notes.some(n => !n.isDeleted);
-            if (!hasVisibleNotes && notes.length > 0) {
-                // Restore all notes for the visitor
-                notes.forEach(n => restoreNote(n.id));
-            }
-        }
-
-        // Trigger bounce animation on notes dock icon
-        setNotesDockBouncing(true);
-        setTimeout(() => setNotesDockBouncing(false), 600);
-    };
-
-    // Dock Configuration - Now using OSDock component for centralized management
-
-    // --- ICON PERSISTENCE LOGIC START ---
+    // Icons Layout (Extracted)
     const { iconPositions, handleIconPositionChange } = useDesktopLayout({ aboutData, isAdmin, csrfToken: csrfToken || null });
-    // --- ICON PERSISTENCE LOGIC END ---
 
-    // Icons Layout
-    // Optimized Layout: Only trigger reshuffle if "Obstacles" change.
-    // We filter out irrelevant window changes (like project windows opening/closing).
-    const obstacleSignature = useMemo(() => {
-        // Optimized: Windows no longer affect icon layout (Static Layout)
-
-        // 1. Sticky Notes State (Position & Deletion)
-        const notesState = notes
-            .filter(n => !n.isDeleted)
-            .map(n => `${n.id}:${n.x},${n.y}`)
-            .join('|');
-
-        return `static-windows|${notesState}`;
-    }, [notes]);
-
-    const projectIcons = useMemo(() => {
-        if (!mounted || !commercialProjects.length || !windowSize.width) return [];
-
-        // Merge props prefs with local state overrides
-        const mergedPreferences: DesktopPreferences = {
-            visibleProjectIds: aboutData?.desktopPreferences?.visibleProjectIds || [],
-            maxIcons: aboutData?.desktopPreferences?.maxIcons || 100,
-            layout: aboutData?.desktopPreferences?.layout || 'grid',
-            iconPositions: iconPositions
-        };
-
-        // Pass to utility (it will filter internally again, but at least we control WHEN this runs)
-        return generateDesktopIcons(
-            windowSize,
-            windows,
-            notes,
-            commercialProjects,
-            mergedPreferences,
-            handleGoHome
-        );
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [mounted, windowSize.width, windowSize.height, obstacleSignature, commercialProjects, aboutData, handleGoHome, iconPositions]); // Added iconPositions dependency
+    const { projectIcons } = useDesktopIcons({
+        mounted,
+        windowSize,
+        windows,
+        notes,
+        commercialProjects,
+        aboutData,
+        handleGoHome,
+        iconPositions
+    });
 
     // Effects for Lock & Cleanup controlled by useDesktopLock hook now
 
