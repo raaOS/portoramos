@@ -247,7 +247,7 @@
       "y": 64,
       "width": 587,
       "height": 496,
-      "isOpenByDefault": true
+      "isOpenByDefault": false
     }
   },
   "labels": {},
@@ -499,5 +499,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-22T15:12:25.615Z"
+  "lastUpdated": "2026-02-22T15:14:18.664Z"
 }
