@@ -3,14 +3,14 @@
     "id": "welcome-note",
     "text": "Halo! Selamat Datang di Ramos OS v2.0 🖥️✨\n\nSaya Ramos, seorang Graphic Designer & Visual Strategist.\n\nQuick Start:\n1. Buka folder \"Projects\" untuk lihat karya saya.\n2. Klik \"Contact\" di bawah untuk ngobrol.\n3. Drag note ini ke mana saja!\n\nSelamat mengeksplorasi!",
     "date": "2026-02-22T18:17:10.544Z",
-    "color": "#fef08a",
+    "color": "#bbf7d0",
     "isStarred": true,
     "isDeleted": false,
-    "x": 810,
-    "y": 280.5,
-    "width": 300,
-    "height": 350,
-    "zIndex": 100,
+    "x": 37,
+    "y": 99.5,
+    "width": 342,
+    "height": 425,
+    "zIndex": 105,
     "isPinned": false
   }
 ]
