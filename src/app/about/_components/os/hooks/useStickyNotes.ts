@@ -36,8 +36,8 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
     useEffect(() => {
         const loadNotes = async () => {
             try {
-                // Add timestamp to prevent caching
-                const response = await fetch(`/api/sticky-notes?t=${Date.now()}`);
+                // Add timestamp and force=true to prevent caching
+                const response = await fetch(`/api/sticky-notes?t=${Date.now()}&force=true`);
                 const data = await response.json();
                 if (Array.isArray(data) && data.length > 0) {
                     // Mobile adjustment: pull notes to visible area

@@ -4,7 +4,10 @@ import { checkAdminAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
     try {
-        const data = await stickyNotesService.getNotes();
+        const { searchParams } = new URL(request.url);
+        const force = searchParams.get('force') === 'true';
+
+        const data = await stickyNotesService.getNotes(force);
         return NextResponse.json(data, {
             headers: {
                 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
