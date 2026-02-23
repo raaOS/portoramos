@@ -36,6 +36,7 @@ interface StickyNoteItemProps {
     onDelete: (id: string) => void;
     onPermanentDelete: (id: string) => void;
     onRestore: (id: string) => void;
+    onAdd?: () => void;
     dragControls: DragControls;
     isAdmin?: boolean;
 }
@@ -56,7 +57,7 @@ import { NoteHeader } from './ui/NoteHeader';
 import { NoteToolbar } from './ui/NoteToolbar';
 import { NoteFooter } from './ui/NoteFooter';
 
-export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, dragControls, isAdmin = false }: StickyNoteItemProps) {
+export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, onAdd, dragControls, isAdmin = false }: StickyNoteItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isUnlocked, setIsUnlocked] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -272,6 +273,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                     onColorChange={(c) => onUpdate(note.id, { color: c })}
                     onDelete={() => onDelete(note.id)}
                     onToggleCollapse={() => onUpdate(note.id, { isCollapsed: !note.isCollapsed })}
+                    onAdd={onAdd}
                     isPinned={!!note.isPinned}
                     dragControls={dragControls}
                 />

@@ -24,6 +24,7 @@ interface DesktopIconsLayerProps {
     deleteNote: (id: string) => void;
     permanentDeleteNote: (id: string) => void;
     restoreNote: (id: string) => void;
+    addNote: () => void;
     isAdmin: boolean;
     setNotesVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -40,6 +41,7 @@ export default function DesktopIconsLayer({
     deleteNote,
     permanentDeleteNote,
     restoreNote,
+    addNote,
     isAdmin,
     setNotesVisible
 }: DesktopIconsLayerProps) {
@@ -88,6 +90,7 @@ export default function DesktopIconsLayer({
                             }}
                             permanentDeleteNote={permanentDeleteNote}
                             restoreNote={restoreNote}
+                            addNote={addNote}
                             isAdmin={isAdmin}
                         />
                     ))}

@@ -9,6 +9,7 @@ interface DraggableStickyNoteProps {
     deleteNote: (id: string) => void;
     permanentDeleteNote: (id: string) => void;
     restoreNote: (id: string) => void;
+    addNote?: () => void;
     isAdmin?: boolean;
 }
 
@@ -19,6 +20,7 @@ export const DraggableStickyNote = ({
     deleteNote,
     permanentDeleteNote,
     restoreNote,
+    addNote,
     isAdmin = false
 }: DraggableStickyNoteProps) => {
     const dragControls = useDragControls();
@@ -58,6 +60,7 @@ export const DraggableStickyNote = ({
                 onDelete={deleteNote}
                 onPermanentDelete={permanentDeleteNote}
                 onRestore={restoreNote}
+                onAdd={addNote}
                 dragControls={dragControls}
                 isAdmin={isAdmin}
             />

@@ -11,6 +11,8 @@ interface UseDesktopNavigationProps {
     setNotesVisible: (visible: boolean) => void;
     notes: any[];
     restoreNote: (id: string) => void;
+    addNote: () => void;
+    isAdmin: boolean;
     setNotesDockBouncing: (bouncing: boolean) => void;
 }
 
@@ -23,6 +25,8 @@ export function useDesktopNavigation({
     setNotesVisible,
     notes,
     restoreNote,
+    addNote,
+    isAdmin,
     setNotesDockBouncing
 }: UseDesktopNavigationProps) {
     const router = useRouter();
@@ -52,14 +56,23 @@ export function useDesktopNavigation({
 
         if (nextState) {
             const hasVisibleNotes = notes.some(n => !n.isDeleted);
-            if (!hasVisibleNotes && notes.length > 0) {
-                notes.forEach(n => restoreNote(n.id));
+            if (!hasVisibleNotes) {
+                if (notes.length > 0) {
+                    notes.forEach(n => restoreNote(n.id));
+                } else if (isAdmin) {
+                    // Create new note if toggled ON and none exist
+                    addNote();
+                }
             }
+        } else if (notesVisible && isAdmin) {
+            // If already visible and clicked again in Admin mode, create a new one (macOS-like "New Note" shortcut)
+            addNote();
+            setNotesVisible(true); // Ensure it stays visible
         }
 
         setNotesDockBouncing(true);
         setTimeout(() => setNotesDockBouncing(false), 600);
-    }, [notesVisible, setNotesVisible, notes, restoreNote, setNotesDockBouncing]);
+    }, [notesVisible, setNotesVisible, notes, restoreNote, setNotesDockBouncing, isAdmin, addNote]);
 
     return {
         handleGoHome,

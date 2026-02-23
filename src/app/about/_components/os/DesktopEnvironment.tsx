@@ -224,6 +224,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         setNotesVisible,
         notes,
         restoreNote,
+        addNote,
+        isAdmin,
         setNotesDockBouncing
     });
 
@@ -298,6 +300,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                     deleteNote={deleteNote}
                                     permanentDeleteNote={permanentDeleteNote}
                                     restoreNote={restoreNote}
+                                    addNote={addNote}
                                     isAdmin={isAdmin}
                                     setNotesVisible={setNotesVisible}
                                 />

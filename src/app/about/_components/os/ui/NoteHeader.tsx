@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, Plus } from 'lucide-react';
 
 interface NoteHeaderProps {
     color: string;
@@ -7,6 +7,7 @@ interface NoteHeaderProps {
     onColorChange: (color: string) => void;
     onDelete: () => void;
     onToggleCollapse: () => void;
+    onAdd?: () => void;
     isPinned: boolean;
     dragControls: any;
 }
@@ -17,6 +18,7 @@ export const NoteHeader = ({
     onColorChange,
     onDelete,
     onToggleCollapse,
+    onAdd,
     isPinned,
     dragControls
 }: NoteHeaderProps) => (
@@ -48,8 +50,17 @@ export const NoteHeader = ({
             ))}
         </div>
 
-        {/* Close Button */}
-        <div onPointerDown={(e) => e.stopPropagation()}>
+        {/* Actions */}
+        <div className="flex items-center" onPointerDown={(e) => e.stopPropagation()}>
+            {onAdd && (
+                <button
+                    onClick={onAdd}
+                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-black transition-colors"
+                    title="Tambah Catatan (Ctrl+N)"
+                >
+                    <Plus size={16} />
+                </button>
+            )}
             <button
                 onClick={onDelete}
                 className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-black transition-colors"
