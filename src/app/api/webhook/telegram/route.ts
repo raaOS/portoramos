@@ -109,17 +109,6 @@ export async function POST(request: Request) {
                             messagesToSend.push({ text: `❌ Gagal baca database.\nError: ${error.message}\nPath: ${leadsPath}` });
                         }
                     }
-                    else if (command === '/status') {
-                        const uptime = process.uptime();
-                        const hours = Math.floor(uptime / 3600);
-                        const minutes = Math.floor((uptime % 3600) / 60);
-
-                        messagesToSend.push({
-                            text: `✅ *Server Online*\n` +
-                                `🕒 *Time:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}\n` +
-                                `⏱ *Uptime:* ${hours}j ${minutes}m`
-                        });
-                    }
                     else if (command === '/prop') {
                         const jobContent = text.replace('/prop', '').trim();
                         if (!jobContent) {
@@ -129,7 +118,9 @@ export async function POST(request: Request) {
 
                             try {
                                 const { aiProposalService } = await import('@/lib/services/aiProposalService');
+                                await sendImmediate(incomingChatId, "🔍 *Menganalisa job description...*", botToken);
                                 const proposal = await aiProposalService.generateProposalForJob(jobContent);
+                                await sendImmediate(incomingChatId, "✍️ *Menyusun proposal maut...*", botToken);
                                 await sendImmediate(incomingChatId, proposal, botToken);
                             } catch (err: any) {
                                 await sendImmediate(incomingChatId, `❌ *Gagal generate:* ${err.message}`, botToken);
@@ -146,9 +137,13 @@ export async function POST(request: Request) {
 
                             try {
                                 const { atsService } = await import('@/lib/services/atsService');
+                                await sendImmediate(incomingChatId, "🔍 *Menganalisa loker & strategi AI...*", botToken);
                                 const { pdfBuffer, hrMessage, analysis } = await atsService.tailorResume(jobContent);
 
+                                await sendImmediate(incomingChatId, "✍️ *Menyusun konten ATS-Friendly...*", botToken);
                                 await sendImmediate(incomingChatId, "🔍 *AI Strategy Analysis:*\n\n" + analysis, botToken);
+
+                                await sendImmediate(incomingChatId, "🖨️ *Rendering PDF Resume...*", botToken);
 
                                 const { sendTelegramDocument } = await import('@/lib/telegram');
                                 await sendTelegramDocument(`Resume_Ramos_ATS.pdf`, pdfBuffer, "📄 *Resume ATS-Friendly* sudah siap!");
@@ -167,7 +162,6 @@ export async function POST(request: Request) {
                                 `/prop [detail] - AI bikin Proposal Lamaran maut!\n` +
                                 `/leads - Cek 5 pesan terakhir\n` +
                                 `/help - Tampilkan menu ini\n` +
-                                `/status - Cek status server\n` +
                                 `/ai - Aktifkan ulang AI Auto-Responder di obrolan ini`
                         });
                     }
