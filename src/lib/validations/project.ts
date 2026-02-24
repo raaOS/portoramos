@@ -55,6 +55,7 @@ export const ProjectSchema = z.object({
     role: z.string().optional(),
     timeline: z.string().optional(),
     team: z.string().optional(),
+    software: z.array(z.string()).optional(),
     type: z.enum(['commercial', 'visual_art']).optional(),
 
     narrative: NarrativeSchema.optional(),

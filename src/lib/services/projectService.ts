@@ -1,99 +1,66 @@
 import { Project, ProjectsData, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { ProjectSchema, CreateProjectSchema, UpdateProjectSchema } from '@/lib/validations/project';
-import { z } from 'zod';
-import { loadData, saveData, ensureDataDir } from '@/lib/backup';
-import { githubService } from '@/lib/github';
+import { db } from '@/lib/firebaseAdmin';
 import projectsData from '@/data/projects.json';
-import path from 'path';
-
-const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'projects.json');
 
 export const projectService = {
     /**
-     * Get all projects, optionally filtered by status.
-     * Uses a dual storage strategy: local FS for development and GitHub API for production.
+     * Get all projects from Firebase.
      * Implements Zod validation to ensure data integrity.
-     * 
-     * @param status - Optional status to filter by (e.g., 'published', 'draft')
-     * @param fresh - If true, bypasses the cache and fetches fresh data from GitHub
-     * @returns A promise that resolves to an object containing the sorted projects and last updated timestamp
      */
     async getProjects(status?: string, fresh = false): Promise<{ projects: Project[], lastUpdated: string }> {
         try {
-            let data: ProjectsData | null = null;
-            const isDev = process.env.NODE_ENV === 'development';
+            // Fetch from Firebase
+            const projectsRef = db.ref('projects');
+            const lastUpdatedRef = db.ref('lastUpdated');
 
-            // 1. Development: Try to read from FS
-            if (isDev) {
-                await ensureDataDir();
-                data = (await loadData(DATA_FILE)) as ProjectsData | null;
-            }
-            // 2. Production: Use GitHub Service (which now uses Next.js Data Cache)
-            // This allows us to Revalidate / Purge cache on demand (Admin functionality).
-            // Static import (projectsData) is too rigid and requires redeploy.
-            else {
-                try {
-                    // getFile() calls githubService.getFileContent(local=false) in Prod
-                    // which uses fetch() -> cached by Next.js -> revalidatable via revalidatePath
-                    const ghData = await githubService.getFile(fresh);
-                    if (ghData && ghData.content) data = ghData.content as ProjectsData;
-                } catch (error) {
-                    console.warn('Failed to fetch from GitHub, falling back to static data:', error);
-                    // Fallback will be handled by step 3
-                }
-            }
+            const [projectsSnap, lastUpdatedSnap] = await Promise.all([
+                projectsRef.once('value'),
+                lastUpdatedRef.once('value')
+            ]);
 
-            // 3. Fallback: Use the statically imported JSON (Duplicate check but safe)
-            if (!data) {
-                data = projectsData as unknown as ProjectsData;
+            let projectsObject = projectsSnap.val() || {};
+            let lastUpdated = lastUpdatedSnap.val() || new Date().toISOString();
+
+            // Convert object map to array
+            let projects: Project[] = Object.values(projectsObject);
+
+            if (projects.length === 0) {
+                // Initial fallback to static data if Firebase is empty (safety net)
+                const fallback = projectsData as unknown as ProjectsData;
+                return {
+                    projects: status ? (fallback.projects || []).filter(p => p.status === status) : (fallback.projects || []),
+                    lastUpdated: fallback.lastUpdated || new Date().toISOString()
+                };
             }
 
-            if (!data) {
-                return { projects: [], lastUpdated: new Date().toISOString() };
-            }
-
-            // 4. Zod Validation (Mission Critical)
-            // Even if data is loaded, we validate each project to ensure schema integrity.
-            // We use safeParse so one bad apple doesn't crash the whole app.
-            let projects = data?.projects || [];
-
-            // Filter by Status first (optimization)
-            if (status) {
-                projects = projects.filter((project) => project.status === status);
-            }
-
-            // Validate and Filter Corrupt Data
+            // FILTER & VALIDATE
             const validProjects: Project[] = [];
-            const validationErrors: any[] = [];
-
             projects.forEach(p => {
+                // Filter by status if requested
+                if (status && p.status !== status) return;
+
                 const result = ProjectSchema.safeParse(p);
                 if (result.success) {
                     validProjects.push(result.data as unknown as Project);
                 } else {
                     console.warn(`[ProjectService] Validation Failed for project ${p.id || 'unknown'}:`, result.error.format());
-                    validationErrors.push({ id: p.id, error: result.error });
                 }
             });
 
-            if (validationErrors.length > 0) {
-                console.error(`[ProjectService] Skipped ${validationErrors.length} invalid projects during load.`);
-            }
-
-            const sortedProjects = validProjects
-                .slice()
-                .sort(
-                    (a, b) =>
-                        (a.order || 0) - (b.order || 0) ||
-                        (b.year as number || 0) - (a.year as number || 0) // Handle string/number year
-                );
+            // SORT
+            const sortedProjects = validProjects.sort(
+                (a, b) =>
+                    (a.order || 0) - (b.order || 0) ||
+                    (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            );
 
             return {
                 projects: sortedProjects,
-                lastUpdated: data?.lastUpdated || new Date().toISOString()
+                lastUpdated
             };
         } catch (error) {
-            console.error('Error loading projects:', error);
+            console.error('Error loading projects from Firebase:', error);
             const fallbackData = projectsData as unknown as ProjectsData;
             return {
                 projects: fallbackData?.projects || [],
@@ -103,54 +70,29 @@ export const projectService = {
     },
 
     /**
-     * Create a new project.
-     * Validates input with Zod, generates a unique slug, and saves to the appropriate storage.
-     * Auto-syncs to GitHub in development if credentials are provided.
-     * 
-     * @param data - The project data to create
-     * @returns A promise that resolves to the newly created project
-     * @throws ZodError if validation fails
+     * Create a new project in Firebase.
      */
     async createProject(data: CreateProjectData): Promise<Project> {
-        // [Zod] Validate Input (Strict)
-        // Checks 'CreateProjectData' against our Zod schema.
-        // If invalid, throws ZodError which API catches.
         CreateProjectSchema.parse(data);
 
-        const isDev = process.env.NODE_ENV === 'development';
-        let currentProjects: Project[] = [];
-
-        // FETCH EXISTING DATA
-        if (isDev) {
-            await ensureDataDir();
-            const localData = (await loadData(DATA_FILE)) as ProjectsData | null;
-            currentProjects = localData?.projects || [];
-        } else {
-            const ghData = await githubService.getFile();
-            currentProjects = ghData.content.projects || [];
-        }
-
-        // First run fallback for dev if file was empty/null
-        if (isDev && !currentProjects.length) {
-            const staticData = projectsData as unknown as ProjectsData;
-            if (staticData?.projects?.length) {
-                currentProjects = [...staticData.projects];
-            }
-        }
+        // Get current count for order
+        const snapshot = await db.ref('projects').once('value');
+        const currentCount = snapshot.numChildren();
 
         // Generate unique slug
         const baseSlug = data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         let slug = baseSlug;
-        let counter = 1;
-        while (currentProjects.some(p => p.slug === slug)) {
-            slug = `${baseSlug}-${counter}`;
-            counter++;
+
+        // Check for slug collision
+        const projectsSnap = await db.ref('projects').orderByChild('slug').equalTo(slug).once('value');
+        if (projectsSnap.exists()) {
+            slug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
         }
 
-        // Generate new project
+        const id = `project-${Date.now()}`;
         const newProject: Project = {
             ...data,
-            id: `project-${Date.now()}`,
+            id,
             slug,
             cover: data.cover || 'https://via.placeholder.com/800x600',
             autoplay: data.autoplay ?? false,
@@ -168,367 +110,109 @@ export const projectService = {
                 afterImage: '',
                 afterType: 'image'
             },
-            order: currentProjects.length + 1,
+            order: currentCount + 1,
             status: data.status || 'published',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         };
 
-        // Add to list
-        const updatedProjects = [...currentProjects, newProject];
-        const updatedData = {
-            projects: updatedProjects,
-            lastUpdated: new Date().toISOString()
-        };
-
-        // SAVE DATA
-        if (isDev) {
-            // Save local FS
-            const success = await saveData(DATA_FILE, updatedData);
-            if (!success) throw new Error('Failed to save to local filesystem');
-
-            // Auto-Sync to GitHub
-            if (process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN) {
-                try {
-                    await githubService.updateProjects({
-                        projects: updatedProjects,
-                        message: `Add project: ${newProject.title} (Dev Auto-Sync)`
-                    });
-                    // Auto-synced to GitHub
-                } catch (error) {
-                    console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
-                }
-            }
-        } else {
-            // Save to GitHub
-            const success = await githubService.updateProjects({
-                projects: updatedProjects,
-                message: `Add project: ${newProject.title} (via Admin CMS)`
-            });
-            if (!success) throw new Error('Failed to save to GitHub');
-        }
+        // SAVE TO FIREBASE
+        await Promise.all([
+            db.ref(`projects/${id}`).set(newProject),
+            db.ref('lastUpdated').set(new Date().toISOString())
+        ]);
 
         return newProject;
     },
 
     /**
-     * Update an existing project.
-     * Partially validates input with Zod and ensures slug uniqueness if changed.
-     * 
-     * @param id - The ID of the project to update
-     * @param data - The partial project data to update
-     * @returns A promise that resolves to the updated project, or null if not found
-     * @throws ZodError if validation fails
+     * Update an existing project in Firebase.
      */
     async updateProject(id: string, data: UpdateProjectData): Promise<Project | null> {
-        // [Zod] Validate Input (Partial)
         UpdateProjectSchema.parse(data);
 
-        const isDev = process.env.NODE_ENV === 'development';
-        let currentProjects: Project[] = [];
+        const projectRef = db.ref(`projects/${id}`);
+        const snap = await projectRef.once('value');
+        if (!snap.exists()) return null;
 
-        // FETCH EXISTING DATA
-        if (isDev) {
-            await ensureDataDir();
-            const localData = (await loadData(DATA_FILE)) as ProjectsData | null;
-            currentProjects = localData?.projects || [];
-        } else {
-            const ghData = await githubService.getFile();
-            currentProjects = ghData.content.projects || [];
-        }
+        const currentProject = snap.val();
 
-        // Find index
-        const index = currentProjects.findIndex(p => p.id === id);
-        if (index === -1) return null;
-
-        // Update
-        let finalSlug = currentProjects[index].slug;
-        if (data.title && data.title !== currentProjects[index].title) {
-            // If title changed, should we update slug? 
-            // Usually better to keep slug stable for SEO unless explicitly requested.
-            // But if data.slug is provided, we use it.
-            // Let's assume data.slug might be passed.
-        }
-
-        // Critical: Check Unique Slug if checking/changing slug
-        // Note: ProjectForm typically doesn't send slug, but if we derived it elsewhere...
-        // Actually, let's look at `data`. If `data.slug` exists:
-        if (data.slug && data.slug !== currentProjects[index].slug) {
-            const baseSlug = data.slug;
-            let newSlug = baseSlug;
-            let counter = 1;
-            while (currentProjects.some(p => p.slug === newSlug && p.id !== id)) {
-                newSlug = `${baseSlug}-${counter}`;
-                counter++;
+        // Check slug uniqueness if changed
+        if (data.slug && data.slug !== currentProject.slug) {
+            const collisionSnap = await db.ref('projects').orderByChild('slug').equalTo(data.slug).once('value');
+            if (collisionSnap.exists()) {
+                // Ensure the collision isn't with itself (shouldn't be if data.slug changed)
+                const collisionData = collisionSnap.val();
+                if (Object.keys(collisionData)[0] !== id) {
+                    data.slug = `${data.slug}-${Date.now().toString().slice(-4)}`;
+                }
             }
-            data.slug = newSlug; // Override with safe slug
         }
 
         const updatedProject = {
-            ...currentProjects[index],
+            ...currentProject,
             ...data,
             updatedAt: new Date().toISOString()
         };
-        currentProjects[index] = updatedProject;
 
-        const updatedData = {
-            projects: currentProjects,
-            lastUpdated: new Date().toISOString()
-        };
-
-        // SAVE DATA
-        if (isDev) {
-            const success = await saveData(DATA_FILE, updatedData);
-            if (!success) throw new Error('Failed to save to local filesystem');
-
-            // Auto-Sync to GitHub
-            if (process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN) {
-                try {
-                    await githubService.updateProjects({
-                        projects: currentProjects,
-                        message: `Update project: ${updatedProject.title} (Dev Auto-Sync)`
-                    });
-                    // Auto-synced to GitHub
-                } catch (error) {
-                    console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
-                }
-            }
-        } else {
-            const success = await githubService.updateProjects({
-                projects: currentProjects,
-                message: `Update project: ${updatedProject.title} (via Admin CMS)`
-            });
-            if (!success) throw new Error('Failed to save to GitHub');
-        }
+        await Promise.all([
+            projectRef.set(updatedProject),
+            db.ref('lastUpdated').set(new Date().toISOString())
+        ]);
 
         return updatedProject;
     },
 
     /**
-     * Delete a project by its ID.
-     * Also triggers an auto-cleanup of associated media files (best effort).
-     * 
-     * @param id - The ID of the project to delete
-     * @returns A promise that resolves to true if deleted, false if not found
+     * Delete a project from Firebase.
      */
     async deleteProject(id: string): Promise<boolean> {
-        const isDev = process.env.NODE_ENV === 'development';
-        let currentProjects: Project[] = [];
+        const projectRef = db.ref(`projects/${id}`);
+        const snap = await projectRef.once('value');
+        if (!snap.exists()) return false;
 
-        // FETCH EXISTING DATA
-        if (isDev) {
-            await ensureDataDir();
-            const localData = (await loadData(DATA_FILE)) as ProjectsData | null;
-            currentProjects = localData?.projects || [];
-        } else {
-            const ghData = await githubService.getFile();
-            currentProjects = ghData.content.projects || [];
-        }
-
-        const projectToDelete = currentProjects.find(p => p.id === id);
-        if (!projectToDelete) return false; // Not found
-
-        const initialLength = currentProjects.length;
-        currentProjects = currentProjects.filter(p => p.id !== id);
-
-        const updatedData = {
-            projects: currentProjects,
-            lastUpdated: new Date().toISOString()
-        };
-
-        // SAVE DATA
-        if (isDev) {
-            const success = await saveData(DATA_FILE, updatedData);
-            if (!success) throw new Error('Failed to save to local filesystem');
-
-            // Auto-Sync to GitHub
-            if (process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN) {
-                try {
-                    await githubService.updateProjects({
-                        projects: currentProjects,
-                        message: `Delete project ID: ${id} (Dev Auto-Sync)`
-                    });
-                    // Auto-synced to GitHub
-                } catch (error) {
-                    console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
-                }
-            }
-        } else {
-            const success = await githubService.updateProjects({
-                projects: currentProjects,
-                message: `Delete project ID: ${id} (via Admin CMS)`
-            });
-            if (!success) throw new Error('Failed to save to GitHub');
-        }
-
-        // AUTO-CLEANUP FILES (Best Effort)
-        await cleanupProjectFiles(projectToDelete);
+        await Promise.all([
+            projectRef.remove(),
+            db.ref('lastUpdated').set(new Date().toISOString())
+        ]);
 
         return true;
     },
 
     /**
-     * Bulk update projects as an atomic operation.
-     * Supports bulk deletion, status updates, and reordering.
-     * 
-     * @param updates - Object containing the IDs to update and the operations to perform
-     * @returns A promise that resolves to true if successful
+     * Bulk update projects in Firebase (Atomic).
      */
     async bulkUpdateProjects(updates: { ids: string[], status?: 'published' | 'draft', delete?: boolean, reorder?: boolean }): Promise<boolean> {
-        const isDev = process.env.NODE_ENV === 'development';
-        let currentProjects: Project[] = [];
+        const projectsRef = db.ref('projects');
+        const snap = await projectsRef.once('value');
+        if (!snap.exists()) return true;
 
-        // FETCH EXISTING DATA (Read Once)
-        if (isDev) {
-            await ensureDataDir();
-            const localData = (await loadData(DATA_FILE)) as ProjectsData | null;
-            currentProjects = localData?.projects || [];
-        } else {
-            const ghData = await githubService.getFile();
-            currentProjects = ghData.content.projects || [];
-        }
+        const currentProjects = snap.val();
+        const firebaseUpdates: Record<string, any> = {};
 
-        let hasChanges = false;
-
-        // Apply Updates in Memory
         if (updates.delete) {
-            const projectsToDelete = currentProjects.filter(p => updates.ids.includes(p.id));
-            if (projectsToDelete.length > 0) {
-                // Perform Cleanup for ALL deleted projects
-                // Bulk delete starting cleanup
-                // Process in parallel or serial? Serial is safer for API limits.
-                for (const p of projectsToDelete) {
-                    await cleanupProjectFiles(p);
-                }
-
-                currentProjects = currentProjects.filter(p => !updates.ids.includes(p.id));
-                hasChanges = true;
-            }
+            updates.ids.forEach(id => {
+                firebaseUpdates[`projects/${id}`] = null;
+            });
         } else if (updates.reorder) {
-            // Map IDs to their new index (1-based)
-            const orderMap = new Map(updates.ids.map((id, index) => [id, index + 1]));
-
-            currentProjects = currentProjects.map(p => {
-                if (orderMap.has(p.id)) {
-                    const newOrder = orderMap.get(p.id)!;
-                    if (p.order !== newOrder) {
-                        hasChanges = true;
-                        return { ...p, order: newOrder, updatedAt: new Date().toISOString() }; // Update order
-                    }
+            updates.ids.forEach((id, index) => {
+                if (currentProjects[id]) {
+                    firebaseUpdates[`projects/${id}/order`] = index + 1;
+                    firebaseUpdates[`projects/${id}/updatedAt`] = new Date().toISOString();
                 }
-                return p;
             });
-
-            // Optional: Sort currentProjects by order to keep the array vaguely sorted, 
-            // though not strictly required as getProjects sorts them.
-            if (hasChanges) {
-                currentProjects.sort((a, b) => (a.order || 0) - (b.order || 0));
-            }
-
         } else if (updates.status) {
-            currentProjects = currentProjects.map(p => {
-                if (updates.ids.includes(p.id) && p.status !== updates.status) {
-                    hasChanges = true;
-                    return { ...p, status: updates.status!, updatedAt: new Date().toISOString() };
+            updates.ids.forEach(id => {
+                if (currentProjects[id]) {
+                    firebaseUpdates[`projects/${id}/status`] = updates.status;
+                    firebaseUpdates[`projects/${id}/updatedAt`] = new Date().toISOString();
                 }
-                return p;
             });
         }
 
-        if (!hasChanges) return true; // Nothing to do
+        firebaseUpdates['lastUpdated'] = new Date().toISOString();
 
-        const updatedData = {
-            projects: currentProjects,
-            lastUpdated: new Date().toISOString()
-        };
-
-        // SAVE DATA (Write Once)
-        if (isDev) {
-            const success = await saveData(DATA_FILE, updatedData);
-            if (!success) throw new Error('Failed to save to local filesystem');
-
-            // Auto-Sync to GitHub
-            if (process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN) {
-                try {
-                    await githubService.updateProjects({
-                        projects: currentProjects,
-                        message: updates.reorder
-                            ? `Reorder projects (Dev Auto-Sync)`
-                            : `Bulk update ${updates.ids.length} projects (Dev Auto-Sync)`
-                    });
-                    // Auto-synced to GitHub
-                } catch (error) {
-                    console.warn('[ProjectService] Failed to auto-sync to GitHub in dev:', error);
-                }
-            }
-        } else {
-            const success = await githubService.updateProjects({
-                projects: currentProjects,
-                message: updates.reorder
-                    ? `Reorder projects (via Admin CMS)`
-                    : `Bulk update ${updates.ids.length} projects (via Admin CMS)`
-            });
-            if (!success) throw new Error('Failed to save to GitHub');
-        }
-
+        await db.ref().update(firebaseUpdates);
         return true;
     }
 };
-
-/**
- * Helper: Best Effort File Cleanup
- * Handles both GitHub URLs (Prod/Dev hybrid) and Local Paths.
- */
-async function cleanupProjectFiles(project: Project) {
-    const isDev = process.env.NODE_ENV === 'development';
-    const fs = isDev ? require('fs').promises : null;
-
-    const filesToDelete = [
-        project.cover,
-        project.comparison?.beforeImage,
-        project.comparison?.afterImage
-    ].filter((url): url is string => !!url && typeof url === 'string');
-
-    if (filesToDelete.length === 0) return;
-
-    // Cleaning up files for project (parallel)
-
-    // Parallelize deletions to avoid Vercel Timeouts
-    const deleteTasks = filesToDelete.map(async (url) => {
-        try {
-            let repoPath = '';
-            let isRemote = false;
-
-            if (url.includes('raw.githubusercontent.com')) {
-                const match = url.match(/(public\/assets\/.*)$/);
-                if (match) {
-                    repoPath = match[1];
-                    isRemote = true;
-                }
-            } else if (url.startsWith('/assets/')) {
-                repoPath = `public${url}`;
-            } else if (url.startsWith('public/')) {
-                repoPath = url;
-            }
-
-            if (!repoPath) return;
-
-            if (isDev) {
-                const localPath = path.join(process.cwd(), repoPath);
-                try {
-                    if (fs) await fs.unlink(localPath);
-                    // Deleted local file
-                } catch (e) {
-                    // Ignore
-                }
-            } else {
-                await githubService.deleteFile(repoPath, `Cleanup: ${project.slug}`);
-            }
-        } catch (error) {
-            console.warn(`[ProjectService] Check failed for ${url}`, error);
-        }
-    });
-
-    await Promise.all(deleteTasks);
-}
-
