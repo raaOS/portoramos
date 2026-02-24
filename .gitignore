@@ -42,3 +42,9 @@ src/data/telegram.json
 *_debug.txt
 *_hash.txt
 scores.txt
+
+# Audit & temp debug files
+audit-log.txt
+firebase-audit*.json
+probe-results*.txt
+lint-output.txt
