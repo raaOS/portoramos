@@ -14,6 +14,7 @@ import ProjectCTA from './ProjectCTA';
 import Media from '@/components/shared/Media';
 import { Compare } from '@/components/ui/compare';
 import { useImageProtection } from '@/hooks/useImageProtection';
+import { getIconMap } from '@/constants/skillIcons'; // Added import
 
 // Lazy load heavy components to reduce initial bundle
 const CommentSection = dynamic(() => import('@/components/features/CommentSection'), {
@@ -336,12 +337,29 @@ export default function ProjectDetailTwoColumn({
                                     </div>
 
                                     <div className="flex flex-col gap-6 mb-8">
-                                        {(project.role || project.timeline || project.team) && (
+                                        {(project.role || project.timeline || project.team || (project.software && project.software.length > 0)) && (
                                             <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:gap-x-12 gap-y-6 py-5 border-y border-gray-100 dark:border-gray-800">
                                                 {project.role && (
                                                     <div>
                                                         <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">{translations ? 'Role' : 'Peran'}</h3>
                                                         <p className="text-sm font-medium text-gray-900 dark:text-white">{translations?.role || project.role}</p>
+                                                    </div>
+                                                )}
+                                                {/* Software Icons */}
+                                                {project.software && project.software.length > 0 && (
+                                                    <div className="flex flex-col gap-1">
+                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Software</h3>
+                                                        <div className="flex items-center gap-2">
+                                                            {project.software.map(s => (
+                                                                <div key={s} title={s.replace('_', ' ')}>
+                                                                    {getIconMap("w-5 h-5")[s.toLowerCase()] || (
+                                                                        <div className="w-5 h-5 bg-gray-200 rounded flex items-center justify-center text-[8px] font-bold text-gray-500 uppercase">
+                                                                            {s.slice(0, 2)}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 )}
                                                 {project.timeline && (

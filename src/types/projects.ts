@@ -23,6 +23,7 @@ export interface Project {
   role?: string;
   timeline?: string;
   team?: string;
+  software?: string[];
   type?: 'commercial' | 'visual_art';
 
   narrative?: {
@@ -96,6 +97,7 @@ export interface CreateProjectData {
   role?: string;
   timeline?: string;
   team?: string;
+  software?: string[];
   type?: 'commercial' | 'visual_art';
 
   narrative?: {

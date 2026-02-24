@@ -11,6 +11,7 @@ interface AIResponse {
     role: string;
     team: string;
     timeline: string;
+    software?: string[];
     narrative: any;
 }
 
@@ -84,6 +85,7 @@ export default function ProjectAIHelper({ cover, pendingFile, slug, onGenerate }
                 role: data.role || '',
                 team: data.team || '',
                 timeline: data.timeline || '',
+                software: data.software || [],
                 narrative: data.narrative || {}
             });
 

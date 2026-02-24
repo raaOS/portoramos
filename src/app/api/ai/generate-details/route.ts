@@ -79,7 +79,8 @@ export async function POST(req: NextRequest) {
         2. DESKRIPSI: (max ${sentenceCount} kalimat) Jelaskan inti visual secara jujur.
         3. CLIENT: (Identitas brand atau "Personal Exploration").
         4. TAGS: (3-5 kata kunci teknis).
-        5. TYPE: "visual_art" atau "commercial".
+        5. SOFTWARE: (Max 2 software UTAMA yang kemungkinan besar digunakan: photoshop, illustrator, indesign, figma, affinity_designer, affinity_photo, capcut, finalcut, davinci).
+        6. TYPE: "visual_art" atau "commercial".
         
         CASE STUDY DETAILS (Berdasarkan pengamatan visual yang nyata):
         - ROLE: (Cth: "UI Execution", "Visual Development", "3D Modeling")
@@ -104,6 +105,7 @@ export async function POST(req: NextRequest) {
           "description": "...",
           "client": "...",
           "tags": "...",
+          "software": ["photoshop", "figma"],
           "type": "commercial | visual_art",
           "role": "...",
           "team": "...",
