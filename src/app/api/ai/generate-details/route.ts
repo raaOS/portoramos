@@ -60,41 +60,56 @@ export async function POST(req: NextRequest) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
 
         const prompt = `Analisis gambar ini secara mendalam. 
-        BERTINDAK SEBAGAI: Senior Creative Designer yang sedang menulis case study portofolio sendiri.
+        BERTINDAK SEBAGAI: Senior Creative Strategist & Product Designer.
         
-        GAYA BAHASA (PENTING):
+        TONE/GAYA BAHASA (WAJIB IKUTI):
+        Style yang dipilih user: "${style}"
+        
+        ${style === 'professional' ? `
+        - FOKUS: Problem-solving, hasil kerja yang reliabel, dan nilai bisnis.
+        - BAHASA: Formal-elegan, meyakinkan, lugas.
+        - TUJUAN: Menunjukkan bahwa project ini bisa menyelesaikan masalah klien.` : ''}
+        ${style === 'creative' ? `
+        - FOKUS: Inovasi, estetika yang berani, dan ide-ide out-of-the-box.
+        - BAHASA: Inspiratif, penuh semangat, deskriptif kreatif.
+        - TUJUAN: Menunjukkan sisi eksploratif dan keunikan visual.` : ''}
+        ${style === 'minimalist' ? `
+        - FOKUS: Kejelasan, esensialisme, dan kualitas detail kecil.
+        - BAHASA: Sangat singkat, bersih, to-the-point tanpa 'fluff'.
+        - TUJUAN: Menunjukkan ketajaman visi dan efisiensi desain.` : ''}
+        
+        ATURAN UMUM:
         - HINDARI bahasa robot/kaku seperti "Karya ini merupakan..." atau "Tujuannya adalah..."
-        - HINDARI kata-kata klise/berlebihan.
-        - Gunakan bahasa Indonesia yang NATURAL, lugas, dan to-the-point.
-        - Bayangkan kamu sedang menceritakan project ini ke teman sesama desainer: Jujur, Spesifik, dan Profesional tapi Santai.
+        - HINDARI kata-kata klise berlebihan (revolutionary, game-changing).
+        - Gunakan bahasa Indonesia yang NATURAL (bisa sedikit campur istilah Inggris teknis yang umum di industri).
         
-        Tentukan apakah ini "Visual Art" atau "Commercial Project".
+        Tentukan tipe project (Visual Art atau Commercial).
         
-        Berikan detail berikut:
+        Isi Detail:
         1. JUDUL: (max ${maxTitleWords} kata, catchy & singkat)
-        2. DESKRIPSI: (max ${sentenceCount} kalimat) Ceritakan apa yang ada di visual dengan bahasa deskriptif tapi tidak puitis berlebihan.
-        3. CLIENT: (Jika ada logo/brand, sebutkan. Jika tidak, "Personal Work").
+        2. DESKRIPSI: (max ${sentenceCount} kalimat) Fokus pada "Apa nilai menarik dari visual ini?".
+        3. CLIENT: (Identifikasi brand jika ada, jika tidak: "Personal Project").
         4. TAGS: (3-5 kata kunci teknis).
         5. TYPE: "visual_art" atau "commercial".
         
-        CASE STUDY DETAILS (Isi sesuai Type):
-        - ROLE: (Contoh spesifik: "Lead UI Designer", "3D Animator", bukan cuma "Designer")
-        - TEAM: (Jujur: "Solo Project", "Collab with @username", "Agency Team")
-        - TIMELINE: (Estimasi realistis: "2 Hari", "1 Sprint (2 Minggu)", "Weekend Project")
+        CASE STUDY DETAILS (Generate yang BENAR-BENAR spesifik berdasarkan visual):
+        - ROLE: (Cth: "Lead Brand Identity", "System Architect", "3D Surrealist")
+        - TEAM: (Cth: "Solo Execution", "Modular Team Collaboration")
+        - TIMELINE: (Cth: "48 Hours Sprint", "1 Month Production")
         
-        NARRATIVE (Sesuaikan Type):
+        NARRATIVE (Harus Terasa "Mahal" dan Menarik bagi Klien):
         Jika Commercial:
-        - context: (Kenapa project ini ada? Langsung ke inti masalah. Cth: "Brand X butuh rebranding karena engagement turun.")
-        - challenge: (Apa susahnya? Cth: "Deadline mepet 2 hari dan materi foto terbatas.")
-        - solution: (Apa yang kamu lakukan? Cth: "Saya pakai pendekatan tipografi besar untuk menutupi kurangnya foto bagus.")
-        - impact: (Dampak/Hasil - Gunakan kata prediksi yang humble seperti "Didesain untuk...", "Berpotensi...", jangan klaim angka palsu.)
+        - context: (Apa problem industrinya? Kenapa brand ini butuh solusi ini?)
+        - challenge: (Apa hambatan teknis/strategis yang paling sulit?)
+        - solution: (Langkah brilian apa yang kamu ambil sebagai desainer?)
+        - impact: (Kenapa solusi ini bagus untuk masa depan brand?)
         
         Jika Visual Art:
-        - concept: (Ide gila apa di baliknya? Cth: "Eksperimen menggabungkan tekstur plastik dengan layout majalah jadul.")
-        - process: (Teknik spesifik? Cth: "Scan kertas asli lalu di-layering di Photoshop, bukan full digital.")
-        - detail: (Apa yang harus orang perhatikan? Cth: "Perhatikan noise grain di bagian shadow.")
+        - concept: (Makna filosofis atau eksperimen teknis apa yang dikejar?)
+        - process: (Langkah unik yang kamu lakukan, cth: "manual scanning", "procedural generation")
+        - detail: (Spesifik area visual yang menunjukkan keahlianmu, cth: "lighting contrast", "subsurface scattering")
         
-        Output JSON murni validation key:
+        Output JSON murni:
         {
           "title": "...",
           "description": "...",

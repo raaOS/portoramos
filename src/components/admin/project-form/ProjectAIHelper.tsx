@@ -23,6 +23,7 @@ interface ProjectAIHelperProps {
 
 export default function ProjectAIHelper({ cover, pendingFile, slug, onGenerate }: ProjectAIHelperProps) {
     const [isGenerating, setIsGenerating] = useState(false);
+    const [selectedStyle, setSelectedStyle] = useState<'professional' | 'creative' | 'minimalist'>('professional');
     const [error, setError] = useState<string | null>(null);
 
     const handleGenerate = async () => {
@@ -36,7 +37,7 @@ export default function ProjectAIHelper({ cover, pendingFile, slug, onGenerate }
 
         try {
             let body: any = {
-                style: 'estetik', // Default style
+                style: selectedStyle,
                 maxTitleWords: 6,
                 sentenceCount: 3
             };
@@ -128,6 +129,24 @@ export default function ProjectAIHelper({ cover, pendingFile, slug, onGenerate }
                         </>
                     )}
                 </button>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="text-[10px] uppercase font-bold text-violet-400 mr-2">Tone:</span>
+                {(['professional', 'creative', 'minimalist'] as const).map((s) => (
+                    <button
+                        key={s}
+                        onClick={() => setSelectedStyle(s)}
+                        className={`
+                            px-3 py-1 text-[10px] font-bold uppercase tracking-tighter transition-all
+                            ${selectedStyle === s
+                                ? 'bg-violet-600 text-white shadow-sm'
+                                : 'bg-white text-violet-500 border border-violet-100 hover:bg-violet-50'}
+                        `}
+                    >
+                        {s}
+                    </button>
+                ))}
             </div>
             {error && (
                 <p className="text-xs text-red-500 mt-2 font-medium">
