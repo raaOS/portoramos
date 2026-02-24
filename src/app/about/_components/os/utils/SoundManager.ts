@@ -25,9 +25,27 @@ class SoundManager {
     };
 
     private soundVolumes: Record<string, number> = {};
+    private isUnlocked: boolean = false;
+    private pendingSounds: Set<SoundType> = new Set();
+    private hasPlayedStartup: boolean = false;
+    private suppressedSounds: Set<SoundType> = new Set();
+
+    /**
+     * Temporarily suppress a sound type for the given duration (ms).
+     */
+    public suppressSound(type: SoundType, durationMs: number) {
+        this.suppressedSounds.add(type);
+        setTimeout(() => {
+            this.suppressedSounds.delete(type);
+            console.log(`[SoundManager] Suppression lifted for "${type}".`);
+        }, durationMs);
+    }
 
     private constructor() {
-        console.log("%c[SoundManager] v1.3-STABLE (PCM-WAV)", "color: #00ff00; font-weight: bold;");
+        console.log("%c[SoundManager] v1.5-DEBUG (Autoplay-Ready)", "color: #00ff00; font-weight: bold;");
+        if (typeof window !== 'undefined') {
+            (window as any).__soundManager = this; // Attach for easy console debugging
+        }
     }
 
     public static getInstance(): SoundManager {
@@ -38,10 +56,54 @@ class SoundManager {
     }
 
     /**
-     * Initialize the sound system.
+     * Unlock the audio context on user interaction WITHOUT playing any sounds.
+     * Use this for the "Power On" button click.
+     */
+    public unlock() {
+        if (this.isUnlocked) return;
+        console.log('[SoundManager] Unlocking audio context silently...');
+        this.isUnlocked = true;
+        // Play a zero-volume buffer to secure the interaction context
+        try {
+            const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFRm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
+            silentAudio.volume = 0;
+            silentAudio.play().catch(() => { });
+        } catch (e) {
+            // Ignore
+        }
+    }
+
+    /**
+     * Initialize/Unlock the sound system on first user interaction AND flush pending sounds.
+     * This is called by interaction listeners when sounds are already queued.
      */
     public init() {
-        console.log('[SoundManager] Sound system ready (lazy load).');
+        if (this.isUnlocked && this.pendingSounds.size === 0) return;
+
+        console.log(`[SoundManager] Interaction detected. Unlocking (pending: ${this.pendingSounds.size})...`);
+
+        // 1. Mark as potentially unlocked
+        this.isUnlocked = true;
+
+        // 2. Play a tiny silent buffer synchronously to secure the interaction context
+        const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFRm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
+        silentAudio.volume = 0;
+
+        // Use the synchronous part of the event to play
+        try {
+            silentAudio.play().catch(() => { });
+
+            // 3. IMPORTANT: Directly play the pending startup sound if it exists
+            // Doing it here, inside the interaction handler's call stack, is much more reliable than inside a .then()
+            if (this.pendingSounds.size > 0) {
+                console.log(`[SoundManager] Triggering ${this.pendingSounds.size} pending sounds from interaction stack.`);
+                const toPlay = Array.from(this.pendingSounds);
+                this.pendingSounds.clear(); // Clear BEFORE playing to avoid re-triggering issues
+                toPlay.forEach(type => this.play(type));
+            }
+        } catch (e) {
+            console.error('[SoundManager] Unlock attempt failed:', e);
+        }
     }
 
     /**
@@ -50,20 +112,30 @@ class SoundManager {
     public loadConfig(config: Record<string, { path: string, volume: number }>) {
         if (!config) return;
 
-        console.log('[SoundManager] Loading dynamic sound configuration...');
+        console.log('[SoundManager] Loading dynamic sound configuration:', config);
         Object.entries(config).forEach(([key, setting]) => {
             const typeKey = key as SoundType;
             if (this.soundPaths[typeKey] !== undefined) {
-                // Update internal path
                 const oldPath = this.soundPaths[typeKey];
-                this.soundPaths[typeKey] = setting.path;
 
-                // If path changed, clear existing cached audio element to force reload
-                if (oldPath !== setting.path) {
+                // UX Fix: Localization GitHub URL -> Local path
+                let path = setting.path;
+                if (path.includes('/public/sounds/')) {
+                    const filename = path.split('/').pop()?.split('?')[0];
+                    const version = path.split('?v=')[1] || '1.3';
+                    if (filename) {
+                        path = `/sounds/${filename}?v=${version}`;
+                        console.log(`[SoundManager] Localized path for ${typeKey}: ${path}`);
+                    }
+                }
+
+                this.soundPaths[typeKey] = path;
+
+                if (oldPath !== path) {
+                    console.log(`[SoundManager] Updating path for ${typeKey}: ${oldPath} -> ${path}`);
                     this.sounds.delete(typeKey);
                 }
 
-                // Store volume config
                 this.soundVolumes[typeKey] = setting.volume;
             }
         });
@@ -75,33 +147,63 @@ class SoundManager {
     public play(type: SoundType, customVolume?: number) {
         if (this.isMuted) return;
 
+        // Check if this sound is temporarily suppressed
+        if (this.suppressedSounds.has(type)) {
+            console.log(`[SoundManager] "${type}" is suppressed. Skipping.`);
+            return;
+        }
+
+        // Protection for startup sound: only play once per session
+        if (type === 'startup') {
+            if (this.hasPlayedStartup) {
+                console.log('[SoundManager] Startup sound already played. Skipping.');
+                return;
+            }
+            // We set it true in the success handler below to allow retries if blocked
+        }
+
         try {
             let audio = this.sounds.get(type);
 
-            // Lazy load if not exists in memory
             if (!audio) {
                 const path = this.soundPaths[type];
                 if (!path) {
                     console.warn(`[SoundManager] No path defined for sound type: ${type}`);
                     return;
                 }
+                console.log(`[SoundManager] Creating new Audio for ${type}: ${path}`);
                 audio = new Audio(path);
                 this.sounds.set(type, audio);
             }
 
-            // Always clone the node to allow overlapping sounds of the same type
-            const clone = audio.cloneNode() as HTMLAudioElement;
-
             // Priority: customVolume > Config Volume > Global Default Volume
             const configVolume = this.soundVolumes[type as string];
-            clone.volume = customVolume ?? configVolume ?? this.volume;
+            const targetVolume = customVolume ?? configVolume ?? this.volume;
 
-            const playPromise = clone.play();
+            console.log(`[SoundManager] Playing "${type}" at volume ${targetVolume}`);
+
+            // For very large sounds (like startup), avoid cloning on the first play 
+            // to ensure metadata is handled correctly.
+            let playTarget: HTMLAudioElement;
+            if (audio.paused && audio.currentTime === 0) {
+                playTarget = audio;
+            } else {
+                playTarget = audio.cloneNode() as HTMLAudioElement;
+            }
+
+            playTarget.volume = targetVolume;
+            const playPromise = playTarget.play();
+
             if (playPromise !== undefined) {
-                playPromise.catch(err => {
-                    // Browsers block autoplay if no interaction has occurred
+                playPromise.then(() => {
+                    console.log(`[SoundManager] Successfully started playing "${type}"`);
+                    if (type === 'startup') {
+                        this.hasPlayedStartup = true;
+                    }
+                }).catch(err => {
                     if (err.name === 'NotAllowedError') {
-                        // Expected failure if user hasn't interacted yet
+                        this.pendingSounds.add(type);
+                        console.info(`[SoundManager] Autoplay blocked for "${type}". Queued for interaction.`);
                         return;
                     }
                     console.warn(`[SoundManager] Playback failed for "${type}":`, err.message);
@@ -125,6 +227,26 @@ class SoundManager {
 
     public getIsMuted(): boolean {
         return this.isMuted;
+    }
+
+    /**
+     * Clear the cached Audio element for a specific sound type.
+     * Call this after uploading a new file to force the next play() to load fresh from disk.
+     */
+    public clearCache(type: SoundType) {
+        if (this.sounds.has(type)) {
+            const audio = this.sounds.get(type);
+            if (audio) {
+                audio.pause();
+                audio.src = '';
+            }
+            this.sounds.delete(type);
+            console.log(`[SoundManager] Cache cleared for "${type}".`);
+        }
+        // Reset startup protection so it can play again on next Power On
+        if (type === 'startup') {
+            this.hasPlayedStartup = false;
+        }
     }
 }
 

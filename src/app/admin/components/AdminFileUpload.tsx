@@ -9,6 +9,8 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface AdminFileUploadProps {
   onUpload: (urls: string[]) => void;
+  onUploadStart?: () => void;
+  onUploadEnd?: () => void;
   accept?: string;
   multiple?: boolean;
   maxFiles?: number;
@@ -32,8 +34,10 @@ export default function AdminFileUpload({
   autoUpload = true,
   onFileSelect,
   folder,
-  customFilename
-}: AdminFileUploadProps & { enableCrop?: boolean; enableVideoTrim?: boolean; autoUpload?: boolean; onFileSelect?: (file: File) => void }) {
+  customFilename,
+  onUploadStart,
+  onUploadEnd
+}: AdminFileUploadProps & { enableCrop?: boolean; enableVideoTrim?: boolean; autoUpload?: boolean; onFileSelect?: (file: File) => void; onUploadStart?: () => void; onUploadEnd?: () => void }) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [status, setStatus] = useState<string>('');
   const [progress, setProgress] = useState(0);
@@ -226,6 +230,7 @@ export default function AdminFileUpload({
   const executeUpload = useCallback(async (files: File[], trimOptions?: { start: number; end: number; crop?: any }) => {
     setStatus('starting');
     setProgress(0);
+    onUploadStart?.();
 
     try {
       const uploadPromises = files.map(async (file, index) => {
@@ -310,8 +315,9 @@ export default function AdminFileUpload({
     } finally {
       setStatus('');
       setProgress(0);
+      onUploadEnd?.();
     }
-  }, [uploadToGitHub, compressImageServer, compressVideoClient, onUpload, success, showError, showWarning, autoUpload, onFileSelect]);
+  }, [uploadToGitHub, compressImageServer, compressVideoClient, onUpload, onUploadStart, onUploadEnd, success, showError, showWarning, autoUpload, onFileSelect]);
 
   const handleFiles = useCallback(async (files: FileList) => {
     if (disabled) return;

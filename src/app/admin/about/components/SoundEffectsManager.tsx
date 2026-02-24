@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Volume2, Play, Music, Info, AlertCircle, RefreshCcw, Upload } from 'lucide-react';
+import { Save, Play, Music, Info, Upload, Loader2, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { SoundConfig } from '@/types/about';
 import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
@@ -13,6 +13,7 @@ interface SoundEffectsManagerProps {
 export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsManagerProps) {
     const [localConfig, setLocalConfig] = useState<SoundConfig>(config || {});
     const [saving, setSaving] = useState(false);
+    const [uploadingKey, setUploadingKey] = useState<string | null>(null);
     const { showSuccess, showError } = useToast();
 
     const handleUpdate = (type: string, field: 'path' | 'volume', value: any) => {
@@ -39,7 +40,11 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
 
     const handlePreview = (type: string, setting: { path: string, volume: number }) => {
         try {
-            const audio = new Audio(setting.path);
+            // Strip any old cache-bust param and add a fresh one so the browser
+            // always loads the latest uploaded file instead of a stale cached version.
+            const basePath = setting.path.split('?')[0];
+            const freshPath = `${basePath}?v=${Date.now()}`;
+            const audio = new Audio(freshPath);
             audio.volume = setting.volume;
             audio.play().catch(err => {
                 showError('Gagal memutar suara preview: ' + err.message);
@@ -101,10 +106,13 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
                                 </div>
                                 <button
                                     onClick={() => handlePreview(type.key, setting)}
-                                    className="p-2 bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-all"
+                                    disabled={uploadingKey === type.key}
+                                    className="p-2 bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                     title="Test Sound"
                                 >
-                                    <Play size={18} fill="currentColor" />
+                                    {uploadingKey === type.key
+                                        ? <Loader2 size={18} className="animate-spin text-amber-500" />
+                                        : <Play size={18} fill="currentColor" />}
                                 </button>
                             </div>
 
@@ -114,7 +122,9 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
                                         <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest block">Path File (.wav / .mp3)</label>
                                         <div className="relative group/upload">
                                             <button className="flex items-center gap-1 text-[10px] font-bold text-amber-600 hover:text-amber-700 transition-colors">
-                                                <Upload size={10} /> Upload Baru
+                                                {uploadingKey === type.key
+                                                    ? <><Loader2 size={10} className="animate-spin" /> Mengupload...</>
+                                                    : <><Upload size={10} /> Upload Baru</>}
                                             </button>
                                             <div className="absolute inset-0 opacity-0 cursor-pointer overflow-hidden z-10">
                                                 <AdminFileUpload
@@ -122,10 +132,15 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
                                                     accept="audio/*"
                                                     multiple={false}
                                                     customFilename={type.key}
+                                                    onUploadStart={() => setUploadingKey(type.key)}
+                                                    onUploadEnd={() => setUploadingKey(null)}
                                                     onUpload={(urls) => {
                                                         const timestamp = Date.now();
-                                                        const urlWithCacheBust = `${urls[0]}?v=${timestamp}`;
+                                                        const urlWithCacheBust = `${urls[0].split('?')[0]}?v=${timestamp}`;
                                                         handleUpdate(type.key, 'path', urlWithCacheBust);
+                                                        // Evict old cached Audio so the next play uses the fresh file
+                                                        soundManager.clearCache(type.key as any);
+                                                        showSuccess(`File ${type.label} berhasil diunggah! Klik "Simpan Konfigurasi" di atas untuk menerapkan.`);
                                                     }}
                                                 />
                                             </div>

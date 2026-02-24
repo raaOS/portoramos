@@ -1,9 +1,9 @@
 ﻿'use client';
 
 import type { Project, GalleryItem } from '@/types/projects';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Languages, Loader2, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import MasonryGrid from '@/components/layout/MasonryGrid';
@@ -47,7 +47,60 @@ export default function ProjectDetailTwoColumn({
     const [isProjectLiked, setIsProjectLiked] = useState(false);
     const [metrics, setMetrics] = useState({ likes: 0, shares: 0 });
     const [isLoaded, setIsLoaded] = useState(false);
+    const [translations, setTranslations] = useState<Record<string, string> | null>(null);
+    const [translateLoading, setTranslateLoading] = useState(false);
+    const CACHE_KEY = `gemini_proj_${project.slug}`;
     const { toast, handleContextMenu } = useImageProtection();
+
+    // Restore cached translations on mount
+    useEffect(() => {
+        try {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) setTranslations(JSON.parse(cached));
+        } catch { /* ignore */ }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [project.slug]);
+
+    const translateAll = useCallback(async () => {
+        if (translations) { setTranslations(null); return; } // toggle off (cache stays)
+
+        // Check localStorage cache first
+        try {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) { setTranslations(JSON.parse(cached)); return; }
+        } catch { /* ignore */ }
+
+        setTranslateLoading(true);
+        try {
+            const fields: Record<string, string> = {};
+            if (project.title) fields.title = project.title;
+            if (project.description) fields.description = project.description;
+            if (project.role) fields.role = project.role;
+            if (project.timeline) fields.timeline = project.timeline;
+            if (project.team) fields.team = project.team;
+            if (project.narrative?.context) fields.context = project.narrative.context;
+            const challenge = project.narrative?.challenge || project.narrative?.concept;
+            if (challenge) fields.challenge = challenge;
+            const solution = project.narrative?.solution || project.narrative?.process;
+            if (solution) fields.solution = solution;
+            const impact = project.narrative?.impact || project.narrative?.result || project.narrative?.detail;
+            if (impact) fields.impact = impact;
+
+            const res = await fetch('/api/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setTranslations(data.translations);
+                // Cache to localStorage
+                try { localStorage.setItem(CACHE_KEY, JSON.stringify(data.translations)); } catch { /* ignore */ }
+            }
+        } catch { /* silent */ } finally {
+            setTranslateLoading(false);
+        }
+    }, [project, translations]);
 
     // Load like status immediately (local storage only)
     useEffect(() => {
@@ -241,9 +294,9 @@ export default function ProjectDetailTwoColumn({
                                     <div className="mt-6 sm:mt-8 space-y-6 sm:space-y-8">
                                         {project.description && (
                                             <div>
-                                                <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-gray-500">Tentang Project Ini</h3>
+                                                <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-gray-500">{translations ? 'About This Project' : 'Tentang Project Ini'}</h3>
                                                 <ReadMoreDescription
-                                                    text={project.description}
+                                                    text={translations?.description || project.description}
                                                     maxLines={6}
                                                     className="text-sm leading-relaxed text-gray-700 dark:text-gray-300"
                                                 />
@@ -266,7 +319,7 @@ export default function ProjectDetailTwoColumn({
                                 <div className="p-4 sm:p-6 lg:p-8">
                                     <div className="flex items-start justify-between gap-4 mb-4">
                                         <h1 className="text-xl sm:text-2xl lg:text-3xl font-serif font-bold text-gray-900 dark:text-white transition-colors duration-300">
-                                            {project.title}
+                                            {translations?.title || project.title}
                                         </h1>
                                         {isWindowMode && (
                                             <a
@@ -287,26 +340,26 @@ export default function ProjectDetailTwoColumn({
                                             <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:gap-x-12 gap-y-6 py-5 border-y border-gray-100 dark:border-gray-800">
                                                 {project.role && (
                                                     <div>
-                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Peran</h3>
-                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{project.role}</p>
+                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">{translations ? 'Role' : 'Peran'}</h3>
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{translations?.role || project.role}</p>
                                                     </div>
                                                 )}
                                                 {project.timeline && (
                                                     <div>
-                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Waktu</h3>
-                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{project.timeline}</p>
+                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">{translations ? 'Timeline' : 'Waktu'}</h3>
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{translations?.timeline || project.timeline}</p>
                                                     </div>
                                                 )}
                                                 {project.team && (
                                                     <div>
-                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Tim</h3>
-                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{project.team}</p>
+                                                        <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">{translations ? 'Team' : 'Tim'}</h3>
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{translations?.team || project.team}</p>
                                                     </div>
                                                 )}
                                                 <div>
-                                                    <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Tipe</h3>
+                                                    <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">{translations ? 'Type' : 'Tipe'}</h3>
                                                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {project.type === 'commercial' ? 'Project Komersial' : 'Karya Visual'}
+                                                        {translations ? (project.type === 'commercial' ? 'Commercial Project' : 'Visual Art') : (project.type === 'commercial' ? 'Project Komersial' : 'Karya Visual')}
                                                     </p>
                                                 </div>
                                             </div>
@@ -364,9 +417,21 @@ export default function ProjectDetailTwoColumn({
                                                     {metrics.shares > 0 && <span className="text-sm font-medium pr-1">{metrics.shares}</span>}
                                                 </button>
 
-                                                {project.description && (
-                                                    <AITranslator text={project.description} context={`Project: ${project.title || ''}`} />
-                                                )}
+                                                <button
+                                                    onClick={translateAll}
+                                                    disabled={translateLoading}
+                                                    className={`p-1.5 flex items-center gap-1 rounded-full transition-all duration-200 disabled:opacity-50 ${translations
+                                                        ? 'text-purple-600 hover:text-gray-400'
+                                                        : 'text-gray-400 hover:text-purple-600'
+                                                        }`}
+                                                    title={translations ? 'Restore original' : 'Translate with Gemini AI'}
+                                                >
+                                                    {translateLoading
+                                                        ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
+                                                        : translations
+                                                            ? <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
+                                                            : <Languages className="w-5 h-5 sm:w-6 sm:h-6" />}
+                                                </button>
                                             </div>
 
                                             <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-end">
@@ -391,8 +456,8 @@ export default function ProjectDetailTwoColumn({
                                             {/* Context (Commercial/General) */}
                                             {project.narrative.context && (
                                                 <div className="mb-8 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
-                                                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Konteks</h3>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-300 italic">&quot;{project.narrative.context}&quot;</p>
+                                                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">{translations ? 'Context' : 'Konteks'}</h3>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-300 italic">&quot;{translations?.context || project.narrative.context}&quot;</p>
                                                 </div>
                                             )}
 
@@ -401,10 +466,10 @@ export default function ProjectDetailTwoColumn({
                                                 {(project.narrative.challenge || project.narrative.concept) && (
                                                     <div>
                                                         <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-red-500">
-                                                            {project.narrative.concept ? 'Konsep' : 'Tantangan'}
+                                                            {translations ? (project.narrative.concept ? 'Concept' : 'Challenge') : (project.narrative.concept ? 'Konsep' : 'Tantangan')}
                                                         </h3>
                                                         <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                            {project.narrative.challenge || project.narrative.concept}
+                                                            {translations?.challenge || project.narrative.challenge || project.narrative.concept}
                                                         </p>
                                                     </div>
                                                 )}
@@ -413,10 +478,10 @@ export default function ProjectDetailTwoColumn({
                                                 {(project.narrative.solution || project.narrative.process) && (
                                                     <div>
                                                         <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-blue-500">
-                                                            {project.narrative.process ? 'Proses' : 'Solusi'}
+                                                            {translations ? (project.narrative.process ? 'Process' : 'Solution') : (project.narrative.process ? 'Proses' : 'Solusi')}
                                                         </h3>
                                                         <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                            {project.narrative.solution || project.narrative.process}
+                                                            {translations?.solution || project.narrative.solution || project.narrative.process}
                                                         </p>
                                                     </div>
                                                 )}
@@ -425,10 +490,10 @@ export default function ProjectDetailTwoColumn({
                                                 {(project.narrative.impact || project.narrative.result || project.narrative.detail) && (
                                                     <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 p-5 rounded-xl border border-green-100 dark:border-green-900/30">
                                                         <h3 className="text-xs font-bold uppercase tracking-wider mb-2 text-green-600 dark:text-green-400">
-                                                            {project.narrative.impact ? 'Dampak' : (project.narrative.detail ? 'Detail' : 'Hasil')}
+                                                            {translations ? (project.narrative.impact ? 'Impact' : (project.narrative.detail ? 'Detail' : 'Result')) : (project.narrative.impact ? 'Dampak' : (project.narrative.detail ? 'Detail' : 'Hasil'))}
                                                         </h3>
                                                         <p className={`leading-relaxed ${project.narrative.impact ? 'text-base sm:text-lg font-medium text-gray-900 dark:text-white' : 'text-sm sm:text-base text-gray-800 dark:text-gray-200'}`}>
-                                                            {project.narrative.impact || project.narrative.result || project.narrative.detail}
+                                                            {translations?.impact || project.narrative.impact || project.narrative.result || project.narrative.detail}
                                                         </p>
                                                     </div>
                                                 )}

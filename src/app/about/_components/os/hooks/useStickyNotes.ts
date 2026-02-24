@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { NoteData } from '../StickyNoteItem';
 
 const INITIAL_NOTES: NoteData[] = [
@@ -31,6 +31,7 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
     const [notes, setNotes] = useState<NoteData[]>([]);
     const [noteZIndex, setNoteZIndex] = useState(1);
     const [hasLoaded, setHasLoaded] = useState(false);
+    const isModified = useRef(false);
 
     // Load notes from server
     useEffect(() => {
@@ -82,7 +83,7 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
 
     // Auto-sync for Admins ONLY
     useEffect(() => {
-        if (!mounted || !hasLoaded || !isAdmin || !csrfToken) return;
+        if (!mounted || !hasLoaded || !isAdmin || !csrfToken || !isModified.current) return;
 
         const saveNotes = async () => {
             try {
@@ -99,6 +100,7 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                     },
                     body: JSON.stringify(notes)
                 });
+                isModified.current = false; // Reset after successful save
             } catch (error) {
                 console.error("Failed to auto-save notes:", error instanceof Error ? error.message : error);
             }
@@ -132,10 +134,12 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
         };
         setNotes(prev => [newNote, ...prev]);
         setNoteZIndex(prev => prev + 1);
+        isModified.current = true;
     }, [noteZIndex]);
 
     const updateNote = useCallback((id: string, updates: Partial<NoteData>) => {
         setNotes(prev => prev.map(note => note.id === id ? { ...note, ...updates } : note));
+        isModified.current = true;
     }, []);
 
     const deleteNote = useCallback((id: string) => {
@@ -144,6 +148,7 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
 
     const permanentDeleteNote = useCallback((id: string) => {
         setNotes(prev => prev.filter(n => n.id !== id));
+        isModified.current = true;
     }, []);
 
     const restoreNote = useCallback((id: string) => {

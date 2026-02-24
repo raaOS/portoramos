@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
+import { soundManager } from '../utils/SoundManager';
 
 interface BootSequenceProps {
     onComplete: () => void;
@@ -35,6 +36,12 @@ const BootSequence = ({ onComplete, skipAnimation = false }: BootSequenceProps) 
             clearTimeout(timer3);
         };
     }, [onComplete, skipAnimation]);
+
+    useEffect(() => {
+        if (step === 1) {
+            soundManager.play('startup');
+        }
+    }, [step]);
 
     return (
         <AnimatePresence>

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Check, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Check, Trash2, Loader2 } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
 import { WallpaperConfig, Wallpaper } from '@/types/about';
 
@@ -16,6 +16,9 @@ const DEFAULT_WALLPAPERS = [
 export default function WallpaperManager({ data, onUpdate }: WallpaperManagerProps) {
     const [wallpapers, setWallpapers] = useState<Wallpaper[]>(DEFAULT_WALLPAPERS);
     const [activeId, setActiveId] = useState<string>('default');
+    // Local state for blur — only saves to GitHub on pointer/mouse up (not every keystroke)
+    const [blurValue, setBlurValue] = useState<number>(data?.blur || 0);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Sync state with props in render
     const [lastData, setLastData] = useState(data);
@@ -24,6 +27,8 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
             setWallpapers(data.collection);
             setActiveId(data.activeWallpaperId || 'default');
         }
+        // Sync local blur value when external data changes (e.g. initial load)
+        setBlurValue(data.blur ?? 0);
         setLastData(data);
     }
 
@@ -88,7 +93,7 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
                             Blur Intensity (0-20px)
                         </label>
                         <span className="text-sm px-2 py-1 bg-white rounded border border-gray-200 text-gray-600 font-mono">
-                            {data?.blur || 0}px
+                            {blurValue}px
                         </span>
                     </div>
                     <input
@@ -96,8 +101,10 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
                         min="0"
                         max="20"
                         step="1"
-                        value={data?.blur || 0}
-                        onChange={(e) => onUpdate({ ...data!, collection: wallpapers, activeWallpaperId: activeId, blur: parseInt(e.target.value) })}
+                        value={blurValue}
+                        onChange={(e) => setBlurValue(parseInt(e.target.value))}
+                        onPointerUp={(e) => onUpdate({ ...data!, collection: wallpapers, activeWallpaperId: activeId, blur: parseInt((e.target as HTMLInputElement).value) })}
+                        onMouseUp={(e) => onUpdate({ ...data!, collection: wallpapers, activeWallpaperId: activeId, blur: parseInt((e.target as HTMLInputElement).value) })}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                     />
                     <p className="text-xs text-gray-500 mt-2">
@@ -155,20 +162,24 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
                     })}
 
                     {/* Clean Upload Area */}
-                    <div className="relative aspect-video rounded-2xl border-3 border-dashed border-gray-200 hover:border-blue-400 bg-gray-50/50 hover:bg-blue-50/10 flex flex-col items-center justify-center transition-all group cursor-pointer gap-4">
-                        <div className="p-4 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform text-blue-500">
-                            <Plus size={32} />
+                    <div className={`relative aspect-video rounded-2xl border-3 border-dashed ${isUploading ? 'border-amber-400 bg-amber-50/20' : 'border-gray-200 hover:border-blue-400 bg-gray-50/50 hover:bg-blue-50/10'} flex flex-col items-center justify-center transition-all group cursor-pointer gap-4`}>
+                        <div className={`p-4 rounded-full shadow-sm transition-transform text-blue-500 ${isUploading ? 'bg-amber-50' : 'bg-white group-hover:scale-110'}`}>
+                            {isUploading ? <Loader2 size={32} className="animate-spin text-amber-500" /> : <Plus size={32} />}
                         </div>
                         <div className="text-center">
-                            <h4 className="font-semibold text-gray-700">Upload New</h4>
-                            <p className="text-xs text-gray-400 mt-1">1920x1080 or higher rec.</p>
+                            <h4 className="font-semibold text-gray-700">{isUploading ? 'Mengupload...' : 'Upload New'}</h4>
+                            <p className="text-xs text-gray-400 mt-1">{isUploading ? 'Harap tunggu...' : '1920x1080 or higher rec.'}</p>
                         </div>
-                        <div className='absolute inset-0 opacity-0 cursor-pointer overflow-hidden'>
-                            <AdminFileUpload
-                                folder="wallpapers"
-                                onUpload={handleUpload}
-                            />
-                        </div>
+                        {!isUploading && (
+                            <div className='absolute inset-0 opacity-0 cursor-pointer overflow-hidden'>
+                                <AdminFileUpload
+                                    folder="wallpapers"
+                                    onUpload={handleUpload}
+                                    onUploadStart={() => setIsUploading(true)}
+                                    onUploadEnd={() => setIsUploading(false)}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

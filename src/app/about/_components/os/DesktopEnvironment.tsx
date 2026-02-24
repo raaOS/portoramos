@@ -71,6 +71,10 @@ const BootSequence = dynamic(() => import("./ui/BootSequence"), {
     loading: () => <div className="fixed inset-0 bg-black flex items-center justify-center"><div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>,
     ssr: false
 });
+const StartScreen = dynamic(() => import("./ui/StartScreen"), {
+    loading: () => <div className="fixed inset-0 bg-black flex items-center justify-center"><div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>,
+    ssr: false
+});
 
 // - ProjectDetailWrapper -> ./ui/ProjectDetailWrapper.tsx
 // - AppIcon -> ./ui/AppIcon.tsx
@@ -110,17 +114,19 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
     // Screen Lock & Resize Hook (Handles mounted state, window size, and body lock)
     const { mounted, windowSize, isMobile } = useDesktopLock();
-    const { isBooting, finishBooting } = useBootSequence();
+    const { needsPowerOn, isBooting, powerOn, finishBooting } = useBootSequence();
 
     // Fix race condition: pastikan loadConfig dipanggil SEBELUM startup sound diputar
     // Jika aboutData belum tersedia, finishBooting tetap bisa jalan (pakai default sounds)
     // React Compiler menangani memoization otomatis — tidak perlu useCallback manual
-    const handleBootComplete = () => {
+    const handleBootComplete = useCallback(() => {
         if (aboutData?.soundConfig) {
             soundManager.loadConfig(aboutData.soundConfig);
         }
+        // Suppress window-open sound briefly so it doesn't overlap with the boot sound
+        soundManager.suppressSound('window-open', 1500);
         finishBooting();
-    };
+    }, [aboutData?.soundConfig, finishBooting]);
     const [showSpotlight, setShowSpotlight] = useState(false);
     useDesktopShortcuts({ showSpotlight, setShowSpotlight });
 
@@ -279,6 +285,11 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                         <>
                             {/* Boot Sequence Overlay */}
                             <AnimatePresence>
+                                {needsPowerOn && (
+                                    <StartScreen
+                                        onStart={powerOn}
+                                    />
+                                )}
                                 {isBooting && (
                                     <BootSequence
                                         onComplete={handleBootComplete}
@@ -290,7 +301,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                             <m.div
                                 className="relative w-full h-full overflow-hidden select-none"
                                 initial="booting"
-                                animate={isBooting ? "booting" : "ready"}
+                                animate={(isBooting || needsPowerOn) ? "booting" : "ready"}
                                 variants={desktopVariants}
                             >
                                 {/* Wallpaper */}
@@ -314,8 +325,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                     setNotesVisible={setNotesVisible}
                                 />
 
-                                {/* Layer 2: Windows (Load ONLY when at least one window is open) */}
-                                {windows.some(w => w.isOpen) && (
+                                {/* Layer 2: Windows (Load ONLY after full boot sequence) */}
+                                {windows.some(w => w.isOpen) && !isBooting && !needsPowerOn && (
                                     <WindowsLayer
                                         isAdmin={isAdmin}
                                     />
@@ -323,7 +334,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
                                 {/* Layer 3: UI Overlays (Dock, MenuBar, Spotlight, DynamicIsland) */}
                                 <UIOverlaysLayer
-                                    isBooting={isBooting}
+                                    isBooting={isBooting || needsPowerOn}
                                     navToChat={navToChat}
                                     testimonialContacts={testimonialContacts}
                                     showSpotlight={showSpotlight}

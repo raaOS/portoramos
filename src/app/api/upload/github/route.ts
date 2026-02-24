@@ -195,14 +195,46 @@ export async function POST(req: NextRequest) {
         if (isAudioFile && ext !== 'wav' && uploadFolder.includes('sounds')) {
             console.log(`[UploadAPI] Audio detected (${ext}) in sounds folder, converting to WAV...`);
             try {
-                const [{ default: ffmpegPath }, { spawn }] = await Promise.all([
+                const [{ default: ffmpegPathRaw }, { spawn }] = await Promise.all([
                     import('ffmpeg-static'),
                     import('child_process')
                 ]);
 
+                // Fixed Resolution for Windows/Next.js Compatibility
+                let ffmpegPath = ffmpegPathRaw as string;
+                const fs = require('fs');
+                const nodePath = require('path');
+
+                console.log(`[UploadAPI] Current CWD: "${process.cwd()}"`);
+                console.log(`[UploadAPI] Raw FFmpeg from import: "${ffmpegPathRaw}"`);
+
+                if (ffmpegPath && typeof ffmpegPath === 'string') {
+                    try {
+                        const pkgP = require.resolve('ffmpeg-static/package.json');
+                        ffmpegPath = nodePath.join(nodePath.dirname(pkgP), process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
+                        console.log(`[UploadAPI] FFmpeg via require.resolve: "${ffmpegPath}"`);
+                    } catch (e) {
+                        // Manual cleanup of Vercel/Next.js ROOT prefix
+                        const cleanP = ffmpegPath.replace(/^[\\\/]?ROOT[\\\/]/i, '').replace(/^[\\\/]/, '');
+                        ffmpegPath = nodePath.resolve(process.cwd(), cleanP);
+                        console.log(`[UploadAPI] require.resolve failed, used manual resolve: "${ffmpegPath}"`);
+                    }
+
+                    if (!fs.existsSync(ffmpegPath)) {
+                        const fallback = nodePath.resolve(process.cwd(), 'node_modules', 'ffmpeg-static', process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
+                        if (fs.existsSync(fallback)) {
+                            ffmpegPath = fallback;
+                            console.log(`[UploadAPI] Used final fallback path: "${ffmpegPath}"`);
+                        }
+                    }
+                }
+
+                console.log(`[UploadAPI] Final selected FFmpeg path: "${ffmpegPath}" (Exists: ${fs.existsSync(ffmpegPath)})`);
+
                 const convertAudio = async (inBuffer: Buffer): Promise<Buffer> => {
                     return new Promise((resolve, reject) => {
-                        const ffmpeg = spawn(ffmpegPath as string, [
+                        console.log(`[UploadAPI] Spawning FFmpeg at: ${ffmpegPath}`);
+                        const ffmpeg = spawn(ffmpegPath, [
                             '-i', 'pipe:0',
                             '-f', 'wav',
                             '-acodec', 'pcm_s16le', // Standard 16-bit PCM WAV
@@ -211,12 +243,16 @@ export async function POST(req: NextRequest) {
                             'pipe:1'
                         ]);
                         const chunks: Buffer[] = [];
+                        let stderr = '';
                         ffmpeg.stdout.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
-                        ffmpeg.stderr.on('data', () => { }); // Silence stderr logs
+                        ffmpeg.stderr.on('data', (data) => {
+                            const str = data.toString();
+                            stderr += str;
+                        });
 
                         ffmpeg.on('close', (code: number) => {
                             if (code === 0 && chunks.length > 0) resolve(Buffer.concat(chunks));
-                            else reject(new Error(`FFmpeg audio conversion failed with code ${code}`));
+                            else reject(new Error(`FFmpeg exit code ${code}. ${stderr.slice(-200)}`));
                         });
                         ffmpeg.on('error', (err: any) => reject(err));
                         ffmpeg.stdin.write(inBuffer);
@@ -232,10 +268,11 @@ export async function POST(req: NextRequest) {
                 processedPath = processedPath.replace(oldExtRegex, '.wav');
                 finalFilename = finalFilename.replace(oldExtRegex, '.wav');
                 console.log(`[UploadAPI] Audio conversion success! Saved as: ${finalFilename}`);
-            } catch (err) {
+            } catch (err: any) {
                 console.warn(`[UploadAPI] Audio conversion failed, keeping original:`, err);
+                const detail = err?.message || String(err);
                 // Set a user-visible warning so the admin knows the file was NOT converted
-                warning = `File diupload dalam format asli (.${ext}) karena konversi ke WAV gagal. Pastikan ffmpeg tersedia di environment ini.`;
+                warning = `Konversi ke WAV gagal (tetap .${ext}): ${detail}`;
             }
         }
 
@@ -316,27 +353,9 @@ export async function POST(req: NextRequest) {
 
         const data = await response.json();
 
-        // 3. Construct Public URL
-        // We use the Raw URL for immediate availability (avoiding CDN cache delay)
-        // Format: /assets/media/filename (Logic: Next.js Image wrapper should handle this if we use local path logic, 
-        // BUT for Vercel deployment we might need absolute URL if the file isn't in the build yet)
-
-        // PROBLEM: If we return "/assets/media/...", Next.js will look in its CURRENT build folder. The file IS NOT THERE yet.
-        // It's only on GitHub. Vercel needs to rebuild to fetch it.
-        // SOLUTION: Return the Absolute GitHub Raw URL.
-        const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/${path}`;
-
-        // ALTERNATIVE: jsDelivr (Better for caching, but maybe slight delay)
-        // const cdnUrl = `https://cdn.jsdelivr.net/gh/${REPO_OWNER}/${REPO_NAME}@${BRANCH}/${path}`;
-
-        // Let's stick to a format that our app handles.
-        // Since our app expects "/assets/media/...", using an absolute URL might break some internal logic 
-        // if we have components strictly expecting relative paths.
-        // BUT `next/image` handles absolute URLs fine if hostname is allowed.
-
         return NextResponse.json({
-            url: rawUrl,
-            publicPath: path.replace(/^public/, ''), // Strip 'public' prefix to make it a valid Next.js asset path
+            url: `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/${path}`,
+            publicPath: path.replace(/^public/, ''),
             githubPath: data.content.path,
             warning
         });

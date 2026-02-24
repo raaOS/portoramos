@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Comment } from '@/lib/magic';
+import dynamic from 'next/dynamic';
+
+const AITranslator = dynamic(() => import('@/components/features/AITranslator'), { ssr: false });
 
 interface CommentSectionProps {
   slug: string;
@@ -185,6 +188,7 @@ export default function CommentSection({
                     <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                       {comment.text}
                     </p>
+                    <AITranslator text={comment.text} compact={true} />
                   </div>
                 </div>
                 {/* Render Replies (Read-Only) */}
@@ -205,6 +209,7 @@ export default function CommentSection({
                           <p className="text-xs text-gray-700 dark:text-gray-400">
                             {reply.text}
                           </p>
+                          <AITranslator text={reply.text} compact={true} />
                         </div>
                       </div>
                     ))}

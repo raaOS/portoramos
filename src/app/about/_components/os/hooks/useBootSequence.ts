@@ -4,31 +4,25 @@ import { useState, useEffect } from "react";
 import { soundManager } from "../utils/SoundManager";
 
 export function useBootSequence() {
-    const [isBooting, setIsBooting] = useState(true);
+    const [needsPowerOn, setNeedsPowerOn] = useState(true);
+    const [isBooting, setIsBooting] = useState(false);
 
-    // Initialize sounds on first interaction
-    useEffect(() => {
-        const initAudio = () => {
-            soundManager.init();
-            window.removeEventListener('mousedown', initAudio);
-            window.removeEventListener('keydown', initAudio);
-        };
-        window.addEventListener('mousedown', initAudio);
-        window.addEventListener('keydown', initAudio);
-
-        return () => {
-            window.removeEventListener('mousedown', initAudio);
-            window.removeEventListener('keydown', initAudio);
-        };
-    }, []);
+    const powerOn = () => {
+        console.log('[useBootSequence] Powering on, unlocking audio silently...');
+        soundManager.unlock(); // Unlock without playing any sound
+        soundManager.clearCache('startup'); // Reset so startup plays on each new boot
+        setNeedsPowerOn(false);
+        setIsBooting(true);
+    };
 
     const finishBooting = () => {
         setIsBooting(false);
-        soundManager.play('startup');
     };
 
     return {
+        needsPowerOn,
         isBooting,
+        powerOn,
         finishBooting
     };
 }

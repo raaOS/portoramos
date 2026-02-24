@@ -13,6 +13,7 @@ import UnregisterSW from '@/components/shared/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import SmoothScroll from '@/components/layout/SmoothScroll';
 import { loadAboutData } from '@/lib/about';
+import SoundConfigLoader from '@/components/layout/SoundConfigLoader';
 
 // ISR: Revalidate layout every 60 seconds to propagate dock configuration changes
 // while reducing server load vs revalidate = 0 (every request)
@@ -104,6 +105,7 @@ export default async function RootLayout({
               <NavbarVisibilityProvider>
                 <ErrorBoundary>
                   <AppWrapper>
+                    <SoundConfigLoader soundConfig={aboutData?.soundConfig} />
                     <LayoutClient modal={modal} dockConfig={aboutData?.dockConfig}>
                       {children}
                     </LayoutClient>
