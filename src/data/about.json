@@ -191,7 +191,7 @@
     }
   },
   "wallpaperConfig": {
-    "activeWallpaperId": "default",
+    "activeWallpaperId": "w-1771963215224-tlnky0qal",
     "collection": [
       {
         "id": "default",
@@ -202,6 +202,11 @@
         "id": "minimal",
         "url": "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=2070",
         "name": "Alps"
+      },
+      {
+        "id": "w-1771963215224-tlnky0qal",
+        "url": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/wallpapers/1771963212220-fy3vb66wba5k-wallaper.png",
+        "name": "Custom Wallpaper"
       }
     ],
     "blur": 10
@@ -536,5 +541,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-24T19:59:47.999Z"
+  "lastUpdated": "2026-02-24T20:00:15.252Z"
 }
