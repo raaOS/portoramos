@@ -139,6 +139,7 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                             updateField('role', data.role);
                             updateField('team', data.team);
                             updateField('timeline', data.timeline);
+                            updateField('software', data.software);
 
                             // 3. Narrative
                             if (data.narrative) {

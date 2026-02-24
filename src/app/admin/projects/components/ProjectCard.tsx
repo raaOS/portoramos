@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Pencil, Trash2, Copy, Eye, EyeOff, MessageCircle } from 'lucide-react';
 import { Project } from '@/types/projects';
 import { isVideoLink } from '@/lib/media';
+import { getIconMap } from '@/constants/skillIcons';
 import StatusToggle from '../../components/StatusToggle';
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/400x300/CCCCCC/666666?text=No+Image';
@@ -84,7 +85,20 @@ export const ProjectCard = ({
                             />
                         </div>
                     </div>
-                    <p className="text-sm text-violet-600 font-medium mb-2">{project.client} • {project.year}</p>
+                    <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm text-violet-600 font-medium">{project.client} • {project.year}</p>
+                        <div className="flex items-center gap-1.5 grayscale opacity-60">
+                            {project.software?.slice(0, 3).map(s => (
+                                <div key={s} title={s.replace('_', ' ')} className="w-4 h-4">
+                                    {getIconMap("w-full h-full")[s.toLowerCase()] || (
+                                        <div className="w-full h-full bg-gray-200 rounded-sm flex items-center justify-center text-[6px] font-bold text-gray-500 uppercase">
+                                            {s.slice(0, 2)}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                     <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
                 </div>
 

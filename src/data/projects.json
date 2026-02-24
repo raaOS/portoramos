@@ -9,6 +9,10 @@
       "timeline": "1 Hari Kerja (Fast turnaround)",
       "team": "Solo Project",
       "type": "commercial",
+      "software": [
+        "canva",
+        "photoshop"
+      ],
       "year": 2025,
       "description": "Visual vertikal dengan latar hijau tua ini menampilkan promo Natal, menonjolkan gift card layanan streaming populer (Netflix, Spotify, dll.) yang dibingkai menyerupai kado. Aksen hiasan Natal 3D digunakan untuk memperkuat suasana liburan. Desain ini bertujuan memberikan informasi diskon dan mengarahkan audiens ke tautan pembelian.",
       "narrative": {
@@ -35,10 +39,7 @@
       "updatedAt": "2026-02-24T21:24:36.231Z",
       "likes": 8,
       "shares": 5,
-      "allowComments": true,
-      "software": [
-        "photoshop"
-      ]
+      "allowComments": true
     },
     {
       "id": "gen-1766512146544-0",
@@ -82,7 +83,10 @@
         "beforeType": "image",
         "afterImage": "",
         "afterType": "video"
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-1",
@@ -118,7 +122,10 @@
         "concept": "Eksplorasi tentang ambisi manusia dan alam semesta. Tangan raksasa melambangkan takdir atau campur tangan ilahi.",
         "process": "Komposisi full di Photoshop dengan stok foto vintage. Fokus utamanya di pencahayaan (lighting match) biar elemen-elemen potongannya kerasa satu dimensi.",
         "detail": "Efek grain film-nya ditambah di akhir proses biar kesan retronya makin dapet."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-2",
@@ -154,7 +161,10 @@
         "concept": "Terinspirasi dari film-film horor gothic klasik. Mencoba menangkap perasaan isolasi dan ketidakpastian saat melangkah ke tempat asing.",
         "process": "Pencahayaan sangat minim (low-key lighting). Hampir 70% canvas adalah shadow/hitam untuk membangun suspense.",
         "detail": "Siluet jembatan dan kabut tipis di kejauhan."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-3",
@@ -165,6 +175,9 @@
       "timeline": "5 Days",
       "team": "Solo Project",
       "type": "visual_art",
+      "software": [
+        "photoshop"
+      ],
       "year": 2025,
       "description": "Satire visual yang menggabungkan tokoh politik kaku dengan elemen bunga-bunga glitchy yang chaos. Tabrakan visual yang disengaja.",
       "narrative": {
@@ -241,7 +254,10 @@
         "concept": "Sneaker culture meets architectural dreams. Mengubah struktur sepatu sneakers modern jadi bangunan monumen di tengah alam.",
         "process": "Modeling dasar di Blender untuk referensi perspektif, lalu heavy photobashing di Photoshop untuk tekstur beton dan lumutnya.",
         "detail": "Tekstur tali sepatu yang berubah jadi kabel baja raksasa."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-5",
@@ -278,7 +294,10 @@
         "challenge": "Gimana caranya naruh teks putih di atas background bunga yang super detail tanpa bikin pusing bacanya.",
         "solution": "Mainin kontras dan hierarchy ukuran font. Bunga dijadikan tekstur background, bukan focal point utama.",
         "impact": "Didesain untuk poster pameran seni atau cover majalah fashion indie."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-7",
@@ -315,7 +334,10 @@
         "challenge": "Menyeimbangkan area kosong (negative space) dengan area foto yang padat tekstur.",
         "solution": "Menggunakan tipografi bold sans-serif sebagai 'jangkar' visual biar mata gak lari kemana-mana.",
         "impact": "Cocok banget buat referensi layout lookbook fashion summer season."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-6",
@@ -351,7 +373,10 @@
         "concept": "Visual storytelling tanpa kata. Mengumpulkan fragmen-fragmen gambar untuk membangun 'dunia' dan 'rasa' sebelum syuting dimulai.",
         "process": "Kurasi ratusan foto, color correction biar tone-nya nyambung semua, lalu layouting gaya grid sinematik.",
         "detail": "Konsistensi palet warna biru-abu (cold tone) di setiap panel."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-8",
@@ -388,7 +413,10 @@
         "challenge": "Bikin visual yang 'sepi' tapi gak kosong.",
         "solution": "Pakai satu foto makro yang kuat sebagai background, tipografi disimpen kecil dan rapi di tengah biar elegan.",
         "impact": "Desain ini dirancang untuk menarik pembaca yang suka estetika minimalis dan melankolis."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-10",
@@ -425,7 +453,10 @@
         "challenge": "Sinkronisasi gerakan 'ledakan' bunga biar kerasa natural tapi tetap kartunis.",
         "solution": "Kombinasi 3D particle system ringan dan layering 2D asset bunga.",
         "impact": "Potensial untuk aset social media brand fashion atau kosmetik yang playful."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-9",
@@ -462,7 +493,10 @@
         "challenge": "Bikin logo yang kerasa mahal tapi tetap 'membumi' (nature-vibe).",
         "solution": "Pilih jenis huruf serif yang tajam, dipadukan warna hijau lumut gelap (forest green) biar kesan eksklusifnya dapet.",
         "impact": "Draft logo ini bisa dikembangkan jadi full brand identity kit."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-11",
@@ -499,7 +533,10 @@
         "challenge": "Visual harus teriak 'CEPAT' dan 'ENERGIK' dalam sekilas pandang.",
         "solution": "Pakai warna kuning safety (warning color) biar eye-catching, plus tipografi miring (italic) yang agresif.",
         "impact": "Desain high-impact yang cocok buat billboard atau poster jalanan."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-12",
@@ -535,7 +572,10 @@
         "concept": "Old meets New. Arsitektur klasik yang 'dijajah' oleh estetika digital neon.",
         "process": "Seleksi gedung yang detail banget, lalu background diganti total dengan gradien vector.",
         "detail": "Efek glow pada tipografinya bikin teksnya serasa lampu neon beneran."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-15",
@@ -571,7 +611,10 @@
         "concept": "Religious iconography meets rural horror. Apa jadinya kalau hewan ternak dianggap suci dengan cara yang salah?",
         "process": "Digital painting di atas foto dasar (matte painting). Banyak main brush texture cat minyak biar kerasa 'old painting'.",
         "detail": "Cahaya halo yang pudar dan tidak sempurna."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-16",
@@ -607,7 +650,10 @@
         "concept": "Alam mengambil alih karya manusia. Teks (budaya) yang pelan-pelan tertutup semak belukar.",
         "process": "Teknik masking layer per layer. Sebagian huruf di depan daun, sebagian di belakang, buat efek kedalaman (depth).",
         "detail": "Shadow daun di atas huruf yang bikin efek realistis."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-17",
@@ -643,7 +689,10 @@
         "concept": "Kekacauan informasi di era digital. Semuanya terpotong-potong dan dicampur aduk.",
         "process": "Metode 'Cut & Paste' digital. Sengaja dibuat kasar potongannya biar kerasa kayak zine punk.",
         "detail": "Komposisi diagonal yang bikin visualnya kerasa dinamis/gerak."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-18",
@@ -680,7 +729,10 @@
         "challenge": "Bikin efek kertas lecek yang realistis tanpa kelihatan maksa.",
         "solution": "Pakai displacement map dari foto kertas kusut asli, di-blend mode 'Multiply' di atas artwork.",
         "impact": "Memberikan kesan 'street' dan raw, cocok untuk brand streetwear atau event musik underground."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-19",
@@ -716,7 +768,10 @@
         "concept": "Kritik sosial tentang materialisme. 'Surgawi' yang terikat oleh kekayaan duniawi (emas).",
         "process": "Digital painting dengan referensi patung klasik Yunani.",
         "detail": "Kilauan emas yang kontras dengan tekstur batu rantai yang kasar."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-20",
@@ -752,7 +807,10 @@
         "concept": "Eksplorasi bentuk huruf sebagai tekstur visual, bukan untuk dibaca.",
         "process": "Pakai filter 'Polar Coordinates' dan 'Twirl' di Photoshop untuk mendistorsi teks biasa jadi bentuk abstrak.",
         "detail": "Gradasi warna yang smooth banget transisinya."
-      }
+      },
+      "software": [
+        "photoshop"
+      ]
     }
   ],
   "lastUpdated": "2026-02-24T21:24:36.236Z"
