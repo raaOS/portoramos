@@ -68,15 +68,15 @@
       "order": 2,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-06T20:18:03.057Z",
+      "updatedAt": "2026-02-24T21:38:17.845Z",
       "likes": 33,
       "shares": 5,
       "allowComments": true,
       "initialCommentCount": 2,
       "narrative": {
-        "concept": "Mendobrak batas antara objek mati (vinyl) dan kehidupan (hutan/ombak). Ide dasarnya adalah musik itu 'hidup' dan punya ekosistemnya sendiri.",
-        "process": "Teknik masking yang cukup rumit di Photoshop untuk blending transisi air ke piringan hitam biar gak kelihatan tempelan. Color grading-nya dibuat dreamy biar dapet nuansa fantasinya.",
-        "detail": "Perhatikan detail cipratan ombak yang menyatu dengan alur piringan hitam."
+        "challenge": "",
+        "solution": "",
+        "result": ""
       },
       "comparison": {
         "beforeImage": "/assets/projects/politik-pop-digital-cover.jpg",
@@ -813,5 +813,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-24T21:24:36.236Z"
+  "lastUpdated": "2026-02-24T21:38:17.849Z"
 }
