@@ -234,6 +234,8 @@ export async function POST(req: NextRequest) {
                 console.log(`[UploadAPI] Audio conversion success! Saved as: ${finalFilename}`);
             } catch (err) {
                 console.warn(`[UploadAPI] Audio conversion failed, keeping original:`, err);
+                // Set a user-visible warning so the admin knows the file was NOT converted
+                warning = `File diupload dalam format asli (.${ext}) karena konversi ke WAV gagal. Pastikan ffmpeg tersedia di environment ini.`;
             }
         }
 

@@ -111,6 +111,16 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     // Screen Lock & Resize Hook (Handles mounted state, window size, and body lock)
     const { mounted, windowSize, isMobile } = useDesktopLock();
     const { isBooting, finishBooting } = useBootSequence();
+
+    // Fix race condition: pastikan loadConfig dipanggil SEBELUM startup sound diputar
+    // Jika aboutData belum tersedia, finishBooting tetap bisa jalan (pakai default sounds)
+    // React Compiler menangani memoization otomatis — tidak perlu useCallback manual
+    const handleBootComplete = () => {
+        if (aboutData?.soundConfig) {
+            soundManager.loadConfig(aboutData.soundConfig);
+        }
+        finishBooting();
+    };
     const [showSpotlight, setShowSpotlight] = useState(false);
     useDesktopShortcuts({ showSpotlight, setShowSpotlight });
 
@@ -141,14 +151,12 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         setNotes
     } = useStickyNotes(mounted, isAdmin, csrfToken);
 
+    // Re-apply sound config jika aboutData berubah setelah boot (misal admin ubah setting)
     useEffect(() => {
-        if (mounted) {
-            // Load dynamic sound configuration if available
-            if (aboutData?.soundConfig) {
-                soundManager.loadConfig(aboutData.soundConfig);
-            }
+        if (mounted && aboutData?.soundConfig) {
+            soundManager.loadConfig(aboutData.soundConfig);
         }
-    }, [mounted, isAdmin, aboutData?.soundConfig]);
+    }, [mounted, aboutData?.soundConfig]);
 
 
     // Dynamic Contacts (Mock + Testimonials)
@@ -273,7 +281,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                             <AnimatePresence>
                                 {isBooting && (
                                     <BootSequence
-                                        onComplete={finishBooting}
+                                        onComplete={handleBootComplete}
                                     />
                                 )}
                             </AnimatePresence>
