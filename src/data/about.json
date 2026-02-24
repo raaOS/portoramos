@@ -256,7 +256,7 @@
   },
   "soundConfig": {
     "startup": {
-      "path": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/sounds/startup.mp3?v=1771948300849",
+      "path": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/sounds/startup.wav?v=1771955845386",
       "volume": 0.5
     },
     "click": {
@@ -541,5 +541,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-24T17:44:06.722Z"
+  "lastUpdated": "2026-02-24T17:57:29.094Z"
 }
