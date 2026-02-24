@@ -266,7 +266,7 @@ export default function ProjectDetailTwoColumn({
                                             />
                                         </div>
                                     ) : (
-                                        <div className="relative rounded-xl overflow-hidden shadow-lg border border-black/5 dark:border-white/5 bg-gray-100 dark:bg-gray-800" onContextMenu={handleContextMenu}>
+                                        <div className="relative rounded-xl overflow-hidden shadow-lg border border-black/5 dark:border-white/5 bg-gray-100 dark:bg-gray-800" style={{ aspectRatio: ratio }} onContextMenu={handleContextMenu}>
                                             <Media
                                                 kind={cover.kind}
                                                 src={cover.src}

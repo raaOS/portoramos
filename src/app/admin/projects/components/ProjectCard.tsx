@@ -91,7 +91,7 @@ export const ProjectCard = ({
                             {project.software?.slice(0, 3).map(s => (
                                 <div key={s} title={s.replace('_', ' ')} className="w-4 h-4">
                                     {getIconMap("w-full h-full")[s.toLowerCase()] || (
-                                        <div className="w-full h-full bg-gray-200 rounded-sm flex items-center justify-center text-[6px] font-bold text-gray-500 uppercase">
+                                        <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center text-[6px] font-bold text-gray-500 uppercase">
                                             {s.slice(0, 2)}
                                         </div>
                                     )}

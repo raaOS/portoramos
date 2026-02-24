@@ -1,7 +1,6 @@
 import { Project, ProjectsData, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { ProjectSchema, CreateProjectSchema, UpdateProjectSchema } from '@/lib/validations/project';
 import { db } from '@/lib/firebaseAdmin';
-import projectsData from '@/data/projects.json';
 
 export const projectService = {
     /**
@@ -26,12 +25,7 @@ export const projectService = {
             let projects: Project[] = Object.values(projectsObject);
 
             if (projects.length === 0) {
-                // Initial fallback to static data if Firebase is empty (safety net)
-                const fallback = projectsData as unknown as ProjectsData;
-                return {
-                    projects: status ? (fallback.projects || []).filter(p => p.status === status) : (fallback.projects || []),
-                    lastUpdated: fallback.lastUpdated || new Date().toISOString()
-                };
+                return { projects: [], lastUpdated: new Date().toISOString() };
             }
 
             // FILTER & VALIDATE
@@ -61,10 +55,9 @@ export const projectService = {
             };
         } catch (error) {
             console.error('Error loading projects from Firebase:', error);
-            const fallbackData = projectsData as unknown as ProjectsData;
             return {
-                projects: fallbackData?.projects || [],
-                lastUpdated: fallbackData?.lastUpdated || new Date().toISOString()
+                projects: [],
+                lastUpdated: new Date().toISOString()
             };
         }
     },

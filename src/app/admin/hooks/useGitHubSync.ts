@@ -29,7 +29,7 @@ export function useGitHubSync(csrfToken: string | null) {
         setConnectionStatus('checking');
         setConnectionError(null);
         try {
-            const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/src/data/projects.json`, {
+            const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}`, {
                 method: 'HEAD',
                 headers: {
                     'Authorization': `Bearer ${config.token}`,

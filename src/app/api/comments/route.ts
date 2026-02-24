@@ -1,97 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
-import { loadData, saveData, ensureDataDir } from '@/lib/backup';
-import { githubService } from '@/lib/github';
-import path from 'path';
-
-const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'comments.json');
-const GITHUB_PATH = 'src/data/comments.json'; // Relative path in repo
+import { db } from '@/lib/firebaseAdmin';
 
 interface Comment {
     id: string;
-    text?: string;    // Legacy/Backend
-    comment?: string; // Frontend payload uses 'comment'
-    author?: string;  // Legacy/Backend
-    name?: string;    // Frontend uses this
-    time?: string;    // Legacy
-    createdAt?: string; // Frontend uses this
+    text?: string;
+    comment?: string;
+    author?: string;
+    name?: string;
+    time?: string;
+    createdAt?: string;
     likes?: number;
     likedByMe?: boolean;
     replies?: Comment[];
 }
 
-interface CommentsData {
-    comments: Record<string, Comment[]>;
-}
-
-async function getCommentsData(): Promise<CommentsData> {
-    const isDev = process.env.NODE_ENV === 'development';
-    let data: CommentsData | null = null;
-
-    // 1. Dev: Local FS
-    if (isDev) {
-        await ensureDataDir();
-        data = (await loadData(DATA_FILE)) as CommentsData | null;
-    }
-    // 2. Prod: GitHub
-    else {
-        try {
-            const ghData = await githubService.getFileContent<CommentsData>(GITHUB_PATH);
-            data = ghData.content;
-        } catch (error) {
-            console.warn('Failed to fetch comments from GitHub:', error);
-        }
-    }
-
-    if (!data) {
-        data = { comments: {} };
-    }
-    return data;
-}
-
 export async function GET(request: NextRequest) {
     try {
-        const data = await getCommentsData();
         const { searchParams } = new URL(request.url);
         const slug = searchParams.get('slug');
 
         if (slug) {
+            const snap = await db.ref(`comments/${slug}`).once('value');
             return NextResponse.json({
-                comments: data.comments[slug] || []
+                comments: snap.val() || []
             });
         }
 
-        return NextResponse.json(data);
+        const allSnap = await db.ref('comments').once('value');
+        return NextResponse.json({ comments: allSnap.val() || {} });
     } catch (error) {
-        console.error('Error loading comments:', error instanceof Error ? error.message : error);
-        return NextResponse.json({ 
+        console.error('Error loading comments from Firebase:', error instanceof Error ? error.message : error);
+        return NextResponse.json({
             error: 'Failed to load comments',
             details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 }
 
-// Helper to load banned words dynamically
 async function getBannedWords(): Promise<string[]> {
     try {
-        const isDev = process.env.NODE_ENV === 'development';
-        let settings: any = null;
+        const snap = await db.ref('settings/bannedWords').once('value');
+        if (snap.exists()) return snap.val();
 
-        // We reuse the logic or fetch internally? 
-        // Better to duplicate simple load logic to avoid circular imports or relative path hell in Next.js api routes
-        const settingsPath = path.join(process.cwd(), 'src', 'data', 'settings.json');
-
-        if (isDev) {
-            settings = await loadData(settingsPath);
-        } else {
-            const ghData = await githubService.getFileContent('src/data/settings.json');
-            settings = ghData.content;
-        }
-
-        return settings?.bannedWords || [];
+        // Try getting from root settings if not in subpath
+        const rootSnap = await db.ref('settings').once('value');
+        const settings = rootSnap.val();
+        return settings?.bannedWords || ['judol', 'slot'];
     } catch (e) {
-        console.warn('Failed to load banned words, using fallback', e instanceof Error ? e.message : e);
-        return ['judol', 'slot']; // Fallback minimum
+        console.warn('Failed to load banned words from Firebase, using fallback', e instanceof Error ? e.message : e);
+        return ['judol', 'slot'];
     }
 }
 
@@ -103,54 +61,31 @@ export async function POST(request: NextRequest) {
         // --- 1. HONEYPOT VALIDATION ---
         if (website_url) {
             console.warn(`Honeypot triggered for slug ${slug}`);
-            return NextResponse.json(
-                { error: 'Spam detected' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'Spam detected' }, { status: 400 });
         }
 
         if (!slug || !comments) {
-            return NextResponse.json(
-                { error: 'Missing slug or comments' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'Missing slug or comments' }, { status: 400 });
         }
 
         // --- 2. FLOOD CONTROL (RATE LIMITING) ---
-        // Verify against SERVER data, not the payload
-        let currentData = await getCommentsData();
-        const existingRaw = currentData.comments[slug] || [];
+        const existingSnap = await db.ref(`comments/${slug}`).limitToLast(1).once('value');
+        const existingRaw: Comment[] = existingSnap.val() || [];
 
-        // Identify the *new* comment to determine Author
         if (Array.isArray(comments) && comments.length > 0) {
             const newLastComment = comments[comments.length - 1];
             const authorName = newLastComment.name || newLastComment.author;
 
-            if (authorName) {
-                // Find last comment by THIS author in the existing DB
-                // Search backwards for performance
-                let lastUserComment = null;
-                for (let i = existingRaw.length - 1; i >= 0; i--) {
-                    const c = existingRaw[i];
-                    if ((c.name === authorName) || (c.author === authorName)) {
-                        lastUserComment = c;
-                        break;
-                    }
-                }
+            if (authorName && Array.isArray(existingRaw) && existingRaw.length > 0) {
+                const lastUserComment = existingRaw[0]; // limitToLast(1) returns array with 1 elem or object
+                const isMatch = (lastUserComment.name === authorName) || (lastUserComment.author === authorName);
 
-                if (lastUserComment) {
+                if (isMatch) {
                     const lastTimeStr = lastUserComment.createdAt || lastUserComment.time;
                     if (lastTimeStr) {
-                        const lastDate = new Date(lastTimeStr);
-                        if (!isNaN(lastDate.getTime())) {
-                            const timeDiff = Date.now() - lastDate.getTime();
-                            // Limit: 5 seconds per user
-                            if (timeDiff < 5000) {
-                                return NextResponse.json(
-                                    { error: 'Please wait 5 seconds before posting again.' },
-                                    { status: 429 }
-                                );
-                            }
+                        const timeDiff = Date.now() - new Date(lastTimeStr).getTime();
+                        if (timeDiff < 5000) {
+                            return NextResponse.json({ error: 'Please wait 5 seconds before posting again.' }, { status: 429 });
                         }
                     }
                 }
@@ -163,44 +98,25 @@ export async function POST(request: NextRequest) {
         const foundBadWord = bannedWords.find(word => payloadString.includes(word.toLowerCase()));
 
         if (foundBadWord) {
-            return NextResponse.json(
-                { error: `Comment contains restricted word: ${foundBadWord}` },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: `Comment contains restricted word: ${foundBadWord}` }, { status: 400 });
         }
 
-        // --- 4. SAVE ---
-        const isDev = process.env.NODE_ENV === 'development';
-
-        // Update data (currentData was already loaded above)
-        currentData.comments[slug] = comments;
-
-        // Save
-        if (isDev) {
-            await ensureDataDir();
-            const success = await saveData(DATA_FILE, currentData);
-            if (!success) throw new Error('Failed to save to local filesystem');
-        } else {
-            const success = await githubService.updateFile(GITHUB_PATH, currentData, `Update comments for ${slug}`);
-            if (!success) throw new Error('Failed to save to GitHub');
-        }
+        // --- 4. SAVE TO FIREBASE ---
+        await db.ref(`comments/${slug}`).set(comments);
 
         return NextResponse.json({ success: true, comments: comments });
     } catch (error) {
-        console.error('Error saving comments:', error instanceof Error ? error.message : error);
-        return NextResponse.json(
-            { 
-                error: 'Failed to save comments',
-                details: error instanceof Error ? error.message : 'Unknown error'
-            },
-            { status: 500 }
-        );
+        console.error('Error saving comments to Firebase:', error instanceof Error ? error.message : error);
+        return NextResponse.json({
+            error: 'Failed to save comments',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
     }
 }
 
 // Helper: Recursively remove comment/reply by ID
 function removeCommentById(comments: Comment[], idToDelete: string): Comment[] {
-    return comments
+    return (comments || [])
         .filter(c => c.id !== idToDelete)
         .map(c => ({
             ...c,
@@ -218,39 +134,21 @@ export async function DELETE(request: NextRequest) {
         const { slug, commentId } = body;
 
         if (!slug || !commentId) {
-            return NextResponse.json(
-                { error: 'Missing slug or commentId' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'Missing slug or commentId' }, { status: 400 });
         }
 
-        const isDev = process.env.NODE_ENV === 'development';
-        let currentData = await getCommentsData();
-
-        const projectComments = currentData.comments[slug] || [];
+        const snap = await db.ref(`comments/${slug}`).once('value');
+        const projectComments = snap.val() || [];
         const updatedComments = removeCommentById(projectComments, commentId);
 
-        currentData.comments[slug] = updatedComments;
-
-        // Save
-        if (isDev) {
-            await ensureDataDir();
-            const success = await saveData(DATA_FILE, currentData);
-            if (!success) throw new Error('Failed to save to local filesystem');
-        } else {
-            const success = await githubService.updateFile(GITHUB_PATH, currentData, `Delete comment ${commentId} on ${slug}`);
-            if (!success) throw new Error('Failed to save to GitHub');
-        }
+        await db.ref(`comments/${slug}`).set(updatedComments);
 
         return NextResponse.json({ success: true, comments: updatedComments });
     } catch (error) {
-        console.error('Error deleting comment:', error instanceof Error ? error.message : error);
-        return NextResponse.json(
-            { 
-                error: 'Failed to delete comment',
-                details: error instanceof Error ? error.message : 'Unknown error'
-            },
-            { status: 500 }
-        );
+        console.error('Error deleting comment from Firebase:', error instanceof Error ? error.message : error);
+        return NextResponse.json({
+            error: 'Failed to delete comment',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
     }
 }

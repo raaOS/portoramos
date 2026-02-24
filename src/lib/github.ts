@@ -263,24 +263,6 @@ export class GitHubService {
         }
     }
 
-    /**
-     * Fetch the current content and SHA of the projects.json file
-     * @param noCache - If true, bypasses cache
-     */
-    async getFile(noCache = false): Promise<{ content: { projects: Project[], lastUpdated: string }, sha: string }> {
-        return this.getFileContent(this.path, noCache);
-    }
-
-    /**
-     * Update the projects.json file on GitHub
-     */
-    async updateProjects({ projects, message }: UpdateFileParams): Promise<boolean> {
-        const content = {
-            projects,
-            lastUpdated: new Date().toISOString()
-        };
-        return this.updateFile(this.path, content, message);
-    }
 
     /**
      * Update the gallery-featured.json file on GitHub

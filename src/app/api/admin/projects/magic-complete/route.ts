@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFileSync, writeFileSync } from 'fs';
-import path from 'path';
 import { generateViralMetrics, generateGenZComments } from '@/lib/magic';
 import { checkAdminAuth } from '@/lib/auth';
-
-const projectsFile = path.join(process.cwd(), 'src/data/projects.json');
-const commentsFile = path.join(process.cwd(), 'src/data/comments.json');
+import { projectService } from '@/lib/services/projectService';
+import { db } from '@/lib/firebaseAdmin';
 
 export async function POST(req: NextRequest) {
     if (!checkAdminAuth(req)) {
@@ -19,27 +16,21 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing projectId or slug' }, { status: 400 });
         }
 
-        // 1. Update Project Metrics in projects.json
-        const projectsData = JSON.parse(readFileSync(projectsFile, 'utf8'));
-        const projectIndex = projectsData.projects.findIndex((p: any) => p.id === projectId);
+        // 1. Update Project Metrics in Firebase
+        const metrics = generateViralMetrics();
+        const updatedProject = await projectService.updateProject(projectId, {
+            id: projectId,
+            ...metrics
+        });
 
-        if (projectIndex === -1) {
+        if (!updatedProject) {
             return NextResponse.json({ error: 'Project not found' }, { status: 404 });
         }
 
-        const metrics = generateViralMetrics();
-        projectsData.projects[projectIndex] = {
-            ...projectsData.projects[projectIndex],
-            ...metrics
-        };
-        writeFileSync(projectsFile, JSON.stringify(projectsData, null, 2));
-
-        // 2. Generate and Update Comments in comments.json
-        const commentsData = JSON.parse(readFileSync(commentsFile, 'utf8'));
+        // 2. Generate and Update Comments in Firebase
+        // Since comments don't have a dedicated service yet, we use direct Firebase path
         const newComments = generateGenZComments(slug);
-
-        commentsData.comments[slug] = newComments;
-        writeFileSync(commentsFile, JSON.stringify(commentsData, null, 2));
+        await db.ref(`comments/${slug}`).set(newComments);
 
         return NextResponse.json({
             success: true,
@@ -49,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error('Magic Complete Error:', error instanceof Error ? error.message : error);
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: error instanceof Error ? error.message : 'Failed to complete magic operation',
             details: error instanceof Error ? error.stack : 'Unknown error'
         }, { status: 500 });
