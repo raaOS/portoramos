@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import { getTelegramConfig } from '@/lib/telegram';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request, { checkCsrf: false }))) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    if (!checkAdminAuth(request)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await validateAdminRequest(request))) {
+        return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     try {
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Failed to save telegram config:', error instanceof Error ? error.message : error);
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: 'Failed to save configuration',
             details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });

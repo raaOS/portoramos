@@ -5,6 +5,7 @@ import { Project } from '@/types/projects';
 import Media from '@/components/shared/Media';
 import { resolveCover } from '@/lib/images';
 import { Heart, Share2 } from 'lucide-react';
+import { useImageProtection } from '@/hooks/useImageProtection';
 
 interface ProjectCardPinterestProps {
     project: Project;
@@ -25,6 +26,7 @@ export default function ProjectCardPinterest({
     const { slug, title, tags, likes, shares } = project;
     const cover = resolveCover(project);
     const shouldAutoplay = videoEnabled && (project.autoplay ?? true);
+    const { toast, handleContextMenu } = useImageProtection();
 
     // Calculate aspect ratio for the image/video container
     const width = project.coverWidth || 800;
@@ -41,20 +43,20 @@ export default function ProjectCardPinterest({
         ? tags.find(t => t.toLowerCase() === highlightedTag.toLowerCase())
         : tags?.[0];
 
-    const Component: any = onClick ? 'div' : (interactive ? Link : 'div');
+    const Component: React.ElementType = onClick ? 'div' : (interactive ? Link : 'div');
     const hrefProps = (!onClick && interactive) ? { href: `/projects/${slug}` } : {};
     const isInteractive = interactive || !!onClick;
 
     return (
         <Component {...hrefProps} onClick={onClick} className={`block mb-2 md:mb-6 relative z-0 ${isInteractive ? 'group hover:z-10 cursor-pointer' : ''}`}>
-            {/* ... (keep media container) ... */}
+            {/* Outer: scale saja (tanpa overflow-hidden agar rounded tidak hilang saat hover)
+                Inner: overflow-hidden + rounded untuk clip gambar */}
             <div
-                className={`relative overflow-hidden rounded-md bg-neutral-200 dark:bg-neutral-900 transition-transform duration-300 ${isInteractive ? 'hover:scale-[1.02]' : ''}`}
-                style={{
-                    aspectRatio: ratio,
-                }}
+                className={`relative transition-transform duration-300 ${isInteractive ? 'hover:scale-[1.02]' : ''}`}
+                style={{ aspectRatio: ratio }}
+                onContextMenu={handleContextMenu}
             >
-                <div className="absolute inset-0">
+                <div className="absolute inset-0 overflow-hidden rounded-md bg-neutral-200 dark:bg-neutral-900">
                     <Media
                         kind={cover.kind}
                         src={cover.src}
@@ -74,6 +76,14 @@ export default function ProjectCardPinterest({
                         sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 20vw"
                     />
                 </div>
+
+                {/* Overlay hitam solid menutupi seluruh gambar saat right-click */}
+                {toast && (
+                    <div className="absolute inset-0 overflow-hidden rounded-md bg-black flex flex-col items-center justify-center gap-2 z-20">
+                        <span className="text-3xl">{toast.emoji}</span>
+                        <p className="text-white text-xs font-bold text-center px-3 leading-snug">{toast.text}</p>
+                    </div>
+                )}
             </div>
 
             {/* Project Info */}

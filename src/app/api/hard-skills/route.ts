@@ -1,13 +1,18 @@
-import { NextResponse } from 'next/server';
 import { getHardSkills, saveHardSkills, HardSkill } from '@/lib/hard-skills';
+import { validateAdminRequest } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
   const skills = await getHardSkills(true);
   return NextResponse.json(skills);
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    if (!(await validateAdminRequest(request))) {
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
+    }
+
     const skills: HardSkill[] = await request.json();
 
     // Basic validation

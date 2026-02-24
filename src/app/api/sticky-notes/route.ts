@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stickyNotesService } from '@/lib/services/stickyNotesService';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
     try {
@@ -23,12 +23,8 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
     try {
-        // Sticky notes don't necessarily have to be admin only if we want the user to play with them, 
-        // BUT for persistent sync across environments that saves to REPO, it MUST be admin only or it will cause PR noise.
-        // Given this specific portfolio context, Sticky Notes are meant to be private notes for the owner or semi-public.
-        // The user's request implies they want these synced like other CRUDs.
-        if (!checkAdminAuth(request)) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!(await validateAdminRequest(request))) {
+            return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
         }
 
         const body = await request.json();

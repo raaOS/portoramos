@@ -8,7 +8,6 @@ import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
 import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
-import ScrambleText from '@/components/ui/ScrambleText';
 
 // Helper for fetching
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -18,7 +17,6 @@ interface ChatMessage {
     text: string;
     sender: 'visitor' | 'admin';
     timestamp: number;
-    isEncrypting?: boolean;
 }
 
 export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
@@ -53,7 +51,6 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                 text: contactInfo?.subtext || "👋 Halo! Ada project menarik yang bisa saya bantu? Ketik pesanmu di bawah ini, langsung masuk ke HP saya loh!",
                 sender: 'admin',
                 timestamp: Date.now(),
-                isEncrypting: true
             }]);
         }
     }, [visitorId, contactInfo?.subtext, messages.length]);
@@ -86,14 +83,14 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                             // Replace temp message with server message to prevent visual duplicates during network race
                             newMessages[existingTempIndex] = serverMsg;
                         } else {
-                            newMessages.push({ ...serverMsg, isEncrypting: true });
+                            newMessages.push(serverMsg);
                             if (serverMsg.sender === 'admin') hasNewAdminMessage = true;
                         }
                     }
                 });
 
                 if (hasNewAdminMessage) {
-                    soundManager.play('notification', 0.6);
+                    soundManager.play('notification');
                 }
 
                 // Absolute deduplication by ID just in case state got tangled
@@ -112,11 +109,7 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
         }
     }, [syncData]);
 
-    const handleEncryptionComplete = (msgId: string) => {
-        setMessages(prev => prev.map(m =>
-            m.id === msgId ? { ...m, isEncrypting: false } : m
-        ));
-    };
+
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -138,10 +131,9 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
             text: messageText,
             sender: 'visitor',
             timestamp: Date.now(),
-            isEncrypting: true
         }]);
 
-        soundManager.play('click', 0.3);
+        soundManager.play('sent');
 
         try {
             const res = await fetch('/api/chat/send', {
@@ -250,14 +242,7 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                                             </svg>
 
                                             <div className="whitespace-pre-wrap">
-                                                {msg.isEncrypting ? (
-                                                    <ScrambleText
-                                                        text={msg.text}
-                                                        onComplete={() => handleEncryptionComplete(msg.id)}
-                                                    />
-                                                ) : (
-                                                    msg.text
-                                                )}
+                                                {msg.text}
                                             </div>
 
                                             <div className={`flex items-center justify-end gap-1 mt-1 -mb-1 ${isMe ? 'text-[#667781] dark:text-white/60' : 'text-[#667781] dark:text-white/50'}`}>
@@ -282,7 +267,12 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                         >
                             <textarea
                                 value={input}
-                                onChange={(e) => setInput(e.target.value)}
+                                onChange={(e) => {
+                                    setInput(e.target.value);
+                                    if (e.target.value.length > input.length) {
+                                        soundManager.play('typing');
+                                    }
+                                }}
                                 onKeyDown={handleKeyDown}
                                 placeholder="Tulis pesan..."
                                 className="flex-1 max-h-[120px] py-3 bg-transparent border-none outline-none resize-none text-[15px] text-[#111b21] dark:text-[#d1d7db] placeholder:text-[#8696a0] scrollbar-hide no-ring"

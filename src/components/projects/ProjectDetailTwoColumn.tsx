@@ -13,6 +13,7 @@ import type { Comment } from '@/lib/magic';
 import ProjectCTA from './ProjectCTA';
 import Media from '@/components/shared/Media';
 import { Compare } from '@/components/ui/compare';
+import { useImageProtection } from '@/hooks/useImageProtection';
 
 // Lazy load heavy components to reduce initial bundle
 const CommentSection = dynamic(() => import('@/components/features/CommentSection'), {
@@ -46,6 +47,7 @@ export default function ProjectDetailTwoColumn({
     const [isProjectLiked, setIsProjectLiked] = useState(false);
     const [metrics, setMetrics] = useState({ likes: 0, shares: 0 });
     const [isLoaded, setIsLoaded] = useState(false);
+    const { toast, handleContextMenu } = useImageProtection();
 
     // Load like status immediately (local storage only)
     useEffect(() => {
@@ -210,7 +212,7 @@ export default function ProjectDetailTwoColumn({
                                             />
                                         </div>
                                     ) : (
-                                        <div className="rounded-xl overflow-hidden shadow-lg border border-black/5 dark:border-white/5 bg-gray-100 dark:bg-gray-800">
+                                        <div className="relative rounded-xl overflow-hidden shadow-lg border border-black/5 dark:border-white/5 bg-gray-100 dark:bg-gray-800" onContextMenu={handleContextMenu}>
                                             <Media
                                                 kind={cover.kind}
                                                 src={cover.src}
@@ -225,6 +227,13 @@ export default function ProjectDetailTwoColumn({
                                                 loop={project.loop ?? true}
                                                 playsInline={project.playsInline ?? true}
                                             />
+                                            {/* Overlay hitam solid saat right-click */}
+                                            {toast && (
+                                                <div className="absolute inset-0 bg-black flex flex-col items-center justify-center gap-3">
+                                                    <span className="text-5xl">{toast.emoji}</span>
+                                                    <p className="text-white text-sm font-bold text-center px-6 leading-relaxed">{toast.text}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -436,12 +445,13 @@ export default function ProjectDetailTwoColumn({
                                                 {gallery.map((item, idx) => (
                                                     <div
                                                         key={`gallery-item-${idx}`}
-                                                        className={`rounded-xl overflow-hidden shadow-md border border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-900/40 relative group ${item.width && item.height && item.width < item.height ? 'row-span-2' : ''
+                                                        className={`relative rounded-xl overflow-hidden shadow-md border border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-900/40 group ${item.width && item.height && item.width < item.height ? 'row-span-2' : ''
                                                             }`}
                                                         style={{
                                                             aspectRatio: item.width && item.height ? `${item.width}/${item.height}` : undefined,
                                                             minHeight: (!item.width || !item.height) ? '300px' : 'auto'
                                                         }}
+                                                        onContextMenu={handleContextMenu}
                                                     >
                                                         <Media
                                                             kind={item.kind}
@@ -457,6 +467,13 @@ export default function ProjectDetailTwoColumn({
                                                             loop={true}
                                                             playsInline={true}
                                                         />
+                                                        {/* Overlay hitam solid saat right-click */}
+                                                        {toast && (
+                                                            <div className="absolute inset-0 bg-black flex flex-col items-center justify-center gap-2">
+                                                                <span className="text-4xl">{toast.emoji}</span>
+                                                                <p className="text-white text-xs font-bold text-center px-4 leading-snug">{toast.text}</p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>

@@ -25,7 +25,6 @@ export function useAdminAuth() {
             // Optimistic clear
             setIsAdmin(false);
             setCsrfToken('');
-            console.log('[Auth] Logged out successfully');
 
             // Give the browser a moment to process cookie deletions
             await new Promise(resolve => setTimeout(resolve, 800));
@@ -41,7 +40,6 @@ export function useAdminAuth() {
     useEffect(() => {
         // Handle explicit logout param in URL
         if (typeof window !== 'undefined' && window.location.search.includes('logged_out=true')) {
-            console.log('[Auth] Detected logout param - forcing client clear');
             setIsAdmin(false);
             setCsrfToken('');
         }
@@ -55,9 +53,8 @@ export function useAdminAuth() {
                 const data = await res.json();
                 const authed = data.authenticated === true;
                 setIsAdmin(authed);
-                console.log(`[Auth] Admin Session: ${authed ? 'ACTIVE (Saves Enabled)' : 'INACTIVE (Visitor Mode)'}`);
                 if (data.csrfToken) setCsrfToken(data.csrfToken);
-                else if (!authed) setCsrfToken(''); // Clear token if no longer authed
+                else if (!authed) setCsrfToken('');
             } catch (e) {
                 console.error('Failed to check admin auth:', e);
                 setIsAdmin(false);

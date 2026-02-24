@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { testimonialService } from '@/lib/services/testimonialService';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 
 // GET - Read testimonials
 export async function GET() {
@@ -16,9 +16,9 @@ export async function GET() {
 // POST - Create new testimonial (admin only)
 export async function POST(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized or invalid CSRF token' },
         { status: 401 }
       );
     }
@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
 // PUT - Update testimonial (admin only)
 export async function PUT(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized or invalid CSRF token' },
         { status: 401 }
       );
     }
@@ -60,9 +60,9 @@ export async function PUT(request: NextRequest) {
 // DELETE - Delete testimonial (admin only)
 export async function DELETE(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized or invalid CSRF token' },
         { status: 401 }
       );
     }

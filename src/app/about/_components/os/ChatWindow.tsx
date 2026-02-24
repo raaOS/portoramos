@@ -6,19 +6,17 @@ import { mockChats, ContactProfile, ChatMessage } from './data/mockChats';
 import { soundManager } from "./utils/SoundManager";
 import { getAvatarUrl } from '@/lib/avatar';
 import { Project } from '@/types/projects';
-import ScrambleText from '@/components/ui/ScrambleText';
 
 // Letter Avatar Helper (Clean & Consistent)
 const USER_AVATAR = `https://ui-avatars.com/api/?background=00a884&color=ffffff&name=R&size=128&bold=true&length=1`; // User (Ramos) - Green background
 const CLIENT_AVATAR = `https://ui-avatars.com/api/?background=d9fdd3&color=128c7e&name=C&size=128&bold=true&length=1`; // Default Client Fallback
 
 interface ChatWindowProps {
-    settings?: any;
     activeChatId?: string | null;
     customContacts?: Record<string, ContactProfile>;
 }
 
-export default function ChatWindow({ settings, activeChatId, customContacts }: ChatWindowProps) {
+export default function ChatWindow({ activeChatId, customContacts }: ChatWindowProps) {
     const [chats, setChats] = useState<Record<string, ContactProfile>>({});
     const [input, setInput] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -27,11 +25,6 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
     const [isRemoteTyping, setIsRemoteTyping] = useState(false);
     const [projects, setProjects] = useState<Record<string, Project>>({});
     const sequencerRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Sound notification via centralized SoundManager
-    const playNotificationSound = () => {
-        soundManager.play('notification', 0.6);
-    };
 
     // Load projects for thumbnails
     useEffect(() => {
@@ -79,8 +72,8 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
                     setIsRemoteTyping(true);
                     sequencerRef.current = setTimeout(() => {
                         setIsRemoteTyping(false);
-                        setVisibleMessages(prev => [...prev, { ...msg, isEncrypting: true }]);
-                        playNotificationSound();
+                        setVisibleMessages(prev => [...prev, msg]);
+                        soundManager.play('notification');
                         currentIndex++;
                         // Wait 1.5s after a message before showing the next one
                         sequencerRef.current = setTimeout(nextStep, 1500);
@@ -117,22 +110,17 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
             isMe: true,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             status: 'sent' as const,
-            type: 'text',
-            isEncrypting: true
+            type: 'text'
         };
 
         setVisibleMessages(prev => [...prev, newMessage]);
         setInput('');
 
         // Play click sound
-        soundManager.play('click', 0.4);
+        soundManager.play('click');
     };
 
-    const handleEncryptionComplete = (msgId: string | number) => {
-        setVisibleMessages(prev => prev.map(m =>
-            String(m.id) === String(msgId) ? { ...m, isEncrypting: false } : m
-        ));
-    };
+
 
     if (!activeContact) return <div className="h-full bg-[#efeae2]"></div>;
 
@@ -222,14 +210,7 @@ export default function ChatWindow({ settings, activeChatId, customContacts }: C
                                     )}
 
                                     <p className="text-[#111b21] leading-[19px] break-words whitespace-pre-wrap pr-1">
-                                        {msg.isEncrypting ? (
-                                            <ScrambleText
-                                                text={msg.text}
-                                                onComplete={() => handleEncryptionComplete(msg.id)}
-                                            />
-                                        ) : (
-                                            msg.text
-                                        )}
+                                        {msg.text}
                                     </p>
                                     <div className="flex justify-end items-center gap-1 select-none mt-1 h-3">
                                         <span className="text-[11px] text-[#667781] leading-none">{msg.time}</span>

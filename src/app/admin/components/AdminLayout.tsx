@@ -28,7 +28,8 @@ import {
   Sparkles,
   Type,
   User,
-  Tag
+  Tag,
+  Music
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -45,7 +46,7 @@ interface AdminLayoutProps {
 interface NavItem {
   href: string;
   label: string;
-  icon: any;
+  icon: React.ElementType;
   color: string;
   bg: string;
   children?: NavItem[];
@@ -74,19 +75,20 @@ function AdminLayoutContent({
     return { '/admin/about': true };
   });
 
-  // Sync expanded state with active path in render
-  const [lastPathname, setLastPathname] = useState(pathname);
-  if (pathname !== lastPathname) {
+  // Sync expanded state with active path
+  useEffect(() => {
     const shouldExpandAbout = pathname?.startsWith('/admin/about') ||
       pathname?.startsWith('/admin/experience') ||
       pathname?.startsWith('/admin/testimonial') ||
       pathname?.startsWith('/admin/contact');
 
-    if (shouldExpandAbout && !expandedMenus['/admin/about']) {
-      setExpandedMenus(prev => ({ ...prev, '/admin/about': true }));
+    if (shouldExpandAbout) {
+      const t = setTimeout(() => {
+        setExpandedMenus(prev => ({ ...prev, '/admin/about': true }));
+      }, 0);
+      return () => clearTimeout(t);
     }
-    setLastPathname(pathname);
-  }
+  }, [pathname]);
 
   const toggleMenu = (href: string) => {
     setExpandedMenus(prev => ({
@@ -119,6 +121,7 @@ function AdminLayoutContent({
         { href: '/admin/about?tab=dock', label: 'Sistem Dock', icon: Layout, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
         { href: '/admin/about?tab=chat', label: 'Pengaturan Chat', icon: MessageSquare, color: 'text-green-600', bg: 'hover:bg-green-50' },
         { href: '/admin/about?tab=stickyNotes', label: 'Catatan Tempel', icon: Smile, color: 'text-yellow-600', bg: 'hover:bg-yellow-50' },
+        { href: '/admin/about?tab=sounds', label: 'Efek Suara', icon: Music, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
         { href: '/admin/about?tab=labels', label: 'Labels & Tag', icon: Tag, color: 'text-gray-600', bg: 'hover:bg-gray-50' },
       ]
     },
@@ -127,7 +130,7 @@ function AdminLayoutContent({
     { href: '/admin/contact', label: 'Kontak', icon: PhoneCall, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
     { href: '/admin/leads', label: 'Pesan Masuk', icon: Users, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
     { href: '/admin/telegram', label: 'Bot Telegram', icon: Send, color: 'text-sky-500', bg: 'hover:bg-sky-50' },
-    { href: '/admin/analytics', label: 'Statistik', icon: Activity as any, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
+    { href: '/admin/analytics', label: 'Statistik', icon: Activity, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
     { href: '/admin/sequences', label: 'Bidikan Image', icon: Zap, color: 'text-yellow-500', bg: 'hover:bg-yellow-50' },
   ];
 
@@ -212,8 +215,8 @@ function AdminLayoutContent({
           {/* Sidebar Header */}
           <div className="h-16 flex items-center px-6 border-b border-gray-200">
             <LayoutDashboard className="h-6 w-6 text-gray-800 mr-2" />
-            <span className="font-bold text-xl text-gray-900" suppressHydrationWarning>
-              {typeof window !== 'undefined' ? 'Admin Dashboard' : 'Admin Panel'}
+            <span className="font-bold text-xl text-gray-900">
+              Admin Dashboard
             </span>
           </div>
 

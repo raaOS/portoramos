@@ -144,7 +144,7 @@ export const chatStore = {
         if (!snap.exists()) return [];
         const messagesMap = snap.val();
         // Convert object to sorted array
-        return Object.values(messagesMap)
-            .sort((a: any, b: any) => a.timestamp - b.timestamp) as ChatMessage[];
+        return (Object.values(messagesMap) as ChatMessage[])
+            .sort((a, b) => a.timestamp - b.timestamp);
     }
 };

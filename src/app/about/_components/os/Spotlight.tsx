@@ -32,18 +32,16 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
         ...projects.filter(p => p.title.toLowerCase().includes(query.toLowerCase())).map(p => ({ ...p, type: 'project' }))
     ].slice(0, 8);
 
-    // Reset index when opening
-    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
-    if (isOpen && !prevIsOpen) {
-        setSelectedIndex(0);
-        setPrevIsOpen(true);
-    } else if (!isOpen && prevIsOpen) {
-        setPrevIsOpen(false);
-    }
-
+    // Reset state saat Spotlight dibuka
+    // setState dijalankan di microtask (setTimeout 0) untuk menghindari cascading render
     useEffect(() => {
         if (isOpen) {
+            const t = setTimeout(() => {
+                setSelectedIndex(0);
+                setQuery('');
+            }, 0);
             inputRef.current?.focus();
+            return () => clearTimeout(t);
         }
     }, [isOpen]);
 

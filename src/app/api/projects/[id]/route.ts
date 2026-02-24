@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { UpdateProjectData } from '@/types/projects';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 import { generateGenZComments } from '@/lib/magic';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
@@ -66,7 +66,7 @@ export async function GET(
     const params = await props.params;
     const { id } = params;
 
-    // Inefficient to load all, but consistent with service pattern
+    // TODO: Optimasi - tambahkan getProjectById(id) di projectService agar tidak perlu load semua proyek
     const { projects } = await projectService.getProjects();
     const project = projects.find(p => p.id === id);
 
@@ -87,9 +87,9 @@ export async function PUT(
   props: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized or invalid CSRF token' },
         { status: 401 }
       );
     }
@@ -226,9 +226,9 @@ export async function DELETE(
   props: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized or invalid CSRF token' },
         { status: 401 }
       );
     }

@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import crypto from 'crypto';
 import { sign, verify } from 'jsonwebtoken';
+import { validateCSRFToken } from '@/lib/security';
+import { cookies } from 'next/headers';
 
 // Helper to clean environment variables (removes quotes and trims)
 const cleanEnvVar = (name: string): string | undefined => {
@@ -77,6 +79,40 @@ export const verifyAdminToken = (token: string): boolean => {
   } catch {
     return false;
   }
+};
+
+/**
+ * Validates both Admin Auth (JWT/Cookie) and CSRF Token.
+ * Recommended for all POST/PUT/DELETE admin routes.
+ * 
+ * @param request The incoming NextRequest
+ * @param options Configuration for validation
+ * @returns boolean indicating if the request is valid
+ */
+export const validateAdminRequest = async (
+  request: NextRequest,
+  options: { checkCsrf?: boolean } = {}
+): Promise<boolean> => {
+  // 1. Check Admin Auth
+  if (!checkAdminAuth(request)) {
+    return false;
+  }
+
+  // 2. Check CSRF (Default: true for mutations)
+  const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method);
+  const shouldCheckCsrf = options.checkCsrf ?? isMutation;
+
+  if (shouldCheckCsrf) {
+    const csrfHeader = request.headers.get('x-csrf-token');
+    const cookieStore = await cookies();
+    const csrfCookie = cookieStore.get('csrf_token')?.value;
+
+    if (!csrfHeader || !csrfCookie || !validateCSRFToken(csrfHeader, csrfCookie)) {
+      return false;
+    }
+  }
+
+  return true;
 };
 
 export const checkAdminAuth = (request: NextRequest): boolean => {

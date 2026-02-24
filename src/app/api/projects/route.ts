@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod'; // Import Zod
 import { CreateProjectData } from '@/types/projects';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 import { generateGenZComments } from '@/lib/magic';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
@@ -43,9 +43,9 @@ export async function GET(request: NextRequest) {
 // POST - Create new project (admin only)
 export async function POST(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized or invalid CSRF token' },
         { status: 401 }
       );
     }

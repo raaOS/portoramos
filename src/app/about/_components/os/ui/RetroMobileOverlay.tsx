@@ -47,7 +47,7 @@ export default function RetroMobileOverlay() {
     // Sound effect on error
     useEffect(() => {
         if (step === "error") {
-            soundManager.play('error', 0.5);
+            soundManager.play('error');
         }
     }, [step]);
 

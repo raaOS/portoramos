@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
 import { ContactData, UpdateContactData } from '@/types/contact';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 import path from 'path';
 
 const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'contact.json');
@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
 // PUT - Update contact content (admin only)
 export async function PUT(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized or invalid CSRF token' },
         { status: 401 }
       );
     }

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
-import { m, useMotionValue, useTransform, useSpring } from "framer-motion";
+import React, { useRef } from "react";
+import { m, useMotionValue, useTransform, useSpring, MotionValue } from "framer-motion";
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { DockPreferences } from "@/types/about";
 
@@ -10,7 +10,7 @@ interface DockItemProps {
     icon: React.ReactNode;
     label: string;
     onClick: () => void;
-    mouseX: any;
+    mouseX: MotionValue<number>;
     isOpen?: boolean;
     shouldBounceExternal?: boolean;
     isMobile?: boolean;

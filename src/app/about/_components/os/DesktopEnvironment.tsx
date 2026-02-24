@@ -114,11 +114,10 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     const [showSpotlight, setShowSpotlight] = useState(false);
     useDesktopShortcuts({ showSpotlight, setShowSpotlight });
 
-    // Check if we've already booted in this session
     useEffect(() => {
-        // We want to boot on every mount (refresh or navigation)
-        // strict mode double-invoke is acceptable in dev
+        // Boot runs on every mount (refresh or navigation)
     }, []);
+
 
 
 
@@ -142,12 +141,14 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         setNotes
     } = useStickyNotes(mounted, isAdmin, csrfToken);
 
-    // Logging for debug
     useEffect(() => {
         if (mounted) {
-            console.log(`[Desktop v1.2] Admin status: ${isAdmin ? 'AUTHORIZED' : 'VISITOR'}`);
+            // Load dynamic sound configuration if available
+            if (aboutData?.soundConfig) {
+                soundManager.loadConfig(aboutData.soundConfig);
+            }
         }
-    }, [mounted, isAdmin]);
+    }, [mounted, isAdmin, aboutData?.soundConfig]);
 
 
     // Dynamic Contacts (Mock + Testimonials)

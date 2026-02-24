@@ -78,7 +78,7 @@ export default function OSWindow({
         if (isOpen) {
             // Use setTimeout to ensure user interaction is detected first
             const timer = setTimeout(() => {
-                soundManager.play('window-open', 0.4);
+                soundManager.play('window-open');
             }, 100);
             return () => clearTimeout(timer);
         }
@@ -263,7 +263,7 @@ export default function OSWindow({
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    soundManager.play('window-close', 0.4);
+                                    soundManager.play('window-close');
                                     onClose();
                                 }}
                                 onPointerDown={(e) => e.stopPropagation()}

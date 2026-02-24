@@ -128,6 +128,15 @@ export interface WindowPreferences {
   [key: string]: WindowPreference;
 }
 
+export interface SoundSetting {
+  path: string;
+  volume: number;
+}
+
+export interface SoundConfig {
+  [key: string]: SoundSetting;
+}
+
 export interface AboutData {
   hero: AboutHero;
   professional: AboutProfessional;
@@ -141,6 +150,7 @@ export interface AboutData {
   chatSettings?: ChatSettings;
   windowPreferences?: WindowPreferences;
   islandNotifications?: AboutIslandNotification[];
+  soundConfig?: SoundConfig;
 
 
   labels?: {
@@ -166,6 +176,7 @@ export interface UpdateAboutData {
   chatSettings?: ChatSettings;
   windowPreferences?: WindowPreferences;
   islandNotifications?: AboutIslandNotification[];
+  soundConfig?: SoundConfig;
 
   labels?: Partial<AboutData['labels']>;
 }

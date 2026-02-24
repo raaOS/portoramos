@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 import { experienceService } from '@/lib/services/experienceService';
 
 export async function GET() {
@@ -13,9 +13,9 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { message: 'Unauthorized or invalid CSRF token' },
         { status: 401 }
       );
     }

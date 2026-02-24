@@ -2,8 +2,14 @@ import { NextResponse } from 'next/server';
 import { getTelegramConfig } from '@/lib/telegram';
 import { chatStore } from '@/lib/chatStore';
 import { aiChatService } from '@/lib/services/aiChatService';
+import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
 
 export const dynamic = 'force-dynamic';
+
+// Rate limit: max 10 pesan per 60 detik per visitorId
+const CHAT_MAX_MESSAGES = 10;
+const CHAT_WINDOW_MS = 60 * 1000;      // 1 menit
+const CHAT_BLOCK_MS = 5 * 60 * 1000;   // 5 menit block
 
 export async function POST(request: Request) {
     try {
@@ -13,10 +19,24 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { message, visitorId, pageUrl } = body;
+        const { message, visitorId, pageUrl } = body as { message: string; visitorId: string; pageUrl?: string };
 
         if (!message || !visitorId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        // Rate limiting per visitorId untuk mencegah spam ke Telegram
+        const rateCheck = await checkFirebaseRateLimit(
+            `chat_${visitorId}`,
+            CHAT_MAX_MESSAGES,
+            CHAT_WINDOW_MS,
+            CHAT_BLOCK_MS
+        );
+        if (!rateCheck.allowed) {
+            return NextResponse.json(
+                { error: 'Too many messages. Please wait before sending again.', retryAfter: rateCheck.retryAfter },
+                { status: 429, headers: { 'Retry-After': String(rateCheck.retryAfter) } }
+            );
         }
 
         // 1. Add message to Firebase store

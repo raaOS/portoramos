@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
 import { githubService } from '@/lib/github';
+import { validateAdminRequest } from '@/lib/auth';
 import path from 'path';
 
 const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'settings.json');
@@ -35,6 +36,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
+        if (!(await validateAdminRequest(request))) {
+            return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
+        }
         const body = await request.json();
 
         // Validation simple

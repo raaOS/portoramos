@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UpdateAboutData } from '@/types/about';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 import { aboutService } from '@/lib/services/aboutService';
 
 
@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
 // PUT - Update about content (admin only)
 export async function PUT(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await validateAdminRequest(request))) {
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const updates: UpdateAboutData = await request.json();

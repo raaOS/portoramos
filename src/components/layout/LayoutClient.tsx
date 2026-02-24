@@ -7,6 +7,7 @@ import Header from '@/components/shared/Header';
 import { WindowProvider } from '@/contexts/WindowContext';
 import GlobalDock from './GlobalDock';
 import WindowRenderer from './WindowRenderer';
+import type { DockPreferences } from '@/types/about';
 
 // Lazy-load below-fold components to reduce initial JS bundle (~30-50KB savings)
 const Footer = dynamic(() => import('@/components/shared/Footer'), { ssr: false });
@@ -19,7 +20,7 @@ export default function LayoutClient({
 }: {
     children: React.ReactNode;
     modal: React.ReactNode;
-    dockConfig?: any;
+    dockConfig?: DockPreferences;
 }) {
     const pathname = usePathname();
     const isAdminRequest = pathname?.startsWith('/admin');

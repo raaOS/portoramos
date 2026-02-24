@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { Maximize2, Minimize2, Music, AppWindow } from "lucide-react";
-import ScrambleText from "@/components/ui/ScrambleText";
 
 import { ContactProfile } from "../data/mockChats";
 import { getAvatarUrl } from "@/lib/avatar";
@@ -207,14 +206,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                                     <span className="text-[10px] text-white/40 font-normal">Now</span>
                                 </span>
                                 <span className="text-xs text-white/70 truncate">
-                                    {notification.isEncrypting ? (
-                                        <ScrambleText
-                                            text={notification.message}
-                                            onComplete={() => setNotification(curr => curr ? { ...curr, isEncrypting: false } : null)}
-                                        />
-                                    ) : (
-                                        notification.message
-                                    )}
+                                    {notification.message}
                                 </span>
                             </div>
                         </m.div>

@@ -4,7 +4,7 @@
  * Standardized on WAV for maximum compatibility with generated assets.
  */
 
-type SoundType = 'startup' | 'click' | 'window-open' | 'window-close' | 'error' | 'notification' | 'drag';
+type SoundType = 'startup' | 'click' | 'window-open' | 'window-close' | 'error' | 'notification' | 'drag' | 'typing' | 'sent';
 
 class SoundManager {
     private static instance: SoundManager;
@@ -19,8 +19,12 @@ class SoundManager {
         'window-close': '/sounds/window-close.wav?v=1.3',
         error: '/sounds/error.wav?v=1.3',
         notification: '/sounds/notification.wav?v=1.3',
-        drag: '/sounds/drag.wav?v=1.3'
+        drag: '/sounds/drag.wav?v=1.3',
+        typing: '/sounds/click.wav?v=1.3',
+        sent: '/sounds/notification.wav?v=1.3'
     };
+
+    private soundVolumes: Record<string, number> = {};
 
     private constructor() {
         console.log("%c[SoundManager] v1.3-STABLE (PCM-WAV)", "color: #00ff00; font-weight: bold;");
@@ -41,6 +45,31 @@ class SoundManager {
     }
 
     /**
+     * Load dynamic configuration (overriding defaults)
+     */
+    public loadConfig(config: Record<string, { path: string, volume: number }>) {
+        if (!config) return;
+
+        console.log('[SoundManager] Loading dynamic sound configuration...');
+        Object.entries(config).forEach(([key, setting]) => {
+            const typeKey = key as SoundType;
+            if (this.soundPaths[typeKey] !== undefined) {
+                // Update internal path
+                const oldPath = this.soundPaths[typeKey];
+                this.soundPaths[typeKey] = setting.path;
+
+                // If path changed, clear existing cached audio element to force reload
+                if (oldPath !== setting.path) {
+                    this.sounds.delete(typeKey);
+                }
+
+                // Store volume config
+                this.soundVolumes[typeKey] = setting.volume;
+            }
+        });
+    }
+
+    /**
      * Play a sound by type
      */
     public play(type: SoundType, customVolume?: number) {
@@ -52,13 +81,20 @@ class SoundManager {
             // Lazy load if not exists in memory
             if (!audio) {
                 const path = this.soundPaths[type];
+                if (!path) {
+                    console.warn(`[SoundManager] No path defined for sound type: ${type}`);
+                    return;
+                }
                 audio = new Audio(path);
                 this.sounds.set(type, audio);
             }
 
             // Always clone the node to allow overlapping sounds of the same type
             const clone = audio.cloneNode() as HTMLAudioElement;
-            clone.volume = customVolume ?? this.volume;
+
+            // Priority: customVolume > Config Volume > Global Default Volume
+            const configVolume = this.soundVolumes[type as string];
+            clone.volume = customVolume ?? configVolume ?? this.volume;
 
             const playPromise = clone.play();
             if (playPromise !== undefined) {

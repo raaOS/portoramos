@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTelegramConfig } from '@/lib/telegram';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
-    if (!checkAdminAuth(request)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await validateAdminRequest(request))) {
+        return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
     try {
         const { url } = await request.json(); // The public URL of the Vercel deployment
@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-    if (!checkAdminAuth(request)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await validateAdminRequest(request))) {
+        return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
     try {
         const { botToken } = await getTelegramConfig();
@@ -51,7 +51,7 @@ export async function DELETE(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request, { checkCsrf: false }))) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     // Check webhook info

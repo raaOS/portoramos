@@ -1,38 +1,47 @@
-import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { NextRequest, NextResponse } from 'next/server';
+import { checkAdminAuth } from '@/lib/auth';
+import { db } from '@/lib/firebaseAdmin';
 
-const DATA_FILE = path.join(process.cwd(), 'src/data/analytics-logs.json');
+// Firebase path for analytics logs
+const ANALYTICS_PATH = 'analytics/logs';
+const MAX_LOGS = 100;
 
-// Helper to ensure file exists
-function ensureFile() {
-    if (!fs.existsSync(DATA_FILE)) {
-        fs.writeFileSync(DATA_FILE, JSON.stringify({ logs: [] }, null, 2));
-    }
+interface AnalyticsLog {
+    id: string;
+    timestamp: string;
+    event: string;
+    details: Record<string, unknown>;
+    userAgent: string;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { event, details } = body;
+        const { event, details } = body as { event: string; details: Record<string, unknown> };
 
-        ensureFile();
+        if (!event) {
+            return NextResponse.json({ success: false, error: 'Missing event field' }, { status: 400 });
+        }
 
-        const fileContent = fs.readFileSync(DATA_FILE, 'utf-8');
-        const data = JSON.parse(fileContent);
-
-        const newLog = {
+        const newLog: AnalyticsLog = {
             id: Date.now().toString(),
             timestamp: new Date().toISOString(),
-            event, // e.g., "CV_DOWNLOAD", "PROJECT_VIEW"
-            details, // e.g., { location: "Jakarta", device: "Mobile" } - currently simulated as client doesn't send sensitive IP data directly
+            event,
+            details: details || {},
             userAgent: request.headers.get('user-agent') || 'Unknown'
         };
 
-        // Keep only last 100 logs to prevent file bloat
-        const updatedLogs = [newLog, ...data.logs].slice(0, 100);
+        // Write to Firebase (async, works on Vercel)
+        const logsSnap = await db.ref(ANALYTICS_PATH).once('value');
+        const existing: AnalyticsLog[] = logsSnap.exists() ? Object.values(logsSnap.val()) : [];
 
-        fs.writeFileSync(DATA_FILE, JSON.stringify({ logs: updatedLogs }, null, 2));
+        // Keep only last MAX_LOGS entries
+        const updated = [newLog, ...existing].slice(0, MAX_LOGS);
+
+        // Rewrite as object keyed by id
+        const updatedMap: Record<string, AnalyticsLog> = {};
+        updated.forEach(log => { updatedMap[log.id] = log; });
+        await db.ref(ANALYTICS_PATH).set(updatedMap);
 
         return NextResponse.json({ success: true });
     } catch (error) {
@@ -40,12 +49,21 @@ export async function POST(request: Request) {
     }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    // Only admins can read analytics
+    if (!checkAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
-        ensureFile();
-        const fileContent = fs.readFileSync(DATA_FILE, 'utf-8');
-        const data = JSON.parse(fileContent);
-        return NextResponse.json(data);
+        const logsSnap = await db.ref(ANALYTICS_PATH).once('value');
+        const logs: AnalyticsLog[] = logsSnap.exists()
+            ? (Object.values(logsSnap.val()) as AnalyticsLog[]).sort(
+                (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            )
+            : [];
+
+        return NextResponse.json({ logs });
     } catch (error) {
         return NextResponse.json({ logs: [] });
     }

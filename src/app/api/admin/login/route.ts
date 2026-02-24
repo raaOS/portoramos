@@ -2,72 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminPassword, getAdminToken } from '@/lib/auth';
 import { sendTelegramAlert } from '@/lib/telegram';
 import { generateCSRFToken, validateCSRFToken } from '@/lib/security';
+import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-// RATE LIMITING CONFIGURATION - STRICT!
-const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 menit
-const MAX_ATTEMPTS_PER_WINDOW = 3; // Hanya 3 percobaan
-const BLOCK_DURATION = 30 * 60 * 1000; // 30 menit block
-
-// Global rate limiting storage
-const globalRateLimit = globalThis as typeof globalThis & {
-  __rateLimitStore?: Map<string, { attempts: number; resetAt: number; blockedUntil?: number }>;
-};
-
-const rateLimitStore = globalRateLimit.__rateLimitStore || new Map();
-globalRateLimit.__rateLimitStore = rateLimitStore;
+// RATE LIMITING - 3 percobaan per 5 menit, block 30 menit (disimpan di Firebase)
+const MAX_ATTEMPTS_PER_WINDOW = 3;
+const RATE_LIMIT_WINDOW = 5 * 60 * 1000;  // 5 menit
+const BLOCK_DURATION = 30 * 60 * 1000;    // 30 menit
 
 function getClientIdentifier(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
   const userAgent = request.headers.get('user-agent') || 'unknown';
   return `${ip}|${userAgent}`;
-}
-
-function checkRateLimit(clientId: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const record = rateLimitStore.get(clientId);
-
-  // Jika sedang diblock
-  if (record?.blockedUntil && now < record.blockedUntil) {
-    return {
-      allowed: false,
-      retryAfter: Math.ceil((record.blockedUntil - now) / 1000)
-    };
-  }
-
-  // Reset jika window sudah lewat
-  if (!record || now > record.resetAt) {
-    rateLimitStore.set(clientId, {
-      attempts: 0,
-      resetAt: now + RATE_LIMIT_WINDOW
-    });
-    return { allowed: true };
-  }
-
-  // Block jika sudah max attempts
-  if (record.attempts >= MAX_ATTEMPTS_PER_WINDOW) {
-    record.blockedUntil = now + BLOCK_DURATION;
-    return {
-      allowed: false,
-      retryAfter: Math.ceil(BLOCK_DURATION / 1000)
-    };
-  }
-
-  return { allowed: true };
-}
-
-function incrementAttempts(clientId: string): void {
-  const record = rateLimitStore.get(clientId);
-  if (record) {
-    record.attempts += 1;
-  }
-}
-
-function clearAttempts(clientId: string): void {
-  rateLimitStore.delete(clientId);
 }
 
 function parseUserAgent(ua: string) {
@@ -148,11 +97,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isProd = process.env.NODE_ENV === 'production';
     const clientId = getClientIdentifier(request);
 
-    // Bypass rate limit in development mode for easier testing
-    const rateLimit = isProd ? checkRateLimit(clientId) : { allowed: true };
+    // Firebase rate limiting (persisten di Vercel, tidak hilang saat cold start)
+    const rateLimit = await checkFirebaseRateLimit(
+      `login_${clientId}`,
+      MAX_ATTEMPTS_PER_WINDOW,
+      RATE_LIMIT_WINDOW,
+      BLOCK_DURATION
+    );
 
     if (!rateLimit.allowed) {
       const [ip, userAgent] = clientId.split('|');
@@ -195,7 +148,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (password.length < 8) {
-      incrementAttempts(clientId);
       return NextResponse.json(
         { error: 'Invalid password' },
         { status: 401 }
@@ -215,13 +167,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isValid) {
-      incrementAttempts(clientId);
-
       const [ip, userAgent] = clientId.split('|');
       const geo = await getGeoInfo(ip);
       const device = parseUserAgent(userAgent);
-
-      const remainingAttempts = MAX_ATTEMPTS_PER_WINDOW - (rateLimitStore.get(clientId)?.attempts || 0);
 
       await sendTelegramAlert(
         `❌ **LOGIN FAILED**
@@ -230,23 +178,18 @@ export async function POST(request: NextRequest) {
 🌐 **Network:** ${geo.isp}
 📡 **IP:** \`${ip}\`
 📍 **Location:** ${geo.location}
-🎯 **Remaining Attempts:** ${remainingAttempts}
 
 🕒 ${new Date().toLocaleString('id-ID')}`,
-        { priority: remainingAttempts <= 1 ? 'high' : 'normal' }
+        { priority: 'normal' }
       );
 
       return NextResponse.json(
-        {
-          error: 'Invalid password',
-          remainingAttempts: Math.max(0, remainingAttempts)
-        },
+        { error: 'Invalid password' },
         { status: 401 }
       );
     }
 
-    // SUCCESS - Clear attempts & issue token
-    clearAttempts(clientId);
+    // SUCCESS
 
     const [ip, userAgent] = clientId.split('|');
     const geo = await getGeoInfo(ip);
@@ -283,10 +226,10 @@ export async function POST(request: NextRequest) {
 
     return response;
 
-  } catch (error: any) {
-    // Generic error - jangan expose detail
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: 'Authentication failed', details: error.message || String(error) },
+      { error: 'Authentication failed', details: msg },
       { status: 500 }
     );
   }

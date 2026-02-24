@@ -23,6 +23,7 @@ import ChatSettingsForm from './components/ChatSettingsForm';
 import StickyNotesManager from './components/StickyNotesManager';
 import NotificationsManager from './components/NotificationsManager';
 import HardSkillsManager from './components/HardSkillsManager';
+import SoundEffectsManager from './components/SoundEffectsManager';
 
 // Lazy load heavy third-party components
 const DesignPhilosophyForm = dynamic(() => import('@/components/admin/about/DesignPhilosophyForm'));
@@ -33,7 +34,7 @@ export default function AdminAboutClient() {
 
   // Derive active tab from URL search parameters (Source of Truth)
   const tabParam = searchParams.get('tab');
-  const validTabs = ['professional', 'softSkills', 'hardSkills', 'runningText', 'philosophy', 'desktop', 'dock', 'chat', 'stickyNotes', 'notifications'];
+  const validTabs = ['professional', 'softSkills', 'hardSkills', 'runningText', 'philosophy', 'desktop', 'dock', 'chat', 'stickyNotes', 'notifications', 'sounds'];
   const activeTab = (tabParam && validTabs.includes(tabParam))
     ? (tabParam as any)
     : 'professional';
@@ -210,6 +211,15 @@ export default function AdminAboutClient() {
                 <NotificationsManager
                   notifications={aboutData?.islandNotifications || []}
                   onUpdate={(data) => handleUpdateAbout({ islandNotifications: data })}
+                />
+              </div>
+            )}
+
+            {activeTab === 'sounds' && (
+              <div className="space-y-8">
+                <SoundEffectsManager
+                  config={aboutData?.soundConfig || {}}
+                  onUpdate={(data) => handleUpdateAbout({ soundConfig: data })}
                 />
               </div>
             )}

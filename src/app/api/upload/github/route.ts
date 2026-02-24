@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 import path from 'path';
 
 /**
@@ -17,8 +17,8 @@ const BRANCH = 'main'; // Adjust if using 'master'
 
 
 export async function POST(req: NextRequest) {
-    if (!checkAdminAuth(req)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await validateAdminRequest(req))) {
+        return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
     if (!GITHUB_TOKEN || !REPO_OWNER || !REPO_NAME) {
         return NextResponse.json({ error: 'GitHub Configuration Missing (Token/Owner/Repo)' }, { status: 500 });
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
             console.log(`[UploadAPI] Generated unique filename: ${finalFilename}`);
         }
 
-        let processedBuffer = buffer;
+        let processedBuffer: Buffer = buffer;
         let processedPath = `${uploadFolder}/${finalFilename}`;
 
         // ICNS -> WebP Pre-optimization (Essential for Vercel/Production support)
@@ -108,9 +108,12 @@ export async function POST(req: NextRequest) {
                     // Sort by size descending
                     candidates.sort((a, b) => b.size - a.size);
 
-                    const sharp = require('sharp');
-                    const { spawn } = require('child_process');
-                    const ffmpegPath = require('ffmpeg-static');
+                    const [sharpMod, { spawn }, { default: ffmpegPath }] = await Promise.all([
+                        import('sharp'),
+                        import('child_process'),
+                        import('ffmpeg-static')
+                    ]);
+                    const sharp = sharpMod.default;
 
                     // Helper: Decode JP2 via FFmpeg pipe (since Sharp often lacks JP2 support)
                     const decodeJp2WithFfmpeg = async (inBuffer: Buffer): Promise<Buffer> => {
@@ -187,6 +190,53 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        // Audio Conversion: Any audio -> WAV (Essential for OS Sound compatibility)
+        const isAudioFile = file.type.startsWith('audio/') || ['mp3', 'm4a', 'ogg', 'aac', 'flac', 'webm'].includes(ext);
+        if (isAudioFile && ext !== 'wav' && uploadFolder.includes('sounds')) {
+            console.log(`[UploadAPI] Audio detected (${ext}) in sounds folder, converting to WAV...`);
+            try {
+                const [{ default: ffmpegPath }, { spawn }] = await Promise.all([
+                    import('ffmpeg-static'),
+                    import('child_process')
+                ]);
+
+                const convertAudio = async (inBuffer: Buffer): Promise<Buffer> => {
+                    return new Promise((resolve, reject) => {
+                        const ffmpeg = spawn(ffmpegPath as string, [
+                            '-i', 'pipe:0',
+                            '-f', 'wav',
+                            '-acodec', 'pcm_s16le', // Standard 16-bit PCM WAV
+                            '-ar', '44100',        // 44.1kHz sample rate
+                            '-ac', '2',            // Stereo
+                            'pipe:1'
+                        ]);
+                        const chunks: Buffer[] = [];
+                        ffmpeg.stdout.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
+                        ffmpeg.stderr.on('data', () => { }); // Silence stderr logs
+
+                        ffmpeg.on('close', (code: number) => {
+                            if (code === 0 && chunks.length > 0) resolve(Buffer.concat(chunks));
+                            else reject(new Error(`FFmpeg audio conversion failed with code ${code}`));
+                        });
+                        ffmpeg.on('error', (err: any) => reject(err));
+                        ffmpeg.stdin.write(inBuffer);
+                        ffmpeg.stdin.end();
+                    });
+                };
+
+                const convertedBuffer = await convertAudio(buffer);
+                processedBuffer = convertedBuffer;
+
+                // Update final path and filename to .wav
+                const oldExtRegex = new RegExp(`\\.${ext}$`, 'i');
+                processedPath = processedPath.replace(oldExtRegex, '.wav');
+                finalFilename = finalFilename.replace(oldExtRegex, '.wav');
+                console.log(`[UploadAPI] Audio conversion success! Saved as: ${finalFilename}`);
+            } catch (err) {
+                console.warn(`[UploadAPI] Audio conversion failed, keeping original:`, err);
+            }
+        }
+
         const path = processedPath;
         const finalContentBase64 = processedBuffer.toString('base64');
 
@@ -207,7 +257,35 @@ export async function POST(req: NextRequest) {
         // 2. Upload to GitHub
         const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`;
 
+        // Get existing file SHA if it exists (required for overwrites)
+        let existingSha: string | undefined;
+        try {
+            const getRes = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'User-Agent': 'Portfolio-Uploader'
+                }
+            });
+            if (getRes.ok) {
+                const existingData = await getRes.json();
+                existingSha = existingData.sha;
+                console.log(`[UploadAPI] Found existing file, SHA: ${existingSha}`);
+            }
+        } catch (e) {
+            console.warn(`[UploadAPI] Error checking for existing SHA:`, e);
+        }
+
         const uploadFileWithRetry = async (retryCount = 0): Promise<Response> => {
+            const body: { message: string; content: string; branch: string; sha?: string } = {
+                message: `Upload ${finalFilename} via Admin Panel`,
+                content: finalContentBase64,
+                branch: BRANCH
+            };
+
+            if (existingSha) {
+                body.sha = existingSha;
+            }
+
             const response = await fetch(url, {
                 method: 'PUT',
                 headers: {
@@ -215,11 +293,7 @@ export async function POST(req: NextRequest) {
                     'Content-Type': 'application/json',
                     'User-Agent': 'Portfolio-Uploader'
                 },
-                body: JSON.stringify({
-                    message: `Upload ${finalFilename} via Admin Panel`,
-                    content: finalContentBase64,
-                    branch: BRANCH
-                })
+                body: JSON.stringify(body)
             });
 
             if (response.status === 409 && retryCount < 3) {

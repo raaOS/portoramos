@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 
 export async function POST(request: NextRequest) {
     try {
-        console.log('[BulkUpdate] Started');
-        if (!checkAdminAuth(request)) {
-            console.warn('[BulkUpdate] Unauthorized');
+        if (!(await validateAdminRequest(request))) {
             return NextResponse.json(
-                { error: 'Unauthorized' },
+                { error: 'Unauthorized or invalid CSRF token' },
                 { status: 401 }
             );
         }
 
         const body = await request.json();
         const { action, ids } = body;
-        console.log('[BulkUpdate] Request:', { action, idsCount: ids?.length, ids });
 
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
             return NextResponse.json({ error: 'No project IDs provided' }, { status: 400 });
@@ -31,11 +28,8 @@ export async function POST(request: NextRequest) {
         } else if (action === 'reorder') {
             success = await projectService.bulkUpdateProjects({ ids, reorder: true });
         } else {
-            console.warn('[BulkUpdate] Invalid action:', action);
             return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
         }
-
-        console.log('[BulkUpdate] Result:', success);
 
         if (!success) {
             return NextResponse.json({ error: 'Failed to perform bulk update' }, { status: 500 });

@@ -52,7 +52,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
 
     const handleDragStart = () => {
         setIsDragging(true);
-        soundManager.play('drag', 0.5);
+        soundManager.play('drag');
     };
 
     const handleDragEnd = () => {
@@ -81,7 +81,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
             data-lenis-prevent
             onClick={(e) => {
                 if (!isDragging) {
-                    soundManager.play('click', 0.4);
+                    soundManager.play('click');
                     onClick();
                 }
             }}
@@ -99,7 +99,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
             onKeyDown={(e) => {
                 if ((e.key === 'Enter' || e.key === ' ') && !isDragging) {
                     e.preventDefault();
-                    soundManager.play('click', 0.4);
+                    soundManager.play('click');
                     onClick();
                 }
             }}

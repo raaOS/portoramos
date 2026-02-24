@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { GalleryFeaturedData } from '@/types/gallery';
+import { validateAdminRequest } from '@/lib/auth';
+import { NextRequest } from 'next/server';
 
 const dataFilePath = path.join(process.cwd(), 'src/data/gallery-featured.json');
 
@@ -17,8 +19,11 @@ export async function GET() {
     }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
+        if (!(await validateAdminRequest(request))) {
+            return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
+        }
         const body = await request.json();
         const { featuredProjectIds } = body;
 
