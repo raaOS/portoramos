@@ -191,7 +191,7 @@
     }
   },
   "wallpaperConfig": {
-    "activeWallpaperId": "w-1771963004813-p1yts6mcy",
+    "activeWallpaperId": "default",
     "collection": [
       {
         "id": "default",
@@ -202,14 +202,9 @@
         "id": "minimal",
         "url": "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=2070",
         "name": "Alps"
-      },
-      {
-        "id": "w-1771963004813-p1yts6mcy",
-        "url": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/wallpapers/1771963001387-yfwye4hggmcu-wallaper.png",
-        "name": "Custom Wallpaper"
       }
     ],
-    "blur": 6
+    "blur": 10
   },
   "dockConfig": {
     "whatsapp": {
@@ -541,5 +536,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-24T19:58:25.947Z"
+  "lastUpdated": "2026-02-24T19:59:47.998Z"
 }
