@@ -6,6 +6,14 @@ import Script from 'next/script';
  * Analytics Component
  * Wrapper for Google Analytics or Vercel Analytics
  */
+
+declare global {
+    interface Window {
+        gtag?: (command: string, ...args: any[]) => void;
+        dataLayer?: any[];
+    }
+}
+
 export default function Analytics() {
     const gaId = process.env.NEXT_PUBLIC_GA_ID;
     const isProduction = process.env.NODE_ENV === 'production';
@@ -40,9 +48,9 @@ export default function Analytics() {
  * Track custom events
  * Usage: trackEvent('button_click', { button_name: 'cta' })
  */
-export function trackEvent(eventName: string, eventParams?: Record<string, any>) {
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', eventName, eventParams);
+export function trackEvent(eventName: string, eventParams?: Record<string, unknown>) {
+    if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', eventName, eventParams);
     }
 }
 
@@ -51,8 +59,8 @@ export function trackEvent(eventName: string, eventParams?: Record<string, any>)
  * Usage: trackPageView('/about')
  */
 export function trackPageView(url: string) {
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('config', process.env.NEXT_PUBLIC_GA_ID, {
+    if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('config', process.env.NEXT_PUBLIC_GA_ID!, {
             page_path: url,
         });
     }

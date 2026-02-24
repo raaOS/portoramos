@@ -119,14 +119,14 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     // Fix race condition: pastikan loadConfig dipanggil SEBELUM startup sound diputar
     // Jika aboutData belum tersedia, finishBooting tetap bisa jalan (pakai default sounds)
     // React Compiler menangani memoization otomatis — tidak perlu useCallback manual
-    const handleBootComplete = useCallback(() => {
+    const handleBootComplete = () => {
         if (aboutData?.soundConfig) {
             soundManager.loadConfig(aboutData.soundConfig);
         }
         // Suppress window-open sound briefly so it doesn't overlap with the boot sound
         soundManager.suppressSound('window-open', 1500);
         finishBooting();
-    }, [aboutData?.soundConfig, finishBooting]);
+    };
     const [showSpotlight, setShowSpotlight] = useState(false);
     useDesktopShortcuts({ showSpotlight, setShowSpotlight });
 

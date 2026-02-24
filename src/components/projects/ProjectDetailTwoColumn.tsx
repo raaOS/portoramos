@@ -100,7 +100,7 @@ export default function ProjectDetailTwoColumn({
         } catch { /* silent */ } finally {
             setTranslateLoading(false);
         }
-    }, [project, translations]);
+    }, [project, translations, CACHE_KEY]);
 
     // Load like status immediately (local storage only)
     useEffect(() => {

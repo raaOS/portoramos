@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
                             ]);
 
                             const chunks: Buffer[] = [];
-                            ffmpeg.stdout.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
+                            ffmpeg.stdout.on('data', (chunk: Buffer | string) => chunks.push(Buffer.from(chunk)));
                             ffmpeg.stderr.on('data', () => { }); // Mute stderr
 
                             ffmpeg.on('close', (code: number) => {
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
                                 else reject(new Error(`FFmpeg exited with code ${code}`));
                             });
 
-                            ffmpeg.on('error', (err: any) => reject(err));
+                            ffmpeg.on('error', (err: Error) => reject(err));
 
                             ffmpeg.stdin.write(inBuffer);
                             ffmpeg.stdin.end();
@@ -244,7 +244,7 @@ export async function POST(req: NextRequest) {
                         ]);
                         const chunks: Buffer[] = [];
                         let stderr = '';
-                        ffmpeg.stdout.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
+                        ffmpeg.stdout.on('data', (chunk: Buffer | string) => chunks.push(Buffer.from(chunk)));
                         ffmpeg.stderr.on('data', (data) => {
                             const str = data.toString();
                             stderr += str;
@@ -254,7 +254,7 @@ export async function POST(req: NextRequest) {
                             if (code === 0 && chunks.length > 0) resolve(Buffer.concat(chunks));
                             else reject(new Error(`FFmpeg exit code ${code}. ${stderr.slice(-200)}`));
                         });
-                        ffmpeg.on('error', (err: any) => reject(err));
+                        ffmpeg.on('error', (err: Error) => reject(err));
                         ffmpeg.stdin.write(inBuffer);
                         ffmpeg.stdin.end();
                     });
@@ -268,9 +268,9 @@ export async function POST(req: NextRequest) {
                 processedPath = processedPath.replace(oldExtRegex, '.wav');
                 finalFilename = finalFilename.replace(oldExtRegex, '.wav');
                 console.log(`[UploadAPI] Audio conversion success! Saved as: ${finalFilename}`);
-            } catch (err: any) {
+            } catch (err) {
                 console.warn(`[UploadAPI] Audio conversion failed, keeping original:`, err);
-                const detail = err?.message || String(err);
+                const detail = err instanceof Error ? err.message : String(err);
                 // Set a user-visible warning so the admin knows the file was NOT converted
                 warning = `Konversi ke WAV gagal (tetap .${ext}): ${detail}`;
             }
@@ -360,8 +360,8 @@ export async function POST(req: NextRequest) {
             warning
         });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('GitHub Upload Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
     }
 }

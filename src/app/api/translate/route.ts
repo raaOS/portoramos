@@ -67,7 +67,7 @@ ${text}`;
             return NextResponse.json({ translation });
         }
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Translation handler error:', error);
         return NextResponse.json(
             { error: 'Translation failed. Please try again.' },

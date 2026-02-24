@@ -46,7 +46,16 @@ export async function sendTelegramAlert(message: string, options?: { buttons?: {
     try {
         const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
-        const body: any = {
+        interface TelegramMessageBody {
+            chat_id: string;
+            text: string;
+            parse_mode: 'Markdown' | 'HTML';
+            reply_markup?: {
+                inline_keyboard: { text: string; url: string }[][];
+            };
+        }
+
+        const body: TelegramMessageBody = {
             chat_id: chatId,
             text: message,
             parse_mode: 'Markdown',

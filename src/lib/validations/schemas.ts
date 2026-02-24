@@ -156,13 +156,13 @@ export const commentSchema: z.ZodType<CommentType> = baseCommentSchema.extend({
 }) as z.ZodType<CommentType>;
 
 // Validate comment depth
-export function validateCommentDepth(comment: any, depth: number = 0): boolean {
+export function validateCommentDepth(comment: CommentType, depth: number = 0): boolean {
     if (depth > MAX_COMMENT_DEPTH) {
         return false;
     }
 
     if (comment.replies && Array.isArray(comment.replies)) {
-        return comment.replies.every((reply: any) =>
+        return comment.replies.every((reply: CommentType) =>
             validateCommentDepth(reply, depth + 1)
         );
     }
