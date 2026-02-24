@@ -14,12 +14,7 @@
       "narrative": {
         "challenge": "Tantangannya adalah membuat produk digital (kartu langganan) terasa 'hadiah' yang fisik dan menarik di tengah kebisingan promosi musiman. Selain itu, desain harus tetap mobile-first dan memastikan semua branding pihak ketiga (Netflix, dll.) tidak terdistorsi.",
         "solution": "Saya menggunakan palet warna merah-hijau klasik dengan elemen 3D (ornamen, permen tongkat) untuk membangun suasana festive yang instan. Gift card ditata miring dan diberi efek bungkus kado untuk menonjolkan nilai gifting. Hierarki visual dibuat sangat jelas: Promo > CTA > Produk.",
-        "result": "",
-        "context": "Rizky Akbar Store perlu memanfaatkan momen puncak penjualan di akhir tahun (Natal dan Tahun Baru) untuk menggenjot traffic dan konversi layanan gift card digital mereka.",
-        "impact": "Didesain untuk mencapai rasio swipe-up atau klik tertinggi, memastikan audiens yang melihat di Story atau Reels langsung memahami penawaran dan jangka waktu promo tanpa perlu teks tambahan yang panjang.",
-        "concept": null,
-        "process": null,
-        "detail": null
+        "result": ""
       },
       "cover": "/assets/projects/kampanye-hadiah-digital-liburan.mp4",
       "coverWidth": 1080,
@@ -37,10 +32,13 @@
       "order": 1,
       "status": "published",
       "createdAt": "2025-12-23T17:49:06.544Z",
-      "updatedAt": "2026-01-12T05:39:27.589Z",
+      "updatedAt": "2026-02-24T21:24:08.694Z",
       "likes": 8,
       "shares": 5,
-      "allowComments": true
+      "allowComments": true,
+      "software": [
+        "photoshop"
+      ]
     },
     {
       "id": "gen-1766512146544-0",
@@ -757,5 +755,5 @@
       }
     }
   ],
-  "lastUpdated": "2026-01-16T15:47:59.815Z"
+  "lastUpdated": "2026-02-24T21:24:08.698Z"
 }
