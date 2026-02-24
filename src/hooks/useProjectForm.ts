@@ -28,6 +28,7 @@ export interface ProjectFormData {
     role?: string;
     timeline?: string;
     team?: string;
+    software?: string[];
     type?: 'commercial' | 'visual_art';
     narrative: {
         // Commercial
@@ -78,6 +79,7 @@ export const useProjectForm = (project?: Project) => {
         role: project?.role || '',
         timeline: project?.timeline || '',
         team: project?.team || '',
+        software: project?.software || [],
         type: project?.type || 'commercial',
 
         narrative: {
@@ -137,7 +139,8 @@ export const useProjectForm = (project?: Project) => {
                     beforeType: project.comparison?.beforeType || 'image',
                     afterImage: project.comparison?.afterImage || '',
                     afterType: project.comparison?.afterType || 'image'
-                }
+                },
+                software: project.software || []
             });
         }
     }, [project]);

@@ -459,6 +459,42 @@ export default function ProjectBasicInfo({ formData, errors, updateField, allPro
                         />
                     </div>
                 </div>
+
+                {/* Software / Tools Selection (New) */}
+                <div className="pt-6 border-t border-gray-100">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        Software / Tools Used
+                    </label>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                        {['photoshop', 'illustrator', 'figma', 'capcut', 'affinity_designer', 'affinity_photo', 'premiere', 'aftereffects'].map(tool => {
+                            const isSelected = formData.software?.includes(tool);
+                            return (
+                                <button
+                                    key={tool}
+                                    type="button"
+                                    onClick={() => {
+                                        const current = formData.software || [];
+                                        if (current.includes(tool)) {
+                                            updateField('software', current.filter(t => t !== tool));
+                                        } else {
+                                            updateField('software', [...current, tool]);
+                                        }
+                                    }}
+                                    className={`px-3 py-1.5 text-xs font-bold transition-all border rounded-none uppercase flex items-center gap-2 ${isSelected
+                                        ? 'bg-violet-600 border-violet-600 text-white shadow-md'
+                                        : 'bg-white border-gray-200 text-gray-500 hover:border-violet-300 hover:text-violet-600'
+                                        }`}
+                                >
+                                    {tool.replace('_', ' ')}
+                                    {isSelected && <X className="w-3 h-3" />}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <p className="text-[11px] text-gray-500 italic">
+                        Select tool icons to display in the project metadata section.
+                    </p>
+                </div>
             </div>
         </div>
     );
