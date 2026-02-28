@@ -20,8 +20,9 @@
           "isMe": true,
           "time": "09:41",
           "status": "read",
-          "type": "image",
-          "imageSrc": "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400&h=300&fit=crop"
+          "type": "project",
+          "imageSrc": "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400&h=300&fit=crop",
+          "projectId": "gen-1766512146544-16"
         },
         {
           "id": 1600000000003,
@@ -200,5 +201,5 @@
       "id": 7
     }
   ],
-  "lastUpdated": "2026-02-18T16:14:59.856Z"
+  "lastUpdated": "2026-02-28T23:24:10.114Z"
 }

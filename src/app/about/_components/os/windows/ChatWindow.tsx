@@ -189,7 +189,10 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                     {/* Project Thumbnail Bubble */}
                                     {msg.type === 'project' && msg.projectId && (
                                         projects[msg.projectId] ? (
-                                            <div className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 group cursor-pointer relative">
+                                            <div 
+                                                className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 group cursor-pointer relative hover:opacity-90 transition-opacity"
+                                                onClick={() => setPreviewImage(projects[msg.projectId!].cover)}
+                                            >
                                                 <Image
                                                     src={projects[msg.projectId].cover}
                                                     alt={projects[msg.projectId].title}
@@ -199,12 +202,13 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                                 />
                                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
                                                     <p className="text-white text-[11px] font-bold truncate">{projects[msg.projectId].title}</p>
+                                                    <p className="text-white/70 text-[9px]">Klik untuk preview</p>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="mb-2 rounded-md overflow-hidden bg-[#00a884]/10 border border-[#00a884]/20 p-3 cursor-pointer">
+                                            <div className="mb-2 rounded-md overflow-hidden bg-[#00a884]/10 border border-[#00a884]/20 p-3">
                                                 <p className="text-[#00a884] text-xs font-medium">📁 Project: {msg.projectId}</p>
-                                                <p className="text-[#667781] text-[10px] mt-1">Klik untuk lihat detail</p>
+                                                <p className="text-[#667781] text-[10px] mt-1">Loading project...</p>
                                             </div>
                                         )
                                     )}
