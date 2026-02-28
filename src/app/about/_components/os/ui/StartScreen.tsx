@@ -120,12 +120,11 @@ const StartScreen = ({ onStart }: StartScreenProps) => {
                                     <m.span
                                         key={i}
                                         className="text-white text-5xl md:text-7xl font-light tracking-tight"
-                                        initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
-                                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
                                         exit={{ 
                                             opacity: 0, 
-                                            y: -20, 
-                                            filter: "blur(10px)",
+                                            y: -20,
                                             transition: { duration: 0.2 }
                                         }}
                                         transition={{ 
@@ -138,15 +137,7 @@ const StartScreen = ({ onStart }: StartScreenProps) => {
                                     </m.span>
                                 ))}
                             </m.div>
-
-                            {/* Subtle glow under text */}
-                            <m.div
-                                className="absolute bottom-1/2 translate-y-12 w-48 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                                initial={{ scaleX: 0, opacity: 0 }}
-                                animate={{ scaleX: 1, opacity: 1 }}
-                                exit={{ scaleX: 0, opacity: 0 }}
-                                transition={{ delay: 0.5, duration: 0.4 }}
-                            />
+                            {/* Removed: Subtle glow under text */}
                         </m.div>
                     )}
 
@@ -164,21 +155,9 @@ const StartScreen = ({ onStart }: StartScreenProps) => {
                                     delay: 0.1
                                 }}
                             >
-                                {/* Door edge highlight */}
-                                <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+                                {/* Removed: Door edge highlight */}
                                 
-                                {/* Door texture/pattern */}
-                                <div className="absolute inset-0 opacity-5">
-                                    <div className="h-full w-full" style={{
-                                        backgroundImage: `repeating-linear-gradient(
-                                            90deg,
-                                            transparent,
-                                            transparent 40px,
-                                            rgba(255,255,255,0.1) 40px,
-                                            rgba(255,255,255,0.1) 41px
-                                        )`
-                                    }} />
-                                </div>
+                                {/* Removed: Door texture/pattern */}
                             </m.div>
 
                             {/* Right Door - Slides to RIGHT */}
@@ -192,34 +171,16 @@ const StartScreen = ({ onStart }: StartScreenProps) => {
                                     delay: 0.1
                                 }}
                             >
-                                {/* Door edge highlight */}
-                                <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+                                {/* Removed: Door edge highlight */}
                                 
-                                {/* Door texture/pattern */}
-                                <div className="absolute inset-0 opacity-5">
-                                    <div className="h-full w-full" style={{
-                                        backgroundImage: `repeating-linear-gradient(
-                                            90deg,
-                                            transparent,
-                                            transparent 40px,
-                                            rgba(255,255,255,0.1) 40px,
-                                            rgba(255,255,255,0.1) 41px
-                                        )`
-                                    }} />
-                                </div>
+                                {/* Removed: Door texture/pattern */}
                             </m.div>
 
-                            {/* Center line glow when doors separate */}
-                            <m.div
-                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-0 bg-white/40"
-                                initial={{ height: 0 }}
-                                animate={{ height: "100%" }}
-                                transition={{ duration: 0.3, delay: 0.1 }}
-                            />
+                            {/* Removed: Center line glow when doors separate */}
 
-                            {/* Light burst from center */}
+                            {/* Light burst from center - softer */}
                             <m.div
-                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0 h-0 rounded-full bg-white/10"
+                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0 h-0 rounded-full bg-white/5"
                                 initial={{ width: 0, height: 0, opacity: 1 }}
                                 animate={{ width: 200, height: 200, opacity: 0 }}
                                 transition={{ duration: 0.8, delay: 0.2 }}
