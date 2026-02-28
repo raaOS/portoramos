@@ -266,6 +266,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                             <AnimatePresence>
                                 {(needsPowerOn || isBooting) && (
                                     <m.div
+                                        key="boot-overlay"
                                         className="fixed inset-0 bg-black z-[9999]"
                                         initial={{ opacity: 1 }}
                                         exit={{ opacity: 0 }}
@@ -274,11 +275,13 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                 )}
                                 {needsPowerOn && (
                                     <StartScreen
+                                        key="start-screen"
                                         onStart={powerOn}
                                     />
                                 )}
                                 {isBooting && (
                                     <BootSequence
+                                        key="boot-sequence"
                                         onComplete={handleBootComplete}
                                     />
                                 )}
