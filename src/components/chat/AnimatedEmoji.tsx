@@ -168,8 +168,7 @@ export function parseEmojiText(text: string): React.ReactNode[] {
     parts.push(
       <AnimatedEmoji 
         key={`emoji-${match.index}`} 
-        emoji={emoji} 
-        className={className}
+        emoji={emoji}
       />
     );
     
