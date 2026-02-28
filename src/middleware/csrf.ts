@@ -13,7 +13,8 @@ export function checkCSRF(request: NextRequest) {
             '/api/chat/send', 
             '/api/webhook/telegram', 
             '/api/translate',
-            '/api/debug/simulate-reply'  // Allow for local testing
+            '/api/debug/simulate-reply',  // Allow for local testing
+            '/api/debug/webhook-status'   // Allow webhook status update
         ];
         if (!allowlistPaths.includes(pathname)) {
             const csrfToken = request.headers.get('x-csrf-token');
