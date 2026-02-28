@@ -185,19 +185,26 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                             >
                                 <div className="flex flex-col">
                                     {/* Project Thumbnail Bubble */}
-                                    {msg.type === 'project' && msg.projectId && projects[msg.projectId] && (
-                                        <div className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 group cursor-pointer relative">
-                                            <Image
-                                                src={projects[msg.projectId].cover}
-                                                alt={projects[msg.projectId].title}
-                                                width={300}
-                                                height={200}
-                                                className="w-full h-auto object-cover max-h-[180px]"
-                                            />
-                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                                                <p className="text-white text-[11px] font-bold truncate">{projects[msg.projectId].title}</p>
+                                    {msg.type === 'project' && msg.projectId && (
+                                        projects[msg.projectId] ? (
+                                            <div className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 group cursor-pointer relative">
+                                                <Image
+                                                    src={projects[msg.projectId].cover}
+                                                    alt={projects[msg.projectId].title}
+                                                    width={300}
+                                                    height={200}
+                                                    className="w-full h-auto object-cover max-h-[180px]"
+                                                />
+                                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                                                    <p className="text-white text-[11px] font-bold truncate">{projects[msg.projectId].title}</p>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div className="mb-2 rounded-md overflow-hidden bg-[#00a884]/10 border border-[#00a884]/20 p-3 cursor-pointer">
+                                                <p className="text-[#00a884] text-xs font-medium">📁 Project: {msg.projectId}</p>
+                                                <p className="text-[#667781] text-[10px] mt-1">Klik untuk lihat detail</p>
+                                            </div>
+                                        )
                                     )}
 
                                     {/* Image Bubble */}
