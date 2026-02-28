@@ -52,7 +52,6 @@ function TypingIndicator() {
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-[#111b21] dark:text-[#e9edef]">Ramos is typing</span>
                     <span className="text-[#00a884] font-bold min-w-[20px]">{dots}</span>
-                    <span className="w-0.5 h-4 bg-[#00a884] animate-pulse ml-0.5"></span>
                 </div>
             </div>
         </m.div>
