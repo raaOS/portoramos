@@ -15,19 +15,19 @@ const StartScreen = ({ onStart }: StartScreenProps) => {
     const handleClick = () => {
         if (screenState !== "idle") return;
         
-        // Step 1: Show RamosOS text
+        // Step 1: Show RamosOS text (1.5 detik)
         setScreenState("showingText");
         
-        // Step 2: Show black screen then doors open
+        // Step 2: Doors opening animation (1.5 detik setelah teks)
         setTimeout(() => {
             setScreenState("doorsOpening");
         }, 1500);
         
-        // Step 3: Complete
+        // Step 3: Complete (setelah animasi pintu selesai)
         setTimeout(() => {
             setScreenState("done");
             onStart();
-        }, 3000);
+        }, 3500); // 1500 + 2000 untuk animasi pintu yang lebih panjang
     };
 
     return (
@@ -150,9 +150,9 @@ const StartScreen = ({ onStart }: StartScreenProps) => {
                                 initial={{ x: 0 }}
                                 animate={{ x: "-100%" }}
                                 transition={{ 
-                                    duration: 1.2, 
+                                    duration: 1.8, 
                                     ease: [0.22, 1, 0.36, 1],
-                                    delay: 0.1
+                                    delay: 0.2
                                 }}
                             >
                                 {/* Removed: Door edge highlight */}
@@ -166,9 +166,9 @@ const StartScreen = ({ onStart }: StartScreenProps) => {
                                 initial={{ x: 0 }}
                                 animate={{ x: "100%" }}
                                 transition={{ 
-                                    duration: 1.2, 
+                                    duration: 1.8, 
                                     ease: [0.22, 1, 0.36, 1],
-                                    delay: 0.1
+                                    delay: 0.2
                                 }}
                             >
                                 {/* Removed: Door edge highlight */}
