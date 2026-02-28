@@ -263,15 +263,24 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                     </div>
 
                     {/* Chat Messages Area */}
-                    <div className="flex-1 w-full overflow-y-auto px-4 py-6 flex flex-col gap-3 relative"
-                        style={{ backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}>
+                    <div className="flex-1 w-full overflow-y-auto px-4 py-6 flex flex-col gap-3 relative bg-[#e5ddd5] dark:bg-[#0b141a]">
+                        {/* WhatsApp Pattern Background */}
+                        <div 
+                            className="absolute inset-0 opacity-40 pointer-events-none"
+                            style={{ 
+                                backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`, 
+                                backgroundSize: '400px',
+                                backgroundRepeat: 'repeat'
+                            }} 
+                        />
 
-                        <div className="w-full flex justify-center mb-4">
-                            <span className="bg-[#d9ddcf] dark:bg-[#1f2c34] text-[#4a4a4a] dark:text-gray-300 text-xs px-3 py-1 rounded-md shadow-sm">
-                                Today
-                            </span>
-                        </div>
-
+                        {/* Messages Container - above background */}
+                        <div className="relative z-10 flex flex-col gap-3 w-full">
+                            <div className="w-full flex justify-center mb-4">
+                                <span className="bg-[#d9ddcf] dark:bg-[#1f2c34] text-[#4a4a4a] dark:text-gray-300 text-xs px-3 py-1 rounded-md shadow-sm">
+                                    Today
+                                </span>
+                            </div>
                         <AnimatePresence initial={false}>
                             {messages.map((msg, idx) => {
                                 const isMe = msg.sender === 'visitor';
@@ -312,8 +321,9 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                             {/* Typing Indicator */}
                             {isTyping && <TypingIndicator />}
                         </AnimatePresence>
+                        </div>
 
-                        <div ref={bottomRef} className="h-2 w-full" />
+                        <div ref={bottomRef} className="h-2 w-full relative z-10" />
                     </div>
 
                     <div className="bg-[#f0f2f5] dark:bg-[#202c33] px-3 py-3 md:px-4 md:py-4 flex items-end gap-2 shrink-0 z-20 no-ring">
