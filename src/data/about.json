@@ -247,8 +247,8 @@
   "chatSettings": {},
   "windowPreferences": {
     "about": {
-      "x": 1249.75,
-      "y": 59,
+      "x": 1457.5277099609375,
+      "y": 60.111106872558594,
       "width": 647,
       "height": 573,
       "isOpenByDefault": false
@@ -541,5 +541,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-28T18:28:11.358Z"
+  "lastUpdated": "2026-02-28T18:28:12.893Z"
 }
