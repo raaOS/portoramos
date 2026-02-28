@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
 import EmojiPicker from '@/components/chat/EmojiPicker';
+import { parseEmojiText } from '@/components/chat/AnimatedEmoji';
 
 // Helper for fetching
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -324,7 +325,7 @@ export default function FullPageChat({ contactInfo }: FullPageChatProps) {
                                                 </svg>
 
                                                 <div className="whitespace-pre-wrap">
-                                                    {msg.text}
+                                                    {parseEmojiText(msg.text)}
                                                 </div>
 
                                                 <div className={`flex items-center justify-end gap-1 mt-1 -mb-1 ${isMe ? 'text-[#667781] dark:text-white/60' : 'text-[#667781] dark:text-white/50'}`}>
