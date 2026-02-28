@@ -19,6 +19,46 @@ interface ChatMessage {
     timestamp: number;
 }
 
+// Typing indicator component with typewriter effect
+function TypingIndicator() {
+    const [dots, setDots] = useState('');
+    
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setDots(prev => {
+                if (prev === '') return '.';
+                if (prev === '.') return '..';
+                if (prev === '..') return '...';
+                return '';
+            });
+        }, 400);
+        
+        return () => clearInterval(interval);
+    }, []);
+    
+    return (
+        <m.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className="flex flex-col max-w-[85%] self-start items-start relative"
+        >
+            <div className="px-4 py-3 rounded-2xl shadow-sm bg-white dark:bg-[#202c33] text-[#667781] dark:text-[#8696a0] rounded-tl-none relative min-w-[140px]">
+                {/* Chat Tail SVG */}
+                <svg viewBox="0 0 8 13" width="8" height="13" className="absolute top-0 -left-[8px] text-white dark:text-[#202c33] fill-current transform scale-x-[-1]">
+                    <path d="M5.188 1H0v11.191L8 1.733V1h-2.812z"></path>
+                </svg>
+                
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-[#111b21] dark:text-[#e9edef]">Ramos is typing</span>
+                    <span className="text-[#00a884] font-bold min-w-[20px]">{dots}</span>
+                    <span className="w-0.5 h-4 bg-[#00a884] animate-pulse ml-0.5"></span>
+                </div>
+            </div>
+        </m.div>
+    );
+}
+
 export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
     console.log('[FullPageChat] Rendered, contactInfo:', !!contactInfo);
     // Session state
@@ -26,6 +66,7 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isSending, setIsSending] = useState(false);
+    const [isTyping, setIsTyping] = useState(false);
 
     const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -62,6 +103,17 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
         { refreshInterval: 2500, revalidateOnFocus: true }
     );
 
+    // Timeout for typing indicator (max 30 seconds)
+    useEffect(() => {
+        if (!isTyping) return;
+        
+        const timeout = setTimeout(() => {
+            setIsTyping(false);
+        }, 30000); // 30 seconds max
+        
+        return () => clearTimeout(timeout);
+    }, [isTyping]);
+
     // Update messages when polling returns new data
     useEffect(() => {
         if (syncData?.success && syncData?.messages?.length > 0) {
@@ -91,6 +143,7 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
 
                 if (hasNewAdminMessage) {
                     soundManager.play('notification');
+                    setIsTyping(false); // Hide typing when admin replies
                 }
 
                 // Absolute deduplication by ID just in case state got tangled
@@ -114,7 +167,7 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
     // Auto-scroll to bottom
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isSending]);
+    }, [messages, isSending, isTyping]);
 
     const handleSend = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -123,6 +176,7 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
         const messageText = input.trim();
         setInput('');
         setIsSending(true);
+        setIsTyping(true); // Show typing indicator
 
         // Optimistically add to UI
         const tempId = `temp-${Date.now()}`;
@@ -165,7 +219,7 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
             }
         } catch (error) {
             console.error('Failed to send message:', error);
-            // Could add a visual error state here
+            setIsTyping(false); // Hide typing on error
         } finally {
             setIsSending(false);
         }
@@ -255,6 +309,9 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                                     </m.div>
                                 );
                             })}
+                            
+                            {/* Typing Indicator */}
+                            {isTyping && <TypingIndicator />}
                         </AnimatePresence>
 
                         <div ref={bottomRef} className="h-2 w-full" />
