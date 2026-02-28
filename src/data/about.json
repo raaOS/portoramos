@@ -254,7 +254,10 @@
     },
     "whatsapp": {
       "x": 735,
-      "y": 134
+      "y": 134,
+      "width": 450,
+      "height": 600,
+      "isOpenByDefault": true
     }
   },
   "soundConfig": {
@@ -544,5 +547,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-28T23:57:23.593Z"
+  "lastUpdated": "2026-02-28T23:57:24.908Z"
 }
