@@ -1,8 +1,7 @@
 import { Project } from '@/types/projects';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { unstable_cache } from 'next/cache';
-import { revalidateTag, revalidatePath } from 'next/cache';
+import { unstable_cache, revalidateTag, revalidatePath } from 'next/cache';
 
 const GITHUB_API_URL = 'https://api.github.com';
 

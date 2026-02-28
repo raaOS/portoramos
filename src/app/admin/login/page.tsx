@@ -464,7 +464,7 @@ export default function AdminLoginPage() {
                 </p>
                 <p className="text-red-700 mt-1">
                   Chrome kadang memblokir geolocation di localhost meski sudah di-allow. 
-                  Solusi: <strong>Refresh halaman (F5)</strong> atau klik tombol "Coba Lagi" setelah mengizinkan lokasi.
+                  Solusi: <strong>Refresh halaman (F5)</strong> atau klik tombol &quot;Coba Lagi&quot; setelah mengizinkan lokasi.
                 </p>
               </div>
 
@@ -472,8 +472,8 @@ export default function AdminLoginPage() {
                 <p className="font-medium text-gray-900 mb-2">Langkah 1: Allow di Browser</p>
                 <ol className="list-decimal list-inside space-y-1 ml-2">
                   <li>Klik ikon gembok (🔒) atau lokasi (📍) di sebelah kiri address bar</li>
-                  <li>Pastikan "Location" di-set ke "Allow"</li>
-                  <li>Jika ada popup "Allow... to know your location", klik "Allow"</li>
+                  <li>Pastikan &quot;Location&quot; di-set ke &quot;Allow&quot;</li>
+                  <li>Jika ada popup &quot;Allow... to know your location&quot;, klik &quot;Allow&quot;</li>
                 </ol>
               </div>
 
@@ -481,7 +481,7 @@ export default function AdminLoginPage() {
                 <p className="font-medium text-gray-900 mb-2">Langkah 2: Windows Location</p>
                 <ol className="list-decimal list-inside space-y-1 ml-2">
                   <li>Buka Windows Settings → Privacy & Security → Location</li>
-                  <li>Pastikan "Location services" ON</li>
+                  <li>Pastikan &quot;Location services&quot; ON</li>
                   <li>Scroll ke bawah, cari Chrome/Edge Anda, pastikan ON</li>
                 </ol>
               </div>
@@ -489,10 +489,10 @@ export default function AdminLoginPage() {
               <div>
                 <p className="font-medium text-gray-900 mb-2">Langkah 3: Reset & Refresh</p>
                 <ol className="list-decimal list-inside space-y-1 ml-2">
-                  <li>Klik ikon gembok → "Reset permission" atau "Site settings"</li>
-                  <li>Set Location ke "Allow"</li>
+                  <li>Klik ikon gembok → &quot;Reset permission&quot; atau &quot;Site settings&quot;</li>
+                  <li>Set Location ke &quot;Allow&quot;</li>
                   <li><strong>Refresh halaman (F5)</strong></li>
-                  <li>Klik "Allow" jika ada popup</li>
+                  <li>Klik &quot;Allow&quot; jika ada popup</li>
                 </ol>
               </div>
 

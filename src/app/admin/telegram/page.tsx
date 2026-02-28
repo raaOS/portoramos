@@ -64,7 +64,11 @@ export default function TelegramAdminPage() {
   };
 
   useEffect(() => {
-    checkStatus();
+    // Use setTimeout to avoid synchronous setState in effect (cascading renders)
+    const timer = setTimeout(() => {
+      checkStatus();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -152,8 +156,8 @@ export default function TelegramAdminPage() {
         <div className="mt-6 text-sm text-gray-500">
           <p>Instructions:</p>
           <ol className="list-decimal list-inside mt-2 space-y-1">
-            <li>Click "Fix Webhook URL" if status shows ❌ WRONG URL</li>
-            <li>Click "Clear Pending Updates" if there are stuck messages</li>
+            <li>Click &quot;Fix Webhook URL&quot; if status shows ❌ WRONG URL</li>
+            <li>Click &quot;Clear Pending Updates&quot; if there are stuck messages</li>
             <li>After fixing, reply from Telegram app should work!</li>
           </ol>
         </div>
