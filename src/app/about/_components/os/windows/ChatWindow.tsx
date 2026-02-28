@@ -32,7 +32,9 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                 const data = await response.json();
                 const projectMap: Record<string, Project> = {};
                 (data.projects || []).forEach((p: Project) => {
+                    // Index by both id and slug for flexible lookup
                     projectMap[p.id] = p;
+                    if (p.slug) projectMap[p.slug] = p;
                 });
                 setProjects(projectMap);
             } catch {
