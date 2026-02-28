@@ -249,8 +249,8 @@
     "about": {
       "x": 1236.75,
       "y": 50,
-      "width": 629,
-      "height": 589,
+      "width": 647,
+      "height": 573,
       "isOpenByDefault": true
     }
   },
@@ -541,5 +541,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-28T14:39:58.145Z"
+  "lastUpdated": "2026-02-28T15:07:48.212Z"
 }
