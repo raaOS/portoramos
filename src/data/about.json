@@ -251,7 +251,7 @@
       "y": 159.00000381469727,
       "width": 647,
       "height": 573,
-      "isOpenByDefault": true
+      "isOpenByDefault": false
     }
   },
   "soundConfig": {
@@ -541,5 +541,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-28T18:29:17.192Z"
+  "lastUpdated": "2026-02-28T18:29:16.300Z"
 }
