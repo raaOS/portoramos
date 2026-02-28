@@ -1,5 +1,4 @@
-import './globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { displayClassName, sansClassName } from '@/app/fonts';
 import { generateStructuredData, baseSEO } from '@/lib/seo';
 import Providers from '@/components/layout/Providers';
@@ -7,17 +6,29 @@ import { ToastProvider } from '@/contexts/ToastContext';
 import { LastUpdatedProvider } from '@/contexts/LastUpdatedContext';
 import { NavbarVisibilityProvider } from '@/contexts/NavbarVisibilityContext';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
-import AppWrapper from '@/components/layout/AppWrapper';
+
 import LayoutClient from '@/components/layout/LayoutClient';
 import UnregisterSW from '@/components/shared/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import PerformanceMonitor from '@/components/shared/PerformanceMonitor';
 import SmoothScroll from '@/components/layout/SmoothScroll';
 import { loadAboutData } from '@/lib/about';
 import SoundConfigLoader from '@/components/layout/SoundConfigLoader';
+import './globals.css';
 
-// ISR: Revalidate layout every 60 seconds to propagate dock configuration changes
-// while reducing server load vs revalidate = 0 (every request)
+// ISR: Revalidate layout every 60 seconds
 export const revalidate = 60;
+
+// Separate viewport export for Next.js 14+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0b0b0b' },
+  ],
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseSEO.siteUrl),
@@ -30,6 +41,17 @@ export const metadata: Metadata = {
   authors: [{ name: baseSEO.author }],
   creator: baseSEO.author,
   publisher: baseSEO.author,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   openGraph: {
     type: 'website',
     locale: baseSEO.locale,
@@ -52,16 +74,11 @@ export const metadata: Metadata = {
     description: baseSEO.description,
     images: [baseSEO.image],
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
+  alternates: {
+    canonical: baseSEO.siteUrl,
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
   },
 };
 
@@ -73,47 +90,55 @@ export default async function RootLayout({
   modal: React.ReactNode;
 }) {
   const websiteStructuredData = generateStructuredData('website');
-
-  // Fetch generic data for global layout elements
   const aboutData = await loadAboutData();
 
   return (
     <html lang="id" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
-        {/* Preconnect to external domains for faster resource loading */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        {/* Preconnect to critical domains */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://api.github.com" />
         <link rel="dns-prefetch" href="https://api.github.com" />
-        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
-
+        <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
+        
+        {/* Preload critical LCP image - OS Wallpaper */}
+        <link 
+          rel="preload" 
+          href="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop" 
+          as="image" 
+          type="image/jpeg"
+          fetchPriority="high"
+        />
+        
+        {/* Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData) }}
         />
       </head>
       <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default" suppressHydrationWarning>
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100000] focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-black">
+        {/* Skip to content - Accessibility */}
+        <a 
+          href="#main-content" 
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100000] focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-black"
+          aria-label="Skip to main content"
+        >
           Skip to main content
         </a>
+        
         <SmoothScroll />
         <Providers>
           <ToastProvider>
             <LastUpdatedProvider>
               <NavbarVisibilityProvider>
                 <ErrorBoundary>
-                  <AppWrapper>
                     <SoundConfigLoader soundConfig={aboutData?.soundConfig} />
                     <LayoutClient modal={modal} dockConfig={aboutData?.dockConfig}>
                       {children}
                     </LayoutClient>
-                    {/* Track page views and route changes */}
-                    {/* Ensure any old service workers are removed */}
                     <UnregisterSW />
                     <SpeedInsights />
-                  </AppWrapper>
+                    <PerformanceMonitor />
                 </ErrorBoundary>
               </NavbarVisibilityProvider>
             </LastUpdatedProvider>

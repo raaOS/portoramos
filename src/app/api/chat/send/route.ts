@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTelegramConfig } from '@/lib/telegram';
+import { validateConfig } from '@/lib/telegram';
 import { chatStore } from '@/lib/chatStore';
 import { aiChatService } from '@/lib/services/aiChatService';
 import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
@@ -13,7 +13,13 @@ const CHAT_BLOCK_MS = 5 * 60 * 1000;   // 5 menit block
 
 export async function POST(request: Request) {
     try {
-        const { botToken, chatId: adminChatId } = await getTelegramConfig();
+        // Use validateConfig to get actual bot token (not masked)
+        const validation = validateConfig();
+        if (!validation.valid) {
+            return NextResponse.json({ error: 'Telegram not configured: ' + validation.error }, { status: 500 });
+        }
+        const { botToken, chatId: adminChatId, groupId: envGroupId } = validation.config;
+        
         if (!botToken || !adminChatId) {
             return NextResponse.json({ error: 'Telegram not configured' }, { status: 500 });
         }
@@ -59,9 +65,12 @@ export async function POST(request: Request) {
         }
 
         // 3. Telegram Routing (Topics vs DM)
-        const groupId = process.env.TELEGRAM_GROUP_ID;
+        const groupId = envGroupId || process.env.TELEGRAM_GROUP_ID;
         let targetChatId = groupId || adminChatId;
-        let threadId = session.telegramThreadId;
+        // Ensure threadId is treated as number from Firebase
+        let threadId: number | undefined = session.telegramThreadId ? Number(session.telegramThreadId) : undefined;
+
+
 
         if (groupId) {
             // Need to ensure visitor has a Topic created in the forum
@@ -76,16 +85,17 @@ export async function POST(request: Request) {
                         })
                     });
                     const topicData = await topicRes.json();
+                    
                     if (topicData.ok && topicData.result?.message_thread_id) {
-                        threadId = topicData.result.message_thread_id;
-                        await chatStore.updateSessionThreadId(visitorId, threadId as number);
+                        threadId = Number(topicData.result.message_thread_id);
+                        await chatStore.updateSessionThreadId(visitorId, threadId);
                     } else {
-                        console.error('Failed to create Telegram Topic (Fallback to DM):', topicData);
+                        console.error('[Chat Send] Failed to create Telegram Topic:', topicData);
                         // Fallback to sending to admin DM instead of group topic
                         targetChatId = adminChatId;
                     }
                 } catch (topicErr) {
-                    console.error('Network Error creating Telegram Topic (Fallback to DM):', topicErr);
+                    console.error('[Chat Send] Network Error creating Telegram Topic:', topicErr);
                     targetChatId = adminChatId;
                 }
             }
@@ -112,6 +122,8 @@ export async function POST(request: Request) {
         // 3b. Map the Telegram message ID to the visitor ID for future manual replies
         if (tgData.ok && tgData.result?.message_id) {
             await chatStore.mapTelegramMessage(visitorId, tgData.result.message_id);
+        } else {
+            console.error('[Chat Send] Failed to send message to Telegram:', tgData);
         }
 
         // 4. Trigger AI if in AI mode
@@ -145,6 +157,8 @@ export async function POST(request: Request) {
                     const aiTgData = await aiTgRes.json();
                     if (aiTgData.ok && aiTgData.result?.message_id) {
                         await chatStore.mapTelegramMessage(visitorId, aiTgData.result.message_id);
+                    } else {
+                        console.error('[Chat Send] Failed to send AI reply to Telegram:', aiTgData);
                     }
                 }
             } catch (aiErr) {

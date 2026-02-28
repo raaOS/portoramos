@@ -1,69 +1,234 @@
 "use client";
 
-import React from "react";
-import { m } from "framer-motion";
-import { Power } from "lucide-react";
+import React, { useState } from "react";
+import { m, AnimatePresence } from "framer-motion";
 
 interface StartScreenProps {
     onStart: () => void;
 }
 
+type ScreenState = "idle" | "showingText" | "doorsOpening" | "done";
+
 const StartScreen = ({ onStart }: StartScreenProps) => {
+    const [screenState, setScreenState] = useState<ScreenState>("idle");
+
+    const handleClick = () => {
+        if (screenState !== "idle") return;
+        
+        // Step 1: Show RamosOS text
+        setScreenState("showingText");
+        
+        // Step 2: Show black screen then doors open
+        setTimeout(() => {
+            setScreenState("doorsOpening");
+        }, 1500);
+        
+        // Step 3: Complete
+        setTimeout(() => {
+            setScreenState("done");
+            onStart();
+        }, 3000);
+    };
+
     return (
-        <m.div
-            className="fixed inset-0 z-[10000] bg-black flex flex-col items-center justify-center select-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 1 } }}
-        >
-            {/* Vintage Monitor Reflection Effect - Moved to cover whole screen */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.02] to-transparent pointer-events-none" />
-
-            <m.div
-                className="flex flex-col items-center gap-8 relative z-10"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.8 }}
-            >
-                {/* Power Button */}
-                <m.button
-                    onClick={onStart}
-                    className="relative group w-24 h-24 rounded-full bg-black border border-white/10 flex items-center justify-center transition-all duration-300 hover:border-white/20 cursor-pointer overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)]"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                >
-                    {/* Inner Glow */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                    {/* Animated Pulsing Ring */}
-                    <m.div
-                        className="absolute inset-0 rounded-full border border-white/20"
-                        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    />
-
-                    <Power size={32} className="text-white/40 group-hover:text-white transition-colors duration-300" />
-                </m.button>
-
-                {/* Text Prompt */}
+        <AnimatePresence mode="wait">
+            {screenState !== "done" && (
                 <m.div
-                    className="text-center space-y-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: [0.3, 0.6, 0.3] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="fixed inset-0 z-[10000] overflow-hidden"
+                    initial={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
                 >
-                    <p className="text-white/40 font-mono text-[10px] tracking-[0.3em] uppercase">
-                        System Ready
-                    </p>
-                    <p className="text-white/60 font-mono text-xs tracking-widest uppercase">
-                        Push to Power On
-                    </p>
-                </m.div>
-            </m.div>
+                    {/* === STAGE 1: Power Button === */}
+                    {screenState === "idle" && (
+                        <m.div
+                            className="absolute inset-0 bg-black flex items-center justify-center cursor-pointer"
+                            onClick={handleClick}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.5 }}
+                        >
+                            {/* Power Button Container */}
+                            <m.div
+                                className="relative flex flex-col items-center gap-6"
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                            >
+                                {/* Power Button Circle */}
+                                <m.div
+                                    className="relative w-24 h-24 rounded-full border-2 border-white/30 flex items-center justify-center"
+                                    whileHover={{ 
+                                        borderColor: "rgba(255,255,255,0.8)",
+                                        boxShadow: "0 0 30px rgba(255,255,255,0.2)"
+                                    }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    {/* Inner glow */}
+                                    <m.div
+                                        className="absolute inset-2 rounded-full bg-white/5"
+                                        animate={{ 
+                                            opacity: [0.3, 0.6, 0.3],
+                                        }}
+                                        transition={{ 
+                                            duration: 2, 
+                                            repeat: Infinity,
+                                            ease: "easeInOut"
+                                        }}
+                                    />
+                                    
+                                    {/* Power Icon */}
+                                    <svg 
+                                        width="40" 
+                                        height="40" 
+                                        viewBox="0 0 24 24" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="1.5"
+                                        className="text-white/80"
+                                    >
+                                        <path d="M12 2v4M12 12v-2M5.636 5.636a9 9 0 1 0 12.728 0" />
+                                        <path d="M12 12a4 4 0 1 0 0-8" />
+                                    </svg>
+                                </m.div>
 
-            {/* CRT Scanline Effect (Optional/Subtle) */}
-            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]" />
-        </m.div>
+                                {/* Click hint */}
+                                <m.p
+                                    className="text-white/40 text-xs tracking-[0.3em] uppercase"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5, duration: 0.5 }}
+                                >
+                                    Click to Start
+                                </m.p>
+                            </m.div>
+                        </m.div>
+                    )}
+
+                    {/* === STAGE 2: RamosOS Text === */}
+                    {screenState === "showingText" && (
+                        <m.div
+                            className="absolute inset-0 bg-black flex items-center justify-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <m.div className="flex items-center gap-1">
+                                {"RamosOS".split("").map((char, i) => (
+                                    <m.span
+                                        key={i}
+                                        className="text-white text-5xl md:text-7xl font-light tracking-tight"
+                                        initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
+                                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                        exit={{ 
+                                            opacity: 0, 
+                                            y: -20, 
+                                            filter: "blur(10px)",
+                                            transition: { duration: 0.2 }
+                                        }}
+                                        transition={{ 
+                                            delay: i * 0.08, 
+                                            duration: 0.4,
+                                            ease: [0.22, 1, 0.36, 1]
+                                        }}
+                                    >
+                                        {char}
+                                    </m.span>
+                                ))}
+                            </m.div>
+
+                            {/* Subtle glow under text */}
+                            <m.div
+                                className="absolute bottom-1/2 translate-y-12 w-48 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                                initial={{ scaleX: 0, opacity: 0 }}
+                                animate={{ scaleX: 1, opacity: 1 }}
+                                exit={{ scaleX: 0, opacity: 0 }}
+                                transition={{ delay: 0.5, duration: 0.4 }}
+                            />
+                        </m.div>
+                    )}
+
+                    {/* === STAGE 3: Japanese Door Split === */}
+                    {screenState === "doorsOpening" && (
+                        <>
+                            {/* Left Door - Slides to LEFT */}
+                            <m.div
+                                className="absolute inset-y-0 left-0 w-1/2 bg-black z-[10001]"
+                                initial={{ x: 0 }}
+                                animate={{ x: "-100%" }}
+                                transition={{ 
+                                    duration: 1.2, 
+                                    ease: [0.22, 1, 0.36, 1],
+                                    delay: 0.1
+                                }}
+                            >
+                                {/* Door edge highlight */}
+                                <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+                                
+                                {/* Door texture/pattern */}
+                                <div className="absolute inset-0 opacity-5">
+                                    <div className="h-full w-full" style={{
+                                        backgroundImage: `repeating-linear-gradient(
+                                            90deg,
+                                            transparent,
+                                            transparent 40px,
+                                            rgba(255,255,255,0.1) 40px,
+                                            rgba(255,255,255,0.1) 41px
+                                        )`
+                                    }} />
+                                </div>
+                            </m.div>
+
+                            {/* Right Door - Slides to RIGHT */}
+                            <m.div
+                                className="absolute inset-y-0 right-0 w-1/2 bg-black z-[10001]"
+                                initial={{ x: 0 }}
+                                animate={{ x: "100%" }}
+                                transition={{ 
+                                    duration: 1.2, 
+                                    ease: [0.22, 1, 0.36, 1],
+                                    delay: 0.1
+                                }}
+                            >
+                                {/* Door edge highlight */}
+                                <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+                                
+                                {/* Door texture/pattern */}
+                                <div className="absolute inset-0 opacity-5">
+                                    <div className="h-full w-full" style={{
+                                        backgroundImage: `repeating-linear-gradient(
+                                            90deg,
+                                            transparent,
+                                            transparent 40px,
+                                            rgba(255,255,255,0.1) 40px,
+                                            rgba(255,255,255,0.1) 41px
+                                        )`
+                                    }} />
+                                </div>
+                            </m.div>
+
+                            {/* Center line glow when doors separate */}
+                            <m.div
+                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-0 bg-white/40"
+                                initial={{ height: 0 }}
+                                animate={{ height: "100%" }}
+                                transition={{ duration: 0.3, delay: 0.1 }}
+                            />
+
+                            {/* Light burst from center */}
+                            <m.div
+                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0 h-0 rounded-full bg-white/10"
+                                initial={{ width: 0, height: 0, opacity: 1 }}
+                                animate={{ width: 200, height: 200, opacity: 0 }}
+                                transition={{ duration: 0.8, delay: 0.2 }}
+                            />
+                        </>
+                    )}
+                </m.div>
+            )}
+        </AnimatePresence>
     );
 };
 

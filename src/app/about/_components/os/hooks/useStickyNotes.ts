@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { NoteData } from '../StickyNoteItem';
+import type { NoteData } from '../ui/elements/StickyNoteItem';
 
 const INITIAL_NOTES: NoteData[] = [
     {
@@ -19,9 +19,9 @@ const INITIAL_NOTES: NoteData[] = [
 ];
 
 // Helper debounce function
-const debounce = (func: Function, wait: number) => {
+const debounce = <T extends (...args: any[]) => any>(func: T, wait: number) => {
     let timeout: NodeJS.Timeout;
-    return (...args: any[]) => {
+    return (...args: Parameters<T>) => {
         clearTimeout(timeout);
         timeout = setTimeout(() => func(...args), wait);
     };

@@ -1,15 +1,17 @@
 import React, { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { Project } from "@/types/projects";
+import type { ContactProfile } from "../data/mockChats";
+import type { NoteData } from "../ui/elements/StickyNoteItem";
 
 interface UseDesktopNavigationProps {
-    openWindow: (id: string, options?: any) => void;
+    openWindow: (id: string, options?: { content: React.ReactNode }) => void;
     resetWindows: () => void;
-    dynamicContacts: any;
-    ChatWindow: React.ComponentType<any>;
+    dynamicContacts: Record<string, ContactProfile>;
+    ChatWindow: React.ComponentType<{ activeChatId?: string | null; customContacts?: Record<string, ContactProfile> }>;
     notesVisible: boolean;
     setNotesVisible: (visible: boolean) => void;
-    notes: any[];
+    notes: NoteData[];
     restoreNote: (id: string) => void;
     addNote: () => void;
     isAdmin: boolean;

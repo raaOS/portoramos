@@ -1,9 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { GalleryFeaturedData } from '@/types/gallery';
 import { validateAdminRequest } from '@/lib/auth';
-import { NextRequest } from 'next/server';
 
 const dataFilePath = path.join(process.cwd(), 'src/data/gallery-featured.json');
 

@@ -2,6 +2,10 @@ import { Project } from "@/types/projects";
 import { getProxiedUrl } from "@/lib/utils";
 import { DesktopPreferences } from "@/types/about";
 
+type DesktopItem =
+    | { id: string; type: "folder"; label: string; action?: () => void }
+    | (Omit<Project, "type"> & { type: "project" });
+
 export const generateDesktopIcons = (
     windowSize: { width: number; height: number },
     commercialProjects: Project[],
@@ -54,9 +58,10 @@ export const generateDesktopIcons = (
         ...visibleProjects.map((p) => ({ ...p, type: "project" })),
     ];
 
-    const generatedIcons = desktopItems.map((item: any, index: number) => {
+    const generatedIcons = (desktopItems as DesktopItem[]).map((item, index: number) => {
+        const itemId = item.id;
         // 1. Check if we have a saved position for this ID (Admin Saved)
-        const savedPos = desktopPreferences?.iconPositions?.[item.id];
+        const savedPos = desktopPreferences?.iconPositions?.[itemId];
 
         let slotIndex, slot, finalX, finalY;
 
@@ -81,7 +86,7 @@ export const generateDesktopIcons = (
                 return (hash % 100) / 100;
             };
 
-            const seed = getSeededRandom(item.id);
+            const seed = getSeededRandom(itemId);
             const jitterRange = isMobile ? 5 : 20;
             const jitterX = seed * jitterRange - (jitterRange / 2);
             const jitterY = (1 - seed) * jitterRange - (jitterRange / 2);
@@ -107,7 +112,7 @@ export const generateDesktopIcons = (
             };
         }
 
-        const project = item as Project;
+        const project = item;
 
         // Video Detection Logic
         let videoUrl: string | undefined;
@@ -117,8 +122,8 @@ export const generateDesktopIcons = (
 
         if (isVideo(project.cover)) {
             videoUrl = project.cover;
-        } else if (project.galleryItems?.some((i) => i.kind === "video")) {
-            videoUrl = project.galleryItems.find((i) => i.kind === "video")?.src;
+        } else if (project.galleryItems?.some((i: { kind: string; src: string }) => i.kind === "video")) {
+            videoUrl = project.galleryItems.find((i: { kind: string; src: string }) => i.kind === "video")?.src;
         }
 
         // Calculate aspect ratio from project dimensions, default to 4:5 (portrait poster)

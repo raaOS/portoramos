@@ -8,12 +8,12 @@ import { HardSkillsData } from "@/types/hardSkill";
 import { Project } from "@/types/projects";
 import { ContactProfile } from "../data/mockChats";
 
-const AboutContent = dynamic(() => import("../AboutContent"), {
+const AboutContent = dynamic(() => import("../windows/AboutContent"), {
     loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
     ssr: false
 });
 
-const ChatWindow = dynamic(() => import("../ChatWindow"), {
+const ChatWindow = dynamic(() => import("../windows/ChatWindow"), {
     loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
     ssr: false
 });

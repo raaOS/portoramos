@@ -2,12 +2,12 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import DesktopIcon from "../DesktopIcon";
-import { DraggableStickyNote } from "../DraggableStickyNote";
-import type { NoteData } from "../StickyNoteItem";
+import DesktopIcon from "../ui/elements/DesktopIcon";
+import { DraggableStickyNote } from "../ui/elements/DraggableStickyNote";
+import type { NoteData } from "../ui/elements/StickyNoteItem";
 import type { Project } from "@/types/projects";
 
-const MacFolder = dynamic(() => import("../MacFolder"), {
+const MacFolder = dynamic(() => import("../windows/MacFolder"), {
     loading: () => <div className="w-16 h-16 bg-gray-200/50 rounded-lg animate-pulse" />,
     ssr: false
 });
@@ -46,55 +46,47 @@ export default function DesktopIconsLayer({
     setNotesVisible
 }: DesktopIconsLayerProps) {
     return (
-        <div
-            className="absolute inset-0 z-10 pointer-events-none"
-            style={{ pointerEvents: 'none' }}
-        >
-            {projectIcons.map((icon: any) => {
-                const isFolder = icon.type === 'folder';
-
-                return (
+        <div className="absolute inset-0 z-10 pointer-events-none">
+            {/* Desktop Icons Grid */}
+            <div className="absolute inset-0 pointer-events-none">
+                {projectIcons.map((icon) => (
                     <DesktopIcon
                         key={icon.id}
                         {...icon}
-                        icon={!isFolder ? icon.icon : undefined}
+                        icon={!icon.type || icon.type !== 'folder' ? icon.icon : undefined}
                         isMobile={isMobile}
                         priority={icon.priority}
                         onPositionChange={handleIconPositionChange}
                         onClick={() => {
-                            if (isFolder && icon.action) icon.action();
-                            else if (icon.type === 'project') openProjectWindow(icon.data);
+                            if (icon.type === 'project' && icon.data) {
+                                openProjectWindow(icon.data);
+                            } else if (icon.action) {
+                                icon.action();
+                            }
                         }}
                     >
-                        {isFolder && <MacFolder size={0.85} isStatic={true} />}
+                        {icon.type === 'folder' && <MacFolder size={0.85} isStatic={true} />}
                     </DesktopIcon>
-                );
-            })}
+                ))}
+            </div>
 
-            {/* Sticky Notes - Only show when toggled visible */}
+            {/* Sticky Notes Layer */}
             {notesVisible && (
-                <>
-                    {notes.filter(n => !n.isDeleted).map(note => (
+                <div className="absolute inset-0 pointer-events-none z-20">
+                    {notes.filter(n => !n.isDeleted).map((note) => (
                         <DraggableStickyNote
                             key={note.id}
                             note={note}
                             updateNote={updateNote}
                             bringToFrontNote={bringToFrontNote}
-                            deleteNote={(id) => {
-                                deleteNote(id);
-                                // If this was the last visible note, turn off the dock indicator
-                                const visibleCount = notes.filter(n => !n.isDeleted).length;
-                                if (visibleCount <= 1) {
-                                    setNotesVisible(false);
-                                }
-                            }}
+                            deleteNote={deleteNote}
                             permanentDeleteNote={permanentDeleteNote}
                             restoreNote={restoreNote}
                             addNote={addNote}
                             isAdmin={isAdmin}
                         />
                     ))}
-                </>
+                </div>
             )}
         </div>
     );

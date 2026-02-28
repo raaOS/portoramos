@@ -37,7 +37,7 @@ const nextConfig = {
     // Modern formats for best compression and performance
     formats: ['image/avif', 'image/webp'],
     // Supported image qualities to match assets
-    qualities: [60, 75, 90],
+    qualities: [60, 75, 85, 90],
     // Long cache time for CDN optimization (1 year)
     minimumCacheTTL: 31536000,
   },
@@ -66,7 +66,11 @@ const nextConfig = {
       '@tsparticles/react',
       'react-intersection-observer',
       'react-masonry-css',
-    ]
+    ],
+    // Enable optimistic client cache for faster navigation
+    optimisticClientCache: true,
+    // Enable scroll restoration
+    scrollRestoration: true,
   },
 
   // Externalize heavy server dependencies to fix Vercel lambda size limits
@@ -134,6 +138,15 @@ const nextConfig = {
   async rewrites() {
     return [
       // Swallow legacy Vite HMR client requests (harmless 404s in Next dev)
+      // Handle __webpack_hmr requests to suppress 404 errors in logs
+      {
+        source: '/__webpack_hmr',
+        destination: '/api/empty'
+      },
+      {
+        source: '/events',
+        destination: '/api/empty'
+      }
     ]
   },
   async redirects() {
@@ -151,6 +164,31 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
+          // Security Headers for Best Practices 100
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on'
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin'
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()'
+          },
           {
             key: 'Cross-Origin-Embedder-Policy',
             value: 'unsafe-none'
@@ -211,9 +249,37 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   poweredByHeader: false,
   generateEtags: true,
+  
+  // Image optimization for Performance 100
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'plus.unsplash.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+      { protocol: 'https', hostname: 'via.placeholder.com' },
+      { protocol: 'https', hostname: 'raw.githubusercontent.com' },
+      { protocol: 'https', hostname: 'ui-avatars.com' },
+      { protocol: 'https', hostname: 'i.ibb.co' },
+      { protocol: 'https', hostname: 'postimg.cc' },
+      { protocol: 'https', hostname: 'i.postimg.cc' },
+      { protocol: 'https', hostname: 'images2.imgbox.com' }
+    ],
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 640],
+    minimumCacheTTL: 31536000,
+    dangerouslyAllowSVG: false,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+  
   // Strict mode for quality
   typescript: {
     ignoreBuildErrors: false,
+  },
+  
+  // Compiler optimizations
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
   },
 }
 

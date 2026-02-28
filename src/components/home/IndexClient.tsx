@@ -1,4 +1,3 @@
-import Card from '@/components/shared/Card'
 import type { Project } from '@/types/projects'
 import { allProjectsAsync } from '@/lib/projects'
 import IndexClientInner from './IndexClientInner'
@@ -20,4 +19,3 @@ export default async function IndexClient(props: Props) {
     throw e;
   }
 }
-

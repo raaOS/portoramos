@@ -2,15 +2,15 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import MenuBar from "../MenuBar";
-import OSDock from "../OSDock";
+import MenuBar from "../core/MenuBar";
+import OSDock from "../core/OSDock";
 import type { WindowState } from "@/hooks/useWindowManager";
 import type { AboutData } from "@/types/about";
 import type { Project } from "@/types/projects";
 import type { ContactProfile } from "../data/mockChats";
-import { useWindowContext } from "../context/WindowContext";
+import { useDesktopWindowContext } from "../context/DesktopWindowContext";
 
-const Spotlight = dynamic(() => import("../Spotlight"), {
+const Spotlight = dynamic(() => import("../core/Spotlight"), {
     loading: () => null,
     ssr: false
 });
@@ -51,7 +51,7 @@ export default function UIOverlaysLayer({
     commercialProjects,
     openProjectWindow
 }: UIOverlaysLayerProps) {
-    const { windows, openWindow, bouncingDocId } = useWindowContext();
+    const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
     const isWindowOpen = (id: string) => windows.find(w => w.id === id)?.isOpen ?? false;
     const activeWindows = windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex);
     const topWindowTitle = activeWindows[0]?.title || null;

@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
-import Dock from '@/app/about/_components/os/Dock';
+import Dock from '@/app/about/_components/os/core/Dock';
 import AppIcon from '@/app/about/_components/os/ui/AppIcon';
 import WhatsAppIcon from '@/app/about/_components/os/ui/WhatsAppIcon';
 import { useWindowContext } from '@/contexts/WindowContext';

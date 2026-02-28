@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminPassword, getAdminToken } from '@/lib/auth';
-import { sendTelegramAlert } from '@/lib/telegram';
+import { sendTelegramAlert, sendTelegramToGroup } from '@/lib/telegram';
 import { generateCSRFToken, validateCSRFToken } from '@/lib/security';
 import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
 import { cookies } from 'next/headers';
@@ -11,6 +11,9 @@ export const dynamic = 'force-dynamic';
 const MAX_ATTEMPTS_PER_WINDOW = 3;
 const RATE_LIMIT_WINDOW = 5 * 60 * 1000;  // 5 menit
 const BLOCK_DURATION = 30 * 60 * 1000;    // 30 menit
+
+// Google Maps API Key
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 function getClientIdentifier(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -59,6 +62,62 @@ async function getGeoInfo(ip: string) {
 }
 
 /**
+ * Google Maps Reverse Geocoding - Convert lat,lng to address
+ */
+async function getGoogleMapsAddress(lat: number, lng: number): Promise<string | null> {
+  if (!GOOGLE_MAPS_API_KEY) {
+    return null;
+  }
+
+  try {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}&language=id`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.status === 'OK' && data.results && data.results.length > 0) {
+      // Get the most detailed address (usually first result)
+      return data.results[0].formatted_address;
+    }
+  } catch (error) {
+    console.error('[Google Maps] Reverse geocoding error:', error);
+  }
+
+  return null;
+}
+
+/**
+ * Format location info for Telegram message
+ */
+async function formatLocationInfo(
+  lat: number | null,
+  lng: number | null,
+  accuracy: number | null,
+  ipLocation: string
+): Promise<{ text: string; mapUrl: string | null }> {
+  // If we have GPS coordinates
+  if (lat && lng) {
+    const address = await getGoogleMapsAddress(lat, lng);
+    const mapUrl = `https://maps.google.com/?q=${lat},${lng}`;
+    const accuracyText = accuracy ? `±${Math.round(accuracy)}m` : 'N/A';
+
+    let locationText = '📍 **Lokasi (GPS)**\n';
+    if (address) {
+      locationText += `• Alamat: ${address}\n`;
+    }
+    locationText += `• Koordinat: \`${lat.toFixed(6)}, ${lng.toFixed(6)}\`\n`;
+    locationText += `• Akurasi: ${accuracyText}`;
+
+    return { text: locationText, mapUrl };
+  }
+
+  // Fallback to IP location
+  return {
+    text: `📍 **Lokasi (IP)**\n• ${ipLocation}`,
+    mapUrl: null
+  };
+}
+
+/**
  * GET Handler - Generates and provides a CSRF token.
  * Sets a secure, httpOnly cookie with the token.
  */
@@ -87,12 +146,26 @@ export async function POST(request: NextRequest) {
     // 1. CSRF VALIDATION
     const csrfToken = request.headers.get('x-csrf-token');
     const cookieStore = await cookies();
-
     const sessionCsrfToken = cookieStore.get('csrf_token')?.value;
 
-    if (!csrfToken || !sessionCsrfToken || !validateCSRFToken(csrfToken, sessionCsrfToken)) {
+    // Debug logging
+    console.log('[CSRF Debug] Header token:', csrfToken ? 'present' : 'missing');
+    console.log('[CSRF Debug] Cookie token:', sessionCsrfToken ? 'present' : 'missing');
+    
+    if (!csrfToken || !sessionCsrfToken) {
+      console.log('[CSRF Debug] Missing token - header:', !!csrfToken, 'cookie:', !!sessionCsrfToken);
       return NextResponse.json(
-        { error: 'Invalid or missing CSRF token' },
+        { error: 'Invalid or missing CSRF token', debug: { hasHeader: !!csrfToken, hasCookie: !!sessionCsrfToken } },
+        { status: 403 }
+      );
+    }
+
+    const isValid = validateCSRFToken(csrfToken, sessionCsrfToken);
+    console.log('[CSRF Debug] Validation result:', isValid);
+
+    if (!isValid) {
+      return NextResponse.json(
+        { error: 'Invalid CSRF token' },
         { status: 403 }
       );
     }
@@ -112,8 +185,7 @@ export async function POST(request: NextRequest) {
       const geo = await getGeoInfo(ip);
       const device = parseUserAgent(userAgent);
 
-      await sendTelegramAlert(
-        `🚫 **BLOCKED BY RATE LIMIT**
+      const message = `🚫 **BLOCKED BY RATE LIMIT**
 
 💻 **Device:** ${device}
 🌐 **Network:** ${geo.isp}
@@ -121,9 +193,9 @@ export async function POST(request: NextRequest) {
 📍 **Location:** ${geo.location}
 ⏰ **Retry After:** ${rateLimit.retryAfter} seconds
 
-🕒 ${new Date().toLocaleString('id-ID')}`,
-        { priority: 'high' }
-      );
+🕒 ${new Date().toLocaleString('id-ID')}`;
+
+      await sendTelegramAlert(message, { priority: 'high' });
 
       return NextResponse.json(
         {
@@ -137,7 +209,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { password, lat, lng } = await request.json();
+    const { password, lat, lng, accuracy } = await request.json();
 
     // VALIDASI INPUT STRICT
     if (!password || typeof password !== 'string') {
@@ -154,10 +226,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const [ip, userAgent] = clientId.split('|');
+    const geo = await getGeoInfo(ip);
+    const device = parseUserAgent(userAgent);
+
+    // Get location info (GPS preferred, fallback to IP)
+    const locationInfo = await formatLocationInfo(
+      lat ?? null,
+      lng ?? null,
+      accuracy ?? null,
+      geo.location
+    );
+
     // VERIFY PASSWORD
-    let isValid = false;
+    let passwordValid = false;
     try {
-      isValid = verifyAdminPassword(password);
+      passwordValid = verifyAdminPassword(password);
     } catch (error) {
       // Jika auth config error, jangan expose ke user
       return NextResponse.json(
@@ -166,22 +250,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!isValid) {
-      const [ip, userAgent] = clientId.split('|');
-      const geo = await getGeoInfo(ip);
-      const device = parseUserAgent(userAgent);
+    if (!passwordValid) {
+      const message = `❌ **LOGIN FAILED**
 
-      await sendTelegramAlert(
-        `❌ **LOGIN FAILED**
+${locationInfo.text}
 
 💻 **Device:** ${device}
 🌐 **Network:** ${geo.isp}
 📡 **IP:** \`${ip}\`
-📍 **Location:** ${geo.location}
 
-🕒 ${new Date().toLocaleString('id-ID')}`,
-        { priority: 'normal' }
-      );
+🕒 ${new Date().toLocaleString('id-ID')}`;
+
+      const buttons = locationInfo.mapUrl
+        ? [[{ text: '🗺️ Buka di Google Maps', url: locationInfo.mapUrl }]]
+        : undefined;
+
+      await sendTelegramAlert(message, { priority: 'normal', buttons });
 
       return NextResponse.json(
         { error: 'Invalid password' },
@@ -191,21 +275,25 @@ export async function POST(request: NextRequest) {
 
     // SUCCESS
 
-    const [ip, userAgent] = clientId.split('|');
-    const geo = await getGeoInfo(ip);
-    const device = parseUserAgent(userAgent);
+    const message = `✅ **LOGIN SUCCESS**
 
-    await sendTelegramAlert(
-      `✅ **LOGIN SUCCESS**
+${locationInfo.text}
 
 💻 **Device:** ${device}
 🌐 **Network:** ${geo.isp}
 📡 **IP:** \`${ip}\`
-📍 **Location:** ${geo.location}
 
-🕒 ${new Date().toLocaleString('id-ID')}`,
-      { priority: 'normal' }
-    );
+🕒 ${new Date().toLocaleString('id-ID')}`;
+
+    const buttons = locationInfo.mapUrl
+      ? [[{ text: '🗺️ Buka di Google Maps', url: locationInfo.mapUrl }]]
+      : undefined;
+
+    // Send to personal chat
+    await sendTelegramAlert(message, { priority: 'normal', buttons });
+    
+    // Also send to group if configured
+    await sendTelegramToGroup(message, { priority: 'normal', buttons });
 
     const token = getAdminToken();
 

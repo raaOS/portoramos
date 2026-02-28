@@ -2,9 +2,9 @@
 
 import React from "react";
 import { AnimatePresence } from "framer-motion";
-import OSWindow from "../Window";
+import OSWindow from "../windows/Window";
 import type { WindowState } from "@/hooks/useWindowManager";
-import { useWindowContext } from "../context/WindowContext";
+import { useDesktopWindowContext } from "../context/DesktopWindowContext";
 
 interface WindowsLayerProps {
     isAdmin: boolean;
@@ -21,7 +21,7 @@ export default function WindowsLayer({ isAdmin }: WindowsLayerProps) {
         handleWindowResize,
         handleWindowResizeEnd,
         togglePin
-    } = useWindowContext();
+    } = useDesktopWindowContext();
     return (
         <div className="absolute inset-0 z-20 pointer-events-none">
             <AnimatePresence>

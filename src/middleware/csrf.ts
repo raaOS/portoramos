@@ -1,0 +1,45 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { validateCSRFToken } from '@/lib/security';
+import { isAPIRoute } from './utils';
+
+export function checkCSRF(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+    const mutationMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
+
+    if (isAPIRoute(pathname) && mutationMethods.includes(request.method)) {
+        const allowlistPaths = [
+            '/api/admin/login', 
+            '/api/admin/logout', 
+            '/api/chat/send', 
+            '/api/webhook/telegram', 
+            '/api/translate',
+            '/api/debug/simulate-reply'  // Allow for local testing
+        ];
+        if (!allowlistPaths.includes(pathname)) {
+            const csrfToken = request.headers.get('x-csrf-token');
+            const sessionCsrfToken = request.cookies.get('csrf_token')?.value;
+
+            if (!csrfToken || !sessionCsrfToken || !validateCSRFToken(csrfToken, sessionCsrfToken)) {
+                console.warn(`[Security] CSRF Validation Failed for ${pathname}.`);
+
+                if (process.env.NODE_ENV === 'development') {
+                    console.debug('CSRF Debug:', {
+                        headerToken: csrfToken,
+                        cookieToken: sessionCsrfToken,
+                        allCookies: request.cookies.getAll().map(c => c.name)
+                    });
+                }
+
+                return {
+                    isValid: false,
+                    response: NextResponse.json({
+                        error: 'Invalid or missing CSRF token',
+                        details: 'CSRF (Cross-Site Request Forgery) validation failed. Ensure cookies are enabled.'
+                    }, { status: 403 })
+                };
+            }
+        }
+    }
+
+    return { isValid: true };
+}

@@ -73,23 +73,27 @@ export const chatStore = {
 
     async mapTelegramMessage(visitorId: string, telegramMsgId: number) {
         await db.ref(`sessions/${visitorId}`).update({ telegramMessageId: telegramMsgId });
-        await db.ref(`messageMap/${telegramMsgId}`).set(visitorId);
+        // Use string key for consistency
+        await db.ref(`messageMap/${String(telegramMsgId)}`).set(visitorId);
     },
 
     async updateSessionThreadId(visitorId: string, threadId: number) {
+        // Ensure threadId is stored as number in session
         await db.ref(`sessions/${visitorId}`).update({ telegramThreadId: threadId });
-        // Also map threadId to visitorId for fast webhook routing
-        await db.ref(`threadMap/${threadId}`).set(visitorId);
+        // Map threadId to visitorId using string key for Firebase (threadId could be very large)
+        await db.ref(`threadMap/${String(threadId)}`).set(visitorId);
     },
 
     async getVisitorByThreadId(threadId: number): Promise<string | null> {
-        const snap = await db.ref(`threadMap/${threadId}`).once('value');
+        // Use string key for lookup (consistent with storage)
+        const snap = await db.ref(`threadMap/${String(threadId)}`).once('value');
         if (!snap.exists()) return null;
         return snap.val();
     },
 
     async getVisitorByMessageId(msgId: number): Promise<string | null> {
-        const snap = await db.ref(`messageMap/${msgId}`).once('value');
+        // Use string key for consistency
+        const snap = await db.ref(`messageMap/${String(msgId)}`).once('value');
         if (!snap.exists()) return null;
         return snap.val();
     },

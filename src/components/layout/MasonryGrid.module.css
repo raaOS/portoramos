@@ -1,0 +1,32 @@
+.masonryGrid {
+    display: flex;
+    width: 100%;
+    will-change: auto;
+}
+
+.masonryGridColumn {
+    padding-right: 16px;
+    background-clip: padding-box;
+    min-height: 100px;
+}
+
+.masonryGridColumn:last-child {
+    padding-right: 0;
+}
+
+.masonryGridColumn>div {
+    margin-bottom: 16px;
+    break-inside: avoid;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+.masonryGridColumn img,
+.masonryGridColumn video {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { DragControls } from 'framer-motion';
 import { X, Check, Plus } from 'lucide-react';
 
 interface NoteHeaderProps {
@@ -9,7 +10,7 @@ interface NoteHeaderProps {
     onToggleCollapse: () => void;
     onAdd?: () => void;
     isPinned: boolean;
-    dragControls: any;
+    dragControls: DragControls;
 }
 
 export const NoteHeader = ({

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Masonry from 'react-masonry-css';
+import styles from './MasonryGrid.module.css';
 
 interface MasonryGridProps {
     children: React.ReactNode;
@@ -163,8 +164,8 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         <div ref={containerRef} className="w-full" style={{ width: '100%' }}>
             <Masonry
                 breakpointCols={masonryCols}
-                className={`masonry-grid -ml-2 md:-ml-4 w-auto flex ${className}`}
-                columnClassName="masonry-grid-column pl-2 md:pl-4 bg-clip-padding"
+                className={`${styles.masonryGrid} -ml-2 md:-ml-4 w-auto flex ${className}`}
+                columnClassName={`${styles.masonryGridColumn} pl-2 md:pl-4 bg-clip-padding`}
             >
                 {children}
             </Masonry>

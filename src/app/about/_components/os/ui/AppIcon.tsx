@@ -1,9 +1,11 @@
 import React from 'react';
 import Image from 'next/image';
 
+import type { LucideIcon } from "lucide-react";
+
 interface AppIconProps {
     color?: string;
-    icon?: any;
+    icon?: LucideIcon;
     imageUrl?: string;
 }
 

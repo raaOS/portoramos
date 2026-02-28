@@ -1,18 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Edit2, Save, X, MoveUp, MoveDown, Sparkles, Loader2, Search } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-
-interface HardSkill {
-    id: string;
-    name: string;
-    icon: string;
-    level: string;
-    color: string;
-    details: string[];
-}
+import { HardSkill, HardSkillLevel } from '@/types/hardSkill';
 
 export default function HardSkillsManager() {
     const [skills, setSkills] = useState<HardSkill[]>([]);
@@ -23,6 +16,26 @@ export default function HardSkillsManager() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSearchingIcon, setIsSearchingIcon] = useState(false);
     const { csrfToken } = useAdminAuth();
+
+    // Initial fetch
+    useEffect(() => {
+        fetchSkills();
+    }, []);
+
+    const fetchSkills = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/hard-skills');
+            if (res.ok) {
+                const data = await res.json();
+                setSkills(Array.isArray(data) ? data : []);
+            }
+        } catch (error) {
+            console.error('Error fetching skills:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleAutoIcon = async () => {
         if (!editForm?.name) {
@@ -45,7 +58,7 @@ export default function HardSkillsManager() {
             if (res.ok) {
                 const data = await res.json();
                 if (data.iconUrl) {
-                    setEditForm(prev => prev ? { ...prev, icon: data.iconUrl } : null);
+                    setEditForm(prev => prev ? { ...prev, iconUrl: data.iconUrl } : null);
                 }
             } else {
                 alert('Icon not found. Please try manually or check the name.');
@@ -93,26 +106,6 @@ export default function HardSkillsManager() {
         }
     };
 
-    // Initial fetch
-    useEffect(() => {
-        fetchSkills();
-    }, []);
-
-    const fetchSkills = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch('/api/hard-skills');
-            if (res.ok) {
-                const data = await res.json();
-                setSkills(data);
-            }
-        } catch (error) {
-            console.error('Error fetching skills:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const saveOrder = async (newSkills: HardSkill[]) => {
         setSkills(newSkills);
         await fetch('/api/hard-skills', {
@@ -148,18 +141,23 @@ export default function HardSkillsManager() {
 
     const handleEdit = (skill: HardSkill) => {
         setEditingId(skill.id);
-        setEditForm({ ...skill });
+        // Ensure details has 4 items for the form
+        const details = skill.details ? [...skill.details, '', '', '', ''].slice(0, 4) : ['', '', '', ''];
+        setEditForm({ ...skill, details });
         setIsAdding(false);
     };
 
     const handleAdd = () => {
         const newSkill: HardSkill = {
-            id: Date.now().toString(),
+            id: `hard-${Date.now()}`,
             name: '',
-            icon: '',
+            iconUrl: '',
             level: 'Intermediate',
-            color: '#000000',
-            details: ['', '', '', '']
+            order: skills.length + 1,
+            details: ['', '', '', ''],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            isActive: true
         };
         setEditForm(newSkill);
         setIsAdding(true);
@@ -169,11 +167,19 @@ export default function HardSkillsManager() {
     const handleSave = async () => {
         if (!editForm) return;
 
+        // Clean empty details
+        const cleanedDetails = (editForm.details || []).filter(d => d.trim() !== '');
+        const skillToSave = {
+            ...editForm,
+            details: cleanedDetails,
+            updatedAt: new Date().toISOString()
+        };
+
         let newSkills = [...skills];
         if (isAdding) {
-            newSkills.push(editForm);
+            newSkills.push(skillToSave);
         } else {
-            newSkills = newSkills.map(s => s.id === editForm.id ? editForm : s);
+            newSkills = newSkills.map(s => s.id === editForm.id ? skillToSave : s);
         }
 
         await saveOrder(newSkills);
@@ -184,7 +190,7 @@ export default function HardSkillsManager() {
 
     const updateFormDetail = (index: number, value: string) => {
         if (!editForm) return;
-        const newDetails = [...editForm.details];
+        const newDetails = [...(editForm.details || ['', '', '', ''])];
         newDetails[index] = value;
         setEditForm({ ...editForm, details: newDetails });
     };
@@ -230,10 +236,10 @@ export default function HardSkillsManager() {
                                 <label className="block text-sm font-medium mb-1">Level</label>
                                 <select
                                     value={editForm.level}
-                                    onChange={e => setEditForm({ ...editForm, level: e.target.value })}
+                                    onChange={e => setEditForm({ ...editForm, level: e.target.value as HardSkillLevel })}
                                     className="w-full p-2 border rounded-lg"
                                 >
-                                    <option value="Basic">Basic</option>
+                                    <option value="Beginner">Beginner</option>
                                     <option value="Intermediate">Intermediate</option>
                                     <option value="Advanced">Advanced</option>
                                     <option value="Expert">Expert</option>
@@ -253,29 +259,13 @@ export default function HardSkillsManager() {
                                 </div>
                                 <input
                                     type="text"
-                                    value={editForm.icon}
-                                    onChange={e => setEditForm({ ...editForm, icon: e.target.value })}
+                                    value={editForm.iconUrl}
+                                    onChange={e => setEditForm({ ...editForm, iconUrl: e.target.value })}
                                     className="w-full p-2 border rounded-lg"
                                     placeholder="https://cdn..."
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Color (Hex)</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="color"
-                                        value={editForm.color}
-                                        onChange={e => setEditForm({ ...editForm, color: e.target.value })}
-                                        className="h-10 w-10 p-1 rounded cursor-pointer"
-                                    />
-                                    <input
-                                        type="text"
-                                        value={editForm.color}
-                                        onChange={e => setEditForm({ ...editForm, color: e.target.value })}
-                                        className="w-full p-2 border rounded-lg"
-                                    />
-                                </div>
-                            </div>
+                            {/* Color removed as it's deprecated */}
                         </div>
 
                         <div>
@@ -291,89 +281,102 @@ export default function HardSkillsManager() {
                                 </button>
                             </div>
                             <div className="space-y-2">
-                                {editForm.details.map((detail, idx) => (
+                                {(editForm.details || ['', '', '', '']).map((detail, idx) => (
                                     <input
                                         key={idx}
                                         type="text"
                                         value={detail}
                                         onChange={e => updateFormDetail(idx, e.target.value)}
                                         className="w-full p-2 border rounded-lg"
-                                        placeholder={`Point ${idx + 1}`}
+                                        placeholder={`Capability ${idx + 1}`}
                                     />
                                 ))}
                             </div>
                         </div>
 
-                        <div className="pt-4 flex justify-end gap-3">
+                        <div className="flex justify-end gap-2 pt-2">
                             <button
                                 onClick={() => { setIsAdding(false); setEditingId(null); setEditForm(null); }}
-                                className="px-4 py-2 text-gray-600 hover:text-black"
+                                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 flex items-center gap-2"
+                                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 flex items-center gap-2"
                             >
-                                <Save size={18} /> Save Skill
+                                <Save size={18} /> Save Changes
                             </button>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Skills List */}
-            <div className="bg-white rounded-xl border shadow-sm divide-y">
-                {skills.map((skill, index) => (
-                    <div key={skill.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
-                        <div className="flex items-center gap-4">
-                            <div className="flex flex-col gap-1">
-                                <button
-                                    disabled={index === 0}
-                                    onClick={() => moveUp(index)}
-                                    className="p-1 text-gray-400 hover:text-black disabled:opacity-30"
-                                >
+            {/* List */}
+            {loading ? (
+                <div className="text-center py-8 text-gray-500">Loading skills...</div>
+            ) : (
+                <div className="space-y-2">
+                    {skills.map((skill, index) => (
+                        <motion.div
+                            layout
+                            key={skill.id}
+                            className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:shadow-md transition-shadow"
+                        >
+                            <div className="flex flex-col gap-1 text-gray-300">
+                                <button onClick={() => moveUp(index)} className="hover:text-black disabled:opacity-30" disabled={index === 0}>
                                     <MoveUp size={16} />
                                 </button>
-                                <button
-                                    disabled={index === skills.length - 1}
-                                    onClick={() => moveDown(index)}
-                                    className="p-1 text-gray-400 hover:text-black disabled:opacity-30"
-                                >
+                                <button onClick={() => moveDown(index)} className="hover:text-black disabled:opacity-30" disabled={index === skills.length - 1}>
                                     <MoveDown size={16} />
                                 </button>
                             </div>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={skill.icon} alt="" className="w-8 h-8 object-contain" />
-                            <div>
-                                <h4 className="font-bold">{skill.name}</h4>
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                                    {skill.level}
-                                </span>
+
+                            <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center p-2 shrink-0">
+                                {skill.iconUrl ? (
+                                    <Image
+                                        src={skill.iconUrl}
+                                        alt={skill.name}
+                                        width={40}
+                                        height={40}
+                                        className="w-full h-full object-contain"
+                                    />
+                                ) : (
+                                    <div className="text-xs text-gray-400">No Icon</div>
+                                )}
                             </div>
+
+                            <div className="flex-1">
+                                <h3 className="font-bold">{skill.name}</h3>
+                                <div className="text-xs text-gray-500 flex gap-2">
+                                    <span className="bg-gray-100 px-2 py-0.5 rounded">{skill.level}</span>
+                                    <span>{skill.details?.length || 0} capabilities</span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={() => handleEdit(skill)}
+                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                >
+                                    <Edit2 size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(skill.id)}
+                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        </motion.div>
+                    ))}
+                    {skills.length === 0 && (
+                        <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed">
+                            No hard skills added yet.
                         </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => handleEdit(skill)}
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                            >
-                                <Edit2 size={18} />
-                            </button>
-                            <button
-                                onClick={() => handleDelete(skill.id)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                            >
-                                <Trash2 size={18} />
-                            </button>
-                        </div>
-                    </div>
-                ))}
-                {skills.length === 0 && !loading && (
-                    <div className="p-8 text-center text-gray-500">
-                        No skills found. Add one to get started.
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

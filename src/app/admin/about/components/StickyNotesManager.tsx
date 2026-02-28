@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Save, Type, GripHorizontal, Palette, Pin, Star, CheckSquare } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
-import { NoteData } from '@/app/about/_components/os/StickyNoteItem';
+import { NoteData } from '@/app/about/_components/os/ui/elements/StickyNoteItem';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const COLORS = [
@@ -82,7 +82,7 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
             width: 280,
             height: 280,
             zIndex: 100,
-            fontFamily: 'var(--font-caveat), sans-serif',
+            fontFamily: 'var(--font-handwritten, "Comic Sans MS", cursive)',
             fontSize: 24,
             isPinned: false
         };

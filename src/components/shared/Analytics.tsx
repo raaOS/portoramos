@@ -7,13 +7,6 @@ import Script from 'next/script';
  * Wrapper for Google Analytics or Vercel Analytics
  */
 
-declare global {
-    interface Window {
-        gtag?: (command: string, ...args: any[]) => void;
-        dataLayer?: any[];
-    }
-}
-
 export default function Analytics() {
     const gaId = process.env.NEXT_PUBLIC_GA_ID;
     const isProduction = process.env.NODE_ENV === 'production';
