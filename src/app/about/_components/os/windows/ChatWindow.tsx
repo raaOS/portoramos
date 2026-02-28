@@ -203,7 +203,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                     {/* Image Bubble */}
                                     {msg.type === 'image' && msg.imageSrc && (
                                         <div 
-                                            className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 cursor-pointer hover:opacity-90 transition-opacity"
+                                            className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 cursor-pointer hover:opacity-90 transition-opacity min-h-[100px] flex items-center justify-center bg-gray-100"
                                             onClick={() => setPreviewImage(msg.imageSrc || null)}
                                         >
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -211,6 +211,9 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                                 src={msg.imageSrc}
                                                 alt="Shared media"
                                                 className="w-full h-auto object-cover max-h-[250px]"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMDBhODg0Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5EZXNhaW4gS2VtYXNhbjwvdGV4dD48L3N2Zz4=';
+                                                }}
                                             />
                                         </div>
                                     )}
