@@ -61,7 +61,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
             if (sequencerRef.current) clearTimeout(sequencerRef.current);
 
             let currentIndex = 0;
-            const fullConversation = contact.conversation;
+            const fullConversation = contact.messages || contact.conversation || [];
 
             const nextStep = () => {
                 if (currentIndex >= fullConversation.length) return;

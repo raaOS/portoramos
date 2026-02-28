@@ -5,7 +5,7 @@
       "name": "Sari Rahmawati",
       "notificationText": "Mas, desain kemasannya udah oke nih. Tim produksi juga bilang pas.",
       "isActive": true,
-      "conversation": [
+      "messages": [
         {
           "id": 1600000000001,
           "text": "Mas, ini mockup kemasannya ya?",
@@ -54,7 +54,7 @@
       "name": "Dodi Kurniawan",
       "notificationText": "Bro, gokil hasil web-nya. Jauh lebih bersih dari yang lama.",
       "isActive": true,
-      "conversation": [
+      "messages": [
         {
           "id": 1600000000004,
           "text": "Bro, gokil hasil web-nya. Jauh lebih bersih dari yang lama.",
@@ -80,7 +80,7 @@
       "name": "Pak Bambang",
       "notificationText": "Siang Mas Ramos. Proposalnya sudah kami review. Desainnya sangat profesional.",
       "isActive": true,
-      "conversation": [
+      "messages": [
         {
           "id": 1600000000007,
           "text": "Siang Mas Ramos. Proposalnya sudah kami review. Desainnya sangat profesional.",
@@ -106,7 +106,7 @@
       "name": "Rini (HRD)",
       "notificationText": "Halo Mas Ramos. Brief kemarin sudah dieksekusi dengan baik ya.",
       "isActive": true,
-      "conversation": [
+      "messages": [
         {
           "id": 1600000000010,
           "text": "Halo Mas Ramos. Brief kemarin sudah dieksekusi dengan baik ya.",
@@ -132,7 +132,7 @@
       "name": "Andi Fotografer",
       "notificationText": "Mas, gila sih layout-nya. Foto gue jadi kelihatan lebih 'mahal' di situ.",
       "isActive": true,
-      "conversation": [
+      "messages": [
         {
           "id": 1600000000013,
           "text": "Mas, gila sih layout-nya. Foto gue jadi kelihatan lebih 'mahal' di situ.",
@@ -157,7 +157,7 @@
       "name": "Andi",
       "notificationText": "Mas Ramos, hasil desain banner ads-nya sesuai brief dan keren banget!",
       "isActive": true,
-      "conversation": [
+      "messages": [
         {
           "text": "Halo Mas Ramos, baru aja saya cek final desain banner ads-nya. Sesuai banget sama brief yang kemarin saya kasih.",
           "isMe": false,
@@ -183,7 +183,7 @@
       "name": "Bagas Pratama - Kopi Sini",
       "notificationText": "Mas Ramos, logonya mantap banget! Tim saya pada suka.",
       "isActive": true,
-      "conversation": [
+      "messages": [
         {
           "text": "Halo Mas RaLogonya keren banget!mos, file logo barusan saya cek sama tim. Suka banget sama konsepnya, clean dan sesuai brief awal kita.",
           "isMe": true,
