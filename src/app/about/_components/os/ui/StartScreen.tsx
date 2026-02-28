@@ -25,17 +25,17 @@ const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
         }, 800);
 
         // Text fades out, Glass clears to reveal desktop
-        // (Original 2200 + 2000 = 4200)
+        // (4200 - 1000 = 3200)
         setTimeout(() => {
             setScreenState("glassReveal");
-        }, 4200);
+        }, 3200);
 
         // Complete the start sequence and reveal Desktop entirely
-        // 4200 + 1500 (Glass animation) = 5700
+        // 3200 + 1500 (Glass animation) = 4700
         setTimeout(() => {
             setScreenState("done");
             onStart();
-        }, 5700);
+        }, 4700);
     };
 
     if (!isActive || screenState === "done") {
