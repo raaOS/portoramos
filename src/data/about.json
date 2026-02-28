@@ -244,7 +244,6 @@
       "label": "Hubungi Saya"
     }
   },
-  "chatSettings": {},
   "windowPreferences": {
     "about": {
       "x": 1417.527587890625,
@@ -252,6 +251,10 @@
       "width": 647,
       "height": 573,
       "isOpenByDefault": true
+    },
+    "whatsapp": {
+      "x": 735,
+      "y": 134
     }
   },
   "soundConfig": {
@@ -541,5 +544,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-28T18:29:17.192Z"
+  "lastUpdated": "2026-02-28T23:57:23.593Z"
 }
