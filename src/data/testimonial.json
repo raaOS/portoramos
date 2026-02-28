@@ -209,7 +209,9 @@
           "text": "Siang Mas Ramos, mau update soal project manipulasi foto yang kemarin.",
           "isMe": false,
           "time": "14:15",
-          "id": 1772322840256
+          "id": 1772322840256,
+          "type": "project",
+          "projectId": "gen-1766512146544-14"
         },
         {
           "text": "Siang Mas Bram. Gimana mas, apa sudah sempat dicek file finalnya?",
@@ -254,5 +256,5 @@
       "id": 8
     }
   ],
-  "lastUpdated": "2026-02-28T23:54:30.258Z"
+  "lastUpdated": "2026-02-28T23:55:41.330Z"
 }
