@@ -3,6 +3,7 @@ import { Plus, Trash2, Save, Type, GripHorizontal, Palette, Pin, Star, CheckSqua
 import { useToast } from '@/contexts/ToastContext';
 import { NoteData } from '@/app/about/_components/os/ui/elements/StickyNoteItem';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { AdminNoteEditor } from './AdminNoteEditor';
 
 const COLORS = [
     '#fef08a', // Yellow
@@ -173,11 +174,11 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
                             {/* Content Editor */}
                             <div>
                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Content (HTML Supported)</label>
-                                <textarea
+                                <AdminNoteEditor
                                     value={note.text}
-                                    onChange={(e) => updateNote(note.id, { text: e.target.value })}
-                                    className="w-full h-40 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono"
-                                    placeholder="Enter note content..."
+                                    onChange={(val) => updateNote(note.id, { text: val })}
+                                    fontSize={note.fontSize || 18}
+                                    onFontSizeChange={(size) => updateNote(note.id, { fontSize: size })}
                                 />
                             </div>
 

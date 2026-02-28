@@ -281,8 +281,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                             <m.div
                                 className="relative w-full h-full overflow-hidden select-none"
                                 initial={{ opacity: 0 }}
-                                animate={{ 
-                                    opacity: (!(isBooting || needsPowerOn)) ? 1 : 0 
+                                animate={{
+                                    opacity: 1
                                 }}
                                 transition={{ duration: 0.3 }}
                                 style={{ willChange: 'opacity' }}
@@ -308,8 +308,8 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                     setNotesVisible={setNotesVisible}
                                 />
 
-                                {/* Layer 2: Windows (Load ONLY after full boot sequence) */}
-                                {windows.some(w => w.isOpen) && !isBooting && !needsPowerOn && (
+                                {/* Layer 2: Windows (Rendered early so animations finish before doors open) */}
+                                {windows.some(w => w.isOpen) && (
                                     <WindowsLayer
                                         isAdmin={isAdmin}
                                     />

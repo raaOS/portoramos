@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, Trash2, Edit, Palette, RotateCcw, Pin, Eye, EyeOff, Bold, Italic, List, ListOrdered, CheckSquare, Check, Download, X, Plus, Minus } from 'lucide-react';
+import { Star, Trash2, Edit, Palette, RotateCcw, Pin, Eye, EyeOff, Check, Download, X, Plus, Minus } from 'lucide-react';
 import { m, AnimatePresence, DragControls } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
@@ -55,7 +55,6 @@ const COLORS = [
 const DEFAULT_FONT = 'var(--font-handwritten, "Comic Sans MS", "Chalkboard SE", cursive)';
 
 import { NoteHeader } from '../NoteHeader';
-import { NoteToolbar } from '../NoteToolbar';
 import { NoteFooter } from '../NoteFooter';
 
 export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, onAdd, dragControls, isAdmin = false }: StickyNoteItemProps) {
@@ -140,6 +139,17 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
     // We'll use a ref to track the inner content without triggering re-renders while typing
     const innerContentRef = useRef(note.text);
 
+    // Initial load sync - very important for rendering HTML from server on first paint
+    useEffect(() => {
+        if (textAreaRef.current && note.text) {
+            // Only update if it's different and we are NOT currently focused/editing it
+            if (!isEditing && textAreaRef.current.innerHTML !== note.text) {
+                textAreaRef.current.innerHTML = note.text;
+                innerContentRef.current = note.text;
+            }
+        }
+    }, [note.text, isEditing]);
+
     // Sync only when not editing or when note.text changes externally
     useEffect(() => {
         if (textAreaRef.current) {
@@ -167,44 +177,14 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
         onUpdate(note.id, { text: innerContentRef.current });
     };
 
-    const execFormat = (command: string, value?: string) => {
-        if (textAreaRef.current) {
-            textAreaRef.current.focus();
-            document.execCommand(command, false, value);
-            handleContentChange({ currentTarget: textAreaRef.current } as any);
-            // After formatting, sync immediately so toolbar changes are saved
-            onUpdate(note.id, { text: textAreaRef.current.innerHTML });
-        }
-    };
-
-    const insertChecklist = () => {
-        // Wrap in a div to ensure block level (vertical)
-        const html = '<div style="display: flex; align-items: flex-start; gap: 8px; margin: 4px 0;"><input type="checkbox" style="margin-top: 6px; accent-color: black; width: 16px; height: 16px;" /> <span>&nbsp;</span></div>';
-        execFormat('insertHTML', html);
-    };
-
     const handlePaste = (e: React.ClipboardEvent) => {
-        // Handle images
-        if (e.clipboardData && e.clipboardData.files.length > 0) {
-            const file = e.clipboardData.files[0];
-            if (file.type.startsWith('image/')) {
-                e.preventDefault();
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    if (event.target?.result) {
-                        const imgHtml = `<img src="${event.target.result}" style="max-width: 100%; border-radius: 4px; margin: 8px 0; display: block;" />`;
-                        execFormat('insertHTML', imgHtml);
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+        // When editing in desktop, force plain text paste to keep UI clean
+        e.preventDefault();
+        const text = e.clipboardData.getData('text/plain');
+        document.execCommand('insertText', false, text);
     };
 
-    const formatDate = (dateStr: string) => {
-        // Simple formatter, can be improved
-        return new Date(dateStr).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' });
-    };
+
 
     const handleDownload = async () => {
         if (!containerRef.current) return;
@@ -236,7 +216,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className={`absolute rounded-lg flex flex-col shadow-md hover:shadow-xl group ${!isResizing ? 'transition-shadow duration-300' : ''}`}
+                className={`absolute rounded-lg flex flex-col group`}
                 style={{
                     backgroundColor: note.color,
                     width: width,
@@ -282,15 +262,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                 {/* Main Content Area (Hidden if collapsed) */}
                 {!note.isCollapsed && (
                     <div className="flex-grow p-4 pt-16 overflow-hidden relative group flex flex-col">
-                        {/* Formatting Toolbar (Visible only when editing) */}
-                        {isEditing && isAdmin && (
-                            <NoteToolbar
-                                onFormat={execFormat}
-                                onInsertChecklist={insertChecklist}
-                                fontSize={note.fontSize || 18}
-                                onFontSizeChange={(newSize) => onUpdate(note.id, { fontSize: newSize })}
-                            />
-                        )}
+                        {/* Formatting Toolbar has been moved to Admin Panel */}
 
                         {/* Text Display / Input */}
                         <div
@@ -302,6 +274,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                             onMouseDown={(e) => e.stopPropagation()}
                             onDragStart={(e) => e.preventDefault()}
                             onPaste={handlePaste}
+                            dangerouslySetInnerHTML={{ __html: note.text || '<span class="text-gray-400 italic">Empty note...</span>' }}
                             className={`w-full h-full bg-transparent border-none outline-none resize-none text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto ${isEditing && isAdmin ? 'cursor-text' : 'cursor-default'}`}
                             data-lenis-prevent
                             style={{
@@ -313,12 +286,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                             }}
                         />
 
-                        {/* Date Display (Inside content, bottom right) */}
-                        <div className="absolute bottom-2 right-4 pointer-events-none select-none">
-                            <span className="text-[10px] font-bold text-gray-500/30 uppercase tracking-widest italic">
-                                {formatDate(note.date)}
-                            </span>
-                        </div>
+
                     </div>
                 )}
 

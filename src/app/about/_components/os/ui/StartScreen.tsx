@@ -8,41 +8,92 @@ interface StartScreenProps {
     isActive: boolean;
 }
 
-type ScreenState = "idle" | "showingText" | "doorsOpening" | "done";
+type ScreenState = "idle" | "showingText" | "glassReveal" | "done";
 
 const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
     const [screenState, setScreenState] = useState<ScreenState>("idle");
+    const [isClicked, setIsClicked] = useState(false);
 
     const handleClick = () => {
         if (screenState !== "idle") return;
-        
-        // Step 1: Show RamosOS text
-        setScreenState("showingText");
-        
-        // Step 2: Doors opening
+
+        setIsClicked(true);
+
+        // Quick zoom animation from Keyhole then transition to text
         setTimeout(() => {
-            setScreenState("doorsOpening");
-        }, 1500);
-        
-        // Step 3: Complete
+            setScreenState("showingText");
+        }, 800);
+
+        // Text fades out, Glass clears to reveal desktop
+        // (Original 2200 + 2000 = 4200)
+        setTimeout(() => {
+            setScreenState("glassReveal");
+        }, 4200);
+
+        // Complete the start sequence and reveal Desktop entirely
+        // 4200 + 1500 (Glass animation) = 5700
         setTimeout(() => {
             setScreenState("done");
             onStart();
-        }, 3500);
+        }, 5700);
     };
-    
+
     if (!isActive || screenState === "done") {
         return null;
     }
 
     return (
-        <div className="fixed inset-0 z-[10000] bg-black overflow-hidden">
+        <div className="fixed inset-0 z-[10000] bg-transparent overflow-hidden">
+            {/* 
+              The Master Background (The Glass Reveal):
+              A sleek cinematic transition from solid black to solid white, 
+              then beautifully clears up a heavy frosted-glass blur to reveal the desktop.
+            */}
+            <m.div
+                className="absolute inset-0 pointer-events-none"
+                initial={{
+                    backgroundColor: "rgba(0, 0, 0, 1)",
+                    backdropFilter: "blur(0px)",
+                    WebkitBackdropFilter: "blur(0px)",
+                }}
+                animate={
+                    screenState === "idle"
+                        // Solid black
+                        ? {
+                            backgroundColor: "rgba(0, 0, 0, 1)",
+                            backdropFilter: "blur(0px)",
+                            WebkitBackdropFilter: "blur(0px)",
+                        }
+                        : screenState === "showingText"
+                            // Transition to solid white while RamosOS text fades in
+                            // Preparing the heavy blur underneath so it's ready to reveal
+                            ? {
+                                backgroundColor: "rgba(255, 255, 255, 1)",
+                                backdropFilter: "blur(50px)",
+                                WebkitBackdropFilter: "blur(50px)",
+                            }
+                            // Clear the glass! Fade out the white frost and drop the blur to 0px
+                            : { // glassReveal
+                                backgroundColor: "rgba(255, 255, 255, 0)",
+                                backdropFilter: "blur(0px)",
+                                WebkitBackdropFilter: "blur(0px)",
+                            }
+                }
+                transition={
+                    screenState === "glassReveal"
+                        // Smoothly fade frost and clear the blur like wiping condensation
+                        ? { duration: 1.5, ease: "easeInOut" }
+                        // Snap immediately from black to white so there is no gray fade when Keyhole unmounts
+                        : { duration: 0 }
+                }
+            />
+
             <AnimatePresence>
-                {/* === STAGE 1: Power Button === */}
+                {/* === STAGE 1: Power Button (The Keyhole) === */}
                 {screenState === "idle" && (
                     <m.div
                         key="power-button"
-                        className="absolute inset-0 bg-black flex items-center justify-center cursor-pointer"
+                        className="absolute inset-0 flex items-center justify-center cursor-pointer z-[10001]"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -50,113 +101,49 @@ const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
                         onClick={handleClick}
                     >
                         <m.div
-                            className="relative flex flex-col items-center gap-6"
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                            className="relative flex items-center justify-center"
+                            // Massive scale-up without fading out so it stays solid white
+                            animate={isClicked ? { scale: 150, opacity: 1 } : { scale: 1, opacity: 1 }}
+                            transition={
+                                isClicked
+                                    ? { duration: 0.8, ease: "circIn" }
+                                    : { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+                            }
                         >
-                            {/* Power Button Circle */}
-                            <m.div
-                                className="relative w-24 h-24 rounded-full border-2 border-white/30 flex items-center justify-center"
-                                whileHover={{ 
-                                    borderColor: "rgba(255,255,255,0.8)",
-                                    boxShadow: "0 0 30px rgba(255,255,255,0.2)"
-                                }}
-                                whileTap={{ scale: 0.95 }}
-                            >
-                                <m.div
-                                    className="absolute inset-2 rounded-full bg-white/5"
-                                    animate={{ opacity: [0.3, 0.6, 0.3] }}
-                                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                />
-                                
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white/80">
-                                    <path d="M12 2v4M12 12v-2M5.636 5.636a9 9 0 1 0 12.728 0" />
-                                    <path d="M12 12a4 4 0 1 0 0-8" />
+                            {/* Keyhole Silhouette (Solid White) */}
+                            <div className="relative flex items-center justify-center text-white">
+                                <svg width="60" height="90" viewBox="0 0 24 36" fill="currentColor">
+                                    <circle cx="12" cy="12" r="8" />
+                                    <path d="M10 18 L6 30 C 5 33, 19 33, 18 30 L14 18 Z" />
                                 </svg>
-                            </m.div>
+                            </div>
 
-                            <m.p
-                                className="text-white/40 text-xs tracking-[0.3em] uppercase"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5, duration: 0.5 }}
-                            >
-                                Click to Start
-                            </m.p>
+                            {/* Hidden Text (Static) */}
+                            {!isClicked && (
+                                <p className="absolute -bottom-16 text-white/30 text-xs tracking-[0.4em] uppercase whitespace-nowrap">
+                                    Unlock OS
+                                </p>
+                            )}
                         </m.div>
                     </m.div>
                 )}
 
-                {/* === STAGE 2: RamosOS Text === */}
+                {/* === STAGE 2: RamosOS Text Intro === */}
                 {screenState === "showingText" && (
                     <m.div
-                        key="ramos-text"
-                        className="absolute inset-0 bg-black flex items-center justify-center z-[10002]"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        key="ramos-text-glass"
+                        className="absolute inset-0 flex items-center justify-center z-[10002] pointer-events-none"
+                        initial={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
+                        animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                        // Smooth exit right before the cinematic iris cuts through
+                        exit={{ opacity: 0, scale: 1.1, filter: "blur(20px)", transition: { duration: 0.8, ease: "easeIn" } }}
+                        transition={{ duration: 1, ease: "easeOut" }}
                     >
-                        <m.div className="flex items-center gap-1">
-                            {"RamosOS".split("").map((char, i) => (
-                                <m.span
-                                    key={i}
-                                    className="text-white text-5xl md:text-7xl font-light tracking-tight"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    transition={{ 
-                                        delay: i * 0.08, 
-                                        duration: 0.4,
-                                        ease: [0.22, 1, 0.36, 1]
-                                    }}
-                                >
-                                    {char}
-                                </m.span>
-                            ))}
-                        </m.div>
+                        <span className="text-black text-4xl md:text-6xl font-sans flex items-baseline">
+                            <span className="font-thin uppercase tracking-[0.2em]">Ramos</span>
+                            <span className="font-extrabold uppercase tracking-tighter">os</span>
+                        </span>
                     </m.div>
-                )}
-
-                {/* === STAGE 3: Japanese Door Split === */}
-                {screenState === "doorsOpening" && (
-                    <>
-                        {/* Black background that fades to reveal desktop */}
-                        <m.div
-                            key="door-bg"
-                            className="absolute inset-0 bg-black z-[10001]"
-                            initial={{ opacity: 1 }}
-                            animate={{ opacity: 0 }}
-                            transition={{ duration: 0.1, delay: 1.5 }}
-                        />
-                        
-                        {/* Left Door */}
-                        <m.div
-                            key="left-door"
-                            className="absolute inset-y-0 left-0 w-1/2 bg-black z-[10002]"
-                            initial={{ x: 0 }}
-                            animate={{ x: "-100%" }}
-                            transition={{ 
-                                duration: 1.5, 
-                                ease: [0.22, 1, 0.36, 1],
-                                delay: 0.1
-                            }}
-                        />
-
-                        {/* Right Door */}
-                        <m.div
-                            key="right-door"
-                            className="absolute inset-y-0 right-0 w-1/2 bg-black z-[10002]"
-                            initial={{ x: 0 }}
-                            animate={{ x: "100%" }}
-                            transition={{ 
-                                duration: 1.5, 
-                                ease: [0.22, 1, 0.36, 1],
-                                delay: 0.1
-                            }}
-                        />
-                    </>
                 )}
             </AnimatePresence>
         </div>

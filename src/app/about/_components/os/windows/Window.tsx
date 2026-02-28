@@ -245,7 +245,7 @@ export default function OSWindow({
                         left: 0,
                     }}
                     data-lenis-prevent
-                    className={`flex flex-col shadow-lg overflow-hidden border border-white/40 will-change-transform pointer-events-auto ${isSmallScreen
+                    className={`flex flex-col overflow-hidden border border-white/40 will-change-transform pointer-events-auto ${isSmallScreen
                         ? 'bg-white/95'
                         : 'bg-white/80 backdrop-blur-xl'
                         }`}
