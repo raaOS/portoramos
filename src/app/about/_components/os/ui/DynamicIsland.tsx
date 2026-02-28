@@ -121,40 +121,40 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
         ? "notification"
         : (activeWindow ? "active-window" : "idle");
 
-    // Animation Variants
+    // Animation Variants - Sleeker dimensions (more like real iPhone Dynamic Island)
     const variants = {
         idle: {
-            width: 90,
-            height: 32,
-            borderRadius: 20,
+            width: 72,
+            height: 26,
+            borderRadius: 16,
         },
         active: {
-            width: 200,
-            height: 48,
-            borderRadius: 24,
+            width: 160,
+            height: 36,
+            borderRadius: 20,
         },
         notification: {
-            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '95vw' : 320,
-            height: 64,
-            borderRadius: 32,
+            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '92vw' : 280,
+            height: 52,
+            borderRadius: 26,
         },
         hovered: {
-            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '95vw' : 320,
-            height: 120,
-            borderRadius: 24,
+            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '92vw' : 280,
+            height: 100,
+            borderRadius: 22,
         }
     };
 
     if (isBooting) return null;
 
     return (
-        <div className="fixed top-[42px] left-0 right-0 flex justify-center z-[9999] pointer-events-none">
+        <div className="fixed top-[46px] left-0 right-0 flex justify-center z-[9999] pointer-events-none">
             <m.div
-                className="bg-black shadow-2xl overflow-hidden pointer-events-auto cursor-default border border-white/10"
+                className="bg-black/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden pointer-events-auto cursor-default ring-1 ring-white/10"
                 initial="idle"
                 animate={currentState === "active-window" ? "active" : currentState}
                 variants={variants}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
             >
                 <div className="w-full h-full relative flex items-center justify-center text-white px-4">
 
@@ -168,11 +168,11 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                         >
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-xs font-medium truncate flex-1 text-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                            <span className="text-[11px] font-medium truncate flex-1 text-center">
                                 {activeWindow}
                             </span>
-                            <AppWindow size={14} className="text-white/60" />
+                            <AppWindow size={12} className="text-white/60" />
                         </m.div>
                     )}
 
@@ -191,20 +191,20 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                         >
                             {/* Avatar */}
                             <div className="relative shrink-0">
-                                <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20">
+                                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={notification.avatar} alt={notification.name} className="object-cover w-full h-full" />
                                 </div>
-                                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-black rounded-full z-20 shadow-lg scale-110"></div>
+                                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-black rounded-full z-20 shadow-sm"></div>
                             </div>
 
                             {/* Text */}
                             <div className="flex flex-col flex-1 min-w-0">
-                                <span className="text-xs font-bold text-white/90 flex justify-between items-center">
+                                <span className="text-[11px] font-semibold text-white/90 flex justify-between items-center">
                                     {notification.name}
-                                    <span className="text-[10px] text-white/40 font-normal">Now</span>
+                                    <span className="text-[9px] text-white/40 font-normal">Now</span>
                                 </span>
-                                <span className="text-xs text-white/70 truncate">
+                                <span className="text-[11px] text-white/70 truncate">
                                     {notification.message}
                                 </span>
                             </div>
