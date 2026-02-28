@@ -55,7 +55,6 @@ const BootSequence = dynamic(() => import("../ui/BootSequence"), {
     ssr: false
 });
 const StartScreen = dynamic(() => import("../ui/StartScreen"), {
-    loading: () => <div className="fixed inset-0 bg-black flex items-center justify-center"><div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>,
     ssr: false
 });
 
