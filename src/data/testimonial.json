@@ -199,7 +199,60 @@
         }
       ],
       "id": 7
+    },
+    {
+      "name": "Bram - Digital Agency",
+      "notificationText": "Mas Ramos, hasil manipulasi fotonya mantap banget, tim puas semua.",
+      "isActive": true,
+      "messages": [
+        {
+          "text": "Siang Mas Ramos, mau update soal project manipulasi foto yang kemarin.",
+          "isMe": false,
+          "time": "14:15",
+          "id": 1772322840256
+        },
+        {
+          "text": "Siang Mas Bram. Gimana mas, apa sudah sempat dicek file finalnya?",
+          "isMe": true,
+          "time": "14:18",
+          "id": 1772322840257,
+          "type": "project",
+          "projectId": "gen-1766512146544-15"
+        },
+        {
+          "text": "Sudah Mas, baru aja selesai review bareng tim internal. Hasilnya gokil sih.",
+          "isMe": false,
+          "time": "14:22",
+          "id": 1772322840258
+        },
+        {
+          "text": "Syukurlah kalau cocok mas. Bagian shading sama lighting-nya sudah pas ya?",
+          "isMe": true,
+          "time": "14:25",
+          "id": 1772322840259
+        },
+        {
+          "text": "Iya, pengerjaannya rapi banget, kelihatan natural padahal itu gabungan banyak aset.",
+          "isMe": false,
+          "time": "14:28",
+          "id": 1772322840260
+        },
+        {
+          "text": "Alhamdulillah. Terima kasih banyak ya Mas Bram atas kepercayaannya.",
+          "isMe": true,
+          "time": "14:31",
+          "id": 1772322840261
+        },
+        {
+          "text": "Sama-sama Mas. Nanti kalau ada project sejenis, saya langsung kontak Mas Ramos lagi ya!",
+          "isMe": false,
+          "time": "14:35",
+          "id": 1772322840262
+        }
+      ],
+      "projectId": "gen-1766512146544-14",
+      "id": 8
     }
   ],
-  "lastUpdated": "2026-02-28T23:24:10.114Z"
+  "lastUpdated": "2026-02-28T23:54:30.258Z"
 }
