@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { Smile } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { createPortal } from 'react-dom';
 
 // Dynamic import Lottie untuk mengurangi bundle size
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -22,7 +23,6 @@ interface EmojiPickerProps {
 }
 
 // Data emoji populer yang tersedia di Google Noto Animation
-// Format: https://fonts.gstatic.com/s/e/notoemoji/latest/{unicode}/lottie.json
 const POPULAR_EMOJIS: EmojiItem[] = [
   // Wajah & Emosi
   { unicode: '1f602', char: '😂', name: 'joy', category: 'emosi' },
@@ -105,7 +105,7 @@ const AnimatedEmojiPreview = ({ unicode }: { unicode: string }) => {
         const data = await response.json();
         setAnimationData(data);
       } catch {
-        // Jika gagal load, biarkan null (akan fallback ke static emoji)
+        // Jika gagal load, biarkan null
       }
     };
     loadAnimation();
@@ -125,22 +125,30 @@ const AnimatedEmojiPreview = ({ unicode }: { unicode: string }) => {
   );
 };
 
-export default function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
-  const [isOpen, setIsOpen] = useState(false);
+// Komponen Picker Panel (akan di-render via portal)
+interface PickerPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onEmojiSelect: (emoji: string) => void;
+  triggerRect: DOMRect | null;
+}
+
+const PickerPanel = ({ isOpen, onClose, onEmojiSelect, triggerRect }: PickerPanelProps) => {
   const [activeCategory, setActiveCategory] = useState('emosi');
   const [hoveredEmoji, setHoveredEmoji] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [isClient, setIsClient] = useState(false);
   
-  // Filter emoji berdasarkan kategori
-  const filteredEmojis = POPULAR_EMOJIS.filter(
-    (emoji) => emoji.category === activeCategory
-  );
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsClient(true);
+  }, []);
   
-  // Handle click outside untuk close picker
+  // Handle click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-emoji-picker]')) {
+        onClose();
       }
     };
     
@@ -151,35 +159,77 @@ export default function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
   
-  const handleEmojiClick = (emojiChar: string) => {
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+    
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+  
+  const filteredEmojis = POPULAR_EMOJIS.filter(
+    (emoji) => emoji.category === activeCategory
+  );
+  
+  const handleEmojiClick = useCallback((emojiChar: string) => {
     onEmojiSelect(emojiChar);
-    setIsOpen(false);
-  };
+    onClose();
+  }, [onEmojiSelect, onClose]);
   
-  return (
-    <div ref={containerRef} className="relative">
-      {/* Trigger Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-full hover:bg-[#00a884]/10 transition-colors focus:outline-none"
-        aria-label="Open emoji picker"
-      >
-        <Smile className="w-6 h-6 text-[#8696a0] hover:text-[#00a884] transition-colors" />
-      </button>
-      
-      {/* Emoji Picker Panel */}
-      <AnimatePresence>
-        {isOpen && (
+  if (!isClient || !triggerRect) return null;
+  
+  // Calculate position - center horizontally relative to trigger, bottom aligned
+  const pickerWidth = 320;
+  const windowWidth = window.innerWidth;
+  
+  // Calculate left position (centered under trigger button)
+  let left = triggerRect.left + (triggerRect.width / 2) - (pickerWidth / 2);
+  
+  // Ensure picker doesn't go off-screen on left
+  if (left < 8) left = 8;
+  
+  // Ensure picker doesn't go off-screen on right
+  if (left + pickerWidth > windowWidth - 8) {
+    left = windowWidth - pickerWidth - 8;
+  }
+  
+  // Calculate bottom position (above the trigger)
+  const bottom = window.innerHeight - triggerRect.top + 8;
+  
+  const panel = (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
           <m.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/20 z-[9998]"
+            onClick={onClose}
+          />
+          
+          {/* Picker Panel */}
+          <m.div
+            data-emoji-picker
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-full right-0 mb-2 bg-white dark:bg-[#202c33] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50"
-            style={{ width: '320px', maxHeight: '400px' }}
+            className="fixed bg-white dark:bg-[#202c33] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[9999]"
+            style={{ 
+              width: '320px', 
+              maxHeight: '400px',
+              left: `${left}px`,
+              bottom: `${bottom}px`,
+            }}
           >
             {/* Category Tabs */}
             <div className="flex items-center justify-between px-2 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1f2c34]">
@@ -213,7 +263,7 @@ export default function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
                     className="relative flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a3942] transition-all transform hover:scale-110"
                     title={emoji.name}
                   >
-                    {/* Static Emoji (fallback) */}
+                    {/* Static Emoji */}
                     <span className="text-2xl">{emoji.char}</span>
                     
                     {/* Animated Preview on Hover */}
@@ -234,8 +284,66 @@ export default function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
               </p>
             </div>
           </m.div>
-        )}
-      </AnimatePresence>
-    </div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+  
+  return createPortal(panel, document.body);
+};
+
+// Komponen utama
+export default function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  
+  const handleToggle = () => {
+    if (!isOpen && buttonRef.current) {
+      // Get button position before opening
+      setTriggerRect(buttonRef.current.getBoundingClientRect());
+    }
+    setIsOpen(!isOpen);
+  };
+  
+  // Update position on resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (isOpen && buttonRef.current) {
+        setTriggerRect(buttonRef.current.getBoundingClientRect());
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleResize, true);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleResize, true);
+    };
+  }, [isOpen]);
+  
+  return (
+    <>
+      {/* Trigger Button */}
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={handleToggle}
+        className="p-2 rounded-full hover:bg-[#00a884]/10 transition-colors focus:outline-none"
+        aria-label="Open emoji picker"
+        aria-expanded={isOpen}
+      >
+        <Smile className={`w-6 h-6 transition-colors ${isOpen ? 'text-[#00a884]' : 'text-[#8696a0] hover:text-[#00a884]'}`} />
+      </button>
+      
+      {/* Picker Panel (Portal) */}
+      <PickerPanel
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        onEmojiSelect={onEmojiSelect}
+        triggerRect={triggerRect}
+      />
+    </>
   );
 }
