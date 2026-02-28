@@ -44,9 +44,13 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
     // Sequencer Logic: Autoplay conversation
     useEffect(() => {
         // Select contacts to use (custom or default)
+        // Use customContacts (from testimonial.json) first, fallback to initialChats
+        const contactsToUse = customContacts && Object.keys(customContacts).length > 0 
+            ? customContacts 
+            : initialChats;
 
-        const contactId = activeChatId || Object.keys(initialChats)[0];
-        const contact = contactId ? initialChats[contactId] : (Object.values(initialChats)[0] || null);
+        const contactId = activeChatId || Object.keys(contactsToUse)[0];
+        const contact = contactId ? contactsToUse[contactId] : (Object.values(contactsToUse)[0] || null);
 
         if (contact) {
             setActiveContact(contact);
