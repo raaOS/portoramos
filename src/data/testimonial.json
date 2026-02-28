@@ -8,21 +8,44 @@
       "messages": [
         {
           "id": 1600000000001,
-          "text": "Wah, gila sih ini! Hasilnya keren banget mas. Makasih ya!",
+          "text": "Mas, ini mockup kemasannya ya?",
           "isMe": false,
-          "time": "09:41"
+          "time": "09:40",
+          "status": "read",
+          "type": "text"
         },
         {
           "id": 1600000000002,
-          "text": "Alhamdulillah kalau gitu Mbak. Berarti fix ya warnanya?",
+          "text": "Iya Mbak, ini desain finalnya",
           "isMe": true,
-          "time": "09:42"
+          "time": "09:41",
+          "status": "read",
+          "type": "image",
+          "imageSrc": "/assets/placeholder-project.png"
         },
         {
           "id": 1600000000003,
+          "text": "Wah, gila sih ini! Hasilnya keren banget mas. Makasih ya!",
+          "isMe": false,
+          "time": "09:42",
+          "status": "read",
+          "type": "text"
+        },
+        {
+          "id": 1600000000004,
+          "text": "Alhamdulillah kalau gitu Mbak. Berarti fix ya warnanya?",
+          "isMe": true,
+          "time": "09:43",
+          "status": "read",
+          "type": "text"
+        },
+        {
+          "id": 1600000000005,
           "text": "Iya fix Mas. Suka banget sama feel-nya. Makasih banyak ya!",
           "isMe": false,
-          "time": "09:45"
+          "time": "09:45",
+          "status": "read",
+          "type": "text"
         }
       ]
     },

@@ -21,6 +21,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
     const [visibleMessages, setVisibleMessages] = useState<ChatMessage[]>([]);
     const [isRemoteTyping, setIsRemoteTyping] = useState(false);
     const [projects, setProjects] = useState<Record<string, Project>>({});
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
     const sequencerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Load projects for thumbnails
@@ -79,10 +80,12 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                         sequencerRef.current = setTimeout(nextStep, 1500);
                     }, 2000); // Typing duration
                 } else {
-                    // Internal messages appear faster
+                    // Internal messages (from Me)
                     setVisibleMessages(prev => [...prev, msg]);
                     currentIndex++;
-                    sequencerRef.current = setTimeout(nextStep, 1000);
+                    // Longer delay for image messages to allow viewing
+                    const delay = msg.type === 'image' ? 2500 : 1000;
+                    sequencerRef.current = setTimeout(nextStep, delay);
                 }
             };
 
@@ -199,7 +202,10 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
 
                                     {/* Image Bubble */}
                                     {msg.type === 'image' && msg.imageSrc && (
-                                        <div className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5">
+                                        <div 
+                                            className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={() => setPreviewImage(msg.imageSrc || null)}
+                                        >
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
                                                 src={msg.imageSrc}
@@ -279,6 +285,35 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                     )}
                 </div>
             </div>
+
+            {/* Image Preview Modal */}
+            <AnimatePresence>
+                {previewImage && (
+                    <m.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4"
+                        onClick={() => setPreviewImage(null)}
+                    >
+                        <m.img
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0.9 }}
+                            src={previewImage}
+                            alt="Preview"
+                            className="max-w-full max-h-full object-contain rounded-lg"
+                            onClick={e => e.stopPropagation()}
+                        />
+                        <button
+                            className="absolute top-4 right-4 text-white/80 hover:text-white p-2"
+                            onClick={() => setPreviewImage(null)}
+                        >
+                            ✕
+                        </button>
+                    </m.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
