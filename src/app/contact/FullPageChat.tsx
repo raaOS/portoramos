@@ -22,7 +22,7 @@ interface ChatMessage {
 // Typing indicator component with typewriter effect
 function TypingIndicator() {
     const [dots, setDots] = useState('');
-    
+
     useEffect(() => {
         const interval = setInterval(() => {
             setDots(prev => {
@@ -32,10 +32,10 @@ function TypingIndicator() {
                 return '';
             });
         }, 400);
-        
+
         return () => clearInterval(interval);
     }, []);
-    
+
     return (
         <m.div
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -45,10 +45,10 @@ function TypingIndicator() {
         >
             <div className="px-4 py-3 rounded-2xl shadow-sm bg-white dark:bg-[#202c33] text-[#667781] dark:text-[#8696a0] rounded-tl-none relative min-w-[140px]">
                 {/* Chat Tail SVG */}
-                <svg viewBox="0 0 8 13" width="8" height="13" className="absolute top-0 -left-[8px] text-white dark:text-[#202c33] fill-current transform scale-x-[-1]">
-                    <path d="M5.188 1H0v11.191L8 1.733V1h-2.812z"></path>
+                <svg viewBox="0 0 8 13" width="8" height="13" className="absolute top-0 -left-[8px] text-white dark:text-[#202c33] fill-current transform scale-x-[-1] overflow-visible z-20">
+                    <path d="M5.188 0H0v12.191L8 1.733V0h-2.812z"></path>
                 </svg>
-                
+
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-[#111b21] dark:text-[#e9edef]">Ramos is typing</span>
                     <span className="text-[#00a884] font-bold min-w-[20px]">{dots}</span>
@@ -105,11 +105,11 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
     // Timeout for typing indicator (max 30 seconds)
     useEffect(() => {
         if (!isTyping) return;
-        
+
         const timeout = setTimeout(() => {
             setIsTyping(false);
         }, 30000); // 30 seconds max
-        
+
         return () => clearTimeout(timeout);
     }, [isTyping]);
 
@@ -236,7 +236,7 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
             <div className="relative flex-1 bg-[#0a0a0a] overflow-hidden flex flex-col items-center justify-center pt-28 pb-32 px-4 h-full min-h-[100dvh]">
                 {/* Device Frame Constraint for Desktop */}
                 <div
-                    className="w-full h-full md:h-[80vh] bg-[#e5ddd5] dark:bg-[#0b141a] md:rounded-[2.5rem] md:border-[12px] border-gray-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden relative z-10"
+                    className="w-full h-full md:h-[80vh] bg-[#e5ddd5] dark:bg-[#0b141a] md:rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] flex flex-col overflow-hidden relative z-10"
                     style={{ maxWidth: '480px' }}
                 >
 
@@ -265,13 +265,13 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                     {/* Chat Messages Area */}
                     <div className="flex-1 w-full overflow-y-auto px-4 py-6 flex flex-col gap-3 relative bg-[#e5ddd5] dark:bg-[#0b141a]">
                         {/* WhatsApp Pattern Background */}
-                        <div 
+                        <div
                             className="absolute inset-0 opacity-40 pointer-events-none"
-                            style={{ 
-                                backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`, 
+                            style={{
+                                backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`,
                                 backgroundSize: '400px',
                                 backgroundRepeat: 'repeat'
-                            }} 
+                            }}
                         />
 
                         {/* Messages Container - above background */}
@@ -281,46 +281,46 @@ export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
                                     Today
                                 </span>
                             </div>
-                        <AnimatePresence initial={false}>
-                            {messages.map((msg, idx) => {
-                                const isMe = msg.sender === 'visitor';
-                                return (
-                                    <m.div
-                                        key={msg.id || idx}
-                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group`}
-                                    >
-                                        <div
-                                            className={`px-3 py-2 rounded-2xl shadow-sm text-[15px] leading-relaxed relative ${isMe
-                                                ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111b21] dark:text-[#e9edef] rounded-tr-none'
-                                                : 'bg-white dark:bg-[#202c33] text-[#111b21] dark:text-[#e9edef] rounded-tl-none'
-                                                }`}
-                                            style={{ wordBreak: 'break-word' }}
+                            <AnimatePresence initial={false}>
+                                {messages.map((msg, idx) => {
+                                    const isMe = msg.sender === 'visitor';
+                                    return (
+                                        <m.div
+                                            key={msg.id || idx}
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group`}
                                         >
-                                            {/* Chat Tail SVG (Simplified) */}
-                                            <svg viewBox="0 0 8 13" width="8" height="13" className={`absolute top-0 ${isMe ? '-right-[8px] text-[#d9fdd3] dark:text-[#005c4b]' : '-left-[8px] text-white dark:text-[#202c33] transform scale-x-[-1]'} fill-current`}>
-                                                <path d="M5.188 1H0v11.191L8 1.733V1h-2.812z"></path>
-                                            </svg>
+                                            <div
+                                                className={`px-3 py-2 rounded-2xl shadow-sm text-[15px] leading-relaxed relative ${isMe
+                                                    ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111b21] dark:text-[#e9edef] rounded-tr-none'
+                                                    : 'bg-white dark:bg-[#202c33] text-[#111b21] dark:text-[#e9edef] rounded-tl-none'
+                                                    }`}
+                                                style={{ wordBreak: 'break-word' }}
+                                            >
+                                                {/* Chat Tail SVG (Simplified) */}
+                                                <svg viewBox="0 0 8 13" width="8" height="13" className={`absolute top-0 ${isMe ? '-right-[8px] text-[#d9fdd3] dark:text-[#005c4b]' : '-left-[8px] text-white dark:text-[#202c33] transform scale-x-[-1]'} fill-current overflow-visible z-20`}>
+                                                    <path d="M5.188 0H0v12.191L8 1.733V0h-2.812z"></path>
+                                                </svg>
 
-                                            <div className="whitespace-pre-wrap">
-                                                {msg.text}
-                                            </div>
+                                                <div className="whitespace-pre-wrap">
+                                                    {msg.text}
+                                                </div>
 
-                                            <div className={`flex items-center justify-end gap-1 mt-1 -mb-1 ${isMe ? 'text-[#667781] dark:text-white/60' : 'text-[#667781] dark:text-white/50'}`}>
-                                                <span className="text-[10px] uppercase">
-                                                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                                {isMe && <CheckCheck className="w-3.5 h-3.5 text-blue-500" />}
+                                                <div className={`flex items-center justify-end gap-1 mt-1 -mb-1 ${isMe ? 'text-[#667781] dark:text-white/60' : 'text-[#667781] dark:text-white/50'}`}>
+                                                    <span className="text-[10px] uppercase">
+                                                        {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                    {isMe && <CheckCheck className="w-3.5 h-3.5 text-blue-500" />}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </m.div>
-                                );
-                            })}
-                            
-                            {/* Typing Indicator */}
-                            {isTyping && <TypingIndicator />}
-                        </AnimatePresence>
+                                        </m.div>
+                                    );
+                                })}
+
+                                {/* Typing Indicator */}
+                                {isTyping && <TypingIndicator />}
+                            </AnimatePresence>
                         </div>
 
                         <div ref={bottomRef} className="h-2 w-full relative z-10" />
