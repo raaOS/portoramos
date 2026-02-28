@@ -1,7 +1,7 @@
 [
   {
     "id": "welcome-note",
-    "text": "Halo! Selamat Datang di Ramos OS v2.0 🖥️✨\n\nSaya Ramos, seorang Graphic Designer &amp; Visual Strategist.\n\nQuick Start:\n1. Buka folder \"Projects\" untuk lihat karya saya.\n2. Klik \"Contact\" di bawah untuk ngobrol.\n3. Drag note ini ke mana saja!\n\nSelamat mengeksplorasi!",
+    "text": "Halo! Selamat Datang di Ramos OS v2.0 🖥️✨\nSaya Ramos, seorang Graphic Designer <div>&amp; <span style=\"font-family: var(--font-handwritten, &quot;Comic Sans MS&quot;, cursive);\">Visual Strategist.</span><div>\nQuick Start:\n1. Buka folder \"Projects\" untuk lihat karya saya.\n2. Klik \"Contact\" di bawah untuk ngobrol.\n3. Drag note ini ke mana saja!\n\nSelamat mengeksplorasi!</div></div>",
     "date": "2026-02-22T18:17:10.544Z",
     "color": "#fef08a",
     "isStarred": true,
