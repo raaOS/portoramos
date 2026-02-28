@@ -43,10 +43,9 @@ export function useAdminProjects() {
             const data = await res.json();
             const counts: Record<string, number> = {};
             if (data.comments) {
-                Object.entries(data.comments).forEach(([slug, commentsList]: [string, any]) => {
-                    const total = Array.isArray(commentsList)
-                        ? commentsList.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)
-                        : 0;
+                Object.entries(data.comments).forEach(([slug, commentsList]: [string, unknown]) => {
+                    const commentsArr = Array.isArray(commentsList) ? commentsList : [];
+                    const total = commentsArr.reduce((acc, c) => acc + 1 + ((c as { replies?: unknown[] }).replies?.length || 0), 0);
                     counts[slug] = total;
                 });
             }
@@ -77,7 +76,7 @@ export function useAdminProjects() {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
             showSuccess('Project berhasil dibuat');
         },
-        onError: (err: any) => showError(err.message || 'Failed to create project')
+        onError: (err: Error) => showError(err.message || 'Failed to create project')
     });
 
     const updateMutation = useMutation({
@@ -101,7 +100,7 @@ export function useAdminProjects() {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
             showSuccess('Project berhasil diperbarui');
         },
-        onError: (err: any) => showError(err.message || 'Failed to update project')
+        onError: (err: Error) => showError(err.message || 'Failed to update project')
     });
 
     const deleteMutation = useMutation({
@@ -123,7 +122,7 @@ export function useAdminProjects() {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
             showSuccess('Project dihapus');
         },
-        onError: (err: any) => showError(err.message || 'Failed to delete project')
+        onError: (err: Error) => showError(err.message || 'Failed to delete project')
     });
 
     const handleReorder = useCallback(async (newItems: Project[]) => {
@@ -142,8 +141,9 @@ export function useAdminProjects() {
                 const data = await res.json().catch(() => ({}));
                 throw new Error(data.error || 'Failed to reorder');
             }
-        } catch (e: any) {
-            showError(`Gagal memperbarui urutan: ${e.message}`);
+        } catch (e: unknown) {
+            const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+            showError(`Gagal memperbarui urutan: ${errorMsg}`);
             // Rollback if needed or refetch
             queryClient.invalidateQueries({ queryKey: ['projects', 'admin'] });
         }
@@ -171,7 +171,7 @@ export function useAdminProjects() {
             setSelectedProjectIds(new Set());
             showSuccess(`Bulk ${action} complete`);
             await queryClient.invalidateQueries({ queryKey: ['projects'] });
-        } catch (e) {
+        } catch {
             showError(`Bulk ${action} failed`);
         } finally {
             setIsBulkUpdating(false);

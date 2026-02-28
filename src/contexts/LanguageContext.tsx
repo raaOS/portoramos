@@ -15,7 +15,6 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const [language, setLanguage] = useState<Language>('en');
-    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         // Load saved language or default to 'en'
@@ -23,7 +22,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         if (savedLang && (savedLang === 'en' || savedLang === 'id')) {
             requestAnimationFrame(() => setLanguage(savedLang));
         }
-        requestAnimationFrame(() => setMounted(true));
     }, []);
 
     const handleSetLanguage = (lang: Language) => {

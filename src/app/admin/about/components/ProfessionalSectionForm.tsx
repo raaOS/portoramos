@@ -1,18 +1,42 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Project } from '@/types/projects';
+
+interface MottoData {
+    badge?: string;
+    quote?: string;
+}
+
+interface BioData {
+    content?: string;
+}
+
+interface AvailabilityData {
+    status?: string;
+    text?: string;
+}
+
+interface HeroData {
+    availability?: AvailabilityData;
+}
+
+interface ProfessionalData {
+    motto?: MottoData;
+    bio?: BioData;
+}
 
 interface ProfessionalSectionFormProps {
-    data: any;
-    heroData: any;
-    projects: Project[];
-    onUpdate: (data: any) => void;
+    data: ProfessionalData;
+    heroData: HeroData;
+    projects?: unknown[]; // Kept for API compatibility but not used
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onUpdate: (data: any) => void | Promise<void>; // Using any for compatibility with UpdateAboutData
 }
 
 export default function ProfessionalSectionForm({
     data,
     heroData,
+    projects: _projects,
     onUpdate
 }: ProfessionalSectionFormProps) {
     const [formData, setFormData] = useState({

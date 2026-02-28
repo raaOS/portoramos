@@ -6,13 +6,18 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_AI_API_KEY;
 
+interface GenerateTestimonialRequest {
+    topic?: string;
+    messageCount?: number;
+}
+
 export async function POST(req: NextRequest) {
     if (!API_KEY) {
         return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
     }
 
     try {
-        const { topic = 'Desain Ads', messageCount = 3 } = await req.json();
+        const { topic = 'Desain Ads', messageCount = 3 } = await req.json() as GenerateTestimonialRequest;
 
         // Call Gemini API
         const model = 'gemini-flash-latest';
@@ -87,8 +92,9 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(parsed);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('AI Generate Testimonial Error:', error);
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+        const errorMsg = error instanceof Error ? error.message : 'Internal Server Error';
+        return NextResponse.json({ error: errorMsg }, { status: 500 });
     }
 }

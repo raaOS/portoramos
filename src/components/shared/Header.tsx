@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Wifi, Eye } from 'lucide-react';
+import { Search, Wifi } from 'lucide-react';
 
 import { AboutData } from '@/types/about';
 

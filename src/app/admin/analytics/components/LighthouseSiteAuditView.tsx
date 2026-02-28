@@ -49,8 +49,8 @@ export default function LighthouseSiteAuditView() {
                     status: 'pending'
                 })));
 
-            } catch (error) {
-                console.error('Failed to fetch routes', error);
+            } catch {
+                // Silently handle error
             }
         };
 
@@ -99,11 +99,11 @@ export default function LighthouseSiteAuditView() {
                     scores: result
                 } : p));
 
-            } catch (err: any) {
+            } catch (err: unknown) {
                 setPages(prev => prev.map((p, idx) => idx === i ? {
                     ...p,
                     status: 'error',
-                    error: err.message || 'Scan failed'
+                    error: err instanceof Error ? err.message : 'Scan failed'
                 } : p));
             } finally {
                 setProgress(((i + 1) / initialPages.length) * 100);
@@ -111,19 +111,6 @@ export default function LighthouseSiteAuditView() {
         }
 
         setScanning(false);
-    };
-
-    const getScoreBadge = (score?: number) => {
-        if (score === undefined) return <span className="text-gray-300">-</span>;
-        let color = 'bg-red-100 text-red-700';
-        if (score >= 90) color = 'bg-emerald-100 text-emerald-700';
-        else if (score >= 50) color = 'bg-amber-100 text-amber-700';
-
-        return (
-            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${color}`}>
-                {score}
-            </span>
-        );
     };
 
     const StatusIcon = ({ status }: { status: string }) => {

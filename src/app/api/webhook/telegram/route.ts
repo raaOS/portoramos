@@ -38,6 +38,7 @@ function checkRateLimit(chatId: string): { allowed: boolean; remaining: number }
 }
 
 // Sanitize error for user display (never expose internal details)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function sanitizeError(error: unknown): string {
     if (error instanceof Error) {
         // Only return safe, generic messages
@@ -50,16 +51,27 @@ function sanitizeError(error: unknown): string {
 }
 
 // Validate incoming webhook data
-function validateWebhookData(body: any): { valid: boolean; error?: string } {
+interface WebhookBody {
+    message?: {
+        text?: string;
+        chat?: unknown;
+        [key: string]: unknown;
+    };
+    [key: string]: unknown;
+}
+
+function validateWebhookData(body: unknown): { valid: boolean; error?: string } {
     if (!body || typeof body !== 'object') {
         return { valid: false, error: 'Invalid payload' };
     }
     
-    if (body.message && typeof body.message !== 'object') {
+    const webhookBody = body as WebhookBody;
+    
+    if (webhookBody.message && typeof webhookBody.message !== 'object') {
         return { valid: false, error: 'Invalid message format' };
     }
     
-    if (body.message?.text && typeof body.message.text !== 'string') {
+    if (webhookBody.message?.text && typeof webhookBody.message.text !== 'string') {
         return { valid: false, error: 'Invalid text format' };
     }
     
@@ -179,7 +191,11 @@ export async function POST(request: Request) {
                 console.log('[Webhook Debug] No threadId or reply_to_message');
             }
 
-            const messagesToSend: { text: string; reply_markup?: any; message_thread_id?: number }[] = [];
+            interface ReplyMarkup {
+                inline_keyboard: { text: string; url?: string }[][];
+            }
+            
+            const messagesToSend: { text: string; reply_markup?: ReplyMarkup; message_thread_id?: number }[] = [];
 
             // --- ADMIN COMMANDS ---
             if (isAdmin) {
@@ -221,7 +237,7 @@ export async function POST(request: Request) {
                                         `📱 ${phone}\n` +
                                         `💬 _"${l.message.trim().substring(0, 100)}${l.message.length > 100 ? '...' : ''}"_`;
 
-                                    const msgPayload: any = { text: msgText };
+                                    const msgPayload: { text: string; reply_markup?: ReplyMarkup } = { text: msgText };
 
                                     if (waUrl) {
                                         msgPayload.reply_markup = {
@@ -426,7 +442,13 @@ export async function POST(request: Request) {
 
             // Send all messages
             for (const msg of messagesToSend) {
-                const payload: any = {
+                const payload: { 
+                    chat_id: string; 
+                    text: string; 
+                    parse_mode: string; 
+                    reply_markup?: ReplyMarkup;
+                    message_thread_id?: number;
+                } = {
                     chat_id: incomingChatId,
                     text: msg.text,
                     parse_mode: 'Markdown',
@@ -463,7 +485,12 @@ async function sendImmediate(
     threadId?: number
 ) {
     try {
-        const payload: any = {
+        const payload: { 
+            chat_id: string; 
+            text: string; 
+            parse_mode: string;
+            message_thread_id?: number;
+        } = {
             chat_id: chatId,
             text: text,
             parse_mode: 'Markdown'

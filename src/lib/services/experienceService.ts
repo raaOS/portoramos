@@ -3,7 +3,7 @@ import { ExperienceData } from '@/types/experience';
 // No specific fallback file usually for experience, or it's experience.json itself.
 // The route previously hardcoded a fallback. Let's create a constant.
 
-const FALLBACK_EXPERIENCE: ExperienceData = {
+const _FALLBACK_EXPERIENCE: ExperienceData = {
     statistics: { years: '+12', projects: '+46', designTools: '+5', clientSatisfaction: '95%' },
     workExperience: [],
     lastUpdated: new Date().toISOString()

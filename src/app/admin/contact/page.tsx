@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
 import { generateMetadata as generateSEOMetadata } from '@/lib/seo';
 import AdminContactClient from './AdminContactClient';
 
@@ -9,15 +8,7 @@ export const metadata: Metadata = generateSEOMetadata({
   path: '/admin/contact'
 });
 
-
-
-
-
 export default function AdminContactPage() {
   return <AdminContactClient />;
 }
-
-
-
-
 

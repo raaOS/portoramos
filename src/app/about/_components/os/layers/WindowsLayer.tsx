@@ -3,7 +3,7 @@
 import React from "react";
 import { AnimatePresence } from "framer-motion";
 import OSWindow from "../windows/Window";
-import type { WindowState } from "@/hooks/useWindowManager";
+
 import { useDesktopWindowContext } from "../context/DesktopWindowContext";
 
 interface WindowsLayerProps {

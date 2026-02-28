@@ -24,15 +24,15 @@ export async function POST(request: Request) {
         );
 
         return NextResponse.json(newItem);
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to create item' }, { status: 500 });
     }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(_request: Request) {
     // This is for bulk updates (ordering)
     try {
-        const body = await request.json();
+        const body = await _request.json();
         const { items } = body;
 
         if (!Array.isArray(items)) {
@@ -43,7 +43,7 @@ export async function PUT(request: Request) {
 
         return NextResponse.json({ success: true, items: updatedItems });
 
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to update items' }, { status: 500 });
     }
 }

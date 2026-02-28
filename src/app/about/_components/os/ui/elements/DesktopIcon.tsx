@@ -75,11 +75,11 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
             dragMomentum={false}
             dragElastic={0.05}
             onDragStart={handleDragStart}
-            onDragEnd={(e, info) => {
+            onDragEnd={(_e, _info) => {
                 handleDragEnd();
             }}
             data-lenis-prevent
-            onClick={(e) => {
+            onClick={(_e) => {
                 if (!isDragging) {
                     soundManager.play('click');
                     onClick();

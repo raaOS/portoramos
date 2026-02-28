@@ -2,13 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_AI_API_KEY;
 
+interface SuggestSkillsRequest {
+    skillName: string;
+}
+
+interface SuggestSkillsResponse {
+    details: string[];
+}
+
 export async function POST(req: NextRequest) {
     if (!API_KEY) {
         return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
     }
 
     try {
-        const { skillName } = await req.json();
+        const { skillName } = await req.json() as SuggestSkillsRequest;
 
         if (!skillName) {
             return NextResponse.json({ error: 'Skill name is required' }, { status: 400 });
@@ -54,12 +62,13 @@ export async function POST(req: NextRequest) {
         if (!text) throw new Error('No response from AI');
 
         const jsonText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(jsonText);
+        const parsed: SuggestSkillsResponse = JSON.parse(jsonText);
 
         return NextResponse.json(parsed);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('AI Suggest Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ error: errorMsg }, { status: 500 });
     }
 }

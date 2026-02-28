@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { runningTextService } from '@/lib/services/runningTextService';
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(_request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        const body = await request.json();
+        const body = await _request.json();
 
         const updatedItem = await runningTextService.updateItem(id, body);
 
@@ -13,12 +13,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         }
 
         return NextResponse.json(updatedItem);
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to update item' }, { status: 500 });
     }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
         const success = await runningTextService.deleteItem(id);
@@ -28,7 +28,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
         }
 
         return NextResponse.json({ success: true });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 });
     }
 }

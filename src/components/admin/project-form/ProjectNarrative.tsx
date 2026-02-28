@@ -1,6 +1,4 @@
 import { ProjectFormData } from '@/hooks/useProjectForm';
-import { Loader2, UploadCloud } from 'lucide-react';
-import { useState, useRef } from 'react';
 
 interface ProjectNarrativeProps {
     formData: ProjectFormData;
@@ -8,65 +6,11 @@ interface ProjectNarrativeProps {
 }
 
 export default function ProjectNarrative({ formData, updateField }: ProjectNarrativeProps) {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isUploading, setIsUploading] = useState(false);
-
     const handleNarrativeChange = (field: keyof ProjectFormData['narrative'], value: string) => {
         updateField('narrative', {
             ...formData.narrative,
             [field]: value
         });
-    };
-
-    const handleComparisonChange = (field: 'beforeImage' | 'afterImage' | 'beforeType' | 'afterType', value: string) => {
-        updateField('comparison', {
-            ...formData.comparison,
-            [field]: value
-        });
-    };
-
-    const handleBeforeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        // Basic Size Limit (50MB for raw methods)
-        if (file.size > 50 * 1024 * 1024) {
-            alert("File too large (>50MB). Please compress it first.");
-            return;
-        }
-
-        setIsUploading(true);
-        try {
-            const data = new FormData();
-            data.append('file', file);
-
-            // Construct API URL
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            let endpoint = isLocal ? '/api/upload?folder=comparisons' : '/api/upload/github?folder=comparisons';
-
-            // Add Slug if available for naming
-            if (formData.slug) {
-                endpoint += `&slug=${encodeURIComponent(formData.slug)}`;
-            }
-
-            const res = await fetch(endpoint, {
-                method: 'POST',
-                body: data
-            });
-
-            if (!res.ok) throw new Error('Upload Failed');
-
-            const result = await res.json();
-            if (result.url) {
-                handleComparisonChange('beforeImage', result.url);
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Failed to upload before media.");
-        } finally {
-            setIsUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-        }
     };
 
     const isVisualArt = formData.type === 'visual_art';

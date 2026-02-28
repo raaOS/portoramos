@@ -5,10 +5,15 @@ import { chatStore } from '@/lib/chatStore';
 export const dynamic = 'force-dynamic';
 
 // Simple in-memory log storage (resets on cold start)
-const recentLogs: any[] = [];
+interface LogEntry {
+  timestamp: string;
+  [key: string]: unknown;
+}
+
+const recentLogs: LogEntry[] = [];
 const MAX_LOGS = 50;
 
-export function addLog(data: any) {
+export function addLog(data: Record<string, unknown>) {
   recentLogs.unshift({
     timestamp: new Date().toISOString(),
     ...data
@@ -49,10 +54,11 @@ export async function GET(request: NextRequest) {
       logCount: recentLogs.length
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({
       error: 'Failed to get logs',
-      details: error.message
+      details: errorMessage
     }, { status: 500 });
   }
 }
@@ -85,9 +91,10 @@ export async function POST(request: NextRequest) {
       error: 'Need threadId or visitorId'
     }, { status: 400 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }

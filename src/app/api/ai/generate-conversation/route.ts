@@ -82,8 +82,9 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(parsed);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('AI Generate Conversation Error:', error);
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+        const errorMsg = error instanceof Error ? error.message : 'Internal Server Error';
+        return NextResponse.json({ error: errorMsg }, { status: 500 });
     }
 }

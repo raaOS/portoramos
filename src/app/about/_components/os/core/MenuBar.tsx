@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Wifi, Battery, Command, LogOut, Lock } from "lucide-react";
+import { Search, Wifi, LogOut } from "lucide-react";
 
 interface MenuBarProps {
     onSearch?: () => void;

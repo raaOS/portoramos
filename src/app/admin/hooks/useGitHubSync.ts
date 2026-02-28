@@ -9,9 +9,7 @@ interface GitHubConfig {
     repo: string;
 }
 
-const utf8_to_b64 = (str: string) => {
-    return window.btoa(unescape(encodeURIComponent(str)));
-};
+
 
 export function useGitHubSync(csrfToken: string | null) {
     const { showSuccess, showError } = useToast();
@@ -49,10 +47,11 @@ export function useGitHubSync(csrfToken: string | null) {
                     setConnectionError(`Error: ${res.status}`);
                 }
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
+            const msg = e instanceof Error && e.message === 'Failed to fetch' ? 'Connection Failed (Network/CORS)' : 'Network Error';
             console.error(e);
             setConnectionStatus('error');
-            setConnectionError(e.message === 'Failed to fetch' ? 'Connection Failed (Network/CORS)' : 'Network Error');
+            setConnectionError(msg);
         }
     }, []);
 
@@ -99,9 +98,10 @@ export function useGitHubSync(csrfToken: string | null) {
                 setIsSavingToGithub(false);
             }, 1500);
 
-        } catch (e: any) {
+        } catch (e: unknown) {
+            const errorMsg = e instanceof Error ? e.message : 'Sync failed';
             console.error(e);
-            showError(e.message || 'Sync failed');
+            showError(errorMsg);
             setDeployStatus('failed');
             setTimeout(() => {
                 setDeployStatus('idle');

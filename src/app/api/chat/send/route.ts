@@ -11,6 +11,19 @@ const CHAT_MAX_MESSAGES = 10;
 const CHAT_WINDOW_MS = 60 * 1000;      // 1 menit
 const CHAT_BLOCK_MS = 5 * 60 * 1000;   // 5 menit block
 
+interface TelegramPayload {
+    chat_id: string;
+    text: string;
+    parse_mode: string;
+    message_thread_id?: number;
+}
+
+interface ChatRequestBody {
+    message: string;
+    visitorId: string;
+    pageUrl?: string;
+}
+
 export async function POST(request: Request) {
     try {
         // Use validateConfig to get actual bot token (not masked)
@@ -24,8 +37,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Telegram not configured' }, { status: 500 });
         }
 
-        const body = await request.json();
-        const { message, visitorId, pageUrl } = body as { message: string; visitorId: string; pageUrl?: string };
+        const body = await request.json() as ChatRequestBody;
+        const { message, visitorId, pageUrl } = body;
 
         if (!message || !visitorId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -58,6 +71,9 @@ export async function POST(request: Request) {
 
         // 2. Format message for Admin
         let text = `🌐 *New Web Chat Message*\n_ID: ${visitorId.substring(0, 6)}_\n\n💬 "${message}"`;
+        if (pageUrl) {
+            text += `\n\n📄 Page: ${pageUrl}`;
+        }
         if (isAiMode) {
             text += `\n\n🤖 _AI is calculating a response..._\n_(Reply to take over manually)_`;
         } else {
@@ -102,7 +118,7 @@ export async function POST(request: Request) {
         }
 
         // Send to Telegram
-        const tgPayload: any = {
+        const tgPayload: TelegramPayload = {
             chat_id: targetChatId,
             text: text,
             parse_mode: 'Markdown'
@@ -141,7 +157,7 @@ export async function POST(request: Request) {
 
                 // Notify admin of AI reply inside the same topic
                 if (aiReplyMsg) {
-                    const aiPayload: any = {
+                    const aiPayload: TelegramPayload = {
                         chat_id: targetChatId,
                         text: `🤖 *AI Auto-Reply:*\n"${aiResponseText}"`,
                         parse_mode: 'Markdown'
@@ -168,11 +184,12 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true, message: chatMsg });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[Web Chat Send Error]:', error);
+        const errMsg = error instanceof Error ? error.message : String(error);
         return NextResponse.json({
             error: 'Failed to send message',
-            details: error.message || String(error)
+            details: errMsg
         }, { status: 500 });
     }
 }

@@ -175,7 +175,7 @@ export function useToastAsync() {
   const toast = useToast();
 
   const executeWithToast = useCallback(
-    async (operation: () => Promise<any>, options: {
+    async (operation: () => Promise<unknown>, options: {
       loadingMessage?: string;
       successMessage?: string;
       errorMessage?: string;

@@ -1,13 +1,20 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
-import Cropper from 'react-easy-crop';
+import Cropper, { Area } from 'react-easy-crop';
 import { Play, Pause, ZoomIn, Maximize2 } from 'lucide-react';
 
 interface VideoTrimmerProps {
     file: File;
-    onConfirm: (start: number, end: number, crop: any) => void;
+    onConfirm: (start: number, end: number, crop: Area | null) => void;
     onCancel: () => void;
+}
+
+interface MediaSize {
+    width: number;
+    height: number;
+    naturalWidth: number;
+    naturalHeight: number;
 }
 
 export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmerProps) {
@@ -24,7 +31,7 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
     const [zoom, setZoom] = useState(1);
     const [aspect, setAspect] = useState<number | undefined>(undefined);
     const [naturalAspect, setNaturalAspect] = useState<number | undefined>(undefined);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
     // Internal Video Source
     const [videoSrc, setVideoSrc] = useState<string>('');
@@ -57,7 +64,7 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
         }
     }, [range]); // Run when range changes to check if we need to expand it to full duration
 
-    const onMediaLoaded = (mediaSize: { width: number, height: number, naturalWidth: number, naturalHeight: number }) => {
+    const onMediaLoaded = (mediaSize: MediaSize) => {
         // Ensure ref is captured
         if (!videoRef.current && containerRef.current) {
             videoRef.current = containerRef.current.querySelector('video');
@@ -128,7 +135,7 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
         }
     };
 
-    const onCropCompleteEvent = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+    const onCropCompleteEvent = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
         setCroppedAreaPixels(croppedAreaPixels);
     }, []);
 
@@ -179,7 +186,7 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
                             onTimeUpdate: handleTimeUpdate,
                             onEnded: () => setIsPlaying(false),
                             onClick: togglePlay,
-                        } as any}
+                        } as React.VideoHTMLAttributes<HTMLVideoElement>}
                     />
 
                     {/* Controls Overlay (Top Right) */}
@@ -241,7 +248,7 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
                                     max={duration || 10}
                                     step={0.1}
                                     value={range}
-                                    onChange={handleSliderChange as any}
+                                    onChange={handleSliderChange as (value: number | number[]) => void}
                                     trackStyle={[{ backgroundColor: '#7c3aed', height: 6 }]}
                                     handleStyle={[
                                         { borderColor: '#7c3aed', backgroundColor: '#fff', opacity: 1, height: 18, width: 18, marginTop: -6, cursor: 'ew-resize' },

@@ -1,5 +1,15 @@
 import { ContentService } from './contentService';
-import { AboutData, UpdateAboutData } from '@/types/about';
+import {
+    AboutData,
+    UpdateAboutData,
+    DesignPhilosophy,
+    DesktopPreferences,
+    WallpaperConfig,
+    DockPreferences,
+    ChatSettings,
+    WindowPreferences,
+    SoundConfig
+} from '@/types/about';
 import aboutDataFallback from '@/data/about.json';
 
 const service = new ContentService<AboutData>('about.json', aboutDataFallback as unknown as AboutData);
@@ -33,16 +43,16 @@ export const aboutService = {
                 hero: { ...current.hero, ...(updates.hero || {}) },
                 professional: { ...current.professional, ...(updates.professional || {}) },
                 softSkills: { ...current.softSkills, ...(updates.softSkills || {}) },
-                designPhilosophy: { ...(current.designPhilosophy || {}), ...(updates.designPhilosophy || {}) } as any,
+                designPhilosophy: { ...(current.designPhilosophy || {}), ...(updates.designPhilosophy || {}) } as DesignPhilosophy,
 
                 // OS Configuration
-                desktopPreferences: { ...current.desktopPreferences, ...(updates.desktopPreferences || {}) } as any,
-                wallpaperConfig: { ...current.wallpaperConfig, ...(updates.wallpaperConfig || {}) } as any,
-                dockConfig: { ...current.dockConfig, ...(updates.dockConfig || {}) } as any,
-                chatSettings: { ...current.chatSettings, ...(updates.chatSettings || {}) } as any,
-                windowPreferences: { ...current.windowPreferences, ...(updates.windowPreferences || {}) } as any,
-                soundConfig: { ...current.soundConfig, ...(updates.soundConfig || {}) } as any,
-                labels: { ...(current.labels || {}), ...(updates.labels || {}) } as any,
+                desktopPreferences: { ...current.desktopPreferences, ...(updates.desktopPreferences || {}) } as DesktopPreferences,
+                wallpaperConfig: { ...current.wallpaperConfig, ...(updates.wallpaperConfig || {}) } as WallpaperConfig,
+                dockConfig: { ...current.dockConfig, ...(updates.dockConfig || {}) } as DockPreferences,
+                chatSettings: { ...current.chatSettings, ...(updates.chatSettings || {}) } as ChatSettings,
+                windowPreferences: { ...current.windowPreferences, ...(updates.windowPreferences || {}) } as WindowPreferences,
+                soundConfig: { ...current.soundConfig, ...(updates.soundConfig || {}) } as SoundConfig,
+                labels: { ...(current.labels || {}), ...(updates.labels || {}) } as AboutData['labels'],
 
                 lastUpdated: new Date().toISOString()
             };

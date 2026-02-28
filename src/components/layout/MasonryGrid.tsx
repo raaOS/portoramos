@@ -49,8 +49,8 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         if (typeof window === 'undefined') return 2; // SSR fallback
         const w = window.innerWidth;
         if (w >= 1280) return breakpointColumns.default || 7;
-        if (w >= 1024) return (breakpointColumns as any)[1024] || 4;
-        if (w >= 768) return (breakpointColumns as any)[768] || 3;
+        if (w >= 1024) return (breakpointColumns as Record<number, number>)[1024] || 4;
+        if (w >= 768) return (breakpointColumns as Record<number, number>)[768] || 3;
         return 2; // Mobile
     };
 
@@ -71,7 +71,7 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
 
         for (let bp of breakpoints) {
             if (w <= bp) {
-                cols = (breakpointColumns as any)[bp];
+                cols = (breakpointColumns as Record<number, number>)[bp];
             }
         }
         return cols;
@@ -116,27 +116,6 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
             observer.disconnect();
         };
     }, [getCols, width]); // Using getCols (which depends on breakpointColumns) and width
-
-    // Helper to determine grid classes based on props
-    const getGridClasses = () => {
-        if (columns === 'sidebar') return 'grid-cols-2 lg:grid-cols-3';
-        if (columns === 'bottom') return 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6';
-
-        // Match defaultBreakpoints EXACTLY
-        return 'grid-cols-2 xs:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7';
-    };
-
-    const renderNativeGrid = () => (
-        <div
-            className={`w-full grid items-start content-start ${className} ${getGridClasses()} gap-2 md:gap-4`}
-        >
-            {React.Children.map(children, (child) => (
-                <div className="mb-2 md:mb-4 break-inside-avoid">
-                    {child}
-                </div>
-            ))}
-        </div>
-    );
 
     // SSR / Hydration Stability
     // We render the wrapper div immediately and only populate the Masonry 

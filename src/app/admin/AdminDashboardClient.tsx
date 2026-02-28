@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function AdminDashboardClient() {
@@ -29,8 +29,7 @@ export default function AdminDashboardClient() {
         } else {
           router.push('/admin/login');
         }
-      } catch (error) {
-        console.error('Auth check error:', error);
+      } catch {
         router.push('/admin/login');
       }
     };

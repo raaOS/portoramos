@@ -35,7 +35,7 @@ export function useAdminAbout(csrfToken: string | null) {
             const response = await fetch('/api/running-text');
             const data = await response.json();
             setRunningTexts(data.items || []);
-        } catch (error) {
+        } catch {
             showError('Failed to load running text.');
         } finally {
             setRunningTextsLoading(false);
@@ -47,8 +47,8 @@ export function useAdminAbout(csrfToken: string | null) {
             const response = await fetch('/api/projects');
             const data = await response.json();
             setProjects(data.projects || []);
-        } catch (err) {
-            console.error('Failed to load projects for selector', err);
+        } catch (_err) {
+            console.error('Failed to load projects for selector', _err);
         }
     }, []);
 
@@ -104,7 +104,7 @@ export function useAdminAbout(csrfToken: string | null) {
             } else {
                 showError('Gagal menambahkan running text.');
             }
-        } catch (err) {
+        } catch {
             showError('Gagal menambahkan running text.');
         }
     };
@@ -126,7 +126,7 @@ export function useAdminAbout(csrfToken: string | null) {
             } else {
                 showError('Gagal memperbarui running text.');
             }
-        } catch (err) {
+        } catch {
             showError('Gagal memperbarui running text.');
         }
     };
@@ -146,7 +146,7 @@ export function useAdminAbout(csrfToken: string | null) {
             } else {
                 showError('Gagal menghapus running text.');
             }
-        } catch (err) {
+        } catch {
             showError('Gagal menghapus running text.');
         }
     };

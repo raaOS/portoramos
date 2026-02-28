@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
  */
 export async function GET() {
     try {
-        const checks: Record<string, any> = {
+        const checks: Record<string, unknown> = {
             status: 'ok',
             timestamp: new Date().toISOString(),
             uptime: process.uptime(),
@@ -19,7 +19,7 @@ export async function GET() {
             const { githubService } = await import('@/lib/github');
             await githubService.getFileContent('README.md', true);
             checks.github = 'connected';
-        } catch (error) {
+        } catch {
             checks.github = 'disconnected';
             checks.status = 'degraded';
         }
@@ -31,7 +31,7 @@ export async function GET() {
             const testPath = path.join(process.cwd(), 'public');
             await fs.access(testPath);
             checks.filesystem = 'accessible';
-        } catch (error) {
+        } catch {
             checks.filesystem = 'inaccessible';
             checks.status = 'degraded';
         }
@@ -46,7 +46,7 @@ export async function GET() {
 
         const statusCode = checks.status === 'ok' ? 200 : 503;
         return NextResponse.json(checks, { status: statusCode });
-    } catch (error) {
+    } catch {
         return NextResponse.json({
             status: 'error',
             timestamp: new Date().toISOString(),

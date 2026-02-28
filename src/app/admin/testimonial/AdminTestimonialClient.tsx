@@ -19,7 +19,7 @@ export default function AdminTestimonialClient() {
     testimonials,
     projects,
     loading,
-    error,
+    _error,
     isAiGenerating,
     lastUpdated,
     generateAITestimonial,
@@ -79,7 +79,7 @@ export default function AdminTestimonialClient() {
         ...prev,
         name: data.name,
         notificationText: data.notificationText,
-        messages: data.messages.map((m: any, idx: number) => ({ ...m, id: Date.now() + idx }))
+        messages: data.messages.map((m: { text?: string; isMe?: boolean; time?: string; status?: string }, idx: number) => ({ ...m, id: Date.now() + idx }))
       }));
     }
   };

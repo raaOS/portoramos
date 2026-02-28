@@ -126,8 +126,9 @@ export default function ProjectBasicInfo({ formData, errors, updateField, allPro
                 updateField('likes', Math.floor(Math.random() * 401) + 100);
                 updateField('shares', Math.floor(Math.random() * 81) + 20);
             }
-        } catch (e: any) {
-            alert(`Auto-Fill Failed: ${e.message}`);
+        } catch (e: unknown) {
+            const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+            alert(`Auto-Fill Failed: ${errorMessage}`);
         } finally {
             setIsGenerating(false);
         }
@@ -406,7 +407,7 @@ export default function ProjectBasicInfo({ formData, errors, updateField, allPro
                     </label>
                     <select
                         value={formData.type || 'commercial'}
-                        onChange={(e) => updateField('type', e.target.value as any)}
+                        onChange={(e) => updateField('type', e.target.value as 'commercial' | 'visual_art')}
                         className="w-full px-4 py-3 border border-gray-300 rounded-none bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all shadow-sm"
                     >
                         <option value="commercial">Commercial Case Study (Standard)</option>

@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
         } else {
             return NextResponse.json({ ok: false, error: data.description });
         }
-    } catch (error) {
+    } catch {
         return NextResponse.json({ ok: false, error: 'Network error' });
     }
 }

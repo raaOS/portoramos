@@ -8,8 +8,9 @@ import WhatsAppIcon from '@/app/about/_components/os/ui/WhatsAppIcon';
 import { useWindowContext } from '@/contexts/WindowContext';
 import { Grid, User, Mail, FileText, Trash2 } from 'lucide-react';
 import { getDockItemConfig } from '@/app/about/_components/os/utils/dockUtils';
+import type { DockPreferences } from '@/types/about';
 
-export default function GlobalDock({ dockConfig }: { dockConfig?: any }) {
+export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
   const router = useRouter();
   const pathname = usePathname();
   const { isWindowOpen, bouncingDocId } = useWindowContext();

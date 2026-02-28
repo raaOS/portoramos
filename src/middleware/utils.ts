@@ -12,7 +12,7 @@ export function isStaticAsset(pathname: string): boolean {
 
 export function getRateLimitKey(request: NextRequest, endpoint?: string): string {
     const forwarded = request.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0] : (request as any).ip || 'unknown';
+    const ip = forwarded ? forwarded.split(',')[0] : (request as NextRequest & { ip?: string }).ip || 'unknown';
     return endpoint ? `${ip}:${endpoint}` : ip;
 }
 

@@ -2,8 +2,6 @@
 import { useState } from 'react';
 import VideoTrimmer from '@/components/admin/VideoTrimmer';
 
-
-
 export default function DebugTrimmerPage() {
     const [file, setFile] = useState<File | null>(null);
 
@@ -47,7 +45,7 @@ export default function DebugTrimmerPage() {
                     <div className="border border-gray-200 rounded-lg overflow-hidden h-[600px] relative">
                         <VideoTrimmer
                             file={file}
-                            onConfirm={(s, e, c) => {
+                            onConfirm={(s, e, _c) => {
                                 alert(`Confirmed: ${s} - ${e}`);
                             }}
                             onCancel={() => setFile(null)}

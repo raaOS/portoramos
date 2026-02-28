@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Search, Upload, CheckCircle2, Loader2, Image as ImageIcon, RotateCcw } from 'lucide-react';
+import { X, Trash2, Search, CheckCircle2, Loader2, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 

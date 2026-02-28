@@ -63,7 +63,7 @@ export type MediaProps = {
 }
 
 // Generate a simple blur placeholder
-const generateBlurDataURL = (width: number = 8, height: number = 6): string => {
+const generateBlurDataURL = (_width: number = 8, _height: number = 6): string => {
   return 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAGAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=='
 }
 
@@ -93,9 +93,10 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   playsInline = true,
   controls = false,
   lazy = false,
-  layoutId,
+
   quality,
   objectFit = 'cover',
+  _layoutId,
 }, ref) => {
   const pathname = usePathname()
   const internalVideoRef = useRef<HTMLVideoElement | null>(null)
@@ -110,19 +111,19 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   // No state for reduceMotion to avoid re-renders. Read direct if needed or just assume false for perf.
 
   // Mobile Optimization State
-  const [isMobile, setIsMobile] = useState(() => {
+  const [, setIsMobile] = useState(() => {
     if (typeof window !== 'undefined') return window.innerWidth < 768;
     return false;
   });
   const manualPlayRef = useRef(false)
-  const loadTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // [STICKY NOTE] MOBILE OPTIMIZATION
   // Mendeteksi apakah user menggunakan HP (layar kecil < 768px).
   // Gunanya: Kita bisa mematikan fitur berat (seperti auto-play video banyak) di HP agar tidak lag.
   // Menggunakan "Debounce" agar tidak menghitung ulang terus-menerus saat layar diputar/diubah.
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(prev => prev === mobile ? prev : mobile); // Only update if changed
@@ -296,7 +297,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
             setIsLoading(true)
             setHasError(false)
           }}
-          onError={(e) => {
+          onError={(_e) => {
             setIsLoading(false)
             setHasError(true)
           }}
@@ -332,7 +333,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           </div>
         )}
 
-        {((autoplayBlocked && !hasError) || (isMobile && !shouldLoad)) && (
+        {((autoplayBlocked && !hasError) || ((isMobile as boolean) && !shouldLoad)) && (
           <div
             className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer group hover:bg-black/50 transition-colors"
             onClick={(e) => {

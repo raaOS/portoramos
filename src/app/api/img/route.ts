@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 
 const ALLOWED_HOSTS = new Set(['picsum.photos'])
 
-function stripCloudinaryTransform(u: URL) {
+function stripCloudinaryTransform(_u: URL) {
   return null
 }
 

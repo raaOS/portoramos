@@ -1,4 +1,4 @@
-import { HardSkill, HardSkillsData, HardSkillLevel } from '@/types/hardSkill';
+import { HardSkill, HardSkillsData } from '@/types/hardSkill';
 import { ContentService } from '@/lib/services/contentService';
 import hardSkillsDataFallback from '@/data/hardSkills.json';
 

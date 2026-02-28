@@ -15,7 +15,7 @@ const COMMENTS_DATA_FILE = path.join(process.cwd(), 'src', 'data', 'comments.jso
 const COMMENTS_GITHUB_PATH = 'src/data/comments.json';
 
 interface CommentsData {
-  comments: Record<string, any[]>;
+  comments: Record<string, unknown[]>;
 }
 
 // GET - Read all projects
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       projects,
       lastUpdated,
     });
-  } catch (error) {
+  } catch {
     // Silently handle projects loading errors
     return NextResponse.json(
       { error: 'Failed to load projects' },
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
         await githubService.updateFile(COMMENTS_GITHUB_PATH, commentsData, `Auto-generated comments for ${newProject.slug}`);
       }
 
-    } catch (commentError) {
+    } catch {
       // Silently handle comment generation errors
       // We continue even if comment generation fails
     }
@@ -232,7 +232,7 @@ async function finalizeMedia(
 
     // Return relative path
     return `/assets/${subDir}/${newFilename}`;
-  } catch (e) {
+  } catch {
     // Silently handle media finalization errors
     return url;
   }

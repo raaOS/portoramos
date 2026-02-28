@@ -14,10 +14,15 @@ interface AnalyticsLog {
     userAgent: string;
 }
 
+interface AnalyticsPostBody {
+    event: string;
+    details?: Record<string, unknown>;
+}
+
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const { event, details } = body as { event: string; details: Record<string, unknown> };
+        const body = await request.json() as AnalyticsPostBody;
+        const { event, details } = body;
 
         if (!event) {
             return NextResponse.json({ success: false, error: 'Missing event field' }, { status: 400 });
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
         await db.ref(ANALYTICS_PATH).set(updatedMap);
 
         return NextResponse.json({ success: true });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ success: false, error: 'Failed to log event' }, { status: 500 });
     }
 }
@@ -64,7 +69,7 @@ export async function GET(request: NextRequest) {
             : [];
 
         return NextResponse.json({ logs });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ logs: [] });
     }
 }

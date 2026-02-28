@@ -4,7 +4,7 @@ import React, { useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { useToast } from "@/contexts/ToastContext";
-import { Loader2, Play, Upload } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 
 export default function SequenceGenerator() {
     const { showSuccess, showError } = useToast();
@@ -121,9 +121,9 @@ export default function SequenceGenerator() {
                 const formData = new FormData();
                 formData.append("sequenceName", sequenceName);
 
-                chunk.forEach((blob, textIndex) => {
+                chunk.forEach((blob, idx) => {
                     // Global index for correct filename
-                    const globalIndex = start + textIndex;
+                    const globalIndex = start + idx;
                     const filename = `frame_${String(globalIndex).padStart(3, "0")}.webp`;
                     formData.append("files", blob, filename);
                 });

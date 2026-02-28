@@ -8,7 +8,7 @@ export const atsService = {
     async tailorResume(jobText: string): Promise<{ pdfBuffer: Buffer; hrMessage: string; analysis: string }> {
         // 1. Prepare Base Data
         const baseBio = aboutData.professional.bio.content;
-        const contacts = (aboutData as any).professional.contacts;
+        const contacts = (aboutData as { professional: { contacts: Record<string, string> } }).professional.contacts;
 
         const workHistory = experienceData.workExperience.map(exp => ({
             company: exp.company,
@@ -86,7 +86,7 @@ export const atsService = {
         }
     },
 
-    async generatePdf(data: any): Promise<Buffer> {
+    async generatePdf(data: { summary: string; skills: string[]; experience: Array<{ position: string; year: string; company: string; bullets: string[] }> }): Promise<Buffer> {
         const doc = new jsPDF();
         const margin = 20;
         const pageWidth = 210;
@@ -103,7 +103,7 @@ export const atsService = {
             y += (lines.length * (fontSize / 2)) + 2;
         };
 
-        const contacts = (aboutData as any).professional.contacts;
+        const contacts = (aboutData as { professional: { contacts: Record<string, string> } }).professional.contacts;
 
         // --- HEADER ---
         doc.setFont("helvetica", "bold");
@@ -127,7 +127,7 @@ export const atsService = {
         const emailText = contacts.email;
         const emailWidth = doc.getTextWidth(emailText);
         doc.text(emailText, currentX, y);
-        (doc as any).link(currentX, y - 3, emailWidth, textHeight, { url: `mailto:${contacts.email}` });
+        (doc as unknown as { link: (x: number, y: number, w: number, h: number, opts: { url: string }) => void }).link(currentX, y - 3, emailWidth, textHeight, { url: `mailto:${contacts.email}` });
         currentX += emailWidth + 2;
 
         // Separator
@@ -141,7 +141,7 @@ export const atsService = {
         const waWidth = doc.getTextWidth(waText);
         const cleanWa = contacts.whatsapp.replace(/\D/g, '').replace(/^0/, '62');
         doc.text(waText, currentX, y);
-        (doc as any).link(currentX, y - 3, waWidth, textHeight, { url: `https://wa.me/${cleanWa}` });
+        (doc as unknown as { link: (x: number, y: number, w: number, h: number, opts: { url: string }) => void }).link(currentX, y - 3, waWidth, textHeight, { url: `https://wa.me/${cleanWa}` });
 
         y += 5;
         // Portfolio
@@ -154,7 +154,7 @@ export const atsService = {
         const labelWidth = doc.getTextWidth(pfLabel);
         const linkWidth = doc.getTextWidth(pfLink);
         doc.text(pfLink, margin + labelWidth, y);
-        (doc as any).link(margin + labelWidth, y - 3, linkWidth, textHeight, { url: pfLink });
+        (doc as unknown as { link: (x: number, y: number, w: number, h: number, opts: { url: string }) => void }).link(margin + labelWidth, y - 3, linkWidth, textHeight, { url: pfLink });
 
         doc.setTextColor(0, 0, 0);
         y += 12;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Save, Bell, Eye, EyeOff, MessageSquare, Clock, User as UserIcon, Check, Pencil, X, Info, Sparkles, Wand2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Save, Bell, Eye, EyeOff, MessageSquare, Clock, Check, Pencil, X, Info, Sparkles, Wand2, Loader2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { AboutIslandNotification, ChatMessage } from '@/types/about';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -49,7 +49,7 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
             setSaving(true);
             await onUpdate(localNotifications);
             showSuccess('Daftar notifikasi berhasil diperbarui.');
-        } catch (err) {
+        } catch {
             showError('Gagal memperbarui notifikasi.');
         } finally {
             setSaving(false);
@@ -74,7 +74,7 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
             const data = await res.json();
             handleUpdate(notif.id, { message: data.message });
             showSuccess('Pesan notifikasi berhasil di-generate!');
-        } catch (err) {
+        } catch {
             showError('Gagal generate pesan.');
         } finally {
             setGeneratingNotifId(null);
@@ -103,7 +103,14 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
 
             // Suffix IDs to avoid collision and ensure uniqueness
             const timestamp = Date.now();
-            const sanitizedMessages = generatedMessages.map((msg: any, i: number) => ({
+            interface GeneratedMessage {
+                text: string;
+                isMe: boolean;
+                time: string;
+                status: 'sent' | 'delivered' | 'read';
+            }
+
+            const sanitizedMessages = generatedMessages.map((msg: GeneratedMessage, i: number) => ({
                 ...msg,
                 id: timestamp + i
             }));
@@ -113,7 +120,7 @@ export default function NotificationsManager({ notifications, onUpdate }: Notifi
             });
 
             showSuccess('AI berhasil membuatkan kelanjutan chat!');
-        } catch (err) {
+        } catch {
             showError('Gagal generate chat via AI.');
         } finally {
             setGeneratingAiId(null);

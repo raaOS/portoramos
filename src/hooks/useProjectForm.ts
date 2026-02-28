@@ -170,9 +170,9 @@ export const useProjectForm = (project?: Project) => {
         if (field === 'tags' && typeof value === 'string') {
             setFormData(prev => ({ ...prev, tags: value.toLowerCase() }));
         } else if (field === 'narrative') {
-            setFormData(prev => ({ ...prev, narrative: { ...prev.narrative, ...(value as any) } }));
+            setFormData(prev => ({ ...prev, narrative: { ...prev.narrative, ...(value as Record<string, string>) } }));
         } else if (field === 'comparison') {
-            setFormData(prev => ({ ...prev, comparison: { ...prev.comparison, ...(value as any) } }));
+            setFormData(prev => ({ ...prev, comparison: { ...prev.comparison, ...(value as Record<string, string>) } }));
         } else {
             setFormData(prev => ({ ...prev, [field]: value }));
         }

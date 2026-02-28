@@ -60,14 +60,15 @@ export async function POST(req: NextRequest) {
                 if (res.ok && res.headers.get('content-type')?.includes('image')) {
                     return NextResponse.json({ iconUrl: url });
                 }
-            } catch (e) {
+            } catch {
                 // Ignore and try next
             }
         }
 
         return NextResponse.json({ error: 'Icon not found', slug }, { status: 404 });
 
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

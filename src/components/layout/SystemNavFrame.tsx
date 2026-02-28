@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ChevronRight, Home, Monitor, Zap } from 'lucide-react';
+import { ChevronRight, Monitor, Zap } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 interface SystemNavFrameProps {
@@ -12,7 +12,7 @@ interface SystemNavFrameProps {
     hideFooter?: boolean;
 }
 
-export default function SystemNavFrame({ children, title, hideFooter }: SystemNavFrameProps) {
+export default function SystemNavFrame({ children, title: _title, hideFooter }: SystemNavFrameProps) {
     const pathname = usePathname();
     const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
     const effectiveHideFooter = hideFooter || isContact;

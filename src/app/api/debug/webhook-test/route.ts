@@ -76,11 +76,12 @@ export async function POST(request: NextRequest) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Webhook Test Error]:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       error: 'Test failed',
-      details: error.message || String(error)
+      details: errorMessage
     }, { status: 500 });
   }
 }
@@ -107,10 +108,11 @@ export async function GET(request: NextRequest) {
       found: !!visitorId
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({
       error: 'Check failed',
-      details: error.message
+      details: errorMessage
     }, { status: 500 });
   }
 }

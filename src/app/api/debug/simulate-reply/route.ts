@@ -85,11 +85,12 @@ export async function POST(request: NextRequest) {
       telegramNotification: telegramResult
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Simulate Reply Error]:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       error: 'Failed to simulate reply',
-      details: error.message || String(error)
+      details: errorMessage
     }, { status: 500 });
   }
 }
@@ -111,7 +112,8 @@ export async function GET() {
         }
       }
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

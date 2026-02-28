@@ -85,6 +85,11 @@ async function getGoogleMapsAddress(lat: number, lng: number): Promise<string | 
   return null;
 }
 
+interface LocationInfo {
+  text: string;
+  mapUrl: string | null;
+}
+
 /**
  * Format location info for Telegram message
  */
@@ -93,7 +98,7 @@ async function formatLocationInfo(
   lng: number | null,
   accuracy: number | null,
   ipLocation: string
-): Promise<{ text: string; mapUrl: string | null }> {
+): Promise<LocationInfo> {
   // If we have GPS coordinates
   if (lat && lng) {
     const address = await getGoogleMapsAddress(lat, lng);
@@ -139,6 +144,13 @@ export async function GET() {
   response.headers.set('Expires', '0');
 
   return response;
+}
+
+interface LoginRequestBody {
+  password: string;
+  lat?: number;
+  lng?: number;
+  accuracy?: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -209,7 +221,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { password, lat, lng, accuracy } = await request.json();
+    const { password, lat, lng, accuracy } = await request.json() as LoginRequestBody;
 
     // VALIDASI INPUT STRICT
     if (!password || typeof password !== 'string') {
@@ -242,7 +254,7 @@ export async function POST(request: NextRequest) {
     let passwordValid = false;
     try {
       passwordValid = verifyAdminPassword(password);
-    } catch (error) {
+    } catch {
       // Jika auth config error, jangan expose ke user
       return NextResponse.json(
         { error: 'Authentication service error' },

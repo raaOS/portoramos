@@ -25,7 +25,7 @@ export function ErrorFallback({
   const handleRetry = () => {
     try {
       resetError();
-    } catch (retryError) {
+    } catch {
       showError('Failed to retry. Please refresh the page.');
     }
   };

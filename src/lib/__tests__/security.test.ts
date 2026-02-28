@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { checkRateLimit, resetRateLimit, sanitize, validate, generateSecureToken } from '../security';
 
 describe('security utils', () => {

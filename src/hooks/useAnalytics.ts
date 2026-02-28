@@ -2,6 +2,10 @@
 
 import { useCallback } from 'react';
 
+interface AnalyticsDetails {
+    [key: string]: string | number | boolean | unknown;
+}
+
 const getCsrfToken = () => {
     if (typeof document === 'undefined') return undefined;
     const value = `; ${document.cookie}`;
@@ -11,7 +15,7 @@ const getCsrfToken = () => {
 };
 
 export const useAnalytics = () => {
-    const trackEvent = useCallback(async (eventName: string, details?: any) => {
+    const trackEvent = useCallback(async (eventName: string, details?: AnalyticsDetails) => {
         try {
             await fetch('/api/analytics', {
                 method: 'POST',

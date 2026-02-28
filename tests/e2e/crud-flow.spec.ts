@@ -60,7 +60,7 @@ test.describe('Project CRUD Flow', () => {
         // By default created projects might be published or draft. The current create implementation sets it to "published" usually?
         // Let's check status. If there is an eye icon, it's published.
         // We can go to homepage to check.
-        const homePage = await page.opener() || page; // reuse page or open new
+        // Reuse page for navigation
         await page.goto('/');
 
         // Wait for grid to load

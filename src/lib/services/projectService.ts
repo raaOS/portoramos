@@ -1,4 +1,4 @@
-import { Project, ProjectsData, CreateProjectData, UpdateProjectData } from '@/types/projects';
+import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { ProjectSchema, CreateProjectSchema, UpdateProjectSchema } from '@/lib/validations/project';
 import { db } from '@/lib/firebaseAdmin';
 
@@ -7,7 +7,7 @@ export const projectService = {
      * Get all projects from Firebase.
      * Implements Zod validation to ensure data integrity.
      */
-    async getProjects(status?: string, fresh = false): Promise<{ projects: Project[], lastUpdated: string }> {
+    async getProjects(status?: string, _fresh = false): Promise<{ projects: Project[], lastUpdated: string }> {
         try {
             // Fetch from Firebase
             const projectsRef = db.ref('projects');
@@ -181,7 +181,7 @@ export const projectService = {
         if (!snap.exists()) return true;
 
         const currentProjects = snap.val();
-        const firebaseUpdates: Record<string, any> = {};
+        const firebaseUpdates: Record<string, string | number | boolean | null | object | undefined> = {};
 
         if (updates.delete) {
             updates.ids.forEach(id => {

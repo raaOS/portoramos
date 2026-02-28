@@ -42,16 +42,31 @@ export async function GET(request: NextRequest) {
         // Filter for Opportunities (load opportunities from performance category)
         const performanceAuditRefs = categories.performance.auditRefs;
 
+        interface AuditRef {
+            id: string;
+            group?: string;
+        }
+
+        interface AuditData {
+            id: string;
+            title: string;
+            description: string;
+            score: number | null;
+            displayValue?: string;
+            details?: unknown;
+            scoreDisplayMode: string;
+        }
+
         const opportunities = performanceAuditRefs
-            .filter((ref: any) => ref.group === 'load-opportunities' && audits[ref.id].score !== 1 && audits[ref.id].scoreDisplayMode !== 'notApplicable')
-            .map((ref: any) => getAuditData(ref.id))
-            .filter(Boolean)
-            .sort((a: any, b: any) => (a.score || 0) - (b.score || 0)); // Lower score first (more critical)
+            .filter((ref: AuditRef) => ref.group === 'load-opportunities' && audits[ref.id].score !== 1 && audits[ref.id].scoreDisplayMode !== 'notApplicable')
+            .map((ref: AuditRef) => getAuditData(ref.id))
+            .filter((item: AuditData | null): item is AuditData => item !== null)
+            .sort((a: AuditData, b: AuditData) => (a.score || 0) - (b.score || 0)); // Lower score first (more critical)
 
         const diagnostics = performanceAuditRefs
-            .filter((ref: any) => ref.group === 'diagnostics' && audits[ref.id].score !== 1 && audits[ref.id].scoreDisplayMode !== 'notApplicable')
-            .map((ref: any) => getAuditData(ref.id))
-            .filter(Boolean);
+            .filter((ref: AuditRef) => ref.group === 'diagnostics' && audits[ref.id].score !== 1 && audits[ref.id].scoreDisplayMode !== 'notApplicable')
+            .map((ref: AuditRef) => getAuditData(ref.id))
+            .filter((item: AuditData | null): item is AuditData => item !== null);
 
         const screenshotAudit = audits['final-screenshot'];
         const screenshotData = screenshotAudit?.details?.data; // Base64 data

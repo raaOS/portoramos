@@ -72,7 +72,7 @@ export default function ManageCommentsModal({ project, onClose, onSyncTrigger }:
             } else {
                 throw new Error('Failed to delete');
             }
-        } catch (e) {
+        } catch {
             showError('Failed to delete comment');
         } finally {
             setDeletingId(null);

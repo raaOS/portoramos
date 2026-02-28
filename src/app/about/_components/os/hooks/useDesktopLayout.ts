@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { AboutData } from "@/types/about";
 
 interface UseDesktopLayoutProps {

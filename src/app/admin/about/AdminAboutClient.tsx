@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+// React hooks - useState dan useEffect diimport untuk keperluan future use
 import { useSearchParams } from 'next/navigation';
-import { Info, Monitor, MessageSquare, Layout, Smile, BriefcaseBusiness, Dumbbell, Terminal, Palette, MessageCircle, Info as InfoIcon, X } from 'lucide-react';
+import { Info, Monitor, Info as InfoIcon, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 // Design system & hooks
@@ -35,8 +35,10 @@ export default function AdminAboutClient() {
   // Derive active tab from URL search parameters (Source of Truth)
   const tabParam = searchParams.get('tab');
   const validTabs = ['professional', 'softSkills', 'hardSkills', 'runningText', 'philosophy', 'desktop', 'dock', 'chat', 'stickyNotes', 'notifications', 'sounds'];
+  type ValidTab = 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'desktop' | 'dock' | 'chat' | 'stickyNotes' | 'notifications' | 'sounds';
+
   const activeTab = (tabParam && validTabs.includes(tabParam))
-    ? (tabParam as any)
+    ? (tabParam as ValidTab)
     : 'professional';
 
   // Custom Hook for Data management

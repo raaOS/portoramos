@@ -30,7 +30,7 @@ export default function SequenceList() {
 
             if (!res.ok) throw new Error("Activation failed");
 
-            const data = await res.json();
+            await res.json();
             showSuccess(`Active sequence set to: ${name}`);
         } catch (error) {
             console.error(error);
@@ -45,10 +45,10 @@ export default function SequenceList() {
         try {
             const res = await fetch("/api/upload/sequence");
             if (!res.ok) throw new Error("Failed to fetch");
-            const data = await res.json();
+            const sequencesData: Sequence[] = await res.json();
 
             // Map strings to dates if needed, though JSON returns strings
-            setSequences(data);
+            setSequences(sequencesData);
         } catch (error) {
             console.error(error);
             showError("Failed to load sequences");
@@ -133,22 +133,6 @@ export default function SequenceList() {
                             <code className="hidden sm:block text-xs bg-muted px-2 py-1 rounded select-all">
                                 {seq.name}
                             </code>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => handleActivate(seq.name)}
-                                disabled={activatingId !== null}
-                            >
-                                {activatingId === seq.name ? (
-                                    <span className="animate-pulse">Active...</span>
-                                ) : (
-                                    <span className="flex items-center">
-                                        <Play className="w-3 h-3 mr-1 fill-current" />
-                                        Use
-                                    </span>
-                                )}
-                            </Button>
-
                             <Button
                                 variant="secondary"
                                 size="sm"

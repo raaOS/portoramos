@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, MoreVertical, Phone, Video, Search, CheckCheck } from 'lucide-react';
+import { Send, MoreVertical, Phone, Video, CheckCheck } from 'lucide-react';
 import { m, AnimatePresence } from 'framer-motion';
 import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
 // The ID used for this browser session to track polling
@@ -58,7 +58,26 @@ function TypingIndicator() {
     );
 }
 
-export default function FullPageChat({ contactInfo }: { contactInfo: any }) {
+// Interface for contact info passed from parent
+interface FullPageChatContactInfo {
+  email?: string;
+  socialMedia?: {
+    linkedin?: string;
+    instagram?: string;
+    twitter?: string;
+    github?: string;
+    behance?: string;
+    whatsapp?: string;
+  };
+  headline?: string;
+  subtext?: string;
+}
+
+interface FullPageChatProps {
+  contactInfo?: FullPageChatContactInfo;
+}
+
+export default function FullPageChat({ contactInfo }: FullPageChatProps) {
     console.log('[FullPageChat] Rendered, contactInfo:', !!contactInfo);
     // Session state
     const [visitorId, setVisitorId] = useState<string>('');

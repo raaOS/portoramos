@@ -1,15 +1,13 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Send, MoreVertical, Search, CheckCheck, Paperclip, Smile, Mic, ArrowLeft, BadgeCheck, FileText, ExternalLink } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, MoreVertical, Search, CheckCheck, Paperclip, Smile, Mic, BadgeCheck } from 'lucide-react';
 import { m, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { mockChats, ContactProfile, ChatMessage } from '../data/mockChats';
+import { mockChats as initialChats, ContactProfile, ChatMessage } from '../data/mockChats';
 import { soundManager } from "../utils/SoundManager";
 import { getAvatarUrl } from '@/lib/avatar';
 import { Project } from '@/types/projects';
 
 // Letter Avatar Helper (Clean & Consistent)
-const USER_AVATAR = `https://ui-avatars.com/api/?background=00a884&color=ffffff&name=R&size=128&bold=true&length=1`; // User (Ramos) - Green background
-const CLIENT_AVATAR = `https://ui-avatars.com/api/?background=d9fdd3&color=128c7e&name=C&size=128&bold=true&length=1`; // Default Client Fallback
 
 interface ChatWindowProps {
     activeChatId?: string | null;
@@ -17,7 +15,6 @@ interface ChatWindowProps {
 }
 
 export default function ChatWindow({ activeChatId, customContacts }: ChatWindowProps) {
-    const [chats, setChats] = useState<Record<string, ContactProfile>>({});
     const [input, setInput] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
     const [activeContact, setActiveContact] = useState<ContactProfile | null>(null);
@@ -37,8 +34,8 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                     projectMap[p.id] = p;
                 });
                 setProjects(projectMap);
-            } catch (err) {
-                console.error('Error loading projects for chat:', err);
+            } catch {
+                console.error('Error loading projects for chat');
             }
         };
         loadProjects();
@@ -46,8 +43,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
 
     // Sequencer Logic: Autoplay conversation
     useEffect(() => {
-        const initialChats = customContacts || mockChats;
-        setChats(initialChats);
+        // Select contacts to use (custom or default)
 
         const contactId = activeChatId || Object.keys(initialChats)[0];
         const contact = contactId ? initialChats[contactId] : (Object.values(initialChats)[0] || null);

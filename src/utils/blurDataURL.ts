@@ -3,7 +3,7 @@
  * Uses default SVG blur for all images
  */
 
-export function generateBlurDataURL(imageUrl: string): string {
+export function generateBlurDataURL(_imageUrl: string): string {
   // Default SVG blur placeholder
   const shimmer = `
     <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">

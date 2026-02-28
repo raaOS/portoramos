@@ -74,7 +74,7 @@ export const detectImageDimensions = async (url: string): Promise<{ width: numbe
         if (url.startsWith('blob:')) {
             try {
                 return await getVideoDimensions(url);
-            } catch (videoError) {
+            } catch {
                 throw new Error('Failed to load media (Image or Video detection failed)');
             }
         }

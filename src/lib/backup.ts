@@ -36,7 +36,7 @@ export const loadData = async (filePath: string) => {
   }
 };
 
-export const saveData = async (filePath: string, data: any) => {
+export const saveData = async (filePath: string, data: unknown) => {
   try {
     // 1. Backup dulu
     await createBackup(filePath);

@@ -17,11 +17,12 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ success: true, messages });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[Web Chat Sync Error]:', error);
+        const errMsg = error instanceof Error ? error.message : String(error);
         return NextResponse.json({
             error: 'Failed to sync messages',
-            details: error.message || String(error)
+            details: errMsg
         }, { status: 500 });
     }
 }

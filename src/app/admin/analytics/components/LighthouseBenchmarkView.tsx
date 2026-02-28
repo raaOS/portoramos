@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Play, Loader2, Swords, Trophy, XCircle, CheckCircle2 } from 'lucide-react';
-import { RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts';
+import { Play, Loader2, Swords, Trophy } from 'lucide-react';
 
 interface BenchmarkScores {
     performance: number;
@@ -63,31 +62,11 @@ export default function LighthouseBenchmarkView() {
                 cls: d2.coreWebVitals?.cls || '-'
             });
 
-        } catch (err: any) {
-            setError(err.message || 'Failed to run benchmark');
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to run benchmark');
         } finally {
             setLoading(false);
         }
-    };
-
-    const getScoreColor = (score: number) => {
-        if (score >= 90) return '#059669';
-        if (score >= 50) return '#d97706';
-        return '#dc2626';
-    };
-
-    const SmallGauge = ({ score }: { score: number }) => {
-        const color = getScoreColor(score);
-        const data = [{ value: score, fill: color }];
-        return (
-            <div className="relative w-16 h-16 flex items-center justify-center">
-                <RadialBarChart width={64} height={64} cx="50%" cy="50%" innerRadius="60%" outerRadius="100%" barSize={4} data={data} startAngle={90} endAngle={-270}>
-                    <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-                    <RadialBar background dataKey="value" cornerRadius={30} />
-                </RadialBarChart>
-                <div className="absolute inset-0 flex items-center justify-center text-sm font-bold" style={{ color }}>{score}</div>
-            </div>
-        );
     };
 
     const StatRow = ({ label, val1, val2, highlightHigher = true }: { label: string; val1: number | string; val2: number | string; highlightHigher?: boolean }) => {

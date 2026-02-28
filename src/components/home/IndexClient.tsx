@@ -1,4 +1,3 @@
-import type { Project } from '@/types/projects'
 import { allProjectsAsync } from '@/lib/projects'
 import IndexClientInner from './IndexClientInner'
 

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { projectService } from '../projectService';
 import { loadData, ensureDataDir } from '@/lib/backup';
 import { githubService } from '@/lib/github';
-import projectsData from '@/data/projects.json';
+import _projectsData from '@/data/projects.json';
 
 // Mock dependencies
 vi.mock('@/lib/backup', () => ({
@@ -72,7 +72,7 @@ describe('projectService', () => {
                 ],
                 lastUpdated: '2024-01-01T00:00:00.000Z'
             };
-            (loadData as any).mockResolvedValue(mockData);
+            (loadData as unknown as { mockResolvedValue: (v: unknown) => void }).mockResolvedValue(mockData);
 
             const result = await projectService.getProjects();
 
@@ -104,7 +104,7 @@ describe('projectService', () => {
                     lastUpdated: '2024-02-01T00:00:00.000Z'
                 }
             };
-            (githubService.getFile as any).mockResolvedValue(mockGhData);
+            (githubService.getFile as unknown as { mockResolvedValue: (v: unknown) => void }).mockResolvedValue(mockGhData);
 
             const result = await projectService.getProjects();
 
@@ -114,7 +114,7 @@ describe('projectService', () => {
         });
 
         it('should fallback to static data if loading fails', async () => {
-            (loadData as any).mockResolvedValue(null);
+            (loadData as unknown as { mockResolvedValue: (v: unknown) => void }).mockResolvedValue(null);
 
             const result = await projectService.getProjects();
 
@@ -142,7 +142,7 @@ describe('projectService', () => {
                 ],
                 lastUpdated: '2024-01-01T00:00:00.000Z'
             };
-            (loadData as any).mockResolvedValue(mockData);
+            (loadData as unknown as { mockResolvedValue: (v: unknown) => void }).mockResolvedValue(mockData);
 
             const result = await projectService.getProjects();
 

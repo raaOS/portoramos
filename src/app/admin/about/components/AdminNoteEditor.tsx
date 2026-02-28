@@ -23,7 +23,11 @@ export const AdminNoteEditor = ({ value, onChange, fontSize, onFontSizeChange }:
         }
     }, [value]);
 
-    const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
+    interface EditorElement {
+        currentTarget: HTMLDivElement;
+    }
+
+    const handleContentChange = (e: React.FormEvent<HTMLDivElement> | EditorElement) => {
         const newHtml = e.currentTarget.innerHTML;
         innerContentRef.current = newHtml;
     };
@@ -36,7 +40,7 @@ export const AdminNoteEditor = ({ value, onChange, fontSize, onFontSizeChange }:
         if (editorRef.current) {
             editorRef.current.focus();
             document.execCommand(command, false, val);
-            handleContentChange({ currentTarget: editorRef.current } as any);
+            handleContentChange({ currentTarget: editorRef.current });
             onChange(editorRef.current.innerHTML);
         }
     };

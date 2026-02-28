@@ -1,17 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import { AnimatePresence, m, LazyMotion, domMax } from "framer-motion";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
 // Admin Auth Hook
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-
-// Internal Components (always loaded - core UI)
-import OSDock from "./OSDock";
-import MenuBar from "./MenuBar";
 
 // Render Layer Components (Dynamic Imports for Bundle Optimization)
 const DesktopIconsLayer = dynamic(() => import("../layers/DesktopIconsLayer"), { ssr: false });
@@ -36,7 +31,7 @@ import { useChatContacts } from "../hooks/useChatContacts";
 import { useDesktopLayout } from "../hooks/useDesktopLayout";
 import { useDesktopIcons } from "../hooks/useDesktopIcons";
 import { useDesktopNavigation } from "../hooks/useDesktopNavigation";
-import type { AboutData, DesktopPreferences } from "@/types/about";
+import type { AboutData } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
 import type { Project } from "@/types/projects";
@@ -88,11 +83,10 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
     );
 }
 
-function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSkillsData, projects }: DesktopEnvironmentProps) {
-    const router = useRouter();
+function DesktopEnvironmentContent({ aboutData, experienceData, hardSkillsData, projects }: Omit<DesktopEnvironmentProps, 'children'>) {
 
     // Screen Lock & Resize Hook (Handles mounted state, window size, and body lock)
-    const { mounted, windowSize, isMobile } = useDesktopLock();
+    const { mounted, isMobile } = useDesktopLock();
     const { needsPowerOn, isBooting, powerOn, finishBooting } = useBootSequence();
 
     // Fix race condition: pastikan loadConfig dipanggil SEBELUM startup sound diputar
@@ -109,16 +103,13 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     const [showSpotlight, setShowSpotlight] = useState(false);
     useDesktopShortcuts({ showSpotlight, setShowSpotlight });
 
-    useEffect(() => {
-        // Boot runs on every mount (refresh or navigation)
-    }, []);
+    // Boot runs on every mount (refresh or navigation)
 
 
 
 
     // Notes visibility toggle (visible by default as per request)
     const [notesVisible, setNotesVisible] = useState(true);
-    const [notesDockBouncing, setNotesDockBouncing] = useState(false);
 
     // Admin auth check - now safe to use (API returns 200 for non-admins)
     // Admin auth check - now returns csrfToken
@@ -132,8 +123,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         deleteNote,
         permanentDeleteNote,
         restoreNote,
-        bringToFrontNote,
-        setNotes
+        bringToFrontNote
     } = useStickyNotes(mounted, isAdmin, csrfToken);
 
     // Re-apply sound config jika aboutData berubah setelah boot (misal admin ubah setting)
@@ -188,8 +178,6 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
             setTimeout(() => {
                 if (appToOpen === 'notes') {
                     setNotesVisible(true);
-                    setNotesDockBouncing(true);
-                    setTimeout(() => setNotesDockBouncing(false), 600);
                 } else {
                     openWindow(appToOpen);
                 }
@@ -205,7 +193,6 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
     // Navigation & Desktop Actions (Extracted)
     const {
         handleGoHome,
-        resetDesktopAndClose,
         openProjectWindow,
         navToChat,
         toggleNotesVisibility
@@ -219,8 +206,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         notes,
         restoreNote,
         addNote,
-        isAdmin,
-        setNotesDockBouncing
+        isAdmin
     });
 
     // Icons Layout (Extracted)
@@ -228,7 +214,6 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
     const { projectIcons } = useDesktopIcons({
         mounted,
-        windowSize,
         commercialProjects,
         aboutData,
         handleGoHome,
@@ -244,14 +229,7 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
         return <DesktopSkeleton />;
     }
     // Desktop Content - ready immediately, no delay
-    const desktopVariants = {
-        booting: { scale: 1, filter: "blur(0px)", opacity: 1 },
-        ready: {
-            scale: 1,
-            filter: "blur(0px)",
-            opacity: 1,
-        }
-    };
+    // Desktop Content - ready immediately, no delay
 
     return (
         <DesktopErrorBoundary>

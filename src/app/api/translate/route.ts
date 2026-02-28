@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(req: NextRequest) {
     try {
-        const { text, targetLanguage = 'English', fields } = await req.json();
+        const { text, targetLanguage: _targetLanguage, fields } = await req.json();
 
         // Mode 1: Translate multiple fields at once (object mode)
         // Mode 2: Translate a single text string
@@ -67,7 +67,7 @@ ${text}`;
             return NextResponse.json({ translation });
         }
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Translation handler error:', error);
         return NextResponse.json(
             { error: 'Translation failed. Please try again.' },

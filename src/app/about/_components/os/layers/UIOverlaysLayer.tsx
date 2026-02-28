@@ -4,7 +4,7 @@ import React from "react";
 import dynamic from "next/dynamic";
 import MenuBar from "../core/MenuBar";
 import OSDock from "../core/OSDock";
-import type { WindowState } from "@/hooks/useWindowManager";
+
 import type { AboutData } from "@/types/about";
 import type { Project } from "@/types/projects";
 import type { ContactProfile } from "../data/mockChats";

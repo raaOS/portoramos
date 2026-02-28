@@ -3,9 +3,14 @@ import { Testimonial, TestimonialData } from '@/types/testimonial';
 import testimonialDataFallback from '@/data/testimonial.json';
 
 // Ensure consistent fallback structure
+interface TestimonialJsonData {
+    testimonials?: unknown[];
+    lastUpdated?: string;
+}
+
 const defaultData: TestimonialData = {
-    testimonials: (testimonialDataFallback as any).testimonials || [],
-    lastUpdated: (testimonialDataFallback as any).lastUpdated || new Date().toISOString(),
+    testimonials: ((testimonialDataFallback as TestimonialJsonData).testimonials as Testimonial[]) || [],
+    lastUpdated: (testimonialDataFallback as TestimonialJsonData).lastUpdated || new Date().toISOString(),
 };
 
 const service = new ContentService<TestimonialData>('testimonial.json', defaultData);

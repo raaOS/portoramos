@@ -11,7 +11,7 @@ async function getAboutData() {
     try {
         const fileContents = await fs.readFile(filePath, 'utf8');
         return JSON.parse(fileContents);
-    } catch (error) {
+    } catch {
         return null;
     }
 }

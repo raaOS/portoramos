@@ -6,7 +6,6 @@
 import { ExperienceData } from '@/types/experience';
 import { HardSkill } from '@/types/hardSkill';
 import { HardSkillConcept } from '@/types/hardSkillConcept';
-import { TRAIL_SRC_LIST } from './trailPlaceholders';
 
 export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
     {

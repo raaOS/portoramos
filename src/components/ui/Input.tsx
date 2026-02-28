@@ -19,7 +19,7 @@ type InputProps = BaseProps & (
 )
 
 export default function Input(props: InputProps) {
-  const { label, hint, error, required, className = '', inputClassName = '', as = 'input', id, ...restProps } = props as any
+  const { label, hint, error, required, className = '', inputClassName = '', as = 'input', id, ...restProps } = props
   const generatedId = React.useId()
   const inputId = id || generatedId
   const hintId = `${inputId}-hint`

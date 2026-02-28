@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import crypto from 'crypto';
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const rawBody = await req.text();
-    const headers = req.headers;
+    const rawBody = await request.text();
+    const headers = request.headers;
     const signature = headers.get('x-hub-signature-256');
     const secret = process.env.REVALIDATION_TOKEN;
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Process Payload
-    const payload = JSON.parse(rawBody);
+    const _payload = JSON.parse(rawBody);
 
     // We only care about pushes to main/master that touch data
     // But for simplicity, we revalidate on any push for now.

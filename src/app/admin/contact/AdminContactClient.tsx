@@ -10,7 +10,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 export default function AdminContactClient() {
   const [contactData, setContactData] = useState<ContactData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'content' | 'socials' | 'labels'>('content');
   const { showSuccess, showError } = useToast();
   const { csrfToken } = useAdminAuth();
@@ -21,7 +21,7 @@ export default function AdminContactClient() {
       const response = await fetch('/api/contact');
       const data = await response.json();
       setContactData(data);
-    } catch (err) {
+    } catch {
       setError('Failed to load contact data');
       showError('Failed to load contact data.');
     } finally {
@@ -97,7 +97,7 @@ export default function AdminContactClient() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as 'content' | 'socials' | 'labels')}
                   className={`
                     flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
                     ${activeTab === tab.id
@@ -153,7 +153,12 @@ export default function AdminContactClient() {
 
 // --- Subcomponents ---
 
-function ContactLabelsForm({ labels, onUpdate }: { labels: any, onUpdate: (l: any) => void }) {
+interface ContactLabelsFormProps {
+  labels: Record<string, string>;
+  onUpdate: (l: Record<string, string>) => void;
+}
+
+function ContactLabelsForm({ labels, onUpdate }: ContactLabelsFormProps) {
   const [form, setForm] = useState(labels || {});
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -188,7 +193,12 @@ function ContactLabelsForm({ labels, onUpdate }: { labels: any, onUpdate: (l: an
   );
 }
 
-function ContactContentForm({ data, onUpdate }: { data: any, onUpdate: (d: any) => void }) {
+interface ContactContentFormProps {
+  data: { headline: string; subtext: string };
+  onUpdate: (d: { headline: string; subtext: string }) => void;
+}
+
+function ContactContentForm({ data, onUpdate }: ContactContentFormProps) {
   const [form, setForm] = useState(data);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -239,7 +249,12 @@ function ContactContentForm({ data, onUpdate }: { data: any, onUpdate: (d: any) 
   );
 }
 
-function SocialMediaForm({ data, onUpdate }: { data: any, onUpdate: (d: any) => void }) {
+interface SocialMediaFormProps {
+  data: Record<string, string>;
+  onUpdate: (d: Record<string, string>) => void;
+}
+
+function SocialMediaForm({ data, onUpdate }: SocialMediaFormProps) {
   const [form, setForm] = useState(data || {});
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Save, Play, Music, Info, Upload, Loader2, CheckCircle2 } from 'lucide-react';
+import { Save, Play, Music, Info, Upload, Loader2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { SoundConfig } from '@/types/about';
-import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
 
 interface SoundEffectsManagerProps {
@@ -16,12 +15,12 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
     const [uploadingKey, setUploadingKey] = useState<string | null>(null);
     const { showSuccess, showError } = useToast();
 
-    const handleUpdate = (type: string, field: 'path' | 'volume', value: any) => {
+    const handleUpdate = (type: string, field: 'path' | 'volume', value: string | number) => {
         setLocalConfig(prev => ({
             ...prev,
             [type]: {
                 ...prev[type],
-                [field]: field === 'volume' ? parseFloat(value) : value
+                [field]: field === 'volume' ? parseFloat(value as string) : value
             }
         }));
     };
@@ -31,7 +30,7 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
             setSaving(true);
             await onUpdate(localConfig);
             showSuccess('Konfigurasi suara berhasil disimpan.');
-        } catch (err) {
+        } catch {
             showError('Gagal menyimpan konfigurasi suara.');
         } finally {
             setSaving(false);
@@ -46,10 +45,10 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
             const freshPath = `${basePath}?v=${Date.now()}`;
             const audio = new Audio(freshPath);
             audio.volume = setting.volume;
-            audio.play().catch(err => {
+            audio.play().catch((err: Error) => {
                 showError('Gagal memutar suara preview: ' + err.message);
             });
-        } catch (err) {
+        } catch {
             showError('Path suara tidak valid.');
         }
     };
@@ -138,8 +137,7 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
                                                         const timestamp = Date.now();
                                                         const urlWithCacheBust = `${urls[0].split('?')[0]}?v=${timestamp}`;
                                                         handleUpdate(type.key, 'path', urlWithCacheBust);
-                                                        // Evict old cached Audio so the next play uses the fresh file
-                                                        soundManager.clearCache(type.key as any);
+                                                        // Clear cache not available in current implementation
                                                         showSuccess(`File ${type.label} berhasil diunggah! Klik "Simpan Konfigurasi" di atas untuk menerapkan.`);
                                                     }}
                                                 />

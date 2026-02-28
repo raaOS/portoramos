@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Sparkles, Loader2, Wand2 } from 'lucide-react';
-import AdminButton from '@/app/admin/components/AdminButton';
 
 interface AIResponse {
     title: string;
@@ -12,7 +11,7 @@ interface AIResponse {
     team: string;
     timeline: string;
     software?: string[];
-    narrative: any;
+    narrative: unknown;
 }
 
 interface ProjectAIHelperProps {
@@ -22,7 +21,15 @@ interface ProjectAIHelperProps {
     onGenerate: (data: AIResponse) => void;
 }
 
-export default function ProjectAIHelper({ cover, pendingFile, slug, onGenerate }: ProjectAIHelperProps) {
+interface GenerateRequestBody {
+    style: 'professional' | 'creative' | 'minimalist';
+    maxTitleWords: number;
+    sentenceCount: number;
+    imageBase64?: string;
+    imageUrl?: string;
+}
+
+export default function ProjectAIHelper({ cover, pendingFile, onGenerate }: ProjectAIHelperProps) {
     const [isGenerating, setIsGenerating] = useState(false);
     const [selectedStyle, setSelectedStyle] = useState<'professional' | 'creative' | 'minimalist'>('professional');
     const [error, setError] = useState<string | null>(null);
@@ -37,7 +44,7 @@ export default function ProjectAIHelper({ cover, pendingFile, slug, onGenerate }
         setError(null);
 
         try {
-            let body: any = {
+            const body: GenerateRequestBody = {
                 style: selectedStyle,
                 maxTitleWords: 6,
                 sentenceCount: 3
@@ -89,9 +96,10 @@ export default function ProjectAIHelper({ cover, pendingFile, slug, onGenerate }
                 narrative: data.narrative || {}
             });
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            setError(err.message || "Failed to generate details");
+            const errorMessage = err instanceof Error ? err.message : "Failed to generate details";
+            setError(errorMessage);
         } finally {
             setIsGenerating(false);
         }

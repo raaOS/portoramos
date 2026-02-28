@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutGrid, Eye, EyeOff, Upload, Save, Pencil, Image as ImageIcon } from 'lucide-react';
+import { Eye, EyeOff, Pencil, Image as ImageIcon } from 'lucide-react';
 import IconPickerModal from './IconPickerModal';
 
 interface DockItemConfig {

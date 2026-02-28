@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
-import { m, useDragControls, AnimatePresence } from "framer-motion";
-import { X, Minus, Square, Pin, Lock } from "lucide-react";
+import { m, useDragControls } from "framer-motion";
+import { X, Minus, Pin, Lock } from "lucide-react";
 import { soundManager } from "../utils/SoundManager";
 
 interface WindowProps {
@@ -32,7 +32,7 @@ interface WindowProps {
 }
 
 export default function OSWindow({
-    id,
+    // id is reserved for future use
     title,
     children,
     isOpen,
@@ -44,7 +44,7 @@ export default function OSWindow({
     onFocus,
     zIndex = 10,
     initialPosition = { x: 100, y: 100 },
-    minimizeTarget,
+    // minimizeTarget is reserved for future use
     noPadding = false,
     onUpdatePosition,
     width,
@@ -54,7 +54,7 @@ export default function OSWindow({
     isPinned = false,
     onTogglePin,
     isAdmin = false,
-    animationVariant = 'genie',
+    // animationVariant is reserved for future use (default: 'genie')
 }: WindowProps) {
     const isMobileWindow = typeof window !== 'undefined' && window.innerWidth < 768;
     const isTabletWindow = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024;

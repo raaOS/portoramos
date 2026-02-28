@@ -37,7 +37,7 @@ export const Compare = ({
 }: CompareProps) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isMouseOver, setIsMouseOver] = useState(false);
+  const [, setIsMouseOver] = useState(false);
 
   // Motion values for smooth interaction
   const x = useMotionValue(0);

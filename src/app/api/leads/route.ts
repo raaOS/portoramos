@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { checkAdminAuth } from '@/lib/auth';
 
-export async function GET(request: any) {
+export async function GET(request: NextRequest) {
     if (!checkAdminAuth(request)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

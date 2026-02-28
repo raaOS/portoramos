@@ -8,7 +8,7 @@ interface ProjectToolbarProps {
     selectedProjectIds: Set<string>;
     isBulkUpdating: boolean;
     allProjectsLength: number;
-    githubConfig: any;
+    githubConfig: { token: string; owner: string; repo: string } | null;
     handleBulkUpdate: (action: 'publish' | 'draft' | 'delete') => void;
     selectAllProjects: () => void;
     setShowSecurityModal: (show: boolean) => void;

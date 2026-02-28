@@ -16,7 +16,7 @@ interface DockItemProps {
     isMobile?: boolean;
 }
 
-function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBounceExternal = false, isMobile = false }: DockItemProps) {
+function DockItem({ id, icon, label, onClick, mouseX, shouldBounceExternal = false, isMobile = false }: DockItemProps) {
     const ref = useRef<HTMLDivElement>(null);
     const { playPop } = useSystemSound();
 

@@ -7,7 +7,7 @@ interface Log {
     id: string;
     timestamp: string;
     event: string;
-    details: any;
+    details: Record<string, unknown>;
     userAgent: string;
 }
 
@@ -22,7 +22,7 @@ export default function AdminAnalyticsClient() {
                 setLogs(data.logs || []);
                 setLoading(false);
             })
-            .catch(err => setLoading(false));
+            .catch(() => setLoading(false));
     }, []);
 
     return (

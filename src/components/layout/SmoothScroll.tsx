@@ -10,7 +10,7 @@ export default function SmoothScroll() {
     useEffect(() => {
         if (isOsMode) return;
 
-        let lenis: any = null;
+        let lenis: { raf: (time: number) => void; destroy: () => void } | null = null;
         let rafId: number;
 
         // Lazy-load Lenis to reduce initial bundle size (~12KB savings)

@@ -1,12 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { generateDesktopIcons } from "../utils/desktopLayoutUtils";
 import type { DesktopPreferences, AboutData } from "@/types/about";
 import type { Project } from "@/types/projects";
-import type { WindowState } from "@/hooks/useWindowManager";
 
 interface UseDesktopIconsProps {
     mounted: boolean;
-    windowSize: { width: number; height: number };
     commercialProjects: Project[];
     aboutData: AboutData | null | undefined;
     handleGoHome: () => void;
@@ -15,12 +13,22 @@ interface UseDesktopIconsProps {
 
 export function useDesktopIcons({
     mounted,
-    windowSize,
     commercialProjects,
     aboutData,
     handleGoHome,
     iconPositions
 }: UseDesktopIconsProps) {
+    // Internal window size state
+    const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+
+    useEffect(() => {
+        const updateSize = () => {
+            setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+        };
+        updateSize();
+        window.addEventListener('resize', updateSize);
+        return () => window.removeEventListener('resize', updateSize);
+    }, []);
 
     const projectIcons = useMemo(() => {
         if (!mounted || !commercialProjects.length || !windowSize.width) return [];

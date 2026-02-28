@@ -55,15 +55,15 @@ test.describe('Admin Reply E2E Test', () => {
     const verifyRes = await page.request.get(`/api/debug/chat-session?visitorId=${TEST_VISITOR_ID}`);
     const verifyData = await verifyRes.json();
 
-    const adminMessages = verifyData.messages.filter((m: any) => m.sender === 'admin');
+    const adminMessages = verifyData.messages.filter((m: { sender?: string }) => m.sender === 'admin');
     console.log('Admin messages:', adminMessages.length);
     
     // Should have AI reply + our manual admin reply
     expect(adminMessages.length).toBeGreaterThanOrEqual(1);
     
     // Check if our specific message is there
-    const ourReply = adminMessages.find((m: any) => 
-      m.text.includes('Sure, I can help you with design')
+    const ourReply = adminMessages.find((m: { text?: string }) => 
+      m.text?.includes('Sure, I can help you with design')
     );
     expect(ourReply).toBeDefined();
 
@@ -117,7 +117,7 @@ test.describe('Admin Reply E2E Test', () => {
     const verifyRes = await page.request.get(`/api/debug/chat-session?visitorId=${visitorId}`);
     const verifyData = await verifyRes.json();
     
-    const adminMessages = verifyData.messages.filter((m: any) => m.sender === 'admin');
+    const adminMessages = verifyData.messages.filter((m: { sender?: string }) => m.sender === 'admin');
     console.log('Total admin messages after webhook:', adminMessages.length);
     
     // Should have AI + webhook reply

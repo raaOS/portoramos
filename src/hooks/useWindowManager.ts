@@ -28,7 +28,7 @@ interface UseWindowManagerProps {
     isAdmin?: boolean;
 }
 
-export const useWindowManager = ({ initialWindows, aboutData, projects, csrfToken, isAdmin = false }: UseWindowManagerProps) => {
+export const useWindowManager = ({ initialWindows, aboutData, projects: _projects, csrfToken, isAdmin = false }: UseWindowManagerProps) => {
     const [windows, setWindows] = useState<WindowState[]>(initialWindows);
     const [topZIndex, setTopZIndex] = useState(20);
     const [bouncingDocId, setBouncingDocId] = useState<string | null>(null);
@@ -142,12 +142,12 @@ export const useWindowManager = ({ initialWindows, aboutData, projects, csrfToke
                 },
                 body: JSON.stringify({ windowPreferences: newPrefs })
             });
-        } catch (e) {
+        } catch {
             // Silently ignore window preference save errors
         }
     }, [aboutData, csrfToken]);
 
-    const isWindowOpen = useCallback((id: string) => windows.find(w => w.id === id)?.isOpen ?? false, [windows]);
+    const _isWindowOpen = useCallback((id: string) => windows.find(w => w.id === id)?.isOpen ?? false, [windows]);
 
     // OPTIMIZED: Cache window dimensions untuk menghindari repeated DOM access
     const [windowDimensions, setWindowDimensions] = useState({ width: 1200, height: 800 });
@@ -392,11 +392,6 @@ export const useWindowManager = ({ initialWindows, aboutData, projects, csrfToke
         setWindows(prev => prev.map(w => ({ ...w, isOpen: false, isMinimized: false, isMaximized: false })));
         setTopZIndex(20);
     }, []);
-
-    // Legacy support wrappers to match original API
-    const simpleOpenWindow = (id: string, customWidth?: number, customHeight?: number) => {
-        openWindow(id, { width: customWidth, height: customHeight });
-    }
 
     return {
         windows,

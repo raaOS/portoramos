@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export const revalidate = 0;
 
 export default async function ContactPage() {
-  const [contactData, aboutData] = await Promise.all([
+  const [contactData, _aboutData] = await Promise.all([
     getContactData(),
     loadAboutData()
   ]);

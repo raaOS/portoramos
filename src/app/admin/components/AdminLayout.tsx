@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, ReactNode, useEffect, Suspense } from 'react';
-import Link from 'next/link';
+
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -55,8 +55,8 @@ interface NavItem {
 function AdminLayoutContent({
   children,
   title,
-  subtitle,
-  breadcrumbs = [],
+  subtitle: _subtitle,
+  breadcrumbs: _breadcrumbs = [],
   actions,
   titleIcon,
   titleAccent = 'bg-blue-50 text-blue-700'

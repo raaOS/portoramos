@@ -19,7 +19,7 @@ function hashStr(str: string) {
     return `gemini_inline_${h}`;
 }
 
-export default function AITranslator({ text, className = '', compact = false }: AITranslatorProps) {
+export default function AITranslator({ text, className = '', compact: _compact = false }: AITranslatorProps) {
     const [translation, setTranslation] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAdminRequest } from '@/lib/auth';
-import path from 'path';
+// import path from 'path';
 
 /**
  * GitHub Direct Upload API
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
         // 1. Prepare File Data
         const buffer = Buffer.from(await file.arrayBuffer());
-        const contentBase64 = buffer.toString('base64');
+        // const contentBase64 = buffer.toString('base64');
 
         const { searchParams } = new URL(req.url);
         const customFilename = searchParams.get('filename');
@@ -155,8 +155,8 @@ export async function POST(req: NextRequest) {
                                     console.log(`[UploadAPI] Detected JP2 block, using FFmpeg to decode...`);
                                     inputBuffer = await decodeJp2WithFfmpeg(inputBuffer);
                                     console.log(`[UploadAPI] FFmpeg decoded JP2 -> PNG (${inputBuffer.length} bytes)`);
-                                } catch (ffmpegErr) {
-                                    console.warn(`[UploadAPI] FFmpeg JP2 decode failed, trying Sharp directly...`, ffmpegErr);
+                                } catch (_ffmpegErr) {
+                                    console.warn(`[UploadAPI] FFmpeg JP2 decode failed, trying Sharp directly...`, _ffmpegErr);
                                     inputBuffer = candidate.buffer;
                                 }
                             }
@@ -172,8 +172,8 @@ export async function POST(req: NextRequest) {
                             console.log(`[UploadAPI] Success with block ${candidate.type}! Converted to WebP.`);
                             converted = true;
                             break;
-                        } catch (conversionErr) {
-                            console.warn(`[UploadAPI] Failed to convert block ${candidate.type}:`, conversionErr);
+                        } catch (_conversionErr) {
+                            console.warn(`[UploadAPI] Failed to convert block ${candidate.type}:`, _conversionErr);
                         }
                     }
 
@@ -185,8 +185,8 @@ export async function POST(req: NextRequest) {
                         );
                     }
                 }
-            } catch (err) {
-                console.warn(`[UploadAPI] ICNS pre-optimization failed, continuing with original:`, err);
+            } catch (_err) {
+                console.warn(`[UploadAPI] ICNS pre-optimization failed, continuing with original:`, _err);
             }
         }
 
@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
                         const pkgP = require.resolve('ffmpeg-static/package.json');
                         ffmpegPath = nodePath.join(nodePath.dirname(pkgP), process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
                         console.log(`[UploadAPI] FFmpeg via require.resolve: "${ffmpegPath}"`);
-                    } catch (e) {
+                    } catch {
                         // Manual cleanup of Vercel/Next.js ROOT prefix
                         const cleanP = ffmpegPath.replace(/^[\\\/]?ROOT[\\\/]/i, '').replace(/^[\\\/]/, '');
                         ffmpegPath = nodePath.resolve(process.cwd(), cleanP);
@@ -268,9 +268,9 @@ export async function POST(req: NextRequest) {
                 processedPath = processedPath.replace(oldExtRegex, '.wav');
                 finalFilename = finalFilename.replace(oldExtRegex, '.wav');
                 console.log(`[UploadAPI] Audio conversion success! Saved as: ${finalFilename}`);
-            } catch (err) {
-                console.warn(`[UploadAPI] Audio conversion failed, keeping original:`, err);
-                const detail = err instanceof Error ? err.message : String(err);
+            } catch (_err) {
+                console.warn(`[UploadAPI] Audio conversion failed, keeping original:`, _err);
+                const detail = _err instanceof Error ? _err.message : String(_err);
                 // Set a user-visible warning so the admin knows the file was NOT converted
                 warning = `Konversi ke WAV gagal (tetap .${ext}): ${detail}`;
             }

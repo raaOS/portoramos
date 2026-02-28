@@ -5,6 +5,7 @@ import { useToast } from '@/contexts/ToastContext';
 // FFmpeg imports removed from top-level to improve bundle size
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import type { FFmpeg } from '@ffmpeg/ffmpeg';
 
 
 interface AdminFileUploadProps {
@@ -42,7 +43,7 @@ export default function AdminFileUpload({
   const [status, setStatus] = useState<string>('');
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { showSuccess: success, showError, showWarning } = useToast();
+  const { showSuccess: showSuccessToast, showError, showWarning } = useToast();
   const { csrfToken } = useAdminAuth();
 
   // Cropping & Trimming State
@@ -50,7 +51,7 @@ export default function AdminFileUpload({
   const [activeTrim, setActiveTrim] = useState<{ file: File } | null>(null);
 
   // FFmpeg Ref
-  const ffmpegRef = useRef<any>(null);
+  const ffmpegRef = useRef<FFmpeg | null>(null);
 
   const validateFile = useCallback((file: File): string | null => {
     // limit video size to maxSize as well (default 10MB, but can be higher)
@@ -95,7 +96,7 @@ export default function AdminFileUpload({
         coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
         wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
       });
-    } catch (e) {
+    } catch {
       throw new Error('Compression engine failed to load.');
     }
     ffmpegRef.current = ffmpeg;
@@ -105,7 +106,7 @@ export default function AdminFileUpload({
   const compressVideoClient = useCallback(async (
     file: File,
     onProgress: (p: number) => void,
-    trimOptions?: { start: number; end: number; crop?: { x: number; y: number; width: number; height: number } }
+    trimOptions?: { start: number; end: number; crop?: { x: number; y: number; width: number; height: number } | null }
   ): Promise<File> => {
     setStatus('Initializing Compressor...');
     const ffmpeg = await loadFFmpeg();
@@ -170,7 +171,7 @@ export default function AdminFileUpload({
     await ffmpeg.exec(ffmpegArgs);
 
     const data = await ffmpeg.readFile(outputName);
-    const blob = new Blob([data as any], { type: 'video/mp4' });
+    const blob = new Blob([data as Uint8Array], { type: 'video/mp4' });
     return new File([blob], file.name, { type: 'video/mp4' });
   }, []); // ffmpegRef is persistent
 
@@ -205,7 +206,7 @@ export default function AdminFileUpload({
     return { url: data.url, publicPath: data.publicPath, warning: data.warning };
   }, [folder, customFilename, csrfToken]); // Add folder/filename and csrfToken to dependencies
 
-  const compressImageServer = useCallback(async (filePath: string): Promise<{ success: boolean; stats?: any; newPath?: string }> => {
+  const compressImageServer = useCallback(async (filePath: string): Promise<{ success: boolean; stats?: { originalSize?: string; newSize?: string; saved?: string }; newPath?: string }> => {
     try {
       setStatus('Optimizing Image (Server)...');
       const response = await fetch('/api/admin/compress', {
@@ -222,12 +223,12 @@ export default function AdminFileUpload({
       }
       const data = await response.json();
       return { success: true, stats: data, newPath: data.newPath };
-    } catch (e) {
+    } catch {
       return { success: false };
     }
   }, [csrfToken]);
 
-  const executeUpload = useCallback(async (files: File[], trimOptions?: { start: number; end: number; crop?: any }) => {
+  const executeUpload = useCallback(async (files: File[], trimOptions?: { start: number; end: number; crop?: { x: number; y: number; width: number; height: number } | null }) => {
     setStatus('starting');
     setProgress(0);
     onUploadStart?.();
@@ -243,7 +244,7 @@ export default function AdminFileUpload({
             // setProgress(0); // Optional: reset for individual?
             fileToUpload = await compressVideoClient(file, (p) => setProgress(p), trimOptions);
             const newSize = fileToUpload.size;
-            success(`Video Processed! ${(originalSize / 1024 / 1024).toFixed(2)}MB -> ${(newSize / 1024 / 1024).toFixed(2)}MB`);
+            showSuccessToast(`Video Processed! ${(originalSize / 1024 / 1024).toFixed(2)}MB -> ${(newSize / 1024 / 1024).toFixed(2)}MB`);
           } catch (e) {
             console.error('Client compression failed, falling back to original', e);
             showWarning('Compression engine offline. Uploading original file...');
@@ -277,7 +278,7 @@ export default function AdminFileUpload({
         if (isImageFile && publicPath) {
           const { success: compSuccess, stats, newPath } = await compressImageServer(publicPath);
           if (compSuccess && stats) {
-            success(`${file.name} Optimized! (${stats.originalSize} -> ${stats.newSize}). Saved ${stats.saved}`);
+            showSuccessToast(`${file.name} Optimized! (${stats.originalSize} -> ${stats.newSize}). Saved ${stats.saved}`);
             if (newPath && newPath !== publicPath) {
               const extOld = '.' + file.name.split('.').pop()?.toLowerCase();
               if (finalUrl.includes(extOld) && newPath.endsWith('.webp')) {
@@ -299,7 +300,7 @@ export default function AdminFileUpload({
       onUpload(results);
 
       if (autoUpload !== false) {
-        success('All files processed successfully.');
+        showSuccessToast('All files processed successfully.');
       }
 
       // UX Improvement: Show Success State
@@ -309,15 +310,15 @@ export default function AdminFileUpload({
       // Wait 2 seconds before resetting
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      showError(`Process failed: ${err.message || 'Unknown error'}`);
+      showError(`Process failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setStatus('');
       setProgress(0);
       onUploadEnd?.();
     }
-  }, [uploadToGitHub, compressImageServer, compressVideoClient, onUpload, onUploadStart, onUploadEnd, success, showError, showWarning, autoUpload, onFileSelect]);
+  }, [uploadToGitHub, compressImageServer, compressVideoClient, onUpload, onUploadStart, onUploadEnd, showSuccessToast, showError, showWarning, autoUpload, onFileSelect]);
 
   const handleFiles = useCallback(async (files: FileList) => {
     if (disabled) return;
@@ -370,7 +371,7 @@ export default function AdminFileUpload({
   };
   const handleCropCancel = () => { setActiveCrop(null); };
 
-  const handleTrimConfirm = (start: number, end: number, crop?: any) => {
+  const handleTrimConfirm = (start: number, end: number, crop?: { x: number; y: number; width: number; height: number } | null) => {
     if (!activeTrim) return;
     const file = activeTrim.file;
     setActiveTrim(null);
@@ -501,6 +502,6 @@ function ImageCropperWrapper({ src, onConfirm, onCancel }: { src: string, onConf
   return <ImageCropper imageSrc={src} onCropComplete={onConfirm} onCancel={onCancel} />;
 }
 
-function VideoTrimmerWrapper({ file, onConfirm, onCancel }: { file: File, onConfirm: (s: number, e: number, c?: any) => void, onCancel: () => void }) {
+function VideoTrimmerWrapper({ file, onConfirm, onCancel }: { file: File, onConfirm: (s: number, e: number, c?: { x: number; y: number; width: number; height: number } | null) => void, onCancel: () => void }) {
   return <VideoTrimmer file={file} onConfirm={onConfirm} onCancel={onCancel} />;
 }

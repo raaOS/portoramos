@@ -6,13 +6,21 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_AI_API_KEY;
 
+interface GenerateDetailsRequest {
+    imageUrl?: string;
+    imageBase64?: string;
+    style?: string;
+    maxTitleWords?: number;
+    sentenceCount?: number;
+}
+
 export async function POST(req: NextRequest) {
     if (!API_KEY) {
         return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
     }
 
     try {
-        const { imageUrl, imageBase64, style = 'estetik', maxTitleWords = 5, sentenceCount = 2 } = await req.json();
+        const { imageUrl, imageBase64, style = 'estetik', maxTitleWords = 5, sentenceCount = 2 } = await req.json() as GenerateDetailsRequest;
 
         if (!imageUrl && !imageBase64) {
             return NextResponse.json({ error: 'Image URL or Base64 is required' }, { status: 400 });
@@ -25,7 +33,7 @@ export async function POST(req: NextRequest) {
             // Direct base64 input (e.g. from Client FileReader)
             // Remove prefix if present (data:image/jpeg;base64,)
             base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-        } else {
+        } else if (imageUrl) {
             const isLocal = imageUrl.startsWith('/');
 
             if (isLocal) {
@@ -37,8 +45,9 @@ export async function POST(req: NextRequest) {
                 try {
                     const buffer = await fs.readFile(localPath);
                     base64Data = buffer.toString('base64');
-                } catch (err) {
-                    return NextResponse.json({ error: `File not found on server: ${imageUrl}` }, { status: 404 });
+                } catch (err: unknown) {
+                    const errMsg = err instanceof Error ? err.message : String(err);
+                    return NextResponse.json({ error: `File not found on server: ${imageUrl} - ${errMsg}` }, { status: 404 });
                 }
             } else {
                 // Remote URL
@@ -117,7 +126,7 @@ export async function POST(req: NextRequest) {
         }`;
 
         // Detect Mime Type
-        const ext = imageUrl.split('.').pop()?.toLowerCase();
+        const ext = imageUrl?.split('.').pop()?.toLowerCase() || '';
         let mimeType = "image/jpeg";
         if (ext === 'mp4') mimeType = "video/mp4";
         else if (ext === 'webm') mimeType = "video/webm";
@@ -165,8 +174,9 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(parsed);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('AI Generate Error:', error);
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+        const errorMsg = error instanceof Error ? error.message : 'Internal Server Error';
+        return NextResponse.json({ error: errorMsg }, { status: 500 });
     }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import Cropper from 'react-easy-crop'
+import Cropper, { Area } from 'react-easy-crop'
 import getCroppedImg from '@/utils/cropImage'
 
 interface ImageCropperProps {
@@ -19,13 +19,13 @@ export default function ImageCropper({ imageSrc, onCropComplete, onCancel }: Ima
     const [crop, setCrop] = useState({ x: 0, y: 0 })
     const [zoom, setZoom] = useState(1)
     const [aspect, setAspect] = useState<number | undefined>(1)
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
 
     const onCropChange = (crop: { x: number; y: number }) => {
         setCrop(crop)
     }
 
-    const onCropCompleteEvent = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+    const onCropCompleteEvent = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
         setCroppedAreaPixels(croppedAreaPixels)
     }, [])
 
@@ -36,7 +36,7 @@ export default function ImageCropper({ imageSrc, onCropComplete, onCancel }: Ima
             if (croppedImage) {
                 onCropComplete(croppedImage)
             }
-        } catch (e) {
+        } catch {
             // Silently ignore crop errors
         }
     }

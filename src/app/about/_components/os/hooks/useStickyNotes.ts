@@ -18,8 +18,8 @@ const INITIAL_NOTES: NoteData[] = [
     }
 ];
 
-// Helper debounce function
-const debounce = <T extends (...args: any[]) => any>(func: T, wait: number) => {
+// Helper debounce function - prefixed with _ to indicate it's reserved for future use
+const _debounce = <T extends (...args: unknown[]) => ReturnType<T>>(func: T, wait: number) => {
     let timeout: NodeJS.Timeout;
     return (...args: Parameters<T>) => {
         clearTimeout(timeout);

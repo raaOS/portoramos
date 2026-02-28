@@ -44,7 +44,7 @@ class SoundManager {
     private constructor() {
         console.log("%c[SoundManager] v1.5-DEBUG (Autoplay-Ready)", "color: #00ff00; font-weight: bold;");
         if (typeof window !== 'undefined') {
-            (window as any).__soundManager = this; // Attach for easy console debugging
+            (window as unknown as { __soundManager: SoundManager }).__soundManager = this; // Attach for easy console debugging
         }
     }
 
@@ -68,7 +68,7 @@ class SoundManager {
             const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFRm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
             silentAudio.volume = 0;
             silentAudio.play().catch(() => { });
-        } catch (e) {
+        } catch {
             // Ignore
         }
     }

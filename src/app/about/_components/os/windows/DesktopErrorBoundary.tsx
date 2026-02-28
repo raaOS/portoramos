@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
-import { AlertTriangle, RefreshCw, Power } from "lucide-react";
+import { RefreshCw, Power } from "lucide-react";
 
 interface Props {
     children: ReactNode;
@@ -35,8 +35,8 @@ export default class DesktopErrorBoundary extends Component<Props, State> {
         try {
             localStorage.removeItem('window-positions');
             localStorage.removeItem('dock-config');
-        } catch (e) {
-            console.error("Failed to clear local storage", e);
+        } catch {
+            console.error("Failed to clear local storage");
         }
         window.location.reload();
     };

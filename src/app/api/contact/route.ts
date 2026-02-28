@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
-import { ContactData, UpdateContactData } from '@/types/contact';
+import { ContactData, UpdateContactData, ContactContent, ContactInfo, ContactFormSettings } from '@/types/contact';
 import { validateAdminRequest } from '@/lib/auth';
 import path from 'path';
 
 const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'contact.json');
 
 // GET - Read contact content
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     await ensureDataDir();
     const data = await loadData(DATA_FILE) as ContactData;
@@ -44,9 +44,9 @@ export async function PUT(request: NextRequest) {
 
     // Update data with new content
     const updatedData: ContactData = {
-      content: { ...data.content, ...body.content } as any, // Cast to any to avoid strict type check if content was missing
-      info: { ...data.info, ...body.info },
-      formSettings: { ...data.formSettings, ...body.formSettings },
+      content: body.content ? { ...data.content, ...body.content } as ContactContent : data.content,
+      info: { ...data.info, ...body.info } as ContactInfo,
+      formSettings: { ...data.formSettings, ...body.formSettings } as ContactFormSettings,
       lastUpdated: new Date().toISOString()
     };
 

@@ -27,19 +27,19 @@ const SadMacIcon = () => (
 export default function RetroMobileOverlay() {
     const [step, setStep] = useState<"boot" | "error" | "details">("boot");
     const [progress, setProgress] = useState(0);
-    const [locale, setLocale] = useState<"id" | "en">(() => {
+    const [locale] = useState<"id" | "en">(() => {
         // Safe check for locale during initialization if possible
         if (typeof Intl !== 'undefined') {
             try {
                 const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 const indonesianTz = ["Asia/Jakarta", "Asia/Pontianak", "Asia/Makassar", "Asia/Jayapura"];
                 if (indonesianTz.includes(tz)) return "id";
-            } catch (e) { }
+            } catch { }
         }
         return "en";
     });
     const [copied, setCopied] = useState(false);
-    const [siteUrl, setSiteUrl] = useState(() => {
+    const [siteUrl] = useState(() => {
         if (typeof window !== 'undefined') return window.location.origin;
         return "";
     });

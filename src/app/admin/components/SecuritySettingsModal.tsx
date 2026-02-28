@@ -15,7 +15,7 @@ export default function SecuritySettingsModal({ onClose }: SecuritySettingsModal
     const [words, setWords] = useState<string[]>([]);
     const [newWord, setNewWord] = useState('');
     const [loading, setLoading] = useState(true);
-    const { showSuccess, showError } = useToast();
+    const { showError } = useToast();
     const { csrfToken } = useAdminAuth();
 
     useEffect(() => {
@@ -62,7 +62,7 @@ export default function SecuritySettingsModal({ onClose }: SecuritySettingsModal
             } else {
                 showError('Failed to save settings');
             }
-        } catch (e) {
+        } catch {
             showError('Error saving settings');
         }
     };

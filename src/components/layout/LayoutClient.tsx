@@ -10,7 +10,8 @@ import WindowRenderer from './WindowRenderer';
 import type { DockPreferences } from '@/types/about';
 
 // Lazy-load below-fold components to reduce initial JS bundle (~30-50KB savings)
-const Footer = dynamic(() => import('@/components/shared/Footer'), { ssr: false });
+// Footer is available but not currently used in this layout
+void dynamic(() => import('@/components/shared/Footer'), { ssr: false });
 const ScrollToTop = dynamic(() => import('@/components/layout/ScrollToTop'), { ssr: false });
 
 export default function LayoutClient({

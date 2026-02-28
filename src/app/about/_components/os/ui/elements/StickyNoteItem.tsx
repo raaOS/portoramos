@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, Trash2, Edit, Palette, RotateCcw, Pin, Eye, EyeOff, Check, Download, X, Plus, Minus } from 'lucide-react';
-import { m, AnimatePresence, DragControls } from 'framer-motion';
+
+import { m, DragControls } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 // Lazy load PasswordModal - only needed when editing locked notes

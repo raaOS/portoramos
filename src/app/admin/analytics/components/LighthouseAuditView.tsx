@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Smartphone, Monitor, Play, Loader2, AlertCircle, AlertTriangle, ChevronDown, ChevronUp, CheckCircle, Circle, Square, Camera, Camera as CameraIcon, Copy, Check } from 'lucide-react';
-import Image from 'next/image';
-import { RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts';
+import { Smartphone, Monitor, Play, Loader2, AlertCircle, Copy, Check } from 'lucide-react';
+
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 // Reusing interfaces (should ideally be shared types, but defining here for speed)
@@ -16,7 +15,9 @@ interface AuditItem {
     scoreDisplayMode: string;
     details?: {
         type: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         items?: any[];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         headings?: any[];
         overallSavingsMs?: number;
         overallSavingsBytes?: number;
@@ -85,14 +86,14 @@ export default function LighthouseAuditView() {
             // Save to history automatically
             await saveToHistory(url, data);
 
-        } catch (err: any) {
-            setError(err.message || 'Failed to run audit');
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to run audit');
         } finally {
             setLoading(false);
         }
     };
 
-    const saveToHistory = async (url: string, data: Scores) => {
+    const saveToHistory = async (auditUrl: string, data: Scores) => {
         try {
             await fetch('/api/lighthouse/history', {
                 method: 'POST',
@@ -102,7 +103,7 @@ export default function LighthouseAuditView() {
                 },
                 credentials: 'include',
                 body: JSON.stringify({
-                    url,
+                    url: auditUrl,
                     scores: {
                         performance: data.performance,
                         accessibility: data.accessibility,
@@ -116,15 +117,15 @@ export default function LighthouseAuditView() {
         }
     };
 
-    const formatDetails = (details: any) => {
+    const formatDetails = (details: { type?: string; items?: Array<Record<string, unknown>>; headings?: Array<{ key: string; label?: string; text?: string; itemType?: string }> }) => {
         if (!details || !details.items || details.items.length === 0) return '';
 
         // Handle Table format
         if (details.type === 'table' && details.headings) {
-            const headings = details.headings.map((h: any) => h.text || h.label).join('\t');
-            const rows = details.items.map((item: any) => {
-                return details.headings.map((h: any) => {
-                    const val = item[h.key];
+            const headings = details.headings.map((h) => h.text || h.label).join('\t');
+            const rows = details.items.map((item) => {
+                return details.headings?.map((h) => {
+                    const val = item[h.key] as string | number | { url?: string } | unknown;
                     // Simple formatting for bytes/time if needed, or raw value
                     if (h.itemType === 'bytes') return `${(val / 1024).toFixed(2)} KiB`;
                     if (h.itemType === 'ms') return `${val} ms`;

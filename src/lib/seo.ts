@@ -144,7 +144,22 @@ export function generateProjectMetadata(project: Project): Metadata {
 }
 
 // Generate structured data (JSON-LD)
-export function generateStructuredData(type: 'website' | 'portfolio' | 'project' | 'person', data?: any) {
+interface ProjectStructuredData {
+    title: string;
+    description: string;
+    cover: string;
+    tags?: string[];
+    client?: string;
+    year?: number;
+}
+
+interface PersonStructuredData {
+    socialLinks?: string[];
+}
+
+type StructuredDataType = ProjectStructuredData | PersonStructuredData | Record<string, unknown>;
+
+export function generateStructuredData(type: 'website' | 'portfolio' | 'project' | 'person', data?: StructuredDataType) {
   const baseStructuredData = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -182,16 +197,17 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
         url: `${baseSEO.siteUrl}/portfolio`
       }
 
-    case 'project':
+    case 'project': {
       if (!data) return baseStructuredData
+      const projectData = data as ProjectStructuredData;
 
       return {
         '@context': 'https://schema.org',
         '@type': 'CreativeWork',
-        name: data.title,
-        description: data.description,
-        url: `${baseSEO.siteUrl}/projects/${data.slug}`,
-        image: data.cover,
+        name: projectData.title,
+        description: projectData.description,
+        url: `${baseSEO.siteUrl}/projects/${(data as { slug?: string }).slug}`,
+        image: projectData.cover,
         author: {
           '@type': 'Person',
           name: baseSEO.author
@@ -201,19 +217,21 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
           name: baseSEO.title,
           url: baseSEO.siteUrl
         },
-        keywords: data.tags?.join(', '),
-        ...(data.client && {
+        keywords: projectData.tags?.join(', '),
+        ...(projectData.client && {
           client: {
             '@type': 'Organization',
-            name: data.client
+            name: projectData.client
           }
         }),
-        ...(data.year && {
-          dateCreated: `${data.year}-01-01`
+        ...(projectData.year && {
+          dateCreated: `${projectData.year}-01-01`
         })
       }
+    }
 
-    case 'person':
+    case 'person': {
+      const personData = data as PersonStructuredData | undefined;
       return {
         '@context': 'https://schema.org',
         '@type': 'Person',
@@ -222,7 +240,7 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
         image: baseSEO.siteUrl + '/images/profile.jpg', // Assuming profile image path
         sameAs: [
           // Add links if available in data
-          ...(data?.socialLinks || [])
+          ...(personData?.socialLinks || [])
         ],
         jobTitle: 'Creative Designer & Visual Storyteller',
         worksFor: {
@@ -232,6 +250,7 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
         description: baseSEO.description,
         knowsAbout: ['Graphic Design', 'UI/UX', 'Motion Graphics', 'Visual Identity']
       }
+    }
 
     default:
       return baseStructuredData

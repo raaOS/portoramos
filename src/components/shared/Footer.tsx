@@ -1,8 +1,6 @@
 "use client"
-import { usePathname } from 'next/navigation'
 
 export default function Footer() {
-  const pathname = usePathname()
   const year = new Date().getFullYear()
 
   return (

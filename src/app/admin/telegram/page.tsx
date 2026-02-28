@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 export default function TelegramAdminPage() {
-  const [status, setStatus] = useState<any>(null);
+  const [status, setStatus] = useState<{ isCorrect?: boolean; telegram?: { url?: string; pending_update_count?: number }; currentConfig?: { expectedWebhookUrl?: string } } | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -13,8 +13,8 @@ export default function TelegramAdminPage() {
       const res = await fetch('/api/debug/webhook-status');
       const data = await res.json();
       setStatus(data);
-    } catch (e) {
-      setMessage('Error checking status: ' + (e as Error).message);
+    } catch (_e) {
+      setMessage('Error checking status: ' + (_e as Error).message);
     }
     setLoading(false);
   };
@@ -34,8 +34,8 @@ export default function TelegramAdminPage() {
       } else {
         setMessage('❌ Failed: ' + (data.error || 'Unknown error'));
       }
-    } catch (e) {
-      setMessage('❌ Error: ' + (e as Error).message);
+    } catch (_e) {
+      setMessage('❌ Error: ' + (_e as Error).message);
     }
     setLoading(false);
   };
@@ -57,8 +57,8 @@ export default function TelegramAdminPage() {
           setMessage('❌ Failed to clear: ' + clearData.description);
         }
       }
-    } catch (e) {
-      setMessage('❌ Error: ' + (e as Error).message);
+    } catch (_e) {
+      setMessage('❌ Error: ' + (_e as Error).message);
     }
     setLoading(false);
   };

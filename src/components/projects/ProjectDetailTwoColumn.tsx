@@ -22,7 +22,8 @@ const CommentSection = dynamic(() => import('@/components/features/CommentSectio
     ssr: false
 });
 
-const AITranslator = dynamic(() => import('@/components/features/AITranslator'), {
+// AITranslator is available for future use but not currently used
+void dynamic(() => import('@/components/features/AITranslator'), {
     loading: () => <div className="w-6 h-6" />,
     ssr: false
 });
@@ -47,7 +48,7 @@ export default function ProjectDetailTwoColumn({
     const [comments, setComments] = useState<Comment[]>([]);
     const [isProjectLiked, setIsProjectLiked] = useState(false);
     const [metrics, setMetrics] = useState({ likes: 0, shares: 0 });
-    const [isLoaded, setIsLoaded] = useState(false);
+    const [_isLoaded, setIsLoaded] = useState(false);
     const [translations, setTranslations] = useState<Record<string, string> | null>(null);
     const [translateLoading, setTranslateLoading] = useState(false);
     const CACHE_KEY = `gemini_proj_${project.slug}`;
@@ -159,8 +160,8 @@ export default function ProjectDetailTwoColumn({
                     action: newIsLiked ? 'like' : 'unlike'
                 })
             });
-        } catch (error) {
-            console.error('Failed to update like metric:', error);
+        } catch {
+            console.error('Failed to update like metric');
         }
     };
 
@@ -172,7 +173,7 @@ export default function ProjectDetailTwoColumn({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ slug: project.slug, action: 'share' })
             });
-        } catch (e) { }
+        } catch { }
 
         if (navigator.share) {
             navigator.share({

@@ -57,17 +57,20 @@ export default function Gallery({
   }, [list.length])
 
   const enterFullscreen = useCallback(() => {
-    const el = viewerRef.current
+    const el = viewerRef.current as HTMLDivElement & {
+      webkitRequestFullscreen?: () => void;
+      msRequestFullscreen?: () => void;
+    } | null;
     if (!el) return
     try {
       if (el.requestFullscreen) {
         el.requestFullscreen()
-      } else if ((el as any).webkitRequestFullscreen) {
-        ; (el as any).webkitRequestFullscreen()
-      } else if ((el as any).msRequestFullscreen) {
-        ; (el as any).msRequestFullscreen()
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen()
+      } else if (el.msRequestFullscreen) {
+        el.msRequestFullscreen()
       }
-    } catch (e) {
+    } catch {
       // Failed to enter fullscreen
     }
   }, [])

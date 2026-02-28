@@ -22,8 +22,8 @@ export function useAdminTestimonial(csrfToken: string | null) {
             const data: TestimonialData = await response.json();
             setTestimonials(data.testimonials);
             setError(null);
-        } catch (error) {
-            console.error('Error loading testimonials:', error);
+        } catch (_error) {
+            console.error('Error loading testimonials:', _error);
             setError('Failed to load testimonials');
             showError('Failed to load testimonials.');
         } finally {
@@ -37,8 +37,8 @@ export function useAdminTestimonial(csrfToken: string | null) {
             if (!response.ok) throw new Error('Failed to fetch projects');
             const data = await response.json();
             setProjects(data.projects || []);
-        } catch (err) {
-            console.error('Error loading projects:', err);
+        } catch (_err) {
+            console.error('Error loading projects:', _err);
         }
     }, []);
 
@@ -67,7 +67,7 @@ export function useAdminTestimonial(csrfToken: string | null) {
             const data = await response.json();
             showSuccess('Konten berhasil dibuat oleh AI!');
             return data;
-        } catch (err) {
+        } catch {
             showError('Gagal generate AI. Coba lagi.');
             return null;
         } finally {
@@ -95,7 +95,7 @@ export function useAdminTestimonial(csrfToken: string | null) {
                 showError('Failed to create testimonial.');
                 return false;
             }
-        } catch (error) {
+        } catch {
             showError('Failed to create testimonial.');
             return false;
         }
@@ -121,7 +121,7 @@ export function useAdminTestimonial(csrfToken: string | null) {
                 showError('Failed to update testimonial.');
                 return false;
             }
-        } catch (error) {
+        } catch {
             showError('Failed to update testimonial.');
             return false;
         }
@@ -146,7 +146,7 @@ export function useAdminTestimonial(csrfToken: string | null) {
             } else {
                 showError('Failed to delete testimonial.');
             }
-        } catch (error) {
+        } catch {
             showError('Failed to delete testimonial.');
         }
     };

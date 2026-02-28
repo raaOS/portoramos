@@ -12,8 +12,19 @@ const MacFolder = dynamic(() => import("../windows/MacFolder"), {
     ssr: false
 });
 
+interface ProjectIcon {
+    id: string;
+    x: number;
+    y: number;
+    icon?: React.ReactNode;
+    type?: 'project' | 'folder' | string;
+    data?: Project;
+    action?: () => void;
+    priority?: boolean;
+}
+
 interface DesktopIconsLayerProps {
-    projectIcons: any[];
+    projectIcons: ProjectIcon[];
     isMobile: boolean;
     notesVisible: boolean;
     notes: NoteData[];
@@ -26,7 +37,6 @@ interface DesktopIconsLayerProps {
     restoreNote: (id: string) => void;
     addNote: () => void;
     isAdmin: boolean;
-    setNotesVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function DesktopIconsLayer({
@@ -42,8 +52,7 @@ export default function DesktopIconsLayer({
     permanentDeleteNote,
     restoreNote,
     addNote,
-    isAdmin,
-    setNotesVisible
+    isAdmin
 }: DesktopIconsLayerProps) {
     return (
         <div className="absolute inset-0 z-10 pointer-events-none">

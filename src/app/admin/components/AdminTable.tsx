@@ -3,24 +3,24 @@
 import { ReactNode } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 
-interface Column {
+interface Column<T = Record<string, unknown>> {
   key: string;
   label: string;
   sortable?: boolean;
-  render?: (value: any, item: any) => ReactNode;
+  render?: (value: unknown, item: T) => ReactNode;
   className?: string;
 }
 
 interface AdminTableProps {
   columns: Column[];
-  data?: any[];
+  data?: Record<string, unknown>[];
   loading?: boolean;
   emptyMessage?: string;
   onSort?: (key: string, direction: 'asc' | 'desc') => void;
   sortKey?: string;
   sortDirection?: 'asc' | 'desc';
   className?: string;
-  onEdit?: (item: any) => void;
+  onEdit?: (item: Record<string, unknown>) => void;
   onDelete?: (id: number) => void;
 }
 

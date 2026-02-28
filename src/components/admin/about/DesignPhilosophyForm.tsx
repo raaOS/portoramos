@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Save, Plus, Trash2, Loader2, Sparkles } from 'lucide-react';
+import { Save, Loader2, Sparkles } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface PhilosophyStep {
@@ -81,7 +81,7 @@ export default function DesignPhilosophyForm() {
             } else {
                 throw new Error('Failed to save');
             }
-        } catch (error) {
+        } catch {
             setMessage({ type: 'error', text: 'Gagal menyimpan perubahan.' });
         } finally {
             setIsSaving(false);

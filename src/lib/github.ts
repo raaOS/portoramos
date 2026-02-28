@@ -1,4 +1,4 @@
-import { Project } from '@/types/projects';
+
 import { promises as fs } from 'fs';
 import path from 'path';
 import { unstable_cache, revalidateTag, revalidatePath } from 'next/cache';
@@ -9,11 +9,6 @@ interface GitHubFileResponse {
     content: string;
     sha: string;
     encoding: string;
-}
-
-interface UpdateFileParams {
-    projects: Project[];
-    message: string;
 }
 
 // Helper to clean environment variables (removes quotes and trims)
@@ -121,7 +116,7 @@ export class GitHubService {
                     content: JSON.parse(content),
                     sha: 'local-file-sha'
                 };
-            } catch (error) {
+            } catch {
                 if (process.env.NODE_ENV === 'development') {
                     console.warn(`[GitHubService] Local file read failed for ${filePath}, falling back to API.`);
                 }
@@ -181,7 +176,7 @@ export class GitHubService {
     /**
      * Update any file in the repo
      */
-    async updateFile(filePath: string, content: any, message: string, retryCount = 0): Promise<boolean> {
+    async updateFile(filePath: string, content: unknown, message: string, retryCount = 0): Promise<boolean> {
         try {
             // 1. Get current file to get the latest SHA (required for updates)
             let sha: string | undefined;
@@ -189,7 +184,7 @@ export class GitHubService {
                 // IMPORTANT: Use noCache=true to get the LATEST SHA and avoid 409 conflicts
                 const current = await this.getFileContent(filePath, true);
                 sha = current.sha;
-            } catch (e) {
+            } catch {
                 // File might not exist yet, which is fine for creation
                 // File not found, creating new
             }
@@ -257,7 +252,7 @@ export class GitHubService {
             // Update successful, cache revalidated
             return true;
         } catch (error) {
-            console.error('[GitHubService] Error:', error);
+            console.error('[GitHubService] Error:', error instanceof Error ? error.message : String(error));
             throw error;
         }
     }
@@ -284,7 +279,7 @@ export class GitHubService {
             try {
                 const current = await this.getFileContent(filePath, true);
                 sha = current.sha;
-            } catch (e) {
+            } catch {
                 console.warn(`[GitHubService] File ${filePath} not found, skipping delete.`);
                 return true; // File doesn't exist, mission accomplished
             }

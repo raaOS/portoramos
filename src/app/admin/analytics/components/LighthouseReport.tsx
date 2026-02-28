@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertCircle, AlertTriangle, Square, ChevronDown, ChevronUp, Circle, Camera } from 'lucide-react';
+import { AlertTriangle, Square, ChevronDown, ChevronUp, Circle, Camera } from 'lucide-react';
 import Image from 'next/image';
 
 // Types (should actully be in a types file, but keeping collocated for now per existing pattern)
@@ -14,8 +14,8 @@ interface AuditItem {
     scoreDisplayMode: string;
     details?: {
         type: string;
-        items?: any[];
-        headings?: any[];
+        items?: Array<Record<string, string | number | unknown>>;
+        headings?: Array<{ key: string; label?: string; text?: string; valueType?: string }>;
         overallSavingsMs?: number;
         overallSavingsBytes?: number;
     };
@@ -72,7 +72,7 @@ const Gauge = ({ score, label }: { score: number; label: string }) => {
     );
 };
 
-const MetricCard = ({ label, value, icon }: { label: string; value: string; icon: any }) => (
+const MetricCard = ({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) => (
     <div className="flex items-center justify-between p-3 border-b border-gray-100 last:border-0 sm:border sm:rounded-lg sm:p-4 hover:bg-gray-50 transition-colors">
         <div className="flex items-center gap-3">
             {icon}
@@ -98,7 +98,7 @@ export default function LighthouseReport({ scores }: LighthouseReportProps) {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    const AuditRow = ({ audit, type }: { audit: AuditItem, type: 'opportunity' | 'diagnostic' }) => {
+    const AuditRow = ({ audit }: { audit: AuditItem }) => {
         const isExpanded = expandedAudits[audit.id];
         const severity = audit.score === 0 || audit.scoreDisplayMode === 'error' ? 'red' : 'amber';
         const Icon = severity === 'red' ? AlertTriangle : Square;
@@ -147,16 +147,16 @@ export default function LighthouseReport({ scores }: LighthouseReportProps) {
                         <table className="w-full text-sm text-left">
                             <thead className="text-xs text-gray-500 uppercase bg-gray-100">
                                 <tr>
-                                    {audit.details.headings?.map((h: any, idx: number) => (
+                                    {audit.details.headings?.map((h, idx: number) => (
                                         <th key={idx} className="px-3 py-2">{h.label}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {audit.details.items.map((item: any, idx: number) => (
+                                {audit.details.items.map((item, idx: number) => (
                                     <tr key={idx} className="border-b border-gray-200 last:border-0 bg-white">
-                                        {audit.details?.headings?.map((h: any, hIdx: number) => {
-                                            const val = item[h.key];
+                                        {audit.details?.headings?.map((h, hIdx: number) => {
+                                            const val = item[h.key] as string | number;
                                             return (
                                                 <td key={hIdx} className="px-3 py-2 text-gray-700 truncate max-w-[200px] border-b border-gray-100" title={String(val)}>
                                                     {h.valueType === 'url' ? (
@@ -265,7 +265,7 @@ export default function LighthouseReport({ scores }: LighthouseReportProps) {
                     </div>
                     <div className="divide-y divide-gray-200">
                         {scores.audits.opportunities.map((audit) => (
-                            <AuditRow key={audit.id} audit={audit} type="opportunity" />
+                            <AuditRow key={audit.id} audit={audit} />
                         ))}
                     </div>
                 </div>
@@ -280,7 +280,7 @@ export default function LighthouseReport({ scores }: LighthouseReportProps) {
                     </div>
                     <div className="divide-y divide-gray-200">
                         {scores.audits.diagnostics.map((audit) => (
-                            <AuditRow key={audit.id} audit={audit} type="diagnostic" />
+                            <AuditRow key={audit.id} audit={audit} />
                         ))}
                     </div>
                 </div>

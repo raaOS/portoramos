@@ -9,7 +9,7 @@ import type { Project } from '@/types/projects';
 import type { HardSkillsData } from '@/types/hardSkill';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
-import { Download, FileText, Share2, Printer } from 'lucide-react';
+import { Download, FileText, Share2 } from 'lucide-react';
 
 type Props = {
   aboutData: AboutData | null;
@@ -49,7 +49,7 @@ export default function CvPageClient({
   const displayName = 'Ramos';
   const headline = 'Graphic Designer & Visual Strategist';
   const summary = aboutData?.professional?.bio?.content ?? 'Desainer Grafis senior dengan fokus pada solusi visual yang strategis dan berdampak nyata.';
-  const contacts = (aboutData as any)?.professional?.contacts;
+  // contacts data is available in aboutData if needed for future use
 
   const softSkills = aboutData?.softSkills?.texts ?? [];
 

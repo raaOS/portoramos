@@ -5,30 +5,10 @@ import { z } from 'zod';
  * Prevents injection attacks, validates data types, and enforces business rules
  */
 
-// Helper: Limit nested object depth
-const MAX_DEPTH = 5;
+// Helper: Limit nested object depth (reserved for future use)
+// const MAX_DEPTH = 5;
 
-function createDepthLimitedSchema(depth: number = 0): z.ZodTypeAny {
-    if (depth >= MAX_DEPTH) {
-        return z.any().refine(() => false, {
-            message: `Maximum nesting depth of ${MAX_DEPTH} exceeded`
-        });
-    }
 
-    return z.lazy(() =>
-        z.record(
-            z.string(),
-            z.union([
-                z.string(),
-                z.number(),
-                z.boolean(),
-                z.null(),
-                z.array(z.any()),
-                createDepthLimitedSchema(depth + 1)
-            ])
-        )
-    );
-}
 
 // Project Schemas
 export const projectTechnologySchema = z.string()
@@ -191,9 +171,9 @@ export const uploadFileSchema = z.object({
 
 // Contact Schemas
 export const updateContactSchema = z.object({
-    content: z.record(z.string(), z.any()).optional(),
-    info: z.record(z.string(), z.any()).optional(),
-    formSettings: z.record(z.string(), z.any()).optional(),
+    content: z.record(z.string(), z.unknown()).optional(),
+    info: z.record(z.string(), z.unknown()).optional(),
+    formSettings: z.record(z.string(), z.unknown()).optional(),
 }).strict();
 
 // Settings Schemas

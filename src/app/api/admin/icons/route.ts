@@ -14,12 +14,13 @@ const safeUnlink = async (p: string) => {
             // Try async unlink first
             await fs.promises.unlink(p);
             return;
-        } catch (err: any) {
-            if (['EBUSY', 'EPERM', 'EACCES'].includes(err.code)) {
+        } catch (err: unknown) {
+            const nodeErr = err as { code?: string };
+            if (['EBUSY', 'EPERM', 'EACCES'].includes(nodeErr.code || '')) {
                 attempts++;
                 await new Promise(r => setTimeout(r, 250 * attempts));
             } else {
-                if (err.code === 'ENOENT') return; // File already gone
+                if (nodeErr.code === 'ENOENT') return; // File already gone
                 throw err;
             }
         }
@@ -188,8 +189,9 @@ export async function DELETE(req: NextRequest) {
             if (isDev && fs.existsSync(targetAbsPath)) {
                 try {
                     await safeUnlink(targetAbsPath);
-                } catch (err: any) {
-                    console.error(`[IconsAPI] Local delete failure for ${targetName}:`, err.message);
+                } catch (err: unknown) {
+                    const errMsg = err instanceof Error ? err.message : String(err);
+                    console.error(`[IconsAPI] Local delete failure for ${targetName}:`, errMsg);
                 }
             }
 
@@ -199,8 +201,9 @@ export async function DELETE(req: NextRequest) {
                 try {
                     // githubService.deleteFile handles fetching current SHA internally
                     await githubService.deleteFile(targetRelPath, `Delete icon variant ${targetName}`);
-                } catch (error: any) {
-                    console.warn(`[IconsAPI] GitHub delete failure for ${targetName}:`, error.message);
+                } catch (error: unknown) {
+                    const errMsg = error instanceof Error ? error.message : String(error);
+                    console.warn(`[IconsAPI] GitHub delete failure for ${targetName}:`, errMsg);
                 }
             }
         }));

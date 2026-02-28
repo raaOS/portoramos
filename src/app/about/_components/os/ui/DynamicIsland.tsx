@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { m, AnimatePresence } from "framer-motion";
-import { Maximize2, Minimize2, Music, AppWindow } from "lucide-react";
+import { m } from "framer-motion";
+import { AppWindow } from "lucide-react";
 
 import { ContactProfile } from "../data/mockChats";
 import { getAvatarUrl } from "@/lib/avatar";
@@ -27,7 +27,6 @@ interface DynamicIslandProps {
 const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotifications }: DynamicIslandProps) => {
     // Determine state based on props
     // "idle" | "active-window" | "booting" | "notification"
-    const [isHovered, setIsHovered] = useState(false);
     const [notification, setNotification] = useState<{ id: string; name: string; message: string; avatar: string; isEncrypting?: boolean } | null>(null);
     const [isGracePeriod, setIsGracePeriod] = useState(false);
     const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);

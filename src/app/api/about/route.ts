@@ -5,11 +5,11 @@ import { aboutService } from '@/lib/services/aboutService';
 
 
 // GET - Read about content
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const data = await aboutService.getAboutData(true);
     return NextResponse.json(data);
-  } catch (error) {
+  } catch {
     // Silently handle about data loading errors
     return NextResponse.json({ error: 'Failed to load about data' }, { status: 500 });
   }
@@ -31,11 +31,12 @@ export async function PUT(request: NextRequest) {
       success: true,
       data: updatedData
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API/About] Update Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({
       error: 'Failed to update about data',
-      details: error.message || 'Unknown error'
+      details: errorMessage
     }, { status: 500 });
   }
 }

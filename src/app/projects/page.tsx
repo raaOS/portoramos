@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 }
 
 export default async function ProjectsPage() {
-    const [projects, aboutData] = await Promise.all([
+    const [projects, _aboutData] = await Promise.all([
         allProjectsAsync(),
         loadAboutData()
     ]);

@@ -20,8 +20,8 @@ export default function AdminLeadsClient() {
                 const data = await res.json();
                 setLeads(data);
             }
-        } catch (error) {
-            console.error('Failed to fetch leads', error);
+        } catch (_error) {
+            console.error('Failed to fetch leads', _error);
         } finally {
             setLoading(false);
         }
@@ -40,7 +40,7 @@ export default function AdminLeadsClient() {
         {
             key: 'contact',
             label: 'Kontak',
-            render: (val: string, item: any) => {
+            render: (val: string, item: { contactType?: string }) => {
                 let href = '#';
                 if (item.contactType === 'WhatsApp') {
                     // Basic cleaning for WA link

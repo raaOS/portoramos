@@ -22,7 +22,7 @@ export class AdminErrorBoundary extends Component<AdminErrorBoundaryProps, Admin
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, _errorInfo: React.ErrorInfo) {
     // Remove debug logging to prevent showing error details
     this.setState({ error });
   }

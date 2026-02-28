@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { validateAdminRequest } from '@/lib/auth';
 
 const execAsync = promisify(exec);
 
-export async function POST(request: any) {
+export async function POST(request: NextRequest) {
     if (!(await validateAdminRequest(request))) {
         return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
@@ -39,7 +39,7 @@ export async function POST(request: any) {
         }
 
         // 3. Push
-        const { stdout, stderr } = await execAsync('git push');
+        await execAsync('git push');
         // Silently handle git push output
         // git push writes to stderr sometimes even on success
 

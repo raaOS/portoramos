@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Project } from '@/types/projects';
 import { GalleryFeaturedData } from '@/types/gallery';
-import { Check, Save, Loader2, AlertCircle } from 'lucide-react';
+import { Save, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 

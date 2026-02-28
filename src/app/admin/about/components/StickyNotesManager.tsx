@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, Save, Type, GripHorizontal, Palette, Pin, Star, CheckSquare } from 'lucide-react';
+import { Plus, Save, Pin, Star, CheckSquare } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { NoteData } from '@/app/about/_components/os/ui/elements/StickyNoteItem';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -15,7 +15,8 @@ const COLORS = [
 ];
 
 interface StickyNotesManagerProps {
-    onUpdate?: (data: any) => void; // Optional if we want parent to handle save, but this component can self-manage
+    // This prop is optional - component self-manages state
+    onUpdate?: (_data: unknown) => void;
 }
 
 export default function StickyNotesManager({ }: StickyNotesManagerProps) {
@@ -34,7 +35,7 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
             // Checking route.ts line 8: return NextResponse.json(data); 
             // Assuming service.getNotes() returns the array.
             setNotes(Array.isArray(data) ? data : []);
-        } catch (err) {
+        } catch {
             showError('Gagal memuat catatan tempel.');
         } finally {
             setLoading(false);
@@ -63,7 +64,7 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
             } else {
                 showError('Gagal menyimpan catatan.');
             }
-        } catch (err) {
+        } catch {
             showError('Gagal menyimpan catatan.');
         } finally {
             setSaving(false);
@@ -131,7 +132,7 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
             </div>
 
             <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6">
-                {notes.map((note, index) => (
+                {notes.map((note) => (
                     <div key={note.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
                         {/* Header color strip */}
                         <div

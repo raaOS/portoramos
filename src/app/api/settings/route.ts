@@ -18,7 +18,7 @@ export async function getSettingsData() {
         try {
             const ghData = await githubService.getFileContent(GITHUB_PATH);
             data = ghData.content;
-        } catch (error) {
+        } catch {
             // Silently handle GitHub fetch errors
         }
     }
@@ -29,7 +29,7 @@ export async function getSettingsData() {
     return data;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     const data = await getSettingsData();
     return NextResponse.json(data);
 }
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ success: true, settings: body });
-    } catch (error) {
+    } catch {
         // Silently handle settings save errors
         return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });
     }

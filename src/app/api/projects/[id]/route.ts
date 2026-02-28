@@ -15,7 +15,7 @@ const COMMENTS_DATA_FILE = path.join(process.cwd(), 'src', 'data', 'comments.jso
 const COMMENTS_GITHUB_PATH = 'src/data/comments.json';
 
 interface CommentsData {
-  comments: Record<string, any[]>;
+  comments: Record<string, unknown[]>;
 }
 
 // Helper to finalize media (Move from temp to permanent)

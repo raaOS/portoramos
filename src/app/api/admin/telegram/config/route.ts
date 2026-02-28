@@ -4,9 +4,9 @@ import { getTelegramConfigSafe } from '@/lib/telegram';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   // Check admin auth
-  if (!(await validateAdminRequest(request, { checkCsrf: false }))) {
+  if (!(await validateAdminRequest(_request, { checkCsrf: false }))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
       ...config,
       _botToken: validation.valid ? validation.config.botToken : undefined
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

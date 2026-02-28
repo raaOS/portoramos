@@ -26,7 +26,7 @@ interface FuseInstance<T> {
   setCollection: (collection: T[]) => void
 }
 
-export default function IndexClientInner({ projects, tag, searchQuery, lastUpdated, windowWidth }: Props) {
+export default function IndexClientInner({ projects, tag, searchQuery, lastUpdated: _lastUpdated, windowWidth }: Props) {
   // Start with a smaller number to improve initial load performance (LCP)
   const [visibleCount, setVisibleCount] = useState(8)
 
@@ -47,7 +47,7 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
               keys: ['title', 'description', 'client', 'tags'],
               threshold: 0.3,
               includeScore: true,
-            }) as any as FuseInstance<Project>)
+            }) as unknown as FuseInstance<Project>)
           } else {
             fuseInstance.setCollection(projects)
           }

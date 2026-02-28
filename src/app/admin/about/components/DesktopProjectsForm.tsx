@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Project } from '@/types/projects';
 import { Grid, Check, Folder, MousePointer2 } from 'lucide-react';
 

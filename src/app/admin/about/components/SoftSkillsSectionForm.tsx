@@ -3,9 +3,25 @@
 import React, { useState } from 'react';
 import { Trash2, Eye, EyeOff, Plus } from 'lucide-react';
 
+interface SkillItem {
+    text?: string;
+    description?: string;
+    isDraft?: boolean;
+}
+
+interface SoftSkillsData {
+    items?: SkillItem[];
+    texts?: string[];
+    descriptions?: string[];
+}
+
+interface SoftSkillsSubmitData {
+    items: Array<{ text: string; description: string; isDraft: boolean }>;
+}
+
 interface SoftSkillsSectionFormProps {
-    data: any;
-    onUpdate: (data: any) => void;
+    data: SoftSkillsData;
+    onUpdate: (data: SoftSkillsSubmitData) => void;
 }
 
 export default function SoftSkillsSectionForm({
@@ -15,7 +31,7 @@ export default function SoftSkillsSectionForm({
     // Initialize items by zipping texts and descriptions OR using new items array
     const initializeItems = () => {
         if (data?.items && Array.isArray(data.items)) {
-            return data.items.map((i: any) => ({
+            return data.items.map((i: SkillItem) => ({
                 text: i.text || '',
                 description: i.description || '',
                 isDraft: i.isDraft || false

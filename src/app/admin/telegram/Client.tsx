@@ -39,7 +39,7 @@ export default function TelegramClient() {
     const [copiedChatId, setCopiedChatId] = useState(false);
 
     // Webhook State
-    const [webhookInfo, setWebhookInfo] = useState<any>(null);
+    const [webhookInfo, setWebhookInfo] = useState<{ url?: string } | null>(null);
     const [webhookLoading, setWebhookLoading] = useState(false);
 
     useEffect(() => {
@@ -64,8 +64,8 @@ export default function TelegramClient() {
                     setActiveConfig(data);
                 }
             }
-        } catch (error) {
-            console.error('Failed to load config', error);
+        } catch (_error) {
+            console.error('Failed to load config', _error);
         } finally {
             setLoading(false);
         }
@@ -77,7 +77,7 @@ export default function TelegramClient() {
             const res = await fetch(`/api/admin/telegram/status?token=${encodeURIComponent(token)}`);
             const data = await res.json();
             setStatus(data);
-        } catch (error) {
+        } catch {
             setStatus({ ok: false, error: 'Connection failed' });
         }
     };
@@ -89,8 +89,8 @@ export default function TelegramClient() {
             if (data.ok) {
                 setWebhookInfo(data.result);
             }
-        } catch (e) {
-            console.error('Webhook check failed', e);
+        } catch (_e) {
+            console.error('Webhook check failed', _e);
         }
     };
 
@@ -115,7 +115,7 @@ export default function TelegramClient() {
             } else {
                 alert(`Failed: ${data.description}`);
             }
-        } catch (e) {
+        } catch {
             alert('Error setting webhook');
         } finally {
             setWebhookLoading(false);
@@ -136,7 +136,7 @@ export default function TelegramClient() {
                 alert('Webhook disconnected.');
                 await checkWebhook();
             }
-        } catch (e) {
+        } catch {
             alert('Error deleting webhook');
         } finally {
             setWebhookLoading(false);
@@ -163,7 +163,7 @@ export default function TelegramClient() {
                 success: res.ok,
                 message: data.message || (res.ok ? 'Ping successful! Check your Telegram.' : 'Ping failed.')
             });
-        } catch (error) {
+        } catch {
             setTestResult({ success: false, message: 'Network error during test.' });
         } finally {
             setTesting(false);
@@ -192,7 +192,7 @@ export default function TelegramClient() {
             } else {
                 alert('Failed to save configuration.');
             }
-        } catch (error) {
+        } catch {
             alert('Error saving configuration.');
         } finally {
             setSaving(false);
@@ -430,8 +430,8 @@ function PrivateContactForm() {
                     linkedin: data.professional?.contacts?.linkedin || ''
                 });
             }
-        } catch (error) {
-            console.error('Failed to load contact info', error);
+        } catch (_error) {
+            console.error('Failed to load contact info', _error);
         } finally {
             setLoading(false);
         }
@@ -470,7 +470,7 @@ function PrivateContactForm() {
             } else {
                 alert('Failed to update contact info');
             }
-        } catch (error) {
+        } catch {
             alert('Error updating contact info');
         } finally {
             setSaving(false);

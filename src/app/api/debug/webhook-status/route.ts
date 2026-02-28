@@ -31,9 +31,10 @@ export async function GET(request: NextRequest) {
       isCorrect: data.ok && data.result.url === expectedWebhookUrl
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }
@@ -69,9 +70,10 @@ export async function POST(request: NextRequest) {
       telegramResponse: data
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }

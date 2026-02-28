@@ -2,12 +2,6 @@ import { useState, useEffect } from 'react';
 
 export const useDesktopLock = () => {
     const [mounted, setMounted] = useState(false);
-    const [windowSize, setWindowSize] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return { width: window.innerWidth, height: window.innerHeight };
-        }
-        return { width: 0, height: 0 };
-    });
     const [isMobile, setIsMobile] = useState(() => {
         if (typeof window !== 'undefined') return window.innerWidth < 768;
         return false;
@@ -56,7 +50,6 @@ export const useDesktopLock = () => {
 
         const handleResize = () => {
             const width = window.innerWidth;
-            setWindowSize({ width, height: window.innerHeight });
             setIsMobile(width < 768);
         };
 
@@ -80,5 +73,5 @@ export const useDesktopLock = () => {
         };
     }, []);
 
-    return { mounted, windowSize, isMobile };
+    return { mounted, isMobile };
 };
