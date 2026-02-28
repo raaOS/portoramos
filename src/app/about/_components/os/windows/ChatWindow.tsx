@@ -48,8 +48,8 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
     useEffect(() => {
         // Select contacts to use (custom or default)
         // Use customContacts (from testimonial.json) first, fallback to initialChats
-        const contactsToUse = customContacts && Object.keys(customContacts).length > 0 
-            ? customContacts 
+        const contactsToUse = customContacts && Object.keys(customContacts).length > 0
+            ? customContacts
             : initialChats;
 
         const contactId = activeChatId || Object.keys(contactsToUse)[0];
@@ -189,7 +189,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                     {/* Project Thumbnail Bubble */}
                                     {msg.type === 'project' && msg.projectId && (
                                         projects[msg.projectId] ? (
-                                            <div 
+                                            <div
                                                 className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 group cursor-pointer relative hover:opacity-90 transition-opacity"
                                                 onClick={() => setPreviewImage(projects[msg.projectId!].cover)}
                                             >
@@ -215,7 +215,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
 
                                     {/* Image Bubble */}
                                     {msg.type === 'image' && msg.imageSrc && (
-                                        <div 
+                                        <div
                                             className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 cursor-pointer hover:opacity-90 transition-opacity min-h-[100px] flex items-center justify-center bg-gray-100"
                                             onClick={() => setPreviewImage(msg.imageSrc || null)}
                                         >
@@ -312,21 +312,20 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                         className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4"
                         onClick={() => setPreviewImage(null)}
                     >
-                        <m.img
-                            initial={{ scale: 0.9 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0.9 }}
-                            src={previewImage}
-                            alt="Preview"
-                            className="max-w-full max-h-full object-contain rounded-lg"
-                            onClick={e => e.stopPropagation()}
-                        />
-                        <button
-                            className="absolute top-4 right-4 text-white/80 hover:text-white p-2"
-                            onClick={() => setPreviewImage(null)}
-                        >
-                            ✕
-                        </button>
+                        <div className="relative max-w-full max-h-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={previewImage}
+                                alt="Preview"
+                                className="max-w-full max-h-full object-contain rounded-lg"
+                            />
+                            <button
+                                className="absolute top-2 right-2 text-white/80 hover:text-white p-1 bg-black/50 rounded-md w-8 h-8 flex items-center justify-center text-lg z-10 shadow-lg"
+                                onClick={() => setPreviewImage(null)}
+                            >
+                                ✕
+                            </button>
+                        </div>
                     </m.div>
                 )}
             </AnimatePresence>

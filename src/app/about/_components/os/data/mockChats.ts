@@ -15,6 +15,7 @@ export interface ContactProfile {
     avatar: string;
     status: string;
     conversation: ChatMessage[];
+    messages?: ChatMessage[];
 }
 
 // mockChats is now empty to ensure CRUD data is the sole source of truth 
