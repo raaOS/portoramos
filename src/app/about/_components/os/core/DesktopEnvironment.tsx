@@ -262,23 +262,14 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                         <RetroMobileOverlay />
                     ) : (
                         <>
-                            {/* Boot Sequence Overlay - Solid black background */}
+                            {/* Boot Sequence - StartScreen handles all visuals */}
                             <AnimatePresence>
-                                {(needsPowerOn || isBooting) && (
-                                    <m.div
-                                        key="boot-overlay"
-                                        className="fixed inset-0 bg-black z-[9999]"
-                                        initial={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={{ duration: 0.3 }}
-                                    />
-                                )}
-                                {needsPowerOn && (
-                                    <StartScreen
-                                        key="start-screen"
-                                        onStart={powerOn}
-                                    />
-                                )}
+                                {/* StartScreen controls its own visibility until animation completes */}
+                                <StartScreen
+                                    key="start-screen"
+                                    onStart={powerOn}
+                                    isActive={needsPowerOn}
+                                />
                                 {isBooting && (
                                     <BootSequence
                                         key="boot-sequence"

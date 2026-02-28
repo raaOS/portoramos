@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { m, AnimatePresence } from "framer-motion";
 
 interface StartScreenProps {
     onStart: () => void;
+    isActive: boolean;
 }
 
 type ScreenState = "idle" | "showingText" | "doorsOpening" | "done";
 
-const StartScreen = ({ onStart }: StartScreenProps) => {
+const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
     const [screenState, setScreenState] = useState<ScreenState>("idle");
 
     const handleClick = () => {
@@ -27,18 +28,23 @@ const StartScreen = ({ onStart }: StartScreenProps) => {
         setTimeout(() => {
             setScreenState("done");
             onStart();
-        }, 3500); // 1500 + 2000 untuk animasi pintu yang lebih panjang
+        }, 3500);
     };
+    
+    // Don't render if not active or animation is complete
+    if (!isActive || screenState === "done") {
+        return null;
+    }
 
     return (
         <AnimatePresence mode="wait">
-            {screenState !== "done" && (
-                <m.div
-                    className="fixed inset-0 z-[10000] bg-black overflow-hidden"
-                    initial={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                >
+            <m.div
+                key="start-screen-container"
+                className="fixed inset-0 z-[10000] bg-black overflow-hidden"
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+            >
                     {/* === STAGE 1: Power Button === */}
                     {screenState === "idle" && (
                         <m.div
@@ -188,7 +194,6 @@ const StartScreen = ({ onStart }: StartScreenProps) => {
                         </>
                     )}
                 </m.div>
-            )}
         </AnimatePresence>
     );
 };
