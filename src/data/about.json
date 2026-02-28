@@ -247,11 +247,11 @@
   "chatSettings": {},
   "windowPreferences": {
     "about": {
-      "x": 1468.6387939453125,
-      "y": 45.66667175292969,
+      "x": 1417.527587890625,
+      "y": 159.00000381469727,
       "width": 647,
       "height": 573,
-      "isOpenByDefault": false
+      "isOpenByDefault": true
     }
   },
   "soundConfig": {
@@ -541,5 +541,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-02-28T18:29:13.531Z"
+  "lastUpdated": "2026-02-28T18:29:17.192Z"
 }
