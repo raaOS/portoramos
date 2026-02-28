@@ -34,10 +34,10 @@ const StartScreen = ({ onStart }: StartScreenProps) => {
         <AnimatePresence mode="wait">
             {screenState !== "done" && (
                 <m.div
-                    className="fixed inset-0 z-[10000] overflow-hidden"
+                    className="fixed inset-0 z-[10000] bg-black overflow-hidden"
                     initial={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
+                    transition={{ duration: 0.3 }}
                 >
                     {/* === STAGE 1: Power Button === */}
                     {screenState === "idle" && (

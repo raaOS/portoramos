@@ -262,8 +262,16 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                         <RetroMobileOverlay />
                     ) : (
                         <>
-                            {/* Boot Sequence Overlay */}
+                            {/* Boot Sequence Overlay - Solid black background */}
                             <AnimatePresence>
+                                {(needsPowerOn || isBooting) && (
+                                    <m.div
+                                        className="fixed inset-0 bg-black z-[9999]"
+                                        initial={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                    />
+                                )}
                                 {needsPowerOn && (
                                     <StartScreen
                                         onStart={powerOn}
@@ -276,13 +284,15 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                                 )}
                             </AnimatePresence>
 
-                            {/* Main Desktop Content */}
+                            {/* Main Desktop Content - Hidden during boot */}
                             <m.div
                                 className="relative w-full h-full overflow-hidden select-none"
-                                initial="booting"
-                                animate={(!(isBooting || needsPowerOn)) ? "ready" : "booting"}
-                                variants={desktopVariants}
-                                style={{ willChange: 'transform, opacity, filter' }}
+                                initial={{ opacity: 0 }}
+                                animate={{ 
+                                    opacity: (!(isBooting || needsPowerOn)) ? 1 : 0 
+                                }}
+                                transition={{ duration: 0.3 }}
+                                style={{ willChange: 'opacity' }}
                             >
                                 {/* Wallpaper */}
                                 <DesktopBackground wallpaperConfig={aboutData?.wallpaperConfig} />
