@@ -10,7 +10,10 @@ export const convertTestimonialToContact = (testimonial: Testimonial): ContactPr
             text: m.text,
             isMe: m.isMe,
             time: m.time,
-            status: 'read'
+            status: 'read',
+            type: m.type,
+            imageSrc: m.imageSrc,
+            projectId: m.projectId
         }))
         : [
             {
