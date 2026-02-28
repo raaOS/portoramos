@@ -8,6 +8,7 @@ import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
 import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
+import EmojiPicker from '@/components/chat/EmojiPicker';
 
 // Helper for fetching
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -346,6 +347,16 @@ export default function FullPageChat({ contactInfo }: FullPageChatProps) {
                     </div>
 
                     <div className="bg-[#f0f2f5] dark:bg-[#202c33] px-3 py-3 md:px-4 md:py-4 flex items-end gap-2 shrink-0 z-20 no-ring">
+                        {/* Emoji Picker Button */}
+                        <div className="flex items-center shrink-0">
+                            <EmojiPicker 
+                                onEmojiSelect={(emoji) => {
+                                    setInput(prev => prev + emoji);
+                                    soundManager.play('typing');
+                                }} 
+                            />
+                        </div>
+
                         <div
                             className="flex-1 bg-white dark:bg-[#2a3942] rounded-2xl md:rounded-3xl min-h-[44px] flex items-center px-4 overflow-hidden border border-transparent dark:border-white/5 shadow-sm no-ring focus-within:ring-0 focus-within:ring-offset-0"
                             style={{ boxShadow: 'none', outline: 'none' }}
