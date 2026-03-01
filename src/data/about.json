@@ -235,11 +235,11 @@
   },
   "windowPreferences": {
     "about": {
-      "x": 1033.527587890625,
-      "y": 122.75000381469727,
+      "x": 1163.527587890625,
+      "y": 77.75000381469727,
       "width": 647,
       "height": 573,
-      "isOpenByDefault": false
+      "isOpenByDefault": true
     },
     "whatsapp": {
       "x": 735,
@@ -536,5 +536,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-03-01T01:22:56.339Z"
+  "lastUpdated": "2026-03-01T01:22:58.098Z"
 }
