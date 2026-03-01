@@ -28,7 +28,9 @@ import {
   Type,
   User,
   Tag,
-  Music
+  Music,
+  Image as ImageIcon,
+  Archive
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -74,6 +76,7 @@ const navItems: NavItem[] = [
       { href: '/admin/about?tab=professional', label: 'Info Utama', icon: User, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
       { href: '/admin/experience', label: 'Pengalaman', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
       { href: '/admin/testimonial', label: 'WhatsApp Notif', icon: Quote, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
+      { href: '/admin/about?tab=archive', label: 'Archive', icon: Archive, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
       { href: '/admin/about?tab=softSkills', label: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
       { href: '/admin/about?tab=hardSkills', label: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'hover:bg-violet-50' },
       { href: '/admin/about?tab=philosophy', label: 'Filosofi', icon: Sparkles, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
@@ -84,7 +87,8 @@ const navItems: NavItem[] = [
         color: 'text-cyan-600',
         bg: 'hover:bg-cyan-50',
         children: [
-          { href: '/admin/about?tab=desktop', label: 'Desktop & Wallpaper', icon: Monitor, color: 'text-cyan-600', bg: 'hover:bg-cyan-50' },
+          { href: '/admin/about?tab=wallpaper', label: 'Wallpaper & Tema', icon: ImageIcon, color: 'text-cyan-600', bg: 'hover:bg-cyan-50' },
+          { href: '/admin/about?tab=desktop', label: 'Ikon Desktop', icon: Monitor, color: 'text-blue-600', bg: 'hover:bg-blue-50' },
           { href: '/admin/about?tab=runningText', label: 'Teks Berjalan', icon: Type, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
           { href: '/admin/about?tab=dock', label: 'Sistem Dock', icon: Layout, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
           { href: '/admin/about?tab=stickyNotes', label: 'Catatan Tempel', icon: Smile, color: 'text-yellow-600', bg: 'hover:bg-yellow-50' },
@@ -141,7 +145,7 @@ function AdminLayoutContent({
     const isContact = pathname?.startsWith('/admin/contact') || pathname?.startsWith('/admin/leads') || pathname?.startsWith('/admin/telegram');
     const isOSConfig = pathname?.startsWith('/admin/about') && ['desktop', 'dock', 'stickyNotes', 'sounds', 'runningText'].includes(searchParams.get('tab') || '');
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setExpandedMenus(prev => {
       // Only update if something actually needs to expand (don't auto-collapse others)
       const nextProjects = isProject || prev['/admin/projects-group'];

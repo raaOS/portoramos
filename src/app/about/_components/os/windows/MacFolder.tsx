@@ -193,12 +193,12 @@ const MacFolder = ({
 
                 {/* LABELS */}
                 {label && (
-                    <div className="flex flex-col items-center justify-start z-30 mt-2 pointer-events-none w-24 h-14">
-                        <h3 className="text-[11px] font-semibold text-neutral-800 leading-tight transition-colors text-center line-clamp-2 w-full break-words">
+                    <div className="flex flex-col items-center justify-start z-30 mt-2 pointer-events-none w-24 h-14 select-none">
+                        <h3 className="text-[11px] font-semibold text-neutral-800 leading-tight transition-colors text-center line-clamp-2 w-full break-words pointer-events-none">
                             {label}
                         </h3>
                         {subLabel && (
-                            <p className="text-[9px] text-neutral-500 font-medium mt-0.5 whitespace-nowrap">
+                            <p className="text-[9px] text-neutral-500 font-medium mt-0.5 whitespace-nowrap pointer-events-none">
                                 {subLabel}
                             </p>
                         )}

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { MessageSquare, Link as LinkIcon, Image as ImageIcon, User, CheckCheck, Trash2, Plus, Image, ArrowLeftRight } from 'lucide-react';
+import { MessageSquare, Link as LinkIcon, Image as ImageIcon, CheckCheck, Trash2, Plus, Image, ArrowLeftRight } from 'lucide-react';
 import { ChatHistoryMessage } from '@/types/testimonial';
 import { Project } from '@/types/projects';
 

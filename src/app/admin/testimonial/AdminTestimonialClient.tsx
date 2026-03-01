@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, MessageSquare, X } from 'lucide-react';
+import { Pencil, MessageSquare, X, ChevronDown } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import AdminButton from '../components/AdminButton';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -19,7 +19,6 @@ export default function AdminTestimonialClient() {
     testimonials,
     projects,
     loading,
-    _error,
     isAiGenerating,
     lastUpdated,
     generateAITestimonial,
@@ -128,20 +127,23 @@ export default function AdminTestimonialClient() {
                   type="text"
                   value={formData.name || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-violet-500 outline-none transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-violet-400 outline-none transition-all"
                   placeholder="Contoh: Pak Budi (Klien)"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Link ke Project (Opsional)</label>
-                <select
-                  value={formData.projectId || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-violet-500 outline-none transition-all text-sm"
-                >
-                  <option value="">-- Pilih Project --</option>
-                  {projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-                </select>
+                <div className="relative">
+                  <select
+                    value={formData.projectId || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
+                    className="w-full pl-4 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-violet-400 outline-none transition-all text-sm appearance-none cursor-pointer"
+                  >
+                    <option value="">-- Pilih Project --</option>
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
               </div>
             </div>
 
@@ -151,7 +153,7 @@ export default function AdminTestimonialClient() {
                 type="text"
                 value={formData.notificationText || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, notificationText: e.target.value }))}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-violet-500 outline-none transition-all"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-violet-400 outline-none transition-all"
                 placeholder="Mas, desainnya sudah oke ya!"
               />
             </div>

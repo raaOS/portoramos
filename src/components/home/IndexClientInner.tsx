@@ -162,7 +162,7 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
   }, []) // Observer created once — reads current state via ref
 
   return (
-    <section className="pt-24 pb-8 px-4">
+    <section className="pt-4 pb-8 px-4">
       {/* Hidden H1 for SEO */}
       <h1 className="sr-only">Portfolio - Creative Works & Projects</h1>
 

@@ -28,7 +28,6 @@ const SettingsModal = dynamic(() => import('@/app/admin/components/SettingsModal
 });
 const ManageCommentsModal = dynamic(() => import('../components/ManageCommentsModal'));
 const SecuritySettingsModal = dynamic(() => import('../components/SecuritySettingsModal'));
-const GalleryManager = dynamic(() => import('@/components/admin/GalleryManager'), { loading: () => <Loader2 className="animate-spin" /> });
 
 function SortableProjectItem({ id, children }: { id: string, children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
@@ -75,7 +74,6 @@ export default function AdminProjectsClient() {
   } = useGitHubSync(csrfToken);
 
   // Local UI State
-  const [activeTab, setActiveTab] = useState<'projects' | 'gallery'>('projects');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [managingCommentsProject, setManagingCommentsProject] = useState<Project | null>(null);
@@ -119,105 +117,78 @@ export default function AdminProjectsClient() {
 
   return (
     <div className="space-y-8">
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-          {['projects', 'gallery'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as 'projects' | 'gallery')}
-              className={`${activeTab === tab
-                ? 'border-violet-500 text-violet-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm capitalize`}
-            >
-              {tab === 'projects' ? 'Project' : 'Gallery About'}
-            </button>
-          ))}
-        </nav>
-      </div>
+      <ProjectToolbar
+        isSavingToGithub={isSavingToGithub}
+        deployStatus={deployStatus}
+        connectionStatus={connectionStatus}
+        selectedProjectIds={selectedProjectIds}
+        isBulkUpdating={isBulkUpdating}
+        allProjectsLength={orderedProjects.length}
+        githubConfig={githubConfig}
+        handleBulkUpdate={handleBulkUpdate}
+        selectAllProjects={() => selectAllProjects(orderedProjects.map(p => p.id))}
+        setShowSecurityModal={setShowSecurityModal}
+        setShowSettings={setShowSettings}
+        setShowCreateForm={setShowCreateForm}
+      />
 
-      {activeTab === 'projects' && (
-        <ProjectToolbar
-          isSavingToGithub={isSavingToGithub}
-          deployStatus={deployStatus}
-          connectionStatus={connectionStatus}
-          selectedProjectIds={selectedProjectIds}
-          isBulkUpdating={isBulkUpdating}
-          allProjectsLength={orderedProjects.length}
-          githubConfig={githubConfig}
-          handleBulkUpdate={handleBulkUpdate}
-          selectAllProjects={() => selectAllProjects(orderedProjects.map(p => p.id))}
-          setShowSecurityModal={setShowSecurityModal}
-          setShowSettings={setShowSettings}
-          setShowCreateForm={setShowCreateForm}
-        />
-      )}
+      <>
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+            <X className="h-5 w-5 text-red-500" />
+            <p className="text-sm text-red-700">Failed to load projects</p>
+          </div>
+        )}
 
-      {activeTab === 'projects' ? (
-        <>
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
-              <X className="h-5 w-5 text-red-500" />
-              <p className="text-sm text-red-700">Failed to load projects</p>
-            </div>
-          )}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => <ProjectCardSkeleton key={i} />)}
+          </div>
+        ) : orderedProjects.length === 0 ? (
+          <div className="text-center py-20 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <p className="text-gray-500 text-lg mb-2">Project tidak ditemukan</p>
+            <p className="text-gray-400 text-sm">Buat project pertama Anda untuk memulai</p>
+          </div>
+        ) : (
+          <>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={paginatedProjects.map(p => p.id)} strategy={rectSortingStrategy}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedProjects.map((project) => (
+                    <SortableProjectItem key={project.id} id={project.id}>
+                      <ProjectCard
+                        project={project}
+                        selectedProjectIds={selectedProjectIds}
+                        toggleProjectSelection={toggleProjectSelection}
+                        handleToggleProjectStatus={handleToggleProjectStatus}
+                        setEditingProject={setEditingProject}
+                        handleDeleteProject={(id) => {
+                          if (confirm('Hapus proyek ini?')) deleteMutation.mutate(id, { onSuccess: () => triggerGithubSync(true) });
+                        }}
+                        handleDuplicateProject={(p) => {
+                          if (confirm(`Duplikat "${p.title}"?`)) {
+                            createMutation.mutate({ ...p, title: `${p.title} (Copy)`, status: 'draft' } as CreateProjectData, {
+                              onSuccess: () => triggerGithubSync(true)
+                            });
+                          }
+                        }}
+                        setManagingCommentsProject={setManagingCommentsProject}
+                        commentCount={commentCounts[project.slug] || 0}
+                      />
+                    </SortableProjectItem>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
 
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => <ProjectCardSkeleton key={i} />)}
-            </div>
-          ) : orderedProjects.length === 0 ? (
-            <div className="text-center py-20 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-              <p className="text-gray-500 text-lg mb-2">Project tidak ditemukan</p>
-              <p className="text-gray-400 text-sm">Buat project pertama Anda untuk memulai</p>
-            </div>
-          ) : (
-            <>
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={paginatedProjects.map(p => p.id)} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {paginatedProjects.map((project) => (
-                      <SortableProjectItem key={project.id} id={project.id}>
-                        <ProjectCard
-                          project={project}
-                          selectedProjectIds={selectedProjectIds}
-                          toggleProjectSelection={toggleProjectSelection}
-                          handleToggleProjectStatus={handleToggleProjectStatus}
-                          setEditingProject={setEditingProject}
-                          handleDeleteProject={(id) => {
-                            if (confirm('Hapus proyek ini?')) deleteMutation.mutate(id, { onSuccess: () => triggerGithubSync(true) });
-                          }}
-                          handleDuplicateProject={(p) => {
-                            if (confirm(`Duplikat "${p.title}"?`)) {
-                              createMutation.mutate({ ...p, title: `${p.title} (Copy)`, status: 'draft' } as CreateProjectData, {
-                                onSuccess: () => triggerGithubSync(true)
-                              });
-                            }
-                          }}
-                          setManagingCommentsProject={setManagingCommentsProject}
-                          commentCount={commentCounts[project.slug] || 0}
-                        />
-                      </SortableProjectItem>
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            </>
-          )}
-        </>
-      ) : (
-        <GalleryManager
-          projects={orderedProjects}
-          onSyncTrigger={() => triggerGithubSync(true)}
-        />
-      )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </>
+        )}
+      </>
 
       {/* Modals */}
       {(showCreateForm || editingProject) && (

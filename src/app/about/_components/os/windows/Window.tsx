@@ -183,14 +183,15 @@ export default function OSWindow({
         <>
             {isOpen && (
                 <m.div
-                    drag={!isMaximized && !isResizing && !isPinned && !isSmallScreen}
+                    drag={!isMaximized && !isResizing && (!isPinned || isAdmin) && !isSmallScreen}
                     dragControls={dragControls}
                     dragListener={false}
                     dragMomentum={false}
                     dragElastic={0}
                     onDragEnd={(e, info) => {
-                        // We only want to update position if NOT maximizing/minimizing and NOT pinned
-                        if (!isMaximized && !isMinimized && !isPinned && onUpdatePosition) {
+                        // We only want to update position if NOT maximizing/minimizing 
+                        // and either NOT pinned or is Admin
+                        if (!isMaximized && !isMinimized && (!isPinned || isAdmin) && onUpdatePosition) {
                             // The final position is current (initial) + delta
                             // OR we can trust the visual position if we tracked it?
                             // Framer motion 'drag' modifies the transform, not the layout.
@@ -253,7 +254,7 @@ export default function OSWindow({
                     {/* Title Bar */}
                     <div
                         onPointerDown={(e) => {
-                            if (!isMaximized && !isPinned) dragControls.start(e);
+                            if (!isMaximized && (!isPinned || isAdmin)) dragControls.start(e);
                         }}
                         onDoubleClick={onMaximize}
                         className="h-8 sm:h-7 bg-[#EFEFEF] border-b border-[#D1D1D1] flex items-center justify-between px-3 shrink-0 cursor-default select-none relative z-50"

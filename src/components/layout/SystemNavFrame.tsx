@@ -15,7 +15,9 @@ interface SystemNavFrameProps {
 export default function SystemNavFrame({ children, title: _title, hideFooter }: SystemNavFrameProps) {
     const pathname = usePathname();
     const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
+    const isProjects = pathname?.startsWith('/projects');
     const effectiveHideFooter = hideFooter || isContact;
+    const showSystemHeader = !isProjects;
 
     // Generate Breadcrumbs from pathname
     const pathSegments = pathname.split('/').filter(Boolean);
@@ -31,39 +33,41 @@ export default function SystemNavFrame({ children, title: _title, hideFooter }: 
     return (
         <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
             {/* Retro System Header */}
-            <header className="sticky top-0 z-50 w-full bg-[#EFEFEF] border-b border-[#D1D1D1] h-9 flex items-center justify-between px-4 select-none print:hidden">
-                <div className="flex items-center gap-4">
-                    {/* System OS Label */}
-                    <div className="flex items-center gap-2 pr-4 border-r border-gray-300">
-                        <Monitor size={14} className="text-gray-600" />
-                        <span className="text-[11px] font-bold tracking-tight text-gray-800">Ramos v2.0 <span className="font-normal text-gray-500 ml-1">(System Connected)</span></span>
+            {showSystemHeader && (
+                <header className="sticky top-0 z-50 w-full bg-[#EFEFEF] border-b border-[#D1D1D1] h-9 flex items-center justify-between px-4 select-none print:hidden">
+                    <div className="flex items-center gap-4">
+                        {/* System OS Label */}
+                        <div className="flex items-center gap-2 pr-4 border-r border-gray-300">
+                            <Monitor size={14} className="text-gray-600" />
+                            <span className="text-[11px] font-bold tracking-tight text-gray-800">Ramos v2.0 <span className="font-normal text-gray-500 ml-1">(System Connected)</span></span>
+                        </div>
+
+                        {/* Breadcrumb Navigator */}
+                        <nav className="hidden md:flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                            {breadcrumbs.map((crumb, i) => (
+                                <React.Fragment key={crumb.href}>
+                                    {i > 0 && <ChevronRight size={12} className="text-gray-400 shrink-0" />}
+                                    <Link
+                                        href={crumb.href}
+                                        className={`text-[11px] font-medium transition-colors hover:text-black whitespace-nowrap ${crumb.isLast ? 'text-black font-bold' : 'text-gray-500'
+                                            }`}
+                                    >
+                                        {crumb.label}
+                                    </Link>
+                                </React.Fragment>
+                            ))}
+                        </nav>
                     </div>
 
-                    {/* Breadcrumb Navigator */}
-                    <nav className="hidden md:flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                        {breadcrumbs.map((crumb, i) => (
-                            <React.Fragment key={crumb.href}>
-                                {i > 0 && <ChevronRight size={12} className="text-gray-400 shrink-0" />}
-                                <Link
-                                    href={crumb.href}
-                                    className={`text-[11px] font-medium transition-colors hover:text-black whitespace-nowrap ${crumb.isLast ? 'text-black font-bold' : 'text-gray-500'
-                                        }`}
-                                >
-                                    {crumb.label}
-                                </Link>
-                            </React.Fragment>
-                        ))}
-                    </nav>
-                </div>
-
-                {/* System Status Indicators */}
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5">
-                        <Zap size={12} className="text-green-600 fill-green-600" />
-                        <span className="text-[10px] font-bold text-gray-700 uppercase tracking-widest">Live</span>
+                    {/* System Status Indicators */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                            <Zap size={12} className="text-green-600 fill-green-600" />
+                            <span className="text-[10px] font-bold text-gray-700 uppercase tracking-widest">Live</span>
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
+            )}
 
             {/* Main Content Area */}
             <motion.div

@@ -96,7 +96,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
 
   quality,
   objectFit = 'cover',
-  _layoutId,
+  layoutId: _layoutId,
 }, ref) => {
   const pathname = usePathname()
   const internalVideoRef = useRef<HTMLVideoElement | null>(null)
@@ -111,7 +111,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
   // No state for reduceMotion to avoid re-renders. Read direct if needed or just assume false for perf.
 
   // Mobile Optimization State
-  const [, setIsMobile] = useState(() => {
+  const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== 'undefined') return window.innerWidth < 768;
     return false;
   });

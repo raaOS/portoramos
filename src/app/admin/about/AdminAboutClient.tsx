@@ -2,7 +2,7 @@
 
 // React hooks - useState dan useEffect diimport untuk keperluan future use
 import { useSearchParams } from 'next/navigation';
-import { Info, Monitor, Info as InfoIcon, X } from 'lucide-react';
+import { Info, Monitor, Info as InfoIcon, X, Image as ImageIcon } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 // Design system & hooks
@@ -13,6 +13,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAdminAbout } from '../hooks/useAdminAbout';
 import ProfessionalSectionForm from './components/ProfessionalSectionForm';
 import SoftSkillsSectionForm from './components/SoftSkillsSectionForm';
+import { useGitHubSync } from '../hooks/useGitHubSync';
 
 // Existing Modular Components
 import RunningTextPanel from './components/RunningTextPanel';
@@ -26,6 +27,7 @@ import SoundEffectsManager from './components/SoundEffectsManager';
 
 // Lazy load heavy third-party components
 const DesignPhilosophyForm = dynamic(() => import('@/components/admin/about/DesignPhilosophyForm'));
+const GalleryManager = dynamic(() => import('@/components/admin/GalleryManager'), { loading: () => <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> });
 
 export default function AdminAboutClient() {
   const { csrfToken } = useAdminAuth();
@@ -33,8 +35,8 @@ export default function AdminAboutClient() {
 
   // Derive active tab from URL search parameters (Source of Truth)
   const tabParam = searchParams.get('tab');
-  const validTabs = ['professional', 'softSkills', 'hardSkills', 'runningText', 'philosophy', 'desktop', 'dock', 'stickyNotes', 'notifications', 'sounds'];
-  type ValidTab = 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'desktop' | 'dock' | 'stickyNotes' | 'notifications' | 'sounds';
+  const validTabs = ['professional', 'softSkills', 'hardSkills', 'runningText', 'philosophy', 'desktop', 'wallpaper', 'dock', 'stickyNotes', 'notifications', 'sounds', 'archive'];
+  type ValidTab = 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'desktop' | 'wallpaper' | 'dock' | 'stickyNotes' | 'notifications' | 'sounds' | 'archive';
 
   const activeTab = (tabParam && validTabs.includes(tabParam))
     ? (tabParam as ValidTab)
@@ -55,6 +57,10 @@ export default function AdminAboutClient() {
   } = useAdminAbout(csrfToken);
 
   const { isAdmin, isLoading: authLoading } = useAdminAuth();
+
+  const {
+    triggerGithubSync
+  } = useGitHubSync(csrfToken);
 
 
   if (authLoading || (loading && !aboutData)) {
@@ -161,20 +167,33 @@ export default function AdminAboutClient() {
               />
             )}
 
-            {activeTab === 'desktop' && (
+            {activeTab === 'wallpaper' && (
               <div className="space-y-8">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <h3 className="font-bold text-blue-800 flex items-center gap-2">
-                    <Monitor className="w-5 h-5" /> Konfigurasi Desktop OS
+                <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4 mb-6">
+                  <h3 className="font-bold text-cyan-800 flex items-center gap-2">
+                    <ImageIcon className="w-5 h-5" /> Konfigurasi Wallpaper & Tema
                   </h3>
-                  <p className="text-sm text-blue-600 mt-1">
-                    Start Menu, Icon Desktop, dan perilaku Window.
+                  <p className="text-sm text-cyan-600 mt-1">
+                    Ganti latar belakang desktop dan atur transparansi window.
                   </p>
                 </div>
                 <WallpaperManager
                   data={aboutData.wallpaperConfig}
                   onUpdate={(data) => handleUpdateAbout({ wallpaperConfig: data })}
                 />
+              </div>
+            )}
+
+            {activeTab === 'desktop' && (
+              <div className="space-y-8">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <h3 className="font-bold text-blue-800 flex items-center gap-2">
+                    <Monitor className="w-5 h-5" /> Konfigurasi Ikon Desktop
+                  </h3>
+                  <p className="text-sm text-blue-600 mt-1">
+                    Atur shortcut aplikasi dan file yang tampil di halaman utama.
+                  </p>
+                </div>
                 <DesktopProjectsForm
                   projects={projects}
                   data={aboutData.desktopPreferences}
@@ -216,6 +235,13 @@ export default function AdminAboutClient() {
                   onUpdate={(data) => handleUpdateAbout({ soundConfig: data })}
                 />
               </div>
+            )}
+
+            {activeTab === 'archive' && (
+              <GalleryManager
+                projects={projects}
+                onSyncTrigger={() => triggerGithubSync(true)}
+              />
             )}
           </div>
         </div>

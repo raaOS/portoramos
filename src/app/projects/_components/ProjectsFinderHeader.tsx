@@ -41,7 +41,7 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
     };
 
     return (
-        <div className="bg-[#F6F6F6] border-b border-gray-200 px-4 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="px-4 sm:px-8 py-4 mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Title & Icon */}
             <div className="flex items-center gap-3 w-full sm:w-auto">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 shadow-sm border border-blue-200 shrink-0">

@@ -171,7 +171,7 @@ export default function AdminFileUpload({
     await ffmpeg.exec(ffmpegArgs);
 
     const data = await ffmpeg.readFile(outputName);
-    const blob = new Blob([data as any], { type: 'video/mp4' });
+    const blob = new Blob([data as BlobPart], { type: 'video/mp4' });
     return new File([blob], file.name, { type: 'video/mp4' });
   }, []); // ffmpegRef is persistent
 

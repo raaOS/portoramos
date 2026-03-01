@@ -29,7 +29,7 @@ export const ProjectCard = ({
     handleDeleteProject,
     handleDuplicateProject,
     setManagingCommentsProject,
-    commentCount = 0
+    commentCount: _commentCount = 0
 }: ProjectCardProps) => {
     const isPublished = project.status === 'published';
 
@@ -102,39 +102,34 @@ export const ProjectCard = ({
                     <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
                 </div>
 
-                <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-100 pt-4" onPointerDown={(e) => e.stopPropagation()}>
-                    <div className="flex items-center gap-1.5">
-                        <button
-                            onClick={() => setEditingProject(project)}
-                            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all"
-                            title="Edit Project"
-                        >
-                            <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => handleDuplicateProject(project)}
-                            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                            title="Duplicate Project"
-                        >
-                            <Copy className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => handleDeleteProject(project.id)}
-                            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                            title="Delete Project"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    </div>
-
+                <div className="mt-auto flex items-center gap-3 border-t border-gray-100 pt-4" onPointerDown={(e) => e.stopPropagation()}>
+                    <button
+                        onClick={() => setEditingProject(project)}
+                        className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all"
+                        title="Edit Project"
+                    >
+                        <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => handleDuplicateProject(project)}
+                        className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                        title="Duplicate Project"
+                    >
+                        <Copy className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        title="Delete Project"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
                     <button
                         onClick={() => setManagingCommentsProject(project)}
-                        className="h-9 flex items-center justify-center gap-1.5 px-4 text-xs font-bold text-gray-500 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all"
+                        className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all"
+                        title="Manage Comments"
                     >
-                        <MessageCircle className="w-4 h-4" />
-                        <span className="leading-none">
-                            {commentCount > 0 ? `${commentCount} Komentar` : 'Komentar'}
-                        </span>
+                        <MessageCircle className="w-4 h-4 shrink-0" />
                     </button>
                 </div>
             </div>

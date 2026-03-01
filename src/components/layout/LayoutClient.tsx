@@ -31,6 +31,8 @@ export default function LayoutClient({
     // We want the Dock on ALL pages except Admin and the OS Desktop itself (which has its own Dock)
     const showGlobalDock = !isAdminRequest && !isOsMode;
 
+    const showHeader = !isAdminRequest && !isOsMode;
+
     if (isAdminRequest || isOsMode) {
         return (
             <>
@@ -43,7 +45,7 @@ export default function LayoutClient({
     return (
         <LazyMotion features={domAnimation}>
             <WindowProvider>
-                <Header />
+                {showHeader && <Header />}
                 <main className={isContact ? "" : "pb-24"}>
                     {children}
                 </main>
