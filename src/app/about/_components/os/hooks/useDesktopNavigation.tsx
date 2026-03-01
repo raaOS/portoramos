@@ -40,16 +40,18 @@ export function useDesktopNavigation({
         router.push(`/projects/${project.slug}`);
     }, [router]);
 
+    // Klik Dynamic Island (dengan chatId spesifik) -> langsung buka chat
     const navToChat = useCallback((chatId?: string) => {
-        if (chatId) {
-            openWindow("whatsapp", {
-                content: <ChatWindow activeChatId={chatId} customContacts={dynamicContacts} />
-            });
-        } else {
-            openWindow("whatsapp", {
-                content: <ChatWindow customContacts={dynamicContacts} />
-            });
-        }
+        openWindow("whatsapp", {
+            content: <ChatWindow activeChatId={chatId || null} customContacts={dynamicContacts} />
+        });
+    }, [openWindow, dynamicContacts, ChatWindow]);
+
+    // Klik Dock WA -> buka list view (tanpa activeChatId)
+    const openWhatsAppList = useCallback(() => {
+        openWindow("whatsapp", {
+            content: <ChatWindow activeChatId={null} customContacts={dynamicContacts} />
+        });
     }, [openWindow, dynamicContacts, ChatWindow]);
 
     const toggleNotesVisibility = useCallback(() => {
@@ -81,6 +83,7 @@ export function useDesktopNavigation({
         resetDesktopAndClose,
         openProjectWindow,
         navToChat,
+        openWhatsAppList,
         toggleNotesVisibility
     };
 }

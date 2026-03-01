@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { m } from "framer-motion";
-import { AppWindow } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 import { ContactProfile } from "../data/mockChats";
 import { getAvatarUrl } from "@/lib/avatar";
@@ -10,58 +10,83 @@ interface DynamicIslandProps {
     isBooting: boolean;
     onOpenChat?: (chatId?: string) => void;
     customNotifications?: ContactProfile[];
-    // TODO: New tasks for AI Helper and UI overhaul
-    // - [x] Transition to Letter-based Avatars (Clean & Consistent) <!-- id: 6 -->
-    // - [/] AI-Powered Testimonial Generator <!-- id: 7 -->
-    //     - [/] Create `/api/ai/generate-testimonial` endpoint
-    //     - [ ] Design new "WA Preview" component for Admin Panel
-    //     - [ ] Rework `AdminTestimonialClient.tsx` UI (Split View + AI Magic Tool)
-    //     - [ ] Implement AI prompt logic (Friendly, Polite, Professional tone)
-    //     - [ ] Add "Number of Messages" selector for AI generation
-    //     - [ ] Verify AI-generated content follows the "No Gue/Lu" rule
 }
 
-// WhatsApp Notif system now uses CRUD data from the Admin panel
-// Legacy hardcoded list removed as it is now in testimonial.json
-
 const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotifications }: DynamicIslandProps) => {
-    // Determine state based on props
-    // "idle" | "active-window" | "booting" | "notification"
-    const [notification, setNotification] = useState<{ id: string; name: string; message: string; avatar: string; isEncrypting?: boolean } | null>(null);
+    const [notification, setNotification] = useState<{ id: string; name: string; message: string; avatar: string; initial: string } | null>(null);
     const [isGracePeriod, setIsGracePeriod] = useState(false);
+    const [displayedMessage, setDisplayedMessage] = useState("");
+    const [showVerified, setShowVerified] = useState(false);
     const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const textToggleRef = useRef<NodeJS.Timeout | null>(null);
+    const currentIndexRef = useRef(0);
 
     // Handle Active Window Grace Period
     useEffect(() => {
         if (activeWindow) {
             requestAnimationFrame(() => setIsGracePeriod(true));
-            const timer = setTimeout(() => setIsGracePeriod(false), 1000); // 1s grace period
+            const timer = setTimeout(() => setIsGracePeriod(false), 1000);
             return () => clearTimeout(timer);
         }
     }, [activeWindow]);
 
-    // Notification Interval Logic
-    const lastIndexRef = useRef(0);
+    // Typing effect for message - shorter max length
+    const startTypingEffect = (message: string) => {
+        // Shorten message to max 40 chars
+        const shortMessage = message.length > 22 ? message.substring(0, 22) + "..." : message;
+        setDisplayedMessage("");
+        let index = 0;
+        
+        if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+        
+        typingIntervalRef.current = setInterval(() => {
+            if (index < shortMessage.length) {
+                setDisplayedMessage(prev => prev + shortMessage[index]);
+                index++;
+            } else {
+                if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+            }
+        }, 30);
+    };
+
+    // Toggle between name and verified text
+    const startTextToggle = () => {
+        if (textToggleRef.current) clearInterval(textToggleRef.current);
+        
+        setShowVerified(false);
+        
+        let toggleCount = 0;
+        textToggleRef.current = setInterval(() => {
+            toggleCount++;
+            setShowVerified(prev => !prev);
+            
+            if (toggleCount >= 5) {
+                if (textToggleRef.current) clearInterval(textToggleRef.current);
+            }
+        }, 2000);
+    };
 
     const triggerNotification = React.useCallback(async (index?: number) => {
-        // Clear existing timer if any
         if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+        if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+        if (textToggleRef.current) clearInterval(textToggleRef.current);
 
         let randomTesti;
 
         if (customNotifications && customNotifications.length > 0) {
-            // Use sequential index if provided, otherwise random fallback
             const actualIndex = index !== undefined ? index : Math.floor(Math.random() * customNotifications.length);
             const randomContact = customNotifications[actualIndex];
 
-            // Prioritize the 'status' field (which now carries our 'notificationText')
-            const isGenericStatus = !randomContact.status || ["Online", "Terakhir dilihat", "Akun Bisnis"].some(s => randomContact.status.includes(s));
+            const isGenericStatus = !randomContact.status || ["Online", "Terakhir dilihat", "Akun Bisnis"].some(s => randomContact.status?.includes(s));
 
             const notificationMsg = (!isGenericStatus && randomContact.status)
                 ? randomContact.status
                 : (randomContact.conversation && randomContact.conversation.length > 0
                     ? randomContact.conversation[randomContact.conversation.length - 1].text
                     : "Mengirim pesan...");
+
+            const initial = randomContact.name.charAt(0).toUpperCase();
 
             randomTesti = {
                 id: `notif-${Date.now()}`,
@@ -70,24 +95,21 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                 avatar: (randomContact.avatar && randomContact.avatar.startsWith('http'))
                     ? randomContact.avatar
                     : getAvatarUrl(randomContact.name),
-                isEncrypting: true
+                initial
             };
         }
 
         if (randomTesti) {
-            // Show "Typing..." first for a more organic feel
-            setNotification({ ...randomTesti, message: "sedang mengetik..." });
+            setNotification(randomTesti);
+            startTypingEffect(randomTesti.message);
+            startTextToggle();
 
-            // After 1 second, show the actual message
             notificationTimerRef.current = setTimeout(() => {
-                setNotification(randomTesti);
-
-                // Then hide after 2 seconds
-                notificationTimerRef.current = setTimeout(() => {
-                    setNotification(null);
-                    notificationTimerRef.current = null;
-                }, 2000);
-            }, 1000);
+                setNotification(null);
+                setDisplayedMessage("");
+                setShowVerified(false);
+                notificationTimerRef.current = null;
+            }, 10000);
         }
     }, [customNotifications]);
 
@@ -97,31 +119,30 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
 
         let interval: NodeJS.Timeout | null = null;
 
-        // Custom interval: Wait 3s initial, then show every 12s cycle (5s show + 7s gap)
-        // A longer gap feels more organic and less "spammy" than 8s
         const initialDelay = setTimeout(() => {
-            triggerNotification(lastIndexRef.current % customNotifications.length);
-            lastIndexRef.current++;
+            // Start with first testimonial
+            triggerNotification(0);
 
             interval = setInterval(() => {
-                triggerNotification(lastIndexRef.current % customNotifications.length);
-                lastIndexRef.current++;
-            }, 7000); // 2s show + 5s hide = 7s cycle
-        }, 1000);
+                // Cycle to next testimonial
+                currentIndexRef.current = (currentIndexRef.current + 1) % customNotifications.length;
+                triggerNotification(currentIndexRef.current);
+            }, 15000);
+        }, 2000);
 
         return () => {
             clearTimeout(initialDelay);
             if (interval) clearInterval(interval);
             if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+            if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+            if (textToggleRef.current) clearInterval(textToggleRef.current);
         };
-    }, [isBooting, customNotifications, triggerNotification]); // Re-run if customNotifications changes
+    }, [isBooting, customNotifications, triggerNotification]);
 
-    // Priority: Notification (highest) > Active Window > Idle
     const currentState = (notification && !isGracePeriod)
         ? "notification"
         : (activeWindow ? "active-window" : "idle");
 
-    // Animation Variants
     const variants = {
         idle: {
             width: 90,
@@ -134,15 +155,10 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
             borderRadius: 24,
         },
         notification: {
-            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '95vw' : 320,
-            height: 64,
-            borderRadius: 32,
-        },
-        hovered: {
-            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '95vw' : 320,
-            height: 120,
+            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '92vw' : 280,
+            height: 48,
             borderRadius: 24,
-        }
+        },
     };
 
     if (isBooting) return null;
@@ -156,57 +172,98 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                 variants={variants}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
             >
-                <div className="w-full h-full relative flex items-center justify-center text-white px-4">
+                <div className="w-full h-full relative flex items-center text-white px-3">
 
-                    {/* Idle State - Hidden */}
+                    {/* Idle State */}
                     {currentState === "idle" && null}
 
-                    {/* Active Window State (Compact) */}
+                    {/* Active Window State */}
                     {currentState === "active-window" && (
                         <m.div
-                            className="flex items-center gap-3 w-full"
+                            className="flex items-center gap-3 w-full justify-center"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                         >
                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-xs font-medium truncate flex-1 text-center">
+                            <span className="text-xs font-medium truncate max-w-[140px]">
                                 {activeWindow}
                             </span>
-                            <AppWindow size={14} className="text-white/60" />
                         </m.div>
                     )}
 
                     {/* Notification State */}
                     {currentState === "notification" && notification && (
                         <m.div
-                            className="flex items-center gap-3 w-full px-1 cursor-pointer"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
+                            className="flex items-center gap-3 w-full h-full cursor-pointer"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
                             onClick={() => {
                                 if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
-                                setNotification(null); // Dismiss notification immediately
+                                if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+                                if (textToggleRef.current) clearInterval(textToggleRef.current);
+                                setNotification(null);
+                                setDisplayedMessage("");
+                                setShowVerified(false);
                                 onOpenChat?.(notification.name);
                             }}
                         >
-                            {/* Avatar */}
-                            <div className="relative shrink-0">
-                                <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={notification.avatar} alt={notification.name} className="object-cover w-full h-full" />
+                            {/* Avatar with Elastic Bounce */}
+                            <m.div
+                                className="shrink-0 relative flex items-center justify-center w-7 h-7"
+                                animate={{
+                                    y: [0, -2, 0],
+                                    scaleY: [1, 1.06, 0.97, 1],
+                                    scaleX: [1, 0.97, 1.02, 1],
+                                }}
+                                transition={{
+                                    duration: 0.5,
+                                    repeat: Infinity,
+                                    repeatDelay: 3,
+                                    ease: [0.34, 1.56, 0.64, 1],
+                                    times: [0, 0.4, 0.7, 1],
+                                }}
+                            >
+                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-xs font-bold text-white">
+                                    {notification.initial}
                                 </div>
-                                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-black rounded-full z-20 shadow-lg scale-110"></div>
-                            </div>
+                            </m.div>
 
-                            {/* Text */}
-                            <div className="flex flex-col flex-1 min-w-0">
-                                <span className="text-xs font-bold text-white/90 flex justify-between items-center">
-                                    {notification.name}
-                                    <span className="text-[10px] text-white/40 font-normal">Now</span>
-                                </span>
-                                <span className="text-xs text-white/70 truncate">
-                                    {notification.message}
-                                </span>
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                {/* Name / Verified Row */}
+                                <div className="flex items-center gap-1.5">
+                                    <div className="relative h-4 overflow-hidden flex-1">
+                                        {/* Name */}
+                                        <m.span
+                                            animate={{
+                                                y: showVerified ? -16 : 0,
+                                                opacity: showVerified ? 0 : 1,
+                                            }}
+                                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                                            className="absolute inset-0 font-semibold text-[12px] text-white truncate flex items-center leading-none"
+                                        >
+                                            {notification.name}
+                                        </m.span>
+                                        {/* Verified */}
+                                        <m.span
+                                            animate={{
+                                                y: showVerified ? 0 : 16,
+                                                opacity: showVerified ? 1 : 0,
+                                            }}
+                                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                                            className="absolute inset-0 inline-flex items-center gap-1 text-[10px] text-green-400 font-medium leading-none"
+                                        >
+                                            <CheckCircle2 className="w-2.5 h-2.5" />
+                                            Verified Testimonial
+                                        </m.span>
+                                    </div>
+                                </div>
+
+                                {/* Testimonial Quote */}
+                                <p className="text-gray-400 text-[10px] truncate mt-0.5 leading-tight">
+                                    &ldquo;{displayedMessage || ""}&rdquo;
+                                </p>
                             </div>
                         </m.div>
                     )}

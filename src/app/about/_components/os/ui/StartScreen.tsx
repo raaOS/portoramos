@@ -58,17 +58,17 @@ const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
                 }}
                 animate={
                     screenState === "idle"
-                        // Solid black
+                        // Electric Blue background for Scene 1
                         ? {
-                            backgroundColor: "rgba(0, 0, 0, 1)",
+                            backgroundColor: "rgba(0, 17, 228, 1)", // #0011e4
                             backdropFilter: "blur(0px)",
                             WebkitBackdropFilter: "blur(0px)",
                         }
                         : screenState === "showingText"
-                            // Transition to solid white while RamosOS text fades in
+                            // Transition to Neon Green while RamosOS text fades in
                             // Preparing the heavy blur underneath so it's ready to reveal
                             ? {
-                                backgroundColor: "rgba(255, 255, 255, 1)",
+                                backgroundColor: "rgba(94, 255, 21, 1)", // #5eff15
                                 backdropFilter: "blur(50px)",
                                 WebkitBackdropFilter: "blur(50px)",
                             }
@@ -110,17 +110,17 @@ const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
                                     : { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
                             }
                         >
-                            {/* Keyhole Silhouette (Solid White) */}
-                            <div className="relative flex items-center justify-center text-white">
+                            {/* Keyhole Silhouette (Neon Green) */}
+                            <div className="relative flex items-center justify-center text-[#5eff15]">
                                 <svg width="60" height="90" viewBox="0 0 24 36" fill="currentColor">
                                     <circle cx="12" cy="12" r="8" />
                                     <path d="M10 18 L6 30 C 5 33, 19 33, 18 30 L14 18 Z" />
                                 </svg>
                             </div>
 
-                            {/* Hidden Text (Static) */}
+                            {/* Hidden Text (Neon Green) */}
                             {!isClicked && (
-                                <p className="absolute -bottom-16 text-white/30 text-xs tracking-[0.4em] uppercase whitespace-nowrap">
+                                <p className="absolute -bottom-16 text-[#5eff15] opacity-50 text-xs tracking-[0.4em] uppercase whitespace-nowrap">
                                     Unlock OS
                                 </p>
                             )}
@@ -139,9 +139,9 @@ const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
                         exit={{ opacity: 0, scale: 1.1, filter: "blur(20px)", transition: { duration: 0.8, ease: "easeIn" } }}
                         transition={{ duration: 1, ease: "easeOut" }}
                     >
-                        <span className="text-black text-4xl md:text-6xl font-sans flex items-baseline">
+                        <span className="text-black text-4xl md:text-6xl font-sans flex items-baseline drop-shadow-md">
                             <span className="font-thin uppercase tracking-[0.2em]">Ramos</span>
-                            <span className="font-extrabold uppercase tracking-tighter">os</span>
+                            <span className="font-black uppercase tracking-tighter">os</span>
                         </span>
                     </m.div>
                 )}

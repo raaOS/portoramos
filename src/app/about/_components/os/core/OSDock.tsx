@@ -12,6 +12,7 @@ import WhatsAppIcon from "../ui/WhatsAppIcon";
 interface OSDockProps {
   aboutData?: AboutData;
   onOpenWindow: (windowId: string) => void;
+  onOpenWhatsApp: () => void;
   onOpenNotes: () => void;
   onOpenTrash: () => void;
   isWindowOpen: (windowId: string) => boolean;
@@ -24,6 +25,7 @@ interface OSDockProps {
 export default function OSDock({
   aboutData,
   onOpenWindow,
+  onOpenWhatsApp,
   onOpenNotes,
   onOpenTrash,
   isWindowOpen,
@@ -38,14 +40,14 @@ export default function OSDock({
     const defaultItems = [
       { id: "projects", label: "Projects", icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />, onClick: () => router.push('/projects') },
       { id: "about", label: "About Me", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => onOpenWindow("about"), isOpen: isWindowOpen("about") },
-      { id: "whatsapp", label: "WhatsApp", icon: <WhatsAppIcon />, onClick: () => onOpenWindow("whatsapp"), isOpen: isWindowOpen("whatsapp") },
+      { id: "whatsapp", label: "WhatsApp", icon: <WhatsAppIcon />, onClick: onOpenWhatsApp, isOpen: isWindowOpen("whatsapp") },
       { id: "contact", label: "Contact", icon: <AppIcon icon={Mail} color="from-blue-400 to-indigo-500" />, onClick: () => router.push('/contact') },
       { id: "notes", label: "Notes", icon: <AppIcon icon={FileText} color="from-yellow-300 to-orange-400" />, onClick: onOpenNotes, isOpen: notesVisible },
       { id: "trash", label: "Trash", icon: <AppIcon icon={Trash2} color="from-gray-400 to-gray-500" />, onClick: onOpenTrash, isOpen: isWindowOpen("trash-bin") },
     ];
 
     return getDockItemConfig(defaultItems, aboutData?.dockConfig);
-  }, [router, aboutData?.dockConfig, onOpenWindow, onOpenNotes, onOpenTrash, isWindowOpen, notesVisible]);
+  }, [router, aboutData?.dockConfig, onOpenWindow, onOpenWhatsApp, onOpenNotes, onOpenTrash, isWindowOpen, notesVisible]);
 
   return (
     <div className={className}>

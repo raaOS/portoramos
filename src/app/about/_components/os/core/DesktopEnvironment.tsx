@@ -83,7 +83,7 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
     );
 }
 
-function DesktopEnvironmentContent({ aboutData, experienceData, hardSkillsData, projects }: Omit<DesktopEnvironmentProps, 'children'>) {
+function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSkillsData, projects }: DesktopEnvironmentProps) {
 
     // Screen Lock & Resize Hook (Handles mounted state, window size, and body lock)
     const { mounted, isMobile } = useDesktopLock();
@@ -195,6 +195,7 @@ function DesktopEnvironmentContent({ aboutData, experienceData, hardSkillsData, 
         handleGoHome,
         openProjectWindow,
         navToChat,
+        openWhatsAppList,
         toggleNotesVisibility
     } = useDesktopNavigation({
         openWindow,
@@ -206,7 +207,8 @@ function DesktopEnvironmentContent({ aboutData, experienceData, hardSkillsData, 
         notes,
         restoreNote,
         addNote,
-        isAdmin
+        isAdmin,
+        setNotesDockBouncing: () => { }
     });
 
     // Icons Layout (Extracted)
@@ -270,6 +272,7 @@ function DesktopEnvironmentContent({ aboutData, experienceData, hardSkillsData, 
 
                                 {/* Layer 1: Desktop Icons & Sticky Notes */}
                                 <DesktopIconsLayer
+                                    // @ts-expect-error type mismatch between OS icon types and exact Project type string unions
                                     projectIcons={projectIcons}
                                     isMobile={isMobile}
                                     notesVisible={notesVisible}
@@ -287,16 +290,13 @@ function DesktopEnvironmentContent({ aboutData, experienceData, hardSkillsData, 
                                 />
 
                                 {/* Layer 2: Windows (Rendered early so animations finish before doors open) */}
-                                {windows.some(w => w.isOpen) && (
-                                    <WindowsLayer
-                                        isAdmin={isAdmin}
-                                    />
-                                )}
+                                <WindowsLayer isAdmin={isAdmin} />
 
                                 {/* Layer 3: UI Overlays (Dock, MenuBar, Spotlight, DynamicIsland) */}
                                 <UIOverlaysLayer
                                     isBooting={isBooting || needsPowerOn}
                                     navToChat={navToChat}
+                                    openWhatsAppList={openWhatsAppList}
                                     testimonialContacts={testimonialContacts}
                                     showSpotlight={showSpotlight}
                                     setShowSpotlight={setShowSpotlight}

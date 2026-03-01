@@ -1,55 +1,57 @@
-import { MetadataRoute } from 'next';
-import { allProjectsAsync } from '@/lib/projects';
-import { baseSEO } from '@/lib/seo';
+import { MetadataRoute } from 'next'
+import { allProjectsAsync } from '@/lib/projects'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = baseSEO.siteUrl;
-  const now = new Date();
-  
-  // Static pages with proper priorities
-  const staticPages: MetadataRoute.Sitemap = [
+  const baseUrl = 'http://ramos-portofolio.vercel.app'
+
+  // Ambil semua project
+  const projects = await allProjectsAsync()
+
+  // URL statis (halaman tetap)
+  const staticUrls: MetadataRoute.Sitemap = [
     {
-      url: `${base}/`,
-      lastModified: now,
-      changeFrequency: 'daily',
-      priority: 1.0,
+      url: baseUrl,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 1,
     },
     {
-      url: `${base}/about`,
-      lastModified: now,
+      url: `${baseUrl}/projects`,
+      lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
-      url: `${base}/projects`,
-      lastModified: now,
-      changeFrequency: 'daily',
-      priority: 0.9,
+      url: `${baseUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
     },
     {
-      url: `${base}/contact`,
-      lastModified: now,
+      url: `${baseUrl}/cv`,
+      lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${base}/cv`,
-      lastModified: now,
+      url: `${baseUrl}/contact`,
+      lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.6,
     },
-  ];
-  
-  // Dynamic project pages
-  const projects = await allProjectsAsync();
-  const publishedProjects = projects.filter(p => p.status !== 'draft');
-  
-  const projectPages: MetadataRoute.Sitemap = publishedProjects.map((project) => ({
-    url: `${base}/projects/${project.slug}`,
-    lastModified: new Date(project.updatedAt || project.createdAt),
-    changeFrequency: 'weekly',
-    priority: 0.8,
-  }));
-  
-  return [...staticPages, ...projectPages];
+  ]
+
+  // URL dinamis dari project
+  const projectUrls: MetadataRoute.Sitemap = projects
+    .filter((project) => project.status !== 'draft') // Hanya publish project
+    .map((project) => ({
+      url: `${baseUrl}/projects/${project.slug}`,
+      lastModified: project.updatedAt
+        ? new Date(project.updatedAt)
+        : new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    }))
+
+  return [...staticUrls, ...projectUrls]
 }

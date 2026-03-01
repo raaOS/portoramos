@@ -1,13 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, MoreVertical, Search, CheckCheck, Paperclip, Smile, Mic, BadgeCheck } from 'lucide-react';
+import { Send, MoreVertical, Search, CheckCheck, Paperclip, Smile, Mic, BadgeCheck, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { m, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { mockChats as initialChats, ContactProfile, ChatMessage } from '../data/mockChats';
 import { soundManager } from "../utils/SoundManager";
 import { getAvatarUrl } from '@/lib/avatar';
 import { Project } from '@/types/projects';
-
-// Letter Avatar Helper (Clean & Consistent)
 
 interface ChatWindowProps {
     activeChatId?: string | null;
@@ -22,7 +20,12 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
     const [isRemoteTyping, setIsRemoteTyping] = useState(false);
     const [projects, setProjects] = useState<Record<string, Project>>({});
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [showList, setShowList] = useState(!activeChatId);
     const sequencerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const contactsToUse = customContacts && Object.keys(customContacts).length > 0
+        ? customContacts
+        : initialChats;
 
     // Load projects for thumbnails
     useEffect(() => {
@@ -32,7 +35,6 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                 const data = await response.json();
                 const projectMap: Record<string, Project> = {};
                 (data.projects || []).forEach((p: Project) => {
-                    // Index by both id and slug for flexible lookup
                     projectMap[p.id] = p;
                     if (p.slug) projectMap[p.slug] = p;
                 });
@@ -44,63 +46,58 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
         loadProjects();
     }, []);
 
+    // When activeChatId changes, switch to that chat
+    useEffect(() => {
+        if (activeChatId && contactsToUse[activeChatId]) {
+            setActiveContact(contactsToUse[activeChatId]);
+            setShowList(false);
+        } else if (!activeChatId) {
+            setShowList(true);
+            setActiveContact(null);
+        }
+    }, [activeChatId, contactsToUse]);
+
     // Sequencer Logic: Autoplay conversation
     useEffect(() => {
-        // Select contacts to use (custom or default)
-        // Use customContacts (from testimonial.json) first, fallback to initialChats
-        const contactsToUse = customContacts && Object.keys(customContacts).length > 0
-            ? customContacts
-            : initialChats;
+        if (showList || !activeContact) return;
 
-        const contactId = activeChatId || Object.keys(contactsToUse)[0];
-        const contact = contactId ? contactsToUse[contactId] : (Object.values(contactsToUse)[0] || null);
+        // Reset visibility
+        setVisibleMessages([]);
+        setIsRemoteTyping(false);
+        if (sequencerRef.current) clearTimeout(sequencerRef.current);
 
-        if (contact) {
-            setActiveContact(contact);
-            // Reset visibility
-            setVisibleMessages([]);
-            setIsRemoteTyping(false);
-            if (sequencerRef.current) clearTimeout(sequencerRef.current);
+        let currentIndex = 0;
+        const fullConversation = activeContact.messages || activeContact.conversation || [];
 
-            let currentIndex = 0;
-            const fullConversation = contact.messages || contact.conversation || [];
+        const nextStep = () => {
+            if (currentIndex >= fullConversation.length) return;
 
-            const nextStep = () => {
-                if (currentIndex >= fullConversation.length) return;
+            const msg = fullConversation[currentIndex];
 
-                const msg = fullConversation[currentIndex];
-
-                // If the next message is from Client (Remote), show typing first
-                if (!msg.isMe) {
-                    setIsRemoteTyping(true);
-                    sequencerRef.current = setTimeout(() => {
-                        setIsRemoteTyping(false);
-                        setVisibleMessages(prev => [...prev, msg]);
-                        soundManager.play('notification');
-                        currentIndex++;
-                        // Wait 1.5s after a message before showing the next one
-                        sequencerRef.current = setTimeout(nextStep, 1500);
-                    }, 2000); // Typing duration
-                } else {
-                    // Internal messages (from Me)
+            if (!msg.isMe) {
+                setIsRemoteTyping(true);
+                sequencerRef.current = setTimeout(() => {
+                    setIsRemoteTyping(false);
                     setVisibleMessages(prev => [...prev, msg]);
+                    soundManager.play('notification');
                     currentIndex++;
-                    // Longer delay for image messages to allow viewing
-                    const delay = msg.type === 'image' ? 2500 : 1000;
-                    sequencerRef.current = setTimeout(nextStep, delay);
-                }
-            };
+                    sequencerRef.current = setTimeout(nextStep, 1500);
+                }, 2000);
+            } else {
+                setVisibleMessages(prev => [...prev, msg]);
+                currentIndex++;
+                const delay = msg.type === 'image' ? 2500 : 1000;
+                sequencerRef.current = setTimeout(nextStep, delay);
+            }
+        };
 
-            // Start after a small initial delay
-            sequencerRef.current = setTimeout(nextStep, 800);
-        }
+        sequencerRef.current = setTimeout(nextStep, 800);
 
         return () => {
             if (sequencerRef.current) clearTimeout(sequencerRef.current);
         };
-    }, [activeChatId, customContacts]);
+    }, [activeContact, showList]);
 
-    // Scroll to bottom on visible messages change
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [visibleMessages, isRemoteTyping]);
@@ -120,13 +117,98 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
 
         setVisibleMessages(prev => [...prev, newMessage]);
         setInput('');
-
-        // Play click sound
         soundManager.play('click');
     };
 
+    const selectContact = (contact: ContactProfile) => {
+        setActiveContact(contact);
+        setShowList(false);
+        setVisibleMessages([]);
+    };
 
+    const goBackToList = () => {
+        setShowList(true);
+        setActiveContact(null);
+        setVisibleMessages([]);
+        if (sequencerRef.current) clearTimeout(sequencerRef.current);
+    };
 
+    // Get last message preview
+    const getLastMessage = (contact: ContactProfile) => {
+        const messages = contact.messages || contact.conversation || [];
+        if (messages.length === 0) return "Tidak ada pesan";
+        const lastMsg = messages[messages.length - 1];
+        return lastMsg.text.length > 30 ? lastMsg.text.substring(0, 30) + "..." : lastMsg.text;
+    };
+
+    // Chat List View
+    if (showList) {
+        return (
+            <div className="flex flex-col h-full w-full bg-white relative overflow-hidden text-[#111b21]">
+                {/* List Header */}
+                <div className="bg-[#f0f2f5] py-3 px-4 flex items-center justify-between shrink-0 h-[60px] border-b border-[#d1d7db] z-10">
+                    {/* Pill Badge Style */}
+                    <span className="inline-flex items-center gap-1.5 text-[13px] text-green-600 font-semibold bg-green-50 border border-green-500/30 px-3 py-1.5 rounded-full">
+                        <CheckCircle2 className="w-4 h-4" />
+                        Verified Testimonials
+                    </span>
+                    <div className="flex items-center gap-4 text-[#54656f]">
+                        <Search size={20} className="cursor-pointer" />
+                        <MoreVertical size={20} className="cursor-pointer" />
+                    </div>
+                </div>
+
+                {/* Contact List */}
+                <div className="flex-1 overflow-y-auto bg-white">
+                    {Object.values(contactsToUse).map((contact, index) => (
+                        <m.div
+                            key={contact.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-[#f0f2f5] cursor-pointer border-b border-[#e9edef] transition-colors"
+                            onClick={() => selectContact(contact)}
+                        >
+                            {/* Avatar */}
+                            <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-gray-200">
+                                {contact.avatar && contact.avatar.startsWith('http') ? (
+                                    <Image
+                                        src={contact.avatar}
+                                        alt={contact.name}
+                                        width={48}
+                                        height={48}
+                                        unoptimized
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-lg font-bold text-white">
+                                        {contact.name.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Contact Info */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-medium text-[16px] text-[#111b21] truncate">
+                                        {contact.name}
+                                    </span>
+                                    <span className="text-[11px] text-[#667781]">Baru saja</span>
+                                </div>
+                                <div className="flex items-center gap-1 mt-0.5">
+                                    <span className="text-[13px] text-[#667781] truncate flex-1">
+                                        {getLastMessage(contact)}
+                                    </span>
+                                </div>
+                            </div>
+                        </m.div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    // Individual Chat View
     if (!activeContact) return <div className="h-full bg-[#efeae2]"></div>;
 
     return (
@@ -143,8 +225,18 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
             ></div>
 
             {/* Header */}
-            <div className="bg-[#f0f2f5] py-2 px-4 flex items-center justify-between shrink-0 h-[60px] border-b border-[#d1d7db] z-10">
-                <div className="flex items-center gap-3">
+            <div className="bg-[#f0f2f5] py-2 px-3 flex items-center justify-between shrink-0 h-[60px] border-b border-[#d1d7db] z-10">
+                <div className="flex items-center gap-2">
+                    {/* Back Button (only show when came from list) */}
+                    {!activeChatId && (
+                        <button 
+                            onClick={goBackToList}
+                            className="p-1 -ml-1 text-[#54656f] hover:text-[#41525d] transition-colors"
+                        >
+                            <ArrowLeft size={22} />
+                        </button>
+                    )}
+                    
                     <div className="w-10 h-10 rounded-full overflow-hidden cursor-pointer relative shrink-0">
                         <Image
                             src={activeContact.avatar && activeContact.avatar.startsWith('http') ? activeContact.avatar : getAvatarUrl(activeContact.name)}
@@ -161,7 +253,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                             <span className="text-[11px] text-[#00a884] font-medium mt-0.5 animate-pulse">sedang mengetik...</span>
                         ) : (
                             <span className="text-[11px] text-[#00a884] font-medium flex items-center gap-1 mt-0.5">
-                                <BadgeCheck size={14} fill="#00a884" className="text-white" /> Verified Client Testimonial
+                                <BadgeCheck size={14} fill="#00a884" className="text-white" /> Verified Testimonial
                             </span>
                         )}
                     </div>

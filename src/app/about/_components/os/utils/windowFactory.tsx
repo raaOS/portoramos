@@ -43,10 +43,13 @@ export const createInitialWindows = ({
         {
             id: "about",
             title: "Finder: About Me",
-            isOpen: false,
+            isOpen: true,
             zIndex: 10,
             noPadding: true,
-            initialPosition: { x: 100, y: 80 },
+            initialPosition: {
+                x: aboutData?.windowPreferences?.about?.x ?? 100,
+                y: aboutData?.windowPreferences?.about?.y ?? 80
+            },
             width: 900,
             height: 600,
             content: <AboutContent aboutData={aboutData || undefined} experienceData={experienceData || undefined} hardSkillsData={hardSkillsData || undefined} projects={projects} />

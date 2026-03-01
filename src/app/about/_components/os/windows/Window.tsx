@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
-import { m, useDragControls } from "framer-motion";
+import { m, useDragControls, AnimatePresence } from "framer-motion";
 import { X, Minus, Pin, Lock } from "lucide-react";
 import { soundManager } from "../utils/SoundManager";
 
@@ -180,7 +180,7 @@ export default function OSWindow({
 
 
     return (
-        <>
+        <AnimatePresence>
             {isOpen && (
                 <m.div
                     drag={!isMaximized && !isResizing && (!isPinned || isAdmin) && !isSmallScreen}
@@ -355,6 +355,6 @@ export default function OSWindow({
                     </div>
                 </m.div>
             )}
-        </>
+        </AnimatePresence>
     );
 }

@@ -23,6 +23,7 @@ const DynamicIsland = dynamic(() => import("../ui/DynamicIsland"), {
 interface UIOverlaysLayerProps {
     isBooting: boolean;
     navToChat: (chatId?: string) => void;
+    openWhatsAppList: () => void;
     testimonialContacts: ContactProfile[];
     showSpotlight: boolean;
     setShowSpotlight: React.Dispatch<React.SetStateAction<boolean>>;
@@ -39,6 +40,7 @@ interface UIOverlaysLayerProps {
 export default function UIOverlaysLayer({
     isBooting,
     navToChat,
+    openWhatsAppList,
     testimonialContacts,
     showSpotlight,
     setShowSpotlight,
@@ -83,6 +85,7 @@ export default function UIOverlaysLayer({
                         <OSDock
                             aboutData={aboutData}
                             onOpenWindow={openWindow}
+                            onOpenWhatsApp={openWhatsAppList}
                             onOpenNotes={toggleNotesVisibility}
                             onOpenTrash={() => openWindow("trash-bin")}
                             isWindowOpen={isWindowOpen}
