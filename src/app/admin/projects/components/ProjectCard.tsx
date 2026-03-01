@@ -103,25 +103,25 @@ export const ProjectCard = ({
                 </div>
 
                 <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-100 pt-4" onPointerDown={(e) => e.stopPropagation()}>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                         <button
                             onClick={() => setEditingProject(project)}
-                            className="p-2 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
-                            title="Edit"
+                            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all"
+                            title="Edit Project"
                         >
                             <Pencil className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => handleDuplicateProject(project)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Duplicate"
+                            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                            title="Duplicate Project"
                         >
                             <Copy className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => handleDeleteProject(project.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete"
+                            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                            title="Delete Project"
                         >
                             <Trash2 className="w-4 h-4" />
                         </button>
@@ -129,10 +129,12 @@ export const ProjectCard = ({
 
                     <button
                         onClick={() => setManagingCommentsProject(project)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                        className="h-9 flex items-center justify-center gap-1.5 px-4 text-xs font-bold text-gray-500 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all"
                     >
                         <MessageCircle className="w-4 h-4" />
-                        {commentCount > 0 ? `${commentCount} Komentar` : 'Komentar'}
+                        <span className="leading-none">
+                            {commentCount > 0 ? `${commentCount} Komentar` : 'Komentar'}
+                        </span>
                     </button>
                 </div>
             </div>
