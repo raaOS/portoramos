@@ -136,7 +136,7 @@
       "gen-1766512146544-0",
       "gen-1766512146544-10"
     ],
-    "maxIcons": 8,
+    "maxIcons": 10,
     "layout": "scattered",
     "iconPositions": {
       "gen-1766512146544-3": {
@@ -542,5 +542,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-03-01T01:23:18.085Z"
+  "lastUpdated": "2026-03-01T01:23:18.356Z"
 }
