@@ -129,7 +129,9 @@
     ]
   },
   "desktopPreferences": {
-    "visibleProjectIds": [],
+    "visibleProjectIds": [
+      "gen-1766512146544-2"
+    ],
     "maxIcons": 5,
     "layout": "scattered",
     "iconPositions": {
@@ -536,5 +538,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-03-01T01:22:39.337Z"
+  "lastUpdated": "2026-03-01T01:22:38.150Z"
 }
