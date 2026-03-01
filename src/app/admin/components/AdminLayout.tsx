@@ -264,8 +264,8 @@ function AdminLayoutContent({
           {/* Sidebar Header */}
           <div className="h-16 flex items-center px-6 border-b border-gray-200">
             <LayoutDashboard className="h-6 w-6 text-gray-800 mr-2" />
-            <span className="font-bold text-xl text-gray-900">
-              Admin Dashboard
+            <span className="font-bold text-xl text-gray-900 truncate">
+              Ramos Admin
             </span>
           </div>
 
@@ -280,14 +280,14 @@ function AdminLayoutContent({
               onClick={() => router.push('/')}
               className="w-full flex items-center justify-start gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
             >
-              <Eye className="h-4.5 w-4.5" />
+              <Eye className="h-4 w-4" />
               View Site
             </button>
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-start gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
             >
-              <LogOut className="h-4.5 w-4.5" />
+              <LogOut className="h-4 w-4" />
               Log Out
             </button>
           </div>

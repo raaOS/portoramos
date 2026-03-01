@@ -103,9 +103,13 @@ export default function SecuritySettingsModal({ onClose }: SecuritySettingsModal
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {words.map(word => (
-                                <div key={word} className="bg-white border border-gray-200 px-2 py-1 rounded text-sm flex items-center gap-2 group">
+                                <div key={word} className="bg-white border border-gray-200 px-2.5 py-1 rounded-lg text-sm flex items-center gap-2 group shadow-sm transition-all hover:border-gray-300">
                                     <span>{word}</span>
-                                    <button onClick={() => handleRemove(word)} className="text-gray-400 hover:text-red-500">
+                                    <button
+                                        onClick={() => handleRemove(word)}
+                                        className="w-5 h-5 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                        title={`Remove "${word}"`}
+                                    >
                                         <X className="w-3 h-3" />
                                     </button>
                                 </div>

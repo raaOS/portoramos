@@ -128,8 +128,8 @@ export default function AdminTable({
                       {onEdit && (
                         <button
                           onClick={() => onEdit(item)}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-indigo-700 hover:bg-indigo-100 transition"
-                          aria-label="Edit"
+                          className="w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 flex items-center justify-center gap-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-all font-medium"
+                          title="Edit"
                         >
                           <Pencil className="h-4 w-4" aria-hidden />
                           <span className="hidden sm:inline">Edit</span>
@@ -138,8 +138,8 @@ export default function AdminTable({
                       {onDelete && (
                         <button
                           onClick={() => onDelete(item.id as number)}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-rose-700 hover:bg-rose-100 transition"
-                          aria-label="Delete"
+                          className="w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 flex items-center justify-center gap-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 transition-all font-medium"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" aria-hidden />
                           <span className="hidden sm:inline">Delete</span>

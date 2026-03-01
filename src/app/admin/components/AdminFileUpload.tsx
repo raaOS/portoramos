@@ -171,7 +171,7 @@ export default function AdminFileUpload({
     await ffmpeg.exec(ffmpegArgs);
 
     const data = await ffmpeg.readFile(outputName);
-    const blob = new Blob([data as Uint8Array], { type: 'video/mp4' });
+    const blob = new Blob([data as any], { type: 'video/mp4' });
     return new File([blob], file.name, { type: 'video/mp4' });
   }, []); // ffmpegRef is persistent
 
@@ -474,7 +474,7 @@ export default function AdminFileUpload({
           ) : (
             <div className="space-y-4">
               <div className="mx-auto h-12 w-12 text-gray-400">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>

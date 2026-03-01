@@ -94,7 +94,7 @@ export default function ManageCommentsModal({ project, onClose, onSyncTrigger }:
                 <button
                     onClick={() => handleDelete(comment.id)}
                     disabled={deletingId === comment.id}
-                    className="text-gray-400 hover:text-red-600 p-1 rounded transition-colors disabled:opacity-50"
+                    className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 shrink-0"
                     title="Delete Comment"
                 >
                     {deletingId === comment.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
