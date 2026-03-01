@@ -4,13 +4,13 @@
     "text": "Halo! Selamat Datang di Ramos OS v2.0 🖥️✨\nSaya Ramos, seorang Graphic Designer <div>&amp; <span style=\"font-family: var(--font-handwritten, &quot;Comic Sans MS&quot;, cursive);\">Visual Strategist.</span><div>\n<b>Quick Start:\n1. Buka folder \"Projects\" untuk lihat karya saya.\n2. Klik \"Contact\" di bawah untuk ngobrol.\n3. Drag note ini ke mana saja!</b>\n\nSelamat mengeksplorasi!</div></div>",
     "date": "2026-02-22T18:17:10.544Z",
     "color": "#fef08a",
-    "isStarred": true,
+    "isStarred": false,
     "isDeleted": false,
     "x": 44.889007568359375,
     "y": 219.94445037841797,
     "width": 320,
     "height": 387,
-    "zIndex": 147,
+    "zIndex": 148,
     "isPinned": false,
     "fontSize": 14
   }
