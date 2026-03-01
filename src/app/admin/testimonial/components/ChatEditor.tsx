@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { MessageSquare, Link as LinkIcon, Image as ImageIcon, User, CheckCheck, Trash2, Plus, Image } from 'lucide-react';
+import { MessageSquare, Link as LinkIcon, Image as ImageIcon, User, CheckCheck, Trash2, Plus, Image, ArrowLeftRight } from 'lucide-react';
 import { ChatHistoryMessage } from '@/types/testimonial';
 import { Project } from '@/types/projects';
 
@@ -96,44 +96,54 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 z-10 custom-scrollbar">
                     {messages.map((msg, index) => {
                         const linkedProject = msg.type === 'project' && msg.projectId ? getProjectById(msg.projectId) : null;
-                        
+
                         return (
                             <div key={msg.id} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'} group items-end gap-2 mb-3`}>
-                                {msg.isMe && (
-                                    <button
-                                        onClick={() => updateMessage(index, { isMe: false })}
-                                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-green-600 transition-all"
-                                    >
-                                        <User size={16} />
-                                    </button>
-                                )}
-
                                 <div className={`relative max-w-[80%] rounded-lg px-3 pt-2 pb-1 shadow-sm text-[14.2px] 
                                     ${msg.isMe ? 'bg-[#d9fdd3] rounded-tr-none' : 'bg-white rounded-tl-none'}
                                 `}>
-                                    {/* Type Selector */}
-                                    <div className="flex gap-1 mb-2 border-b border-black/5 pb-1.5">
-                                        <button
-                                            onClick={() => updateMessage(index, { type: 'text', projectId: undefined, imageSrc: undefined })}
-                                            className={`p-1.5 rounded ${msg.type === 'text' || !msg.type ? 'bg-black/10' : 'hover:bg-black/5'}`}
-                                            title="Teks"
-                                        >
-                                            <MessageSquare size={14} />
-                                        </button>
-                                        <button
-                                            onClick={() => updateMessage(index, { type: 'project', projectId: projectId || projects[0]?.id || '' })}
-                                            className={`p-1.5 rounded ${msg.type === 'project' ? 'bg-green-100 text-green-600' : 'hover:bg-black/5'}`}
-                                            title="Link Project"
-                                        >
-                                            <LinkIcon size={14} />
-                                        </button>
-                                        <button
-                                            onClick={() => updateMessage(index, { type: 'image', projectId: undefined })}
-                                            className={`p-1.5 rounded ${msg.type === 'image' ? 'bg-blue-100 text-blue-600' : 'hover:bg-black/5'}`}
-                                            title="Gambar URL"
-                                        >
-                                            <ImageIcon size={14} />
-                                        </button>
+                                    {/* Type Selector & Actions */}
+                                    <div className="flex items-center justify-between gap-4 mb-2 border-b border-black/5 pb-1.5">
+                                        <div className="flex gap-1.5">
+                                            <button
+                                                onClick={() => updateMessage(index, { type: 'text', projectId: undefined, imageSrc: undefined })}
+                                                className={`w-7 h-7 flex items-center justify-center rounded transition-all ${msg.type === 'text' || !msg.type ? 'bg-black/10 text-black' : 'text-gray-400 hover:bg-black/5'}`}
+                                                title="Teks"
+                                            >
+                                                <MessageSquare size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => updateMessage(index, { type: 'project', projectId: projectId || projects[0]?.id || '' })}
+                                                className={`w-7 h-7 flex items-center justify-center rounded transition-all ${msg.type === 'project' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:bg-black/5'}`}
+                                                title="Link Project"
+                                            >
+                                                <LinkIcon size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => updateMessage(index, { type: 'image', projectId: undefined })}
+                                                className={`w-7 h-7 flex items-center justify-center rounded transition-all ${msg.type === 'image' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:bg-black/5'}`}
+                                                title="Gambar URL"
+                                            >
+                                                <ImageIcon size={14} />
+                                            </button>
+                                        </div>
+
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => updateMessage(index, { isMe: !msg.isMe })}
+                                                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-all"
+                                                title="Tukar Pengirim"
+                                            >
+                                                <ArrowLeftRight size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => removeMessage(msg.id)}
+                                                className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-all"
+                                                title="Hapus Pesan"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {/* Project Selector & Preview */}
@@ -151,17 +161,20 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                                                     </option>
                                                 ))}
                                             </select>
-                                            
+
                                             {/* Project Preview */}
                                             {linkedProject && (
                                                 <div className="bg-white/80 rounded-lg overflow-hidden border border-black/10 mt-2">
                                                     {linkedProject.cover ? (
                                                         <div className="relative h-24 bg-gray-100">
                                                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                            <img 
-                                                                src={linkedProject.cover} 
+                                                            <img
+                                                                src={linkedProject.cover}
                                                                 alt={`${linkedProject.title} - ${linkedProject.client || 'Project'}`}
                                                                 className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                                }}
                                                             />
                                                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                                             <div className="absolute bottom-2 left-2 right-2">
@@ -192,9 +205,9 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                                             {msg.imageSrc && (
                                                 <div className="mt-2 rounded-lg overflow-hidden bg-gray-100 max-h-32">
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img 
-                                                        src={msg.imageSrc} 
-                                                        alt="Preview" 
+                                                    <img
+                                                        src={msg.imageSrc}
+                                                        alt="Preview"
                                                         className="w-full h-full object-cover"
                                                         onError={(e) => {
                                                             (e.target as HTMLImageElement).style.display = 'none';
@@ -223,28 +236,11 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                                         {msg.isMe && <span className="text-[#53bdeb] ml-0.5"><CheckCheck size={15} strokeWidth={1.5} /></span>}
                                     </div>
 
-                                    {/* Delete Button */}
-                                    <button 
-                                        onClick={() => removeMessage(msg.id)} 
-                                        className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 bg-red-500 text-white p-1 rounded-full shadow-lg transition-all hover:bg-red-600"
-                                    >
-                                        <Trash2 size={12} />
-                                    </button>
-
                                     {/* Triangle tip */}
                                     <div className={`absolute top-0 w-0 h-0 border-[6px] border-transparent 
                                         ${msg.isMe ? 'right-[-6px] border-t-[#d9fdd3] border-l-[#d9fdd3]' : 'left-[-6px] border-t-white border-r-white'}
                                     `} />
                                 </div>
-
-                                {!msg.isMe && (
-                                    <button
-                                        onClick={() => updateMessage(index, { isMe: true })}
-                                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-green-600 transition-all font-bold"
-                                    >
-                                        <User size={16} />
-                                    </button>
-                                )}
                             </div>
                         );
                     })}

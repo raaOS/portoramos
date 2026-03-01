@@ -38,7 +38,7 @@ export default function AdminTable({
 }: AdminTableProps) {
   const handleSort = (key: string) => {
     if (!onSort) return;
-    
+
     const newDirection = sortKey === key && sortDirection === 'asc' ? 'desc' : 'asc';
     onSort(key, newDirection);
   };
@@ -71,9 +71,8 @@ export default function AdminTable({
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                    column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
-                  } ${column.className || ''}`}
+                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
+                    } ${column.className || ''}`}
                   onClick={column.sortable ? () => handleSort(column.key) : undefined}
                 >
                   <div className="flex items-center space-x-1">
@@ -81,22 +80,20 @@ export default function AdminTable({
                     {column.sortable && (
                       <div className="flex flex-col">
                         <svg
-                          className={`w-3 h-3 ${
-                            sortKey === column.key && sortDirection === 'asc'
-                              ? 'text-blue-600'
-                              : 'text-gray-400'
-                          }`}
+                          className={`w-3 h-3 ${sortKey === column.key && sortDirection === 'asc'
+                            ? 'text-blue-600'
+                            : 'text-gray-400'
+                            }`}
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
                           <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
                         </svg>
                         <svg
-                          className={`w-3 h-3 ${
-                            sortKey === column.key && sortDirection === 'desc'
-                              ? 'text-blue-600'
-                              : 'text-gray-400'
-                          }`}
+                          className={`w-3 h-3 ${sortKey === column.key && sortDirection === 'desc'
+                            ? 'text-blue-600'
+                            : 'text-gray-400'
+                            }`}
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -116,13 +113,13 @@ export default function AdminTable({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {data.map((item, index) => (
-              <tr key={item.id || index} className="hover:bg-gray-50">
+              <tr key={String(item.id || index)} className="hover:bg-gray-50">
                 {columns.map((column) => (
                   <td
                     key={column.key}
                     className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${column.className || ''}`}
                   >
-                    {column.render ? column.render(item[column.key], item) : item[column.key]}
+                    {column.render ? column.render(item[column.key], item) : (item[column.key] as React.ReactNode)}
                   </td>
                 ))}
                 {(onEdit || onDelete) && (
@@ -131,7 +128,7 @@ export default function AdminTable({
                       {onEdit && (
                         <button
                           onClick={() => onEdit(item)}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-indigo-700 hover:bg-indigo-100 transition"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-indigo-700 hover:bg-indigo-100 transition"
                           aria-label="Edit"
                         >
                           <Pencil className="h-4 w-4" aria-hidden />
@@ -140,8 +137,8 @@ export default function AdminTable({
                       )}
                       {onDelete && (
                         <button
-                          onClick={() => onDelete(item.id)}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-rose-700 hover:bg-rose-100 transition"
+                          onClick={() => onDelete(item.id as number)}
+                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-rose-700 hover:bg-rose-100 transition"
                           aria-label="Delete"
                         >
                           <Trash2 className="h-4 w-4" aria-hidden />

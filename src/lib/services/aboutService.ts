@@ -6,7 +6,6 @@ import {
     DesktopPreferences,
     WallpaperConfig,
     DockPreferences,
-    ChatSettings,
     WindowPreferences,
     SoundConfig
 } from '@/types/about';
@@ -49,7 +48,7 @@ export const aboutService = {
                 desktopPreferences: { ...current.desktopPreferences, ...(updates.desktopPreferences || {}) } as DesktopPreferences,
                 wallpaperConfig: { ...current.wallpaperConfig, ...(updates.wallpaperConfig || {}) } as WallpaperConfig,
                 dockConfig: { ...current.dockConfig, ...(updates.dockConfig || {}) } as DockPreferences,
-                chatSettings: { ...current.chatSettings, ...(updates.chatSettings || {}) } as ChatSettings,
+
                 windowPreferences: { ...current.windowPreferences, ...(updates.windowPreferences || {}) } as WindowPreferences,
                 soundConfig: { ...current.soundConfig, ...(updates.soundConfig || {}) } as SoundConfig,
                 labels: { ...(current.labels || {}), ...(updates.labels || {}) } as AboutData['labels'],

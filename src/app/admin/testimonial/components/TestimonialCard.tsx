@@ -48,10 +48,18 @@ export default function TestimonialCard({ testimonial: t, onEdit, onDelete, onTo
             </div>
 
             <div className="flex items-center justify-end gap-2 border-t border-gray-50 pt-4">
-                <button onClick={onEdit} className="p-2 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all">
+                <button
+                    onClick={onEdit}
+                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all"
+                    title="Edit Testimonial"
+                >
                     <Pencil size={16} />
                 </button>
-                <button onClick={onDelete} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                <button
+                    onClick={onDelete}
+                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                    title="Hapus Testimonial"
+                >
                     <Trash2 size={16} />
                 </button>
             </div>

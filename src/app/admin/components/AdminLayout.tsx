@@ -21,7 +21,6 @@ import {
   ChevronRight,
   Monitor,
   Layout,
-  MessageSquare,
   Smile,
   Zap,
   Dumbbell,
@@ -52,6 +51,63 @@ interface NavItem {
   children?: NavItem[];
 }
 
+const navItems: NavItem[] = [
+  {
+    href: '/admin/projects-group',
+    label: 'Project (Karya)',
+    icon: FolderKanban,
+    color: 'text-purple-600',
+    bg: 'hover:bg-purple-50',
+    children: [
+      { href: '/admin/projects', label: 'List Project', icon: FolderKanban, color: 'text-purple-600', bg: 'hover:bg-purple-50' },
+      { href: '/admin/sequences', label: 'Bidikan Image', icon: Zap, color: 'text-yellow-500', bg: 'hover:bg-yellow-50' },
+      { href: '/admin/analytics', label: 'Statistik', icon: Activity, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
+    ]
+  },
+  {
+    href: '/admin/about-group',
+    label: 'Tentang (About)',
+    icon: Info,
+    color: 'text-blue-600',
+    bg: 'hover:bg-blue-50',
+    children: [
+      { href: '/admin/about?tab=professional', label: 'Info Utama', icon: User, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
+      { href: '/admin/experience', label: 'Pengalaman', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
+      { href: '/admin/testimonial', label: 'WhatsApp Notif', icon: Quote, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
+      { href: '/admin/about?tab=softSkills', label: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
+      { href: '/admin/about?tab=hardSkills', label: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'hover:bg-violet-50' },
+      { href: '/admin/about?tab=philosophy', label: 'Filosofi', icon: Sparkles, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
+      {
+        href: '/admin/os-config',
+        label: 'Pengaturan OS',
+        icon: Monitor,
+        color: 'text-cyan-600',
+        bg: 'hover:bg-cyan-50',
+        children: [
+          { href: '/admin/about?tab=desktop', label: 'Desktop & Wallpaper', icon: Monitor, color: 'text-cyan-600', bg: 'hover:bg-cyan-50' },
+          { href: '/admin/about?tab=runningText', label: 'Teks Berjalan', icon: Type, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
+          { href: '/admin/about?tab=dock', label: 'Sistem Dock', icon: Layout, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
+          { href: '/admin/about?tab=stickyNotes', label: 'Catatan Tempel', icon: Smile, color: 'text-yellow-600', bg: 'hover:bg-yellow-50' },
+          { href: '/admin/about?tab=sounds', label: 'Efek Suara', icon: Music, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
+        ]
+      },
+      { href: '/admin/about?tab=labels', label: 'Labels & Tag', icon: Tag, color: 'text-gray-600', bg: 'hover:bg-gray-50' },
+    ]
+  },
+  {
+    href: '/admin/contact-group',
+    label: 'Kontak (Contact)',
+    icon: PhoneCall,
+    color: 'text-amber-600',
+    bg: 'hover:bg-amber-50',
+    children: [
+      { href: '/admin/contact', label: 'Pengaturan Kontak', icon: PhoneCall, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
+      { href: '/admin/leads', label: 'Pesan Masuk', icon: Users, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
+      { href: '/admin/telegram', label: 'Bot Telegram', icon: Send, color: 'text-sky-500', bg: 'hover:bg-sky-50' },
+    ]
+  }
+];
+
 function AdminLayoutContent({
   children,
   title,
@@ -71,24 +127,45 @@ function AdminLayoutContent({
      However, pathname might be null initially in some environments.
   */
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
-    // We can't use pathname here safely because it's from a hook, but we can set the default.
-    return { '/admin/about': true };
+    return {
+      '/admin/projects-group': false,
+      '/admin/about-group': true, // Default to About expanded
+      '/admin/contact-group': false
+    };
   });
 
   // Sync expanded state with active path
   useEffect(() => {
-    const shouldExpandAbout = pathname?.startsWith('/admin/about') ||
-      pathname?.startsWith('/admin/experience') ||
-      pathname?.startsWith('/admin/testimonial') ||
-      pathname?.startsWith('/admin/contact');
+    const isProject = pathname?.startsWith('/admin/projects') || pathname?.startsWith('/admin/sequences') || pathname?.startsWith('/admin/analytics');
+    const isAbout = pathname?.startsWith('/admin/about') || pathname?.startsWith('/admin/experience') || pathname?.startsWith('/admin/testimonial');
+    const isContact = pathname?.startsWith('/admin/contact') || pathname?.startsWith('/admin/leads') || pathname?.startsWith('/admin/telegram');
+    const isOSConfig = pathname?.startsWith('/admin/about') && ['desktop', 'dock', 'stickyNotes', 'sounds', 'runningText'].includes(searchParams.get('tab') || '');
 
-    if (shouldExpandAbout) {
-      const t = setTimeout(() => {
-        setExpandedMenus(prev => ({ ...prev, '/admin/about': true }));
-      }, 0);
-      return () => clearTimeout(t);
-    }
-  }, [pathname]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setExpandedMenus(prev => {
+      // Only update if something actually needs to expand (don't auto-collapse others)
+      const nextProjects = isProject || prev['/admin/projects-group'];
+      const nextAbout = isAbout || prev['/admin/about-group'];
+      const nextContact = isContact || prev['/admin/contact-group'];
+      const nextOS = isOSConfig || prev['/admin/os-config'];
+
+      if (
+        nextProjects !== prev['/admin/projects-group'] ||
+        nextAbout !== prev['/admin/about-group'] ||
+        nextContact !== prev['/admin/contact-group'] ||
+        nextOS !== prev['/admin/os-config']
+      ) {
+        return {
+          ...prev,
+          '/admin/projects-group': nextProjects,
+          '/admin/about-group': nextAbout,
+          '/admin/contact-group': nextContact,
+          '/admin/os-config': nextOS
+        };
+      }
+      return prev;
+    });
+  }, [pathname, searchParams]);
 
   const toggleMenu = (href: string) => {
     setExpandedMenus(prev => ({
@@ -102,37 +179,6 @@ function AdminLayoutContent({
   const handleLogout = async () => {
     await logout();
   };
-
-  const navItems: NavItem[] = [
-    { href: '/admin/projects', label: 'Project', icon: FolderKanban, color: 'text-purple-600', bg: 'hover:bg-purple-50' },
-    {
-      href: '/admin/about',
-      label: 'Tentang',
-      icon: Info,
-      color: 'text-blue-600',
-      bg: 'hover:bg-blue-50',
-      children: [
-        { href: '/admin/about?tab=professional', label: 'Info Utama', icon: User, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
-        { href: '/admin/about?tab=softSkills', label: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
-        { href: '/admin/about?tab=hardSkills', label: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'hover:bg-violet-50' },
-        { href: '/admin/about?tab=philosophy', label: 'Filosofi', icon: Sparkles, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
-        { href: '/admin/about?tab=runningText', label: 'Teks Berjalan', icon: Type, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
-        { href: '/admin/about?tab=desktop', label: 'Desktop & OS', icon: Monitor, color: 'text-cyan-600', bg: 'hover:bg-cyan-50' },
-        { href: '/admin/about?tab=dock', label: 'Sistem Dock', icon: Layout, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
-        { href: '/admin/about?tab=chat', label: 'Pengaturan Chat', icon: MessageSquare, color: 'text-green-600', bg: 'hover:bg-green-50' },
-        { href: '/admin/about?tab=stickyNotes', label: 'Catatan Tempel', icon: Smile, color: 'text-yellow-600', bg: 'hover:bg-yellow-50' },
-        { href: '/admin/about?tab=sounds', label: 'Efek Suara', icon: Music, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
-        { href: '/admin/about?tab=labels', label: 'Labels & Tag', icon: Tag, color: 'text-gray-600', bg: 'hover:bg-gray-50' },
-      ]
-    },
-    { href: '/admin/experience', label: 'Pengalaman', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
-    { href: '/admin/testimonial', label: 'WhatsApp Notif', icon: Quote, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
-    { href: '/admin/contact', label: 'Kontak', icon: PhoneCall, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
-    { href: '/admin/leads', label: 'Pesan Masuk', icon: Users, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
-    { href: '/admin/telegram', label: 'Bot Telegram', icon: Send, color: 'text-sky-500', bg: 'hover:bg-sky-50' },
-    { href: '/admin/analytics', label: 'Statistik', icon: Activity, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
-    { href: '/admin/sequences', label: 'Bidikan Image', icon: Zap, color: 'text-yellow-500', bg: 'hover:bg-yellow-50' },
-  ];
 
   const isActive = (href: string) => {
     if (href === '/admin') return pathname === '/admin';
@@ -160,8 +206,11 @@ function AdminLayoutContent({
             }`}
           style={{ paddingLeft: `${12 + (depth * 12)}px` }}
           onClick={() => {
-            router.push(item.href);
-            if (hasChildren && !isExpanded) toggleMenu(item.href);
+            const isVirtualGroup = item.href.endsWith('-group') || item.href === '/admin/os-config';
+            if (!isVirtualGroup) {
+              router.push(item.href);
+            }
+            if (hasChildren) toggleMenu(item.href);
             setIsMobileMenuOpen(false);
           }}
         >
@@ -175,7 +224,7 @@ function AdminLayoutContent({
                 e.stopPropagation();
                 toggleMenu(item.href);
               }}
-              className="p-1 hover:bg-black/5 rounded-md transition-colors"
+              className="p-1 flex items-center justify-center hover:bg-black/5 rounded-md transition-colors"
             >
               {isExpanded ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
             </button>

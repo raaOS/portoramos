@@ -109,12 +109,7 @@ export interface DockPreferences {
   [key: string]: DockItemConfig;
 }
 
-export interface ChatSettings {
-  autoReplyText: string;
-  contactEmail: string;
-  contactPhone: string;
-  avatarUrl?: string;
-}
+
 
 export interface WindowPreference {
   x?: number;
@@ -147,7 +142,6 @@ export interface AboutData {
   desktopPreferences?: DesktopPreferences;
   wallpaperConfig?: WallpaperConfig;
   dockConfig?: DockPreferences;
-  chatSettings?: ChatSettings;
   windowPreferences?: WindowPreferences;
   islandNotifications?: AboutIslandNotification[];
   soundConfig?: SoundConfig;
@@ -173,7 +167,6 @@ export interface UpdateAboutData {
   desktopPreferences?: DesktopPreferences;
   wallpaperConfig?: WallpaperConfig;
   dockConfig?: DockPreferences;
-  chatSettings?: ChatSettings;
   windowPreferences?: WindowPreferences;
   islandNotifications?: AboutIslandNotification[];
   soundConfig?: SoundConfig;

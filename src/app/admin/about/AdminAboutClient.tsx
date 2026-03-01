@@ -19,7 +19,6 @@ import RunningTextPanel from './components/RunningTextPanel';
 import WallpaperManager from './components/WallpaperManager';
 import DesktopProjectsForm from './components/DesktopProjectsForm';
 import DockConfigForm from './components/DockConfigForm';
-import ChatSettingsForm from './components/ChatSettingsForm';
 import StickyNotesManager from './components/StickyNotesManager';
 import NotificationsManager from './components/NotificationsManager';
 import HardSkillsManager from './components/HardSkillsManager';
@@ -34,8 +33,8 @@ export default function AdminAboutClient() {
 
   // Derive active tab from URL search parameters (Source of Truth)
   const tabParam = searchParams.get('tab');
-  const validTabs = ['professional', 'softSkills', 'hardSkills', 'runningText', 'philosophy', 'desktop', 'dock', 'chat', 'stickyNotes', 'notifications', 'sounds'];
-  type ValidTab = 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'desktop' | 'dock' | 'chat' | 'stickyNotes' | 'notifications' | 'sounds';
+  const validTabs = ['professional', 'softSkills', 'hardSkills', 'runningText', 'philosophy', 'desktop', 'dock', 'stickyNotes', 'notifications', 'sounds'];
+  type ValidTab = 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'desktop' | 'dock' | 'stickyNotes' | 'notifications' | 'sounds';
 
   const activeTab = (tabParam && validTabs.includes(tabParam))
     ? (tabParam as ValidTab)
@@ -193,14 +192,7 @@ export default function AdminAboutClient() {
               </div>
             )}
 
-            {activeTab === 'chat' && (
-              <div className="space-y-8">
-                <ChatSettingsForm
-                  data={aboutData.chatSettings}
-                  onUpdate={(data) => handleUpdateAbout({ chatSettings: data })}
-                />
-              </div>
-            )}
+
 
             {activeTab === 'stickyNotes' && (
               <div className="space-y-8">
