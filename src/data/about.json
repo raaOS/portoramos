@@ -254,7 +254,7 @@
       "y": 62.750003814697266,
       "width": 647,
       "height": 573,
-      "isOpenByDefault": true
+      "isOpenByDefault": false
     },
     "whatsapp": {
       "x": 735,
@@ -551,5 +551,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-03-01T01:33:35.773Z"
+  "lastUpdated": "2026-03-01T01:33:38.577Z"
 }
