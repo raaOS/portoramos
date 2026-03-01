@@ -209,7 +209,7 @@
         "name": "Custom Wallpaper"
       }
     ],
-    "blur": 10
+    "blur": 0
   },
   "dockConfig": {
     "whatsapp": {
@@ -547,5 +547,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-03-01T01:21:46.971Z"
+  "lastUpdated": "2026-03-01T01:21:52.940Z"
 }
