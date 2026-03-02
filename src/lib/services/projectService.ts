@@ -1,24 +1,51 @@
-import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
+import { Project, CreateProjectData, UpdateProjectData, ProjectsData } from '@/types/projects';
 import { ProjectSchema, CreateProjectSchema, UpdateProjectSchema } from '@/lib/validations/project';
 import { db } from '@/lib/firebaseAdmin';
+import { githubService } from '@/lib/github';
 
 export const projectService = {
     /**
      * Get all projects from Firebase.
      * Implements Zod validation to ensure data integrity.
      */
-    async getProjects(status?: string, _fresh = false): Promise<{ projects: Project[], lastUpdated: string }> {
+    async getProjects(status?: string, fresh = false): Promise<{ projects: Project[], lastUpdated: string }> {
         try {
-            // Fetch from Firebase
+            // 1. If fresh is requested, or we want to ensure we have data, we can optionally pull from GitHub
+            // However, the standard flow is to try Firebase first.
             const projectsRef = db.ref('projects');
             const lastUpdatedRef = db.ref('lastUpdated');
 
-            const [projectsSnap, lastUpdatedSnap] = await Promise.all([
-                projectsRef.once('value'),
-                lastUpdatedRef.once('value')
-            ]);
-
+            let projectsSnap = await projectsRef.once('value');
             let projectsObject = projectsSnap.val() || {};
+
+            // 2. FALLBACK/SYNC: If Firebase is empty or 'fresh' is explicitly requested, pull from GitHub
+            if (fresh || Object.keys(projectsObject).length === 0) {
+                console.log(`[ProjectService] ${fresh ? 'Fresh sync requested' : 'Firebase empty'}, pulling from GitHub...`);
+                try {
+                    const ghData = await githubService.getFileContent<ProjectsData>('src/data/projects.json', true);
+                    if (ghData && ghData.content && Array.from(ghData.content.projects || []).length > 0) {
+                        const ghProjects = ghData.content.projects;
+
+                        // Convert Array to Firebase Object Map (id as key)
+                        const newFirebaseObject: Record<string, Project> = {};
+                        ghProjects.forEach(p => {
+                            if (p.id) newFirebaseObject[p.id] = p;
+                        });
+
+                        // Seed Firebase
+                        await projectsRef.set(newFirebaseObject);
+                        await lastUpdatedRef.set(new Date().toISOString());
+
+                        // Update local variable for immediate return
+                        projectsObject = newFirebaseObject;
+                        console.log(`[ProjectService] Seeded ${ghProjects.length} projects from GitHub to Firebase.`);
+                    }
+                } catch (ghError) {
+                    console.warn('[ProjectService] GitHub sync failed, continuing with Firebase/Empty:', ghError);
+                }
+            }
+
+            const lastUpdatedSnap = await lastUpdatedRef.once('value');
             let lastUpdated = lastUpdatedSnap.val() || new Date().toISOString();
 
             // Convert object map to array
