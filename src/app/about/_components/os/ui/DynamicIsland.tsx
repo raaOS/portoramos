@@ -115,7 +115,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                 setDisplayedMessage("");
                 setShowVerified(false);
                 notificationTimerRef.current = null;
-            }, 10000);
+            }, 6000);
         }
     }, [customNotifications]);
 
@@ -133,8 +133,8 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                 // Cycle to next testimonial
                 currentIndexRef.current = (currentIndexRef.current + 1) % customNotifications.length;
                 triggerNotification(currentIndexRef.current);
-            }, 15000);
-        }, 2000);
+            }, 8000);
+        }, 1000);
 
         return () => {
             clearTimeout(initialDelay);
