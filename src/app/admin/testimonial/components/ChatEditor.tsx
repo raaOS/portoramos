@@ -12,6 +12,8 @@ interface ChatEditorProps {
     projectId?: string;
 }
 
+const isVideo = (url?: string) => url?.toLowerCase().endsWith('.mp4');
+
 const AutoResizeTextarea = ({ value, onChange, className, placeholder }: { value: string, onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void, className?: string, placeholder?: string }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -167,15 +169,25 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                                                 <div className="bg-white/80 rounded-lg overflow-hidden border border-black/10 mt-2">
                                                     {linkedProject.cover ? (
                                                         <div className="relative h-24 bg-gray-100">
-                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                            <img
-                                                                src={linkedProject.cover}
-                                                                alt={`${linkedProject.title} - ${linkedProject.client || 'Project'}`}
-                                                                className="w-full h-full object-cover"
-                                                                onError={(e) => {
-                                                                    (e.target as HTMLImageElement).style.display = 'none';
-                                                                }}
-                                                            />
+                                                            {isVideo(linkedProject.cover) ? (
+                                                                <video
+                                                                    src={linkedProject.cover}
+                                                                    className="w-full h-full object-cover"
+                                                                    autoPlay
+                                                                    muted
+                                                                    loop
+                                                                    playsInline
+                                                                />
+                                                            ) : (
+                                                                <img
+                                                                    src={linkedProject.cover}
+                                                                    alt={`${linkedProject.title} - ${linkedProject.client || 'Project'}`}
+                                                                    className="w-full h-full object-cover"
+                                                                    onError={(e) => {
+                                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                                    }}
+                                                                />
+                                                            )}
                                                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                                             <div className="absolute bottom-2 left-2 right-2">
                                                                 <p className="text-white text-xs font-bold truncate">{linkedProject.title}</p>
@@ -192,27 +204,61 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                                         </div>
                                     )}
 
-                                    {/* Image URL Input */}
+                                    {/* Image URL Input & Project Picker */}
                                     {msg.type === 'image' && (
-                                        <div className="mb-2">
-                                            <input
-                                                type="text"
-                                                value={msg.imageSrc || ''}
-                                                onChange={(e) => updateMessage(index, { imageSrc: e.target.value })}
-                                                placeholder="URL Gambar (https://...)"
-                                                className="w-full bg-white/70 border border-black/10 text-xs rounded-lg p-2 outline-none mb-2"
-                                            />
+                                        <div className="mb-2 space-y-2">
+                                            {/* Optional Project Picker for Image Source */}
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] font-bold text-blue-600 uppercase tracking-wider ml-1">Ambil dari Project</label>
+                                                <select
+                                                    value=""
+                                                    onChange={(e) => {
+                                                        const p = getProjectById(e.target.value);
+                                                        if (p) updateMessage(index, { imageSrc: p.cover });
+                                                    }}
+                                                    className="w-full bg-blue-50/50 border border-blue-100 text-xs rounded-lg p-2 outline-none"
+                                                >
+                                                    <option value="">-- Pilih Project (Auto-fill URL) --</option>
+                                                    {projects.map(p => (
+                                                        <option key={p.id} value={p.id || p.slug}>
+                                                            {p.title}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">URL Gambar Langsung</label>
+                                                <input
+                                                    type="text"
+                                                    value={msg.imageSrc || ''}
+                                                    onChange={(e) => updateMessage(index, { imageSrc: e.target.value })}
+                                                    placeholder="URL Gambar (https://...)"
+                                                    className="w-full bg-white/70 border border-black/10 text-xs rounded-lg p-2 outline-none"
+                                                />
+                                            </div>
+
                                             {msg.imageSrc && (
-                                                <div className="mt-2 rounded-lg overflow-hidden bg-gray-100 max-h-32">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img
-                                                        src={msg.imageSrc}
-                                                        alt="Preview"
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            (e.target as HTMLImageElement).style.display = 'none';
-                                                        }}
-                                                    />
+                                                <div className="mt-2 rounded-lg overflow-hidden bg-gray-100 max-h-32 shadow-inner border border-black/5">
+                                                    {isVideo(msg.imageSrc) ? (
+                                                        <video
+                                                            src={msg.imageSrc}
+                                                            className="w-full h-full object-cover"
+                                                            autoPlay
+                                                            muted
+                                                            loop
+                                                            playsInline
+                                                        />
+                                                    ) : (
+                                                        <img
+                                                            src={msg.imageSrc}
+                                                            alt="Preview"
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMzAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YxZjFmMSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNDAiIGZpbGw9IiNjY2MiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7im6A8L3RleHQ+PC9zdmc+';
+                                                            }}
+                                                        />
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

@@ -12,6 +12,8 @@ interface ChatWindowProps {
     customContacts?: Record<string, ContactProfile>;
 }
 
+const isVideo = (url?: string) => url?.toLowerCase().endsWith('.mp4');
+
 export default function ChatWindow({ activeChatId, customContacts }: ChatWindowProps) {
     const [input, setInput] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -31,10 +33,10 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
     useEffect(() => {
         const loadProjects = async () => {
             try {
-                const response = await fetch('/api/projects');
+                const response = await fetch('/api/projects', { cache: 'no-store' });
                 const data = await response.json();
                 const projectMap: Record<string, Project> = {};
-                (data.projects || []).forEach((p: Project) => {
+                (data?.data?.projects || []).forEach((p: Project) => {
                     projectMap[p.id] = p;
                     if (p.slug) projectMap[p.slug] = p;
                 });
@@ -229,14 +231,14 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                 <div className="flex items-center gap-2">
                     {/* Back Button (only show when came from list) */}
                     {!activeChatId && (
-                        <button 
+                        <button
                             onClick={goBackToList}
                             className="p-1 -ml-1 text-[#54656f] hover:text-[#41525d] transition-colors"
                         >
                             <ArrowLeft size={22} />
                         </button>
                     )}
-                    
+
                     <div className="w-10 h-10 rounded-full overflow-hidden cursor-pointer relative shrink-0">
                         <Image
                             src={activeContact.avatar && activeContact.avatar.startsWith('http') ? activeContact.avatar : getAvatarUrl(activeContact.name)}
@@ -266,7 +268,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-y-5 z-10 custom-scrollbar relative">
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence>
                     {visibleMessages.map((msg) => (
                         <m.div
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -285,13 +287,27 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                                 className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 group cursor-pointer relative hover:opacity-90 transition-opacity"
                                                 onClick={() => setPreviewImage(projects[msg.projectId!].cover)}
                                             >
-                                                <Image
-                                                    src={projects[msg.projectId].cover}
-                                                    alt={projects[msg.projectId].title}
-                                                    width={300}
-                                                    height={200}
-                                                    className="w-full h-auto object-cover max-h-[180px]"
-                                                />
+                                                {isVideo(projects[msg.projectId].cover) ? (
+                                                    <video
+                                                        src={projects[msg.projectId].cover}
+                                                        autoPlay
+                                                        muted
+                                                        loop
+                                                        playsInline
+                                                        className="w-full h-auto object-cover max-h-[180px]"
+                                                    />
+                                                ) : (
+                                                    <Image
+                                                        src={projects[msg.projectId].cover}
+                                                        alt={projects[msg.projectId].title}
+                                                        width={300}
+                                                        height={200}
+                                                        className="w-full h-auto object-cover max-h-[180px]"
+                                                        onError={(e) => {
+                                                            (e.target as any).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMzAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzAwYTg4NCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNDAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+74uYPC90ZXh0Pjwvc3ZnPg==';
+                                                        }}
+                                                    />
+                                                )}
                                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
                                                     <p className="text-white text-[11px] font-bold truncate">{projects[msg.projectId].title}</p>
                                                     <p className="text-white/70 text-[9px]">Klik untuk preview</p>
@@ -311,15 +327,26 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                             className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 cursor-pointer hover:opacity-90 transition-opacity min-h-[100px] flex items-center justify-center bg-gray-100"
                                             onClick={() => setPreviewImage(msg.imageSrc || null)}
                                         >
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img
-                                                src={msg.imageSrc}
-                                                alt="Shared media"
-                                                className="w-full h-auto object-cover max-h-[250px]"
-                                                onError={(e) => {
-                                                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMDBhODg0Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5EZXNhaW4gS2VtYXNhbjwvdGV4dD48L3N2Zz4=';
-                                                }}
-                                            />
+                                            {isVideo(msg.imageSrc) ? (
+                                                <video
+                                                    src={msg.imageSrc}
+                                                    autoPlay
+                                                    muted
+                                                    loop
+                                                    playsInline
+                                                    className="w-full h-auto object-cover max-h-[250px]"
+                                                />
+                                            ) : (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
+                                                <img
+                                                    src={msg.imageSrc}
+                                                    alt="Shared media"
+                                                    className="w-full h-auto object-cover max-h-[250px]"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMDBhODg0Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5EZXNhaW4gS2VtYXNhbjwvdGV4dD48L3N2Zz4=';
+                                                    }}
+                                                />
+                                            )}
                                         </div>
                                     )}
 
@@ -405,12 +432,21 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                         onClick={() => setPreviewImage(null)}
                     >
                         <div className="relative max-w-full max-h-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={previewImage}
-                                alt="Preview"
-                                className="max-w-full max-h-full object-contain rounded-lg"
-                            />
+                            {isVideo(previewImage) ? (
+                                <video
+                                    src={previewImage}
+                                    controls
+                                    autoPlay
+                                    className="max-w-full max-h-full object-contain rounded-lg"
+                                />
+                            ) : (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img
+                                    src={previewImage}
+                                    alt="Preview"
+                                    className="max-w-full max-h-full object-contain rounded-lg"
+                                />
+                            )}
                             <button
                                 className="absolute top-2 right-2 text-white/80 hover:text-white p-1 bg-black/50 rounded-md w-8 h-8 flex items-center justify-center text-lg z-10 shadow-lg"
                                 onClick={() => setPreviewImage(null)}

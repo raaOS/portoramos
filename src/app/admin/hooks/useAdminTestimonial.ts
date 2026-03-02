@@ -36,7 +36,7 @@ export function useAdminTestimonial(csrfToken: string | null) {
             const response = await fetch('/api/projects');
             if (!response.ok) throw new Error('Failed to fetch projects');
             const data = await response.json();
-            setProjects(data.projects || []);
+            setProjects(data?.data?.projects || []);
         } catch (_err) {
             console.error('Error loading projects:', _err);
         }

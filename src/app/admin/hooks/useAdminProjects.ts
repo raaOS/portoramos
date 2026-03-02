@@ -15,7 +15,6 @@ export function useAdminProjects() {
     const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set());
     const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
-    // 1. Fetch Projects
     const { data: projectsData, isLoading, error } = useQuery({
         queryKey: ['projects', 'admin'],
         queryFn: async () => {
@@ -25,12 +24,12 @@ export function useAdminProjects() {
         }
     });
 
-    const projects = (projectsData?.projects || []) as Project[];
+    const projects = (projectsData?.data?.projects || []) as Project[];
 
     // Sync orderedProjects when data changes
     useEffect(() => {
-        if (projectsData?.projects) {
-            setOrderedProjects(projectsData.projects as Project[]);
+        if (projectsData?.data?.projects) {
+            setOrderedProjects(projectsData.data.projects as Project[]);
         }
     }, [projectsData]);
 
