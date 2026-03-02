@@ -32,17 +32,23 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
     }, [activeWindow]);
 
     // Typing effect for message - shorter max length
-    const startTypingEffect = (message: string) => {
-        // Shorten message to max 40 chars
-        const shortMessage = message.length > 22 ? message.substring(0, 22) + "..." : message;
+    const startTypingEffect = (message: any) => {
+        // Safety: Ensure message is a string
+        const safeMessage = typeof message === 'string' ? message : String(message || "");
+
+        // Shorten message to max characters
+        const shortMessage = safeMessage.length > 22 ? safeMessage.substring(0, 22) + "..." : safeMessage;
         setDisplayedMessage("");
         let index = 0;
-        
+
         if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
-        
+
         typingIntervalRef.current = setInterval(() => {
             if (index < shortMessage.length) {
-                setDisplayedMessage(prev => prev + shortMessage[index]);
+                const char = shortMessage[index];
+                if (char !== undefined) {
+                    setDisplayedMessage(prev => prev + char);
+                }
                 index++;
             } else {
                 if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
@@ -53,14 +59,14 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
     // Toggle between name and verified text
     const startTextToggle = () => {
         if (textToggleRef.current) clearInterval(textToggleRef.current);
-        
+
         setShowVerified(false);
-        
+
         let toggleCount = 0;
         textToggleRef.current = setInterval(() => {
             toggleCount++;
             setShowVerified(prev => !prev);
-            
+
             if (toggleCount >= 5) {
                 if (textToggleRef.current) clearInterval(textToggleRef.current);
             }
@@ -155,7 +161,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
             borderRadius: 24,
         },
         notification: {
-            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '92vw' : 280,
+            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '92vw' : 240,
             height: 48,
             borderRadius: 24,
         },

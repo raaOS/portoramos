@@ -46,7 +46,7 @@ export const convertTestimonialToContact = (testimonial: Testimonial): ContactPr
         // Uses ui-avatars.com to create a clean single letter (e.g., "B" for Budi).
         // Background is a soft pastel green/gray (WhatsApp style), Bold font enabled.
         avatar: getAvatarUrl(testimonial.name),
-        status: testimonial.notificationText || (testimonial.role ? `${testimonial.role} @ ${testimonial.company}` : 'Client'),
+        status: testimonial.notificationText || (testimonial.role ? (testimonial.company ? `${testimonial.role} @ ${testimonial.company}` : testimonial.role) : 'Client'),
         conversation
     };
 };
