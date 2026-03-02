@@ -21,8 +21,8 @@
           "time": "09:41",
           "status": "read",
           "type": "project",
-          "imageSrc": "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400&h=300&fit=crop",
-          "projectId": "gen-1766512146544-16"
+          "imageSrc": "/assets/projects/manipulasi-foto-musik-alam.mp4",
+          "projectId": "gen-1766512146544-1"
         },
         {
           "id": 1600000000003,
@@ -256,5 +256,5 @@
       "id": 8
     }
   ],
-  "lastUpdated": "2026-02-28T23:55:54.607Z"
+  "lastUpdated": "2026-03-02T19:52:48.486Z"
 }
