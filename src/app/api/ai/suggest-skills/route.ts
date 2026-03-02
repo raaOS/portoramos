@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
 
 const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_AI_API_KEY;
+
+// Rate limiting: 10 requests per minute, block 5 minutes
+const MAX_AI_REQUESTS = 10;
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const BLOCK_DURATION = 5 * 60 * 1000; // 5 minutes
+
+function getClientIdentifier(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+  return `${ip}|${userAgent}`;
+}
 
 interface SuggestSkillsRequest {
     skillName: string;
@@ -13,6 +26,22 @@ interface SuggestSkillsResponse {
 export async function POST(req: NextRequest) {
     if (!API_KEY) {
         return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
+    }
+
+    // Rate limiting check
+    const clientId = getClientIdentifier(req);
+    const rateLimit = await checkFirebaseRateLimit(
+        `ai_skills_${clientId}`,
+        MAX_AI_REQUESTS,
+        RATE_LIMIT_WINDOW,
+        BLOCK_DURATION
+    );
+
+    if (!rateLimit.allowed) {
+        return NextResponse.json(
+            { error: 'Too many requests. Please try again later.', retryAfter: rateLimit.retryAfter },
+            { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+        );
     }
 
     try {

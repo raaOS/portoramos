@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { runningTextService } from '@/lib/services/runningTextService';
+import { validateAdminRequest } from '@/lib/auth';
 
 export async function GET() {
     const data = await runningTextService.getRunningTextData();
@@ -8,7 +9,12 @@ export async function GET() {
     return NextResponse.json(data);
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+    // Check admin authentication
+    if (!(await validateAdminRequest(request))) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const body = await request.json();
         const { text, order, isActive } = body;
@@ -29,10 +35,15 @@ export async function POST(request: Request) {
     }
 }
 
-export async function PUT(_request: Request) {
+export async function PUT(request: NextRequest) {
+    // Check admin authentication
+    if (!(await validateAdminRequest(request))) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // This is for bulk updates (ordering)
     try {
-        const body = await _request.json();
+        const body = await request.json();
         const { items } = body;
 
         if (!Array.isArray(items)) {

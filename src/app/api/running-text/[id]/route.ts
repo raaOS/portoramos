@@ -1,10 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { runningTextService } from '@/lib/services/runningTextService';
+import { validateAdminRequest } from '@/lib/auth';
 
-export async function PUT(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    // Check admin authentication
+    if (!(await validateAdminRequest(request))) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const { id } = await params;
-        const body = await _request.json();
+        const body = await request.json();
 
         const updatedItem = await runningTextService.updateItem(id, body);
 
@@ -18,7 +24,12 @@ export async function PUT(_request: Request, { params }: { params: Promise<{ id:
     }
 }
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    // Check admin authentication
+    if (!(await validateAdminRequest(request))) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const { id } = await params;
         const success = await runningTextService.deleteItem(id);

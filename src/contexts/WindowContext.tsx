@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from "react";
 import { WindowState } from "@/hooks/useWindowManager";
 
 interface WindowContextType {
@@ -89,13 +89,14 @@ export const WindowProvider: React.FC<WindowProviderProps> = ({
     }));
   }, []);
 
-  const value: WindowContextType = {
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo<WindowContextType>(() => ({
     windows,
     openWindow,
     closeWindow,
     isWindowOpen,
     bouncingDocId,
-  };
+  }), [windows, openWindow, closeWindow, isWindowOpen, bouncingDocId]);
 
   return (
     <WindowContext.Provider value={value}>

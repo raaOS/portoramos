@@ -12,7 +12,7 @@ import ReadMoreDescription from '@/components/ui/ReadMoreDescription';
 import type { Comment } from '@/lib/magic';
 import ProjectCTA from './ProjectCTA';
 import Media from '@/components/shared/Media';
-import { Compare } from '@/components/ui/compare';
+import { Compare } from '@/components/ui/Compare';
 import { useImageProtection } from '@/hooks/useImageProtection';
 import { getIconMap } from '@/constants/skillIcons'; // Added import
 

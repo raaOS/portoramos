@@ -1,6 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { db } from '@/lib/firebaseAdmin';
+import { commentSchema, validateCommentDepth } from '@/lib/validations/schemas';
+import { success, badRequest, unauthorized, serverError, rateLimit } from '@/lib/api-response';
+import { z } from 'zod';
 
 interface Comment {
     id: string;
@@ -22,19 +25,14 @@ export async function GET(request: NextRequest) {
 
         if (slug) {
             const snap = await db.ref(`comments/${slug}`).once('value');
-            return NextResponse.json({
-                comments: snap.val() || []
-            });
+            return success({ comments: snap.val() || [] });
         }
 
         const allSnap = await db.ref('comments').once('value');
-        return NextResponse.json({ comments: allSnap.val() || {} });
+        return success({ comments: allSnap.val() || {} });
     } catch (error) {
-        console.error('Error loading comments from Firebase:', error instanceof Error ? error.message : error);
-        return NextResponse.json({
-            error: 'Failed to load comments',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 });
+        console.error('[API /comments GET] Error:', error);
+        return serverError('Failed to load comments');
     }
 }
 
@@ -60,15 +58,33 @@ export async function POST(request: NextRequest) {
 
         // --- 1. HONEYPOT VALIDATION ---
         if (website_url) {
-            console.warn(`Honeypot triggered for slug ${slug}`);
-            return NextResponse.json({ error: 'Spam detected' }, { status: 400 });
+            console.warn(`[API /comments POST] Honeypot triggered for slug ${slug}`);
+            return badRequest('Spam detected');
         }
 
         if (!slug || !comments) {
-            return NextResponse.json({ error: 'Missing slug or comments' }, { status: 400 });
+            return badRequest('Missing slug or comments');
         }
 
-        // --- 2. FLOOD CONTROL (RATE LIMITING) ---
+        // --- 2. VALIDATE COMMENTS STRUCTURE WITH ZOD ---
+        try {
+            const commentArraySchema = z.array(commentSchema).max(1000, 'Too many comments');
+            commentArraySchema.parse(comments);
+            
+            // Validate depth for nested replies
+            for (const comment of comments) {
+                if (!validateCommentDepth(comment)) {
+                    return badRequest('Comment nesting too deep (max 3 levels)');
+                }
+            }
+        } catch (validationError) {
+            if (validationError instanceof z.ZodError) {
+                return badRequest('Invalid comment structure', validationError.format());
+            }
+            throw validationError;
+        }
+
+        // --- 3. FLOOD CONTROL (RATE LIMITING) ---
         const existingSnap = await db.ref(`comments/${slug}`).limitToLast(1).once('value');
         const existingRaw: Comment[] = existingSnap.val() || [];
 
@@ -77,7 +93,7 @@ export async function POST(request: NextRequest) {
             const authorName = newLastComment.name || newLastComment.author;
 
             if (authorName && Array.isArray(existingRaw) && existingRaw.length > 0) {
-                const lastUserComment = existingRaw[0]; // limitToLast(1) returns array with 1 elem or object
+                const lastUserComment = existingRaw[0];
                 const isMatch = (lastUserComment.name === authorName) || (lastUserComment.author === authorName);
 
                 if (isMatch) {
@@ -85,32 +101,29 @@ export async function POST(request: NextRequest) {
                     if (lastTimeStr) {
                         const timeDiff = Date.now() - new Date(lastTimeStr).getTime();
                         if (timeDiff < 5000) {
-                            return NextResponse.json({ error: 'Please wait 5 seconds before posting again.' }, { status: 429 });
+                            return rateLimit(5, 'Please wait 5 seconds before posting again');
                         }
                     }
                 }
             }
         }
 
-        // --- 3. CONTENT MODERATION ---
+        // --- 4. CONTENT MODERATION ---
         const bannedWords = await getBannedWords();
         const payloadString = JSON.stringify(comments).toLowerCase();
         const foundBadWord = bannedWords.find(word => payloadString.includes(word.toLowerCase()));
 
         if (foundBadWord) {
-            return NextResponse.json({ error: `Comment contains restricted word: ${foundBadWord}` }, { status: 400 });
+            return badRequest(`Comment contains restricted word: ${foundBadWord}`);
         }
 
-        // --- 4. SAVE TO FIREBASE ---
+        // --- 5. SAVE TO FIREBASE ---
         await db.ref(`comments/${slug}`).set(comments);
 
-        return NextResponse.json({ success: true, comments: comments });
+        return success({ comments });
     } catch (error) {
-        console.error('Error saving comments to Firebase:', error instanceof Error ? error.message : error);
-        return NextResponse.json({
-            error: 'Failed to save comments',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 });
+        console.error('[API /comments POST] Error:', error);
+        return serverError('Failed to save comments');
     }
 }
 
@@ -126,7 +139,7 @@ function removeCommentById(comments: Comment[], idToDelete: string): Comment[] {
 
 export async function DELETE(request: NextRequest) {
     if (!checkAdminAuth(request)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return unauthorized('Admin authentication required');
     }
 
     try {
@@ -134,7 +147,7 @@ export async function DELETE(request: NextRequest) {
         const { slug, commentId } = body;
 
         if (!slug || !commentId) {
-            return NextResponse.json({ error: 'Missing slug or commentId' }, { status: 400 });
+            return badRequest('Missing slug or commentId');
         }
 
         const snap = await db.ref(`comments/${slug}`).once('value');
@@ -143,12 +156,9 @@ export async function DELETE(request: NextRequest) {
 
         await db.ref(`comments/${slug}`).set(updatedComments);
 
-        return NextResponse.json({ success: true, comments: updatedComments });
+        return success({ comments: updatedComments });
     } catch (error) {
-        console.error('Error deleting comment from Firebase:', error instanceof Error ? error.message : error);
-        return NextResponse.json({
-            error: 'Failed to delete comment',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 });
+        console.error('[API /comments DELETE] Error:', error);
+        return serverError('Failed to delete comment');
     }
 }

@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { z } from 'zod'; // Import Zod
-import { CreateProjectData } from '@/types/projects';
+import { z } from 'zod';
 import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 import { generateGenZComments } from '@/lib/magic';
@@ -10,6 +9,10 @@ import { githubService } from '@/lib/github';
 import path from 'path';
 import fs from 'fs';
 import { sendTelegramAlert } from '@/lib/telegram';
+import { CreateProjectSchema } from '@/lib/validations/project';
+import { success, created, unauthorized, serverError, validationError } from '@/lib/api-response';
+
+export const dynamic = 'force-dynamic';
 
 const COMMENTS_DATA_FILE = path.join(process.cwd(), 'src', 'data', 'comments.json');
 const COMMENTS_GITHUB_PATH = 'src/data/comments.json';
@@ -27,16 +30,10 @@ export async function GET(request: NextRequest) {
 
     const { projects, lastUpdated } = await projectService.getProjects(status, fresh);
 
-    return NextResponse.json({
-      projects,
-      lastUpdated,
-    });
-  } catch {
-    // Silently handle projects loading errors
-    return NextResponse.json(
-      { error: 'Failed to load projects' },
-      { status: 500 }
-    );
+    return success({ projects, lastUpdated });
+  } catch (error) {
+    console.error('[API /projects GET] Error:', error);
+    return serverError('Failed to load projects');
   }
 }
 
@@ -44,23 +41,28 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     if (!(await validateAdminRequest(request))) {
-      return NextResponse.json(
-        { error: 'Unauthorized or invalid CSRF token' },
-        { status: 401 }
-      );
+      return unauthorized('Invalid or missing CSRF token');
     }
 
-    const body: CreateProjectData = await request.json();
+    const rawBody = await request.json();
 
-    // Validate required fields
-    if (!body.title || !body.client || !body.year) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    // Validate with Zod schema
+    const validationResult = CreateProjectSchema.safeParse(rawBody);
+    if (!validationResult.success) {
+      return validationError(validationResult.error);
     }
 
-    const newProject = await projectService.createProject(body);
+    // Convert year to number if it's a string
+    const projectData = {
+      ...validationResult.data,
+      year: typeof validationResult.data.year === 'string'
+        ? parseInt(validationResult.data.year, 10)
+        : validationResult.data.year
+    };
+
+    // Type assertion needed due to Zod schema allowing nulls that CreateProjectData doesn't
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const newProject = await projectService.createProject(projectData as any);
 
     // [STICKY NOTE] SMART MOVE: Temp -> Permanent
     // If cover image is in /temp/, move it to /assets/projects/ and rename it to [slug].ext
@@ -106,21 +108,19 @@ export async function POST(request: NextRequest) {
       // We already have newProject object which we will return, but we need to ensure it's saved correctly.
       // `createProject` handled the initial save.
       // If we changed paths, we need to update the project again.
-      if (hasCompChanges || (newProject.cover !== body.cover)) { // check both
+      if (hasCompChanges) {
         await projectService.updateProject(newProject.id, {
           id: newProject.id,
           cover: newProject.cover,
           comparison: newProject.comparison
         });
+      } else if (newProject.cover !== validationResult.data.cover) {
+        // Case where only cover changed and no comparison
+        await projectService.updateProject(newProject.id, {
+          id: newProject.id,
+          cover: newProject.cover
+        });
       }
-    } else if (newProject.cover !== body.cover) {
-      // Case where only cover changed and no comparison (covered by if above logically but need separate update call execution structure)
-      // Actually `createProject` returns the object. We modify it here.
-      // We must save it.
-      await projectService.updateProject(newProject.id, {
-        id: newProject.id,
-        cover: newProject.cover
-      });
     }
 
     // --- Auto-Generate Comments ---
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     // Setiap kali project baru dibuat, AI otomatis membuat "Komentar Palsu" ala Gen-Z.
     // Tujuannya agar project terlihat ramai dan viral sejak detik pertama.
     try {
-      const generatedComments = generateGenZComments(newProject.slug, body.initialCommentCount);
+      const generatedComments = generateGenZComments(newProject.slug, validationResult.data.initialCommentCount);
 
       const isDev = process.env.NODE_ENV === 'development';
       let commentsData: CommentsData = { comments: {} };
@@ -169,28 +169,19 @@ export async function POST(request: NextRequest) {
     sendTelegramAlert(successMessage);
 
     // Auto-revalidate paths so the new project appears immediately on public pages
-    revalidatePath('/', 'layout'); // Revalidate everything (simplest and safest)
+    revalidatePath('/', 'layout');
     revalidatePath('/projects');
     revalidatePath('/admin');
 
-
-    return NextResponse.json({
-      success: true,
-      project: newProject,
-    });
+    return created(newProject, 'Project created successfully');
   } catch (error) {
+    console.error('[API /projects POST] Error:', error);
+
     if (error instanceof z.ZodError) {
-      console.warn('Validation Error:', error.format());
-      return NextResponse.json(
-        { error: 'Validation Failed', details: error.format() },
-        { status: 400 }
-      );
+      return validationError(error);
     }
-    // Silently handle project creation errors
-    return NextResponse.json(
-      { error: 'Failed to create project' },
-      { status: 500 }
-    );
+
+    return serverError('Failed to create project');
   }
 }
 
@@ -213,11 +204,6 @@ async function finalizeMedia(
     const ext = path.extname(url);
     const newFilename = `${slug}${suffix}${ext}`;
 
-    // Construct target directory: public/assets/projects OR public/assets/projects/comparisons
-    // If subDir is "projects", it goes to public/assets/projects
-    // If subDir is "comparisons", it goes to public/assets/projects/comparisons
-    // Let's make subDir relative to public/assets/
-
     const targetDir = path.join(publicDir, 'assets', subDir);
 
     if (!fs.existsSync(targetDir)) {
@@ -226,14 +212,10 @@ async function finalizeMedia(
 
     const newPath = path.join(targetDir, newFilename);
 
-    // If file exists, overwrite (or maybe backup? overwrite is fine for CRUD)
-    // Rename moves the file
     await fs.promises.rename(oldPath, newPath);
 
-    // Return relative path
     return `/assets/${subDir}/${newFilename}`;
   } catch {
-    // Silently handle media finalization errors
     return url;
   }
 }

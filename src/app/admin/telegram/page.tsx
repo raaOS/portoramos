@@ -107,7 +107,7 @@ export default function TelegramAdminPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Pending Updates:</span>
-                <span className={status.telegram?.pending_update_count > 0 ? 'text-orange-600 font-semibold' : 'text-gray-800'}>
+                <span className={(status.telegram?.pending_update_count ?? 0) > 0 ? 'text-orange-600 font-semibold' : 'text-gray-800'}>
                   {status.telegram?.pending_update_count || 0}
                 </span>
               </div>
@@ -133,13 +133,13 @@ export default function TelegramAdminPage() {
               {loading ? 'Processing...' : status?.isCorrect ? '✅ Webhook Already Correct' : '🔧 Fix Webhook URL'}
             </button>
 
-            {status?.telegram?.pending_update_count > 0 && (
+            {(status?.telegram?.pending_update_count ?? 0) > 0 && (
               <button
                 onClick={clearPending}
                 disabled={loading}
                 className="w-full py-3 px-4 rounded-lg font-semibold bg-orange-600 hover:bg-orange-700 text-white"
               >
-                🧹 Clear {status.telegram.pending_update_count} Pending Updates
+                🧹 Clear {status?.telegram?.pending_update_count ?? 0} Pending Updates
               </button>
             )}
 

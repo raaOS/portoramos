@@ -1,0 +1,38 @@
+﻿src/app/admin/leads/AdminLeadsClient.tsx(96,25): error TS2322: Type '({ key: string; label: string; sortable: boolean; render: (val: string) => string; className?: undefined; } | { key: string; label: string; sortable: boolean; className: string; render?: undefined; } | { ...; })[]' is not assignable to type 'Column<Record<string, unknown>>[]'.
+  Type '{ key: string; label: string; sortable: boolean; render: (val: string) => string; className?: undefined; } | { key: string; label: string; sortable: boolean; className: string; render?: undefined; } | { ...; }' is not assignable to type 'Column<Record<string, unknown>>'.
+    Type '{ key: string; label: string; sortable: boolean; render: (val: string) => string; className?: undefined; }' is not assignable to type 'Column<Record<string, unknown>>'.
+      Types of property 'render' are incompatible.
+        Type '(val: string) => string' is not assignable to type '(value: unknown, item: Record<string, unknown>) => ReactNode'.
+          Types of parameters 'val' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'string'.
+src/app/admin/telegram/page.tsx(110,34): error TS18048: 'status.telegram.pending_update_count' is possibly 'undefined'.
+src/app/admin/telegram/page.tsx(136,14): error TS18048: 'status.telegram.pending_update_count' is possibly 'undefined'.
+src/app/admin/telegram/page.tsx(142,27): error TS18047: 'status' is possibly 'null'.
+src/app/admin/telegram/page.tsx(142,27): error TS18048: 'status.telegram' is possibly 'undefined'.
+src/app/layout.tsx(83,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/components/chat/AnimatedEmoji.tsx(96,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/components/chat/AnimatedEmoji.tsx(177,7): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/components/shared/PerformanceMonitor.tsx(102,36): error TS2352: Conversion of type 'PerformanceEntry' to type '{ hadRecentInput?: boolean | undefined; value: number; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Property 'value' is missing in type 'PerformanceEntry' but required in type '{ hadRecentInput?: boolean | undefined; value: number; }'.
+src/components/shared/WebVitals.tsx(32,16): error TS2307: Cannot find module 'web-vitals' or its corresponding type declarations.
+src/components/shared/WebVitals.tsx(59,13): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/components/shared/WebVitals.tsx(60,13): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/components/shared/WebVitals.tsx(61,13): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/components/shared/WebVitals.tsx(62,13): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/components/shared/WebVitals.tsx(63,13): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/components/ui/Input.tsx(50,10): error TS2322: Type '{ id: string; className: string; "aria-describedby": string | undefined; "aria-invalid": "true" | "false"; "aria-required": "true" | undefined; accept?: string | undefined; alt?: string | undefined; ... 298 more ...; onTransitionStartCapture?: TransitionEventHandler<...> | undefined; } | { ...; }' is not assignable to type 'DetailedHTMLProps<TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>'.
+  Type '{ id: string; className: string; "aria-describedby": string | undefined; "aria-invalid": "true" | "false"; "aria-required": "true" | undefined; accept?: string | undefined; alt?: string | undefined; ... 298 more ...; onTransitionStartCapture?: TransitionEventHandler<...> | undefined; }' is not assignable to type 'DetailedHTMLProps<TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>'.
+    Type '{ id: string; className: string; "aria-describedby": string | undefined; "aria-invalid": "true" | "false"; "aria-required": "true" | undefined; accept?: string | undefined; alt?: string | undefined; ... 298 more ...; onTransitionStartCapture?: TransitionEventHandler<...> | undefined; }' is not assignable to type 'TextareaHTMLAttributes<HTMLTextAreaElement>'.
+      Types of property 'onChange' are incompatible.
+        Type 'ChangeEventHandler<HTMLInputElement> | undefined' is not assignable to type 'ChangeEventHandler<HTMLTextAreaElement> | undefined'.
+          Type 'ChangeEventHandler<HTMLInputElement>' is not assignable to type 'ChangeEventHandler<HTMLTextAreaElement>'.
+            Type 'HTMLInputElement' is missing the following properties from type 'HTMLTextAreaElement': cols, rows, textLength, wrap
+src/components/ui/Input.tsx(59,10): error TS2322: Type '{ id: string; className: string; "aria-describedby": string | undefined; "aria-invalid": "true" | "false"; "aria-required": "true" | undefined; accept?: string | undefined; alt?: string | undefined; ... 298 more ...; onTransitionStartCapture?: TransitionEventHandler<...> | undefined; } | { ...; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Type '{ id: string; className: string; "aria-describedby": string | undefined; "aria-invalid": "true" | "false"; "aria-required": "true" | undefined; autoComplete?: string | undefined; cols?: number | undefined; ... 282 more ...; onTransitionStartCapture?: TransitionEventHandler<...> | undefined; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+    Type '{ id: string; className: string; "aria-describedby": string | undefined; "aria-invalid": "true" | "false"; "aria-required": "true" | undefined; autoComplete?: string | undefined; cols?: number | undefined; ... 282 more ...; onTransitionStartCapture?: TransitionEventHandler<...> | undefined; }' is not assignable to type 'InputHTMLAttributes<HTMLInputElement>'.
+      Types of property 'onChange' are incompatible.
+        Type 'ChangeEventHandler<HTMLTextAreaElement> | undefined' is not assignable to type 'ChangeEventHandler<HTMLInputElement> | undefined'.
+          Type 'ChangeEventHandler<HTMLTextAreaElement>' is not assignable to type 'ChangeEventHandler<HTMLInputElement>'.
+            Type 'HTMLTextAreaElement' is missing the following properties from type 'HTMLInputElement': accept, align, alt, capture, and 29 more.
+src/lib/logger.ts(166,13): error TS2322: Type 'unknown' is not assignable to type 'ReturnType<T>'.
+src/lib/services/__tests__/projectService.test.ts(5,27): error TS2307: Cannot find module '@/data/projects.json' or its corresponding type declarations.

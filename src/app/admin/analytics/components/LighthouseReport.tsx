@@ -5,7 +5,7 @@ import { AlertTriangle, Square, ChevronDown, ChevronUp, Circle, Camera } from 'l
 import Image from 'next/image';
 
 // Types (should actully be in a types file, but keeping collocated for now per existing pattern)
-interface AuditItem {
+export interface AuditItem {
     id: string;
     title: string;
     description: string;

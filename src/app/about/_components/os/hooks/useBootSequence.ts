@@ -1,28 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { soundManager } from "../utils/SoundManager";
 
-export function useBootSequence() {
+interface BootSequenceConfig {
+    totalDuration: number;
+    allowSkip: boolean;
+}
+
+const DEFAULT_CONFIG: BootSequenceConfig = {
+    totalDuration: 3500, // 3.5 seconds
+    allowSkip: true
+};
+
+export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
+    const finalConfig = { ...DEFAULT_CONFIG, ...config };
     const [needsPowerOn, setNeedsPowerOn] = useState(true);
     const [isBooting, setIsBooting] = useState(false);
 
-    const powerOn = () => {
+    const powerOn = useCallback(() => {
         console.log('[useBootSequence] Powering on, unlocking audio silently...');
-        soundManager.unlock(); // Unlock without playing any sound
-        soundManager.clearCache('startup'); // Reset so startup plays on each new boot
+        soundManager.unlock(); // Unlock audio context
+        soundManager.clearCache('startup'); // Reset startup sound for fresh boot
         setNeedsPowerOn(false);
         setIsBooting(true);
-    };
+    }, []);
 
-    const finishBooting = () => {
+    const finishBooting = useCallback(() => {
+        setNeedsPowerOn(false); // Ensure needsPowerOn is false
         setIsBooting(false);
-    };
+    }, []);
+
+    const skipBoot = useCallback(() => {
+        if (!finalConfig.allowSkip) return;
+
+        console.log('[useBootSequence] Skipping boot sequence');
+        setNeedsPowerOn(false);
+        setIsBooting(false);
+    }, [finalConfig.allowSkip]);
 
     return {
         needsPowerOn,
         isBooting,
         powerOn,
-        finishBooting
+        finishBooting,
+        skipBoot,
+        config: finalConfig
     };
 }

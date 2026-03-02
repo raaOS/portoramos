@@ -4,7 +4,7 @@
  * Standardized on WAV for maximum compatibility with generated assets.
  */
 
-type SoundType = 'startup' | 'click' | 'window-open' | 'window-close' | 'error' | 'notification' | 'drag' | 'typing' | 'sent';
+type SoundType = 'startup' | 'click' | 'window-open' | 'window-close' | 'error' | 'notification' | 'drag' | 'typing' | 'sent' | 'unlock';
 
 class SoundManager {
     private static instance: SoundManager;
@@ -21,7 +21,8 @@ class SoundManager {
         notification: '/sounds/notification.wav?v=1.3',
         drag: '/sounds/drag.wav?v=1.3',
         typing: '/sounds/click.wav?v=1.3',
-        sent: '/sounds/notification.wav?v=1.3'
+        sent: '/sounds/notification.wav?v=1.3',
+        unlock: '/sounds/click.wav?v=1.3' // Using click sound for unlock "ceklek" effect
     };
 
     private soundVolumes: Record<string, number> = {};

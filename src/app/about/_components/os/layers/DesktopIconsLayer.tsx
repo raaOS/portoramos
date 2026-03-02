@@ -16,7 +16,11 @@ interface ProjectIcon {
     id: string;
     x: number;
     y: number;
+    label: string;
     icon?: React.ReactNode;
+    imageUrl?: string;
+    videoUrl?: string;
+    aspectRatio?: number;
     type?: 'project' | 'folder' | string;
     data?: Project;
     action?: () => void;

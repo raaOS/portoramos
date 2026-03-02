@@ -93,7 +93,6 @@ const EMOJI_TO_UNICODE: Record<string, string> = {
   '👋': '1f44b',
   '✌️': '270c',
   '👌': '1f44c',
-  '👏': '1f44f',
   '👐': '1f450',
   '🙌': '1f64c',
   '👊': '1f44a',
@@ -124,7 +123,7 @@ interface AnimatedEmojiProps {
 
 export default function AnimatedEmoji({ emoji, className = '' }: AnimatedEmojiProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [animationData, setAnimationData] = useState<unknown>(null);
+  const [animationData, setAnimationData] = useState<Record<string, unknown> | null>(null);
   const [hasAnimation, setHasAnimation] = useState(false);
   const loadAttempted = useRef(false);
   
@@ -183,7 +182,7 @@ export default function AnimatedEmoji({ emoji, className = '' }: AnimatedEmojiPr
           lineHeight: 1
         }}
       >
-        {emoji}
+        {emoji as string}
       </span>
       
       {/* Animated Lottie (overlay saat hover) */}
@@ -228,7 +227,7 @@ export function parseEmojiText(text: string): React.ReactNode[] {
     }
     
     // Emoji dengan animasi
-    const emoji = match[1];
+    const emoji = match[1] as string;
     parts.push(
       <AnimatedEmoji 
         key={`emoji-${match.index}`} 

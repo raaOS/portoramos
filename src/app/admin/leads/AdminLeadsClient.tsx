@@ -5,8 +5,19 @@ import AdminLayout from '../components/AdminLayout';
 import AdminTable from '../components/AdminTable';
 import { ExternalLink, MessageSquare } from 'lucide-react';
 
+
+
+interface Lead extends Record<string, unknown> {
+    id: string;
+    createdAt: string;
+    name: string;
+    contact: string;
+    contactType: 'WhatsApp' | 'Email';
+    message: string;
+}
+
 export default function AdminLeadsClient() {
-    const [leads, setLeads] = useState([]);
+    const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -27,12 +38,13 @@ export default function AdminLeadsClient() {
         }
     };
 
-    const columns = [
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const columns: any[] = [
         {
             key: 'createdAt',
             label: 'Tanggal',
             sortable: true,
-            render: (val: string) => new Date(val).toLocaleString('id-ID', {
+            render: (val: unknown) => new Date(String(val)).toLocaleString('id-ID', {
                 day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
             })
         },
@@ -40,11 +52,12 @@ export default function AdminLeadsClient() {
         {
             key: 'contact',
             label: 'Kontak',
-            render: (val: string, item: { contactType?: string }) => {
+            render: (val: unknown, item: Lead) => {
+                const contactValue = String(val);
                 let href = '#';
                 if (item.contactType === 'WhatsApp') {
                     // Basic cleaning for WA link
-                    let num = val.replace(/\D/g, '');
+                    let num = contactValue.replace(/\D/g, '');
                     if (num.startsWith('0')) num = '62' + num.substring(1);
                     if (!num.startsWith('62')) num = '62' + num;
                     href = `https://wa.me/${num}`;
@@ -59,7 +72,7 @@ export default function AdminLeadsClient() {
                         ) : (
                             <span className="bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded-full mr-1">@</span>
                         )}
-                        {val}
+                        {contactValue}
                         <ExternalLink className="w-3 h-3" />
                     </a>
                 );
@@ -68,9 +81,9 @@ export default function AdminLeadsClient() {
         {
             key: 'message',
             label: 'Pesan',
-            render: (val: string) => (
-                <span title={val} className="block max-w-xs truncate text-gray-600">
-                    {val}
+            render: (val: unknown) => (
+                <span title={String(val)} className="block max-w-xs truncate text-gray-600">
+                    {String(val)}
                 </span>
             )
         },

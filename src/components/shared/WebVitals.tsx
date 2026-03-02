@@ -29,13 +29,8 @@ export default function WebVitals() {
         if (!isEnabled) return;
 
         // Dynamically import web-vitals library (optional dependency)
-        import('web-vitals').then((webVitals: { 
-            getCLS?: (handler: ReportHandler) => void;
-            getFID?: (handler: ReportHandler) => void;
-            getFCP?: (handler: ReportHandler) => void;
-            getLCP?: (handler: ReportHandler) => void;
-            getTTFB?: (handler: ReportHandler) => void;
-        }) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        import('web-vitals').then((webVitals: any) => {
             const { getCLS, getFID, getFCP, getLCP, getTTFB } = webVitals;
             // Report to console in development, could send to analytics in production
             const reportWebVital: ReportHandler = (metric) => {

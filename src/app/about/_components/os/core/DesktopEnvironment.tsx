@@ -45,10 +45,6 @@ import { DesktopWindowContext } from "../context/DesktopWindowContext";
 // UI Components (Extracted)
 import DesktopBackground from "../ui/DesktopBackground";
 import DesktopSkeleton from "../ui/DesktopSkeleton";
-const BootSequence = dynamic(() => import("../ui/BootSequence"), {
-    loading: () => <div className="fixed inset-0 bg-black flex items-center justify-center"><div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" /></div>,
-    ssr: false
-});
 const StartScreen = dynamic(() => import("../ui/StartScreen"), {
     ssr: false
 });
@@ -83,20 +79,18 @@ export default function DesktopEnvironment({ children, aboutData, experienceData
     );
 }
 
-function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSkillsData, projects }: DesktopEnvironmentProps) {
+function DesktopEnvironmentContent({ aboutData, experienceData, hardSkillsData, projects }: DesktopEnvironmentProps) {
 
     // Screen Lock & Resize Hook (Handles mounted state, window size, and body lock)
     const { mounted, isMobile } = useDesktopLock();
-    const { needsPowerOn, isBooting, powerOn, finishBooting } = useBootSequence();
+    const { needsPowerOn, isBooting, finishBooting } = useBootSequence();
 
-    // Fix race condition: pastikan loadConfig dipanggil SEBELUM startup sound diputar
-    // Jika aboutData belum tersedia, finishBooting tetap bisa jalan (pakai default sounds)
-    // React Compiler menangani memoization otomatis — tidak perlu useCallback manual
+    // Handle boot completion - StartScreen already played startup sound
     const handleBootComplete = () => {
         if (aboutData?.soundConfig) {
             soundManager.loadConfig(aboutData.soundConfig);
         }
-        // Suppress window-open sound briefly so it doesn't overlap with the boot sound
+        // Suppress window-open sound briefly so it doesn't overlap
         soundManager.suppressSound('window-open', 1500);
         finishBooting();
     };
@@ -161,7 +155,6 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
 
     const windowManager = useWindowManager({ initialWindows, aboutData, projects, csrfToken, isAdmin });
     const {
-        windows,
         openWindow,
         resetWindows
     } = windowManager;
@@ -241,20 +234,13 @@ function DesktopEnvironmentContent({ children, aboutData, experienceData, hardSk
                         <RetroMobileOverlay />
                     ) : (
                         <>
-                            {/* Boot Sequence - StartScreen handles all visuals */}
+                            {/* Boot Sequence - StartScreen handles all visuals and sounds */}
                             <AnimatePresence>
-                                {/* StartScreen controls its own visibility until animation completes */}
                                 <StartScreen
                                     key="start-screen"
-                                    onStart={powerOn}
-                                    isActive={needsPowerOn}
+                                    onStart={handleBootComplete}
+                                    isActive={needsPowerOn || isBooting}
                                 />
-                                {isBooting && (
-                                    <BootSequence
-                                        key="boot-sequence"
-                                        onComplete={handleBootComplete}
-                                    />
-                                )}
                             </AnimatePresence>
 
                             {/* Main Desktop Content - Hidden during boot */}

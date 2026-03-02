@@ -59,9 +59,13 @@ export interface SoftSkillItem {
 
 export interface AboutSoftSkills {
   items?: SoftSkillItem[];
-  texts?: string[]; // Deprecated
+  /** @deprecated Use items array instead */
+  texts?: string[];
+  /** @deprecated Use items array with text_id instead */
   texts_id?: string[];
-  descriptions?: string[]; // Deprecated
+  /** @deprecated Use items array with description instead */
+  descriptions?: string[];
+  /** @deprecated Use items array with description_id instead */
   descriptions_id?: string[];
 }
 

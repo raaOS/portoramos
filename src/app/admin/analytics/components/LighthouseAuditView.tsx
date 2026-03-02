@@ -4,46 +4,9 @@ import { useState } from 'react';
 import { Smartphone, Monitor, Play, Loader2, AlertCircle, Copy, Check } from 'lucide-react';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import LighthouseReport, { type LighthouseScores, type AuditItem } from './LighthouseReport';
 
-// Reusing interfaces (should ideally be shared types, but defining here for speed)
-interface AuditItem {
-    id: string;
-    title: string;
-    description: string;
-    score: number;
-    displayValue?: string;
-    scoreDisplayMode: string;
-    details?: {
-        type: string;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        items?: any[];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        headings?: any[];
-        overallSavingsMs?: number;
-        overallSavingsBytes?: number;
-    };
-}
-
-interface Scores {
-    performance: number;
-    accessibility: number;
-    bestPractices: number;
-    seo: number;
-    coreWebVitals?: {
-        lcp: string;
-        fcp: string;
-        cls: string;
-        tbt: string;
-        si: string;
-    };
-    audits?: {
-        opportunities: AuditItem[];
-        diagnostics: AuditItem[];
-        screenshot?: string; // Base64
-    };
-}
-
-import LighthouseReport from './LighthouseReport';
+type Scores = LighthouseScores;
 
 export default function LighthouseAuditView() {
     const [url, setUrl] = useState('');
@@ -117,7 +80,7 @@ export default function LighthouseAuditView() {
         }
     };
 
-    const formatDetails = (details: { type?: string; items?: Array<Record<string, unknown>>; headings?: Array<{ key: string; label?: string; text?: string; itemType?: string }> }) => {
+    const formatDetails = (details?: { type?: string; items?: Array<Record<string, unknown>>; headings?: Array<{ key: string; label?: string; text?: string; valueType?: string }> }) => {
         if (!details || !details.items || details.items.length === 0) return '';
 
         // Handle Table format
@@ -125,13 +88,13 @@ export default function LighthouseAuditView() {
             const headings = details.headings.map((h) => h.text || h.label).join('\t');
             const rows = details.items.map((item) => {
                 return details.headings?.map((h) => {
-                    const val = item[h.key] as string | number | { url?: string } | unknown;
+                    const val = item[h.key];
                     // Simple formatting for bytes/time if needed, or raw value
-                    if (h.itemType === 'bytes') return `${(val / 1024).toFixed(2)} KiB`;
-                    if (h.itemType === 'ms') return `${val} ms`;
+                    if (h.valueType === 'bytes') return `${(Number(val) / 1024).toFixed(2)} KiB`;
+                    if (h.valueType === 'ms') return `${val} ms`;
                     // Handle URL objects often returned by Lighthouse
-                    if (typeof val === 'object' && val?.url) return val.url;
-                    return val;
+                    if (typeof val === 'object' && val !== null && 'url' in val) return String((val as {url: string}).url);
+                    return String(val);
                 }).join('\t');
             }).join('\n');
 

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { testimonialService } from '@/lib/services/testimonialService';
 import { validateAdminRequest } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 // GET - Read testimonials
 export async function GET() {
   try {

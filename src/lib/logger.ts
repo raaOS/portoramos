@@ -163,7 +163,8 @@ export function withRequestId<T extends (...args: unknown[]) => Promise<unknown>
         logger.setRequestId(requestId);
 
         try {
-            return await handler(...args);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return await handler(...args) as any;
         } finally {
             logger.clear();
         }
