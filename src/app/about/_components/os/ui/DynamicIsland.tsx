@@ -161,7 +161,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
             borderRadius: 24,
         },
         notification: {
-            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '92vw' : 240,
+            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '92vw' : 220,
             height: 48,
             borderRadius: 24,
         },
@@ -178,7 +178,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                 variants={variants}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
             >
-                <div className="w-full h-full relative flex items-center text-white px-3">
+                <div className="w-full h-full relative flex items-center text-white px-5">
 
                     {/* Idle State */}
                     {currentState === "idle" && null}
