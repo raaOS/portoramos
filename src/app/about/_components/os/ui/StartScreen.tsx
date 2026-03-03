@@ -26,8 +26,9 @@ const StartScreen = ({ onStart, isActive, onReady }: StartScreenProps) => {
 
     // Signal to parent that StartScreen has mounted and is covering the screen
     useEffect(() => {
+        // Immediate call to prevent loading hang
         onReady?.();
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [onReady]);
 
     const handleClick = useCallback(() => {
         if (screenState !== "idle") return;
@@ -209,15 +210,17 @@ const StartScreen = ({ onStart, isActive, onReady }: StartScreenProps) => {
                 <m.div
                     className="relative flex items-center justify-center cursor-pointer will-change-transform"
                     layout={false}
-                    initial={{ scale: 1 }}
+                    initial={{ scale: 0, opacity: 0 }}
                     animate={{
-                        // Keep it scaled up once zooming starts so it doesn't "shrink" back 
-                        // when the state changes to showingText/glassReveal.
-                        scale: (screenState === "idle") ? 1 : 300
+                        // Galactic Pop into scale 1, then Super Zoom into scale 300 on click
+                        scale: (screenState === "idle") ? 1 : 300,
+                        opacity: 1
                     }}
                     transition={{
-                        duration: BOOT_CONFIG.keyholeZoomDuration / 1000,
-                        ease: [0.76, 0, 0.24, 1]
+                        scale: (screenState === "idle")
+                            ? { type: "spring", stiffness: 260, damping: 20 }
+                            : { duration: BOOT_CONFIG.keyholeZoomDuration / 1000, ease: [0.76, 0, 0.24, 1] },
+                        opacity: { duration: 0.5 }
                     }}
                 >
                     <m.div
@@ -239,10 +242,17 @@ const StartScreen = ({ onStart, isActive, onReady }: StartScreenProps) => {
                             width="80"
                             height="120"
                             viewBox="0 0 24 36"
-                            fill="currentColor"
+                            fill="#5eff15"
+                            className="relative overflow-visible"
                         >
-                            <circle cx="12" cy="10" r="9" />
-                            <path d="M8 16 L4 32 C 3 35, 21 35, 20 32 L16 16 Z" />
+                            <circle
+                                cx="12"
+                                cy="10"
+                                r="9"
+                            />
+                            <path
+                                d="M8 16 L4 32 C 3 35, 21 35, 20 32 L16 16 Z"
+                            />
                         </svg>
                     </m.div>
 
