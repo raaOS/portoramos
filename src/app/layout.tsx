@@ -11,9 +11,11 @@ import LayoutClient from '@/components/layout/LayoutClient';
 import UnregisterSW from '@/components/shared/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import PerformanceMonitor from '@/components/shared/PerformanceMonitor';
+import VersionGuard from '@/components/shared/VersionGuard';
 import SmoothScroll from '@/components/layout/SmoothScroll';
 import { loadAboutData } from '@/lib/about';
 import SoundConfigLoader from '@/components/layout/SoundConfigLoader';
+import { APP_VERSION } from '@/lib/constants';
 import './globals.css';
 
 // ISR: Revalidate layout every 60 seconds
@@ -100,45 +102,47 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.github.com" />
         <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
-        
+
         {/* Preload critical LCP image - OS Wallpaper */}
-        <link 
-          rel="preload" 
-          href="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop" 
-          as="image" 
+        <link
+          rel="preload"
+          href="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop"
+          as="image"
           type="image/jpeg"
           fetchPriority="high"
         />
-        
+
         {/* Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData) }}
-        />
+        {/* Application Version (Cache Tracking) */}
+        <meta name="application-version" content={APP_VERSION} />
       </head>
+      {/* suppressHydrationWarning: required because browser extensions (e.g. dark mode, 
+           translators) inject attributes on <body> during SSR→hydration, causing false mismatches.
+           This is the standard Next.js pattern — see: https://nextjs.org/docs/messages/react-hydration-error */}
       <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default" suppressHydrationWarning>
         {/* Skip to content - Accessibility */}
-        <a 
-          href="#main-content" 
+        <a
+          href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100000] focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-black"
           aria-label="Skip to main content"
         >
           Skip to main content
         </a>
-        
+
         <SmoothScroll />
         <Providers>
           <ToastProvider>
             <LastUpdatedProvider>
               <NavbarVisibilityProvider>
                 <ErrorBoundary>
-                    <SoundConfigLoader soundConfig={aboutData?.soundConfig} />
-                    <LayoutClient modal={modal} dockConfig={aboutData?.dockConfig}>
-                      {children}
-                    </LayoutClient>
-                    <UnregisterSW />
-                    <SpeedInsights />
-                    <PerformanceMonitor />
+                  <SoundConfigLoader soundConfig={aboutData?.soundConfig} />
+                  <LayoutClient modal={modal} dockConfig={aboutData?.dockConfig}>
+                    {children}
+                  </LayoutClient>
+                  <UnregisterSW />
+                  <SpeedInsights />
+                  <PerformanceMonitor />
+                  <VersionGuard />
                 </ErrorBoundary>
               </NavbarVisibilityProvider>
             </LastUpdatedProvider>

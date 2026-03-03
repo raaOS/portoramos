@@ -166,7 +166,9 @@ export async function POST(request: NextRequest) {
     }
 
     const successMessage = `✨ **NEW PROJECT CREATED**\n\n**Title:** ${newProject.title}\n**Client:** ${newProject.client}\n**ID:** ${newProject.id}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
-    sendTelegramAlert(successMessage);
+    await sendTelegramAlert(successMessage).catch(() => {
+      // Non-critical: continue even if Telegram alert fails
+    });
 
     // Auto-revalidate paths so the new project appears immediately on public pages
     revalidatePath('/', 'layout');
@@ -212,7 +214,9 @@ async function finalizeMedia(
 
     const newPath = path.join(targetDir, newFilename);
 
-    await fs.promises.rename(oldPath, newPath);
+    // Use copyFile + unlink instead of rename for cross-filesystem compatibility (Vercel)
+    await fs.promises.copyFile(oldPath, newPath);
+    await fs.promises.unlink(oldPath).catch(() => { });
 
     return `/assets/${subDir}/${newFilename}`;
   } catch {

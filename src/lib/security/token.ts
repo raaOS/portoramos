@@ -34,6 +34,12 @@ export function validateCSRFToken(token: string, sessionToken: string): boolean 
     if (!token || !sessionToken) return false
     if (token.length !== 64 || sessionToken.length !== 64) return false
 
-    // Simple validation - in production, use proper CSRF validation
-    return token === sessionToken
+    // Timing-safe comparison to prevent side-channel attacks
+    const bufA = Buffer.from(token, 'hex')
+    const bufB = Buffer.from(sessionToken, 'hex')
+    if (bufA.length !== bufB.length) return false
+
+    // crypto is available globally in Node.js
+    const crypto = require('crypto')
+    return crypto.timingSafeEqual(bufA, bufB)
 }

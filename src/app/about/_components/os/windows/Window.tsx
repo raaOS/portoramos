@@ -29,6 +29,7 @@ interface WindowProps {
     onTogglePin?: () => void;
     isAdmin?: boolean;
     animationVariant?: 'genie' | 'scale' | 'tv' | 'snap';
+    isFocused?: boolean;
 }
 
 export default function OSWindow({
@@ -54,8 +55,10 @@ export default function OSWindow({
     isPinned = false,
     onTogglePin,
     isAdmin = false,
+    isFocused = false,
     // animationVariant is reserved for future use (default: 'genie')
 }: WindowProps) {
+    const windowRef = useRef<HTMLDivElement>(null);
     const isMobileWindow = typeof window !== 'undefined' && window.innerWidth < 768;
     const isTabletWindow = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024;
     const isSmallScreen = isMobileWindow || isTabletWindow;
@@ -83,6 +86,13 @@ export default function OSWindow({
             return () => clearTimeout(timer);
         }
     }, [isOpen]);
+
+    // Handle auto-focus when window becomes active
+    useEffect(() => {
+        if (isFocused && windowRef.current) {
+            windowRef.current.focus();
+        }
+    }, [isFocused]);
 
     // "Premium Solid" Mode (Snappy, No Bounce, Direct)
     const getMinimizeState = () => {
@@ -183,6 +193,7 @@ export default function OSWindow({
         <AnimatePresence>
             {isOpen && (
                 <m.div
+                    ref={windowRef}
                     drag={!isMaximized && !isResizing && (!isPinned || isAdmin) && !isSmallScreen}
                     dragControls={dragControls}
                     dragListener={false}
@@ -226,11 +237,11 @@ export default function OSWindow({
                                     opacity: 1,
                                     x: initialPosition.x,
                                     y: initialPosition.y,
-                                    width: dynamicSize.width || width || winWidth, // USE DYNAMIC SIZE
-                                    height: dynamicSize.height || height || "auto", // USE DYNAMIC SIZE
+                                    width: dynamicSize.width || width || winWidth,
+                                    height: dynamicSize.height || height || "auto",
                                     borderRadius: 10,
                                     // Solid, Premium Spring (No wobble)
-                                    transition: isResizing ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 25 }
+                                    transition: isResizing ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 25, layout: { duration: 0 } }
                                 }
                     }
                     exit={{
@@ -238,7 +249,49 @@ export default function OSWindow({
                         opacity: 0,
                         transition: { duration: 0.15 }
                     }}
+                    layout={false} // CRITICAL GPU OFF-LOAD: Disable automatic layout reflow animations
                     onPointerDown={onFocus}
+                    onKeyDown={(e) => {
+                        // Keyboard Shortcuts
+                        if (e.key === 'Escape') {
+                            e.preventDefault();
+                            soundManager.play('window-close');
+                            onClose();
+                        }
+                        if (e.ctrlKey && e.key === 'm') {
+                            e.preventDefault();
+                            onMinimize && onMinimize();
+                        }
+                        if (e.ctrlKey && e.key === 'Enter') {
+                            e.preventDefault();
+                            onMaximize && onMaximize();
+                        }
+
+                        // Simple Focus Trap: Tab handling
+                        if (e.key === 'Tab') {
+                            const focusableElements = e.currentTarget.querySelectorAll(
+                                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                            );
+                            const firstElement = focusableElements[0] as HTMLElement;
+                            const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+                            if (e.shiftKey) { // Shift + Tab
+                                if (document.activeElement === firstElement) {
+                                    e.preventDefault();
+                                    lastElement.focus();
+                                }
+                            } else { // Tab
+                                if (document.activeElement === lastElement) {
+                                    e.preventDefault();
+                                    firstElement.focus();
+                                }
+                            }
+                        }
+                    }}
+                    tabIndex={0}
+                    aria-modal="true"
+                    role="dialog"
+                    aria-label={title}
                     style={{
                         position: "absolute",
                         zIndex: zIndex,
@@ -246,7 +299,7 @@ export default function OSWindow({
                         left: 0,
                     }}
                     data-lenis-prevent
-                    className={`flex flex-col overflow-hidden border border-white/40 will-change-transform pointer-events-auto ${isSmallScreen
+                    className={`flex flex-col overflow-hidden border border-white/40 will-change-transform pointer-events-auto shadow-2xl rounded-lg focus-within:ring-2 focus-within:ring-blue-500/50 outline-none ${isSmallScreen
                         ? 'bg-white/95'
                         : 'bg-white/80 backdrop-blur-xl'
                         }`}

@@ -2,6 +2,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { unstable_cache, revalidateTag, revalidatePath } from 'next/cache';
+import { cleanEnvVar } from '@/lib/utils/env';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
@@ -10,17 +11,6 @@ interface GitHubFileResponse {
     sha: string;
     encoding: string;
 }
-
-// Helper to clean environment variables (removes quotes and trims)
-const cleanEnvVar = (name: string): string | undefined => {
-    let val = process.env[name];
-    if (!val) return undefined;
-    val = val.trim();
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-        val = val.slice(1, -1);
-    }
-    return val;
-};
 
 export class GitHubService {
     private path: string = 'src/data/projects.json';

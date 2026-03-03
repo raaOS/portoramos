@@ -20,8 +20,12 @@ export default function WindowsLayer({ isAdmin }: WindowsLayerProps) {
         handleWindowResizeEnd,
         togglePin
     } = useDesktopWindowContext();
+
+    // Determine which window is on top (highest zIndex) to handle keyboard focus
+    const maxZIndex = Math.max(...windows.filter(w => w.isOpen && !w.isMinimized).map(w => w.zIndex || 0), 0);
+
     return (
-        <div className="absolute inset-0 z-20 pointer-events-none w-full h-full pb-16">
+        <div className="absolute inset-0 z-20 pointer-events-none w-full h-full pb-20">
             {windows.map(w => (
                 <OSWindow
                     key={w.id}
@@ -29,6 +33,7 @@ export default function WindowsLayer({ isAdmin }: WindowsLayerProps) {
                     isOpen={w.isOpen}
                     title={w.title}
                     isMinimized={w.isMinimized}
+                    isFocused={w.isOpen && !w.isMinimized && w.zIndex === maxZIndex && maxZIndex > 0}
                     onClose={() => closeWindow(w.id)}
                     onMinimize={() => minimizeWindow(w.id)}
                     onMaximize={() => maximizeWindow(w.id)}

@@ -8,17 +8,7 @@
  * - Never log full token - only show first/last 5 chars for debugging
  */
 
-// Helper to clean environment variables (removes quotes and trims)
-const cleanEnvVar = (name: string): string | undefined => {
-    let val = process.env[name];
-    if (!val) return undefined;
-    val = val.trim();
-    // Remove surrounding quotes if present
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-        val = val.slice(1, -1);
-    }
-    return val;
-};
+import { cleanEnvVar } from '@/lib/utils/env';
 
 // Helper to mask token for logging (security)
 const maskToken = (token: string): string => {
@@ -40,24 +30,24 @@ function validateConfig(): { valid: true; config: { botToken: string; chatId: st
     const { botToken, chatId, groupId } = getTelegramConfig();
 
     if (!botToken) {
-        return { 
-            valid: false, 
-            error: 'Telegram Bot Token tidak dikonfigurasi. Tambahkan TELEGRAM_BOT_TOKEN di .env.local' 
+        return {
+            valid: false,
+            error: 'Telegram Bot Token tidak dikonfigurasi. Tambahkan TELEGRAM_BOT_TOKEN di .env.local'
         };
     }
 
     if (!chatId) {
-        return { 
-            valid: false, 
-            error: 'Telegram Chat ID tidak dikonfigurasi. Tambahkan TELEGRAM_CHAT_ID di .env.local' 
+        return {
+            valid: false,
+            error: 'Telegram Chat ID tidak dikonfigurasi. Tambahkan TELEGRAM_CHAT_ID di .env.local'
         };
     }
 
     // Validate token format (should be digits:alphanumeric)
     if (!/^\d+:[A-Za-z0-9_-]+$/.test(botToken)) {
-        return { 
-            valid: false, 
-            error: 'Format TELEGRAM_BOT_TOKEN tidak valid. Pastikan format: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz' 
+        return {
+            valid: false,
+            error: 'Format TELEGRAM_BOT_TOKEN tidak valid. Pastikan format: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz'
         };
     }
 
@@ -68,14 +58,14 @@ function validateConfig(): { valid: true; config: { botToken: string; chatId: st
  * Send Telegram Alert with Markdown formatting
  */
 export async function sendTelegramAlert(
-    message: string, 
-    options?: { 
-        buttons?: { text: string; url: string }[][], 
-        priority?: string 
+    message: string,
+    options?: {
+        buttons?: { text: string; url: string }[][],
+        priority?: string
     }
 ): Promise<{ success: boolean; error?: string }> {
     const validation = validateConfig();
-    
+
     if (!validation.valid) {
         console.error('[Telegram] Config error:', validation.error);
         return { success: false, error: 'Service not configured' };
@@ -133,12 +123,12 @@ export async function sendTelegramAlert(
  * Send Document/PDF via Telegram
  */
 export async function sendTelegramDocument(
-    fileName: string, 
-    buffer: Buffer, 
+    fileName: string,
+    buffer: Buffer,
     caption?: string
 ): Promise<{ success: boolean; error?: string }> {
     const validation = validateConfig();
-    
+
     if (!validation.valid) {
         console.error('[Telegram] Config error:', validation.error);
         return { success: false, error: 'Service not configured' };
@@ -182,16 +172,16 @@ export async function sendTelegramDocument(
  */
 export async function getTelegramConfigSafe() {
     const validation = validateConfig();
-    
+
     if (!validation.valid) {
-        return { 
-            configured: false as const, 
-            error: validation.error 
+        return {
+            configured: false as const,
+            error: validation.error
         };
     }
 
     const { botToken, chatId, groupId } = validation.config;
-    
+
     return {
         configured: true as const,
         botToken: maskToken(botToken),
@@ -207,14 +197,14 @@ export async function getTelegramConfigSafe() {
  * This is a wrapper that sends to the group instead of personal chat
  */
 export async function sendTelegramToGroup(
-    message: string, 
-    options?: { 
-        buttons?: { text: string; url: string }[][], 
-        priority?: string 
+    message: string,
+    options?: {
+        buttons?: { text: string; url: string }[][],
+        priority?: string
     }
 ): Promise<{ success: boolean; error?: string }> {
     const validation = validateConfig();
-    
+
     if (!validation.valid) {
         console.error('[Telegram] Config error:', validation.error);
         return { success: false, error: 'Service not configured' };

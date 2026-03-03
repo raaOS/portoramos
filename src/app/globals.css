@@ -311,3 +311,19 @@ textarea,
     page-break-after: avoid;
   }
 }
+
+/* ==========================================================================
+   OS Mode Global Overrides (managed by useDesktopLock.ts)
+   ========================================================================== */
+html.os-mode-active,
+body.os-mode-active {
+    overflow: hidden !important;
+    height: 100vh !important;
+    width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    overscroll-behavior: none !important;
+}

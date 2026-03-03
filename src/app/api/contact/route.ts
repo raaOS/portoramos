@@ -2,21 +2,38 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loadData, saveData, ensureDataDir } from '@/lib/backup';
 import { ContactData, UpdateContactData, ContactContent, ContactInfo, ContactFormSettings } from '@/types/contact';
 import { validateAdminRequest } from '@/lib/auth';
+import { githubService } from '@/lib/github';
 import path from 'path';
 
 const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'contact.json');
+const GITHUB_PATH = 'src/data/contact.json';
+const isDev = process.env.NODE_ENV === 'development';
 
 // GET - Read contact content
 export async function GET(_request: NextRequest) {
   try {
-    await ensureDataDir();
-    const data = await loadData(DATA_FILE) as ContactData;
-
-    if (!data) {
-      return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
+    if (isDev) {
+      await ensureDataDir();
+      const data = await loadData(DATA_FILE) as ContactData;
+      if (!data) {
+        return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
+      }
+      return NextResponse.json(data);
     }
 
-    return NextResponse.json(data);
+    // Production: read from GitHub for persistence
+    try {
+      const { content } = await githubService.getFileContent<ContactData>(GITHUB_PATH);
+      return NextResponse.json(content);
+    } catch {
+      // Fallback to local file if GitHub is unavailable
+      await ensureDataDir();
+      const data = await loadData(DATA_FILE) as ContactData;
+      if (!data) {
+        return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
+      }
+      return NextResponse.json(data);
+    }
   } catch (error) {
     console.error('Error loading contact data:', error);
     return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
@@ -35,8 +52,20 @@ export async function PUT(request: NextRequest) {
 
     const body: UpdateContactData = await request.json();
 
-    await ensureDataDir();
-    const data = await loadData(DATA_FILE) as ContactData;
+    // Load current data
+    let data: ContactData | null = null;
+    if (isDev) {
+      await ensureDataDir();
+      data = await loadData(DATA_FILE) as ContactData;
+    } else {
+      try {
+        const gh = await githubService.getFileContent<ContactData>(GITHUB_PATH);
+        data = gh.content;
+      } catch {
+        await ensureDataDir();
+        data = await loadData(DATA_FILE) as ContactData;
+      }
+    }
 
     if (!data) {
       return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
@@ -50,11 +79,18 @@ export async function PUT(request: NextRequest) {
       lastUpdated: new Date().toISOString()
     };
 
-    // Save data
-    const success = await saveData(DATA_FILE, updatedData);
-
-    if (!success) {
-      return NextResponse.json({ error: 'Failed to save contact data' }, { status: 500 });
+    // Save data — local in dev, GitHub in production
+    if (isDev) {
+      const success = await saveData(DATA_FILE, updatedData);
+      if (!success) {
+        return NextResponse.json({ error: 'Failed to save contact data' }, { status: 500 });
+      }
+    } else {
+      await githubService.updateFile(
+        GITHUB_PATH,
+        updatedData,
+        `Update contact data - ${new Date().toISOString()}`
+      );
     }
 
     return NextResponse.json({

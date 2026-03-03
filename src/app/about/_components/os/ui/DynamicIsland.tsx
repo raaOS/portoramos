@@ -32,7 +32,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
     }, [activeWindow]);
 
     // Typing effect for message - shorter max length
-    const startTypingEffect = (message: any) => {
+    const startTypingEffect = (message: string) => {
         // Safety: Ensure message is a string
         const safeMessage = typeof message === 'string' ? message : String(message || "");
 

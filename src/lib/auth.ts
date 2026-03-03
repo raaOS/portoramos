@@ -3,17 +3,7 @@ import crypto from 'crypto';
 import { sign, verify } from 'jsonwebtoken';
 import { validateCSRFToken } from '@/lib/security';
 import { cookies } from 'next/headers';
-
-// Helper to clean environment variables (removes quotes and trims)
-const cleanEnvVar = (name: string): string | undefined => {
-  let val = process.env[name];
-  if (!val) return undefined;
-  val = val.trim();
-  if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-    val = val.slice(1, -1);
-  }
-  return val;
-};
+import { cleanEnvVar } from '@/lib/utils/env';
 
 // Clean auth system - scrypt only (most secure)
 const ADMIN_PASSWORD_SCRYPT = cleanEnvVar('ADMIN_PASSWORD_SCRYPT');

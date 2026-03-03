@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { m, AnimatePresence } from "framer-motion";
+import { m } from "framer-motion";
 import { soundManager } from "../utils/SoundManager";
 
 interface StartScreenProps {
     onStart: () => void;
     isActive: boolean;
+    onReady?: () => void;
 }
 
 type ScreenState = "idle" | "zooming" | "showingText" | "glassReveal" | "done";
@@ -20,8 +21,14 @@ const BOOT_CONFIG = {
     allowSkip: true,
 } as const;
 
-const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
+const StartScreen = ({ onStart, isActive, onReady }: StartScreenProps) => {
     const [screenState, setScreenState] = useState<ScreenState>("idle");
+
+    // Signal to parent that StartScreen has mounted and is covering the screen
+    useEffect(() => {
+        onReady?.();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
     const handleClick = useCallback(() => {
         if (screenState !== "idle") return;
 
@@ -70,9 +77,9 @@ const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
 
     return (
         <m.div
-            className="fixed inset-0 z-[10000] overflow-hidden"
+            className="fixed inset-0 w-full h-full overflow-hidden select-none z-[10000]"
             initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }} // NEVER fade out the main container. The hole creates the reveal.
+            animate={{ opacity: 1 }}
             style={{ pointerEvents: screenState === "glassReveal" ? "none" : "auto" }}
         >
             {/* Stage 3 & 4: Deep Dive Background Reveal (Hollow 'O') */}
@@ -117,6 +124,22 @@ const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
                         height="100"
                         fill="#5eff15"
                         mask="url(#hollow-o-mask)"
+                    />
+
+                    {/* The Green Plug - Smoothly fades out to reveal desktop beneath (Anti-Flicker) */}
+                    <m.circle
+                        cx="50"
+                        cy="50"
+                        r="2.235"
+                        fill="#5eff15"
+                        initial={{ opacity: 1 }}
+                        animate={{
+                            opacity: screenState === "glassReveal" ? 0 : 1
+                        }}
+                        transition={{
+                            duration: 0.8,
+                            ease: "easeInOut"
+                        }}
                     />
 
                     {/* The text "RAMOS OS" - Hybrid Design (DM Sans Paths + Perfect Circles) */}
@@ -168,7 +191,7 @@ const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
                     backgroundColor: (screenState === "showingText") ? "#5eff15" : "#000000"
                 }}
                 transition={{
-                    opacity: { duration: screenState === "glassReveal" ? 0 : 0.8, ease: "easeInOut" },
+                    opacity: { duration: screenState === "glassReveal" ? 0.8 : 0.8, ease: "easeInOut" },
                     backgroundColor: { duration: 0 } // Switch instantly behind the text mask
                 }}
             />
@@ -184,7 +207,8 @@ const StartScreen = ({ onStart, isActive }: StartScreenProps) => {
                 transition={{ duration: 0.8, ease: "easeInOut" }} // Smoothly fade out as RAMOS OS fades in (crossfade)
             >
                 <m.div
-                    className="relative flex items-center justify-center cursor-pointer"
+                    className="relative flex items-center justify-center cursor-pointer will-change-transform"
+                    layout={false}
                     initial={{ scale: 1 }}
                     animate={{
                         // Keep it scaled up once zooming starts so it doesn't "shrink" back 

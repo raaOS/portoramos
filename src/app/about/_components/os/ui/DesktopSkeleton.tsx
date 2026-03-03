@@ -3,11 +3,17 @@ import Image from 'next/image';
 
 interface DesktopSkeletonProps {
     wallpaperUrl?: string;
+    isBooting?: boolean;
 }
 
-export default function DesktopSkeleton({ wallpaperUrl }: DesktopSkeletonProps) {
+export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkeletonProps) {
     const defaultWallpaper = "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop";
     const wallpaper = wallpaperUrl || defaultWallpaper;
+
+    // If booting, show absolutely nothing but black to prevent "Skeleton Glitch"
+    if (isBooting) {
+        return <div className="fixed inset-0 bg-black z-[10001]" />;
+    }
 
     return (
         <div className="fixed inset-0 w-full h-full overflow-hidden select-none bg-white">
@@ -25,8 +31,8 @@ export default function DesktopSkeleton({ wallpaperUrl }: DesktopSkeletonProps) 
                 />
             </div>
 
-            {/* White overlay during loading */}
-            <div className="absolute inset-0 bg-white z-1" />
+            {/* Dark overlay during loading */}
+            <div className="absolute inset-0 bg-black z-1" />
 
             {/* Fake Menu Bar */}
             <div className="absolute top-0 left-0 right-0 h-9 sm:h-8 bg-white/80 backdrop-blur-md flex items-center px-4 border-b border-gray-100 z-[10000]">

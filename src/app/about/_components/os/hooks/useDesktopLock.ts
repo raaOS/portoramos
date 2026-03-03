@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
 
+/**
+ * Hook to lock the desktop environment in place.
+ * 
+ * Manages:
+ * - `mounted` state for component readiness
+ * - `isMobile` state for responsive layout
+ * - Prevents scroll/overflow when OS mode is active
+ * - Applies full-viewport lock styles via CSS class (avoids style tag injection)
+ */
 export const useDesktopLock = () => {
     const [mounted, setMounted] = useState(false);
     const [isMobile, setIsMobile] = useState(() => {
@@ -19,7 +28,7 @@ export const useDesktopLock = () => {
             bodyHeight: body.style.height
         };
 
-        // Lock
+        // Lock viewport
         window.scrollTo(0, 0);
         html.style.overflow = "hidden";
         body.style.overflow = "hidden";
@@ -27,26 +36,11 @@ export const useDesktopLock = () => {
         body.style.height = "100%";
         html.classList.add('lenis-stopped');
 
-        // Style Injection (Safe)
-        const styleId = 'os-mode-reset';
-        if (!document.getElementById(styleId)) {
-            const style = document.createElement('style');
-            style.id = styleId;
-            style.textContent = `
-                html, body {
-                    overflow: hidden !important;
-                    height: 100vh !important;
-                    width: 100vw !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    position: fixed !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    overscroll-behavior: none !important;
-                }
-            `;
-            document.head.appendChild(style);
-        }
+        // Apply OS mode lock via CSS class instead of injecting a <style> tag.
+        // The class applies the same styles (overflow:hidden, position:fixed, etc.)
+        // but is safer because it won't conflict with other components' style injections.
+        html.classList.add('os-mode-active');
+        body.classList.add('os-mode-active');
 
         const handleResize = () => {
             const width = window.innerWidth;
@@ -67,9 +61,8 @@ export const useDesktopLock = () => {
             html.style.height = originalStyles.htmlHeight;
             body.style.height = originalStyles.bodyHeight;
             html.classList.remove('lenis-stopped');
-
-            const styleTag = document.getElementById(styleId);
-            if (styleTag) styleTag.remove();
+            html.classList.remove('os-mode-active');
+            body.classList.remove('os-mode-active');
         };
     }, []);
 

@@ -46,7 +46,8 @@ import { DesktopWindowContext } from "../context/DesktopWindowContext";
 import DesktopBackground from "../ui/DesktopBackground";
 import DesktopSkeleton from "../ui/DesktopSkeleton";
 const StartScreen = dynamic(() => import("../ui/StartScreen"), {
-    ssr: false
+    ssr: false,
+    loading: () => <div className="fixed inset-0 bg-black z-[10000]" />
 });
 
 const RetroMobileOverlay = dynamic(() => import("../ui/RetroMobileOverlay"), {
@@ -84,6 +85,10 @@ function DesktopEnvironmentContent({ aboutData, experienceData, hardSkillsData, 
     // Screen Lock & Resize Hook (Handles mounted state, window size, and body lock)
     const { mounted, isMobile } = useDesktopLock();
     const { needsPowerOn, isBooting, finishBooting } = useBootSequence();
+
+    // Track when StartScreen has actually mounted and is covering the screen
+    // This prevents the desktop from being visible during the React render timing gap
+    const [startScreenReady, setStartScreenReady] = useState(false);
 
     // Handle boot completion - StartScreen already played startup sound
     const handleBootComplete = () => {
@@ -221,7 +226,7 @@ function DesktopEnvironmentContent({ aboutData, experienceData, hardSkillsData, 
     // SSR Skeleton: Show a basic visual immediately to improve LCP
     // Before: `return null` caused 17s LCP (blank screen until JS hydrates)
     if (!mounted) {
-        return <DesktopSkeleton />;
+        return <DesktopSkeleton isBooting={needsPowerOn} wallpaperUrl={aboutData?.wallpaperConfig?.activeWallpaperId} />;
     }
     // Desktop Content - ready immediately, no delay
     // Desktop Content - ready immediately, no delay
@@ -240,26 +245,30 @@ function DesktopEnvironmentContent({ aboutData, experienceData, hardSkillsData, 
                                     key="start-screen"
                                     onStart={handleBootComplete}
                                     isActive={needsPowerOn || isBooting}
+                                    onReady={() => setStartScreenReady(true)}
                                 />
                             </AnimatePresence>
 
-                            {/* Main Desktop Content - Hidden during boot */}
+                            {/* Main Desktop Content - Hidden until StartScreen is mounted and covering the screen */}
                             <m.div
                                 className="relative w-full h-full overflow-hidden select-none"
                                 initial={{ opacity: 0 }}
                                 animate={{
-                                    opacity: 1
+                                    opacity: startScreenReady ? 1 : 0
                                 }}
-                                transition={{ duration: 0.3 }}
-                                style={{ willChange: 'opacity' }}
+                                transition={{ duration: 0.15 }}
+                                style={{
+                                    willChange: 'opacity',
+                                    visibility: startScreenReady ? 'visible' : 'hidden'
+                                }}
                             >
                                 {/* Wallpaper */}
                                 <DesktopBackground wallpaperConfig={aboutData?.wallpaperConfig} />
 
                                 {/* Layer 1: Desktop Icons & Sticky Notes */}
+                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                 <DesktopIconsLayer
-                                    // @ts-expect-error type mismatch between OS icon types and exact Project type string unions
-                                    projectIcons={projectIcons}
+                                    projectIcons={projectIcons as any[]}
                                     isMobile={isMobile}
                                     notesVisible={notesVisible}
                                     notes={notes}
@@ -272,7 +281,6 @@ function DesktopEnvironmentContent({ aboutData, experienceData, hardSkillsData, 
                                     restoreNote={restoreNote}
                                     addNote={addNote}
                                     isAdmin={isAdmin}
-                                    setNotesVisible={setNotesVisible}
                                 />
 
                                 {/* Layer 2: Windows (Rendered early so animations finish before doors open) */}

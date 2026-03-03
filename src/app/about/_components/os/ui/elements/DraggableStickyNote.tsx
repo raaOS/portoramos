@@ -47,7 +47,8 @@ export const DraggableStickyNote = ({
                 updateNote(note.id, { x: newX, y: newY });
             }}
             onPointerDown={() => bringToFrontNote(note.id)}
-            className="absolute pointer-events-auto"
+            layout={false} // CRITICAL GPU OFF-LOAD: Disable automatic layout reflow animations
+            className="absolute pointer-events-auto will-change-transform"
             style={{
                 left: 0,
                 top: 0,

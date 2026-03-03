@@ -4,6 +4,8 @@
  * Standardized on WAV for maximum compatibility with generated assets.
  */
 
+import { getAssetPath } from '@/lib/constants';
+
 type SoundType = 'startup' | 'click' | 'window-open' | 'window-close' | 'error' | 'notification' | 'drag' | 'typing' | 'sent' | 'unlock';
 
 class SoundManager {
@@ -13,16 +15,16 @@ class SoundManager {
     private volume: number = 0.5;
 
     private soundPaths: Record<SoundType, string> = {
-        startup: '/sounds/startup.wav?v=1.3',
-        click: '/sounds/click.wav?v=1.3',
-        'window-open': '/sounds/window-open.wav?v=1.3',
-        'window-close': '/sounds/window-close.wav?v=1.3',
-        error: '/sounds/error.wav?v=1.3',
-        notification: '/sounds/notification.wav?v=1.3',
-        drag: '/sounds/drag.wav?v=1.3',
-        typing: '/sounds/click.wav?v=1.3',
-        sent: '/sounds/notification.wav?v=1.3',
-        unlock: '/sounds/click.wav?v=1.3' // Using click sound for unlock "ceklek" effect
+        startup: getAssetPath('/sounds/startup.wav'),
+        click: getAssetPath('/sounds/click.wav'),
+        'window-open': getAssetPath('/sounds/window-open.wav'),
+        'window-close': getAssetPath('/sounds/window-close.wav'),
+        error: getAssetPath('/sounds/error.wav'),
+        notification: getAssetPath('/sounds/notification.wav'),
+        drag: getAssetPath('/sounds/drag.wav'),
+        typing: getAssetPath('/sounds/click.wav'),
+        sent: getAssetPath('/sounds/notification.wav'),
+        unlock: getAssetPath('/sounds/click.wav') // Using click sound for unlock "ceklek" effect
     };
 
     private soundVolumes: Record<string, number> = {};

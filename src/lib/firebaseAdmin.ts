@@ -1,22 +1,12 @@
 import 'server-only';
 import * as admin from 'firebase-admin';
+import { cleanEnvVar } from '@/lib/utils/env';
 
 // Initialize the app lazily to allow Vercel to inject env vars at runtime
 export const getFirebaseDb = (): admin.database.Database => {
     if (admin.apps.length > 0) {
         return admin.app().database();
     }
-
-    // Helper to clean environment variables (removes quotes and trims)
-    const cleanEnvVar = (name: string): string | undefined => {
-        let val = process.env[name];
-        if (!val) return undefined;
-        val = val.trim();
-        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-            val = val.slice(1, -1);
-        }
-        return val;
-    };
 
     const projectId = cleanEnvVar('FIREBASE_PROJECT_ID');
     const clientEmail = cleanEnvVar('FIREBASE_CLIENT_EMAIL');

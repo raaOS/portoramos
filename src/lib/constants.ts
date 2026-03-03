@@ -124,3 +124,21 @@ export const TRANSITIONS = {
     NORMAL: 0.3,
     SLOW: 0.6,
 } as const;
+
+/**
+ * Global Application Version (for Cache Busting)
+ */
+export const APP_VERSION = '0.1.0';
+
+/**
+ * Helper to get asset path with automatic cache busting for visitors
+ * @param path The relative path to the asset (e.g. '/sounds/click.wav')
+ */
+export const getAssetPath = (path: string): string => {
+    if (!path) return '';
+    // If it already has a query param or is external, return as is
+    if (path.includes('?') || path.startsWith('http') || path.startsWith('data:')) {
+        return path;
+    }
+    return `${path}?v=${APP_VERSION}`;
+};

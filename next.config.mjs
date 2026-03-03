@@ -40,6 +40,9 @@ const nextConfig = {
     qualities: [60, 75, 85, 90],
     // Long cache time for CDN optimization (1 year)
     minimumCacheTTL: 31536000,
+    // Security: prevent SVG injection attacks
+    dangerouslyAllowSVG: false,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   // Transpile packages (empty - Three.js removed as unused)
   transpilePackages: [],
@@ -161,6 +164,16 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // Cache control for Home page (HTML)
+      {
+        source: '/',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=0, stale-while-revalidate=59, must-revalidate'
+          }
+        ]
+      },
       {
         source: '/(.*)',
         headers: [
@@ -249,34 +262,12 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   poweredByHeader: false,
   generateEtags: true,
-  
-  // Image optimization for Performance 100
-  images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-      { protocol: 'https', hostname: 'plus.unsplash.com' },
-      { protocol: 'https', hostname: 'picsum.photos' },
-      { protocol: 'https', hostname: 'via.placeholder.com' },
-      { protocol: 'https', hostname: 'raw.githubusercontent.com' },
-      { protocol: 'https', hostname: 'ui-avatars.com' },
-      { protocol: 'https', hostname: 'i.ibb.co' },
-      { protocol: 'https', hostname: 'postimg.cc' },
-      { protocol: 'https', hostname: 'i.postimg.cc' },
-      { protocol: 'https', hostname: 'images2.imgbox.com' }
-    ],
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 640],
-    minimumCacheTTL: 31536000,
-    dangerouslyAllowSVG: false,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-  },
-  
+
   // Strict mode for quality
   typescript: {
     ignoreBuildErrors: false,
   },
-  
+
   // Compiler optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',

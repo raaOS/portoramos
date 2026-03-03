@@ -92,7 +92,8 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                 x: iconX,
                 y: iconY
             }}
-            className={`flex flex-col items-center gap-3 w-auto group cursor-pointer pointer-events-auto`}
+            layout={false} // CRITICAL GPU OFF-LOAD: Disable automatic layout reflow animations
+            className={`flex flex-col items-center gap-3 w-auto group cursor-pointer pointer-events-auto will-change-transform focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none rounded-xl`}
             role="button"
             aria-label={label}
             tabIndex={0}
