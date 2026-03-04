@@ -28,11 +28,17 @@ function DockItem({ id, icon, label, onClick, mouseX, shouldBounceExternal = fal
     // OPTIMIZATION: Instead of animating DOM width/height (Layout Thrashing CPU bind),
     // we animate a uniform CSS scale transform while keeping the bounds fixed!
     const baseWidth = isMobile ? 48 : 64;
-    const hoverScale = isMobile ? 1 : (128 / 64); // 2x scale on hover for desktop
+    const hoverScaleMultiplier = isMobile ? 1 : 1.6;
 
-    // distance is -150 to +150
-    const scaleSync = useTransform(distance, [-150, 0, 150], [1, hoverScale, 1]);
-    const scale = useSpring(scaleSync, { mass: 0.1, stiffness: 150, damping: 12 });
+    // Magnification logic: distance-based scale factor
+    const scaleSync = useTransform(distance, [-100, 0, 100], [1, hoverScaleMultiplier, 1]);
+
+    // SMOOTHNESS: useSpring adds the buttery feel to the magnification
+    const springScale = useSpring(scaleSync, { mass: 0.1, stiffness: 250, damping: 20 });
+
+    // Map the spring scale to pixel dimensions
+    const width = useTransform(springScale, (s) => s * baseWidth);
+    const height = useTransform(springScale, (s) => s * baseWidth);
 
     const [bounceKey, setBounceKey] = React.useState(0);
     const [isBouncing, setIsBouncing] = React.useState(false);
@@ -57,14 +63,14 @@ function DockItem({ id, icon, label, onClick, mouseX, shouldBounceExternal = fal
             key={`${id}-${bounceKey}`}
             id={`dock-item-${id}`}
             ref={ref}
-            // STATIC layout (No reflow tracking)
+            // DYNAMIC layout (Affects siblings)
             style={isMobile
-                ? { width: 48, height: 48, scale: 1 }
-                : { width: 64, height: 64, scale: scale, transformOrigin: "bottom" }
+                ? { width: 48, height: 48 }
+                : { width: width, height: height, transformOrigin: "center bottom" }
             }
-            layout={false} // CRITICAL GPU OFF-LOAD: Disable automatic layout reflow animations
+            layout={true} // Re-enable layout to allow siblings to push each other
             animate={activeBounce ? {
-                y: isMobile ? [0, -12, 0, -4, 0] : [0, -24, 0, -8, 0],
+                y: isMobile ? [0, -6, 0, -2, 0] : [0, -12, 0, -4, 0],
                 // When bouncing, we add slight squash and stretch *on top* of the current scale.
                 scaleX: isMobile ? [1, 0.9, 1.1, 1] : undefined, // Framer handles scale compositing poorly if mixed with style={scale}
                 scaleY: isMobile ? [1, 1.2, 0.9, 1] : undefined
@@ -77,7 +83,7 @@ function DockItem({ id, icon, label, onClick, mouseX, shouldBounceExternal = fal
                     repeat: isBouncing ? 0 : (shouldBounceExternal ? Infinity : 0),
                     repeatDelay: 0.1,
                 }
-                : { type: "spring", mass: 0.1, stiffness: 250, damping: 18 }
+                : { type: "spring", mass: 0.1, stiffness: 250, damping: 20 }
             }
             onClick={handleClick}
             className="aspect-square rounded-[12px] flex items-center justify-center cursor-pointer relative group shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
@@ -166,14 +172,15 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                     onMouseMove={(e) => !isMobile && mouseX.set(e.clientX)}
                     onMouseLeave={() => !isMobile && mouseX.set(Infinity)}
                 >
-                    <div
+                    <m.div
+                        layout // Smoothly animate container size changes
                         className={`flex items-end bg-gradient-to-b from-white/25 to-white/10 backdrop-blur-2xl border border-white/40 rounded-[24px] shadow-lg shadow-black/10 ${isMobile
                             ? 'h-[72px] overflow-x-auto scrollbar-hide gap-5 px-5 py-3'
-                            : 'h-[88px] gap-3 px-3 py-2.5'}`}
+                            : 'h-[96px] gap-2 px-3 py-4'}`}
                         style={{
                             boxShadow: "0 10px 30px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.2), inset 0 0 20px rgba(255,255,255,0.1)",
-                            minWidth: isMobile ? 'auto' : visibleItems.length * 64 + (visibleItems.length - 1) * 12 + 24,
-                            minHeight: isMobile ? 72 : 88,
+                            minWidth: isMobile ? 'auto' : visibleItems.length * 64 + (visibleItems.length - 1) * 8 + 24,
+                            minHeight: isMobile ? 72 : 96,
                         }}
                     >
                         {visibleItems.map((item) => (
@@ -189,7 +196,7 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                                 isMobile={isMobile}
                             />
                         ))}
-                    </div>
+                    </m.div>
                 </nav>
             </>
         </m.div>

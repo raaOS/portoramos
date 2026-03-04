@@ -3,15 +3,23 @@ import { useRouter } from "next/navigation";
 import type { Project } from "@/types/projects";
 import type { ContactProfile } from "../data/mockChats";
 import type { NoteData } from "../ui/elements/StickyNoteItem";
+import { WindowState } from "@/hooks/useWindowManager";
+import dynamic from "next/dynamic";
+
+const ProjectDetailWrapper = dynamic(() => import("../ui/ProjectDetailWrapper"), {
+    loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
+    ssr: false
+});
 
 interface UseDesktopNavigationProps {
-    openWindow: (id: string, options?: { content: React.ReactNode }) => void;
+    openWindow: (id: string, options?: Partial<WindowState>) => void;
     resetWindows: () => void;
     dynamicContacts: Record<string, ContactProfile>;
     ChatWindow: React.ComponentType<{ activeChatId?: string | null; customContacts?: Record<string, ContactProfile> }>;
     notesVisible: boolean;
     setNotesVisible: (visible: boolean) => void;
     notes: NoteData[];
+    projects: Project[];
     restoreNote: (id: string) => void;
     addNote: () => void;
     isAdmin: boolean;
@@ -26,6 +34,7 @@ export function useDesktopNavigation({
     notesVisible,
     setNotesVisible,
     notes,
+    projects,
     restoreNote,
     addNote,
     isAdmin,
@@ -37,8 +46,11 @@ export function useDesktopNavigation({
     const resetDesktopAndClose = useCallback(() => resetWindows(), [resetWindows]);
 
     const openProjectWindow = useCallback((project: Project) => {
-        router.push(`/projects/${project.slug}`);
-    }, [router]);
+        openWindow("projects", {
+            title: `Portfolio: ${project.title}`,
+            content: <ProjectDetailWrapper project={project} projects={projects} />
+        });
+    }, [openWindow, projects]);
 
     // Klik Dynamic Island (dengan chatId spesifik) -> langsung buka chat
     const navToChat = useCallback((chatId?: string) => {

@@ -18,6 +18,11 @@ const ChatWindow = dynamic(() => import("../windows/ChatWindow"), {
     ssr: false
 });
 
+const ProjectDetailWrapper = dynamic(() => import("../ui/ProjectDetailWrapper"), {
+    loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
+    ssr: false
+});
+
 const IndexClientWithAutoUpdate = dynamic(() => import("@/components/home/IndexClientWithAutoUpdate"), {
     loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
     ssr: false
@@ -66,21 +71,6 @@ export const createInitialWindows = ({
             content: <ChatWindow customContacts={dynamicContacts} />
         },
         {
-            id: "projects",
-            title: "Finder: Projects",
-            isOpen: false,
-            zIndex: 9,
-            noPadding: true,
-            initialPosition: { x: 150, y: 100 },
-            width: 1000,
-            height: 700,
-            content: (
-                <div className="w-full h-full overflow-y-auto bg-white custom-scrollbar">
-                    <IndexClientWithAutoUpdate initialProjects={commercialProjects} />
-                </div>
-            )
-        },
-        {
             id: "trash-bin",
             title: "Recycle Bin",
             isOpen: false,
@@ -95,5 +85,16 @@ export const createInitialWindows = ({
                     <p className="text-gray-500 text-sm">You cannot delete perfection.</p>
                 </div>
             )
+        },
+        {
+            id: "projects",
+            title: "Finder: Projects",
+            isOpen: false,
+            zIndex: 12,
+            noPadding: true,
+            initialPosition: { x: 50, y: 50 },
+            width: 1000,
+            height: 700,
+            content: null // Content will be injected dynamically via openProjectWindow
         }
     ];

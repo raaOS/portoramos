@@ -3,7 +3,6 @@
 import React, { createContext, useContext, ReactNode } from "react";
 import { useWindowManager, WindowState } from "@/hooks/useWindowManager";
 import { AboutData } from "@/types/about";
-import { Project } from "@/types/projects";
 
 // Extract the return type of useWindowManager to use as our Context type
 type WindowManagerReturn = ReturnType<typeof useWindowManager>;
@@ -19,7 +18,6 @@ interface DesktopWindowProviderProps {
     children: ReactNode;
     initialWindows: WindowState[];
     aboutData?: AboutData | null;
-    projects: Project[];
     csrfToken?: string;
 }
 
@@ -27,13 +25,11 @@ export function DesktopWindowProvider({
     children,
     initialWindows,
     aboutData,
-    projects,
     csrfToken
 }: DesktopWindowProviderProps) {
     const windowManager = useWindowManager({
         initialWindows,
         aboutData,
-        projects,
         csrfToken
     });
 

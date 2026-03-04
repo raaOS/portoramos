@@ -2,7 +2,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import type { Project, GalleryItem } from "@/types/projects";
 
-// Dynamic import to match original behavior
+// Dynamic import for the detail component
 const ProjectDetailTwoColumn = dynamic(() => import("@/components/projects/ProjectDetailTwoColumn"), {
     loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
     ssr: false

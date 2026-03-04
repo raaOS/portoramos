@@ -33,11 +33,25 @@ export const DraggableStickyNote = ({
             dragListener={false}
             dragMomentum={false}
             data-lenis-prevent
-            animate={{
-                x: note.x || 100,
-                y: note.y || 100,
-                scale: 1,
-                opacity: note.opacity || 1
+            animate={note.isDeleted ? { opacity: 0, scale: 0.8 } : "show"}
+            initial="hidden"
+            variants={{
+                hidden: {
+                    opacity: 0,
+                    scale: 0.8,
+                    y: note.y || 100, // No extra drop here, parent handles it
+                    x: note.x || 100
+                },
+                show: {
+                    opacity: note.opacity || 1,
+                    scale: 1,
+                    y: note.y || 100,
+                    x: note.x || 100,
+                    transition: {
+                        y: { type: "spring", stiffness: 250, damping: 18, mass: 0.8 },
+                        opacity: { duration: 0.4 }
+                    }
+                }
             }}
             transition={{ type: "none" }}
             onDragStart={() => bringToFrontNote(note.id)}

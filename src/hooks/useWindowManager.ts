@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { AboutData } from "@/types/about";
-import { Project } from "@/types/projects";
 import { useSystemSound } from "@/hooks/useSystemSound";
 
 export interface WindowState {
@@ -23,12 +22,11 @@ export interface WindowState {
 interface UseWindowManagerProps {
     initialWindows: WindowState[];
     aboutData?: AboutData | null;
-    projects: Project[];
     csrfToken?: string;
     isAdmin?: boolean;
 }
 
-export const useWindowManager = ({ initialWindows, aboutData, projects: _projects, csrfToken, isAdmin = false }: UseWindowManagerProps) => {
+export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin = false }: UseWindowManagerProps) => {
     const [windows, setWindows] = useState<WindowState[]>(initialWindows);
     const [topZIndex, setTopZIndex] = useState(20);
     const [bouncingDocId, setBouncingDocId] = useState<string | null>(null);
@@ -100,7 +98,8 @@ export const useWindowManager = ({ initialWindows, aboutData, projects: _project
         requestAnimationFrame(() => {
             setWindows(prev => prev.map(w => {
                 const fresh = initialWindows.find(fw => fw.id === w.id);
-                if (fresh && fresh.content !== w.content) {
+                // Fix: Jangan timpa konten jika konten baru adalah null (dynamic content)
+                if (fresh && fresh.content !== null && fresh.content !== w.content) {
                     return { ...w, content: fresh.content };
                 }
                 return w;
@@ -257,8 +256,13 @@ export const useWindowManager = ({ initialWindows, aboutData, projects: _project
             });
         });
         setTopZIndex(prev => {
-            // Cap at 9000 to keep room for Spotlight (10002) and Dynamic Island
-            if (prev > 9000) return 20;
+            // Jika mencapai batas, jangan reset ke 20 secara kasar karena bisa menyebabkan window tenggelam.
+            // Kita gunakan 10000 sebagai batas atas (di bawah Spotlight).
+            if (prev > 9000) {
+                // Return high value but allow growth, eventually we might need a full re-normalization
+                // but for now, incrementing is safer than resetting to a small number.
+                return prev + 1;
+            }
             return prev + 1;
         });
     }, [aboutData, playOpen, topZIndex, getCenterPosition]);

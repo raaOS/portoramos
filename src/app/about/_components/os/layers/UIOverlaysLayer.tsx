@@ -2,6 +2,7 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import MenuBar from "../core/MenuBar";
 import OSDock from "../core/OSDock";
 
@@ -53,6 +54,7 @@ export default function UIOverlaysLayer({
     commercialProjects,
     openProjectWindow
 }: UIOverlaysLayerProps) {
+    const router = useRouter();
     const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
     const isWindowOpen = (id: string) => windows.find(w => w.id === id)?.isOpen ?? false;
     const activeWindows = windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex);
@@ -92,6 +94,8 @@ export default function UIOverlaysLayer({
                             notesVisible={notesVisible}
                             bouncingId={bouncingDocId}
                             isMobile={isMobile}
+                            commercialProjects={commercialProjects}
+                            openProjectWindow={openProjectWindow}
                         />
                     )}
                 </div>
@@ -103,7 +107,10 @@ export default function UIOverlaysLayer({
                         isOpen={showSpotlight}
                         onClose={() => setShowSpotlight(false)}
                         projects={commercialProjects}
-                        onOpenProject={openProjectWindow}
+                        onOpenProject={(project: any) => {
+                            setShowSpotlight(false);
+                            openProjectWindow(project);
+                        }}
                         onOpenApp={(id) => openWindow(id)}
                     />
                 </div>

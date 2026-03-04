@@ -6,6 +6,7 @@ import Dock from './Dock';
 import AppIcon from "../ui/AppIcon";
 import { getDockItemConfig } from "../utils/dockUtils";
 import { AboutData } from '@/types/about';
+import { Project } from '@/types/projects';
 import { Grid, User, Mail, FileText, Trash2 } from 'lucide-react';
 import WhatsAppIcon from "../ui/WhatsAppIcon";
 
@@ -20,6 +21,8 @@ interface OSDockProps {
   bouncingId?: string | null;
   className?: string;
   isMobile?: boolean;
+  commercialProjects: Project[];
+  openProjectWindow: (project: Project) => void;
 }
 
 export default function OSDock({
@@ -32,13 +35,26 @@ export default function OSDock({
   notesVisible,
   bouncingId,
   className,
-  isMobile = false
+  isMobile = false,
+  commercialProjects,
+  openProjectWindow
 }: OSDockProps) {
   const router = useRouter();
 
   const dockItems = useMemo(() => {
     const defaultItems = [
-      { id: "projects", label: "Projects", icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />, onClick: () => router.push('/projects') },
+      {
+        id: "projects",
+        label: "Projects",
+        icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />,
+        onClick: () => {
+          if (commercialProjects.length > 0) {
+            openProjectWindow(commercialProjects[0]);
+          } else {
+            router.push('/projects');
+          }
+        }
+      },
       { id: "about", label: "About Me", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => onOpenWindow("about"), isOpen: isWindowOpen("about") },
       { id: "whatsapp", label: "WhatsApp", icon: <WhatsAppIcon />, onClick: onOpenWhatsApp, isOpen: isWindowOpen("whatsapp") },
       { id: "contact", label: "Contact", icon: <AppIcon icon={Mail} color="from-blue-400 to-indigo-500" />, onClick: () => router.push('/contact') },

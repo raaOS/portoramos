@@ -3,7 +3,7 @@
 import type { Project, GalleryItem } from '@/types/projects';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ExternalLink, Languages, Loader2, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Languages, Loader2, RotateCcw, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import MasonryGrid from '@/components/layout/MasonryGrid';
@@ -239,6 +239,17 @@ export default function ProjectDetailTwoColumn({
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className={`${isWindowMode ? 'h-full overflow-y-auto p-3 sm:p-4 lg:p-6' : 'min-h-screen pt-10 sm:pt-12 px-3 sm:px-4 lg:px-6 pb-8'} bg-white dark:bg-black transition-colors duration-300`}
         >
+            {/* Floating Back to Desktop Button */}
+            {!isWindowMode && (
+                <Link
+                    href="/about"
+                    className="fixed top-6 left-6 z-[100] flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/50 dark:bg-black/50 backdrop-blur-xl border border-black/10 dark:border-white/10 text-gray-800 dark:text-gray-200 hover:scale-110 hover:bg-white dark:hover:bg-black active:scale-95 transition-all shadow-2xl group"
+                    title="Back to Desktop"
+                >
+                    <X className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform duration-300" />
+                </Link>
+            )}
+
             {!isWindowMode && (
                 <Link
                     href="/"

@@ -8,6 +8,7 @@ interface StartScreenProps {
     onStart: () => void;
     isActive: boolean;
     onReady?: () => void;
+    onReveal?: () => void;
 }
 
 type ScreenState = "idle" | "zooming" | "showingText" | "glassReveal" | "done";
@@ -21,7 +22,7 @@ const BOOT_CONFIG = {
     allowSkip: true,
 } as const;
 
-const StartScreen = ({ onStart, isActive, onReady }: StartScreenProps) => {
+const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps) => {
     const [screenState, setScreenState] = useState<ScreenState>("idle");
 
     // Signal to parent that StartScreen has mounted and is covering the screen
@@ -47,6 +48,7 @@ const StartScreen = ({ onStart, isActive, onReady }: StartScreenProps) => {
         // After text display, start hiding background
         setTimeout(() => {
             setScreenState("glassReveal");
+            onReveal?.();
         }, BOOT_CONFIG.keyholeZoomDuration + BOOT_CONFIG.textDisplayDuration - 200);
 
         // Complete
@@ -117,22 +119,22 @@ const StartScreen = ({ onStart, isActive, onReady }: StartScreenProps) => {
                         </mask>
                     </defs>
 
-                    {/* Stage 3: The Neon Green Background (Full Screen again!) */}
+                    {/* Stage 3: The White Background (Full Screen again!) */}
                     <rect
                         x="0"
                         y="0"
                         width="100"
                         height="100"
-                        fill="#5eff15"
+                        fill="#ffffff"
                         mask="url(#hollow-o-mask)"
                     />
 
-                    {/* The Green Plug - Smoothly fades out to reveal desktop beneath (Anti-Flicker) */}
+                    {/* The White Plug - Smoothly fades out to reveal desktop beneath (Anti-Flicker) */}
                     <m.circle
                         cx="50"
                         cy="50"
                         r="2.235"
-                        fill="#5eff15"
+                        fill="#ffffff"
                         initial={{ opacity: 1 }}
                         animate={{
                             opacity: screenState === "glassReveal" ? 0 : 1
@@ -182,14 +184,14 @@ const StartScreen = ({ onStart, isActive, onReady }: StartScreenProps) => {
             </m.div>
 
             {/* Stage 1 & 2 & 3: Master Solid Frame */}
-            {/* Starts black for keyhole, turns Neon Green exactly when RAMOS OS appears, 
+            {/* Starts black for keyhole, turns White exactly when RAMOS OS appears, 
                 then INSTANTLY DISAPPEARS during glassReveal (opacity 0 duration 0) so the expanding 
-                green SVG hole cleanly reveals the desktop beneath without black flashes. */}
+                white SVG hole cleanly reveals the desktop beneath without black flashes. */}
             <m.div
                 className="absolute inset-0 z-[10000]"
                 animate={{
                     opacity: (screenState === "idle" || screenState === "zooming" || screenState === "showingText") ? 1 : 0,
-                    backgroundColor: (screenState === "showingText") ? "#5eff15" : "#000000"
+                    backgroundColor: (screenState === "showingText") ? "#ffffff" : "#000000"
                 }}
                 transition={{
                     opacity: { duration: screenState === "glassReveal" ? 0.8 : 0.8, ease: "easeInOut" },
@@ -224,16 +226,16 @@ const StartScreen = ({ onStart, isActive, onReady }: StartScreenProps) => {
                     }}
                 >
                     <m.div
-                        className="relative flex items-center justify-center text-[#5eff15]"
+                        className="relative flex items-center justify-center text-[#ffffff]"
                         whileHover={screenState === "idle" ? {
-                            filter: "drop-shadow(0 0 60px rgba(94, 255, 21, 0.8)) drop-shadow(0 0 20px rgba(94, 255, 21, 0.5))",
+                            filter: "drop-shadow(0 0 60px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5))",
                             scale: 1.05
                         } : {
-                            filter: "drop-shadow(0 0 0px rgba(94, 255, 21, 0))",
+                            filter: "drop-shadow(0 0 0px rgba(255, 255, 255, 0))",
                             scale: 1
                         }}
                         animate={{
-                            filter: screenState === "idle" ? "drop-shadow(0 0 0px rgba(94, 255, 21, 0))" : "none",
+                            filter: screenState === "idle" ? "drop-shadow(0 0 0px rgba(255, 255, 255, 0))" : "none",
                             scale: 1
                         }}
                         transition={{ duration: screenState === "idle" ? 0.3 : 0 }}
@@ -242,7 +244,7 @@ const StartScreen = ({ onStart, isActive, onReady }: StartScreenProps) => {
                             width="80"
                             height="120"
                             viewBox="0 0 24 36"
-                            fill="#5eff15"
+                            fill="#ffffff"
                             className="relative overflow-visible"
                         >
                             <circle
@@ -258,7 +260,7 @@ const StartScreen = ({ onStart, isActive, onReady }: StartScreenProps) => {
 
                     {screenState === "idle" && (
                         <m.p
-                            className="absolute -bottom-20 text-[#5eff15] text-sm tracking-[0.3em] uppercase whitespace-nowrap font-medium"
+                            className="absolute -bottom-20 text-[#ffffff] text-sm tracking-[0.3em] uppercase whitespace-nowrap font-medium"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 0.8 }}
                             transition={{ delay: 0.5 }}
