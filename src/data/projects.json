@@ -826,7 +826,38 @@
       "type": "commercial",
       "updatedAt": "2026-01-08T14:36:19.676Z",
       "year": 2025
+    },
+    {
+      "allowComments": true,
+      "autoplay": false,
+      "client": "Test Bot",
+      "comparison": {
+        "afterImage": "",
+        "afterType": "image",
+        "beforeImage": "",
+        "beforeType": "image"
+      },
+      "cover": "https://placehold.co/800x600/png",
+      "coverHeight": 600,
+      "coverWidth": 800,
+      "createdAt": "2026-03-05T15:37:56.501Z",
+      "description": "Automated CRUD test - will be deleted",
+      "id": "project-1772725076501",
+      "likes": 0,
+      "loop": false,
+      "muted": true,
+      "order": 21,
+      "playsInline": true,
+      "shares": 0,
+      "slug": "crud-test-1772725076387",
+      "status": "draft",
+      "tags": [
+        "auto-test"
+      ],
+      "title": "CRUD-TEST-1772725076387",
+      "updatedAt": "2026-03-05T15:37:56.501Z",
+      "year": 2026
     }
   ],
-  "lastUpdated": "2026-03-05T15:37:04.243Z"
+  "lastUpdated": "2026-03-05T15:37:56.558Z"
 }
