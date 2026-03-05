@@ -1,209 +1,43 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
-import { Send, CheckCircle2, AlertCircle, RefreshCw, Save, Eye, EyeOff, Copy, Check, Plus, Shield, Sparkles } from 'lucide-react';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
-
-interface TelegramConfig {
-    botToken: string;
-    chatId: string;
-    isCustom: boolean; // true if loaded from json, false if from env
-}
-
-interface BotStatus {
-    ok: boolean;
-    username?: string;
-    firstName?: string;
-    error?: string;
-}
+import { Send } from 'lucide-react';
+import { useTelegramConfig } from './hooks';
+import {
+    BotConfigForm,
+    ActiveConfigCard,
+    PrivateContactForm
+} from './components';
 
 export default function TelegramClient() {
-    // State for the ACTIVE (saved) configuration
-    const [activeConfig, setActiveConfig] = useState<TelegramConfig | null>(null);
-    const { csrfToken } = useAdminAuth();
-
-    // State for the FORM (input) configuration
-    const [formConfig, setFormConfig] = useState<{ botToken: string; chatId: string }>({ botToken: '', chatId: '' });
-
-    const [status, setStatus] = useState<BotStatus | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [testing, setTesting] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-
-    // UI States for Active Card toggles
-    const [showToken, setShowToken] = useState(false);
-    const [showChatId, setShowChatId] = useState(false);
-    const [copiedToken, setCopiedToken] = useState(false);
-    const [copiedChatId, setCopiedChatId] = useState(false);
-
-    // Webhook State
-    const [webhookInfo, setWebhookInfo] = useState<{ url?: string } | null>(null);
-    const [webhookLoading, setWebhookLoading] = useState(false);
-
-    useEffect(() => {
-        fetchConfig();
-    }, []);
-
-    useEffect(() => {
-        if (activeConfig?.botToken) {
-            checkStatus(activeConfig.botToken);
-            checkWebhook();
-        }
-    }, [activeConfig]);
-
-    const fetchConfig = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch('/api/admin/telegram/config');
-            if (res.ok) {
-                const data = await res.json();
-                // If the response is empty/invalid, activeConfig stays null or default
-                if (data && (data.botToken || data.chatId)) {
-                    setActiveConfig(data);
-                }
-            }
-        } catch (_error) {
-            console.error('Failed to load config', _error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const checkStatus = async (token: string) => {
-        if (!token) return;
-        try {
-            const res = await fetch(`/api/admin/telegram/status?token=${encodeURIComponent(token)}`);
-            const data = await res.json();
-            setStatus(data);
-        } catch {
-            setStatus({ ok: false, error: 'Connection failed' });
-        }
-    };
-
-    const checkWebhook = async () => {
-        try {
-            const res = await fetch('/api/admin/telegram/webhook');
-            const data = await res.json();
-            if (data.ok) {
-                setWebhookInfo(data.result);
-            }
-        } catch (_e) {
-            console.error('Webhook check failed', _e);
-        }
-    };
-
-    const handleSetWebhook = async () => {
-        setWebhookLoading(true);
-        try {
-            // Use current window location to determine the base URL
-            const url = window.location.origin;
-            const res = await fetch('/api/admin/telegram/webhook', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken
-                },
-                credentials: 'include',
-                body: JSON.stringify({ url })
-            });
-            const data = await res.json();
-            if (data.ok) {
-                alert('Webhook connected successfully!');
-                await checkWebhook();
-            } else {
-                alert(`Failed: ${data.description}`);
-            }
-        } catch {
-            alert('Error setting webhook');
-        } finally {
-            setWebhookLoading(false);
-        }
-    };
-
-    const handleDeleteWebhook = async () => {
-        if (!confirm('Are you sure you want to disconnect the webhook? The bot will stop replying.')) return;
-        setWebhookLoading(true);
-        try {
-            const res = await fetch('/api/admin/telegram/webhook', {
-                method: 'DELETE',
-                headers: { 'x-csrf-token': csrfToken },
-                credentials: 'include'
-            });
-            const data = await res.json();
-            if (data.ok) {
-                alert('Webhook disconnected.');
-                await checkWebhook();
-            }
-        } catch {
-            alert('Error deleting webhook');
-        } finally {
-            setWebhookLoading(false);
-        }
-    };
-
-    const handleTestPing = async () => {
-        if (!activeConfig) return;
-
-        setTesting(true);
-        setTestResult(null);
-        try {
-            const res = await fetch('/api/admin/telegram/test', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken
-                },
-                credentials: 'include',
-                body: JSON.stringify(activeConfig) // Test the ACTIVE config
-            });
-            const data = await res.json();
-            setTestResult({
-                success: res.ok,
-                message: data.message || (res.ok ? 'Ping successful! Check your Telegram.' : 'Ping failed.')
-            });
-        } catch {
-            setTestResult({ success: false, message: 'Network error during test.' });
-        } finally {
-            setTesting(false);
-        }
-    };
-
-    const handleSave = async () => {
-        setSaving(true);
-        try {
-            const res = await fetch('/api/admin/telegram/config', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken
-                },
-                credentials: 'include',
-                body: JSON.stringify(formConfig)
-            });
-
-            if (res.ok) {
-                // Refresh active config logic
-                await fetchConfig();
-                // Clear the form
-                setFormConfig({ botToken: '', chatId: '' });
-                alert('Success! New bot configuration activated.');
-            } else {
-                alert('Failed to save configuration.');
-            }
-        } catch {
-            alert('Error saving configuration.');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const copyToClipboard = (text: string, setCopied: (val: boolean) => void) => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
+    const {
+        // State
+        activeConfig,
+        formConfig,
+        setFormConfig,
+        status,
+        loading,
+        testing,
+        saving,
+        testResult,
+        webhookInfo,
+        webhookLoading,
+        showToken,
+        setShowToken,
+        showChatId,
+        setShowChatId,
+        copiedToken,
+        setCopiedToken,
+        copiedChatId,
+        setCopiedChatId,
+        // Actions
+        checkStatus,
+        handleSetWebhook,
+        handleDeleteWebhook,
+        handleTestPing,
+        handleSave,
+        copyToClipboard
+    } = useTelegramConfig();
 
     return (
         <AdminLayout
@@ -213,327 +47,48 @@ export default function TelegramClient() {
             titleAccent="bg-sky-50 text-sky-700"
         >
             <div className="space-y-8 max-w-3xl">
-
                 {/* 1. UPDATE / ADD BOT FORM (TOP) */}
-                <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-gray-100 rounded-lg">
-                            <Plus className="w-5 h-5 text-gray-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-gray-900">Update / Replace Bot</h3>
-                            <p className="text-sm text-gray-500">Enter new credentials below to switch bots. Fields will clear after saving.</p>
-                        </div>
-                    </div>
+                <BotConfigForm
+                    botToken={formConfig.botToken}
+                    chatId={formConfig.chatId}
+                    onBotTokenChange={(value) => setFormConfig(prev => ({ ...prev, botToken: value }))}
+                    onChatIdChange={(value) => setFormConfig(prev => ({ ...prev, chatId: value }))}
+                    onSave={handleSave}
+                    saving={saving}
+                />
 
-                    <div className="grid gap-5">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">New Bot Token</label>
-                            <input
-                                type="text"
-                                value={formConfig.botToken}
-                                onChange={(e) => setFormConfig({ ...formConfig, botToken: e.target.value })}
-                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 font-mono text-sm"
-                                placeholder="Paste new token here..."
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">New Chat ID</label>
-                            <input
-                                type="text"
-                                value={formConfig.chatId}
-                                onChange={(e) => setFormConfig({ ...formConfig, chatId: e.target.value })}
-                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 font-mono text-sm"
-                                placeholder="Paste new chat ID here..."
-                            />
-                        </div>
-                    </div>
-
-                    <div className="pt-2">
-                        <button
-                            onClick={handleSave}
-                            disabled={saving || !formConfig.botToken || !formConfig.chatId}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition shadow-sm w-full justification-center justify-center sm:w-auto"
-                        >
-                            <Save className="w-4 h-4" />
-                            {saving ? 'Saving...' : 'Save & Activate New Bot'}
-                        </button>
-                    </div>
-                </section>
-
-                {/* 3. PRIVATE CONTACT INFO (AI RESUME) */}
+                {/* 2. PRIVATE CONTACT INFO (AI RESUME) */}
                 <PrivateContactForm />
 
-                {/* 2. ACTIVE CONFIGURATION (BOTTOM) */}
+                {/* 3. ACTIVE CONFIGURATION (BOTTOM) */}
                 {activeConfig && (
-                    <section className="space-y-4">
-                        <div className="flex items-center justify-between px-1">
-                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <Shield className="w-5 h-5 text-green-600" />
-                                Active Configuration
-                            </h3>
-                            {activeConfig.isCustom ? (
-                                <span className="text-xs bg-orange-100 text-orange-800 px-3 py-1 rounded-full font-medium border border-orange-200">
-                                    Custom Override
-                                </span>
-                            ) : (
-                                <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium border border-gray-200">
-                                    Environment Default
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Status Checker in Card */}
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                                <h3 className="font-semibold text-gray-800">Bot Status</h3>
-                                <button
-                                    onClick={() => handleTestPing()}
-                                    disabled={testing}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-sky-50 text-sky-700 border border-sky-200 rounded-lg hover:bg-sky-100 disabled:opacity-50 transition text-xs font-medium"
-                                >
-                                    <Send className="w-3.5 h-3.5" />
-                                    {testing ? 'Pinging...' : 'Test Ping'}
-                                </button>
-                            </div>
-
-                            <div className="p-6 space-y-6">
-                                {/* Bot Identity */}
-                                <div className="flex items-start gap-4">
-                                    <div className={`p-3 rounded-full flex-shrink-0 ${status?.ok ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                        {status?.ok ? <CheckCircle2 className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
-                                    </div>
-                                    <div className="flex-1">
-                                        <h4 className="text-base font-semibold text-gray-900">
-                                            {status?.ok ? `Connected as ${status.firstName}` : 'Disconnected'}
-                                        </h4>
-                                        <p className="text-sm text-gray-500">
-                                            {status?.ok ? `@${status.username}` : (status?.error || 'Unknown Error')}
-                                        </p>
-                                    </div>
-                                    <button
-                                        onClick={() => checkStatus(activeConfig.botToken)}
-                                        disabled={loading}
-                                        className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition"
-                                    >
-                                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                                    </button>
-                                </div>
-
-                                {/* Ping Result */}
-                                {testResult && (
-                                    <div className={`p-3 rounded-lg text-sm flex items-start gap-3 ${testResult.success ? 'bg-green-50 text-green-800 border border-green-100' : 'bg-red-50 text-red-800 border border-red-100'}`}>
-                                        {testResult.success ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />}
-                                        <span>{testResult.message}</span>
-                                    </div>
-                                )}
-
-                                <hr className="border-gray-100" />
-
-                                {/* Read-Only Credentials */}
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Active Token</label>
-                                        <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                            <code className="flex-1 text-sm font-mono text-gray-700 truncate">
-                                                {showToken ? activeConfig.botToken : '••••••••••••••••••••'}
-                                            </code>
-                                            <button onClick={() => setShowToken(!showToken)} className="p-1 text-gray-400 hover:text-gray-700">
-                                                {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                            </button>
-                                            <button onClick={() => copyToClipboard(activeConfig.botToken, setCopiedToken)} className="p-1 text-gray-400 hover:text-sky-600">
-                                                {copiedToken ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Active Chat ID</label>
-                                        <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                            <code className="flex-1 text-sm font-mono text-gray-700 truncate">
-                                                {showChatId ? activeConfig.chatId : '•••••'}
-                                            </code>
-                                            <button onClick={() => setShowChatId(!showChatId)} className="p-1 text-gray-400 hover:text-gray-700">
-                                                {showChatId ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                            </button>
-                                            <button onClick={() => copyToClipboard(activeConfig.chatId, setCopiedChatId)} className="p-1 text-gray-400 hover:text-sky-600">
-                                                {copiedChatId ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <hr className="border-gray-100" />
-
-                                {/* Webhook Controls */}
-                                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-slate-800">Webhook Status</h4>
-                                        <p className="text-xs text-slate-500 mt-1">
-                                            {webhookInfo?.url
-                                                ? `Active: ${webhookInfo.url}`
-                                                : 'Not connected. Bot performs one-way alerts only.'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        {webhookInfo?.url ? (
-                                            <button
-                                                onClick={handleDeleteWebhook}
-                                                disabled={webhookLoading}
-                                                className="text-xs px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-md font-medium transition"
-                                            >
-                                                {webhookLoading ? 'Disconnecting...' : 'Disconnect Webhook'}
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={handleSetWebhook}
-                                                disabled={webhookLoading}
-                                                className="text-xs px-3 py-1.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-md font-medium transition"
-                                            >
-                                                {webhookLoading ? 'Connecting...' : 'Connect Webhook'}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+                    <ActiveConfigCard
+                        config={activeConfig}
+                        status={status}
+                        loading={loading}
+                        testing={testing}
+                        testResult={testResult}
+                        webhookInfo={webhookInfo}
+                        webhookLoading={webhookLoading}
+                        showToken={showToken}
+                        showChatId={showChatId}
+                        copiedToken={copiedToken}
+                        copiedChatId={copiedChatId}
+                        onRefresh={() => checkStatus(activeConfig.botToken)}
+                        onTestPing={handleTestPing}
+                        onToggleShowToken={() => setShowToken(!showToken)}
+                        onToggleShowChatId={() => setShowChatId(!showChatId)}
+                        onCopyToken={() => copyToClipboard(activeConfig.botToken, setCopiedToken)}
+                        onCopyChatId={() => copyToClipboard(activeConfig.chatId, setCopiedChatId)}
+                        onConnectWebhook={handleSetWebhook}
+                        onDisconnectWebhook={handleDeleteWebhook}
+                    />
                 )}
             </div>
         </AdminLayout>
     );
 }
 
-function PrivateContactForm() {
-    const [formData, setFormData] = useState({
-        email: '',
-        whatsapp: '',
-        linkedin: ''
-    });
-    const { csrfToken } = useAdminAuth();
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-
-    useEffect(() => {
-        fetchAboutData();
-    }, []);
-
-    const fetchAboutData = async () => {
-        try {
-            const res = await fetch('/api/about');
-            if (res.ok) {
-                const data = await res.json();
-                setFormData({
-                    email: data.professional?.contacts?.email || '',
-                    whatsapp: data.professional?.contacts?.whatsapp || '',
-                    linkedin: data.professional?.contacts?.linkedin || ''
-                });
-            }
-        } catch (_error) {
-            console.error('Failed to load contact info', _error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSave = async () => {
-        setSaving(true);
-        try {
-            // We need to fetch current about data first to preserve other fields
-            const currentRes = await fetch('/api/about');
-            const currentData = await currentRes.json();
-
-            const updateData = {
-                professional: {
-                    ...currentData.professional,
-                    contacts: {
-                        email: formData.email,
-                        whatsapp: formData.whatsapp,
-                        linkedin: formData.linkedin
-                    }
-                }
-            };
-
-            const res = await fetch('/api/about', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken
-                },
-                credentials: 'include',
-                body: JSON.stringify(updateData)
-            });
-
-            if (res.ok) {
-                alert('Contact info updated successfully!');
-            } else {
-                alert('Failed to update contact info');
-            }
-        } catch {
-            alert('Error updating contact info');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    if (loading) return <div className="p-4 text-center text-gray-500">Loading contact info...</div>;
-
-    return (
-        <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
-            <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-amber-50 rounded-lg">
-                    <Sparkles className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                    <h3 className="text-lg font-bold text-gray-900">Private Contact Info</h3>
-                    <p className="text-sm text-gray-500">Contact details used by AI Resume to generate responses.</p>
-                </div>
-            </div>
-
-            <div className="grid gap-5 md:grid-cols-3">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-mono text-sm"
-                        placeholder="email@example.com"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
-                    <input
-                        type="text"
-                        value={formData.whatsapp}
-                        onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-mono text-sm"
-                        placeholder="+62..."
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
-                    <input
-                        type="text"
-                        value={formData.linkedin}
-                        onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-mono text-sm"
-                        placeholder="username"
-                    />
-                </div>
-            </div>
-
-            <div className="pt-2">
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 transition shadow-sm w-full justification-center sm:w-auto"
-                >
-                    <Save className="w-4 h-4" />
-                    {saving ? 'Saving...' : 'Save Contact Info'}
-                </button>
-            </div>
-        </section>
-    );
-}
+// Re-export hooks and components
+export { useTelegramConfig } from './hooks';
+export * from './components';

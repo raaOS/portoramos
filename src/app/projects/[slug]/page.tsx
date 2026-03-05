@@ -4,6 +4,9 @@ import { allProjectsAsync } from '@/lib/projects'
 import ProjectDetailTwoColumn from '@/components/projects/ProjectDetailTwoColumn'
 import { resolveCover, resolveGallery } from '@/lib/images'
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface ProjectPageProps {
   params: { slug: string }
 }
@@ -12,7 +15,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   const { slug } = await params
   const projects = await allProjectsAsync()
   const project = projects.find(p => p.slug === slug && p.status !== 'draft')
-  
+
   if (!project) {
     return {
       title: 'Project Not Found',
@@ -34,17 +37,19 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const { slug } = await params
   const projects = await allProjectsAsync()
   const project = projects.find(p => p.slug === slug && p.status !== 'draft')
-  
+
   if (!project) {
     notFound()
   }
 
+  console.log(`[ProjectPage Server] Rendering project: ${project.slug}, galleryGroups present: ${!!project.galleryGroups && project.galleryGroups.length > 0}`);
+
   const otherProjects = projects.filter(p => p.id !== project.id && p.status !== 'draft')
   const cover = resolveCover(project)
   const gallery = resolveGallery(project)
-  
-  const ratio = (project.coverWidth && project.coverHeight) 
-    ? project.coverWidth / project.coverHeight 
+
+  const ratio = (project.coverWidth && project.coverHeight)
+    ? project.coverWidth / project.coverHeight
     : 16 / 9
 
   return (

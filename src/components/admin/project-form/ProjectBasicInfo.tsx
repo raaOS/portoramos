@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ProjectFormData } from '@/hooks/useProjectForm';
-import { Sparkles, Loader2, X, Plus } from 'lucide-react';
+import { Sparkles, X, Plus } from 'lucide-react';
 import { Project } from '@/types/projects';
 
 interface ProjectBasicInfoProps {
@@ -11,19 +11,7 @@ interface ProjectBasicInfoProps {
 }
 
 export default function ProjectBasicInfo({ formData, errors, updateField, allProjects = [] }: ProjectBasicInfoProps) {
-    const [isGenerating, setIsGenerating] = useState(false);
     const [tagInput, setTagInput] = useState('');
-    const [aiOptions, setAiOptions] = useState({
-        style: 'estetik & profesional',
-        maxTitleWords: 5,
-        sentenceCount: 2,
-        viralPackage: true
-    });
-
-    const isValidMediaUrl = (url: string) => {
-        if (!url) return false;
-        return url.startsWith('http') || url.startsWith('/');
-    };
 
     // Calculate unique existing tags from all projects
     const availableTags = useMemo(() => {
@@ -81,135 +69,8 @@ export default function ProjectBasicInfo({ formData, errors, updateField, allPro
         }
     };
 
-    const handleAutoFill = async () => {
-        if (!formData.cover || !isValidMediaUrl(formData.cover)) {
-            alert("Please upload a Valid Cover Image first!");
-            return;
-        }
-
-        setIsGenerating(true);
-        try {
-            try {
-                const res = await fetch('/api/ai/generate-details', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        imageUrl: formData.cover,
-                        ...aiOptions
-                    })
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.title) updateField('title', data.title);
-                    if (data.description) updateField('description', data.description);
-                    if (data.client) updateField('client', data.client);
-                    // if (data.tags) updateField('tags', data.tags); // User requested manual tags only
-                } else {
-                    console.warn("AI Text Gen failed, skipping to Viral Package...");
-                }
-            } catch (aiError) {
-                console.warn("AI Text Gen Network error warning:", aiError);
-            }
-
-            if (aiOptions.viralPackage) {
-                if (formData.id) {
-                    await fetch('/api/admin/projects/magic-complete', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            projectId: formData.id,
-                            slug: formData.slug || formData.title?.toLowerCase().replace(/ /g, '-') || 'temp-slug'
-                        })
-                    });
-                }
-                updateField('likes', Math.floor(Math.random() * 401) + 100);
-                updateField('shares', Math.floor(Math.random() * 81) + 20);
-            }
-        } catch (e: unknown) {
-            const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-            alert(`Auto-Fill Failed: ${errorMessage}`);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
     return (
         <div className="space-y-8">
-            {/* AI Customization Bar */}
-            {formData.cover && isValidMediaUrl(formData.cover) && (
-                <div className="bg-white border border-gray-200 rounded-none p-5">
-                    <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                            <div className="flex items-center gap-2">
-                                <Sparkles className="w-5 h-5 text-violet-600" />
-                                <h3 className="font-bold text-gray-900">Magic AI Helper</h3>
-                            </div>
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest group-hover:text-violet-600 transition-colors">Include Viral Stats</span>
-                                <div className="relative inline-flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        className="opacity-0 absolute w-0 h-0 peer"
-                                        checked={aiOptions.viralPackage}
-                                        onChange={(e) => setAiOptions(prev => ({ ...prev, viralPackage: e.target.checked }))}
-                                    />
-                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-none peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-none after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600"></div>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div className="grid grid-cols-5 gap-3 items-end">
-                            <div className="col-span-2">
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tone of Voice</label>
-                                <select
-                                    value={aiOptions.style}
-                                    onChange={(e) => setAiOptions(prev => ({ ...prev, style: e.target.value }))}
-                                    className="w-full text-sm bg-white border border-gray-200 rounded-none pl-3 pr-10 py-2.5 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all truncate hover:border-violet-300 appearance-none cursor-pointer"
-                                >
-                                    <option value="estetik & profesional">Estetik & Profesional</option>
-                                    <option value="minimalis & elegan">Minimalis & Elegan</option>
-                                    <option value="kreatif & berapi-api">Kreatif & Berapi-api</option>
-                                    <option value="poetis & mendalam">Poetis & Mendalam</option>
-                                    <option value="santai & trendi">Santai & Trendi</option>
-                                    <option value="Gen-Z (Casual/Chill)">Gen-Z (Casual/Chill)</option>
-                                </select>
-                            </div>
-                            <div className="col-span-1">
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 truncate" title="Max Title Words">Max Words</label>
-                                <input
-                                    type="number"
-                                    value={aiOptions.maxTitleWords}
-                                    onChange={(e) => setAiOptions(prev => ({ ...prev, maxTitleWords: parseInt(e.target.value) || 5 }))}
-                                    className="w-full text-sm bg-white border border-gray-200 rounded-none px-3 py-2.5 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all text-center hover:border-violet-300"
-                                    min="1" max="15"
-                                />
-                            </div>
-                            <div className="col-span-1">
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 truncate">Sentences</label>
-                                <input
-                                    type="number"
-                                    value={aiOptions.sentenceCount}
-                                    onChange={(e) => setAiOptions(prev => ({ ...prev, sentenceCount: parseInt(e.target.value) || 2 }))}
-                                    className="w-full text-sm bg-white border border-gray-200 rounded-none px-3 py-2.5 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all text-center hover:border-violet-300"
-                                    min="1" max="5"
-                                />
-                            </div>
-                            <div className="col-span-1">
-                                <button
-                                    type="button"
-                                    onClick={handleAutoFill}
-                                    disabled={isGenerating}
-                                    title="Auto-Fill Details"
-                                    className="w-full h-[42px] flex items-center justify-center gap-2 text-white bg-violet-600 hover:bg-violet-700 rounded-none transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                                >
-                                    {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <div className="grid grid-cols-1 gap-6">
                 {/* Basic Details Section */}
@@ -398,24 +259,6 @@ export default function ProjectBasicInfo({ formData, errors, updateField, allPro
                         placeholder="Describe the project concept, tools used, and outcome..."
                     />
                     {errors.description && <p className="mt-1 text-sm text-red-600 font-medium">{errors.description}</p>}
-                </div>
-
-                {/* Project Type Selection */}
-                <div className="pt-4 border-t border-gray-100">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Project Type / Format
-                    </label>
-                    <select
-                        value={formData.type || 'commercial'}
-                        onChange={(e) => updateField('type', e.target.value as 'commercial' | 'visual_art')}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-none bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all shadow-sm"
-                    >
-                        <option value="commercial">Commercial Case Study (Standard)</option>
-                        <option value="visual_art">Visual Art / Manipulation (Comparison)</option>
-                    </select>
-                    <p className="mt-2 text-[11px] text-gray-500">
-                        Changing this will update the fields available in the narrative section below.
-                    </p>
                 </div>
 
                 {/* Optional Details: Role, Timeline, Team - Moved to Bottom */}

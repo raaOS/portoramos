@@ -57,7 +57,7 @@ export const createInitialWindows = ({
             },
             width: 900,
             height: 600,
-            content: <AboutContent aboutData={aboutData || undefined} experienceData={experienceData || undefined} hardSkillsData={hardSkillsData || undefined} projects={projects} />
+            content: <AboutContent aboutData={aboutData || undefined} experienceData={experienceData || undefined} hardSkillsData={hardSkillsData || undefined} />
         },
         {
             id: "whatsapp",

@@ -9,6 +9,14 @@ export const GalleryItemSchema = z.object({
     height: z.number().optional(),
     isActive: z.boolean().optional(),
     poster: z.string().optional(),
+    githubPath: z.string().optional(),
+});
+
+export const GalleryGroupSchema = z.object({
+    id: z.string().optional(),
+    name: z.string().min(1, "Group name is required"),
+    description: z.string().optional(),
+    items: z.array(GalleryItemSchema),
 });
 
 export const NarrativeSchema = z.object({
@@ -63,6 +71,7 @@ export const ProjectSchema = z.object({
 
     gallery: z.array(z.string()).optional(),
     galleryItems: z.array(GalleryItemSchema).optional(),
+    galleryGroups: z.array(GalleryGroupSchema).optional(),
 
     initialCommentCount: z.number().optional(),
     order: z.number().default(0),

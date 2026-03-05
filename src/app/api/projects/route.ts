@@ -61,79 +61,14 @@ export async function POST(request: NextRequest) {
     };
 
     // Type assertion needed due to Zod schema allowing nulls that CreateProjectData doesn't
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const newProject = await projectService.createProject(projectData as any);
 
-    // [STICKY NOTE] SMART MOVE: Temp -> Permanent
-    // If cover image is in /temp/, move it to /assets/projects/ and rename it to [slug].ext
-    if (newProject.cover && newProject.cover.startsWith('/temp/')) {
-      const newCover = await finalizeMedia(newProject.cover, newProject.slug, 'projects', '');
-      if (newCover !== newProject.cover) {
-        newProject.cover = newCover;
-      }
-    }
-
-    // Process Comparison Images
-    if (newProject.comparison) {
-      let hasCompChanges = false;
-
-      // Before Image -> /assets/projects/comparisons/[slug]-before.ext
-      if (newProject.comparison.beforeImage && newProject.comparison.beforeImage.startsWith('/temp/')) {
-        const newBefore = await finalizeMedia(
-          newProject.comparison.beforeImage,
-          newProject.slug,
-          'projects/comparisons',
-          '-before'
-        );
-        if (newBefore !== newProject.comparison.beforeImage) {
-          newProject.comparison.beforeImage = newBefore;
-          hasCompChanges = true;
-        }
-      }
-
-      // After Image -> /assets/projects/[slug]-after.ext (Separate from main cover to avoid conflict)
-      if (newProject.comparison.afterImage && newProject.comparison.afterImage.startsWith('/temp/')) {
-        const newAfter = await finalizeMedia(
-          newProject.comparison.afterImage,
-          newProject.slug,
-          'projects',
-          '-after' // Suffix to distinguish from main cover if separate
-        );
-        if (newAfter !== newProject.comparison.afterImage) {
-          newProject.comparison.afterImage = newAfter;
-          hasCompChanges = true;
-        }
-      }
-
-      // We already have newProject object which we will return, but we need to ensure it's saved correctly.
-      // `createProject` handled the initial save.
-      // If we changed paths, we need to update the project again.
-      if (hasCompChanges) {
-        await projectService.updateProject(newProject.id, {
-          id: newProject.id,
-          cover: newProject.cover,
-          comparison: newProject.comparison
-        });
-      } else if (newProject.cover !== validationResult.data.cover) {
-        // Case where only cover changed and no comparison
-        await projectService.updateProject(newProject.id, {
-          id: newProject.id,
-          cover: newProject.cover
-        });
-      }
-    }
-
     // --- Auto-Generate Comments ---
-    // [STICKY NOTE] GEN-Z BUZZ GENERATOR
-    // Setiap kali project baru dibuat, AI otomatis membuat "Komentar Palsu" ala Gen-Z.
-    // Tujuannya agar project terlihat ramai dan viral sejak detik pertama.
     try {
       const generatedComments = generateGenZComments(newProject.slug, validationResult.data.initialCommentCount);
-
       const isDev = process.env.NODE_ENV === 'development';
       let commentsData: CommentsData = { comments: {} };
 
-      // Load existing data
       if (isDev) {
         await ensureDataDir();
         const loaded = await loadData(COMMENTS_DATA_FILE);
@@ -147,30 +82,21 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Ensure structure
       if (!commentsData.comments) commentsData.comments = {};
-
-      // Add new comments
       commentsData.comments[newProject.slug] = generatedComments;
 
-      // Save data
       if (isDev) {
         await saveData(COMMENTS_DATA_FILE, commentsData);
       } else {
         await githubService.updateFile(COMMENTS_GITHUB_PATH, commentsData, `Auto-generated comments for ${newProject.slug}`);
       }
-
     } catch {
       // Silently handle comment generation errors
-      // We continue even if comment generation fails
     }
 
     const successMessage = `✨ **NEW PROJECT CREATED**\n\n**Title:** ${newProject.title}\n**Client:** ${newProject.client}\n**ID:** ${newProject.id}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
-    await sendTelegramAlert(successMessage).catch(() => {
-      // Non-critical: continue even if Telegram alert fails
-    });
+    await sendTelegramAlert(successMessage).catch(() => { });
 
-    // Auto-revalidate paths so the new project appears immediately on public pages
     revalidatePath('/', 'layout');
     revalidatePath('/projects');
     revalidatePath('/admin');
@@ -178,48 +104,7 @@ export async function POST(request: NextRequest) {
     return created(newProject, 'Project created successfully');
   } catch (error) {
     console.error('[API /projects POST] Error:', error);
-
-    if (error instanceof z.ZodError) {
-      return validationError(error);
-    }
-
+    if (error instanceof z.ZodError) return validationError(error);
     return serverError('Failed to create project');
-  }
-}
-
-async function finalizeMedia(
-  url: string,
-  slug: string,
-  subDir: string = 'projects',
-  suffix: string = ''
-): Promise<string> {
-  if (!url || !url.startsWith('/temp/')) return url;
-
-  try {
-    const publicDir = path.join(process.cwd(), 'public');
-    const relativeUrl = url.startsWith('/') ? url.slice(1) : url;
-    const oldPath = path.join(publicDir, relativeUrl);
-
-    if (!fs.existsSync(oldPath)) return url;
-
-    // Use original extension
-    const ext = path.extname(url);
-    const newFilename = `${slug}${suffix}${ext}`;
-
-    const targetDir = path.join(publicDir, 'assets', subDir);
-
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
-
-    const newPath = path.join(targetDir, newFilename);
-
-    // Use copyFile + unlink instead of rename for cross-filesystem compatibility (Vercel)
-    await fs.promises.copyFile(oldPath, newPath);
-    await fs.promises.unlink(oldPath).catch(() => { });
-
-    return `/assets/${subDir}/${newFilename}`;
-  } catch {
-    return url;
   }
 }

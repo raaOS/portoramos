@@ -226,7 +226,6 @@ export default function CommentSection({
         {!guestName || isSettingName ? (
           <div className="space-y-4">
             <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
               Isi namamu dulu untuk mulai berkomentar 😊
             </p>
             <div className="flex gap-2">

@@ -53,13 +53,11 @@ export function resolveCover(p: Project): GalleryItem {
 
   if (p.cover) {
     // Auto-generate poster for videos: /path/to/video.mp4 -> /path/to/video.jpg
-    // This allows Next/Image to show a fast-loading poster while video loads
     let posterUrl: string | undefined = undefined;
     if (inferredVideo) {
       posterUrl = p.cover.replace(/\.(mp4|webm|mov)$/i, '.jpg');
     }
 
-    // Return RAW URL (Local or GitHub)
     return {
       kind,
       src: toMediaProxy(p.cover),

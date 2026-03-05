@@ -47,11 +47,19 @@ export interface Project {
   };
   gallery?: string[];
   galleryItems?: GalleryItem[];
+  galleryGroups?: GalleryGroup[];
   initialCommentCount?: number;
   order: number;
   status: 'published' | 'draft';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface GalleryGroup {
+  id: string;
+  name: string;
+  description?: string;
+  items: GalleryItem[];
 }
 
 export interface GalleryItem {
@@ -62,6 +70,7 @@ export interface GalleryItem {
   height?: number;
   isActive?: boolean;
   poster?: string;
+  githubPath?: string;
 }
 
 export interface ProjectsData {
@@ -119,6 +128,7 @@ export interface CreateProjectData {
     afterImage: string;
     afterType?: 'image' | 'video';
   };
+  galleryGroups?: GalleryGroup[];
 }
 
 export interface UpdateProjectData extends Partial<CreateProjectData> {

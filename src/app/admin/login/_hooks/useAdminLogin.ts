@@ -1,0 +1,122 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import type { LocationData } from './useGeolocation';
+
+export function useAdminLogin(location: LocationData | null) {
+    const router = useRouter();
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [csrfToken, setCsrfToken] = useState<string>('');
+
+    // Fetch CSRF token on load
+    const fetchCSRF = useCallback(async () => {
+        try {
+            const res = await fetch('/api/admin/login', {
+                credentials: 'include',
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setCsrfToken(data.csrfToken);
+                console.log('CSRF token fetched successfully');
+            }
+        } catch (e) {
+            console.error('CSRF fetch error:', e);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchCSRF();
+    }, [fetchCSRF]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (!location) {
+            setError('⚠️ Lokasi wajib diaktifkan untuk login.');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        // Refresh CSRF token before login
+        let currentToken = csrfToken;
+        try {
+            const res = await fetch('/api/admin/login', {
+                credentials: 'include',
+            });
+            if (res.ok) {
+                const data = await res.json();
+                currentToken = data.csrfToken;
+                setCsrfToken(data.csrfToken);
+            }
+        } catch (e) {
+            console.error('CSRF fetch error:', e);
+        }
+        
+        if (!currentToken) {
+            setError('⚠️ CSRF token tidak tersedia. Silakan refresh halaman.');
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/admin/login', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': currentToken,
+                },
+                body: JSON.stringify({
+                    password,
+                    lat: location.lat,
+                    lng: location.lng,
+                    accuracy: location.accuracy,
+                }),
+            });
+
+            if (response.ok) {
+                router.push('/admin');
+            } else {
+                // Small delay to discourage brute-force attempts
+                await new Promise((resolve) => setTimeout(resolve, 400));
+
+                let message = 'Login failed. Please try again.';
+                if (response.status === 500) {
+                    message = '⚠️ Backend Error: Masalah koneksi database (Internal Server Error). Pastikan server stabil.';
+                } else {
+                    try {
+                        const data = await response.json();
+                        if (response.status === 401) {
+                            message = data?.error || 'Incorrect password. Please try again.';
+                        } else if (data?.error) {
+                            message = data.error;
+                        }
+                    } catch {
+                        // Ignore JSON parse errors
+                    }
+                }
+                setError(message);
+            }
+        } catch {
+            setError('Unable to login. Please check your connection and try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return {
+        password,
+        setPassword,
+        showPassword,
+        setShowPassword,
+        loading,
+        error,
+        handleSubmit
+    };
+}

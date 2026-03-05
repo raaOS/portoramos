@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   // Aggressively set/refresh the CSRF cookie to ensure persistence sync
   // We use a manual header as a fallback to ensure Next.js App Router doesn't strip it
   response.cookies.set('csrf_token', csrfToken, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7, // 7 days

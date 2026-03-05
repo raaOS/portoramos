@@ -131,7 +131,7 @@ export async function GET() {
   const response = NextResponse.json({ csrfToken: token });
 
   response.cookies.set('csrf_token', token, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 3600, // 1 hour
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     // Debug logging
     console.log('[CSRF Debug] Header token:', csrfToken ? 'present' : 'missing');
     console.log('[CSRF Debug] Cookie token:', sessionCsrfToken ? 'present' : 'missing');
-    
+
     if (!csrfToken || !sessionCsrfToken) {
       console.log('[CSRF Debug] Missing token - header:', !!csrfToken, 'cookie:', !!sessionCsrfToken);
       return NextResponse.json(
@@ -303,7 +303,7 @@ ${locationInfo.text}
 
     // Send to personal chat
     await sendTelegramAlert(message, { priority: 'normal', buttons });
-    
+
     // Also send to group if configured
     await sendTelegramToGroup(message, { priority: 'normal', buttons });
 

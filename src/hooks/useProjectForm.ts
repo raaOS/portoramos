@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Project, CreateProjectData, UpdateProjectData, GalleryItem } from '@/types/projects';
+import { Project, CreateProjectData, UpdateProjectData, GalleryItem, GalleryGroup } from '@/types/projects';
 import { isVideoLink, detectImageDimensions } from '@/lib/media';
 
 export interface ProjectFormData {
@@ -12,6 +12,7 @@ export interface ProjectFormData {
     coverHeight: number;
     gallery: string;
     galleryItems: GalleryItem[];
+    galleryGroups: GalleryGroup[];
     tags: string;
     // external_link?: string; // Removed
     autoplay: boolean;
@@ -62,6 +63,7 @@ export const useProjectForm = (project?: Project) => {
         coverHeight: project?.coverHeight || 600,
         gallery: '',
         galleryItems: [],
+        galleryGroups: project?.galleryGroups || [],
         tags: project?.tags?.join(', ') || '',
         // external_link removed
         autoplay: project?.autoplay ?? true,
@@ -118,6 +120,7 @@ export const useProjectForm = (project?: Project) => {
                 coverHeight: project.coverHeight || 600,
                 gallery: '',
                 galleryItems: [],
+                galleryGroups: project.galleryGroups || [],
                 tags: project.tags?.join(', ') || '',
                 autoplay: project.autoplay ?? true,
                 muted: project.muted ?? true,
@@ -130,9 +133,14 @@ export const useProjectForm = (project?: Project) => {
                 allowComments: project.allowComments ?? true,
 
                 narrative: {
+                    context: project.narrative?.context || '',
                     challenge: project.narrative?.challenge || '',
                     solution: project.narrative?.solution || '',
-                    result: project.narrative?.result || ''
+                    impact: project.narrative?.impact || '',
+                    result: project.narrative?.result || '',
+                    concept: project.narrative?.concept || '',
+                    process: project.narrative?.process || '',
+                    detail: project.narrative?.detail || ''
                 },
                 comparison: {
                     beforeImage: project.comparison?.beforeImage || '',
@@ -206,7 +214,7 @@ export const useProjectForm = (project?: Project) => {
         }
     };
 
-    const addGalleryItem = (url: string) => {
+    const addGalleryItem = (url: string, githubPath?: string) => {
         const cleanUrl = url.trim();
         if (!cleanUrl) return false;
         if (formData.galleryItems.some(item => item.src === cleanUrl)) return false;
@@ -214,7 +222,8 @@ export const useProjectForm = (project?: Project) => {
         const newItem: GalleryItem = {
             kind: isVideoLink(cleanUrl) ? 'video' : 'image',
             src: cleanUrl,
-            isActive: true
+            isActive: true,
+            githubPath // Store the GitHub repository path for deletion support
         };
 
         setFormData(prev => ({
@@ -240,6 +249,83 @@ export const useProjectForm = (project?: Project) => {
         }));
     };
 
+    const addGalleryGroup = (name: string) => {
+        const newGroup: GalleryGroup = {
+            id: Math.random().toString(36).substr(2, 9),
+            name,
+            items: []
+        };
+        setFormData(prev => ({
+            ...prev,
+            galleryGroups: [...prev.galleryGroups, newGroup]
+        }));
+    };
+
+    const removeGalleryGroup = (groupId: string) => {
+        setFormData(prev => ({
+            ...prev,
+            galleryGroups: prev.galleryGroups.filter(g => g.id !== groupId)
+        }));
+    };
+
+    const addGalleryItemToGroup = (groupId: string, url: string, githubPath?: string) => {
+        const cleanUrl = url.trim();
+        if (!cleanUrl) return false;
+
+        const newItem: GalleryItem = {
+            kind: isVideoLink(cleanUrl) ? 'video' : 'image',
+            src: cleanUrl,
+            isActive: true,
+            githubPath // Store the GitHub repository path for deletion support
+        };
+
+        setFormData(prev => ({
+            ...prev,
+            galleryGroups: prev.galleryGroups.map(group =>
+                group.id === groupId
+                    ? { ...group, items: [...group.items, newItem] }
+                    : group
+            )
+        }));
+        return true;
+    };
+
+    const removeGalleryItemFromGroup = (groupId: string, itemIndex: number) => {
+        setFormData(prev => ({
+            ...prev,
+            galleryGroups: prev.galleryGroups.map(group =>
+                group.id === groupId
+                    ? { ...group, items: group.items.filter((_: GalleryItem, i: number) => i !== itemIndex) }
+                    : group
+            )
+        }));
+    };
+
+    const toggleGalleryItemInGroup = (groupId: string, itemIndex: number) => {
+        setFormData(prev => ({
+            ...prev,
+            galleryGroups: prev.galleryGroups.map(group =>
+                group.id === groupId
+                    ? {
+                        ...group,
+                        items: group.items.map((item: GalleryItem, i: number) =>
+                            i === itemIndex ? { ...item, isActive: !item.isActive } : item
+                        )
+                    }
+                    : group
+            )
+        }));
+    };
+
+    const updateGroupName = (groupId: string, name: string) => {
+        setFormData(prev => ({
+            ...prev,
+            galleryGroups: prev.galleryGroups.map(group =>
+                group.id === groupId ? { ...group, name } : group
+            )
+        }));
+    };
+
     const getSubmitData = (): CreateProjectData | UpdateProjectData | null => {
         const validationErrors = validateForm();
         setErrors(validationErrors);
@@ -251,6 +337,7 @@ export const useProjectForm = (project?: Project) => {
             tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
             gallery: formData.galleryItems.map(item => item.src),
             galleryItems: formData.galleryItems,
+            galleryGroups: formData.galleryGroups,
             narrative: formData.narrative,
             comparison: formData.comparison.beforeImage ? formData.comparison : undefined,
             ...(project && { id: project.id })
@@ -265,6 +352,12 @@ export const useProjectForm = (project?: Project) => {
         addGalleryItem,
         removeGalleryItem,
         toggleGalleryItem,
+        addGalleryGroup,
+        removeGalleryGroup,
+        addGalleryItemToGroup,
+        removeGalleryItemFromGroup,
+        toggleGalleryItemInGroup,
+        updateGroupName,
         getSubmitData
     };
 };

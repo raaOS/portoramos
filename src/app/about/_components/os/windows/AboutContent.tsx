@@ -1,32 +1,29 @@
 import React, { useState } from "react";
 import Link from "next/link";
-import { User, FileText, Heart, Lightbulb, Archive, type LucideIcon } from "lucide-react";
+import { User, FileText, Heart, Lightbulb, type LucideIcon } from "lucide-react";
 import type { AboutData } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
-import type { Project } from "@/types/projects";
 
 // Sub-components (Clean Code: Sections extracted)
 import { AboutTab } from "../sections/AboutTab";
 import { CVTab } from "../sections/CVTab";
 import { PhilosophyTab } from "../sections/PhilosophyTab";
 import { InterestsTab } from "../sections/InterestsTab";
-import { ArchiveTab } from "../sections/ArchiveTab";
 
 interface AboutContentProps {
     aboutData?: AboutData | null;
     experienceData?: ExperienceData | null;
     hardSkillsData?: HardSkillsData | null;
-    projects?: Project[];
 }
 
 interface MenuButtonProps {
-    id: 'about' | 'cv' | 'philosophy' | 'interests' | 'archive';
+    id: 'about' | 'cv' | 'philosophy' | 'interests';
     label: string;
     count?: string;
     icon: LucideIcon;
-    activeTab: 'about' | 'cv' | 'philosophy' | 'interests' | 'archive';
-    setActiveTab: (id: 'about' | 'cv' | 'philosophy' | 'interests' | 'archive') => void;
+    activeTab: 'about' | 'cv' | 'philosophy' | 'interests';
+    setActiveTab: (id: 'about' | 'cv' | 'philosophy' | 'interests') => void;
 }
 
 const MenuButton = ({ id, label, count, icon: Icon, activeTab, setActiveTab }: MenuButtonProps) => (
@@ -48,10 +45,8 @@ const MenuButton = ({ id, label, count, icon: Icon, activeTab, setActiveTab }: M
     </button>
 );
 
-export default function AboutContent({ aboutData, experienceData, hardSkillsData, projects = [] }: AboutContentProps) {
-    const [activeTab, setActiveTab] = useState<'about' | 'cv' | 'philosophy' | 'interests' | 'archive'>('about');
-
-    const archiveProjects = projects.filter(p => p.type === 'visual_art');
+export default function AboutContent({ aboutData, experienceData, hardSkillsData }: AboutContentProps) {
+    const [activeTab, setActiveTab] = useState<'about' | 'cv' | 'philosophy' | 'interests'>('about');
 
     return (
         <div className="flex h-full w-full bg-[#ECECEC] font-sans">
@@ -83,13 +78,6 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                 <MenuButton id="philosophy" label="Philosophy" count="3" icon={Lightbulb} activeTab={activeTab} setActiveTab={setActiveTab} />
                 <MenuButton id="interests" label="Interests" count={(aboutData?.softSkills?.items?.length || aboutData?.softSkills?.texts?.length) ? "∞" : "0"} icon={Heart} activeTab={activeTab} setActiveTab={setActiveTab} />
 
-                <div className="h-px bg-gray-300 my-2 mx-1 opacity-0 md:opacity-50 transition-opacity duration-300"></div>
-
-                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold px-3 mb-1 opacity-0 md:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                    Works
-                </div>
-                <MenuButton id="archive" label="Archive" count={String(archiveProjects.length)} icon={Archive} activeTab={activeTab} setActiveTab={setActiveTab} />
-
                 <div className="mt-auto pt-4 overflow-hidden">
                     <Link
                         href="/cv?mode=ats&print=true"
@@ -115,7 +103,6 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                 {activeTab === 'cv' && <CVTab experienceData={experienceData} />}
                 {activeTab === 'philosophy' && <PhilosophyTab aboutData={aboutData} />}
                 {activeTab === 'interests' && <InterestsTab aboutData={aboutData} />}
-                {activeTab === 'archive' && <ArchiveTab archiveProjects={archiveProjects} />}
             </div>
         </div>
     );

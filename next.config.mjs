@@ -164,6 +164,7 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // Cache control for static JS/CSS files (re-enabled after fix)
       // Cache control for Home page (HTML)
       {
         source: '/',

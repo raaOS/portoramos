@@ -353,6 +353,7 @@ export async function POST(req: NextRequest) {
 
         const data = await response.json();
 
+
         return NextResponse.json({
             url: `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/${path}`,
             publicPath: path.replace(/^public/, ''),
@@ -365,3 +366,34 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
     }
 }
+
+export async function DELETE(req: NextRequest) {
+    if (!(await validateAdminRequest(req))) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+        const { searchParams } = new URL(req.url);
+        const githubPath = searchParams.get('path');
+
+        if (!githubPath) {
+            return NextResponse.json({ error: 'Path is required' }, { status: 400 });
+        }
+
+        const { githubService } = await import('@/lib/github');
+        const success = await githubService.deleteFile(
+            githubPath,
+            `Delete ${githubPath} via Admin Panel`
+        );
+
+        if (!success) {
+            return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true, message: 'File deleted from GitHub' });
+    } catch (error) {
+        console.error('GitHub Delete Error:', error);
+        return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    }
+}
+

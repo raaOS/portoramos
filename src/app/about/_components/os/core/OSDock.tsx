@@ -48,11 +48,7 @@ export default function OSDock({
         label: "Projects",
         icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />,
         onClick: () => {
-          if (commercialProjects.length > 0) {
-            openProjectWindow(commercialProjects[0]);
-          } else {
-            router.push('/projects');
-          }
+          router.push('/projects');
         }
       },
       { id: "about", label: "About Me", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => onOpenWindow("about"), isOpen: isWindowOpen("about") },

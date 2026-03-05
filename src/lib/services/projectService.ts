@@ -142,6 +142,9 @@ export const projectService = {
             db.ref('lastUpdated').set(new Date().toISOString())
         ]);
 
+        // AUTO-SYNC TO GITHUB
+        this.asyncSyncToGithub();
+
         return newProject;
     },
 
@@ -180,21 +183,101 @@ export const projectService = {
             db.ref('lastUpdated').set(new Date().toISOString())
         ]);
 
+        // AUTO-SYNC TO GITHUB
+        this.asyncSyncToGithub();
+
         return updatedProject;
     },
 
     /**
-     * Delete a project from Firebase.
+     * Delete a project from Firebase and its associated assets from GitHub (Cascade Delete).
      */
+    async asyncSyncToGithub() {
+        try {
+            const projectsRef = db.ref('projects');
+            const snap = await projectsRef.once('value');
+            const projects = Object.values(snap.val() || {});
+            const data = {
+                projects,
+                lastUpdated: new Date().toISOString()
+            };
+
+            // 1. Write to local file
+            const fs = await import('fs');
+            const path = await import('path');
+            const localPath = path.join(process.cwd(), 'src', 'data', 'projects.json');
+            const dir = path.dirname(localPath);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(localPath, JSON.stringify(data, null, 2));
+            console.log('[ProjectService] Local projects.json updated.');
+
+            // 2. Push to GitHub
+            await githubService.updateFile('src/data/projects.json', data, 'Auto-sync: Project Data Update');
+            console.log('[ProjectService] Auto-sync to GitHub successful.');
+        } catch (error) {
+            console.error('[ProjectService] Auto-sync to GitHub failed:', error);
+        }
+    },
+
     async deleteProject(id: string): Promise<boolean> {
         const projectRef = db.ref(`projects/${id}`);
         const snap = await projectRef.once('value');
         if (!snap.exists()) return false;
 
+        const project: Project = snap.val();
+
+        // 1. Cascade Delete Assets from GitHub
+        const assetsToDelete = new Set<string>();
+
+        const getPath = (url: string) => {
+            if (!url || !url.includes('assets/projects/')) return null;
+            // Clean URL and extract relative path
+            const parts = url.split('projects/');
+            if (parts.length < 2) return null;
+            return `public/assets/projects/${parts[1].split('?')[0]}`;
+        };
+
+        if (project.cover) {
+            const path = getPath(project.cover);
+            if (path) assetsToDelete.add(path);
+        }
+
+        if (project.comparison) {
+            const b = getPath(project.comparison.beforeImage);
+            const a = getPath(project.comparison.afterImage);
+            if (b) assetsToDelete.add(b);
+            if (a) assetsToDelete.add(a);
+        }
+
+        if (project.galleryItems) {
+            project.galleryItems.forEach(item => {
+                const path = getPath(item.src);
+                if (path) assetsToDelete.add(path);
+            });
+        }
+
+        if (project.galleryGroups) {
+            project.galleryGroups.forEach(group => {
+                group.items.forEach(item => {
+                    const path = getPath(item.src);
+                    if (path) assetsToDelete.add(path);
+                });
+            });
+        }
+
+        // Execute deletions in background to not block the main response
+        Promise.all(Array.from(assetsToDelete).map(path =>
+            githubService.deleteFile(path, `Cascade Delete: Project ${id} removed`).catch(e => console.error(`Failed to delete asset ${path}:`, e))
+        ));
+
+        // 2. Remove from Firebase
         await Promise.all([
             projectRef.remove(),
             db.ref('lastUpdated').set(new Date().toISOString())
         ]);
+
+        // 3. Trigger sync after delete
+        this.asyncSyncToGithub();
 
         return true;
     },
@@ -211,9 +294,10 @@ export const projectService = {
         const firebaseUpdates: Record<string, string | number | boolean | null | object | undefined> = {};
 
         if (updates.delete) {
-            updates.ids.forEach(id => {
-                firebaseUpdates[`projects/${id}`] = null;
-            });
+            for (const id of updates.ids) {
+                await this.deleteProject(id); // Use the enhanced deleteProject for cascade delete
+            }
+            return true;
         } else if (updates.reorder) {
             updates.ids.forEach((id, index) => {
                 if (currentProjects[id]) {
@@ -233,6 +317,10 @@ export const projectService = {
         firebaseUpdates['lastUpdated'] = new Date().toISOString();
 
         await db.ref().update(firebaseUpdates);
+
+        // Trigger sync
+        this.asyncSyncToGithub();
+
         return true;
     }
 };
