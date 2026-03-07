@@ -213,28 +213,6 @@
       "external_link": "",
       "galleryGroups": [
         {
-          "description": "Berbagai aset iklan digital untuk kampanye ini.",
-          "id": "group-adv-1",
-          "items": [
-            {
-              "isActive": true,
-              "kind": "image",
-              "src": "/assets/projects/identitas-monogram-hijau.jpg"
-            },
-            {
-              "isActive": true,
-              "kind": "image",
-              "src": "/assets/projects/tipografi-alam-kontras-tinggi.jpg"
-            },
-            {
-              "isActive": true,
-              "kind": "image",
-              "src": "/assets/projects/overlay-bunga-barok-digital.jpg"
-            }
-          ],
-          "name": "Advertising & Assets"
-        },
-        {
           "description": "Hasil akhir desain dalam berbagai format.",
           "id": "group-doc-1",
           "items": [
@@ -288,7 +266,7 @@
       "timeline": "1 Hari Kerja (Fast turnaround)",
       "title": "Promo Streaming Digital Penuh Semangat Natal",
       "type": "commercial",
-      "updatedAt": "2026-03-07T05:37:14.644Z",
+      "updatedAt": "2026-03-07T05:38:16.726Z",
       "year": 2025
     },
     {
@@ -832,5 +810,5 @@
       "year": 2025
     }
   ],
-  "lastUpdated": "2026-03-07T05:37:14.995Z"
+  "lastUpdated": "2026-03-07T05:38:16.783Z"
 }
