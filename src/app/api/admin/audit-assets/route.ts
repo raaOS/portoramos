@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
             const projectsSnap = await db.ref('projects').once('value');
             const firebaseProjects = projectsSnap.val() || {};
             
-            // Collect assets from Firebase projects
             Object.values(firebaseProjects).forEach((p: any) => {
                 collectProjectAssets(p, usedAssets);
             });
@@ -39,26 +38,54 @@ export async function GET(req: NextRequest) {
         try {
             const aboutData = await aboutService.getAboutData() as any;
             
-            // Desktop icons
+            // Desktop icons - CRITICAL: These should NEVER be deleted
             if (aboutData.desktop?.icons) {
                 aboutData.desktop.icons.forEach((icon: any) => {
-                    if (icon.iconUrl) usedAssets.add(icon.iconUrl);
+                    if (icon.iconUrl) {
+                        usedAssets.add(icon.iconUrl);
+                        // Also add without leading slash for flexible matching
+                        if (icon.iconUrl.startsWith('/')) {
+                            usedAssets.add(icon.iconUrl.substring(1));
+                        } else {
+                            usedAssets.add('/' + icon.iconUrl);
+                        }
+                    }
                 });
             }
             
             // Sticky notes images
             if (aboutData.desktop?.stickyNotes) {
                 aboutData.desktop.stickyNotes.forEach((note: any) => {
-                    if (note.imageUrl) usedAssets.add(note.imageUrl);
+                    if (note.imageUrl) {
+                        usedAssets.add(note.imageUrl);
+                        if (note.imageUrl.startsWith('/')) {
+                            usedAssets.add(note.imageUrl.substring(1));
+                        } else {
+                            usedAssets.add('/' + note.imageUrl);
+                        }
+                    }
                 });
             }
         } catch (e) {
             console.error('Failed to load about data:', e);
         }
 
-        // 4. Scan Folder Lokal (Dev environment)
+        // 4. Get GitHub file list to check sync status
+        let githubFiles: Set<string> = new Set();
+        try {
+            const ghContent = await githubService.getFileContent('public/assets/projects');
+            if (Array.isArray(ghContent.content)) {
+                ghContent.content.forEach((item: any) => {
+                    if (item.name) githubFiles.add(item.name.toLowerCase());
+                });
+            }
+        } catch (e) {
+            console.log('Could not fetch GitHub file list, will assume local is source of truth');
+        }
+
+        // 5. Scan Folder Lokal (Dev environment)
         const projectAssetsDir = path.join(process.cwd(), 'public/assets/projects');
-        let orphanFiles: string[] = [];
+        let orphanFiles: Array<{name: string, inGithub: boolean, reason: string}> = [];
         let totalFiles = 0;
 
         if (fs.existsSync(projectAssetsDir)) {
@@ -66,18 +93,36 @@ export async function GET(req: NextRequest) {
             totalFiles = files.length;
 
             files.forEach(file => {
-                if (file === 'comparisons' || file === '.gitkeep') return; // Skip directory
+                if (file === 'comparisons' || file === '.gitkeep') return;
+                if (fs.statSync(path.join(projectAssetsDir, file)).isDirectory()) return;
 
                 const publicPath = `/assets/projects/${file}`;
+                const noSlashPath = `assets/projects/${file}`;
 
-                // Periksa apakah path ini ada di set usedAssets (partial match)
+                // Check if file is used (with various path formats)
                 let isUsed = false;
+                let usedBy = '';
+                
                 usedAssets.forEach(assetUrl => {
-                    if (assetUrl.includes(publicPath) || assetUrl.includes(file)) isUsed = true;
+                    const normalizedUrl = assetUrl.toLowerCase();
+                    const normalizedFile = file.toLowerCase();
+                    
+                    if (normalizedUrl.includes(normalizedFile) || 
+                        normalizedUrl.includes(publicPath.toLowerCase()) ||
+                        normalizedUrl.includes(noSlashPath.toLowerCase())) {
+                        isUsed = true;
+                        usedBy = assetUrl;
+                    }
                 });
 
                 if (!isUsed) {
-                    orphanFiles.push(file);
+                    // Check if file exists in GitHub
+                    const inGithub = githubFiles.has(file.toLowerCase());
+                    orphanFiles.push({
+                        name: file,
+                        inGithub,
+                        reason: inGithub ? 'Not referenced by any project or icon' : 'Local only - not pushed to GitHub'
+                    });
                 }
             });
         }
@@ -88,7 +133,8 @@ export async function GET(req: NextRequest) {
                 totalFilesOnDisk: totalFiles,
                 orphanFilesCount: orphanFiles.length
             },
-            orphanFiles: orphanFiles
+            orphanFiles: orphanFiles,
+            usedAssetsList: Array.from(usedAssets).slice(0, 50) // Debug: show first 50 used assets
         });
     } catch (error) {
         console.error('Audit Error:', error);

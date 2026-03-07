@@ -11,8 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        // In production (Vercel), we don't have access to git CLI, nor should we commit local files.
-        // Data updates are handled directly via githubService (API).
+        // In production (Vercel), we don't have access to git CLI
         if (process.env.NODE_ENV === 'production') {
             return NextResponse.json({
                 success: true,
@@ -27,21 +26,41 @@ export async function POST(request: NextRequest) {
         try {
             await execAsync('git commit -m "Content Update: new assets/data from Admin Panel"');
         } catch (error) {
-            // If nothing to commit (e.g. only untracked files were added, or no changes), standard git commit behavior might throw if clean.
-            // If "nothing to commit" is in stdout, we can proceed. If it's a real error, rethrow.
+            // If nothing to commit, that's ok
             if (error instanceof Error && error.message.includes('nothing to commit')) {
-                // Nothing to commit, skipping commit
-                // If nothing to commit, we can still try to push if there are committed changes not pushed.
-                // Or just ignore.
+                // Continue to push
             } else {
-                throw error; // Re-throw real errors
+                throw error;
             }
         }
 
-        // 3. Push
-        await execAsync('git push');
-        // Silently handle git push output
-        // git push writes to stderr sometimes even on success
+        // 3. Push with retry
+        let pushAttempts = 0;
+        const maxAttempts = 3;
+        let lastError = null;
+        
+        while (pushAttempts < maxAttempts) {
+            try {
+                await execAsync('git push');
+                lastError = null;
+                break;
+            } catch (error) {
+                pushAttempts++;
+                lastError = error;
+                
+                if (error instanceof Error && error.message.includes('cannot lock ref')) {
+                    if (pushAttempts < maxAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, 1000 * pushAttempts));
+                        continue;
+                    }
+                }
+                throw error;
+            }
+        }
+        
+        if (lastError) {
+            throw lastError;
+        }
 
         return NextResponse.json({
             success: true,
@@ -49,11 +68,17 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error) {
-        // Silently handle git sync errors
+        const errorMessage = error instanceof Error ? error.message : 'Sync failed';
+        console.error('[Sync Error]', error);
+        
+        const isLockError = errorMessage.includes('cannot lock ref');
+        
         return NextResponse.json({
             success: false,
-            error: error instanceof Error ? error.message : 'Sync failed',
-            details: error instanceof Error ? error.stack : 'Unknown error'
-        }, { status: 500 });
+            error: isLockError 
+                ? 'GitHub sedang sibuk. Data sudah tersimpan lokal, coba sync lagi dalam beberapa detik.'
+                : errorMessage,
+            retryable: isLockError
+        }, { status: isLockError ? 503 : 500 });
     }
 }
