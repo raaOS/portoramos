@@ -1,5 +1,5 @@
 import { ProjectFormData } from '@/hooks/useProjectForm';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, Image as ImageIcon } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
 import { useEffect, useRef } from 'react';
 import { deleteFromGitHub, getGithubPathFromUrl } from '@/lib/githubUpload';
@@ -91,194 +91,237 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
 
     return (
         <div className="space-y-4">
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cover Image/Video URL *
-                </label>
-
-                {/* Manual URL Input */}
-                <div className="flex gap-2 items-center mb-4">
-                    <input
-                        type="text"
-                        value={formData.cover}
-                        onChange={(e) => updateField('cover', e.target.value)}
-                        className={`flex-1 px-3 py-2 border rounded-none focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.cover ? 'border-red-300' : 'border-gray-300'
-                            }`}
-                        placeholder="https://... or /assets/..."
-                    />
-                    {formData.cover && (
-                        <button
-                            type="button"
-                            onClick={() => handleDeleteMedia('cover')}
-                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                            title="Hapus / Clear"
-                        >
-                            <Trash2 className="w-5 h-5" />
-                        </button>
-                    )}
-                    {isDetectingDimensions && (
-                        <div className="flex items-center px-2 text-violet-600">
-                            <Loader2 className="w-5 h-5 animate-spin" />
+            {/* 2 Column Layout: Preview | Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left: Preview */}
+                <div className="flex items-center justify-center bg-gray-50 rounded-lg border border-gray-100 min-h-[200px]">
+                    {formData.cover ? (
+                        <div className="relative group p-4">
+                            <div className="bg-gray-100 rounded-lg overflow-hidden max-h-56">
+                                {formData.cover?.match(/\.(mp4|webm|mov)$/i) ? (
+                                    <video 
+                                        src={formData.cover} 
+                                        className="w-auto h-auto max-h-56 object-contain"
+                                        controls
+                                    />
+                                ) : (
+                                    <img 
+                                        src={formData.cover} 
+                                        alt="Cover" 
+                                        className="w-auto h-auto max-h-56 object-contain"
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center text-gray-400">
+                            <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                            <p className="text-xs">Belum ada preview</p>
                         </div>
                     )}
                 </div>
 
-                {/* Uploader with Deferred Mode */}
-                <AdminFileUpload
-                    onUpload={handleUploadComplete} // Handles initial load or manual URL if needed
-                    onFileSelect={(file) => {
-                        // Create preview URL
-                        const url = URL.createObjectURL(file);
-                        updateField('cover', url);
-                        // Notify parent to store File
-                        if (onFileChange) onFileChange(file);
-                    }}
-                    autoUpload={false} // DEFERRED MODE
-                    multiple={false}
-                    accept="image/*,video/*"
-                    maxSize={500}
-                    enableCrop={true}
-                    enableVideoTrim={true}
-                    className="mt-2"
-                />
+                {/* Right: Controls */}
+                <div className="space-y-4">
+                    {/* URL Input */}
+                    <div>
+                        <label className="block text-xs text-gray-500 mb-1.5">Image/Video URL</label>
+                        <div className="flex gap-2 items-center">
+                            <input
+                                type="text"
+                                value={formData.cover}
+                                onChange={(e) => updateField('cover', e.target.value)}
+                                className={`flex-1 px-3 py-2 text-sm border rounded-md focus:outline-none focus:border-gray-400 transition-colors ${errors.cover ? 'border-red-300' : 'border-gray-200'}`}
+                                placeholder="https://... or /assets/..."
+                            />
+                            {formData.cover && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleDeleteMedia('cover')}
+                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                    title="Hapus / Clear"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            )}
+                            {isDetectingDimensions && (
+                                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                            )}
+                        </div>
+                        {errors.cover && (
+                            <p className="mt-1 text-xs text-red-600">{errors.cover}</p>
+                        )}
+                    </div>
 
-                {errors.cover && (
-                    <p className="mt-1 text-sm text-red-600">{errors.cover}</p>
-                )}
+                    {/* Uploader */}
+                    <AdminFileUpload
+                        onUpload={handleUploadComplete}
+                        onFileSelect={(file) => {
+                            const url = URL.createObjectURL(file);
+                            updateField('cover', url);
+                            if (onFileChange) onFileChange(file);
+                        }}
+                        autoUpload={false}
+                        multiple={false}
+                        accept="image/*,video/*"
+                        maxSize={500}
+                        enableCrop={true}
+                        enableVideoTrim={true}
+                    />
+
+                    {/* Dimensions */}
+                    {(formData.coverWidth || formData.coverHeight) && (
+                        <div className="flex items-center gap-4 text-xs text-gray-500 pt-2">
+                            <span>Width: <span className="text-gray-700 font-medium">{formData.coverWidth || '-'}</span> px</span>
+                            <span>Height: <span className="text-gray-700 font-medium">{formData.coverHeight || '-'}</span> px</span>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-xs text-gray-500 mb-1">Cover Width</label>
-                    <input
-                        type="number"
-                        value={formData.coverWidth}
-                        readOnly
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-none text-gray-500 text-sm"
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs text-gray-500 mb-1">Cover Height</label>
-                    <input
-                        type="number"
-                        value={formData.coverHeight}
-                        readOnly
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-none text-gray-500 text-sm"
-                    />
-                </div>
-            </div>
-
-            {/* Comparison Media Section - ONLY SHOW IF FORMAT IS COMPARISON */}
+            {/* Comparison Section - Clean Cards with Preview */}
             {mediaFormat === 'comparison' && (
-                <div className="pt-6 border-t border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                        Comparison Media (Before & After)
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Before Image */}
-                        <div>
-                            <div className="flex justify-between items-center mb-1">
-                                <label className="block text-xs font-medium text-gray-700">Before Image (Original)</label>
-                                <select
-                                    value={formData.comparison?.beforeType || 'image'}
-                                    onChange={(e) => updateField('comparison', {
-                                        ...formData.comparison,
-                                        beforeType: e.target.value as 'image' | 'video'
-                                    })}
-                                    className="text-[10px] border-gray-300 rounded py-0.5 px-2 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                >
-                                    <option value="image">Image</option>
-                                    <option value="video">Video</option>
-                                </select>
-                            </div>
-                            <div className="flex gap-2 items-center mb-2">
-                                <input
-                                    type="text"
-                                    value={formData.comparison?.beforeImage || ''}
-                                    onChange={(e) => updateField('comparison', { ...formData.comparison, beforeImage: e.target.value })}
-                                    className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                    placeholder="/assets/..."
-                                />
-                                {formData.comparison?.beforeImage && (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDeleteMedia('before')}
-                                        className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                                        title="Hapus / Clear"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </div>
-                            <AdminFileUpload
-                                onUpload={(urls) => {
-                                    if (urls.length > 0) updateField('comparison', { ...formData.comparison, beforeImage: urls[0] });
-                                }}
-                                onFileSelect={(file) => {
-                                    const url = URL.createObjectURL(file);
-                                    updateField('comparison', { ...formData.comparison, beforeImage: url });
-                                    if (onFileChange) onFileChange(file);
-                                }}
-                                autoUpload={true}
-                                multiple={false}
-                                accept="image/*,video/*"
-                                maxSize={500}
-                                className="mt-1"
-                                folder="comparisons"
-                                customFilename={slug ? `${slug}-before` : undefined}
-                            />
-                            {!slug && <p className="text-[10px] text-orange-500 mt-1">Enter title/slug first for auto-naming</p>}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                    {/* Before */}
+                    <div className="bg-gray-50/50 rounded-lg border border-gray-100 p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-medium text-gray-700">Before</span>
+                            <select
+                                value={formData.comparison?.beforeType || 'image'}
+                                onChange={(e) => updateField('comparison', {
+                                    ...formData.comparison,
+                                    beforeType: e.target.value as 'image' | 'video'
+                                })}
+                                className="text-[10px] border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:border-gray-400"
+                            >
+                                <option value="image">Image</option>
+                                <option value="video">Video</option>
+                            </select>
                         </div>
-
-                        {/* After Image */}
-                        <div>
-                            <div className="flex justify-between items-center mb-1">
-                                <label className="block text-xs font-medium text-gray-700">After Image (Result)</label>
-                                <select
-                                    value={formData.comparison?.afterType || 'image'}
-                                    onChange={(e) => updateField('comparison', {
-                                        ...formData.comparison,
-                                        afterType: e.target.value as 'image' | 'video'
-                                    })}
-                                    className="text-[10px] border-gray-300 rounded py-0.5 px-2 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                >
-                                    <option value="image">Image</option>
-                                    <option value="video">Video</option>
-                                </select>
+                        
+                        {/* Preview - Maintains original aspect ratio */}
+                        {formData.comparison?.beforeImage && (
+                            <div className="mb-3 relative group flex justify-center">
+                                <div className="bg-gray-100 rounded-lg overflow-hidden max-h-40">
+                                    {(formData.comparison?.beforeType === 'video' || formData.comparison?.beforeImage?.match(/\.(mp4|webm|mov)$/i)) ? (
+                                        <video 
+                                            src={formData.comparison.beforeImage} 
+                                            className="w-auto h-auto max-h-40 object-contain"
+                                            controls
+                                        />
+                                    ) : (
+                                        <img 
+                                            src={formData.comparison.beforeImage} 
+                                            alt="Before" 
+                                            className="w-auto h-auto max-h-40 object-contain"
+                                        />
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex gap-2 items-center mb-2">
-                                <input
-                                    type="text"
-                                    value={formData.comparison?.afterImage || ''}
-                                    onChange={(e) => updateField('comparison', { ...formData.comparison, afterImage: e.target.value })}
-                                    className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                    placeholder="/assets/..."
-                                />
-                                {formData.comparison?.afterImage && (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDeleteMedia('after')}
-                                        className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                                        title="Hapus / Clear"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </div>
-                            <AdminFileUpload
-                                onUpload={(urls) => {
-                                    if (urls.length > 0) updateField('comparison', { ...formData.comparison, afterImage: urls[0] });
-                                }}
-                                autoUpload={true}
-                                multiple={false}
-                                accept="image/*,video/*"
-                                maxSize={500}
-                                className="mt-1"
-                                customFilename={slug ? `${slug}-after` : undefined}
+                        )}
+                        
+                        <div className="flex gap-2 items-center mb-2">
+                            <input
+                                type="text"
+                                value={formData.comparison?.beforeImage || ''}
+                                onChange={(e) => updateField('comparison', { ...formData.comparison, beforeImage: e.target.value })}
+                                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-gray-400"
+                                placeholder="/assets/..."
                             />
+                            {formData.comparison?.beforeImage && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleDeleteMedia('before')}
+                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            )}
                         </div>
+                        <AdminFileUpload
+                            onUpload={(urls) => {
+                                if (urls.length > 0) updateField('comparison', { ...formData.comparison, beforeImage: urls[0] });
+                            }}
+                            onFileSelect={(file) => {
+                                const url = URL.createObjectURL(file);
+                                updateField('comparison', { ...formData.comparison, beforeImage: url });
+                                if (onFileChange) onFileChange(file);
+                            }}
+                            autoUpload={true}
+                            multiple={false}
+                            accept="image/*,video/*"
+                            maxSize={500}
+                            folder="comparisons"
+                            customFilename={slug ? `${slug}-before` : undefined}
+                        />
+                    </div>
+
+                    {/* After */}
+                    <div className="bg-gray-50/50 rounded-lg border border-gray-100 p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-medium text-gray-700">After</span>
+                            <select
+                                value={formData.comparison?.afterType || 'image'}
+                                onChange={(e) => updateField('comparison', {
+                                    ...formData.comparison,
+                                    afterType: e.target.value as 'image' | 'video'
+                                })}
+                                className="text-[10px] border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:border-gray-400"
+                            >
+                                <option value="image">Image</option>
+                                <option value="video">Video</option>
+                            </select>
+                        </div>
+                        
+                        {/* Preview - Maintains original aspect ratio */}
+                        {formData.comparison?.afterImage && (
+                            <div className="mb-3 relative group flex justify-center">
+                                <div className="bg-gray-100 rounded-lg overflow-hidden max-h-40">
+                                    {(formData.comparison?.afterType === 'video' || formData.comparison?.afterImage?.match(/\.(mp4|webm|mov)$/i)) ? (
+                                        <video 
+                                            src={formData.comparison.afterImage} 
+                                            className="w-auto h-auto max-h-40 object-contain"
+                                            controls
+                                        />
+                                    ) : (
+                                        <img 
+                                            src={formData.comparison.afterImage} 
+                                            alt="After" 
+                                            className="w-auto h-auto max-h-40 object-contain"
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="flex gap-2 items-center mb-2">
+                            <input
+                                type="text"
+                                value={formData.comparison?.afterImage || ''}
+                                onChange={(e) => updateField('comparison', { ...formData.comparison, afterImage: e.target.value })}
+                                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-gray-400"
+                                placeholder="/assets/..."
+                            />
+                            {formData.comparison?.afterImage && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleDeleteMedia('after')}
+                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+                        <AdminFileUpload
+                            onUpload={(urls) => {
+                                if (urls.length > 0) updateField('comparison', { ...formData.comparison, afterImage: urls[0] });
+                            }}
+                            autoUpload={true}
+                            multiple={false}
+                            accept="image/*,video/*"
+                            maxSize={500}
+                            customFilename={slug ? `${slug}-after` : undefined}
+                        />
                     </div>
                 </div>
             )}

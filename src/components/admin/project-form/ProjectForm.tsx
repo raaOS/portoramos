@@ -152,58 +152,130 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
             </div>
 
             <form onSubmit={handleSubmit} className="min-h-[400px]">
-                {/* STEP 1: SETUP */}
+                {/* STEP 1: SETUP - Minimalist with Checkbox Style */}
                 {currentStep === 1 && (
-                    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
-                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 space-y-4">
-                            <div>
-                                <h3 className="text-sm font-bold text-gray-900 mb-2">Tipe Studi Kasus</h3>
-                                <p className="text-xs text-gray-500 mb-4">Pilih pendekatan yang paling sesuai dengan jenis karya ini.</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <label className={`cursor-pointer p-4 border rounded-lg text-center transition-colors ${formData.type === 'commercial' ? 'border-black bg-black text-white' : 'border-gray-200 bg-white hover:border-black'}`}>
-                                        <input type="radio" name="type" className="hidden" checked={formData.type === 'commercial'} onChange={() => updateField('type', 'commercial')} />
-                                        <span className="font-bold text-sm block">Komersial</span>
-                                        <span className={`text-[10px] ${formData.type === 'commercial' ? 'text-gray-300' : 'text-gray-500'}`}>Proyek Klien / Iklan</span>
-                                    </label>
-                                    <label className={`cursor-pointer p-4 border rounded-lg text-center transition-colors ${formData.type === 'visual_art' ? 'border-black bg-black text-white' : 'border-gray-200 bg-white hover:border-black'}`}>
-                                        <input type="radio" name="type" className="hidden" checked={formData.type === 'visual_art'} onChange={() => updateField('type', 'visual_art')} />
-                                        <span className="font-bold text-sm block">Art Visual</span>
-                                        <span className={`text-[10px] ${formData.type === 'visual_art' ? 'text-gray-300' : 'text-gray-500'}`}>Eksplorasi Pribadi / Seni</span>
-                                    </label>
-                                </div>
+                    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300 px-2">
+                        {/* Section 1: Project Type */}
+                        <section>
+                            <div className="mb-4">
+                                <h3 className="text-sm font-semibold text-gray-900">Tipe Studi Kasus</h3>
+                                <p className="text-xs text-gray-500 mt-0.5">Pilih pendekatan yang sesuai</p>
                             </div>
-                        </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="group flex items-center gap-3 py-1.5 cursor-pointer">
+                                    <input type="radio" name="type" className="hidden" checked={formData.type === 'commercial'} onChange={() => updateField('type', 'commercial')} />
+                                    {formData.type === 'commercial' ? (
+                                        <>
+                                            <div className="w-5 h-5 rounded border-2 border-green-500 bg-green-50 flex items-center justify-center flex-shrink-0">
+                                                <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <span className="text-sm font-medium text-green-600">Komersial</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center flex-shrink-0 group-hover:border-gray-400" />
+                                            <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors">Komersial</span>
+                                        </>
+                                    )}
+                                </label>
+                                <label className="group flex items-center gap-3 py-1.5 cursor-pointer">
+                                    <input type="radio" name="type" className="hidden" checked={formData.type === 'visual_art'} onChange={() => updateField('type', 'visual_art')} />
+                                    {formData.type === 'visual_art' ? (
+                                        <>
+                                            <div className="w-5 h-5 rounded border-2 border-green-500 bg-green-50 flex items-center justify-center flex-shrink-0">
+                                                <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <span className="text-sm font-medium text-green-600">Art Visual</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center flex-shrink-0 group-hover:border-gray-400" />
+                                            <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors">Art Visual</span>
+                                        </>
+                                    )}
+                                </label>
+                            </div>
+                        </section>
 
-                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 space-y-4">
-                            <div>
-                                <h3 className="text-sm font-bold text-gray-900 mb-2">Format Media Tambahan</h3>
-                                <p className="text-xs text-gray-500 mb-4">Pilihan ini menentukan input apa yang akan diminta pada langkah selanjutnya.</p>
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <label className={`flex-1 cursor-pointer p-3 border rounded-lg text-center transition-colors ${mediaFormat === 'single' ? 'border-black bg-white shadow-sm ring-1 ring-black' : 'border-gray-200 bg-white hover:border-black'}`}>
-                                        <input type="radio" name="mediaFormat" className="hidden" checked={mediaFormat === 'single'} onChange={() => setMediaFormat('single')} />
-                                        <span className={`font-bold text-sm ${mediaFormat === 'single' ? 'text-black' : 'text-gray-700'}`}>Cover Saja</span>
-                                    </label>
-                                    <label className={`flex-1 cursor-pointer p-3 border rounded-lg text-center transition-colors ${mediaFormat === 'comparison' ? 'border-black bg-white shadow-sm ring-1 ring-black' : 'border-gray-200 bg-white hover:border-black'}`}>
-                                        <input type="radio" name="mediaFormat" className="hidden" checked={mediaFormat === 'comparison'} onChange={() => setMediaFormat('comparison')} />
-                                        <span className={`font-bold text-sm ${mediaFormat === 'comparison' ? 'text-black' : 'text-gray-700'}`}>Before / After</span>
-                                    </label>
-                                    <label className={`flex-1 cursor-pointer p-3 border rounded-lg text-center transition-colors ${mediaFormat === 'gallery' ? 'border-black bg-white shadow-sm ring-1 ring-black' : 'border-gray-200 bg-white hover:border-black'}`}>
-                                        <input type="radio" name="mediaFormat" className="hidden" checked={mediaFormat === 'gallery'} onChange={() => setMediaFormat('gallery')} />
-                                        <span className={`font-bold text-sm ${mediaFormat === 'gallery' ? 'text-black' : 'text-gray-700'}`}>Galeri Item</span>
-                                    </label>
-                                </div>
+                        {/* Divider */}
+                        <div className="h-px bg-gray-100" />
+
+                        {/* Section 2: Media Format */}
+                        <section>
+                            <div className="mb-4">
+                                <h3 className="text-sm font-semibold text-gray-900">Format Media</h3>
+                                <p className="text-xs text-gray-500 mt-0.5">Menentukan input selanjutnya</p>
                             </div>
-                        </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="group flex items-center gap-3 py-1.5 cursor-pointer">
+                                    <input type="radio" name="mediaFormat" className="hidden" checked={mediaFormat === 'single'} onChange={() => setMediaFormat('single')} />
+                                    {mediaFormat === 'single' ? (
+                                        <>
+                                            <div className="w-5 h-5 rounded border-2 border-green-500 bg-green-50 flex items-center justify-center flex-shrink-0">
+                                                <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <span className="text-sm font-medium text-green-600">Cover Saja</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center flex-shrink-0 group-hover:border-gray-400" />
+                                            <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors">Cover Saja</span>
+                                        </>
+                                    )}
+                                </label>
+                                <label className="group flex items-center gap-3 py-1.5 cursor-pointer">
+                                    <input type="radio" name="mediaFormat" className="hidden" checked={mediaFormat === 'comparison'} onChange={() => setMediaFormat('comparison')} />
+                                    {mediaFormat === 'comparison' ? (
+                                        <>
+                                            <div className="w-5 h-5 rounded border-2 border-green-500 bg-green-50 flex items-center justify-center flex-shrink-0">
+                                                <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <span className="text-sm font-medium text-green-600">Before / After</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center flex-shrink-0 group-hover:border-gray-400" />
+                                            <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors">Before / After</span>
+                                        </>
+                                    )}
+                                </label>
+                                <label className="group flex items-center gap-3 py-1.5 cursor-pointer">
+                                    <input type="radio" name="mediaFormat" className="hidden" checked={mediaFormat === 'gallery'} onChange={() => setMediaFormat('gallery')} />
+                                    {mediaFormat === 'gallery' ? (
+                                        <>
+                                            <div className="w-5 h-5 rounded border-2 border-green-500 bg-green-50 flex items-center justify-center flex-shrink-0">
+                                                <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <span className="text-sm font-medium text-green-600">Galeri Item</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center flex-shrink-0 group-hover:border-gray-400" />
+                                            <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors">Galeri Item</span>
+                                        </>
+                                    )}
+                                </label>
+                            </div>
+                        </section>
                     </div>
                 )}
 
-                {/* STEP 2: MEDIA UPLOADS */}
+                {/* STEP 2: MEDIA UPLOADS - Clean Card Layout */}
                 {currentStep === 2 && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 bg-pink-500 rounded-full"></span> Gambar Cover Utama (Wajib)
-                            </h3>
+                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                        {/* Cover Image Card */}
+                        <div className="bg-white rounded-lg border border-gray-200 p-5">
+                            <h3 className="text-sm font-semibold text-gray-900 mb-4">Cover Image</h3>
                             <ProjectMediaUpload
                                 formData={formData}
                                 errors={errors}
@@ -215,12 +287,10 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                             />
                         </div>
 
-
+                        {/* Gallery Manager - Only for gallery format */}
                         {mediaFormat === 'gallery' && (
-                            <div className="bg-violet-50/30 p-4 rounded-xl border border-violet-100">
-                                <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 bg-violet-500 rounded-full"></span> Kelola Galeri
-                                </h3>
+                            <div className="bg-white rounded-lg border border-gray-200 p-5">
+                                <h3 className="text-sm font-semibold text-gray-900 mb-4">Gallery Items</h3>
                                 <ProjectGalleryManager
                                     formData={formData}
                                     addGalleryItem={addGalleryItem}

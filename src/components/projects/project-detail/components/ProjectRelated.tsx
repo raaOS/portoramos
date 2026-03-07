@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+// Note: columnBProjects is computed but not currently used (reserved for future two-column layout)
 import { motion } from 'framer-motion';
 import type { Project } from '@/types/projects';
 import MasonryGrid from '@/components/layout/MasonryGrid';
@@ -75,7 +76,7 @@ interface ProjectRelatedProps {
 export function ProjectRelated({ projects }: ProjectRelatedProps) {
     const { displayedProjects, isLoading, observerTarget } = useInfiniteProjects(projects);
 
-    const { columnAProjects, columnBProjects } = useMemo(() => {
+    const { columnAProjects } = useMemo(() => {
         const halfIndex = Math.ceil(displayedProjects.length / 2);
         return {
             columnAProjects: displayedProjects.slice(0, halfIndex),

@@ -1,11 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 export default function TelegramAdminPage() {
   const [status, setStatus] = useState<{ isCorrect?: boolean; telegram?: { url?: string; pending_update_count?: number }; currentConfig?: { expectedWebhookUrl?: string } } | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const { isAdmin, csrfToken, isLoading: authLoading } = useAdminAuth();
+
+  // Redirect if not admin
+  useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      window.location.href = '/admin/login';
+    }
+  }, [isAdmin, authLoading]);
 
   const checkStatus = async () => {
     setLoading(true);
@@ -20,12 +29,20 @@ export default function TelegramAdminPage() {
   };
 
   const fixWebhook = async () => {
+    if (!csrfToken) {
+      setMessage('❌ CSRF token not available. Please login again.');
+      return;
+    }
     setLoading(true);
     setMessage('');
     try {
       const res = await fetch('/api/debug/webhook-status', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
+        credentials: 'include'
       });
       const data = await res.json();
       if (data.success) {
@@ -45,7 +62,9 @@ export default function TelegramAdminPage() {
     setMessage('');
     try {
       // Get bot token from config
-      const res = await fetch('/api/admin/telegram/config');
+      const res = await fetch('/api/admin/telegram/config', {
+        credentials: 'include'
+      });
       const config = await res.json();
       
       if (config.configured && config._botToken) {
@@ -70,6 +89,18 @@ export default function TelegramAdminPage() {
     }, 0);
     return () => clearTimeout(timer);
   }, []);
+
+  // Show loading while checking auth
+  if (authLoading || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">{authLoading ? 'Checking authentication...' : 'Redirecting to login...'}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">

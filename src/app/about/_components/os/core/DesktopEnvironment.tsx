@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 
 import { AnimatePresence, m, LazyMotion, domMax } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -217,6 +217,10 @@ function DesktopMain({
         iconPositions
     });
 
+    // Memoized callbacks for StartScreen to prevent React Compiler warnings
+    const handleStartScreenReady = useCallback(() => setStartScreenReady(true), [setStartScreenReady]);
+    const handleStartScreenReveal = useCallback(() => setIsRevealed(true), [setIsRevealed]);
+
     return (
         <LazyMotion features={domMax}>
             {isMobile ? (
@@ -228,8 +232,8 @@ function DesktopMain({
                             key="start-screen"
                             onStart={handleBootComplete}
                             isActive={needsPowerOn || isBooting}
-                            onReady={() => setStartScreenReady(true)}
-                            onReveal={() => setIsRevealed(true)}
+                            onReady={handleStartScreenReady}
+                            onReveal={handleStartScreenReveal}
                         />
                     </AnimatePresence>
 

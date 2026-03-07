@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { ProjectFormData } from '@/hooks/useProjectForm';
-import { CheckCircle2, X, Plus, FolderPlus, Trash2, Image as ImageIcon, UploadCloud, Loader2, AlertCircle } from 'lucide-react';
+import { CheckCircle2, X, Plus, FolderPlus, Trash2, Image as ImageIcon, UploadCloud, Loader2, MoreVertical } from 'lucide-react';
 import { uploadToGitHub, deleteFromGitHub, getGithubPathFromUrl } from '@/lib/githubUpload';
 
 interface ProjectGalleryManagerProps {
@@ -32,8 +32,6 @@ export default function ProjectGalleryManager({
     const [newGalleryUrl, setNewGalleryUrl] = useState('');
     const [newGroupName, setNewGroupName] = useState('');
     const [newItemUrls, setNewItemUrls] = useState<Record<string, string>>({});
-
-    // Upload States
     const [isUploading, setIsUploading] = useState(false);
     const [uploadingGroupId, setUploadingGroupId] = useState<string | null>(null);
 
@@ -63,35 +61,22 @@ export default function ProjectGalleryManager({
         } finally {
             setIsUploading(false);
             setUploadingGroupId(null);
-            e.target.value = ''; // Reset input
+            e.target.value = '';
         }
     };
 
     const handleRemoveItem = async (index: number) => {
         const item = formData.galleryItems[index];
-        // Try to get githubPath from item or infer from URL
         const githubPath = item.githubPath || getGithubPathFromUrl(item.src);
 
         if (githubPath) {
             const confirmDelete = window.confirm(
-                "Apakah Anda juga ingin menghapus file ini PERMANEN dari GitHub?\n\n" +
-                "⚠️ PERHATIAN: Ini akan menghapus file asli di repositori.\n\n" +
-                "Klik OK untuk hapus permanen (bersihkan GitHub).\n" +
-                "Klik Batal untuk hanya menghapus dari galeri saja."
+                "Hapus file ini PERMANEN dari GitHub?\n\nOK = Hapus permanen\nBatal = Hapus dari galeri saja"
             );
-
             if (confirmDelete) {
-                const success = await deleteFromGitHub(githubPath);
-                if (!success) {
-                    alert("Gagal menghapus file dari GitHub. Item akan dihapus dari form.");
-                } else {
-                    console.log(`Successfully deleted ${githubPath} from GitHub`);
-                }
+                await deleteFromGitHub(githubPath);
             }
-        } else {
-            if (!window.confirm("Hapus item ini dari galeri?")) return;
         }
-
         removeGalleryItem(index);
     };
 
@@ -101,25 +86,14 @@ export default function ProjectGalleryManager({
         if (!item) return;
 
         const githubPath = item.githubPath || getGithubPathFromUrl(item.src);
-
         if (githubPath) {
             const confirmDelete = window.confirm(
-                "Apakah Anda juga ingin menghapus file ini PERMANEN dari GitHub?\n\n" +
-                "⚠️ PERHATIAN: Ini akan menghapus file asli di repositori.\n\n" +
-                "Klik OK untuk hapus permanen (bersihkan GitHub).\n" +
-                "Klik Batal untuk hanya menghapus dari galeri saja."
+                "Hapus file ini PERMANEN dari GitHub?\n\nOK = Hapus permanen\nBatal = Hapus dari galeri saja"
             );
-
             if (confirmDelete) {
-                const success = await deleteFromGitHub(githubPath);
-                if (!success) {
-                    alert("Gagal menghapus file dari GitHub. Item akan dihapus dari form.");
-                }
+                await deleteFromGitHub(githubPath);
             }
-        } else {
-            if (!window.confirm("Hapus item ini dari kelompok galeri?")) return;
         }
-
         removeGalleryItemFromGroup(groupId, itemIndex);
     };
 
@@ -138,196 +112,218 @@ export default function ProjectGalleryManager({
     };
 
     return (
-        <div className="space-y-8">
-            {/* Standard Gallery (Legacy Support) */}
-            <div className="p-4 bg-gray-50 border border-gray-200">
-                <label className="block text-xs font-bold uppercase text-gray-400 mb-3 tracking-wider">
-                    Galeri Utama (Default)
-                </label>
-
-                <div className="flex gap-2 mb-4">
-                    <input
-                        type="text"
-                        value={newGalleryUrl}
-                        onChange={(e) => setNewGalleryUrl(e.target.value)}
-                        placeholder="Tambah URL gambar/video ke galeri utama..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-black"
-                    />
-                    <button
-                        type="button"
-                        onClick={handleAddUrl}
-                        title="Tambah via Link"
-                        className="px-4 py-2 bg-black text-white text-xs font-bold uppercase hover:bg-zinc-800 transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                    </button>
-                    <label
-                        className={`cursor-pointer px-4 py-2 bg-purple-600 text-white text-xs font-bold uppercase hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 ${isUploading && uploadingGroupId === null ? 'opacity-50 cursor-wait' : ''}`}
-                        title="Upload dari Komputer (PC)"
-                    >
-                        {isUploading && uploadingGroupId === null ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-                        <span className="hidden sm:inline">Upload PC</span>
-                        <input
-                            type="file"
-                            className="hidden"
-                            accept="image/*,video/*"
-                            onChange={(e) => handleUploadFile(e, null)}
-                            disabled={isUploading}
-                        />
-                    </label>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                    {formData.galleryItems.map((item, index) => (
-                        <div key={index} className="relative aspect-square bg-gray-200 group border border-gray-100">
-                            {item.kind === 'video' ? (
-                                <video src={item.src} className="w-full h-full object-cover" />
-                            ) : (
-                                <Image src={item.src} alt="" fill className="object-cover" unoptimized />
-                            )}
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => toggleGalleryItem(index)}
-                                    className={`p-1.5 rounded-full ${item.isActive ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'}`}
-                                >
-                                    <CheckCircle2 className="w-3 h-3" />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveItem(index)}
-                                    className="p-1.5 bg-red-500 text-white rounded-full"
-                                >
-                                    <Trash2 className="w-3 h-3" />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+        <div className="space-y-6">
+            {/* Add New Group */}
+            <div className="flex gap-2">
+                <input
+                    type="text"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                    placeholder="Nama grup baru (misal: Dokumentasi, Proses, dll)"
+                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-gray-400"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddGroup()}
+                />
+                <button
+                    type="button"
+                    onClick={handleAddGroup}
+                    disabled={!newGroupName.trim()}
+                    className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                    <FolderPlus className="w-4 h-4" />
+                    <span className="hidden sm:inline">Grup Baru</span>
+                </button>
             </div>
 
-            {/* Gallery Groups */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold uppercase text-gray-400 tracking-wider">
-                        Kelompok Galeri (Gallery Grouping)
-                    </label>
-                    <div className="flex gap-2">
+            {/* Default Gallery (Ungrouped Items) */}
+            {formData.galleryItems.length > 0 && (
+                <div className="bg-white rounded-lg border border-gray-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-sm font-medium text-gray-900">Galeri Utama</h4>
+                        <span className="text-xs text-gray-500">{formData.galleryItems.length} item</span>
+                    </div>
+                    
+                    {/* Thumbnail Grid */}
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 mb-4">
+                        {formData.galleryItems.map((item, index) => (
+                            <div key={index} className="relative aspect-square bg-gray-100 rounded-md overflow-hidden group">
+                                {item.kind === 'video' ? (
+                                    <video src={item.src} className="w-full h-full object-cover" />
+                                ) : (
+                                    <Image src={item.src} alt="" fill className="object-cover" unoptimized />
+                                )}
+                                {/* Status Indicator - Minimal dot */}
+                                <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${item.isActive ? 'bg-green-500' : 'bg-gray-400/70'}`} />
+                                
+                                {/* Hover Actions - Clean inline buttons */}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); toggleGalleryItem(index); }}
+                                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${item.isActive ? 'bg-green-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                                        title={item.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                                    >
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        {item.isActive ? 'Aktif' : 'Nonaktif'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); handleRemoveItem(index); }}
+                                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white text-red-600 rounded-md text-xs font-medium hover:bg-red-50 transition-all"
+                                        title="Hapus"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                        Hapus
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Add Item Row */}
+                    <div className="flex gap-2 pt-3 border-t border-gray-100">
                         <input
                             type="text"
-                            value={newGroupName}
-                            onChange={(e) => setNewGroupName(e.target.value)}
-                            placeholder="Nama Kelompok (misal: Dokumentasi)"
-                            className="px-3 py-1.5 border border-gray-300 rounded-none text-xs focus:outline-none focus:ring-1 focus:ring-black"
+                            value={newGalleryUrl}
+                            onChange={(e) => setNewGalleryUrl(e.target.value)}
+                            placeholder="Tambah URL gambar/video..."
+                            className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-gray-400"
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddUrl()}
                         />
                         <button
                             type="button"
-                            onClick={handleAddGroup}
-                            className="px-3 py-1.5 bg-zinc-100 text-zinc-900 border border-zinc-200 text-[10px] font-bold uppercase hover:bg-zinc-200 flex items-center gap-1.5"
+                            onClick={handleAddUrl}
+                            disabled={!newGalleryUrl.trim()}
+                            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 transition-colors"
                         >
-                            <FolderPlus className="w-3 h-3" /> Group Baru
+                            <Plus className="w-4 h-4" />
                         </button>
+                        <label className={`cursor-pointer px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center gap-1.5 ${isUploading && uploadingGroupId === null ? 'opacity-50' : ''}`}>
+                            {isUploading && uploadingGroupId === null ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <UploadCloud className="w-4 h-4" />
+                            )}
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*,video/*"
+                                onChange={(e) => handleUploadFile(e, null)}
+                                disabled={isUploading}
+                            />
+                        </label>
                     </div>
                 </div>
+            )}
 
-                <div className="space-y-6">
-                    {formData.galleryGroups.map((group) => (
-                        <div key={group.id} className="border border-zinc-200 p-4 bg-white shadow-sm transition-all hover:shadow-md">
-                            <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-100">
-                                <div className="flex-1">
-                                    <input
-                                        type="text"
-                                        value={group.name}
-                                        onChange={(e) => updateGroupName(group.id, e.target.value)}
-                                        className="text-sm font-bold bg-transparent border-none p-0 focus:ring-0 w-full"
-                                        placeholder="Nama Kelompok..."
-                                    />
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => removeGalleryGroup(group.id)}
-                                    className="text-zinc-400 hover:text-red-500 transition-colors"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
+            {/* Gallery Groups */}
+            <div className="space-y-4">
+                {formData.galleryGroups.map((group) => (
+                    <div key={group.id} className="bg-white rounded-lg border border-gray-200 p-5">
+                        {/* Group Header */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <input
+                                type="text"
+                                value={group.name}
+                                onChange={(e) => updateGroupName(group.id, e.target.value)}
+                                className="flex-1 text-sm font-medium text-gray-900 bg-transparent border-none p-0 focus:ring-0 placeholder:text-gray-400"
+                                placeholder="Nama grup..."
+                            />
+                            <span className="text-xs text-gray-500">{group.items.length} item</span>
+                            <button
+                                type="button"
+                                onClick={() => removeGalleryGroup(group.id)}
+                                className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                                title="Hapus grup"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
 
-                            <div className="flex gap-2 mb-4">
-                                <input
-                                    type="text"
-                                    value={newItemUrls[group.id] || ''}
-                                    onChange={(e) => setNewItemUrls(prev => ({ ...prev, [group.id]: e.target.value }))}
-                                    placeholder="URL gambar/video untuk kelompok ini..."
-                                    className="flex-1 px-3 py-1.5 border border-gray-300 rounded-none text-xs focus:outline-none focus:ring-1 focus:ring-black"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => handleAddItemToGroup(group.id)}
-                                    title="Tambah via Link"
-                                    className="px-3 py-1.5 bg-zinc-900 text-white text-[10px] font-bold uppercase"
-                                >
-                                    Tambah
-                                </button>
-                                <label
-                                    className={`cursor-pointer px-3 py-1.5 bg-purple-600 text-white text-[10px] font-bold uppercase hover:bg-purple-700 transition-colors flex items-center justify-center gap-1.5 ${isUploading && uploadingGroupId === group.id ? 'opacity-50 cursor-wait' : ''}`}
-                                    title="Upload dari Komputer (PC)"
-                                >
-                                    {isUploading && uploadingGroupId === group.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <UploadCloud className="w-3 h-3" />}
-                                    <span className="hidden sm:inline">Upload PC</span>
-                                    <input
-                                        type="file"
-                                        className="hidden"
-                                        accept="image/*,video/*"
-                                        onChange={(e) => handleUploadFile(e, group.id)}
-                                        disabled={isUploading}
-                                    />
-                                </label>
-                            </div>
-
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                        {/* Items Grid */}
+                        {group.items.length > 0 ? (
+                            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 mb-4">
                                 {group.items.map((item, index) => (
-                                    <div key={index} className="relative aspect-square bg-gray-100 group overflow-hidden border border-gray-200">
+                                    <div key={index} className="relative aspect-square bg-gray-100 rounded-md overflow-hidden group">
                                         {item.kind === 'video' ? (
                                             <video src={item.src} className="w-full h-full object-cover" />
                                         ) : (
                                             <Image src={item.src} alt="" fill className="object-cover" unoptimized />
                                         )}
-                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
-                                            <div className="flex gap-1.5">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => toggleGalleryItemInGroup(group.id, index)}
-                                                    className={`p-1 rounded-full ${item.isActive ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'}`}
-                                                >
-                                                    <CheckCircle2 className="w-3 h-3" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveItemFromGroup(group.id, index)}
-                                                    className="p-1 bg-red-500 text-white rounded-full"
-                                                >
-                                                    <Trash2 className="w-3 h-3" />
-                                                </button>
-                                            </div>
-                                            <span className="text-[8px] text-white font-bold uppercase tracking-widest">{item.kind}</span>
+                                        {/* Status Indicator - Minimal dot */}
+                                        <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${item.isActive ? 'bg-green-500' : 'bg-gray-400/70'}`} />
+                                        
+                                        {/* Hover Actions - Clean inline buttons */}
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); toggleGalleryItemInGroup(group.id, index); }}
+                                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${item.isActive ? 'bg-green-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                                            >
+                                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                                {item.isActive ? 'Aktif' : 'Nonaktif'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); handleRemoveItemFromGroup(group.id, index); }}
+                                                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white text-red-600 rounded-md text-xs font-medium hover:bg-red-50 transition-all"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                                Hapus
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
-                                {group.items.length === 0 && (
-                                    <div className="col-span-full py-8 border-2 border-dashed border-gray-100 rounded-none flex flex-col items-center justify-center text-gray-300">
-                                        <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
-                                        <p className="text-[10px] font-bold uppercase tracking-widest">Kosong</p>
-                                    </div>
-                                )}
                             </div>
+                        ) : (
+                            <div className="py-8 border-2 border-dashed border-gray-100 rounded-lg flex flex-col items-center justify-center text-gray-400 mb-4">
+                                <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+                                <p className="text-xs text-gray-400">Belum ada item</p>
+                            </div>
+                        )}
+
+                        {/* Add Item Row */}
+                        <div className="flex gap-2 pt-3 border-t border-gray-100">
+                            <input
+                                type="text"
+                                value={newItemUrls[group.id] || ''}
+                                onChange={(e) => setNewItemUrls(prev => ({ ...prev, [group.id]: e.target.value }))}
+                                placeholder="Tambah URL gambar/video..."
+                                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-gray-400"
+                                onKeyDown={(e) => e.key === 'Enter' && handleAddItemToGroup(group.id)}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => handleAddItemToGroup(group.id)}
+                                disabled={!newItemUrls[group.id]?.trim()}
+                                className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                            >
+                                <Plus className="w-4 h-4" />
+                            </button>
+                            <label className={`cursor-pointer px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center gap-1.5 ${isUploading && uploadingGroupId === group.id ? 'opacity-50' : ''}`}>
+                                {isUploading && uploadingGroupId === group.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <UploadCloud className="w-4 h-4" />
+                                )}
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*,video/*"
+                                    onChange={(e) => handleUploadFile(e, group.id)}
+                                    disabled={isUploading}
+                                />
+                            </label>
                         </div>
-                    ))}
-                    {formData.galleryGroups.length === 0 && (
-                        <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-none bg-gray-50/50">
-                            <p className="text-sm text-gray-400 italic">Belum ada kelompok galeri. Jika project Anda kompleks, tambahkan kelompok untuk mengelompokkan aset.</p>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                ))}
+
+                {formData.galleryGroups.length === 0 && formData.galleryItems.length === 0 && (
+                    <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50/50">
+                        <ImageIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p className="text-sm text-gray-500 mb-1">Belum ada galeri</p>
+                        <p className="text-xs text-gray-400">Tambahkan grup untuk mengelompokkan gambar/video</p>
+                    </div>
+                )}
             </div>
         </div>
     );

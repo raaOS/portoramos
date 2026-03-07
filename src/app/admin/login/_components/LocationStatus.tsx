@@ -1,7 +1,6 @@
 'use client';
 
-import { MapPin, Shield, AlertCircle, RefreshCw } from 'lucide-react';
-import { HelpCircle } from 'lucide-react';
+import { MapPin, Shield, AlertCircle, RefreshCw, HelpCircle } from 'lucide-react';
 import type { LocationData, LocationStatus } from '../_hooks';
 
 interface LocationStatusProps {

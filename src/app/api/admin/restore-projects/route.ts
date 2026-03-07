@@ -5,7 +5,7 @@ import { validateAdminRequest } from '@/lib/auth';
 import fs from 'fs';
 import path from 'path';
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
     try {
         // Bypass auth for one-time restoration via terminal
         // const isAdmin = await validateAdminRequest(req);

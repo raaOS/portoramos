@@ -20,14 +20,15 @@ interface ProjectNarrativeProps {
 }
 
 export function ProjectNarrative({ project, translations, activeTab, onTabChange }: ProjectNarrativeProps) {
-    if (!project.narrative) return null;
-
+    // Compute booleans FIRST (before hooks)
+    const hasNarrative = !!project.narrative;
     const hasDescription = !!project.description;
-    const hasChallenge = !!(project.narrative.challenge || project.narrative.concept);
-    const hasSolution = !!(project.narrative.solution || project.narrative.process);
-    const hasImpact = !!(project.narrative.impact || project.narrative.result || project.narrative.detail);
+    const hasChallenge = !!(project.narrative?.challenge || project.narrative?.concept);
+    const hasSolution = !!(project.narrative?.solution || project.narrative?.process);
+    const hasImpact = !!(project.narrative?.impact || project.narrative?.result || project.narrative?.detail);
 
     // Memoize tab configs to prevent object recreation
+    // MUST be called before any early return (Rules of Hooks)
     const tabs = useMemo(() => {
         const result: Array<{
             id: 'description' | 'challenge' | 'solution' | 'impact';
@@ -62,8 +63,9 @@ export function ProjectNarrative({ project, translations, activeTab, onTabChange
             }
         ];
         return result.filter(t => t.show);
-    }, [translations, project.narrative, hasDescription, hasChallenge, hasSolution, hasImpact]);
+    }, [translations, hasNarrative, hasDescription, hasChallenge, hasSolution, hasImpact]);
 
+    // useCallback MUST be called before any early return (Rules of Hooks)
     const getTabClasses = useCallback((tabId: string, color: string) => {
         const isActive = activeTab === tabId;
         const baseClasses = 'pb-3 text-xs sm:text-sm font-bold uppercase tracking-wider transition-colors whitespace-nowrap px-1';
@@ -82,16 +84,19 @@ export function ProjectNarrative({ project, translations, activeTab, onTabChange
         return `${baseClasses} ${colorClasses[color] || colorClasses.gray} border-b-2`;
     }, [activeTab]);
 
+    // Early return MUST be after all hooks (Rules of Hooks)
+    if (!hasNarrative) return null;
+
     return (
         <div className="mb-8 font-sans border-b border-gray-100 dark:border-gray-800 pb-8">
             {/* Context */}
-            {project.narrative.context && (
+            {project.narrative!.context && (
                 <div className="mb-8 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">
                         {translations ? 'Context' : 'Konteks'}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-300 italic">
-                        &quot;{translations?.context || project.narrative.context}&quot;
+                        &quot;{translations?.context || project.narrative!.context}&quot;
                     </p>
                 </div>
             )}

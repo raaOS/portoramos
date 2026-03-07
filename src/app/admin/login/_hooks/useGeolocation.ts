@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 
 export interface LocationData {
     lat: number;
@@ -10,15 +10,18 @@ export interface LocationData {
 
 export type LocationStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'error' | 'unsupported' | 'checking';
 
+// Use syncExternalStore to avoid setState in effect
+const getServerSnapshot = () => false;
+const getClientSnapshot = () => true;
+const subscribe = () => () => {};
+
 export function useGeolocation() {
     const [location, setLocation] = useState<LocationData | null>(null);
     const [status, setStatus] = useState<LocationStatus>('idle');
     const [error, setError] = useState<string>('');
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+    
+    // Use useSyncExternalStore instead of setState in useEffect
+    const mounted = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
 
     // Check permission status using Permissions API
     const checkPermission = useCallback(async (): Promise<string | null> => {
@@ -96,21 +99,21 @@ export function useGeolocation() {
 
     // Check permission on mount and request location
     useEffect(() => {
-        if (mounted) {
-            checkPermission().then((state) => {
-                console.log('Initial permission state:', state);
-                if (state === 'granted') {
-                    requestLocation();
-                } else if (state === 'prompt') {
-                    requestLocation();
-                } else if (state === 'denied') {
-                    setStatus('denied');
-                    setError('Izin lokasi ditolak. Klik "Reset Izin" di pengaturan browser lalu refresh halaman.');
-                } else {
-                    requestLocation();
-                }
-            });
-        }
+        if (!mounted) return;
+        
+        checkPermission().then((state) => {
+            console.log('Initial permission state:', state);
+            if (state === 'granted') {
+                requestLocation();
+            } else if (state === 'prompt') {
+                requestLocation();
+            } else if (state === 'denied') {
+                setStatus('denied');
+                setError('Izin lokasi ditolak. Klik "Reset Izin" di pengaturan browser lalu refresh halaman.');
+            } else {
+                requestLocation();
+            }
+        });
     }, [mounted, checkPermission, requestLocation]);
 
     // Watch for permission changes

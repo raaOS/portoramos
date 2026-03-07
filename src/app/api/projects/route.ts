@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Type assertion needed due to Zod schema allowing nulls that CreateProjectData doesn't
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const newProject = await projectService.createProject(projectData as any);
 
     // --- Auto-Generate Comments ---

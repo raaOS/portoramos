@@ -5,7 +5,7 @@
       "autoplay": true,
       "client": "Personal Work",
       "comparison": {
-        "afterImage": "",
+        "afterImage": "/assets/projects/manipulasi-foto-musik-alam.mp4",
         "afterType": "video",
         "beforeImage": "/assets/projects/politik-pop-digital-cover.jpg",
         "beforeType": "image"
@@ -23,6 +23,11 @@
       "muted": true,
       "narrative": {
         "challenge": "",
+        "concept": "",
+        "context": "",
+        "detail": "",
+        "impact": "",
+        "process": "",
         "result": "",
         "solution": ""
       },
@@ -42,7 +47,7 @@
       "timeline": "2 Days",
       "title": "Manipulasi Foto Musik Alam",
       "type": "visual_art",
-      "updatedAt": "2026-02-24T21:46:20.600Z",
+      "updatedAt": "2026-03-07T02:38:28.655Z",
       "year": 2025
     },
     {
@@ -828,5 +833,5 @@
       "year": 2025
     }
   ],
-  "lastUpdated": "2026-03-05T15:38:06.713Z"
+  "lastUpdated": "2026-03-07T02:38:28.720Z"
 }

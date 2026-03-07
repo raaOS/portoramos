@@ -57,7 +57,7 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
             setScreenState("done");
             onStart();
         }, BOOT_CONFIG.keyholeZoomDuration + BOOT_CONFIG.textDisplayDuration + 2500 - 400);
-    }, [screenState, onStart]);
+    }, [screenState, onStart, onReveal]);
 
     // Keyboard support
     useEffect(() => {
