@@ -230,6 +230,12 @@
               "isActive": true,
               "kind": "image",
               "src": "/assets/projects/overlay-bunga-barok-digital.jpg"
+            },
+            {
+              "githubPath": "public/assets/projects/1772861795553-fqhtjfq8ttjl-download--3-.jpg",
+              "isActive": true,
+              "kind": "image",
+              "src": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/assets/projects/1772861795553-fqhtjfq8ttjl-download--3-.jpg"
             }
           ],
           "name": "Advertising & Assets"
@@ -288,7 +294,7 @@
       "timeline": "1 Hari Kerja (Fast turnaround)",
       "title": "Promo Streaming Digital Penuh Semangat Natal",
       "type": "commercial",
-      "updatedAt": "2026-03-07T05:35:13.433Z",
+      "updatedAt": "2026-03-07T05:36:41.393Z",
       "year": 2025
     },
     {
@@ -832,5 +838,5 @@
       "year": 2025
     }
   ],
-  "lastUpdated": "2026-03-07T05:35:13.496Z"
+  "lastUpdated": "2026-03-07T05:36:41.450Z"
 }
