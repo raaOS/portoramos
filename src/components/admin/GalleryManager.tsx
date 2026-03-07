@@ -112,13 +112,15 @@ export default function GalleryManager({ projects, onSyncTrigger }: GalleryManag
             if (!auditRes.ok) throw new Error('Scan failed');
 
             const data = await auditRes.json();
+            if (data.error) throw new Error(data.error);
+            
             setOrphanFiles(data.orphanFiles || []);
             setCleanupStep('done');
 
-            if (data.orphanFiles.length === 0) {
+            if (data.orphanCount === 0) {
                 showSuccess('Semua file sudah tersinkron! Tidak ada sampah.');
             } else {
-                showSuccess(`Ditemukan ${data.orphanFiles.length} file tidak terpakai`);
+                showSuccess(`Ditemukan ${data.orphanCount} file tidak terpakai`);
             }
         } catch (error: any) {
             showError(error.message || 'Gagal cleanup');

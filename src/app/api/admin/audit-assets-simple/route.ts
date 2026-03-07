@@ -9,67 +9,19 @@ import path from 'path';
 // Simplified audit: Local JSON is the source of truth
 export async function GET(request: NextRequest) {
     try {
-        // 1. Get all used assets from Local JSON (Master)
-        const usedAssets = new Set<string>();
-
-        // From projects
-        const projects = await allProjectsAsync();
-        projects.forEach(p => {
-            if (p.cover) usedAssets.add(getFilename(p.cover));
-            if (p.comparison?.beforeImage) usedAssets.add(getFilename(p.comparison.beforeImage));
-            if (p.comparison?.afterImage) usedAssets.add(getFilename(p.comparison.afterImage));
-            if (p.galleryItems) {
-                p.galleryItems.forEach((item: any) => {
-                    if (item.src) usedAssets.add(getFilename(item.src));
-                });
-            }
-            if (p.galleryGroups) {
-                p.galleryGroups.forEach((group: any) => {
-                    group.items?.forEach((item: any) => {
-                        if (item.src) usedAssets.add(getFilename(item.src));
-                    });
-                });
-            }
-        });
-
-        // From desktop icons
-        const aboutData = await aboutService.getAboutData() as any;
-        if (aboutData.desktop?.icons) {
-            aboutData.desktop.icons.forEach((icon: any) => {
-                if (icon.iconUrl) usedAssets.add(getFilename(icon.iconUrl));
-            });
-        }
-
-        // From hero background
-        if (aboutData.hero?.backgroundTrail) {
-            aboutData.hero.backgroundTrail.forEach((bg: any) => {
-                if (bg.src) usedAssets.add(getFilename(bg.src));
-            });
-        }
-
-        // 2. Scan local folder
+        const orphanFiles = await getOrphanFiles();
+        
+        // Get counts for stats
         const assetsDir = path.join(process.cwd(), 'public/assets/projects');
-        const orphanFiles: string[] = [];
-
-        if (fs.existsSync(assetsDir)) {
-            const files = fs.readdirSync(assetsDir);
-            
-            files.forEach(file => {
-                // Skip directories and non-media files
-                if (fs.statSync(path.join(assetsDir, file)).isDirectory()) return;
-                if (!file.match(/\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i)) return;
-
-                // If not in used assets, it's orphan
-                if (!usedAssets.has(file.toLowerCase())) {
-                    orphanFiles.push(file);
-                }
-            });
-        }
+        const totalFiles = fs.existsSync(assetsDir) ? fs.readdirSync(assetsDir).filter(f => {
+            if (fs.statSync(path.join(assetsDir, f)).isDirectory()) return false;
+            return f.match(/\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i);
+        }).length : 0;
 
         return NextResponse.json({
             orphanFiles,
-            usedCount: usedAssets.size,
-            totalFiles: fs.existsSync(assetsDir) ? fs.readdirSync(assetsDir).length : 0
+            orphanCount: orphanFiles.length,
+            totalFiles
         });
 
     } catch (error) {
@@ -93,9 +45,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No files specified' }, { status: 400 });
         }
 
-        // Re-verify files are still orphans
-        const verifyRes = await fetch(`http://localhost:${process.env.PORT || 3000}/api/admin/audit-assets-simple`);
-        const { orphanFiles: currentOrphans } = await verifyRes.json();
+        // Re-verify files are still orphans (direct call, not fetch)
+        const currentOrphans = await getOrphanFiles();
 
         const results = { success: 0, failed: 0, errors: [] as string[] };
 
@@ -136,6 +87,64 @@ export async function POST(request: NextRequest) {
         console.error('Delete error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
+}
+
+// Helper to get orphan files (reusable)
+async function getOrphanFiles(): Promise<string[]> {
+    const usedAssets = new Set<string>();
+
+    // From projects
+    const projects = await allProjectsAsync();
+    projects.forEach(p => {
+        if (p.cover) usedAssets.add(getFilename(p.cover));
+        if (p.comparison?.beforeImage) usedAssets.add(getFilename(p.comparison.beforeImage));
+        if (p.comparison?.afterImage) usedAssets.add(getFilename(p.comparison.afterImage));
+        if (p.galleryItems) {
+            p.galleryItems.forEach((item: any) => {
+                if (item.src) usedAssets.add(getFilename(item.src));
+            });
+        }
+        if (p.galleryGroups) {
+            p.galleryGroups.forEach((group: any) => {
+                group.items?.forEach((item: any) => {
+                    if (item.src) usedAssets.add(getFilename(item.src));
+                });
+            });
+        }
+    });
+
+    // From desktop icons
+    const aboutData = await aboutService.getAboutData() as any;
+    if (aboutData.desktop?.icons) {
+        aboutData.desktop.icons.forEach((icon: any) => {
+            if (icon.iconUrl) usedAssets.add(getFilename(icon.iconUrl));
+        });
+    }
+
+    // From hero background
+    if (aboutData.hero?.backgroundTrail) {
+        aboutData.hero.backgroundTrail.forEach((bg: any) => {
+            if (bg.src) usedAssets.add(getFilename(bg.src));
+        });
+    }
+
+    // Scan local folder
+    const assetsDir = path.join(process.cwd(), 'public/assets/projects');
+    const orphanFiles: string[] = [];
+
+    if (fs.existsSync(assetsDir)) {
+        const files = fs.readdirSync(assetsDir);
+        
+        files.forEach(file => {
+            if (fs.statSync(path.join(assetsDir, file)).isDirectory()) return;
+            if (!file.match(/\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i)) return;
+            if (!usedAssets.has(file.toLowerCase())) {
+                orphanFiles.push(file);
+            }
+        });
+    }
+
+    return orphanFiles;
 }
 
 function getFilename(url: string): string {
