@@ -2,35 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { validateAdminRequest } from '@/lib/auth';
-import { githubService } from '@/lib/github';
-import fs from 'fs';
-import path from 'path';
 
 const execAsync = promisify(exec);
 
 export async function POST(request: NextRequest) {
     if (!(await validateAdminRequest(request))) {
-        return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
+        return NextResponse.json({ 
+            success: false,
+            error: 'Unauthorized or invalid CSRF token' 
+        }, { status: 401 });
     }
 
     try {
         const body = await request.json();
         const { action } = body;
 
-        // Handle full sync (push all)
+        // In production (Vercel), git CLI is not available
+        if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+            return NextResponse.json({
+                success: true,
+                message: 'Changes saved to local storage. Git sync available in development only.',
+                note: 'Vercel deployment uses GitHub integration directly.'
+            });
+        }
+
+        // Development: Use git CLI
         if (action === 'full-sync') {
             return await standardSync();
         }
 
-        // In production (Vercel), we don't have access to git CLI
-        if (process.env.NODE_ENV === 'production') {
-            return NextResponse.json({
-                success: true,
-                message: 'Sync handled via GitHub API (Git CLI skipped)'
-            });
-        }
-
-        // Standard sync flow
         return await standardSync();
 
     } catch (error) {
@@ -49,45 +49,6 @@ export async function POST(request: NextRequest) {
     }
 }
 
-async function pushSingleFile(filename: string) {
-    const localPath = path.join(process.cwd(), 'public/assets/projects', filename);
-    const githubPath = `public/assets/projects/${filename}`;
-
-    // Check if file exists locally
-    if (!fs.existsSync(localPath)) {
-        return NextResponse.json({
-            success: false,
-            error: `File tidak ditemukan: ${filename}`
-        }, { status: 404 });
-    }
-
-    try {
-        // Read file as Buffer and upload to GitHub
-        const content = fs.readFileSync(localPath);
-
-        const success = await githubService.updateFile(
-            githubPath,
-            content,
-            `Add asset: ${filename}`
-        );
-
-        if (success) {
-            return NextResponse.json({
-                success: true,
-                message: `File ${filename} berhasil di-push ke GitHub`
-            });
-        } else {
-            throw new Error('GitHub API returned false');
-        }
-    } catch (error) {
-        console.error(`[Push File Error] ${filename}:`, error);
-        return NextResponse.json({
-            success: false,
-            error: `Gagal push ${filename}: ${error instanceof Error ? error.message : 'Unknown error'}`
-        }, { status: 500 });
-    }
-}
-
 async function standardSync() {
     // 1. Add all changes
     await execAsync('git add .');
@@ -97,7 +58,7 @@ async function standardSync() {
         await execAsync('git commit -m "Content Update: new assets/data from Admin Panel"');
     } catch (error) {
         if (error instanceof Error && error.message.includes('nothing to commit')) {
-            // Continue to push
+            // Nothing to commit, still try to push existing commits
         } else {
             throw error;
         }
