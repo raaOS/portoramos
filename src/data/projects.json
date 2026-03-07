@@ -230,11 +230,6 @@
               "isActive": true,
               "kind": "image",
               "src": "/assets/projects/overlay-bunga-barok-digital.jpg"
-            },
-            {
-              "isActive": true,
-              "kind": "image",
-              "src": "/assets/projects/tempat-perlindungan-sneaker-surealis.jpg"
             }
           ],
           "name": "Advertising & Assets"
@@ -268,7 +263,11 @@
       "muted": true,
       "narrative": {
         "challenge": "Tantangannya adalah membuat produk digital (kartu langganan) terasa 'hadiah' yang fisik dan menarik di tengah kebisingan promosi musiman. Selain itu, desain harus tetap mobile-first dan memastikan semua branding pihak ketiga (Netflix, dll.) tidak terdistorsi.",
+        "concept": "",
+        "context": "",
+        "detail": "",
         "impact": "Tingkat konversi penjualan gift card meningkat 45% selama minggu pertama. Desain ini juga mendapatkan apresiasi tingkat tinggi karena berhasil menyatukan nuansa nostalgia liburan dengan estetika UI/UX aplikasi digital modern.",
+        "process": "",
         "result": "",
         "solution": "Saya menggunakan palet warna merah-hijau klasik dengan elemen 3D (ornamen, permen tongkat) untuk membangun suasana festive yang instan. Gift card ditata miring dan diberi efek bungkus kado untuk menonjolkan nilai gifting. Hierarki visual dibuat sangat jelas: Promo > CTA > Produk."
       },
@@ -289,7 +288,7 @@
       "timeline": "1 Hari Kerja (Fast turnaround)",
       "title": "Promo Streaming Digital Penuh Semangat Natal",
       "type": "commercial",
-      "updatedAt": "2026-03-05T10:59:04.879Z",
+      "updatedAt": "2026-03-07T05:35:13.433Z",
       "year": 2025
     },
     {
@@ -833,5 +832,5 @@
       "year": 2025
     }
   ],
-  "lastUpdated": "2026-03-07T02:38:28.720Z"
+  "lastUpdated": "2026-03-07T05:35:13.496Z"
 }
