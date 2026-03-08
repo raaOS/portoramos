@@ -5,18 +5,8 @@ import { UpdateProjectData } from '@/types/projects';
 import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 import { generateGenZComments } from '@/lib/magic';
-import { loadData, saveData, ensureDataDir } from '@/lib/backup';
-import { githubService } from '@/lib/github';
-import path from 'path';
-import fs from 'fs';
+import { db } from '@/lib/firebaseAdmin';
 import { sendTelegramAlert } from '@/lib/telegram';
-
-const COMMENTS_DATA_FILE = path.join(process.cwd(), 'src', 'data', 'comments.json');
-const COMMENTS_GITHUB_PATH = 'src/data/comments.json';
-
-interface CommentsData {
-  comments: Record<string, unknown[]>;
-}
 
 // GET - Read single project
 export async function GET(
@@ -27,7 +17,6 @@ export async function GET(
     const params = await props.params;
     const { id } = params;
 
-    // TODO: Optimasi - tambahkan getProjectById(id) di projectService agar tidak perlu load semua proyek
     const { projects } = await projectService.getProjects();
     const project = projects.find(p => p.id === id);
 
@@ -59,57 +48,31 @@ export async function PUT(
     const { id } = params;
     const body: UpdateProjectData & { initialCommentCount?: number } = await request.json();
 
-    // 1. Fetch existing project to get 'slug' for renaming files
-    const { projects } = await projectService.getProjects();
-    const existingProject = projects.find(p => p.id === id);
-
-    if (!existingProject) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
-
-    const targetSlug = body.slug || existingProject.slug;
-
-    // 3. Update Project
+    // 1. Update Project
     const updatedProject = await projectService.updateProject(id, body);
 
     if (!updatedProject) {
       return NextResponse.json({ error: 'Project not found or update failed' }, { status: 404 });
     }
 
-    // --- Auto-Generate / Append Comments if requested ---
+    // --- Auto-Generate / Append Comments (Firebase) ---
     if (body.initialCommentCount && body.initialCommentCount > 0) {
       try {
         console.log(`Generating ${body.initialCommentCount} additional comments for ${updatedProject.slug}...`);
         const newComments = generateGenZComments(updatedProject.slug, body.initialCommentCount);
-        const isDev = process.env.NODE_ENV === 'development';
-        let commentsData: CommentsData = { comments: {} };
 
-        if (isDev) {
-          await ensureDataDir();
-          const loaded = await loadData(COMMENTS_DATA_FILE);
-          if (loaded) commentsData = loaded as CommentsData;
-        } else {
-          try {
-            const gh = await githubService.getFileContent<CommentsData>(COMMENTS_GITHUB_PATH);
-            commentsData = gh.content;
-          } catch (e) {
-            console.warn('Failed to load GitHub comments, starting fresh', e);
-          }
-        }
+        // Get existing comments from Firebase
+        const commentsRef = db.ref(`comments/${updatedProject.slug}`);
+        const snap = await commentsRef.once('value');
+        const existingComments = snap.val() || [];
 
-        if (!commentsData.comments) commentsData.comments = {};
-        if (!commentsData.comments[updatedProject.slug]) commentsData.comments[updatedProject.slug] = [];
-
-        commentsData.comments[updatedProject.slug] = [
-          ...commentsData.comments[updatedProject.slug],
+        const combinedComments = [
+          ...(Array.isArray(existingComments) ? existingComments : []),
           ...newComments
         ];
 
-        if (isDev) {
-          await saveData(COMMENTS_DATA_FILE, commentsData);
-        } else {
-          await githubService.updateFile(COMMENTS_GITHUB_PATH, commentsData, `Added ${body.initialCommentCount} comments to ${updatedProject.slug}`);
-        }
+        await commentsRef.set(combinedComments);
+        console.log(`[API/Projects/[id]] Successfully appended comments to ${updatedProject.slug}`);
       } catch (commentError) {
         console.error('Failed to append comments:', commentError);
       }
@@ -163,11 +126,9 @@ export async function DELETE(
     const successMessage = `🗑️ **PROJECT DELETED**\n\n**ID:** ${id}\n**By:** Admin\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
     sendTelegramAlert(successMessage);
 
-    // Auto-revalidate paths so deletion is reflected immediately
     revalidatePath('/', 'layout');
-    revalidatePath('/works');
+    revalidatePath('/projects');
     revalidatePath('/admin');
-
 
     return NextResponse.json({
       success: true,

@@ -32,6 +32,10 @@ class SoundManager {
     private pendingSounds: Set<SoundType> = new Set();
     private hasPlayedStartup: boolean = false;
     private suppressedSounds: Set<SoundType> = new Set();
+    
+    // FIXED (BUG-002): Track active audio elements untuk cleanup
+    private activeAudioElements: Set<HTMLAudioElement> = new Set();
+    private maxActiveAudioElements: number = 20; // Limit untuk mencegah memory bloat
 
     /**
      * Temporarily suppress a sound type for the given duration (ms).
@@ -146,6 +150,9 @@ class SoundManager {
 
     /**
      * Play a sound by type
+     * 
+     * FIXED (BUG-002): Track dan cleanup audio elements untuk mencegah memory leak.
+     * Audio elements di-track dan di-remove setelah selesai diputar.
      */
     public play(type: SoundType, customVolume?: number) {
         if (this.isMuted) return;
@@ -194,6 +201,9 @@ class SoundManager {
                 playTarget = audio.cloneNode() as HTMLAudioElement;
             }
 
+            // FIXED: Track audio element
+            this.trackAudioElement(playTarget);
+
             playTarget.volume = targetVolume;
             const playPromise = playTarget.play();
 
@@ -207,14 +217,70 @@ class SoundManager {
                     if (err.name === 'NotAllowedError') {
                         this.pendingSounds.add(type);
                         console.info(`[SoundManager] Autoplay blocked for "${type}". Queued for interaction.`);
+                        // FIXED: Remove from tracking jika gagal
+                        this.untrackAudioElement(playTarget);
                         return;
                     }
                     console.warn(`[SoundManager] Playback failed for "${type}":`, err.message);
+                    // FIXED: Remove from tracking jika gagal
+                    this.untrackAudioElement(playTarget);
                 });
             }
         } catch (e) {
             console.error(`[SoundManager] Critical error playing "${type}":`, e);
         }
+    }
+
+    /**
+     * FIXED (BUG-002): Track audio element dan setup cleanup handler
+     */
+    private trackAudioElement(audio: HTMLAudioElement): void {
+        // Cleanup oldest elements jika mencapai limit
+        if (this.activeAudioElements.size >= this.maxActiveAudioElements) {
+            const oldest = this.activeAudioElements.values().next().value;
+            if (oldest) {
+                this.untrackAudioElement(oldest);
+            }
+        }
+
+        this.activeAudioElements.add(audio);
+
+        // Setup cleanup handlers
+        const cleanup = () => {
+            this.untrackAudioElement(audio);
+        };
+
+        audio.addEventListener('ended', cleanup, { once: true });
+        audio.addEventListener('error', cleanup, { once: true });
+    }
+
+    /**
+     * FIXED (BUG-002): Remove audio element dari tracking dan cleanup
+     */
+    private untrackAudioElement(audio: HTMLAudioElement): void {
+        if (this.activeAudioElements.has(audio)) {
+            audio.pause();
+            audio.src = '';
+            audio.load(); // Force release resources
+            this.activeAudioElements.delete(audio);
+        }
+    }
+
+    /**
+     * FIXED (BUG-002): Cleanup semua active audio elements
+     */
+    public cleanupAllAudio(): void {
+        console.log(`[SoundManager] Cleaning up ${this.activeAudioElements.size} active audio elements`);
+        this.activeAudioElements.forEach(audio => {
+            audio.pause();
+            audio.src = '';
+            try {
+                audio.load();
+            } catch {
+                // Ignore cleanup errors
+            }
+        });
+        this.activeAudioElements.clear();
     }
 
     public setMuted(muted: boolean) {

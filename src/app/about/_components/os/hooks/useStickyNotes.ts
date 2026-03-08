@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { NoteData } from '../ui/elements/StickyNoteItem';
+import { useLayoutPersistence } from '../contexts/LayoutPersistenceContext';
 
-const INITIAL_NOTES: NoteData[] = [
+// BUG FIX #5: Gunakan function untuk lazy initialization agar tidak SSR leak
+const getInitialNotes = (): NoteData[] => [
     {
         id: 'welcome-note',
         text: 'Halo! Selamat Datang di Ramos OS v2.0 🖥️✨\n\nSaya Ramos, seorang Graphic Designer & Visual Strategist.\n\nQuick Start:\n1. Buka folder "Projects" untuk lihat karya saya.\n2. Klik "Contact" di bawah untuk ngobrol.\n3. Drag note ini ke mana saja!\n\nSelamat mengeksplorasi!',
@@ -9,8 +11,9 @@ const INITIAL_NOTES: NoteData[] = [
         color: '#fef08a',
         isStarred: true,
         isDeleted: false,
-        x: typeof window !== 'undefined' ? (window.innerWidth - 300) / 2 : 100,
-        y: typeof window !== 'undefined' ? (window.innerHeight - 350) / 2 : 100,
+        // BUG FIX #5: Safe window access dengan fallback yang lebih reasonable
+        x: typeof window !== 'undefined' ? Math.max(50, (window.innerWidth - 300) / 2) : 100,
+        y: typeof window !== 'undefined' ? Math.max(50, (window.innerHeight - 350) / 2) : 100,
         width: 300,
         height: 350,
         zIndex: 100,
@@ -27,18 +30,34 @@ const _debounce = <T extends (...args: unknown[]) => ReturnType<T>>(func: T, wai
     };
 };
 
-export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfToken?: string) => {
+export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfToken?: string, requestNextZIndex?: (id?: string) => number) => {
     const [notes, setNotes] = useState<NoteData[]>([]);
-    const [noteZIndex, setNoteZIndex] = useState(1);
     const [hasLoaded, setHasLoaded] = useState(false);
     const isModified = useRef(false);
+    const notesRef = useRef(notes);
+
+    // Sync notesRef with state
+    notesRef.current = notes;
+
+    const { registerFlush, unregisterFlush } = useLayoutPersistence();
 
     // Load notes from server
     useEffect(() => {
+        const controller = new AbortController();
+        
         const loadNotes = async () => {
             try {
                 // Add timestamp and force=true to prevent caching
-                const response = await fetch(`/api/sticky-notes?t=${Date.now()}&force=true`);
+                const response = await fetch(`/api/sticky-notes?t=${Date.now()}&force=true`, {
+                    signal: controller.signal
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error(`[StickyNotes] API Error (${response.status}):`, text.slice(0, 200));
+                    throw new Error(`Server responded with status ${response.status}`);
+                }
+
                 const data = await response.json();
                 if (Array.isArray(data) && data.length > 0) {
                     // Mobile adjustment: pull notes to visible area
@@ -58,39 +77,85 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                     });
 
                     setNotes(adjustedData);
-                    // Find max z-index to initialize counter
-                    const maxZ = Math.max(...data.map(n => n.zIndex || 0), 0);
-                    setNoteZIndex(maxZ + 1);
+                    // Note: z-indexes are now managed by UnifiedZIndexContext
+                    // We keep the zIndex values in notes for persistence, but the actual
+                    // stacking is controlled by the unified system
                 } else {
                     // Show welcome note ONLY if no notes exist AND it's a first-time view this session
-                    const hasSeenWelcome = sessionStorage.getItem('ramos_os_welcome_seen');
-                    if (!hasSeenWelcome) {
-                        setNotes(INITIAL_NOTES);
-                        sessionStorage.setItem('ramos_os_welcome_seen', 'true');
-                    } else {
-                        setNotes([]);
+                    // BUG FIX #2: try-catch untuk sessionStorage
+                    try {
+                        const hasSeenWelcome = sessionStorage.getItem('ramos_os_welcome_seen');
+                        if (!hasSeenWelcome) {
+                            setNotes(getInitialNotes());
+                            sessionStorage.setItem('ramos_os_welcome_seen', 'true');
+                        } else {
+                            setNotes([]);
+                        }
+                    } catch (e) {
+                        console.warn('[StickyNotes] Failed to access sessionStorage:', e);
+                        setNotes(getInitialNotes());
                     }
                 }
             } catch (error) {
-                console.error("Failed to load notes from server", error instanceof Error ? error.message : error);
-                setNotes(INITIAL_NOTES);
+                if (error instanceof Error && error.name === 'AbortError') {
+                    console.log('[StickyNotes] Load aborted');
+                    return;
+                }
+                console.error("Failed to load notes from server:", error instanceof Error ? error.message : error);
+                setNotes(getInitialNotes());
             } finally {
                 setHasLoaded(true);
             }
         };
         loadNotes();
+        
+        return () => controller.abort();
     }, []);
 
     // Auto-sync for Admins ONLY
     useEffect(() => {
         if (!mounted || !hasLoaded || !isAdmin || !csrfToken || !isModified.current) return;
 
+        const controller = new AbortController();
+
         const saveNotes = async () => {
             try {
-                // We used to have a mobile guard here, but it might interfere with testing.
-                // Instead, we skip auto-save ONLY if the notes array is empty and it wasn't empty before (to prevent accidental clears)
-                // or if we detection a massive stack that clearly looks like mobile auto-layout.
-                // For now, let's just allow it for the admin.
+                let notesToPersist = [...notes];
+                const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+                // GHOST BUG FIX: Prevent overwriting desktop positions from mobile
+                // We keep text/color/star changes but merge back server positions for existing notes
+                if (isMobile) {
+                    try {
+                        const response = await fetch(`/api/sticky-notes?force=true&t=${Date.now()}`, {
+                            signal: controller.signal
+                        });
+                        if (response.ok) {
+                            const serverData = await response.json();
+                            if (Array.isArray(serverData)) {
+                                notesToPersist = notes.map(localNote => {
+                                    const serverNote = serverData.find((sn: NoteData) => sn.id === localNote.id);
+                                    if (serverNote) {
+                                        return {
+                                            ...localNote,
+                                            x: serverNote.x,
+                                            y: serverNote.y,
+                                            width: serverNote.width,
+                                            height: serverNote.height
+                                        };
+                                    }
+                                    return localNote;
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        if (e instanceof Error && e.name === 'AbortError') {
+                            console.log('[StickyNotes] Mobile merge aborted');
+                            return;
+                        }
+                        console.warn("[StickyNotes] Mobile merge failed", e);
+                    }
+                }
 
                 await fetch('/api/sticky-notes', {
                     method: 'PUT',
@@ -98,21 +163,64 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                         'Content-Type': 'application/json',
                         'X-CSRF-Token': csrfToken
                     },
-                    body: JSON.stringify(notes)
+                    credentials: 'include',
+                    signal: controller.signal,
+                    body: JSON.stringify(notesToPersist)
                 });
-                isModified.current = false; // Reset after successful save
+                isModified.current = false;
             } catch (error) {
+                if (error instanceof Error && error.name === 'AbortError') {
+                    console.log('[StickyNotes] Save aborted');
+                    return;
+                }
                 console.error("Failed to auto-save notes:", error instanceof Error ? error.message : error);
             }
         };
 
         const debouncedSave = setTimeout(saveNotes, 1500); // Slightly longer debounce
-        return () => clearTimeout(debouncedSave);
+        return () => {
+            clearTimeout(debouncedSave);
+            controller.abort();
+        };
     }, [notes, mounted, hasLoaded, isAdmin, csrfToken]);
 
+    // Flusher for logout/exit
+    // BUG FIX #3: Capture notes data di awal untuk mencegah race condition
+    const flushNotes = useCallback(async () => {
+        if (!isAdmin || !csrfToken || !isModified.current) return;
+
+        // Capture current notes state immediately
+        const notesToFlush = notesRef.current;
+        
+        try {
+            await fetch('/api/sticky-notes', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                credentials: 'include',
+                body: JSON.stringify(notesToFlush)
+            });
+            isModified.current = false;
+            console.log('[StickyNotes] Flushed notes positions');
+        } catch (error) {
+            console.error("[StickyNotes] Failed to flush notes:", error);
+        }
+    }, [isAdmin, csrfToken]);
+
+    useEffect(() => {
+        registerFlush('stickyNotes', flushNotes);
+        return () => unregisterFlush('stickyNotes');
+    }, [registerFlush, unregisterFlush, flushNotes]);
+
     const addNote = useCallback(() => {
+        const noteId = 'note-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        // Get z-index from unified system, passing the note ID
+        const nextZ = requestNextZIndex ? requestNextZIndex(noteId) : 100;
+        
         const newNote: NoteData = {
-            id: 'note-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+            id: noteId,
             text: '',
             date: new Date().toISOString(),
             color: '#fef08a',
@@ -129,13 +237,12 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
             isPinned: false,
             isCollapsed: false,
             opacity: 1,
-            zIndex: noteZIndex + 1,
+            zIndex: nextZ,
             fontFamily: 'inherit'
         };
         setNotes(prev => [newNote, ...prev]);
-        setNoteZIndex(prev => prev + 1);
         isModified.current = true;
-    }, [noteZIndex]);
+    }, [requestNextZIndex]);
 
     const updateNote = useCallback((id: string, updates: Partial<NoteData>) => {
         setNotes(prev => prev.map(note => note.id === id ? { ...note, ...updates } : note));
@@ -156,12 +263,13 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
     }, [updateNote]);
 
     const bringToFrontNote = useCallback((id: string) => {
-        setNoteZIndex(prev => {
-            const next = prev + 1;
-            updateNote(id, { zIndex: next });
-            return next;
-        });
-    }, [updateNote]);
+        // Get z-index from unified system, passing the note ID
+        // The actual z-index is managed by UnifiedZIndexContext
+        if (requestNextZIndex) {
+            const nextZ = requestNextZIndex(id);
+            updateNote(id, { zIndex: nextZ });
+        }
+    }, [updateNote, requestNextZIndex]);
 
     return {
         notes,

@@ -42,7 +42,7 @@ export const ProjectSchema = z.object({
     slug: z.string(),
     title: z.string().min(1, "Title is required"),
     client: z.string().min(1, "Client is required"),
-    year: z.union([z.string(), z.number()]),
+    year: z.number(),
     tags: z.array(z.string()).default([]),
     description: z.string(),
     description_id: z.string().optional(),

@@ -97,10 +97,15 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
 
     // Load like status immediately (local storage only)
     useEffect(() => {
+        // BUG FIX #6: try-catch untuk localStorage
         if (typeof window !== 'undefined') {
-            const savedLike = localStorage.getItem(`like-${project.slug}`);
-            if (savedLike === 'true') {
-                requestAnimationFrame(() => setIsProjectLiked(true));
+            try {
+                const savedLike = localStorage.getItem(`like-${project.slug}`);
+                if (savedLike === 'true') {
+                    requestAnimationFrame(() => setIsProjectLiked(true));
+                }
+            } catch (e) {
+                console.warn('[useProjectDetail] Failed to load like status:', e);
             }
         }
         requestAnimationFrame(() => setIsLoaded(true));
@@ -141,7 +146,12 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
             ...prev,
             likes: newIsLiked ? prev.likes + 1 : Math.max(0, prev.likes - 1)
         }));
-        localStorage.setItem(`like-${project.slug}`, String(newIsLiked));
+        // BUG FIX #6: try-catch untuk localStorage
+        try {
+            localStorage.setItem(`like-${project.slug}`, String(newIsLiked));
+        } catch (e) {
+            console.warn('[useProjectDetail] Failed to save like status:', e);
+        }
         try {
             await fetch('/api/metrics', {
                 method: 'POST',

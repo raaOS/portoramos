@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { AboutData } from "@/types/about";
 import { useSystemSound } from "@/hooks/useSystemSound";
+import { useLayoutPersistence } from "@/app/about/_components/os/contexts/LayoutPersistenceContext";
+import { useUnifiedZIndex } from "@/app/about/_components/os/context/UnifiedZIndexContext";
 
 export interface WindowState {
     id: string;
@@ -28,10 +30,21 @@ interface UseWindowManagerProps {
 
 export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin = false }: UseWindowManagerProps) => {
     const [windows, setWindows] = useState<WindowState[]>(initialWindows);
-    const [topZIndex, setTopZIndex] = useState(20);
+    const { bringToFront: bringToFrontZIndex } = useUnifiedZIndex();
     const [bouncingDocId, setBouncingDocId] = useState<string | null>(null);
     const { playOpen, playClose } = useSystemSound();
     const [isInitialized, setIsInitialized] = useState(false);
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isPersistingRef = useRef(false);
+
+    // Cleanup timeout on unmount to prevent memory leak
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Initialize windows based on server preferences (aboutData.windowPreferences)
     useEffect(() => {
@@ -95,7 +108,8 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
 
     // Content Sync Effect: Update window content when initialWindows (and underlying data) changes
     useEffect(() => {
-        requestAnimationFrame(() => {
+        let rafId: number;
+        rafId = requestAnimationFrame(() => {
             setWindows(prev => prev.map(w => {
                 const fresh = initialWindows.find(fw => fw.id === w.id);
                 // Fix: Jangan timpa konten jika konten baru adalah null (dynamic content)
@@ -105,6 +119,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
                 return w;
             }));
         });
+        return () => cancelAnimationFrame(rafId);
     }, [initialWindows]);
 
     // Bounce cleanup - OPTIMIZED dengan cleanup yang benar
@@ -124,46 +139,100 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
      * @param updates - Positional or state updates
      */
     const saveWindowPreference = useCallback(async (id: string, updates: Partial<{ x: number, y: number, width: number, height: number, isOpenByDefault: boolean }>) => {
-        if (!aboutData) return;
-        try {
-            const currentPrefs = aboutData.windowPreferences || {};
-            const newPrefs = {
-                ...currentPrefs,
-                [id]: { ...(currentPrefs[id] || {}), ...updates }
-            };
-            if (!csrfToken) return; // Only admins with a CSRF token can save preferences
+        if (!aboutData || !isAdmin || !csrfToken) return;
 
-            await fetch('/api/about', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken || ''
-                },
-                body: JSON.stringify({ windowPreferences: newPrefs })
-            });
-        } catch {
-            // Silently ignore window preference save errors
+        // GHOST BUG FIX: Prevent overwriting desktop layout from mobile
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+        if (isMobile) {
+            // We allow toggling 'isOpenByDefault' (pin) from mobile if needed, 
+            // but we STRIP spatial updates (x, y, width, height)
+            const spatialKeys = ['x', 'y', 'width', 'height'];
+            const hasSpatialUpdate = Object.keys(updates).some(k => spatialKeys.includes(k));
+
+            if (hasSpatialUpdate) {
+                // If it's pure spatial, just stop. If mixed, filter it.
+                const filteredUpdates = { ...updates };
+                delete filteredUpdates.x;
+                delete filteredUpdates.y;
+                delete filteredUpdates.width;
+                delete filteredUpdates.height;
+
+                if (Object.keys(filteredUpdates).length === 0) return;
+                updates = filteredUpdates;
+            }
         }
-    }, [aboutData, csrfToken]);
+
+        // Use debounce for manual moves to avoid race conditions
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        isPersistingRef.current = true;
+
+        saveTimeoutRef.current = setTimeout(async () => {
+            try {
+                const currentPrefs = aboutData.windowPreferences || {};
+                const newPrefs = {
+                    ...currentPrefs,
+                    [id]: { ...(currentPrefs[id] || {}), ...updates }
+                };
+
+                await fetch('/api/about', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ windowPreferences: newPrefs })
+                });
+            } catch (error) {
+                console.error("[WindowManager] Failed to save preference:", error);
+            } finally {
+                setTimeout(() => {
+                    isPersistingRef.current = false;
+                }, 1000);
+            }
+        }, 800);
+    }, [aboutData, csrfToken, isAdmin]);
 
     const _isWindowOpen = useCallback((id: string) => windows.find(w => w.id === id)?.isOpen ?? false, [windows]);
 
-    // OPTIMIZED: Cache window dimensions untuk menghindari repeated DOM access
-    const [windowDimensions, setWindowDimensions] = useState({ width: 1200, height: 800 });
+    // FIXED (BUG-009): Cache window dimensions dengan SSR-safe initialization
+    const [windowDimensions, setWindowDimensions] = useState({ width: 0, height: 0 });
 
+    // FIXED (BUG-009): SSR-safe dimensions update
+    // BUG FIX #7: Throttled resize handler untuk mencegah terlalu banyak re-render
     useEffect(() => {
+        let resizeTimeout: NodeJS.Timeout | null = null;
+        let frameId: number | null = null;
+        
         const updateDimensions = () => {
-            setWindowDimensions({
-                width: window.innerWidth,
-                height: window.innerHeight
+            if (frameId) cancelAnimationFrame(frameId);
+            frameId = requestAnimationFrame(() => {
+                setWindowDimensions({
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                });
             });
+        };
+        
+        // Throttled version - max 10 updates per second
+        const throttledUpdate = () => {
+            if (resizeTimeout) return;
+            resizeTimeout = setTimeout(() => {
+                resizeTimeout = null;
+                updateDimensions();
+            }, 100);
         };
 
         updateDimensions();
-        window.addEventListener('resize', updateDimensions);
-        return () => window.removeEventListener('resize', updateDimensions);
+        window.addEventListener('resize', throttledUpdate);
+        return () => {
+            window.removeEventListener('resize', throttledUpdate);
+            if (resizeTimeout) clearTimeout(resizeTimeout);
+            if (frameId) cancelAnimationFrame(frameId);
+        };
     }, []);
 
+    // FIXED (BUG-009): Define getCenterPosition terlebih dahulu
     const getCenterPosition = useCallback((w: number, h: number) => {
         const { width: safeWidth, height: safeHeight } = windowDimensions;
 
@@ -177,6 +246,9 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
     }, [windowDimensions]);
 
     const openWindow = useCallback((id: string, customConfig?: Partial<WindowState>) => {
+        // Get unified z-index for this window
+        const newZIndex = bringToFrontZIndex(id, 'window');
+
         setWindows(prev => {
             const existingWindow = prev.find(w => w.id === id);
 
@@ -202,14 +274,13 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
                     ...customConfig,
                     id,
                     isOpen: true,
-                    zIndex: topZIndex + 1,
+                    zIndex: newZIndex,
                     initialPosition: customConfig.initialPosition || getCenterPosition(width, height),
                     width,
                     height,
                     content: customConfig.content
                 };
                 playOpen();
-                setTopZIndex(z => z + 1);
                 return [...prev, newWindow];
             }
 
@@ -219,7 +290,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
                         return {
                             ...w,
                             isMinimized: false,
-                            zIndex: topZIndex + 1,
+                            zIndex: newZIndex,
                             content: customConfig?.content || w.content,
                             title: customConfig?.title || w.title,
                         };
@@ -243,7 +314,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
                         ...w,
                         isOpen: true,
                         isMinimized: false,
-                        zIndex: topZIndex + 1,
+                        zIndex: newZIndex,
                         initialPosition: w.initialPosition || initialPosition,
                         width,
                         height,
@@ -255,17 +326,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
                 return w;
             });
         });
-        setTopZIndex(prev => {
-            // Jika mencapai batas, jangan reset ke 20 secara kasar karena bisa menyebabkan window tenggelam.
-            // Kita gunakan 10000 sebagai batas atas (di bawah Spotlight).
-            if (prev > 9000) {
-                // Return high value but allow growth, eventually we might need a full re-normalization
-                // but for now, incrementing is safer than resetting to a small number.
-                return prev + 1;
-            }
-            return prev + 1;
-        });
-    }, [aboutData, playOpen, topZIndex, getCenterPosition]);
+    }, [aboutData, playOpen, getCenterPosition, bringToFrontZIndex]);
 
     const closeWindow = useCallback((id: string) => {
         setWindows(prev => prev.map(w => {
@@ -286,29 +347,41 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
     }, []);
 
     const maximizeWindow = useCallback((id: string) => {
+        // Use unified z-index system - maximize also brings to front
+        const newZIndex = bringToFrontZIndex(id, 'window');
         setWindows(prev => prev.map(w => {
-            if (w.id === id) return { ...w, isMaximized: !w.isMaximized, zIndex: topZIndex + 1 };
+            if (w.id === id) return { ...w, isMaximized: !w.isMaximized, zIndex: newZIndex };
             return w;
         }));
-        setTopZIndex(prev => (prev > 9000 ? 20 : prev + 1));
-    }, [topZIndex]);
+    }, [bringToFrontZIndex]);
 
     const focusWindow = useCallback((id: string) => {
+        // Use unified z-index system
+        const newZIndex = bringToFrontZIndex(id, 'window');
         setWindows(prev => prev.map(w => {
-            if (w.id === id) return { ...w, zIndex: topZIndex + 1 };
+            if (w.id === id) return { ...w, zIndex: newZIndex };
             return w;
         }));
-        setTopZIndex(prev => (prev > 9000 ? 20 : prev + 1));
-    }, [topZIndex]);
+    }, [bringToFrontZIndex]);
 
     const updateWindowPosition = useCallback((id: string, x: number, y: number) => {
-        setWindows(prev => prev.map(w => {
-            if (w.id === id) {
-                if (isAdmin || w.isPinned) saveWindowPreference(id, { x, y });
-                return { ...w, initialPosition: { x, y } };
+        setWindows(prev => {
+            const updated = prev.map(w => {
+                if (w.id === id) {
+                    return { ...w, initialPosition: { x, y } };
+                }
+                return w;
+            });
+            
+            // BUG FIX #2: Check isPinned from the window we're updating
+            const win = prev.find(w => w.id === id);
+            if (isAdmin || win?.isPinned) {
+                // Use setTimeout to defer saveWindowPreference call
+                setTimeout(() => saveWindowPreference(id, { x, y }), 0);
             }
-            return w;
-        }));
+            
+            return updated;
+        });
     }, [saveWindowPreference, isAdmin]);
 
     const handleWindowResize = useCallback((id: string, width: number, height: number) => {
@@ -321,55 +394,17 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
         }));
     }, []);
 
-    // OPTIMIZED: Pisahkan logic async untuk menghindari memory leaks
-    const saveWindowSizeAsync = useCallback(async (id: string, width: number, height: number) => {
-        try {
-            // Fetch current preferences from server
-            const res = await fetch('/api/about');
-            const currentData = await res.json();
-            const currentPrefs = currentData?.windowPreferences || {};
-
-            // Merge new dimensions
-            const newPrefs = {
-                ...currentPrefs,
-                [id]: { ...(currentPrefs[id] || {}), width, height }
-            };
-
-            if (!csrfToken) return; // Only admins with a CSRF token can save preferences
-
-            // Save back with credentials (admin cookie sent automatically)
-            const saveRes = await fetch('/api/about', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken || ''
-                },
-                credentials: 'include', // Important: sends cookies for auth
-                body: JSON.stringify({ windowPreferences: newPrefs })
-            });
-
-            if (saveRes.ok) {
-                // Window size saved successfully
-            } else if (saveRes.status !== 401 && saveRes.status !== 403) {
-                // Only log real errors, ignore auth errors for visitors
-                console.error('Failed to save window size:', saveRes.status, await saveRes.text());
-            }
-        } catch (error) {
-            console.error("Failed to save window size:", error instanceof Error ? error.message : error);
-        }
-    }, [csrfToken]);
-
     const handleWindowResizeEnd = useCallback((id: string, width: number, height: number) => {
-        // Access latest state via setWindows callback to check isPinned
+        // Access latest state via setWindows callback to check isPinned/admin
         setWindows(prev => {
             const win = prev.find(w => w.id === id);
             if (isAdmin || win?.isPinned) {
-                // Save via authenticated API call (admin only - cookies sent automatically)
-                saveWindowSizeAsync(id, width, height);
+                // Save via the unified debounced save function
+                saveWindowPreference(id, { width, height });
             }
-            return prev; // No state change, just side effect
+            return prev;
         });
-    }, [saveWindowSizeAsync, isAdmin]);
+    }, [saveWindowPreference, isAdmin]);
 
     const togglePin = useCallback((id: string) => {
         setWindows(prev => prev.map(w => {
@@ -394,13 +429,65 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
 
     const resetWindows = useCallback(() => {
         setWindows(prev => prev.map(w => ({ ...w, isOpen: false, isMinimized: false, isMaximized: false })));
-        setTopZIndex(20);
+        // Note: Z-index reset is handled by UnifiedZIndexContext if needed
     }, []);
+
+    // Register flush for window positions (save all current positions on logout)
+    const { registerFlush, unregisterFlush } = useLayoutPersistence();
+    const windowsRef = useRef(windows);
+    windowsRef.current = windows;
+
+    const flushWindowPositions = useCallback(async () => {
+        if (!isAdmin || !csrfToken) return;
+
+        try {
+            // Build window preferences dari current windows state
+            const windowPrefs: Record<string, unknown> = {};
+            windowsRef.current.forEach(w => {
+                if (w.isPinned || isAdmin) {
+                    windowPrefs[w.id] = {
+                        x: w.initialPosition?.x,
+                        y: w.initialPosition?.y,
+                        width: w.width,
+                        height: w.height,
+                        isOpenByDefault: w.isPinned
+                    };
+                }
+            });
+
+            await fetch('/api/about', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                credentials: 'include',
+                body: JSON.stringify({ windowPreferences: windowPrefs })
+            });
+            console.log('[WindowManager] Flushed window positions');
+        } catch (error) {
+            console.error('[WindowManager] Failed to flush window positions', error);
+        }
+    }, [isAdmin, csrfToken]);
+
+    React.useEffect(() => {
+        registerFlush('windowPositions', flushWindowPositions);
+        return () => unregisterFlush('windowPositions');
+    }, [flushWindowPositions, registerFlush, unregisterFlush]);
+
+    // Request next z-index from unified system
+    // Note: This is used by sticky notes and other components
+    // The actual bring-to-front is handled by the component using the returned z-index
+    const requestNextZIndex = useCallback((id?: string) => {
+        // Use provided id or generate a temporary one
+        const elementId = id || `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        return bringToFrontZIndex(elementId, 'window');
+    }, [bringToFrontZIndex]);
 
     return {
         windows,
         setWindows,
-        topZIndex,
+        requestNextZIndex,
         bouncingDocId,
         openWindow,
         closeWindow,

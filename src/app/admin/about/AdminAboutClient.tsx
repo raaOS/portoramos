@@ -13,7 +13,6 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAdminAbout } from '../hooks/useAdminAbout';
 import ProfessionalSectionForm from './components/ProfessionalSectionForm';
 import SoftSkillsSectionForm from './components/SoftSkillsSectionForm';
-import { useGitHubSync } from '../hooks/useGitHubSync';
 
 // Existing Modular Components
 import RunningTextPanel from './components/RunningTextPanel';
@@ -57,11 +56,6 @@ export default function AdminAboutClient() {
   } = useAdminAbout(csrfToken);
 
   const { isAdmin, isLoading: authLoading } = useAdminAuth();
-
-  const {
-    triggerGithubSync
-  } = useGitHubSync(csrfToken);
-
 
   if (authLoading || (loading && !aboutData)) {
     return (
@@ -240,7 +234,6 @@ export default function AdminAboutClient() {
             {activeTab === 'archive' && (
               <GalleryManager
                 projects={projects}
-                onSyncTrigger={() => triggerGithubSync(true)}
               />
             )}
           </div>

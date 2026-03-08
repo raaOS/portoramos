@@ -105,9 +105,10 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                                         controls
                                     />
                                 ) : (
-                                    <img 
-                                        src={formData.cover} 
-                                        alt="Cover" 
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={formData.cover}
+                                        alt="Cover"
                                         className="w-auto h-auto max-h-56 object-contain"
                                     />
                                 )}
@@ -210,9 +211,10 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                                             controls
                                         />
                                     ) : (
-                                        <img 
-                                            src={formData.comparison.beforeImage} 
-                                            alt="Before" 
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                            src={formData.comparison.beforeImage}
+                                            alt="Before"
                                             className="w-auto h-auto max-h-40 object-contain"
                                         />
                                     )}
@@ -284,9 +286,10 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                                             controls
                                         />
                                     ) : (
-                                        <img 
-                                            src={formData.comparison.afterImage} 
-                                            alt="After" 
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                            src={formData.comparison.afterImage}
+                                            alt="After"
                                             className="w-auto h-auto max-h-40 object-contain"
                                         />
                                     )}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import { sanitize } from '@/lib/security/sanitization';
 
 import { m, DragControls } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -39,6 +40,7 @@ interface StickyNoteItemProps {
     onAdd?: () => void;
     dragControls: DragControls;
     isAdmin?: boolean;
+    onFocus?: () => void;
 }
 
 const COLORS = [
@@ -57,7 +59,7 @@ const DEFAULT_FONT = 'var(--font-handwritten, "Comic Sans MS", "Chalkboard SE", 
 import { NoteHeader } from '../NoteHeader';
 import { NoteFooter } from '../NoteFooter';
 
-export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, onAdd, dragControls, isAdmin = false }: StickyNoteItemProps) {
+export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, onAdd, dragControls, isAdmin = false, onFocus }: StickyNoteItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isUnlocked, setIsUnlocked] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -235,9 +237,7 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                                 height: '16px',
                                 borderRadius: '50%',
                                 // 3D Gradient: Highlight (Top Left) -> Mid Red -> Dark Red (Bottom Right)
-                                background: 'radial-gradient(circle at 35% 30%, #ffcfcf, #ef4444 30%, #991b1b)',
-                                // Shadows: Drop shadow + slight inset for rim separation
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                                background: 'radial-gradient(circle at 35% 30%, #ffcfcf, #ef4444 30%, #991b1b)'
                             }}
                         >
                             {/* Specular Highlight (The shiny white reflection) */}
@@ -270,11 +270,11 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                             contentEditable={isEditing && isAdmin}
                             onInput={handleContentChange}
                             onBlur={handleBlur}
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onMouseDown={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => { e.stopPropagation(); onFocus?.(); }}
+                            onMouseDown={(e) => { e.stopPropagation(); onFocus?.(); }}
                             onDragStart={(e) => e.preventDefault()}
                             onPaste={handlePaste}
-                            dangerouslySetInnerHTML={{ __html: note.text || '<span class="text-gray-400 italic">Empty note...</span>' }}
+                            dangerouslySetInnerHTML={{ __html: sanitize.html(note.text) || '<span class="text-gray-400 italic">Empty note...</span>' }}
                             className={`w-full h-full bg-transparent border-none outline-none resize-none text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto ${isEditing && isAdmin ? 'cursor-text' : 'cursor-default'}`}
                             data-lenis-prevent
                             style={{

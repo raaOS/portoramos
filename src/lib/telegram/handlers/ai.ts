@@ -3,26 +3,26 @@
  * Activates AI auto-responder mode
  */
 
-import type { MessageToSend, ChatStoreInterface, SimpleMessage } from '../types';
+import type { MessageToSend, ChatStoreInterface } from '../types';
 
 export async function handleAiCommand(
     currentVisitorId: string | null,
     chatStore: ChatStoreInterface
 ): Promise<MessageToSend[]> {
     const messages: MessageToSend[] = [];
-    
+
     if (!currentVisitorId) {
-        messages.push({ 
-            text: '❌ _Gunakan perintah ini di dalam Topik pengunjung (Forum), atau Reply pesan pengunjung._' 
+        messages.push({
+            text: '❌ _Gunakan perintah ini di dalam Topik pengunjung (Forum), atau Reply pesan pengunjung._'
         });
         return messages;
     }
 
     const success = await chatStore.setAiMode(currentVisitorId, true);
-    
+
     if (success) {
-        messages.push({ 
-            text: '🤖 *Mode AI Aktif!*\nSistem akan membalas pesan secara otomatis.' 
+        messages.push({
+            text: '🤖 *Mode AI Aktif!*\nSistem akan membalas pesan secara otomatis.'
         });
 
         // Smart catch-up
@@ -30,8 +30,8 @@ export async function handleAiCommand(
         const lastMessage = allMessages[allMessages.length - 1];
 
         if (lastMessage && lastMessage.sender === 'visitor') {
-            messages.push({ 
-                text: '🔍 _Membalas pesan terakhir pengunjung..._' 
+            messages.push({
+                text: '🔍 _Membalas pesan terakhir pengunjung..._'
             });
 
             try {
@@ -49,10 +49,10 @@ export async function handleAiCommand(
             }
         }
     } else {
-        messages.push({ 
-            text: '❌ _Sesi klien tidak ditemukan atau sudah kadaluarsa._' 
+        messages.push({
+            text: '❌ _Sesi klien tidak ditemukan atau sudah kadaluarsa._'
         });
     }
-    
+
     return messages;
 }

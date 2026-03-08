@@ -20,10 +20,9 @@ interface Comment {
 interface ManageCommentsModalProps {
     project: Project;
     onClose: () => void;
-    onSyncTrigger: () => void;
 }
 
-export default function ManageCommentsModal({ project, onClose, onSyncTrigger }: ManageCommentsModalProps) {
+export default function ManageCommentsModal({ project, onClose }: ManageCommentsModalProps) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState(true);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -68,7 +67,6 @@ export default function ManageCommentsModal({ project, onClose, onSyncTrigger }:
             if (res.ok) {
                 showSuccess('Comment deleted');
                 fetchComments(); // Reload to be safe (handles nested deletions)
-                onSyncTrigger(); // Sync to GitHub
             } else {
                 throw new Error('Failed to delete');
             }

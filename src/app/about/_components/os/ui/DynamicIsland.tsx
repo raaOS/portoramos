@@ -1,18 +1,23 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { m } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 
 import { ContactProfile } from "../data/mockChats";
 import { getAvatarUrl } from "@/lib/avatar";
+import { useUnifiedZIndex } from "../context/UnifiedZIndexContext";
 
 interface DynamicIslandProps {
     activeWindow: string | null;
     isBooting: boolean;
     onOpenChat?: (chatId?: string) => void;
     customNotifications?: ContactProfile[];
+    islandId?: string;
 }
 
-const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotifications }: DynamicIslandProps) => {
+const ISLAND_ID = 'dynamic-island';
+
+const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotifications, islandId = ISLAND_ID }: DynamicIslandProps) => {
+    const { bringToFront, getZIndex } = useUnifiedZIndex();
     const [notification, setNotification] = useState<{ id: string; name: string; message: string; avatar: string; initial: string } | null>(null);
     const [isGracePeriod, setIsGracePeriod] = useState(false);
     const [displayedMessage, setDisplayedMessage] = useState("");
@@ -21,6 +26,17 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const textToggleRef = useRef<NodeJS.Timeout | null>(null);
     const currentIndexRef = useRef(0);
+
+    // Handle focus - bring island to front in unified z-index system
+    const handleFocus = useCallback(() => {
+        bringToFront(islandId, 'dynamicIsland');
+    }, [bringToFront, islandId]);
+
+    // Register with unified z-index system on mount
+    useEffect(() => {
+        // Initial registration
+        handleFocus();
+    }, [handleFocus]); // Only once on mount, handleFocus is stable due to useCallback
 
     // Handle Active Window Grace Period
     useEffect(() => {
@@ -106,6 +122,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
         }
 
         if (randomTesti) {
+            handleFocus(); // Bring to front when notification arrives
             setNotification(randomTesti);
             startTypingEffect(randomTesti.message);
             startTextToggle();
@@ -117,7 +134,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                 notificationTimerRef.current = null;
             }, 6000);
         }
-    }, [customNotifications]);
+    }, [customNotifications, handleFocus]);
 
     useEffect(() => {
         if (isBooting) return;
@@ -169,10 +186,17 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
 
     if (isBooting) return null;
 
+    const zIndex = getZIndex(islandId);
+
     return (
-        <div className="fixed top-[42px] left-0 right-0 flex justify-center z-[9999] pointer-events-none">
+        <div
+            className="fixed top-[42px] left-0 right-0 flex justify-center pointer-events-none"
+            style={{ zIndex }}
+        >
             <m.div
-                className="bg-black shadow-2xl overflow-hidden pointer-events-auto cursor-default border border-white/10"
+                onMouseDown={handleFocus}
+                onPointerDown={handleFocus}
+                className="bg-black overflow-hidden pointer-events-auto cursor-default border border-white/10"
                 initial="idle"
                 animate={currentState === "active-window" ? "active" : currentState}
                 variants={variants}
@@ -280,3 +304,4 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
 };
 
 export default DynamicIsland;
+export { ISLAND_ID };

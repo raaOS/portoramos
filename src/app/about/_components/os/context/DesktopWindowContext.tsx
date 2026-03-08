@@ -19,18 +19,21 @@ interface DesktopWindowProviderProps {
     initialWindows: WindowState[];
     aboutData?: AboutData | null;
     csrfToken?: string;
+    isAdmin?: boolean;
 }
 
 export function DesktopWindowProvider({
     children,
     initialWindows,
     aboutData,
-    csrfToken
+    csrfToken,
+    isAdmin
 }: DesktopWindowProviderProps) {
     const windowManager = useWindowManager({
         initialWindows,
         aboutData,
-        csrfToken
+        csrfToken,
+        isAdmin
     });
 
     return (

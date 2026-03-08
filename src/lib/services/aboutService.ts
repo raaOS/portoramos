@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { ContentService } from './contentService';
 import {
     AboutData,
@@ -12,6 +13,14 @@ import {
 import aboutDataFallback from '@/data/about.json';
 
 const service = new ContentService<AboutData>('about.json', aboutDataFallback as unknown as AboutData);
+
+/**
+ * Cached version untuk Server Components.
+ * Menghindari redundant fetch ke Firebase dalam satu request.
+ */
+export const getCachedAboutData = cache(async () => {
+    return aboutService.getAboutData();
+});
 
 export const aboutService = {
     /**

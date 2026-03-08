@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { db } from '@/lib/firebaseAdmin';
-import { commentSchema, validateCommentDepth } from '@/lib/validations/schemas';
+import { commentSchema, validateCommentDepth } from '@/lib/validations';
 import { success, badRequest, unauthorized, serverError, rateLimit } from '@/lib/api-response';
 import { z } from 'zod';
 

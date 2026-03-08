@@ -121,7 +121,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                         minWidth: baseHeight * aspectRatio,
                         minHeight: baseHeight,
                     }}
-                    className={`relative shadow-lg border-2 border-white/40 group-hover:border-white/60 transition-colors bg-white/20 overflow-hidden`}
+                    className={`relative border-2 border-white/40 group-hover:border-white/60 transition-colors bg-white/20 overflow-hidden`}
                 >
                     {/* Always render Image as base layer */}
                     {imageUrl && (
@@ -154,7 +154,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                     )}
                 </div>
             ) : (
-                <div className={`w-16 h-16 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 flex items-center justify-center transition-colors group-hover:bg-white/30 shadow-lg`}>
+                <div className={`w-16 h-16 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 flex items-center justify-center transition-colors group-hover:bg-white/30`}>
                     <div className="text-black/80 group-hover:text-black transition-colors">
                         {icon}
                     </div>
@@ -166,7 +166,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                     {label}
                 </span>
             ) : (
-                <span className={`text-xs text-black font-medium text-center px-2 py-1 bg-white/40 rounded-[4px] backdrop-blur-md shadow-sm border border-white/30 transition-all duration-200 max-w-[120px] truncate select-none mt-1 z-20 opacity-0 group-hover:opacity-100`}>
+                <span className={`text-xs text-black font-medium text-center px-2 py-1 bg-white/40 rounded-[4px] backdrop-blur-md border border-white/30 transition-all duration-200 max-w-[120px] truncate select-none mt-1 z-20 opacity-0 group-hover:opacity-100`}>
                     {label}
                 </span>
             )}

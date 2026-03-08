@@ -1,31 +1,13 @@
-import path from 'path';
-import { loadData, ensureDataDir } from '@/lib/backup';
+import { db } from '@/lib/firebaseAdmin';
 import { ContactData } from '@/types/contact';
-import { githubService } from '@/lib/github';
 
-const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'contact.json');
-const GITHUB_PATH = 'src/data/contact.json';
-
-export async function getContactData(noCache = false): Promise<ContactData | null> {
-    const isDev = process.env.NODE_ENV === 'development';
-    let data: ContactData | null = null;
-
+export async function getContactData(): Promise<ContactData | null> {
     try {
-        if (isDev) {
-            await ensureDataDir();
-            data = await loadData(DATA_FILE) as ContactData;
-        } else {
-            // Fallback or specific logic if needed for GitHub fetch
-            try {
-                const ghData = await githubService.getFileContent<ContactData>(GITHUB_PATH, noCache);
-                data = ghData.content;
-            } catch (e) {
-                console.warn('Failed to fetch contact from GitHub via LIB, falling back or returning null', e);
-            }
-        }
+        const snap = await db.ref('content/contact').once('value');
+        const data = snap.val() as ContactData;
+        return data || null;
     } catch (error) {
-        console.error('Error loading contact data in lib:', error);
+        console.error('Error loading contact data from Firebase:', error);
+        return null;
     }
-
-    return data;
 }

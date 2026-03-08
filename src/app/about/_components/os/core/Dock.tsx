@@ -108,7 +108,7 @@ function DockItem({ id, icon, label, onClick, mouseX, shouldBounceExternal = fal
         >
             {/* Tooltip - Disabled on Mobile */}
             {!isMobile && (
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-2 py-1 bg-white/80 backdrop-blur-sm text-black text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-black/5 shadow-sm z-50">
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-2 py-1 bg-white/80 backdrop-blur-sm text-black text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-black/5 z-50">
                     {label}
                 </div>
             )}
@@ -174,11 +174,10 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                 >
                     <m.div
                         layout // Smoothly animate container size changes
-                        className={`flex items-end bg-gradient-to-b from-white/25 to-white/10 backdrop-blur-2xl border border-white/40 rounded-[24px] shadow-lg shadow-black/10 ${isMobile
+                        className={`flex items-end bg-gradient-to-b from-white/25 to-white/10 backdrop-blur-2xl border border-white/40 rounded-[24px] ${isMobile
                             ? 'h-[72px] overflow-x-auto scrollbar-hide gap-5 px-5 py-3'
                             : 'h-[96px] gap-2 px-3 py-4'}`}
                         style={{
-                            boxShadow: "0 10px 30px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.2), inset 0 0 20px rgba(255,255,255,0.1)",
                             minWidth: isMobile ? 'auto' : visibleItems.length * 64 + (visibleItems.length - 1) * 8 + 24,
                             minHeight: isMobile ? 72 : 96,
                         }}

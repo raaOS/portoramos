@@ -228,14 +228,11 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
                     <m.div
                         className="relative flex items-center justify-center text-[#ffffff]"
                         whileHover={screenState === "idle" ? {
-                            filter: "drop-shadow(0 0 60px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5))",
                             scale: 1.05
                         } : {
-                            filter: "drop-shadow(0 0 0px rgba(255, 255, 255, 0))",
                             scale: 1
                         }}
                         animate={{
-                            filter: screenState === "idle" ? "drop-shadow(0 0 0px rgba(255, 255, 255, 0))" : "none",
                             scale: 1
                         }}
                         transition={{ duration: screenState === "idle" ? 0.3 : 0 }}

@@ -26,10 +26,9 @@ export default function DesktopBackground({ wallpaperConfig }: DesktopBackground
 
     return (
         <div 
-            className="absolute inset-0 z-0"
+            className="fixed inset-0 z-0 w-full h-full"
             style={{
-                width: '100%',
-                height: '100%',
+                willChange: 'transform', // Prevent layout shifts
             }}
         >
             {/* Primary wallpaper - Priority load for LCP */}
@@ -45,6 +44,7 @@ export default function DesktopBackground({ wallpaperConfig }: DesktopBackground
                 style={{
                     filter: blurAmount > 0 ? `blur(${blurAmount}px)` : undefined,
                     transform: 'translateZ(0)', // GPU acceleration
+                    willChange: 'transform', // Prevent jitter
                 }}
             />
             

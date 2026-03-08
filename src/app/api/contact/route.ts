@@ -1,39 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadData, saveData, ensureDataDir } from '@/lib/backup';
+import { db } from '@/lib/firebaseAdmin';
 import { ContactData, UpdateContactData, ContactContent, ContactInfo, ContactFormSettings } from '@/types/contact';
 import { validateAdminRequest } from '@/lib/auth';
-import { githubService } from '@/lib/github';
-import path from 'path';
-
-const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'contact.json');
-const GITHUB_PATH = 'src/data/contact.json';
-const isDev = process.env.NODE_ENV === 'development';
 
 // GET - Read contact content
 export async function GET(_request: NextRequest) {
   try {
-    if (isDev) {
-      await ensureDataDir();
-      const data = await loadData(DATA_FILE) as ContactData;
-      if (!data) {
-        return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
-      }
-      return NextResponse.json(data);
-    }
+    const snap = await db.ref('content/contact').once('value');
+    const data = snap.val() as ContactData;
 
-    // Production: read from GitHub for persistence
-    try {
-      const { content } = await githubService.getFileContent<ContactData>(GITHUB_PATH);
-      return NextResponse.json(content);
-    } catch {
-      // Fallback to local file if GitHub is unavailable
-      await ensureDataDir();
-      const data = await loadData(DATA_FILE) as ContactData;
-      if (!data) {
-        return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
-      }
-      return NextResponse.json(data);
+    if (!data) {
+      return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
     }
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error loading contact data:', error);
     return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
@@ -52,20 +31,10 @@ export async function PUT(request: NextRequest) {
 
     const body: UpdateContactData = await request.json();
 
-    // Load current data
-    let data: ContactData | null = null;
-    if (isDev) {
-      await ensureDataDir();
-      data = await loadData(DATA_FILE) as ContactData;
-    } else {
-      try {
-        const gh = await githubService.getFileContent<ContactData>(GITHUB_PATH);
-        data = gh.content;
-      } catch {
-        await ensureDataDir();
-        data = await loadData(DATA_FILE) as ContactData;
-      }
-    }
+    // Load current data from Firebase
+    const contactRef = db.ref('content/contact');
+    const snap = await contactRef.once('value');
+    const data = snap.val() as ContactData;
 
     if (!data) {
       return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
@@ -79,19 +48,8 @@ export async function PUT(request: NextRequest) {
       lastUpdated: new Date().toISOString()
     };
 
-    // Save data — local in dev, GitHub in production
-    if (isDev) {
-      const success = await saveData(DATA_FILE, updatedData);
-      if (!success) {
-        return NextResponse.json({ error: 'Failed to save contact data' }, { status: 500 });
-      }
-    } else {
-      await githubService.updateFile(
-        GITHUB_PATH,
-        updatedData,
-        `Update contact data - ${new Date().toISOString()}`
-      );
-    }
+    // Save to Firebase
+    await contactRef.set(updatedData);
 
     return NextResponse.json({
       success: true,
@@ -99,6 +57,25 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error updating contact data:', error);
+    
+    // FIXED (BUG-008): More specific error handling
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+    }
+    if (error instanceof TypeError) {
+      return NextResponse.json({ error: 'Invalid data format' }, { status: 422 });
+    }
+    // Check if it's a Firebase error
+    if (error && typeof error === 'object' && 'code' in error) {
+      const firebaseError = error as { code: string; message: string };
+      if (firebaseError.code === 'PERMISSION_DENIED') {
+        return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
+      }
+      if (firebaseError.code === 'NETWORK_ERROR') {
+        return NextResponse.json({ error: 'Database connection failed' }, { status: 503 });
+      }
+    }
+    
     return NextResponse.json({ error: 'Failed to update contact data' }, { status: 500 });
   }
 }

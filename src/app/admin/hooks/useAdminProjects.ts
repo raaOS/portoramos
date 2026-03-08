@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { POLLING } from '@/lib/constants';
+import { useRealtimeSync } from '@/lib/services/realtimeSync';
 
 export function useAdminProjects() {
     const queryClient = useQueryClient();
@@ -21,7 +23,9 @@ export function useAdminProjects() {
             const res = await fetch('/api/projects?fresh=true');
             if (!res.ok) throw new Error('Failed to fetch projects');
             return res.json();
-        }
+        },
+        staleTime: POLLING.CLIENT_STALE_TIME, // 5 menit cache - hemat bandwidth
+        gcTime: 10 * 60 * 1000, // 10 menit garbage collect
     });
 
     const projects = (projectsData?.data?.projects || []) as Project[];
@@ -71,8 +75,11 @@ export function useAdminProjects() {
             }
             return response.json();
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['projects'] });
+        onSuccess: async () => {
+            // Invalidate dan force refetch dengan no-cache untuk data terbaru
+            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
+            // Refetch admin list
+            await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
             showSuccess('Project berhasil dibuat');
         },
         onError: (err: Error) => showError(err.message || 'Failed to create project')
@@ -95,8 +102,11 @@ export function useAdminProjects() {
             }
             return response.json();
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['projects'] });
+        onSuccess: async () => {
+            // Invalidate dan force refetch untuk data terbaru
+            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
+            // Refetch admin list
+            await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
             showSuccess('Project berhasil diperbarui');
         },
         onError: (err: Error) => showError(err.message || 'Failed to update project')
@@ -117,8 +127,11 @@ export function useAdminProjects() {
             }
             return id;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['projects'] });
+        onSuccess: async () => {
+            // Invalidate dan force refetch untuk data terbaru
+            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
+            // Refetch admin list
+            await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
             showSuccess('Project dihapus');
         },
         onError: (err: Error) => showError(err.message || 'Failed to delete project')
@@ -169,7 +182,10 @@ export function useAdminProjects() {
 
             setSelectedProjectIds(new Set());
             showSuccess(`Bulk ${action} complete`);
-            await queryClient.invalidateQueries({ queryKey: ['projects'] });
+            // Invalidate dan force refetch untuk data terbaru
+            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
+            // Refetch admin list
+            await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
         } catch {
             showError(`Bulk ${action} failed`);
         } finally {
@@ -195,6 +211,26 @@ export function useAdminProjects() {
         }
     };
 
+    // Manual refresh function
+    const refreshProjects = async () => {
+        await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
+        await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true });
+    };
+
+    // REAL-TIME SYNC: Listen lastUpdated timestamp (hemat bandwidth!)
+    // Trigger refresh otomatis kalau ada CRUD di Firebase
+    // Kalau Firebase tidak tersedia, admin tetap bisa refresh manual
+    useRealtimeSync({
+        onUpdate: () => {
+            console.log('[AdminProjects] Real-time update detected, refreshing...');
+            refreshProjects();
+        },
+        onUnavailable: () => {
+            console.log('[AdminProjects] Real-time sync unavailable, using manual refresh');
+        },
+        enabled: typeof window !== 'undefined' // Hanya di browser
+    });
+
     return {
         projects,
         orderedProjects,
@@ -211,6 +247,7 @@ export function useAdminProjects() {
         selectedProjectIds,
         toggleProjectSelection,
         selectAllProjects,
-        csrfToken
+        csrfToken,
+        refreshProjects // Export manual refresh
     };
 }

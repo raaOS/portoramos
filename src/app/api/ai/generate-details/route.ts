@@ -13,10 +13,10 @@ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const BLOCK_DURATION = 5 * 60 * 1000; // 5 minutes
 
 function getClientIdentifier(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
-  const userAgent = request.headers.get('user-agent') || 'unknown';
-  return `${ip}|${userAgent}`;
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+    return `${ip}|${userAgent}`;
 }
 
 interface GenerateDetailsRequest {
@@ -60,27 +60,38 @@ export async function POST(req: NextRequest) {
 
         if (imageBase64) {
             // Direct base64 input (e.g. from Client FileReader)
-            // Remove prefix if present (data:image/jpeg;base64,)
             base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
         } else if (imageUrl) {
-            const isLocal = imageUrl.startsWith('/');
-
-            if (isLocal) {
-                // Read from local filesystem
-                const fs = await import('fs/promises');
-                const path = await import('path');
-                const localPath = path.join(process.cwd(), 'public', imageUrl);
+            if (imageUrl.startsWith('/assets/') || imageUrl.startsWith('assets/') || imageUrl.includes('/o/')) {
+                // Firebase Storage / Local Path
+                let storagePath = imageUrl;
+                if (imageUrl.includes('/o/')) {
+                    const parts = imageUrl.split('/o/');
+                    storagePath = decodeURIComponent(parts[1].split('?')[0]);
+                } else {
+                    storagePath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+                }
 
                 try {
-                    const buffer = await fs.readFile(localPath);
+                    const { bucket } = await import('@/lib/firebaseAdmin');
+                    const [buffer] = await bucket.file(storagePath).download();
                     base64Data = buffer.toString('base64');
                 } catch (err: unknown) {
-                    const errMsg = err instanceof Error ? err.message : String(err);
-                    return NextResponse.json({ error: `File not found on server: ${imageUrl} - ${errMsg}` }, { status: 404 });
+                    // Fallback to fetch if it's a full URL
+                    if (imageUrl.startsWith('http')) {
+                        const imageRes = await fetch(imageUrl);
+                        if (imageRes.ok) {
+                            const arrayBuffer = await imageRes.arrayBuffer();
+                            base64Data = Buffer.from(arrayBuffer).toString('base64');
+                        } else {
+                            throw new Error(`Cloud fetch failed: ${imageUrl}`);
+                        }
+                    } else {
+                        throw err;
+                    }
                 }
-            } else {
-                // Remote URL
-                // Download image to buffer with User-Agent to avoid blocks
+            } else if (imageUrl.startsWith('http')) {
+                // External Remote URL
                 const imageRes = await fetch(imageUrl, {
                     headers: {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'

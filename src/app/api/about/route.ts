@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { UpdateAboutData } from '@/types/about';
 import { validateAdminRequest } from '@/lib/auth';
 import { aboutService } from '@/lib/services/aboutService';
+import { invalidateAboutCache } from '@/lib/about';
 
 
 // GET - Read about content
@@ -9,8 +11,8 @@ export async function GET(_request: NextRequest) {
   try {
     const data = await aboutService.getAboutData(true);
     return NextResponse.json(data);
-  } catch {
-    // Silently handle about data loading errors
+  } catch (error) {
+    console.error('[API/About] Error loading about data:', error instanceof Error ? error.message : error);
     return NextResponse.json({ error: 'Failed to load about data' }, { status: 500 });
   }
 }
@@ -26,6 +28,13 @@ export async function PUT(request: NextRequest) {
 
     // The service handles the merging logic now
     const updatedData = await aboutService.updateAboutData(updates);
+
+    // Invalidate cache agar visitor langsung lihat perubahan
+    invalidateAboutCache();
+    
+    // Revalidate ISR pages
+    revalidatePath('/', 'layout');
+    revalidatePath('/about');
 
     return NextResponse.json({
       success: true,

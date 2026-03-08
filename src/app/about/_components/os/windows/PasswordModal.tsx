@@ -113,7 +113,7 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
                         transition={{
                             x: error ? { duration: 0.4, ease: "easeInOut" } : { type: "spring", damping: 20, stiffness: 300 }
                         }}
-                        className="relative w-[320px] bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 shadow-2xl flex flex-col items-center gap-6 overflow-hidden mt-[-10vh]"
+                        className="relative w-[320px] bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 flex flex-col items-center gap-6 overflow-hidden mt-[-10vh]"
                     >
                         <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
 

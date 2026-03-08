@@ -31,9 +31,9 @@ const AppIcon = ({ color, icon: Icon, imageUrl }: AppIconProps) => {
         );
     }
     return (
-        <div className={`w-full h-full rounded-xl bg-gradient-to-b ${color} flex items-center justify-center shadow-lg relative`}>
+        <div className={`w-full h-full rounded-xl bg-gradient-to-b ${color} flex items-center justify-center relative`}>
             <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 inset-ring pointer-events-none" />
-            {Icon && <Icon className="text-white drop-shadow-sm" size="65%" strokeWidth={2} />}
+            {Icon && <Icon className="text-white" size="65%" strokeWidth={2} />}
         </div>
     );
 };

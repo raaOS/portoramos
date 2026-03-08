@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { checkAdminAuth } from "@/lib/auth";
 import { aboutService } from "@/lib/services/aboutService";
+import { invalidateAboutCache } from "@/lib/about";
 
 export async function POST(request: NextRequest) {
     try {
@@ -25,6 +27,13 @@ export async function POST(request: NextRequest) {
         await aboutService.updateAboutData({
             desktopPreferences
         });
+
+        // 4. Invalidate cache agar visitor langsung lihat perubahan
+        invalidateAboutCache();
+        
+        // Revalidate ISR pages
+        revalidatePath('/', 'layout');
+        revalidatePath('/about');
 
         return NextResponse.json({
             success: true,

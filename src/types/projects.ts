@@ -1,3 +1,5 @@
+import { Comment } from '@/lib/magic';
+
 export interface Project {
   id: string;
   title: string;
@@ -129,9 +131,11 @@ export interface CreateProjectData {
     afterType?: 'image' | 'video';
   };
   galleryGroups?: GalleryGroup[];
+  comments?: Comment[]; // Generated comments for viral package
 }
 
 export interface UpdateProjectData extends Partial<CreateProjectData> {
   id: string;
   slug?: string;
+  comments?: Comment[];
 }

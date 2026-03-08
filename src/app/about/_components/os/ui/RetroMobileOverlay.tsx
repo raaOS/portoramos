@@ -166,7 +166,7 @@ export default function RetroMobileOverlay() {
                         key="error-box"
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="retro-window w-full max-w-[340px] shadow-2xl"
+                        className="retro-window w-full max-w-[340px]"
                     >
                         <div className="retro-title-bar">
                             <span className="retro-title-text">{t.title}</span>

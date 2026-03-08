@@ -11,7 +11,7 @@ import { APP_VERSION } from '@/lib/constants';
  * manual cache clearing.
  */
 export default function VersionGuard() {
-    const { showInfo, hideToast } = useToast();
+    const { showInfo } = useToast();
     const [hasUpdate, setHasUpdate] = useState(false);
     const toastIdRef = useRef<string | null>(null);
     const isCheckingRef = useRef(false);

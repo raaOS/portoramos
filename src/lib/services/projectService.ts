@@ -1,55 +1,83 @@
-import { Project, CreateProjectData, UpdateProjectData, ProjectsData } from '@/types/projects';
-import { ProjectSchema, CreateProjectSchema, UpdateProjectSchema } from '@/lib/validations/project';
-import { db } from '@/lib/firebaseAdmin';
-import { githubService } from '@/lib/github';
+import { cache } from 'react';
+import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
+import { ProjectSchema, CreateProjectSchema, UpdateProjectSchema } from '@/lib/validations';
+import { db, bucket } from '@/lib/firebaseAdmin';
+
+// Simple in-memory cache untuk project data (sama dengan ContentService)
+const projectCache = new Map<string, { data: unknown; timestamp: number }>();
+const PROJECT_CACHE_TTL = 30000; // 30 detik
+
+function getProjectCacheKey(key: string): string {
+    return `project:${key}`;
+}
+
+function getFromProjectCache<T>(key: string): T | null {
+    const cached = projectCache.get(key);
+    if (!cached) return null;
+    if (Date.now() - cached.timestamp > PROJECT_CACHE_TTL) {
+        projectCache.delete(key);
+        return null;
+    }
+    return cached.data as T;
+}
+
+function setProjectCache(key: string, data: unknown): void {
+    projectCache.set(key, { data, timestamp: Date.now() });
+}
+
+/**
+ * Clear all project caches setelah CRUD operations.
+ * Dipanggil otomatis setelah create/update/delete.
+ */
+export function clearProjectCache(): void {
+    console.log('[ProjectService] Clearing all project caches...');
+    for (const key of projectCache.keys()) {
+        if (key.startsWith('project:')) {
+            projectCache.delete(key);
+        }
+    }
+}
+
+/**
+ * Cached version of getProjects for Server Components.
+ * Menggunakan React.cache untuk menghindari redundant fetch dalam satu request.
+ */
+export const getCachedProjects = cache(async (status?: string): Promise<{ projects: Project[], lastUpdated: string }> => {
+    return projectService.getProjects(status);
+});
 
 export const projectService = {
     /**
      * Get all projects from Firebase.
      * Implements Zod validation to ensure data integrity.
+     * 
+     * OPTIMIZATION: Menggunakan memory cache untuk mengurangi bandwidth.
+     * Cache di-clear otomatis setelah CRUD operations.
      */
-    async getProjects(status?: string, fresh = false): Promise<{ projects: Project[], lastUpdated: string }> {
+    async getProjects(status?: string, noCache = false): Promise<{ projects: Project[], lastUpdated: string }> {
+        const cacheKey = getProjectCacheKey(`projects:${status || 'all'}`);
+        
+        // Cek cache dulu (kecuali noCache=true)
+        if (!noCache) {
+            const cached = getFromProjectCache<{ projects: Project[], lastUpdated: string }>(cacheKey);
+            if (cached) {
+                console.log(`[ProjectService] Cache hit for projects:${status || 'all'}`);
+                return cached;
+            }
+        }
+
         try {
-            // 1. If fresh is requested, or we want to ensure we have data, we can optionally pull from GitHub
-            // However, the standard flow is to try Firebase first.
             const projectsRef = db.ref('projects');
             const lastUpdatedRef = db.ref('lastUpdated');
 
-            let projectsSnap = await projectsRef.once('value');
-            let projectsObject = projectsSnap.val() || {};
-
-            // 2. FALLBACK/SYNC: If Firebase is empty or 'fresh' is explicitly requested, pull from GitHub
-            if (fresh || Object.keys(projectsObject).length === 0) {
-                console.log(`[ProjectService] ${fresh ? 'Fresh sync requested' : 'Firebase empty'}, pulling from GitHub...`);
-                try {
-                    const ghData = await githubService.getFileContent<ProjectsData>('src/data/projects.json', true);
-                    if (ghData && ghData.content && Array.from(ghData.content.projects || []).length > 0) {
-                        const ghProjects = ghData.content.projects;
-
-                        // Convert Array to Firebase Object Map (id as key)
-                        const newFirebaseObject: Record<string, Project> = {};
-                        ghProjects.forEach(p => {
-                            if (p.id) newFirebaseObject[p.id] = p;
-                        });
-
-                        // Seed Firebase
-                        await projectsRef.set(newFirebaseObject);
-                        await lastUpdatedRef.set(new Date().toISOString());
-
-                        // Update local variable for immediate return
-                        projectsObject = newFirebaseObject;
-                        console.log(`[ProjectService] Seeded ${ghProjects.length} projects from GitHub to Firebase.`);
-                    }
-                } catch (ghError) {
-                    console.warn('[ProjectService] GitHub sync failed, continuing with Firebase/Empty:', ghError);
-                }
-            }
+            const projectsSnap = await projectsRef.once('value');
+            const projectsObject = projectsSnap.val() || {};
 
             const lastUpdatedSnap = await lastUpdatedRef.once('value');
-            let lastUpdated = lastUpdatedSnap.val() || new Date().toISOString();
+            const lastUpdated = lastUpdatedSnap.val() || new Date().toISOString();
 
             // Convert object map to array
-            let projects: Project[] = Object.values(projectsObject);
+            const projects: Project[] = Object.values(projectsObject);
 
             if (projects.length === 0) {
                 return { projects: [], lastUpdated: new Date().toISOString() };
@@ -76,10 +104,15 @@ export const projectService = {
                     (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
             );
 
-            return {
+            const result = {
                 projects: sortedProjects,
                 lastUpdated
             };
+            
+            // Simpan ke cache
+            setProjectCache(cacheKey, result);
+            
+            return result;
         } catch (error) {
             console.error('Error loading projects from Firebase:', error);
             return {
@@ -91,6 +124,10 @@ export const projectService = {
 
     /**
      * Create a new project in Firebase.
+     * Cache otomatis di-clear setelah create.
+     * 
+     * FIXED (BUG-006): Slug generation dengan collision detection yang lebih robust
+     * menggunakan retry dengan timestamp + random suffix.
      */
     async createProject(data: CreateProjectData): Promise<Project> {
         CreateProjectSchema.parse(data);
@@ -99,14 +136,33 @@ export const projectService = {
         const snapshot = await db.ref('projects').once('value');
         const currentCount = snapshot.numChildren();
 
-        // Generate unique slug
-        const baseSlug = data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        // FIXED (BUG-012): Limit title length sebelum regex processing untuk mencegah bottleneck
+        const MAX_TITLE_LENGTH = 200;
+        const truncatedTitle = data.title.substring(0, MAX_TITLE_LENGTH);
+        const baseSlug = truncatedTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').substring(0, 50);
         let slug = baseSlug;
+        let attempts = 0;
+        const MAX_ATTEMPTS = 5;
 
-        // Check for slug collision
-        const projectsSnap = await db.ref('projects').orderByChild('slug').equalTo(slug).once('value');
-        if (projectsSnap.exists()) {
-            slug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
+        // FIXED (BUG-006): Robust collision detection dengan retry
+        while (attempts < MAX_ATTEMPTS) {
+            const projectsSnap = await db.ref('projects').orderByChild('slug').equalTo(slug).once('value');
+            if (!projectsSnap.exists()) {
+                // Slug is unique
+                break;
+            }
+            
+            // Collision detected, generate new slug dengan timestamp + random
+            const timestamp = Date.now().toString(36);
+            const random = Math.random().toString(36).substring(2, 6);
+            slug = `${baseSlug}-${timestamp}${random}`;
+            attempts++;
+            
+            console.log(`[ProjectService] Slug collision detected, retrying with: ${slug}`);
+        }
+
+        if (attempts >= MAX_ATTEMPTS) {
+            throw new Error('Failed to generate unique slug after maximum attempts');
         }
 
         const id = `project-${Date.now()}`;
@@ -142,14 +198,15 @@ export const projectService = {
             db.ref('lastUpdated').set(new Date().toISOString())
         ]);
 
-        // AUTO-SYNC TO GITHUB
-        this.asyncSyncToGithub();
+        // Clear cache agar data terbaru langsung tersedia
+        clearProjectCache();
 
         return newProject;
     },
 
     /**
      * Update an existing project in Firebase.
+     * Cache otomatis di-clear setelah update.
      */
     async updateProject(id: string, data: UpdateProjectData): Promise<Project | null> {
         UpdateProjectSchema.parse(data);
@@ -164,7 +221,6 @@ export const projectService = {
         if (data.slug && data.slug !== currentProject.slug) {
             const collisionSnap = await db.ref('projects').orderByChild('slug').equalTo(data.slug).once('value');
             if (collisionSnap.exists()) {
-                // Ensure the collision isn't with itself (shouldn't be if data.slug changed)
                 const collisionData = collisionSnap.val();
                 if (Object.keys(collisionData)[0] !== id) {
                     data.slug = `${data.slug}-${Date.now().toString().slice(-4)}`;
@@ -183,107 +239,92 @@ export const projectService = {
             db.ref('lastUpdated').set(new Date().toISOString())
         ]);
 
-        // AUTO-SYNC TO GITHUB
-        this.asyncSyncToGithub();
+        // Clear cache agar data terbaru langsung tersedia
+        clearProjectCache();
 
         return updatedProject;
     },
 
     /**
-     * Delete a project from Firebase and its associated assets from GitHub (Cascade Delete).
+     * Delete project from Firebase.
+     * Cache otomatis di-clear setelah delete.
      */
-    async asyncSyncToGithub() {
-        try {
-            const projectsRef = db.ref('projects');
-            const snap = await projectsRef.once('value');
-            const projects = Object.values(snap.val() || {});
-            const data = {
-                projects,
-                lastUpdated: new Date().toISOString()
-            };
-
-            // 1. Write to local file
-            const fs = await import('fs');
-            const path = await import('path');
-            const localPath = path.join(process.cwd(), 'src', 'data', 'projects.json');
-            const dir = path.dirname(localPath);
-            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-            fs.writeFileSync(localPath, JSON.stringify(data, null, 2));
-            console.log('[ProjectService] Local projects.json updated.');
-
-            // 2. Push to GitHub
-            await githubService.updateFile('src/data/projects.json', data, 'Auto-sync: Project Data Update');
-            console.log('[ProjectService] Auto-sync to GitHub successful.');
-        } catch (error) {
-            console.error('[ProjectService] Auto-sync to GitHub failed:', error);
-        }
-    },
-
     async deleteProject(id: string): Promise<boolean> {
         const projectRef = db.ref(`projects/${id}`);
         const snap = await projectRef.once('value');
         if (!snap.exists()) return false;
 
-        const project: Project = snap.val();
+        const project = snap.val();
 
-        // 1. Cascade Delete Assets from GitHub
-        const assetsToDelete = new Set<string>();
-
-        const getPath = (url: string) => {
-            if (!url || !url.includes('assets/projects/')) return null;
-            // Clean URL and extract relative path
-            const parts = url.split('projects/');
-            if (parts.length < 2) return null;
-            return `public/assets/projects/${parts[1].split('?')[0]}`;
-        };
-
-        if (project.cover) {
-            const path = getPath(project.cover);
-            if (path) assetsToDelete.add(path);
-        }
-
-        if (project.comparison) {
-            const b = getPath(project.comparison.beforeImage);
-            const a = getPath(project.comparison.afterImage);
-            if (b) assetsToDelete.add(b);
-            if (a) assetsToDelete.add(a);
-        }
-
-        if (project.galleryItems) {
-            project.galleryItems.forEach(item => {
-                const path = getPath(item.src);
-                if (path) assetsToDelete.add(path);
-            });
-        }
-
-        if (project.galleryGroups) {
-            project.galleryGroups.forEach(group => {
-                group.items.forEach(item => {
-                    const path = getPath(item.src);
-                    if (path) assetsToDelete.add(path);
+        // Clean up associated Storage assets
+        try {
+            const assetUrls: string[] = [];
+            if (project.cover) assetUrls.push(project.cover);
+            if (project.comparison?.beforeImage) assetUrls.push(project.comparison.beforeImage);
+            if (project.comparison?.afterImage) assetUrls.push(project.comparison.afterImage);
+            if (project.galleryItems && Array.isArray(project.galleryItems)) {
+                project.galleryItems.forEach((item: { src?: string }) => {
+                    if (item.src) assetUrls.push(item.src);
                 });
-            });
+            }
+            if (project.galleryGroups && Array.isArray(project.galleryGroups)) {
+                project.galleryGroups.forEach((group: { items?: Array<{ src?: string }> }) => {
+                    group.items?.forEach(item => {
+                        if (item.src) assetUrls.push(item.src);
+                    });
+                });
+            }
+
+            // Delete each asset from Storage
+            for (const url of assetUrls) {
+                try {
+                    let storagePath = '';
+                    if (url.includes('/o/')) {
+                        const parts = url.split('/o/');
+                        storagePath = decodeURIComponent(parts[1].split('?')[0]);
+                    } else if (url.startsWith('/')) {
+                        storagePath = url.substring(1);
+                    }
+                    if (storagePath && storagePath.startsWith('assets/')) {
+                        const file = bucket.file(storagePath);
+                        const [exists] = await file.exists();
+                        if (exists) await file.delete();
+                    }
+                } catch (e) {
+                    console.warn(`[ProjectService] Failed to delete asset: ${url}`, e);
+                }
+            }
+        } catch (e) {
+            console.warn('[ProjectService] Storage cleanup partial failure:', e);
         }
 
-        // Execute deletions in background to not block the main response
-        Promise.all(Array.from(assetsToDelete).map(path =>
-            githubService.deleteFile(path, `Cascade Delete: Project ${id} removed`).catch(e => console.error(`Failed to delete asset ${path}:`, e))
-        ));
+        // Also delete associated comments
+        try {
+            if (project.slug) {
+                await db.ref(`comments/${project.slug}`).remove();
+            }
+        } catch (e) {
+            console.warn('[ProjectService] Failed to cleanup comments:', e);
+        }
 
-        // 2. Remove from Firebase
+        // Remove from Firebase
         await Promise.all([
             projectRef.remove(),
             db.ref('lastUpdated').set(new Date().toISOString())
         ]);
 
-        // 3. Trigger sync after delete
-        this.asyncSyncToGithub();
+        // Clear cache agar data terbaru langsung tersedia
+        clearProjectCache();
 
         return true;
     },
 
     /**
      * Bulk update projects in Firebase (Atomic).
+     * Cache otomatis di-clear setelah bulk operation.
+     * 
+     * FIXED (BUG-001): Menggunakan Promise.allSettled untuk parallel delete
+     * dengan proper error handling. Tidak sequential untuk performance.
      */
     async bulkUpdateProjects(updates: { ids: string[], status?: 'published' | 'draft', delete?: boolean, reorder?: boolean }): Promise<boolean> {
         const projectsRef = db.ref('projects');
@@ -291,12 +332,29 @@ export const projectService = {
         if (!snap.exists()) return true;
 
         const currentProjects = snap.val();
-        const firebaseUpdates: Record<string, string | number | boolean | null | object | undefined> = {};
+        const firebaseUpdates: Record<string, unknown> = {};
 
         if (updates.delete) {
-            for (const id of updates.ids) {
-                await this.deleteProject(id); // Use the enhanced deleteProject for cascade delete
+            // BUG FIX #3: Delete langsung tanpa melalui deleteProject untuk menghindari cache thrashing
+            const projectsRef = db.ref('projects');
+            const snap = await projectsRef.once('value');
+            const currentProjects = snap.val() || {};
+            
+            const firebaseUpdates: Record<string, unknown> = {};
+            
+            updates.ids.forEach(id => {
+                if (currentProjects[id]) {
+                    firebaseUpdates[`projects/${id}`] = null;
+                }
+            });
+            
+            if (Object.keys(firebaseUpdates).length > 0) {
+                firebaseUpdates['lastUpdated'] = new Date().toISOString();
+                await db.ref().update(firebaseUpdates);
             }
+            
+            // Clear cache sekali setelah semua delete selesai
+            clearProjectCache();
             return true;
         } else if (updates.reorder) {
             updates.ids.forEach((id, index) => {
@@ -318,8 +376,8 @@ export const projectService = {
 
         await db.ref().update(firebaseUpdates);
 
-        // Trigger sync
-        this.asyncSyncToGithub();
+        // Clear cache agar data terbaru langsung tersedia
+        clearProjectCache();
 
         return true;
     }

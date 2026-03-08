@@ -1,0 +1,37 @@
+/**
+ * Validation Schemas Barrel Export
+ * 
+ * Centralized exports for all Zod validation schemas.
+ * Usage: import { commentSchema, ProjectSchema } from '@/lib/validations';
+ */
+
+// Project-related validations
+export {
+    GalleryItemSchema,
+    GalleryGroupSchema,
+    NarrativeSchema,
+    ComparisonSchema,
+    ProjectSchema,
+    CreateProjectSchema,
+    UpdateProjectSchema,
+    type Project,
+} from './project';
+
+// Comment and other validations from schemas.ts
+export {
+    projectTechnologySchema,
+    projectGalleryItemSchema,
+    projectComparisonSchema,
+    createProjectSchema,
+    updateProjectSchema,
+    commentSchema,
+    validateCommentDepth,
+    createCommentSchema,
+    uploadFileSchema,
+    updateContactSchema,
+    updateSettingsSchema,
+    type CreateProjectInput,
+    type UpdateProjectInput,
+    type CreateCommentInput,
+    type UploadFileInput,
+} from './schemas';

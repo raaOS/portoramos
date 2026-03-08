@@ -1,32 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadData, saveData, ensureDataDir } from '@/lib/backup';
-import { githubService } from '@/lib/github';
+import { db } from '@/lib/firebaseAdmin';
 import { validateAdminRequest } from '@/lib/auth';
-import path from 'path';
-
-const DATA_FILE = path.join(process.cwd(), 'src', 'data', 'settings.json');
-const GITHUB_PATH = 'src/data/settings.json';
 
 export async function getSettingsData() {
-    const isDev = process.env.NODE_ENV === 'development';
-    let data = null;
-
-    if (isDev) {
-        await ensureDataDir();
-        data = await loadData(DATA_FILE);
-    } else {
-        try {
-            const ghData = await githubService.getFileContent(GITHUB_PATH);
-            data = ghData.content;
-        } catch {
-            // Silently handle GitHub fetch errors
-        }
+    try {
+        const snap = await db.ref('settings').once('value');
+        const data = snap.val();
+        return data || { bannedWords: [] };
+    } catch {
+        return { bannedWords: [] };
     }
-
-    if (!data) {
-        data = { bannedWords: [] };
-    }
-    return data;
 }
 
 export async function GET(_request: NextRequest) {
@@ -46,19 +29,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
         }
 
-        const isDev = process.env.NODE_ENV === 'development';
-
-        // Save
-        if (isDev) {
-            await ensureDataDir();
-            await saveData(DATA_FILE, body);
-        } else {
-            await githubService.updateFile(GITHUB_PATH, body, 'Update settings');
-        }
+        // Save to Firebase
+        await db.ref('settings').set(body);
 
         return NextResponse.json({ success: true, settings: body });
-    } catch {
-        // Silently handle settings save errors
+    } catch (error: unknown) {
+        console.error('[API/Settings] POST Error:', error);
         return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });
     }
 }

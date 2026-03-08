@@ -4,10 +4,13 @@ import { validateAdminRequest } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
     try {
+        console.log('[API/StickyNotes] GET request received');
         const { searchParams } = new URL(request.url);
         const force = searchParams.get('force') === 'true';
 
         const data = await stickyNotesService.getNotes(force);
+        console.log(`[API/StickyNotes] Returning ${Array.isArray(data) ? data.length : 'non-array'} notes`);
+
         return NextResponse.json(data, {
             headers: {
                 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',

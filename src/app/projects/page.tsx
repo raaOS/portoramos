@@ -26,8 +26,12 @@ export default async function ProjectsPage() {
     return (
         <SystemNavFrame>
             <main id="main-content" role="main" className="flex-1 bg-white">
-                {/* Integrated Finder Header */}
-                <ProjectsFinderHeader itemCount={filteredProjects.length} />
+                {/* Integrated Finder Header - Wrapped in Suspense for useSearchParams */}
+                <Suspense fallback={
+                    <div className="px-4 sm:px-8 py-4 mt-8 h-16 bg-gray-50 animate-pulse rounded" />
+                }>
+                    <ProjectsFinderHeader itemCount={filteredProjects.length} />
+                </Suspense>
 
                 <Suspense fallback={
                     <section className="py-24 px-4 text-center">

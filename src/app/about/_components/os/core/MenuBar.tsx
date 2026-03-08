@@ -37,7 +37,7 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
     });
 
     return (
-        <div className="fixed top-0 left-0 right-0 h-9 sm:h-8 bg-white flex items-center justify-between px-3 sm:px-4 z-[10000] text-black text-xs select-none shadow-sm border-b border-gray-200 pointer-events-auto">
+        <div className="fixed top-0 left-0 right-0 h-9 sm:h-8 bg-white flex items-center justify-between px-3 sm:px-4 z-[10000] text-black text-xs select-none border-b border-gray-200 pointer-events-auto">
             {/* Left Side */}
             <div className="flex items-center gap-4">
                 <div className="flex items-center hover:bg-black/5 px-2 py-1 rounded cursor-pointer transition-colors pb-1.5">
@@ -99,7 +99,7 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
 
                     {/* Custom Battery 100% Green */}
                     <span className="flex items-center gap-[1px] cursor-pointer" title="Battery Full (100%)" role="img" aria-label="Battery 100%">
-                        <div className="w-[22px] h-[11px] bg-[#22c55e] rounded-[2.5px] border border-[#16a34a] flex items-center justify-center shadow-sm">
+                        <div className="w-[22px] h-[11px] bg-[#22c55e] rounded-[2.5px] border border-[#16a34a] flex items-center justify-center">
                             <span className="text-[7px] font-bold text-black leading-none pt-[0.5px]" aria-hidden="true">100</span>
                         </div>
                         <div className="w-[1.5px] h-[3.5px] bg-[#16a34a] rounded-r-[1px] opacity-80" />
