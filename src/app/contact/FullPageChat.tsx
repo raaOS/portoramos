@@ -93,13 +93,20 @@ export default function FullPageChat({ contactInfo }: FullPageChatProps) {
     // Initialize visitor ID on mount
     useEffect(() => {
         document.body.setAttribute('data-page', 'contact');
-        const storedId = localStorage.getItem('ramos_visitor_id');
-        if (storedId) {
-            setVisitorId(storedId);
-        } else {
-            const newId = uuidv4();
-            localStorage.setItem('ramos_visitor_id', newId);
-            setVisitorId(newId);
+        // BUG FIX #2: try-catch untuk localStorage
+        try {
+            const storedId = localStorage.getItem('ramos_visitor_id');
+            if (storedId) {
+                setVisitorId(storedId);
+            } else {
+                const newId = uuidv4();
+                localStorage.setItem('ramos_visitor_id', newId);
+                setVisitorId(newId);
+            }
+        } catch (e) {
+            console.warn('[FullPageChat] Failed to access localStorage:', e);
+            // Fallback: generate new ID without storage
+            setVisitorId(uuidv4());
         }
         return () => document.body.removeAttribute('data-page');
     }, []);

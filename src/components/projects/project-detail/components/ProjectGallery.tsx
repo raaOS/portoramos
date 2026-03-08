@@ -21,14 +21,14 @@ export function ProjectGallery({ project, gallery, onGroupClick }: ProjectGaller
     if (!hasLegacyGallery && !hasGroupedGallery) return null;
 
     return (
-        <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
+        <div className="mt-0 font-sans">
             {/* Legacy Flat Gallery */}
             {hasLegacyGallery && (
                 <div className="mb-12">
                     <h3 className="text-xs font-bold uppercase tracking-wider mb-6 text-gray-400">Project Gallery</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {gallery.map((item, idx) => (
-                            <GalleryItem 
+                            <GalleryItem
                                 key={`gallery-item-${idx}`}
                                 item={item}
                                 projectTitle={project.title}
@@ -74,12 +74,11 @@ function GalleryItem({ item, projectTitle, index, onContextMenu, toast }: Galler
     }), [item.width, item.height]);
 
     const isPortrait = item.width && item.height && item.width < item.height;
-    
+
     return (
         <div
-            className={`relative rounded-xl overflow-hidden shadow-md border border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-900/40 group ${
-                isPortrait ? 'row-span-2' : ''
-            }`}
+            className={`relative rounded-xl overflow-hidden shadow-md border border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-900/40 group ${isPortrait ? 'row-span-2' : ''
+                }`}
             style={style}
             onContextMenu={onContextMenu}
         >

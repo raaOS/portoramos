@@ -17,7 +17,6 @@ import {
     ProjectRelatedColumn,
     ProjectComments
 } from './project-detail/components';
-import ProjectCTA from './ProjectCTA';
 
 // Lazy load AITranslator (available for future use)
 void dynamic(() => import('@/components/features/AITranslator'), {
@@ -66,8 +65,8 @@ export default function ProjectDetailTwoColumn({
 
     // Memoize container class to prevent recreation
     const containerClassName = useMemo(() => {
-        return isWindowMode 
-            ? 'h-full overflow-y-auto p-3 sm:p-4 lg:p-6' 
+        return isWindowMode
+            ? 'h-full overflow-y-auto p-3 sm:p-4 lg:p-6'
             : 'min-h-screen pt-10 sm:pt-12 px-3 sm:px-4 lg:px-6 pb-8';
     }, [isWindowMode]);
 
@@ -101,8 +100,8 @@ export default function ProjectDetailTwoColumn({
                             {/* Cover & Interaction Section */}
                             <div className="w-full lg:w-[45%] border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-gray-900/20">
                                 <ProjectCover project={project} cover={cover} ratio={ratio} />
-                                
-                                <div className="mt-6 sm:mt-8 space-y-6 sm:space-y-8 px-4 lg:px-6">
+
+                                <div className="mt-6 sm:mt-8 space-y-6 sm:space-y-8 px-6 lg:px-10 pb-10">
                                     {/* Interaction Bar */}
                                     <ProjectInteractionBar
                                         isProjectLiked={isProjectLiked}
@@ -117,7 +116,7 @@ export default function ProjectDetailTwoColumn({
                                         client={project.client}
                                         year={project.year}
                                     />
-                                    
+
                                     {/* Comments Section */}
                                     <ProjectComments
                                         slug={project.slug}
@@ -132,17 +131,17 @@ export default function ProjectDetailTwoColumn({
                             <div className="w-full lg:w-[55%] flex flex-col">
                                 <div className="p-4 sm:p-6 lg:p-8">
                                     {/* Header */}
-                                    <ProjectHeader 
-                                        project={project} 
-                                        translations={translations} 
-                                        isWindowMode={isWindowMode} 
+                                    <ProjectHeader
+                                        project={project}
+                                        translations={translations}
+                                        isWindowMode={isWindowMode}
                                     />
 
                                     {/* Meta Info */}
-                                    <ProjectMeta 
-                                        project={project} 
-                                        translations={translations} 
-                                        isWindowMode={isWindowMode} 
+                                    <ProjectMeta
+                                        project={project}
+                                        translations={translations}
+                                        isWindowMode={isWindowMode}
                                     />
 
                                     {/* Narrative Tabs */}
@@ -166,23 +165,23 @@ export default function ProjectDetailTwoColumn({
 
                     {/* Related Projects - Column A (Only for non-window mode) */}
                     {!isWindowMode && columnAProjects.length > 0 && (
-                        <ProjectRelatedColumn 
-                            projects={columnAProjects} 
-                            column="A" 
+                        <ProjectRelatedColumn
+                            projects={columnAProjects}
+                            column="A"
                         />
                     )}
                 </div>
 
                 {/* Right Column - Related Projects */}
                 {!isWindowMode && columnBProjects.length > 0 && (
-                    <ProjectRelatedColumn 
-                        projects={columnBProjects} 
-                        column="B" 
+                    <ProjectRelatedColumn
+                        projects={columnBProjects}
+                        column="B"
                     />
                 )}
             </div>
 
-            {!isWindowMode && <ProjectCTA />}
+
 
             {/* Lightbox */}
             {activeGalleryGroup && (

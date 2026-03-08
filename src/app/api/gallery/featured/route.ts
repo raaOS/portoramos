@@ -1,20 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { GalleryFeaturedData } from '@/types/gallery';
+import { galleryFeaturedService } from '@/lib/services/galleryFeaturedService';
 import { validateAdminRequest } from '@/lib/auth';
-
-const dataFilePath = path.join(process.cwd(), 'src/data/gallery-featured.json');
 
 export async function GET() {
     try {
-        const fileContents = await fs.readFile(dataFilePath, 'utf8');
-        const data: GalleryFeaturedData = JSON.parse(fileContents);
+        const data = await galleryFeaturedService.getFeaturedData();
         return NextResponse.json(data);
     } catch (error) {
         console.error('Error reading gallery data:', error);
-        // Return empty structure if file doesn't exist
-        return NextResponse.json({ featuredProjectIds: [], lastUpdated: '' });
+        return NextResponse.json({ featuredProjectIds: [], lastUpdated: new Date().toISOString() });
     }
 }
 
@@ -30,12 +24,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
         }
 
-        const newData: GalleryFeaturedData = {
-            featuredProjectIds,
-            lastUpdated: new Date().toISOString()
-        };
-
-        await fs.writeFile(dataFilePath, JSON.stringify(newData, null, 2), 'utf8');
+        const newData = await galleryFeaturedService.updateFeaturedData(featuredProjectIds);
 
         return NextResponse.json({ success: true, data: newData });
     } catch (error) {

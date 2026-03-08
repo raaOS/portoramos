@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { githubService } from '@/lib/github';
+import { db } from '@/lib/firebaseAdmin';
 import crypto from 'crypto';
-
-const SETTINGS_PATH = 'src/data/os-settings.json';
 
 export async function POST(request: Request) {
     try {
@@ -12,17 +10,20 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Password is required' }, { status: 400 });
         }
 
-        // 1. Fetch current settings (from GitHub in Prod, Local in Dev)
-        // We use githubService because it already handles the Local FS fallback.
-        const { content: settings } = await githubService.getFileContent<{ passwordHash: string }>(SETTINGS_PATH, false);
+        // 1. Fetch current settings from Firebase
+        const snap = await db.ref('os-settings').once('value');
+        const settings = snap.val();
+
+        if (!settings || !settings.passwordHash) {
+            // Fallback for first time setup or missing data
+            return NextResponse.json({ error: 'System not initialized' }, { status: 500 });
+        }
 
         // 2. Hash the incoming password
         const cleanPassword = password.toString().trim();
         const inputHash = crypto.createHash('sha256').update(cleanPassword).digest('hex');
 
-        // Security: Never log password or hash values
-
-        // 3. Compare (Case insensitive compare just in case)
+        // 3. Compare
         if (inputHash.toLowerCase() === settings.passwordHash.toLowerCase()) {
             return NextResponse.json({ success: true });
         } else {

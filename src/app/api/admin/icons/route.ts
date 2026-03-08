@@ -1,108 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import { checkAdminAuth } from '@/lib/auth';
-import { githubService } from '@/lib/github';
+import { bucket } from '@/lib/firebaseAdmin';
+import { checkAdminAuth, validateAdminRequest } from '@/lib/auth';
 
-// Helper for Windows EBUSY/EPERM
-// Helper for Windows EBUSY/EPERM
-const safeUnlink = async (p: string) => {
-    if (!fs.existsSync(p)) return;
-    let attempts = 0;
-    while (attempts < 10) {
-        try {
-            // Try async unlink first
-            await fs.promises.unlink(p);
-            return;
-        } catch (err: unknown) {
-            const nodeErr = err as { code?: string };
-            if (['EBUSY', 'EPERM', 'EACCES'].includes(nodeErr.code || '')) {
-                attempts++;
-                await new Promise(r => setTimeout(r, 250 * attempts));
-            } else {
-                if (nodeErr.code === 'ENOENT') return; // File already gone
-                throw err;
-            }
-        }
-    }
-    // If we get here, we failed to delete
-    throw new Error(`Failed to delete ${p} after multiple attempts (EBUSY/EPERM).`);
-};
+const FOLDER_PATH = 'assets/icons-library';
 
 export async function GET(req: NextRequest) {
     try {
-        if (!await checkAdminAuth(req)) {
+        if (!checkAdminAuth(req)) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const isDev = process.env.NODE_ENV === 'development';
-        const folderPath = 'assets/icons-library';
-        const publicFolderPath = path.join(process.cwd(), 'public', folderPath);
+        const [files] = await bucket.getFiles({ prefix: FOLDER_PATH });
 
-        let icons: string[] = [];
-
-        if (isDev) {
-            // Local mode
-            if (!fs.existsSync(publicFolderPath)) {
-                fs.mkdirSync(publicFolderPath, { recursive: true });
-            }
-            const files = fs.readdirSync(publicFolderPath);
-            icons = files
-                .filter(file => {
-                    // Filter junk and temp files
-                    if (file.startsWith('.')) return false;
-                    if (file.includes('_temp')) return false;
-                    return /\.(webp|png|jpg|jpeg|svg)$/i.test(file);
-                })
-                .sort((a, b) => b.localeCompare(a)) // Newest (higher timestamp) first
-                .map(file => `/${folderPath}/${file}`);
-        } else {
-            // Production: Query GitHub API via existing fetch patterns
-            const owner = process.env.GITHUB_OWNER;
-            const repo = process.env.GITHUB_REPO;
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/public/${folderPath}`;
-
-            const response = await fetch(url, {
-                headers: {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Authorization': `Bearer ${process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN}`
-                },
-                next: { revalidate: 0 } // No cache for production scan either to ensure visibility
+        const icons = files
+            .filter(file => {
+                const name = file.name;
+                if (name.includes('/.')) return false;
+                if (name.includes('_temp')) return false;
+                return /\.(webp|png|jpg|jpeg|svg)$/i.test(name);
+            })
+            .sort((a, b) => b.name.localeCompare(a.name))
+            .map(file => {
+                // Return Firebase Storage Public URL format
+                return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(file.name)}?alt=media`;
             });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (Array.isArray(data)) {
-                    icons = data
-                        .filter(file => {
-                            if (file.type !== 'file') return false;
-                            if (file.name.startsWith('.')) return false;
-                            if (file.name.includes('_temp')) return false;
-                            return /\.(webp|png|jpg|jpeg|svg)$/i.test(file.name);
-                        })
-                        .sort((a, b) => b.name.localeCompare(a.name)) // Descending order
-                        .map(file => {
-                            // Construct raw URL for preview with cache buster
-                            return `https://raw.githubusercontent.com/${owner}/${repo}/main/public/${folderPath}/${file.name}?v=${Date.now()}`;
-                        });
-                }
-            } else if (response.status === 404) {
-                icons = [];
-            } else {
-                throw new Error(`GitHub API returned ${response.status}`);
-            }
-        }
 
         return NextResponse.json({ icons });
     } catch (error) {
-        console.error('[IconsAPI] Error:', error);
+        console.error('[IconsAPI] GET Error:', error);
         return NextResponse.json({ error: 'Failed to list icons' }, { status: 500 });
     }
 }
 
 export async function DELETE(req: NextRequest) {
     try {
-        if (!await checkAdminAuth(req)) {
+        if (!await validateAdminRequest(req)) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -113,98 +45,48 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: 'No icon URL provided' }, { status: 400 });
         }
 
-        // Strip query parameters (cache busters)
-        iconUrl = iconUrl.split('?')[0];
-
-        // 1. Resolve Path
-        let relativePath = '';
-        if (iconUrl.startsWith('https://raw.githubusercontent.com')) {
-            const parts = iconUrl.split('/public/');
-            if (parts.length > 1) {
-                relativePath = `public/${parts[1]}`;
-            }
+        // 1. Resolve Path from URL
+        let storagePath = '';
+        if (iconUrl.includes('/o/')) {
+            const parts = iconUrl.split('/o/');
+            const pathWithParams = parts[1].split('?')[0];
+            storagePath = decodeURIComponent(pathWithParams);
         } else if (iconUrl.startsWith('/assets/')) {
-            relativePath = `public${iconUrl}`;
+            storagePath = iconUrl.startsWith('/') ? iconUrl.substring(1) : iconUrl;
         }
 
-        if (!relativePath || !relativePath.includes('assets/icons-library')) {
+        if (!storagePath || !storagePath.includes(FOLDER_PATH)) {
             return NextResponse.json({ error: 'Invalid icon path' }, { status: 400 });
         }
 
-        const isDev = process.env.NODE_ENV === 'development';
-        const absolutePath = path.join(process.cwd(), relativePath);
-        const dir = path.dirname(absolutePath);
-        const filename = path.basename(absolutePath);
-        const ext = path.extname(filename);
-        const baseName = filename.substring(0, filename.length - ext.length); // e.g. "123-file"
+        const dirName = storagePath.split('/').slice(0, -1).join('/'); // assets/icons-library
+        const fileName = storagePath.split('/').pop() || '';
+        const ext = fileName.includes('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
+        const baseName = ext ? fileName.substring(0, fileName.length - ext.length) : fileName;
 
-        // Smart Delete: Target all variants (original, webp, temp)
-        const variants = ['.icns', '.webp', '.png', '.jpg', '.jpeg', '.svg'];
+        // Variants to delete
+        const extensions = ['.icns', '.webp', '.png', '.jpg', '.jpeg', '.svg'];
         const suffixes = ['', '_temp'];
 
-        const folderRelPath = path.dirname(relativePath).replace(/\\/g, '/');
-
-        // OPTIMIZATION: Fetch existing files first to avoid unnecessary sequential checks
-        let existingFiles: string[] = [];
-        if (isDev) {
-            const publicDir = path.join(process.cwd(), folderRelPath);
-            if (fs.existsSync(publicDir)) {
-                existingFiles = fs.readdirSync(publicDir);
-            }
-        } else {
-            const owner = process.env.GITHUB_OWNER;
-            const repo = process.env.GITHUB_REPO;
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${folderRelPath}`;
-            const response = await fetch(url, {
-                headers: {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Authorization': `Bearer ${process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                if (Array.isArray(data)) {
-                    existingFiles = data.map(f => f.name);
-                }
-            }
-        }
-
-        // Collect all potential targets that actually exist
+        // Collect all potential targets
         const targetsToDelete: string[] = [];
         for (const suffix of suffixes) {
-            for (const variantExt of variants) {
-                const targetName = `${baseName}${suffix}${variantExt}`;
-                if (existingFiles.includes(targetName)) {
-                    targetsToDelete.push(targetName);
-                }
+            for (const variantExt of extensions) {
+                targetsToDelete.push(`${dirName}/${baseName}${suffix}${variantExt}`);
             }
         }
 
-        // 2. Execute Deletions (Parallelized to save time on Vercel)
-        await Promise.all(targetsToDelete.map(async (targetName) => {
-            const targetRelPath = `${folderRelPath}/${targetName}`;
-            const targetAbsPath = path.join(dir, targetName);
-
-            // Local Delete
-            if (isDev && fs.existsSync(targetAbsPath)) {
-                try {
-                    await safeUnlink(targetAbsPath);
-                } catch (err: unknown) {
-                    const errMsg = err instanceof Error ? err.message : String(err);
-                    console.error(`[IconsAPI] Local delete failure for ${targetName}:`, errMsg);
+        // Delete from Firebase Storage
+        await Promise.all(targetsToDelete.map(async (targetPath) => {
+            try {
+                const file = bucket.file(targetPath);
+                const [exists] = await file.exists();
+                if (exists) {
+                    await file.delete();
+                    console.log(`[IconsAPI] Deleted: ${targetPath}`);
                 }
-            }
-
-            // GitHub Delete
-            const hasGitHubToken = !!(process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN);
-            if (hasGitHubToken) {
-                try {
-                    // githubService.deleteFile handles fetching current SHA internally
-                    await githubService.deleteFile(targetRelPath, `Delete icon variant ${targetName}`);
-                } catch (error: unknown) {
-                    const errMsg = error instanceof Error ? error.message : String(error);
-                    console.warn(`[IconsAPI] GitHub delete failure for ${targetName}:`, errMsg);
-                }
+            } catch (err) {
+                console.warn(`[IconsAPI] Failed to delete ${targetPath}:`, err);
             }
         }));
 

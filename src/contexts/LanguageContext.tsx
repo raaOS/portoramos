@@ -18,15 +18,25 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         // Load saved language or default to 'en'
-        const savedLang = localStorage.getItem('pixel_portfolio_lang') as Language;
-        if (savedLang && (savedLang === 'en' || savedLang === 'id')) {
-            requestAnimationFrame(() => setLanguage(savedLang));
+        // BUG FIX #2: try-catch untuk localStorage
+        try {
+            const savedLang = localStorage.getItem('pixel_portfolio_lang') as Language;
+            if (savedLang && (savedLang === 'en' || savedLang === 'id')) {
+                requestAnimationFrame(() => setLanguage(savedLang));
+            }
+        } catch (e) {
+            console.warn('[LanguageContext] Failed to load language from localStorage:', e);
         }
     }, []);
 
     const handleSetLanguage = (lang: Language) => {
         setLanguage(lang);
-        localStorage.setItem('pixel_portfolio_lang', lang);
+        // BUG FIX #2: try-catch untuk localStorage
+        try {
+            localStorage.setItem('pixel_portfolio_lang', lang);
+        } catch (e) {
+            console.warn('[LanguageContext] Failed to save language to localStorage:', e);
+        }
     };
 
     const toggleLanguage = () => {

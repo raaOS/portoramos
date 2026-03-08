@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { LayoutGrid, Grid, List, Filter, Search as SearchIcon, X } from 'lucide-react';
+import { Grid, List, Filter, Search as SearchIcon, X } from 'lucide-react';
 
 interface ProjectsFinderHeaderProps {
     itemCount: number;
@@ -42,11 +42,8 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
 
     return (
         <div className="px-4 sm:px-8 py-4 mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Title & Icon */}
+            {/* Title */}
             <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 shadow-sm border border-blue-200 shrink-0">
-                    <LayoutGrid size={20} strokeWidth={2.5} />
-                </div>
                 <div>
                     <h1 className="text-xl font-bold text-gray-900 tracking-tight whitespace-nowrap">Koleksi Project</h1>
                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{itemCount} Items</p>
@@ -76,11 +73,11 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
 
             {/* View Mode & Filter Buttons */}
             <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end order-2 sm:order-3">
-                <div className="flex items-center bg-gray-200/50 p-1 rounded-md border border-gray-300/50">
-                    <button className="p-1.5 bg-white shadow-sm rounded border border-gray-200 text-blue-600">
+                <div className="flex items-center bg-gray-100 p-0.5 rounded-lg border border-gray-200/80">
+                    <button className="p-1.5 bg-white rounded-md text-blue-600 transition-all duration-200">
                         <Grid size={14} />
                     </button>
-                    <button className="p-1.5 hover:bg-white transition-colors rounded text-gray-400">
+                    <button className="p-1.5 hover:bg-white/50 transition-colors rounded-md text-gray-400">
                         <List size={14} />
                     </button>
                 </div>

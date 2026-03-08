@@ -2,7 +2,6 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import MenuBar from "../core/MenuBar";
 import OSDock from "../core/OSDock";
 
@@ -10,6 +9,7 @@ import type { AboutData } from "@/types/about";
 import type { Project } from "@/types/projects";
 import type { ContactProfile } from "../data/mockChats";
 import { useDesktopWindowContext } from "../context/DesktopWindowContext";
+import { ISLAND_ID } from "../ui/DynamicIsland";
 
 const Spotlight = dynamic(() => import("../core/Spotlight"), {
     loading: () => null,
@@ -23,6 +23,7 @@ const DynamicIsland = dynamic(() => import("../ui/DynamicIsland"), {
 
 interface UIOverlaysLayerProps {
     isBooting: boolean;
+    needsPowerOn: boolean;
     navToChat: (chatId?: string) => void;
     openWhatsAppList: () => void;
     testimonialContacts: ContactProfile[];
@@ -40,6 +41,7 @@ interface UIOverlaysLayerProps {
 
 export default function UIOverlaysLayer({
     isBooting,
+    needsPowerOn,
     navToChat,
     openWhatsAppList,
     testimonialContacts,
@@ -54,52 +56,60 @@ export default function UIOverlaysLayer({
     commercialProjects,
     openProjectWindow
 }: UIOverlaysLayerProps) {
-    const router = useRouter();
+    // Don't show overlays during boot sequence
+    const isBootingOrStarting = isBooting || needsPowerOn;
     const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
+
     const isWindowOpen = (id: string) => windows.find(w => w.id === id)?.isOpen ?? false;
-    const activeWindows = windows.filter(w => w.isOpen && !w.isMinimized).sort((a, b) => b.zIndex - a.zIndex);
+    // Get top window from windows array (already sorted by zIndex in context)
+    const activeWindows = windows.filter(w => w.isOpen && !w.isMinimized);
     const topWindowTitle = activeWindows[0]?.title || null;
 
     return (
-        <div className="absolute inset-0 z-30 pointer-events-none">
-            {/* Dynamic Island - High Z-index */}
+        <div className="absolute inset-0 pointer-events-none">
+            {/* Dynamic Island - Unified Z-index participant */}
             <DynamicIsland
                 activeWindow={topWindowTitle}
                 isBooting={isBooting}
                 onOpenChat={navToChat}
                 customNotifications={testimonialContacts}
+                islandId={ISLAND_ID}
             />
 
-            {/* MenuBar - high z-index, handles its own fixed positioning */}
-            <MenuBar
-                activeWindow={topWindowTitle || "Finder"}
-                onAbout={() => openWindow("about")}
-                onSearch={() => setShowSpotlight(true)}
-                availability={aboutData?.hero?.availability}
-                isAdmin={isAdmin}
-                onLogout={logout}
-            />
+            {/* MenuBar - hidden during boot */}
+            {!isBootingOrStarting && (
+                <MenuBar
+                    activeWindow={topWindowTitle || "Finder"}
+                    onAbout={() => openWindow("about")}
+                    onSearch={() => setShowSpotlight(true)}
+                    availability={aboutData?.hero?.availability}
+                    isAdmin={isAdmin}
+                    onLogout={logout}
+                />
+            )}
 
-            {/* Dock Container - pointer-events-none to let icons through */}
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe">
-                <div className="pointer-events-auto">
-                    {aboutData && (
-                        <OSDock
-                            aboutData={aboutData}
-                            onOpenWindow={openWindow}
-                            onOpenWhatsApp={openWhatsAppList}
-                            onOpenNotes={toggleNotesVisibility}
-                            onOpenTrash={() => openWindow("trash-bin")}
-                            isWindowOpen={isWindowOpen}
-                            notesVisible={notesVisible}
-                            bouncingId={bouncingDocId}
-                            isMobile={isMobile}
-                            commercialProjects={commercialProjects}
-                            openProjectWindow={openProjectWindow}
-                        />
-                    )}
+            {/* Dock Container - hidden during boot */}
+            {!isBootingOrStarting && (
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe">
+                    <div className="pointer-events-auto">
+                        {aboutData && (
+                            <OSDock
+                                aboutData={aboutData}
+                                onOpenWindow={openWindow}
+                                onOpenWhatsApp={openWhatsAppList}
+                                onOpenNotes={toggleNotesVisibility}
+                                onOpenTrash={() => openWindow("trash-bin")}
+                                isWindowOpen={isWindowOpen}
+                                notesVisible={notesVisible}
+                                bouncingId={bouncingDocId}
+                                isMobile={isMobile}
+                                commercialProjects={commercialProjects}
+                                openProjectWindow={openProjectWindow}
+                            />
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {showSpotlight && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-auto z-[9999]">
@@ -107,7 +117,7 @@ export default function UIOverlaysLayer({
                         isOpen={showSpotlight}
                         onClose={() => setShowSpotlight(false)}
                         projects={commercialProjects}
-                        onOpenProject={(project: any) => {
+                        onOpenProject={(project: Project) => {
                             setShowSpotlight(false);
                             openProjectWindow(project);
                         }}

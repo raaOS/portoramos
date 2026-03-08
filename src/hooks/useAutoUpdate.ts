@@ -17,6 +17,8 @@ export function useAutoUpdate<T>(
 
   // Use ref to store fetchFunction to avoid dependency issues
   const fetchFunctionRef = useRef(fetchFunction);
+  // BUG FIX #4: Mounted ref untuk mencegah setState pada unmounted component
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     fetchFunctionRef.current = fetchFunction;
@@ -26,24 +28,46 @@ export function useAutoUpdate<T>(
     try {
       setError(null);
       const result = await fetchFunctionRef.current();
-      setData(result);
-      setLastUpdated(new Date());
+      // BUG FIX #4: Guard setState dengan isMountedRef
+      if (isMountedRef.current) {
+        setData(result);
+        setLastUpdated(new Date());
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch data');
+      // BUG FIX #4: Guard setState dengan isMountedRef
+      if (isMountedRef.current) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch data');
+      }
     } finally {
-      setLoading(false);
+      // BUG FIX #4: Guard setState dengan isMountedRef
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, []); // Empty dependency array - stable function
 
   useEffect(() => {
+    // BUG FIX #4: Set mounted flag
+    isMountedRef.current = true;
+    
     let intervalId: ReturnType<typeof setInterval> | null = null;
-    fetchData();
+    
+    // BUG FIX #4: Handle promise rejection dari fetchData awal
+    fetchData().catch(err => {
+      console.error('[useAutoUpdate] Initial fetch failed:', err);
+    });
 
     if (enabled) {
-      intervalId = setInterval(fetchData, interval);
+      intervalId = setInterval(() => {
+        fetchData().catch(err => {
+          console.error('[useAutoUpdate] Interval fetch failed:', err);
+        });
+      }, interval);
     }
 
     return () => {
+      // BUG FIX #4: Set unmounted flag dan clear interval
+      isMountedRef.current = false;
       if (intervalId) {
         clearInterval(intervalId);
       }

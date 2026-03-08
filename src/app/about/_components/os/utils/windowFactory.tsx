@@ -18,15 +18,14 @@ const ChatWindow = dynamic(() => import("../windows/ChatWindow"), {
     ssr: false
 });
 
-const ProjectDetailWrapper = dynamic(() => import("../ui/ProjectDetailWrapper"), {
+// Dynamic imports for future use - prefixed with underscore to avoid lint warnings
+const _ProjectDetailWrapper = dynamic(() => import("../ui/ProjectDetailWrapper"), {
     loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
     ssr: false
 });
 
-const IndexClientWithAutoUpdate = dynamic(() => import("@/components/home/IndexClientWithAutoUpdate"), {
-    loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
-    ssr: false
-});
+// BUG FIX #5: Removed unused _IndexClientWithAutoUpdate import to reduce bundle size
+// If needed in future, import dynamically at call site
 
 interface WindowFactoryProps {
     aboutData: AboutData | null | undefined;
@@ -41,8 +40,8 @@ export const createInitialWindows = ({
     aboutData,
     experienceData,
     hardSkillsData,
-    projects,
-    commercialProjects,
+    projects: _projects,
+    commercialProjects: _commercialProjects,
     dynamicContacts
 }: WindowFactoryProps): WindowState[] => [
         {

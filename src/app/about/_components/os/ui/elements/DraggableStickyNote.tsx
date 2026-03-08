@@ -1,6 +1,7 @@
 import React from "react";
 import { m, useDragControls } from "framer-motion";
 import StickyNoteItem, { NoteData } from "./StickyNoteItem";
+import { useUnifiedZIndex } from "../../context/UnifiedZIndexContext";
 
 interface DraggableStickyNoteProps {
     note: NoteData;
@@ -11,6 +12,7 @@ interface DraggableStickyNoteProps {
     restoreNote: (id: string) => void;
     addNote?: () => void;
     isAdmin?: boolean;
+    zIndex?: number;
 }
 
 export const DraggableStickyNote = ({
@@ -24,6 +26,20 @@ export const DraggableStickyNote = ({
     isAdmin = false
 }: DraggableStickyNoteProps) => {
     const dragControls = useDragControls();
+    const { getZIndex, bringToFront } = useUnifiedZIndex();
+
+    // Unified bring to front handler
+    const handleBringToFront = React.useCallback(() => {
+        // Register this note with unified z-index system
+        bringToFront(note.id, 'stickyNote');
+        // Also call the parent's handler for any side effects
+        bringToFrontNote(note.id);
+    }, [note.id, bringToFront, bringToFrontNote]);
+
+    // Get z-index from unified system (fallback to note's stored z-index)
+    const unifiedZIndex = getZIndex(note.id) || note.zIndex || 1;
+    // Pinned notes get a small boost but still participate in unified stacking
+    const finalZIndex = note.isPinned ? Math.max(unifiedZIndex, 5000) : unifiedZIndex;
 
     return (
         <m.div
@@ -54,19 +70,19 @@ export const DraggableStickyNote = ({
                 }
             }}
             transition={{ type: "none" }}
-            onDragStart={() => bringToFrontNote(note.id)}
+            onDragStart={handleBringToFront}
             onDragEnd={(e, info) => {
                 const newX = (note.x || 100) + info.offset.x;
                 const newY = (note.y || 100) + info.offset.y;
                 updateNote(note.id, { x: newX, y: newY });
             }}
-            onPointerDown={() => bringToFrontNote(note.id)}
+            onPointerDown={handleBringToFront}
             layout={false} // CRITICAL GPU OFF-LOAD: Disable automatic layout reflow animations
             className="absolute pointer-events-auto will-change-transform"
             style={{
                 left: 0,
                 top: 0,
-                zIndex: note.isPinned ? 5000 + (note.zIndex || 0) : (note.zIndex || 1),
+                zIndex: finalZIndex,
             }}
         >
             <StickyNoteItem
@@ -78,6 +94,7 @@ export const DraggableStickyNote = ({
                 onAdd={addNote}
                 dragControls={dragControls}
                 isAdmin={isAdmin}
+                onFocus={handleBringToFront}
             />
         </m.div>
     );

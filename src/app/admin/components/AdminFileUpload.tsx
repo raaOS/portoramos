@@ -6,8 +6,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import {
     useFileValidation,
     useFFmpeg,
-    useGitHubUpload,
-    useImageCompression
+    useFirebaseUpload
 } from './file-upload/hooks';
 import {
     UploadProgress,
@@ -41,7 +40,7 @@ export default function AdminFileUpload({
     const [progress, setProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { showSuccess: showSuccessToast, showError, showWarning } = useToast();
-    const { csrfToken } = useAdminAuth();
+    const { csrfToken: _csrfToken } = useAdminAuth();
 
     // Cropping & Trimming State
     const [activeCrop, setActiveCrop] = useState<{ src: string; file: File } | null>(null);
@@ -50,8 +49,7 @@ export default function AdminFileUpload({
     // Hooks
     const { validateFiles } = useFileValidation({ accept, maxSize });
     const { compressVideo } = useFFmpeg(setStatus);
-    const { uploadToGitHub } = useGitHubUpload({ folder, customFilename, csrfToken });
-    const { compressImageServer } = useImageCompression(csrfToken);
+    const { upload } = useFirebaseUpload();
 
     const executeUpload = useCallback(async (
         files: File[],
@@ -129,7 +127,7 @@ export default function AdminFileUpload({
             setProgress(0);
             onUploadEnd?.();
         }
-    }, [compressVideo, uploadToGitHub, compressImageServer, onUpload, onUploadStart, onUploadEnd, showSuccessToast, showError, showWarning, autoUpload, onFileSelect]);
+    }, [compressVideo, upload, onUpload, onUploadStart, onUploadEnd, showSuccessToast, showError, showWarning, autoUpload, onFileSelect, customFilename, folder]);
 
     const handleFiles = useCallback(async (files: FileList) => {
         if (disabled) return;

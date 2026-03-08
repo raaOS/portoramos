@@ -10,13 +10,13 @@ interface ProjectMetaProps {
     isWindowMode?: boolean;
 }
 
-export function ProjectMeta({ project, translations, isWindowMode }: ProjectMetaProps) {
+export function ProjectMeta({ project, translations, isWindowMode: _isWindowMode }: ProjectMetaProps) {
     // Memoize icon map to prevent recreation on every render
     // MUST be called before any early return (Rules of Hooks)
     const iconMap = useMemo(() => getIconMap('w-5 h-5'), []);
-    
+
     const hasMeta = project.role || project.timeline || project.team || (project.software && project.software.length > 0);
-    
+
     if (!hasMeta) return null;
 
     return (
@@ -76,8 +76,8 @@ export function ProjectMeta({ project, translations, isWindowMode }: ProjectMeta
                         {translations ? 'Type' : 'Tipe'}
                     </h3>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {translations 
-                            ? (project.type === 'commercial' ? 'Commercial Project' : 'Visual Art') 
+                        {translations
+                            ? (project.type === 'commercial' ? 'Commercial Project' : 'Visual Art')
                             : (project.type === 'commercial' ? 'Project Komersial' : 'Karya Visual')
                         }
                     </p>
@@ -90,11 +90,11 @@ export function ProjectMeta({ project, translations, isWindowMode }: ProjectMeta
 // Separate component for software icon to prevent unnecessary re-renders
 function SoftwareIcon({ name, iconMap }: { name: string; iconMap: Record<string, React.ReactNode> }) {
     const icon = iconMap[name.toLowerCase()];
-    
+
     if (icon) {
         return <div title={name.replace('_', ' ')}>{icon}</div>;
     }
-    
+
     return (
         <div className="w-5 h-5 bg-gray-200 rounded flex items-center justify-center text-[8px] font-bold text-gray-500 uppercase">
             {name.slice(0, 2)}

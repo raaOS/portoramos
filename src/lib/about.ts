@@ -5,18 +5,21 @@ import type { AboutData, AboutHero, AboutProfessional, AboutSoftSkills, DesignPh
 const ABOUT_CACHE_KEY = 'about-data';
 
 // Cached fetcher untuk deduplication
+// NOTE: TTL dikurangi ke 5 detik karena about data sering berubah (positions, windows)
 const cachedAboutFetcher = createCachedFetcher<AboutData>(
   ABOUT_CACHE_KEY,
   async () => {
+    // ContentService sudah handle cache 5 detik, tapi tetap force noCache untuk fresh
     const data = await aboutService.getAboutData(true); // noCache = true untuk fresh data
     return data;
   },
-  30_000 // 30 seconds cache
+  5_000 // 5 seconds cache (cepat update untuk positions/windows)
 );
 
 /**
  * Load about data with caching
  * Uses React.cache for request deduplication
+ * Cache hanya 5 detik karena positions/windows sering berubah
  */
 export async function loadAboutData(): Promise<AboutData | null> {
   try {

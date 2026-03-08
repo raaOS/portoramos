@@ -22,14 +22,20 @@ export const ANIMATION = {
 
 /**
  * Data Polling Configuration
+ * 
+ * NOTE: Polling interval dinaikkan untuk hemat bandwidth Firebase.
+ * Default: 30 detik (non-admin), 60 detik (admin).
+ * StaleTime: 5 menit untuk cache client lebih lama.
  */
 export const POLLING = {
-    /** Auto-update interval in milliseconds (5 seconds for real-time) */
-    UPDATE_INTERVAL: 5000,
+    /** Auto-update interval in milliseconds (30 seconds - hemat bandwidth) */
+    UPDATE_INTERVAL: 30000,
 
-    /** Auto-update interval for admin (faster, 5 seconds) */
-    ADMIN_UPDATE_INTERVAL: 5000,
+    /** Auto-update interval for admin (60 seconds - admin jarang perlu realtime) */
+    ADMIN_UPDATE_INTERVAL: 60000,
 
+    /** Client cache stale time (5 menit - jangan refetch jika data masih fresh) */
+    CLIENT_STALE_TIME: 5 * 60 * 1000,
 
     /** Maximum number of retry attempts for failed requests */
     MAX_RETRIES: 3,

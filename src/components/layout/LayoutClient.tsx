@@ -1,16 +1,14 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { LazyMotion, domAnimation } from 'framer-motion';
 import Header from '@/components/shared/Header';
 import { WindowProvider } from '@/contexts/WindowContext';
 import GlobalDock from './GlobalDock';
 import WindowRenderer from './WindowRenderer';
+import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import type { DockPreferences } from '@/types/about';
 
-// Lazy-load below-fold components to reduce initial JS bundle (~30-50KB savings)
-const ScrollToTop = dynamic(() => import('@/components/layout/ScrollToTop'), { ssr: false });
 
 export default function LayoutClient({
     children,
@@ -41,18 +39,20 @@ export default function LayoutClient({
     }
 
     return (
-        <LazyMotion features={domAnimation}>
-            <WindowProvider>
-                {showHeader && <Header />}
-                <main className={isContact ? "" : "pb-24"}>
-                    {children}
-                </main>
-                {modal}
-                <ScrollToTop />
-                {showGlobalDock && <GlobalDock dockConfig={dockConfig} />}
-                <WindowRenderer />
-            </WindowProvider>
-        </LazyMotion>
+        <ErrorBoundary>
+            <LazyMotion features={domAnimation}>
+                <WindowProvider>
+                    {showHeader && <Header />}
+                    <main className={isContact ? "" : "pb-24"}>
+                        {children}
+                    </main>
+                    {modal}
+
+                    {showGlobalDock && <GlobalDock dockConfig={dockConfig} />}
+                    <WindowRenderer />
+                </WindowProvider>
+            </LazyMotion>
+        </ErrorBoundary>
     )
 }
 

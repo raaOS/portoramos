@@ -1,13 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import path from 'path';
-import fs from 'fs';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
+import { bucket } from '@/lib/firebaseAdmin';
+
+// FIXED (BUG-010): Valid filename characters
+const VALID_FILENAME_REGEX = /^[a-zA-Z0-9_-]+$/;
+const MAX_FILENAME_LENGTH = 100;
+
+function sanitizeFilename(input: string | null): string | null {
+    if (!input) return null;
+    
+    // Remove any path traversal attempts
+    const sanitized = input
+        .replace(/[/\\]/g, '') // Remove path separators
+        .replace(/\.{2,}/g, '') // Remove sequences of dots
+        .replace(/[<>"|?*]/g, ''); // Remove other dangerous chars
+    
+    // Validate result
+    if (!VALID_FILENAME_REGEX.test(sanitized)) {
+        return null;
+    }
+    
+    // Limit length
+    return sanitized.substring(0, MAX_FILENAME_LENGTH);
+}
 
 export async function POST(req: NextRequest) {
-    if (!checkAdminAuth(req)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
     try {
+        if (!await validateAdminRequest(req)) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const formData = await req.formData();
         const file = formData.get('file') as File | null;
 
@@ -23,13 +45,17 @@ export async function POST(req: NextRequest) {
 
         const buffer = Buffer.from(await file.arrayBuffer());
 
-        // [STICKY NOTE] LOCAL FILE STORAGE
-        // File yang diupload akan disimpan di dalam folder "public/assets/media".
-        // Kenapa public? Agar bisa langsung diakses browser via URL (contoh: domain.com/assets/media/gambar.jpg).
-        // Filename dibersihkan (sanitize) agar tidak ada karakter aneh yang bikin error.
         const { searchParams } = new URL(req.url);
-        const customFilename = searchParams.get('filename');
+        const rawCustomFilename = searchParams.get('filename');
         const folderParam = searchParams.get('folder');
+
+        // FIXED (BUG-010): Sanitize custom filename
+        const customFilename = sanitizeFilename(rawCustomFilename);
+        if (rawCustomFilename && !customFilename) {
+            return NextResponse.json({ 
+                error: 'Invalid filename. Use only alphanumeric characters, hyphens, and underscores.' 
+            }, { status: 400 });
+        }
 
         // Determine Name & Folder
         const ext = file.name.split('.').pop() || '';
@@ -37,34 +63,31 @@ export async function POST(req: NextRequest) {
         let targetDir: string;
 
         if (customFilename) {
-            // Smart Upload: Direct to projects folder with correct name
             finalFilename = `${customFilename}.${ext}`;
             targetDir = 'assets/projects';
         } else if (folderParam === 'comparisons') {
-            // Comparisons Folder (Before/After)
-            const cleanName = searchParams.get('slug') ? `${searchParams.get('slug')}-before` : file.name.split('.')[0];
+            const rawSlug = searchParams.get('slug');
+            const cleanSlug = rawSlug ? sanitizeFilename(rawSlug) : null;
+            const cleanName = cleanSlug ? `${cleanSlug}-before` : file.name.split('.')[0];
             finalFilename = `${cleanName}.${ext}`;
             targetDir = 'assets/projects/comparisons';
         } else {
-            // Standard
             const cleanName = file.name.toLowerCase().replace(/[^a-z0-9.]/g, '-');
             finalFilename = `${Date.now()}-${cleanName}`;
             targetDir = folderParam === 'temp' ? 'temp' : 'assets/media';
         }
 
-        const uploadDir = path.join(process.cwd(), 'public', targetDir);
+        const storagePath = `${targetDir}/${finalFilename}`;
+        const firebaseFile = bucket.file(storagePath);
 
-        // Ensure directory exists
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
+        await firebaseFile.save(buffer, {
+            metadata: { contentType: file.type }
+        });
 
-        const filePath = path.join(uploadDir, finalFilename);
-
-        await fs.promises.writeFile(filePath, buffer);
+        const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(storagePath)}?alt=media`;
 
         return NextResponse.json({
-            url: `/${targetDir}/${finalFilename}`,
+            url: publicUrl,
             success: true
         });
     } catch (e) {

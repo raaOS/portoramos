@@ -2,13 +2,10 @@ import React from 'react';
 import { CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, Trash2, Shield, Settings, Plus } from 'lucide-react';
 
 interface ProjectToolbarProps {
-    isSavingToGithub: boolean;
-    deployStatus: 'idle' | 'pushing' | 'synced' | 'failed';
     connectionStatus: 'checking' | 'connected' | 'error' | 'disconnected';
     selectedProjectIds: Set<string>;
     isBulkUpdating: boolean;
     allProjectsLength: number;
-    githubConfig: { token: string; owner: string; repo: string } | null;
     handleBulkUpdate: (action: 'publish' | 'draft' | 'delete') => void;
     selectAllProjects: () => void;
     setShowSecurityModal: (show: boolean) => void;
@@ -17,13 +14,10 @@ interface ProjectToolbarProps {
 }
 
 export const ProjectToolbar = ({
-    isSavingToGithub,
-    deployStatus,
     connectionStatus,
     selectedProjectIds,
     isBulkUpdating,
     allProjectsLength,
-    githubConfig,
     handleBulkUpdate,
     selectAllProjects,
     setShowSecurityModal,
@@ -34,52 +28,24 @@ export const ProjectToolbar = ({
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
             {/* Status Indicators */}
             <div className="flex-shrink-0 flex items-center">
-                {isSavingToGithub ? (
-                    deployStatus === 'synced' ? (
-                        <div className="h-10 px-4 flex items-center text-sm text-green-600 bg-white rounded-lg border border-green-200 font-medium whitespace-nowrap select-none shadow-sm">
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Tersinkron
+                <div className="flex items-center">
+                    {connectionStatus === 'connected' ? (
+                        <div className="h-10 px-4 flex items-center text-sm text-green-700 bg-white rounded-lg border border-green-200 whitespace-nowrap select-none font-medium">
+                            <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
+                            Firebase Connected
                         </div>
-                    ) : deployStatus === 'failed' ? (
-                        <div className="h-10 px-4 flex items-center text-sm text-red-600 bg-white rounded-lg border border-red-200 font-medium whitespace-nowrap select-none">
-                            <AlertCircle className="w-4 h-4 mr-2" />
-                            Gagal Sinkron
+                    ) : connectionStatus === 'checking' ? (
+                        <div className="h-10 px-4 flex items-center text-sm text-yellow-600 bg-white rounded-lg border border-yellow-200 whitespace-nowrap select-none">
+                            <Loader2 className="animate-spin w-3 h-3 mr-2" />
+                            Checking Firebase...
                         </div>
                     ) : (
-                        <div className="h-10 px-4 flex items-center text-sm text-violet-600 bg-white rounded-lg border border-violet-200 whitespace-nowrap select-none">
-                            <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                            Memproses...
+                        <div className="h-10 px-4 flex items-center text-sm text-red-600 bg-white rounded-lg border border-red-200 whitespace-nowrap select-none">
+                            <AlertCircle className="w-3 h-3 mr-2" />
+                            Firebase Error
                         </div>
-                    )
-                ) : (
-                    <>
-                        {connectionStatus === 'connected' ? (
-                            deployStatus === 'synced' ? (
-                                <div className="h-10 px-4 flex items-center text-sm text-green-700 bg-white rounded-lg border border-green-200 whitespace-nowrap select-none font-medium">
-                                    <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
-                                    Tersimpan di GitHub
-                                </div>
-                            ) : (
-                                <div className="h-10 px-4 flex items-center text-sm text-green-600 bg-white rounded-lg border border-green-200 whitespace-nowrap select-none">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                                    GitHub Terhubung
-                                </div>
-                            )
-                        ) : null}
-                        {connectionStatus === 'checking' && (
-                            <div className="h-10 px-4 flex items-center text-sm text-yellow-600 bg-white rounded-lg border border-yellow-200 whitespace-nowrap select-none">
-                                <Loader2 className="animate-spin w-3 h-3 mr-2" />
-                                Mengecek...
-                            </div>
-                        )}
-                        {connectionStatus === 'error' && (
-                            <div className="h-10 px-4 flex items-center text-sm text-red-600 bg-white rounded-lg border border-red-200 whitespace-nowrap select-none">
-                                <AlertCircle className="w-3 h-3 mr-2" />
-                                GitHub Error
-                            </div>
-                        )}
-                    </>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* Main Toolbar */}
@@ -148,11 +114,11 @@ export const ProjectToolbar = ({
 
                     <button
                         onClick={() => setShowSettings(true)}
-                        className={`h-10 w-10 inline-flex items-center justify-center border text-sm font-medium rounded-lg focus:outline-none transition-all flex-shrink-0 ${!githubConfig || connectionStatus === 'error' ? 'bg-white text-amber-500 border-amber-200 hover:border-amber-300' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600'
+                        className={`h-10 w-10 inline-flex items-center justify-center border text-sm font-medium rounded-lg focus:outline-none transition-all flex-shrink-0 ${connectionStatus === 'error' ? 'bg-white text-amber-500 border-amber-200 hover:border-amber-300' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600'
                             }`}
                         title="Pengaturan GitHub"
                     >
-                        <Settings className={`h-5 w-5 ${(!githubConfig || connectionStatus === 'error') ? 'animate-pulse' : ''}`} />
+                        <Settings className={`h-5 w-5 ${connectionStatus === 'error' ? 'animate-pulse' : ''}`} />
                     </button>
 
                     <button

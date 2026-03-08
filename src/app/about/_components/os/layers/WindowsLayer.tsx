@@ -58,7 +58,7 @@ export default function WindowsLayer({ isAdmin, isReady = true }: WindowsLayerPr
 
     return (
         <m.div
-            className="absolute inset-0 z-20 pointer-events-none w-full h-full pb-20"
+            className="absolute inset-0 pointer-events-none w-full h-full pb-20"
             variants={containerVariants}
             initial="hidden"
             animate={isReady ? "show" : "hidden"}

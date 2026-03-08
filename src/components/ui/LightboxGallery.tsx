@@ -17,12 +17,21 @@ export default function LightboxGallery({ items, initialIndex = 0, onClose, grou
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const validItems = items.filter(item => item.isActive !== false);
 
+    // Navigation handlers
+    const handleNext = useCallback(() => {
+        setCurrentIndex((prev) => (prev === validItems.length - 1 ? 0 : prev + 1));
+    }, [validItems.length]);
+
+    const handlePrev = useCallback(() => {
+        setCurrentIndex((prev) => (prev === 0 ? validItems.length - 1 : prev - 1));
+    }, [validItems.length]);
+
     // Keyboard navigation
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if (e.key === 'Escape') onClose();
         if (e.key === 'ArrowRight') handleNext();
         if (e.key === 'ArrowLeft') handlePrev();
-    }, [onClose]);
+    }, [onClose, handleNext, handlePrev]);
 
     useEffect(() => {
         document.body.style.overflow = 'hidden'; // Prevent background scrolling
@@ -32,14 +41,6 @@ export default function LightboxGallery({ items, initialIndex = 0, onClose, grou
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, [handleKeyDown]);
-
-    const handleNext = () => {
-        setCurrentIndex((prev) => (prev === validItems.length - 1 ? 0 : prev + 1));
-    };
-
-    const handlePrev = () => {
-        setCurrentIndex((prev) => (prev === 0 ? validItems.length - 1 : prev - 1));
-    };
 
     if (validItems.length === 0) return null;
 
@@ -91,6 +92,7 @@ export default function LightboxGallery({ items, initialIndex = 0, onClose, grou
                                 controls={true}
                             />
                         ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                                 src={currentItem.src}
                                 alt={currentItem.alt || `Gallery Image ${currentIndex + 1}`}

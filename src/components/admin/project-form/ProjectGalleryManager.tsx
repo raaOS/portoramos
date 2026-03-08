@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { ProjectFormData } from '@/hooks/useProjectForm';
-import { CheckCircle2, X, Plus, FolderPlus, Trash2, Image as ImageIcon, UploadCloud, Loader2, MoreVertical } from 'lucide-react';
-import { uploadToGitHub, deleteFromGitHub, getGithubPathFromUrl } from '@/lib/githubUpload';
+import { CheckCircle2, Plus, FolderPlus, Trash2, Image as ImageIcon, UploadCloud, Loader2 } from 'lucide-react';
+import { useFirebaseUpload } from '@/app/admin/components/file-upload/hooks';
+import { extractStoragePath } from '@/lib/storageUtils';
 
 interface ProjectGalleryManagerProps {
     formData: ProjectFormData;

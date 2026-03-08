@@ -137,7 +137,7 @@ const MacFolder = ({
 
                             {/* BADGE COUNT */}
                             {count !== undefined && count > 0 && (
-                                <div className={`absolute -top-3 -right-3 z-50 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white shadow-sm transition-opacity duration-300 ${open ? 'opacity-0' : 'opacity-100 delay-300'}`}>
+                                <div className={`absolute -top-3 -right-3 z-50 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white transition-opacity duration-300 ${open ? 'opacity-0' : 'opacity-100 delay-300'}`}>
                                     {count}
                                 </div>
                             )}

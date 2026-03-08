@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 
 import { AnimatePresence, m, LazyMotion, domMax } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -8,9 +8,15 @@ import dynamic from "next/dynamic";
 // Admin Auth Hook
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
+// Layout Persistence Context
+import { LayoutPersistenceProvider, useLayoutPersistence } from "../contexts/LayoutPersistenceContext";
+
+// Unified Z-Index Context
+import { UnifiedZIndexProvider } from "../context/UnifiedZIndexContext";
+
 // Render Layer Components (Dynamic Imports for Bundle Optimization)
 const DesktopIconsLayer = dynamic(() => import("../layers/DesktopIconsLayer"), { ssr: false });
-const WindowsLayer = dynamic(() => import("../layers/WindowsLayer"), { ssr: false });
+const UnifiedLayer = dynamic(() => import("../layers/UnifiedLayer"), { ssr: false });
 const UIOverlaysLayer = dynamic(() => import("../layers/UIOverlaysLayer"), { ssr: false });
 
 // Window Content Components - Required by useDesktopNavigation
@@ -22,7 +28,7 @@ const ChatWindow = dynamic(() => import("../windows/ChatWindow"), {
 
 
 // Hooks & Types
-import { useWindowManager, WindowState } from "@/hooks/useWindowManager";
+import { WindowState } from "@/hooks/useWindowManager";
 import { useStickyNotes } from "../hooks/useStickyNotes";
 import { useDesktopLock } from "../hooks/useDesktopLock";
 import { useBootSequence } from "../hooks/useBootSequence";
@@ -70,6 +76,14 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
     const { mounted, isMobile } = useDesktopLock();
     const { needsPowerOn, isBooting, finishBooting } = useBootSequence();
 
+    // When boot is skipped, ensure sound is unlocked and boot is marked complete
+    useEffect(() => {
+        if (!needsPowerOn && !isBooting) {
+            // Boot was skipped or completed - ensure audio is unlocked
+            soundManager.unlock();
+        }
+    }, [needsPowerOn, isBooting]);
+
     // Track when StartScreen has actually mounted and is covering the screen
     const [startScreenReady, setStartScreenReady] = useState(false);
 
@@ -77,21 +91,10 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
     const [isRevealed, setIsRevealed] = useState(false);
 
     // Admin auth check
-    const { isAdmin, csrfToken, logout } = useAdminAuth();
+    const { isAdmin, csrfToken, logout: originalLogout } = useAdminAuth();
 
     // Notes visibility toggle
     const [notesVisible, setNotesVisible] = useState(true);
-
-    // Hooks
-    const {
-        notes,
-        addNote,
-        updateNote,
-        deleteNote,
-        permanentDeleteNote,
-        restoreNote,
-        bringToFrontNote
-    } = useStickyNotes(mounted, isAdmin, csrfToken);
 
     // Dynamic Contacts
     const { dynamicContacts, testimonialContacts } = useChatContacts();
@@ -133,55 +136,106 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
 
     return (
         <DesktopErrorBoundary>
-            <DesktopWindowProvider
-                initialWindows={initialWindows}
-                aboutData={aboutData}
-                csrfToken={csrfToken || undefined}
-            >
-                <DesktopMain
-                    aboutData={aboutData}
-                    isMobile={isMobile}
-                    needsPowerOn={needsPowerOn}
-                    isBooting={isBooting}
-                    isRevealed={isRevealed}
-                    startScreenReady={startScreenReady}
-                    setStartScreenReady={setStartScreenReady}
-                    setIsRevealed={setIsRevealed}
-                    handleBootComplete={handleBootComplete}
-                    notesVisible={notesVisible}
-                    setNotesVisible={setNotesVisible}
-                    notes={notes}
-                    addNote={addNote}
-                    updateNote={updateNote}
-                    deleteNote={deleteNote}
-                    permanentDeleteNote={permanentDeleteNote}
-                    restoreNote={restoreNote}
-                    bringToFrontNote={bringToFrontNote}
-                    dynamicContacts={dynamicContacts}
-                    testimonialContacts={testimonialContacts}
-                    showSpotlight={showSpotlight}
-                    setShowSpotlight={setShowSpotlight}
-                    commercialProjects={commercialProjects}
-                    projects={projects}
-                    isAdmin={isAdmin}
-                    logout={logout}
-                />
-            </DesktopWindowProvider>
+            <LayoutPersistenceProvider>
+                <UnifiedZIndexProvider>
+                    <DesktopWindowProvider
+                        initialWindows={initialWindows}
+                        aboutData={aboutData}
+                        csrfToken={csrfToken || undefined}
+                        isAdmin={isAdmin}
+                    >
+                        <DesktopMainWithLogout
+                            aboutData={aboutData}
+                            isMobile={isMobile}
+                            needsPowerOn={needsPowerOn}
+                            isBooting={isBooting}
+                            isRevealed={isRevealed}
+                            startScreenReady={startScreenReady}
+                            setStartScreenReady={setStartScreenReady}
+                            setIsRevealed={setIsRevealed}
+                            handleBootComplete={handleBootComplete}
+                            notesVisible={notesVisible}
+                            setNotesVisible={setNotesVisible}
+                            dynamicContacts={dynamicContacts}
+                            testimonialContacts={testimonialContacts}
+                            showSpotlight={showSpotlight}
+                            setShowSpotlight={setShowSpotlight}
+                            commercialProjects={commercialProjects}
+                            projects={projects}
+                            isAdmin={isAdmin}
+                            csrfToken={csrfToken}
+                            originalLogout={originalLogout}
+                        />
+                    </DesktopWindowProvider>
+                </UnifiedZIndexProvider>
+            </LayoutPersistenceProvider>
         </DesktopErrorBoundary>
     );
 }
 
+// Wrapper component that handles logout with flush
+interface DesktopMainWithLogoutProps extends Omit<DesktopMainProps, 'logout'> {
+    originalLogout: () => void;
+}
+
+function DesktopMainWithLogout(props: DesktopMainWithLogoutProps) {
+    const { flushAll } = useLayoutPersistence();
+    const { originalLogout, ...desktopMainProps } = props;
+
+    const handleLogout = async () => {
+        console.log('[DesktopEnvironment] Flushing pending saves before logout...');
+        await flushAll();
+        // Tunggu sebentar agar fetch selesai
+        await new Promise(resolve => setTimeout(resolve, 300));
+        originalLogout();
+    };
+
+    return <DesktopMain {...desktopMainProps} logout={handleLogout} />;
+}
+
 // Sub-component that has access to DesktopWindowContext
+interface DesktopMainProps {
+    aboutData: AboutData | null | undefined;
+    isMobile: boolean;
+    needsPowerOn: boolean;
+    isBooting: boolean;
+    isRevealed: boolean;
+    startScreenReady: boolean;
+    setStartScreenReady: React.Dispatch<React.SetStateAction<boolean>>;
+    setIsRevealed: React.Dispatch<React.SetStateAction<boolean>>;
+    handleBootComplete: () => void;
+    notesVisible: boolean;
+    setNotesVisible: React.Dispatch<React.SetStateAction<boolean>>;
+    testimonialContacts: import('../data/mockChats').ContactProfile[];
+    dynamicContacts: Record<string, import('../data/mockChats').ContactProfile>;
+    showSpotlight: boolean;
+    setShowSpotlight: React.Dispatch<React.SetStateAction<boolean>>;
+    commercialProjects: Project[];
+    projects: Project[];
+    isAdmin: boolean;
+    logout: () => void;
+    csrfToken?: string;
+}
+
 function DesktopMain({
     aboutData, isMobile, needsPowerOn, isBooting, isRevealed,
     startScreenReady, setStartScreenReady, setIsRevealed,
-    handleBootComplete, notesVisible, setNotesVisible, notes,
-    addNote, updateNote, deleteNote, permanentDeleteNote,
-    restoreNote, bringToFrontNote, dynamicContacts,
-    testimonialContacts, showSpotlight, setShowSpotlight,
-    commercialProjects, projects, isAdmin, logout
-}: any) {
-    const { openWindow, resetWindows } = useDesktopWindowContext();
+    handleBootComplete, notesVisible, setNotesVisible,
+    dynamicContacts, testimonialContacts, showSpotlight, setShowSpotlight,
+    commercialProjects, projects, isAdmin, logout, csrfToken
+}: DesktopMainProps) {
+    const { 
+        openWindow, resetWindows, requestNextZIndex,
+        windows, closeWindow, minimizeWindow, maximizeWindow, focusWindow,
+        updateWindowPosition, handleWindowResize, handleWindowResizeEnd, togglePin
+    } = useDesktopWindowContext();
+
+    // useStickyNotes must be called HERE because it needs LayoutPersistenceProvider context
+    // Now using unified z-index system - requestNextZIndex from UnifiedZIndexProvider via DesktopWindowContext
+    const {
+        notes, addNote, updateNote, deleteNote,
+        permanentDeleteNote, restoreNote, bringToFrontNote
+    } = useStickyNotes(true, isAdmin, csrfToken, requestNextZIndex);
 
     const {
         openProjectWindow,
@@ -203,10 +257,11 @@ function DesktopMain({
         setNotesDockBouncing: () => { }
     });
 
+    // useDesktopLayout sekarang otomatis register flush ke LayoutPersistenceContext
     const { iconPositions, handleIconPositionChange } = useDesktopLayout({
         aboutData,
         isAdmin,
-        csrfToken: null // CSRF is only needed for sticky notes
+        csrfToken: csrfToken || null
     });
 
     const { projectIcons } = useDesktopIcons({
@@ -217,7 +272,15 @@ function DesktopMain({
         iconPositions
     });
 
-    // Memoized callbacks for StartScreen to prevent React Compiler warnings
+    // Check if boot was skipped immediately (based on initial state from useBootSequence)
+    const wasBootSkipped = !needsPowerOn && !isBooting;
+    
+    // For skipped boot: immediately ready and revealed
+    // For normal boot: wait for StartScreen callbacks
+    const isDesktopReady = wasBootSkipped || startScreenReady;
+    const isDesktopRevealed = wasBootSkipped || isRevealed;
+
+    // Memoized callbacks for StartScreen
     const handleStartScreenReady = useCallback(() => setStartScreenReady(true), [setStartScreenReady]);
     const handleStartScreenReveal = useCallback(() => setIsRevealed(true), [setIsRevealed]);
 
@@ -227,46 +290,66 @@ function DesktopMain({
                 <RetroMobileOverlay />
             ) : (
                 <>
-                    <AnimatePresence>
-                        <StartScreen
-                            key="start-screen"
-                            onStart={handleBootComplete}
-                            isActive={needsPowerOn || isBooting}
-                            onReady={handleStartScreenReady}
-                            onReveal={handleStartScreenReveal}
-                        />
-                    </AnimatePresence>
+                    {/* Only render StartScreen if boot is needed */}
+                    {(needsPowerOn || isBooting) && (
+                        <AnimatePresence>
+                            <StartScreen
+                                key="start-screen"
+                                onStart={handleBootComplete}
+                                isActive={needsPowerOn || isBooting}
+                                onReady={handleStartScreenReady}
+                                onReveal={handleStartScreenReveal}
+                            />
+                        </AnimatePresence>
+                    )}
 
                     <m.div
                         className="relative w-full h-full overflow-hidden select-none"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: startScreenReady ? 1 : 0 }}
-                        transition={{ duration: 0.2 }}
+                        initial={{ opacity: wasBootSkipped ? 0 : 0 }}
+                        animate={{ 
+                            opacity: isDesktopReady ? 1 : 0 
+                        }}
+                        transition={{ 
+                            duration: wasBootSkipped ? 0.4 : 0.2,
+                            ease: wasBootSkipped ? [0.32, 0.72, 0, 1] : "easeOut"
+                        }}
                     >
                         <DesktopBackground wallpaperConfig={aboutData?.wallpaperConfig} />
 
+                        {/* Desktop Icons - Only icons, no sticky notes */}
                         <DesktopIconsLayer
-                            projectIcons={projectIcons as any[]}
+                            projectIcons={projectIcons}
                             isMobile={isMobile}
-                            notesVisible={notesVisible}
-                            notes={notes}
+                            isReady={isDesktopRevealed}
                             handleIconPositionChange={handleIconPositionChange}
+                            openProjectWindow={openProjectWindow}
+                        />
+                        
+                        {/* Unified Layer - Windows + Sticky Notes with coordinated z-index */}
+                        <UnifiedLayer
+                            windows={windows}
+                            notes={notes}
+                            notesVisible={notesVisible}
+                            isAdmin={isAdmin}
+                            isReady={isDesktopRevealed}
+                            closeWindow={closeWindow}
+                            minimizeWindow={minimizeWindow}
+                            maximizeWindow={maximizeWindow}
+                            focusWindow={focusWindow}
+                            updateWindowPosition={updateWindowPosition}
+                            handleWindowResize={handleWindowResize}
+                            handleWindowResizeEnd={handleWindowResizeEnd}
+                            togglePin={togglePin}
                             updateNote={updateNote}
                             bringToFrontNote={bringToFrontNote}
                             deleteNote={deleteNote}
                             permanentDeleteNote={permanentDeleteNote}
                             restoreNote={restoreNote}
                             addNote={addNote}
-                            openProjectWindow={openProjectWindow}
-                            isAdmin={isAdmin}
-                            isReady={isRevealed || (!needsPowerOn && !isBooting)}
-                        />
-                        <WindowsLayer
-                            isAdmin={isAdmin}
-                            isReady={isRevealed || (!needsPowerOn && !isBooting)}
                         />
                         <UIOverlaysLayer
                             isBooting={isBooting}
+                            needsPowerOn={needsPowerOn}
                             navToChat={navToChat}
                             openWhatsAppList={openWhatsAppList}
                             testimonialContacts={testimonialContacts}

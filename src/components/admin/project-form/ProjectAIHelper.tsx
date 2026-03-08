@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Sparkles, Loader2, Wand2 } from 'lucide-react';
+import { generateGenZComments, Comment } from '@/lib/magic';
 
 const getCsrfToken = () => {
     if (typeof document === 'undefined') return '';
@@ -19,11 +20,12 @@ export interface AIResponse {
     team: string;
     timeline: string;
     software?: string[];
-    narrative: any;
+    narrative: Record<string, unknown>;
     // For Viral Package
     likes?: number;
     shares?: number;
     isViralPackageRequested?: boolean;
+    comments?: Comment[];
 }
 
 interface ProjectAIHelperProps {
@@ -42,7 +44,7 @@ interface GenerateRequestBody {
     imageUrl?: string;
 }
 
-export default function ProjectAIHelper({ cover, pendingFile, slug, projectId, onGenerate }: ProjectAIHelperProps) {
+export default function ProjectAIHelper({ cover, pendingFile, slug, projectId: _projectId, onGenerate }: ProjectAIHelperProps) {
     const [isGenerating, setIsGenerating] = useState(false);
     const [aiOptions, setAiOptions] = useState({
         style: 'estetik & profesional',
@@ -109,6 +111,7 @@ export default function ProjectAIHelper({ cover, pendingFile, slug, projectId, o
             // 2. Viral Package Magic
             let likesCount = undefined;
             let sharesCount = undefined;
+            let generatedComments: Comment[] = [];
 
             if (aiOptions.viralPackage) {
                 if (projectId) {

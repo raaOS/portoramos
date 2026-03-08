@@ -91,7 +91,7 @@ export default async function RootLayout({
   children: React.ReactNode;
   modal: React.ReactNode;
 }) {
-  const websiteStructuredData = generateStructuredData('website');
+  const _websiteStructuredData = generateStructuredData('website');
   const aboutData = await loadAboutData();
 
   return (

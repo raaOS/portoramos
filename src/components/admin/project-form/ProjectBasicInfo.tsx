@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ProjectFormData } from '@/hooks/useProjectForm';
-import { Sparkles, X, Plus } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import { Project } from '@/types/projects';
 
 interface ProjectBasicInfoProps {

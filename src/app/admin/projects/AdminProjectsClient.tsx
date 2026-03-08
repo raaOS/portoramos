@@ -45,7 +45,7 @@ function SortableProjectItem({ id, children }: { id: string, children: React.Rea
 }
 
 export default function AdminProjectsClient() {
-  const { csrfToken } = useAdminAuth();
+  useAdminAuth();
 
   // Custom Hooks
   const {
@@ -67,11 +67,8 @@ export default function AdminProjectsClient() {
   const {
     githubConfig,
     connectionStatus,
-    deployStatus,
-    isSavingToGithub,
-    saveGithubSettings,
-    triggerGithubSync
-  } = useGitHubSync(csrfToken);
+    triggerSync
+  } = useFirebaseStatus();
 
   // Local UI State
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -95,12 +92,10 @@ export default function AdminProjectsClient() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Actions Wrappers (to trigger extra logic like GitHub Sync)
+  // Actions Wrappers (Firebase is real-time, triggerSync is now a no-op but kept for compatibility)
   const handleToggleProjectStatus = (project: Project) => {
     const nextStatus = project.status === 'published' ? 'draft' : 'published';
-    updateMutation.mutate({ ...project, status: nextStatus, id: project.id }, {
-      onSuccess: () => triggerGithubSync(true)
-    });
+    updateMutation.mutate({ ...project, status: nextStatus, id: project.id });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -118,13 +113,10 @@ export default function AdminProjectsClient() {
   return (
     <div className="space-y-8">
       <ProjectToolbar
-        isSavingToGithub={isSavingToGithub}
-        deployStatus={deployStatus}
         connectionStatus={connectionStatus}
         selectedProjectIds={selectedProjectIds}
         isBulkUpdating={isBulkUpdating}
         allProjectsLength={orderedProjects.length}
-        githubConfig={githubConfig}
         handleBulkUpdate={handleBulkUpdate}
         selectAllProjects={() => selectAllProjects(orderedProjects.map(p => p.id))}
         setShowSecurityModal={setShowSecurityModal}
@@ -200,11 +192,9 @@ export default function AdminProjectsClient() {
           onSubmit={async (data) => {
             if (editingProject) {
               await updateMutation.mutateAsync(data as UpdateProjectData);
-              await triggerGithubSync(true);
               setEditingProject(null);
             } else {
               await createMutation.mutateAsync(data as CreateProjectData);
-              await triggerGithubSync(true);
               setShowCreateForm(false);
             }
           }}
@@ -222,7 +212,6 @@ export default function AdminProjectsClient() {
       {managingCommentsProject && (
         <ManageCommentsModal
           project={managingCommentsProject}
-          onSyncTrigger={() => triggerGithubSync(true)}
           onClose={() => setManagingCommentsProject(null)}
         />
       )}

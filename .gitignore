@@ -54,3 +54,5 @@ raw_errors.txt
 ts_errors.txt
 ts_errors_2.log
 tmp_live_projects.json
+
+service-account.json

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Project, CreateProjectData, UpdateProjectData, GalleryItem, GalleryGroup } from '@/types/projects';
 import { isVideoLink, detectImageDimensions } from '@/lib/media';
+import { Comment } from '@/lib/magic';
 
 export interface ProjectFormData {
     title: string;
@@ -50,6 +51,7 @@ export interface ProjectFormData {
         afterImage: string;
         afterType: 'image' | 'video';
     };
+    comments?: Comment[];
 }
 
 export const useProjectForm = (project?: Project) => {

@@ -72,7 +72,7 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
             onClick={onClose}
         >
             <motion.div
-                className="w-[600px] bg-white/80 backdrop-blur-2xl rounded-xl shadow-2xl border border-white/40 overflow-hidden"
+                className="w-[600px] bg-white/80 backdrop-blur-2xl rounded-xl border border-white/40 overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={handleKeyDown}
             >

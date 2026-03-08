@@ -1,12 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
-import { m, AnimatePresence } from "framer-motion";
+import { m } from "framer-motion";
 import DesktopIcon from "../ui/elements/DesktopIcon";
-import { DraggableStickyNote } from "../ui/elements/DraggableStickyNote";
-import type { NoteData } from "../ui/elements/StickyNoteItem";
 import type { Project } from "@/types/projects";
 
 const MacFolder = dynamic(() => import("../windows/MacFolder"), {
@@ -32,38 +29,18 @@ interface ProjectIcon {
 interface DesktopIconsLayerProps {
     projectIcons: ProjectIcon[];
     isMobile: boolean;
-    notesVisible: boolean;
-    notes: NoteData[];
-    handleIconPositionChange: (id: string, x: number, y: number) => void;
-    updateNote: (id: string, updates: Partial<NoteData>) => void;
-    bringToFrontNote: (id: string) => void;
-    deleteNote: (id: string) => void;
-    permanentDeleteNote: (id: string) => void;
-    restoreNote: (id: string) => void;
-    addNote: () => void;
-    openProjectWindow: (project: Project) => void;
-    isAdmin: boolean;
     isReady?: boolean;
+    handleIconPositionChange: (id: string, x: number, y: number) => void;
+    openProjectWindow: (project: Project) => void;
 }
 
 export default function DesktopIconsLayer({
     projectIcons,
     isMobile,
-    notesVisible,
-    notes,
+    isReady = true,
     handleIconPositionChange,
-    updateNote,
-    bringToFrontNote,
-    deleteNote,
-    permanentDeleteNote,
-    restoreNote,
-    addNote,
     openProjectWindow,
-    isAdmin,
-    isReady = true
 }: DesktopIconsLayerProps) {
-    const router = useRouter();
-
     // Parent container animation variants for staggering
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -96,12 +73,8 @@ export default function DesktopIconsLayer({
         }
     };
 
-
-
     return (
-        <div className="absolute inset-0 z-10 pointer-events-none">
-
-
+        <div className="absolute inset-0 pointer-events-none">
             {/* Desktop Icons Grid */}
             <m.div
                 className="pointer-events-none"
@@ -122,7 +95,9 @@ export default function DesktopIconsLayer({
                             priority={icon.priority}
                             onPositionChange={handleIconPositionChange}
                             onClick={() => {
-                                if (icon.type === 'project' && icon.data) {
+                                // FIXED: Check icon.data untuk identify project (bukan type string)
+                                // karena project.type bisa 'commercial' | 'visual_art', bukan 'project'
+                                if (icon.data) {
                                     openProjectWindow(icon.data);
                                 } else if (icon.action) {
                                     icon.action();
@@ -134,36 +109,6 @@ export default function DesktopIconsLayer({
                     </m.div>
                 ))}
             </m.div>
-
-            {/* Sticky Notes Layer */}
-            {notesVisible && (
-                <m.div
-                    className="z-20 pointer-events-none"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate={isReady ? "show" : "hidden"}
-                >
-                    {notes.filter(n => !n.isDeleted).map((note) => (
-                        <m.div
-                            key={note.id}
-                            variants={itemVariants}
-                            className="pointer-events-none"
-                        >
-                            <DraggableStickyNote
-                                key={note.id}
-                                note={note}
-                                updateNote={updateNote}
-                                bringToFrontNote={bringToFrontNote}
-                                deleteNote={deleteNote}
-                                permanentDeleteNote={permanentDeleteNote}
-                                restoreNote={restoreNote}
-                                addNote={addNote}
-                                isAdmin={isAdmin}
-                            />
-                        </m.div>
-                    ))}
-                </m.div>
-            )}
         </div>
     );
 }

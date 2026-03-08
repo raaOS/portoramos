@@ -190,7 +190,7 @@ export default function OSWindow({
 
 
     return (
-        <AnimatePresence>
+        <AnimatePresence mode="popLayout">
             {isOpen && (
                 <m.div
                     ref={windowRef}
@@ -299,7 +299,7 @@ export default function OSWindow({
                         left: 0,
                     }}
                     data-lenis-prevent
-                    className={`flex flex-col overflow-hidden border border-white/40 will-change-transform pointer-events-auto shadow-2xl rounded-lg outline-none ${isSmallScreen
+                    className={`flex flex-col overflow-hidden border border-white/40 will-change-transform pointer-events-auto rounded-lg outline-none ${isSmallScreen
                         ? 'bg-white/95'
                         : 'bg-white/80 backdrop-blur-xl'
                         }`}
@@ -324,7 +324,7 @@ export default function OSWindow({
                                 className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
                                 aria-label="Close window"
                             >
-                                <span className="w-[12px] h-[12px] rounded-full bg-[#FF5F57] border-[0.5px] border-[#D6443F] shadow-sm flex items-center justify-center">
+                                <span className="w-[12px] h-[12px] rounded-full bg-[#FF5F57] border-[0.5px] border-[#D6443F] flex items-center justify-center">
                                     <X size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
                                 </span>
                             </button>
@@ -334,7 +334,7 @@ export default function OSWindow({
                                 className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
                                 aria-label="Minimize window"
                             >
-                                <span className="w-[12px] h-[12px] rounded-full bg-[#FEBC2E] border-[0.5px] border-[#DDA335] shadow-sm flex items-center justify-center">
+                                <span className="w-[12px] h-[12px] rounded-full bg-[#FEBC2E] border-[0.5px] border-[#DDA335] flex items-center justify-center">
                                     <Minus size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
                                 </span>
                             </button>
@@ -344,7 +344,7 @@ export default function OSWindow({
                                 className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
                                 aria-label="Maximize window"
                             >
-                                <span className="w-[12px] h-[12px] rounded-full bg-[#28C840] border-[0.5px] border-[#22AA32] shadow-sm flex items-center justify-center">
+                                <span className="w-[12px] h-[12px] rounded-full bg-[#28C840] border-[0.5px] border-[#22AA32] flex items-center justify-center">
                                     {/* Outline Square for Expand */}
                                     <span className="w-[6px] h-[6px] bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rotate-45 transform scale-[0.8] block" style={{ clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" }} />
                                 </span>
@@ -353,7 +353,7 @@ export default function OSWindow({
 
                         {/* Title Indicator */}
                         <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-1.5 opacity-80 pointer-events-none w-[60%]">
-                            <span className="text-xs font-semibold text-gray-700 tracking-wide drop-shadow-sm truncate block text-center w-full">{title}</span>
+                            <span className="text-xs font-semibold text-gray-700 tracking-wide truncate block text-center w-full">{title}</span>
                         </div>
 
                         {/* Top Right Pin/Lock Button - Admin Only */}

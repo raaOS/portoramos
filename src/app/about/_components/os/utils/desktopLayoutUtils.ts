@@ -4,7 +4,7 @@ import { DesktopPreferences } from "@/types/about";
 
 type DesktopItem =
     | { id: string; type: "folder"; label: string; action?: () => void }
-    | (Omit<Project, "type"> & { type: "project" });
+    | Project;
 
 export const generateDesktopIcons = (
     windowSize: { width: number; height: number },
@@ -48,14 +48,15 @@ export const generateDesktopIcons = (
     }
 
     // 4. Combine Projects with specialized shortcuts
+    // NOTE: Jangan override type dari Project, gunakan type asli ('commercial' | 'visual_art')
     const desktopItems = [
         {
             id: "shortcut-home",
-            type: "folder",
+            type: "folder" as const,
             label: "My Projects",
             action: handleGoHome,
         },
-        ...visibleProjects.map((p) => ({ ...p, type: "project" })),
+        ...visibleProjects,
     ];
 
     const generatedIcons = (desktopItems as DesktopItem[]).map((item, index: number) => {
@@ -138,7 +139,7 @@ export const generateDesktopIcons = (
 
         return {
             id: project.id,
-            type: "project",
+            type: project.type || 'commercial',
             data: project,
             label: project.title,
             videoUrl: videoUrl ? getProxiedUrl(videoUrl) : undefined,

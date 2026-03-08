@@ -276,7 +276,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                             key={msg.id}
                             className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}
                         >
-                            <div className={`relative max-w-[85%] rounded-lg px-2 pt-1.5 pb-1 shadow-sm text-[14.2px] 
+                            <div className={`relative max-w-[85%] rounded-lg px-2 pt-1.5 pb-1 text-[14.2px] 
                                 ${msg.isMe ? 'bg-[#d9fdd3] rounded-tr-none' : 'bg-white rounded-tl-none'}`}
                             >
                                 <div className="flex flex-col">
@@ -384,7 +384,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                             exit={{ opacity: 0 }}
                             className="flex justify-start"
                         >
-                            <div className="bg-white rounded-lg rounded-tl-none px-3 py-2 shadow-sm flex gap-1 items-center">
+                            <div className="bg-white rounded-lg rounded-tl-none px-3 py-2 flex gap-1 items-center">
                                 <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
                                 <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
                                 <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
@@ -448,7 +448,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                 />
                             )}
                             <button
-                                className="absolute top-2 right-2 text-white/80 hover:text-white p-1 bg-black/50 rounded-md w-8 h-8 flex items-center justify-center text-lg z-10 shadow-lg"
+                                className="absolute top-2 right-2 text-white/80 hover:text-white p-1 bg-black/50 rounded-md w-8 h-8 flex items-center justify-center text-lg z-10"
                                 onClick={() => setPreviewImage(null)}
                             >
                                 ✕

@@ -46,7 +46,7 @@ export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkel
             */}
 
             {/* Fake Dock */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-20 w-[90%] max-w-[450px] bg-white/30 backdrop-blur-md rounded-[24px] border border-gray-200/20 shadow-sm" />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-20 w-[90%] max-w-[450px] bg-white/30 backdrop-blur-md rounded-[24px] border border-gray-200/20" />
 
         </div>
     );

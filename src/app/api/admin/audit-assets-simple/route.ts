@@ -1,79 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateAdminRequest } from '@/lib/auth';
-import { githubService } from '@/lib/github';
-import { allProjectsAsync } from '@/lib/projects';
-import { aboutService } from '@/lib/services/aboutService';
-import fs from 'fs';
-import path from 'path';
+import { db, bucket } from '@/lib/firebaseAdmin';
+import { checkAdminAuth, validateAdminRequest } from '@/lib/auth';
 
-// Simplified audit: Local JSON is the source of truth
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
     try {
+        if (!checkAdminAuth(req)) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const orphanFiles = await getOrphanFiles();
-        
-        // Get counts for stats
-        const assetsDir = path.join(process.cwd(), 'public/assets/projects');
-        const totalFiles = fs.existsSync(assetsDir) ? fs.readdirSync(assetsDir).filter(f => {
-            if (fs.statSync(path.join(assetsDir, f)).isDirectory()) return false;
-            return f.match(/\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i);
-        }).length : 0;
+        const [files] = await bucket.getFiles({ prefix: 'assets/' });
 
         return NextResponse.json({
             orphanFiles,
             orphanCount: orphanFiles.length,
-            totalFiles
+            totalFiles: files.length
         });
-
     } catch (error) {
         console.error('Simple Audit Error:', error);
         return NextResponse.json({ error: 'Audit failed' }, { status: 500 });
     }
 }
 
-// DELETE orphan files
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
     try {
-        const isAdmin = await validateAdminRequest(request);
-        if (!isAdmin) {
+        if (!await validateAdminRequest(req)) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const body = await request.json();
+        const body = await req.json();
         const { files } = body;
 
         if (!Array.isArray(files) || files.length === 0) {
             return NextResponse.json({ error: 'No files specified' }, { status: 400 });
         }
 
-        // Re-verify files are still orphans (direct call, not fetch)
-        const currentOrphans = await getOrphanFiles();
-
         const results = { success: 0, failed: 0, errors: [] as string[] };
 
         for (const filename of files) {
-            // Safety check: only delete if still orphan
-            if (!currentOrphans.includes(filename)) {
-                results.errors.push(`${filename}: File sekarang digunakan (tidak dihapus)`);
-                results.failed++;
-                continue;
-            }
-
-            const githubPath = `public/assets/projects/${filename}`;
-            const localPath = path.join(process.cwd(), 'public/assets/projects', filename);
-
             try {
-                // Delete from GitHub
-                await githubService.deleteFile(githubPath, `Cleanup: Removing unused asset ${filename}`);
-                
-                // Delete from local
-                if (fs.existsSync(localPath)) {
-                    fs.unlinkSync(localPath);
+                const file = bucket.file(filename);
+                const [exists] = await file.exists();
+                if (exists) {
+                    await file.delete();
+                    results.success++;
+                } else {
+                    results.failed++;
+                    results.errors.push(`${filename}: Not found`);
                 }
-                
-                results.success++;
-            } catch (err: any) {
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : String(err);
                 console.error(`Failed to delete ${filename}:`, err);
-                results.errors.push(`${filename}: ${err.message}`);
+                results.errors.push(`${filename}: ${message}`);
                 results.failed++;
             }
         }
@@ -82,73 +60,57 @@ export async function POST(request: NextRequest) {
             message: `Deleted ${results.success} files, ${results.failed} failed`,
             results
         });
-
-    } catch (error: any) {
-        console.error('Delete error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Audit failed';
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }
 
-// Helper to get orphan files (reusable)
 async function getOrphanFiles(): Promise<string[]> {
     const usedAssets = new Set<string>();
 
     // From projects
-    const projects = await allProjectsAsync();
-    projects.forEach(p => {
-        if (p.cover) usedAssets.add(getFilename(p.cover));
-        if (p.comparison?.beforeImage) usedAssets.add(getFilename(p.comparison.beforeImage));
-        if (p.comparison?.afterImage) usedAssets.add(getFilename(p.comparison.afterImage));
+    const projectsSnap = await db.ref('projects').once('value');
+    const projects = projectsSnap.val() || {};
+    Object.values(projects as Record<string, { cover?: string; comparison?: { beforeImage?: string; afterImage?: string }; galleryItems?: { src?: string }[] }>).forEach((p) => {
+        if (p.cover) usedAssets.add(p.cover);
+        if (p.comparison?.beforeImage) usedAssets.add(p.comparison.beforeImage);
+        if (p.comparison?.afterImage) usedAssets.add(p.comparison.afterImage);
         if (p.galleryItems) {
-            p.galleryItems.forEach((item: any) => {
-                if (item.src) usedAssets.add(getFilename(item.src));
-            });
-        }
-        if (p.galleryGroups) {
-            p.galleryGroups.forEach((group: any) => {
-                group.items?.forEach((item: any) => {
-                    if (item.src) usedAssets.add(getFilename(item.src));
-                });
+            (p.galleryItems as { src?: string }[]).forEach((item) => {
+                if (item.src) usedAssets.add(item.src);
             });
         }
     });
 
-    // From desktop icons
-    const aboutData = await aboutService.getAboutData() as any;
-    if (aboutData.desktop?.icons) {
-        aboutData.desktop.icons.forEach((icon: any) => {
-            if (icon.iconUrl) usedAssets.add(getFilename(icon.iconUrl));
+    // From Content
+    const contentSnap = await db.ref('content').once('value');
+    const content = contentSnap.val() || {};
+    if (content.about?.desktop?.icons) {
+        (content.about.desktop.icons as { iconUrl?: string }[]).forEach((icon) => {
+            if (icon.iconUrl) usedAssets.add(icon.iconUrl);
         });
     }
 
-    // From hero background
-    if (aboutData.hero?.backgroundTrail) {
-        aboutData.hero.backgroundTrail.forEach((bg: any) => {
-            if (bg.src) usedAssets.add(getFilename(bg.src));
-        });
-    }
-
-    // Scan local folder
-    const assetsDir = path.join(process.cwd(), 'public/assets/projects');
+    const [files] = await bucket.getFiles({ prefix: 'assets/' });
     const orphanFiles: string[] = [];
 
-    if (fs.existsSync(assetsDir)) {
-        const files = fs.readdirSync(assetsDir);
-        
-        files.forEach(file => {
-            if (fs.statSync(path.join(assetsDir, file)).isDirectory()) return;
-            if (!file.match(/\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i)) return;
-            if (!usedAssets.has(file.toLowerCase())) {
-                orphanFiles.push(file);
+    files.forEach(file => {
+        const name = file.name;
+        if (name.includes('/.')) return;
+
+        const encodedName = encodeURIComponent(name);
+        let isUsed = false;
+        usedAssets.forEach(url => {
+            if (url.includes(encodedName) || url.endsWith(name)) {
+                isUsed = true;
             }
         });
-    }
+
+        if (!isUsed) {
+            orphanFiles.push(name);
+        }
+    });
 
     return orphanFiles;
-}
-
-function getFilename(url: string): string {
-    if (!url) return '';
-    const parts = url.split('/');
-    return parts[parts.length - 1].toLowerCase();
 }

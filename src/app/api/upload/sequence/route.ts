@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth } from "@/lib/auth";
-import { join } from "path";
-import { mkdir, writeFile, readdir, stat, rm } from "fs/promises";
-import { existsSync } from "fs";
+import { checkAdminAuth, validateAdminRequest } from "@/lib/auth";
+import { bucket, db } from "@/lib/firebaseAdmin";
 
 export async function POST(request: NextRequest) {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     try {
@@ -20,74 +18,60 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 1. Create Directory
-        // Public path: public/assets/sequence/[name]
-        const relativePath = join("assets", "sequence", sequenceName);
-        const absolutePath = join(process.cwd(), "public", relativePath);
+        // Sanitize sequence name
+        const cleanName = sequenceName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+        const storagePath = `assets/sequence/${cleanName}`;
 
-        if (!existsSync(absolutePath)) {
-            await mkdir(absolutePath, { recursive: true });
-        }
-
-        // 2. Save Files
+        // Upload all files to Firebase Storage
         await Promise.all(
             files.map(async (file) => {
                 const bytes = await file.arrayBuffer();
                 const buffer = Buffer.from(bytes);
-                const filePath = join(absolutePath, file.name);
-                await writeFile(filePath, buffer);
+                const filePath = `${storagePath}/${file.name}`;
+                const storageFile = bucket.file(filePath);
+                await storageFile.save(buffer, {
+                    metadata: { contentType: file.type }
+                });
             })
         );
 
         return NextResponse.json({
             success: true,
-            path: `/${relativePath}`, // Return web-accessible path
+            path: storagePath,
             count: files.length
         });
-
     } catch (error) {
         console.error("Sequence upload error:", error instanceof Error ? error.message : error);
         return NextResponse.json(
-            { 
-                error: "Internal Server Error",
-                details: error instanceof Error ? error.message : 'Unknown error'
-            },
+            { error: "Internal Server Error", details: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 }
         );
     }
 }
 
-// GET: List all sequence folders
+// GET: List all sequence folders from Firebase Storage
 export async function GET() {
     try {
-        const sequenceDir = join(process.cwd(), "public", "assets", "sequence");
+        const [files] = await bucket.getFiles({ prefix: 'assets/sequence/' });
 
-        if (!existsSync(sequenceDir)) {
-            return NextResponse.json([]);
-        }
+        // Group files by folder name
+        const folderMap = new Map<string, { name: string, frames: number }>();
 
-        const dirents = await readdir(sequenceDir, { withFileTypes: true });
+        files.forEach(file => {
+            const parts = file.name.replace('assets/sequence/', '').split('/');
+            if (parts.length >= 2 && parts[0]) {
+                const folderName = parts[0];
+                const current = folderMap.get(folderName) || { name: folderName, frames: 0 };
+                current.frames++;
+                folderMap.set(folderName, current);
+            }
+        });
 
-        // Filter only directories
-        const folders = await Promise.all(
-            dirents
-                .filter((dirent) => dirent.isDirectory())
-                .map(async (dirent) => {
-                    const folderPath = join(sequenceDir, dirent.name);
-                    const stats = await stat(folderPath);
-                    const files = await readdir(folderPath);
-
-                    return {
-                        name: dirent.name,
-                        createdAt: stats.birthtime,
-                        frames: files.length,
-                        path: `/assets/sequence/${dirent.name}`
-                    };
-                })
-        );
-
-        // Sort by newest first
-        folders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        const folders = Array.from(folderMap.values()).map(f => ({
+            name: f.name,
+            frames: f.frames,
+            path: `assets/sequence/${f.name}`
+        }));
 
         return NextResponse.json(folders);
     } catch (error) {
@@ -96,7 +80,7 @@ export async function GET() {
     }
 }
 
-// DELETE: Remove a sequence folder
+// DELETE: Remove a sequence folder from Firebase Storage
 export async function DELETE(request: NextRequest) {
     if (!checkAdminAuth(request)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -109,18 +93,19 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: "Folder name is required" }, { status: 400 });
         }
 
-        // Safety check: Prevent deleting outside of sequence directory
+        // Safety check
         if (folderName.includes("..") || folderName.includes("/") || folderName.includes("\\")) {
             return NextResponse.json({ error: "Invalid folder name" }, { status: 400 });
         }
 
-        const folderPath = join(process.cwd(), "public", "assets", "sequence", folderName);
+        const prefix = `assets/sequence/${folderName}/`;
+        const [files] = await bucket.getFiles({ prefix });
 
-        if (!existsSync(folderPath)) {
+        if (files.length === 0) {
             return NextResponse.json({ error: "Folder not found" }, { status: 404 });
         }
 
-        await rm(folderPath, { recursive: true, force: true });
+        await Promise.all(files.map(file => file.delete()));
 
         return NextResponse.json({ success: true, message: "Deleted successfully" });
     } catch (error) {
@@ -129,7 +114,7 @@ export async function DELETE(request: NextRequest) {
     }
 }
 
-// PATCH: Activate a sequence
+// PATCH: Activate a sequence (save config to Firebase DB)
 export async function PATCH(request: NextRequest) {
     if (!checkAdminAuth(request)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -141,8 +126,7 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: "Sequence name required" }, { status: 400 });
         }
 
-        const configPath = join(process.cwd(), "src", "data", "sequence-config.json");
-        await writeFile(configPath, JSON.stringify({ activeSequence: name }, null, 2));
+        await db.ref('content/sequence-config').set({ activeSequence: name, updatedAt: new Date().toISOString() });
 
         return NextResponse.json({ success: true, activeSequence: name });
     } catch (error) {

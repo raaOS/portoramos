@@ -1,10 +1,9 @@
 /**
  * /leads command handler
- * Returns last 5 leads from leads.json
+ * Returns last 5 leads from Firebase Realtime Database
  */
 
-import fs from 'fs/promises';
-import path from 'path';
+import { db } from '@/lib/firebaseAdmin';
 import type { MessageToSend, ReplyMarkup } from '../types';
 
 interface Lead {
@@ -16,17 +15,18 @@ interface Lead {
 
 export async function handleLeadsCommand(): Promise<MessageToSend[]> {
     const messages: MessageToSend[] = [];
-    
-    try {
-        const leadsPath = path.join(process.cwd(), 'src/data/leads.json');
-        const fileContent = await fs.readFile(leadsPath, 'utf-8');
-        let leadsData: Lead[] | { leads: Lead[] } = JSON.parse(fileContent);
 
-        if (!Array.isArray(leadsData) && 'leads' in leadsData) {
-            leadsData = leadsData.leads;
+    try {
+        const snapshot = await db.ref('leads').limitToLast(5).once('value');
+        const leadsRaw = snapshot.val();
+
+        let leads: Lead[] = [];
+        if (leadsRaw) {
+            leads = Array.isArray(leadsRaw)
+                ? leadsRaw
+                : Object.values(leadsRaw);
         }
 
-        const leads = Array.isArray(leadsData) ? leadsData : [];
         const lastLeads = leads.slice(-5).reverse();
 
         if (lastLeads.length === 0) {
@@ -66,10 +66,10 @@ export async function handleLeadsCommand(): Promise<MessageToSend[]> {
         }
     } catch (error) {
         console.error('[Telegram] Leads error:', error);
-        messages.push({ 
-            text: '❌ *Gagal membaca data*\n\nSilakan coba lagi nanti.' 
+        messages.push({
+            text: '❌ *Gagal membaca data*\n\nSilakan coba lagi nanti.'
         });
     }
-    
+
     return messages;
 }

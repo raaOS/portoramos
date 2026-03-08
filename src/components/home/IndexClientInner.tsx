@@ -12,6 +12,7 @@ type Props = {
   searchQuery: string
   lastUpdated?: Date | string | null
   windowWidth?: number
+  isLoading?: boolean // Prop baru dari parent
 }
 
 // Minimal typing for Fuse.js since it's dynamically imported
@@ -26,36 +27,69 @@ interface FuseInstance<T> {
   setCollection: (collection: T[]) => void
 }
 
-export default function IndexClientInner({ projects, tag, searchQuery, lastUpdated: _lastUpdated, windowWidth }: Props) {
+export default function IndexClientInner({ 
+  projects, 
+  tag, 
+  searchQuery, 
+  lastUpdated: _lastUpdated, // Dead prop - kept for API compatibility
+  windowWidth,
+  isLoading: isParentLoading 
+}: Props) {
   // Start with a smaller number to improve initial load performance (LCP)
   const [visibleCount, setVisibleCount] = useState(8)
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [fuseInstance, setFuseInstance] = useState<FuseInstance<Project> | null>(null)
+  
+  // BUG FIX #3: Cleanup flag untuk mencegah setState pada unmounted component
+  const isMountedRef = useRef(true)
+  
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
-  // Lazy load Fuse.js and update collection when projects change
+  // BUG FIX #3 & #7: Lazy load Fuse.js dengan proper cleanup dan auto-update collection
   useEffect(() => {
     // Only load Fuse if user actually types to save bundle size
     if (searchQuery) {
       // Small timeout to not block typing immediately
-      const id = setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         import('fuse.js').then((FuseModule) => {
+          // Guard: jangan update state kalau component sudah unmount
+          if (!isMountedRef.current) return
+          
           const Fuse = FuseModule.default || FuseModule
 
-          if (!fuseInstance) {
-            setFuseInstance(new Fuse(projects, {
-              keys: ['title', 'description', 'client', 'tags'],
-              threshold: 0.3,
-              includeScore: true,
-            }) as unknown as FuseInstance<Project>)
-          } else {
-            fuseInstance.setCollection(projects)
-          }
+          setFuseInstance(prevInstance => {
+            if (!prevInstance) {
+              return new Fuse(projects, {
+                keys: ['title', 'description', 'client', 'tags'],
+                threshold: 0.3,
+                includeScore: true,
+              }) as unknown as FuseInstance<Project>
+            } else {
+              prevInstance.setCollection(projects)
+              return prevInstance
+            }
+          })
+        }).catch(err => {
+          console.error('[IndexClientInner] Failed to load Fuse.js:', err)
         })
       }, 100);
-      return () => clearTimeout(id)
+      
+      return () => clearTimeout(timeoutId)
     }
-  }, [searchQuery, projects, fuseInstance])
+  }, [searchQuery]) // Hanya depend on searchQuery, tidak projects
+
+  // BUG FIX #7: Update Fuse collection saat projects berubah (tanpa re-create instance)
+  useEffect(() => {
+    if (fuseInstance && searchQuery) {
+      fuseInstance.setCollection(projects)
+    }
+  }, [projects, fuseInstance, searchQuery])
 
   // Filter projects by tag and search
   const filteredProjects = useMemo(() => {
@@ -111,7 +145,8 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
   // RESET HANDLER:
   // When the user types a search or changes a tag, we must reset the scroll
   // back to the top (14 items) so they don't get lost.
-  const prevProjectIds = useRef<string>('');
+  // BUG FIX #8: Initialize dengan IDs yang valid untuk mencegah flash
+  const prevProjectIds = useRef<string>(projects.map(p => p.id).join(','));
 
   useEffect(() => {
     const currentIds = filteredProjects.map(p => p.id).join(',');
@@ -119,7 +154,7 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
       setVisibleCount(14);
       prevProjectIds.current = currentIds;
     }
-  }, [filteredProjects, searchQuery, tag])
+  }, [filteredProjects])
 
   // OPTIMIZED SCROLL OBSERVER:
   // This watches the bottom of the page. When the user reaches it:
@@ -129,22 +164,22 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
   const observerTarget = useRef<HTMLDivElement>(null)
 
   // Use refs for values that change frequently to avoid recreating observer
-  const scrollStateRef = useRef({ isLoading, visibleCount, filteredCount: filteredProjects.length })
+  const scrollStateRef = useRef({ isLoadingMore, visibleCount, filteredCount: filteredProjects.length })
   useEffect(() => {
-    scrollStateRef.current = { isLoading, visibleCount, filteredCount: filteredProjects.length }
+    scrollStateRef.current = { isLoadingMore, visibleCount, filteredCount: filteredProjects.length }
   })
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        const { isLoading: loading, visibleCount: count, filteredCount } = scrollStateRef.current;
+        const { isLoadingMore: loading, visibleCount: count, filteredCount } = scrollStateRef.current;
         if (entries[0].isIntersecting && !loading && filteredCount > 0 && count < MAX_DISPLAY_COUNT) {
-          setIsLoading(true)
+          setIsLoadingMore(true)
 
           // Load next batch with a slight delay to prevent re-render loops
           setTimeout(() => {
             setVisibleCount(prev => Math.min(prev + 14, MAX_DISPLAY_COUNT))
-            setIsLoading(false)
+            setIsLoadingMore(false)
           }, 500)
         }
       },
@@ -161,12 +196,13 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
     return () => observer.disconnect()
   }, []) // Observer created once — reads current state via ref
 
+  // Combine loading states
+  const showLoading = isLoadingMore || isParentLoading;
+
   return (
     <section className="pt-4 pb-8 px-4">
       {/* Hidden H1 for SEO */}
       <h1 className="sr-only">Portfolio - Creative Works & Projects</h1>
-
-      {/* TAG FILTER INDICATOR REMOVED - NOW HANDLED BY FINDER HEADER OR URL STATE */}
 
       {/* Tag Filter Indicator */}
       {tag && (
@@ -218,7 +254,7 @@ export default function IndexClientInner({ projects, tag, searchQuery, lastUpdat
               <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
 
               {/* Subtle loading indicator */}
-              {isLoading && (
+              {showLoading && (
                 <div className="text-center py-8 opacity-50">
                   <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
                   <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>

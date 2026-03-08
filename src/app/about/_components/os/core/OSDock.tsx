@@ -21,8 +21,8 @@ interface OSDockProps {
   bouncingId?: string | null;
   className?: string;
   isMobile?: boolean;
-  commercialProjects: Project[];
-  openProjectWindow: (project: Project) => void;
+  commercialProjects?: Project[];
+  openProjectWindow?: (project: Project) => void;
 }
 
 export default function OSDock({
@@ -36,8 +36,6 @@ export default function OSDock({
   bouncingId,
   className,
   isMobile = false,
-  commercialProjects,
-  openProjectWindow
 }: OSDockProps) {
   const router = useRouter();
 

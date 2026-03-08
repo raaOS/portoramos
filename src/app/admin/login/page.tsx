@@ -6,12 +6,11 @@ import { LocationStatusPanel, LoginForm, HelpModal } from './_components';
 
 export default function AdminLoginPage() {
     const [showHelpModal, setShowHelpModal] = useState(false);
-    
+
     const {
         location,
         status: locationStatus,
         error: locationError,
-        mounted,
         isEnabled,
         requestLocation,
         formatAccuracy,
@@ -68,9 +67,9 @@ export default function AdminLoginPage() {
             </div>
 
             {/* Help Modal */}
-            <HelpModal 
-                isOpen={showHelpModal} 
-                onClose={() => setShowHelpModal(false)} 
+            <HelpModal
+                isOpen={showHelpModal}
+                onClose={() => setShowHelpModal(false)}
             />
         </div>
     );

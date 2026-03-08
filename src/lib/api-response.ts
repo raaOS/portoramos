@@ -16,16 +16,46 @@ export interface ApiSuccessResponse<T> {
   success: true;
   data: T;
   message?: string;
+  meta?: {
+    timestamp: string;
+    requestId?: string;
+  };
 }
 
 export interface ApiErrorResponse {
   success: false;
   error: string;
+  errorCode?: string;
   details?: unknown;
-  code?: string;
+  meta?: {
+    timestamp: string;
+    requestId?: string;
+  };
 }
 
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
+
+// ============================================
+// Type Guards
+// ============================================
+
+/**
+ * Type guard to check if response is success
+ */
+export function isSuccess<T>(
+  response: ApiResponse<T>
+): response is ApiSuccessResponse<T> {
+  return response.success === true;
+}
+
+/**
+ * Type guard to check if response is error
+ */
+export function isError<T>(
+  response: ApiResponse<T>
+): response is ApiErrorResponse {
+  return response.success === false;
+}
 
 // ============================================
 // Success Responses
@@ -39,14 +69,17 @@ export function success<T>(
   message?: string,
   status: number = 200
 ): NextResponse<ApiSuccessResponse<T>> {
-  return NextResponse.json(
-    {
-      success: true,
-      data,
-      ...(message && { message })
-    },
-    { status }
-  );
+  const response: ApiSuccessResponse<T> = {
+    success: true,
+    data,
+    meta: {
+      timestamp: new Date().toISOString()
+    }
+  };
+  if (message) {
+    response.message = message;
+  }
+  return NextResponse.json(response, { status });
 }
 
 /**
@@ -79,7 +112,10 @@ export function badRequest(
 ): NextResponse<ApiErrorResponse> {
   const response: ApiErrorResponse = {
     success: false,
-    error
+    error,
+    meta: {
+      timestamp: new Date().toISOString()
+    }
   };
   if (details) {
     response.details = details;
@@ -96,7 +132,11 @@ export function unauthorized(
   return NextResponse.json(
     {
       success: false,
-      error
+      error,
+      errorCode: 'UNAUTHORIZED',
+      meta: {
+        timestamp: new Date().toISOString()
+      }
     },
     { status: 401 }
   );
@@ -111,7 +151,11 @@ export function forbidden(
   return NextResponse.json(
     {
       success: false,
-      error
+      error,
+      errorCode: 'FORBIDDEN',
+      meta: {
+        timestamp: new Date().toISOString()
+      }
     },
     { status: 403 }
   );
@@ -126,7 +170,11 @@ export function notFound(
   return NextResponse.json(
     {
       success: false,
-      error
+      error,
+      errorCode: 'NOT_FOUND',
+      meta: {
+        timestamp: new Date().toISOString()
+      }
     },
     { status: 404 }
   );
@@ -143,7 +191,10 @@ export function rateLimit(
     {
       success: false,
       error,
-      code: 'RATE_LIMITED'
+      errorCode: 'RATE_LIMITED',
+      meta: {
+        timestamp: new Date().toISOString()
+      }
     },
     {
       status: 429,
@@ -161,7 +212,11 @@ export function serverError(
 ): NextResponse<ApiErrorResponse> {
   const response: ApiErrorResponse = {
     success: false,
-    error
+    error,
+    errorCode: 'INTERNAL_ERROR',
+    meta: {
+      timestamp: new Date().toISOString()
+    }
   };
   if (details) {
     response.details = details;
@@ -183,7 +238,11 @@ export function validationError(zodError: ZodError): NextResponse<ApiErrorRespon
     {
       success: false,
       error: 'Validation failed',
-      details: formattedErrors
+      errorCode: 'VALIDATION_ERROR',
+      details: formattedErrors,
+      meta: {
+        timestamp: new Date().toISOString()
+      }
     },
     { status: 400 }
   );
@@ -204,5 +263,40 @@ export function logError(route: string, error: unknown): void {
   console.error(`[API Error] ${timestamp} | ${route}:`, errorMessage);
   if (errorStack) {
     console.error('Stack:', errorStack);
+  }
+}
+
+// ============================================
+// Client-side Helpers
+// ============================================
+
+/**
+ * Safely parse API response with type checking
+ */
+export async function parseApiResponse<T>(
+  response: Response
+): Promise<ApiResponse<T>> {
+  const data = await response.json();
+  return data as ApiResponse<T>;
+}
+
+/**
+ * Handle API response with callbacks
+ */
+export function handleApiResponse<T>(
+  response: ApiResponse<T>,
+  handlers: {
+    onSuccess: (data: T, message?: string) => void;
+    onError: (code: string, message: string, details?: unknown) => void;
+  }
+): void {
+  if (isSuccess(response)) {
+    handlers.onSuccess(response.data, response.message);
+  } else {
+    handlers.onError(
+      response.errorCode || 'UNKNOWN_ERROR',
+      response.error,
+      response.details
+    );
   }
 }
