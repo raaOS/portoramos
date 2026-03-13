@@ -74,7 +74,7 @@ async function beautifyFirebase() {
                         await moveFile(currentPath, expectedPath);
                         updatedProject.cover = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(expectedPath)}?alt=media`;
                         changed = true;
-                    } else if (!updatedProject.cover.startsWith('http')) {
+                    } else if (!coverUrl.startsWith('http')) {
                         // Just normalize to full URL
                         updatedProject.cover = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(currentPath)}?alt=media`;
                         changed = true;
