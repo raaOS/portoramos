@@ -22,12 +22,13 @@ const nextConfig = {
       { protocol: 'https', hostname: 'plus.unsplash.com' },
       { protocol: 'https', hostname: 'picsum.photos' },
       { protocol: 'https', hostname: 'via.placeholder.com' },
-      { protocol: 'https', hostname: 'raw.githubusercontent.com' },
       { protocol: 'https', hostname: 'ui-avatars.com' },
       { protocol: 'https', hostname: 'i.ibb.co' },
       { protocol: 'https', hostname: 'postimg.cc' },
       { protocol: 'https', hostname: 'i.postimg.cc' },
-      { protocol: 'https', hostname: 'images2.imgbox.com' }
+      { protocol: 'https', hostname: 'images2.imgbox.com' },
+      { protocol: 'https', hostname: 'storage.googleapis.com' },
+      { protocol: 'https', hostname: 'firebasestorage.googleapis.com' }
     ],
     // Enable optimization in production only
     unoptimized: process.env.NODE_ENV === 'development',

@@ -146,21 +146,59 @@ export class ContentService<T> {
 
         try {
             const snapshot = await db.ref(this.firebasePath).once('value');
-            const data = snapshot.val();
+            const firebaseData = snapshot.val();
 
-            if (!data) {
+            if (!firebaseData) {
                 console.log(`[ContentService] No data at ${this.firebasePath}, using fallback.`);
                 return this.fallbackData;
             }
 
+            // Merge dengan fallback: field baru di fallback yang gak ada di Firebase tetap kebawa
+            const mergedData = this.deepMerge(this.fallbackData, firebaseData);
+            
             // Simpan ke cache dengan TTL spesifik
-            setCache(cacheKey, data, this.cacheTTL);
+            setCache(cacheKey, mergedData, this.cacheTTL);
 
-            return data as T;
+            return mergedData as T;
         } catch (error) {
             console.error(`[ContentService] Error loading data from ${this.firebasePath}:`, error);
             return this.fallbackData;
         }
+    }
+
+    /**
+     * Deep merge fallback (base) dengan firebase data (override)
+     * Firebase data menang untuk field yang sama, tapi field baru di fallback tetap kebawa
+     */
+    private deepMerge(base: unknown, override: unknown): unknown {
+        if (override === null || override === undefined) {
+            return base;
+        }
+        if (base === null || base === undefined) {
+            return override;
+        }
+        
+        // Jika array, pakai override
+        if (Array.isArray(override)) {
+            return override;
+        }
+        
+        // Jika primitive, pakai override
+        if (typeof override !== 'object' || typeof base !== 'object') {
+            return override;
+        }
+        
+        // Merge objects
+        const result: Record<string, unknown> = { ...(base as Record<string, unknown>) };
+        
+        for (const key of Object.keys(override as Record<string, unknown>)) {
+            const baseVal = (base as Record<string, unknown>)[key];
+            const overrideVal = (override as Record<string, unknown>)[key];
+            
+            result[key] = this.deepMerge(baseVal, overrideVal);
+        }
+        
+        return result;
     }
 
     async saveData(data: T, _message?: string): Promise<boolean> {

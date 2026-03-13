@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { m, useMotionValue } from "framer-motion";
 import Image from "next/image";
 import { soundManager } from "../../utils/SoundManager";
@@ -21,13 +21,28 @@ interface DesktopIconProps {
 }
 
 export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false, isMobile = false, onPositionChange }: DesktopIconProps) {
-    const [mediaError, setMediaError] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    const [videoError, setVideoError] = useState(false);
     const [hovering, setHovering] = useState(false);
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    // Handle video playback on hover
+    useEffect(() => {
+        if (videoRef.current) {
+            if (hovering && !isMobile) {
+                videoRef.current.play().catch(() => {});
+            } else {
+                videoRef.current.pause();
+                // videoRef.current.currentTime = 0; // Optional: reset to start
+            }
+        }
+    }, [hovering, isMobile]);
 
     // Track URLs to reset error state when they change
     const [lastUrls, setLastUrls] = useState({ imageUrl, videoUrl });
     if (lastUrls.imageUrl !== imageUrl || lastUrls.videoUrl !== videoUrl) {
-        setMediaError(false);
+        setImageError(false);
+        setVideoError(false);
         setLastUrls({ imageUrl, videoUrl });
     }
 
@@ -69,6 +84,8 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
         }
     };
 
+    const showMedia = (imageUrl && !imageError) || (videoUrl && !videoError);
+
     return (
         <m.div
             drag
@@ -93,7 +110,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                 y: iconY
             }}
             layout={false} // CRITICAL GPU OFF-LOAD: Disable automatic layout reflow animations
-            className={`flex flex-col items-center gap-3 w-auto group cursor-pointer pointer-events-auto will-change-transform focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none rounded-xl`}
+            className={`flex flex-col items-center gap-1 w-auto group cursor-pointer pointer-events-auto will-change-transform focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none rounded-none`}
             role="button"
             aria-label={label}
             tabIndex={0}
@@ -113,7 +130,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                 <div className="relative">
                     {children}
                 </div>
-            ) : (imageUrl || videoUrl) && !mediaError ? (
+            ) : showMedia ? (
                 <div
                     style={{
                         height: baseHeight,
@@ -121,55 +138,54 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                         minWidth: baseHeight * aspectRatio,
                         minHeight: baseHeight,
                     }}
-                    className={`relative border-2 border-white/40 group-hover:border-white/60 transition-colors bg-white/20 overflow-hidden`}
+                    className={`relative border-2 border-white/40 group-hover:border-white/60 transition-colors bg-white/20 overflow-hidden rounded-none shadow-sm`}
                 >
-                    {/* Always render Image as base layer */}
-                    {imageUrl && (
+                    {/* Always render Image as base layer if available and not error */}
+                    {imageUrl && !imageError && (
                         <Image
                             src={imageUrl}
                             alt={label}
                             fill
-                            className={`object-cover pointer-events-none transition-opacity duration-300 ${hovering && videoUrl ? 'opacity-0' : 'opacity-100'}`}
+                            className={`object-cover pointer-events-none transition-opacity duration-300 ${hovering && videoUrl && !videoError ? 'opacity-0' : 'opacity-100'}`}
                             sizes="(max-width: 768px) 96px, 128px"
                             draggable={false}
-                            onError={() => setMediaError(true)}
+                            onError={() => setImageError(true)}
                             priority={priority} // Important for LCP
                             loading={priority ? "eager" : "lazy"}
                             quality={60} // Thumbnails don't need 100% quality
                         />
                     )}
 
-                    {/* Only render Video if hovering and video exists (and not mobile) */}
-                    {videoUrl && hovering && !isMobile && (
+                    {/* Always render Video if video exists to act as its own thumbnail fallback */}
+                    {videoUrl && !isMobile && !videoError && (
                         <video
-                            src={videoUrl}
-                            autoPlay
+                            ref={videoRef}
+                            src={videoUrl + '#t=0.1'}
                             muted
                             loop
                             playsInline
-                            className="absolute inset-0 object-cover w-full h-full pointer-events-none rounded-none"
+                            preload="metadata"
+                            className={`absolute inset-0 object-cover w-full h-full pointer-events-none rounded-none transition-opacity duration-300 ${(!hovering && imageUrl && !imageError) ? 'opacity-0' : 'opacity-100'}`}
                             draggable={false}
-                            onError={() => setMediaError(true)}
+                            onError={() => setVideoError(true)}
                         />
+                    )}
+
+                    {/* Show simple loading/placeholder if everything fails */}
+                    {imageError && (!videoUrl || videoError) && (
+                         <div className="absolute inset-0 flex items-center justify-center bg-white/10 backdrop-blur-sm">
+                             <div className="text-[10px] text-white/40 uppercase font-bold tracking-widest">No Media</div>
+                         </div>
                     )}
                 </div>
             ) : (
-                <div className={`w-16 h-16 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 flex items-center justify-center transition-colors group-hover:bg-white/30`}>
+                <div className={`w-16 h-16 bg-white/20 backdrop-blur-sm rounded-none border border-white/30 flex items-center justify-center transition-colors group-hover:bg-white/30`}>
                     <div className="text-black/80 group-hover:text-black transition-colors">
                         {icon}
                     </div>
                 </div>
             )}
 
-            {isMobile ? (
-                <span className="text-[10px] text-white font-medium text-center px-1.5 py-0.5 bg-black/30 rounded backdrop-blur-sm max-w-[80px] truncate select-none mt-1 z-20">
-                    {label}
-                </span>
-            ) : (
-                <span className={`text-xs text-black font-medium text-center px-2 py-1 bg-white/40 rounded-[4px] backdrop-blur-md border border-white/30 transition-all duration-200 max-w-[120px] truncate select-none mt-1 z-20 opacity-0 group-hover:opacity-100`}>
-                    {label}
-                </span>
-            )}
         </m.div>
     );
 }

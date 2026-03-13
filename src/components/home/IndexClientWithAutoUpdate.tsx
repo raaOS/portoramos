@@ -19,7 +19,10 @@ interface ProjectsResponse {
 }
 
 export default function IndexClientWithAutoUpdate({ initialProjects: serverProjects = [], windowWidth }: Props) {
-  const { lastUpdated: contextLastUpdated, setLastUpdated } = useLastUpdated();
+  // Safe context access
+  const context = useLastUpdated();
+  const contextLastUpdated = context?.lastUpdated;
+  const setLastUpdated = context?.setLastUpdated || (() => {});
   const searchParams = useSearchParams();
   const tag = searchParams?.get('tag') || '';
   const searchQuery = searchParams?.get('q') || '';
@@ -37,7 +40,10 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
     if (!response.ok) {
       throw new Error('Failed to fetch projects');
     }
-    return response.json();
+    const json = await response.json();
+    // API wraps response in { success, data: { projects, lastUpdated } }
+    // Extract the inner data object
+    return json.data ?? json;
   }, [])
 
   // BUG FIX #5: Valid timestamp untuk initialData

@@ -28,6 +28,94 @@ export const DraggableStickyNote = ({
     const dragControls = useDragControls();
     const { getZIndex, bringToFront } = useUnifiedZIndex();
 
+    // Resize Logic (Internal to avoid jitter)
+    const [isResizing, setIsResizing] = React.useState(false);
+    const [dynamicSize, setDynamicSize] = React.useState({ 
+        width: note.width || 280, 
+        height: note.height || 280 
+    });
+    
+    // Resize Handlers Refs
+    const resizeStartRef = React.useRef<{ x: number, y: number, w: number, h: number, dir: 'e' | 's' | 'se' } | null>(null);
+    const finalSizeRef = React.useRef({ w: 0, h: 0 });
+
+    const handleResizeStart = (e: React.MouseEvent | React.TouchEvent, direction: 'e' | 's' | 'se') => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsResizing(true);
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        resizeStartRef.current = {
+            x: clientX,
+            y: clientY,
+            w: dynamicSize.width,
+            h: dynamicSize.height,
+            dir: direction
+        };
+    };
+
+    React.useEffect(() => {
+        if (!isResizing) return;
+
+        const handleMouseMove = (moveEvent: MouseEvent | TouchEvent) => {
+            if (!resizeStartRef.current) return;
+
+            const clientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+            const clientY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+
+            const { x: startX, y: startY, w: startWidth, h: startHeight, dir: direction } = resizeStartRef.current;
+            const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
+
+            let newWidth = startWidth;
+            let newHeight = startHeight;
+
+            if (direction === 'e' || direction === 'se') {
+                newWidth = Math.max(200, startWidth + deltaX);
+            }
+            if (direction === 's' || direction === 'se') {
+                newHeight = Math.max(150, startHeight + deltaY);
+            }
+
+            setDynamicSize({ width: newWidth, height: newHeight });
+            finalSizeRef.current = { w: newWidth, h: newHeight };
+        };
+
+        const handleMouseUp = () => {
+            if (isResizing) {
+                const finalW = finalSizeRef.current.w;
+                const finalH = finalSizeRef.current.h;
+                if (finalW > 0) {
+                    updateNote(note.id, { width: finalW, height: finalH });
+                }
+            }
+            setIsResizing(false);
+            resizeStartRef.current = null;
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        window.addEventListener('touchmove', handleMouseMove, { passive: false });
+        window.addEventListener('touchend', handleMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener('touchmove', handleMouseMove);
+            window.removeEventListener('touchend', handleMouseUp);
+        };
+    }, [isResizing, note.id, updateNote]);
+
+    // Update dynamic size when props change externally
+    React.useEffect(() => {
+        if (!isResizing) {
+            setDynamicSize({ 
+                width: note.width || 280, 
+                height: note.height || 280 
+            });
+        }
+    }, [note.width, note.height, isResizing]);
+
     // Unified bring to front handler
     const handleBringToFront = React.useCallback(() => {
         // Register this note with unified z-index system
@@ -44,7 +132,7 @@ export const DraggableStickyNote = ({
     return (
         <m.div
             key={note.id}
-            drag={!note.isPinned}
+            drag={!note.isPinned && !isResizing}
             dragControls={dragControls}
             dragListener={false}
             dragMomentum={false}
@@ -63,6 +151,7 @@ export const DraggableStickyNote = ({
                     scale: 1,
                     y: note.y || 100,
                     x: note.x || 100,
+                    width: dynamicSize.width,
                     transition: {
                         y: { type: "spring", stiffness: 250, damping: 18, mass: 0.8 },
                         opacity: { duration: 0.4 }
@@ -86,7 +175,7 @@ export const DraggableStickyNote = ({
             }}
         >
             <StickyNoteItem
-                note={note}
+                note={{ ...note, width: dynamicSize.width, height: dynamicSize.height }}
                 onUpdate={updateNote}
                 onDelete={deleteNote}
                 onPermanentDelete={permanentDeleteNote}
@@ -95,6 +184,8 @@ export const DraggableStickyNote = ({
                 dragControls={dragControls}
                 isAdmin={isAdmin}
                 onFocus={handleBringToFront}
+                onResizeStart={handleResizeStart}
+                isResizing={isResizing}
             />
         </m.div>
     );

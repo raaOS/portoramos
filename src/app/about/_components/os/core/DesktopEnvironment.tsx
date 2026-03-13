@@ -46,6 +46,7 @@ import type { Project } from "@/types/projects";
 import DesktopErrorBoundary from "../windows/DesktopErrorBoundary";
 import { soundManager } from "../utils/SoundManager";
 import { createInitialWindows } from "../utils/windowFactory";
+import { clearVisitorPositions } from "../utils/positionSync";
 import { DesktopWindowProvider, useDesktopWindowContext } from "../context/DesktopWindowContext";
 
 // UI Components (Extracted)
@@ -117,9 +118,10 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
             hardSkillsData,
             projects, // Restore projects as required by WindowFactoryProps
             commercialProjects,
-            dynamicContacts
+            dynamicContacts,
+            isAdmin
         }),
-        [aboutData, experienceData, hardSkillsData, projects, commercialProjects, dynamicContacts]
+        [aboutData, experienceData, hardSkillsData, projects, commercialProjects, dynamicContacts, isAdmin]
     );
 
     const handleBootComplete = () => {
@@ -185,6 +187,8 @@ function DesktopMainWithLogout(props: DesktopMainWithLogoutProps) {
     const handleLogout = async () => {
         console.log('[DesktopEnvironment] Flushing pending saves before logout...');
         await flushAll();
+        // Clear visitor session so admin sees their saved template after logout
+        clearVisitorPositions();
         // Tunggu sebentar agar fetch selesai
         await new Promise(resolve => setTimeout(resolve, 300));
         originalLogout();

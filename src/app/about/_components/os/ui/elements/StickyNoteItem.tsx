@@ -41,6 +41,8 @@ interface StickyNoteItemProps {
     dragControls: DragControls;
     isAdmin?: boolean;
     onFocus?: () => void;
+    onResizeStart?: (e: React.MouseEvent | React.TouchEvent, direction: 'e' | 's' | 'se') => void;
+    isResizing?: boolean;
 }
 
 const COLORS = [
@@ -59,84 +61,20 @@ const DEFAULT_FONT = 'var(--font-handwritten, "Comic Sans MS", "Chalkboard SE", 
 import { NoteHeader } from '../NoteHeader';
 import { NoteFooter } from '../NoteFooter';
 
-export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, onAdd, dragControls, isAdmin = false, onFocus }: StickyNoteItemProps) {
-    const [isEditing, setIsEditing] = useState(false);
-    const [isUnlocked, setIsUnlocked] = useState(false);
-    const [showPasswordModal, setShowPasswordModal] = useState(false);
+export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, onAdd, dragControls, isAdmin = false, onFocus, onResizeStart, isResizing = false }: StickyNoteItemProps) {
     const textAreaRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const [isResizing, setIsResizing] = useState(false);
     const [localSize, setLocalSize] = useState({ width: note.width || 280, height: note.height || 280 });
 
     // Sync local size when prop changes (external update)
     useEffect(() => {
-        if (!isResizing) {
-            setLocalSize({ width: note.width || 280, height: note.height || 280 });
-        }
-    }, [note.width, note.height, isResizing]);
+        setLocalSize({ width: note.width || 280, height: note.height || 280 });
+    }, [note.width, note.height]);
 
     const width = localSize.width;
     const height = localSize.height;
 
-    // Handle Resize
-    useEffect(() => {
-        if (!isResizing) return;
-        // Effect hook for resizing if needed in future
-    }, [isResizing]);
 
-    // We'll use a direct pointer down handler on the resize handle
-    const handleResizeStart = (e: React.PointerEvent) => {
-        if (!isAdmin) return; // Only admin can resize
-
-        e.preventDefault();
-        e.stopPropagation(); // Prevent drag of the note itself
-        setIsResizing(true);
-
-        const startX = e.clientX;
-        const startY = e.clientY;
-        const startWidth = localSize.width;
-        const startHeight = localSize.height;
-
-        let lastWidth = startWidth;
-        let lastHeight = startHeight;
-
-        const handlePointerMove = (moveEvent: PointerEvent) => {
-            lastWidth = Math.max(200, startWidth + (moveEvent.clientX - startX));
-            lastHeight = Math.max(200, startHeight + (moveEvent.clientY - startY));
-            setLocalSize({ width: lastWidth, height: lastHeight });
-        };
-
-        const handlePointerUp = () => {
-            setIsResizing(false);
-            onUpdate(note.id, { width: lastWidth, height: lastHeight });
-            document.removeEventListener('pointermove', handlePointerMove);
-            document.removeEventListener('pointerup', handlePointerUp);
-        };
-
-        document.addEventListener('pointermove', handlePointerMove);
-        document.addEventListener('pointerup', handlePointerUp);
-    };
-
-    const handleEditClick = () => {
-        if (!isAdmin) return;
-
-        if (isEditing) {
-            setIsEditing(false);
-            return;
-        }
-
-        if (isUnlocked) {
-            setIsEditing(true);
-            // Clear placeholder if it's there
-            if (textAreaRef.current && note.text === '') {
-                textAreaRef.current.innerHTML = '';
-            }
-        } else {
-            // Simplified for admin: always allow edit without password modal for now, or keep logic if desired.
-            // Keeping logic for now.
-            setIsEditing(true);
-        }
-    };
 
     // We'll use a ref to track the inner content without triggering re-renders while typing
     const innerContentRef = useRef(note.text);
@@ -144,29 +82,23 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
     // Initial load sync - very important for rendering HTML from server on first paint
     useEffect(() => {
         if (textAreaRef.current && note.text) {
-            // Only update if it's different and we are NOT currently focused/editing it
-            if (!isEditing && textAreaRef.current.innerHTML !== note.text) {
-                textAreaRef.current.innerHTML = note.text;
+            if (textAreaRef.current.innerHTML !== note.text) {
+                textAreaRef.current.innerHTML = sanitize.richText(note.text);
                 innerContentRef.current = note.text;
             }
         }
-    }, [note.text, isEditing]);
+    }, [note.text]);
 
-    // Sync only when not editing or when note.text changes externally
+    // Sync only when note.text changes externally
     useEffect(() => {
         if (textAreaRef.current) {
             const currentDOM = textAreaRef.current.innerHTML;
-            // Case 1: External update (when not editing)
-            if (!isEditing && currentDOM !== note.text) {
-                textAreaRef.current.innerHTML = note.text || '<span class="text-gray-400 italic">Empty note...</span>';
+            if (currentDOM !== note.text) {
+                textAreaRef.current.innerHTML = sanitize.richText(note.text) || '<span class="text-gray-400 italic">Empty note...</span>';
                 innerContentRef.current = note.text;
             }
-            // Case 2: Newly mounted (e.g. after uncollapse) while editing
-            else if (isEditing && (currentDOM === '' || currentDOM === '<br>')) {
-                textAreaRef.current.innerHTML = innerContentRef.current || '';
-            }
         }
-    }, [note.text, isEditing, note.isCollapsed]); // Added isCollapsed to trigger on mount/uncollapse
+    }, [note.text, note.isCollapsed]);
 
     const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
         const newHtml = e.currentTarget.innerHTML;
@@ -247,14 +179,13 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                 )}
 
 
-                {/* Header: Color Picker & Close (Double click to collapse) */}
+                {/* Header: Close (Double click to collapse) */}
                 <NoteHeader
                     color={note.color}
                     colors={COLORS}
                     onColorChange={(c) => onUpdate(note.id, { color: c })}
                     onDelete={() => onDelete(note.id)}
                     onToggleCollapse={() => onUpdate(note.id, { isCollapsed: !note.isCollapsed })}
-                    onAdd={onAdd}
                     isPinned={!!note.isPinned}
                     dragControls={dragControls}
                 />
@@ -267,15 +198,15 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                         {/* Text Display / Input */}
                         <div
                             ref={textAreaRef}
-                            contentEditable={isEditing && isAdmin}
+                            contentEditable={false}
                             onInput={handleContentChange}
                             onBlur={handleBlur}
                             onPointerDown={(e) => { e.stopPropagation(); onFocus?.(); }}
                             onMouseDown={(e) => { e.stopPropagation(); onFocus?.(); }}
                             onDragStart={(e) => e.preventDefault()}
                             onPaste={handlePaste}
-                            dangerouslySetInnerHTML={{ __html: sanitize.html(note.text) || '<span class="text-gray-400 italic">Empty note...</span>' }}
-                            className={`w-full h-full bg-transparent border-none outline-none resize-none text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto ${isEditing && isAdmin ? 'cursor-text' : 'cursor-default'}`}
+                            dangerouslySetInnerHTML={{ __html: sanitize.richText(note.text) || '<span class="text-gray-400 italic">Empty note...</span>' }}
+                            className={`w-full h-full bg-transparent border-none outline-none resize-none text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto cursor-default`}
                             data-lenis-prevent
                             style={{
                                 minHeight: '100px',
@@ -293,51 +224,57 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
 
                 {/* Footer / Toolbar (Hidden if collapsed) */}
                 {!note.isCollapsed && (
-                    <NoteFooter
-                        isAdmin={isAdmin}
-                        isDeleted={note.isDeleted}
-                        isEditing={isEditing}
-                        isPinned={!!note.isPinned}
-                        isStarred={note.isStarred}
-                        opacity={note.opacity || 1}
-                        onEditToggle={handleEditClick}
-                        onPinToggle={() => onUpdate(note.id, { isPinned: !note.isPinned })}
-                        onOpacityToggle={() => {
-                            const current = note.opacity || 1;
-                            const next = current === 1 ? 0.75 : current === 0.75 ? 0.5 : 1;
-                            onUpdate(note.id, { opacity: next });
-                        }}
-                        onStarToggle={() => onUpdate(note.id, { isStarred: !note.isStarred })}
-                        onDelete={() => onDelete(note.id)}
-                        onRestore={() => onRestore(note.id)}
-                        onPermanentDelete={() => onPermanentDelete(note.id)}
-                        onDownload={handleDownload}
-                    />
-                )}
+                    <div className="relative">
+                        <NoteFooter
+                            isAdmin={isAdmin}
+                            isDeleted={note.isDeleted}
+                            isPinned={!!note.isPinned}
+                            isStarred={note.isStarred}
+                            opacity={note.opacity || 1}
+                            onDelete={() => onDelete(note.id)}
+                            onRestore={() => onRestore(note.id)}
+                            onPermanentDelete={() => onPermanentDelete(note.id)}
+                            onDownload={handleDownload}
+                        />
 
-                {/* Resize Handle - Admin Only */}
-                {!note.isCollapsed && isAdmin && (
-                    <div
-                        className="absolute bottom-0 right-0 w-8 h-8 cursor-se-resize z-30 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"
-                        onPointerDown={handleResizeStart}
-                        title="Resize Note"
-                    >
-                        <svg width="12" height="12" viewBox="0 0 10 10" fill="none">
-                            <path d="M10 0L0 10V10H10V0Z" fill="black" />
-                        </svg>
+                        {/* Resize Handles - Admin Only & Not Collapsed */}
+                        {isAdmin && onResizeStart && !note.isCollapsed && (
+                            <>
+                                {/* Right Handle */}
+                                <div
+                                    className="absolute top-0 right-0 w-2 h-full cursor-ew-resize z-[60] group flex items-center justify-center"
+                                    onMouseDown={(e) => onResizeStart(e, 'e')}
+                                    onTouchStart={(e) => onResizeStart(e, 'e')}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                >
+                                    <div className="w-0.5 h-6 bg-black/10 group-hover:bg-black/30 rounded-full transition-colors" />
+                                </div>
+                                {/* Bottom Handle */}
+                                <div
+                                    className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize z-[60] group flex items-center justify-center"
+                                    onMouseDown={(e) => onResizeStart(e, 's')}
+                                    onTouchStart={(e) => onResizeStart(e, 's')}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                >
+                                    <div className="w-6 h-0.5 bg-black/10 group-hover:bg-black/30 rounded-full transition-colors" />
+                                </div>
+                                {/* Corner Handle */}
+                                <div
+                                    className="absolute bottom-1 right-1 w-4 h-4 cursor-nwse-resize z-[70] group flex flex-col items-center justify-center"
+                                    onMouseDown={(e) => onResizeStart(e, 'se')}
+                                    onTouchStart={(e) => onResizeStart(e, 'se')}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                >
+                                     <div className="w-full h-full flex flex-col items-end justify-end p-0.5">
+                                        <div className="w-2 h-0.5 bg-black/20 rotate-[-45deg] translate-y-[-1px]" />
+                                        <div className="w-3 h-0.5 bg-black/20 rotate-[-45deg]" />
+                                     </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
             </m.div >
-
-            <PasswordModal
-                isOpen={showPasswordModal}
-                onClose={() => setShowPasswordModal(false)}
-                onSuccess={() => {
-                    setIsUnlocked(true);
-                    setIsEditing(true);
-                    setShowPasswordModal(false);
-                }}
-            />
         </>
     );
 }

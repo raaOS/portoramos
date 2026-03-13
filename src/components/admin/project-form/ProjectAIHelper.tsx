@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Sparkles, Loader2, Wand2 } from 'lucide-react';
-import { generateGenZComments, Comment } from '@/lib/magic';
+import { Comment } from '@/lib/magic';
 
 const getCsrfToken = () => {
     if (typeof document === 'undefined') return '';
@@ -111,10 +111,8 @@ export default function ProjectAIHelper({ cover, pendingFile, slug, projectId: _
             // 2. Viral Package Magic
             let likesCount = undefined;
             let sharesCount = undefined;
-            let generatedComments: Comment[] = [];
-
             if (aiOptions.viralPackage) {
-                if (projectId) {
+                if (_projectId) {
                     try {
                         await fetch('/api/admin/projects/magic-complete', {
                             method: 'POST',
@@ -123,7 +121,7 @@ export default function ProjectAIHelper({ cover, pendingFile, slug, projectId: _
                                 'X-CSRF-Token': getCsrfToken()
                             },
                             body: JSON.stringify({
-                                projectId: projectId,
+                                projectId: _projectId,
                                 slug: slug || data.title?.toLowerCase().replace(/ /g, '-') || 'temp-slug'
                             })
                         });

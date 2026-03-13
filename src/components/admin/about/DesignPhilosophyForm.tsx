@@ -1,22 +1,140 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Save, Loader2, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Save, Loader2, Sparkles, Plus, Trash2, ChevronDown, ChevronUp, GripVertical, RotateCcw } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
-interface PhilosophyStep {
+// Types - Hanya Workflow, hapus Legacy
+interface SubStep {
+    id: string;
+    title: string;
+    description: string;
+    status?: 'default' | 'in-progress' | 'completed' | 'pending';
+}
+
+interface WorkflowStep {
+    id: string;
     number: string;
     title: string;
-    desc: string;
-    quote: string;
+    subtitle: string;
+    description: string;
+    type: 'phase' | 'decision' | 'terminator';
+    color: 'amber' | 'blue' | 'purple' | 'rose' | 'emerald';
+    icon: string;
+    subSteps: SubStep[];
+    nextSteps: string[];
+    loopTargets: string[];
 }
 
 interface DesignPhilosophyData {
     heading: string;
     subheading: string;
-    steps: PhilosophyStep[];
+    workflowSteps: WorkflowStep[];
 }
+
+const AVAILABLE_ICONS = ['Search', 'Lightbulb', 'Palette', 'GitPullRequest', 'CheckCircle2', 'Sparkles', 'Target', 'Zap'];
+const COLORS = [
+    { value: 'amber', label: '🟡 Amber (Discovery)', bg: 'bg-amber-100', border: 'border-amber-400' },
+    { value: 'blue', label: '🔵 Blue (Strategy)', bg: 'bg-blue-100', border: 'border-blue-400' },
+    { value: 'purple', label: '🟣 Purple (Execution)', bg: 'bg-purple-100', border: 'border-purple-400' },
+    { value: 'rose', label: '🔴 Rose (Refinement)', bg: 'bg-rose-100', border: 'border-rose-400' },
+    { value: 'emerald', label: '🟢 Emerald (Delivery)', bg: 'bg-emerald-100', border: 'border-emerald-400' },
+];
+
+// Default workflow steps - selalu dipakai kalau data kosong
+const DEFAULT_WORKFLOW_STEPS: WorkflowStep[] = [
+    {
+        id: 'discovery',
+        number: '01',
+        title: 'Discovery & Research',
+        subtitle: 'Memahami fondasi proyek',
+        description: 'Tahap awal untuk memahami masalah bisnis, target audience, dan tujuan desain.',
+        type: 'phase',
+        color: 'amber',
+        icon: 'Search',
+        subSteps: [
+            { id: 'briefing', title: 'Briefing & Debrief', description: 'Diskusi awal dengan klien', status: 'default' },
+            { id: 'research', title: 'Research & Observasi', description: 'Analisis pasar dan kompetitor', status: 'default' },
+            { id: 'reference', title: 'Cari Referensi & Asset', description: 'Mengumpulkan inspirasi visual', status: 'default' },
+            { id: 'sync', title: 'Sync dengan Klien', description: 'Validasi arah konsep', status: 'default' },
+        ],
+        nextSteps: ['strategy'],
+        loopTargets: []
+    },
+    {
+        id: 'strategy',
+        number: '02',
+        title: 'Strategy & Concept',
+        subtitle: 'Merancang pendekatan visual',
+        description: 'Menentukan hierarki visual, pesan utama, dan strategi komunikasi.',
+        type: 'phase',
+        color: 'blue',
+        icon: 'Lightbulb',
+        subSteps: [
+            { id: 'message', title: 'Definisikan Pesan Utama', description: 'Core message yang harus tersampaikan', status: 'default' },
+            { id: 'hierarchy', title: 'Hierarki Visual', description: 'Struktur informasi dan prioritas', status: 'default' },
+            { id: 'brainstorm', title: 'Brainstorm dengan Tim', description: 'Diskusi kreatif eksplorasi ide', status: 'default' },
+            { id: 'proposal', title: 'Proposal Konsep', description: 'Presentasi konsep untuk klien', status: 'default' },
+        ],
+        nextSteps: ['execution'],
+        loopTargets: ['discovery']
+    },
+    {
+        id: 'execution',
+        number: '03',
+        title: 'Execution & Iteration',
+        subtitle: 'Mengembangkan desain',
+        description: 'Proses kreatif membuat desain dengan iterasi dan revisi.',
+        type: 'phase',
+        color: 'purple',
+        icon: 'Palette',
+        subSteps: [
+            { id: 'wireframe', title: 'Draft & Wireframe', description: 'Kerangka awal dan layout dasar', status: 'default' },
+            { id: 'visual', title: 'Desain Visual', description: 'Visual dengan detail penuh', status: 'default' },
+            { id: 'internal', title: 'Review Internal', description: 'Evaluasi dengan tim', status: 'default' },
+            { id: 'present', title: 'Present ke Klien', description: 'Tampilkan hasil dan terima feedback', status: 'default' },
+        ],
+        nextSteps: ['approval'],
+        loopTargets: ['strategy', 'execution']
+    },
+    {
+        id: 'approval',
+        number: '04',
+        title: 'Refinement & Approval',
+        subtitle: 'Penyempurnaan dan ACC',
+        description: 'Tahap revisi akhir hingga persetujuan final.',
+        type: 'decision',
+        color: 'rose',
+        icon: 'GitPullRequest',
+        subSteps: [
+            { id: 'r1', title: 'Revisi R1', description: 'Perbaikan berdasarkan feedback', status: 'default' },
+            { id: 'r2', title: 'Revisi R2 (jika perlu)', description: 'Penyempurnaan tambahan', status: 'default' },
+            { id: 'polish', title: 'Final Polish', description: 'Detail terakhir dan QC', status: 'default' },
+            { id: 'acc', title: 'ACC dari Klien', description: 'Persetujuan final', status: 'default' },
+        ],
+        nextSteps: ['delivery'],
+        loopTargets: ['execution', 'strategy', 'discovery']
+    },
+    {
+        id: 'delivery',
+        number: '05',
+        title: 'Delivery & Result',
+        subtitle: 'Serah terima final',
+        description: 'Penyerahan aset final dan dokumentasi.',
+        type: 'terminator',
+        color: 'emerald',
+        icon: 'CheckCircle2',
+        subSteps: [
+            { id: 'assets', title: 'Prepare Final Assets', description: 'File dalam format siap pakai', status: 'default' },
+            { id: 'styleguide', title: 'Styleguide & Dokumentasi', description: 'Panduan penggunaan brand', status: 'default' },
+            { id: 'handover', title: 'Handover Session', description: 'Sesi penjelasan dan Q&A', status: 'default' },
+            { id: 'archive', title: 'Archive & Closing', description: 'Backup dan closing admin', status: 'default' },
+        ],
+        nextSteps: [],
+        loopTargets: []
+    }
+];
 
 export default function DesignPhilosophyForm() {
     const [formData, setFormData] = useState<DesignPhilosophyData | null>(null);
@@ -24,6 +142,7 @@ export default function DesignPhilosophyForm() {
     const [isSaving, setIsSaving] = useState(false);
     const { csrfToken } = useAdminAuth();
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set(['01', '02', '03', '04', '05']));
 
     // Fetch initial data
     useEffect(() => {
@@ -32,11 +151,34 @@ export default function DesignPhilosophyForm() {
                 const res = await fetch('/api/about/philosophy');
                 if (res.ok) {
                     const data = await res.json();
-                    setFormData(data);
+                    
+                    // Defensive: Ensure workflowSteps exists dengan default
+                    const safeData: DesignPhilosophyData = {
+                        heading: data.heading || 'Design Philosophy',
+                        subheading: data.subheading || 'Strategic Thinking Framework',
+                        workflowSteps: (data.workflowSteps && Array.isArray(data.workflowSteps) && data.workflowSteps.length > 0)
+                            ? data.workflowSteps 
+                            : DEFAULT_WORKFLOW_STEPS
+                    };
+                    
+                    setFormData(safeData);
+                } else {
+                    // Kalau API error, pakai default
+                    setFormData({
+                        heading: 'Design Philosophy',
+                        subheading: 'Strategic Thinking Framework',
+                        workflowSteps: DEFAULT_WORKFLOW_STEPS
+                    });
                 }
             } catch (error) {
                 console.error('Failed to fetch philosophy data:', error);
-                setMessage({ type: 'error', text: 'Gagal mengambil data' });
+                // Kalau error, pakai default biar form tetap bisa dipakai
+                setFormData({
+                    heading: 'Design Philosophy',
+                    subheading: 'Strategic Thinking Framework',
+                    workflowSteps: DEFAULT_WORKFLOW_STEPS
+                });
+                setMessage({ type: 'error', text: 'Gagal mengambil data, menggunakan default' });
             } finally {
                 setIsLoading(false);
             }
@@ -44,16 +186,73 @@ export default function DesignPhilosophyForm() {
         fetchData();
     }, []);
 
+    const togglePhase = (number: string) => {
+        setExpandedPhases(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(number)) newSet.delete(number);
+            else newSet.add(number);
+            return newSet;
+        });
+    };
+
     const handleChange = (field: keyof DesignPhilosophyData, value: string) => {
         if (!formData) return;
         setFormData({ ...formData, [field]: value });
     };
 
-    const handleStepChange = (index: number, field: keyof PhilosophyStep, value: string) => {
-        if (!formData) return;
-        const newSteps = [...formData.steps];
+    const handlePhaseChange = (index: number, field: keyof WorkflowStep, value: unknown) => {
+        if (!formData || !formData.workflowSteps || !formData.workflowSteps[index]) return;
+        const newSteps = [...formData.workflowSteps];
         newSteps[index] = { ...newSteps[index], [field]: value };
-        setFormData({ ...formData, steps: newSteps });
+        setFormData({ ...formData, workflowSteps: newSteps });
+    };
+
+    const handleSubStepChange = (phaseIndex: number, subIndex: number, field: keyof SubStep, value: string) => {
+        if (!formData || !formData.workflowSteps) return;
+        const phase = formData.workflowSteps[phaseIndex];
+        if (!phase || !phase.subSteps || !phase.subSteps[subIndex]) return;
+        
+        const newSteps = [...formData.workflowSteps];
+        const newSubSteps = [...(newSteps[phaseIndex].subSteps || [])];
+        newSubSteps[subIndex] = { ...newSubSteps[subIndex], [field]: value };
+        newSteps[phaseIndex] = { ...newSteps[phaseIndex], subSteps: newSubSteps };
+        setFormData({ ...formData, workflowSteps: newSteps });
+    };
+
+    const handleAddSubStep = (phaseIndex: number) => {
+        if (!formData || !formData.workflowSteps || !formData.workflowSteps[phaseIndex]) return;
+        const newSteps = [...formData.workflowSteps];
+        const newSubStep: SubStep = {
+            id: `sub-${Date.now()}`,
+            title: 'Sub-step Baru',
+            description: 'Deskripsi sub-step',
+            status: 'default'
+        };
+        if (!newSteps[phaseIndex].subSteps) {
+            newSteps[phaseIndex].subSteps = [];
+        }
+        newSteps[phaseIndex].subSteps.push(newSubStep);
+        setFormData({ ...formData, workflowSteps: newSteps });
+    };
+
+    const handleRemoveSubStep = (phaseIndex: number, subIndex: number) => {
+        if (!formData || !formData.workflowSteps || !formData.workflowSteps[phaseIndex]) return;
+        const newSteps = [...formData.workflowSteps];
+        if (!newSteps[phaseIndex].subSteps) return;
+        newSteps[phaseIndex].subSteps.splice(subIndex, 1);
+        setFormData({ ...formData, workflowSteps: newSteps });
+    };
+
+    const handleLoopTargetToggle = (phaseIndex: number, targetId: string) => {
+        if (!formData || !formData.workflowSteps || !formData.workflowSteps[phaseIndex]) return;
+        const newSteps = [...formData.workflowSteps];
+        const currentTargets = newSteps[phaseIndex].loopTargets || [];
+        if (currentTargets.includes(targetId)) {
+            newSteps[phaseIndex].loopTargets = currentTargets.filter(id => id !== targetId);
+        } else {
+            newSteps[phaseIndex].loopTargets = [...currentTargets, targetId];
+        }
+        setFormData({ ...formData, workflowSteps: newSteps });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -76,7 +275,6 @@ export default function DesignPhilosophyForm() {
 
             if (res.ok) {
                 setMessage({ type: 'success', text: 'Perubahan berhasil disimpan! ✨' });
-                // Clean up message after 3 seconds
                 setTimeout(() => setMessage(null), 3000);
             } else {
                 throw new Error('Failed to save');
@@ -96,19 +294,36 @@ export default function DesignPhilosophyForm() {
         );
     }
 
-    if (!formData) return null;
+    if (!formData || !formData.workflowSteps) {
+        return (
+            <div className="flex items-center justify-center py-12 text-gray-500">
+                Gagal memuat form. Silakan refresh halaman.
+            </div>
+        );
+    }
+
+    const colorClass = (color: string) => {
+        const map: Record<string, string> = {
+            amber: 'bg-amber-50 border-amber-300 text-amber-900',
+            blue: 'bg-blue-50 border-blue-300 text-blue-900',
+            purple: 'bg-purple-50 border-purple-300 text-purple-900',
+            rose: 'bg-rose-50 border-rose-300 text-rose-900',
+            emerald: 'bg-emerald-50 border-emerald-300 text-emerald-900',
+        };
+        return map[color] || 'bg-gray-50 border-gray-300';
+    };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm">
+            {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 pb-6">
                 <div>
                     <h2 className="text-xl font-bold flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-blue-500" />
                         Design Philosophy
                     </h2>
-                    <p className="text-gray-400 text-sm mt-1">Gunakan tab &quot;Bidikan Image&quot; untuk mengupload foto baru.</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Edit bagian &quot;Filosofi Desain&quot; pada halaman About.
+                        Edit workflow proses desain (5 phase dengan sub-steps)
                     </p>
                 </div>
                 <button
@@ -134,72 +349,228 @@ export default function DesignPhilosophyForm() {
                 </motion.div>
             )}
 
-            <div className="grid gap-6">
-                {/* Global Headings */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-gray-400">Heading Utama</label>
-                        <input
-                            type="text"
-                            value={formData.heading}
-                            onChange={(e) => handleChange('heading', e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-gray-400">Sub-Heading</label>
-                        <input
-                            type="text"
-                            value={formData.subheading}
-                            onChange={(e) => handleChange('subheading', e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                        />
-                    </div>
+            {/* Global Headings */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-400">Heading Utama</label>
+                    <input
+                        type="text"
+                        value={formData.heading}
+                        onChange={(e) => handleChange('heading', e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-400">Sub-Heading</label>
+                    <input
+                        type="text"
+                        value={formData.subheading}
+                        onChange={(e) => handleChange('subheading', e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    />
+                </div>
+            </div>
+
+            {/* Workflow Steps Editor */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                        Workflow Steps ({formData.workflowSteps.length} Phase)
+                    </label>
+                    <span className="text-xs text-gray-400">
+                        Klik phase untuk expand/collapse
+                    </span>
                 </div>
 
-                {/* Steps */}
-                <div className="space-y-4">
-                    <label className="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-2">Steps (3 Poin Utama)</label>
-
-                    <div className="grid gap-6">
-                        {formData.steps.map((step, index) => (
-                            <div key={index} className="p-5 bg-gray-50 dark:bg-zinc-800/30 rounded-xl border border-gray-200 dark:border-zinc-700 relative group hover:border-blue-200 dark:hover:border-blue-900/50 transition-colors">
-                                <div className="absolute top-4 right-4 text-xs font-bold text-gray-300">#{step.number}</div>
-
-                                <div className="grid md:grid-cols-12 gap-6">
-                                    <div className="md:col-span-4 space-y-4">
-                                        <div>
-                                            <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1.5">Judul Step</label>
-                                            <input
-                                                type="text"
-                                                value={step.title}
-                                                onChange={(e) => handleStepChange(index, 'title', e.target.value)}
-                                                className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm font-bold focus:border-blue-500 outline-none"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1.5">Quote Singkat</label>
-                                            <input
-                                                type="text"
-                                                value={step.quote}
-                                                onChange={(e) => handleStepChange(index, 'quote', e.target.value)}
-                                                className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm italic text-gray-600 focus:border-blue-500 outline-none"
-                                            />
-                                        </div>
+                <div className="space-y-3">
+                    {formData.workflowSteps.map((phase, phaseIndex) => {
+                        // Defensive: skip invalid phases
+                        if (!phase) return null;
+                        
+                        const loopTargets = phase.loopTargets || [];
+                        const subSteps = phase.subSteps || [];
+                        
+                        return (
+                            <div
+                                key={phase.id || `phase-${phaseIndex}`}
+                                className={`rounded-xl border-2 overflow-hidden ${colorClass(phase.color)}`}
+                            >
+                                {/* Phase Header */}
+                                <button
+                                    type="button"
+                                    onClick={() => togglePhase(phase.number || String(phaseIndex))}
+                                    className="w-full p-4 flex items-center gap-4 text-left hover:bg-black/5 transition-colors"
+                                >
+                                    <GripVertical className="w-5 h-5 text-gray-400" />
+                                    <span className="text-lg font-bold">{phase.number || phaseIndex + 1}</span>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold">{phase.title || 'Untitled'}</h3>
+                                        <p className="text-sm opacity-70">{phase.subtitle || ''}</p>
                                     </div>
-                                    <div className="md:col-span-8">
-                                        <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1.5">Deskripsi / Penjelasan</label>
-                                        <textarea
-                                            value={step.desc}
-                                            onChange={(e) => handleStepChange(index, 'desc', e.target.value)}
-                                            rows={4}
-                                            className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm leading-relaxed focus:border-blue-500 outline-none resize-none"
-                                        />
-                                    </div>
-                                </div>
+                                    {loopTargets.length > 0 && (
+                                        <div className="flex items-center gap-1 text-xs bg-white/50 px-2 py-1 rounded-full">
+                                            <RotateCcw className="w-3 h-3" />
+                                            {loopTargets.length} loop
+                                        </div>
+                                    )}
+                                    {expandedPhases.has(phase.number || String(phaseIndex)) ? (
+                                        <ChevronUp className="w-5 h-5 text-gray-400" />
+                                    ) : (
+                                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                                    )}
+                                </button>
+
+                                {/* Phase Content */}
+                                <AnimatePresence>
+                                    {expandedPhases.has(phase.number || String(phaseIndex)) && (
+                                        <motion.div
+                                            initial={{ height: 0 }}
+                                            animate={{ height: 'auto' }}
+                                            exit={{ height: 0 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="p-4 pt-0 space-y-4 border-t border-black/10">
+                                                {/* Phase Settings */}
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                                                    <div>
+                                                        <label className="text-[10px] font-bold uppercase text-gray-500 block mb-1">Judul</label>
+                                                        <input
+                                                            type="text"
+                                                            value={phase.title || ''}
+                                                            onChange={(e) => handlePhaseChange(phaseIndex, 'title', e.target.value)}
+                                                            className="w-full px-3 py-2 bg-white/70 border border-black/10 rounded-lg text-sm font-bold"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold uppercase text-gray-500 block mb-1">Subtitle</label>
+                                                        <input
+                                                            type="text"
+                                                            value={phase.subtitle || ''}
+                                                            onChange={(e) => handlePhaseChange(phaseIndex, 'subtitle', e.target.value)}
+                                                            className="w-full px-3 py-2 bg-white/70 border border-black/10 rounded-lg text-sm"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold uppercase text-gray-500 block mb-1">Warna</label>
+                                                        <select
+                                                            value={phase.color || 'amber'}
+                                                            onChange={(e) => handlePhaseChange(phaseIndex, 'color', e.target.value)}
+                                                            className="w-full px-3 py-2 bg-white/70 border border-black/10 rounded-lg text-sm"
+                                                        >
+                                                            {COLORS.map(c => (
+                                                                <option key={c.value} value={c.value}>{c.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold uppercase text-gray-500 block mb-1">Icon</label>
+                                                        <select
+                                                            value={phase.icon || 'Sparkles'}
+                                                            onChange={(e) => handlePhaseChange(phaseIndex, 'icon', e.target.value)}
+                                                            className="w-full px-3 py-2 bg-white/70 border border-black/10 rounded-lg text-sm"
+                                                        >
+                                                            {AVAILABLE_ICONS.map(icon => (
+                                                                <option key={icon} value={icon}>{icon}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                {/* Description */}
+                                                <div>
+                                                    <label className="text-[10px] font-bold uppercase text-gray-500 block mb-1">Deskripsi Phase</label>
+                                                    <textarea
+                                                        value={phase.description || ''}
+                                                        onChange={(e) => handlePhaseChange(phaseIndex, 'description', e.target.value)}
+                                                        rows={2}
+                                                        className="w-full px-3 py-2 bg-white/70 border border-black/10 rounded-lg text-sm"
+                                                    />
+                                                </div>
+
+                                                {/* Loop Targets */}
+                                                <div>
+                                                    <label className="text-[10px] font-bold uppercase text-gray-500 block mb-2">
+                                                        Revisi bisa ke (Loop Targets):
+                                                    </label>
+                                                    <div className="flex gap-2 flex-wrap">
+                                                        {formData.workflowSteps.map((targetPhase) => {
+                                                            if (!targetPhase || !targetPhase.id) return null;
+                                                            return (
+                                                                <button
+                                                                    key={targetPhase.id}
+                                                                    type="button"
+                                                                    onClick={() => handleLoopTargetToggle(phaseIndex, targetPhase.id)}
+                                                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                                                                        loopTargets.includes(targetPhase.id)
+                                                                            ? 'bg-black text-white'
+                                                                            : 'bg-white/50 text-gray-600 hover:bg-white'
+                                                                    }`}
+                                                                >
+                                                                    {targetPhase.number || '?'} {targetPhase.title || 'Untitled'}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                {/* Sub-steps */}
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <label className="text-[10px] font-bold uppercase text-gray-500">
+                                                            Sub-steps ({subSteps.length})
+                                                        </label>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleAddSubStep(phaseIndex)}
+                                                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                                        >
+                                                            <Plus className="w-3 h-3" /> Tambah
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        {subSteps.map((subStep, subIndex) => {
+                                                            if (!subStep) return null;
+                                                            return (
+                                                                <div
+                                                                    key={subStep.id || `sub-${subIndex}`}
+                                                                    className="flex items-start gap-3 p-3 bg-white/50 rounded-lg border border-black/5"
+                                                                >
+                                                                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={subStep.title || ''}
+                                                                            onChange={(e) => handleSubStepChange(phaseIndex, subIndex, 'title', e.target.value)}
+                                                                            placeholder="Judul sub-step"
+                                                                            className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium"
+                                                                        />
+                                                                        <input
+                                                                            type="text"
+                                                                            value={subStep.description || ''}
+                                                                            onChange={(e) => handleSubStepChange(phaseIndex, subIndex, 'description', e.target.value)}
+                                                                            placeholder="Deskripsi"
+                                                                            className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm"
+                                                                        />
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleRemoveSubStep(phaseIndex, subIndex)}
+                                                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
-                        ))}
-                    </div>
+                        );
+                    })}
                 </div>
             </div>
         </form>

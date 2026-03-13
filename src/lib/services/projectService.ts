@@ -56,7 +56,7 @@ export const projectService = {
      */
     async getProjects(status?: string, noCache = false): Promise<{ projects: Project[], lastUpdated: string }> {
         const cacheKey = getProjectCacheKey(`projects:${status || 'all'}`);
-        
+
         // Cek cache dulu (kecuali noCache=true)
         if (!noCache) {
             const cached = getFromProjectCache<{ projects: Project[], lastUpdated: string }>(cacheKey);
@@ -108,10 +108,10 @@ export const projectService = {
                 projects: sortedProjects,
                 lastUpdated
             };
-            
+
             // Simpan ke cache
             setProjectCache(cacheKey, result);
-            
+
             return result;
         } catch (error) {
             console.error('Error loading projects from Firebase:', error);
@@ -151,13 +151,13 @@ export const projectService = {
                 // Slug is unique
                 break;
             }
-            
+
             // Collision detected, generate new slug dengan timestamp + random
             const timestamp = Date.now().toString(36);
             const random = Math.random().toString(36).substring(2, 6);
             slug = `${baseSlug}-${timestamp}${random}`;
             attempts++;
-            
+
             console.log(`[ProjectService] Slug collision detected, retrying with: ${slug}`);
         }
 
@@ -335,25 +335,67 @@ export const projectService = {
         const firebaseUpdates: Record<string, unknown> = {};
 
         if (updates.delete) {
-            // BUG FIX #3: Delete langsung tanpa melalui deleteProject untuk menghindari cache thrashing
             const projectsRef = db.ref('projects');
             const snap = await projectsRef.once('value');
             const currentProjects = snap.val() || {};
-            
+
             const firebaseUpdates: Record<string, unknown> = {};
-            
+            const allAssetPathsToPurge: string[] = [];
+
             updates.ids.forEach(id => {
-                if (currentProjects[id]) {
+                const project = currentProjects[id];
+                if (project) {
                     firebaseUpdates[`projects/${id}`] = null;
+
+                    // Collect all assets for this project to prevent ghost files
+                    const urls: string[] = [];
+                    if (project.cover) urls.push(project.cover);
+                    if (project.comparison?.beforeImage) urls.push(project.comparison.beforeImage);
+                    if (project.comparison?.afterImage) urls.push(project.comparison.afterImage);
+
+                    if (project.galleryItems && Array.isArray(project.galleryItems)) {
+                        project.galleryItems.forEach((item: { src?: string }) => item.src && urls.push(item.src));
+                    }
+                    if (project.galleryGroups && Array.isArray(project.galleryGroups)) {
+                        project.galleryGroups.forEach((group: { items?: { src?: string }[] }) => {
+                            group.items?.forEach((item: { src?: string }) => item.src && urls.push(item.src));
+                        });
+                    }
+
+                    // Extract purely storage paths
+                    urls.forEach(url => {
+                        let path = '';
+                        if (url.includes('/o/')) {
+                            path = decodeURIComponent(url.split('/o/')[1].split('?')[0]);
+                        } else if (url.startsWith('/')) {
+                            path = url.substring(1);
+                        }
+                        if (path && path.startsWith('assets/')) {
+                            allAssetPathsToPurge.push(path);
+                        }
+                    });
                 }
             });
-            
+
+            // Fire and forget storage purge
+            if (allAssetPathsToPurge.length > 0) {
+                console.log(`[ProjectService] Bulk purging ${allAssetPathsToPurge.length} storage assets...`);
+                Promise.all(allAssetPathsToPurge.map(async (storagePath) => {
+                    try {
+                        const file = bucket.file(storagePath);
+                        const [exists] = await file.exists();
+                        if (exists) await file.delete();
+                    } catch (e) {
+                        console.warn(`[ProjectService] Failed bulk delete asset: ${storagePath}`, e);
+                    }
+                })).catch(e => console.error('[ProjectService] Bulk storage purge error:', e));
+            }
+
             if (Object.keys(firebaseUpdates).length > 0) {
                 firebaseUpdates['lastUpdated'] = new Date().toISOString();
                 await db.ref().update(firebaseUpdates);
             }
-            
-            // Clear cache sekali setelah semua delete selesai
+
             clearProjectCache();
             return true;
         } else if (updates.reorder) {

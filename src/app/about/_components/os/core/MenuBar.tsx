@@ -65,14 +65,20 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
             {/* Center Area - Logout Button (Admin Only) */}
             {isAdmin && (
                 <div className="absolute inset-x-0 flex justify-center items-center pointer-events-none h-full">
-                    <button
-                        onClick={onLogout}
-                        className="pointer-events-auto flex items-center gap-1.5 px-3 py-1 text-red-600 hover:text-red-700 transition-all active:scale-95 group"
-                        title="Sign Out from Admin Session"
-                    >
-                        <LogOut size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-                        <span className="font-bold text-[11px] uppercase tracking-tight">Exit Admin</span>
-                    </button>
+                    <div className="flex items-center gap-2 pointer-events-auto">
+                        <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 border border-amber-200 shadow-sm animate-in fade-in slide-in-from-top-1">
+                             <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                             <span className="text-[9px] font-bold text-amber-700 uppercase tracking-wider">Admin Mode</span>
+                        </div>
+                        <button
+                            onClick={onLogout}
+                            className="flex items-center gap-1.5 px-3 py-1 text-red-600 hover:text-red-700 transition-all active:scale-95 group"
+                            title="Sign Out from Admin Session"
+                        >
+                            <LogOut size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+                            <span className="font-bold text-[11px] uppercase tracking-tight">Exit Admin</span>
+                        </button>
+                    </div>
                 </div>
             )}
 

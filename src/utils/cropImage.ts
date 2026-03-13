@@ -1,9 +1,22 @@
 export const createImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
         const image = new Image()
-        image.addEventListener('load', () => resolve(image))
-        image.addEventListener('error', (_error) => reject(_error))
-        image.setAttribute('crossOrigin', 'anonymous') // needed to avoid cross-origin issues on CodeSandbox
+
+        // Timeout handling (15 seconds)
+        const timeoutId = setTimeout(() => {
+            image.src = ''; // stop loading
+            reject(new Error('Image load timeout: ' + url));
+        }, 15000);
+
+        image.addEventListener('load', () => {
+            clearTimeout(timeoutId);
+            resolve(image);
+        })
+        image.addEventListener('error', (_error) => {
+            clearTimeout(timeoutId);
+            reject(_error);
+        })
+        image.setAttribute('crossOrigin', 'anonymous')
         image.src = url
     })
 
@@ -26,7 +39,7 @@ export function rotateSize(width: number, height: number, rotation: number) {
 }
 
 /**
- * This function was adapted from the one in the Readme of https://github.com/DominicTobias/react-image-crop
+ * This function was adapted from a popular image cropping library.
  */
 export default async function getCroppedImg(
     imageSrc: string,

@@ -3,7 +3,6 @@
     {
       "id": "hard-ps",
       "name": "Adobe Photoshop",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/photoshop/photoshop-plain.svg",
       "level": "Expert",
       "order": 1,
       "description": "Expert image manipulation tool",
@@ -19,7 +18,6 @@
     {
       "id": "hard-ai",
       "name": "Adobe Illustrator",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/illustrator/illustrator-plain.svg",
       "level": "Expert",
       "order": 2,
       "description": "Vector graphics editor",
@@ -35,7 +33,6 @@
     {
       "id": "hard-figma",
       "name": "Figma",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg",
       "level": "Advanced",
       "order": 3,
       "description": "Interface design tool",
@@ -51,7 +48,6 @@
     {
       "id": "hard-canva",
       "name": "Canva",
-      "iconUrl": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/canva/canva-original.svg",
       "level": "Intermediate",
       "order": 4,
       "description": "Graphic design platform",

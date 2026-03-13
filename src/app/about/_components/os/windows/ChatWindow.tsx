@@ -6,13 +6,12 @@ import { mockChats as initialChats, ContactProfile, ChatMessage } from '../data/
 import { soundManager } from "../utils/SoundManager";
 import { getAvatarUrl } from '@/lib/avatar';
 import { Project } from '@/types/projects';
+import { isVideoLink } from '@/lib/media';
 
 interface ChatWindowProps {
     activeChatId?: string | null;
     customContacts?: Record<string, ContactProfile>;
 }
-
-const isVideo = (url?: string) => url?.toLowerCase().endsWith('.mp4');
 
 export default function ChatWindow({ activeChatId, customContacts }: ChatWindowProps) {
     const [input, setInput] = useState('');
@@ -220,7 +219,7 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                 key="chat-bg-pattern-os-v2"
                 className="absolute inset-0 opacity-100 pointer-events-none z-0"
                 style={{
-                    backgroundImage: 'url("/assets/whatsapp-bg.png")',
+                    backgroundImage: 'url("/assets/whatsapp-bg.webp")',
                     backgroundRepeat: 'repeat',
                     backgroundSize: '400px'
                 }}
@@ -287,9 +286,9 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                                 className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 group cursor-pointer relative hover:opacity-90 transition-opacity"
                                                 onClick={() => setPreviewImage(projects[msg.projectId!].cover)}
                                             >
-                                                {isVideo(projects[msg.projectId].cover) ? (
+                                                {isVideoLink(projects[msg.projectId].cover) ? (
                                                     <video
-                                                        src={projects[msg.projectId].cover}
+                                                        src={projects[msg.projectId].cover + '#t=0.1'}
                                                         autoPlay
                                                         muted
                                                         loop
@@ -327,10 +326,10 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                             className="mb-2 rounded-md overflow-hidden bg-black/5 border border-black/5 cursor-pointer hover:opacity-90 transition-opacity min-h-[100px] flex items-center justify-center bg-gray-100"
                                             onClick={() => setPreviewImage(msg.imageSrc || null)}
                                         >
-                                            {isVideo(msg.imageSrc) ? (
+                                            {isVideoLink(msg.imageSrc) ? (
                                                 <video
-                                                    src={msg.imageSrc}
-                                                    autoPlay
+                                                    src={msg.imageSrc + '#t=0.1'}
+                                                    autoPlay={true}
                                                     muted
                                                     loop
                                                     playsInline
@@ -432,9 +431,9 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                         onClick={() => setPreviewImage(null)}
                     >
                         <div className="relative max-w-full max-h-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
-                            {isVideo(previewImage) ? (
+                            {isVideoLink(previewImage) ? (
                                 <video
-                                    src={previewImage}
+                                    src={previewImage + '#t=0.1'}
                                     controls
                                     autoPlay
                                     className="max-w-full max-h-full object-contain rounded-lg"

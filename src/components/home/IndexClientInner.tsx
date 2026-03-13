@@ -27,23 +27,23 @@ interface FuseInstance<T> {
   setCollection: (collection: T[]) => void
 }
 
-export default function IndexClientInner({ 
-  projects, 
-  tag, 
-  searchQuery, 
+export default function IndexClientInner({
+  projects,
+  tag,
+  searchQuery,
   lastUpdated: _lastUpdated, // Dead prop - kept for API compatibility
   windowWidth,
-  isLoading: isParentLoading 
+  isLoading: isParentLoading
 }: Props) {
   // Start with a smaller number to improve initial load performance (LCP)
   const [visibleCount, setVisibleCount] = useState(8)
 
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [fuseInstance, setFuseInstance] = useState<FuseInstance<Project> | null>(null)
-  
+
   // BUG FIX #3: Cleanup flag untuk mencegah setState pada unmounted component
   const isMountedRef = useRef(true)
-  
+
   useEffect(() => {
     isMountedRef.current = true
     return () => {
@@ -60,7 +60,7 @@ export default function IndexClientInner({
         import('fuse.js').then((FuseModule) => {
           // Guard: jangan update state kalau component sudah unmount
           if (!isMountedRef.current) return
-          
+
           const Fuse = FuseModule.default || FuseModule
 
           setFuseInstance(prevInstance => {
@@ -79,10 +79,10 @@ export default function IndexClientInner({
           console.error('[IndexClientInner] Failed to load Fuse.js:', err)
         })
       }, 100);
-      
+
       return () => clearTimeout(timeoutId)
     }
-  }, [searchQuery]) // Hanya depend on searchQuery, tidak projects
+  }, [searchQuery, projects])
 
   // BUG FIX #7: Update Fuse collection saat projects berubah (tanpa re-create instance)
   useEffect(() => {

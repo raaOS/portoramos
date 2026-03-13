@@ -1,25 +1,39 @@
 // [STICKY NOTE] IMAGES UTILITY
-// File ini menggunakan JSDelivr CDN untuk mempercepat loading aset dari GitHub.
-// JSDelivr cache GitHub files dengan CDN global - gratis dan cepat.
+// File ini mengelola aset gambar dan media untuk portofolio.
 
 import type { Project, GalleryItem } from '@/types/projects';
 
 /**
- * Media proxy helper. 
- * We now prefer using our local /api/media proxy for better caching control
- * and to avoid cross-domain issues with videos.
- * The Media component already uses getProxiedUrl which handles this.
+ * Convert GCS storage URLs to Firebase Storage URLs.
+ * storage.googleapis.com/<bucket>/<path> → firebasestorage.googleapis.com/v0/b/<bucket>/o/<path>?alt=media
  */
-function toProxy(u: string) {
+function convertGcsUrl(u: string): string {
+  const gcsMatch = u.match(
+    /^https?:\/\/storage\.googleapis\.com\/([^/]+)\/(.+)$/
+  );
+  if (gcsMatch) {
+    const bucket = gcsMatch[1];
+    let path = gcsMatch[2];
+    if (!path.startsWith('assets/')) {
+        path = `assets/${path}`;
+    }
+    const converted = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media`;
+    // console.log('[IMAGES.TS] CONVERTED:', u.substring(0, 60), '→', converted.substring(0, 80));
+    return converted;
+  }
   return u;
+}
+
+function toProxy(u: string) {
+  return convertGcsUrl(u);
 }
 
 export function toImageProxy(u: string) {
-  return u;
+  return convertGcsUrl(u);
 }
 
 export function toMediaProxy(u: string) {
-  return u;
+  return convertGcsUrl(u);
 }
 
 export function isVideoLink(u: string): boolean {

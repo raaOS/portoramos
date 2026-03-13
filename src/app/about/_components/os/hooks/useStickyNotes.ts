@@ -121,40 +121,42 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
         const saveNotes = async () => {
             try {
                 let notesToPersist = [...notes];
-                const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
-                // GHOST BUG FIX: Prevent overwriting desktop positions from mobile
-                // We keep text/color/star changes but merge back server positions for existing notes
-                if (isMobile) {
-                    try {
-                        const response = await fetch(`/api/sticky-notes?force=true&t=${Date.now()}`, {
-                            signal: controller.signal
-                        });
-                        if (response.ok) {
-                            const serverData = await response.json();
-                            if (Array.isArray(serverData)) {
-                                notesToPersist = notes.map(localNote => {
-                                    const serverNote = serverData.find((sn: NoteData) => sn.id === localNote.id);
-                                    if (serverNote) {
-                                        return {
-                                            ...localNote,
-                                            x: serverNote.x,
-                                            y: serverNote.y,
-                                            width: serverNote.width,
-                                            height: serverNote.height
-                                        };
-                                    }
-                                    return localNote;
-                                });
-                            }
+                
+                // GHOST BUG FIX: Prevent overwriting CRUD text edits from stale frontend state
+                // We fetch the latest server state and ONLY apply our local positional/visual state before saving.
+                try {
+                    const response = await fetch(`/api/sticky-notes?force=true&t=${Date.now()}`, {
+                        signal: controller.signal
+                    });
+                    if (response.ok) {
+                        const serverData = await response.json();
+                        if (Array.isArray(serverData)) {
+                            notesToPersist = notes.map(localNote => {
+                                const serverNote = serverData.find((sn: NoteData) => sn.id === localNote.id);
+                                if (serverNote) {
+                                    // Keep server's text, color, and star status, but apply our local drag/drop/resize state
+                                    return {
+                                        ...serverNote,
+                                        x: localNote.x,
+                                        y: localNote.y,
+                                        width: localNote.width,
+                                        height: localNote.height,
+                                        zIndex: localNote.zIndex,
+                                        isPinned: localNote.isPinned,
+                                        isCollapsed: localNote.isCollapsed,
+                                        opacity: localNote.opacity
+                                    };
+                                }
+                                return localNote;
+                            });
                         }
-                    } catch (e) {
-                        if (e instanceof Error && e.name === 'AbortError') {
-                            console.log('[StickyNotes] Mobile merge aborted');
-                            return;
-                        }
-                        console.warn("[StickyNotes] Mobile merge failed", e);
                     }
+                } catch (e) {
+                    if (e instanceof Error && e.name === 'AbortError') {
+                        console.log('[StickyNotes] Safe merge aborted');
+                        return;
+                    }
+                    console.warn("[StickyNotes] Safe merge failed", e);
                 }
 
                 await fetch('/api/sticky-notes', {
@@ -247,7 +249,14 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
     const updateNote = useCallback((id: string, updates: Partial<NoteData>) => {
         setNotes(prev => prev.map(note => note.id === id ? { ...note, ...updates } : note));
         isModified.current = true;
-    }, []);
+        
+        // Simpan posisi/size ke positionSync buffer jika admin
+        if (isAdmin && (updates.x !== undefined || updates.y !== undefined || updates.width !== undefined || updates.height !== undefined)) {
+            import('../utils/positionSync').then(({ saveNotePosition }) => {
+                saveNotePosition(id, updates, isAdmin);
+            });
+        }
+    }, [isAdmin]);
 
     const deleteNote = useCallback((id: string) => {
         updateNote(id, { isDeleted: true });

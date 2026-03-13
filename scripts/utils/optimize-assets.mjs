@@ -11,7 +11,6 @@ const MEDIA_DIR = path.join(process.cwd(), 'public', 'assets', 'media');
 // We will output optimized files to the SAME directory but with a prefix or overwrite?
 // "Extreme" means overwrite or replace usage. 
 // A safer "extreme" is to create a parallel "_opt" file and swizzle logic? 
-// No, user wants GitHub storage to equal Cloudinary. Cloudinary delivers optimized. 
 // We should Overwrite the originals (if we are brave) or create WebP sidecars.
 // Updating code to look for .webp is annoying. 
 // STRATEGY: 

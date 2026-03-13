@@ -2,19 +2,29 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import type { Project, GalleryItem } from "@/types/projects";
 
+import { getProxiedUrl } from "@/lib/utils";
+
 // Dynamic import for the detail component
 const ProjectDetailTwoColumn = dynamic(() => import("@/components/projects/ProjectDetailTwoColumn"), {
     loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
     ssr: false
 });
 
-const isVideo = (url?: string) => url && /\.(mp4|webm|mov)$/i.test(url);
+const isVideo = (url?: string) => url && /\.(mp4|webm|mov)(\?.*)?$/i.test(url);
 
 const ProjectDetailWrapper = ({ project, projects }: { project: Project, projects: Project[] }) => {
     const coverSrc = project.cover || '/placeholder.jpg';
+    const isVid = isVideo(coverSrc);
+    
+    // Generate poster for video (replace extension with .jpg and keep query params)
+    const poster = isVid 
+        ? getProxiedUrl(coverSrc.replace(/\.(mp4|webm|mov)(\?.*)?$/i, '.jpg$2'))
+        : undefined;
+
     const cover: GalleryItem = {
-        kind: isVideo(coverSrc) ? 'video' : 'image',
-        src: coverSrc,
+        kind: isVid ? 'video' : 'image',
+        src: getProxiedUrl(coverSrc),
+        poster: poster,
         alt: project.title
     };
 

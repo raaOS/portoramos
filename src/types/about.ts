@@ -69,17 +69,32 @@ export interface AboutSoftSkills {
   descriptions_id?: string[];
 }
 
-export interface PhilosophyStep {
+// Workflow types for interactive flowchart (Hapus PhilosophyStep legacy)
+export interface WorkflowSubStep {
+  id: string;
+  title: string;
+  description: string;
+  status?: 'default' | 'in-progress' | 'completed' | 'pending';
+}
+
+export interface WorkflowStep {
+  id: string;
   number: string;
   title: string;
-  desc: string;
-  quote: string;
+  subtitle: string;
+  description: string;
+  type: 'phase' | 'decision' | 'terminator';
+  color: 'amber' | 'blue' | 'purple' | 'rose' | 'emerald';
+  icon: string;
+  subSteps: WorkflowSubStep[];
+  nextSteps: string[];
+  loopTargets: string[];
 }
 
 export interface DesignPhilosophy {
   heading: string;
   subheading: string;
-  steps: PhilosophyStep[];
+  workflowSteps: WorkflowStep[];
 }
 
 

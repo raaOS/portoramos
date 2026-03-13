@@ -11,6 +11,22 @@ import { success, created, unauthorized, serverError, validationError } from '@/
 
 export const dynamic = 'force-dynamic';
 
+// Convert storage.googleapis.com URLs to firebasestorage.googleapis.com format
+function convertGcsUrls(url?: string): string | undefined {
+  if (!url) return url;
+  const m = url.match(/^https?:\/\/storage\.googleapis\.com\/([^/]+)\/(.+)$/);
+  if (m) {
+    const bucket = m[1];
+    let path = m[2];
+    // Database URLs are missing the 'assets/' prefix that local files were uploaded with
+    if (!path.startsWith('assets/')) {
+        path = `assets/${path}`;
+    }
+    return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media`;
+  }
+  return url;
+}
+
 // GET - Read all projects
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +37,19 @@ export async function GET(request: NextRequest) {
     // Jika admin minta fresh data, skip cache (noCache=true)
     const { projects, lastUpdated } = await projectService.getProjects(status, fresh);
 
-    return success({ projects, lastUpdated });
+    // Fix GCS storage URLs → Firebase Storage URLs (prevents 403 Forbidden)
+    const fixedProjects = projects.map(p => ({
+      ...p,
+      cover: convertGcsUrls(p.cover) || p.cover,
+      galleryItems: p.galleryItems?.map(item => ({
+        ...item,
+        src: convertGcsUrls(item.src) || item.src,
+        poster: convertGcsUrls(item.poster) || item.poster,
+      })),
+      gallery: p.gallery?.map(url => convertGcsUrls(url) || url),
+    }));
+
+    return success({ projects: fixedProjects, lastUpdated });
   } catch (error) {
     console.error('[API /projects GET] Error:', error);
     return serverError('Failed to load projects');

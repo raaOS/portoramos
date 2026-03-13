@@ -27,8 +27,5 @@ export function LastUpdatedProvider({ children }: { children: ReactNode }) {
 
 export function useLastUpdated() {
   const context = useContext(LastUpdatedContext);
-  if (context === undefined) {
-    throw new Error('useLastUpdated must be used within a LastUpdatedProvider');
-  }
   return context;
 }

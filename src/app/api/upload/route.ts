@@ -8,18 +8,18 @@ const MAX_FILENAME_LENGTH = 100;
 
 function sanitizeFilename(input: string | null): string | null {
     if (!input) return null;
-    
+
     // Remove any path traversal attempts
     const sanitized = input
         .replace(/[/\\]/g, '') // Remove path separators
         .replace(/\.{2,}/g, '') // Remove sequences of dots
         .replace(/[<>"|?*]/g, ''); // Remove other dangerous chars
-    
+
     // Validate result
     if (!VALID_FILENAME_REGEX.test(sanitized)) {
         return null;
     }
-    
+
     // Limit length
     return sanitized.substring(0, MAX_FILENAME_LENGTH);
 }
@@ -52,8 +52,8 @@ export async function POST(req: NextRequest) {
         // FIXED (BUG-010): Sanitize custom filename
         const customFilename = sanitizeFilename(rawCustomFilename);
         if (rawCustomFilename && !customFilename) {
-            return NextResponse.json({ 
-                error: 'Invalid filename. Use only alphanumeric characters, hyphens, and underscores.' 
+            return NextResponse.json({
+                error: 'Invalid filename. Use only alphanumeric characters, hyphens, and underscores.'
             }, { status: 400 });
         }
 
@@ -74,7 +74,13 @@ export async function POST(req: NextRequest) {
         } else {
             const cleanName = file.name.toLowerCase().replace(/[^a-z0-9.]/g, '-');
             finalFilename = `${Date.now()}-${cleanName}`;
-            targetDir = folderParam === 'temp' ? 'temp' : 'assets/media';
+            
+            // Respect the folder param if provided and safe
+            if (folderParam && (folderParam.startsWith('assets/') || folderParam === 'temp')) {
+                targetDir = folderParam;
+            } else {
+                targetDir = 'assets/media';
+            }
         }
 
         const storagePath = `${targetDir}/${finalFilename}`;
@@ -93,5 +99,37 @@ export async function POST(req: NextRequest) {
     } catch (e) {
         console.error('Upload Error:', e);
         return NextResponse.json({ error: e instanceof Error ? e.message : 'Upload failed' }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    try {
+        if (!await validateAdminRequest(req)) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(req.url);
+        const storagePath = searchParams.get('path');
+
+        if (!storagePath) {
+            return NextResponse.json({ error: 'Missing storage path' }, { status: 400 });
+        }
+
+        // Only allow deleting from certain paths for security
+        if (!storagePath.startsWith('assets/') && !storagePath.startsWith('temp/')) {
+            return NextResponse.json({ error: 'Forbidden path' }, { status: 403 });
+        }
+
+        const firebaseFile = bucket.file(storagePath);
+        const [exists] = await firebaseFile.exists();
+
+        if (exists) {
+            await firebaseFile.delete();
+        }
+
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        console.error('Delete Error:', e);
+        return NextResponse.json({ error: e instanceof Error ? e.message : 'Delete failed' }, { status: 500 });
     }
 }

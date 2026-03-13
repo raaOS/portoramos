@@ -65,9 +65,9 @@ export const AdminNoteEditor = ({ value, onChange, fontSize, onFontSizeChange }:
                 contentEditable={true}
                 onInput={handleContentChange}
                 onBlur={handleBlur}
-                className="w-full min-h-[160px] max-h-[400px] p-4 text-gray-800 text-lg whitespace-pre-wrap overflow-y-auto focus:outline-none"
+                className="w-full min-h-[160px] max-h-[400px] p-4 text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto focus:outline-none"
                 style={{
-                    fontFamily: 'var(--font-handwritten, "Comic Sans MS", cursive)',
+                    fontFamily: 'var(--font-handwritten, "Comic Sans MS", "Chalkboard SE", cursive)',
                     fontSize: `${fontSize}px`,
                 }}
             />

@@ -83,7 +83,7 @@ export default function GalleryManager({ projects }: GalleryManagerProps) {
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
-    const isVideoLink = (url: string) => /\.(mp4|webm|ogg)$/i.test(url);
+    const isVideoLink = (url: string) => /\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
 
     return (
         <div className="space-y-6">
@@ -131,7 +131,7 @@ export default function GalleryManager({ projects }: GalleryManagerProps) {
                         >
                             {isVideo ? (
                                 <video
-                                    src={project.cover}
+                                    src={project.cover + '#t=0.1'}
                                     className={`w-full h-full object-cover transition-all duration-300 ${isSelected ? 'brightness-100' : 'brightness-90 group-hover:brightness-100'}`}
                                     muted
                                     loop

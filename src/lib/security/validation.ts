@@ -92,10 +92,6 @@ export function validateProjectData(data: unknown): ValidationResult {
         errors.push('Invalid URL format')
     }
 
-    // GitHub URL validation
-    if (project.github && typeof project.github === 'string' && !isValidUrl(project.github)) {
-        errors.push('Invalid GitHub URL format')
-    }
 
     // Technologies validation
     if (project.technologies && !Array.isArray(project.technologies)) {

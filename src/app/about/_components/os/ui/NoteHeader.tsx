@@ -1,6 +1,6 @@
 import React from 'react';
 import type { DragControls } from 'framer-motion';
-import { X, Check, Plus } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface NoteHeaderProps {
     color: string;
@@ -8,7 +8,6 @@ interface NoteHeaderProps {
     onColorChange: (color: string) => void;
     onDelete: () => void;
     onToggleCollapse: () => void;
-    onAdd?: () => void;
     isPinned: boolean;
     dragControls: DragControls;
 }
@@ -19,7 +18,6 @@ export const NoteHeader = ({
     onColorChange,
     onDelete,
     onToggleCollapse,
-    onAdd,
     isPinned,
     dragControls
 }: NoteHeaderProps) => (
@@ -30,38 +28,11 @@ export const NoteHeader = ({
         }}
         onDoubleClick={onToggleCollapse}
     >
-        {/* Color Picker */}
-        <div className="flex gap-2" onPointerDown={(e) => e.stopPropagation()}>
-            {colors.map(c => (
-                <button
-                    key={c}
-                    onClick={() => onColorChange(c)}
-                    className="rounded-full border border-black/10 hover:scale-125 transition-transform flex items-center justify-center shrink-0"
-                    style={{
-                        backgroundColor: c,
-                        width: '12px',
-                        height: '12px',
-                        minWidth: '12px',
-                        minHeight: '12px'
-                    }}
-                    title="Set Warna"
-                >
-                    {color === c && <Check size={8} className="text-black/60" strokeWidth={3} />}
-                </button>
-            ))}
-        </div>
+        <div></div>
 
         {/* Actions */}
         <div className="flex items-center" onPointerDown={(e) => e.stopPropagation()}>
-            {onAdd && (
-                <button
-                    onClick={onAdd}
-                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-black transition-colors"
-                    title="Tambah Catatan (Ctrl+N)"
-                >
-                    <Plus size={16} />
-                </button>
-            )}
+
             <button
                 onClick={onDelete}
                 className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-black transition-colors"

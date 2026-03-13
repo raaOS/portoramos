@@ -81,7 +81,7 @@ export async function PUT(
     // --- Telegram Notification ---
     const changedFields = Object.keys(body).filter(k => k !== 'initialCommentCount').join(', ');
     const updateMessage = `✏️ **PROJECT UPDATED**\n\n**Title:** ${updatedProject.title}\n**ID:** ${updatedProject.id}\n**Changes:** ${changedFields || 'No specific fields'}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
-    sendTelegramAlert(updateMessage);
+    sendTelegramAlert(updateMessage).catch(err => console.error('[Telegram] Failed to send update alert:', err));
 
     revalidatePath('/', 'layout');
     revalidatePath('/projects');
@@ -124,7 +124,7 @@ export async function DELETE(
     }
 
     const successMessage = `🗑️ **PROJECT DELETED**\n\n**ID:** ${id}\n**By:** Admin\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
-    sendTelegramAlert(successMessage);
+    sendTelegramAlert(successMessage).catch(err => console.error('[Telegram] Failed to send delete alert:', err));
 
     revalidatePath('/', 'layout');
     revalidatePath('/projects');

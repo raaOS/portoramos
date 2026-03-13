@@ -35,7 +35,7 @@ export default function LighthouseSiteAuditView() {
                 // 2. Fetch Dynamic Projects
                 const res = await fetch('/api/projects');
                 const data = await res.json();
-                const projects: Project[] = data.projects || [];
+                const projects: Project[] = data?.data?.projects || [];
 
                 const projectRoutes = projects
                     //.filter(p => !p.isHidden) // Optional: only scan public pages

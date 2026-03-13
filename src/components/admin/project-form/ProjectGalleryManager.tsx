@@ -1,21 +1,22 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { ProjectFormData } from '@/hooks/useProjectForm';
 import { CheckCircle2, Plus, FolderPlus, Trash2, Image as ImageIcon, UploadCloud, Loader2 } from 'lucide-react';
 import { useFirebaseUpload } from '@/app/admin/components/file-upload/hooks';
-import { extractStoragePath } from '@/lib/storageUtils';
+import { extractStoragePath } from '@/lib/media';
 
 interface ProjectGalleryManagerProps {
     formData: ProjectFormData;
-    addGalleryItem: (url: string, githubPath?: string) => boolean;
+    addGalleryItem: (url: string) => boolean;
     removeGalleryItem: (index: number) => void;
     toggleGalleryItem: (index: number) => void;
     addGalleryGroup: (name: string) => void;
     removeGalleryGroup: (groupId: string) => void;
-    addGalleryItemToGroup: (groupId: string, url: string, githubPath?: string) => boolean;
+    addGalleryItemToGroup: (groupId: string, url: string) => boolean;
     removeGalleryItemFromGroup: (groupId: string, itemIndex: number) => void;
     toggleGalleryItemInGroup: (groupId: string, itemIndex: number) => void;
     updateGroupName: (groupId: string, name: string) => void;
+    onNewUpload?: (url: string) => void;
 }
 
 export default function ProjectGalleryManager({
@@ -28,13 +29,29 @@ export default function ProjectGalleryManager({
     addGalleryItemToGroup,
     removeGalleryItemFromGroup,
     toggleGalleryItemInGroup,
-    updateGroupName
+    updateGroupName,
+    onNewUpload
 }: ProjectGalleryManagerProps) {
     const [newGalleryUrl, setNewGalleryUrl] = useState('');
     const [newGroupName, setNewGroupName] = useState('');
     const [newItemUrls, setNewItemUrls] = useState<Record<string, string>>({});
     const [isUploading, setIsUploading] = useState(false);
     const [uploadingGroupId, setUploadingGroupId] = useState<string | null>(null);
+
+    // Hooks
+    const { upload } = useFirebaseUpload();
+
+    const deleteMedia = useCallback(async (path: string) => {
+        try {
+            const res = await fetch(`/api/upload?path=${encodeURIComponent(path)}`, {
+                method: 'DELETE'
+            });
+            return res.ok;
+        } catch (e) {
+            console.error("Delete failed", e);
+            return false;
+        }
+    }, []);
 
     const handleAddUrl = () => {
         if (addGalleryItem(newGalleryUrl)) {
@@ -49,12 +66,16 @@ export default function ProjectGalleryManager({
         try {
             setIsUploading(true);
             setUploadingGroupId(groupId);
-            const { url, githubPath } = await uploadToGitHub(file);
+            const { url, success, error } = await upload(file);
+
+            if (!success) throw new Error(error);
+
+            if (onNewUpload) onNewUpload(url);
 
             if (groupId) {
-                addGalleryItemToGroup(groupId, url, githubPath);
+                addGalleryItemToGroup(groupId, url);
             } else {
-                addGalleryItem(url, githubPath);
+                addGalleryItem(url);
             }
         } catch (error) {
             console.error("Upload failed", error);
@@ -68,16 +89,25 @@ export default function ProjectGalleryManager({
 
     const handleRemoveItem = async (index: number) => {
         const item = formData.galleryItems[index];
-        const githubPath = item.githubPath || getGithubPathFromUrl(item.src);
+        const storagePath = extractStoragePath(item.src);
 
-        if (githubPath) {
+        if (storagePath) {
             const confirmDelete = window.confirm(
-                "Hapus file ini PERMANEN dari GitHub?\n\nOK = Hapus permanen\nBatal = Hapus dari galeri saja"
+                "Apakah Anda yakin ingin menghapus file ini?\n\nOK = Hapus permanen dari Firebase\nBatal = Tidak jadi menghapus"
             );
             if (confirmDelete) {
-                await deleteFromGitHub(githubPath);
+                const success = await deleteMedia(storagePath);
+                if (!success) {
+                    alert("Gagal menghapus file dari Firebase.");
+                    return;
+                }
+            } else {
+                return;
             }
+        } else {
+            if (!window.confirm("Hapus item ini dari galeri?")) return;
         }
+
         removeGalleryItem(index);
     };
 
@@ -86,15 +116,25 @@ export default function ProjectGalleryManager({
         const item = group?.items[itemIndex];
         if (!item) return;
 
-        const githubPath = item.githubPath || getGithubPathFromUrl(item.src);
-        if (githubPath) {
+        const storagePath = extractStoragePath(item.src);
+
+        if (storagePath) {
             const confirmDelete = window.confirm(
-                "Hapus file ini PERMANEN dari GitHub?\n\nOK = Hapus permanen\nBatal = Hapus dari galeri saja"
+                "Apakah Anda yakin ingin menghapus file ini?\n\nOK = Hapus permanen dari Firebase\nBatal = Tidak jadi menghapus"
             );
             if (confirmDelete) {
-                await deleteFromGitHub(githubPath);
+                const success = await deleteMedia(storagePath);
+                if (!success) {
+                    alert("Gagal menghapus file dari Firebase.");
+                    return;
+                }
+            } else {
+                return;
             }
+        } else {
+            if (!window.confirm("Hapus item ini dari grup?")) return;
         }
+
         removeGalleryItemFromGroup(groupId, itemIndex);
     };
 
@@ -142,7 +182,7 @@ export default function ProjectGalleryManager({
                         <h4 className="text-sm font-medium text-gray-900">Galeri Utama</h4>
                         <span className="text-xs text-gray-500">{formData.galleryItems.length} item</span>
                     </div>
-                    
+
                     {/* Thumbnail Grid */}
                     <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 mb-4">
                         {formData.galleryItems.map((item, index) => (
@@ -154,7 +194,7 @@ export default function ProjectGalleryManager({
                                 )}
                                 {/* Status Indicator - Minimal dot */}
                                 <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${item.isActive ? 'bg-green-500' : 'bg-gray-400/70'}`} />
-                                
+
                                 {/* Hover Actions - Clean inline buttons */}
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                     <button
@@ -252,7 +292,7 @@ export default function ProjectGalleryManager({
                                         )}
                                         {/* Status Indicator - Minimal dot */}
                                         <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${item.isActive ? 'bg-green-500' : 'bg-gray-400/70'}`} />
-                                        
+
                                         {/* Hover Actions - Clean inline buttons */}
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                             <button

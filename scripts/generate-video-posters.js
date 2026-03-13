@@ -46,7 +46,7 @@ for (const mp4File of mp4Files) {
         // Extract frame at 0.5 seconds, scale to 720px width (maintain aspect ratio)
         const cmd = `ffmpeg -i "${mp4Path}" -ss 00:00:00.500 -vframes 1 -q:v 2 -vf "scale=720:-1" "${jpgPath}"`;
         execSync(cmd, { stdio: 'ignore' });
-        
+
         console.log(`✅ Generated: ${jpgFile}`);
         successCount++;
     } catch (error) {
@@ -60,5 +60,5 @@ console.log(`   Success: ${successCount}`);
 console.log(`   Failed: ${failCount}`);
 console.log(`   Skipped: ${mp4Files.length - successCount - failCount}`);
 console.log(`\nNext steps:`);
-console.log('1. Upload new .jpg files to GitHub');
-console.log('2. Or run: npm run sync (if you have sync script)');
+console.log('1. New .jpg files generated locally.');
+console.log('2. Upload to Firebase Storage for production use.');

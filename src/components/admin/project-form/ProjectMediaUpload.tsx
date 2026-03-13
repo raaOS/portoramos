@@ -1,8 +1,8 @@
 import { ProjectFormData } from '@/hooks/useProjectForm';
 import { Loader2, Trash2, Image as ImageIcon } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
-import { useEffect, useRef } from 'react';
-import { deleteFromGitHub, getGithubPathFromUrl } from '@/lib/githubUpload';
+import { useEffect, useRef, useCallback } from 'react';
+import { extractStoragePath } from '@/lib/media';
 
 interface ProjectMediaUploadProps {
     formData: ProjectFormData;
@@ -12,11 +12,13 @@ interface ProjectMediaUploadProps {
     slug?: string;
     onFileChange?: (file: File | null) => void;
     mediaFormat?: 'single' | 'comparison' | 'gallery';
+    onNewUpload?: (url: string) => void;
 }
-export default function ProjectMediaUpload({ formData, errors, isDetectingDimensions, updateField, slug, onFileChange, mediaFormat }: ProjectMediaUploadProps) {
+export default function ProjectMediaUpload({ formData, errors, isDetectingDimensions, updateField, slug, onFileChange, mediaFormat, onNewUpload }: ProjectMediaUploadProps) {
     const handleUploadComplete = (urls: string[]) => {
         if (urls.length > 0) {
             updateField('cover', urls[0]);
+            if (onNewUpload) onNewUpload(urls[0]);
         }
     };
 
@@ -52,6 +54,18 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
         };
     }, [formData.cover, formData.comparison?.beforeImage, formData.comparison?.afterImage]);
 
+    const deleteMedia = useCallback(async (path: string) => {
+        try {
+            const res = await fetch(`/api/upload?path=${encodeURIComponent(path)}`, {
+                method: 'DELETE'
+            });
+            return res.ok;
+        } catch (e) {
+            console.error("Delete failed", e);
+            return false;
+        }
+    }, []);
+
     const handleDeleteMedia = async (field: 'cover' | 'before' | 'after') => {
         let url = '';
         if (field === 'cover') url = formData.cover;
@@ -60,22 +74,26 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
 
         if (!url) return;
 
-        const githubPath = getGithubPathFromUrl(url);
-        if (githubPath) {
-            const confirmDelete = window.confirm(
-                "Apakah Anda ingin menghapus file ini PERMANEN dari GitHub?\n\n" +
-                "Klik OK untuk hapus permanen (bersihkan GitHub).\n" +
-                "Klik Batal untuk hanya menghapus dari input ini saja."
-            );
+        const isBlob = url.startsWith('blob:');
 
-            if (confirmDelete) {
-                const success = await deleteFromGitHub(githubPath);
-                if (!success) {
-                    alert("Gagal menghapus file dari GitHub. Input akan dibersihkan.");
+        if (!isBlob) {
+            const storagePath = extractStoragePath(url);
+            if (storagePath) {
+                const confirmDelete = window.confirm(
+                    "Apakah Anda yakin ingin menghapus file ini?\n\nOK = Hapus permanen dari Firebase\nBatal = Batal menghapus"
+                );
+                if (confirmDelete) {
+                    const success = await deleteMedia(storagePath);
+                    if (!success) {
+                        alert("Gagal menghapus file dari Firebase. Silakan coba lagi.");
+                        return; // abort UI removal if deletion fails
+                    }
+                } else {
+                    return; // user cancelled the prompt
                 }
+            } else {
+                if (!window.confirm("Hapus link media ini?")) return;
             }
-        } else {
-            if (!url.startsWith('blob:') && !window.confirm("Hapus link media ini?")) return;
         }
 
         // Clear the field
@@ -99,8 +117,8 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                         <div className="relative group p-4">
                             <div className="bg-gray-100 rounded-lg overflow-hidden max-h-56">
                                 {formData.cover?.match(/\.(mp4|webm|mov)$/i) ? (
-                                    <video 
-                                        src={formData.cover} 
+                                    <video
+                                        src={formData.cover}
                                         className="w-auto h-auto max-h-56 object-contain"
                                         controls
                                     />
@@ -199,14 +217,14 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                                 <option value="video">Video</option>
                             </select>
                         </div>
-                        
+
                         {/* Preview - Maintains original aspect ratio */}
                         {formData.comparison?.beforeImage && (
                             <div className="mb-3 relative group flex justify-center">
                                 <div className="bg-gray-100 rounded-lg overflow-hidden max-h-40">
                                     {(formData.comparison?.beforeType === 'video' || formData.comparison?.beforeImage?.match(/\.(mp4|webm|mov)$/i)) ? (
-                                        <video 
-                                            src={formData.comparison.beforeImage} 
+                                        <video
+                                            src={formData.comparison.beforeImage}
                                             className="w-auto h-auto max-h-40 object-contain"
                                             controls
                                         />
@@ -221,7 +239,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                                 </div>
                             </div>
                         )}
-                        
+
                         <div className="flex gap-2 items-center mb-2">
                             <input
                                 type="text"
@@ -274,14 +292,14 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                                 <option value="video">Video</option>
                             </select>
                         </div>
-                        
+
                         {/* Preview - Maintains original aspect ratio */}
                         {formData.comparison?.afterImage && (
                             <div className="mb-3 relative group flex justify-center">
                                 <div className="bg-gray-100 rounded-lg overflow-hidden max-h-40">
                                     {(formData.comparison?.afterType === 'video' || formData.comparison?.afterImage?.match(/\.(mp4|webm|mov)$/i)) ? (
-                                        <video 
-                                            src={formData.comparison.afterImage} 
+                                        <video
+                                            src={formData.comparison.afterImage}
                                             className="w-auto h-auto max-h-40 object-contain"
                                             controls
                                         />
@@ -296,7 +314,7 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                                 </div>
                             </div>
                         )}
-                        
+
                         <div className="flex gap-2 items-center mb-2">
                             <input
                                 type="text"

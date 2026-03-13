@@ -72,7 +72,6 @@ export interface GalleryItem {
   height?: number;
   isActive?: boolean;
   poster?: string;
-  githubPath?: string;
 }
 
 export interface ProjectsData {

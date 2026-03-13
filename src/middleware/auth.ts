@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminToken } from '@/lib/auth';
 import { protectedRoutes, publicRoutes } from './constants';
 
 export function checkAdminAuth(request: NextRequest) {
@@ -22,23 +23,10 @@ export function checkAdminAuth(request: NextRequest) {
         }
 
         try {
-            const parts = token.split('.');
-            if (parts.length !== 3) throw new Error('Invalid token format');
-
-            const payloadSegment = parts[1];
-            const padded = payloadSegment.padEnd(
-                payloadSegment.length + ((4 - (payloadSegment.length % 4)) % 4),
-                '='
-            );
-            const base64 = padded.replace(/-/g, '+').replace(/_/g, '/');
-            const json = atob(base64);
-            const payload = JSON.parse(json) as { sub?: string; exp?: number };
-
-            if (payload.sub !== 'admin') throw new Error('Invalid subject');
-
-            if (typeof payload.exp === 'number') {
-                const now = Math.floor(Date.now() / 1000);
-                if (payload.exp <= now) throw new Error('Token expired');
+            // ✅ FIX #1: Use proper JWT verification with signature check
+            const isValid = verifyAdminToken(token);
+            if (!isValid) {
+                throw new Error('Invalid or expired token');
             }
         } catch (error) {
             console.error('Admin token check failed in middleware:', error);

@@ -5,6 +5,7 @@ import { AboutData } from "@/types/about";
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { useLayoutPersistence } from "@/app/about/_components/os/contexts/LayoutPersistenceContext";
 import { useUnifiedZIndex } from "@/app/about/_components/os/context/UnifiedZIndexContext";
+import { saveWindowPosition } from "@/app/about/_components/os/utils/positionSync";
 
 export interface WindowState {
     id: string;
@@ -35,28 +36,39 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
     const { playOpen, playClose } = useSystemSound();
     const [isInitialized, setIsInitialized] = useState(false);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const persistTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isPersistingRef = useRef(false);
 
-    // Cleanup timeout on unmount to prevent memory leak
+    // Cleanup timeouts on unmount to prevent memory leak
     useEffect(() => {
         return () => {
             if (saveTimeoutRef.current) {
                 clearTimeout(saveTimeoutRef.current);
             }
+            if (persistTimeoutRef.current) {
+                clearTimeout(persistTimeoutRef.current);
+            }
         };
     }, []);
 
-    // Initialize windows based on server preferences (aboutData.windowPreferences)
+    // Initialize/re-initialize windows based on server preferences (aboutData.windowPreferences)
     useEffect(() => {
-        // We wait until aboutData is present AND contains windowPreferences
-        // to ensure we don't mark as initialized with empty/loading state.
-        if (!aboutData?.windowPreferences || isInitialized) return;
+        // Selalu re-initialize saat aboutData berubah, meski sudah initialized
+        // Ini untuk handle kasus data Firebase datang terlambat
+        if (!aboutData?.windowPreferences) return;
 
         const performInitialization = () => {
+            console.log('[WindowManager] Initializing with windowPreferences:', aboutData?.windowPreferences);
+            
             setWindows(prev => {
                 return prev.map(w => {
                     const pref = aboutData?.windowPreferences?.[w.id];
-                    if (!pref) return w;
+                    if (!pref) {
+                        console.log(`[WindowManager] No pref for window ${w.id}, using default`);
+                        return w;
+                    }
+
+                    console.log(`[WindowManager] Applying pref for ${w.id}:`, pref);
 
                     let rawWidth = pref.width || w.width || 800;
                     let rawHeight = pref.height || w.height || 600;
@@ -85,8 +97,8 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
                         ? { x: pref.x, y: pref.y }
                         : getCenterPositionStatic(width, height);
 
-                    // Set isOpen true ONLY if pref says so and it's not already open
-                    const isOpen = pref.isOpenByDefault || w.isOpen;
+                    // Set isOpen berdasarkan pref.isOpenByDefault, tapi tetap buka kalau window.about defaultnya buka
+                    const isOpen = w.id === 'about' ? true : (pref.isOpenByDefault || false);
 
                     return {
                         ...w,
@@ -102,9 +114,8 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
         };
 
         // Using queueMicrotask to avoid synchronous setState in effect body warning
-        // but still ensuring it happens immediately after mount/data arrival.
         queueMicrotask(performInitialization);
-    }, [aboutData, isInitialized]);
+    }, [aboutData]); // Hapus isInitialized dari dependency, selalu update saat aboutData berubah
 
     // Content Sync Effect: Update window content when initialWindows (and underlying data) changes
     useEffect(() => {
@@ -186,8 +197,9 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
             } catch (error) {
                 console.error("[WindowManager] Failed to save preference:", error);
             } finally {
-                setTimeout(() => {
+                persistTimeoutRef.current = setTimeout(() => {
                     isPersistingRef.current = false;
+                    persistTimeoutRef.current = null;
                 }, 1000);
             }
         }, 800);
@@ -365,24 +377,27 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
     }, [bringToFrontZIndex]);
 
     const updateWindowPosition = useCallback((id: string, x: number, y: number) => {
-        setWindows(prev => {
-            const updated = prev.map(w => {
-                if (w.id === id) {
-                    return { ...w, initialPosition: { x, y } };
-                }
-                return w;
-            });
-            
-            // BUG FIX #2: Check isPinned from the window we're updating
-            const win = prev.find(w => w.id === id);
-            if (isAdmin || win?.isPinned) {
-                // Use setTimeout to defer saveWindowPreference call
-                setTimeout(() => saveWindowPreference(id, { x, y }), 0);
+        // Simpan ke positionSync (localStorage untuk admin, sessionStorage untuk visitor)
+        const win = windows.find(w => w.id === id);
+        saveWindowPosition(id, { 
+            x, 
+            y, 
+            width: win?.width,
+            height: win?.height
+        }, isAdmin);
+        
+        setWindows(prev => prev.map(w => {
+            if (w.id === id) {
+                return { ...w, initialPosition: { x, y } };
             }
-            
-            return updated;
-        });
-    }, [saveWindowPreference, isAdmin]);
+            return w;
+        }));
+        
+        // Admin: auto-save ke server juga (debounced)
+        if (isAdmin && csrfToken) {
+            queueMicrotask(() => saveWindowPreference(id, { x, y }));
+        }
+    }, [saveWindowPreference, isAdmin, csrfToken, windows]);
 
     const handleWindowResize = useCallback((id: string, width: number, height: number) => {
         setWindows(prev => prev.map(w => {
@@ -395,16 +410,14 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
     }, []);
 
     const handleWindowResizeEnd = useCallback((id: string, width: number, height: number) => {
-        // Access latest state via setWindows callback to check isPinned/admin
-        setWindows(prev => {
-            const win = prev.find(w => w.id === id);
-            if (isAdmin || win?.isPinned) {
-                // Save via the unified debounced save function
-                saveWindowPreference(id, { width, height });
-            }
-            return prev;
-        });
-    }, [saveWindowPreference, isAdmin]);
+        // Simpan ke positionSync (localStorage untuk admin, sessionStorage untuk visitor)
+        saveWindowPosition(id, { width, height }, isAdmin);
+        
+        // Admin: auto-save ke server
+        if (isAdmin && csrfToken) {
+            queueMicrotask(() => saveWindowPreference(id, { width, height }));
+        }
+    }, [saveWindowPreference, isAdmin, csrfToken]);
 
     const togglePin = useCallback((id: string) => {
         setWindows(prev => prev.map(w => {
@@ -441,32 +454,11 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
         if (!isAdmin || !csrfToken) return;
 
         try {
-            // Build window preferences dari current windows state
-            const windowPrefs: Record<string, unknown> = {};
-            windowsRef.current.forEach(w => {
-                if (w.isPinned || isAdmin) {
-                    windowPrefs[w.id] = {
-                        x: w.initialPosition?.x,
-                        y: w.initialPosition?.y,
-                        width: w.width,
-                        height: w.height,
-                        isOpenByDefault: w.isPinned
-                    };
-                }
-            });
-
-            await fetch('/api/about', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken
-                },
-                credentials: 'include',
-                body: JSON.stringify({ windowPreferences: windowPrefs })
-            });
-            console.log('[WindowManager] Flushed window positions');
+            // Import dan pakai flushPositions dari positionSync
+            const { flushPositions } = await import('@/app/about/_components/os/utils/positionSync');
+            await flushPositions(csrfToken);
         } catch (error) {
-            console.error('[WindowManager] Failed to flush window positions', error);
+            console.error('[WindowManager] Failed to flush:', error);
         }
     }, [isAdmin, csrfToken]);
 

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { GalleryItem } from '@/types/projects';
 import Media from '@/components/shared/Media';
+import { getProxiedUrl } from "@/lib/utils";
 
 interface LightboxGalleryProps {
     items: GalleryItem[];
@@ -71,13 +72,13 @@ export default function LightboxGallery({ items, initialIndex = 0, onClose, grou
                 </div>
 
                 {/* Main Content Area */}
-                <div className="relative w-full h-full flex items-center justify-center p-4 sm:p-12">
+                <div className="relative w-full h-full flex flex-col items-center justify-center p-4 sm:p-20 gap-8">
                     <motion.div
                         key={currentIndex}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3, ease: 'easeOut' }}
-                        className="relative w-full h-full flex items-center justify-center"
+                        className="relative flex-grow w-full flex items-center justify-center min-h-0"
                     >
                         {currentItem.kind === 'video' ? (
                             <Media
@@ -94,13 +95,55 @@ export default function LightboxGallery({ items, initialIndex = 0, onClose, grou
                         ) : (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
-                                src={currentItem.src}
+                                src={getProxiedUrl(currentItem.src)}
                                 alt={currentItem.alt || `Gallery Image ${currentIndex + 1}`}
                                 className="max-w-full max-h-full object-contain shadow-2xl rounded-sm select-none"
                                 draggable={false}
                             />
                         )}
                     </motion.div>
+
+                    {/* Thumbnails Ribbon */}
+                    {validItems.length > 1 && (
+                        <div className="w-full flex justify-center pb-4 sm:pb-0">
+                            <div className="flex items-center justify-start gap-3 p-2 pointer-events-auto max-w-full overflow-x-auto no-scrollbar scroll-smooth">
+                                {validItems.map((item, index) => (
+                                    <button
+                                        key={`thumb-${index}`}
+                                        onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
+                                        className={`relative flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 overflow-hidden border-2 transition-all duration-300 ${
+                                            index === currentIndex 
+                                                ? 'border-white scale-105 shadow-[0_0_15px_rgba(255,255,255,0.3)] z-10' 
+                                                : 'border-white/10 opacity-40 hover:opacity-100 hover:scale-105'
+                                        }`}
+                                    >
+                                        {item.kind === 'video' ? (
+                                            <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                                                {item.poster ? (
+                                                    <img src={getProxiedUrl(item.poster)} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-white/50">
+                                                        <ChevronRight className="w-4 h-4" />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                                    <div className="w-5 h-5 flex items-center justify-center">
+                                                        <div className="w-0 h-0 border-t-[5px] border-t-transparent border-l-[8px] border-l-white border-b-[5px] border-b-transparent ml-1" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <img
+                                                src={getProxiedUrl(item.src)}
+                                                alt=""
+                                                className="w-full h-full object-cover"
+                                            />
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Navigation Buttons */}

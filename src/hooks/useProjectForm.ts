@@ -153,7 +153,7 @@ export const useProjectForm = (project?: Project) => {
                 software: project.software || []
             });
         }
-    }, [project]);
+    }, [project?.id, project?.updatedAt, project]);
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
@@ -216,7 +216,7 @@ export const useProjectForm = (project?: Project) => {
         }
     };
 
-    const addGalleryItem = (url: string, githubPath?: string) => {
+    const addGalleryItem = (url: string) => {
         const cleanUrl = url.trim();
         if (!cleanUrl) return false;
         if (formData.galleryItems.some(item => item.src === cleanUrl)) return false;
@@ -225,7 +225,6 @@ export const useProjectForm = (project?: Project) => {
             kind: isVideoLink(cleanUrl) ? 'video' : 'image',
             src: cleanUrl,
             isActive: true,
-            githubPath // Store the GitHub repository path for deletion support
         };
 
         setFormData(prev => ({
@@ -270,7 +269,7 @@ export const useProjectForm = (project?: Project) => {
         }));
     };
 
-    const addGalleryItemToGroup = (groupId: string, url: string, githubPath?: string) => {
+    const addGalleryItemToGroup = (groupId: string, url: string) => {
         const cleanUrl = url.trim();
         if (!cleanUrl) return false;
 
@@ -278,7 +277,6 @@ export const useProjectForm = (project?: Project) => {
             kind: isVideoLink(cleanUrl) ? 'video' : 'image',
             src: cleanUrl,
             isActive: true,
-            githubPath // Store the GitHub repository path for deletion support
         };
 
         setFormData(prev => ({

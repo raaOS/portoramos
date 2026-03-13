@@ -1,6 +1,7 @@
 import { ContentService } from './contentService';
 import { Testimonial, TestimonialData } from '@/types/testimonial';
 import testimonialDataFallback from '@/data/testimonial.json';
+import { bucket } from '@/lib/firebaseAdmin';
 
 // Ensure consistent fallback structure
 interface TestimonialJsonData {
@@ -61,12 +62,40 @@ export const testimonialService = {
 
     async deleteTestimonial(id: number): Promise<boolean> {
         const currentData = await this.getTestimonials();
-        const initialLen = currentData.testimonials.length;
+        const testimonial = currentData.testimonials.find(t => t.id === id);
+
+        if (!testimonial) return false;
+
+        // Cleanup Storage Assets inside Testimonial Chat
+        try {
+            const assetUrls: string[] = [];
+            testimonial.messages?.forEach(msg => {
+                if (msg.imageSrc) assetUrls.push(msg.imageSrc);
+            });
+
+            for (const url of assetUrls) {
+                try {
+                    let storagePath = '';
+                    if (url.includes('/o/')) {
+                        storagePath = decodeURIComponent(url.split('/o/')[1].split('?')[0]);
+                    } else if (url.startsWith('/assets/')) {
+                        storagePath = url.substring(1);
+                    }
+
+                    if (storagePath && storagePath.startsWith('assets/')) {
+                        const file = bucket.file(storagePath);
+                        const [exists] = await file.exists();
+                        if (exists) await file.delete();
+                    }
+                } catch (e) {
+                    console.warn(`[TestimonialService] Ghost cleanup failed for: ${url}`, e);
+                }
+            }
+        } catch (e) {
+            console.error('[TestimonialService] Storage audit failed during delete:', e);
+        }
 
         currentData.testimonials = currentData.testimonials.filter(t => t.id !== id);
-
-        if (currentData.testimonials.length === initialLen) return false;
-
         currentData.lastUpdated = new Date().toISOString();
         await service.saveData(currentData, `Delete testimonial ID: ${id}`);
         return true;

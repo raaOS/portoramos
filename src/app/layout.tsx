@@ -100,8 +100,6 @@ export default async function RootLayout({
         {/* Preconnect to critical domains */}
         <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://api.github.com" />
-        <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
 
         {/* Preload critical LCP image - OS Wallpaper */}
         <link

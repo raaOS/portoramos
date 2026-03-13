@@ -46,7 +46,7 @@ export function useAdminAbout(csrfToken: string | null) {
         try {
             const response = await fetch('/api/projects');
             const data = await response.json();
-            setProjects(data.projects || []);
+            setProjects(data?.data?.projects || []);
         } catch (_err) {
             console.error('Failed to load projects for selector', _err);
         }

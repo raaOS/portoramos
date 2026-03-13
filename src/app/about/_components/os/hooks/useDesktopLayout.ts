@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AboutData } from "@/types/about";
+import { getIconPosition, saveIconPosition, loadPositions, loadSessionPositions, saveSessionPositions } from "../utils/positionSync";
 import { useLayoutPersistence } from "../contexts/LayoutPersistenceContext";
 
 interface UseDesktopLayoutProps {
@@ -11,120 +12,83 @@ interface UseDesktopLayoutProps {
 }
 
 export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLayoutProps) {
-    // Local state for icon positions (Optimistic UI)
-    const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>(
-        aboutData?.desktopPreferences?.iconPositions || {}
-    );
-    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    // Persistence Lock: Prevents server data (props) from overwriting local 
-    // optimistic state while a save is in progress or pending.
-    const isPersistingRef = useRef(false);
-    // Track latest positions for flush on logout
-    const latestPositionsRef = useRef(iconPositions);
-
-    // Get flush registration function from context
     const { registerFlush, unregisterFlush } = useLayoutPersistence();
 
-    // Sync state with props during render if props changed
-    // This avoids useEffect cascading renders
-    const [prevAboutData, setPrevAboutData] = useState(aboutData);
-    if (aboutData !== prevAboutData) {
-        setPrevAboutData(aboutData);
-        if (aboutData?.desktopPreferences?.iconPositions && !isPersistingRef.current) {
-            setIconPositions(aboutData.desktopPreferences.iconPositions);
-        }
-    }
-
-    // Update ref saat state berubah
-    latestPositionsRef.current = iconPositions;
-
-    // Register flush function untuk save on logout
-    const flushSave = useCallback(async () => {
-        if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-            saveTimeoutRef.current = null;
-        }
-
-        // Force save latest positions
-        if (isAdmin && csrfToken) {
-            try {
-                const payload = {
-                    desktopPreferences: {
-                        ...aboutData?.desktopPreferences,
-                        iconPositions: latestPositionsRef.current
-                    }
-                };
-
-                await fetch('/api/admin/about/desktop', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': csrfToken
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify(payload)
-                });
-                console.log('[DesktopLayout] Flushed icon positions');
-            } catch (error) {
-                console.error("[DesktopLayout] Failed to flush icon positions", error);
-            }
-        }
-    }, [isAdmin, csrfToken, aboutData?.desktopPreferences]);
-
-    // Register flush on mount, unregister on unmount
-    React.useEffect(() => {
-        registerFlush('iconPositions', flushSave);
-        return () => unregisterFlush('iconPositions');
-    }, [flushSave, registerFlush, unregisterFlush]);
-
-    const handleIconPositionChange = (id: string, x: number, y: number) => {
-        // 1. Optimistic Update
-        const newPositions = { ...iconPositions, [id]: { x, y } };
-        setIconPositions(newPositions);
-        latestPositionsRef.current = newPositions;
-
-        // 2. Persist if Admin (Debounced)
+    // Load dari positionSync (localStorage untuk admin, Firebase/default untuk visitor)
+    const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>(() => {
+        const firebase = aboutData?.desktopPreferences?.iconPositions || {};
+        
         if (isAdmin) {
-            const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-            if (isMobile) return; // GHOST BUG FIX: Don't save icon positions from mobile
-
-            isPersistingRef.current = true; // Lock incoming syncs
-            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-
-            saveTimeoutRef.current = setTimeout(async () => {
-                try {
-                    // Update layout preference with ALL current positions
-                    const payload = {
-                        desktopPreferences: {
-                            ...aboutData?.desktopPreferences,
-                            iconPositions: newPositions
-                        }
-                    };
-
-                    await fetch('/api/admin/about/desktop', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-Token': csrfToken || ''
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify(payload)
-                    });
-                } catch (error) {
-                    console.error("Failed to save icon position", error instanceof Error ? error.message : error);
-                } finally {
-                    // Unlock sync after a grace period to allow server state to stabilize
-                    setTimeout(() => {
-                        isPersistingRef.current = false;
-                    }, 2000);
-                }
-            }, 1000); // 1-second debounce
+            // Admin: localStorage menimpa Firebase (buffer sesi)
+            const local = loadPositions().icons || {};
+            return { ...firebase, ...local };
+        } else {
+            // Visitor: Murni Firebase (Admin's template) - Reset on refresh
+            return firebase;
         }
-    };
+    });
+
+    // Sync jika aboutData berubah (admin: jangan timpa localStorage, visitor: jangan timpa sessionStorage)
+    useEffect(() => {
+        const firebase = aboutData?.desktopPreferences?.iconPositions;
+        if (!firebase) return;
+        
+        let existing: Record<string, { x: number; y: number }> = {};
+        if (isAdmin) {
+            existing = loadPositions().icons || {};
+        } else {
+            existing = loadSessionPositions().icons || {};
+        }
+        
+        // Hanya tambah icon yang belum ada di existing/state
+        const merged = { ...iconPositions };
+        let hasNew = false;
+        
+        Object.entries(firebase).forEach(([id, pos]) => {
+            if (!existing?.[id] && !merged[id]) {
+                merged[id] = pos as { x: number; y: number };
+                hasNew = true;
+            }
+        });
+        
+        if (hasNew) {
+            setIconPositions(merged);
+        }
+    }, [aboutData, isAdmin]);
+
+    const handleIconPositionChange = useCallback((id: string, x: number, y: number) => {
+        // Update state (untuk semua agar responsif)
+        setIconPositions(prev => ({ ...prev, [id]: { x, y } }));
+        
+        // Save ke positionSync (localStorage untuk admin, sessionStorage untuk visitor)
+        saveIconPosition(id, { x, y }, isAdmin);
+    }, [isAdmin]);
+
+    const getIconPos = useCallback((id: string, defaultX: number, defaultY: number) => {
+        return iconPositions[id] || getIconPosition(id, null, { x: defaultX, y: defaultY }, isAdmin);
+    }, [iconPositions, isAdmin]);
+
+    // Flush Icons to Server (Admin only)
+    const flushIcons = useCallback(async () => {
+        if (!isAdmin || !csrfToken) return;
+        try {
+            const { flushPositions } = await import('../utils/positionSync');
+            await flushPositions(csrfToken);
+            console.log('[DesktopLayout] Flushed icons to server');
+        } catch (error) {
+            console.error('[DesktopLayout] Failed to flush icons:', error);
+        }
+    }, [isAdmin, csrfToken]);
+
+    useEffect(() => {
+        registerFlush('desktopIcons', flushIcons);
+        return () => unregisterFlush('desktopIcons');
+    }, [registerFlush, unregisterFlush, flushIcons]);
 
     return {
         iconPositions,
         setIconPositions,
-        handleIconPositionChange
+        handleIconPositionChange,
+        getIconPos
     };
 }

@@ -5,10 +5,7 @@ interface FirebaseStatus {
     status: 'connected' | 'error' | 'checking' | 'disconnected';
 }
 
-/**
- * Hook to check Firebase connection status
- * Replaces deprecated useGitHubSync
- */
+/** Hook to check Firebase connection status */
 export function useFirebaseStatus() {
     const [firebaseStatus, setFirebaseStatus] = useState<FirebaseStatus>({
         isLoading: false,
@@ -34,10 +31,10 @@ export function useFirebaseStatus() {
     useEffect(() => {
         // Check every 30 seconds
         const interval = setInterval(checkStatus, 30000);
-        
+
         // Initial check - using setTimeout to avoid synchronous setState in effect
         const timeout = setTimeout(checkStatus, 0);
-        
+
         return () => {
             clearInterval(interval);
             clearTimeout(timeout);

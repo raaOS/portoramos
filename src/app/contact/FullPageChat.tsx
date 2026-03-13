@@ -62,21 +62,20 @@ function TypingIndicator() {
 
 // Interface for contact info passed from parent
 interface FullPageChatContactInfo {
-  email?: string;
-  socialMedia?: {
-    linkedin?: string;
-    instagram?: string;
-    twitter?: string;
-    github?: string;
-    behance?: string;
-    whatsapp?: string;
-  };
-  headline?: string;
-  subtext?: string;
+    email?: string;
+    socialMedia?: {
+        linkedin?: string;
+        instagram?: string;
+        twitter?: string;
+        behance?: string;
+        whatsapp?: string;
+    };
+    headline?: string;
+    subtext?: string;
 }
 
 interface FullPageChatProps {
-  contactInfo?: FullPageChatContactInfo;
+    contactInfo?: FullPageChatContactInfo;
 }
 
 export default function FullPageChat({ contactInfo }: FullPageChatProps) {
@@ -296,7 +295,7 @@ export default function FullPageChat({ contactInfo }: FullPageChatProps) {
                         <div
                             className="absolute inset-0 opacity-40 pointer-events-none"
                             style={{
-                                backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`,
+                                backgroundImage: `url('/assets/whatsapp-bg.webp')`,
                                 backgroundSize: '400px',
                                 backgroundRepeat: 'repeat'
                             }}
@@ -357,11 +356,11 @@ export default function FullPageChat({ contactInfo }: FullPageChatProps) {
                     <div className="bg-[#f0f2f5] dark:bg-[#202c33] px-3 py-3 md:px-4 md:py-4 flex items-end gap-2 shrink-0 z-20 no-ring">
                         {/* Emoji Picker Button */}
                         <div className="flex items-center shrink-0">
-                            <EmojiPicker 
+                            <EmojiPicker
                                 onEmojiSelect={(emoji) => {
                                     setInput(prev => prev + emoji);
                                     soundManager.play('typing');
-                                }} 
+                                }}
                             />
                         </div>
 

@@ -116,7 +116,7 @@ export const ProjectToolbar = ({
                         onClick={() => setShowSettings(true)}
                         className={`h-10 w-10 inline-flex items-center justify-center border text-sm font-medium rounded-lg focus:outline-none transition-all flex-shrink-0 ${connectionStatus === 'error' ? 'bg-white text-amber-500 border-amber-200 hover:border-amber-300' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600'
                             }`}
-                        title="Pengaturan GitHub"
+                        title="Pengaturan Firebase"
                     >
                         <Settings className={`h-5 w-5 ${connectionStatus === 'error' ? 'animate-pulse' : ''}`} />
                     </button>

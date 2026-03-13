@@ -50,7 +50,7 @@ export const ProjectCard = ({
                 </div>
 
                 {isVideoLink(project.cover) ? (
-                    <video src={project.cover} className="w-full h-full object-cover" muted loop playsInline preload="metadata" />
+                    <video src={project.cover + '#t=0.1'} className="w-full h-full object-cover" muted loop playsInline preload="metadata" />
                 ) : (
                     <Image
                         src={project.cover || FALLBACK_IMAGE}

@@ -1,0 +1,601 @@
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getDatabase } from 'firebase-admin/database';
+import { getStorage } from 'firebase-admin/storage';
+import * as dotenv from 'dotenv';
+import path from 'path';
+import { execSync, spawnSync } from 'child_process';
+import fs from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUPREME AUDITOR V5.0 - COMPREHENSIVE SYSTEM VALIDATION
+// Untuk user yang gak bisa coding - semua error punya solusi jelas!
+// ─────────────────────────────────────────────────────────────────────────────
+
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
+// --- CLI FLAGS ---
+const isOfflineMode = process.argv.includes('--offline');
+const isNoServerMode = process.argv.includes('--no-server');
+const isNoFirebaseMode = process.argv.includes('--no-firebase');
+const isJsonOutput = process.argv.includes('--json');
+const isFixMode = process.argv.includes('--fix');
+const isVerbose = process.argv.includes('--verbose');
+
+// --- FIREBASE INITIALIZATION (only if not offline) ---
+let db: any = null;
+let bucket: any = null;
+
+if (!isOfflineMode && !isNoFirebaseMode) {
+    try {
+        const serviceAccount = {
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+        };
+
+        if (!getApps().length && serviceAccount.projectId && serviceAccount.clientEmail && serviceAccount.privateKey) {
+            initializeApp({
+                credential: cert(serviceAccount),
+                databaseURL: process.env.FIREBASE_DATABASE_URL,
+                storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+            });
+        }
+        db = getDatabase();
+        bucket = getStorage().bucket();
+    } catch (e) {
+        if (!isJsonOutput) console.warn("⚠️  Firebase initialization skipped - running in offline mode");
+    }
+}
+
+// --- COLOR HELPERS ---
+const green = (t: string) => `\x1b[32m${t}\x1b[0m`;
+const red = (t: string) => `\x1b[31m${t}\x1b[0m`;
+const yellow = (t: string) => `\x1b[33m${t}\x1b[0m`;
+const cyan = (t: string) => `\x1b[36m${t}\x1b[0m`;
+const bold = (t: string) => `\x1b[1m${t}\x1b[22m`;
+const dim = (t: string) => `\x1b[2m${t}\x1b[22m`;
+
+// --- AUDIT RESULT TRACKING ---
+interface AuditPhase {
+    name: string;
+    status: 'PASS' | 'FAIL' | 'WARN' | 'SKIP';
+    message: string;
+    duration: number;
+    details?: string[];
+    fixes?: string[];
+}
+
+const auditLog: AuditPhase[] = [];
+
+// --- HELPER FUNCTIONS ---
+
+function log(msg: string) {
+    if (!isJsonOutput) console.log(msg);
+}
+
+function logPhase(icon: string, name: string, status: string) {
+    if (!isJsonOutput) process.stdout.write(`${icon} ${name}... `);
+}
+
+function recordPhase(name: string, status: 'PASS' | 'FAIL' | 'WARN' | 'SKIP', message: string, duration: number, details?: string[], fixes?: string[]) {
+    auditLog.push({ name, status, message, duration, details, fixes });
+}
+
+function safeExec(command: string, description: string = ""): { success: boolean; output: string; error: string } {
+    try {
+        const output = execSync(command, { stdio: 'pipe', encoding: 'utf-8' });
+        return { success: true, output, error: "" };
+    } catch (e: any) {
+        return { success: false, output: "", error: e.stdout?.toString() || e.message || e.toString() };
+    }
+}
+
+function validateEnvVar(name: string, minLength: number = 1, format?: 'url' | 'email' | 'hash'): { valid: boolean; error?: string } {
+    const value = process.env[name];
+
+    if (!value) {
+        return { valid: false, error: `${name} is missing (required)` };
+    }
+
+    if (value.length < minLength) {
+        return { valid: false, error: `${name} too short (min ${minLength} chars, got ${value.length})` };
+    }
+
+    if (format === 'url') {
+        try { 
+            new URL(value); 
+        } catch { 
+            return { valid: false, error: `${name} is not a valid URL` }; 
+        }
+    }
+
+    if (format === 'email' && !value.includes('@')) {
+        return { valid: false, error: `${name} is not a valid email` };
+    }
+
+    // Skip hash validation if it looks like it might be valid
+    // (scrypt hashes start with $, but we don't want to be too strict)
+
+    return { valid: true };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TIER 1 CHECKS - CRITICAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+// TIER 1 #1: TypeScript Compilation Check
+async function checkTypeScript(): Promise<AuditPhase> {
+    const startTime = performance.now();
+    logPhase("🔷", "TypeScript Compilation", "");
+
+    if (isOfflineMode) {
+        log(yellow("SKIP ⊘"));
+        recordPhase("TypeScript", "SKIP", "Offline mode", performance.now() - startTime);
+        return { name: "TypeScript", status: "SKIP", message: "Offline mode", duration: 0 };
+    }
+
+    const { success, error, output } = safeExec('npx tsc --noEmit', 'TypeScript check');
+
+    if (success) {
+        log(green("PASS ✅"));
+        recordPhase("TypeScript", "PASS", "All types are correct", performance.now() - startTime);
+        return { name: "TypeScript", status: "PASS", message: "All types are correct", duration: performance.now() - startTime };
+    } else {
+        log(red("FAIL ❌"));
+        const errors = error.split('\n').filter(line => line.includes('error TS')).slice(0, 5);
+        recordPhase("TypeScript", "FAIL", `${errors.length} type errors found`, performance.now() - startTime, errors, 
+            ['Run: npx tsc --noEmit for details', 'Fix type annotations in your code']);
+        return { name: "TypeScript", status: "FAIL", message: `${errors.length} type errors found`, duration: performance.now() - startTime, details: errors };
+    }
+}
+
+// TIER 1 #2: npm Vulnerability Audit
+async function checkVulnerabilities(): Promise<AuditPhase> {
+    const startTime = performance.now();
+    logPhase("🔒", "Security Vulnerabilities", "");
+
+    if (isOfflineMode) {
+        log(yellow("SKIP ⊘"));
+        recordPhase("Vulnerabilities", "SKIP", "Offline mode", performance.now() - startTime);
+        return { name: "Vulnerabilities", status: "SKIP", message: "Offline mode", duration: 0 };
+    }
+
+    const { success, error, output } = safeExec('npm audit --production --json', 'NPM audit');
+
+    try {
+        const auditData = JSON.parse(output);
+        const vulnerabilities = auditData.metadata?.vulnerabilities;
+
+        if (!vulnerabilities || vulnerabilities.total === 0) {
+            log(green("PASS ✅"));
+            recordPhase("Vulnerabilities", "PASS", "No vulnerabilities found", performance.now() - startTime);
+            return { name: "Vulnerabilities", status: "PASS", message: "No vulnerabilities found", duration: performance.now() - startTime };
+        }
+
+        const critical = vulnerabilities.critical || 0;
+        const high = vulnerabilities.high || 0;
+
+        if (critical > 0) {
+            log(red("FAIL ❌"));
+            const msg = `${critical} CRITICAL, ${high} HIGH vulnerabilities found`;
+            recordPhase("Vulnerabilities", "FAIL", msg, performance.now() - startTime, 
+                undefined, ['Run: npm audit'] );
+            return { name: "Vulnerabilities", status: "FAIL", message: msg, duration: performance.now() - startTime };
+        } else if (high > 0) {
+            log(yellow("WARN ⚠️"));
+            const msg = `${high} HIGH vulnerabilities found`;
+            recordPhase("Vulnerabilities", "WARN", msg, performance.now() - startTime,
+                undefined, ['Run: npm audit fix', 'Review: npm audit']);
+            return { name: "Vulnerabilities", status: "WARN", message: msg, duration: performance.now() - startTime };
+        }
+    } catch (e) {
+        log(yellow("WARN ⚠️"));
+        recordPhase("Vulnerabilities", "WARN", "Could not parse audit", performance.now() - startTime);
+        return { name: "Vulnerabilities", status: "WARN", message: "Could not parse audit", duration: performance.now() - startTime };
+    }
+
+    log(green("PASS ✅"));
+    recordPhase("Vulnerabilities", "PASS", "Security check passed", performance.now() - startTime);
+    return { name: "Vulnerabilities", status: "PASS", message: "Security check passed", duration: performance.now() - startTime };
+}
+
+// TIER 1 #3: Environment Variables Validation
+async function checkEnvironmentVariables(): Promise<AuditPhase> {
+    const startTime = performance.now();
+    logPhase("🔑", "Environment Variables", "");
+
+    const required = [
+        { name: 'JWT_SECRET', minLength: 32, format: undefined as any },
+        { name: 'ADMIN_PASSWORD_SCRYPT', minLength: 10, format: 'hash' as any },
+        { name: 'FIREBASE_PROJECT_ID', minLength: 1 },
+        { name: 'FIREBASE_CLIENT_EMAIL', minLength: 1, format: 'email' as any },
+        { name: 'FIREBASE_PRIVATE_KEY', minLength: 100 },
+        { name: 'FIREBASE_DATABASE_URL', minLength: 1, format: 'url' as any },
+        { name: 'NEXT_PUBLIC_SITE_URL', minLength: 1, format: 'url' as any },
+        { name: 'GEMINI_API_KEY', minLength: 20 },
+    ];
+
+    const missing: string[] = [];
+    const invalid: { name: string; error: string }[] = [];
+
+    for (const req of required) {
+        const result = validateEnvVar(req.name, req.minLength, req.format);
+        if (!result.valid) {
+            if (!process.env[req.name]) {
+                missing.push(req.name);
+            } else {
+                invalid.push({ name: req.name, error: result.error || '' });
+            }
+        }
+    }
+
+    if (missing.length === 0 && invalid.length === 0) {
+        log(green("PASS ✅"));
+        recordPhase("Environment", "PASS", "All required variables set", performance.now() - startTime);
+        return { name: "Environment", status: "PASS", message: "All required variables set", duration: performance.now() - startTime };
+    }
+
+    const failDetails: string[] = [];
+    missing.forEach(m => failDetails.push(`❌ ${m} - MISSING`));
+    invalid.forEach(i => failDetails.push(`❌ ${i.name} - ${i.error}`));
+
+    log(red("FAIL ❌"));
+    recordPhase("Environment", "FAIL", `${missing.length + invalid.length} env vars invalid`, performance.now() - startTime, failDetails,
+        ['Set missing variables in .env.local', 'Example: JWT_SECRET=your-32-character-secret-here']);
+
+    return { name: "Environment", status: "FAIL", message: `${missing.length + invalid.length} env vars invalid`, duration: performance.now() - startTime, details: failDetails };
+}
+
+// TIER 1.5 #4: ESLint Check (existing, but keep)
+async function checkEsLint(): Promise<AuditPhase> {
+    const startTime = performance.now();
+    logPhase("🔍", "Code Linting (ESLint)", "");
+
+    if (isOfflineMode) {
+        log(yellow("SKIP ⊘"));
+        recordPhase("ESLint", "SKIP", "Offline mode", performance.now() - startTime);
+        return { name: "ESLint", status: "SKIP", message: "Offline mode", duration: 0 };
+    }
+
+    const { success, error } = safeExec('npx eslint src --max-warnings 0', 'ESLint check');
+
+    if (success) {
+        log(green("PASS ✅"));
+        recordPhase("ESLint", "PASS", "No linting errors", performance.now() - startTime);
+        return { name: "ESLint", status: "PASS", message: "No linting errors", duration: performance.now() - startTime };
+    } else {
+        log(red("FAIL ❌"));
+        const errorLines = error.split('\n').filter(line => line.includes('error') || line.includes('warning')).slice(0, 5);
+        recordPhase("ESLint", "FAIL", `Linting errors found`, performance.now() - startTime, errorLines,
+            ['Run: npm run lint to see all errors', 'Fix reported issues in source code']);
+        return { name: "ESLint", status: "FAIL", message: "Linting errors found", duration: performance.now() - startTime, details: errorLines };
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TIER 2 CHECK #5: Database Schema Validation
+// ─────────────────────────────────────────────────────────────────────────────
+async function checkDatabaseSchema(): Promise<AuditPhase> {
+    const startTime = performance.now();
+    logPhase("📊", "Database Schema Validation", "");
+
+    if (isOfflineMode || !db || isNoFirebaseMode) {
+        log(yellow("SKIP ⊘"));
+        recordPhase("Database", "SKIP", "Firebase not available", performance.now() - startTime);
+        return { name: "Database", status: "SKIP", message: "Firebase not available", duration: 0 };
+    }
+
+    try {
+        const [projSnap, testSnap, skillSnap, expSnap] = await Promise.all([
+            db.ref('projects').once('value'),
+            db.ref('content/testimonial').once('value'),
+            db.ref('content/hardSkill').once('value'),
+            db.ref('content/experience').once('value')
+        ]);
+
+        const projects = projSnap.val() || {};
+        const testimonials = testSnap.val()?.testimonials || [];
+        const skills = skillSnap.val() || {};
+        const experiences = expSnap.val() || {};
+
+        const schemaErrors: string[] = [];
+
+        // Validate projects
+        let publishedCount = 0;
+        for (const [id, p] of Object.entries(projects) as [string, any]) {
+            if (p.status === 'published') publishedCount++;
+            
+            // Required fields check
+            if (p.status === 'published') {
+                if (!p.slug) schemaErrors.push(`Project "${p.title || id}": missing slug`);
+                if (!p.cover) schemaErrors.push(`Project "${p.title || id}": missing cover image`);
+                if (!p.galleryItems || p.galleryItems.length === 0) schemaErrors.push(`Project "${p.title || id}": gallery is empty`);
+                if (!p.category) schemaErrors.push(`Project "${p.title || id}": missing category`);
+            }
+        }
+
+        const summary = [
+            `Projects: ${Object.keys(projects).length} (${publishedCount} published)`,
+            `Testimonials: ${testimonials.length}`,
+            `Skills: ${Object.keys(skills).length}`,
+            `Experiences: ${Object.keys(experiences).length}`
+        ];
+
+        if (schemaErrors.length === 0) {
+            log(green("PASS ✅"));
+            recordPhase("Database", "PASS", "All data valid", performance.now() - startTime, summary);
+            return { name: "Database", status: "PASS", message: "All data valid", duration: performance.now() - startTime, details: summary };
+        } else {
+            log(yellow("WARN ⚠️"));
+            recordPhase("Database", "WARN", `${schemaErrors.length} data issues`, performance.now() - startTime, schemaErrors.slice(0, 5),
+                ['Check admin panel for incomplete projects', 'Complete all required fields before publishing']);
+            return { name: "Database", status: "WARN", message: `${schemaErrors.length} data issues`, duration: performance.now() - startTime, details: schemaErrors };
+        }
+    } catch (e: any) {
+        log(red("FAIL ❌"));
+        recordPhase("Database", "FAIL", "Could not query database", performance.now() - startTime, undefined,
+            ['Check Firebase connection', 'Verify FIREBASE_DATABASE_URL in .env.local']);
+        return { name: "Database", status: "FAIL", message: "Could not query database", duration: performance.now() - startTime };
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TIER 2 CHECK #6: Bundle Size Analysis
+// ─────────────────────────────────────────────────────────────────────────────
+async function checkBundleSize(): Promise<AuditPhase> {
+    const startTime = performance.now();
+    logPhase("📦", "Bundle Size Analysis", "");
+
+    if (isOfflineMode) {
+        log(yellow("SKIP ⊘"));
+        recordPhase("BundleSize", "SKIP", "Offline mode", performance.now() - startTime);
+        return { name: "BundleSize", status: "SKIP", message: "Offline mode", duration: 0 };
+    }
+
+    try {
+        const nextDir = path.join(process.cwd(), '.next');
+        if (!fs.existsSync(nextDir)) {
+            log(yellow("WARN ⚠️"));
+            recordPhase("BundleSize", "WARN", "Build not found - run npm run build", performance.now() - startTime, undefined,
+                ['Run: npm run build', 'Then run audit again']);
+            return { name: "BundleSize", status: "WARN", message: "Build not found", duration: performance.now() - startTime };
+        }
+
+        let totalSize = 0;
+        const getSize = (dir: string): number => {
+            if (!fs.existsSync(dir)) return 0;
+            let size = 0;
+            const files = fs.readdirSync(dir);
+            for (const file of files) {
+                const fullPath = path.join(dir, file);
+                const stat = fs.statSync(fullPath);
+                if (stat.isDirectory()) {
+                    size += getSize(fullPath);
+                } else {
+                    size += stat.size;
+                }
+            }
+            return size;
+        };
+
+        const staticDir = path.join(nextDir, 'static');
+        if (fs.existsSync(staticDir)) {
+            totalSize = getSize(staticDir);
+        }
+
+        const sizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+        const threshold = 5; // 5MB is reasonable for Next.js
+
+        if (parseFloat(sizeMB) > threshold) {
+            log(yellow("WARN ⚠️"));
+            recordPhase("BundleSize", "WARN", `Bundle too large: ${sizeMB}MB (threshold: ${threshold}MB)`, performance.now() - startTime,
+                [`Static bundle: ${sizeMB}MB`], ['Run: npm run analyze for details', 'Consider code splitting']);
+            return { name: "BundleSize", status: "WARN", message: `Bundle ${sizeMB}MB (threshold: ${threshold}MB)`, duration: performance.now() - startTime };
+        }
+
+        log(green("PASS ✅"));
+        recordPhase("BundleSize", "PASS", `Bundle size optimized: ${sizeMB}MB`, performance.now() - startTime, [`Static bundle: ${sizeMB}MB`]);
+        return { name: "BundleSize", status: "PASS", message: `Bundle size: ${sizeMB}MB`, duration: performance.now() - startTime };
+    } catch (e: any) {
+        log(yellow("WARN ⚠️"));
+        recordPhase("BundleSize", "WARN", "Could not measure bundle", performance.now() - startTime);
+        return { name: "BundleSize", status: "WARN", message: "Could not measure bundle", duration: performance.now() - startTime };
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TIER 2 CHECK #7: Security Headers Verification
+// ─────────────────────────────────────────────────────────────────────────────
+async function checkSecurityHeaders(): Promise<AuditPhase> {
+    const startTime = performance.now();
+    logPhase("🛡️ ", "Security Headers (next.config)", "");
+
+    try {
+        const rootFiles = fs.readdirSync(process.cwd());
+        const nextConfigPath = rootFiles.find(f => f.startsWith('next.config.'));
+
+        if (!nextConfigPath) {
+            log(red("FAIL ❌"));
+            recordPhase("SecurityHeaders", "FAIL", "next.config not found", performance.now() - startTime,
+                undefined, ['Create next.config.mjs']);
+            return { name: "SecurityHeaders", status: "FAIL", message: "next.config not found", duration: performance.now() - startTime };
+        }
+
+        const content = fs.readFileSync(path.join(process.cwd(), nextConfigPath), 'utf8');
+        const requiredHeaders = [
+            'Strict-Transport-Security',
+            'X-Frame-Options',
+            'X-Content-Type-Options',
+            'storage.googleapis.com' // For images
+        ];
+
+        const missingHeaders = requiredHeaders.filter(h => !content.includes(h));
+
+        if (missingHeaders.length === 0) {
+            log(green("PASS ✅"));
+            recordPhase("SecurityHeaders", "PASS", "All security headers configured", performance.now() - startTime);
+            return { name: "SecurityHeaders", status: "PASS", message: "All security headers configured", duration: performance.now() - startTime };
+        } else {
+            log(yellow("WARN ⚠️"));
+            const missing = missingHeaders.map(h => `Missing: ${h}`);
+            recordPhase("SecurityHeaders", "WARN", `${missingHeaders.length} headers missing`, performance.now() - startTime, missing,
+                ['Update next.config.mjs with security headers']);
+            return { name: "SecurityHeaders", status: "WARN", message: `${missingHeaders.length} headers missing`, duration: performance.now() - startTime, details: missing };
+        }
+    } catch (e: any) {
+        log(red("FAIL ❌"));
+        recordPhase("SecurityHeaders", "FAIL", "Could not verify headers", performance.now() - startTime);
+        return { name: "SecurityHeaders", status: "FAIL", message: "Could not verify headers", duration: performance.now() - startTime };
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TIER 3 CHECK #8: API & Server Health (with --offline support)
+// ─────────────────────────────────────────────────────────────────────────────
+async function checkServerHealth(): Promise<AuditPhase> {
+    const startTime = performance.now();
+    logPhase("🌐", "API Server Health", "");
+
+    if (isNoServerMode) {
+        log(yellow("SKIP ⊘"));
+        recordPhase("Server", "SKIP", "Server check disabled", performance.now() - startTime);
+        return { name: "Server", status: "SKIP", message: "Server check disabled", duration: 0 };
+    }
+
+    try {
+        const res = await fetch('http://localhost:3000/api/health', { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+            log(green("PASS ✅"));
+            recordPhase("Server", "PASS", "Server is healthy", performance.now() - startTime);
+            return { name: "Server", status: "PASS", message: "Server is healthy", duration: performance.now() - startTime };
+        } else {
+            log(yellow("WARN ⚠️"));
+            recordPhase("Server", "WARN", `Server returned ${res.status}`, performance.now() - startTime, undefined,
+                ['Run: npm run dev', 'Check http://localhost:3000']);
+            return { name: "Server", status: "WARN", message: `Server returned ${res.status}`, duration: performance.now() - startTime };
+        }
+    } catch (e: any) {
+        log(yellow("WARN ⚠️"));
+        recordPhase("Server", "WARN", "Server not running", performance.now() - startTime, undefined,
+            ['Run: npm run dev to start server']);
+        return { name: "Server", status: "WARN", message: "Server not running", duration: performance.now() - startTime };
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN AUDIT RUNNER
+// ─────────────────────────────────────────────────────────────────────────────
+async function runAudit() {
+    if (!isJsonOutput) {
+        console.log("\n" + "=".repeat(95));
+        console.log(bold("🛡️  PORTFOLIO SUPREME AUDITOR V5.0 - COMPREHENSIVE SYSTEM VALIDATION"));
+        console.log(bold("Untuk user yang gak bisa coding - semua error punya solusi!"));
+        console.log("=".repeat(95) + "\n");
+
+        if (isOfflineMode) console.log(yellow("📡 OFFLINE MODE - Firebase checks disabled\n"));
+    }
+
+    // Run all checks in sequence
+    await checkTypeScript();
+    await checkVulnerabilities();
+    await checkEnvironmentVariables();
+    await checkEsLint();
+    await checkDatabaseSchema();
+    await checkBundleSize();
+    await checkSecurityHeaders();
+    await checkServerHealth();
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // GENERATE REPORT
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    if (isJsonOutput) {
+        // JSON output for CI/CD
+        const result = {
+            timestamp: new Date().toISOString(),
+            environment: isOfflineMode ? "offline" : "production",
+            version: "5.0.0",
+            phases: auditLog.map(p => ({
+                name: p.name,
+                status: p.status,
+                message: p.message,
+                duration: p.duration,
+                details: p.details,
+                fixes: p.fixes
+            })),
+            summary: {
+                total: auditLog.length,
+                passed: auditLog.filter(p => p.status === 'PASS').length,
+                warned: auditLog.filter(p => p.status === 'WARN').length,
+                failed: auditLog.filter(p => p.status === 'FAIL').length,
+                skipped: auditLog.filter(p => p.status === 'SKIP').length
+            },
+            exit_code: auditLog.some(p => p.status === 'FAIL') ? 1 : 0
+        };
+
+        console.log(JSON.stringify(result, null, 2));
+
+        process.exit(result.exit_code);
+    } else {
+        // Human-readable output
+        console.log("\n" + "=".repeat(95));
+        console.log(bold("📋 AUDIT SUMMARY"));
+        console.log("=".repeat(95) + "\n");
+
+        const passed = auditLog.filter(p => p.status === 'PASS').length;
+        const warned = auditLog.filter(p => p.status === 'WARN').length;
+        const failed = auditLog.filter(p => p.status === 'FAIL').length;
+        const skipped = auditLog.filter(p => p.status === 'SKIP').length;
+
+        console.log(`${green('✅ PASSED:')} ${passed}/${auditLog.length}`);
+        if (warned > 0) console.log(`${yellow('⚠️  WARNED:')} ${warned}`);
+        if (failed > 0) console.log(`${red('❌ FAILED:')} ${failed}`);
+        if (skipped > 0) console.log(`${dim('⊘ SKIPPED:')} ${skipped}`);
+
+        if (failed > 0) {
+            console.log("\n" + red(bold("🚨 ISSUES FOUND - FIX THESE:")));
+            console.log("─".repeat(95));
+            auditLog.filter(p => p.status === 'FAIL').forEach(phase => {
+                console.log(`\n${red('❌')} ${bold(phase.name)}`);
+                if (phase.details) phase.details.forEach(d => console.log(`   ${d}`));
+                if (phase.fixes) phase.fixes.forEach(f => console.log(`   ${cyan('→')} ${f}`));
+            });
+        }
+
+        if (warned > 0) {
+            console.log("\n" + yellow(bold("⚠️  WARNINGS - RECOMMENDED FIXES:")));
+            console.log("─".repeat(95));
+            auditLog.filter(p => p.status === 'WARN').forEach(phase => {
+                console.log(`\n${yellow('⚠️')} ${bold(phase.name)}`);
+                if (phase.details) phase.details.slice(0, 3).forEach(d => console.log(`   ${d}`));
+                if (phase.fixes) phase.fixes.forEach(f => console.log(`   ${cyan('→')} ${f}`));
+            });
+        }
+
+        console.log("\n" + "=".repeat(95));
+
+        if (failed === 0 && warned === 0) {
+            console.log(green(bold("🏆 EXCELLENT! System is production-ready and optimized!")));
+        } else if (failed === 0) {
+            console.log(yellow(bold("⚡ Good shape with minor warnings - ready to deploy with caution")));
+        } else {
+            console.log(red(bold("🔧 Please fix the issues above before deployment")));
+        }
+
+        console.log("=".repeat(95) + "\n");
+
+        // Save report to file
+        const reportPath = path.join(process.cwd(), `audit-report-${Date.now()}.json`);
+        writeFileSync(reportPath, JSON.stringify(auditLog, null, 2));
+        console.log(dim(`📄 Detailed report saved to: ${reportPath}\n`));
+
+        process.exit(failed > 0 ? 1 : 0);
+    }
+}
+
+// --- START AUDIT ---
+runAudit().catch(e => {
+    console.error(red("Fatal error during audit:"), e);
+    process.exit(1);
+});

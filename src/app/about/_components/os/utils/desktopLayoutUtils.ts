@@ -119,7 +119,8 @@ export const generateDesktopIcons = (
         let videoUrl: string | undefined;
         // isVideo helper logic duplicated or moved? 
         // We will do simple regex here as in original file
-        const isVideo = (url?: string) => url && /\.(mp4|webm|mov)$/i.test(url);
+        // UPDATED: Support query parameters at the end of the URL (e.g. ?alt=media)
+        const isVideo = (url?: string) => url && /\.(mp4|webm|mov)(\?.*)?$/i.test(url);
 
         if (isVideo(project.cover)) {
             videoUrl = project.cover;
@@ -127,14 +128,16 @@ export const generateDesktopIcons = (
             videoUrl = project.galleryItems.find((i: { kind: string; src: string }) => i.kind === "video")?.src;
         }
 
-        // Calculate aspect ratio from project dimensions, default to 4:5 (portrait poster)
+        // Calculate aspect ratio from project dimensions, default to 16:9 for videos or 4:5 for others
         const aspectRatio = project.coverWidth && project.coverHeight
             ? project.coverWidth / project.coverHeight
-            : 0.8; // Default 4:5 portrait
+            : (videoUrl ? 1.77 : 0.8);
 
         // Generate poster URL for video (swap .mp4/.webm to .jpg for faster load)
+        // PROTECTIVE: If it's a video, we try the .jpg poster but the component will still have the ID/Data
+        // to show a fallback if the image fails.
         const posterUrl = videoUrl
-            ? getProxiedUrl(videoUrl.replace(/\.(mp4|webm|mov)$/i, '.jpg'))
+            ? getProxiedUrl(project.cover.replace(/\.(mp4|webm|mov)(\?.*)?$/i, '.jpg$2'))
             : getProxiedUrl(project.cover);
 
         return {

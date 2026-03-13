@@ -84,11 +84,6 @@ export const createProjectSchema = z.object({
         .max(500, 'URL too long')
         .optional(),
 
-    github: z.string()
-        .url('Invalid GitHub URL')
-        .max(500, 'URL too long')
-        .optional(),
-
     status: z.enum(['draft', 'published'])
         .default('published'),
 

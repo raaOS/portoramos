@@ -48,6 +48,7 @@ audit-log.txt
 firebase-audit*.json
 probe-results*.txt
 lint-output.txt
+.audit-reports/
 
 # Error logs & temp files
 raw_errors.txt

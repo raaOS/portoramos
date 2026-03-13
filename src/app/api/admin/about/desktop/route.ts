@@ -23,14 +23,14 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 3. Update via aboutService (handles merge and GitHub/Local sync)
+        // 3. Update via aboutService (handles merge and Firebase sync)
         await aboutService.updateAboutData({
             desktopPreferences
         });
 
         // 4. Invalidate cache agar visitor langsung lihat perubahan
         invalidateAboutCache();
-        
+
         // Revalidate ISR pages
         revalidatePath('/', 'layout');
         revalidatePath('/about');

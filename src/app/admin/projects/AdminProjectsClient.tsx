@@ -14,7 +14,7 @@ import ProjectCardSkeleton from '@/components/admin/ProjectCardSkeleton';
 
 // New Modular Hooks & Components
 import { useAdminProjects } from '../hooks/useAdminProjects';
-import { useGitHubSync } from '../hooks/useGitHubSync';
+import { useFirebaseStatus } from '../hooks/useFirebaseStatus';
 import { ProjectToolbar } from './components/ProjectToolbar';
 import { ProjectCard } from './components/ProjectCard';
 import { Pagination } from './components/Pagination';
@@ -23,7 +23,7 @@ import { Pagination } from './components/Pagination';
 const ProjectForm = dynamic(() => import('@/components/admin/project-form/ProjectForm'), {
   loading: () => <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>
 });
-const SettingsModal = dynamic(() => import('@/app/admin/components/SettingsModal'), {
+const FirebaseSettingsModal = dynamic(() => import('@/app/admin/components/FirebaseSettingsModal'), {
   loading: () => <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>
 });
 const ManageCommentsModal = dynamic(() => import('../components/ManageCommentsModal'));
@@ -65,9 +65,7 @@ export default function AdminProjectsClient() {
   } = useAdminProjects();
 
   const {
-    githubConfig,
     connectionStatus,
-    triggerSync
   } = useFirebaseStatus();
 
   // Local UI State
@@ -155,13 +153,11 @@ export default function AdminProjectsClient() {
                         handleToggleProjectStatus={handleToggleProjectStatus}
                         setEditingProject={setEditingProject}
                         handleDeleteProject={(id) => {
-                          if (confirm('Hapus proyek ini?')) deleteMutation.mutate(id, { onSuccess: () => triggerGithubSync(true) });
+                          if (confirm('Hapus proyek ini?')) deleteMutation.mutate(id);
                         }}
                         handleDuplicateProject={(p) => {
                           if (confirm(`Duplikat "${p.title}"?`)) {
-                            createMutation.mutate({ ...p, title: `${p.title} (Copy)`, status: 'draft' } as CreateProjectData, {
-                              onSuccess: () => triggerGithubSync(true)
-                            });
+                            createMutation.mutate({ ...p, title: `${p.title} (Copy)`, status: 'draft' } as CreateProjectData);
                           }
                         }}
                         setManagingCommentsProject={setManagingCommentsProject}
@@ -202,9 +198,7 @@ export default function AdminProjectsClient() {
       )}
 
       {showSettings && (
-        <SettingsModal
-          initialConfig={githubConfig}
-          onSave={saveGithubSettings}
+        <FirebaseSettingsModal
           onCancel={() => setShowSettings(false)}
         />
       )}

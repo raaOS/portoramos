@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode, useRef, useEffect } from "react";
 import { WindowState } from "@/hooks/useWindowManager";
 
 interface WindowContextType {
@@ -26,30 +26,44 @@ interface WindowProviderProps {
   initialWindows?: WindowState[];
 }
 
-export const WindowProvider: React.FC<WindowProviderProps> = ({ 
-  children, 
-  initialWindows = [] 
+export const WindowProvider: React.FC<WindowProviderProps> = ({
+  children,
+  initialWindows = []
 }) => {
   const [windows, setWindows] = useState<WindowState[]>(initialWindows);
   const [bouncingDocId, setBouncingDocId] = useState<string | null>(null);
-  const [topZIndex, setTopZIndex] = useState(20);
+  const [_topZIndex, _setTopZIndex] = useState(20); // Legacy, to be removed after refactoring usage
+  const topZIndexRef = useRef(20);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const isWindowOpen = useCallback((id: string) => {
     return windows.find(w => w.id === id)?.isOpen ?? false;
   }, [windows]);
 
   const openWindow = useCallback((id: string, customConfig?: Partial<WindowState>) => {
-    setWindows(prev => {
-      const existingWindow = prev.find(w => w.id === id);
-      
+    topZIndexRef.current += 1;
+    const newZIndex = topZIndexRef.current;
+
+    setWindows(prevWindows => {
+      const existingWindow = prevWindows.find(w => w.id === id);
+
       if (existingWindow) {
-        return prev.map(w => {
+        return prevWindows.map(w => {
           if (w.id === id) {
-            return { 
-              ...w, 
-              isOpen: true, 
+            return {
+              ...w,
+              isOpen: true,
               isMinimized: false,
-              zIndex: topZIndex + 1,
+              zIndex: newZIndex,
               ...(customConfig || {})
             };
           }
@@ -62,7 +76,7 @@ export const WindowProvider: React.FC<WindowProviderProps> = ({
           title: customConfig?.title || 'Window',
           isOpen: true,
           isMinimized: false,
-          zIndex: topZIndex + 1,
+          zIndex: newZIndex,
           noPadding: customConfig?.noPadding || false,
           content: customConfig?.content || null,
           initialPosition: customConfig?.initialPosition || { x: 100, y: 100 },
@@ -70,15 +84,20 @@ export const WindowProvider: React.FC<WindowProviderProps> = ({
           height: customConfig?.height || 600,
           ...(customConfig || {})
         };
-        return [...prev, newWindow];
+        return [...prevWindows, newWindow];
       }
     });
-    setTopZIndex(prev => prev + 1);
+
     setBouncingDocId(id);
-    
+
     // Clear bounce after animation
-    setTimeout(() => setBouncingDocId(null), 2000);
-  }, [topZIndex]);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => setBouncingDocId(null), 2000);
+
+    return newZIndex;
+  }, [setWindows]);
 
   const closeWindow = useCallback((id: string) => {
     setWindows(prev => prev.map(w => {

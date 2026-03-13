@@ -32,7 +32,7 @@ class SoundManager {
     private pendingSounds: Set<SoundType> = new Set();
     private hasPlayedStartup: boolean = false;
     private suppressedSounds: Set<SoundType> = new Set();
-    
+
     // FIXED (BUG-002): Track active audio elements untuk cleanup
     private activeAudioElements: Set<HTMLAudioElement> = new Set();
     private maxActiveAudioElements: number = 20; // Limit untuk mencegah memory bloat
@@ -125,7 +125,7 @@ class SoundManager {
             if (this.soundPaths[typeKey] !== undefined) {
                 const oldPath = this.soundPaths[typeKey];
 
-                // UX Fix: Localization GitHub URL -> Local path
+                // UX Fix: Localization Remote URL -> Local path
                 let path = setting.path;
                 if (path.includes('/public/sounds/')) {
                     const filename = path.split('/').pop()?.split('?')[0];

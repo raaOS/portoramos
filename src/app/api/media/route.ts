@@ -7,8 +7,11 @@ export async function GET(request: NextRequest) {
         return new Response('URL required', { status: 400 });
     }
 
-    // Only allow GitHub raw content URLs for security
-    if (!url.includes('raw.githubusercontent.com') && !url.startsWith('/assets/')) {
+    // Allow Firebase Storage and legacy assets
+    const isFirebase = url.includes('storage.googleapis.com');
+    const isLocalAsset = url.startsWith('/assets/');
+
+    if (!isFirebase && !isLocalAsset) {
         return new Response('Invalid media source', { status: 403 });
     }
 

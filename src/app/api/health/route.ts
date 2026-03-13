@@ -14,15 +14,6 @@ export async function GET() {
             version: '1.0.0',
         };
 
-        // Check GitHub API connectivity
-        try {
-            const { githubService } = await import('@/lib/github');
-            await githubService.getFileContent('README.md', true);
-            checks.github = 'connected';
-        } catch {
-            checks.github = 'disconnected';
-            checks.status = 'degraded';
-        }
 
         // Check file system access
         try {
@@ -33,6 +24,24 @@ export async function GET() {
             checks.filesystem = 'accessible';
         } catch {
             checks.filesystem = 'inaccessible';
+            checks.status = 'degraded';
+        }
+
+        // Check Firebase connection (Real test)
+        try {
+            const { db } = await import('@/lib/firebaseAdmin');
+
+            // Perform an actual lightweight read operation with a timeout
+            // This guarantees that the network connection is alive and credentials are valid
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000));
+            const readPromise = db.ref('_healthCheck').once('value');
+
+            await Promise.race([readPromise, timeoutPromise]);
+
+            checks.firebase = 'connected';
+        } catch (error) {
+            console.error('Firebase health check failed:', error);
+            checks.firebase = 'disconnected';
             checks.status = 'degraded';
         }
 

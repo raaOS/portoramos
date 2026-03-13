@@ -12,6 +12,9 @@ const MAX_AI_REQUESTS = 10;
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const BLOCK_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// API Timeout: 30 seconds
+const API_TIMEOUT = 30000;
+
 function getClientIdentifier(request: NextRequest): string {
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
@@ -138,8 +141,7 @@ export async function POST(req: NextRequest) {
         
         NARRATIVE (Gunakan sudut pandang "Belajar & Berproses"):
         Jika Commercial:
-        - context: (Kenapa project ini dibuat? Apa kebutuhan dasarnya?)
-        - challenge: (Hal kecil apa yang menurutmu menantang saat pengerjaan?)
+        - challenge: (Konteks bisnis dan masalah utama apa yang menantang?)
         - solution: (Langkah apa yang kamu ambil untuk mencoba menyelesaikan masalah tersebut?)
         - impact: (Hasil kecil atau pelajaran apa yang didapat dari project ini?)
         
@@ -160,7 +162,7 @@ export async function POST(req: NextRequest) {
           "team": "...",
           "timeline": "...",
           "narrative": {
-             "context": "...", "challenge": "...", "solution": "...", "impact": "...",
+             "challenge": "...", "solution": "...", "impact": "...",
              "concept": "...", "process": "...", "detail": "..."
           }
         }`;
@@ -190,11 +192,21 @@ export async function POST(req: NextRequest) {
             }
         };
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+        let response;
+        try {
+            response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timeoutId);
+        }
 
         if (!response.ok) {
             const txt = await response.text();
@@ -208,13 +220,23 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'No response from AI' }, { status: 500 });
         }
 
-        // Clean markdown
+        // Clean markdown and parse JSON safely
         const jsonText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(jsonText);
+
+        let parsed;
+        try {
+            parsed = JSON.parse(jsonText);
+        } catch (parseError) {
+            console.error('[AI Generate] JSON parse error:', parseError);
+            return NextResponse.json({ error: 'Invalid JSON response from AI' }, { status: 500 });
+        }
 
         return NextResponse.json(parsed);
 
     } catch (error: unknown) {
+        if (error instanceof Error && error.name === 'AbortError') {
+            return NextResponse.json({ error: 'AI request timed out. Please try again.' }, { status: 504 });
+        }
         console.error('AI Generate Error:', error);
         const errorMsg = error instanceof Error ? error.message : 'Internal Server Error';
         return NextResponse.json({ error: errorMsg }, { status: 500 });

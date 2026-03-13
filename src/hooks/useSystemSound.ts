@@ -16,7 +16,8 @@ export const useSystemSound = () => {
 
     const playPop = useCallback(() => {
         initAudio();
-        const ctx = audioContextRef.current!;
+        const ctx = audioContextRef.current;
+        if (!ctx) return;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 
@@ -36,7 +37,8 @@ export const useSystemSound = () => {
 
     const playOpen = useCallback(() => {
         initAudio();
-        const ctx = audioContextRef.current!;
+        const ctx = audioContextRef.current;
+        if (!ctx) return;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 
@@ -56,7 +58,8 @@ export const useSystemSound = () => {
 
     const playClose = useCallback(() => {
         initAudio();
-        const ctx = audioContextRef.current!;
+        const ctx = audioContextRef.current;
+        if (!ctx) return;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 
@@ -76,7 +79,8 @@ export const useSystemSound = () => {
 
     const playChime = useCallback(() => {
         initAudio();
-        const ctx = audioContextRef.current!;
+        const ctx = audioContextRef.current;
+        if (!ctx) return;
 
         const playNote = (freq: number, delay: number) => {
             const osc = ctx.createOscillator();

@@ -40,10 +40,6 @@ export async function POST(req: NextRequest) {
 
         // Potential URLs to check
         const candidates = [
-            // Devicon - Original
-            `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${slug}/${slug}-original.svg`,
-            // Devicon - Plain
-            `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${slug}/${slug}-plain.svg`,
             // Simple Icons (JSDelivr - Reliable)
             `https://cdn.jsdelivr.net/npm/simple-icons@v14/icons/${slug}.svg`,
             // Simple Icons (Unpkg - Reliable)

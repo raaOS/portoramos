@@ -83,7 +83,7 @@ export const FALLBACK_HARD_SKILLS: HardSkill[] = [
     {
         id: 'hard-ai',
         name: 'Adobe Illustrator',
-        iconUrl: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/illustrator/illustrator-plain.svg',
+        iconUrl: 'https://cdn.simpleicons.org/adobeillustrator',
         level: 'Expert',
         order: 1,
         createdAt: '',
@@ -92,7 +92,7 @@ export const FALLBACK_HARD_SKILLS: HardSkill[] = [
     {
         id: 'hard-ps',
         name: 'Adobe Photoshop',
-        iconUrl: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/photoshop/photoshop-plain.svg',
+        iconUrl: 'https://cdn.simpleicons.org/adobephotoshop',
         level: 'Expert',
         order: 2,
         createdAt: '',
@@ -101,7 +101,7 @@ export const FALLBACK_HARD_SKILLS: HardSkill[] = [
     {
         id: 'hard-figma',
         name: 'Figma',
-        iconUrl: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg',
+        iconUrl: 'https://cdn.simpleicons.org/figma',
         level: 'Advanced',
         order: 3,
         createdAt: '',
@@ -110,7 +110,7 @@ export const FALLBACK_HARD_SKILLS: HardSkill[] = [
     {
         id: 'hard-canva',
         name: 'Canva',
-        iconUrl: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/canva/canva-original.svg',
+        iconUrl: 'https://cdn.simpleicons.org/canva',
         level: 'Intermediate',
         order: 4,
         createdAt: '',

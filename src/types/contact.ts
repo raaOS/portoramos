@@ -6,7 +6,6 @@ export interface ContactInfo {
     linkedin?: string;
     instagram?: string;
     twitter?: string;
-    github?: string;
     behance?: string;
     whatsapp?: string;
   };

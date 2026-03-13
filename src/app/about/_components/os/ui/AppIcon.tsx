@@ -14,7 +14,7 @@ const AppIcon = ({ color, icon: Icon, imageUrl }: AppIconProps) => {
 
     if (imageUrl && !imgError) {
         return (
-            <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-xl">
+            <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-none">
                 <Image
                     src={imageUrl}
                     alt="icon"
@@ -31,8 +31,8 @@ const AppIcon = ({ color, icon: Icon, imageUrl }: AppIconProps) => {
         );
     }
     return (
-        <div className={`w-full h-full rounded-xl bg-gradient-to-b ${color} flex items-center justify-center relative`}>
-            <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 inset-ring pointer-events-none" />
+        <div className={`w-full h-full rounded-none bg-gradient-to-b ${color} flex items-center justify-center relative`}>
+            <div className="absolute inset-0 rounded-none ring-1 ring-white/20 inset-ring pointer-events-none" />
             {Icon && <Icon className="text-white" size="65%" strokeWidth={2} />}
         </div>
     );

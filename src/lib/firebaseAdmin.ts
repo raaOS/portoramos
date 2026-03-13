@@ -43,6 +43,7 @@ export const getFirebaseDb = (): admin.database.Database => {
     }
 
     // Determine storage bucket (use env var or default to projectId.appspot.com)
+    const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
     const bucketName = storageBucket || `${projectId}.appspot.com`;
 
     console.log(`[Firebase Admin] Initializing with storage bucket: ${bucketName}`);
@@ -54,6 +55,7 @@ export const getFirebaseDb = (): admin.database.Database => {
             privateKey,
         }),
         databaseURL: dbUrl,
+        storageBucket: bucketName,
     });
 
     return app.database();

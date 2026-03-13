@@ -141,7 +141,7 @@ export default function CommentSection({
             <div className="flex -space-x-2">
               {comments.slice(0, 3).map((c, i) => (
                 <div key={i} className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-800 border-2 border-white dark:border-gray-900 flex items-center justify-center text-[8px] font-bold uppercase text-gray-400">
-                  {c.name[0]}
+                  {c.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
               ))}
             </div>
@@ -176,7 +176,7 @@ export default function CommentSection({
               <div key={comment.id} className="group">
                 <div className="flex gap-4">
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white text-[13px] font-bold uppercase shadow-lg">
-                    {comment.name[0]}
+                    {comment.name?.charAt(0)?.toUpperCase() || '?'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 mb-1">
@@ -197,7 +197,7 @@ export default function CommentSection({
                     {comment.replies.map((reply) => (
                       <div key={reply.id} className="flex gap-3">
                         <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center text-gray-600 dark:text-gray-400 text-[10px] font-bold uppercase ring-1 ring-gray-200 dark:ring-gray-700">
-                          {reply.name[0]}
+                          {reply.name?.charAt(0)?.toUpperCase() || '?'}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-baseline gap-2 mb-1">

@@ -266,7 +266,6 @@ function SocialMediaForm({ data, onUpdate }: SocialMediaFormProps) {
     { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/username' },
     { key: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/username' },
     { key: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/username' },
-    { key: 'github', label: 'GitHub', placeholder: 'https://github.com/username' },
     { key: 'behance', label: 'Behance', placeholder: 'https://behance.net/username' }
   ];
 

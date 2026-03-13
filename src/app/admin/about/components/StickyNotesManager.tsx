@@ -84,8 +84,8 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
             width: 280,
             height: 280,
             zIndex: 100,
-            fontFamily: 'var(--font-handwritten, "Comic Sans MS", cursive)',
-            fontSize: 24,
+            fontFamily: 'var(--font-handwritten, "Comic Sans MS", "Chalkboard SE", cursive)',
+            fontSize: 18,
             isPinned: false
         };
         setNotes([...notes, newNote]);

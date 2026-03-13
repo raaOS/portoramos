@@ -9,7 +9,6 @@ export const GalleryItemSchema = z.object({
     height: z.number().optional(),
     isActive: z.boolean().optional(),
     poster: z.string().optional(),
-    githubPath: z.string().optional(),
 });
 
 export const GalleryGroupSchema = z.object({

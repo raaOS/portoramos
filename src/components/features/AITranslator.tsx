@@ -19,6 +19,28 @@ function hashStr(str: string) {
     return `gemini_inline_${h}`;
 }
 
+// Safe localStorage wrapper
+function getLocalStorageItem(key: string): string | null {
+    try {
+        if (typeof window === 'undefined') return null;
+        return localStorage.getItem(key);
+    } catch (e) {
+        console.warn('[AITranslator] localStorage getItem failed:', e);
+        return null;
+    }
+}
+
+function setLocalStorageItem(key: string, value: string): boolean {
+    try {
+        if (typeof window === 'undefined') return false;
+        localStorage.setItem(key, value);
+        return true;
+    } catch (e) {
+        console.warn('[AITranslator] localStorage setItem failed:', e);
+        return false;
+    }
+}
+
 export default function AITranslator({ text, className = '', compact: _compact = false }: AITranslatorProps) {
     const [translation, setTranslation] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -34,7 +56,7 @@ export default function AITranslator({ text, className = '', compact: _compact =
 
         // Check cache
         const key = hashStr(text);
-        const cached = localStorage.getItem(key);
+        const cached = getLocalStorageItem(key);
         if (cached) { setTranslation(cached); return; }
 
         setLoading(true);
@@ -47,7 +69,7 @@ export default function AITranslator({ text, className = '', compact: _compact =
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
-            localStorage.setItem(key, data.translation);
+            setLocalStorageItem(key, data.translation);
             setTranslation(data.translation);
         } catch {
             setError(true);

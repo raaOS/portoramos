@@ -1,13 +1,13 @@
 export const isVideoLink = (url: string) => {
     if (!url) return false;
-    return url.includes('/video/') ||
-        url.endsWith('.mp4') ||
-        url.endsWith('.mov') ||
-        url.endsWith('.webm') ||
-        // If it's a blob and we don't know the type, we might need more robust checking, 
-        // but often we rely on the component knowing. 
-        // For now, let's allow the detection function to try both.
-        false;
+    
+    // Remove query parameters or hash before checking the extension
+    const urlWithoutQuery = url.split('?')[0].split('#')[0];
+    
+    return urlWithoutQuery.includes('/video/') ||
+        urlWithoutQuery.endsWith('.mp4') ||
+        urlWithoutQuery.endsWith('.mov') ||
+        urlWithoutQuery.endsWith('.webm');
 };
 
 const getVideoDimensions = (url: string): Promise<{ width: number; height: number }> => {
@@ -81,5 +81,23 @@ export const detectImageDimensions = async (url: string): Promise<{ width: numbe
         throw error;
     }
 };
+
+/**
+ * Extract path from URL (for deletion)
+ * @param url - Full URL
+ * @returns Path or null
+ */
+export function extractStoragePath(url: string): string | null {
+    try {
+        const urlObj = new URL(url);
+        // Format: https://storage.googleapis.com/BUCKET_NAME/PATH
+        const parts = urlObj.pathname.split('/');
+        if (parts.length < 2) return null;
+        // Remove bucket name (first part)
+        return parts.slice(2).join('/');
+    } catch {
+        return null;
+    }
+}
 
 

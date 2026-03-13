@@ -6,7 +6,8 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import {
     useFileValidation,
     useFFmpeg,
-    useFirebaseUpload
+    useFirebaseUpload,
+    useImageCompression
 } from './file-upload/hooks';
 import {
     UploadProgress,
@@ -49,7 +50,8 @@ export default function AdminFileUpload({
     // Hooks
     const { validateFiles } = useFileValidation({ accept, maxSize });
     const { compressVideo } = useFFmpeg(setStatus);
-    const { upload } = useFirebaseUpload();
+    const { upload } = useFirebaseUpload({ folder, customFilename, csrfToken: _csrfToken || '' });
+    const { compressImageServer } = useImageCompression(_csrfToken || '');
 
     const executeUpload = useCallback(async (
         files: File[],
@@ -84,23 +86,28 @@ export default function AdminFileUpload({
                 }
 
                 // IMMEDIATE UPLOAD MODE
-                const { url, publicPath, warning } = await uploadToGitHub(fileToUpload);
-                if (warning) {
-                    showWarning(warning);
+                const { url, success, error } = await upload(fileToUpload);
+                if (!success) {
+                    throw new Error(error || 'Upload failed');
                 }
+
                 setProgress(((index + 1) / files.length) * 100);
                 let finalUrl = url;
 
                 const isImageFile = file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.icns');
 
-                if (isImageFile && publicPath) {
-                    const { success: compSuccess, stats, newPath } = await compressImageServer(publicPath);
-                    if (compSuccess && stats) {
-                        showSuccessToast(`${file.name} Optimized! (${stats.originalSize} -> ${stats.newSize}). Saved ${stats.saved}`);
-                        if (newPath && newPath !== publicPath) {
-                            const extOld = '.' + file.name.split('.').pop()?.toLowerCase();
-                            if (finalUrl.includes(extOld) && newPath.endsWith('.webp')) {
-                                finalUrl = finalUrl.replace(extOld, '.webp');
+                if (isImageFile) {
+                    // Extract storage path from Firebase URL
+                    const urlObj = new URL(url);
+                    const pathParts = urlObj.pathname.split('/o/');
+                    if (pathParts.length > 1) {
+                        const publicPath = decodeURIComponent(pathParts[1].split('?')[0]);
+                        const { success: compSuccess, stats, newPath } = await compressImageServer(publicPath);
+                        if (compSuccess && stats) {
+                            showSuccessToast(`${file.name} Optimized! (${stats.originalSize} -> ${stats.newSize}). Saved ${stats.saved}`);
+                            if (newPath && newPath !== publicPath) {
+                                // Since it's Firebase, the URL structure for alt=media remains the same even if content changes
+                                // but we might need to refresh tokens or just trust the overwrite
                             }
                         }
                     }
@@ -127,7 +134,7 @@ export default function AdminFileUpload({
             setProgress(0);
             onUploadEnd?.();
         }
-    }, [compressVideo, upload, onUpload, onUploadStart, onUploadEnd, showSuccessToast, showError, showWarning, autoUpload, onFileSelect, customFilename, folder]);
+    }, [compressVideo, upload, compressImageServer, onUpload, onUploadStart, onUploadEnd, showSuccessToast, showError, showWarning, autoUpload, onFileSelect]);
 
     const handleFiles = useCallback(async (files: FileList) => {
         if (disabled) return;

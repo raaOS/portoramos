@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { MessageSquare, Link as LinkIcon, Image as ImageIcon, CheckCheck, Trash2, Plus, Image, ArrowLeftRight } from 'lucide-react';
+import { MessageSquare, Link as LinkIcon, Image as ImageIcon, CheckCheck, Trash2, Plus, ArrowLeftRight, Wand2 } from 'lucide-react';
 import { ChatHistoryMessage } from '@/types/testimonial';
 import { Project } from '@/types/projects';
+import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
+import { isVideoLink } from '@/lib/media';
 
 interface ChatEditorProps {
     messages: ChatHistoryMessage[];
@@ -11,8 +13,6 @@ interface ChatEditorProps {
     projects: Project[];
     projectId?: string;
 }
-
-const isVideo = (url?: string) => url?.toLowerCase().endsWith('.mp4');
 
 const AutoResizeTextarea = ({ value, onChange, className, placeholder }: { value: string, onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void, className?: string, placeholder?: string }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -55,7 +55,31 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
         onChange(newMessages);
     };
 
-    const removeMessage = (id: number) => {
+    const removeMessage = async (id: number) => {
+        const msgToDelete = messages.find(m => m.id === id);
+
+        // Physical Cleanup for Direct Uploads
+        if (msgToDelete?.imageSrc && msgToDelete.imageSrc.includes('firebasestorage.googleapis.com')) {
+            const confirmDelete = window.confirm(
+                "Pesan ini berisi gambar yang diupload ke Storage.\n\nHapus juga file aslinya dari Storage?\n\nOK = Hapus Permanen\nBatal = Hanya hapus pesan (bisa jadi sampah)"
+            );
+
+            if (confirmDelete) {
+                try {
+                    const url = new URL(msgToDelete.imageSrc);
+                    const pathParts = url.pathname.split('/o/');
+                    if (pathParts.length > 1) {
+                        const storagePath = decodeURIComponent(pathParts[1].split('?')[0]);
+                        await fetch(`/api/upload?path=${encodeURIComponent(storagePath)}`, { method: 'DELETE' });
+                    }
+                } catch (e) {
+                    console.error("Failed to delete physical chat image", e);
+                }
+            } else {
+                return; // Cancel the whole deletion if they didn't want to choose
+            }
+        }
+
         onChange(messages.filter(m => m.id !== id));
     };
 
@@ -75,12 +99,18 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                     </button>
                     <button
                         type="button"
+                        onClick={() => addMessage('image')}
+                        className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 flex items-center gap-1 font-bold"
+                    >
+                        <ImageIcon size={14} /> Gambar
+                    </button>
+                    <button
+                        type="button"
                         onClick={() => addMessage('project')}
                         className="text-xs bg-green-50 text-green-600 px-3 py-1.5 rounded-lg hover:bg-green-100 flex items-center gap-1 font-bold"
                         aria-label="Tambah link project"
                     >
-                        {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                        <Image size={14} aria-hidden="true" /> Link Project
+                        <Wand2 size={14} aria-hidden="true" /> Link Project
                     </button>
                 </div>
             </div>
@@ -89,7 +119,7 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                 <div
                     className="absolute inset-0 opacity-100 pointer-events-none z-0"
                     style={{
-                        backgroundImage: 'url("/assets/whatsapp-bg.png")',
+                        backgroundImage: 'url("/assets/whatsapp-bg.webp")',
                         backgroundRepeat: 'repeat',
                         backgroundSize: '400px'
                     }}
@@ -124,7 +154,7 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                                             <button
                                                 onClick={() => updateMessage(index, { type: 'image', projectId: undefined })}
                                                 className={`w-7 h-7 flex items-center justify-center rounded transition-all ${msg.type === 'image' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:bg-black/5'}`}
-                                                title="Gambar URL"
+                                                title="Upload/Link Gambar"
                                             >
                                                 <ImageIcon size={14} />
                                             </button>
@@ -169,9 +199,9 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                                                 <div className="bg-white/80 rounded-lg overflow-hidden border border-black/10 mt-2">
                                                     {linkedProject.cover ? (
                                                         <div className="relative h-24 bg-gray-100">
-                                                            {isVideo(linkedProject.cover) ? (
+                                                            {isVideoLink(linkedProject.cover) ? (
                                                                 <video
-                                                                    src={linkedProject.cover}
+                                                                    src={linkedProject.cover + '#t=0.1'}
                                                                     className="w-full h-full object-cover"
                                                                     autoPlay
                                                                     muted
@@ -207,17 +237,42 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
 
                                     {/* Image URL Input & Project Picker */}
                                     {msg.type === 'image' && (
-                                        <div className="mb-2 space-y-2">
+                                        <div className="mb-2 space-y-3">
+                                            {/* Direct Upload Section */}
+                                            <div className="flex flex-col gap-1.5 p-2 bg-blue-50/30 border border-blue-100/50 rounded-xl">
+                                                <label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest ml-1">Upload Langsung</label>
+                                                <div className="relative group">
+                                                    <div className="bg-white border border-blue-100 rounded-lg p-3 text-center transition-all hover:border-blue-300">
+                                                        <p className="text-[11px] text-gray-500 font-medium">Klik atau Drag untuk Upload</p>
+                                                    </div>
+                                                    <div className="absolute inset-0 opacity-0 cursor-pointer overflow-hidden">
+                                                        <AdminFileUpload
+                                                            folder="assets/testimonials"
+                                                            multiple={false}
+                                                            onUpload={(urls) => {
+                                                                if (urls && urls[0]) updateMessage(index, { imageSrc: urls[0] });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="relative flex items-center py-1">
+                                                <div className="flex-grow border-t border-gray-200/50"></div>
+                                                <span className="flex-shrink mx-2 text-[9px] font-bold text-gray-300 uppercase tracking-widest">Atau</span>
+                                                <div className="flex-grow border-t border-gray-200/50"></div>
+                                            </div>
+
                                             {/* Optional Project Picker for Image Source */}
                                             <div className="flex flex-col gap-1">
-                                                <label className="text-[10px] font-bold text-blue-600 uppercase tracking-wider ml-1">Ambil dari Project</label>
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Ambil dari Project</label>
                                                 <select
                                                     value=""
                                                     onChange={(e) => {
                                                         const p = getProjectById(e.target.value);
                                                         if (p) updateMessage(index, { imageSrc: p.cover });
                                                     }}
-                                                    className="w-full bg-blue-50/50 border border-blue-100 text-xs rounded-lg p-2 outline-none"
+                                                    className="w-full bg-white/70 border border-black/10 text-xs rounded-lg p-2 outline-none"
                                                 >
                                                     <option value="">-- Pilih Project (Auto-fill URL) --</option>
                                                     {projects.map(p => (
@@ -228,22 +283,13 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                                                 </select>
                                             </div>
 
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">URL Gambar Langsung</label>
-                                                <input
-                                                    type="text"
-                                                    value={msg.imageSrc || ''}
-                                                    onChange={(e) => updateMessage(index, { imageSrc: e.target.value })}
-                                                    placeholder="URL Gambar (https://...)"
-                                                    className="w-full bg-white/70 border border-black/10 text-xs rounded-lg p-2 outline-none"
-                                                />
-                                            </div>
+
 
                                             {msg.imageSrc && (
-                                                <div className="mt-2 rounded-lg overflow-hidden bg-gray-100 max-h-32 shadow-inner border border-black/5">
-                                                    {isVideo(msg.imageSrc) ? (
+                                                <div className="mt-2 rounded-lg overflow-hidden bg-gray-100 max-h-48 shadow-lg border border-white/50">
+                                                    {isVideoLink(msg.imageSrc) ? (
                                                         <video
-                                                            src={msg.imageSrc}
+                                                            src={msg.imageSrc + '#t=0.1'}
                                                             className="w-full h-full object-cover"
                                                             autoPlay
                                                             muted

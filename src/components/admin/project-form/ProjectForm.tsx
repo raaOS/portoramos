@@ -7,7 +7,8 @@ import { useProjectForm } from '@/hooks/useProjectForm';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import AdminModal from '@/app/admin/components/AdminModal';
 import AdminButton from '@/app/admin/components/AdminButton';
-import { uploadToGitHub } from '@/lib/githubUpload'; // Import helper
+import { useFirebaseUpload } from '@/app/admin/components/file-upload/hooks/useFirebaseUpload';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 // Sub-components
 import ProjectBasicInfo from './ProjectBasicInfo';
@@ -42,6 +43,9 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
         getSubmitData
     } = useProjectForm(project);
 
+    const { csrfToken } = useAdminAuth();
+    const { upload } = useFirebaseUpload({ folder: 'projects', csrfToken: csrfToken || '' });
+
     // State for deferred upload
     const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -73,14 +77,57 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
             // Upload Cover if pending
             if (pendingCoverFile) {
                 setIsUploading(true);
-                const { url } = await uploadToGitHub(pendingCoverFile);
+                const { url, success, error: uploadError } = await upload(pendingCoverFile);
+                if (!success) throw new Error(uploadError || 'Upload failed');
                 submitData.cover = url;
             }
 
+            // [Garbage Collection Setup]
+            const getAllUrls = (data: Partial<CreateProjectData>) => {
+                const urls = new Set<string>();
+                if (data.cover) urls.add(data.cover);
+                if (data.comparison?.beforeImage) urls.add(data.comparison.beforeImage);
+                if (data.comparison?.afterImage) urls.add(data.comparison.afterImage);
+                data.galleryItems?.forEach(item => urls.add(item.src));
+                data.galleryGroups?.forEach(g => g.items.forEach(item => urls.add(item.src)));
+                return urls;
+            };
+
+            const usedUrls = getAllUrls(submitData);
+            const originalUrls = project ? getAllUrls(project as unknown as CreateProjectData) : new Set<string>();
+
+            // 1. Ghost session uploads (uploaded in this session, but replaced/removed before submit)
+            const ghostSessionUrls = sessionUploads.filter(url => !usedUrls.has(url));
+            // 2. Removed original uploads (existed before, removed during edit)
+            const removedOriginalUrls = Array.from(originalUrls).filter(url => !usedUrls.has(url));
+
+            const urlsToPurge = [...ghostSessionUrls, ...removedOriginalUrls];
+
+            // Submit Data to DB First!
             await onSubmit(submitData);
+
+            // [Garbage Collection Execution] - Fire and forget AFTER successful save
+            if (urlsToPurge.length > 0) {
+                urlsToPurge.forEach(async (url) => {
+                    try {
+                        const extractRef = (d: string) => {
+                            try {
+                                const p = d.split('/o/');
+                                return p[1] ? decodeURIComponent(p[1].split('?')[0]) : null;
+                            } catch { return null; }
+                        };
+                        const path = extractRef(url);
+                        if (path && !url.startsWith('blob:')) {
+                            // Only delete from our Firebase bucket
+                            await fetch(`/api/upload?path=${encodeURIComponent(path)}`, { method: 'DELETE' });
+                        }
+                    } catch (e) { console.error("Purge failed for", url, e); }
+                });
+            }
+
         } catch (error) {
-            console.error("Upload failed", error);
-            alert("Gagal mengunggah gambar sampul. Silakan coba lagi.");
+            console.error("Submit failed", error);
+            alert("Gagal menyimpan project. Silakan coba lagi.");
         } finally {
             setIsUploading(false);
         }
@@ -91,10 +138,45 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
         handleSubmit(syntheticEvent);
     };
 
+    // [Deep Audit] Ghost File Prevention
+    // Tracks URLs uploaded during THIS specific form session.
+    // If user clicks "Batal" / Cancel, we delete these from Firebase.
+    const [sessionUploads, setSessionUploads] = useState<string[]>([]);
+    const trackNewUpload = (url: string) => {
+        setSessionUploads(prev => [...prev, url]);
+    };
+
+    const handleFormCancel = async () => {
+        if (sessionUploads.length > 0) {
+            const confirm = window.confirm(
+                "Membatalkan form akan MENGHAPUS file media baru yang sudah Anda upload di sesi ini. Lanjutkan?"
+            );
+            if (!confirm) return;
+
+            // Delete ghost files in background (fire and forget to not block UI)
+            sessionUploads.forEach(async (url) => {
+                try {
+                    // Quick import of extractStoragePath logic
+                    const extractRef = (d: string) => {
+                        try {
+                            const p = d.split('/o/');
+                            return p[1] ? decodeURIComponent(p[1].split('?')[0]) : null;
+                        } catch { return null; }
+                    };
+                    const path = extractRef(url);
+                    if (path) {
+                        await fetch(`/api/upload?path=${encodeURIComponent(path)}`, { method: 'DELETE' });
+                    }
+                } catch (e) { console.error("Ghost cleanup failed", e); }
+            });
+        }
+        onCancel();
+    };
+
     return (
         <AdminModal
             isOpen={true}
-            onClose={onCancel}
+            onClose={handleFormCancel}
             title={title}
             size="2xl"
             actions={
@@ -102,7 +184,7 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                     {/* Left side actions (Cancel / Back) */}
                     <div>
                         {currentStep === 1 ? (
-                            <AdminButton variant="secondary" onClick={onCancel} disabled={isUploading}> Batal </AdminButton>
+                            <AdminButton variant="secondary" onClick={handleFormCancel} disabled={isUploading}> Batal </AdminButton>
                         ) : (
                             <AdminButton variant="secondary" onClick={handleBack} disabled={isUploading}> Kembali </AdminButton>
                         )}
@@ -284,6 +366,7 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                                 slug={formData.slug}
                                 onFileChange={setPendingCoverFile}
                                 mediaFormat={mediaFormat}
+                                onNewUpload={trackNewUpload}
                             />
                         </div>
 
@@ -302,6 +385,7 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                                     removeGalleryItemFromGroup={removeGalleryItemFromGroup}
                                     toggleGalleryItemInGroup={toggleGalleryItemInGroup}
                                     updateGroupName={updateGroupName}
+                                    onNewUpload={trackNewUpload}
                                 />
                             </div>
                         )}

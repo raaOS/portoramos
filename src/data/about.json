@@ -107,24 +107,196 @@
   "designPhilosophy": {
     "heading": "Philosophy of Design (Updated)",
     "subheading": "Strategic Thinking Framework",
-    "steps": [
+    "workflowSteps": [
       {
+        "id": "discovery",
         "number": "01",
-        "title": "Context & Purpose",
-        "desc": "Sebelum menyentuh kanvas digital, saya membedah masalah bisnisnya. Apa produknya? Siapa targetnya?",
-        "quote": "Pesan utama apa yang ingin disampaikan?"
+        "title": "Discovery & Research",
+        "subtitle": "Memahami fondasi proyek",
+        "description": "Tahap awal untuk memahami masalah bisnis, target audience, dan tujuan desain.",
+        "type": "phase",
+        "color": "amber",
+        "icon": "Search",
+        "subSteps": [
+          {
+            "id": "briefing",
+            "title": "Briefing & Debrief",
+            "description": "Diskusi awal dengan klien untuk memahami kebutuhan dan ekspektasi.",
+            "status": "default"
+          },
+          {
+            "id": "research",
+            "title": "Research & Observasi",
+            "description": "Analisis pasar, kompetitor, dan tren yang relevan.",
+            "status": "default"
+          },
+          {
+            "id": "reference",
+            "title": "Cari Referensi & Asset",
+            "description": "Mengumpulkan inspirasi visual, moodboard, dan resource.",
+            "status": "default"
+          },
+          {
+            "id": "client-sync",
+            "title": "Sync dengan Klien",
+            "description": "Presentasi temuan dan validasi arah konsep.",
+            "status": "default"
+          }
+        ],
+        "nextSteps": ["strategy"],
+        "loopTargets": []
       },
       {
+        "id": "strategy",
         "number": "02",
-        "title": "Strategic Scope",
-        "desc": "Saya tidak sekadar mendekorasi. Saya fokus pada hierarki visual yang tepat untuk memastikan pesan tersampaikan.",
-        "quote": "Fokus pada esensi, bukan dekorasi."
+        "title": "Strategy & Concept",
+        "subtitle": "Merancang pendekatan visual",
+        "description": "Menentukan hierarki visual, pesan utama, dan strategi komunikasi desain.",
+        "type": "phase",
+        "color": "blue",
+        "icon": "Lightbulb",
+        "subSteps": [
+          {
+            "id": "define-message",
+            "title": "Definisikan Pesan Utama",
+            "description": "Menentukan core message yang harus tersampaikan.",
+            "status": "default"
+          },
+          {
+            "id": "visual-hierarchy",
+            "title": "Hierarki Visual",
+            "description": "Merancang struktur informasi dan prioritas elemen.",
+            "status": "default"
+          },
+          {
+            "id": "team-brainstorm",
+            "title": "Brainstorm dengan Tim",
+            "description": "Diskusi kreatif untuk eksplorasi ide.",
+            "status": "default"
+          },
+          {
+            "id": "concept-proposal",
+            "title": "Proposal Konsep",
+            "description": "Menyusun presentasi konsep untuk klien.",
+            "status": "default"
+          }
+        ],
+        "nextSteps": ["execution"],
+        "loopTargets": ["discovery"]
       },
       {
+        "id": "execution",
         "number": "03",
-        "title": "Execution & Result",
-        "desc": "Estetika adalah penguat pesan. Saya menciptakan visual yang tajam, konsisten, dan mudah diingat audiens.",
-        "quote": "Apakah audiens paham? Apakah mereka ingat?"
+        "title": "Execution & Iteration",
+        "subtitle": "Mengembangkan desain",
+        "description": "Proses kreatif membuat desain dengan iterasi dan revisi.",
+        "type": "phase",
+        "color": "purple",
+        "icon": "Palette",
+        "subSteps": [
+          {
+            "id": "wireframe",
+            "title": "Draft & Wireframe",
+            "description": "Membuat kerangka awal dan layout dasar.",
+            "status": "default"
+          },
+          {
+            "id": "visual-design",
+            "title": "Desain Visual",
+            "description": "Mengembangkan visual dengan detail penuh.",
+            "status": "default"
+          },
+          {
+            "id": "internal-review",
+            "title": "Review Internal",
+            "description": "Evaluasi dengan tim sebelum ke klien.",
+            "status": "default"
+          },
+          {
+            "id": "client-presentation",
+            "title": "Present ke Klien",
+            "description": "Menampilkan hasil dan menerima feedback.",
+            "status": "default"
+          }
+        ],
+        "nextSteps": ["approval"],
+        "loopTargets": ["strategy", "execution"]
+      },
+      {
+        "id": "approval",
+        "number": "04",
+        "title": "Refinement & Approval",
+        "subtitle": "Penyempurnaan dan ACC",
+        "description": "Tahap revisi akhir hingga persetujuan final dari klien.",
+        "type": "decision",
+        "color": "rose",
+        "icon": "GitPullRequest",
+        "subSteps": [
+          {
+            "id": "revision-round-1",
+            "title": "Revisi R1",
+            "description": "Perbaikan berdasarkan feedback pertama.",
+            "status": "default"
+          },
+          {
+            "id": "revision-round-2",
+            "title": "Revisi R2 (jika perlu)",
+            "description": "Penyempurnaan tambahan.",
+            "status": "default"
+          },
+          {
+            "id": "final-polish",
+            "title": "Final Polish",
+            "description": "Detail terakhir dan quality check.",
+            "status": "default"
+          },
+          {
+            "id": "client-approval",
+            "title": "ACC dari Klien",
+            "description": "Persetujuan final dan tanda tangan.",
+            "status": "default"
+          }
+        ],
+        "nextSteps": ["delivery"],
+        "loopTargets": ["execution", "strategy", "discovery"]
+      },
+      {
+        "id": "delivery",
+        "number": "05",
+        "title": "Delivery & Result",
+        "subtitle": "Serah terima final",
+        "description": "Penyerahan aset final dan dokumentasi.",
+        "type": "terminator",
+        "color": "emerald",
+        "icon": "CheckCircle2",
+        "subSteps": [
+          {
+            "id": "asset-prep",
+            "title": "Prepare Final Assets",
+            "description": "Menyusun semua file dalam format siap pakai.",
+            "status": "default"
+          },
+          {
+            "id": "styleguide",
+            "title": "Styleguide & Dokumentasi",
+            "description": "Panduan penggunaan dan brand guidelines.",
+            "status": "default"
+          },
+          {
+            "id": "handover",
+            "title": "Handover Session",
+            "description": "Sesi penjelasan dan Q&A dengan klien.",
+            "status": "default"
+          },
+          {
+            "id": "archive",
+            "title": "Archive & Closing",
+            "description": "Backup project dan closing administrasi.",
+            "status": "default"
+          }
+        ],
+        "nextSteps": [],
+        "loopTargets": []
       }
     ]
   },
@@ -209,7 +381,7 @@
       },
       {
         "id": "w-1772328106931-f1zil1wt3",
-        "url": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/wallpapers/1772328103874-4nb3gn114vgo-wallaper.png",
+        "url": "/wallpapers/1772328103874-4nb3gn114vgo-wallaper.png",
         "name": "Custom Wallpaper"
       }
     ],
@@ -227,13 +399,13 @@
       "iconUrl": "/assets/icons-library/1769438534400-hlte99042ytz-icnsfile-d7ac3a93471d5eaa0d43e730035de6eb-finder-beta-1-pink.webp"
     },
     "about": {
-      "iconUrl": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/assets/icons-library/1769438534391-8jzxtsb8p9mp-icnsfile-ca52dc8679e2709366550576131c5747-bob.webp?v=1771773142662"
+      "iconUrl": "/assets/icons-library/1769438534391-8jzxtsb8p9mp-icnsfile-ca52dc8679e2709366550576131c5747-bob.webp"
     },
     "notes": {
       "iconUrl": "/assets/icons-library/1769437234492-st4egtv1o8tm-icnsfile-922467ee2be0869b8e2164714aed0616-notes.webp"
     },
     "projects": {
-      "iconUrl": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/assets/icons-library/1771773099304-ayvjblj21goq-icnsfile-d8f361ddd357476fc58d4f437de52ff4-adobecreativecloud--tahoe-default-.webp?v=1771773138145",
+      "iconUrl": "/assets/icons-library/1771773099304-ayvjblj21goq-icnsfile-d8f361ddd357476fc58d4f437de52ff4-adobecreativecloud--tahoe-default-.webp",
       "isHidden": false,
       "label": "Projects"
     },
@@ -244,7 +416,7 @@
       "iconUrl": "/assets/icons-library/1769437234483-fjer70ujri1t-icnsfile-4ec6cb84cd46ec05462df321c07583a4-6cjat8gosq.webp"
     },
     "contact": {
-      "iconUrl": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/assets/icons-library/1771772795413-93q5glpk8hei-icnsfile-dd452b95f80869039da006a431cb9cc8-contacts--ios-18-dark-.webp?v=1771772802894",
+      "iconUrl": "/assets/icons-library/1771772795413-93q5glpk8hei-icnsfile-dd452b95f80869039da006a431cb9cc8-contacts--ios-18-dark-.webp",
       "label": "Hubungi Saya"
     }
   },
@@ -266,7 +438,7 @@
   },
   "soundConfig": {
     "startup": {
-      "path": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/sounds/startup.wav?v=1771959299066",
+      "path": "/sounds/startup.wav",
       "volume": 1
     },
     "click": {
@@ -294,7 +466,7 @@
       "volume": 0.5
     },
     "typing": {
-      "path": "https://raw.githubusercontent.com/raaOS/portoramos/main/public/sounds/typing.wav?v=1771962894583",
+      "path": "/sounds/typing.wav",
       "volume": 0.5
     },
     "sent": {

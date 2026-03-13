@@ -16,7 +16,7 @@ const DEFAULT_WALLPAPERS = [
 export default function WallpaperManager({ data, onUpdate }: WallpaperManagerProps) {
     const [wallpapers, setWallpapers] = useState<Wallpaper[]>(DEFAULT_WALLPAPERS);
     const [activeId, setActiveId] = useState<string>('default');
-    // Local state for blur — only saves to GitHub on pointer/mouse up (not every keystroke)
+    // Local state for blur — only saves to database on pointer/mouse up (not every keystroke)
     const [blurValue, setBlurValue] = useState<number>(data?.blur || 0);
     const [isUploading, setIsUploading] = useState(false);
 
@@ -54,7 +54,31 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
         });
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
+        const wallpaperToDelete = wallpapers.find(w => w.id === id);
+
+        if (wallpaperToDelete && wallpaperToDelete.url.includes('firebasestorage.googleapis.com')) {
+            const confirmDelete = window.confirm(
+                "Hapus wallpaper ini secara permanen dari Storage?\n\nOK = Hapus fisik\nBatal = Hanya hapus dari daftar (bisa jadi sampah)"
+            );
+
+            if (confirmDelete) {
+                try {
+                    // Extract path from Firebase URL
+                    const url = new URL(wallpaperToDelete.url);
+                    const pathParts = url.pathname.split('/o/');
+                    if (pathParts.length > 1) {
+                        const storagePath = decodeURIComponent(pathParts[1].split('?')[0]);
+                        await fetch(`/api/upload?path=${encodeURIComponent(storagePath)}`, { method: 'DELETE' });
+                    }
+                } catch (e) {
+                    console.error("Failed to delete physical wallpaper file", e);
+                }
+            } else {
+                return; // User cancelled
+            }
+        }
+
         const newCollection = wallpapers.filter(w => w.id !== id);
         setWallpapers(newCollection);
         // If active was deleted, reset to first

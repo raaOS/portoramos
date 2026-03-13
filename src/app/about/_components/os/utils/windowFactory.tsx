@@ -7,6 +7,7 @@ import { ExperienceData } from "@/types/experience";
 import { HardSkillsData } from "@/types/hardSkill";
 import { Project } from "@/types/projects";
 import { ContactProfile } from "../data/mockChats";
+import { getWindowPosition } from "./positionSync";
 
 const AboutContent = dynamic(() => import("../windows/AboutContent"), {
     loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
@@ -18,15 +19,6 @@ const ChatWindow = dynamic(() => import("../windows/ChatWindow"), {
     ssr: false
 });
 
-// Dynamic imports for future use - prefixed with underscore to avoid lint warnings
-const _ProjectDetailWrapper = dynamic(() => import("../ui/ProjectDetailWrapper"), {
-    loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
-    ssr: false
-});
-
-// BUG FIX #5: Removed unused _IndexClientWithAutoUpdate import to reduce bundle size
-// If needed in future, import dynamically at call site
-
 interface WindowFactoryProps {
     aboutData: AboutData | null | undefined;
     experienceData: ExperienceData | null | undefined;
@@ -34,6 +26,7 @@ interface WindowFactoryProps {
     projects: Project[];
     commercialProjects: Project[];
     dynamicContacts: Record<string, ContactProfile>;
+    isAdmin?: boolean;
 }
 
 export const createInitialWindows = ({
@@ -42,21 +35,32 @@ export const createInitialWindows = ({
     hardSkillsData,
     projects: _projects,
     commercialProjects: _commercialProjects,
-    dynamicContacts
-}: WindowFactoryProps): WindowState[] => [
+    dynamicContacts,
+    isAdmin = false
+}: WindowFactoryProps): WindowState[] => {
+    // About window - pakai positionSync untuk get posisi
+    const aboutPos = getWindowPosition(
+        "about",
+        aboutData?.windowPreferences?.about,
+        { x: 100, y: 80, width: 900, height: 600 },
+        isAdmin
+    );
+
+    return [
         {
             id: "about",
             title: "Finder: About Me",
             isOpen: true,
             zIndex: 10,
             noPadding: true,
-            initialPosition: {
-                x: aboutData?.windowPreferences?.about?.x ?? 100,
-                y: aboutData?.windowPreferences?.about?.y ?? 80
-            },
-            width: 900,
-            height: 600,
-            content: <AboutContent aboutData={aboutData || undefined} experienceData={experienceData || undefined} hardSkillsData={hardSkillsData || undefined} />
+            initialPosition: { x: aboutPos.x, y: aboutPos.y },
+            width: aboutPos.width,
+            height: aboutPos.height,
+            content: <AboutContent 
+                aboutData={aboutData || undefined} 
+                experienceData={experienceData || undefined} 
+                hardSkillsData={hardSkillsData || undefined} 
+            />
         },
         {
             id: "whatsapp",
@@ -94,6 +98,7 @@ export const createInitialWindows = ({
             initialPosition: { x: 50, y: 50 },
             width: 1000,
             height: 700,
-            content: null // Content will be injected dynamically via openProjectWindow
+            content: null
         }
     ];
+};

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 const SparklesCore = dynamic(() => import("@/components/ui/Sparkles").then(mod => mod.SparklesCore), { ssr: false });
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, getProxiedUrl } from "@/lib/utils";
 import { IconDotsVertical } from "@tabler/icons-react";
 
 interface CompareProps {
@@ -166,12 +166,16 @@ export const Compare = ({
   );
 
   const renderMedia = (src: string, className: string, alt: string) => {
-    const isVideo = src.toLowerCase().endsWith('.mp4') || src.toLowerCase().endsWith('.webm');
+    const proxiedSrc = getProxiedUrl(src);
+    const isVideo = proxiedSrc.toLowerCase().includes('.mp4') || 
+                    proxiedSrc.toLowerCase().includes('.webm') ||
+                    src.toLowerCase().endsWith('.mp4') || 
+                    src.toLowerCase().endsWith('.webm');
 
     if (isVideo) {
       return (
         <video
-          src={src}
+          src={proxiedSrc}
           className={cn(className, "object-cover")}
           autoPlay
           loop
@@ -186,7 +190,7 @@ export const Compare = ({
       // eslint-disable-next-line @next/next/no-img-element
       <img
         alt={alt}
-        src={src}
+        src={proxiedSrc}
         className={className}
         draggable={false}
       />

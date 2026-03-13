@@ -15,7 +15,9 @@ export type {
   AboutSoftSkill,
   SoftSkillItem,
   AboutSoftSkills,
-  PhilosophyStep,
+  // PhilosophyStep removed - use WorkflowStep
+  WorkflowSubStep,
+  WorkflowStep,
   DesignPhilosophy,
   Wallpaper,
   WallpaperConfig,
