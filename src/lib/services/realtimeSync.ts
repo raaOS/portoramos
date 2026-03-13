@@ -11,10 +11,10 @@
 import { useEffect, useRef, useCallback } from 'react';
 
 // Type declarations for Firebase SDK (loaded dynamically in browser)
-type FirebaseDatabase = unknown;
-type OnValueFn = unknown;
-type RefFn = unknown;
-type OffFn = unknown;
+type FirebaseDatabase = any;
+type OnValueFn = any;
+type RefFn = any;
+type OffFn = any;
 
 let db: FirebaseDatabase | null = null;
 let onValueFn: OnValueFn | null = null;
@@ -37,9 +37,7 @@ async function initFirebaseClient() {
     }
     
     try {
-        // @ts-expect-error - Firebase client SDK not installed (optional, used for real-time sync demo)
         const firebaseDatabase = await import('firebase/database');
-        // @ts-expect-error - Firebase client SDK not installed (optional, used for real-time sync demo)
         const firebaseApp = await import('firebase/app');
         
         // Cek kalau sudah diinisialisasi

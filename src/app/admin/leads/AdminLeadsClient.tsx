@@ -38,7 +38,7 @@ export default function AdminLeadsClient() {
         }
     };
 
-    const columns: unknown[] = [
+    const columns: any[] = [
         {
             key: 'createdAt',
             label: 'Tanggal',

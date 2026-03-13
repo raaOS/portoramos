@@ -58,13 +58,14 @@ async function beautifyFirebase() {
             // Normalize & Move cover
             if (updatedProject.cover) {
                 let currentPath = '';
-                if (updatedProject.cover.includes('/o/')) {
-                    const parts = updatedProject.cover.split('/o/');
+                const coverUrl = String(updatedProject.cover);
+                if (coverUrl.includes('/o/')) {
+                    const parts = coverUrl.split('/o/');
                     currentPath = decodeURIComponent(parts[1].split('?')[0]);
-                } else if (updatedProject.cover.startsWith('/')) {
-                    currentPath = updatedProject.cover.substring(1);
+                } else if (coverUrl.startsWith('/')) {
+                    currentPath = coverUrl.substring(1);
                 } else {
-                    currentPath = updatedProject.cover;
+                    currentPath = coverUrl;
                 }
 
                 if (currentPath && !currentPath.startsWith('http')) {

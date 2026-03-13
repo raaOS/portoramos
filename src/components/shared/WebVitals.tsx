@@ -29,7 +29,7 @@ export default function WebVitals() {
         if (!isEnabled) return;
 
         // Dynamically import web-vitals library (optional dependency)
-        import('web-vitals').then((webVitals) => {
+        import('web-vitals').then((webVitals: any) => {
             const { getCLS, getFID, getFCP, getLCP, getTTFB } = webVitals;
             // Report to console in development, could send to analytics in production
             const reportWebVital: ReportHandler = (metric) => {

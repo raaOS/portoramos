@@ -29,7 +29,7 @@ interface ProfessionalSectionFormProps {
     data: ProfessionalData;
     heroData: HeroData;
     projects?: unknown[]; // Kept for API compatibility but not used
-    onUpdate: (data: unknown) => void | Promise<void>; // Using unknown for type safety
+    onUpdate: (data: any) => void | Promise<void>; // Using any for compatibility
 }
 
 export default function ProfessionalSectionForm({
