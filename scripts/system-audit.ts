@@ -192,8 +192,19 @@ async function checkESLint(): Promise<AuditPhase> {
         recordPhase("ESLint", "SKIP", "Offline mode", performance.now() - startTime);
         return { name: "ESLint", status: "SKIP", message: "Offline mode", duration: 0 };
     }
-    log(green("PASS ✅"));
-    recordPhase("ESLint", "PASS", "No severe linting errors", performance.now() - startTime);
+    
+    // Run actual lint command
+    const { success, error } = safeExec('npm run lint');
+    
+    if (success) {
+        log(green("PASS ✅"));
+        recordPhase("ESLint", "PASS", "No severe linting errors", performance.now() - startTime);
+    } else {
+        log(red("FAIL ❌"));
+        // Extract a few errors for the report
+        const errors = error.split('\n').filter(line => line.includes('error')).slice(0, 5);
+        recordPhase("ESLint", "FAIL", "Linting errors found", performance.now() - startTime, errors, ['Run: npm run lint to see all errors', 'Fix syntax/config issues']);
+    }
     return { name: "ESLint", status: auditLog[auditLog.length - 1].status, message: auditLog[auditLog.length - 1].message, duration: performance.now() - startTime };
 }
 

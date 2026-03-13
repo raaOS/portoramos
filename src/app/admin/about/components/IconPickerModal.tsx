@@ -171,7 +171,6 @@ export default function IconPickerModal({ isOpen, onClose, onSelect, currentIcon
                                                 ${selectedUrl ? 'pointer-events-none opacity-50' : ''}
                                             `}
                                         >
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
                                                 src={iconUrl}
                                                 alt="icon"

@@ -40,6 +40,7 @@ export function validateCSRFToken(token: string, sessionToken: string): boolean 
     if (bufA.length !== bufB.length) return false
 
     // crypto is available globally in Node.js
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const crypto = require('crypto')
     return crypto.timingSafeEqual(bufA, bufB)
 }

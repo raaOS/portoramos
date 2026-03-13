@@ -29,8 +29,7 @@ interface ProfessionalSectionFormProps {
     data: ProfessionalData;
     heroData: HeroData;
     projects?: unknown[]; // Kept for API compatibility but not used
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onUpdate: (data: any) => void | Promise<void>; // Using any for compatibility with UpdateAboutData
+    onUpdate: (data: unknown) => void | Promise<void>; // Using unknown for type safety
 }
 
 export default function ProfessionalSectionForm({

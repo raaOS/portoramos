@@ -209,7 +209,6 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                                                                     playsInline
                                                                 />
                                                             ) : (
-                                                                /* eslint-disable-next-line @next/next/no-img-element */
                                                                 <img
                                                                     src={linkedProject.cover}
                                                                     alt={`${linkedProject.title} - ${linkedProject.client || 'Project'}`}
@@ -297,7 +296,6 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                                                             playsInline
                                                         />
                                                     ) : (
-                                                        /* eslint-disable-next-line @next/next/no-img-element */
                                                         <img
                                                             src={msg.imageSrc}
                                                             alt="Preview"

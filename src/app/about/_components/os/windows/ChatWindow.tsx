@@ -336,7 +336,6 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                                     className="w-full h-auto object-cover max-h-[250px]"
                                                 />
                                             ) : (
-                                                /* eslint-disable-next-line @next/next/no-img-element */
                                                 <img
                                                     src={msg.imageSrc}
                                                     alt="Shared media"
@@ -439,7 +438,6 @@ export default function ChatWindow({ activeChatId, customContacts }: ChatWindowP
                                     className="max-w-full max-h-full object-contain rounded-lg"
                                 />
                             ) : (
-                                /* eslint-disable-next-line @next/next/no-img-element */
                                 <img
                                     src={previewImage}
                                     alt="Preview"

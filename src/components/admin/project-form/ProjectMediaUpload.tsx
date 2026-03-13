@@ -123,7 +123,6 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                                         controls
                                     />
                                 ) : (
-                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img
                                         src={formData.cover}
                                         alt="Cover"
@@ -229,7 +228,6 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                                             controls
                                         />
                                     ) : (
-                                        // eslint-disable-next-line @next/next/no-img-element
                                         <img
                                             src={formData.comparison.beforeImage}
                                             alt="Before"
@@ -304,7 +302,6 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
                                             controls
                                         />
                                     ) : (
-                                        // eslint-disable-next-line @next/next/no-img-element
                                         <img
                                             src={formData.comparison.afterImage}
                                             alt="After"

@@ -260,11 +260,11 @@ export default function OSWindow({
                         }
                         if (e.ctrlKey && e.key === 'm') {
                             e.preventDefault();
-                            onMinimize && onMinimize();
+                            if (onMinimize) onMinimize();
                         }
                         if (e.ctrlKey && e.key === 'Enter') {
                             e.preventDefault();
-                            onMaximize && onMaximize();
+                            if (onMaximize) onMaximize();
                         }
 
                         // Simple Focus Trap: Tab handling
@@ -329,7 +329,7 @@ export default function OSWindow({
                                 </span>
                             </button>
                             <button
-                                onClick={(e) => { e.stopPropagation(); onMinimize && onMinimize(); }}
+                                onClick={(e) => { e.stopPropagation(); if (onMinimize) onMinimize(); }}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
                                 aria-label="Minimize window"
@@ -339,7 +339,7 @@ export default function OSWindow({
                                 </span>
                             </button>
                             <button
-                                onClick={(e) => { e.stopPropagation(); onMaximize && onMaximize(); }}
+                                onClick={(e) => { e.stopPropagation(); if (onMaximize) onMaximize(); }}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
                                 aria-label="Maximize window"

@@ -28,6 +28,10 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
         }
     });
 
+    // Ref to track latest iconPositions without adding to dependency array
+    const iconPositionsRef = React.useRef(iconPositions);
+    iconPositionsRef.current = iconPositions;
+
     // Sync jika aboutData berubah (admin: jangan timpa localStorage, visitor: jangan timpa sessionStorage)
     useEffect(() => {
         const firebase = aboutData?.desktopPreferences?.iconPositions;
@@ -41,7 +45,8 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
         }
         
         // Hanya tambah icon yang belum ada di existing/state
-        const merged = { ...iconPositions };
+        // Use ref to access latest state without dependency
+        const merged = { ...iconPositionsRef.current };
         let hasNew = false;
         
         Object.entries(firebase).forEach(([id, pos]) => {

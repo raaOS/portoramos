@@ -42,7 +42,7 @@ export function extractImagesFromIcns(buffer: Buffer): IcnsImage[] {
         const typeInfo = ICNS_TYPES[id];
         if (typeInfo) {
             // Data starts after ID(4) and Size(4)
-            let data = buffer.slice(offset + 8, offset + size);
+            const data = buffer.slice(offset + 8, offset + size);
 
             // Modern ICNS files contain PNG or JPEG 2000 data
             // We skip nested 'icns' headers if they appear inside chunks (rare but happens)

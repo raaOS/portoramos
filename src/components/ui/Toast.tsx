@@ -17,7 +17,7 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
     const t = setTimeout(() => {
       setShow(false)
       setTimeout(() => {
-        onClose && onClose()
+        if (onClose) onClose()
       }, 300) // Wait for animation to complete
     }, duration)
     return () => clearTimeout(t)

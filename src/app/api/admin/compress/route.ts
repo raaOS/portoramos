@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
     const originalSize = fs.statSync(tempInput).size;
 
     // 4. Compress with Sharp
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const sharp = require('sharp');
     let sharpChain = sharp(tempInput);
 

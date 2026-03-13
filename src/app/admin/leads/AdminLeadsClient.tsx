@@ -38,8 +38,7 @@ export default function AdminLeadsClient() {
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const columns: any[] = [
+    const columns: unknown[] = [
         {
             key: 'createdAt',
             label: 'Tanggal',

@@ -89,9 +89,12 @@ export function usePersistentPositions(aboutData?: AboutData | null) {
     }
 
     positionsRef.current = merged;
-    setIsLoaded(true);
     
-    console.log('[Positions] Loaded:', merged);
+    // Use queueMicrotask to avoid synchronous setState warning
+    queueMicrotask(() => {
+      setIsLoaded(true);
+      console.log('[Positions] Loaded:', merged);
+    });
   }, [aboutData, isLoaded]);
 
   // Get position

@@ -36,7 +36,7 @@ export async function handleLeadsCommand(): Promise<MessageToSend[]> {
 
             for (let i = 0; i < lastLeads.length; i++) {
                 const lead = lastLeads[i];
-                let phone = lead.contact || '-';
+                const phone = lead.contact || '-';
                 let waUrl: string | null = null;
 
                 if (phone !== '-') {

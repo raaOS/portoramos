@@ -54,8 +54,8 @@ export async function GET(req: NextRequest) {
 
         // 3. Scan Firebase Storage
         const [files] = await bucket.getFiles({ prefix: 'assets/' });
-        let totalFiles = files.length;
-        let orphanFiles: Array<{ name: string, inDb: boolean, reason: string }> = [];
+        const totalFiles = files.length;
+        const orphanFiles: Array<{ name: string, inDb: boolean, reason: string }> = [];
 
         files.forEach(file => {
             const fileName = file.name;

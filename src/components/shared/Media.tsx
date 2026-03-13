@@ -263,7 +263,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
           aria-hidden={!controls ? "true" : undefined}
           tabIndex={!controls ? -1 : undefined}
           autoPlay={effectiveAutoplay}
-          // @ts-ignore
+          // @ts-expect-error - fetchPriority is not yet in React types
           fetchPriority={priority ? "high" : "auto"}
           muted={effectiveAutoplay || muted}
           loop={loop}

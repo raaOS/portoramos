@@ -48,8 +48,7 @@ export default function Input(props: InputProps) {
 
       {as === 'textarea' ? (
         <textarea 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          {...restProps as any}
+          {...restProps as unknown as React.TextareaHTMLAttributes<HTMLTextAreaElement>}
           id={inputId} 
           className={common}
           aria-describedby={ariaDescribedBy}
@@ -58,8 +57,7 @@ export default function Input(props: InputProps) {
         />
       ) : (
         <input 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          {...restProps as any}
+          {...restProps as unknown as React.InputHTMLAttributes<HTMLInputElement>}
           id={inputId} 
           className={common}
           aria-describedby={ariaDescribedBy}

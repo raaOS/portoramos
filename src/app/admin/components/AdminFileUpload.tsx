@@ -92,7 +92,7 @@ export default function AdminFileUpload({
                 }
 
                 setProgress(((index + 1) / files.length) * 100);
-                let finalUrl = url;
+                const finalUrl = url;
 
                 const isImageFile = file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.icns');
 

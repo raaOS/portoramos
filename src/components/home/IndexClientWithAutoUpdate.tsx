@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Project } from '@/types/projects';
 import { useSearchParams } from 'next/navigation';
@@ -22,7 +22,8 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
   // Safe context access
   const context = useLastUpdated();
   const contextLastUpdated = context?.lastUpdated;
-  const setLastUpdated = context?.setLastUpdated || (() => {});
+  // Use useMemo to avoid recreating function on every render
+  const setLastUpdated = useMemo(() => context?.setLastUpdated || (() => {}), [context?.setLastUpdated]);
   const searchParams = useSearchParams();
   const tag = searchParams?.get('tag') || '';
   const searchQuery = searchParams?.get('q') || '';

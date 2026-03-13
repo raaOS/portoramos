@@ -93,7 +93,6 @@ export default function LightboxGallery({ items, initialIndex = 0, onClose, grou
                                 controls={true}
                             />
                         ) : (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                                 src={getProxiedUrl(currentItem.src)}
                                 alt={currentItem.alt || `Gallery Image ${currentIndex + 1}`}

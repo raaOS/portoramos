@@ -272,7 +272,6 @@ export default function FullPageChat({ contactInfo }: FullPageChatProps) {
                         <div className="flex items-center gap-3">
                             {/* Avatar */}
                             <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 border border-white/20">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={`https://ui-avatars.com/api/?background=ffffff&color=000000&name=R&size=128&bold=true&length=1`} alt="Ramos" className="w-full h-full object-cover" />
                             </div>
 

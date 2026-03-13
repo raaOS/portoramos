@@ -49,13 +49,11 @@ async function beautifyFirebase() {
         // 1. Audit Projects
         const projectsSnap = await db.ref('projects').once('value');
         const projects = projectsSnap.val() || {};
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const projectUpdates: Record<string, any> = {};
+        const projectUpdates: Record<string, unknown> = {};
 
         for (const [id, p] of Object.entries(projects)) {
             let changed = false;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const updatedProject = { ...(p as any) };
+            const updatedProject = { ...(p as Record<string, unknown>) };
 
             // Normalize & Move cover
             if (updatedProject.cover) {
@@ -120,8 +118,7 @@ async function beautifyFirebase() {
 
         if (Object.keys(projectUpdates).length > 0) {
             console.log(`Updating ${Object.keys(projectUpdates).length} projects with neat URLs...`);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await db.ref('projects').update(projectUpdates as any);
+            await db.ref('projects').update(projectUpdates);
         }
 
         // 2. Audit Content (About, Desktop Icons, Sticky Notes)
@@ -179,12 +176,10 @@ async function beautifyFirebase() {
 
         // Collect from Projects
         for (const p of Object.values(projects)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const proj = p as any;
+            const proj = p as { cover?: string; galleryItems?: { src?: string }[] };
             if (proj.cover) usedAssets.add(proj.cover);
             if (proj.galleryItems) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                proj.galleryItems.forEach((item: any) => {
+                proj.galleryItems.forEach((item) => {
                     if (item.src) usedAssets.add(item.src);
                 });
             }
@@ -192,8 +187,7 @@ async function beautifyFirebase() {
 
         // Collect from Content
         if (content.about?.desktop?.icons) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            content.about.desktop.icons.forEach((icon: any) => {
+            (content.about.desktop.icons as { iconUrl?: string }[]).forEach((icon) => {
                 if (icon.iconUrl) usedAssets.add(icon.iconUrl);
             });
         }

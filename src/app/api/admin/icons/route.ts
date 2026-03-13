@@ -39,7 +39,7 @@ export async function DELETE(req: NextRequest) {
         }
 
         const { searchParams } = new URL(req.url);
-        let iconUrl = searchParams.get('url');
+        const iconUrl = searchParams.get('url');
 
         if (!iconUrl) {
             return NextResponse.json({ error: 'No icon URL provided' }, { status: 400 });

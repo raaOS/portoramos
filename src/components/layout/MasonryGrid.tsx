@@ -69,7 +69,7 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
             .map(Number)
             .sort((a, b) => b - a);
 
-        for (let bp of breakpoints) {
+        for (const bp of breakpoints) {
             if (w <= bp) {
                 cols = (breakpointColumns as Record<number, number>)[bp];
             }
@@ -94,7 +94,7 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         if (!containerRef.current) return;
 
         const handleResize = (entries: ResizeObserverEntry[]) => {
-            for (let entry of entries) {
+            for (const entry of entries) {
                 if (entry.contentRect.width > 0) {
                     updateCallback(entry.contentRect.width);
                 }

@@ -25,7 +25,6 @@ export default function TestimonialCard({ testimonial: t, onEdit, onDelete, onTo
                             color: `#${getAvatarColors(t.name).text}`
                         }}
                     >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={getAvatarUrl(t.name)} alt="" className="w-full h-full object-cover" />
                     </div>
                     <div className="min-w-0">

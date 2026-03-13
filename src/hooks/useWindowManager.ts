@@ -70,8 +70,8 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
 
                     console.log(`[WindowManager] Applying pref for ${w.id}:`, pref);
 
-                    let rawWidth = pref.width || w.width || 800;
-                    let rawHeight = pref.height || w.height || 600;
+                    const rawWidth = pref.width || w.width || 800;
+                    const rawHeight = pref.height || w.height || 600;
                     const isPinned = pref.isOpenByDefault || false;
 
                     const getCenterPositionStatic = (width: number, height: number) => {
@@ -119,8 +119,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
 
     // Content Sync Effect: Update window content when initialWindows (and underlying data) changes
     useEffect(() => {
-        let rafId: number;
-        rafId = requestAnimationFrame(() => {
+        const rafId = requestAnimationFrame(() => {
             setWindows(prev => prev.map(w => {
                 const fresh = initialWindows.find(fw => fw.id === w.id);
                 // Fix: Jangan timpa konten jika konten baru adalah null (dynamic content)
@@ -309,8 +308,8 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
                     }
 
                     const pref = aboutData?.windowPreferences?.[id];
-                    let rawWidth = customConfig?.width || pref?.width || w.width || 800;
-                    let rawHeight = customConfig?.height || pref?.height || w.height || 600;
+                    const rawWidth = customConfig?.width || pref?.width || w.width || 800;
+                    const rawHeight = customConfig?.height || pref?.height || w.height || 600;
 
                     // Apply mobile constraints
                     const { width, height } = getMobileDims(rawWidth, rawHeight);
