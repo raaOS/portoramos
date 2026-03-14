@@ -8,7 +8,8 @@ interface DesktopSkeletonProps {
 
 export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkeletonProps) {
     const defaultWallpaper = "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop";
-    const wallpaper = wallpaperUrl || defaultWallpaper;
+    const isValidUrl = wallpaperUrl && (wallpaperUrl.startsWith('/') || wallpaperUrl.startsWith('http'));
+    const wallpaper = isValidUrl ? wallpaperUrl : defaultWallpaper;
 
     // If booting, show absolutely nothing but black to prevent "Skeleton Glitch"
     if (isBooting) {

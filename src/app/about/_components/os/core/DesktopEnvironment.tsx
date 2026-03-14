@@ -70,12 +70,15 @@ export interface DesktopEnvironmentProps {
     experienceData?: ExperienceData | null;
     hardSkillsData?: HardSkillsData | null;
     projects: Project[];
+    initialHasBooted?: boolean;
 }
 
-export default function DesktopEnvironment({ aboutData, experienceData, hardSkillsData, projects }: DesktopEnvironmentProps) {
+export default function DesktopEnvironment({ aboutData, experienceData, hardSkillsData, projects, initialHasBooted }: DesktopEnvironmentProps) {
     // Screen Lock & Resize Hook (Handles mounted state, window size, and body lock)
     const { mounted, isMobile } = useDesktopLock();
-    const { needsPowerOn, isBooting, finishBooting } = useBootSequence();
+    const { needsPowerOn, isBooting, finishBooting } = useBootSequence({
+        initialHasBooted
+    });
 
     // When boot is skipped, ensure sound is unlocked and boot is marked complete
     useEffect(() => {
@@ -132,8 +135,17 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
         finishBooting();
     };
 
+    // Resolved Wallpaper URL for Skeleton (prevents 404 ID bug)
+    const skeletonWallpaperUrl = useMemo(() => {
+        const config = aboutData?.wallpaperConfig;
+        if (!config?.activeWallpaperId) return undefined;
+        return config.collection?.find(
+            (w) => w.id === config.activeWallpaperId
+        )?.url;
+    }, [aboutData?.wallpaperConfig]);
+
     if (!mounted) {
-        return <DesktopSkeleton isBooting={needsPowerOn} wallpaperUrl={aboutData?.wallpaperConfig?.activeWallpaperId} />;
+        return <DesktopSkeleton isBooting={needsPowerOn} wallpaperUrl={skeletonWallpaperUrl} />;
     }
 
     return (

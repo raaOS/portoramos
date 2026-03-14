@@ -17,9 +17,12 @@ export default function DesktopBackground({ wallpaperConfig }: DesktopBackground
         if (!wallpaperConfig?.activeWallpaperId) {
             return "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop";
         }
-        return wallpaperConfig.collection?.find(
+        const resolved = wallpaperConfig.collection?.find(
             (w) => w.id === wallpaperConfig.activeWallpaperId
-        )?.url || "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop";
+        )?.url;
+
+        const isValidUrl = resolved && (resolved.startsWith('/') || resolved.startsWith('http'));
+        return isValidUrl ? resolved : "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop";
     }, [wallpaperConfig]);
 
     const blurAmount = wallpaperConfig?.blur || 0;

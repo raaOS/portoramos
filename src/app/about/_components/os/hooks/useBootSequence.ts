@@ -6,6 +6,7 @@ import { soundManager } from "../utils/SoundManager";
 interface BootSequenceConfig {
     totalDuration: number;
     allowSkip: boolean;
+    initialHasBooted?: boolean;
 }
 
 const DEFAULT_CONFIG: BootSequenceConfig = {
@@ -81,11 +82,28 @@ function checkShouldSkipBoot(): boolean {
     }
 }
 
+/**
+ * Update the boot cookie for server-side awareness
+ */
+function updateBootCookie(value: boolean) {
+    if (typeof document === 'undefined') return;
+    
+    // Set cookie for the duration of the session
+    // Using simple document.cookie to avoid extra dependencies
+    document.cookie = `${BOOT_SESSION_KEY}=${value}; path=/; samesite=lax`;
+}
+
 export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
     const finalConfig = { ...DEFAULT_CONFIG, ...config };
     
     // Use lazy initialization for state - ensures check runs once on mount
     const [needsPowerOn, setNeedsPowerOn] = useState(() => {
+        // High priority: Initial state from server (prop)
+        if (finalConfig.initialHasBooted) {
+            console.log('[BootSequence] SKIP: Prop initialHasBooted is true');
+            return false;
+        }
+
         const shouldSkip = checkShouldSkipBoot();
         return !shouldSkip;
     });
@@ -96,6 +114,7 @@ export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
     const markAsBooted = useCallback(() => {
         if (typeof window !== 'undefined') {
             sessionStorage.setItem(BOOT_SESSION_KEY, 'true');
+            updateBootCookie(true);
         }
     }, []);
 
@@ -111,7 +130,8 @@ export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
     const finishBooting = useCallback(() => {
         setNeedsPowerOn(false);
         setIsBooting(false);
-    }, []);
+        markAsBooted(); // FIXED (BUG-011): Persist status after natural finish
+    }, [markAsBooted]);
 
     const skipBoot = useCallback(() => {
         if (!finalConfig.allowSkip) return;
