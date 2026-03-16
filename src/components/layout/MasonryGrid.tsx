@@ -12,8 +12,8 @@ interface MasonryGridProps {
 }
 
 const defaultBreakpoints = {
-    default: 7,    // Desktop (> 1280px)
-    1280: 7,       // Desktop
+    default: 6,    // Desktop (> 1280px)
+    1280: 6,       // Desktop
     1024: 5,       // Tablet L
     768: 4,        // Match md:grid-cols-4
     640: 3,        // Match sm:grid-cols-3

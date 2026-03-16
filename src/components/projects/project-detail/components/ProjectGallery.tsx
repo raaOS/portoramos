@@ -3,6 +3,7 @@
 import type { Project, GalleryItem, GalleryGroup } from '@/types/projects';
 import Media from '@/components/shared/Media';
 import GalleryGroupCard from '@/components/projects/GalleryGroupCard';
+import MasonryGrid from '@/components/layout/MasonryGrid';
 import { useImageProtection } from '@/hooks/useImageProtection';
 import { useMemo } from 'react';
 
@@ -26,7 +27,7 @@ export function ProjectGallery({ project, gallery, onGroupClick }: ProjectGaller
             {hasLegacyGallery && (
                 <div className="mb-12">
                     <h3 className="text-xs font-bold uppercase tracking-wider mb-6 text-gray-400">Project Gallery</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <MasonryGrid columns="bottom">
                         {gallery.map((item, idx) => (
                             <GalleryItem
                                 key={`gallery-item-${idx}`}
@@ -37,7 +38,7 @@ export function ProjectGallery({ project, gallery, onGroupClick }: ProjectGaller
                                 toast={toast}
                             />
                         ))}
-                    </div>
+                    </MasonryGrid>
                 </div>
             )}
 
@@ -77,8 +78,7 @@ function GalleryItem({ item, projectTitle, index, onContextMenu, toast }: Galler
 
     return (
         <div
-            className={`relative rounded-xl overflow-hidden shadow-md border border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-900/40 group ${isPortrait ? 'row-span-2' : ''
-                }`}
+            className={`relative rounded-xl overflow-hidden shadow-md border border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-900/40 group mb-4`}
             style={style}
             onContextMenu={onContextMenu}
         >

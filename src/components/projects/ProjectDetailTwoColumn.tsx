@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Project, GalleryItem } from '@/types/projects';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -15,7 +15,8 @@ import {
     ProjectGallery,
     ProjectInteractionBar,
     ProjectRelatedColumn,
-    ProjectComments
+    ProjectComments,
+    useInfiniteProjects
 } from './project-detail/components';
 
 // Lazy load AITranslator (available for future use)
@@ -41,6 +42,12 @@ export default function ProjectDetailTwoColumn({
     otherProjects,
     isWindowMode = false
 }: ProjectDetailTwoColumnProps) {
+    const [hasMounted, setHasMounted] = useState(false);
+    
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
+
     const {
         comments,
         setComments,
@@ -70,16 +77,20 @@ export default function ProjectDetailTwoColumn({
             : 'min-h-screen pt-10 sm:pt-12 px-3 sm:px-4 lg:px-6 pb-8';
     }, [isWindowMode]);
 
+    // Infinity Scroll Logic
+    const { displayedProjects, isLoading, observerTarget } = useInfiniteProjects(otherProjects);
+
     // Memoize column projects to prevent array recreation
+    // FIX (Point 2): Use Even/Odd distribution instead of slice to prevent layout jumps
     const columnAProjects = useMemo(() => {
         if (isWindowMode) return [];
-        return otherProjects.slice(0, Math.ceil(otherProjects.length / 2));
-    }, [otherProjects, isWindowMode]);
+        return displayedProjects.filter((_, idx) => idx % 2 !== 0);
+    }, [displayedProjects, isWindowMode]);
 
     const columnBProjects = useMemo(() => {
         if (isWindowMode) return [];
-        return otherProjects.slice(Math.ceil(otherProjects.length / 2));
-    }, [otherProjects, isWindowMode]);
+        return displayedProjects.filter((_, idx) => idx % 2 === 0);
+    }, [displayedProjects, isWindowMode]);
 
     return (
         <motion.div
@@ -164,16 +175,19 @@ export default function ProjectDetailTwoColumn({
                     </div>
 
                     {/* Related Projects - Column A (Only for non-window mode) */}
-                    {!isWindowMode && columnAProjects.length > 0 && (
+                    {!isWindowMode && hasMounted && columnAProjects.length > 0 && (
                         <ProjectRelatedColumn
                             projects={columnAProjects}
                             column="A"
+                            // FIX (Point 3): Pass a base index offset if needed, 
+                            // but ProjectRelatedColumn internally handles keys.
+                            // We will update ProjectRelatedColumn next.
                         />
                     )}
                 </div>
 
                 {/* Right Column - Related Projects */}
-                {!isWindowMode && columnBProjects.length > 0 && (
+                {!isWindowMode && hasMounted && columnBProjects.length > 0 && (
                     <ProjectRelatedColumn
                         projects={columnBProjects}
                         column="B"
@@ -181,7 +195,19 @@ export default function ProjectDetailTwoColumn({
                 )}
             </div>
 
-
+            {/* Infinity Scroll Target & Loading UI */}
+            {!isWindowMode && (
+                <div className="mt-10 pb-20">
+                    <div ref={observerTarget} className="h-20 w-full pointer-events-none" aria-hidden="true" />
+                    
+                    {isLoading && (
+                        <div className="text-center opacity-50">
+                            <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500"></div>
+                            <p className="text-xs mt-3 text-gray-500 font-medium whitespace-nowrap">Memuat karya...</p>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Lightbox */}
             {activeGalleryGroup && (

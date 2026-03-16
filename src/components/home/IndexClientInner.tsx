@@ -36,7 +36,7 @@ export default function IndexClientInner({
   isLoading: isParentLoading
 }: Props) {
   // Start with a smaller number to improve initial load performance (LCP)
-  const [visibleCount, setVisibleCount] = useState(8)
+  const [visibleCount, setVisibleCount] = useState(6)
 
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [fuseInstance, setFuseInstance] = useState<FuseInstance<Project> | null>(null)
@@ -151,7 +151,7 @@ export default function IndexClientInner({
   useEffect(() => {
     const currentIds = filteredProjects.map(p => p.id).join(',');
     if (currentIds !== prevProjectIds.current) {
-      setVisibleCount(14);
+      setVisibleCount(6);
       prevProjectIds.current = currentIds;
     }
   }, [filteredProjects])

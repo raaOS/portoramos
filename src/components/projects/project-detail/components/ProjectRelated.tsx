@@ -7,7 +7,7 @@ import type { Project } from '@/types/projects';
 import MasonryGrid from '@/components/layout/MasonryGrid';
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest';
 
-const INITIAL_COUNT = 6;
+const INITIAL_COUNT = 5;
 const BATCH_SIZE = 24;
 
 // Static animation configs to prevent object recreation
@@ -24,15 +24,20 @@ interface UseInfiniteProjectsReturn {
     observerTarget: React.RefObject<HTMLDivElement>;
 }
 
-function useInfiniteProjects(projects: Project[]): UseInfiniteProjectsReturn {
+export function useInfiniteProjects(projects: Project[]): UseInfiniteProjectsReturn {
+    const [hasMounted, setHasMounted] = useState(false);
     const [displayedProjects, setDisplayedProjects] = useState<Project[]>(() => {
         return projects.slice(0, INITIAL_COUNT);
     });
     const [isLoading, setIsLoading] = useState(false);
     const observerTarget = useRef<HTMLDivElement>(null!);
 
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
+
     const loadMore = useCallback(() => {
-        if (isLoading || projects.length === 0) return;
+        if (!hasMounted || isLoading || projects.length === 0) return;
         
         setIsLoading(true);
         const currentCount = displayedProjects.length;
@@ -44,9 +49,11 @@ function useInfiniteProjects(projects: Project[]): UseInfiniteProjectsReturn {
         setTimeout(() => {
             setIsLoading(false);
         }, 50);
-    }, [displayedProjects.length, isLoading, projects]);
+    }, [displayedProjects.length, hasMounted, isLoading, projects]);
 
     useEffect(() => {
+        if (!hasMounted) return;
+
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
@@ -54,7 +61,7 @@ function useInfiniteProjects(projects: Project[]): UseInfiniteProjectsReturn {
                 }
             },
             {
-                rootMargin: '1500px 0px',
+                rootMargin: '800px 0px',
                 threshold: 0.1
             }
         );
@@ -64,11 +71,10 @@ function useInfiniteProjects(projects: Project[]): UseInfiniteProjectsReturn {
         }
 
         return () => observer.disconnect();
-    }, [loadMore]);
+    }, [hasMounted, loadMore]);
 
     return { displayedProjects, isLoading, observerTarget };
 }
-
 interface ProjectRelatedProps {
     projects: Project[];
 }
@@ -76,11 +82,11 @@ interface ProjectRelatedProps {
 export function ProjectRelated({ projects }: ProjectRelatedProps) {
     const { displayedProjects, isLoading, observerTarget } = useInfiniteProjects(projects);
 
-    const { columnAProjects } = useMemo(() => {
-        const halfIndex = Math.ceil(displayedProjects.length / 2);
+    // FIX (Point 2): Use Even/Odd logic
+    const { columnAProjects, columnBProjects } = useMemo(() => {
         return {
-            columnAProjects: displayedProjects.slice(0, halfIndex),
-            columnBProjects: displayedProjects.slice(halfIndex)
+            columnAProjects: displayedProjects.filter((_, idx) => idx % 2 !== 0),
+            columnBProjects: displayedProjects.filter((_, idx) => idx % 2 === 0)
         };
     }, [displayedProjects]);
 
@@ -89,7 +95,7 @@ export function ProjectRelated({ projects }: ProjectRelatedProps) {
             <MasonryGrid columns="sidebar">
                 {columnAProjects.map((p: Project, index: number) => (
                     <ProjectRelatedItem 
-                        key={`col-a-${p.slug}`} 
+                        key={`col-a-${p.slug}-${index}`} 
                         project={p} 
                         index={index} 
                     />
@@ -113,17 +119,14 @@ function ProjectRelatedItem({ project, index }: { project: Project; index: numbe
     
     if (isPriority) {
         return (
-            <div style={{ willChange: 'transform' }}>
+            <div>
                 <ProjectCardPinterest project={project} priority={true} />
             </div>
         );
     }
     
     return (
-        <motion.div
-            {...ANIMATION_CONFIG}
-            style={{ willChange: 'transform' }}
-        >
+        <motion.div {...ANIMATION_CONFIG}>
             <ProjectCardPinterest project={project} priority={false} />
         </motion.div>
     );
@@ -140,7 +143,7 @@ export function ProjectRelatedColumn({ projects, column }: ProjectRelatedColumnP
             <MasonryGrid columns="sidebar">
                 {projects.map((p: Project, index: number) => (
                     <ProjectRelatedColumnItem
-                        key={`col-${column}-${p.slug}`}
+                        key={`col-${column}-${p.slug}-${index}`}
                         project={p}
                         index={index}
                     />
@@ -156,17 +159,14 @@ function ProjectRelatedColumnItem({ project, index }: { project: Project; index:
     
     if (isPriority) {
         return (
-            <div style={{ willChange: 'transform' }}>
+            <div>
                 <ProjectCardPinterest project={project} priority={true} />
             </div>
         );
     }
     
     return (
-        <motion.div
-            {...ANIMATION_CONFIG}
-            style={{ willChange: 'transform' }}
-        >
+        <motion.div {...ANIMATION_CONFIG}>
             <ProjectCardPinterest project={project} priority={false} />
         </motion.div>
     );

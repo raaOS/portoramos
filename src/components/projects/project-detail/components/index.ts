@@ -5,5 +5,5 @@ export { ProjectMeta } from './ProjectMeta';
 export { ProjectNarrative } from './ProjectNarrative';
 export { ProjectGallery } from './ProjectGallery';
 export { ProjectInteractionBar } from './ProjectInteractionBar';
-export { ProjectRelated, ProjectRelatedColumn } from './ProjectRelated';
+export { ProjectRelated, ProjectRelatedColumn, useInfiniteProjects } from './ProjectRelated';
 export { ProjectComments } from './ProjectComments';
