@@ -4,6 +4,7 @@ import type { Project } from '@/types/projects'
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { LazyMotion, domAnimation, m } from 'framer-motion'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
+import ProjectCardList from '@/components/projects/ProjectCardList'
 import MasonryGrid from '@/components/layout/MasonryGrid'
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
   lastUpdated?: Date | string | null
   windowWidth?: number
   isLoading?: boolean // Prop baru dari parent
+  view?: 'grid' | 'list'
 }
 
 // Minimal typing for Fuse.js since it's dynamically imported
@@ -33,7 +35,8 @@ export default function IndexClientInner({
   searchQuery,
   lastUpdated: _lastUpdated, // Dead prop - kept for API compatibility
   windowWidth,
-  isLoading: isParentLoading
+  isLoading: isParentLoading,
+  view = 'grid'
 }: Props) {
   // Start with a smaller number to improve initial load performance (LCP)
   const [visibleCount, setVisibleCount] = useState(6)
@@ -95,10 +98,12 @@ export default function IndexClientInner({
   const filteredProjects = useMemo(() => {
     let result = projects
 
-    // Filter by tag first
+    // Filter by tag or type
     if (tag) {
+      const lowerTag = tag.toLowerCase();
       result = result.filter((p) =>
-        (p.tags || []).some((t) => t.toLowerCase() === tag.toLowerCase())
+        (p.tags || []).some((t) => t.toLowerCase() === lowerTag) ||
+        (p.type && p.type.toLowerCase() === lowerTag)
       )
     }
 
@@ -218,37 +223,49 @@ export default function IndexClientInner({
         <div className="min-h-screen">
           {displayedProjects.length > 0 ? (
             <>
-              <MasonryGrid width={windowWidth}>
-                {displayedProjects.map((project, index) => {
-                  // Determine priority based on index (first 2 items get priority for faster LCP)
-                  const isPriority = index < 2;
+              {view === 'grid' ? (
+                <MasonryGrid width={windowWidth}>
+                  {displayedProjects.map((project, index) => {
+                    // Determine priority based on index (first 2 items get priority for faster LCP)
+                    const isPriority = index < 2;
 
-                  // Animation Logic:
-                  // Priority items (first 2): No animation at all - instant display for LCP
-                  // Non-priority items: Fade in only (no Y movement to prevent CLS)
-                  const animationProps = {};
+                    // Animation Logic:
+                    // Priority items (first 2): No animation at all - instant display for LCP
+                    // Non-priority items: Fade in only (no Y movement to prevent CLS)
+                    const animationProps = {};
 
-                  return (
-                    <m.div
-                      key={`${project.slug}-${index}`}
-                      {...animationProps}
-                      // GPU acceleration + content-visibility for scroll performance
-                      style={{
-                        willChange: 'transform, opacity',
-                        contentVisibility: 'auto',
-                        containIntrinsicSize: 'auto 300px',
-                      }}
-                    >
-                      <ProjectCardPinterest
-                        project={project}
-                        priority={isPriority}
-                        videoEnabled={true}
-                        highlightedTag={tag}
-                      />
-                    </m.div>
-                  )
-                })}
-              </MasonryGrid>
+                    return (
+                      <m.div
+                        key={`${project.slug}-${index}`}
+                        {...animationProps}
+                        // GPU acceleration + content-visibility for scroll performance
+                        style={{
+                          willChange: 'transform, opacity',
+                          contentVisibility: 'auto',
+                          containIntrinsicSize: 'auto 300px',
+                        }}
+                      >
+                        <ProjectCardPinterest
+                          project={project}
+                          priority={isPriority}
+                          videoEnabled={true}
+                          highlightedTag={tag}
+                        />
+                      </m.div>
+                    )
+                  })}
+                </MasonryGrid>
+              ) : (
+                <div className="flex flex-col gap-6 max-w-5xl mx-auto py-4">
+                  {displayedProjects.map((project, index) => (
+                    <ProjectCardList 
+                      key={`${project.slug}-list-${index}`}
+                      project={project}
+                      priority={index < 3}
+                    />
+                  ))}
+                </div>
+              )}
 
               {/* Infinite Scroll Sentinel */}
               <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
