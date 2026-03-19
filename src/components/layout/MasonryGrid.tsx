@@ -81,7 +81,12 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         requestAnimationFrame(() => setMounted(true));
 
         const updateCallback = (w: number) => {
-            setColumnCount(getCols(w));
+            setColumnCount(prev => {
+                const newCols = getCols(w);
+                // BUG FIX: Only update if column count actually changed
+                // Prevents unnecessary re-renders during scroll
+                return prev === newCols ? prev : newCols;
+            });
         };
 
         // 1. Explicit Width Mode (Prop-based) - Preferred for OS Windows
@@ -93,12 +98,17 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         // 2. Observer Mode (DOM-based) - Fallback for standard pages
         if (!containerRef.current) return;
 
+        // BUG FIX: Debounce resize handler to prevent flickering during scroll
+        let resizeTimeout: NodeJS.Timeout | null = null;
         const handleResize = (entries: ResizeObserverEntry[]) => {
-            for (const entry of entries) {
-                if (entry.contentRect.width > 0) {
-                    updateCallback(entry.contentRect.width);
+            if (resizeTimeout) clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                for (const entry of entries) {
+                    if (entry.contentRect.width > 0) {
+                        updateCallback(entry.contentRect.width);
+                    }
                 }
-            }
+            }, 100); // 100ms debounce
         };
 
         const observer = new ResizeObserver(handleResize);
@@ -114,8 +124,9 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
 
         return () => {
             observer.disconnect();
+            if (resizeTimeout) clearTimeout(resizeTimeout);
         };
-    }, [getCols, width]); // Using getCols (which depends on breakpointColumns) and width
+    }, [getCols, width]);
 
     // SSR / Hydration Stability
     // We render the wrapper div immediately and only populate the Masonry 

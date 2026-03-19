@@ -140,6 +140,45 @@ body {
   }
 }
 
+/* ==========================================================================
+   BUG FIX: Project Card Flickering During Scroll
+   ========================================================================== */
+
+/* Disable content-visibility yang menyebabkan flickering */
+[data-projects-grid] * {
+  content-visibility: visible !important;
+}
+
+/* Stabilize project cards during scroll */
+.project-card,
+[data-project-card] {
+  contain: layout style paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Disable will-change after animation completes to save memory */
+.project-card:hover,
+[data-project-card]:hover {
+  will-change: transform;
+}
+
+/* Mobile: Simplify animations to prevent flickering */
+@media (max-width: 768px) {
+  .project-card,
+  [data-project-card] {
+    transition: none !important;
+    will-change: auto !important;
+  }
+  
+  .project-card img,
+  .project-card video,
+  [data-project-card] img,
+  [data-project-card] video {
+    transition: opacity 0.2s ease !important;
+  }
+}
+
 /* High Contrast Mode */
 @media (prefers-contrast: high) {
   :root {

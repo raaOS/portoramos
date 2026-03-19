@@ -48,7 +48,7 @@ export default function ProjectCardPinterest({
     const isInteractive = interactive || !!onClick;
 
     return (
-        <Component {...hrefProps} onClick={onClick} className={`block mb-2 md:mb-6 relative z-0 ${isInteractive ? 'group hover:z-10 cursor-pointer' : ''}`}>
+        <Component {...hrefProps} onClick={onClick} data-project-card className={`project-card block mb-2 md:mb-6 relative z-0 ${isInteractive ? 'group hover:z-10 cursor-pointer' : ''}`}>
             {/* Outer: scale saja (tanpa overflow-hidden agar rounded tidak hilang saat hover)
                 Inner: overflow-hidden + rounded untuk clip gambar */}
             <div

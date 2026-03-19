@@ -203,7 +203,7 @@ export default function IndexClientInner({
   const showLoading = isLoadingMore || isParentLoading;
 
   return (
-    <section className="pt-4 pb-8 px-4">
+    <section className="pt-4 pb-8 px-4" data-projects-grid>
       {/* Hidden H1 for SEO */}
       <h1 className="sr-only">Portfolio - Creative Works & Projects</h1>
 
@@ -241,11 +241,10 @@ export default function IndexClientInner({
                       <m.div
                         key={`${project.slug}-${index}`}
                         {...animationProps}
-                        // GPU acceleration + content-visibility for scroll performance
+                        // BUG FIX: Remove contentVisibility yang menyebabkan flickering
+                        // GPU acceleration only for smooth animations
                         style={{
-                          willChange: 'transform, opacity',
-                          contentVisibility: 'auto',
-                          containIntrinsicSize: 'auto 300px',
+                          willChange: 'transform',
                         }}
                       >
                         <ProjectCardPinterest

@@ -302,7 +302,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         />
 
         {(poster || kind !== 'video') && (
-          <div className={`absolute inset-0 z-10 transition-opacity duration-700 pointer-events-none ${canPlay ? 'opacity-0' : 'opacity-100'}`}>
+          <div className={`absolute inset-0 z-10 transition-opacity duration-300 pointer-events-none ${canPlay ? 'opacity-0' : 'opacity-100'}`}>
             <Image
               src={getProxiedUrl(poster || src)}
               alt={alt}
@@ -371,7 +371,7 @@ const Media = forwardRef<HTMLVideoElement, MediaProps>(({
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : 'auto'}
         sizes={sizes || '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'}
-        className={`${className} transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
         placeholder={effectiveBlurDataURL ? "blur" : "empty"}
         blurDataURL={effectiveBlurDataURL}
         quality={quality || 75}
