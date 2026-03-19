@@ -335,11 +335,6 @@ export const projectService = {
         const firebaseUpdates: Record<string, unknown> = {};
 
         if (updates.delete) {
-            const projectsRef = db.ref('projects');
-            const snap = await projectsRef.once('value');
-            const currentProjects = snap.val() || {};
-
-            const firebaseUpdates: Record<string, unknown> = {};
             const allAssetPathsToPurge: string[] = [];
 
             updates.ids.forEach(id => {
@@ -377,10 +372,10 @@ export const projectService = {
                 }
             });
 
-            // Fire and forget storage purge
+            // Await storage purge to ensure ghost files are tracked
             if (allAssetPathsToPurge.length > 0) {
                 console.log(`[ProjectService] Bulk purging ${allAssetPathsToPurge.length} storage assets...`);
-                Promise.all(allAssetPathsToPurge.map(async (storagePath) => {
+                await Promise.allSettled(allAssetPathsToPurge.map(async (storagePath) => {
                     try {
                         const file = bucket.file(storagePath);
                         const [exists] = await file.exists();
@@ -388,7 +383,7 @@ export const projectService = {
                     } catch (e) {
                         console.warn(`[ProjectService] Failed bulk delete asset: ${storagePath}`, e);
                     }
-                })).catch(e => console.error('[ProjectService] Bulk storage purge error:', e));
+                }));
             }
 
             if (Object.keys(firebaseUpdates).length > 0) {

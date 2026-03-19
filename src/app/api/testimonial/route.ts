@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { testimonialService } from '@/lib/services/testimonialService';
 import { validateAdminRequest } from '@/lib/auth';
 
@@ -28,7 +29,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const newTestimonial = await testimonialService.createTestimonial(body);
 
-    return NextResponse.json(newTestimonial);
+    revalidatePath('/', 'layout');
+    revalidatePath('/about');
+
+    return NextResponse.json({ success: true, testimonial: newTestimonial });
   } catch (error) {
     console.error('Error creating testimonial:', error);
     return NextResponse.json({ error: 'Failed to create testimonial' }, { status: 500 });
@@ -52,7 +56,10 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Testimonial not found' }, { status: 404 });
     }
 
-    return NextResponse.json(updated);
+    revalidatePath('/', 'layout');
+    revalidatePath('/about');
+
+    return NextResponse.json({ success: true, testimonial: updated });
   } catch (error) {
     console.error('Error updating testimonial:', error);
     return NextResponse.json({ error: 'Failed to update testimonial' }, { status: 500 });
@@ -75,6 +82,9 @@ export async function DELETE(request: NextRequest) {
     if (!success) {
       return NextResponse.json({ error: 'Testimonial not found' }, { status: 404 });
     }
+
+    revalidatePath('/', 'layout');
+    revalidatePath('/about');
 
     return NextResponse.json({ success: true });
   } catch (error) {

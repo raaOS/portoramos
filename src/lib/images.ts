@@ -18,7 +18,7 @@ function convertGcsUrl(u: string): string {
         path = `assets/${path}`;
     }
     const converted = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media`;
-    // console.log('[IMAGES.TS] CONVERTED:', u.substring(0, 60), '→', converted.substring(0, 80));
+
     return converted;
   }
   return u;
@@ -49,16 +49,15 @@ export function isVideoLink(u: string): boolean {
 const BLANK_SVG = `data:image/svg+xml;utf8,` +
   encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="24" fill="#9ca3af">PREVIEW</text></svg>');
 
-export function coverUrl(_p: Project) {
-  return BLANK_SVG;
+export function coverUrl(p: Project) {
+  return p.cover ? toMediaProxy(p.cover) : BLANK_SVG;
 }
 
 export function galleryUrls(p: Project) {
-  const count = (p.gallery && p.gallery.length) || 0;
-  // Fallback to Picsum placeholders if gallery exists but URLs are constructed
-  // Note: This function seems rarely used in current logic, mostly resolveGallery is used
-  const arr = new Array(Math.max(count, 3)).fill(0).map((_, i) => i);
-  return arr.map((i) => toProxy(`https://picsum.photos/seed/${encodeURIComponent(p.slug)}-${i}/1600/1000.jpg`));
+  if (p.gallery && p.gallery.length > 0) {
+    return p.gallery.map(src => toImageProxy(src));
+  }
+  return [];
 }
 
 export function resolveCover(p: Project): GalleryItem {

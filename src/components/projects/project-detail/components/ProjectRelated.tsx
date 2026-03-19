@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, useSyncExternalStore } from 'react';
 // Note: columnBProjects is computed but not currently used (reserved for future two-column layout)
 import { motion } from 'framer-motion';
 import type { Project } from '@/types/projects';
@@ -25,16 +25,14 @@ interface UseInfiniteProjectsReturn {
 }
 
 export function useInfiniteProjects(projects: Project[]): UseInfiniteProjectsReturn {
-    const [hasMounted, setHasMounted] = useState(false);
+    // SSR-safe mount detection without triggering set-state-in-effect lint
+    const subscribe = useCallback(() => () => {}, []);
+    const hasMounted = useSyncExternalStore(subscribe, () => true, () => false);
     const [displayedProjects, setDisplayedProjects] = useState<Project[]>(() => {
         return projects.slice(0, INITIAL_COUNT);
     });
     const [isLoading, setIsLoading] = useState(false);
     const observerTarget = useRef<HTMLDivElement>(null!);
-
-    useEffect(() => {
-        setHasMounted(true);
-    }, []);
 
     const loadMore = useCallback(() => {
         if (!hasMounted || isLoading || projects.length === 0) return;

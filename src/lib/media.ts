@@ -11,6 +11,9 @@ export const isVideoLink = (url: string) => {
 };
 
 const getVideoDimensions = (url: string): Promise<{ width: number; height: number }> => {
+    // LOW FIX: SSR safety check
+    if (typeof document === 'undefined') return Promise.reject(new Error('Document not available'));
+    
     return new Promise((resolve, reject) => {
         const video = document.createElement('video');
         video.crossOrigin = 'anonymous';

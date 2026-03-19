@@ -47,7 +47,7 @@ export default function Modal({ children }: { children: React.ReactNode }) {
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.25 }}
                         onClick={handleClose}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm cursor-pointer print:hidden"
                     />
 
                     {/* Modal Content - Pinterest style large centered box */}
@@ -62,7 +62,7 @@ export default function Modal({ children }: { children: React.ReactNode }) {
                         {/* Close Button - top right corner, floating */}
                         <button
                             onClick={handleClose}
-                            className="absolute top-4 right-4 z-50 p-2.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all shadow-lg hover:shadow-xl border border-gray-200/50 dark:border-gray-700/50"
+                            className="absolute top-4 right-4 z-50 p-2.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all shadow-lg hover:shadow-xl border border-gray-200/50 dark:border-gray-700/50 print:hidden"
                             aria-label="Close modal"
                         >
                             <X className="w-5 h-5" />

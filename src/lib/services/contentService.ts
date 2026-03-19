@@ -201,7 +201,23 @@ export class ContentService<T> {
         return result;
     }
 
+    // Track ongoing saves untuk mencegah race condition
+    private pendingSave: Promise<boolean> | null = null;
+
     async saveData(data: T, _message?: string): Promise<boolean> {
+        // MEDIUM FIX: Queue multiple saves to prevent race condition
+        if (this.pendingSave) {
+            console.log(`[ContentService] Queuing save to ${this.firebasePath} (save in progress)`);
+            await this.pendingSave;
+        }
+
+        this.pendingSave = this._doSave(data, _message);
+        const result = await this.pendingSave;
+        this.pendingSave = null;
+        return result;
+    }
+
+    private async _doSave(data: T, _message?: string): Promise<boolean> {
         try {
             // For arrays, we save them directly to avoid converting to object with numeric keys.
             // For objects, we merge with updatedAt.
@@ -209,10 +225,14 @@ export class ContentService<T> {
                 ? data
                 : { ...(data as Record<string, unknown>), updatedAt: new Date().toISOString() };
 
+            // MEDIUM FIX: Clear cache SEBELUM save untuk mencegah stale data read
+            // Jika ada request antara clear dan save, mereka akan fetch dari Firebase (fresh data)
+            clearCache(getCacheKey(this.firebasePath));
+
             await db.ref(this.firebasePath).set(payload);
 
-            // Clear cache setelah save agar next fetch dapat data terbaru
-            clearCache(getCacheKey(this.firebasePath));
+            // Set cache dengan data baru (optimistic update)
+            setCache(getCacheKey(this.firebasePath), data as unknown as object, this.cacheTTL);
 
             console.log(`[ContentService] Successfully saved data to ${this.firebasePath}`);
             return true;

@@ -40,11 +40,21 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
     }
 
-    // Update data with new content
+    // Deep merge to prevent data loss on partial updates
     const updatedData: ContactData = {
       content: body.content ? { ...data.content, ...body.content } as ContactContent : data.content,
-      info: { ...data.info, ...body.info } as ContactInfo,
-      formSettings: { ...data.formSettings, ...body.formSettings } as ContactFormSettings,
+      info: body.info ? {
+        ...data.info,
+        ...body.info,
+        // Deep merge socialMedia to prevent overwriting
+        socialMedia: body.info.socialMedia 
+          ? { ...(data.info?.socialMedia || {}), ...body.info.socialMedia }
+          : data.info?.socialMedia,
+      } as ContactInfo : data.info,
+      formSettings: body.formSettings ? {
+        ...data.formSettings,
+        ...body.formSettings,
+      } as ContactFormSettings : data.formSettings,
       lastUpdated: new Date().toISOString()
     };
 

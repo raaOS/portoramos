@@ -40,11 +40,11 @@ export async function GET(request: NextRequest) {
     // Fix GCS storage URLs → Firebase Storage URLs (prevents 403 Forbidden)
     const fixedProjects = projects.map(p => ({
       ...p,
-      cover: convertGcsUrls(p.cover) || p.cover,
+      cover: convertGcsUrls(p.cover),
       galleryItems: p.galleryItems?.map(item => ({
         ...item,
-        src: convertGcsUrls(item.src) || item.src,
-        poster: convertGcsUrls(item.poster) || item.poster,
+        src: convertGcsUrls(item.src),
+        poster: convertGcsUrls(item.poster),
       })),
       gallery: p.gallery?.map(url => convertGcsUrls(url) || url),
     }));

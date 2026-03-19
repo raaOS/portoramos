@@ -11,7 +11,6 @@ type Props = {
   projects: Project[]
   tag: string
   searchQuery: string
-  lastUpdated?: Date | string | null
   windowWidth?: number
   isLoading?: boolean // Prop baru dari parent
   view?: 'grid' | 'list'
@@ -33,7 +32,6 @@ export default function IndexClientInner({
   projects,
   tag,
   searchQuery,
-  lastUpdated: _lastUpdated, // Dead prop - kept for API compatibility
   windowWidth,
   isLoading: isParentLoading,
   view = 'grid'
@@ -232,7 +230,12 @@ export default function IndexClientInner({
                     // Animation Logic:
                     // Priority items (first 2): No animation at all - instant display for LCP
                     // Non-priority items: Fade in only (no Y movement to prevent CLS)
-                    const animationProps = {};
+                    const animationProps = isPriority ? {} : {
+                      initial: { opacity: 0 },
+                      whileInView: { opacity: 1 },
+                      viewport: { once: true, margin: "-50px" },
+                      transition: { duration: 0.5 }
+                    };
 
                     return (
                       <m.div

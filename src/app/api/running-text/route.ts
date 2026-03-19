@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { runningTextService } from '@/lib/services/runningTextService';
 import { validateAdminRequest } from '@/lib/auth';
 
@@ -29,6 +30,8 @@ export async function POST(request: NextRequest) {
             isActive
         );
 
+        revalidatePath('/', 'layout');
+
         return NextResponse.json(newItem);
     } catch {
         return NextResponse.json({ error: 'Failed to create item' }, { status: 500 });
@@ -51,6 +54,8 @@ export async function PUT(request: NextRequest) {
         }
 
         const updatedItems = await runningTextService.updateItems(items);
+
+        revalidatePath('/', 'layout');
 
         return NextResponse.json({ success: true, items: updatedItems });
 

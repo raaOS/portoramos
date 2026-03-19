@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdminAuth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
+import { validateAdminRequest } from '@/lib/auth';
 import { hardSkillService } from '@/lib/services/hardSkillService';
 
 // PUT - update hard skill
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await validateAdminRequest(request))) {
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const { id } = await params;
@@ -28,8 +29,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 // DELETE - delete hard skill
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await validateAdminRequest(request))) {
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const { id } = await params;
@@ -39,6 +40,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!success) {
       return NextResponse.json({ error: 'Skill not found' }, { status: 404 });
     }
+
+    revalidatePath('/', 'layout');
+    revalidatePath('/about');
 
     return NextResponse.json({ success: true });
   } catch (error) {

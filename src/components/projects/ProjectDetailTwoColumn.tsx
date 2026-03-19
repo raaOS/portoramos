@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useSyncExternalStore } from 'react';
 import type { Project, GalleryItem } from '@/types/projects';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -19,12 +19,6 @@ import {
     useInfiniteProjects
 } from './project-detail/components';
 
-// Lazy load AITranslator (available for future use)
-void dynamic(() => import('@/components/features/AITranslator'), {
-    loading: () => <div className="w-6 h-6" />,
-    ssr: false
-});
-
 interface ProjectDetailTwoColumnProps {
     project: Project;
     cover: GalleryItem;
@@ -42,11 +36,9 @@ export default function ProjectDetailTwoColumn({
     otherProjects,
     isWindowMode = false
 }: ProjectDetailTwoColumnProps) {
-    const [hasMounted, setHasMounted] = useState(false);
-    
-    useEffect(() => {
-        setHasMounted(true);
-    }, []);
+    // SSR-safe mount detection without triggering set-state-in-effect lint
+    const subscribe = useCallback(() => () => {}, []);
+    const hasMounted = useSyncExternalStore(subscribe, () => true, () => false);
 
     const {
         comments,

@@ -17,18 +17,18 @@ describe('security utils', () => {
             resetRateLimit(ip);
         });
 
-        it('should allow requests within limit', () => {
+        it('should allow requests within limit', async () => {
             for (let i = 0; i < 5; i++) {
-                expect(checkRateLimit(ip)).toBe(true);
+                expect(await checkRateLimit(ip)).toBe(true);
             }
         });
 
-        it('should block requests exceeding limit', () => {
+        it('should block requests exceeding limit', async () => {
             // Mocking 100 as the limit from the source code
             for (let i = 0; i < 100; i++) {
-                checkRateLimit(ip);
+                await checkRateLimit(ip);
             }
-            expect(checkRateLimit(ip)).toBe(false);
+            expect(await checkRateLimit(ip)).toBe(false);
         });
     });
 

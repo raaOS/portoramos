@@ -57,6 +57,10 @@ export const DraggableStickyNote = ({
     React.useEffect(() => {
         if (!isResizing) return;
 
+        // PERFORMANCE FIX: Use requestAnimationFrame for throttled updates
+        let rafId: number | null = null;
+        let pendingSize = { width: 0, height: 0 };
+
         const handleMouseMove = (moveEvent: MouseEvent | TouchEvent) => {
             if (!resizeStartRef.current) return;
 
@@ -77,15 +81,32 @@ export const DraggableStickyNote = ({
                 newHeight = Math.max(150, startHeight + deltaY);
             }
 
-            setDynamicSize({ width: newWidth, height: newHeight });
+            // Store final size in ref
             finalSizeRef.current = { w: newWidth, h: newHeight };
+
+            // PERFORMANCE FIX: Throttle setState with requestAnimationFrame
+            pendingSize = { width: newWidth, height: newHeight };
+            if (rafId === null) {
+                rafId = requestAnimationFrame(() => {
+                    setDynamicSize(pendingSize);
+                    rafId = null;
+                });
+            }
         };
 
         const handleMouseUp = () => {
+            // Cancel any pending animation frame
+            if (rafId !== null) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+
             if (isResizing) {
                 const finalW = finalSizeRef.current.w;
                 const finalH = finalSizeRef.current.h;
                 if (finalW > 0) {
+                    // Ensure final size is applied before notifying parent
+                    setDynamicSize({ width: finalW, height: finalH });
                     updateNote(note.id, { width: finalW, height: finalH });
                 }
             }
@@ -99,6 +120,9 @@ export const DraggableStickyNote = ({
         window.addEventListener('touchend', handleMouseUp);
 
         return () => {
+            if (rafId !== null) {
+                cancelAnimationFrame(rafId);
+            }
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
             window.removeEventListener('touchmove', handleMouseMove);

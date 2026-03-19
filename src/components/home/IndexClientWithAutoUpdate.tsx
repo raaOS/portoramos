@@ -111,7 +111,6 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
         projects={projects} 
         tag={tag} 
         searchQuery={searchQuery} 
-        lastUpdated={lastUpdatedStr} 
         windowWidth={windowWidth} 
         isLoading={isLoading}
         view={view}

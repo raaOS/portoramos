@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bucket } from '@/lib/firebaseAdmin';
-import { checkAdminAuth, validateAdminRequest } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 
 const FOLDER_PATH = 'assets/icons-library';
 
 export async function GET(req: NextRequest) {
     try {
-        if (!checkAdminAuth(req)) {
+        if (!(await validateAdminRequest(req, { checkCsrf: false }))) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

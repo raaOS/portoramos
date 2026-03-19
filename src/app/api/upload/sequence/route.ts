@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth, validateAdminRequest } from "@/lib/auth";
+import { validateAdminRequest } from "@/lib/auth";
 import { bucket, db } from "@/lib/firebaseAdmin";
 
 export async function POST(request: NextRequest) {
@@ -82,7 +82,7 @@ export async function GET() {
 
 // DELETE: Remove a sequence folder from Firebase Storage
 export async function DELETE(request: NextRequest) {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     try {
@@ -116,7 +116,7 @@ export async function DELETE(request: NextRequest) {
 
 // PATCH: Activate a sequence (save config to Firebase DB)
 export async function PATCH(request: NextRequest) {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     try {

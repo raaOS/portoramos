@@ -1,11 +1,11 @@
 import { aboutService } from '@/lib/services/aboutService';
 import type { AboutData, AboutHero, AboutProfessional, AboutSoftSkills, DesignPhilosophy, WallpaperConfig, DockPreferences, SoundConfig, WindowPreferences, AboutIslandNotification } from '@/types/about';
 
-// NO CACHE - langsung fetch fresh data setiap kali
+// Use cached data by default for performance
+// Cache is invalidated explicitly when admin updates data
 export async function loadAboutData(): Promise<AboutData | null> {
   try {
-    // Selalu fetch fresh dari Firebase
-    const data = await aboutService.getAboutData(true);
+    const data = await aboutService.getAboutData();
     return data;
   } catch (error) {
     console.error('Error loading about data:', error);
@@ -13,9 +13,10 @@ export async function loadAboutData(): Promise<AboutData | null> {
   }
 }
 
-// Invalidate function (keep for compatibility)
+// Invalidate cache when admin updates about data
 export function invalidateAboutCache(): void {
-  // No-op karena tidak ada cache
+  // Force next read to bypass cache
+  aboutService.getAboutData(true).catch(() => {});
 }
 
 // ===== SECTION-SPECIFIC LOADERS =====

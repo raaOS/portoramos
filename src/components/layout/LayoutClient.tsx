@@ -1,5 +1,6 @@
 'use client';
 
+import React, { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { LazyMotion, domAnimation } from 'framer-motion';
 import Header from '@/components/shared/Header';
@@ -42,7 +43,9 @@ export default function LayoutClient({
         <ErrorBoundary>
             <LazyMotion features={domAnimation}>
                 <WindowProvider>
-                    {showHeader && <Header />}
+                    <Suspense fallback={null}>
+                        {showHeader && <Header />}
+                    </Suspense>
                     <main className={isContact ? "" : "pb-24"}>
                         {children}
                     </main>
@@ -55,4 +58,3 @@ export default function LayoutClient({
         </ErrorBoundary>
     )
 }
-

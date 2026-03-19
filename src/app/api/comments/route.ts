@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 import { db } from '@/lib/firebaseAdmin';
 import { commentSchema, validateCommentDepth } from '@/lib/validations';
 import { success, badRequest, unauthorized, serverError, rateLimit } from '@/lib/api-response';
@@ -138,7 +138,7 @@ function removeCommentById(comments: Comment[], idToDelete: string): Comment[] {
 }
 
 export async function DELETE(request: NextRequest) {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request))) {
         return unauthorized('Admin authentication required');
     }
 

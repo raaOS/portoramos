@@ -10,6 +10,7 @@ export default defineConfig({
         setupFiles: ['./src/tests/setup.ts'],
         alias: {
             '@': path.resolve(__dirname, './src'),
+            'server-only': path.resolve(__dirname, './src/tests/mocks/server-only.ts'),
         },
         exclude: [
             '**/node_modules/**',

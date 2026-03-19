@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 import { allProjectsAsync } from '@/lib/projects'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'http://ramos-portofolio.vercel.app'
+  const baseUrl = 'https://ramos-portofolio.vercel.app'
 
   // Ambil semua project
   const projects = await allProjectsAsync()

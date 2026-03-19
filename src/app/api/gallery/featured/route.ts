@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { galleryFeaturedService } from '@/lib/services/galleryFeaturedService';
 import { validateAdminRequest } from '@/lib/auth';
 
@@ -25,6 +26,9 @@ export async function POST(request: NextRequest) {
         }
 
         const newData = await galleryFeaturedService.updateFeaturedData(featuredProjectIds);
+
+        revalidatePath('/', 'layout');
+        revalidatePath('/projects');
 
         return NextResponse.json({ success: true, data: newData });
     } catch (error) {

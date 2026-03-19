@@ -149,6 +149,7 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                 ease: [0.22, 1, 0.36, 1],
                 delay: 0.2
             }}
+            className="print:hidden"
         >
             <>
                 {/* Invisible hit area that sits above ALL page content to capture mouse events.

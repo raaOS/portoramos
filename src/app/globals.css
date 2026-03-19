@@ -1,6 +1,6 @@
 /* ==========================================================================
    Portfolio Website - Global Styles
-   Optimized for Lighthouse 100 (Performance, Accessibility, Best Practices, SEO)
+   Optimized for Performance, Accessibility, Best Practices, and SEO
    ========================================================================== */
 
 /* Tailwind Directives */
@@ -272,9 +272,11 @@ textarea,
     text-decoration: underline;
   }
   
+  /* 
   a[href]::after {
     content: " (" attr(href) ")";
   }
+  */
   
   abbr[title]::after {
     content: " (" attr(title) ")";

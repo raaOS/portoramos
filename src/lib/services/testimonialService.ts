@@ -2,6 +2,10 @@ import { ContentService } from './contentService';
 import { Testimonial, TestimonialData } from '@/types/testimonial';
 import testimonialDataFallback from '@/data/testimonial.json';
 import { bucket } from '@/lib/firebaseAdmin';
+import crypto from 'crypto';
+
+// Counter untuk menghindari collision pada timestamp yang sama
+let idCounter = 0;
 
 // Ensure consistent fallback structure
 interface TestimonialJsonData {
@@ -24,14 +28,23 @@ export const testimonialService = {
     async createTestimonial(data: Omit<Testimonial, 'id'>): Promise<Testimonial> {
         const currentData = await this.getTestimonials();
 
-        // Generate new ID (max + 1)
-        const newId = currentData.testimonials.length > 0
-            ? Math.max(...currentData.testimonials.map(t => t.id)) + 1
-            : 1;
+        // CRITICAL FIX: Generate unique ID dengan kombinasi timestamp + counter + random
+        // Menghindari race condition saat concurrent creates
+        idCounter = (idCounter + 1) % 10000;
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 1000);
+        const newId = timestamp * 10000 + idCounter * 1000 + random;
+
+        // Ensure ID is truly unique by checking existing IDs
+        const existingIds = new Set(currentData.testimonials.map(t => t.id));
+        let finalId = newId;
+        while (existingIds.has(finalId)) {
+            finalId++;
+        }
 
         const newTestimonial: Testimonial = {
             ...data,
-            id: newId,
+            id: finalId,
             isActive: data.isActive !== undefined ? data.isActive : true
         };
 
@@ -42,9 +55,11 @@ export const testimonialService = {
         return newTestimonial;
     },
 
-    async updateTestimonial(id: number, updates: Partial<Testimonial>): Promise<Testimonial | null> {
+    async updateTestimonial(id: number | string, updates: Partial<Testimonial>): Promise<Testimonial | null> {
         const currentData = await this.getTestimonials();
-        const index = currentData.testimonials.findIndex(t => t.id === id);
+        // Coerce to number to handle string IDs from JSON.parse
+        const numId = Number(id);
+        const index = currentData.testimonials.findIndex(t => t.id === numId);
 
         if (index === -1) return null;
 
@@ -60,9 +75,11 @@ export const testimonialService = {
         return updatedTestimonial;
     },
 
-    async deleteTestimonial(id: number): Promise<boolean> {
+    async deleteTestimonial(id: number | string): Promise<boolean> {
         const currentData = await this.getTestimonials();
-        const testimonial = currentData.testimonials.find(t => t.id === id);
+        // Coerce to number to handle string IDs from JSON.parse
+        const numId = Number(id);
+        const testimonial = currentData.testimonials.find(t => t.id === numId);
 
         if (!testimonial) return false;
 
@@ -95,7 +112,7 @@ export const testimonialService = {
             console.error('[TestimonialService] Storage audit failed during delete:', e);
         }
 
-        currentData.testimonials = currentData.testimonials.filter(t => t.id !== id);
+        currentData.testimonials = currentData.testimonials.filter(t => t.id !== numId);
         currentData.lastUpdated = new Date().toISOString();
         await service.saveData(currentData, `Delete testimonial ID: ${id}`);
         return true;

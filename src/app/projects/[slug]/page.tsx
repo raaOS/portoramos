@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface ProjectPageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
@@ -42,9 +42,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound()
   }
 
-  console.log(`[ProjectPage Server] Rendering project: ${project.slug}, galleryGroups present: ${!!project.galleryGroups && project.galleryGroups.length > 0}`);
-
-  const otherProjects = projects.filter(p => p.id !== project.id && p.status !== 'draft')
+  const otherProjects = projects.filter(p => p.id !== project.id)
   const cover = resolveCover(project)
   const gallery = resolveGallery(project)
 

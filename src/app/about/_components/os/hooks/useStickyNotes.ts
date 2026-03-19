@@ -3,23 +3,28 @@ import type { NoteData } from '../ui/elements/StickyNoteItem';
 import { useLayoutPersistence } from '../contexts/LayoutPersistenceContext';
 
 // BUG FIX #5: Gunakan function untuk lazy initialization agar tidak SSR leak
-const getInitialNotes = (): NoteData[] => [
-    {
-        id: 'welcome-note',
-        text: 'Halo! Selamat Datang di Ramos OS v2.0 🖥️✨\n\nSaya Ramos, seorang Graphic Designer & Visual Strategist.\n\nQuick Start:\n1. Buka folder "Projects" untuk lihat karya saya.\n2. Klik "Contact" di bawah untuk ngobrol.\n3. Drag note ini ke mana saja!\n\nSelamat mengeksplorasi!',
-        date: new Date().toISOString(),
-        color: '#fef08a',
-        isStarred: true,
-        isDeleted: false,
-        // BUG FIX #5: Safe window access dengan fallback yang lebih reasonable
-        x: typeof window !== 'undefined' ? Math.max(50, (window.innerWidth - 300) / 2) : 100,
-        y: typeof window !== 'undefined' ? Math.max(50, (window.innerHeight - 350) / 2) : 100,
-        width: 300,
-        height: 350,
-        zIndex: 100,
-        isPinned: false
-    }
-];
+// HYDRATION FIX: Generate client-specific values only when function is called (client-side)
+const getInitialNotes = (): NoteData[] => {
+    // Generate timestamp and position only on client to prevent hydration mismatch
+    const isClient = typeof window !== 'undefined';
+    return [
+        {
+            id: 'welcome-note',
+            text: 'Halo! Selamat Datang di Ramos OS v2.0 🖥️✨\n\nSaya Ramos, seorang Graphic Designer & Visual Strategist.\n\nQuick Start:\n1. Buka folder "Projects" untuk lihat karya saya.\n2. Klik "Contact" di bawah untuk ngobrol.\n3. Drag note ini ke mana saja!\n\nSelamat mengeksplorasi!',
+            date: isClient ? new Date().toISOString() : '2024-01-01T00:00:00.000Z', // Static date for SSR
+            color: '#fef08a',
+            isStarred: true,
+            isDeleted: false,
+            // BUG FIX #5: Safe window access dengan fallback yang lebih reasonable
+            x: isClient ? Math.max(50, (window.innerWidth - 300) / 2) : 100,
+            y: isClient ? Math.max(50, (window.innerHeight - 350) / 2) : 100,
+            width: 300,
+            height: 350,
+            zIndex: 100,
+            isPinned: false
+        }
+    ];
+};
 
 // Helper debounce function - prefixed with _ to indicate it's reserved for future use
 const _debounce = <T extends (...args: unknown[]) => ReturnType<T>>(func: T, wait: number) => {
@@ -217,23 +222,30 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
     }, [registerFlush, unregisterFlush, flushNotes]);
 
     const addNote = useCallback(() => {
-        const noteId = 'note-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        // HYDRATION FIX: Generate client-specific values only on client
+        const isClient = typeof window !== 'undefined';
+        const noteId = 'note-' + (isClient ? Date.now() : 0) + '-' + (isClient ? Math.random().toString(36).substr(2, 9) : 'xxxxxxxx');
         // Get z-index from unified system, passing the note ID
         const nextZ = requestNextZIndex ? requestNextZIndex(noteId) : 100;
         
+        // HYDRATION FIX: Use consistent SSR-safe defaults, then update on client
         const newNote: NoteData = {
             id: noteId,
             text: '',
-            date: new Date().toISOString(),
+            date: isClient ? new Date().toISOString() : '2024-01-01T00:00:00.000Z',
             color: '#fef08a',
             isStarred: false,
             isDeleted: false,
-            x: window.innerWidth < 768
-                ? (window.innerWidth - 280) / 2
-                : Math.random() * (window.innerWidth - 300),
-            y: window.innerWidth < 768
-                ? (window.innerHeight - 280) / 2
-                : Math.random() * (window.innerHeight - 300),
+            x: isClient 
+                ? (window.innerWidth < 768
+                    ? (window.innerWidth - 280) / 2
+                    : Math.random() * (window.innerWidth - 300))
+                : 100, // Consistent SSR fallback
+            y: isClient
+                ? (window.innerWidth < 768
+                    ? (window.innerHeight - 280) / 2
+                    : Math.random() * (window.innerHeight - 300))
+                : 100, // Consistent SSR fallback
             width: 280,
             height: 280,
             isPinned: false,

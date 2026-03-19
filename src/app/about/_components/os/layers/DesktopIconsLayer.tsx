@@ -41,6 +41,8 @@ export default function DesktopIconsLayer({
     handleIconPositionChange,
     openProjectWindow,
 }: DesktopIconsLayerProps) {
+    // Debug log to verify this version of the file is being served
+
     // Parent container animation variants for staggering
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -57,18 +59,18 @@ export default function DesktopIconsLayer({
     const itemVariants = {
         hidden: {
             opacity: 0,
-            scale: 0.5,
-            y: -60 // Start higher to feel like a more significant drop
+            scale: 0.3, // Start small for "pop" effect
+            y: 0,       // EXPLICITLY set y to 0 to prevent any "drop from -60" inheritance
         },
         show: {
             opacity: 1,
             scale: 1,
-            y: 0,
+            y: 0,       // EXPLICITLY set y to 0
             transition: {
                 type: "spring",
-                stiffness: 250,
-                damping: 18,
-                mass: 0.8
+                stiffness: 350, // Even snappier for "pop"
+                damping: 22,    // Slightly more damping for premium feel
+                mass: 1
             }
         }
     };
@@ -87,16 +89,24 @@ export default function DesktopIconsLayer({
                         key={icon.id}
                         variants={itemVariants}
                         className="pointer-events-none"
+                        style={{
+                            position: "absolute",
+                            left: icon.x,
+                            top: icon.y,
+                        }}
                     >
                         <DesktopIcon
                             {...icon}
+                            x={0}
+                            y={0}
                             icon={!icon.type || icon.type !== 'folder' ? icon.icon : undefined}
                             isMobile={isMobile}
                             priority={icon.priority}
-                            onPositionChange={handleIconPositionChange}
+                            onPositionChange={(id, relX, relY) => {
+                                // Add back the base offset to maintain absolute coordinate reporting
+                                handleIconPositionChange(id, icon.x + relX, icon.y + relY);
+                            }}
                             onClick={() => {
-                                // FIXED: Check icon.data untuk identify project (bukan type string)
-                                // karena project.type bisa 'commercial' | 'visual_art', bukan 'project'
                                 if (icon.data) {
                                     openProjectWindow(icon.data);
                                 } else if (icon.action) {

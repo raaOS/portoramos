@@ -3,12 +3,12 @@ import { generateMetadata as generateSEOMetadata } from '@/lib/seo';
 import CvPageClient from '@/app/cv/_components/CvPageClient';
 import { loadAboutData } from '@/lib/about';
 import { loadExperienceData } from '@/lib/experience';
-import { allProjectsAsync } from '@/lib/projects';
 import { loadHardSkillsData } from '@/lib/hardSkills';
+import { allProjectsAsync } from '@/lib/projects';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Resume | Ramos',
-  description: 'Resume versi ATS-friendly untuk screening cepat: ringkasan, skills, pengalaman, dan proyek utama.',
+  description: 'Resume versi ATS-friendly untuk screening cepat: ringkasan, skills, dan pengalaman.',
   path: '/cv'
 });
 
@@ -16,19 +16,19 @@ export const metadata: Metadata = generateSEOMetadata({
 export const revalidate = 0;
 
 export default async function CvPage() {
-  const [aboutData, experienceData, projects, hardSkillsData] = await Promise.all([
+  const [aboutData, experienceData, hardSkillsData, projects] = await Promise.all([
     loadAboutData(),
     loadExperienceData(),
-    allProjectsAsync(),
-    loadHardSkillsData()
+    loadHardSkillsData(),
+    allProjectsAsync()
   ]);
 
   return (
     <CvPageClient
       aboutData={aboutData}
       experienceData={experienceData}
-      projects={projects}
       hardSkillsData={hardSkillsData}
+      projects={projects}
     />
   );
 }

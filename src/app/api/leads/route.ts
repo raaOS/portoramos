@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebaseAdmin';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
     try {
-        if (!checkAdminAuth(request)) {
+        if (!(await validateAdminRequest(request, { checkCsrf: false }))) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

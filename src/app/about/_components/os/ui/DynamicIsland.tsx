@@ -190,7 +190,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
 
     return (
         <div
-            className="fixed top-[42px] left-0 right-0 flex justify-center pointer-events-none"
+            className="fixed top-[42px] left-0 right-0 flex justify-center pointer-events-none print:hidden"
             style={{ zIndex }}
         >
             <m.div

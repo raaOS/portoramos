@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdminAuth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
+import { validateAdminRequest } from '@/lib/auth';
 import { hardSkillConceptService } from '@/lib/services/hardSkillConceptService';
 
 export async function GET() {
@@ -21,8 +22,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await validateAdminRequest(request))) {
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -38,6 +39,9 @@ export async function POST(request: NextRequest) {
       order: typeof order === 'number' ? order : 0,
       isActive: body.isActive !== undefined ? body.isActive : true,
     });
+
+    revalidatePath('/', 'layout');
+    revalidatePath('/about');
 
     return NextResponse.json({ success: true, concept: newConcept });
   } catch (error) {

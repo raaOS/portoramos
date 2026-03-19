@@ -3,40 +3,24 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+/**
+ * HIGH FIX: Eliminate double auth check
+ * Server-side (page.tsx) already verified admin_token cookie and JWT validity.
+ * If we reach this client component, auth is guaranteed by server.
+ * Just redirect to projects dashboard immediately without extra API call.
+ */
 export default function AdminDashboardClient() {
   const router = useRouter();
 
-  // [STICKY NOTE] AUTH GUARD (PENJAGA PINTU)
-  // Memastikan hanya user yang sudah login (punya cookie sesi) yang bisa masuk sini.
-  // Jika server bilang "tidak authenticated", tendang balik ke halaman login.
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/admin/check-auth', {
-          method: 'GET',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.authenticated) {
-            // Redirect to projects immediately
-            router.push('/admin/projects');
-          } else {
-            router.push('/admin/login');
-          }
-        } else {
-          router.push('/admin/login');
-        }
-      } catch {
-        router.push('/admin/login');
-      }
-    };
-
-    checkAuth();
+    // Server already verified auth, just redirect to projects
+    router.push('/admin/projects');
   }, [router]);
 
-  // Render nothing or a minimal loader while redirecting
-  return null;
+  // Render minimal loader while redirecting
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-pulse text-gray-400">Loading dashboard...</div>
+    </div>
+  );
 }

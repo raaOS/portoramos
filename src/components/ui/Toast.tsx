@@ -87,7 +87,7 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
     <div
       role={ariaRole}
       aria-live={ariaLive}
-      className={`fixed bottom-4 right-4 z-50 transition-all duration-300 ease-in-out ${show ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
+      className={`fixed bottom-4 right-4 z-50 transition-all duration-300 ease-in-out print:hidden ${show ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'
         }`}
     >
       <div className={`px-4 py-3 rounded-lg shadow-xl ${styles.bg} max-w-sm text-sm flex items-center gap-3 ${isAnimating ? styles.animation : ''

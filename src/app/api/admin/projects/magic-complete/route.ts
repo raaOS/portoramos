@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateViralMetrics, generateGenZComments } from '@/lib/magic';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 import { db } from '@/lib/firebaseAdmin';
 
 export async function POST(req: NextRequest) {
-    if (!checkAdminAuth(req)) {
+    if (!(await validateAdminRequest(req))) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

@@ -1,5 +1,4 @@
 import { getContactData } from '@/lib/contact';
-import { loadAboutData } from '@/lib/about';
 import FullPageChat from './FullPageChat';
 import type { Metadata } from 'next';
 
@@ -18,10 +17,7 @@ export const metadata: Metadata = {
 export const revalidate = 0;
 
 export default async function ContactPage() {
-  const [contactData, _aboutData] = await Promise.all([
-    getContactData(),
-    loadAboutData()
-  ]);
+  const contactData = await getContactData();
 
   // Format contact info
   const contactInfo = contactData ? {

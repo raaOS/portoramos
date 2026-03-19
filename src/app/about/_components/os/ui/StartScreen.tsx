@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { m } from "framer-motion";
 import { soundManager } from "../utils/SoundManager";
 
@@ -24,6 +24,7 @@ const BOOT_CONFIG = {
 
 const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps) => {
     const [screenState, setScreenState] = useState<ScreenState>("idle");
+    const timersRef = useRef<NodeJS.Timeout[]>([]);
 
     // Signal to parent that StartScreen has mounted and is covering the screen
     useEffect(() => {
@@ -31,8 +32,20 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
         onReady?.();
     }, [onReady]);
 
+    // Cleanup timers on unmount to prevent memory leaks and state updates on unmounted component
+    useEffect(() => {
+        return () => {
+            timersRef.current.forEach(clearTimeout);
+            timersRef.current = [];
+        };
+    }, []);
+
     const handleClick = useCallback(() => {
         if (screenState !== "idle") return;
+
+        // Clear any existing timers first (prevents duplicate animations if clicked rapidly)
+        timersRef.current.forEach(clearTimeout);
+        timersRef.current = [];
 
         // Start the boot sequence
         setScreenState("zooming");
@@ -41,22 +54,22 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
         soundManager.play("startup");
 
         // After zoom completes (slightly overlapped so it doesn't blink empty green)
-        setTimeout(() => {
+        timersRef.current.push(setTimeout(() => {
             setScreenState("showingText");
-        }, BOOT_CONFIG.keyholeZoomDuration - 200);
+        }, BOOT_CONFIG.keyholeZoomDuration - 200));
 
         // After text display, start hiding background
-        setTimeout(() => {
+        timersRef.current.push(setTimeout(() => {
             setScreenState("glassReveal");
             onReveal?.();
-        }, BOOT_CONFIG.keyholeZoomDuration + BOOT_CONFIG.textDisplayDuration - 200);
+        }, BOOT_CONFIG.keyholeZoomDuration + BOOT_CONFIG.textDisplayDuration - 200));
 
         // Complete
         // Added the new 2.5s duration to the total config time so the screen doesn't unmount early
-        setTimeout(() => {
+        timersRef.current.push(setTimeout(() => {
             setScreenState("done");
             onStart();
-        }, BOOT_CONFIG.keyholeZoomDuration + BOOT_CONFIG.textDisplayDuration + 2500 - 400);
+        }, BOOT_CONFIG.keyholeZoomDuration + BOOT_CONFIG.textDisplayDuration + 2500 - 400));
     }, [screenState, onStart, onReveal]);
 
     // Keyboard support
@@ -80,7 +93,7 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
 
     return (
         <m.div
-            className="fixed inset-0 w-full h-full overflow-hidden select-none z-[10000]"
+            className="fixed inset-0 w-full h-full overflow-hidden select-none z-[10000] print:hidden"
             initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
             style={{ pointerEvents: screenState === "glassReveal" ? "none" : "auto" }}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
 import { db } from '@/lib/firebaseAdmin';
 
 // Firebase path for analytics logs
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
     // Only admins can read analytics
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request, { checkCsrf: false }))) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

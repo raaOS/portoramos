@@ -13,11 +13,17 @@ interface SystemNavFrameProps {
 }
 
 export default function SystemNavFrame({ children, title: _title, hideFooter }: SystemNavFrameProps) {
+    const [isPrintMode, setIsPrintMode] = React.useState(false);
     const pathname = usePathname();
+
+    React.useEffect(() => {
+        setIsPrintMode(window.location.search.includes('print=true'));
+    }, []);
+
     const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
     const isProjects = pathname?.startsWith('/projects');
     const effectiveHideFooter = hideFooter || isContact;
-    const showSystemHeader = !isProjects;
+    const showSystemHeader = !isProjects && !isPrintMode;
 
     // Generate Breadcrumbs from pathname
     const pathSegments = pathname.split('/').filter(Boolean);

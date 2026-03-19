@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import IndexClientWithAutoUpdate from '@/components/home/IndexClientWithAutoUpdate'
 import { allProjectsAsync } from '@/lib/projects'
-import { loadAboutData } from '@/lib/about'
 import SystemNavFrame from '@/components/layout/SystemNavFrame'
 import ProjectsFinderHeader from './_components/ProjectsFinderHeader'
 
@@ -15,13 +14,9 @@ export const metadata: Metadata = {
 }
 
 export default async function ProjectsPage() {
-    const [projects, _aboutData] = await Promise.all([
-        allProjectsAsync(),
-        loadAboutData()
-    ]);
+    const projects = await allProjectsAsync();
 
-    const filteredProjects = (projects || [])
-        .filter(p => p.status !== 'draft');
+    // allProjectsAsync() already filters drafts
 
     return (
         <SystemNavFrame>
@@ -30,7 +25,7 @@ export default async function ProjectsPage() {
                 <Suspense fallback={
                     <div className="px-4 sm:px-8 py-4 mt-8 h-16 bg-gray-50 animate-pulse rounded" />
                 }>
-                    <ProjectsFinderHeader itemCount={filteredProjects.length} />
+                    <ProjectsFinderHeader itemCount={projects.length} />
                 </Suspense>
 
                 <Suspense fallback={
@@ -39,7 +34,7 @@ export default async function ProjectsPage() {
                         <p className="mt-4 text-[10px] font-bold uppercase tracking-widest text-gray-500">Memuat koleksi project...</p>
                     </section>
                 }>
-                    <IndexClientWithAutoUpdate initialProjects={filteredProjects} />
+                    <IndexClientWithAutoUpdate initialProjects={projects} />
                 </Suspense>
             </main>
         </SystemNavFrame>

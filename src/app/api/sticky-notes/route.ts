@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { stickyNotesService } from '@/lib/services/stickyNotesService';
 import { validateAdminRequest } from '@/lib/auth';
 
@@ -32,6 +33,8 @@ export async function PUT(request: NextRequest) {
 
         const body = await request.json();
         const updatedData = await stickyNotesService.saveNotes(body);
+
+        revalidatePath('/', 'layout');
 
         return NextResponse.json({
             success: true,

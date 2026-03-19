@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { checkAdminAuth } from "@/lib/auth";
+import { validateAdminRequest } from "@/lib/auth";
 import { aboutService } from "@/lib/services/aboutService";
 import { invalidateAboutCache } from "@/lib/about";
 
 export async function POST(request: NextRequest) {
     try {
         // 1. Admin Authentication
-        const isAuthenticated = await checkAdminAuth(request);
+        const isAuthenticated = await validateAdminRequest(request);
         if (!isAuthenticated) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }

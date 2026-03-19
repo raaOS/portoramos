@@ -56,6 +56,9 @@ export function getOptimizedImageUrl(
  * Check if browser supports WebP
  */
 export function supportsWebP(): boolean {
+    // LOW FIX: SSR safety check
+    if (typeof document === 'undefined') return false;
+    
     const canvas = document.createElement('canvas');
     if (canvas.getContext && canvas.getContext('2d')) {
         return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
@@ -116,6 +119,9 @@ export function getOptimalSize(containerWidth: number): ImageSize {
  * Preload critical images
  */
 export function preloadImage(url: string): Promise<void> {
+    // LOW FIX: SSR safety check
+    if (typeof window === 'undefined') return Promise.resolve();
+    
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve();

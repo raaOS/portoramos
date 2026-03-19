@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdminAuth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
+import { validateAdminRequest } from '@/lib/auth';
 import { hardSkillConceptService } from '@/lib/services/hardSkillConceptService';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await validateAdminRequest(request))) {
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const { id } = await params;
@@ -17,6 +18,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Concept not found' }, { status: 404 });
     }
 
+    revalidatePath('/', 'layout');
+    revalidatePath('/about');
+
     return NextResponse.json({ success: true, concept: updated });
   } catch (error) {
     console.error('Error updating hard skill concept:', error);
@@ -26,8 +30,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    if (!checkAdminAuth(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await validateAdminRequest(request))) {
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const { id } = await params;
@@ -37,6 +41,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!success) {
       return NextResponse.json({ error: 'Concept not found' }, { status: 404 });
     }
+
+    revalidatePath('/', 'layout');
+    revalidatePath('/about');
 
     return NextResponse.json({ success: true });
   } catch (error) {

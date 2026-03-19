@@ -12,7 +12,6 @@ import {
   Quote,
   Eye,
   LogOut,
-  Activity,
   Users,
   Send,
   Menu,
@@ -63,7 +62,6 @@ const navItems: NavItem[] = [
     children: [
       { href: '/admin/projects', label: 'List Project', icon: FolderKanban, color: 'text-purple-600', bg: 'hover:bg-purple-50' },
       { href: '/admin/sequences', label: 'Bidikan Image', icon: Zap, color: 'text-yellow-500', bg: 'hover:bg-yellow-50' },
-      { href: '/admin/analytics', label: 'Statistik', icon: Activity, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
     ]
   },
   {
@@ -140,7 +138,7 @@ function AdminLayoutContent({
 
   // Sync expanded state with active path
   useEffect(() => {
-    const isProject = pathname?.startsWith('/admin/projects') || pathname?.startsWith('/admin/sequences') || pathname?.startsWith('/admin/analytics');
+    const isProject = pathname?.startsWith('/admin/projects') || pathname?.startsWith('/admin/sequences');
     const isAbout = pathname?.startsWith('/admin/about') || pathname?.startsWith('/admin/experience') || pathname?.startsWith('/admin/testimonial');
     const isContact = pathname?.startsWith('/admin/contact') || pathname?.startsWith('/admin/leads') || pathname?.startsWith('/admin/telegram');
     const isOSConfig = pathname?.startsWith('/admin/about') && ['desktop', 'dock', 'stickyNotes', 'sounds', 'runningText'].includes(searchParams.get('tab') || '');

@@ -85,7 +85,11 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
   const bringToFront = useCallback((id: string, type: ElementType): number => {
     // Check if we need to normalize
     if (topZIndexRef.current >= NORMALIZE_THRESHOLD) {
-      normalizeZIndexes();
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        window.requestIdleCallback(() => normalizeZIndexes());
+      } else {
+        setTimeout(normalizeZIndexes, 100);
+      }
     }
 
     // Get next z-index

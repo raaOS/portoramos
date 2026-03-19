@@ -79,7 +79,6 @@ interface FullPageChatProps {
 }
 
 export default function FullPageChat({ contactInfo }: FullPageChatProps) {
-    console.log('[FullPageChat] Rendered, contactInfo:', !!contactInfo);
     // Session state
     const [visitorId, setVisitorId] = useState<string>('');
     const [input, setInput] = useState('');
@@ -335,7 +334,7 @@ export default function FullPageChat({ contactInfo }: FullPageChatProps) {
 
                                                 <div className={`flex items-center justify-end gap-1 mt-1 -mb-1 ${isMe ? 'text-[#667781] dark:text-white/60' : 'text-[#667781] dark:text-white/50'}`}>
                                                     <span className="text-[10px] uppercase">
-                                                        {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                     {isMe && <CheckCheck className="w-3.5 h-3.5 text-blue-500" />}
                                                 </div>

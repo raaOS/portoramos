@@ -135,6 +135,10 @@ export default function OSWindow({
     useEffect(() => {
         if (!isResizing) return;
 
+        // PERFORMANCE FIX: Use requestAnimationFrame for throttled updates
+        let rafId: number | null = null;
+        let pendingSize = { width: 0, height: 0 };
+
         const handleMouseMove = (moveEvent: MouseEvent | TouchEvent) => {
             if (!resizeStartRef.current) return;
 
@@ -155,17 +159,32 @@ export default function OSWindow({
                 newHeight = Math.max(200, startHeight + deltaY);
             }
 
-            // Update LOCAL state only (super fast, no parent re-render)
-            setDynamicSize({ width: newWidth, height: newHeight });
-
-            // Store final size in separate ref (DO NOT mutate resizeStartRef.w/.h!)
+            // Store final size in ref for mouseUp handler
             finalSizeRef.current = { w: newWidth, h: newHeight };
+
+            // PERFORMANCE FIX: Throttle setState with requestAnimationFrame
+            pendingSize = { width: newWidth, height: newHeight };
+            if (rafId === null) {
+                rafId = requestAnimationFrame(() => {
+                    setDynamicSize(pendingSize);
+                    rafId = null;
+                });
+            }
         };
 
         const handleMouseUp = () => {
+            // Cancel any pending animation frame
+            if (rafId !== null) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+
             if (isResizing) {
                 const finalW = finalSizeRef.current.w;
                 const finalH = finalSizeRef.current.h;
+
+                // Ensure final size is applied
+                setDynamicSize({ width: finalW, height: finalH });
 
                 // Sync to parent ONCE at the end via refs
                 if (onResizeRef.current) onResizeRef.current(finalW, finalH);
@@ -181,6 +200,9 @@ export default function OSWindow({
         window.addEventListener('touchend', handleMouseUp);
 
         return () => {
+            if (rafId !== null) {
+                cancelAnimationFrame(rafId);
+            }
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
             window.removeEventListener('touchmove', handleMouseMove);

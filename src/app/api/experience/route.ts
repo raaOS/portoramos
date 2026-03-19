@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { validateAdminRequest } from '@/lib/auth';
 import { experienceService } from '@/lib/services/experienceService';
 
@@ -7,7 +8,8 @@ export async function GET() {
     const data = await experienceService.getExperienceData();
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ message: 'Error reading experience data', error }, { status: 500 });
+    console.error('Error reading experience data:', error);
+    return NextResponse.json({ error: 'Failed to read experience data' }, { status: 500 });
   }
 }
 
@@ -28,8 +30,13 @@ export async function PUT(request: NextRequest) {
       workExperience
     });
 
-    return NextResponse.json(data);
+    revalidatePath('/', 'layout');
+    revalidatePath('/about');
+    revalidatePath('/cv');
+
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    return NextResponse.json({ message: 'Error updating experience data', error }, { status: 500 });
+    console.error('Error updating experience data:', error);
+    return NextResponse.json({ error: 'Failed to update experience data' }, { status: 500 });
   }
 }

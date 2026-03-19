@@ -118,11 +118,12 @@ export default function CvPageClient({
             </div>
           </div>
 
-          {/* Print-only Header (Standard ATS) */}
-          <div className="print-only hidden pb-4 border-b border-gray-100">
+          <div className="print-only hidden pb-4">
             <h1 className="text-3xl font-bold">{displayName}</h1>
             <p className="text-lg text-gray-600">{headline}</p>
-            <p className="text-sm mt-1">portofolio-ramos.vercel.app</p>
+            <p className="text-sm mt-1">
+              portfolio: <a href="https://ramos-portofolio.vercel.app/" className="text-gray-900 underline">ramos-portofolio.vercel.app</a>
+            </p>
           </div>
 
           <section className="cv-section border-2 border-black/5 md:border-black/5 rounded-3xl p-6 md:p-10 shadow-xl bg-white relative overflow-hidden">
@@ -244,7 +245,7 @@ export default function CvPageClient({
                 ) : (
                   <p className="text-sm text-gray-600">Belum ada proyek ditampilkan.</p>
                 )}
-                {projects.length > 3 && (
+                {projects?.length > 3 && (
                   <p className="text-xs text-gray-600">
                     +{projects.length - 3} proyek lainnya, lihat <Link href="/" className="text-blue-700 underline">portfolio lengkap</Link>.
                   </p>

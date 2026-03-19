@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { runningTextService } from '@/lib/services/runningTextService';
 import { validateAdminRequest } from '@/lib/auth';
 
@@ -17,6 +18,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         if (!updatedItem) {
             return NextResponse.json({ error: 'Item not found' }, { status: 404 });
         }
+
+        revalidatePath('/', 'layout');
 
         return NextResponse.json(updatedItem);
     } catch {
@@ -37,6 +40,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         if (!success) {
             return NextResponse.json({ error: 'Item not found' }, { status: 404 });
         }
+
+        revalidatePath('/', 'layout');
 
         return NextResponse.json({ success: true });
     } catch {

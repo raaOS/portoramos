@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
 import { UpdateProjectData } from '@/types/projects';
 import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 import { generateGenZComments } from '@/lib/magic';
 import { db } from '@/lib/firebaseAdmin';
 import { sendTelegramAlert } from '@/lib/telegram';
+import { UpdateProjectSchema } from '@/lib/validations';
 
 // GET - Read single project
 export async function GET(
@@ -46,20 +46,31 @@ export async function PUT(
 
     const params = await props.params;
     const { id } = params;
-    const body: UpdateProjectData & { initialCommentCount?: number } = await request.json();
+    const rawBody = await request.json();
+
+    // Validate with Zod schema (safeParse for user-friendly errors)
+    const validationResult = UpdateProjectSchema.safeParse({ ...rawBody, id });
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Validation Failed', details: validationResult.error.format() },
+        { status: 400 }
+      );
+    }
+
+    const { id: _validatedId, ...updateData } = validationResult.data;
 
     // 1. Update Project
-    const updatedProject = await projectService.updateProject(id, body);
+    const updatedProject = await projectService.updateProject(id, updateData as UpdateProjectData & { initialCommentCount?: number });
 
     if (!updatedProject) {
       return NextResponse.json({ error: 'Project not found or update failed' }, { status: 404 });
     }
 
     // --- Auto-Generate / Append Comments (Firebase) ---
-    if (body.initialCommentCount && body.initialCommentCount > 0) {
+    if (rawBody.initialCommentCount && rawBody.initialCommentCount > 0) {
       try {
-        console.log(`Generating ${body.initialCommentCount} additional comments for ${updatedProject.slug}...`);
-        const newComments = generateGenZComments(updatedProject.slug, body.initialCommentCount);
+        console.log(`Generating ${rawBody.initialCommentCount} additional comments for ${updatedProject.slug}...`);
+        const newComments = generateGenZComments(updatedProject.slug, rawBody.initialCommentCount);
 
         // Get existing comments from Firebase
         const commentsRef = db.ref(`comments/${updatedProject.slug}`);
@@ -79,7 +90,7 @@ export async function PUT(
     }
 
     // --- Telegram Notification ---
-    const changedFields = Object.keys(body).filter(k => k !== 'initialCommentCount').join(', ');
+    const changedFields = Object.keys(rawBody).filter(k => k !== 'initialCommentCount').join(', ');
     const updateMessage = `✏️ **PROJECT UPDATED**\n\n**Title:** ${updatedProject.title}\n**ID:** ${updatedProject.id}\n**Changes:** ${changedFields || 'No specific fields'}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
     sendTelegramAlert(updateMessage).catch(err => console.error('[Telegram] Failed to send update alert:', err));
 
@@ -93,11 +104,11 @@ export async function PUT(
       project: updatedProject
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation Failed', details: error.format() }, { status: 400 });
-    }
     console.error('Error updating project:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to update project' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to update project' },
+      { status: 500 }
+    );
   }
 }
 

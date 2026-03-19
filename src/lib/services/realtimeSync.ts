@@ -6,6 +6,8 @@
  * fetch data lengkap hanya kalau timestamp berubah.
  * 
  * Bandwidth usage: ~50 bytes/detik vs ~50KB/detik (full listener)
+ * 
+ * MEDIUM FIX: Fixed listener leak dan race condition pada rapid mount/unmount
  */
 
 import { useEffect, useRef, useCallback } from 'react';
@@ -21,49 +23,60 @@ let onValueFn: OnValueFn | null = null;
 let refFn: RefFn | null = null;
 let offFn: OffFn | null = null;
 
+// MEDIUM FIX: Lock untuk mencegah multiple parallel initFirebaseClient calls
+let initPromise: Promise<boolean> | null = null;
+
 // Lazy load Firebase client SDK (hanya browser)
-async function initFirebaseClient() {
+async function initFirebaseClient(): Promise<boolean> {
     if (typeof window === 'undefined') return false;
     if (db) return true;
     
-    // Cek environment variable tersedia
-    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-    const databaseURL = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL;
+    // MEDIUM FIX: Return existing promise jika sedang inisialisasi
+    if (initPromise) return initPromise;
     
-    if (!apiKey || !databaseURL) {
-        console.warn('[RealtimeSync] Firebase config missing. Real-time sync disabled.');
-        console.warn('[RealtimeSync] Add NEXT_PUBLIC_FIREBASE_API_KEY and NEXT_PUBLIC_FIREBASE_DATABASE_URL to .env.local');
-        return false;
-    }
-    
-    try {
-        const firebaseDatabase = await import('firebase/database');
-        const firebaseApp = await import('firebase/app');
-        
-        // Cek kalau sudah diinisialisasi
-        let app;
+    initPromise = (async () => {
         try {
-            app = firebaseApp.getApp();
-        } catch {
-            // Firebase belum init, init dengan config dari env
-            const firebaseConfig = {
-                apiKey,
-                databaseURL,
-            };
-            app = firebaseApp.initializeApp(firebaseConfig);
+            // Cek environment variable tersedia
+            const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+            const databaseURL = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL;
+            
+            if (!apiKey || !databaseURL) {
+                console.warn('[RealtimeSync] Firebase config missing. Real-time sync disabled.');
+                return false;
+            }
+            
+            const firebaseDatabase = await import('firebase/database');
+            const firebaseApp = await import('firebase/app');
+            
+            // Cek kalau sudah diinisialisasi
+            let app;
+            try {
+                app = firebaseApp.getApp();
+            } catch {
+                // Firebase belum init, init dengan config dari env
+                const firebaseConfig = {
+                    apiKey,
+                    databaseURL,
+                };
+                app = firebaseApp.initializeApp(firebaseConfig);
+            }
+            
+            db = firebaseDatabase.getDatabase(app);
+            onValueFn = firebaseDatabase.onValue;
+            refFn = firebaseDatabase.ref;
+            offFn = firebaseDatabase.off;
+            
+            return true;
+        } catch (error) {
+            console.error('[RealtimeSync] Failed to init Firebase client:', error);
+            return false;
+        } finally {
+            // Clear lock setelah selesai (success atau error)
+            setTimeout(() => { initPromise = null; }, 0);
         }
-        
-        db = firebaseDatabase.getDatabase(app);
-        onValueFn = firebaseDatabase.onValue;
-        refFn = firebaseDatabase.ref;
-        offFn = firebaseDatabase.off;
-        
-        console.log('[RealtimeSync] Firebase client initialized successfully');
-        return true;
-    } catch (error) {
-        console.error('[RealtimeSync] Failed to init Firebase client:', error);
-        return false;
-    }
+    })();
+    
+    return initPromise;
 }
 
 interface UseRealtimeSyncOptions {
@@ -78,6 +91,8 @@ type Snapshot = { val: () => unknown };
  * Hook untuk listen lastUpdated timestamp dari Firebase.
  * Trigger onUpdate hanya kalau timestamp berubah (ada CRUD).
  * 
+ * MEDIUM FIX: Fixed listener leak dan race condition pada rapid mount/unmount
+ * 
  * @example
  * useRealtimeSync({
  *   onUpdate: () => refreshProjects(),
@@ -87,23 +102,28 @@ type Snapshot = { val: () => unknown };
 export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: UseRealtimeSyncOptions) {
     const lastTimestampRef = useRef<string | null>(null);
     const isInitializedRef = useRef(false);
+    // MEDIUM FIX: Refs untuk reliable cleanup
+    const unsubscribeRef = useRef<(() => void) | null>(null);
+    const isActiveRef = useRef(true);
+    const setupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleTimestampChange = useCallback((snapshot: Snapshot) => {
         const newTimestamp = snapshot.val() as string | null;
         
         if (!newTimestamp) return;
         
+        // MEDIUM FIX: Check isActiveRef untuk mencegah update setelah unmount
+        if (!isActiveRef.current) return;
+        
         // Skip kalau pertama kali load (hanya track perubahan)
         if (!isInitializedRef.current) {
             lastTimestampRef.current = newTimestamp;
             isInitializedRef.current = true;
-            console.log('[RealtimeSync] Initial timestamp:', newTimestamp);
             return;
         }
         
         // Trigger update hanya kalau timestamp berbeda
         if (newTimestamp !== lastTimestampRef.current) {
-            console.log('[RealtimeSync] Data changed! Old:', lastTimestampRef.current, 'New:', newTimestamp);
             lastTimestampRef.current = newTimestamp;
             onUpdate();
         }
@@ -112,12 +132,14 @@ export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: Use
     useEffect(() => {
         if (!enabled || typeof window === 'undefined') return;
 
-        let unsubscribe: (() => void) | null = null;
-        let isActive = true;
+        // Reset active flag
+        isActiveRef.current = true;
 
         const setupListener = async () => {
             const initialized = await initFirebaseClient();
-            if (!isActive) return;
+            
+            // MEDIUM FIX: Check isActiveRef setelah async operation
+            if (!isActiveRef.current) return;
             
             // Kalau Firebase tidak tersedia, panggil callback
             if (!initialized) {
@@ -136,23 +158,40 @@ export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: Use
             const lastUpdatedRef = refFn(db, 'lastUpdated');
             
             onValueFn(lastUpdatedRef, handleTimestampChange);
-            
-            console.log('[RealtimeSync] Listening to lastUpdated...');
 
-            unsubscribe = () => {
+            // Simpan unsubscribe function ke ref
+            unsubscribeRef.current = () => {
                 if (offFn && lastUpdatedRef) {
-                    offFn(lastUpdatedRef, 'value', handleTimestampChange);
+                    try {
+                        offFn(lastUpdatedRef, 'value', handleTimestampChange);
+                    } catch (e) {
+                        // Ignore cleanup errors
+                    }
                 }
             };
         };
 
-        setupListener();
+        // MEDIUM FIX: Delay setup untuk mencegah rapid mount/unmount issues
+        setupTimeoutRef.current = setTimeout(() => {
+            if (isActiveRef.current) {
+                setupListener();
+            }
+        }, 100);
 
         return () => {
-            isActive = false;
-            if (unsubscribe) {
-                unsubscribe();
-                console.log('[RealtimeSync] Unsubscribed');
+            // Mark as inactive immediately
+            isActiveRef.current = false;
+            
+            // Clear setup timeout
+            if (setupTimeoutRef.current) {
+                clearTimeout(setupTimeoutRef.current);
+                setupTimeoutRef.current = null;
+            }
+            
+            // Unsubscribe listener
+            if (unsubscribeRef.current) {
+                unsubscribeRef.current();
+                unsubscribeRef.current = null;
             }
         };
     }, [enabled, handleTimestampChange, onUnavailable]);

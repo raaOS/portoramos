@@ -58,17 +58,15 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
         if (!aboutData?.windowPreferences) return;
 
         const performInitialization = () => {
-            console.log('[WindowManager] Initializing with windowPreferences:', aboutData?.windowPreferences);
             
             setWindows(prev => {
                 return prev.map(w => {
                     const pref = aboutData?.windowPreferences?.[w.id];
                     if (!pref) {
-                        console.log(`[WindowManager] No pref for window ${w.id}, using default`);
                         return w;
                     }
 
-                    console.log(`[WindowManager] Applying pref for ${w.id}:`, pref);
+
 
                     const rawWidth = pref.width || w.width || 800;
                     const rawHeight = pref.height || w.height || 600;

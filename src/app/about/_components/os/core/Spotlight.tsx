@@ -68,7 +68,7 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
-            className="fixed inset-0 z-[10002] flex items-start justify-center pt-[20vh] bg-black/5 backdrop-blur-sm pointer-events-auto"
+            className="fixed inset-0 z-[10002] flex items-start justify-center pt-[20vh] bg-black/5 backdrop-blur-sm pointer-events-auto print:hidden"
             onClick={onClose}
         >
             <motion.div
