@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import Dock from '@/app/about/_components/os/core/Dock';
 import AppIcon from '@/app/about/_components/os/ui/AppIcon';
 import WhatsAppIcon from '@/app/about/_components/os/ui/WhatsAppIcon';
@@ -14,6 +15,15 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
   const router = useRouter();
   const pathname = usePathname();
   const { isWindowOpen, bouncingDocId } = useWindowContext();
+  
+  // BUG FIX: Add mounted state to prevent flash during initial render
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    // Small delay to ensure smooth transition from OS dock
+    const timer = setTimeout(() => setIsMounted(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleAppLaunch = React.useCallback((appId: string) => {
     router.push(`/?app=${appId}`);
@@ -71,10 +81,21 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
     return null;
   }
 
+  // BUG FIX: Don't render until mounted to prevent flash
+  if (!isMounted) {
+    return null;
+  }
+
   return (
-    <Dock
-      items={dockItems}
-      bouncingId={bouncingDocId}
-    />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+    >
+      <Dock
+        items={dockItems}
+        bouncingId={bouncingDocId}
+      />
+    </motion.div>
   );
 }

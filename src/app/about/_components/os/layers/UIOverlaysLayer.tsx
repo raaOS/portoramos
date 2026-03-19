@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { motion, AnimatePresence } from "framer-motion";
 import MenuBar from "../core/MenuBar";
 import OSDock from "../core/OSDock";
 
@@ -59,6 +60,16 @@ export default function UIOverlaysLayer({
     // Don't show overlays during boot sequence
     const isBootingOrStarting = isBooting || needsPowerOn;
     const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
+    
+    // BUG FIX: Track mount state for smooth exit animation
+    const [isVisible, setIsVisible] = useState(true);
+    
+    useEffect(() => {
+        setIsVisible(true);
+        return () => {
+            setIsVisible(false);
+        };
+    }, []);
 
     const isWindowOpen = (id: string) => windows.find(w => w.id === id)?.isOpen ?? false;
     // Get top window from windows array (already sorted by zIndex in context)
@@ -76,40 +87,59 @@ export default function UIOverlaysLayer({
                 islandId={ISLAND_ID}
             />
 
-            {/* MenuBar - hidden during boot */}
-            {!isBootingOrStarting && (
-                <MenuBar
-                    activeWindow={topWindowTitle || "Finder"}
-                    onAbout={() => openWindow("about")}
-                    onSearch={() => setShowSpotlight(true)}
-                    availability={aboutData?.hero?.availability}
-                    isAdmin={isAdmin}
-                    onLogout={logout}
-                />
-            )}
+            <AnimatePresence mode="wait">
+                {/* MenuBar - hidden during boot */}
+                {!isBootingOrStarting && isVisible && (
+                    <motion.div
+                        key="menubar"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.15 }}
+                    >
+                        <MenuBar
+                            activeWindow={topWindowTitle || "Finder"}
+                            onAbout={() => openWindow("about")}
+                            onSearch={() => setShowSpotlight(true)}
+                            availability={aboutData?.hero?.availability}
+                            isAdmin={isAdmin}
+                            onLogout={logout}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            {/* Dock Container - hidden during boot */}
-            {!isBootingOrStarting && (
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe">
-                    <div className="pointer-events-auto">
-                        {aboutData && (
-                            <OSDock
-                                aboutData={aboutData}
-                                onOpenWindow={openWindow}
-                                onOpenWhatsApp={openWhatsAppList}
-                                onOpenNotes={toggleNotesVisibility}
-                                onOpenTrash={() => openWindow("trash-bin")}
-                                isWindowOpen={isWindowOpen}
-                                notesVisible={notesVisible}
-                                bouncingId={bouncingDocId}
-                                isMobile={isMobile}
-                                commercialProjects={commercialProjects}
-                                openProjectWindow={openProjectWindow}
-                            />
-                        )}
-                    </div>
-                </div>
-            )}
+            <AnimatePresence mode="wait">
+                {/* Dock Container - hidden during boot */}
+                {!isBootingOrStarting && isVisible && (
+                    <motion.div 
+                        key="os-dock"
+                        className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        transition={{ duration: 0.15 }}
+                    >
+                        <div className="pointer-events-auto">
+                            {aboutData && (
+                                <OSDock
+                                    aboutData={aboutData}
+                                    onOpenWindow={openWindow}
+                                    onOpenWhatsApp={openWhatsAppList}
+                                    onOpenNotes={toggleNotesVisibility}
+                                    onOpenTrash={() => openWindow("trash-bin")}
+                                    isWindowOpen={isWindowOpen}
+                                    notesVisible={notesVisible}
+                                    bouncingId={bouncingDocId}
+                                    isMobile={isMobile}
+                                    commercialProjects={commercialProjects}
+                                    openProjectWindow={openProjectWindow}
+                                />
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {showSpotlight && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-auto z-[9999]">
