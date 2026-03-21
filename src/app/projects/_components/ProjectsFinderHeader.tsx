@@ -20,12 +20,22 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isPending, startTransition] = useTransition();
+    const [isMounted, setIsMounted] = useState(false);
 
-    const [searchQuery, setSearchQuery] = useState(searchParams?.get('q') || '');
+    const [searchQuery, setSearchQuery] = useState('');
     const currentView = searchParams?.get('view') || 'grid';
     const currentTag = searchParams?.get('tag') || '';
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const query = searchParams?.get('q') || '';
+        const frame = requestAnimationFrame(() => {
+            setSearchQuery(query);
+            setIsMounted(true);
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [searchParams]);
 
     // Close filter when clicking outside
     useEffect(() => {
@@ -105,35 +115,42 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
                     placeholder="Cari project, klien, atau kategori..."
                     className="w-full pl-10 pr-9 py-2 bg-gray-200/50 dark:bg-neutral-800/50 border border-gray-300 dark:border-neutral-700 rounded-md text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:bg-white dark:focus:bg-neutral-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-200"
                 />
-                {searchQuery && (
+                {isMounted && searchQuery && (
                     <button
                         onClick={handleClear}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-300/50 dark:hover:bg-neutral-700/50 rounded-full transition-colors"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                         aria-label="Clear search"
                     >
-                        <X className="w-4 h-4 text-gray-500" />
+                        <X className="w-4 h-4 text-red-500" />
                     </button>
                 )}
             </div>
 
             {/* View Mode & Filter Buttons */}
             <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end order-2 sm:order-3">
-                <div className="flex items-center bg-gray-100 dark:bg-neutral-800 p-0.5 rounded-lg border border-gray-200/80 dark:border-neutral-700/80">
-                    <button 
-                        onClick={() => handleViewChange('grid')}
-                        className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'grid' ? 'bg-white dark:bg-neutral-700 text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
-                        title="Tampilan Grid"
-                    >
-                        <Grid size={14} />
-                    </button>
-                    <button 
-                        onClick={() => handleViewChange('list')}
-                        className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'list' ? 'bg-white dark:bg-neutral-700 text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
-                        title="Tampilan List"
-                    >
-                        <List size={14} />
-                    </button>
-                </div>
+                {!isMounted ? (
+                    <div className="flex items-center gap-1" aria-hidden="true">
+                        <div className="p-1.5 w-7 h-7" />
+                        <div className="p-1.5 w-7 h-7" />
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-1">
+                        <button 
+                            onClick={() => handleViewChange('grid')}
+                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'grid' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                            title="Tampilan Grid"
+                        >
+                            <Grid size={16} />
+                        </button>
+                        <button 
+                            onClick={() => handleViewChange('list')}
+                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'list' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                            title="Tampilan List"
+                        >
+                            <List size={16} />
+                        </button>
+                    </div>
+                )}
                 
                 {/* Filter Dropdown */}
                 <div className="relative" ref={filterRef}>

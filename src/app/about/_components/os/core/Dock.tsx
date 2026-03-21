@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { m, useMotionValue, useTransform, useSpring, MotionValue } from "framer-motion";
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { DockPreferences } from "@/types/about";
@@ -16,7 +16,7 @@ interface DockItemProps {
     isMobile?: boolean;
 }
 
-function DockItem({ id, icon, label, onClick, mouseX, shouldBounceExternal = false, isMobile = false }: DockItemProps) {
+function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBounceExternal = false, isMobile = false }: DockItemProps) {
     const ref = useRef<HTMLDivElement>(null);
     const { playPop } = useSystemSound();
 
@@ -86,7 +86,7 @@ function DockItem({ id, icon, label, onClick, mouseX, shouldBounceExternal = fal
                 : { type: "spring", mass: 0.1, stiffness: 250, damping: 20 }
             }
             onClick={handleClick}
-            className="aspect-square rounded-[12px] flex items-center justify-center cursor-pointer relative group shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
+            className="aspect-square rounded-[12px] flex items-center justify-center cursor-pointer relative group shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none overflow-hidden"
             role="button"
             aria-label={label}
             tabIndex={0}
@@ -115,6 +115,7 @@ function DockItem({ id, icon, label, onClick, mouseX, shouldBounceExternal = fal
             <div className="flex items-center justify-center w-full h-full relative">
                 {React.cloneElement(icon as React.ReactElement, { className: "w-full h-full" })}
             </div>
+
         </m.div>
     );
 }
@@ -128,6 +129,12 @@ interface DockProps {
 
 export default function Dock({ items, bouncingId, config, isMobile = false }: DockProps) {
     const mouseX = useMotionValue(Infinity);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        const frame = requestAnimationFrame(() => setIsMounted(true));
+        return () => cancelAnimationFrame(frame);
+    }, []);
 
     const visibleItems = items.filter(item => {
         if (!config) return true;
@@ -141,64 +148,69 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
     });
 
     return (
-        <m.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{
-                duration: 0.6,
-                ease: [0.22, 1, 0.36, 1],
-                delay: 0.2
-            }}
-            className="print:hidden"
-        >
-            <>
-                {/* Invisible hit area that sits above ALL page content to capture mouse events.
-                This transparent overlay covers just the dock area and forwards mouse position
-                to the dock's mouseX MotionValue, ensuring magnification works regardless of
-                CSS stacking context issues from page content (masonry grid etc.) */}
-                {!isMobile && (
-                    <div
-                        className="fixed bottom-0 left-0 right-0 h-28 z-[99999] cursor-default"
-                        style={{ pointerEvents: 'auto', background: 'transparent' }}
-                        onMouseMove={(e) => mouseX.set(e.clientX)}
-                        onMouseLeave={() => mouseX.set(Infinity)}
-                        aria-hidden="true"
-                    />
-                )}
-                <nav
-                    className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[99999] pointer-events-auto ${isMobile ? 'max-w-[90vw]' : ''}`}
-                    role="toolbar"
-                    aria-label="Application dock"
-                    aria-orientation="horizontal"
-                    onMouseMove={(e) => !isMobile && mouseX.set(e.clientX)}
-                    onMouseLeave={() => !isMobile && mouseX.set(Infinity)}
+        <div className="print:hidden">
+            {/* Render static placeholder during SSR to prevent hydration mismatch.
+                Framer Motion's initial animation state differs between server and client. */}
+            {!isMounted ? (
+                <div style={{ opacity: 0 }} />
+            ) : (
+                <m.div
+                    initial={{ y: 100, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{
+                        duration: 0.6,
+                        ease: [0.22, 1, 0.36, 1],
+                        delay: 0.2
+                    }}
                 >
-                    <m.div
-                        layout // Smoothly animate container size changes
-                        className={`flex items-end bg-gradient-to-b from-white/25 to-white/10 backdrop-blur-2xl border border-white/40 rounded-[24px] ${isMobile
-                            ? 'h-[72px] overflow-x-auto scrollbar-hide gap-5 px-5 py-3'
-                            : 'h-[96px] gap-2 px-3 py-4'}`}
-                        style={{
-                            minWidth: isMobile ? 'auto' : visibleItems.length * 64 + (visibleItems.length - 1) * 8 + 24,
-                            minHeight: isMobile ? 72 : 96,
-                        }}
+                    {/* Invisible hit area that sits above ALL page content to capture mouse events.
+                    This transparent overlay covers just the dock area and forwards mouse position
+                    to the dock's mouseX MotionValue, ensuring magnification works regardless of
+                    CSS stacking context issues from page content (masonry grid etc.) */}
+                    {!isMobile && (
+                        <div
+                            className="fixed bottom-0 left-0 right-0 h-28 z-[99999] cursor-default"
+                            style={{ pointerEvents: 'auto', background: 'transparent' }}
+                            onMouseMove={(e) => mouseX.set(e.clientX)}
+                            onMouseLeave={() => mouseX.set(Infinity)}
+                            aria-hidden="true"
+                        />
+                    )}
+                    <nav
+                        className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[99999] pointer-events-auto ${isMobile ? 'max-w-[90vw]' : ''}`}
+                        role="toolbar"
+                        aria-label="Application dock"
+                        aria-orientation="horizontal"
+                        onMouseMove={(e) => !isMobile && mouseX.set(e.clientX)}
+                        onMouseLeave={() => !isMobile && mouseX.set(Infinity)}
                     >
-                        {visibleItems.map((item) => (
-                            <DockItem
-                                key={item.id}
-                                id={item.id}
-                                icon={item.icon}
-                                label={item.label}
-                                onClick={item.onClick}
-                                mouseX={mouseX}
-                                isOpen={item.isOpen}
-                                shouldBounceExternal={bouncingId === item.id}
-                                isMobile={isMobile}
-                            />
-                        ))}
-                    </m.div>
-                </nav>
-            </>
-        </m.div>
+                        <m.div
+                            layout // Smoothly animate container size changes
+                            className={`flex items-end bg-gradient-to-b from-white/25 to-white/10 backdrop-blur-2xl border border-white/40 rounded-[24px] ${isMobile
+                                ? 'h-[72px] overflow-x-auto scrollbar-hide gap-5 px-5 py-3'
+                                : 'h-[96px] gap-2 px-3 py-4'}`}
+                            style={{
+                                minWidth: isMobile ? 'auto' : visibleItems.length * 64 + (visibleItems.length - 1) * 8 + 24,
+                                minHeight: isMobile ? 72 : 96,
+                            }}
+                        >
+                            {visibleItems.map((item) => (
+                                <DockItem
+                                    key={item.id}
+                                    id={item.id}
+                                    icon={item.icon}
+                                    label={item.label}
+                                    onClick={item.onClick}
+                                    mouseX={mouseX}
+                                    isOpen={item.isOpen}
+                                    shouldBounceExternal={bouncingId === item.id}
+                                    isMobile={isMobile}
+                                />
+                            ))}
+                        </m.div>
+                    </nav>
+                </m.div>
+            )}
+        </div>
     );
 }

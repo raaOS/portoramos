@@ -5,6 +5,7 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import { LazyMotion, domAnimation, m } from 'framer-motion'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
 import ProjectCardList from '@/components/projects/ProjectCardList'
+import ProjectSplitView from '@/components/projects/ProjectSplitView'
 import MasonryGrid from '@/components/layout/MasonryGrid'
 
 type Props = {
@@ -258,22 +259,19 @@ export default function IndexClientInner({
                   })}
                 </MasonryGrid>
               ) : (
-                <div className="flex flex-col gap-6 max-w-5xl mx-auto py-4">
-                  {displayedProjects.map((project, index) => (
-                    <ProjectCardList 
-                      key={`${project.slug}-list-${index}`}
-                      project={project}
-                      priority={index < 3}
-                    />
-                  ))}
-                </div>
+                <ProjectSplitView 
+                  projects={filteredProjects}
+                  tag={tag}
+                />
               )}
 
-              {/* Infinite Scroll Sentinel */}
-              <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
+              {/* Infinite Scroll Sentinel - Only for grid */}
+              {view === 'grid' && (
+                <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
+              )}
 
-              {/* Subtle loading indicator */}
-              {showLoading && (
+              {/* Loading indicator - Only for grid */}
+              {view === 'grid' && showLoading && (
                 <div className="text-center py-8 opacity-50">
                   <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
                   <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>

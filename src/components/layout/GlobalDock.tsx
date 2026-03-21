@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 import Dock from '@/app/about/_components/os/core/Dock';
 import AppIcon from '@/app/about/_components/os/ui/AppIcon';
 import WhatsAppIcon from '@/app/about/_components/os/ui/WhatsAppIcon';
@@ -87,7 +87,7 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
@@ -96,6 +96,6 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
         items={dockItems}
         bouncingId={bouncingDocId}
       />
-    </motion.div>
+    </m.div>
   );
 }

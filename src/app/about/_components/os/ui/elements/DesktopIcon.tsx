@@ -109,7 +109,9 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                 x: iconX,
                 y: iconY
             }}
-            layout={false} // CRITICAL GPU OFF-LOAD: Disable automatic layout reflow animations
+            // Layout synchronization disabled to prevent global layout shifts
+            layout={false} // Disable to prevent layout sync bugs with Dock icons
+
             className={`flex flex-col items-center gap-1 w-auto group cursor-pointer pointer-events-auto will-change-transform focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none rounded-none`}
             role="button"
             aria-label={label}
@@ -121,8 +123,14 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                     onClick();
                 }
             }}
-            whileHover={!isMobile ? { scale: 1.1 } : undefined}
-            whileTap={!isMobile ? { scale: 0.95 } : undefined}
+            whileHover={!isMobile ? { 
+                scale: 1.1, 
+                transition: { type: "spring", stiffness: 400, damping: 25 } 
+            } : undefined}
+            whileTap={!isMobile ? { 
+                scale: 0.9, // More tactile tap
+                transition: { type: "spring", stiffness: 600, damping: 30 }
+            } : undefined}
             onMouseEnter={() => !isMobile && setHovering(true)}
             onMouseLeave={() => !isMobile && setHovering(false)}
         >

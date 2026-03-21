@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { m } from "framer-motion";
+import { m, LayoutGroup } from "framer-motion";
 import OSWindow from "../windows/Window";
 import { useDesktopWindowContext } from "../context/DesktopWindowContext";
 
@@ -64,7 +64,7 @@ export default function WindowsLayer({ isAdmin, isReady = true }: WindowsLayerPr
             animate={isReady ? "show" : "hidden"}
         >
             {windows.map(w => (
-                <m.div key={w.id} variants={itemVariants} className="pointer-events-none">
+                <m.div key={w.id} variants={itemVariants} className="pointer-events-none" layout={false}>
                     <OSWindow
                         id={w.id}
                         isOpen={w.isOpen}
@@ -91,6 +91,7 @@ export default function WindowsLayer({ isAdmin, isReady = true }: WindowsLayerPr
                     </OSWindow>
                 </m.div>
             ))}
+
         </m.div>
     );
 }

@@ -61,15 +61,7 @@ export default function UIOverlaysLayer({
     const isBootingOrStarting = isBooting || needsPowerOn;
     const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
     
-    // BUG FIX: Track mount state for smooth exit animation
-    const [isVisible, setIsVisible] = useState(true);
-    
-    useEffect(() => {
-        setIsVisible(true);
-        return () => {
-            setIsVisible(false);
-        };
-    }, []);
+    // Note: Exit animation is handled by AnimatePresence when component unmounts
 
     const isWindowOpen = (id: string) => windows.find(w => w.id === id)?.isOpen ?? false;
     // Get top window from windows array (already sorted by zIndex in context)
@@ -89,7 +81,7 @@ export default function UIOverlaysLayer({
 
             <AnimatePresence mode="wait">
                 {/* MenuBar - hidden during boot */}
-                {!isBootingOrStarting && isVisible && (
+                {!isBootingOrStarting && (
                     <motion.div
                         key="menubar"
                         initial={{ opacity: 0, y: -10 }}
@@ -111,7 +103,7 @@ export default function UIOverlaysLayer({
 
             <AnimatePresence mode="wait">
                 {/* Dock Container - hidden during boot */}
-                {!isBootingOrStarting && isVisible && (
+                {!isBootingOrStarting && (
                     <motion.div 
                         key="os-dock"
                         className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe"

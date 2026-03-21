@@ -33,7 +33,7 @@ interface WindowProps {
 }
 
 export default function OSWindow({
-    // id is reserved for future use
+    id,
     title,
     children,
     isOpen,
@@ -212,7 +212,7 @@ export default function OSWindow({
 
 
     return (
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence>
             {isOpen && (
                 <m.div
                     ref={windowRef}
@@ -244,16 +244,16 @@ export default function OSWindow({
                         isMinimized
                             ? getMinimizeState()
                             : isMaximized
-                                ? {
-                                    scale: 1,
-                                    opacity: 1,
-                                    x: 0,
-                                    y: 0,
-                                    width: "100%",
-                                    height: "100%",
-                                    borderRadius: 0,
-                                    transition: { duration: 0.3, ease: [0.32, 0.72, 0, 1] }
-                                }
+                                    ? {
+                                        scale: 1,
+                                        opacity: 1,
+                                        x: 10,
+                                        y: 36,
+                                        width: "calc(100% - 20px)",
+                                        height: "calc(100% - 46px)", // Full height (covers dock) with small bottom margin
+                                        borderRadius: 12,
+                                        transition: { duration: 0.3, ease: [0.32, 0.72, 0, 1] }
+                                    }
                                 : {
                                     scale: 1,
                                     opacity: 1,
@@ -271,7 +271,9 @@ export default function OSWindow({
                         opacity: 0,
                         transition: { duration: 0.15 }
                     }}
-                    layout={false} // CRITICAL GPU OFF-LOAD: Disable automatic layout reflow animations
+                    // Layout synchronization disabled to prevent cross-window glitching
+                    layout={false} 
+
                     onPointerDown={onFocus}
                     onKeyDown={(e) => {
                         // Keyboard Shortcuts

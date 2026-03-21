@@ -100,21 +100,13 @@ export default function UnifiedLayer({
     >
       {/* Windows Layer */}
       {windows.map((w) => (
-        <div
-          key={`window-${w.id}`}
-          className="pointer-events-none"
-          style={{
-            position: 'absolute',
-            zIndex: getZIndex(w.id),
-            // Prevent layout shift when window opens/closes
-            willChange: 'auto',
-          }}
-        >
           <OSWindow
+            key={`window-${w.id}`}
             id={w.id}
             isOpen={w.isOpen}
             title={w.title}
             isMinimized={w.isMinimized}
+            isMaximized={w.isMaximized} // Pastikan ini dilewatkan!
             isFocused={w.isOpen && !w.isMinimized && getZIndex(w.id) === maxWindowZIndex}
             onClose={() => closeWindow(w.id)}
             onMinimize={() => minimizeWindow(w.id)}
@@ -134,7 +126,6 @@ export default function UnifiedLayer({
           >
             {w.content}
           </OSWindow>
-        </div>
       ))}
 
       {/* Sticky Notes Layer - Unified with Windows */}

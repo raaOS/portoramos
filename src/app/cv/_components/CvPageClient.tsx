@@ -9,7 +9,10 @@ import type { Project } from '@/types/projects';
 import type { HardSkillsData } from '@/types/hardSkill';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
-import { Download, FileText, Share2 } from 'lucide-react';
+import { Download, FileText, Share2, Printer, Loader2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { toPng } from 'html-to-image';
+import { jsPDF } from 'jspdf';
 
 type Props = {
   aboutData: AboutData | null;
@@ -26,6 +29,8 @@ export default function CvPageClient({
 }: Props) {
   const searchParams = useSearchParams();
   const shouldAutoPrint = searchParams?.get('print') === 'true';
+  const cvRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     if (shouldAutoPrint) {
@@ -73,9 +78,44 @@ export default function CvPageClient({
   const { trackEvent } = useAnalytics();
 
   const handlePrint = () => {
-    trackEvent('CV_DOWNLOAD', { source: 'CvPage' });
+    trackEvent('CV_PRINT', { source: 'CvPage' });
     if (typeof window === 'undefined') return;
     window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!cvRef.current) return;
+    
+    try {
+      setIsExporting(true);
+      trackEvent('CV_DOWNLOAD_PREMIUM', { source: 'CvPage' });
+
+      // Generate high quality PNG
+      const dataUrl = await toPng(cvRef.current, {
+        quality: 1,
+        pixelRatio: 2, // 300 DPI equivalent
+        backgroundColor: '#ffffff',
+      });
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`CV_Ramos_${new Date().getFullYear()}.pdf`);
+    } catch (error) {
+      console.error('Failed to export PDF:', error);
+      alert('Gagal mengunduh PDF. Silakan gunakan fitur Print (Ctrl+P) sebagai cadangan.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -107,13 +147,19 @@ export default function CvPageClient({
 
             <div className="flex gap-3">
               <button
-                onClick={handlePrint}
-                className="flex items-center gap-2 px-5 py-2.5 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-full hover:bg-red-600 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                onClick={handleDownloadPDF}
+                disabled={isExporting}
+                className="flex items-center gap-2 px-5 py-2.5 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-full hover:bg-red-600 transition-all hover:scale-105 active:scale-95 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Download size={14} /> Download CV
+                {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} 
+                {isExporting ? 'Exporting...' : 'Download PDF'}
               </button>
-              <button className="p-2.5 border border-gray-300 rounded-full hover:bg-gray-100 transition-colors">
-                <Share2 size={16} />
+              <button 
+                onClick={handlePrint}
+                className="p-2.5 border border-gray-300 rounded-full hover:bg-gray-100 transition-colors tooltip"
+                title="Print CV"
+              >
+                <Printer size={16} />
               </button>
             </div>
           </div>
@@ -126,7 +172,10 @@ export default function CvPageClient({
             </p>
           </div>
 
-          <section className="cv-section border-2 border-black/5 md:border-black/5 rounded-3xl p-6 md:p-10 shadow-xl bg-white relative overflow-hidden">
+          <section 
+            ref={cvRef}
+            className="cv-section border-2 border-black/5 md:border-black/5 rounded-3xl p-6 md:p-10 shadow-xl bg-white relative overflow-hidden"
+          >
             <div className="absolute top-0 right-0 w-32 h-32 bg-red-50/50 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none no-print" />
 
             <div className="space-y-10 relative z-10">
@@ -253,15 +302,18 @@ export default function CvPageClient({
 
                 <div className="pt-4 flex justify-end print:hidden">
                   <button
-                    onClick={handlePrint}
-                    className="inline-flex items-center gap-2 rounded-full bg-black text-white px-6 py-3 text-sm font-semibold shadow-lg hover:bg-red-600 transition-all hover:scale-105 active:scale-95"
+                    onClick={handleDownloadPDF}
+                    disabled={isExporting}
+                    className="inline-flex items-center gap-2 rounded-full bg-black text-white px-6 py-3 text-sm font-semibold shadow-lg hover:bg-red-600 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Download sekarang
+                    {isExporting ? <Loader2 size={20} className="animate-spin" /> : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                    )}
+                    {isExporting ? 'Menyiapkan PDF...' : 'Download sekarang'}
                   </button>
                 </div>
               </div>

@@ -2,7 +2,7 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import { m } from "framer-motion";
+import { m, LayoutGroup } from "framer-motion";
 import DesktopIcon from "../ui/elements/DesktopIcon";
 import type { Project } from "@/types/projects";
 
@@ -68,8 +68,8 @@ export default function DesktopIconsLayer({
             y: 0,       // EXPLICITLY set y to 0
             transition: {
                 type: "spring",
-                stiffness: 350, // Even snappier for "pop"
-                damping: 22,    // Slightly more damping for premium feel
+                stiffness: 400, // Even snappier for "pop"
+                damping: 30,    // More damping for premium feel
                 mass: 1
             }
         }
@@ -103,7 +103,6 @@ export default function DesktopIconsLayer({
                             isMobile={isMobile}
                             priority={icon.priority}
                             onPositionChange={(id, relX, relY) => {
-                                // Add back the base offset to maintain absolute coordinate reporting
                                 handleIconPositionChange(id, icon.x + relX, icon.y + relY);
                             }}
                             onClick={() => {
@@ -119,6 +118,7 @@ export default function DesktopIconsLayer({
                     </m.div>
                 ))}
             </m.div>
+
         </div>
     );
 }

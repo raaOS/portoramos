@@ -7,7 +7,7 @@ import { Search, Wifi, Battery, Volume2 } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
 const Header: React.FC = () => {
-    const [currentTime, setCurrentTime] = useState(new Date());
+    const [currentTime, setCurrentTime] = useState<Date | null>(null);
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const { trackEvent } = useAnalytics();
@@ -15,6 +15,7 @@ const Header: React.FC = () => {
     const isPrintMode = searchParams.get('print') === 'true';
 
     useEffect(() => {
+        setCurrentTime(new Date()); // eslint-disable-line
         const timer = setInterval(() => {
             setCurrentTime(new Date());
         }, 1000);
@@ -48,7 +49,7 @@ const Header: React.FC = () => {
     };
 
     const appName = getAppName();
-    const isProjectsPage = pathname?.startsWith('/projects/');
+    const isProjectsPage = pathname?.startsWith('/projects');
 
     return (
         <header 
@@ -89,8 +90,12 @@ const Header: React.FC = () => {
                     <Volume2 size={14} />
                 </div>
                 <div className="flex items-center gap-2 font-medium cursor-default">
-                    <span>{formatDate(currentTime)}</span>
-                    <span className="w-[60px] text-right">{formatTime(currentTime)}</span>
+                    {currentTime && (
+                        <>
+                            <span>{formatDate(currentTime)}</span>
+                            <span className="w-[60px] text-right">{formatTime(currentTime)}</span>
+                        </>
+                    )}
                 </div>
             </div>
         </header>

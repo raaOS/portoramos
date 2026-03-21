@@ -77,12 +77,18 @@ export const SparklesCore = (props: ParticlesProps) => {
                   mode: "push",
                 },
                 onHover: {
-                  enable: false,
-                  mode: "repulse",
+                  enable: true,
+                  mode: "grab",
                 },
                 resize: { enable: true },
               },
               modes: {
+                grab: {
+                  distance: 140,
+                  links: {
+                    opacity: 0.5,
+                  },
+                },
                 push: {
                   quantity: 4,
                 },
@@ -230,7 +236,7 @@ export const SparklesCore = (props: ParticlesProps) => {
                   mode: "delete",
                   value: 0,
                 },
-                value: particleDensity || 120,
+                value: particleDensity || 100,
               },
               opacity: {
                 value: {
@@ -395,13 +401,13 @@ export const SparklesCore = (props: ParticlesProps) => {
               links: {
                 blink: false,
                 color: {
-                  value: "#fff",
+                  value: particleColor || "#ffffff",
                 },
                 consent: false,
-                distance: 100,
-                enable: false,
+                distance: 150,
+                enable: true,
                 frequency: 1,
-                opacity: 1,
+                opacity: 0.2,
                 shadow: {
                   blur: 5,
                   color: {

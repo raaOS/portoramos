@@ -194,13 +194,20 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
             style={{ zIndex }}
         >
             <m.div
+                layout
+                layoutId={islandId}
                 onMouseDown={handleFocus}
                 onPointerDown={handleFocus}
                 className="bg-black overflow-hidden pointer-events-auto cursor-default border border-white/10"
                 initial="idle"
                 animate={currentState === "active-window" ? "active" : currentState}
                 variants={variants}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                transition={{ 
+                    type: "spring", 
+                    stiffness: 400, // Slightly snappier
+                    damping: 28,
+                    layout: { duration: 0.3 } // Specific transition for layout changes
+                }}
             >
                 <div className="w-full h-full relative flex items-center text-white px-5">
 

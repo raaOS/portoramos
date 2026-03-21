@@ -29,9 +29,12 @@ export async function POST(req: NextRequest) {
                 .map(([k, v]) => `"${k}": ${JSON.stringify(v)}`)
                 .join(',\n  ');
 
-            prompt = `You are a professional translator. Translate the following content from Indonesian to English. 
-This is content from a design portfolio website. Preserve meaning, tone, and formatting.
-Return ONLY a valid JSON object with the same keys, with translated values.
+            prompt = `System: You are an expert Indonesian-to-English translator specializing in creative design portfolios.
+Your goal is to translate design-related content while maintaining a sophisticated, professional, and modern tone.
+Preserve all formatting, case consistency, and technical terms (e.g., brand names, software).
+
+Task: Translate the following JSON object values from Indonesian to English.
+Return ONLY the JSON object with the same keys.
 
 Input:
 {
@@ -39,8 +42,10 @@ Input:
 }`;
         } else {
             // Single text mode (for comments or standalone text)
-            prompt = `You are a professional translator. Translate the following text from Indonesian to English.
-This is a comment or description from a design portfolio website. Keep the tone natural and preserve the original meaning.
+            prompt = `System: You are a professional translator for a design portfolio.
+Translate the text naturally, ensuring it sounds professional and fits a high-end creative context.
+
+Task: Translate the following text from Indonesian to English.
 Return ONLY a valid JSON object: {"translation": "<translated text here>"}
 
 Text to translate:
