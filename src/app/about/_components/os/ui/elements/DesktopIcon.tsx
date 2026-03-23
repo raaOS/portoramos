@@ -181,13 +181,13 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
 
                     {/* Show simple loading/placeholder if everything fails */}
                     {imageError && (!videoUrl || videoError) && (
-                         <div className="absolute inset-0 flex items-center justify-center bg-white/10 backdrop-blur-sm">
+                         <div className="absolute inset-0 flex items-center justify-center bg-white/20">
                              <div className="text-[10px] text-white/40 uppercase font-bold tracking-widest">No Media</div>
                          </div>
                     )}
                 </div>
             ) : (
-                <div className={`w-16 h-16 bg-white/20 backdrop-blur-sm rounded-none border border-white/30 flex items-center justify-center transition-colors group-hover:bg-white/30`}>
+                <div className={`w-16 h-16 bg-white/20 rounded-none border border-white/30 flex items-center justify-center transition-colors group-hover:bg-white/30`}>
                     <div className="text-black/80 group-hover:text-black transition-colors">
                         {icon}
                     </div>

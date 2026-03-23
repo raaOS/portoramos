@@ -68,16 +68,16 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
-            className="fixed inset-0 z-[10002] flex items-start justify-center pt-[20vh] bg-black/5 backdrop-blur-sm pointer-events-auto print:hidden"
+            className="fixed inset-0 z-[10002] flex items-start justify-center pt-[20vh] bg-black/20 pointer-events-auto print:hidden"
             onClick={onClose}
         >
             <motion.div
-                className="w-[600px] bg-white/80 backdrop-blur-2xl rounded-xl border border-white/40 overflow-hidden"
+                className="w-[600px] bg-white rounded-xl border border-gray-200 overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={handleKeyDown}
             >
                 {/* Search Input */}
-                <div className="flex items-center px-4 py-4 border-b border-gray-200/50">
+                <div className="flex items-center px-4 py-4 border-b border-gray-200">
                     <Search className="text-gray-400 mr-3" size={20} />
                     <input
                         ref={inputRef}
@@ -129,7 +129,7 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
                 </div>
 
                 {/* Footer */}
-                <div className="px-4 py-2 bg-gray-50/50 border-t border-gray-200/50 flex justify-between items-center text-[10px] text-gray-400">
+                <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-400">
                     <div className="flex gap-3">
                         <span><span className="font-bold">↑↓</span> to navigate</span>
                         <span><span className="font-bold">Enter</span> to open</span>

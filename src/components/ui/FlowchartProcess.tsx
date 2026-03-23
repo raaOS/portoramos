@@ -28,7 +28,7 @@ interface FlowchartProcessProps {
   workflowSteps: WorkflowStep[];
 }
 
-const iconMap: Record<string, React.ElementType> = {
+const iconMap: Record<string, React.ElementType<any>> = {
   Search,
   Lightbulb,
   Palette,
@@ -48,7 +48,7 @@ const CompactWorkflow = ({ steps }: { steps: WorkflowStep[] }) => {
   }
 
   const PhaseCard = ({ step, isLast }: { step: WorkflowStep; isLast: boolean }) => {
-    const Icon = iconMap[step.icon] || Sparkles;
+    const Icon: any = iconMap[step.icon] || Sparkles;
     const colorClasses = {
       amber: 'bg-amber-100 border-amber-400 text-amber-800',
       blue: 'bg-blue-100 border-blue-400 text-blue-800',

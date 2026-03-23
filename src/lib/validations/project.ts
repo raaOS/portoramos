@@ -89,7 +89,7 @@ export const CreateProjectSchema = ProjectSchema.omit({
 });
 
 export const UpdateProjectSchema = CreateProjectSchema.partial().extend({
-    id: z.string().optional(),
+    id: z.string(), // Required untuk update operation
     slug: z.string().optional(),
 });
 

@@ -190,7 +190,7 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
                     />
 
                     {/* Controls Overlay (Top Right) */}
-                    <div className="absolute top-4 right-4 flex flex-col gap-2 bg-white/90 p-2 rounded shadow-lg backdrop-blur text-xs z-10">
+                    <div className="absolute top-4 right-4 flex flex-col gap-2 bg-white p-2 rounded shadow-lg text-xs z-10">
                         <span className="font-bold text-gray-500 uppercase flex items-center gap-1">
                             <Maximize2 size={12} /> Ratio
                         </span>
@@ -215,7 +215,7 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
                     {/* Centered Play Control */}
                     {!isPlaying && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center">
+                            <div className="w-16 h-16 bg-white/40 rounded-full flex items-center justify-center">
                                 <Play className="w-8 h-8 text-white ml-1" fill="currentColor" />
                             </div>
                         </div>

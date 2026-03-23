@@ -271,7 +271,7 @@ export const Compare = ({
               )}
               {/* Label for First Image (Visible when this layer is visible) */}
               {firstSlideLabel && (
-                <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-30">
+                <div className="absolute top-4 left-4 bg-black/70 text-white text-xs px-2 py-1 rounded z-30">
                   {firstSlideLabel}
                 </div>
               )}
@@ -294,7 +294,7 @@ export const Compare = ({
             )}
             {/* Label for Second Image (Visible when overlay is clipped away) */}
             {secondSlideLabel && (
-              <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-[20]">
+              <div className="absolute top-4 right-4 bg-black/70 text-white text-xs px-2 py-1 rounded z-[20]">
                 {secondSlideLabel}
               </div>
             )}

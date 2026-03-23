@@ -7,6 +7,9 @@ import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
 import ProjectCardList from '@/components/projects/ProjectCardList'
 import ProjectSplitView from '@/components/projects/ProjectSplitView'
 import MasonryGrid from '@/components/layout/MasonryGrid'
+import dynamic from 'next/dynamic'
+
+const InfiniteCanvas3D = dynamic(() => import('@/components/projects/InfiniteCanvas3D'), { ssr: false })
 
 type Props = {
   projects: Project[]
@@ -14,7 +17,7 @@ type Props = {
   searchQuery: string
   windowWidth?: number
   isLoading?: boolean // Prop baru dari parent
-  view?: 'grid' | 'list'
+  view?: 'grid' | 'list' | 'canvas'
 }
 
 // Minimal typing for Fuse.js since it's dynamically imported
@@ -219,7 +222,7 @@ export default function IndexClientInner({
 
       {/* Projects Grid */}
       <LazyMotion features={domAnimation}>
-        <div className="min-h-screen">
+        <div className={view === 'grid' ? 'min-h-screen' : ''}>
           {displayedProjects.length > 0 ? (
             <>
               {view === 'grid' ? (
@@ -258,12 +261,16 @@ export default function IndexClientInner({
                     )
                   })}
                 </MasonryGrid>
-              ) : (
+              ) : view === 'list' ? (
                 <ProjectSplitView 
                   projects={filteredProjects}
                   tag={tag}
                 />
-              )}
+              ) : view === 'canvas' ? (
+                <div className="fixed inset-0 z-[40] bg-[#f4f4f5] animate-in fade-in duration-500">
+                  <InfiniteCanvas3D projects={displayedProjects} />
+                </div>
+              ) : null}
 
               {/* Infinite Scroll Sentinel - Only for grid */}
               {view === 'grid' && (

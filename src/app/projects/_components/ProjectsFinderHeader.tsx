@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Grid, List, Filter, Search as SearchIcon, X, Check } from 'lucide-react';
+import { Grid, List, Filter, Search as SearchIcon, X, Check, Box } from 'lucide-react';
 
 interface ProjectsFinderHeaderProps {
     itemCount: number;
@@ -22,20 +22,42 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
     const [isPending, startTransition] = useTransition();
     const [isMounted, setIsMounted] = useState(false);
 
-    const [searchQuery, setSearchQuery] = useState('');
+    // Initialize searchQuery dari searchParams untuk menghindari setState dalam useEffect
+    const [searchQuery, setSearchQuery] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('q') || '';
+        }
+        return '';
+    });
     const currentView = searchParams?.get('view') || 'grid';
     const currentTag = searchParams?.get('tag') || '';
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef<HTMLDivElement>(null);
 
+    // Ref untuk tracking searchQuery terbaru tanpa trigger re-render
+    const searchQueryRef = useRef(searchQuery);
+    useEffect(() => {
+        searchQueryRef.current = searchQuery;
+    }, [searchQuery]);
+
+    // Sync searchQuery dengan URL changes (tanpa setState langsung dalam effect)
     useEffect(() => {
         const query = searchParams?.get('q') || '';
-        const frame = requestAnimationFrame(() => {
-            setSearchQuery(query);
-            setIsMounted(true);
-        });
-        return () => cancelAnimationFrame(frame);
+        if (query !== searchQueryRef.current) {
+            // Update via requestAnimationFrame untuk menghindari cascading renders
+            const frame = requestAnimationFrame(() => {
+                setSearchQuery(query);
+            });
+            return () => cancelAnimationFrame(frame);
+        }
     }, [searchParams]);
+
+    // Separate effect untuk mounted state
+    useEffect(() => {
+        const frame = requestAnimationFrame(() => setIsMounted(true));
+        return () => cancelAnimationFrame(frame);
+    }, []);
 
     // Close filter when clicking outside
     useEffect(() => {
@@ -69,7 +91,7 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
         return () => clearTimeout(timer);
     }, [searchQuery, router, searchParams]);
 
-    const handleViewChange = (view: 'grid' | 'list') => {
+    const handleViewChange = (view: 'grid' | 'list' | 'canvas') => {
         if (view === currentView) return;
         const params = new URLSearchParams(searchParams?.toString());
         params.set('view', view);
@@ -148,6 +170,13 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
                             title="Tampilan List"
                         >
                             <List size={16} />
+                        </button>
+                        <button 
+                            onClick={() => handleViewChange('canvas')}
+                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'canvas' ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:text-purple-500 hover:bg-purple-50/50'}`}
+                            title="Tampilan 3D Canvas"
+                        >
+                            <Box size={16} />
                         </button>
                     </div>
                 )}

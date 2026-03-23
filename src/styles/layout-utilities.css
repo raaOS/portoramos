@@ -18,6 +18,47 @@
     display: none;
 }
 
+/* Thin Scrollbar */
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 3px;
+}
+
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+    background-color: #9ca3af;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+}
+
+.scrollbar-thumb-gray-400::-webkit-scrollbar-thumb {
+    background-color: #9ca3af;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Overscroll Behavior - Prevent scroll chaining */
+.overscroll-contain {
+    overscroll-behavior: contain;
+}
+
 /* Aspect Ratio Containers */
 .aspect-ratio-container {
     position: relative;

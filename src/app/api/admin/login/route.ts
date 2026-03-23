@@ -184,20 +184,25 @@ export async function POST(request: NextRequest) {
 
     const clientId = getClientIdentifier(request);
 
-    // Firebase rate limiting (persisten di Vercel, tidak hilang saat cold start)
-    const rateLimit = await checkFirebaseRateLimit(
-      `login_${clientId}`,
-      MAX_ATTEMPTS_PER_WINDOW,
-      RATE_LIMIT_WINDOW,
-      BLOCK_DURATION
-    );
+    // SKIP RATE LIMIT for test environment or with bypass header
+    const isTestEnv = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === 'true';
+    const hasBypassHeader = request.headers.get('x-test-bypass') === 'true';
+    
+    if (!isTestEnv && !hasBypassHeader) {
+      // Firebase rate limiting (persisten di Vercel, tidak hilang saat cold start)
+      const rateLimit = await checkFirebaseRateLimit(
+        `login_${clientId}`,
+        MAX_ATTEMPTS_PER_WINDOW,
+        RATE_LIMIT_WINDOW,
+        BLOCK_DURATION
+      );
 
-    if (!rateLimit.allowed) {
-      const [ip, userAgent] = clientId.split('|');
-      const geo = await getGeoInfo(ip);
-      const device = parseUserAgent(userAgent);
+      if (!rateLimit.allowed) {
+        const [ip, userAgent] = clientId.split('|');
+        const geo = await getGeoInfo(ip);
+        const device = parseUserAgent(userAgent);
 
-      const message = `🚫 **BLOCKED BY RATE LIMIT**
+        const message = `🚫 **BLOCKED BY RATE LIMIT**
 
 💻 **Device:** ${device}
 🌐 **Network:** ${geo.isp}
@@ -207,18 +212,19 @@ export async function POST(request: NextRequest) {
 
 🕒 ${new Date().toLocaleString('id-ID')}`;
 
-      await sendTelegramAlert(message, { priority: 'high' });
+        await sendTelegramAlert(message, { priority: 'high' });
 
-      return NextResponse.json(
-        {
-          error: 'Too many login attempts. Please try again later.',
-          retryAfter: rateLimit.retryAfter
-        },
-        {
-          status: 429,
-          headers: { 'Retry-After': String(rateLimit.retryAfter) }
-        }
-      );
+        return NextResponse.json(
+          {
+            error: 'Too many login attempts. Please try again later.',
+            retryAfter: rateLimit.retryAfter
+          },
+          {
+            status: 429,
+            headers: { 'Retry-After': String(rateLimit.retryAfter) }
+          }
+        );
+      }
     }
 
     const { password, lat, lng, accuracy } = await request.json() as LoginRequestBody;

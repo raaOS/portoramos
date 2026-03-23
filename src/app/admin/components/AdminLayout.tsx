@@ -46,7 +46,7 @@ interface AdminLayoutProps {
 interface NavItem {
   href: string;
   label: string;
-  icon: React.ElementType;
+  icon: React.ElementType<any>;
   color: string;
   bg: string;
   children?: NavItem[];
@@ -199,7 +199,7 @@ function AdminLayoutContent({
     const active = isActive(item.href);
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedMenus[item.href];
-    const Icon = item.icon;
+    const Icon: any = item.icon;
 
     return (
       <div key={item.href} className="mb-0.5">

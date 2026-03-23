@@ -99,7 +99,7 @@ export default function GalleryManager({ projects }: GalleryManagerProps) {
             </div>
 
             {/* Save Bar */}
-            <div className="flex justify-between items-center sticky top-0 bg-white/80 backdrop-blur z-10 py-4 border-b">
+            <div className="flex justify-between items-center sticky top-0 bg-white z-10 py-4 border-b">
                 <div className="text-sm text-gray-500">
                     Selected: <span className="font-bold text-gray-900">{featuredIds.length}</span> / 10
                 </div>
@@ -154,7 +154,7 @@ export default function GalleryManager({ projects }: GalleryManagerProps) {
                             )}
 
                             {isSelected && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-violet-600/20 backdrop-blur-[2px]">
+                                <div className="absolute inset-0 flex items-center justify-center bg-violet-600/40">
                                     <div className="w-12 h-12 rounded-full bg-violet-600 text-white flex items-center justify-center text-xl font-bold shadow-xl border-4 border-white">
                                         {selectedIndex + 1}
                                     </div>

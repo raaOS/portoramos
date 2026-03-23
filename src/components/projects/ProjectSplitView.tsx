@@ -23,15 +23,22 @@ export default function ProjectSplitView({ projects, tag }: ProjectSplitViewProp
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // Update activeProject ketika projects berubah (dengan proper guard)
   useEffect(() => {
-    if (projects.length > 0) {
-      const exists = projects.some(p => p.id === activeProject?.id);
-      if (!exists) {
-        const frame = requestAnimationFrame(() => setActiveProject(projects[0]));
-        return () => cancelAnimationFrame(frame);
-      }
+    if (projects.length === 0) return;
+    
+    const exists = projects.some(p => p.id === activeProject?.id);
+    if (!exists && activeProject?.id) {
+      // Jika project sebelumnya tidak ada lagi di list, set ke yang pertama
+      const frame = requestAnimationFrame(() => setActiveProject(projects[0]));
+      return () => cancelAnimationFrame(frame);
     }
-  }, [projects, activeProject?.id]);
+    // Jika activeProject masih null tapi projects sudah ada, set ke yang pertama
+    if (!activeProject) {
+      const frame = requestAnimationFrame(() => setActiveProject(projects[0]));
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [projects, activeProject?.id, activeProject]);
 
   const handleProjectClick = useCallback((project: Project) => {
     setActiveProject(project)
@@ -59,9 +66,12 @@ export default function ProjectSplitView({ projects, tag }: ProjectSplitViewProp
   }
 
   return (
-    <div className="flex gap-4 min-h-[500px]">
-      {/* Left Panel - List */}
-      <div className="flex-1 overflow-y-auto pr-2 max-h-[calc(100vh-180px)]">
+    <div className="flex justify-center gap-2 h-[calc(100vh-240px)]">
+      {/* Left Panel - List - Fixed width 55% */}
+      <div 
+        className="w-[55%] overflow-y-auto h-full scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 overscroll-contain"
+        onWheel={(e) => e.stopPropagation()}
+      >
         <div className="space-y-1">
           {projects.map((project, index) => (
             <ProjectListItem
@@ -75,9 +85,9 @@ export default function ProjectSplitView({ projects, tag }: ProjectSplitViewProp
         </div>
       </div>
 
-      {/* Right Panel - Preview */}
+      {/* Right Panel - Preview - Independent Scroll */}
       {!isMobile && activeProject && (
-        <div className="w-[40%] max-w-[420px] sticky top-0">
+        <div className="w-[40%] max-w-[420px] h-full overflow-y-auto scrollbar-hide overscroll-contain">
           <ProjectPreviewPanel project={activeProject} />
         </div>
       )}
@@ -112,8 +122,8 @@ function ProjectListItem({ project, isActive, onClick, index }: {
           isActive ? 'bg-gray-100 ring-1 ring-gray-200' : 'hover:bg-gray-50'
         }`}
       >
-        {/* Thumbnail */}
-        <div className="relative w-16 h-12 rounded overflow-hidden flex-shrink-0 bg-gray-200">
+        {/* Thumbnail - 4:5 Aspect Ratio (clean, no tag) */}
+        <div className="relative w-14 aspect-[4/5] rounded overflow-hidden flex-shrink-0 bg-gray-200">
           {project.cover ? (
             <Media kind="image" src={project.cover} alt={project.title} className="w-full h-full object-cover" priority={index < 5} />
           ) : (
@@ -121,14 +131,16 @@ function ProjectListItem({ project, isActive, onClick, index }: {
               <ImageIcon className="w-4 h-4 text-gray-400" />
             </div>
           )}
-          <span className="absolute bottom-0.5 left-0.5 px-1 py-0.5 bg-black/60 rounded text-[7px] text-white uppercase">
-            {project.type}
-          </span>
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <h3 className={`text-sm truncate ${isActive ? 'font-semibold' : ''}`}>{project.title}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className={`text-sm truncate ${isActive ? 'font-semibold' : ''}`}>{project.title}</h3>
+            <span className="px-1.5 py-0.5 bg-gray-200 text-gray-600 text-[8px] font-bold rounded uppercase tracking-wide flex-shrink-0">
+              {project.type}
+            </span>
+          </div>
           <p className="text-xs text-gray-500 truncate">{project.client}</p>
           <div className="flex items-center gap-2 mt-0.5">
             {project.likes ? <span className="text-xs text-gray-600">♥ {project.likes}</span> : null}
@@ -150,19 +162,19 @@ function ProjectPreviewPanel({ project }: { project: Project }) {
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden"
       >
-        {/* Media - Max height 550px */}
-        <div className="relative max-h-[550px] bg-gray-100 flex items-center justify-center">
+        {/* Media - Max height 50vh untuk muat di viewport */}
+        <div className="relative max-h-[50vh] bg-gray-100 flex items-center justify-center">
           {isVideo ? (
             <video
               src={project.cover}
-              className="max-h-[550px] w-auto object-contain"
+              className="max-h-[50vh] w-auto object-contain"
               autoPlay muted loop playsInline controls
             />
           ) : project.cover ? (
             <img
               src={project.cover}
               alt={project.title}
-              className="max-h-[550px] w-auto object-contain"
+              className="max-h-[50vh] w-auto object-contain"
             />
           ) : (
             <div className="h-[380px] flex items-center justify-center">
@@ -190,7 +202,7 @@ function ProjectPreviewPanel({ project }: { project: Project }) {
             </div>
             <a
               href={`/projects/${project.slug}`}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-1.5 text-blue-600 text-xs font-medium hover:text-blue-700 transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />
               View Details
@@ -240,7 +252,7 @@ function MobilePreviewModal({ isOpen, onClose, project }: {
               <h2 className="text-xl font-bold mb-1">{project.title}</h2>
               <p className="text-gray-500 mb-2">{project.client}</p>
               <p className="text-gray-600 mb-4">{project.description}</p>
-              <a href={`/projects/${project.slug}`} className="flex items-center justify-center gap-2 w-full py-3 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700 transition-colors">
+              <a href={`/projects/${project.slug}`} className="flex items-center justify-center gap-2 w-full py-3 text-blue-600 font-medium hover:text-blue-700 transition-colors">
                 <Eye className="w-4 h-4" />
                 View Details
               </a>

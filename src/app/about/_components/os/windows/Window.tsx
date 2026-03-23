@@ -235,41 +235,83 @@ export default function OSWindow({
                         }
                     }}
                     initial={{
-                        scale: 0.95,
+                        scale: 0.4, // Start smaller for jelly pop
                         opacity: 0,
                         x: initialPosition.x,
                         y: initialPosition.y,
                     }}
                     animate={
                         isMinimized
-                            ? getMinimizeState()
+                            ? {
+                                ...getMinimizeState(),
+                                transition: { type: "spring", stiffness: 300, damping: 25 }
+                            }
                             : isMaximized
-                                    ? {
-                                        scale: 1,
-                                        opacity: 1,
-                                        x: 10,
-                                        y: 36,
-                                        width: "calc(100% - 20px)",
-                                        height: "calc(100% - 46px)", // Full height (covers dock) with small bottom margin
-                                        borderRadius: 12,
-                                        transition: { duration: 0.3, ease: [0.32, 0.72, 0, 1] }
-                                    }
+                                ? {
+                                    // Jelly effect for maximize
+                                    scale: [0.95, 1.03, 0.98, 1.01, 1],
+                                    opacity: 1,
+                                    x: 10,
+                                    y: 36,
+                                    width: "calc(100% - 20px)",
+                                    height: "calc(100% - 46px)",
+                                    borderRadius: 12,
+                                }
                                 : {
-                                    scale: 1,
+                                    // Jelly/Playful entry keyframes (squash & stretch)
+                                    scale: [0.4, 1.2, 0.9, 1.05, 1], // Pop -> Overshoot -> Bounce back -> Settle
                                     opacity: 1,
                                     x: initialPosition.x,
                                     y: initialPosition.y,
                                     width: dynamicSize.width || width || winWidth,
                                     height: dynamicSize.height || height || "auto",
                                     borderRadius: 10,
-                                    // Solid, Premium Spring (No wobble)
-                                    transition: isResizing ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 25, layout: { duration: 0 } }
                                 }
                     }
+                    transition={
+                        isMinimized
+                            ? { type: "spring", stiffness: 300, damping: 25 }
+                            : isMaximized
+                                ? {
+                                    // Jelly transition for maximize
+                                    scale: {
+                                        type: "keyframes",
+                                        times: [0, 0.25, 0.4, 0.6, 1],
+                                        duration: 0.4,
+                                        ease: "easeOut"
+                                    },
+                                    opacity: { duration: 0.2 },
+                                    x: { duration: 0.3, ease: "easeOut" },
+                                    y: { duration: 0.3, ease: "easeOut" },
+                                    width: { duration: 0.3, ease: "easeOut" },
+                                    height: { duration: 0.3, ease: "easeOut" },
+                                    layout: { duration: 0 }
+                                }
+                                : isResizing 
+                                    ? { duration: 0 }
+                                    : {
+                                        // Jelly transition config
+                                        scale: {
+                                            type: "keyframes",
+                                            times: [0, 0.25, 0.4, 0.6, 1],
+                                            duration: 0.5,
+                                            ease: "easeOut"
+                                        },
+                                        opacity: { duration: 0.2 },
+                                        x: { type: "spring", stiffness: 200, damping: 20 },
+                                        y: { type: "spring", stiffness: 200, damping: 20 },
+                                        width: { duration: 0 },
+                                        height: { duration: 0 },
+                                        layout: { duration: 0 }
+                                    }
+                    }
                     exit={{
-                        scale: 0.95,
-                        opacity: 0,
-                        transition: { duration: 0.15 }
+                        scale: [1, 1.1, 0.5, 0], // Stretch then collapse
+                        opacity: [1, 1, 0, 0],
+                        transition: { 
+                            duration: 0.35,
+                            ease: "easeInOut"
+                        }
                     }}
                     // Layout synchronization disabled to prevent cross-window glitching
                     layout={false} 
@@ -296,18 +338,20 @@ export default function OSWindow({
                             const focusableElements = e.currentTarget.querySelectorAll(
                                 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
                             );
-                            const firstElement = focusableElements[0] as HTMLElement;
-                            const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+                            if (focusableElements.length > 0) {
+                                const firstElement = focusableElements[0] as HTMLElement;
+                                const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
 
-                            if (e.shiftKey) { // Shift + Tab
-                                if (document.activeElement === firstElement) {
-                                    e.preventDefault();
-                                    lastElement.focus();
-                                }
-                            } else { // Tab
-                                if (document.activeElement === lastElement) {
-                                    e.preventDefault();
-                                    firstElement.focus();
+                                if (e.shiftKey) { // Shift + Tab
+                                    if (document.activeElement === firstElement) {
+                                        e.preventDefault();
+                                        lastElement.focus();
+                                    }
+                                } else { // Tab
+                                    if (document.activeElement === lastElement) {
+                                        e.preventDefault();
+                                        firstElement.focus();
+                                    }
                                 }
                             }
                         }
@@ -321,11 +365,12 @@ export default function OSWindow({
                         zIndex: zIndex,
                         top: 0,
                         left: 0,
+                        transformOrigin: "center center",
                     }}
                     data-lenis-prevent
                     className={`flex flex-col overflow-hidden border border-white/40 will-change-transform pointer-events-auto rounded-lg outline-none ${isSmallScreen
-                        ? 'bg-white/95'
-                        : 'bg-white/80 backdrop-blur-xl'
+                        ? 'bg-white'
+                        : 'bg-white'
                         }`}
                 >
                     {/* Title Bar */}
@@ -338,6 +383,7 @@ export default function OSWindow({
                     >
                         {/* Traffic Lights */}
                         <div className="flex gap-[8px] mr-3 items-center group">
+                            {/* Close Button (Red) */}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -345,35 +391,39 @@ export default function OSWindow({
                                     onClose();
                                 }}
                                 onPointerDown={(e) => e.stopPropagation()}
-                                className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
+                                className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center relative transition-all outline-none focus:outline-none focus:ring-0 active:outline-none"
                                 aria-label="Close window"
                             >
-                                <span className="w-[12px] h-[12px] rounded-full bg-[#FF5F57] border-[0.5px] border-[#D6443F] flex items-center justify-center">
-                                    <X size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
-                                </span>
+                                <div className="w-3 h-3 rounded-full bg-[#FF5F57] border border-[#E0443E] flex items-center justify-center relative transition-all hover:brightness-95 active:brightness-90">
+                                    <X size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={4} />
+                                </div>
                             </button>
+
+                            {/* Minimize Button (Yellow) */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); if (onMinimize) onMinimize(); }}
                                 onPointerDown={(e) => e.stopPropagation()}
-                                className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
+                                className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center relative transition-all outline-none focus:outline-none focus:ring-0 active:outline-none"
                                 aria-label="Minimize window"
                             >
-                                <span className="w-[12px] h-[12px] rounded-full bg-[#FEBC2E] border-[0.5px] border-[#DDA335] flex items-center justify-center">
-                                    <Minus size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={3} />
-                                </span>
+                                <div className="w-3 h-3 rounded-full bg-[#FEBC2E] border border-[#DDA335] flex items-center justify-center relative transition-all hover:brightness-95 active:brightness-90">
+                                    <Minus size={8} className="text-black/60 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={4} />
+                                </div>
                             </button>
+
+                            {/* Maximize Button (Green) */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); if (onMaximize) onMaximize(); }}
                                 onPointerDown={(e) => e.stopPropagation()}
-                                className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center group-hover:brightness-90 active:brightness-75 transition-all"
+                                className="w-6 h-6 min-w-[24px] min-h-[24px] p-0 rounded-full flex items-center justify-center relative transition-all outline-none focus:outline-none focus:ring-0 active:outline-none"
                                 aria-label="Maximize window"
                             >
-                                <span className="w-[12px] h-[12px] rounded-full bg-[#28C840] border-[0.5px] border-[#22AA32] flex items-center justify-center">
-                                    {/* Outline Square for Expand */}
+                                <div className="w-3 h-3 rounded-full bg-[#28C840] border border-[#22AA32] flex items-center justify-center relative transition-all hover:brightness-95 active:brightness-90">
                                     <span className="w-[6px] h-[6px] bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rotate-45 transform scale-[0.8] block" style={{ clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" }} />
-                                </span>
+                                </div>
                             </button>
                         </div>
+
 
                         {/* Title Indicator */}
                         <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-1.5 opacity-80 pointer-events-none w-[60%]">

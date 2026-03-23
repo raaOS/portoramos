@@ -108,7 +108,7 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
         >
             {/* Tooltip - Disabled on Mobile */}
             {!isMobile && (
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-2 py-1 bg-white/80 backdrop-blur-sm text-black text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-black/5 z-50">
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-black/5 z-50">
                     {label}
                 </div>
             )}
@@ -186,7 +186,7 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                     >
                         <m.div
                             layout // Smoothly animate container size changes
-                            className={`flex items-end bg-gradient-to-b from-white/25 to-white/10 backdrop-blur-2xl border border-white/40 rounded-[24px] ${isMobile
+                            className={`flex items-end bg-white/95 border border-white/60 rounded-[24px] ${isMobile
                                 ? 'h-[72px] overflow-x-auto scrollbar-hide gap-5 px-5 py-3'
                                 : 'h-[96px] gap-2 px-3 py-4'}`}
                             style={{

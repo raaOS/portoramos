@@ -53,7 +53,7 @@ const Header: React.FC = () => {
 
     return (
         <header 
-            className={`fixed top-0 left-0 right-0 h-8 bg-white/90 backdrop-blur-md flex items-center justify-between px-4 z-[100] text-black text-xs select-none print:hidden ${isPrintMode ? 'border-none shadow-none' : 'shadow-sm border-b border-gray-200'}`}
+            className={`fixed top-0 left-0 right-0 h-8 bg-white flex items-center justify-between px-4 z-[100] text-black text-xs select-none print:hidden ${isPrintMode ? 'border-none shadow-none' : 'shadow-sm border-b border-gray-200'}`}
             style={isPrintMode ? { border: 'none', boxShadow: 'none' } : {}}
         >
             {/* Left Side */}

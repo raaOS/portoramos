@@ -38,7 +38,7 @@ export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkel
             {/* Fake Menu Bar 
                 - Dipertahankan sangat samar hanya untuk memberikan sense of depth jika koneksi internet super lambat 
             */}
-            <div className="absolute top-0 left-0 right-0 h-9 sm:h-8 bg-white/50 backdrop-blur-sm flex items-center px-4 z-[10000]">
+            <div className="absolute top-0 left-0 right-0 h-9 sm:h-8 bg-white flex items-center px-4 z-[10000]">
                 <div className="w-16 h-3 bg-gray-200/50 rounded" />
             </div>
 
@@ -47,7 +47,7 @@ export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkel
             */}
 
             {/* Fake Dock */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-20 w-[90%] max-w-[450px] bg-white/30 backdrop-blur-md rounded-[24px] border border-gray-200/20" />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-20 w-[90%] max-w-[450px] bg-white/95 rounded-[24px] border border-gray-200/20" />
 
         </div>
     );
