@@ -7,7 +7,8 @@
  * 
  * Bandwidth usage: ~50 bytes/detik vs ~50KB/detik (full listener)
  * 
- * MEDIUM FIX: Fixed listener leak dan race condition pada rapid mount/unmount
+ * RACE CONDITION FIX: Strengthened cleanup logic, AbortController pattern,
+ * mounted ref checks before all state updates, and proper timeout clearing
  */
 
 import { useEffect, useRef, useCallback } from 'react';
@@ -23,19 +24,32 @@ let onValueFn: OnValueFn | null = null;
 let refFn: RefFn | null = null;
 let offFn: OffFn | null = null;
 
-// MEDIUM FIX: Lock untuk mencegah multiple parallel initFirebaseClient calls
+// Lock untuk mencegah multiple parallel initFirebaseClient calls
 let initPromise: Promise<boolean> | null = null;
 
+// AbortController untuk cancel ongoing initialization
+let initAbortController: AbortController | null = null;
+
 // Lazy load Firebase client SDK (hanya browser)
-async function initFirebaseClient(): Promise<boolean> {
+async function initFirebaseClient(signal?: AbortSignal): Promise<boolean> {
     if (typeof window === 'undefined') return false;
     if (db) return true;
     
-    // MEDIUM FIX: Return existing promise jika sedang inisialisasi
-    if (initPromise) return initPromise;
+    // Return existing promise jika sedang inisialisasi dan tidak di-cancel
+    if (initPromise && !initAbortController?.signal.aborted) {
+        return initPromise;
+    }
+    
+    // Create new AbortController untuk init ini
+    initAbortController = new AbortController();
     
     initPromise = (async () => {
         try {
+            // Check abort sebelum mulai
+            if (signal?.aborted || initAbortController?.signal.aborted) {
+                return false;
+            }
+            
             // Cek environment variable tersedia
             const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
             const databaseURL = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL;
@@ -45,20 +59,45 @@ async function initFirebaseClient(): Promise<boolean> {
                 return false;
             }
             
+            // Check abort sebelum dynamic import
+            if (signal?.aborted || initAbortController?.signal.aborted) {
+                return false;
+            }
+            
             const firebaseDatabase = await import('firebase/database');
+            
+            // Check abort setelah import
+            if (signal?.aborted || initAbortController?.signal.aborted) {
+                return false;
+            }
+            
             const firebaseApp = await import('firebase/app');
+            
+            // Check abort setelah import
+            if (signal?.aborted || initAbortController?.signal.aborted) {
+                return false;
+            }
             
             // Cek kalau sudah diinisialisasi
             let app;
             try {
                 app = firebaseApp.getApp();
             } catch {
+                // Check abort sebelum initialize
+                if (signal?.aborted || initAbortController?.signal.aborted) {
+                    return false;
+                }
                 // Firebase belum init, init dengan config dari env
                 const firebaseConfig = {
                     apiKey,
                     databaseURL,
                 };
                 app = firebaseApp.initializeApp(firebaseConfig);
+            }
+            
+            // Check abort sebelum getDatabase
+            if (signal?.aborted || initAbortController?.signal.aborted) {
+                return false;
             }
             
             db = firebaseDatabase.getDatabase(app);
@@ -68,11 +107,12 @@ async function initFirebaseClient(): Promise<boolean> {
             
             return true;
         } catch (error) {
+            // Jangan log error jika aborted
+            if (signal?.aborted || initAbortController?.signal.aborted) {
+                return false;
+            }
             console.error('[RealtimeSync] Failed to init Firebase client:', error);
             return false;
-        } finally {
-            // Clear lock setelah selesai (success atau error)
-            setTimeout(() => { initPromise = null; }, 0);
         }
     })();
     
@@ -91,7 +131,11 @@ type Snapshot = { val: () => unknown };
  * Hook untuk listen lastUpdated timestamp dari Firebase.
  * Trigger onUpdate hanya kalau timestamp berubah (ada CRUD).
  * 
- * MEDIUM FIX: Fixed listener leak dan race condition pada rapid mount/unmount
+ * RACE CONDITION FIX: 
+ * - Strengthened cleanup dengan mountedRef check
+ * - AbortController untuk cancel async operations
+ * - setupTimeoutRef selalu di-clear
+ * - isActiveRef check setelah EVERY await
  * 
  * @example
  * useRealtimeSync({
@@ -102,18 +146,24 @@ type Snapshot = { val: () => unknown };
 export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: UseRealtimeSyncOptions) {
     const lastTimestampRef = useRef<string | null>(null);
     const isInitializedRef = useRef(false);
-    // MEDIUM FIX: Refs untuk reliable cleanup
     const unsubscribeRef = useRef<(() => void) | null>(null);
     const isActiveRef = useRef(true);
+    const mountedRef = useRef(true);
     const setupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
+    const listenerRef = useRef<any>(null);
+    const lastUpdatedRefPath = useRef<any>(null);
 
     const handleTimestampChange = useCallback((snapshot: Snapshot) => {
+        // GUARD: Check mounted dan active
+        if (!mountedRef.current || !isActiveRef.current) return;
+        
         const newTimestamp = snapshot.val() as string | null;
         
         if (!newTimestamp) return;
         
-        // MEDIUM FIX: Check isActiveRef untuk mencegah update setelah unmount
-        if (!isActiveRef.current) return;
+        // GUARD: Check lagi setelah async operation (val() bisa jadi async di beberapa case)
+        if (!mountedRef.current || !isActiveRef.current) return;
         
         // Skip kalau pertama kali load (hanya track perubahan)
         if (!isInitializedRef.current) {
@@ -125,74 +175,146 @@ export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: Use
         // Trigger update hanya kalau timestamp berbeda
         if (newTimestamp !== lastTimestampRef.current) {
             lastTimestampRef.current = newTimestamp;
-            onUpdate();
+            // GUARD: Final check sebelum callback
+            if (mountedRef.current && isActiveRef.current) {
+                onUpdate();
+            }
         }
     }, [onUpdate]);
 
     useEffect(() => {
         if (!enabled || typeof window === 'undefined') return;
 
-        // Reset active flag
+        // Reset flags
         isActiveRef.current = true;
+        mountedRef.current = true;
+        
+        // Create AbortController untuk operation ini
+        abortControllerRef.current = new AbortController();
+
+        const cleanupListener = () => {
+            // Unsubscribe listener dengan Firebase off()
+            if (offFn && lastUpdatedRefPath.current && listenerRef.current) {
+                try {
+                    offFn(lastUpdatedRefPath.current, 'value', listenerRef.current);
+                } catch (e) {
+                    // Ignore cleanup errors
+                }
+            }
+            
+            // Fallback: gunakan unsubscribeRef jika tersedia
+            if (unsubscribeRef.current) {
+                try {
+                    unsubscribeRef.current();
+                } catch (e) {
+                    // Ignore cleanup errors
+                }
+                unsubscribeRef.current = null;
+            }
+            
+            // Clear refs
+            listenerRef.current = null;
+            lastUpdatedRefPath.current = null;
+        };
 
         const setupListener = async () => {
-            const initialized = await initFirebaseClient();
+            // GUARD: Check mounted dan active sebelum init
+            if (!mountedRef.current || !isActiveRef.current) return;
             
-            // MEDIUM FIX: Check isActiveRef setelah async operation
-            if (!isActiveRef.current) return;
+            const initialized = await initFirebaseClient(abortControllerRef.current?.signal);
+            
+            // GUARD: Check isActiveRef dan mountedRef setelah async operation
+            if (!mountedRef.current || !isActiveRef.current) {
+                cleanupListener();
+                return;
+            }
+            
+            // GUARD: Check abort
+            if (abortControllerRef.current?.signal.aborted) {
+                cleanupListener();
+                return;
+            }
             
             // Kalau Firebase tidak tersedia, panggil callback
             if (!initialized) {
                 console.warn('[RealtimeSync] Firebase not available, realtime sync disabled');
-                onUnavailable?.();
+                if (mountedRef.current && isActiveRef.current) {
+                    onUnavailable?.();
+                }
+                return;
+            }
+
+            // GUARD: Check lagi sebelum access Firebase objects
+            if (!mountedRef.current || !isActiveRef.current) {
+                cleanupListener();
                 return;
             }
 
             if (!db || !onValueFn || !refFn || !offFn) {
                 console.warn('[RealtimeSync] Firebase not available');
-                onUnavailable?.();
+                if (mountedRef.current && isActiveRef.current) {
+                    onUnavailable?.();
+                }
                 return;
             }
 
-            // Listen hanya lastUpdated (1 field kecil!)
-            const lastUpdatedRef = refFn(db, 'lastUpdated');
-            
-            onValueFn(lastUpdatedRef, handleTimestampChange);
+            // GUARD: Final check sebelum setup listener
+            if (!mountedRef.current || !isActiveRef.current) {
+                cleanupListener();
+                return;
+            }
 
-            // Simpan unsubscribe function ke ref
-            unsubscribeRef.current = () => {
-                if (offFn && lastUpdatedRef) {
-                    try {
-                        offFn(lastUpdatedRef, 'value', handleTimestampChange);
-                    } catch (e) {
-                        // Ignore cleanup errors
-                    }
-                }
-            };
+            try {
+                // Listen hanya lastUpdated (1 field kecil!)
+                lastUpdatedRefPath.current = refFn(db, 'lastUpdated');
+                
+                // Simpan reference ke listener untuk cleanup
+                listenerRef.current = handleTimestampChange;
+                
+                onValueFn(lastUpdatedRefPath.current, handleTimestampChange);
+
+                // Simpan unsubscribe function ke ref (fallback)
+                unsubscribeRef.current = () => {
+                    cleanupListener();
+                };
+            } catch (error) {
+                // Ignore errors jika unmounted
+                if (!mountedRef.current || !isActiveRef.current) return;
+                console.error('[RealtimeSync] Error setting up listener:', error);
+            }
         };
 
-        // MEDIUM FIX: Delay setup untuk mencegah rapid mount/unmount issues
+        // Delay setup untuk mencegah rapid mount/unmount issues
         setupTimeoutRef.current = setTimeout(() => {
-            if (isActiveRef.current) {
+            // GUARD: Check sebelum setup
+            if (mountedRef.current && isActiveRef.current) {
                 setupListener();
             }
         }, 100);
 
         return () => {
-            // Mark as inactive immediately
+            // Mark as inactive and unmounted immediately
             isActiveRef.current = false;
+            mountedRef.current = false;
             
-            // Clear setup timeout
+            // Abort ongoing operations
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+                abortControllerRef.current = null;
+            }
+            
+            // ALWAYS clear setup timeout - GUARANTEED
             if (setupTimeoutRef.current) {
                 clearTimeout(setupTimeoutRef.current);
                 setupTimeoutRef.current = null;
             }
             
-            // Unsubscribe listener
-            if (unsubscribeRef.current) {
-                unsubscribeRef.current();
-                unsubscribeRef.current = null;
-            }
+            // Cleanup listener
+            cleanupListener();
+            
+            // Reset init refs
+            isInitializedRef.current = false;
+            lastTimestampRef.current = null;
         };
     }, [enabled, handleTimestampChange, onUnavailable]);
 }

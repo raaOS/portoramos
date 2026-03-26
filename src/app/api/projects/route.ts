@@ -14,6 +14,11 @@ export const dynamic = 'force-dynamic';
 // Convert storage.googleapis.com URLs to firebasestorage.googleapis.com format
 function convertGcsUrls(url?: string): string | undefined {
   if (!url) return url;
+  // Early return if URL is already in firebasestorage.googleapis.com format
+  if (url.includes('firebasestorage.googleapis.com')) {
+    return url;
+  }
+  // Only convert storage.googleapis.com URLs
   const m = url.match(/^https?:\/\/storage\.googleapis\.com\/([^/]+)\/(.+)$/);
   if (m) {
     const bucket = m[1];

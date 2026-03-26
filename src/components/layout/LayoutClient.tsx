@@ -24,7 +24,6 @@ export default function LayoutClient({
     const pathname = usePathname();
     const isAdminRequest = pathname?.startsWith('/admin');
     const isOsMode = pathname === '/' || pathname?.startsWith('/about-test') || pathname?.startsWith('/about');
-    const isFullscreen = pathname === '/test-canvas';
     const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
 
     const [isMounted, setIsMounted] = React.useState(false);
@@ -34,11 +33,11 @@ export default function LayoutClient({
     }, []);
 
     // We want the Dock on ALL pages except Admin, OS Desktop, and fullscreen pages
-    const showGlobalDock = !isAdminRequest && !isOsMode && !isFullscreen;
+    const showGlobalDock = !isAdminRequest && !isOsMode;
 
-    const showHeader = !isAdminRequest && !isOsMode && !isFullscreen;
+    const showHeader = !isAdminRequest && !isOsMode;
 
-    if (isAdminRequest || isOsMode || isFullscreen) {
+    if (isAdminRequest || isOsMode) {
         return (
             <>
                 {children}

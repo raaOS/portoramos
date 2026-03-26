@@ -195,11 +195,16 @@ function AdminLayoutContent({
     return pathname?.startsWith(href);
   };
 
+  // Icon wrapper component to avoid type issues with Lucide icons
+   
+  const NavIcon = ({ icon: IconComponent, className }: { icon: any; className?: string }) => {
+    return <IconComponent className={className || ''} aria-hidden="true" />;
+  };
+
   const renderNavItem = (item: NavItem, depth = 0) => {
     const active = isActive(item.href);
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedMenus[item.href];
-    const Icon: any = item.icon;
 
     return (
       <div key={item.href} className="mb-0.5">
@@ -217,7 +222,10 @@ function AdminLayoutContent({
           }}
         >
           <div className="flex items-center gap-3">
-            <Icon className={`h-4.5 w-4.5 ${active ? item.color : 'text-gray-400 group-hover:text-gray-600'}`} aria-hidden />
+            <NavIcon 
+              icon={item.icon} 
+              className={`h-4.5 w-4.5 ${active ? item.color : 'text-gray-400 group-hover:text-gray-600'}`} 
+            />
             <span>{item.label}</span>
           </div>
           {hasChildren && (

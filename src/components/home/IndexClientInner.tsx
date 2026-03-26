@@ -9,7 +9,7 @@ import ProjectSplitView from '@/components/projects/ProjectSplitView'
 import MasonryGrid from '@/components/layout/MasonryGrid'
 import dynamic from 'next/dynamic'
 
-const InfiniteCanvas3D = dynamic(() => import('@/components/projects/InfiniteCanvas3D'), { ssr: false })
+const InfiniteCanvasView = dynamic(() => import('@/components/canvas/InfiniteCanvasView'), { ssr: false })
 
 type Props = {
   projects: Project[]
@@ -17,7 +17,7 @@ type Props = {
   searchQuery: string
   windowWidth?: number
   isLoading?: boolean // Prop baru dari parent
-  view?: 'grid' | 'list' | 'canvas'
+  view?: 'grid' | 'list' | '3d'
 }
 
 // Minimal typing for Fuse.js since it's dynamically imported
@@ -207,7 +207,7 @@ export default function IndexClientInner({
   const showLoading = isLoadingMore || isParentLoading;
 
   return (
-    <section className="pt-4 pb-8 px-4" data-projects-grid>
+    <section className={`${view === '3d' ? '' : 'pt-4 px-4'} pb-8`} data-projects-grid>
       {/* Hidden H1 for SEO */}
       <h1 className="sr-only">Portfolio - Creative Works & Projects</h1>
 
@@ -222,10 +222,12 @@ export default function IndexClientInner({
 
       {/* Projects Grid */}
       <LazyMotion features={domAnimation}>
-        <div className={view === 'grid' ? 'min-h-screen' : ''}>
+        <div className={view === '3d' ? 'fixed inset-0 z-0 overflow-hidden' : 'min-h-screen'}>
           {displayedProjects.length > 0 ? (
             <>
-              {view === 'grid' ? (
+              {view === '3d' ? (
+                <InfiniteCanvasView projects={filteredProjects} />
+              ) : view === 'grid' ? (
                 <MasonryGrid width={windowWidth}>
                   {displayedProjects.map((project, index) => {
                     // Determine priority based on index (first 2 items get priority for faster LCP)
@@ -261,16 +263,12 @@ export default function IndexClientInner({
                     )
                   })}
                 </MasonryGrid>
-              ) : view === 'list' ? (
-                <ProjectSplitView 
+              ) : (
+                <ProjectSplitView
                   projects={filteredProjects}
                   tag={tag}
                 />
-              ) : view === 'canvas' ? (
-                <div className="fixed inset-0 z-[40] bg-[#f4f4f5] animate-in fade-in duration-500">
-                  <InfiniteCanvas3D projects={displayedProjects} />
-                </div>
-              ) : null}
+              )}
 
               {/* Infinite Scroll Sentinel - Only for grid */}
               {view === 'grid' && (

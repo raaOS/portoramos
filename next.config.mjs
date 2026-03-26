@@ -15,6 +15,8 @@ const nextConfig = {
   reactCompiler: true,
   reactStrictMode: false,
   compress: true,
+  // ... (rest of the images config)
+
   // Optimize images for maximum performance
   images: {
     remotePatterns: [
@@ -45,7 +47,7 @@ const nextConfig = {
     dangerouslyAllowSVG: false,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  // Transpile packages (empty - Three.js removed as unused)
+  // Transpile packages that need ESM handling
   transpilePackages: [],
 
   // Optimize static assets
@@ -60,6 +62,9 @@ const nextConfig = {
     // Enable CSS optimization for tree-shaking and inlining critical CSS
     optimizeCss: true,
     // Optimize package imports to reduce bundle size
+    // organize imports manually for now to avoid Turbopack conflicts
+    // ... rest of experimental
+
     optimizePackageImports: [
       'framer-motion',
       'lucide-react',
@@ -77,11 +82,12 @@ const nextConfig = {
     scrollRestoration: true,
   },
 
+  // Turbopack configuration (Next.js 16 Stable Bundler)
+  turbopack: {},
+
   // Externalize heavy server dependencies to fix Vercel lambda size limits
   serverExternalPackages: ['firebase-admin'],
 
-  // Turbopack configuration (Next.js 16 default bundler)
-  turbopack: {},
   // Webpack optimization for performance (fallback when using --webpack flag)
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
@@ -219,16 +225,18 @@ const nextConfig = {
           }
         ]
       },
-      // Static assets caching
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
-          }
-        ]
-      },
+      // Static assets caching (production only - skip in dev to avoid Next.js warning)
+      ...(process.env.NODE_ENV === 'production' ? [
+        {
+          source: '/_next/static/(.*)',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable'
+            }
+          ]
+        }
+      ] : []),
       {
         source: '/assets/(.*)',
         headers: [

@@ -159,6 +159,80 @@ async function checkVulnerabilities(): Promise<AuditPhase> {
     return { name: "Vulnerabilities", status: auditLog[auditLog.length - 1].status, message: auditLog[auditLog.length - 1].message, duration: performance.now() - startTime };
 }
 
+async function checkTrivySecurity(): Promise<AuditPhase> {
+    const startTime = performance.now();
+    logPhase("🛡️", "Deep Security Scan (Trivy)", "");
+    
+    if (isOfflineMode) {
+        log(yellow("SKIP ⊘"));
+        recordPhase("Trivy", "SKIP", "Offline mode", performance.now() - startTime);
+        return { name: "Trivy", status: "SKIP", message: "Offline mode", duration: 0 };
+    }
+
+    // Check if trivy is installed
+    const { success: trivyExists } = safeExec('trivy --version');
+    if (!trivyExists) {
+        log(yellow("WARN ⚠️"));
+        recordPhase("Trivy", "WARN", "Trivy not found", performance.now() - startTime, 
+            ['Deep security scan skipped'], 
+            ['Install Trivy: https://aquasecurity.github.io/trivy/latest/getting-started/installation/', 'Or use: brew install trivy / choco install trivy']);
+        return { name: "Trivy", status: "WARN", message: "Trivy not installed", duration: performance.now() - startTime };
+    }
+
+    // Run trivy scan
+    const { success, output, error } = safeExec('trivy fs . --severity CRITICAL,HIGH --format json --quiet');
+    
+    if (!success) {
+        log(red("FAIL ❌"));
+        recordPhase("Trivy", "FAIL", "Trivy scan failed to execute", performance.now() - startTime, [error.substring(0, 100)]);
+    } else {
+        try {
+            const report = JSON.parse(output);
+            let totalHigh = 0;
+            let totalCritical = 0;
+            
+            if (report.Results) {
+                for (const result of report.Results) {
+                    if (result.Vulnerabilities) {
+                        for (const vuln of result.Vulnerabilities) {
+                            if (vuln.Severity === 'CRITICAL') totalCritical++;
+                            if (vuln.Severity === 'HIGH') totalHigh++;
+                        }
+                    }
+                    if (result.Misconfigurations) {
+                        for (const misconf of result.Misconfigurations) {
+                            if (misconf.Severity === 'CRITICAL') totalCritical++;
+                            if (misconf.Severity === 'HIGH') totalHigh++;
+                        }
+                    }
+                    if (result.Secrets) {
+                        for (const secret of result.Secrets) {
+                            if (secret.Severity === 'CRITICAL') totalCritical++;
+                            if (secret.Severity === 'HIGH') totalHigh++;
+                        }
+                    }
+                }
+            }
+
+            if (totalCritical > 0) {
+                log(red("FAIL ❌"));
+                recordPhase("Trivy", "FAIL", `${totalCritical} CRITICAL security issues found`, performance.now() - startTime, [`Critical: ${totalCritical}`, `High: ${totalHigh}`], ['Run: trivy fs . to see details']);
+            } else if (totalHigh > 0) {
+                log(yellow("WARN ⚠️"));
+                recordPhase("Trivy", "WARN", `${totalHigh} HIGH security issues found`, performance.now() - startTime, [`High: ${totalHigh}`], ['Run: trivy fs . to see details']);
+            } else {
+                log(green("PASS ✅"));
+                recordPhase("Trivy", "PASS", "No High/Critical issues found", performance.now() - startTime);
+            }
+        } catch (e) {
+            log(yellow("WARN ⚠️"));
+            recordPhase("Trivy", "WARN", "Could not parse Trivy output", performance.now() - startTime);
+        }
+    }
+    
+    return { name: "Trivy", status: auditLog[auditLog.length - 1].status, message: auditLog[auditLog.length - 1].message, duration: performance.now() - startTime };
+}
+
 async function checkEnvironmentVariables(): Promise<AuditPhase> {
     const startTime = performance.now();
     logPhase("🔑", "Environment Variables", "");
@@ -1214,6 +1288,7 @@ async function runAudit() {
     // STANDARD CHECKS (8)
     await checkTypeScript();
     await checkVulnerabilities();
+    await checkTrivySecurity();
     await checkEnvironmentVariables();
     await checkESLint();
     await checkDatabase();
@@ -1262,12 +1337,12 @@ async function runAudit() {
             timestamp: new Date().toISOString(),
             version: "6.0+",
             phases: {
-                core: 8,
+                core: 9,
                 phase1: 5,
                 phase2: 4,
                 phase3: skipPhase3 ? 0 : 4,
                 deepAnalysis: 12,
-                total: skipPhase3 ? 29 : 33
+                total: skipPhase3 ? 30 : 34
             },
             results: auditLog.map(p => ({ name: p.name, status: p.status, message: p.message, duration: p.duration, details: p.details, fixes: p.fixes })),
             summary: {
@@ -1282,14 +1357,14 @@ async function runAudit() {
         process.exit(result.exit_code);
     } else {
         console.log("\n" + "=".repeat(100));
-        console.log(bold("📋 AUDIT SUMMARY (8 Core + 5 Phase1 + 4 Phase2 + 4 Phase3 + 12 Deep Analysis)"));
+        console.log(bold("📋 AUDIT SUMMARY (9 Core + 5 Phase1 + 4 Phase2 + 4 Phase3 + 12 Deep Analysis)"));
         console.log("=".repeat(100) + "\n");
 
         const passed = auditLog.filter(p => p.status === 'PASS').length;
         const warned = auditLog.filter(p => p.status === 'WARN').length;
         const failed = auditLog.filter(p => p.status === 'FAIL').length;
         const skipped = auditLog.filter(p => p.status === 'SKIP').length;
-        const totalChecks = skipPhase3 ? 29 : 33;
+        const totalChecks = skipPhase3 ? 30 : 34;
 
         console.log(`${green('✅ PASSED:')} ${passed}/${totalChecks}`);
         if (warned > 0) console.log(`${yellow('⚠️  WARNED:')} ${warned}`);
@@ -1330,7 +1405,7 @@ async function runAudit() {
         console.log(dim(`📄 Detailed report: .audit-reports/${path.basename(reportPath)}\n`));
 
         console.log(dim(`Checks Include:`));
-        console.log(dim(`  • 8 Core checks (TypeScript, Security, Environment, etc)`));
+        console.log(dim(`  • 9 Core checks (TypeScript, Security, Trivy, Environment, etc)`));
         console.log(dim(`  • 5 Phase 1 checks (Git, files, configs)`));
         console.log(dim(`  • 4 Phase 2 checks (Images, dependencies, connectivity)`));
         console.log(dim(`  • 4 Phase 3 checks (Lighthouse, accessibility, database, API)`));

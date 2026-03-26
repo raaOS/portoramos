@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ChevronRight, Monitor, Zap } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 interface SystemNavFrameProps {
     children: React.ReactNode;
@@ -20,9 +20,12 @@ export default function SystemNavFrame({ children, title: _title, hideFooter }: 
         setIsPrintMode(window.location.search.includes('print=true'));
     }, []);
 
+    const searchParams = useSearchParams();
+    const view = searchParams?.get('view');
+    const is3D = view === '3d';
     const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
     const isProjects = pathname?.startsWith('/projects');
-    const effectiveHideFooter = hideFooter || isContact;
+    const effectiveHideFooter = hideFooter || isContact || is3D;
     const showSystemHeader = !isProjects && !isPrintMode;
 
     // Generate Breadcrumbs from pathname

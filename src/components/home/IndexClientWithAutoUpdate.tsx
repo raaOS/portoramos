@@ -23,11 +23,11 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
   const context = useLastUpdated();
   const contextLastUpdated = context?.lastUpdated;
   // Use useMemo to avoid recreating function on every render
-  const setLastUpdated = useMemo(() => context?.setLastUpdated || (() => {}), [context?.setLastUpdated]);
+  const setLastUpdated = useMemo(() => context?.setLastUpdated || (() => { }), [context?.setLastUpdated]);
   const searchParams = useSearchParams();
   const tag = searchParams?.get('tag') || '';
   const searchQuery = searchParams?.get('q') || '';
-  const view = (searchParams?.get('view') as 'grid' | 'list') || 'grid';
+  const view = (searchParams?.get('view') as 'grid' | 'list' | '3d') || 'grid';
 
   // BUG FIX #4: Sync ref with context value on mount to prevent unnecessary updates
   const prevLastUpdated = useRef<string>(
@@ -50,17 +50,17 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
 
   // BUG FIX #5: Valid timestamp untuk initialData
   const initialData = serverProjects.length > 0
-    ? { 
-        projects: serverProjects, 
-        lastUpdated: new Date().toISOString() // Gunakan timestamp sekarang, bukan string kosong
-      }
+    ? {
+      projects: serverProjects,
+      lastUpdated: new Date().toISOString() // Gunakan timestamp sekarang, bukan string kosong
+    }
     : undefined;
 
-  const { 
-    data, 
-    isError, 
+  const {
+    data,
+    isError,
     error,
-    isLoading 
+    isLoading
   } = useQuery({
     queryKey: ['projects', 'published'],
     queryFn: fetchProjects,
@@ -82,7 +82,7 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
         console.warn('[IndexClientWithAutoUpdate] Invalid date received:', lastUpdatedStr);
         return;
       }
-      
+
       // Hanya update kalau benar-benar berbeda dari ref
       if (lastUpdatedStr !== prevLastUpdated.current) {
         prevLastUpdated.current = lastUpdatedStr;
@@ -106,12 +106,12 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
           Gagal memuat data terbaru. Menampilkan data cache.
         </div>
       )}
-      
-      <IndexClientInner 
-        projects={projects} 
-        tag={tag} 
-        searchQuery={searchQuery} 
-        windowWidth={windowWidth} 
+
+      <IndexClientInner
+        projects={projects}
+        tag={tag}
+        searchQuery={searchQuery}
+        windowWidth={windowWidth}
         isLoading={isLoading}
         view={view}
       />

@@ -22,42 +22,20 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
     const [isPending, startTransition] = useTransition();
     const [isMounted, setIsMounted] = useState(false);
 
-    // Initialize searchQuery dari searchParams untuk menghindari setState dalam useEffect
-    const [searchQuery, setSearchQuery] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            return params.get('q') || '';
-        }
-        return '';
-    });
+    const [searchQuery, setSearchQuery] = useState('');
     const currentView = searchParams?.get('view') || 'grid';
     const currentTag = searchParams?.get('tag') || '';
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef<HTMLDivElement>(null);
 
-    // Ref untuk tracking searchQuery terbaru tanpa trigger re-render
-    const searchQueryRef = useRef(searchQuery);
-    useEffect(() => {
-        searchQueryRef.current = searchQuery;
-    }, [searchQuery]);
-
-    // Sync searchQuery dengan URL changes (tanpa setState langsung dalam effect)
     useEffect(() => {
         const query = searchParams?.get('q') || '';
-        if (query !== searchQueryRef.current) {
-            // Update via requestAnimationFrame untuk menghindari cascading renders
-            const frame = requestAnimationFrame(() => {
-                setSearchQuery(query);
-            });
-            return () => cancelAnimationFrame(frame);
-        }
-    }, [searchParams]);
-
-    // Separate effect untuk mounted state
-    useEffect(() => {
-        const frame = requestAnimationFrame(() => setIsMounted(true));
+        const frame = requestAnimationFrame(() => {
+            setSearchQuery(query);
+            setIsMounted(true);
+        });
         return () => cancelAnimationFrame(frame);
-    }, []);
+    }, [searchParams]);
 
     // Close filter when clicking outside
     useEffect(() => {
@@ -91,7 +69,7 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
         return () => clearTimeout(timer);
     }, [searchQuery, router, searchParams]);
 
-    const handleViewChange = (view: 'grid' | 'list' | 'canvas') => {
+    const handleViewChange = (view: 'grid' | 'list' | '3d') => {
         if (view === currentView) return;
         const params = new URLSearchParams(searchParams?.toString());
         params.set('view', view);
@@ -154,27 +132,28 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
                     <div className="flex items-center gap-1" aria-hidden="true">
                         <div className="p-1.5 w-7 h-7" />
                         <div className="p-1.5 w-7 h-7" />
+                        <div className="p-1.5 w-7 h-7" />
                     </div>
                 ) : (
                     <div className="flex items-center gap-1">
                         <button 
                             onClick={() => handleViewChange('grid')}
-                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'grid' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'grid' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             title="Tampilan Grid"
                         >
                             <Grid size={16} />
                         </button>
                         <button 
                             onClick={() => handleViewChange('list')}
-                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'list' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'list' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             title="Tampilan List"
                         >
                             <List size={16} />
                         </button>
                         <button 
-                            onClick={() => handleViewChange('canvas')}
-                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'canvas' ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:text-purple-500 hover:bg-purple-50/50'}`}
-                            title="Tampilan 3D Canvas"
+                            onClick={() => handleViewChange('3d')}
+                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === '3d' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                            title="Tampilan 3D"
                         >
                             <Box size={16} />
                         </button>

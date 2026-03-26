@@ -12,7 +12,18 @@ import EmojiPicker from '@/components/chat/EmojiPicker';
 import { parseEmojiText } from '@/components/chat/AnimatedEmoji';
 
 // Helper for fetching
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'Network response was not ok');
+    }
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+        return res.json();
+    }
+    throw new Error('Response is not JSON');
+};
 
 interface ChatMessage {
     id: string;

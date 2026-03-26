@@ -1,7 +1,7 @@
 'use client'
 
 import type { Project } from '@/types/projects'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
 import { Heart, Eye, X, Maximize2, Film, Image as ImageIcon } from 'lucide-react'
 import Media from '@/components/shared/Media'
@@ -15,51 +15,99 @@ export default function ProjectSplitView({ projects, tag }: ProjectSplitViewProp
   const [activeProject, setActiveProject] = useState<Project | null>(projects[0] || null)
   const [isMobilePreviewOpen, setIsMobilePreviewOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const projectsRef = useRef(projects)
+  const activeProjectRef = useRef(activeProject)
+
+  // Keep refs in sync with latest values
+  useEffect(() => {
+    projectsRef.current = projects
+  }, [projects])
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
+    activeProjectRef.current = activeProject
+  }, [activeProject])
+
+  // Resize handler with debounce (100ms)
+  useEffect(() => {
+    const checkMobile = () => {
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
+      resizeTimeoutRef.current = setTimeout(() => {
+        setIsMobile(window.innerWidth < 1024)
+      }, 100)
+    }
+    
     checkMobile()
     window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    return () => {
+      window.removeEventListener('resize', checkMobile)
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
+    }
   }, [])
 
   // Update activeProject ketika projects berubah (dengan proper guard)
-  useEffect(() => {
+  // Menggunakan layout effect untuk mencegah flash dan menghindari setState dalam effect biasa
+  const syncActiveProject = useCallback(() => {
     if (projects.length === 0) return;
     
-    const exists = projects.some(p => p.id === activeProject?.id);
-    if (!exists && activeProject?.id) {
+    // Check if activeProject still exists in projects array
+    const exists = projects.some(p => p.id === activeProjectRef.current?.id);
+    if (!exists && activeProjectRef.current?.id) {
       // Jika project sebelumnya tidak ada lagi di list, set ke yang pertama
-      const frame = requestAnimationFrame(() => setActiveProject(projects[0]));
-      return () => cancelAnimationFrame(frame);
+      setActiveProject(projects[0]);
     }
     // Jika activeProject masih null tapi projects sudah ada, set ke yang pertama
-    if (!activeProject) {
-      const frame = requestAnimationFrame(() => setActiveProject(projects[0]));
-      return () => cancelAnimationFrame(frame);
+    if (!activeProjectRef.current) {
+      setActiveProject(projects[0]);
     }
-  }, [projects, activeProject?.id, activeProject]);
+  }, [projects]);
+
+   
+  useEffect(() => {
+    // Wrap dalam rAF untuk menghindari cascading renders
+    const frame = requestAnimationFrame(syncActiveProject);
+    return () => cancelAnimationFrame(frame);
+  }, [syncActiveProject]);
 
   const handleProjectClick = useCallback((project: Project) => {
     setActiveProject(project)
     if (isMobile) setIsMobilePreviewOpen(true)
   }, [isMobile])
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!activeProject) return
-      const currentIndex = projects.findIndex(p => p.id === activeProject.id)
-      if (e.key === 'ArrowDown' && currentIndex < projects.length - 1) {
-        e.preventDefault()
-        setActiveProject(projects[currentIndex + 1])
-      } else if (e.key === 'ArrowUp' && currentIndex > 0) {
-        e.preventDefault()
-        setActiveProject(projects[currentIndex - 1])
-      }
+  // Keyboard handler with useCallback to prevent recreating function
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    const currentActiveProject = activeProjectRef.current
+    const currentProjects = projectsRef.current
+    
+    if (!currentActiveProject) return
+    
+    const currentIndex = currentProjects.findIndex(p => p.id === currentActiveProject.id)
+    
+    // Bounds checking: guard against array changes
+    if (currentIndex === -1) return
+    
+    // Additional check: ensure activeProject still exists in projects array
+    const stillExists = currentProjects.some(p => p.id === currentActiveProject.id)
+    if (!stillExists) return
+    
+    if (e.key === 'ArrowDown' && currentIndex < currentProjects.length - 1) {
+      e.preventDefault()
+      setActiveProject(currentProjects[currentIndex + 1])
+    } else if (e.key === 'ArrowUp' && currentIndex > 0) {
+      e.preventDefault()
+      setActiveProject(currentProjects[currentIndex - 1])
     }
+  }, [])
+
+  // Fixed dependency array for keyboard useEffect
+  useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activeProject, projects])
+  }, [handleKeyDown])
 
   if (projects.length === 0) {
     return <div className="p-12 text-center"><p className="text-gray-500">No projects found</p></div>

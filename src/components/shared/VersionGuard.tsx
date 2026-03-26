@@ -43,6 +43,10 @@ export default function VersionGuard() {
                 toastIdRef.current = id;
             }
         } catch (error) {
+            // Silently ignore network errors (e.g. server restarting) to prevent console spam
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                return;
+            }
             console.error('[VersionGuard] Failed to check version:', error);
         } finally {
             isCheckingRef.current = false;
