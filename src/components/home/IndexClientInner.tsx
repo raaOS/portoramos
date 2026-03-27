@@ -1,15 +1,14 @@
 'use client'
 
 import type { Project } from '@/types/projects'
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useRef, memo } from 'react'
 import { LazyMotion, domAnimation, m } from 'framer-motion'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
-import ProjectCardList from '@/components/projects/ProjectCardList'
 import ProjectSplitView from '@/components/projects/ProjectSplitView'
 import MasonryGrid from '@/components/layout/MasonryGrid'
 import dynamic from 'next/dynamic'
 
-const InfiniteCanvasView = dynamic(() => import('@/components/canvas/InfiniteCanvasView'), { ssr: false })
+const Projects3DView = dynamic(() => import('@/components/canvas/Projects3DView'), { ssr: false })
 
 type Props = {
   projects: Project[]
@@ -32,6 +31,19 @@ interface FuseInstance<T> {
   setCollection: (collection: T[]) => void
 }
 
+// Memoized components untuk mencegah re-render yang tidak perlu
+const MemoizedProjectCardPinterest = memo(ProjectCardPinterest)
+const MemoizedProjectSplitView = memo(ProjectSplitView)
+
+// Loading component untuk view transitions
+function ViewLoadingIndicator() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+    </div>
+  )
+}
+
 export default function IndexClientInner({
   projects,
   tag,
@@ -46,6 +58,10 @@ export default function IndexClientInner({
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [fuseInstance, setFuseInstance] = useState<FuseInstance<Project> | null>(null)
 
+  // IMPROVEMENT: Add loading state saat switch view
+  const [isViewTransitioning, setIsViewTransitioning] = useState(false)
+  const prevViewRef = useRef(view)
+
   // BUG FIX #3: Cleanup flag untuk mencegah setState pada unmounted component
   const isMountedRef = useRef(true)
 
@@ -56,10 +72,38 @@ export default function IndexClientInner({
     }
   }, [])
 
+  // Handle view transitions dengan loading state
+  useEffect(() => {
+    if (prevViewRef.current !== view) {
+      setIsViewTransitioning(true)
+      // Simulate brief transition time for smoother UX
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) {
+          setIsViewTransitioning(false)
+          prevViewRef.current = view
+        }
+      }, 150)
+      return () => clearTimeout(timer)
+    }
+  }, [view])
+
+  // FIX: Tambahkan debouncing untuk searchQuery filtering agar tidak terjadi
+  // re-render berlebihan (paint flashing) saat user mengetik dengan cepat
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery)
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isMountedRef.current) {
+        setDebouncedSearchQuery(searchQuery)
+      }
+    }, 200) // 200ms debounce untuk typing
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
   // BUG FIX #3 & #7: Lazy load Fuse.js dengan proper cleanup dan auto-update collection
   useEffect(() => {
     // Only load Fuse if user actually types to save bundle size
-    if (searchQuery) {
+    if (debouncedSearchQuery) {
       // Small timeout to not block typing immediately
       const timeoutId = setTimeout(() => {
         import('fuse.js').then((FuseModule) => {
@@ -87,14 +131,14 @@ export default function IndexClientInner({
 
       return () => clearTimeout(timeoutId)
     }
-  }, [searchQuery, projects])
+  }, [debouncedSearchQuery, projects])
 
   // BUG FIX #7: Update Fuse collection saat projects berubah (tanpa re-create instance)
   useEffect(() => {
-    if (fuseInstance && searchQuery) {
+    if (fuseInstance && debouncedSearchQuery) {
       fuseInstance.setCollection(projects)
     }
-  }, [projects, fuseInstance, searchQuery])
+  }, [projects, fuseInstance, debouncedSearchQuery])
 
   // Filter projects by tag and search
   const filteredProjects = useMemo(() => {
@@ -110,8 +154,8 @@ export default function IndexClientInner({
     }
 
     // Then filter by search query (only if fuse is loaded)
-    if (searchQuery && fuseInstance) {
-      const searchResults = fuseInstance.search(searchQuery)
+    if (debouncedSearchQuery && fuseInstance) {
+      const searchResults = fuseInstance.search(debouncedSearchQuery)
       const searchedProjectIds = new Set(searchResults.map((r) => r.item.id))
 
       // If tag filter is active, intersect the results using IDs
@@ -126,7 +170,7 @@ export default function IndexClientInner({
     }
 
     return result
-  }, [projects, tag, searchQuery, fuseInstance])
+  }, [projects, tag, debouncedSearchQuery, fuseInstance])
 
   // SAFETY LIMIT FOR INFINITE SCROLL
   // User requested "No Limit" behavior (looping forever).
@@ -176,6 +220,7 @@ export default function IndexClientInner({
     scrollStateRef.current = { isLoadingMore, visibleCount, filteredCount: filteredProjects.length }
   })
 
+  // FIX: Cleanup observer properly dengan disconnect sebelum membuat yang baru
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -185,8 +230,10 @@ export default function IndexClientInner({
 
           // Load next batch with a slight delay to prevent re-render loops
           setTimeout(() => {
-            setVisibleCount(prev => Math.min(prev + 14, MAX_DISPLAY_COUNT))
-            setIsLoadingMore(false)
+            if (isMountedRef.current) {
+              setVisibleCount(prev => Math.min(prev + 14, MAX_DISPLAY_COUNT))
+              setIsLoadingMore(false)
+            }
           }, 500)
         }
       },
@@ -196,15 +243,70 @@ export default function IndexClientInner({
       }
     )
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current)
+    const currentTarget = observerTarget.current
+    if (currentTarget) {
+      observer.observe(currentTarget)
     }
 
-    return () => observer.disconnect()
+    // FIX: Pastikan cleanup observer dengan benar
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget)
+      }
+      observer.disconnect()
+    }
   }, []) // Observer created once — reads current state via ref
 
   // Combine loading states
-  const showLoading = isLoadingMore || isParentLoading;
+  const showLoading = isLoadingMore || isParentLoading || isViewTransitioning;
+
+  // OPTIMIZATION: Memoize view components untuk mencegah re-render berlebihan
+  const gridView = useMemo(() => (
+    <MasonryGrid width={windowWidth}>
+      {displayedProjects.map((project, index) => {
+        // Determine priority based on index (first 2 items get priority for faster LCP)
+        const isPriority = index < 2;
+
+        // Animation Logic:
+        // Priority items (first 2): No animation at all - instant display for LCP
+        // Non-priority items: Fade in only (no Y movement to prevent CLS)
+        const animationProps = isPriority ? {} : {
+          initial: { opacity: 0 },
+          whileInView: { opacity: 1 },
+          viewport: { once: true, margin: "-50px" },
+          transition: { duration: 0.5 }
+        };
+
+        return (
+          <m.div
+            key={`${project.slug}-${index}`}
+            {...animationProps}
+            // FIX: Add CSS Containment to isolate repaints and prevent layout thrashing
+            // Reduce will-change usage to prevent GPU memory exhaustion
+            style={{
+              contain: 'layout paint style',
+              transform: 'translateZ(0)', // Force GPU layer without will-change overhead
+              backfaceVisibility: 'hidden', // Fix WebKit flickering
+            }}
+          >
+            <MemoizedProjectCardPinterest
+              project={project}
+              priority={isPriority}
+              videoEnabled={true}
+              highlightedTag={tag}
+            />
+          </m.div>
+        )
+      })}
+    </MasonryGrid>
+  ), [displayedProjects, windowWidth, tag])
+
+  const listView = useMemo(() => (
+    <MemoizedProjectSplitView
+      projects={filteredProjects}
+      tag={tag}
+    />
+  ), [filteredProjects, tag])
 
   return (
     <section className={`${view === '3d' ? '' : 'pt-4 px-4'} pb-8`} data-projects-grid>
@@ -223,51 +325,16 @@ export default function IndexClientInner({
       {/* Projects Grid */}
       <LazyMotion features={domAnimation}>
         <div className={view === '3d' ? 'fixed inset-0 z-0 overflow-hidden' : 'min-h-screen'}>
-          {displayedProjects.length > 0 ? (
+          {showLoading ? (
+            <ViewLoadingIndicator />
+          ) : displayedProjects.length > 0 ? (
             <>
               {view === '3d' ? (
-                <InfiniteCanvasView projects={filteredProjects} />
+                <Projects3DView projects={filteredProjects} />
               ) : view === 'grid' ? (
-                <MasonryGrid width={windowWidth}>
-                  {displayedProjects.map((project, index) => {
-                    // Determine priority based on index (first 2 items get priority for faster LCP)
-                    const isPriority = index < 2;
-
-                    // Animation Logic:
-                    // Priority items (first 2): No animation at all - instant display for LCP
-                    // Non-priority items: Fade in only (no Y movement to prevent CLS)
-                    const animationProps = isPriority ? {} : {
-                      initial: { opacity: 0 },
-                      whileInView: { opacity: 1 },
-                      viewport: { once: true, margin: "-50px" },
-                      transition: { duration: 0.5 }
-                    };
-
-                    return (
-                      <m.div
-                        key={`${project.slug}-${index}`}
-                        {...animationProps}
-                        // BUG FIX: Remove contentVisibility yang menyebabkan flickering
-                        // GPU acceleration only for smooth animations
-                        style={{
-                          willChange: 'transform',
-                        }}
-                      >
-                        <ProjectCardPinterest
-                          project={project}
-                          priority={isPriority}
-                          videoEnabled={true}
-                          highlightedTag={tag}
-                        />
-                      </m.div>
-                    )
-                  })}
-                </MasonryGrid>
+                gridView
               ) : (
-                <ProjectSplitView
-                  projects={filteredProjects}
-                  tag={tag}
-                />
+                listView
               )}
 
               {/* Infinite Scroll Sentinel - Only for grid */}
@@ -276,7 +343,7 @@ export default function IndexClientInner({
               )}
 
               {/* Loading indicator - Only for grid */}
-              {view === 'grid' && showLoading && (
+              {view === 'grid' && (isLoadingMore || isParentLoading) && (
                 <div className="text-center py-8 opacity-50">
                   <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
                   <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>

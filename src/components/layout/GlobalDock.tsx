@@ -15,10 +15,10 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
   const router = useRouter();
   const pathname = usePathname();
   const { isWindowOpen, bouncingDocId } = useWindowContext();
-  
+
   // BUG FIX: Add mounted state to prevent flash during initial render
   const [isMounted, setIsMounted] = useState(false);
-  
+
   useEffect(() => {
     // Small delay to ensure smooth transition from OS dock
     const timer = setTimeout(() => setIsMounted(true), 100);
@@ -88,14 +88,17 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
 
   return (
     <m.div
+      className="fixed bottom-4 left-0 right-0 flex justify-center z-[99999] pointer-events-none pb-safe"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
     >
-      <Dock
-        items={dockItems}
-        bouncingId={bouncingDocId}
-      />
+      <div className="pointer-events-auto">
+        <Dock
+          items={dockItems}
+          bouncingId={bouncingDocId}
+        />
+      </div>
     </m.div>
   );
 }

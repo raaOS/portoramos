@@ -99,7 +99,8 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         if (!containerRef.current) return;
 
         // BUG FIX: Debounce resize handler to prevent flickering during scroll
-        let resizeTimeout: NodeJS.Timeout | null = null;
+        // FIX: Use ReturnType<typeof setTimeout> instead of NodeJS.Timeout for browser compatibility
+        let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
         const handleResize = (entries: ResizeObserverEntry[]) => {
             if (resizeTimeout) clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
@@ -112,17 +113,22 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         };
 
         const observer = new ResizeObserver(handleResize);
-        observer.observe(containerRef.current);
+        const elementToObserve = containerRef.current;
+        observer.observe(elementToObserve);
 
         // Immediate check
-        if (containerRef.current.offsetWidth > 0) {
-            updateCallback(containerRef.current.offsetWidth);
+        if (elementToObserve.offsetWidth > 0) {
+            updateCallback(elementToObserve.offsetWidth);
         } else if (typeof window !== 'undefined') {
             // Fallback to window width if container has no width yet
             updateCallback(window.innerWidth);
         }
 
         return () => {
+            // FIX: Unobserve specific element before disconnect to prevent memory leaks
+            if (elementToObserve) {
+                observer.unobserve(elementToObserve);
+            }
             observer.disconnect();
             if (resizeTimeout) clearTimeout(resizeTimeout);
         };
@@ -162,6 +168,3 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         </div>
     );
 }
-
-
-

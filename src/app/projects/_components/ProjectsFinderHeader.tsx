@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useTransition, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Grid, List, Filter, Search as SearchIcon, X, Check, Box } from 'lucide-react';
 
@@ -19,7 +19,8 @@ const CATEGORIES = [
 export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeaderProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [isPending, startTransition] = useTransition();
+    // FIX: Remove useTransition - not needed for simple router.push
+    const [isNavigating, setIsNavigating] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -61,9 +62,11 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
             } else {
                 params.delete('q');
             }
-            startTransition(() => {
-                router.push(`/projects?${params.toString()}`, { scroll: false });
-            });
+            // FIX: Direct router.push without startTransition
+            setIsNavigating(true);
+            router.push(`/projects?${params.toString()}`, { scroll: false });
+            // Reset navigating state after a short delay
+            setTimeout(() => setIsNavigating(false), 300);
         }, 300);
 
         return () => clearTimeout(timer);
@@ -73,9 +76,10 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
         if (view === currentView) return;
         const params = new URLSearchParams(searchParams?.toString());
         params.set('view', view);
-        startTransition(() => {
-            router.push(`/projects?${params.toString()}`, { scroll: false });
-        });
+        // FIX: Direct router.push without startTransition
+        setIsNavigating(true);
+        router.push(`/projects?${params.toString()}`, { scroll: false });
+        setTimeout(() => setIsNavigating(false), 300);
     };
 
     const handleTagChange = (tag: string) => {
@@ -86,9 +90,10 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
             params.delete('tag');
         }
         setIsFilterOpen(false);
-        startTransition(() => {
-            router.push(`/projects?${params.toString()}`, { scroll: false });
-        });
+        // FIX: Direct router.push without startTransition
+        setIsNavigating(true);
+        router.push(`/projects?${params.toString()}`, { scroll: false });
+        setTimeout(() => setIsNavigating(false), 300);
     };
 
     const handleClear = () => {
@@ -106,7 +111,7 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
             </div>
 
             {/* Search Input Integrated into Header */}
-            <div className={`relative w-full max-w-md mx-auto sm:mx-0 order-3 sm:order-2 transition-opacity duration-200 ${isPending ? 'opacity-70' : 'opacity-100'}`}>
+            <div className={`relative w-full max-w-md mx-auto sm:mx-0 order-3 sm:order-2 transition-opacity duration-200 ${isNavigating ? 'opacity-70' : 'opacity-100'}`}>
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                     type="text"
@@ -140,6 +145,8 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
                             onClick={() => handleViewChange('grid')}
                             className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'grid' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             title="Tampilan Grid"
+                            aria-label="Grid view"
+                            aria-pressed={currentView === 'grid'}
                         >
                             <Grid size={16} />
                         </button>
@@ -147,6 +154,8 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
                             onClick={() => handleViewChange('list')}
                             className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'list' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             title="Tampilan List"
+                            aria-label="List view"
+                            aria-pressed={currentView === 'list'}
                         >
                             <List size={16} />
                         </button>
@@ -154,6 +163,8 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
                             onClick={() => handleViewChange('3d')}
                             className={`p-1.5 rounded-md transition-all duration-200 ${currentView === '3d' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             title="Tampilan 3D"
+                            aria-label="3D view"
+                            aria-pressed={currentView === '3d'}
                         >
                             <Box size={16} />
                         </button>
@@ -165,17 +176,25 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
                     <button 
                         onClick={() => setIsFilterOpen(!isFilterOpen)}
                         className={`flex items-center gap-2 px-4 py-2 border rounded-md text-[10px] font-black transition-all shadow-sm uppercase tracking-widest leading-none ${currentTag ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-neutral-700 text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800'}`}
+                        aria-expanded={isFilterOpen}
+                        aria-haspopup="listbox"
                     >
                         <Filter size={12} /> {currentTag ? CATEGORIES.find(c => c.value === currentTag)?.label : 'Filter'}
                     </button>
 
                     {isFilterOpen && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-lg shadow-xl py-1 overflow-hidden animate-in fade-in zoom-in duration-200 z-[100]">
+                        <div 
+                            className="absolute right-0 mt-2 w-48 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-lg shadow-xl py-1 overflow-hidden animate-in fade-in zoom-in duration-200 z-[100]"
+                            role="listbox"
+                            aria-label="Filter categories"
+                        >
                             {CATEGORIES.map((cat) => (
                                 <button
                                     key={cat.value}
                                     onClick={() => handleTagChange(cat.value)}
                                     className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${currentTag === cat.value ? 'text-blue-600 font-bold' : 'text-gray-700 dark:text-gray-300'}`}
+                                    role="option"
+                                    aria-selected={currentTag === cat.value}
                                 >
                                     {cat.label}
                                     {currentTag === cat.value && <Check size={12} className="text-blue-600" />}

@@ -32,7 +32,7 @@ export default function ProjectCardList({
     return (
         <Link 
             href={`/projects/${slug}`}
-            className="group block w-full mb-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
+            className="group block w-full mb-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 transform-gpu"
         >
             <div className="flex flex-col sm:flex-row h-full">
                 {/* Image Section */}

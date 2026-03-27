@@ -52,7 +52,7 @@ export default function ProjectCardPinterest({
             {/* Outer: scale saja (tanpa overflow-hidden agar rounded tidak hilang saat hover)
                 Inner: overflow-hidden + rounded untuk clip gambar */}
             <div
-                className={`relative transition-transform duration-300 ${isInteractive ? 'hover:scale-[1.02]' : ''}`}
+                className={`relative transition-transform duration-300 transform-gpu backface-hidden ${isInteractive ? 'hover:scale-[1.02]' : ''}`}
                 style={{ aspectRatio: ratio }}
                 onContextMenu={handleContextMenu}
             >
