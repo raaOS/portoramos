@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bucket } from '@/lib/firebaseAdmin';
 import { validateAdminRequest } from '@/lib/auth';
+import { deleteIconSchema } from '@/lib/validations';
+import { validationError } from '@/lib/api-response';
 
 const FOLDER_PATH = 'assets/icons-library';
 
@@ -41,22 +43,23 @@ export async function DELETE(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const iconUrl = searchParams.get('url');
 
-        if (!iconUrl) {
-            return NextResponse.json({ error: 'No icon URL provided' }, { status: 400 });
+        const validation = deleteIconSchema.safeParse({ url: iconUrl });
+        if (!validation.success) {
+            return validationError(validation.error);
         }
+
+        const { url } = validation.data;
 
         // 1. Resolve Path from URL
         let storagePath = '';
-        if (iconUrl.includes('/o/')) {
-            const parts = iconUrl.split('/o/');
+        if (url.includes('/o/')) {
+            const parts = url.split('/o/');
             const pathWithParams = parts[1].split('?')[0];
             storagePath = decodeURIComponent(pathWithParams);
-        } else if (iconUrl.startsWith('/assets/')) {
-            storagePath = iconUrl.startsWith('/') ? iconUrl.substring(1) : iconUrl;
-        }
-
-        if (!storagePath || !storagePath.includes(FOLDER_PATH)) {
-            return NextResponse.json({ error: 'Invalid icon path' }, { status: 400 });
+        } else if (url.startsWith('/assets/')) {
+            storagePath = url.startsWith('/') ? url.substring(1) : url;
+        } else {
+            return NextResponse.json({ error: 'Invalid icon path/URL structure' }, { status: 400 });
         }
 
         const dirName = storagePath.split('/').slice(0, -1).join('/'); // assets/icons-library

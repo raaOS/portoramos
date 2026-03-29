@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
+import { telegramStatusSchema } from '@/lib/validations';
+import { validationError } from '@/lib/api-response';
 
 /* 
    This route is largely redundant with the GET in /config used with ?token= query param,
@@ -13,8 +15,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
 
-    if (!token) {
-        return NextResponse.json({ ok: false, error: 'Token is required' }, { status: 400 });
+    const validation = telegramStatusSchema.safeParse({ token });
+    if (!validation.success) {
+        return validationError(validation.error);
     }
 
     try {

@@ -205,7 +205,7 @@ export default function OSWindow({
             }
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
-            window.removeEventListener('touchmove', handleMouseMove);
+            window.removeEventListener('touchmove', handleMouseMove, { passive: false } as any);
             window.removeEventListener('touchend', handleMouseUp);
         };
     }, [isResizing]); // ONLY depend on isResizing, NOT dynamicSize

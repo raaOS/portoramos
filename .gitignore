@@ -57,3 +57,13 @@ ts_errors_2.log
 tmp_live_projects.json
 
 service-account.json
+
+# Temporary artifacts & debug screenshots
+3d-*.png
+*.log
+coverage/
+playwright-report/
+debug-*.md
+projects-page.md
+test_output.log
+_a")sxsx214be5b4520cdd.md

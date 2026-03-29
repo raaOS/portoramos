@@ -178,8 +178,29 @@ export const updateSettingsSchema = z.object({
     allowComments: z.boolean().optional(),
 }).passthrough(); // Allow additional fields for flexibility
 
+// Admin Operation Schemas
+export const compressFileSchema = z.object({
+    filePath: z.string().min(1, 'File path is required')
+}).strict();
+
+export const deleteIconSchema = z.object({
+    url: z.string().min(1, 'URL is required')
+}).strict();
+
+export const telegramWebhookSchema = z.object({
+    url: z.string().url('Invalid webhook URL')
+}).strict();
+
+export const telegramStatusSchema = z.object({
+    token: z.string().min(1, 'Bot token is required')
+}).strict();
+
 // Export type inference
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;
 export type UploadFileInput = z.infer<typeof uploadFileSchema>;
+export type CompressFileInput = z.infer<typeof compressFileSchema>;
+export type DeleteIconInput = z.infer<typeof deleteIconSchema>;
+export type TelegramWebhookInput = z.infer<typeof telegramWebhookSchema>;
+export type TelegramStatusInput = z.infer<typeof telegramStatusSchema>;

@@ -177,12 +177,14 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                         />
                     )}
                     <nav
-                        className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[99999] pointer-events-auto ${isMobile ? 'max-w-[90vw]' : ''}`}
+                        className={`relative z-[99999] pointer-events-auto ${isMobile ? 'max-w-[90vw]' : ''}`}
                         role="toolbar"
                         aria-label="Application dock"
                         aria-orientation="horizontal"
                         onMouseMove={(e) => !isMobile && mouseX.set(e.clientX)}
                         onMouseLeave={() => !isMobile && mouseX.set(Infinity)}
+                        // FIX: Promote dock to its own GPU layer to prevent flickering with 3D canvas
+                        style={{ transform: 'translateZ(0)', willChange: 'transform' }}
                     >
                         <m.div
                             layout // Smoothly animate container size changes

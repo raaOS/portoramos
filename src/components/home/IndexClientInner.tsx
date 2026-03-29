@@ -90,7 +90,7 @@ export default function IndexClientInner({
   // FIX: Tambahkan debouncing untuk searchQuery filtering agar tidak terjadi
   // re-render berlebihan (paint flashing) saat user mengetik dengan cepat
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery)
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isMountedRef.current) {
@@ -258,7 +258,7 @@ export default function IndexClientInner({
   }, []) // Observer created once — reads current state via ref
 
   // Combine loading states
-  const showLoading = isLoadingMore || isParentLoading || isViewTransitioning;
+  const showLoading = isParentLoading || isViewTransitioning;
 
   // OPTIMIZATION: Memoize view components untuk mencegah re-render berlebihan
   const gridView = useMemo(() => (

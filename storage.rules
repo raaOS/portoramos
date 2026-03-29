@@ -1,9 +1,36 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // 1. PUBLIC READ ACCESS
+    // All portfolio assets are publicly readable
     match /{allPaths=**} {
       allow read: if true;
+    }
+    
+    // 2. PROTECTED WRITE ACCESS
+    // Only authenticated admins can write to specific project paths
+    
+    // Project media and core assets
+    match /assets/projects/{allPaths=**} {
       allow write: if request.auth != null;
     }
+    
+    // General media library
+    match /assets/media/{allPaths=**} {
+       allow write: if request.auth != null;
+    }
+    
+    // Icon library for Desktop OS
+    match /assets/icons-library/{allPaths=**} {
+       allow write: if request.auth != null;
+    }
+    
+    // Temporary processing folder
+    match /temp/{allPaths=**} {
+      allow write: if request.auth != null;
+    }
+    
+    // DENY ALL OTHER WRITES
+    // Any path not explicitly matched above is write-protected
   }
 }

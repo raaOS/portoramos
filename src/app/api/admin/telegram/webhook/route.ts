@@ -1,21 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTelegramConfig } from '@/lib/telegram';
 import { validateAdminRequest } from '@/lib/auth';
+import { telegramWebhookSchema } from '@/lib/validations';
+import { validationError } from '@/lib/api-response';
 
 export async function POST(request: NextRequest) {
     if (!(await validateAdminRequest(request))) {
         return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
     try {
-        const { url } = await request.json(); // The public URL of the Vercel deployment
+        const body = await request.json().catch(() => ({}));
+        const validation = telegramWebhookSchema.safeParse(body);
+
+        if (!validation.success) {
+            return validationError(validation.error);
+        }
+
+        const { url } = validation.data;
         const { botToken } = await getTelegramConfig();
 
         if (!botToken) {
             return NextResponse.json({ error: 'Bot token not configured' }, { status: 400 });
-        }
-
-        if (!url) {
-            return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
         const webhookUrl = `${url}/api/webhook/telegram`;

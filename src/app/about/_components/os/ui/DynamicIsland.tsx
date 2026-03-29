@@ -89,7 +89,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
         }, 2000);
     };
 
-    const triggerNotification = React.useCallback(async (index?: number) => {
+    const triggerNotification = React.useCallback((index?: number) => {
         if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
         if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
         if (textToggleRef.current) clearInterval(textToggleRef.current);
@@ -159,6 +159,9 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
             if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
             if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
             if (textToggleRef.current) clearInterval(textToggleRef.current);
+            setNotification(null);
+            setDisplayedMessage("");
+            setShowVerified(false);
         };
     }, [isBooting, customNotifications, triggerNotification]);
 

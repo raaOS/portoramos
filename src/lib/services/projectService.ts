@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import v8 from 'v8';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { ProjectSchema, CreateProjectSchema, UpdateProjectSchema } from '@/lib/validations';
 import { db, bucket } from '@/lib/firebaseAdmin';
@@ -7,21 +8,63 @@ import { db, bucket } from '@/lib/firebaseAdmin';
 const projectCache = new Map<string, { data: unknown; timestamp: number }>();
 const PROJECT_CACHE_TTL = 30000; // 30 detik
 
+// Cache Metrics untuk Monitoring Performa
+const cacheMetrics = {
+    hits: 0,
+    misses: 0,
+    evictions: 0,
+    lastMemoryCheck: 0,
+};
+
+/**
+ * Memantau penggunaan memori dan memberikan peringatan jika melebihi ambang batas.
+ * Menggunakan heap_size_limit dari V8 untuk perhitungan rasio yang akurat.
+ * 80% - Warning, 90% - Critical (Force Cache Clear)
+ */
+function checkMemoryUsage() {
+    const now = Date.now();
+    if (now - cacheMetrics.lastMemoryCheck < 60000) return; // Maksimal sekali per menit
+
+    cacheMetrics.lastMemoryCheck = now;
+    const { heapUsed } = process.memoryUsage();
+    const { heap_size_limit } = v8.getHeapStatistics();
+    const ratio = heapUsed / heap_size_limit;
+
+    if (ratio > 0.90) {
+        console.error(`[ProjectService] CRITICAL MEMORY: ${(ratio * 100).toFixed(1)}% (${(heapUsed / 1024 / 1024).toFixed(2)}MB / ${(heap_size_limit / 1024 / 1024).toFixed(2)}MB). clearing cache.`);
+        clearProjectCache();
+        cacheMetrics.evictions++;
+    } else if (ratio > 0.80) {
+        console.warn(`[ProjectService] HIGH MEMORY WARNING: ${(ratio * 100).toFixed(1)}% (${(heapUsed / 1024 / 1024).toFixed(2)}MB).`);
+    }
+}
+
 function getProjectCacheKey(key: string): string {
     return `project:${key}`;
 }
 
 function getFromProjectCache<T>(key: string): T | null {
+    checkMemoryUsage();
     const cached = projectCache.get(key);
-    if (!cached) return null;
-    if (Date.now() - cached.timestamp > PROJECT_CACHE_TTL) {
-        projectCache.delete(key);
+
+    if (!cached) {
+        cacheMetrics.misses++;
         return null;
     }
+
+    if (Date.now() - cached.timestamp > PROJECT_CACHE_TTL) {
+        projectCache.delete(key);
+        cacheMetrics.evictions++;
+        cacheMetrics.misses++;
+        return null;
+    }
+
+    cacheMetrics.hits++;
     return cached.data as T;
 }
 
 function setProjectCache(key: string, data: unknown): void {
+    checkMemoryUsage();
     projectCache.set(key, { data, timestamp: Date.now() });
 }
 
@@ -31,11 +74,14 @@ function setProjectCache(key: string, data: unknown): void {
  */
 export function clearProjectCache(): void {
     console.log('[ProjectService] Clearing all project caches...');
+    let count = 0;
     for (const key of projectCache.keys()) {
         if (key.startsWith('project:')) {
             projectCache.delete(key);
+            count++;
         }
     }
+    if (count > 0) cacheMetrics.evictions += count;
 }
 
 /**
@@ -417,5 +463,19 @@ export const projectService = {
         clearProjectCache();
 
         return true;
+    },
+
+    /**
+     * Get current cache performance metrics.
+     */
+    getCacheMetrics() {
+        const total = cacheMetrics.hits + cacheMetrics.misses;
+        return {
+            ...cacheMetrics,
+            size: projectCache.size,
+            hitRate: total > 0
+                ? ((cacheMetrics.hits / total) * 100).toFixed(1) + '%'
+                : '0%'
+        };
     }
 };

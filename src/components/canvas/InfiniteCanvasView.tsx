@@ -237,6 +237,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
         }
 
         animationFrameRef.current = requestAnimationFrame(loop)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         syncVisibleItems()
 
         return () => {

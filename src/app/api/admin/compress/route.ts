@@ -4,6 +4,8 @@ import fs from 'fs';
 import os from 'os';
 import { validateAdminRequest } from '@/lib/auth';
 import { bucket } from '@/lib/firebaseAdmin';
+import { compressFileSchema } from '@/lib/validations';
+import { validationError } from '@/lib/api-response';
 
 // RATE LIMITING
 const compressAttempts = new Map<string, { count: number; resetTime: number }>();
@@ -44,8 +46,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
 
-    const { filePath } = await request.json(); // e.g. "assets/projects/img.jpg" or full Firebase URL
-    if (!filePath) return NextResponse.json({ error: 'No path provided' }, { status: 400 });
+    const body = await request.json().catch(() => ({}));
+    const validation = compressFileSchema.safeParse(body);
+
+    if (!validation.success) {
+      return validationError(validation.error);
+    }
+
+    const { filePath } = validation.data;
 
     // 1. Resolve Storage Path
     let storagePath = filePath;
