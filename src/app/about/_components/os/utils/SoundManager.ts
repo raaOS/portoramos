@@ -15,16 +15,16 @@ class SoundManager {
     private volume: number = 0.5;
 
     private soundPaths: Record<SoundType, string> = {
-        startup: getAssetPath('/sounds/startup.wav'),
-        click: getAssetPath('/sounds/click.wav'),
-        'window-open': getAssetPath('/sounds/window-open.wav'),
-        'window-close': getAssetPath('/sounds/window-close.wav'),
-        error: getAssetPath('/sounds/error.wav'),
-        notification: getAssetPath('/sounds/notification.wav'),
-        drag: getAssetPath('/sounds/drag.wav'),
-        typing: getAssetPath('/sounds/click.wav'),
-        sent: getAssetPath('/sounds/notification.wav'),
-        unlock: getAssetPath('/sounds/click.wav') // Using click sound for unlock "ceklek" effect
+        startup: getAssetPath('/sounds/startup.mp3'),
+        click: getAssetPath('/sounds/click.mp3'),
+        'window-open': getAssetPath('/sounds/window-open.mp3'),
+        'window-close': getAssetPath('/sounds/window-close.mp3'),
+        error: getAssetPath('/sounds/error.mp3'),
+        notification: getAssetPath('/sounds/notification.mp3'),
+        drag: getAssetPath('/sounds/drag.mp3'),
+        typing: getAssetPath('/sounds/typing.wav'),
+        sent: getAssetPath('/sounds/notification.mp3'),
+        unlock: getAssetPath('/sounds/click.mp3') // Using click sound for unlock "ceklek" effect
     };
 
     private soundVolumes: Record<string, number> = {};
