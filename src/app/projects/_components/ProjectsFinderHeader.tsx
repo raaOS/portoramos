@@ -143,30 +143,30 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
                     <div className="flex items-center gap-1">
                         <button 
                             onClick={() => handleViewChange('grid')}
-                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'grid' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                            className={`p-1 transition-all duration-200 ${currentView === 'grid' ? 'text-emerald-500 scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             title="Tampilan Grid"
                             aria-label="Grid view"
                             aria-pressed={currentView === 'grid'}
                         >
-                            <Grid size={16} />
+                            <Grid size={18} />
                         </button>
                         <button 
                             onClick={() => handleViewChange('list')}
-                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === 'list' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                            className={`p-1 transition-all duration-200 ${currentView === 'list' ? 'text-amber-500 scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             title="Tampilan List"
                             aria-label="List view"
                             aria-pressed={currentView === 'list'}
                         >
-                            <List size={16} />
+                            <List size={18} />
                         </button>
                         <button 
                             onClick={() => handleViewChange('3d')}
-                            className={`p-1.5 rounded-md transition-all duration-200 ${currentView === '3d' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                            className={`p-1 transition-all duration-200 ${currentView === '3d' ? 'text-blue-500 scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             title="Tampilan 3D"
                             aria-label="3D view"
                             aria-pressed={currentView === '3d'}
                         >
-                            <Box size={16} />
+                            <Box size={18} />
                         </button>
                     </div>
                 )}

@@ -101,14 +101,7 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* Preload critical LCP image - OS Wallpaper */}
-        <link
-          rel="preload"
-          href="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop"
-          as="image"
-          type="image/jpeg"
-          fetchPriority="high"
-        />
+
 
         {/* Structured Data */}
         {/* Application Version (Cache Tracking) */}

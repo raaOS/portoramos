@@ -6,7 +6,7 @@ import SystemNavFrame from '@/components/layout/SystemNavFrame'
 import ProjectsFinderHeader from './_components/ProjectsFinderHeader'
 
 // Disable caching for Projects page to ensure immediate dock/content updates
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata: Metadata = {
     title: 'Projects | Ramos Portfolio',

@@ -9,6 +9,7 @@ import WhatsAppIcon from '@/app/about/_components/os/ui/WhatsAppIcon';
 import { useWindowContext } from '@/contexts/WindowContext';
 import { Grid, User, Mail, FileText, Trash2 } from 'lucide-react';
 import { getDockItemConfig } from '@/app/about/_components/os/utils/dockUtils';
+import DockProjectModes from '@/app/about/_components/os/ui/DockProjectModes';
 import type { DockPreferences } from '@/types/about';
 
 export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
@@ -35,7 +36,8 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
         id: "projects",
         label: "Projects",
         icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />,
-        onClick: () => router.push('/projects')
+        onClick: () => router.push('/projects'),
+        popoverContent: <DockProjectModes />
       },
       {
         id: "about",

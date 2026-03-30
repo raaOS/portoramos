@@ -94,29 +94,20 @@ export default function InfiniteCanvasView({ projects }: Props) {
 
         activeItemsRef.current = nextState.items
 
-        // Update rendered items: Add new ones, but don't remove old ones yet (soft-remove)
+        // Update rendered items: Strict addition
+        const nextItems = nextState.items
         setRenderedItems(prev => {
-            const nextKeys = new Set(nextState.items.map(i => i.key))
             const prevKeys = new Set(prev.map(i => i.key))
+            const activeKeys = new Set(nextItems.map(i => i.key))
+            
+            // Only add new items that are not in the current rendered set
+            const itemsToAdd = nextItems.filter(item => !prevKeys.has(item.key))
+            
+            if (itemsToAdd.length === 0) return prev
 
-            let needsUpdate = false
-            for (const item of nextState.items) {
-                if (!prevKeys.has(item.key)) {
-                    needsUpdate = true
-                    break
-                }
-            }
-
-            if (!needsUpdate) return prev
-
-            const merged = [...prev]
-            for (const item of nextState.items) {
-                if (!prevKeys.has(item.key)) {
-                    merged.push(item)
-                }
-            }
-            renderedItemsRef.current = merged
-            return merged
+            const next = [...prev, ...itemsToAdd]
+            renderedItemsRef.current = next
+            return next
         })
     }, [maxCachedAssignments, projectById, projects])
 
@@ -138,11 +129,30 @@ export default function InfiniteCanvasView({ projects }: Props) {
                 previousGrayscale: previousState.grayscale,
             })
 
-            // If an item is NOT active and IS hidden/invisible, it's safe to remove from DOM
-            if (!activeKeys.has(item.key) && visualStyle.hidden && previousState.hidden) {
+            const dz = item.z - camera.z
+            
+            // AGGRESSIVE PRUNING (OCCLUSION CULLING)
+            // If item is:
+            // 1. Far behind camera (dz > 1200) - HARD REMOVE
+            // 2. Extremely far in the distance (dist > 9000)
+            // 3. Not active and hidden (opacity near 0)
+            const isFarBehind = dz > 1200
+            const isTooFar = item.dist > 9000
+            const isInactiveAndHidden = !activeKeys.has(item.key) && (visualStyle.hidden || visualStyle.opacity < 0.01)
+
+            if (isFarBehind || isTooFar || isInactiveAndHidden) {
                 itemsToRemove.push(item.key)
+                
+                // UNLOAD VIDEOS (Critical for memory)
+                const videoNode = videoNodesRef.current.get(item.key)
+                if (videoNode) {
+                    videoNode.pause()
+                    videoNode.src = "" // Explicitly clear src to trigger GC
+                    videoNode.load()
+                }
+
                 node.style.visibility = 'hidden'
-                node.style.opacity = '0'
+                node.style.display = 'none' 
                 continue
             }
 
@@ -153,9 +163,11 @@ export default function InfiniteCanvasView({ projects }: Props) {
             })
 
             if (visualStyle.hidden) {
-                node.style.visibility = 'hidden'
-                node.style.opacity = '0'
-                node.style.pointerEvents = 'none'
+                if (node.style.visibility !== 'hidden') {
+                    node.style.visibility = 'hidden'
+                    node.style.opacity = '0'
+                    node.style.pointerEvents = 'none'
+                }
                 const videoNode = videoNodesRef.current.get(item.key)
                 if (videoNode && !videoNode.paused) {
                     videoNode.pause()
@@ -163,6 +175,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
                 continue
             }
 
+            node.style.display = 'block'
             node.style.visibility = 'visible'
             node.style.opacity = visualStyle.opacity.toFixed(3)
             node.style.pointerEvents = 'auto'
@@ -173,7 +186,13 @@ export default function InfiniteCanvasView({ projects }: Props) {
             const videoNode = videoNodesRef.current.get(item.key)
             if (videoNode) {
                 if (visualStyle.opacity > 0.4 && activeKeys.has(item.key)) {
-                    if (videoNode.paused) void videoNode.play().catch(() => undefined)
+                    if (videoNode.paused) {
+                        // Restore src if it was cleared
+                        if (videoNode.src === "" || videoNode.src.endsWith("/")) {
+                            videoNode.src = getCoverUrl(item.project)
+                        }
+                        void videoNode.play().catch(() => undefined)
+                    }
                 } else if (!videoNode.paused) {
                     videoNode.pause()
                 }
@@ -186,7 +205,11 @@ export default function InfiniteCanvasView({ projects }: Props) {
                 renderedItemsRef.current = next
                 return next
             })
-            itemsToRemove.forEach(key => visualStateRef.current.delete(key))
+            itemsToRemove.forEach(key => {
+                visualStateRef.current.delete(key)
+                cardNodesRef.current.delete(key)
+                videoNodesRef.current.delete(key)
+            })
         }
     }, [])
 

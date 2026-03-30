@@ -14,9 +14,20 @@ interface DockItemProps {
     isOpen?: boolean;
     shouldBounceExternal?: boolean;
     isMobile?: boolean;
+    popoverContent?: React.ReactNode;
 }
 
-function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBounceExternal = false, isMobile = false }: DockItemProps) {
+function DockItem({ 
+    id, 
+    icon, 
+    label, 
+    onClick, 
+    mouseX, 
+    isOpen = false, 
+    shouldBounceExternal = false, 
+    isMobile = false,
+    popoverContent
+}: DockItemProps) {
     const ref = useRef<HTMLDivElement>(null);
     const { playPop } = useSystemSound();
 
@@ -25,25 +36,25 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
         return val - bounds.x - bounds.width / 2;
     });
 
-    // OPTIMIZATION: Instead of animating DOM width/height (Layout Thrashing CPU bind),
-    // we animate a uniform CSS scale transform while keeping the bounds fixed!
     const baseWidth = isMobile ? 48 : 64;
     const hoverScaleMultiplier = isMobile ? 1 : 1.6;
 
-    // Magnification logic: distance-based scale factor
     const scaleSync = useTransform(distance, [-100, 0, 100], [1, hoverScaleMultiplier, 1]);
-
-    // SMOOTHNESS: useSpring adds the buttery feel to the magnification
     const springScale = useSpring(scaleSync, { mass: 0.1, stiffness: 250, damping: 20 });
 
-    // Map the spring scale to pixel dimensions
     const width = useTransform(springScale, (s) => s * baseWidth);
     const height = useTransform(springScale, (s) => s * baseWidth);
 
     const [bounceKey, setBounceKey] = React.useState(0);
     const [isBouncing, setIsBouncing] = React.useState(false);
+    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-    const handleClick = () => {
+    const handleClick = (e: React.MouseEvent) => {
+        if (popoverContent) {
+            e.stopPropagation();
+            setIsPopoverOpen(!isPopoverOpen);
+            return;
+        }
         playPop();
         setIsBouncing(true);
         setBounceKey(prev => prev + 1);
@@ -56,6 +67,14 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
         return () => clearTimeout(timer);
     }, [isBouncing]);
 
+    // Close popover when clicking outside
+    React.useEffect(() => {
+        if (!isPopoverOpen) return;
+        const handleClickOutside = () => setIsPopoverOpen(false);
+        window.addEventListener('click', handleClickOutside);
+        return () => window.removeEventListener('click', handleClickOutside);
+    }, [isPopoverOpen]);
+
     const activeBounce = isBouncing || shouldBounceExternal;
 
     return (
@@ -63,16 +82,14 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
             key={`${id}-${bounceKey}`}
             id={`dock-item-${id}`}
             ref={ref}
-            // DYNAMIC layout (Affects siblings)
             style={isMobile
                 ? { width: 48, height: 48 }
                 : { width: width, height: height, transformOrigin: "center bottom" }
             }
-            layout={true} // Re-enable layout to allow siblings to push each other
+            layout={true}
             animate={activeBounce ? {
                 y: isMobile ? [0, -6, 0, -2, 0] : [0, -12, 0, -4, 0],
-                // When bouncing, we add slight squash and stretch *on top* of the current scale.
-                scaleX: isMobile ? [1, 0.9, 1.1, 1] : undefined, // Framer handles scale compositing poorly if mixed with style={scale}
+                scaleX: isMobile ? [1, 0.9, 1.1, 1] : undefined,
                 scaleY: isMobile ? [1, 1.2, 0.9, 1] : undefined
             } : { y: 0 }}
             transition={activeBounce
@@ -86,13 +103,19 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
                 : { type: "spring", mass: 0.1, stiffness: 250, damping: 20 }
             }
             onClick={handleClick}
-            className="aspect-square rounded-[12px] flex items-center justify-center cursor-pointer relative group shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none overflow-hidden"
+            className="aspect-square rounded-[12px] flex items-center justify-center cursor-pointer relative group shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
             role="button"
             aria-label={label}
             tabIndex={0}
             onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); }
-                // Arrow key navigation between dock items
+                if (e.key === 'Enter' || e.key === ' ') { 
+                    e.preventDefault(); 
+                    if (popoverContent) {
+                        setIsPopoverOpen(!isPopoverOpen);
+                    } else {
+                        handleClick(e as any); 
+                    }
+                }
                 if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
                     e.preventDefault();
                     const current = ref.current;
@@ -106,13 +129,31 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
                 }
             }}
         >
-            {/* Tooltip - Disabled on Mobile */}
-            {!isMobile && (
+            {!isMobile && !isPopoverOpen && (
                 <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-black/5 z-50">
                     {label}
                 </div>
             )}
-            <div className="flex items-center justify-center w-full h-full relative">
+
+            <AnimatePresence>
+                {isPopoverOpen && popoverContent && (
+                    <m.div
+                        initial={{ opacity: 0, y: 10, scale: 0.8, x: "-50%" }}
+                        animate={{ opacity: 1, y: -20, scale: 1, x: "-50%" }}
+                        exit={{ opacity: 0, y: 10, scale: 0.8, x: "-50%" }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        className="absolute bottom-full left-1/2 mb-4 bg-white/80 backdrop-blur-xl border border-white/40 rounded-2xl shadow-2xl z-[100000] ring-1 ring-black/5"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {React.cloneElement(popoverContent as React.ReactElement, { 
+                            onSelect: () => setIsPopoverOpen(false) 
+                        })}
+                        <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-white/80 border-r border-b border-white/40 rotate-45" />
+                    </m.div>
+                )}
+            </AnimatePresence>
+
+            <div className="flex items-center justify-center w-full h-full relative rounded-[12px] overflow-hidden">
                 {React.cloneElement(icon as React.ReactElement, { className: "w-full h-full" })}
             </div>
 
@@ -120,8 +161,19 @@ function DockItem({ id, icon, label, onClick, mouseX, isOpen = false, shouldBoun
     );
 }
 
+import { AnimatePresence } from "framer-motion";
+
+interface DockItemData {
+    id: string;
+    label: string;
+    icon: React.ReactNode;
+    onClick: () => void;
+    isOpen?: boolean;
+    popoverContent?: React.ReactNode;
+}
+
 interface DockProps {
-    items: { id: string; label: string; icon: React.ReactNode; onClick: () => void; isOpen?: boolean }[];
+    items: DockItemData[];
     bouncingId?: string | null;
     config?: DockPreferences;
     isMobile?: boolean;
@@ -205,6 +257,7 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                                     onClick={item.onClick}
                                     mouseX={mouseX}
                                     isOpen={item.isOpen}
+                                    popoverContent={item.popoverContent}
                                     shouldBounceExternal={bouncingId === item.id}
                                     isMobile={isMobile}
                                 />

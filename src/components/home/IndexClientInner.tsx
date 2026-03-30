@@ -284,6 +284,8 @@ export default function IndexClientInner({
             // FIX: Add CSS Containment to isolate repaints and prevent layout thrashing
             // Reduce will-change usage to prevent GPU memory exhaustion
             style={{
+              contentVisibility: 'auto',
+              containIntrinsicSize: '300px', // Fallback for virtualization
               contain: 'layout paint style',
               transform: 'translateZ(0)', // Force GPU layer without will-change overhead
               backfaceVisibility: 'hidden', // Fix WebKit flickering

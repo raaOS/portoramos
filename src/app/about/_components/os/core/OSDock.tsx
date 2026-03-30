@@ -9,6 +9,7 @@ import { AboutData } from '@/types/about';
 import { Project } from '@/types/projects';
 import { Grid, User, Mail, FileText, Trash2 } from 'lucide-react';
 import WhatsAppIcon from "../ui/WhatsAppIcon";
+import DockProjectModes from '../ui/DockProjectModes';
 
 interface OSDockProps {
   aboutData?: AboutData;
@@ -47,7 +48,8 @@ export default function OSDock({
         icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />,
         onClick: () => {
           router.push('/projects');
-        }
+        },
+        popoverContent: <DockProjectModes />
       },
       { id: "about", label: "About Me", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => onOpenWindow("about"), isOpen: isWindowOpen("about") },
       { id: "whatsapp", label: "WhatsApp", icon: <WhatsAppIcon />, onClick: onOpenWhatsApp, isOpen: isWindowOpen("whatsapp") },
