@@ -1,5 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { checkRateLimit, resetRateLimit, sanitize, validate, generateSecureToken } from '../security';
+import {
+    checkRateLimit,
+    resetRateLimit,
+    sanitize,
+    validate,
+    generateSecureToken,
+    createScryptPasswordRecord,
+    hashPasswordSha256,
+    verifyStoredPassword
+} from '../security';
+import { buildTelegramWebhookSecret, isValidTelegramWebhookSecret } from '../telegram';
 
 describe('security utils', () => {
     describe('generateSecureToken', () => {
@@ -39,6 +49,19 @@ describe('security utils', () => {
             expect(sanitized).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
         });
 
+        it('should sanitize rich text using a DOM allowlist', () => {
+            const input = '<script>alert(1)</script><p onclick="alert(1)">Hello</p><input type="checkbox" checked onclick="evil()" data-note-checklist-item="true">';
+            const sanitized = sanitize.richText(input);
+
+            expect(sanitized).not.toContain('<script');
+            expect(sanitized).not.toContain('onclick');
+            expect(sanitized).toContain('<p>Hello</p>');
+            expect(sanitized).toContain('type="checkbox"');
+            expect(sanitized).toContain('disabled=""');
+            expect(sanitized).toContain('checked=""');
+            expect(sanitized).toContain('data-note-checklist-item="true"');
+        });
+
         it('should sanitize email', () => {
             expect(sanitize.email(' RAMOS@Example.com ')).toBe('ramos@example.com');
         });
@@ -63,6 +86,45 @@ describe('security utils', () => {
         it('should validate emails', () => {
             expect(validate.email('invalid-email')).toBe(false);
             expect(validate.email('valid@email.com')).toBe(true);
+        });
+    });
+
+    describe('password migration', () => {
+        it('should validate legacy sha256 records and request a scrypt upgrade', () => {
+            const password = 'CorrectHorseBatteryStaple!';
+            const legacyRecord = {
+                passwordHash: hashPasswordSha256(password),
+                passwordAlgorithm: 'sha256' as const
+            };
+
+            const result = verifyStoredPassword(password, legacyRecord);
+
+            expect(result.valid).toBe(true);
+            expect(result.needsUpgrade).toBe(true);
+            expect(result.upgradedRecord?.passwordAlgorithm).toBe('scrypt');
+            expect(result.upgradedRecord?.passwordSalt).toBeTruthy();
+        });
+
+        it('should validate modern scrypt records without forcing an upgrade', () => {
+            const password = 'CorrectHorseBatteryStaple!';
+            const record = createScryptPasswordRecord(password);
+
+            const result = verifyStoredPassword(password, record);
+
+            expect(result.valid).toBe(true);
+            expect(result.needsUpgrade).toBe(false);
+            expect(result.upgradedRecord).toBeUndefined();
+        });
+    });
+
+    describe('telegram webhook secret', () => {
+        it('should accept only the derived secret token', () => {
+            const botToken = '123456:telegram-bot-token';
+            const secret = buildTelegramWebhookSecret(botToken);
+
+            expect(isValidTelegramWebhookSecret(botToken, secret)).toBe(true);
+            expect(isValidTelegramWebhookSecret(botToken, `${secret}-tampered`)).toBe(false);
+            expect(isValidTelegramWebhookSecret(botToken, null)).toBe(false);
         });
     });
 });

@@ -2,22 +2,10 @@ import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
-    // Clear rate limits (for development only)
-    // In production, this should be protected or removed
     if (process.env.NODE_ENV === 'development') {
-      // Clear rate limit map shared via globalThis in middleware
-      const globalForRateLimit = globalThis as typeof globalThis & {
-        __rateLimitMap?: Map<string, { count: number; resetTime: number }>;
-      };
-
-      const rateLimitMap = globalForRateLimit.__rateLimitMap;
-      if (rateLimitMap) {
-        rateLimitMap.clear();
-      }
-      
       return NextResponse.json({ 
         success: true, 
-        message: 'Rate limits cleared successfully' 
+        message: 'Proxy no longer uses in-memory rate limits. Use route-level Firebase-backed limits instead.' 
       });
     } else {
       return NextResponse.json({ 

@@ -1,11 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { allProjectsAsync } from '@/lib/projects'
+import { allProjectsAsync, getProjectBySlugAsync } from '@/lib/projects'
 import ProjectDetailTwoColumn from '@/components/projects/ProjectDetailTwoColumn'
 import { resolveCover, resolveGallery } from '@/lib/images'
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60;
 
 interface ProjectPageProps {
   params: Promise<{ slug: string }>
@@ -13,8 +12,7 @@ interface ProjectPageProps {
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
   const { slug } = await params
-  const projects = await allProjectsAsync()
-  const project = projects.find(p => p.slug === slug && p.status !== 'draft')
+  const project = await getProjectBySlugAsync(slug)
 
   if (!project) {
     return {

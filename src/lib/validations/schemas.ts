@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CreateProjectSchema, UpdateProjectSchema } from './project';
 
 /**
  * Comprehensive Zod Validation Schemas
@@ -33,79 +34,9 @@ export const projectComparisonSchema = z.object({
     afterLabel: z.string().max(100).optional(),
 }).strict();
 
-export const createProjectSchema = z.object({
-    title: z.string()
-        .min(1, 'Title is required')
-        .max(200, 'Title too long (max 200 characters)')
-        .trim(),
+export const createProjectSchema = CreateProjectSchema;
 
-    client: z.string()
-        .min(1, 'Client is required')
-        .max(100, 'Client name too long')
-        .trim(),
-
-    year: z.number()
-        .int('Year must be an integer')
-        .min(1900, 'Year must be after 1900')
-        .max(2100, 'Year must be before 2100'),
-
-    tags: z.array(z.string().max(50))
-        .max(50, 'Too many tags (max 50)')
-        .default([]),
-
-    description: z.string()
-        .max(5000, 'Description too long (max 5000 characters)')
-        .default(''),
-
-    cover: z.string()
-        .max(500, 'Cover URL too long')
-        .default(''),
-
-    role: z.string()
-        .max(100, 'Role too long')
-        .optional(),
-
-    technologies: z.array(projectTechnologySchema)
-        .max(50, 'Too many technologies (max 50)')
-        .optional(),
-
-    gallery: z.array(z.string().url().max(500))
-        .max(100, 'Too many gallery items (max 100)')
-        .optional(),
-
-    galleryItems: z.array(projectGalleryItemSchema)
-        .max(100, 'Too many gallery items (max 100)')
-        .optional(),
-
-    comparison: projectComparisonSchema.optional(),
-
-    url: z.string()
-        .url('Invalid project URL')
-        .max(500, 'URL too long')
-        .optional(),
-
-    status: z.enum(['draft', 'published'])
-        .default('published'),
-
-    featured: z.boolean().optional(),
-
-    autoplay: z.boolean().optional(),
-    muted: z.boolean().optional(),
-    loop: z.boolean().optional(),
-    playsInline: z.boolean().optional(),
-    coverWidth: z.number().int().positive().optional(),
-    coverHeight: z.number().int().positive().optional(),
-
-    initialCommentCount: z.number()
-        .int()
-        .min(0)
-        .max(100, 'Too many initial comments')
-        .optional(),
-}).strict();
-
-export const updateProjectSchema = createProjectSchema.partial().extend({
-    id: z.string().min(1, 'Project ID is required')
-});
+export const updateProjectSchema = UpdateProjectSchema;
 
 // Comment Schemas
 const MAX_COMMENT_DEPTH = 3;

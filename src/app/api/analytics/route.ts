@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAdminRequest } from '@/lib/auth';
 import { db } from '@/lib/firebaseAdmin';
+import { enforceRequestRateLimit } from '@/lib/security/request';
+import { z } from 'zod';
 
 // Firebase path for analytics logs
 const ANALYTICS_PATH = 'analytics/logs';
@@ -19,14 +21,28 @@ interface AnalyticsPostBody {
     details?: Record<string, unknown>;
 }
 
+const analyticsPostSchema = z.object({
+    event: z.string().min(1).max(100),
+    details: z.record(z.string(), z.unknown()).optional(),
+});
+
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json() as AnalyticsPostBody;
-        const { event, details } = body;
-
-        if (!event) {
-            return NextResponse.json({ success: false, error: 'Missing event field' }, { status: 400 });
+        const rateLimit = await enforceRequestRateLimit(request, 'analytics_post', 30, 60000, 60000);
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { success: false, error: 'Too many requests' },
+                { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+            );
         }
+
+        const body = await request.json() as AnalyticsPostBody;
+        const validation = analyticsPostSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json({ success: false, error: 'Invalid analytics payload' }, { status: 400 });
+        }
+
+        const { event, details } = validation.data;
 
         const newLog: AnalyticsLog = {
             id: Date.now().toString(),

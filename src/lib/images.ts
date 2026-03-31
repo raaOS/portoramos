@@ -24,10 +24,6 @@ function convertGcsUrl(u: string): string {
   return u;
 }
 
-function toProxy(u: string) {
-  return convertGcsUrl(u);
-}
-
 export function toImageProxy(u: string) {
   return convertGcsUrl(u);
 }

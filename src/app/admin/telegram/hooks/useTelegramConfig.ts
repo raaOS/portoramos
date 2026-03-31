@@ -66,10 +66,9 @@ export function useTelegramConfig() {
         }
     }, []);
 
-    const checkStatus = useCallback(async (token: string) => {
-        if (!token) return;
+    const checkStatus = useCallback(async (_token?: string) => {
         try {
-            const res = await fetch(`/api/admin/telegram/status?token=${encodeURIComponent(token)}`);
+            const res = await fetch('/api/admin/telegram/status');
             const data = await res.json();
             setStatus(data);
         } catch {

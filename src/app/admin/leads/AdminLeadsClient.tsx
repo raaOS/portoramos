@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
-import AdminTable from '../components/AdminTable';
+import AdminTable, { type Column } from '../components/AdminTable';
 import { ExternalLink, MessageSquare } from 'lucide-react';
 
 
@@ -38,7 +38,7 @@ export default function AdminLeadsClient() {
         }
     };
 
-    const columns: any[] = [
+    const columns: Column<Lead>[] = [
         {
             key: 'createdAt',
             label: 'Tanggal',

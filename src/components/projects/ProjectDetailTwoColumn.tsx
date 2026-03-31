@@ -1,9 +1,8 @@
 'use client';
-
-import { useState, useMemo, useCallback, useSyncExternalStore } from 'react';
+  
+import { useMemo, useCallback, useSyncExternalStore } from 'react';
 import type { Project, GalleryItem } from '@/types/projects';
 import { motion } from 'framer-motion';
-import dynamic from 'next/dynamic';
 import LightboxGallery from '@/components/ui/LightboxGallery';
 import { useProjectDetail } from './project-detail/hooks';
 import {

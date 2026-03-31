@@ -29,7 +29,8 @@ import {
   Tag,
   Music,
   Image as ImageIcon,
-  Archive
+  Archive,
+  type LucideIcon
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -46,7 +47,7 @@ interface AdminLayoutProps {
 interface NavItem {
   href: string;
   label: string;
-  icon: React.ElementType<any>;
+  icon: LucideIcon;
   color: string;
   bg: string;
   children?: NavItem[];
@@ -197,7 +198,7 @@ function AdminLayoutContent({
 
   // Icon wrapper component to avoid type issues with Lucide icons
    
-  const NavIcon = ({ icon: IconComponent, className }: { icon: any; className?: string }) => {
+  const NavIcon = ({ icon: IconComponent, className }: { icon: LucideIcon; className?: string }) => {
     return <IconComponent className={className || ''} aria-hidden="true" />;
   };
 

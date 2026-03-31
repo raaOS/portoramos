@@ -1,4 +1,3 @@
-/* @ts-nocheck */
 /**
  * Real-time Sync Service - Hemat Bandwidth
  * 
@@ -12,17 +11,14 @@
  */
 
 import { useEffect, useRef, useCallback } from 'react';
+import type { DataSnapshot, Database, DatabaseReference } from 'firebase/database';
 
-// Type declarations for Firebase SDK (loaded dynamically in browser)
-type FirebaseDatabase = any;
-type OnValueFn = any;
-type RefFn = any;
-type OffFn = any;
+type FirebaseDatabaseModule = typeof import('firebase/database');
 
-let db: FirebaseDatabase | null = null;
-let onValueFn: OnValueFn | null = null;
-let refFn: RefFn | null = null;
-let offFn: OffFn | null = null;
+let db: Database | null = null;
+let onValueFn: FirebaseDatabaseModule['onValue'] | null = null;
+let refFn: FirebaseDatabaseModule['ref'] | null = null;
+let offFn: FirebaseDatabaseModule['off'] | null = null;
 
 // Lock untuk mencegah multiple parallel initFirebaseClient calls
 let initPromise: Promise<boolean> | null = null;
@@ -125,8 +121,6 @@ interface UseRealtimeSyncOptions {
     enabled?: boolean;
 }
 
-type Snapshot = { val: () => unknown };
-
 /**
  * Hook untuk listen lastUpdated timestamp dari Firebase.
  * Trigger onUpdate hanya kalau timestamp berubah (ada CRUD).
@@ -151,10 +145,10 @@ export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: Use
     const mountedRef = useRef(true);
     const setupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
-    const listenerRef = useRef<any>(null);
-    const lastUpdatedRefPath = useRef<any>(null);
+    const listenerRef = useRef<((snapshot: DataSnapshot) => void) | null>(null);
+    const lastUpdatedRefPath = useRef<DatabaseReference | null>(null);
 
-    const handleTimestampChange = useCallback((snapshot: Snapshot) => {
+    const handleTimestampChange = useCallback((snapshot: DataSnapshot) => {
         // GUARD: Check mounted dan active
         if (!mountedRef.current || !isActiveRef.current) return;
         
@@ -197,7 +191,7 @@ export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: Use
             if (offFn && lastUpdatedRefPath.current && listenerRef.current) {
                 try {
                     offFn(lastUpdatedRefPath.current, 'value', listenerRef.current);
-                } catch (e) {
+                } catch {
                     // Ignore cleanup errors
                 }
             }
@@ -206,7 +200,7 @@ export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: Use
             if (unsubscribeRef.current) {
                 try {
                     unsubscribeRef.current();
-                } catch (e) {
+                } catch {
                     // Ignore cleanup errors
                 }
                 unsubscribeRef.current = null;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTelegramConfigSafe } from '@/lib/telegram';
+import { getTelegramConfigSafe, isValidTelegramWebhookSecret } from '@/lib/telegram';
 import { checkRateLimit } from '@/lib/telegram/rateLimiter';
 import { validateWebhookData } from '@/lib/telegram/validators';
 import { checkIsAdmin, logWebhookDebug } from '@/lib/telegram/helpers';
@@ -53,6 +53,14 @@ export async function POST(request: Request) {
         }
         
         const { botToken, chatId: adminChatId, groupId } = fullConfig;
+        const providedSecret = request.headers.get('x-telegram-bot-api-secret-token');
+
+        if (!isValidTelegramWebhookSecret(botToken, providedSecret)) {
+            return NextResponse.json(
+                { error: 'Unauthorized webhook request' },
+                { status: 401 }
+            );
+        }
 
         // Parse and validate body
         let body: unknown;

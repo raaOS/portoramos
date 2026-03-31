@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTelegramConfig } from '@/lib/telegram';
+import { buildTelegramWebhookSecret, getTelegramConfigInternal } from '@/lib/telegram';
 import { validateAdminRequest } from '@/lib/auth';
 import { telegramWebhookSchema } from '@/lib/validations';
 import { validationError } from '@/lib/api-response';
@@ -17,18 +17,22 @@ export async function POST(request: NextRequest) {
         }
 
         const { url } = validation.data;
-        const { botToken } = await getTelegramConfig();
+        const { botToken } = await getTelegramConfigInternal();
 
         if (!botToken) {
             return NextResponse.json({ error: 'Bot token not configured' }, { status: 400 });
         }
 
         const webhookUrl = `${url}/api/webhook/telegram`;
+        const secretToken = buildTelegramWebhookSecret(botToken);
 
         const res = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: webhookUrl })
+            body: JSON.stringify({
+                url: webhookUrl,
+                secret_token: secretToken
+            })
         });
 
         const data = await res.json();
@@ -43,10 +47,15 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
     try {
-        const { botToken } = await getTelegramConfig();
+        const { botToken } = await getTelegramConfigInternal();
         if (!botToken) return NextResponse.json({ error: 'No token' }, { status: 400 });
 
-        const res = await fetch(`https://api.telegram.org/bot${botToken}/deleteWebhook`);
+        const dropPendingUpdates = request.nextUrl.searchParams.get('drop_pending_updates') === 'true';
+        const res = await fetch(`https://api.telegram.org/bot${botToken}/deleteWebhook`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ drop_pending_updates: dropPendingUpdates })
+        });
         const data = await res.json();
 
         return NextResponse.json(data);
@@ -61,7 +70,7 @@ export async function GET(request: NextRequest) {
     }
     // Check webhook info
     try {
-        const { botToken } = await getTelegramConfig();
+        const { botToken } = await getTelegramConfigInternal();
         if (!botToken) return NextResponse.json({ error: 'No token' }, { status: 400 });
 
         const res = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);

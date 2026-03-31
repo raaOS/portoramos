@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdminAuth } from '@/lib/auth';
+import { validateAdminRequest } from '@/lib/auth';
+import { buildTelegramWebhookSecret } from '@/lib/telegram';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -12,7 +13,7 @@ interface WebhookInfo {
 
 // GET - Check current webhook status
 export async function GET(request: NextRequest) {
-    if (!checkAdminAuth(request)) {
+    if (!(await validateAdminRequest(request, { checkCsrf: false }))) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -62,8 +63,8 @@ export async function GET(request: NextRequest) {
 
 // POST - Fix/set the webhook URL
 export async function POST(request: NextRequest) {
-    if (!checkAdminAuth(request)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await validateAdminRequest(request))) {
+        return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     if (!BOT_TOKEN) {
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || `https://${request.headers.get('host')}`;
     const webhookUrl = `${baseUrl}/api/webhook/telegram`;
+    const secretToken = buildTelegramWebhookSecret(BOT_TOKEN);
 
     try {
         // Set the webhook
@@ -80,6 +82,7 @@ export async function POST(request: NextRequest) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 url: webhookUrl,
+                secret_token: secretToken,
                 max_connections: 40,
                 allowed_updates: ['message', 'callback_query']
             })

@@ -34,7 +34,6 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
     const { bringToFront: bringToFrontZIndex } = useUnifiedZIndex();
     const [bouncingDocId, setBouncingDocId] = useState<string | null>(null);
     const { playOpen, playClose } = useSystemSound();
-    const [isInitialized, setIsInitialized] = useState(false);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const persistTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isPersistingRef = useRef(false);
@@ -108,7 +107,6 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
                     };
                 });
             });
-            setIsInitialized(true);
         };
 
         // Using queueMicrotask to avoid synchronous setState in effect body warning
@@ -417,25 +415,26 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
     }, [saveWindowPreference, isAdmin, csrfToken]);
 
     const togglePin = useCallback((id: string) => {
-        setWindows(prev => prev.map(w => {
-            if (w.id === id) {
-                const isPinned = !w.isPinned;
-                if (isPinned) {
-                    saveWindowPreference(id, {
-                        x: w.initialPosition?.x || 0,
-                        y: w.initialPosition?.y || 0,
-                        width: w.width,
-                        height: w.height,
-                        isOpenByDefault: true
-                    });
-                } else {
-                    saveWindowPreference(id, { isOpenByDefault: false });
-                }
-                return { ...w, isPinned };
-            }
-            return w;
-        }));
-    }, [saveWindowPreference]);
+        const targetWindow = windows.find(w => w.id === id);
+        if (!targetWindow) return;
+
+        const nextPinned = !targetWindow.isPinned;
+        setWindows(prev => prev.map(w => (
+            w.id === id ? { ...w, isPinned: nextPinned } : w
+        )));
+
+        if (nextPinned) {
+            void saveWindowPreference(id, {
+                x: targetWindow.initialPosition?.x || 0,
+                y: targetWindow.initialPosition?.y || 0,
+                width: targetWindow.width,
+                height: targetWindow.height,
+                isOpenByDefault: true
+            });
+        } else {
+            void saveWindowPreference(id, { isOpenByDefault: false });
+        }
+    }, [saveWindowPreference, windows]);
 
     const resetWindows = useCallback(() => {
         setWindows(prev => prev.map(w => ({ ...w, isOpen: false, isMinimized: false, isMaximized: false })));

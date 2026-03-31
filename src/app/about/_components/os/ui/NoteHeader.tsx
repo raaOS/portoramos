@@ -13,9 +13,6 @@ interface NoteHeaderProps {
 }
 
 export const NoteHeader = ({
-    color,
-    colors,
-    onColorChange,
     onDelete,
     onToggleCollapse,
     isPinned,

@@ -13,8 +13,7 @@ export async function allProjectsAsync(): Promise<Project[]> {
 
 export async function getProjectBySlugAsync(slug: string): Promise<Project | null> {
   try {
-    const { projects } = await projectService.getProjects();
-    const project = projects.find(p => p.slug === slug);
+    const project = await projectService.getProjectBySlug(slug);
     if (project && project.status === 'draft') return null;
     return project || null;
   } catch {

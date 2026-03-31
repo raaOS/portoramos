@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
+import { validateConfig } from '@/lib/telegram';
 import { telegramStatusSchema } from '@/lib/validations';
 import { validationError } from '@/lib/api-response';
 
@@ -13,7 +14,13 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const token = searchParams.get('token');
+    const tokenParam = searchParams.get('token');
+
+    let token = tokenParam;
+    if (!token) {
+        const validation = validateConfig();
+        token = validation.valid ? validation.config.botToken : null;
+    }
 
     const validation = telegramStatusSchema.safeParse({ token });
     if (!validation.success) {

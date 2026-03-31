@@ -3,7 +3,7 @@
 import { ReactNode } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 
-interface Column<T = Record<string, unknown>> {
+export interface Column<T extends Record<string, unknown> = Record<string, unknown>> {
   key: string;
   label: string;
   sortable?: boolean;
@@ -11,20 +11,20 @@ interface Column<T = Record<string, unknown>> {
   className?: string;
 }
 
-interface AdminTableProps {
-  columns: Column[];
-  data?: Record<string, unknown>[];
+interface AdminTableProps<T extends Record<string, unknown> = Record<string, unknown>> {
+  columns: Column<T>[];
+  data?: T[];
   loading?: boolean;
   emptyMessage?: string;
   onSort?: (key: string, direction: 'asc' | 'desc') => void;
   sortKey?: string;
   sortDirection?: 'asc' | 'desc';
   className?: string;
-  onEdit?: (item: Record<string, unknown>) => void;
+  onEdit?: (item: T) => void;
   onDelete?: (id: number) => void;
 }
 
-export default function AdminTable({
+export default function AdminTable<T extends Record<string, unknown> = Record<string, unknown>>({
   columns,
   data = [],
   loading = false,
@@ -35,7 +35,7 @@ export default function AdminTable({
   className = '',
   onEdit,
   onDelete
-}: AdminTableProps) {
+}: AdminTableProps<T>) {
   const handleSort = (key: string) => {
     if (!onSort) return;
 

@@ -2,33 +2,14 @@
 
 import React from 'react';
 import { RotateCcw, Circle, Sparkles, Search, Lightbulb, Palette, GitPullRequest, FileCheck } from 'lucide-react';
-
-interface SubStep {
-  id: string;
-  title: string;
-  description: string;
-  status?: 'default' | 'in-progress' | 'completed' | 'pending';
-}
-
-interface WorkflowStep {
-  id: string;
-  number: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  type: 'phase' | 'decision' | 'terminator';
-  color: 'amber' | 'blue' | 'purple' | 'rose' | 'emerald';
-  icon: string;
-  subSteps: SubStep[];
-  nextSteps: string[];
-  loopTargets: string[];
-}
+import type { LucideIcon } from 'lucide-react';
+import type { WorkflowStep, WorkflowSubStep } from '@/types/about';
 
 interface FlowchartProcessProps {
   workflowSteps: WorkflowStep[];
 }
 
-const iconMap: Record<string, React.ElementType<any>> = {
+const iconMap: Record<string, LucideIcon> = {
   Search,
   Lightbulb,
   Palette,
@@ -48,7 +29,7 @@ const CompactWorkflow = ({ steps }: { steps: WorkflowStep[] }) => {
   }
 
   const PhaseCard = ({ step, isLast }: { step: WorkflowStep; isLast: boolean }) => {
-    const Icon: any = iconMap[step.icon] || Sparkles;
+    const Icon = (iconMap[step.icon] ?? Sparkles) as LucideIcon;
     const colorClasses = {
       amber: 'bg-amber-100 border-amber-400 text-amber-800',
       blue: 'bg-blue-100 border-blue-400 text-blue-800',
@@ -108,7 +89,7 @@ const CompactWorkflow = ({ steps }: { steps: WorkflowStep[] }) => {
     phaseNum,
     isLast 
   }: { 
-    sub: SubStep; 
+    sub: WorkflowSubStep; 
     color: string; 
     phaseNum: string;
     isLast: boolean;

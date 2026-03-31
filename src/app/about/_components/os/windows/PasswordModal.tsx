@@ -15,6 +15,7 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
     const [pin, setPin] = useState(['', '', '', '']);
     const [isVerifying, setIsVerifying] = useState(false);
     const [error, setError] = useState(false);
+    const [csrfToken, setCsrfToken] = useState('');
     const inputRefs = React.useMemo(() => [React.createRef<HTMLInputElement>(), React.createRef<HTMLInputElement>(), React.createRef<HTMLInputElement>(), React.createRef<HTMLInputElement>()], []);
 
     const [mounted, setMounted] = useState(false);
@@ -27,6 +28,19 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
         if (isOpen) {
             setPin(['', '', '', '']);
             setError(false);
+            void fetch('/api/os/verify-password', {
+                method: 'GET',
+                credentials: 'include'
+            })
+                .then(async (response) => {
+                    const data = await response.json().catch(() => null);
+                    if (data?.csrfToken) {
+                        setCsrfToken(data.csrfToken);
+                    }
+                })
+                .catch((fetchError) => {
+                    console.error('Failed to initialize password verification', fetchError);
+                });
             const timer = setTimeout(() => {
                 const firstInput = inputRefs[0].current;
                 if (firstInput) firstInput.focus();
@@ -65,7 +79,11 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
         try {
             const response = await fetch('/api/os/verify-password', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken
+                },
+                credentials: 'include',
                 body: JSON.stringify({ password: finalPin }),
             });
 

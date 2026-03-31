@@ -4,13 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { sanitize } from '@/lib/security/sanitization';
 
 import { m, DragControls } from 'framer-motion';
-import dynamic from 'next/dynamic';
-
-// Lazy load PasswordModal - only needed when editing locked notes
-const PasswordModal = dynamic(() => import('../../windows/PasswordModal'), {
-    loading: () => null,
-    ssr: false
-});
 
 export interface NoteData {
     id: string;
@@ -61,7 +54,7 @@ const DEFAULT_FONT = 'var(--font-handwritten, "Comic Sans MS", "Chalkboard SE", 
 import { NoteHeader } from '../NoteHeader';
 import { NoteFooter } from '../NoteFooter';
 
-export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, onAdd, dragControls, isAdmin = false, onFocus, onResizeStart, isResizing = false }: StickyNoteItemProps) {
+export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDelete, onRestore, dragControls, isAdmin = false, onFocus, onResizeStart }: StickyNoteItemProps) {
     const textAreaRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [localSize, setLocalSize] = useState({ width: note.width || 280, height: note.height || 280 });
@@ -82,9 +75,10 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
     // Initial load sync - very important for rendering HTML from server on first paint
     useEffect(() => {
         if (textAreaRef.current && note.text) {
-            if (textAreaRef.current.innerHTML !== note.text) {
-                textAreaRef.current.innerHTML = sanitize.richText(note.text);
-                innerContentRef.current = note.text;
+            const sanitizedText = sanitize.richText(note.text);
+            if (textAreaRef.current.innerHTML !== sanitizedText) {
+                textAreaRef.current.innerHTML = sanitizedText;
+                innerContentRef.current = sanitizedText;
             }
         }
     }, [note.text]);
@@ -93,9 +87,10 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
     useEffect(() => {
         if (textAreaRef.current) {
             const currentDOM = textAreaRef.current.innerHTML;
-            if (currentDOM !== note.text) {
-                textAreaRef.current.innerHTML = sanitize.richText(note.text) || '<span class="text-gray-400 italic">Empty note...</span>';
-                innerContentRef.current = note.text;
+            const sanitizedText = sanitize.richText(note.text);
+            if (currentDOM !== sanitizedText) {
+                textAreaRef.current.innerHTML = sanitizedText || '<span>Empty note...</span>';
+                innerContentRef.current = sanitizedText;
             }
         }
     }, [note.text, note.isCollapsed]);
@@ -205,8 +200,8 @@ export default function StickyNoteItem({ note, onUpdate, onDelete, onPermanentDe
                             onMouseDown={(e) => { e.stopPropagation(); onFocus?.(); }}
                             onDragStart={(e) => e.preventDefault()}
                             onPaste={handlePaste}
-                            dangerouslySetInnerHTML={{ __html: sanitize.richText(note.text) || '<span class="text-gray-400 italic">Empty note...</span>' }}
-                            className={`w-full h-full bg-transparent border-none outline-none resize-none text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto cursor-default`}
+                            dangerouslySetInnerHTML={{ __html: sanitize.richText(note.text) || '<span>Empty note...</span>' }}
+                            className={`sticky-note-content w-full h-full bg-transparent border-none outline-none resize-none text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto cursor-default`}
                             data-lenis-prevent
                             style={{
                                 minHeight: '100px',

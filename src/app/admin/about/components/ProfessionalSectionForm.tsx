@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import type { AboutHero } from '@/types/about';
 
 interface MottoData {
     badge?: string;
@@ -12,7 +13,7 @@ interface BioData {
 }
 
 interface AvailabilityData {
-    status?: string;
+    status?: NonNullable<AboutHero['availability']>['status'];
     text?: string;
 }
 
@@ -29,8 +30,28 @@ interface ProfessionalSectionFormProps {
     data: ProfessionalData;
     heroData: HeroData;
     projects?: unknown[]; // Kept for API compatibility but not used
-    onUpdate: (data: any) => void | Promise<void>; // Using any for compatibility
+    onUpdate: (data: ProfessionalSectionUpdatePayload) => void | Promise<void>;
 }
+
+interface ProfessionalSectionUpdatePayload {
+    professional: {
+        motto: {
+            badge: string;
+            quote: string;
+        };
+        bio: {
+            content: string;
+        };
+    };
+    hero: {
+        availability: {
+            status: NonNullable<AboutHero['availability']>['status'];
+            text: string;
+        };
+    };
+}
+
+type AvailabilityStatus = NonNullable<AboutHero['availability']>['status'];
 
 export default function ProfessionalSectionForm({
     data,
@@ -38,7 +59,13 @@ export default function ProfessionalSectionForm({
     projects: _projects,
     onUpdate
 }: ProfessionalSectionFormProps) {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        mottoBadge: string;
+        mottoQuote: string;
+        bioContent: string;
+        availStatus: AvailabilityStatus;
+        availText: string;
+    }>({
         mottoBadge: data?.motto?.badge || '',
         mottoQuote: data?.motto?.quote || '',
         bioContent: data?.bio?.content || '',
@@ -86,7 +113,7 @@ export default function ProfessionalSectionForm({
                                 <label className="block text-sm font-medium text-gray-700">Status</label>
                                 <select
                                     value={formData.availStatus}
-                                    onChange={(e) => setFormData({ ...formData, availStatus: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, availStatus: e.target.value as AvailabilityStatus })}
                                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                 >
                                     <option value="available">Available (Green)</option>

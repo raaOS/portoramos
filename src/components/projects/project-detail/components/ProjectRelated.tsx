@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, useSyncExternalStore } from 'react';
-// Note: columnBProjects is computed but not currently used (reserved for future two-column layout)
 import { motion } from 'framer-motion';
 import type { Project } from '@/types/projects';
 import MasonryGrid from '@/components/layout/MasonryGrid';
@@ -80,13 +79,10 @@ interface ProjectRelatedProps {
 export function ProjectRelated({ projects }: ProjectRelatedProps) {
     const { displayedProjects, isLoading, observerTarget } = useInfiniteProjects(projects);
 
-    // FIX (Point 2): Use Even/Odd logic
-    const { columnAProjects, columnBProjects } = useMemo(() => {
-        return {
-            columnAProjects: displayedProjects.filter((_, idx) => idx % 2 !== 0),
-            columnBProjects: displayedProjects.filter((_, idx) => idx % 2 === 0)
-        };
-    }, [displayedProjects]);
+    const columnAProjects = useMemo(
+        () => displayedProjects.filter((_, idx) => idx % 2 !== 0),
+        [displayedProjects]
+    );
 
     return (
         <>

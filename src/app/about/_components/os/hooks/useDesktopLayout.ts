@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { AboutData } from "@/types/about";
-import { getIconPosition, saveIconPosition, loadPositions, loadSessionPositions, saveSessionPositions } from "../utils/positionSync";
+import { getIconPosition, saveIconPosition, loadPositions, loadSessionPositions } from "../utils/positionSync";
 import { useLayoutPersistence } from "../contexts/LayoutPersistenceContext";
 
 interface UseDesktopLayoutProps {

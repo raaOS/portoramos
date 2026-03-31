@@ -5,6 +5,121 @@ export function sanitizeInput(input: string): string {
         .substring(0, 1000) // Limit length
 }
 
+const ALLOWED_RICH_TEXT_TAGS = new Set([
+    'b',
+    'strong',
+    'i',
+    'em',
+    'u',
+    's',
+    'br',
+    'p',
+    'div',
+    'span',
+    'ul',
+    'ol',
+    'li',
+    'h1',
+    'h2',
+    'h3',
+    'input',
+]);
+
+const BLOCKED_RICH_TEXT_TAGS = new Set([
+    'script',
+    'style',
+    'iframe',
+    'object',
+    'embed',
+    'applet',
+    'meta',
+    'link',
+    'base',
+    'form',
+]);
+
+function sanitizeRichTextWithDom(input: string): string {
+    if (typeof DOMParser === 'undefined' || typeof document === 'undefined') {
+        return sanitize.html(input);
+    }
+
+    const parser = new DOMParser();
+    const parsed = parser.parseFromString(`<div>${input}</div>`, 'text/html');
+    const sourceRoot = parsed.body.firstElementChild;
+
+    if (!sourceRoot) {
+        return '';
+    }
+
+    const cleanDoc = document.implementation.createHTMLDocument('');
+    const cleanRoot = cleanDoc.createElement('div');
+
+    const sanitizeNode = (node: Node): Node | null => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            return cleanDoc.createTextNode(node.textContent || '');
+        }
+
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+            return null;
+        }
+
+        const element = node as HTMLElement;
+        const tag = element.tagName.toLowerCase();
+
+        if (BLOCKED_RICH_TEXT_TAGS.has(tag)) {
+            return cleanDoc.createTextNode(element.textContent || '');
+        }
+
+        const sanitizedChildren = Array.from(element.childNodes)
+            .map(child => sanitizeNode(child))
+            .filter((child): child is Node => child !== null);
+
+        if (!ALLOWED_RICH_TEXT_TAGS.has(tag)) {
+            const fragment = cleanDoc.createDocumentFragment();
+            sanitizedChildren.forEach(child => fragment.appendChild(child));
+            return fragment;
+        }
+
+        const sanitizedElement = cleanDoc.createElement(tag);
+
+        if (tag === 'input') {
+            const inputType = (element.getAttribute('type') || '').toLowerCase();
+            if (inputType !== 'checkbox') {
+                return cleanDoc.createTextNode('');
+            }
+
+            sanitizedElement.setAttribute('type', 'checkbox');
+            sanitizedElement.setAttribute('disabled', '');
+            if (element.hasAttribute('checked')) {
+                sanitizedElement.setAttribute('checked', '');
+            }
+            if (element.hasAttribute('data-note-checklist-item')) {
+                sanitizedElement.setAttribute('data-note-checklist-item', 'true');
+            }
+        }
+
+        if (tag === 'div' && element.hasAttribute('data-note-checklist')) {
+            sanitizedElement.setAttribute('data-note-checklist', 'true');
+        }
+
+        if (tag === 'span' && element.hasAttribute('data-note-checklist-label')) {
+            sanitizedElement.setAttribute('data-note-checklist-label', 'true');
+        }
+
+        sanitizedChildren.forEach(child => sanitizedElement.appendChild(child));
+        return sanitizedElement;
+    };
+
+    Array.from(sourceRoot.childNodes).forEach(node => {
+        const cleanNode = sanitizeNode(node);
+        if (cleanNode) {
+            cleanRoot.appendChild(cleanNode);
+        }
+    });
+
+    return cleanRoot.innerHTML.substring(0, 50000);
+}
+
 /**
  * Set of utility functions for sanitizing user input.
  */
@@ -32,15 +147,8 @@ export const sanitize = {
      */
     richText: (input: string): string => {
         if (typeof input !== 'string') return ''
-        
-        // Strip dangerous tags completely
-        let clean = input.replace(/<\/?(script|iframe|object|embed|applet|meta|link|style|base|form)[^>]*>/gi, '');
-        
-        // Strip out inline event handlers (onclick, onload, etc.) and javascript: protocols
-        clean = clean.replace(/(\b)(on\w+)\s*=/gi, '$1data-removed-event=');
-        clean = clean.replace(/href\s*=\s*(['"]?)javascript:/gi, 'href=$1#');
-        
-        return clean.substring(0, 50000);
+
+        return sanitizeRichTextWithDom(input);
     },
 
     email: (input: string): string => {

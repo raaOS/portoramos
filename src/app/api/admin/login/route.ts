@@ -4,6 +4,7 @@ import { sendTelegramAlert, sendTelegramToGroup } from '@/lib/telegram';
 import { generateCSRFToken, validateCSRFToken } from '@/lib/security';
 import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
 import { cookies } from 'next/headers';
+import { getClientIdentifier } from '@/lib/security/request';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,15 +13,8 @@ const MAX_ATTEMPTS_PER_WINDOW = 3;
 const RATE_LIMIT_WINDOW = 5 * 60 * 1000;  // 5 menit
 const BLOCK_DURATION = 30 * 60 * 1000;    // 30 menit
 
-// Google Maps API Key
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-function getClientIdentifier(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
-  const userAgent = request.headers.get('user-agent') || 'unknown';
-  return `${ip}|${userAgent}`;
-}
+// Prefer server-only key, keep public fallback for backward compatibility.
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 function parseUserAgent(ua: string) {
   let os = 'Unknown OS';
@@ -160,20 +154,14 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies();
     const sessionCsrfToken = cookieStore.get('csrf_token')?.value;
 
-    // Debug logging
-    console.log('[CSRF Debug] Header token:', csrfToken ? 'present' : 'missing');
-    console.log('[CSRF Debug] Cookie token:', sessionCsrfToken ? 'present' : 'missing');
-
     if (!csrfToken || !sessionCsrfToken) {
-      console.log('[CSRF Debug] Missing token - header:', !!csrfToken, 'cookie:', !!sessionCsrfToken);
       return NextResponse.json(
-        { error: 'Invalid or missing CSRF token', debug: { hasHeader: !!csrfToken, hasCookie: !!sessionCsrfToken } },
+        { error: 'Invalid or missing CSRF token' },
         { status: 403 }
       );
     }
 
     const isValid = validateCSRFToken(csrfToken, sessionCsrfToken);
-    console.log('[CSRF Debug] Validation result:', isValid);
 
     if (!isValid) {
       return NextResponse.json(
@@ -186,9 +174,8 @@ export async function POST(request: NextRequest) {
 
     // SKIP RATE LIMIT for test environment or with bypass header
     const isTestEnv = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === 'true';
-    const hasBypassHeader = request.headers.get('x-test-bypass') === 'true';
     
-    if (!isTestEnv && !hasBypassHeader) {
+    if (!isTestEnv) {
       // Firebase rate limiting (persisten di Vercel, tidak hilang saat cold start)
       const rateLimit = await checkFirebaseRateLimit(
         `login_${clientId}`,
@@ -333,9 +320,9 @@ ${locationInfo.text}
     return response;
 
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : String(error);
+    console.error('[Admin Login] Authentication failed:', error);
     return NextResponse.json(
-      { error: 'Authentication failed', details: msg },
+      { error: 'Authentication failed' },
       { status: 500 }
     );
   }

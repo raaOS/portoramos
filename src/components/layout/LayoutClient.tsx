@@ -2,15 +2,13 @@
 
 import React, { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
-import { LazyMotion, domAnimation, motion, AnimatePresence } from 'framer-motion';
+import { LazyMotion, domAnimation, AnimatePresence, m } from 'framer-motion';
 import Header from '@/components/shared/Header';
 import { WindowProvider } from '@/contexts/WindowContext';
 import GlobalDock from './GlobalDock';
 import WindowRenderer from './WindowRenderer';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import type { DockPreferences } from '@/types/about';
-import { m } from 'framer-motion';
-
 
 export default function LayoutClient({
     children,

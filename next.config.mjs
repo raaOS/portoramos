@@ -13,7 +13,7 @@ const nextConfig = {
   ],
   // Enable React Compiler for automatic optimization
   reactCompiler: true,
-  reactStrictMode: false,
+  reactStrictMode: true,
   compress: true,
   // ... (rest of the images config)
 
@@ -196,7 +196,7 @@ const nextConfig = {
           },
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
+            value: 'DENY'
           },
           {
             key: 'X-Content-Type-Options',

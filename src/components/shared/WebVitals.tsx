@@ -1,20 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
-
-// Type declarations for web-vitals (optional dependency)
-type Metric = {
-    name: string;
-    value: number;
-    id: string;
-    rating: 'good' | 'needs-improvement' | 'poor';
-};
+import type { Metric } from 'web-vitals';
 
 type ReportHandler = (metric: Metric) => void;
 
 /**
  * Web Vitals Monitoring Component
- * Tracks Core Web Vitals (LCP, FID, CLS) for performance monitoring
+ * Tracks Core Web Vitals (LCP, INP, CLS) for performance monitoring
  *
  * Note: Requires 'web-vitals' package to be installed
  * Install with: npm install web-vitals
@@ -29,8 +22,7 @@ export default function WebVitals() {
         if (!isEnabled) return;
 
         // Dynamically import web-vitals library (optional dependency)
-        import('web-vitals').then((webVitals: any) => {
-            const { getCLS, getFID, getFCP, getLCP, getTTFB } = webVitals;
+        import('web-vitals').then(({ onCLS, onFCP, onINP, onLCP, onTTFB }) => {
             // Report to console in development, could send to analytics in production
             const reportWebVital: ReportHandler = (metric) => {
                 // Send to analytics endpoint (optional)
@@ -50,11 +42,11 @@ export default function WebVitals() {
             };
 
             // Track all Core Web Vitals
-            getCLS(reportWebVital);
-            getFID(reportWebVital);
-            getFCP(reportWebVital);
-            getLCP(reportWebVital);
-            getTTFB(reportWebVital);
+            onCLS(reportWebVital);
+            onINP(reportWebVital);
+            onFCP(reportWebVital);
+            onLCP(reportWebVital);
+            onTTFB(reportWebVital);
         }).catch(() => {
             // Silently fail if web-vitals is not installed
         });

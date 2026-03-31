@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { m, LayoutGroup } from "framer-motion";
+import { m } from "framer-motion";
 import OSWindow from "../windows/Window";
 import { useDesktopWindowContext } from "../context/DesktopWindowContext";
 

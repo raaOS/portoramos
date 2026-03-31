@@ -68,6 +68,20 @@ function setProjectCache(key: string, data: unknown): void {
     projectCache.set(key, { data, timestamp: Date.now() });
 }
 
+function normalizeProject(project: Project): Project {
+    if (!project.galleryGroups?.length) {
+        return project;
+    }
+
+    return {
+        ...project,
+        galleryGroups: project.galleryGroups.map((group, index) => ({
+            ...group,
+            id: group.id || `${project.id}-group-${index}`
+        }))
+    };
+}
+
 /**
  * Clear all project caches setelah CRUD operations.
  * Dipanggil otomatis setelah create/update/delete.
@@ -137,7 +151,7 @@ export const projectService = {
 
                 const result = ProjectSchema.safeParse(p);
                 if (result.success) {
-                    validProjects.push(result.data as unknown as Project);
+                    validProjects.push(normalizeProject(result.data as unknown as Project));
                 } else {
                     console.warn(`[ProjectService] Validation Failed for project ${p.id || 'unknown'}:`, result.error.format());
                 }
@@ -165,6 +179,41 @@ export const projectService = {
                 projects: [],
                 lastUpdated: new Date().toISOString()
             };
+        }
+    },
+
+    async getProjectBySlug(slug: string, noCache = false): Promise<Project | null> {
+        const cacheKey = getProjectCacheKey(`project-slug:${slug}`);
+
+        if (!noCache) {
+            const cached = getFromProjectCache<Project | null>(cacheKey);
+            if (cached !== null) {
+                return cached;
+            }
+        }
+
+        try {
+            const projectSnap = await db.ref('projects').orderByChild('slug').equalTo(slug).once('value');
+            const projectMap = projectSnap.val() || {};
+            const project = Object.values(projectMap)[0] as Project | undefined;
+
+            if (!project) {
+                setProjectCache(cacheKey, null);
+                return null;
+            }
+
+            const validation = ProjectSchema.safeParse(project);
+            if (!validation.success) {
+                console.warn(`[ProjectService] Validation failed for slug ${slug}:`, validation.error.format());
+                return null;
+            }
+
+            const normalizedProject = normalizeProject(validation.data as unknown as Project);
+            setProjectCache(cacheKey, normalizedProject);
+            return normalizedProject;
+        } catch (error) {
+            console.error(`[ProjectService] Error loading project slug ${slug}:`, error);
+            return null;
         }
     },
 

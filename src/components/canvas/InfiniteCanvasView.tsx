@@ -33,10 +33,6 @@ function isVideoUrl(url: string): boolean {
     return /\.(mp4|webm|ogg)$/i.test(url)
 }
 
-function createSignature(items: CanvasItem[]): string {
-    return items.map((item) => `${item.key}:${item.project.id}`).join('|')
-}
-
 export default function InfiniteCanvasView({ projects }: Props) {
     const containerRef = useRef<HTMLDivElement>(null)
     const router = useRouter()
@@ -98,7 +94,6 @@ export default function InfiniteCanvasView({ projects }: Props) {
         const nextItems = nextState.items
         setRenderedItems(prev => {
             const prevKeys = new Set(prev.map(i => i.key))
-            const activeKeys = new Set(nextItems.map(i => i.key))
             
             // Only add new items that are not in the current rendered set
             const itemsToAdd = nextItems.filter(item => !prevKeys.has(item.key))
@@ -260,10 +255,12 @@ export default function InfiniteCanvasView({ projects }: Props) {
         }
 
         animationFrameRef.current = requestAnimationFrame(loop)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        syncVisibleItems()
+        const initialSyncFrame = requestAnimationFrame(() => {
+            syncVisibleItems()
+        })
 
         return () => {
+            cancelAnimationFrame(initialSyncFrame)
             cancelAnimationFrame(animationFrameRef.current)
         }
     }, [projects.length, syncVisibleItems, updateDomNodes])

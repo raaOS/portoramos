@@ -12,15 +12,7 @@ export async function GET(_request: NextRequest) {
 
   try {
     const config = await getTelegramConfigSafe();
-    
-    // Get internal token for clear pending updates
-    const { validateConfig } = await import('@/lib/telegram');
-    const validation = validateConfig();
-    
-    return NextResponse.json({
-      ...config,
-      _botToken: validation.valid ? validation.config.botToken : undefined
-    });
+    return NextResponse.json(config);
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ error: errorMsg }, { status: 500 });

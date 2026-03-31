@@ -33,7 +33,6 @@ interface WindowProps {
 }
 
 export default function OSWindow({
-    id,
     title,
     children,
     isOpen,
@@ -56,7 +55,7 @@ export default function OSWindow({
     onTogglePin,
     isAdmin = false,
     isFocused = false,
-    // animationVariant is reserved for future use (default: 'genie')
+    animationVariant: _animationVariant,
 }: WindowProps) {
     const windowRef = useRef<HTMLDivElement>(null);
     const isMobileWindow = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -138,6 +137,7 @@ export default function OSWindow({
         // PERFORMANCE FIX: Use requestAnimationFrame for throttled updates
         let rafId: number | null = null;
         let pendingSize = { width: 0, height: 0 };
+        const touchMoveOptions: AddEventListenerOptions = { passive: false };
 
         const handleMouseMove = (moveEvent: MouseEvent | TouchEvent) => {
             if (!resizeStartRef.current) return;
@@ -196,7 +196,7 @@ export default function OSWindow({
 
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
-        window.addEventListener('touchmove', handleMouseMove, { passive: false });
+        window.addEventListener('touchmove', handleMouseMove, touchMoveOptions);
         window.addEventListener('touchend', handleMouseUp);
 
         return () => {
@@ -205,7 +205,7 @@ export default function OSWindow({
             }
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
-            window.removeEventListener('touchmove', handleMouseMove, { passive: false } as any);
+            window.removeEventListener('touchmove', handleMouseMove, touchMoveOptions);
             window.removeEventListener('touchend', handleMouseUp);
         };
     }, [isResizing]); // ONLY depend on isResizing, NOT dynamicSize

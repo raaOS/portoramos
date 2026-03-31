@@ -3,7 +3,7 @@
 import type { Project } from '@/types/projects'
 import { useState, useEffect, useCallback, useRef, memo } from 'react'
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
-import { Heart, Eye, X, Maximize2, Film, Image as ImageIcon } from 'lucide-react'
+import { Heart, Eye, X, Image as ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 import Media from '@/components/shared/Media'
 
@@ -198,7 +198,7 @@ function MobilePreviewModal({ isOpen, onClose, project }: {
   )
 }
 
-export default function ProjectSplitView({ projects, tag }: ProjectSplitViewProps) {
+export default function ProjectSplitView({ projects, tag: _tag }: ProjectSplitViewProps) {
   const [activeProject, setActiveProject] = useState<Project | null>(projects[0] || null)
   const [isMobilePreviewOpen, setIsMobilePreviewOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)

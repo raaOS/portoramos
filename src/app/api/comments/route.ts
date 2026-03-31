@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 import { validateAdminRequest } from '@/lib/auth';
 import { db } from '@/lib/firebaseAdmin';
-import { commentSchema, validateCommentDepth } from '@/lib/validations';
+import { validateCommentDepth } from '@/lib/validations';
 import { success, badRequest, unauthorized, serverError, rateLimit } from '@/lib/api-response';
 import { z } from 'zod';
+import { sanitizeInput } from '@/lib/security/sanitization';
 
 interface Comment {
     id: string;
@@ -17,6 +18,15 @@ interface Comment {
     likedByMe?: boolean;
     replies?: Comment[];
 }
+
+const newCommentSchema = z.object({
+    id: z.string().min(1).max(100),
+    text: z.string().min(1).max(1000),
+    name: z.string().min(1).max(100),
+    time: z.string().optional(),
+    createdAt: z.string().optional(),
+    likes: z.number().int().min(0).optional(),
+}).strict();
 
 export async function GET(request: NextRequest) {
     try {
@@ -54,7 +64,8 @@ async function getBannedWords(): Promise<string[]> {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { slug, comments, website_url } = body;
+        const { slug, website_url } = body;
+        const incomingComment = body.comment ?? (Array.isArray(body.comments) ? body.comments[0] : undefined);
 
         // --- 1. HONEYPOT VALIDATION ---
         if (website_url) {
@@ -62,20 +73,26 @@ export async function POST(request: NextRequest) {
             return badRequest('Spam detected');
         }
 
-        if (!slug || !comments) {
-            return badRequest('Missing slug or comments');
+        if (!slug || !incomingComment) {
+            return badRequest('Missing slug or comment');
         }
 
-        // --- 2. VALIDATE COMMENTS STRUCTURE WITH ZOD ---
+        // --- 2. VALIDATE COMMENT STRUCTURE WITH ZOD ---
+        let commentToSave: Comment;
         try {
-            const commentArraySchema = z.array(commentSchema).max(1000, 'Too many comments');
-            commentArraySchema.parse(comments);
-            
-            // Validate depth for nested replies
-            for (const comment of comments) {
-                if (!validateCommentDepth(comment)) {
-                    return badRequest('Comment nesting too deep (max 3 levels)');
-                }
+            const parsedComment = newCommentSchema.parse(incomingComment);
+            commentToSave = {
+                ...parsedComment,
+                text: sanitizeInput(parsedComment.text),
+                name: sanitizeInput(parsedComment.name),
+                createdAt: parsedComment.createdAt || parsedComment.time || new Date().toISOString(),
+                time: parsedComment.createdAt || parsedComment.time || new Date().toISOString(),
+                likes: parsedComment.likes ?? 0,
+                replies: []
+            };
+
+            if (!validateCommentDepth(commentToSave)) {
+                return badRequest('Comment nesting too deep (max 3 levels)');
             }
         } catch (validationError) {
             if (validationError instanceof z.ZodError) {
@@ -84,43 +101,48 @@ export async function POST(request: NextRequest) {
             throw validationError;
         }
 
-        // --- 3. FLOOD CONTROL (RATE LIMITING) ---
-        const existingSnap = await db.ref(`comments/${slug}`).limitToLast(1).once('value');
-        const existingRaw: Comment[] = existingSnap.val() || [];
-
-        if (Array.isArray(comments) && comments.length > 0) {
-            const newLastComment = comments[comments.length - 1];
-            const authorName = newLastComment.name || newLastComment.author;
-
-            if (authorName && Array.isArray(existingRaw) && existingRaw.length > 0) {
-                const lastUserComment = existingRaw[0];
-                const isMatch = (lastUserComment.name === authorName) || (lastUserComment.author === authorName);
-
-                if (isMatch) {
-                    const lastTimeStr = lastUserComment.createdAt || lastUserComment.time;
-                    if (lastTimeStr) {
-                        const timeDiff = Date.now() - new Date(lastTimeStr).getTime();
-                        if (timeDiff < 5000) {
-                            return rateLimit(5, 'Please wait 5 seconds before posting again');
-                        }
-                    }
-                }
-            }
-        }
-
-        // --- 4. CONTENT MODERATION ---
+        // --- 3. CONTENT MODERATION ---
         const bannedWords = await getBannedWords();
-        const payloadString = JSON.stringify(comments).toLowerCase();
+        const payloadString = JSON.stringify(commentToSave).toLowerCase();
         const foundBadWord = bannedWords.find(word => payloadString.includes(word.toLowerCase()));
 
         if (foundBadWord) {
             return badRequest(`Comment contains restricted word: ${foundBadWord}`);
         }
 
-        // --- 5. SAVE TO FIREBASE ---
-        await db.ref(`comments/${slug}`).set(comments);
+        // --- 4. ATOMIC APPEND + FLOOD CONTROL ---
+        const commentsRef = db.ref(`comments/${slug}`);
+        let abortReason: 'flood' | null = null;
 
-        return success({ comments });
+        const transactionResult = await commentsRef.transaction((current: Comment[] | null) => {
+            const existingComments = Array.isArray(current) ? current : [];
+            const lastUserComment = existingComments[0];
+
+            if (lastUserComment) {
+                const isSameAuthor =
+                    lastUserComment.name === commentToSave.name ||
+                    lastUserComment.author === commentToSave.name;
+
+                if (isSameAuthor) {
+                    const lastTimeStr = lastUserComment.createdAt || lastUserComment.time;
+                    if (lastTimeStr) {
+                        const timeDiff = Date.now() - new Date(lastTimeStr).getTime();
+                        if (timeDiff < 5000) {
+                            abortReason = 'flood';
+                            return;
+                        }
+                    }
+                }
+            }
+
+            return [commentToSave, ...existingComments].slice(0, 1000);
+        }) as { committed?: boolean };
+
+        if (abortReason === 'flood' || transactionResult?.committed === false) {
+            return rateLimit(5, 'Please wait 5 seconds before posting again');
+        }
+
+        return success({ comment: commentToSave });
     } catch (error) {
         console.error('[API /comments POST] Error:', error);
         return serverError('Failed to save comments');

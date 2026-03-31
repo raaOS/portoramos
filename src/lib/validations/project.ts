@@ -1,6 +1,11 @@
 
 import { z } from 'zod';
 
+const nullableOptionalString = z.preprocess(
+    value => value === null ? undefined : value,
+    z.string().optional()
+);
+
 export const GalleryItemSchema = z.object({
     kind: z.enum(['image', 'video']),
     src: z.string(),
@@ -19,14 +24,14 @@ export const GalleryGroupSchema = z.object({
 });
 
 export const NarrativeSchema = z.object({
-    context: z.string().nullable().optional(),
-    challenge: z.string().nullable().optional(),
-    solution: z.string().nullable().optional(),
-    impact: z.string().nullable().optional(),
-    result: z.string().nullable().optional(),
-    concept: z.string().nullable().optional(),
-    process: z.string().nullable().optional(),
-    detail: z.string().nullable().optional(),
+    context: nullableOptionalString,
+    challenge: nullableOptionalString,
+    solution: nullableOptionalString,
+    impact: nullableOptionalString,
+    result: nullableOptionalString,
+    concept: nullableOptionalString,
+    process: nullableOptionalString,
+    detail: nullableOptionalString,
 });
 
 export const ComparisonSchema = z.object({

@@ -136,7 +136,7 @@ export default function FullPageChat({ contactInfo }: FullPageChatProps) {
     const { data: syncData } = useSWR(
         visitorId ? `/api/chat/sync?visitorId=${visitorId}` : null,
         fetcher,
-        { refreshInterval: 2500, revalidateOnFocus: true }
+        { refreshInterval: 3000, revalidateOnFocus: false }
     );
 
     // Timeout for typing indicator (max 30 seconds)

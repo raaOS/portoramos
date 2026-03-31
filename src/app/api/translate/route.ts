@@ -1,11 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { enforceRequestRateLimit } from '@/lib/security/request';
+import { z } from 'zod';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const MAX_TRANSLATE_REQUESTS = 20;
+const TRANSLATE_WINDOW_MS = 60 * 1000;
+const TRANSLATE_BLOCK_MS = 5 * 60 * 1000;
+
+const translatePayloadSchema = z.object({
+    text: z.string().max(5000).optional(),
+    targetLanguage: z.string().max(50).optional(),
+    fields: z.record(z.string(), z.string().max(5000)).optional(),
+});
 
 export async function POST(req: NextRequest) {
     try {
-        const { text, targetLanguage: _targetLanguage, fields } = await req.json();
+        const rateLimit = await enforceRequestRateLimit(
+            req,
+            'translate_post',
+            MAX_TRANSLATE_REQUESTS,
+            TRANSLATE_WINDOW_MS,
+            TRANSLATE_BLOCK_MS
+        );
+
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please try again later.', retryAfter: rateLimit.retryAfter },
+                { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+            );
+        }
+
+        const payload = translatePayloadSchema.safeParse(await req.json());
+        if (!payload.success) {
+            return NextResponse.json({ error: 'Invalid translation payload' }, { status: 400 });
+        }
+
+        const { text, targetLanguage: _targetLanguage, fields } = payload.data;
 
         // Mode 1: Translate multiple fields at once (object mode)
         // Mode 2: Translate a single text string

@@ -2,7 +2,6 @@ import { ContentService } from './contentService';
 import { Testimonial, TestimonialData } from '@/types/testimonial';
 import testimonialDataFallback from '@/data/testimonial.json';
 import { bucket } from '@/lib/firebaseAdmin';
-import crypto from 'crypto';
 
 // Counter untuk menghindari collision pada timestamp yang sama
 let idCounter = 0;

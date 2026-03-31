@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { m, AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Grid, LayoutList, Box } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 

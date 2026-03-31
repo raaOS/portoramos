@@ -77,7 +77,7 @@ export default function CommentSection({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slug: slug,
-          comments: updatedComments,
+          comment: newComment,
           website_url: '' // Anti-spam honeypot (must be empty)
         })
       });

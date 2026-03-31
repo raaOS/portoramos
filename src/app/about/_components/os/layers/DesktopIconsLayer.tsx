@@ -2,7 +2,7 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import { m, LayoutGroup } from "framer-motion";
+import { m } from "framer-motion";
 import DesktopIcon from "../ui/elements/DesktopIcon";
 import type { Project } from "@/types/projects";
 

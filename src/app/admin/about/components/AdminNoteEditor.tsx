@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { AdminNoteToolbar } from './AdminNoteToolbar';
+import { sanitize } from '@/lib/security/sanitization';
 
 interface AdminNoteEditorProps {
     value: string;
@@ -16,9 +17,10 @@ export const AdminNoteEditor = ({ value, onChange, fontSize, onFontSizeChange }:
     useEffect(() => {
         if (editorRef.current) {
             const currentDOM = editorRef.current.innerHTML;
-            if (currentDOM !== value) {
-                editorRef.current.innerHTML = value || '';
-                innerContentRef.current = value;
+            const sanitizedValue = sanitize.richText(value || '');
+            if (currentDOM !== sanitizedValue) {
+                editorRef.current.innerHTML = sanitizedValue;
+                innerContentRef.current = sanitizedValue;
             }
         }
     }, [value]);
@@ -33,7 +35,12 @@ export const AdminNoteEditor = ({ value, onChange, fontSize, onFontSizeChange }:
     };
 
     const handleBlur = () => {
-        onChange(innerContentRef.current);
+        const sanitizedValue = sanitize.richText(innerContentRef.current);
+        innerContentRef.current = sanitizedValue;
+        if (editorRef.current) {
+            editorRef.current.innerHTML = sanitizedValue;
+        }
+        onChange(sanitizedValue);
     };
 
     const execFormat = (command: string, val?: string) => {
@@ -46,7 +53,7 @@ export const AdminNoteEditor = ({ value, onChange, fontSize, onFontSizeChange }:
     };
 
     const insertChecklist = () => {
-        const html = '<div style="display: flex; align-items: flex-start; gap: 8px; margin: 4px 0;"><input type="checkbox" style="margin-top: 6px; accent-color: black; width: 16px; height: 16px;" /> <span>&nbsp;</span></div>';
+        const html = '<div data-note-checklist="true"><input type="checkbox" disabled data-note-checklist-item="true" /><span data-note-checklist-label="true">&nbsp;</span></div>';
         execFormat('insertHTML', html);
     };
 
@@ -65,6 +72,11 @@ export const AdminNoteEditor = ({ value, onChange, fontSize, onFontSizeChange }:
                 contentEditable={true}
                 onInput={handleContentChange}
                 onBlur={handleBlur}
+                onPaste={(event) => {
+                    event.preventDefault();
+                    const text = event.clipboardData.getData('text/plain');
+                    document.execCommand('insertText', false, text);
+                }}
                 className="w-full min-h-[160px] max-h-[400px] p-4 text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto focus:outline-none"
                 style={{
                     fontFamily: 'var(--font-handwritten, "Comic Sans MS", "Chalkboard SE", cursive)',

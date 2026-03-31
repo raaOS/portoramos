@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 export default function TelegramAdminPage() {
-  const [status, setStatus] = useState<{ isCorrect?: boolean; telegram?: { url?: string; pending_update_count?: number }; currentConfig?: { expectedWebhookUrl?: string } } | null>(null);
+  const [status, setStatus] = useState<{
+    isCorrect?: boolean;
+    telegram?: { url?: string; pending_update_count?: number };
+    currentConfig?: { expectedWebhookUrl?: string };
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const { isAdmin, csrfToken, isLoading: authLoading } = useAdminAuth();
 
-  // Redirect if not admin
   useEffect(() => {
     if (!authLoading && !isAdmin) {
       window.location.href = '/admin/login';
@@ -22,81 +25,87 @@ export default function TelegramAdminPage() {
       const res = await fetch('/api/debug/webhook-status');
       const data = await res.json();
       setStatus(data);
-    } catch (_e) {
-      setMessage('Error checking status: ' + (_e as Error).message);
+    } catch (error) {
+      setMessage(`Error checking status: ${(error as Error).message}`);
     }
     setLoading(false);
   };
 
   const fixWebhook = async () => {
     if (!csrfToken) {
-      setMessage('❌ CSRF token not available. Please login again.');
+      setMessage('CSRF token not available. Please login again.');
       return;
     }
+
     setLoading(true);
     setMessage('');
     try {
       const res = await fetch('/api/debug/webhook-status', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'x-csrf-token': csrfToken
         },
         credentials: 'include'
       });
       const data = await res.json();
+
       if (data.success) {
-        setMessage('✅ Webhook fixed successfully!');
+        setMessage('Webhook fixed successfully.');
         checkStatus();
       } else {
-        setMessage('❌ Failed: ' + (data.error || 'Unknown error'));
+        setMessage(`Failed: ${data.error || 'Unknown error'}`);
       }
-    } catch (_e) {
-      setMessage('❌ Error: ' + (_e as Error).message);
+    } catch (error) {
+      setMessage(`Error: ${(error as Error).message}`);
     }
     setLoading(false);
   };
 
   const clearPending = async () => {
+    if (!csrfToken) {
+      setMessage('CSRF token not available. Please login again.');
+      return;
+    }
+
     setLoading(true);
     setMessage('');
     try {
-      // Get bot token from config
-      const res = await fetch('/api/admin/telegram/config', {
+      const res = await fetch('/api/admin/telegram/webhook?drop_pending_updates=true', {
+        method: 'DELETE',
+        headers: {
+          'x-csrf-token': csrfToken
+        },
         credentials: 'include'
       });
-      const config = await res.json();
-      
-      if (config.configured && config._botToken) {
-        const clearRes = await fetch(`https://api.telegram.org/bot${config._botToken}/deleteWebhook?drop_pending_updates=true`);
-        const clearData = await clearRes.json();
-        if (clearData.ok) {
-          setMessage('✅ Pending updates cleared!');
-        } else {
-          setMessage('❌ Failed to clear: ' + clearData.description);
-        }
+      const data = await res.json();
+
+      if (data.ok) {
+        setMessage('Pending updates cleared.');
+      } else {
+        setMessage(`Failed to clear: ${data.description || data.error || 'Unknown error'}`);
       }
-    } catch (_e) {
-      setMessage('❌ Error: ' + (_e as Error).message);
+    } catch (error) {
+      setMessage(`Error: ${(error as Error).message}`);
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    // Use setTimeout to avoid synchronous setState in effect (cascading renders)
     const timer = setTimeout(() => {
       checkStatus();
     }, 0);
     return () => clearTimeout(timer);
   }, []);
 
-  // Show loading while checking auth
   if (authLoading || !isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">{authLoading ? 'Checking authentication...' : 'Redirecting to login...'}</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">
+            {authLoading ? 'Checking authentication...' : 'Redirecting to login...'}
+          </p>
         </div>
       </div>
     );
@@ -106,16 +115,22 @@ export default function TelegramAdminPage() {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Telegram Bot Admin</h1>
-        
+
         {message && (
-          <div className={`p-4 rounded-lg mb-4 ${message.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          <div
+            className={`p-4 rounded-lg mb-4 ${
+              message.toLowerCase().includes('success') || message.toLowerCase().includes('cleared')
+                ? 'bg-green-100 text-green-800'
+                : 'bg-red-100 text-red-800'
+            }`}
+          >
             {message}
           </div>
         )}
 
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Webhook Status</h2>
-          
+
           {status ? (
             <div className="space-y-2">
               <div className="flex justify-between">
@@ -133,7 +148,7 @@ export default function TelegramAdminPage() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Status:</span>
                 <span className={status.isCorrect ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
-                  {status.isCorrect ? '✅ CORRECT' : '❌ WRONG URL'}
+                  {status.isCorrect ? 'CORRECT' : 'WRONG URL'}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -150,18 +165,18 @@ export default function TelegramAdminPage() {
 
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Actions</h2>
-          
+
           <div className="space-y-3">
             <button
               onClick={fixWebhook}
               disabled={loading || status?.isCorrect}
               className={`w-full py-3 px-4 rounded-lg font-semibold ${
-                status?.isCorrect 
-                  ? 'bg-gray-300 cursor-not-allowed' 
+                status?.isCorrect
+                  ? 'bg-gray-300 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
             >
-              {loading ? 'Processing...' : status?.isCorrect ? '✅ Webhook Already Correct' : '🔧 Fix Webhook URL'}
+              {loading ? 'Processing...' : status?.isCorrect ? 'Webhook already correct' : 'Fix Webhook URL'}
             </button>
 
             {(status?.telegram?.pending_update_count ?? 0) > 0 && (
@@ -170,7 +185,7 @@ export default function TelegramAdminPage() {
                 disabled={loading}
                 className="w-full py-3 px-4 rounded-lg font-semibold bg-orange-600 hover:bg-orange-700 text-white"
               >
-                🧹 Clear {status?.telegram?.pending_update_count ?? 0} Pending Updates
+                Clear {status?.telegram?.pending_update_count ?? 0} Pending Updates
               </button>
             )}
 
@@ -179,7 +194,7 @@ export default function TelegramAdminPage() {
               disabled={loading}
               className="w-full py-3 px-4 rounded-lg font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800"
             >
-              🔄 Refresh Status
+              Refresh Status
             </button>
           </div>
         </div>
@@ -187,9 +202,9 @@ export default function TelegramAdminPage() {
         <div className="mt-6 text-sm text-gray-500">
           <p>Instructions:</p>
           <ol className="list-decimal list-inside mt-2 space-y-1">
-            <li>Click &quot;Fix Webhook URL&quot; if status shows ❌ WRONG URL</li>
-            <li>Click &quot;Clear Pending Updates&quot; if there are stuck messages</li>
-            <li>After fixing, reply from Telegram app should work!</li>
+            <li>Use "Fix Webhook URL" if the current URL does not match the expected endpoint.</li>
+            <li>Use "Clear Pending Updates" if Telegram messages are stuck in the queue.</li>
+            <li>Refresh status after changes to confirm the bot is healthy.</li>
           </ol>
         </div>
       </div>

@@ -14,6 +14,12 @@ interface PositionData {
   notes: Record<string, NotePosition>;
 }
 
+type PersistedWindowPosition = Partial<WindowPosition> | null | undefined;
+type PersistedIconPosition = Partial<IconPosition> | null | undefined;
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
 
 // Load dari localStorage (ADMIN only)
 export function loadPositions(): Partial<PositionData> {
@@ -36,7 +42,7 @@ export function loadSessionPositions(): Partial<PositionData> {
 }
 
 // Save session positions (VISITOR - deactivated for "refresh = reset" requirement)
-export function saveSessionPositions(data: Partial<PositionData>) {
+export function saveSessionPositions(_data: Partial<PositionData>) {
   // Visitor changes are no longer persisted to any storage
   return;
 }
@@ -67,7 +73,7 @@ export function clearVisitorPositions() {
 // Get position window
 export function getWindowPosition(
   id: string, 
-  firebaseData: any, 
+  firebaseData: PersistedWindowPosition,
   defaults: { x: number; y: number; width: number; height: number },
   isAdmin: boolean = false
 ): { x: number; y: number; width: number; height: number } {
@@ -78,12 +84,12 @@ export function getWindowPosition(
   }
   
   // 2. Cek Firebase (Sumber utama untuk visitor)
-  if (firebaseData?.x !== undefined) {
+  if (isFiniteNumber(firebaseData?.x) && isFiniteNumber(firebaseData?.y)) {
     return {
       x: firebaseData.x,
       y: firebaseData.y,
-      width: firebaseData.width || defaults.width,
-      height: firebaseData.height || defaults.height
+      width: isFiniteNumber(firebaseData.width) ? firebaseData.width : defaults.width,
+      height: isFiniteNumber(firebaseData.height) ? firebaseData.height : defaults.height
     };
   }
   
@@ -94,7 +100,7 @@ export function getWindowPosition(
 // Get position icon
 export function getIconPosition(
   id: string,
-  firebaseData: any,
+  firebaseData: PersistedIconPosition,
   defaults: { x: number; y: number },
   isAdmin: boolean = false
 ): { x: number; y: number } {
@@ -104,7 +110,7 @@ export function getIconPosition(
     if (local) return local;
   }
   
-  if (firebaseData?.x !== undefined) {
+  if (isFiniteNumber(firebaseData?.x) && isFiniteNumber(firebaseData?.y)) {
     return { x: firebaseData.x, y: firebaseData.y };
   }
   

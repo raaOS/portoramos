@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebaseAdmin';
 import { projectService } from '@/lib/services/projectService';
+import { enforceRequestRateLimit } from '@/lib/security/request';
+import { z } from 'zod';
 
 interface ProjectMetrics {
     likes: number;
@@ -10,6 +12,11 @@ interface ProjectMetrics {
 interface MetricsData {
     metrics: Record<string, ProjectMetrics>;
 }
+
+const metricsMutationSchema = z.object({
+    slug: z.string().min(1).max(200),
+    action: z.enum(['like', 'unlike', 'share'])
+});
 
 async function getMetricsData(): Promise<MetricsData> {
     try {
@@ -61,35 +68,45 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
+        const rateLimit = await enforceRequestRateLimit(request, 'metrics_mutation', 60, 60000, 60000);
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: 'Too many requests', retryAfter: rateLimit.retryAfter },
+                { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+            );
+        }
+
         const body = await request.json();
-        const { slug, action } = body; // action: 'like' | 'unlike' | 'share'
-
-        if (!slug || !action) {
-            return NextResponse.json({ error: 'Missing slug or action' }, { status: 400 });
+        const validation = metricsMutationSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json({ error: 'Invalid slug or action' }, { status: 400 });
         }
 
+        const { slug, action } = validation.data;
         const metricsRef = db.ref(`metrics/metrics/${slug}`);
-        const snap = await metricsRef.once('value');
-        let metrics = snap.val();
+        const fallbackMetrics = await getFallbackMetrics(slug);
+        let updatedMetrics: ProjectMetrics = fallbackMetrics;
 
-        // Initialize if not exists, using fallback data as baseline
-        if (!metrics) {
-            metrics = await getFallbackMetrics(slug);
-        }
+        await metricsRef.transaction((current: ProjectMetrics | null) => {
+            const base = current || fallbackMetrics;
+            const next = {
+                likes: base.likes || 0,
+                shares: base.shares || 0
+            };
 
-        // Update logic
-        if (action === 'like') {
-            metrics.likes = (metrics.likes || 0) + 1;
-        } else if (action === 'unlike') {
-            metrics.likes = Math.max(0, (metrics.likes || 0) - 1);
-        } else if (action === 'share') {
-            metrics.shares = (metrics.shares || 0) + 1;
-        }
+            if (action === 'like') {
+                next.likes += 1;
+            } else if (action === 'unlike') {
+                next.likes = Math.max(0, next.likes - 1);
+            } else if (action === 'share') {
+                next.shares += 1;
+            }
 
-        // Save to Firebase
-        await metricsRef.set(metrics);
+            updatedMetrics = next;
+            return next;
+        });
 
-        return NextResponse.json({ success: true, metrics });
+        return NextResponse.json({ success: true, metrics: updatedMetrics });
     } catch (error) {
         console.error('Error saving metrics:', error);
         return NextResponse.json({ error: 'Failed to save metrics' }, { status: 500 });

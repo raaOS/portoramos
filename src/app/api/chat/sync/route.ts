@@ -13,8 +13,9 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Missing visitorId' }, { status: 400 });
         }
 
-        // Rate limit: 20 requests per minute, block for 1 minute
-        const rateLimit = await checkFirebaseRateLimit(`chat_sync_${visitorId}`, 20, 60000, 60000);
+        // Rate limit: 40 requests per minute, block for 1 minute
+        // Keeps headroom above the client polling cadence and focus refetches.
+        const rateLimit = await checkFirebaseRateLimit(`chat_sync_${visitorId}`, 40, 60000, 60000);
         if (!rateLimit.allowed) {
             return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
         }

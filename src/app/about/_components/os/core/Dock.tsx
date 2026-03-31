@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { m, useMotionValue, useTransform, useSpring, MotionValue } from "framer-motion";
+import { m, useMotionValue, useTransform, useSpring, MotionValue, AnimatePresence, useScroll, useVelocity } from "framer-motion";
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { DockPreferences } from "@/types/about";
+import LiquidFilter from "@/components/shared/LiquidFilter";
 
 interface DockItemProps {
     id: string;
@@ -23,7 +24,6 @@ function DockItem({
     label, 
     onClick, 
     mouseX, 
-    isOpen = false, 
     shouldBounceExternal = false, 
     isMobile = false,
     popoverContent
@@ -49,16 +49,20 @@ function DockItem({
     const [isBouncing, setIsBouncing] = React.useState(false);
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
+    const triggerAction = () => {
+        playPop();
+        setIsBouncing(true);
+        setBounceKey(prev => prev + 1);
+        onClick();
+    };
+
     const handleClick = (e: React.MouseEvent) => {
         if (popoverContent) {
             e.stopPropagation();
             setIsPopoverOpen(!isPopoverOpen);
             return;
         }
-        playPop();
-        setIsBouncing(true);
-        setBounceKey(prev => prev + 1);
-        onClick();
+        triggerAction();
     };
 
     React.useEffect(() => {
@@ -113,7 +117,7 @@ function DockItem({
                     if (popoverContent) {
                         setIsPopoverOpen(!isPopoverOpen);
                     } else {
-                        handleClick(e as any); 
+                        triggerAction();
                     }
                 }
                 if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
@@ -153,15 +157,13 @@ function DockItem({
                 )}
             </AnimatePresence>
 
-            <div className="flex items-center justify-center w-full h-full relative rounded-[12px] overflow-hidden">
+            <div className="flex items-center justify-center w-full h-full relative z-10 rounded-[12px] overflow-hidden">
                 {React.cloneElement(icon as React.ReactElement, { className: "w-full h-full" })}
             </div>
 
         </m.div>
     );
 }
-
-import { AnimatePresence } from "framer-motion";
 
 interface DockItemData {
     id: string;
@@ -182,6 +184,15 @@ interface DockProps {
 export default function Dock({ items, bouncingId, config, isMobile = false }: DockProps) {
     const mouseX = useMotionValue(Infinity);
     const [isMounted, setIsMounted] = useState(false);
+
+    // Scroll Awareness for Reactive Shimmer
+    const { scrollY } = useScroll();
+    const scrollVelocityRaw = useVelocity(scrollY);
+    const scrollVelocity = useSpring(scrollVelocityRaw, { 
+        stiffness: 100, 
+        damping: 30,
+        restDelta: 0.001
+    });
 
     useEffect(() => {
         const frame = requestAnimationFrame(() => setIsMounted(true));
@@ -235,17 +246,41 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                         aria-orientation="horizontal"
                         onMouseMove={(e) => !isMobile && mouseX.set(e.clientX)}
                         onMouseLeave={() => !isMobile && mouseX.set(Infinity)}
-                        // FIX: Promote dock to its own GPU layer to prevent flickering with 3D canvas
                         style={{ transform: 'translateZ(0)', willChange: 'transform' }}
                     >
+                        {/* Liquid Glass Background Structure */}
+                        <m.div 
+                            layout
+                            className={`absolute inset-0 rounded-[24px] pointer-events-none overflow-hidden shadow-[0_6px_6px_rgba(0,0,0,0.2),0_0_20px_rgba(0,0,0,0.1)] transition-all duration-400 ${isMobile
+                                ? 'h-[72px]'
+                                : 'h-[96px]'}`}
+                        >
+                            {/* 1. Effect Layer: Distortion + Blur */}
+                            <div 
+                                className="absolute inset-0 z-0 backdrop-blur-[3px]"
+                                style={{ filter: 'url(#liquid-glass)' }}
+                            />
+                            
+                            {/* 2. Tint Layer: Semi-transparent white */}
+                            <div className="absolute inset-0 z-[1] bg-white/50" />
+                            
+                            {/* 3. Shine Layer: Inner shadows for glass rim lighting */}
+                            <div 
+                                className="absolute inset-0 z-[2] rounded-[24px]" 
+                                style={{ 
+                                    boxShadow: 'inset 2px 2px 1px 0 rgba(255, 255, 255, 0.5), inset -1px -1px 1px 1px rgba(255, 255, 255, 0.5)'
+                                }}
+                            />
+                        </m.div>
+
+                        {/* Icon Layer (Clean and Sharp) */}
                         <m.div
-                            layout // Smoothly animate container size changes
-                            className={`flex items-end bg-white/95 border border-white/60 rounded-[24px] ${isMobile
+                            layout
+                            className={`flex items-end relative z-10 ${isMobile
                                 ? 'h-[72px] overflow-x-auto scrollbar-hide gap-5 px-5 py-3'
                                 : 'h-[96px] gap-2 px-3 py-4'}`}
                             style={{
                                 minWidth: isMobile ? 'auto' : visibleItems.length * 64 + (visibleItems.length - 1) * 8 + 24,
-                                minHeight: isMobile ? 72 : 96,
                             }}
                         >
                             {visibleItems.map((item) => (
@@ -263,6 +298,8 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                                 />
                             ))}
                         </m.div>
+
+                        <LiquidFilter id="liquid-glass" mouseX={mouseX} scrollVelocity={scrollVelocity} />
                     </nav>
                 </m.div>
             )}

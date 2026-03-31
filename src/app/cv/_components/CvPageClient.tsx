@@ -9,7 +9,7 @@ import type { Project } from '@/types/projects';
 import type { HardSkillsData } from '@/types/hardSkill';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
-import { Download, FileText, Share2, Printer, Loader2 } from 'lucide-react';
+import { Download, FileText, Printer, Loader2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';

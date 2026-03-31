@@ -74,8 +74,6 @@ function GalleryItem({ item, projectTitle, index, onContextMenu, toast }: Galler
         minHeight: (!item.width || !item.height) ? '300px' : 'auto'
     }), [item.width, item.height]);
 
-    const isPortrait = item.width && item.height && item.width < item.height;
-
     return (
         <div
             className={`relative rounded-xl overflow-hidden shadow-md border border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-900/40 group mb-4`}

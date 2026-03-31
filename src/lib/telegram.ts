@@ -9,6 +9,7 @@
  */
 
 import { cleanEnvVar } from '@/lib/utils/env';
+import crypto from 'crypto';
 
 // Helper to mask token for logging (security)
 const maskToken = (token: string): string => {
@@ -17,7 +18,7 @@ const maskToken = (token: string): string => {
 };
 
 // Get Telegram config from environment only
-function getTelegramConfig() {
+function getTelegramConfigFromEnv() {
     const botToken = cleanEnvVar('TELEGRAM_BOT_TOKEN');
     const chatId = cleanEnvVar('TELEGRAM_CHAT_ID');
     const groupId = cleanEnvVar('TELEGRAM_GROUP_ID');
@@ -27,7 +28,7 @@ function getTelegramConfig() {
 
 // Validate config and return safe error message
 function validateConfig(): { valid: true; config: { botToken: string; chatId: string; groupId?: string } } | { valid: false; error: string } {
-    const { botToken, chatId, groupId } = getTelegramConfig();
+    const { botToken, chatId, groupId } = getTelegramConfigFromEnv();
 
     if (!botToken) {
         return {
@@ -52,6 +53,29 @@ function validateConfig(): { valid: true; config: { botToken: string; chatId: st
     }
 
     return { valid: true, config: { botToken, chatId, groupId: groupId || undefined } };
+}
+
+export function buildTelegramWebhookSecret(botToken: string): string {
+    return crypto
+        .createHash('sha256')
+        .update(`telegram-webhook:${botToken}`)
+        .digest('hex');
+}
+
+export function isValidTelegramWebhookSecret(botToken: string, providedSecret?: string | null): boolean {
+    if (!providedSecret) {
+        return false;
+    }
+
+    const expectedSecret = buildTelegramWebhookSecret(botToken);
+    const providedBuffer = Buffer.from(providedSecret);
+    const expectedBuffer = Buffer.from(expectedSecret);
+
+    if (providedBuffer.length !== expectedBuffer.length) {
+        return false;
+    }
+
+    return crypto.timingSafeEqual(providedBuffer, expectedBuffer);
 }
 
 /**
@@ -187,9 +211,16 @@ export async function getTelegramConfigSafe() {
         botToken: maskToken(botToken),
         chatId,
         groupId,
-        // Full token hanya untuk internal use di webhook
-        _botToken: botToken
     };
+}
+
+export async function getTelegramConfigInternal() {
+    const validation = validateConfig();
+    if (!validation.valid) {
+        throw new Error(validation.error);
+    }
+
+    return validation.config;
 }
 
 /**

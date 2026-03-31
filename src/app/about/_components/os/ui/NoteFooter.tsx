@@ -16,9 +16,6 @@ interface NoteFooterProps {
 export const NoteFooter = ({
     isAdmin,
     isDeleted,
-    isPinned,
-    isStarred,
-    opacity,
     onDelete,
     onRestore,
     onPermanentDelete,
