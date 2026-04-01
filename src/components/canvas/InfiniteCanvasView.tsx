@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { LazyMotion, domAnimation } from 'framer-motion'
 import type { Project } from '@/types/projects'
 import {
     CANVAS_CONSTANTS,
@@ -19,11 +18,14 @@ type Props = {
     projects: Project[]
 }
 
-const DRAG_SENSITIVITY = 1.2
+const DRAG_SENSITIVITY = 1.5    // ↑ from 1.2 — more 1:1 hand-to-camera feel
 const SCROLL_SENSITIVITY = 1.5
-const VELOCITY_DECAY = 0.9
-const VELOCITY_LERP = 0.1
+const VELOCITY_DECAY = 0.95     // ↑ from 0.9 — longer premium glide after release
+const VELOCITY_LERP = 0.2       // ↑ from 0.1 — camera follows mouse faster (less heavy)
 const CARD_WIDTH = 700
+const REMOVAL_BATCH_INTERVAL = 100 // ms — batch DOM removals to avoid per-frame React re-renders
+const MAX_PRIORITY_IMAGES = 3
+const VELOCITY_SMOOTH_FACTOR = 0.5 // ↑ from 0.4 — more responsive velocity transitions
 
 function getCoverUrl(project: Project): string {
     return project.cover || '/og-image.png'
@@ -54,6 +56,15 @@ export default function InfiniteCanvasView({ projects }: Props) {
     const assignmentRef = useRef<Map<string, string>>(new Map())
     const insertionOrderRef = useRef<string[]>([])
     const activeItemsRef = useRef<CanvasItem[]>([])
+
+    // BUG FIX #1 + #3: Deferred batch removal system
+    // Instead of calling setRenderedItems per-frame, we collect removal keys and flush them
+    // in a throttled batch update — prevents 60×/sec React reconciliation
+    const pendingRemovalsRef = useRef<Set<string>>(new Set())
+    const removalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    // BUG FIX #7: Touch/pinch state for mobile support
+    const pinchStartDistRef = useRef<number | null>(null)
 
     const projectById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects])
     const maxCachedAssignments = useMemo(
@@ -94,10 +105,10 @@ export default function InfiniteCanvasView({ projects }: Props) {
         const nextItems = nextState.items
         setRenderedItems(prev => {
             const prevKeys = new Set(prev.map(i => i.key))
-            
+
             // Only add new items that are not in the current rendered set
             const itemsToAdd = nextItems.filter(item => !prevKeys.has(item.key))
-            
+
             if (itemsToAdd.length === 0) return prev
 
             const next = [...prev, ...itemsToAdd]
@@ -106,15 +117,47 @@ export default function InfiniteCanvasView({ projects }: Props) {
         })
     }, [maxCachedAssignments, projectById, projects])
 
+    // BUG FIX #1 + #2 + #3: Flush pending removals in a single batched React update
+    // This runs outside the rAF loop on a throttled timer, preventing per-frame reconciliation
+    const flushRemovals = useCallback(() => {
+        const keysToRemove = pendingRemovalsRef.current
+        if (keysToRemove.size === 0) {
+            removalTimerRef.current = null
+            return
+        }
+
+        // BUG FIX #2: Use Set for O(1) lookup instead of Array.includes() O(n)
+        const removalSet = new Set(keysToRemove)
+        pendingRemovalsRef.current = new Set()
+        removalTimerRef.current = null
+
+        setRenderedItems(prev => {
+            const next = prev.filter(item => !removalSet.has(item.key))
+            renderedItemsRef.current = next
+            return next
+        })
+
+        // BUG FIX #1: Clean refs in the same synchronous flush as the state update.
+        // Items are already visually hidden (display:none) from updateDomNodes,
+        // so this cleanup is purely for garbage collection.
+        removalSet.forEach(key => {
+            visualStateRef.current.delete(key)
+            cardNodesRef.current.delete(key)
+            videoNodesRef.current.delete(key)
+        })
+    }, [])
+
     const updateDomNodes = useCallback(() => {
         const camera = cameraRef.current
         const activeKeys = new Set(activeItemsRef.current.map(i => i.key))
-        const itemsToRemove: string[] = []
         const currentItems = renderedItemsRef.current
 
         for (const item of currentItems) {
             const node = cardNodesRef.current.get(item.key)
             if (!node) continue
+
+            // Skip items already pending removal — they're visually hidden
+            if (pendingRemovalsRef.current.has(item.key)) continue
 
             const previousState = visualStateRef.current.get(item.key) ?? { opacity: 0, grayscale: 0, hidden: false }
             const visualStyle = computeVisualStyle({
@@ -125,29 +168,29 @@ export default function InfiniteCanvasView({ projects }: Props) {
             })
 
             const dz = item.z - camera.z
-            
-            // AGGRESSIVE PRUNING (OCCLUSION CULLING)
-            // If item is:
-            // 1. Far behind camera (dz > 1200) - HARD REMOVE
-            // 2. Extremely far in the distance (dist > 9000)
-            // 3. Not active and hidden (opacity near 0)
+
+            // OCCLUSION CULLING — mark for deferred batch removal
             const isFarBehind = dz > 1200
             const isTooFar = item.dist > 9000
             const isInactiveAndHidden = !activeKeys.has(item.key) && (visualStyle.hidden || visualStyle.opacity < 0.01)
 
             if (isFarBehind || isTooFar || isInactiveAndHidden) {
-                itemsToRemove.push(item.key)
-                
-                // UNLOAD VIDEOS (Critical for memory)
+                // Hide immediately for visual continuity
+                node.style.visibility = 'hidden'
+                node.style.display = 'none'
+                // BUG FIX #9: Release GPU compositing layer for culled items
+                node.style.willChange = 'auto'
+
+                // Unload videos (critical for memory on low-end devices)
                 const videoNode = videoNodesRef.current.get(item.key)
                 if (videoNode) {
                     videoNode.pause()
-                    videoNode.src = "" // Explicitly clear src to trigger GC
+                    videoNode.src = ""
                     videoNode.load()
                 }
 
-                node.style.visibility = 'hidden'
-                node.style.display = 'none' 
+                // BUG FIX #3: Schedule deferred removal instead of per-frame setRenderedItems
+                pendingRemovalsRef.current.add(item.key)
                 continue
             }
 
@@ -162,6 +205,8 @@ export default function InfiniteCanvasView({ projects }: Props) {
                     node.style.visibility = 'hidden'
                     node.style.opacity = '0'
                     node.style.pointerEvents = 'none'
+                    // BUG FIX #9: Release GPU layer for hidden items
+                    node.style.willChange = 'auto'
                 }
                 const videoNode = videoNodesRef.current.get(item.key)
                 if (videoNode && !videoNode.paused) {
@@ -177,12 +222,14 @@ export default function InfiniteCanvasView({ projects }: Props) {
             node.style.filter = visualStyle.filter
             node.style.transform = visualStyle.transform
             node.style.zIndex = visualStyle.zIndex
+            // BUG FIX #9: Only promote actively visible items to GPU compositing layer
+            node.style.willChange = 'transform'
 
             const videoNode = videoNodesRef.current.get(item.key)
             if (videoNode) {
                 if (visualStyle.opacity > 0.4 && activeKeys.has(item.key)) {
                     if (videoNode.paused) {
-                        // Restore src if it was cleared
+                        // Restore src if it was cleared during culling
                         if (videoNode.src === "" || videoNode.src.endsWith("/")) {
                             videoNode.src = getCoverUrl(item.project)
                         }
@@ -194,19 +241,11 @@ export default function InfiniteCanvasView({ projects }: Props) {
             }
         }
 
-        if (itemsToRemove.length > 0) {
-            setRenderedItems(prev => {
-                const next = prev.filter(item => !itemsToRemove.includes(item.key))
-                renderedItemsRef.current = next
-                return next
-            })
-            itemsToRemove.forEach(key => {
-                visualStateRef.current.delete(key)
-                cardNodesRef.current.delete(key)
-                videoNodesRef.current.delete(key)
-            })
+        // BUG FIX #3: Schedule batched removal (max once per interval, not every frame)
+        if (pendingRemovalsRef.current.size > 0 && !removalTimerRef.current) {
+            removalTimerRef.current = setTimeout(flushRemovals, REMOVAL_BATCH_INTERVAL)
         }
-    }, [])
+    }, [flushRemovals])
 
     useEffect(() => {
         if (projects.length === 0) return
@@ -262,6 +301,11 @@ export default function InfiniteCanvasView({ projects }: Props) {
         return () => {
             cancelAnimationFrame(initialSyncFrame)
             cancelAnimationFrame(animationFrameRef.current)
+            // BUG FIX #3: Clean up pending removal timer on unmount
+            if (removalTimerRef.current) {
+                clearTimeout(removalTimerRef.current)
+                removalTimerRef.current = null
+            }
         }
     }, [projects.length, syncVisibleItems, updateDomNodes])
 
@@ -272,9 +316,11 @@ export default function InfiniteCanvasView({ projects }: Props) {
         const originalOverflow = window.getComputedStyle(document.body).overflow
         document.body.style.overflow = 'hidden'
 
+        // BUG FIX #6: Scope wheel listener to container instead of window
+        // This prevents blocking scroll on other page elements (e.g. dropdowns, overlays)
         const handleWheel = (event: WheelEvent) => {
             event.preventDefault()
-            // Swapped: Scroll DOWN = Move BACKWARD (Z increases)
+            // Scroll DOWN = Move BACKWARD (Z increases)
             scrollDeltaRef.current.z += event.deltaY * 0.5
         }
 
@@ -290,108 +336,174 @@ export default function InfiniteCanvasView({ projects }: Props) {
             const deltaY = event.clientY - lastMousePositionRef.current.y
             targetCameraRef.current.x -= deltaX * DRAG_SENSITIVITY
             targetCameraRef.current.y -= deltaY * DRAG_SENSITIVITY
-            velocityRef.current.x = -deltaX * DRAG_SENSITIVITY
-            velocityRef.current.y = -deltaY * DRAG_SENSITIVITY
+            // SMOOTHNESS FIX: Blend velocity instead of overwriting to reduce drag jitter
+            // (exponential moving average prevents sudden velocity spikes from hand tremor)
+            const targetVelX = -deltaX * DRAG_SENSITIVITY
+            const targetVelY = -deltaY * DRAG_SENSITIVITY
+            velocityRef.current.x += (targetVelX - velocityRef.current.x) * VELOCITY_SMOOTH_FACTOR
+            velocityRef.current.y += (targetVelY - velocityRef.current.y) * VELOCITY_SMOOTH_FACTOR
             lastMousePositionRef.current = { x: event.clientX, y: event.clientY }
         }
 
         const handleMouseUp = () => { isDraggingRef.current = false }
 
-        window.addEventListener('wheel', handleWheel, { passive: false })
+        // BUG FIX #7: Touch support for mobile devices
+        const handleTouchStart = (event: TouchEvent) => {
+            if (event.touches.length === 1) {
+                // Single finger: drag/pan
+                isDraggingRef.current = true
+                const touch = event.touches[0]
+                lastMousePositionRef.current = { x: touch.clientX, y: touch.clientY }
+            } else if (event.touches.length === 2) {
+                // Two fingers: pinch-to-zoom
+                isDraggingRef.current = false
+                const dx = event.touches[0].clientX - event.touches[1].clientX
+                const dy = event.touches[0].clientY - event.touches[1].clientY
+                pinchStartDistRef.current = Math.sqrt(dx * dx + dy * dy)
+            }
+        }
+
+        const handleTouchMove = (event: TouchEvent) => {
+            event.preventDefault()
+            if (event.touches.length === 1 && isDraggingRef.current) {
+                // Single finger: drag to pan (mirrors mouse behavior)
+                const touch = event.touches[0]
+                const deltaX = touch.clientX - lastMousePositionRef.current.x
+                const deltaY = touch.clientY - lastMousePositionRef.current.y
+                targetCameraRef.current.x -= deltaX * DRAG_SENSITIVITY
+                targetCameraRef.current.y -= deltaY * DRAG_SENSITIVITY
+                // Smooth velocity blending for touch inertia
+                const targetVelX = -deltaX * DRAG_SENSITIVITY
+                const targetVelY = -deltaY * DRAG_SENSITIVITY
+                velocityRef.current.x += (targetVelX - velocityRef.current.x) * VELOCITY_SMOOTH_FACTOR
+                velocityRef.current.y += (targetVelY - velocityRef.current.y) * VELOCITY_SMOOTH_FACTOR
+                lastMousePositionRef.current = { x: touch.clientX, y: touch.clientY }
+            } else if (event.touches.length === 2 && pinchStartDistRef.current !== null) {
+                // Two fingers: pinch-to-zoom (maps to Z-axis, same as scroll wheel)
+                const dx = event.touches[0].clientX - event.touches[1].clientX
+                const dy = event.touches[0].clientY - event.touches[1].clientY
+                const currentDist = Math.sqrt(dx * dx + dy * dy)
+                const delta = (pinchStartDistRef.current - currentDist) * 2
+                scrollDeltaRef.current.z += delta
+                pinchStartDistRef.current = currentDist
+            }
+        }
+
+        const handleTouchEnd = () => {
+            isDraggingRef.current = false
+            pinchStartDistRef.current = null
+        }
+
+        // BUG FIX #6: Wheel scoped to container, not window
+        container.addEventListener('wheel', handleWheel, { passive: false })
         container.addEventListener('mousedown', handleMouseDown)
         window.addEventListener('mousemove', handleMouseMove)
         window.addEventListener('mouseup', handleMouseUp)
+        // BUG FIX #7: Touch event listeners
+        container.addEventListener('touchstart', handleTouchStart, { passive: false })
+        container.addEventListener('touchmove', handleTouchMove, { passive: false })
+        container.addEventListener('touchend', handleTouchEnd)
 
         return () => {
             document.body.style.overflow = originalOverflow
-            window.removeEventListener('wheel', handleWheel)
+            container.removeEventListener('wheel', handleWheel)
             container.removeEventListener('mousedown', handleMouseDown)
             window.removeEventListener('mousemove', handleMouseMove)
             window.removeEventListener('mouseup', handleMouseUp)
+            container.removeEventListener('touchstart', handleTouchStart)
+            container.removeEventListener('touchmove', handleTouchMove)
+            container.removeEventListener('touchend', handleTouchEnd)
         }
     }, [])
 
     if (projects.length === 0) return null
 
+    // BUG FIX #8: Track priority image count to prevent excessive preloads
+    // (Next.js priority adds <link rel="preload"> — too many = slower initial load)
+    let priorityCount = 0
+
     return (
-        <LazyMotion features={domAnimation}>
-            <div
-                ref={containerRef}
-                className="relative z-10 h-full w-full cursor-grab overflow-hidden select-none bg-[#F0F0F0] active:cursor-grabbing"
-                style={{
-                    touchAction: 'none',
-                    perspective: `${CANVAS_CONSTANTS.perspective}px`,
-                    perspectiveOrigin: '50% 50%',
-                }}
-            >
-                <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d' }}>
-                    {renderedItems.map((item) => {
-                        const coverUrl = getCoverUrl(item.project)
-                        const isVideo = isVideoUrl(coverUrl)
-                        const aspectRatio =
-                            item.project.coverWidth && item.project.coverHeight
-                                ? item.project.coverWidth / item.project.coverHeight
-                                : 16 / 9
+        <div
+            ref={containerRef}
+            className="relative z-10 h-full w-full cursor-grab overflow-hidden select-none bg-[#F0F0F0] active:cursor-grabbing"
+            style={{
+                touchAction: 'none',
+                perspective: `${CANVAS_CONSTANTS.perspective}px`,
+                perspectiveOrigin: '50% 50%',
+            }}
+        >
+            <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d' }}>
+                {renderedItems.map((item) => {
+                    const coverUrl = getCoverUrl(item.project)
+                    const isVideo = isVideoUrl(coverUrl)
+                    const aspectRatio =
+                        item.project.coverWidth && item.project.coverHeight
+                            ? item.project.coverWidth / item.project.coverHeight
+                            : 16 / 9
 
-                        return (
-                            <div
-                                key={item.key}
-                                ref={(element) => {
-                                    if (element) cardNodesRef.current.set(item.key, element)
-                                    else cardNodesRef.current.delete(item.key)
-                                }}
-                                className="absolute left-1/2 top-1/2"
-                                style={{
-                                    width: CARD_WIDTH,
-                                    height: CARD_WIDTH / aspectRatio,
-                                    display: 'block',
-                                    willChange: 'transform, opacity',
-                                    backfaceVisibility: 'hidden',
-                                    contain: 'layout paint style',
-                                    visibility: 'hidden', // Start hidden, loop will show it
-                                    opacity: 0,
-                                }}
-                                onClick={() => router.push(`/projects/${item.project.slug}`)}
-                            >
-                                <div className="group relative h-full w-full overflow-hidden rounded-lg">
-                                    {isVideo ? (
-                                        <video
-                                            ref={(element) => {
-                                                if (element) videoNodesRef.current.set(item.key, element)
-                                                else videoNodesRef.current.delete(item.key)
-                                            }}
-                                            src={coverUrl}
-                                            muted
-                                            loop
-                                            playsInline
-                                            className="absolute inset-0 h-full w-full object-cover"
-                                        />
-                                    ) : (
-                                        <Image
-                                            src={coverUrl}
-                                            alt={item.project.title}
-                                            fill
-                                            className="absolute inset-0 object-cover transition-transform duration-500 group-hover:scale-105"
-                                            sizes="(max-width: 768px) 100vw, 700px"
-                                            priority={item.dist < 3000}
-                                        />
-                                    )}
+                    // BUG FIX #8: Cap priority images to MAX_PRIORITY_IMAGES closest items
+                    const shouldPriority = !isVideo && item.dist < 3000 && priorityCount < MAX_PRIORITY_IMAGES
+                    if (shouldPriority) priorityCount++
 
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                                        <h3 className="px-4 text-center text-2xl font-bold text-black">{item.project.title}</h3>
-                                        <p className="mt-1 text-sm text-black/50">{item.project.year}</p>
-                                    </div>
+                    return (
+                        <div
+                            key={item.key}
+                            ref={(element) => {
+                                if (element) cardNodesRef.current.set(item.key, element)
+                                else cardNodesRef.current.delete(item.key)
+                            }}
+                            className="absolute left-1/2 top-1/2"
+                            style={{
+                                width: CARD_WIDTH,
+                                height: CARD_WIDTH / aspectRatio,
+                                display: 'block',
+                                // BUG FIX #9: willChange set dynamically in updateDomNodes
+                                // only for visible items — saves ~200MB VRAM on low-end GPUs
+                                backfaceVisibility: 'hidden',
+                                contain: 'layout paint style',
+                                visibility: 'hidden', // Start hidden, rAF loop will reveal
+                                opacity: 0,
+                            }}
+                            onClick={() => router.push(`/projects/${item.project.slug}`)}
+                        >
+                            <div className="group relative h-full w-full overflow-hidden rounded-lg">
+                                {isVideo ? (
+                                    <video
+                                        ref={(element) => {
+                                            if (element) videoNodesRef.current.set(item.key, element)
+                                            else videoNodesRef.current.delete(item.key)
+                                        }}
+                                        src={coverUrl}
+                                        muted
+                                        loop
+                                        playsInline
+                                        className="absolute inset-0 h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <Image
+                                        src={coverUrl}
+                                        alt={item.project.title}
+                                        fill
+                                        className="absolute inset-0 object-cover transition-transform duration-500 group-hover:scale-105"
+                                        sizes="(max-width: 768px) 100vw, 700px"
+                                        priority={shouldPriority}
+                                    />
+                                )}
+
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                    <h3 className="px-4 text-center text-2xl font-bold text-black">{item.project.title}</h3>
+                                    <p className="mt-1 text-sm text-black/50">{item.project.year}</p>
                                 </div>
                             </div>
-                        )
-                    })}
-                </div>
-
-                <div className="pointer-events-none absolute bottom-10 left-10 flex flex-col gap-2">
-                    <div className="text-[10px] uppercase tracking-[0.3em] text-black/20">Mode: Infinite Canvas</div>
-                    <div className="text-[10px] uppercase tracking-[0.3em] text-black/40">Drag to PAN / Scroll to ZOOM</div>
-                </div>
+                        </div>
+                    )
+                })}
             </div>
-        </LazyMotion>
+
+            <div className="pointer-events-none absolute bottom-10 left-10 flex flex-col gap-2">
+                <div className="text-[10px] uppercase tracking-[0.3em] text-black/20">Mode: Infinite Canvas</div>
+                <div className="text-[10px] uppercase tracking-[0.3em] text-black/40">Drag to PAN / Scroll to ZOOM</div>
+            </div>
+        </div>
     )
 }

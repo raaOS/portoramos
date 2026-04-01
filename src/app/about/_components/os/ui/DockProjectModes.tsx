@@ -16,7 +16,7 @@ interface ModeOption {
 const MODES: ModeOption[] = [
     { id: 'grid', label: 'Grid View', icon: Grid, view: 'grid', description: 'Pinterest style masonry' },
     { id: 'list', label: 'List View', icon: LayoutList, view: 'list', description: 'Clean minimal rows' },
-    { id: 'canvas', label: '3D Canvas', icon: Box, view: 'canvas', description: 'Infinite 3D exploration' },
+    { id: 'canvas', label: '3D Canvas', icon: Box, view: '3d', description: 'Infinite 3D exploration' },
 ];
 
 interface Props {

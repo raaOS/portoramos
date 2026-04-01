@@ -1,9 +1,12 @@
 import { Project } from '@/types/projects'
 
+/**
+ * Deterministic 3D hash — produces a value in [0, 1).
+ * Matches the implementation in infiniteCanvasEngine.ts for consistency.
+ */
 export function hash3D(x: number, y: number, z: number): number {
-    // Chaotic hash combining sin and multiplication
-    const h = Math.sin(x * 12.9898 + y * 78.233 + z * 45.123) * 43758.5453123
-    return Math.abs(h % 1)
+    const hash = Math.sin(x * 12.9898 + y * 78.233 + z * 45.123) * 43758.5453123
+    return hash - Math.floor(hash)
 }
 
 export function getCoverUrl(project: Project): string {
