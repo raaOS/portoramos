@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { runningTextService } from '@/lib/services/runningTextService';
 import { validateAdminRequest } from '@/lib/auth';
+import { updateRunningTextSchema } from '@/lib/validations';
+import { validationError } from '@/lib/api-response';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     // Check admin authentication
@@ -11,9 +13,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     try {
         const { id } = await params;
-        const body = await request.json();
+        const rawBody = await request.json();
+        const validationResult = updateRunningTextSchema.safeParse(rawBody);
 
-        const updatedItem = await runningTextService.updateItem(id, body);
+        if (!validationResult.success) {
+            return validationError(validationResult.error);
+        }
+
+        const updatedItem = await runningTextService.updateItem(id, validationResult.data);
 
         if (!updatedItem) {
             return NextResponse.json({ error: 'Item not found' }, { status: 404 });

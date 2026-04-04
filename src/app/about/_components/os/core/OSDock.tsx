@@ -15,6 +15,7 @@ interface OSDockProps {
   aboutData?: AboutData;
   onOpenWindow: (windowId: string) => void;
   onOpenWhatsApp: () => void;
+  onOpenContact: () => void;
   onOpenNotes: () => void;
   onOpenTrash: () => void;
   isWindowOpen: (windowId: string) => boolean;
@@ -30,6 +31,7 @@ export default function OSDock({
   aboutData,
   onOpenWindow,
   onOpenWhatsApp,
+  onOpenContact,
   onOpenNotes,
   onOpenTrash,
   isWindowOpen,
@@ -53,13 +55,13 @@ export default function OSDock({
       },
       { id: "about", label: "About Me", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => onOpenWindow("about"), isOpen: isWindowOpen("about") },
       { id: "whatsapp", label: "WhatsApp", icon: <WhatsAppIcon />, onClick: onOpenWhatsApp, isOpen: isWindowOpen("whatsapp") },
-      { id: "contact", label: "Contact", icon: <AppIcon icon={Mail} color="from-blue-400 to-indigo-500" />, onClick: () => router.push('/contact') },
+      { id: "contact", label: "Contact", icon: <AppIcon icon={Mail} color="from-blue-400 to-indigo-500" />, onClick: onOpenContact, isOpen: isWindowOpen("contact") },
       { id: "notes", label: "Notes", icon: <AppIcon icon={FileText} color="from-yellow-300 to-orange-400" />, onClick: onOpenNotes, isOpen: notesVisible },
       { id: "trash", label: "Trash", icon: <AppIcon icon={Trash2} color="from-gray-400 to-gray-500" />, onClick: onOpenTrash, isOpen: isWindowOpen("trash-bin") },
     ];
 
     return getDockItemConfig(defaultItems, aboutData?.dockConfig);
-  }, [router, aboutData?.dockConfig, onOpenWindow, onOpenWhatsApp, onOpenNotes, onOpenTrash, isWindowOpen, notesVisible]);
+  }, [aboutData?.dockConfig, onOpenWindow, onOpenWhatsApp, onOpenContact, onOpenNotes, onOpenTrash, isWindowOpen, notesVisible]);
 
   return (
     <div className={className}>

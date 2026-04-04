@@ -118,6 +118,7 @@ export default function UIOverlaysLayer({
                                     aboutData={aboutData}
                                     onOpenWindow={openWindow}
                                     onOpenWhatsApp={openWhatsAppList}
+                                    onOpenContact={() => openWindow("contact")}
                                     onOpenNotes={toggleNotesVisibility}
                                     onOpenTrash={() => openWindow("trash-bin")}
                                     isWindowOpen={isWindowOpen}

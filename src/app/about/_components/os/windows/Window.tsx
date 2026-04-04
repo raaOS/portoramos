@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { m, useDragControls, AnimatePresence } from "framer-motion";
 import { soundManager } from "../utils/SoundManager";
 import { useWindowResize } from "../hooks/useWindowResize";
 import { useWindowKeyboard } from "../hooks/useWindowKeyboard";
 import { WindowTitleBar } from "./components/WindowTitleBar";
 import { WindowResizeHandles } from "./components/WindowResizeHandles";
+import { getTransformOrigin, resolveDockTarget } from "../utils/windowMotion";
 
 interface WindowProps {
     id: string;
@@ -36,6 +37,7 @@ interface WindowProps {
 }
 
 export default function OSWindow({
+    id,
     title,
     children,
     isOpen,
@@ -64,6 +66,8 @@ export default function OSWindow({
     const isTabletWindow = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024;
     const isSmallScreen = isMobileWindow || isTabletWindow;
     const winWidth = isMobileWindow ? window.innerWidth : isTabletWindow ? Math.min(window.innerWidth - 32, 700) : 600;
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1440;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 900;
     const dragControls = useDragControls();
 
     const { handleKeyDown } = useWindowKeyboard({ onClose, onMinimize, onMaximize });
@@ -88,20 +92,150 @@ export default function OSWindow({
     // Handle auto-focus when window becomes active
     useEffect(() => {
         if (isFocused && windowRef.current) {
-            windowRef.current.focus();
+            windowRef.current.focus({ preventScroll: true });
         }
     }, [isFocused]);
 
-    // "Premium Solid" Mode (Snappy, No Bounce, Direct)
-    const getMinimizeState = () => {
-        return {
-            scale: 0.9,
+    const measuredWidth = dynamicSize.width || width || winWidth;
+    const measuredHeight = dynamicSize.height || height || 600;
+    const dockTarget = resolveDockTarget(id);
+
+    const normalFrame = useMemo(() => ({
+        x: initialPosition.x,
+        y: initialPosition.y,
+        width: measuredWidth,
+        height: measuredHeight,
+    }), [initialPosition.x, initialPosition.y, measuredWidth, measuredHeight]);
+
+    const maximizedFrame = useMemo(() => ({
+        x: 10,
+        y: 36,
+        width: Math.max(viewportWidth - 20, 320),
+        height: Math.max(viewportHeight - 46, 240),
+    }), [viewportWidth, viewportHeight]);
+
+    const activeFrame = isMaximized ? maximizedFrame : normalFrame;
+    const dockScale = isSmallScreen ? 0.24 : 0.18;
+    const dockTopLeft = dockTarget
+        ? {
+            x: dockTarget.x - activeFrame.width / 2,
+            y: dockTarget.y - activeFrame.height / 2,
+        }
+        : { x: activeFrame.x, y: activeFrame.y };
+
+    const transformOrigin = getTransformOrigin(
+        activeFrame,
+        dockTarget,
+        isMaximized ? "50% 20px" : "50% 26px"
+    );
+
+    const shellStyle = {
+        backgroundColor: isMaximized ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.80)",
+        boxShadow: isMaximized
+            ? "0 20px 46px rgba(15, 23, 42, 0.20), 0 4px 18px rgba(15, 23, 42, 0.10)"
+            : "0 26px 60px rgba(15, 23, 42, 0.24), 0 8px 24px rgba(15, 23, 42, 0.12)",
+        filter: "blur(0px) saturate(1)",
+    } as const;
+
+    const minimizedStyle = {
+        backgroundColor: "rgba(255,255,255,0.62)",
+        boxShadow: "0 10px 24px rgba(15, 23, 42, 0.14)",
+        filter: "blur(10px) saturate(0.9)",
+    } as const;
+
+    const entryState = dockTarget
+        ? {
+            x: dockTopLeft.x,
+            y: dockTopLeft.y,
+            scale: dockScale * 0.9,
             opacity: 0,
-            x: initialPosition.x, // Force snap to origin X
-            y: initialPosition.y, // Force snap to origin Y
-            transition: { duration: 0.15, ease: "easeIn" } // Fast exit
+            borderRadius: 24,
+            ...minimizedStyle,
+        }
+        : {
+            x: activeFrame.x,
+            y: activeFrame.y + 18,
+            scale: 0.94,
+            opacity: 0,
+            borderRadius: 24,
+            backgroundColor: "rgba(255,255,255,0.70)",
+            boxShadow: "0 12px 32px rgba(15, 23, 42, 0.10)",
+            filter: "blur(10px) saturate(0.92)",
         };
+
+    const minimizedState = {
+        x: dockTopLeft.x,
+        y: dockTopLeft.y,
+        scale: dockScale,
+        opacity: 0.04,
+        borderRadius: 26,
+        ...minimizedStyle,
     };
+
+    const activeState = {
+        x: activeFrame.x,
+        y: activeFrame.y,
+        scale: 1,
+        opacity: 1,
+        width: activeFrame.width,
+        height: activeFrame.height,
+        borderRadius: isMaximized ? 14 : 18,
+        ...shellStyle,
+    };
+
+    const standardTransition = {
+        x: { type: "spring", stiffness: 280, damping: 30, mass: 0.92 },
+        y: { type: "spring", stiffness: 280, damping: 30, mass: 0.92 },
+        scale: { type: "spring", stiffness: 260, damping: 28, mass: 0.88 },
+        width: { type: "spring", stiffness: 240, damping: 30, mass: 0.96 },
+        height: { type: "spring", stiffness: 240, damping: 30, mass: 0.96 },
+        opacity: { duration: 0.22, ease: [0.32, 0.72, 0, 1] },
+        borderRadius: { duration: 0.26, ease: [0.32, 0.72, 0, 1] },
+        boxShadow: { duration: 0.3, ease: [0.32, 0.72, 0, 1] },
+        filter: { duration: 0.24, ease: [0.32, 0.72, 0, 1] },
+        backgroundColor: { duration: 0.24, ease: [0.32, 0.72, 0, 1] },
+    } as const;
+
+    const minimizeTransition = {
+        x: { type: "spring", stiffness: 340, damping: 34, mass: 0.82 },
+        y: { type: "spring", stiffness: 340, damping: 34, mass: 0.82 },
+        scale: { type: "spring", stiffness: 300, damping: 28, mass: 0.78 },
+        opacity: { duration: 0.18, ease: [0.4, 0, 1, 1] },
+        borderRadius: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+        boxShadow: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+        filter: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+        backgroundColor: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+    } as const;
+
+    const exitState = dockTarget
+        ? {
+            x: dockTopLeft.x,
+            y: dockTopLeft.y,
+            scale: dockScale * 0.82,
+            opacity: 0,
+            borderRadius: 28,
+            ...minimizedStyle,
+            transition: minimizeTransition,
+        }
+        : {
+            x: activeFrame.x,
+            y: activeFrame.y + 12,
+            scale: 0.92,
+            opacity: 0,
+            borderRadius: 26,
+            backgroundColor: "rgba(255,255,255,0.66)",
+            boxShadow: "0 10px 24px rgba(15, 23, 42, 0.10)",
+            filter: "blur(8px) saturate(0.92)",
+            transition: {
+                opacity: { duration: 0.18, ease: [0.4, 0, 1, 1] },
+                scale: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+                y: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+                borderRadius: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+                boxShadow: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+                filter: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+                backgroundColor: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+            },
+        };
 
     return (
         <AnimatePresence>
@@ -123,84 +257,13 @@ export default function OSWindow({
                         }
                     }}
                     initial={{
-                        scale: 0.4, // Start smaller for jelly pop
-                        opacity: 0,
-                        x: initialPosition.x,
-                        y: initialPosition.y,
+                        ...entryState,
+                        width: activeFrame.width,
+                        height: activeFrame.height,
                     }}
-                    animate={
-                        isMinimized
-                            ? {
-                                ...getMinimizeState(),
-                                transition: { type: "spring", stiffness: 300, damping: 25 }
-                            }
-                            : isMaximized
-                                ? {
-                                    // Jelly effect for maximize
-                                    scale: [0.95, 1.03, 0.98, 1.01, 1],
-                                    opacity: 1,
-                                    x: 10,
-                                    y: 36,
-                                    width: "calc(100% - 20px)",
-                                    height: "calc(100% - 46px)",
-                                    borderRadius: "12px",
-                                }
-                                : {
-                                    // Jelly/Playful entry keyframes (squash & stretch)
-                                    scale: [0.4, 1.2, 0.9, 1.05, 1], // Pop -> Overshoot -> Bounce back -> Settle
-                                    opacity: 1,
-                                    x: initialPosition.x,
-                                    y: initialPosition.y,
-                                    width: dynamicSize.width || width || winWidth,
-                                    height: dynamicSize.height || height || "auto",
-                                    borderRadius: "10px",
-                                }
-                    }
-                    transition={
-                        isMinimized
-                            ? { type: "spring", stiffness: 300, damping: 25 }
-                            : isMaximized
-                                ? {
-                                    // Jelly transition for maximize
-                                    scale: {
-                                        type: "keyframes",
-                                        times: [0, 0.25, 0.4, 0.6, 1],
-                                        duration: 0.4,
-                                        ease: "easeOut"
-                                    },
-                                    opacity: { duration: 0.2 },
-                                    x: { duration: 0.3, ease: "easeOut" },
-                                    y: { duration: 0.3, ease: "easeOut" },
-                                    width: { duration: 0.3, ease: "easeOut" },
-                                    height: { duration: 0.3, ease: "easeOut" },
-                                    layout: { duration: 0 }
-                                }
-                                : isResizing 
-                                    ? { duration: 0 }
-                                    : {
-                                        // Jelly transition config
-                                        scale: {
-                                            type: "keyframes",
-                                            times: [0, 0.25, 0.4, 0.6, 1],
-                                            duration: 0.5,
-                                            ease: "easeOut"
-                                        },
-                                        opacity: { duration: 0.2 },
-                                        x: { type: "spring", stiffness: 200, damping: 20 },
-                                        y: { type: "spring", stiffness: 200, damping: 20 },
-                                        width: { duration: 0 },
-                                        height: { duration: 0 },
-                                        layout: { duration: 0 }
-                                    }
-                    }
-                    exit={{
-                        scale: [1, 1.1, 0.5, 0], // Stretch then collapse
-                        opacity: [1, 1, 0, 0],
-                        transition: { 
-                            duration: 0.35,
-                            ease: "easeInOut"
-                        }
-                    }}
+                    animate={isMinimized ? minimizedState : activeState}
+                    transition={isResizing ? { duration: 0 } : (isMinimized ? minimizeTransition : standardTransition)}
+                    exit={exitState}
                     // Layout synchronization disabled to prevent cross-window glitching
                     layout={false} 
 
@@ -215,10 +278,11 @@ export default function OSWindow({
                         zIndex: zIndex,
                         top: 0,
                         left: 0,
-                        transformOrigin: "center center",
+                        transformOrigin,
+                        pointerEvents: isMinimized ? "none" : "auto",
                     }}
                     data-lenis-prevent
-                    className={`flex flex-col overflow-hidden border border-white/40 will-change-transform pointer-events-auto rounded-lg outline-none bg-white`}
+                    className="flex flex-col overflow-hidden border border-white/45 will-change-transform rounded-[18px] outline-none backdrop-blur-xl"
                 >
                     {/* Title Bar */}
                     <WindowTitleBar

@@ -13,8 +13,9 @@ interface ProjectMediaUploadProps {
     onFileChange?: (file: File | null) => void;
     mediaFormat?: 'single' | 'comparison' | 'gallery';
     onNewUpload?: (url: string) => void;
+    csrfToken?: string | null;
 }
-export default function ProjectMediaUpload({ formData, errors, isDetectingDimensions, updateField, slug, onFileChange, mediaFormat, onNewUpload }: ProjectMediaUploadProps) {
+export default function ProjectMediaUpload({ formData, errors, isDetectingDimensions, updateField, slug, onFileChange, mediaFormat, onNewUpload, csrfToken }: ProjectMediaUploadProps) {
     const handleUploadComplete = (urls: string[]) => {
         if (urls.length > 0) {
             updateField('cover', urls[0]);
@@ -57,14 +58,18 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
     const deleteMedia = useCallback(async (path: string) => {
         try {
             const res = await fetch(`/api/upload?path=${encodeURIComponent(path)}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    'x-csrf-token': csrfToken || ''
+                }
             });
             return res.ok;
         } catch (e) {
             console.error("Delete failed", e);
             return false;
         }
-    }, []);
+    }, [csrfToken]);
 
     const handleDeleteMedia = async (field: 'cover' | 'before' | 'after') => {
         let url = '';

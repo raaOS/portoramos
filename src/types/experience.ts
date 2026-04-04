@@ -1,4 +1,5 @@
 export interface WorkExperience {
+  id: string;
   year: string;
   duration: string;
   company: string;

@@ -19,26 +19,35 @@ const defaultData: TestimonialData = {
 
 const service = new ContentService<TestimonialData>('testimonial.json', defaultData);
 
+const normalizeTestimonialId = (id: Testimonial['id'] | number): string => String(id).trim();
+
+const normalizeTestimonial = (testimonial: Testimonial): Testimonial => ({
+    ...testimonial,
+    id: normalizeTestimonialId(testimonial.id),
+});
+
+const normalizeTestimonialData = (data: TestimonialData): TestimonialData => ({
+    ...data,
+    testimonials: data.testimonials.map(normalizeTestimonial),
+});
+
+const generateTestimonialId = (): string => {
+    idCounter = (idCounter + 1) % 10000;
+    return `testimonial-${Date.now()}-${idCounter}-${Math.random().toString(36).slice(2, 8)}`;
+};
+
 export const testimonialService = {
     async getTestimonials(): Promise<TestimonialData> {
-        return await service.getData();
+        const data = await service.getData();
+        return normalizeTestimonialData(data);
     },
 
     async createTestimonial(data: Omit<Testimonial, 'id'>): Promise<Testimonial> {
         const currentData = await this.getTestimonials();
-
-        // CRITICAL FIX: Generate unique ID dengan kombinasi timestamp + counter + random
-        // Menghindari race condition saat concurrent creates
-        idCounter = (idCounter + 1) % 10000;
-        const timestamp = Date.now();
-        const random = Math.floor(Math.random() * 1000);
-        const newId = timestamp * 10000 + idCounter * 1000 + random;
-
-        // Ensure ID is truly unique by checking existing IDs
         const existingIds = new Set(currentData.testimonials.map(t => t.id));
-        let finalId = newId;
+        let finalId = generateTestimonialId();
         while (existingIds.has(finalId)) {
-            finalId++;
+            finalId = generateTestimonialId();
         }
 
         const newTestimonial: Testimonial = {
@@ -56,9 +65,8 @@ export const testimonialService = {
 
     async updateTestimonial(id: number | string, updates: Partial<Testimonial>): Promise<Testimonial | null> {
         const currentData = await this.getTestimonials();
-        // Coerce to number to handle string IDs from JSON.parse
-        const numId = Number(id);
-        const index = currentData.testimonials.findIndex(t => t.id === numId);
+        const normalizedId = normalizeTestimonialId(id);
+        const index = currentData.testimonials.findIndex(t => t.id === normalizedId);
 
         if (index === -1) return null;
 
@@ -76,9 +84,8 @@ export const testimonialService = {
 
     async deleteTestimonial(id: number | string): Promise<boolean> {
         const currentData = await this.getTestimonials();
-        // Coerce to number to handle string IDs from JSON.parse
-        const numId = Number(id);
-        const testimonial = currentData.testimonials.find(t => t.id === numId);
+        const normalizedId = normalizeTestimonialId(id);
+        const testimonial = currentData.testimonials.find(t => t.id === normalizedId);
 
         if (!testimonial) return false;
 
@@ -111,7 +118,7 @@ export const testimonialService = {
             console.error('[TestimonialService] Storage audit failed during delete:', e);
         }
 
-        currentData.testimonials = currentData.testimonials.filter(t => t.id !== numId);
+        currentData.testimonials = currentData.testimonials.filter(t => t.id !== normalizedId);
         currentData.lastUpdated = new Date().toISOString();
         await service.saveData(currentData, `Delete testimonial ID: ${id}`);
         return true;

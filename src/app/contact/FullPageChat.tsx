@@ -23,9 +23,10 @@ interface FullPageChatContactInfo {
 
 interface FullPageChatProps {
     contactInfo?: FullPageChatContactInfo;
+    embedded?: boolean;
 }
 
-export default function FullPageChat({ contactInfo }: FullPageChatProps) {
+export default function FullPageChat({ contactInfo, embedded = false }: FullPageChatProps) {
     const bottomRef = useRef<HTMLDivElement>(null);
     const { 
         messages, 
@@ -39,32 +40,47 @@ export default function FullPageChat({ contactInfo }: FullPageChatProps) {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isAdminTyping]);
 
-    return (
-        <SystemNavFrame hideFooter={true}>
-            <div className="relative flex-1 bg-[#0a0a0a] overflow-hidden flex flex-col items-center justify-center pt-28 pb-32 px-4 h-full min-h-[100dvh]">
-                <m.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="w-full h-full md:h-[80vh] bg-[#e5ddd5] dark:bg-[#0b141a] md:rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] flex flex-col overflow-hidden relative z-10"
-                    style={{ maxWidth: '480px' }}
-                >
-                    <FullPageChatHeader />
-                    <FullPageChatMessages 
-                        messages={messages} 
-                        isTyping={isAdminTyping} 
-                        bottomRef={bottomRef} 
-                    />
-                    <FullPageChatFooter 
-                        onSend={sendMessage} 
-                        isSending={isSending} 
-                    />
-                </m.div>
+    const chatContent = (
+        <div className={embedded
+            ? "relative flex h-full min-h-0 flex-1 overflow-hidden bg-transparent"
+            : "relative flex-1 bg-[#0a0a0a] overflow-hidden flex flex-col items-center justify-center pt-28 pb-32 px-4 h-full min-h-[100dvh]"
+        }>
+            <m.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className={embedded
+                    ? "relative z-10 flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#e5ddd5] dark:bg-[#0b141a]"
+                    : "w-full h-full md:h-[80vh] bg-[#e5ddd5] dark:bg-[#0b141a] md:rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] flex flex-col overflow-hidden relative z-10"
+                }
+                style={embedded ? undefined : { maxWidth: '480px' }}
+            >
+                <FullPageChatHeader />
+                <FullPageChatMessages 
+                    messages={messages} 
+                    isTyping={isAdminTyping} 
+                    bottomRef={bottomRef} 
+                />
+                <FullPageChatFooter 
+                    onSend={sendMessage} 
+                    isSending={isSending} 
+                />
+            </m.div>
 
-                {/* Background Decor */}
+            {!embedded && (
                 <div className="absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-20 flex justify-center items-center">
                     <div className="w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] bg-[#00a884] rounded-full blur-[120px] mix-blend-screen opacity-50" />
                 </div>
-            </div>
+            )}
+        </div>
+    );
+
+    if (embedded) {
+        return chatContent;
+    }
+
+    return (
+        <SystemNavFrame hideFooter={true}>
+            {chatContent}
         </SystemNavFrame>
     );
 }

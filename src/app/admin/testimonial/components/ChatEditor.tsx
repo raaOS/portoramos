@@ -6,6 +6,7 @@ import { ChatHistoryMessage } from '@/types/testimonial';
 import { Project } from '@/types/projects';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
 import { isVideoLink } from '@/lib/media';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface ChatEditorProps {
     messages: ChatHistoryMessage[];
@@ -37,6 +38,8 @@ const AutoResizeTextarea = ({ value, onChange, className, placeholder }: { value
 };
 
 export default function ChatEditor({ messages, onChange, projects, projectId }: ChatEditorProps) {
+    const { csrfToken } = useAdminAuth();
+
     const addMessage = (type: 'text' | 'image' | 'project' = 'text') => {
         const newMsg: ChatHistoryMessage = {
             id: Date.now(),
@@ -70,7 +73,13 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                     const pathParts = url.pathname.split('/o/');
                     if (pathParts.length > 1) {
                         const storagePath = decodeURIComponent(pathParts[1].split('?')[0]);
-                        await fetch(`/api/upload?path=${encodeURIComponent(storagePath)}`, { method: 'DELETE' });
+                        await fetch(`/api/upload?path=${encodeURIComponent(storagePath)}`, {
+                            method: 'DELETE',
+                            credentials: 'include',
+                            headers: {
+                                'x-csrf-token': csrfToken || ''
+                            }
+                        });
                     }
                 } catch (e) {
                     console.error("Failed to delete physical chat image", e);

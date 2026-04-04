@@ -4,6 +4,8 @@ import { UpdateAboutData } from '@/types/about';
 import { validateAdminRequest } from '@/lib/auth';
 import { aboutService } from '@/lib/services/aboutService';
 import { invalidateAboutCache } from '@/lib/about';
+import { updateAboutSchema } from '@/lib/validations';
+import { validationError } from '@/lib/api-response';
 
 
 // GET - Read about content
@@ -24,7 +26,14 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
-    const updates: UpdateAboutData = await request.json();
+    const rawBody = await request.json();
+    const validationResult = updateAboutSchema.safeParse(rawBody);
+
+    if (!validationResult.success) {
+      return validationError(validationResult.error);
+    }
+
+    const updates: UpdateAboutData = validationResult.data;
 
     // The service handles the merging logic now
     const updatedData = await aboutService.updateAboutData(updates);

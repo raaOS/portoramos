@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ExperienceData, WorkExperience } from '@/types/experience';
 import { useToast } from '@/contexts/ToastContext';
+import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 
 export function useAdminExperience(csrfToken: string | null) {
     const [experienceData, setExperienceData] = useState<ExperienceData | null>(null);
@@ -33,11 +34,12 @@ export function useAdminExperience(csrfToken: string | null) {
 
     const updateExperience = async (updateData: Partial<ExperienceData>) => {
         try {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch('/api/experience', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify(updateData)

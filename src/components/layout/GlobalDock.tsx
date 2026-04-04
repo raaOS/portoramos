@@ -57,7 +57,7 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
         id: "contact",
         label: "Contact",
         icon: <AppIcon icon={Mail} color="from-blue-400 to-indigo-500" />,
-        onClick: () => router.push('/contact')
+        onClick: () => handleAppLaunch('contact')
       },
       {
         id: "notes",
@@ -76,7 +76,7 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
     ];
 
     return getDockItemConfig(defaultItems, dockConfig);
-  }, [router, isWindowOpen, dockConfig, handleAppLaunch]);
+  }, [isWindowOpen, dockConfig, handleAppLaunch]);
 
   // Don't render on admin, home (OS desktop has its own), or about pages
   if (pathname?.startsWith('/admin') || pathname === '/' || pathname?.startsWith('/about')) {

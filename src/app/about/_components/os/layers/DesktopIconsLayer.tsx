@@ -34,7 +34,7 @@ interface DesktopIconsLayerProps {
     openProjectWindow: (project: Project) => void;
 }
 
-export default function DesktopIconsLayer({
+function DesktopIconsLayer({
     projectIcons,
     isMobile,
     isReady = true,
@@ -49,8 +49,8 @@ export default function DesktopIconsLayer({
         show: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.12, // 120ms delay between each icon dropping
-                delayChildren: 1.2,    // Wait 1.2s before starting the stagger, letting the start screen portal expand first
+                staggerChildren: 0.08,
+                delayChildren: 0.12,
             }
         }
     };
@@ -122,3 +122,5 @@ export default function DesktopIconsLayer({
         </div>
     );
 }
+
+export default React.memo(DesktopIconsLayer);

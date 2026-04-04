@@ -14,6 +14,7 @@ interface ExperienceFormProps {
 
 export default function ExperienceForm({ work, onSave, onCancel }: ExperienceFormProps) {
     const [formData, setFormData] = useState<Partial<WorkExperience>>(work || {
+        id: '',
         position: '',
         company: '',
         year: '',
@@ -25,11 +26,14 @@ export default function ExperienceForm({ work, onSave, onCancel }: ExperienceFor
 
     const handleSubmit = () => {
         onSave({
+            id: formData.id || crypto.randomUUID(),
             position: formData.position || '',
             company: formData.company || '',
             year: formData.year || '',
             duration: formData.duration || '',
+            position_id: formData.position_id,
             description: formData.description || [],
+            description_id: formData.description_id,
             imageUrl: formData.imageUrl || '',
             isActive: formData.isActive !== undefined ? formData.isActive : true,
         });

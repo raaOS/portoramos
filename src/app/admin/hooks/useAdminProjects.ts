@@ -7,6 +7,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { POLLING } from '@/lib/constants';
 import { useRealtimeSync } from '@/lib/services/realtimeSync';
+import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 
 export function useAdminProjects() {
     const queryClient = useQueryClient();
@@ -60,11 +61,12 @@ export function useAdminProjects() {
     // 3. Mutations
     const createMutation = useMutation({
         mutationFn: async (data: CreateProjectData | UpdateProjectData) => {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch('/api/projects', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify(data)
@@ -87,11 +89,12 @@ export function useAdminProjects() {
 
     const updateMutation = useMutation({
         mutationFn: async (data: UpdateProjectData) => {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch(`/api/projects/${data.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify(data)
@@ -114,10 +117,11 @@ export function useAdminProjects() {
 
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch(`/api/projects/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
             });
@@ -140,11 +144,12 @@ export function useAdminProjects() {
     const handleReorder = useCallback(async (newItems: Project[]) => {
         setOrderedProjects(newItems);
         try {
+            const token = getWritableCsrfToken(csrfToken);
             const res = await fetch('/api/projects/bulk', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify({ action: 'reorder', ids: newItems.map(p => p.id) })
@@ -165,11 +170,12 @@ export function useAdminProjects() {
         if (selectedProjectIds.size === 0) return;
         setIsBulkUpdating(true);
         try {
+            const token = getWritableCsrfToken(csrfToken);
             const res = await fetch('/api/projects/bulk', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify({

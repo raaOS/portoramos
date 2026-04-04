@@ -210,6 +210,11 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
         return item;
     });
 
+    const dockBaseWidth = visibleItems.length > 0
+        ? visibleItems.length * 64 + (visibleItems.length - 1) * 8 + 24
+        : 0;
+    const hoverCaptureWidth = dockBaseWidth + 160;
+
     return (
         <div className="print:hidden">
             {/* Render static placeholder during SSR to prevent hydration mismatch.
@@ -232,8 +237,8 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                     CSS stacking context issues from page content (masonry grid etc.) */}
                     {!isMobile && (
                         <div
-                            className="fixed bottom-0 left-0 right-0 h-28 z-[99999] cursor-default"
-                            style={{ pointerEvents: 'auto', background: 'transparent' }}
+                            className="fixed bottom-0 left-1/2 h-28 z-[99999] -translate-x-1/2 cursor-default"
+                            style={{ width: hoverCaptureWidth, pointerEvents: 'auto', background: 'transparent' }}
                             onMouseMove={(e) => mouseX.set(e.clientX)}
                             onMouseLeave={() => mouseX.set(Infinity)}
                             aria-hidden="true"

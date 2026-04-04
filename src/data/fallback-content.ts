@@ -9,6 +9,7 @@ import { HardSkillConcept } from '@/types/hardSkillConcept';
 
 export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
     {
+        id: 'pt-bitlabs-academy-graphic-designer-0',
         year: 'Nov 2019 - Saat ini',
         duration: '5 tahun 10 bulan',
         company: 'PT. Bitlabs Academy',
@@ -20,6 +21,7 @@ export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
         imageUrl: 'https://images.unsplash.com/photo-1572044162444-ad6021194360?auto=format&fit=crop&w=100&q=80'
     },
     {
+        id: 'sekolah-desain-mentor-desain-grafis-1',
         year: 'Jan 2019 - Jan 2020',
         duration: '1 tahun 1 bulan',
         company: 'Sekolah Desain',
@@ -30,6 +32,7 @@ export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
         imageUrl: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=100&q=80'
     },
     {
+        id: 'pt-duta-mode-graphic-designer-2',
         year: 'Mar 2017 - Nov 2019',
         duration: '2 tahun 9 bulan',
         company: 'PT. Duta Mode',
@@ -41,6 +44,7 @@ export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
         imageUrl: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=100&q=80'
     },
     {
+        id: 'sthal-co-graphic-designer-admin-3',
         year: 'Agt 2016 - Mar 2017',
         duration: '8 bulan',
         company: 'Sthal.Co',
@@ -54,6 +58,7 @@ export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
         imageUrl: 'https://images.unsplash.com/photo-1572044162444-ad6021194360?auto=format&fit=crop&w=100&q=80'
     },
     {
+        id: 'pt-sari-coffee-indonesia-barista-starbuck-coffee-4',
         year: 'Okt 2012 - Agt 2015',
         duration: '2 tahun 11 bulan',
         company: 'PT Sari Coffee Indonesia',
@@ -66,6 +71,7 @@ export const FALLBACK_WORK_EXPERIENCE: ExperienceData['workExperience'] = [
         imageUrl: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=100&q=80'
     },
     {
+        id: 'wulan-boutique-graphic-designer-admin-5',
         year: 'Jan 2012 - Mar 2012',
         duration: '3 bulan',
         company: 'Wulan Boutique',

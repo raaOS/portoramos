@@ -20,7 +20,8 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
     const { bringToFront, getZIndex } = useUnifiedZIndex();
     const [notification, setNotification] = useState<{ id: string; name: string; message: string; avatar: string; initial: string } | null>(null);
     const [isGracePeriod, setIsGracePeriod] = useState(false);
-    const [displayedMessage, setDisplayedMessage] = useState("");
+    const [fullMessage, setFullMessage] = useState("");
+    const [visibleChars, setVisibleChars] = useState(0);
     const [showVerified, setShowVerified] = useState(false);
     const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -54,17 +55,15 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
 
         // Shorten message to max characters
         const shortMessage = safeMessage.length > 22 ? safeMessage.substring(0, 22) + "..." : safeMessage;
-        setDisplayedMessage("");
+        setFullMessage(shortMessage);
+        setVisibleChars(0);
         let index = 0;
 
         if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
 
         typingIntervalRef.current = setInterval(() => {
             if (index < shortMessage.length) {
-                const char = shortMessage[index];
-                if (char !== undefined) {
-                    setDisplayedMessage(prev => prev + char);
-                }
+                setVisibleChars(index + 1);
                 index++;
             } else {
                 if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
@@ -129,7 +128,8 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
 
             notificationTimerRef.current = setTimeout(() => {
                 setNotification(null);
-                setDisplayedMessage("");
+                setFullMessage("");
+                setVisibleChars(0);
                 setShowVerified(false);
                 notificationTimerRef.current = null;
             }, 6000);
@@ -160,7 +160,8 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
             if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
             if (textToggleRef.current) clearInterval(textToggleRef.current);
             setNotification(null);
-            setDisplayedMessage("");
+            setFullMessage("");
+            setVisibleChars(0);
             setShowVerified(false);
         };
     }, [isBooting, customNotifications, triggerNotification]);
@@ -243,7 +244,8 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                                 if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
                                 if (textToggleRef.current) clearInterval(textToggleRef.current);
                                 setNotification(null);
-                                setDisplayedMessage("");
+                                setFullMessage("");
+                                setVisibleChars(0);
                                 setShowVerified(false);
                                 onOpenChat?.(notification.name);
                             }}
@@ -301,8 +303,12 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                                 </div>
 
                                 {/* Testimonial Quote */}
-                                <p className="text-gray-400 text-[10px] truncate mt-0.5 leading-tight">
-                                    &ldquo;{displayedMessage || ""}&rdquo;
+                                <p className="mt-0.5 flex items-center gap-[1px] overflow-hidden text-[10px] leading-tight text-gray-400">
+                                    <span aria-hidden="true">&ldquo;</span>
+                                    <span className="min-w-0 flex-1 overflow-hidden whitespace-nowrap">
+                                        {fullMessage.slice(0, visibleChars)}
+                                    </span>
+                                    <span aria-hidden="true">&rdquo;</span>
                                 </p>
                             </div>
                         </m.div>

@@ -66,6 +66,10 @@ export function useDesktopNavigation({
         });
     }, [openWindow, dynamicContacts, ChatWindow]);
 
+    const openContactWindow = useCallback(() => {
+        openWindow("contact");
+    }, [openWindow]);
+
     const toggleNotesVisibility = useCallback(() => {
         const nextState = !notesVisible;
         setNotesVisible(nextState);
@@ -96,6 +100,7 @@ export function useDesktopNavigation({
         openProjectWindow,
         navToChat,
         openWhatsAppList,
+        openContactWindow,
         toggleNotesVisibility
     };
 }

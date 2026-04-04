@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "node scripts/core/dev.js",
     "dev:webpack": "node scripts/core/dev.js --webpack",
-    "build": "npm run clear-cache && next build",
+    "build": "node scripts/utils/ensure-next-dev-not-running.js && next build",
+    "build:clean": "node scripts/utils/ensure-next-dev-not-running.js && npm run clear-cache -- --force && next build",
     "start": "next start",
     "lint": "eslint src",
     "clear-cache": "node scripts/utils/clear-cache.js",
@@ -17,7 +18,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "pre-deploy": "node scripts/deploy/pre-deploy-check.js",
-    "deploy": "npm run pre-deploy && next build",
+    "deploy": "node scripts/utils/ensure-next-dev-not-running.js && npm run pre-deploy && next build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

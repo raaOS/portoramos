@@ -3,27 +3,27 @@ import { Video, Phone, MoreVertical } from 'lucide-react';
 
 export default function FullPageChatHeader() {
     return (
-        <div className="bg-[#00a884] dark:bg-[#202c33] px-4 py-4 flex items-center justify-between shrink-0 shadow-md z-20">
-            <div className="flex items-center gap-3">
+        <div className="z-10 flex h-[60px] shrink-0 items-center justify-between border-b border-[#d1d7db] bg-[#f0f2f5] px-3 py-2 shadow-sm">
+            <div className="flex items-center gap-2">
                 {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 border border-white/20">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/50 bg-gray-200">
                     <img 
                         src={`https://ui-avatars.com/api/?background=ffffff&color=000000&name=R&size=128&bold=true&length=1`} 
                         alt="Ramos" 
-                        className="w-full h-full object-cover" 
+                        className="h-full w-full object-cover" 
                     />
                 </div>
 
-                <div className="flex flex-col">
-                    <span className="font-semibold text-white text-base leading-tight">Ramos</span>
-                    <span className="text-white/80 text-xs font-medium">Online</span>
+                <div className="ml-1 flex flex-col">
+                    <span className="line-clamp-1 text-sm font-semibold leading-tight text-[#111b21]">Ramos</span>
+                    <span className="text-[11px] font-medium leading-tight text-[#00a884]">online</span>
                 </div>
             </div>
 
-            <div className="flex items-center gap-4 text-white">
-                <Video className="w-5 h-5 opacity-80 cursor-not-allowed" />
-                <Phone className="w-5 h-5 opacity-80 cursor-not-allowed" />
-                <MoreVertical className="w-5 h-5 opacity-80 cursor-not-allowed" />
+            <div className="flex items-center gap-4 text-[#54656f]">
+                <Video size={20} className="cursor-not-allowed opacity-50" />
+                <Phone size={18} className="cursor-not-allowed opacity-50" />
+                <MoreVertical size={20} className="cursor-pointer" />
             </div>
         </div>
     );

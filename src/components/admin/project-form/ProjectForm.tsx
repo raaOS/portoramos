@@ -3,7 +3,7 @@
  * Refactored into sub-components for better maintainability.
  */
 import React, { useState } from 'react';
-import { useProjectForm } from '@/hooks/useProjectForm';
+import { useProjectForm, type ProjectFormData } from '@/hooks/useProjectForm';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import AdminModal from '@/app/admin/components/AdminModal';
 import { useFirebaseUpload } from '@/app/admin/components/file-upload/hooks/useFirebaseUpload';
@@ -17,10 +17,26 @@ import { useProjectWizard } from './hooks/useProjectWizard';
 import ProjectBasicInfo from './ProjectBasicInfo';
 import ProjectMediaUpload from './ProjectMediaUpload';
 import ProjectNarrative from './ProjectNarrative';
-import ProjectAIHelper from './ProjectAIHelper';
+import ProjectAIHelper, { type AIResponse } from './ProjectAIHelper';
 import ProjectGalleryManager from './ProjectGalleryManager';
 import ProjectStepIndicator from './components/ProjectStepIndicator';
 import ProjectStepActions from './components/ProjectStepActions';
+
+const PROJECT_TYPE_OPTIONS = [
+    { value: 'commercial', label: 'Komersial' },
+    { value: 'visual_art', label: 'Art Visual' }
+] as const;
+
+const MEDIA_FORMAT_OPTIONS = [
+    { id: 'single', label: 'Cover Saja' },
+    { id: 'comparison', label: 'Before / After' },
+    { id: 'gallery', label: 'Galeri Item' }
+] as const;
+
+type AIUpdatableField = keyof Pick<
+    ProjectFormData,
+    'title' | 'description' | 'client' | 'role' | 'team' | 'timeline' | 'software' | 'narrative' | 'tags' | 'likes' | 'shares' | 'allowComments'
+>;
 
 interface ProjectFormProps {
     project?: Project;
@@ -53,13 +69,13 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
     
     // Extracted Hooks
     const { 
-        currentStep, setCurrentStep, 
+        currentStep,
         isFormRevealed, revealForm, 
         mediaFormat, setMediaFormat,
         handleNext, handleBack 
     } = useProjectWizard(project);
 
-    const { trackNewUpload, executeCleanup, handleCancelCleanup } = useProjectPurge(project);
+    const { trackNewUpload, executeCleanup, handleCancelCleanup, purgeUrl } = useProjectPurge(project, csrfToken);
 
     // Local state for deferred upload
     const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
@@ -85,8 +101,13 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
 
             // [Garbage Collection Execution]
             await executeCleanup(submitData);
+            setPendingCoverFile(null);
 
         } catch (error) {
+            const failedCoverUrl = submitData.cover;
+            if (pendingCoverFile && failedCoverUrl && failedCoverUrl !== project?.cover) {
+                await purgeUrl(failedCoverUrl);
+            }
             console.error("Submit failed", error);
             alert("Gagal menyimpan project. Silakan coba lagi.");
         } finally {
@@ -132,26 +153,26 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                                 <p className="text-xs text-gray-500 mt-0.5">Pilih pendekatan yang sesuai</p>
                             </div>
                             <div className="flex flex-col gap-2">
-                                {['commercial', 'visual_art'].map((type) => (
-                                    <label key={type} className="group flex items-center gap-3 py-1.5 cursor-pointer">
+                                {PROJECT_TYPE_OPTIONS.map((typeOption) => (
+                                    <label key={typeOption.value} className="group flex items-center gap-3 py-1.5 cursor-pointer">
                                         <input 
                                             type="radio" 
                                             name="type" 
                                             className="hidden" 
-                                            checked={formData.type === type} 
-                                            onChange={() => updateField('type', type)} 
+                                            checked={formData.type === typeOption.value} 
+                                            onChange={() => updateField('type', typeOption.value)} 
                                         />
                                         <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                                            formData.type === type ? 'border-green-500 bg-green-50' : 'border-gray-300 group-hover:border-gray-400'
+                                            formData.type === typeOption.value ? 'border-green-500 bg-green-50' : 'border-gray-300 group-hover:border-gray-400'
                                         }`}>
-                                            {formData.type === type && (
+                                            {formData.type === typeOption.value && (
                                                 <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                 </svg>
                                             )}
                                         </div>
-                                        <span className={`text-sm ${formData.type === type ? 'font-medium text-green-600' : 'text-gray-500 group-hover:text-gray-700'}`}>
-                                            {type === 'commercial' ? 'Komersial' : 'Art Visual'}
+                                        <span className={`text-sm ${formData.type === typeOption.value ? 'font-medium text-green-600' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                                            {typeOption.label}
                                         </span>
                                     </label>
                                 ))}
@@ -168,18 +189,14 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                                 <p className="text-xs text-gray-500 mt-0.5">Menentukan input selanjutnya</p>
                             </div>
                             <div className="flex flex-col gap-2">
-                                {[
-                                    { id: 'single', label: 'Cover Saja' },
-                                    { id: 'comparison', label: 'Before / After' },
-                                    { id: 'gallery', label: 'Galeri Item' }
-                                ].map((fmt) => (
+                                {MEDIA_FORMAT_OPTIONS.map((fmt) => (
                                     <label key={fmt.id} className="group flex items-center gap-3 py-1.5 cursor-pointer">
                                         <input 
                                             type="radio" 
                                             name="mediaFormat" 
                                             className="hidden" 
                                             checked={mediaFormat === fmt.id} 
-                                            onChange={() => setMediaFormat(fmt.id as any)} 
+                                            onChange={() => setMediaFormat(fmt.id)} 
                                         />
                                         <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                                             mediaFormat === fmt.id ? 'border-green-500 bg-green-50' : 'border-gray-300 group-hover:border-gray-400'
@@ -215,6 +232,7 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                                 onFileChange={setPendingCoverFile}
                                 mediaFormat={mediaFormat}
                                 onNewUpload={trackNewUpload}
+                                csrfToken={csrfToken}
                             />
                         </div>
 
@@ -248,24 +266,24 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                             pendingFile={pendingCoverFile}
                             slug={formData.slug || ''}
                             projectId={project?.id}
-                            onGenerate={(data) => {
-                                // Bulk update fields
-                                const mapping: Record<string, any> = {
-                                    title: data.title,
-                                    description: data.description,
-                                    client: data.client,
-                                    role: data.role,
-                                    team: data.team,
-                                    timeline: data.timeline,
-                                    software: data.software,
-                                    narrative: data.narrative,
-                                    tags: data.tags?.join(', '),
-                                    likes: data.likes,
-                                    shares: data.shares,
-                                    allowComments: data.isViralPackageRequested ? true : undefined
-                                };
-                                Object.entries(mapping).forEach(([k, v]) => {
-                                    if (v !== undefined) updateField(k as any, v);
+                            onGenerate={(data: AIResponse) => {
+                                const updates: Array<[AIUpdatableField, ProjectFormData[AIUpdatableField]]> = [
+                                    ['title', data.title],
+                                    ['description', data.description],
+                                    ['client', data.client],
+                                    ['role', data.role],
+                                    ['team', data.team],
+                                    ['timeline', data.timeline],
+                                    ['software', data.software || []],
+                                    ['narrative', data.narrative as ProjectFormData['narrative']],
+                                    ['tags', data.tags?.join(', ') || ''],
+                                    ['likes', data.likes ?? 0],
+                                    ['shares', data.shares ?? 0],
+                                    ['allowComments', data.isViralPackageRequested ? true : formData.allowComments ?? true]
+                                ];
+
+                                updates.forEach(([field, value]) => {
+                                    if (value !== undefined) updateField(field, value);
                                 });
                                 revealForm();
                             }}

@@ -22,7 +22,7 @@ export default function AdminExperienceClient() {
   } = useAdminExperience(csrfToken);
 
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   if (authLoading || (loading && !experienceData)) {
     return (
@@ -75,6 +75,10 @@ export default function AdminExperienceClient() {
     );
   }
 
+  const editingWork = editingId
+    ? experienceData.workExperience.find((work) => work.id === editingId)
+    : undefined;
+
   return (
     <AdminLayout
       title="Experience Management"
@@ -107,7 +111,7 @@ export default function AdminExperienceClient() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Work Experience History</h3>
-            {!isAddingNew && editingIndex === null && (
+            {!isAddingNew && editingId === null && (
               <button
                 onClick={() => setIsAddingNew(true)}
                 className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
@@ -118,35 +122,40 @@ export default function AdminExperienceClient() {
             )}
           </div>
 
-          {(isAddingNew || editingIndex !== null) ? (
+          {(isAddingNew || editingId !== null) ? (
             <ExperienceForm
-              work={editingIndex !== null ? experienceData.workExperience[editingIndex] : undefined}
-              onCancel={() => { setIsAddingNew(false); setEditingIndex(null); }}
+              work={editingWork}
+              onCancel={() => { setIsAddingNew(false); setEditingId(null); }}
               onSave={async (item) => {
-                const newList = [...experienceData.workExperience];
-                if (isAddingNew) newList.push(item);
-                else if (editingIndex !== null) newList[editingIndex] = item;
+                const newList = isAddingNew
+                  ? [...experienceData.workExperience, item]
+                  : experienceData.workExperience.map((work) => (
+                    work.id === item.id ? item : work
+                  ));
 
                 const success = await handleUpdateWorkHistory(newList);
-                if (success) { setIsAddingNew(false); setEditingIndex(null); }
+                if (success) { setIsAddingNew(false); setEditingId(null); }
               }}
             />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {experienceData.workExperience.map((work, index) => (
+              {experienceData.workExperience.map((work) => (
                 <ExperienceCard
-                  key={index}
+                  key={work.id}
                   work={work}
-                  onEdit={() => setEditingIndex(index)}
+                  onEdit={() => setEditingId(work.id)}
                   onDelete={async () => {
                     if (confirm('Are you sure you want to delete this experience entry?')) {
-                      const newList = experienceData.workExperience.filter((_, i) => i !== index);
+                      const newList = experienceData.workExperience.filter((item) => item.id !== work.id);
                       await handleUpdateWorkHistory(newList);
                     }
                   }}
                   onToggleStatus={async () => {
-                    const newList = [...experienceData.workExperience];
-                    newList[index] = { ...work, isActive: work.isActive === false ? true : false };
+                    const newList = experienceData.workExperience.map((item) => (
+                      item.id === work.id
+                        ? { ...item, isActive: work.isActive === false ? true : false }
+                        : item
+                    ));
                     await handleUpdateWorkHistory(newList);
                   }}
                 />

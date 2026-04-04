@@ -5,6 +5,7 @@ import { AboutData, UpdateAboutData } from '@/types/about';
 import { RunningTextItem } from '@/types/runningText';
 import { Project } from '@/types/projects';
 import { useToast } from '@/contexts/ToastContext';
+import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 
 export function useAdminAbout(csrfToken: string | null) {
     const [aboutData, setAboutData] = useState<AboutData | null>(null);
@@ -32,7 +33,7 @@ export function useAdminAbout(csrfToken: string | null) {
     const loadRunningTexts = useCallback(async () => {
         try {
             setRunningTextsLoading(true);
-            const response = await fetch('/api/running-text');
+            const response = await fetch('/api/running-text?fresh=true');
             const data = await response.json();
             setRunningTexts(data.items || []);
         } catch {
@@ -60,11 +61,12 @@ export function useAdminAbout(csrfToken: string | null) {
 
     const handleUpdateAbout = async (updateData: UpdateAboutData) => {
         try {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch('/api/about', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify(updateData)
@@ -89,11 +91,12 @@ export function useAdminAbout(csrfToken: string | null) {
 
     const handleCreateRunningText = async (payload: { text: string; order?: number; isActive?: boolean }) => {
         try {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch('/api/running-text', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify(payload),
@@ -111,11 +114,12 @@ export function useAdminAbout(csrfToken: string | null) {
 
     const handleUpdateRunningText = async (id: string, payload: Partial<RunningTextItem>) => {
         try {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch(`/api/running-text/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify(payload),
@@ -133,10 +137,11 @@ export function useAdminAbout(csrfToken: string | null) {
 
     const handleDeleteRunningText = async (id: string) => {
         try {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch(`/api/running-text/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include'
             });

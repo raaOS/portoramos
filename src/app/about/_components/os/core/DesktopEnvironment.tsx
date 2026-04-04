@@ -1,6 +1,6 @@
 "use client";
 
-import React, { startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, m, LazyMotion, domMax } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -70,6 +70,7 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
     const handleBootComplete = () => {
         if (aboutData?.soundConfig) soundManager.loadConfig(aboutData.soundConfig);
         soundManager.suppressSound('window-open', 1500);
+        startTransition(() => setIsRevealed(true));
         finishBooting();
     };
 
@@ -114,6 +115,12 @@ function DesktopMain({
     dynamicContacts, testimonialContacts, showSpotlight, setShowSpotlight,
     commercialProjects, projects, isAdmin, logout, csrfToken
 }: any) {
+    const hasHandledAppParamRef = useRef(false);
+
+    const handleGoHome = useCallback(() => {
+        window.location.href = '/';
+    }, []);
+
     const { 
         openWindow, resetWindows, requestNextZIndex,
         windows, closeWindow, minimizeWindow, maximizeWindow, focusWindow,
@@ -126,7 +133,30 @@ function DesktopMain({
         notes, projects, restoreNote, addNote, isAdmin, setNotesDockBouncing: () => { }
     });
     const { iconPositions, handleIconPositionChange } = useDesktopLayout({ aboutData, isAdmin, csrfToken });
-    const { projectIcons } = useDesktopIcons({ mounted: true, commercialProjects, aboutData, handleGoHome: () => window.location.href = '/', iconPositions });
+    const { projectIcons } = useDesktopIcons({ mounted: true, commercialProjects, aboutData, handleGoHome, iconPositions });
+
+    useEffect(() => {
+        if (hasHandledAppParamRef.current) return;
+        if (typeof window === 'undefined') return;
+
+        const params = new URLSearchParams(window.location.search);
+        const rawApp = params.get('app');
+        if (!rawApp) {
+            hasHandledAppParamRef.current = true;
+            return;
+        }
+
+        const app = rawApp === 'mail' ? 'contact' : rawApp;
+        if (app === 'whatsapp') {
+            openWhatsAppList();
+        } else {
+            openWindow(app);
+        }
+
+        const nextUrl = `${window.location.pathname}${window.location.hash}`;
+        window.history.replaceState({}, '', nextUrl);
+        hasHandledAppParamRef.current = true;
+    }, [openWindow, openWhatsAppList]);
 
     const wasBootSkipped = !needsPowerOn && !isBooting;
     const isDesktopReady = wasBootSkipped || startScreenReady;
@@ -143,7 +173,6 @@ function DesktopMain({
                                 onStart={handleBootComplete} 
                                 isActive={needsPowerOn || isBooting} 
                                 onReady={() => setStartScreenReady(true)} 
-                                onReveal={() => startTransition(() => setIsRevealed(true))} 
                             />
                         </AnimatePresence>
                     )}
@@ -153,21 +182,27 @@ function DesktopMain({
                         animate={{ opacity: isDesktopReady ? 1 : 0 }}
                         transition={{ duration: wasBootSkipped ? 0.4 : 0.2, ease: wasBootSkipped ? [0.32, 0.72, 0, 1] : "easeOut" }}
                     >
-                        <DesktopBackground wallpaperConfig={aboutData?.wallpaperConfig} />
-                        <DesktopIconsLayer projectIcons={projectIcons} isMobile={isMobile} isReady={isDesktopRevealed} handleIconPositionChange={handleIconPositionChange} openProjectWindow={openProjectWindow} />
-                        <UnifiedLayer
-                            windows={windows} notes={notes} notesVisible={notesVisible} isAdmin={isAdmin} isReady={isDesktopRevealed}
-                            closeWindow={closeWindow} minimizeWindow={minimizeWindow} maximizeWindow={maximizeWindow} focusWindow={focusWindow}
-                            updateWindowPosition={updateWindowPosition} handleWindowResize={handleWindowResize} handleWindowResizeEnd={handleWindowResizeEnd}
-                            togglePin={togglePin} updateNote={updateNote} bringToFrontNote={bringToFrontNote} deleteNote={deleteNote}
-                            permanentDeleteNote={permanentDeleteNote} restoreNote={restoreNote} addNote={addNote}
-                        />
-                        <UIOverlaysLayer
-                            isBooting={isBooting} needsPowerOn={needsPowerOn} navToChat={navToChat} openWhatsAppList={openWhatsAppList}
-                            testimonialContacts={testimonialContacts} showSpotlight={showSpotlight} setShowSpotlight={setShowSpotlight}
-                            aboutData={aboutData} isAdmin={isAdmin} logout={logout} toggleNotesVisibility={toggleNotesVisibility}
-                            notesVisible={notesVisible} isMobile={isMobile} commercialProjects={commercialProjects} openProjectWindow={openProjectWindow}
-                        />
+                        {isDesktopReady && (
+                            <DesktopBackground wallpaperConfig={aboutData?.wallpaperConfig} />
+                        )}
+                        {isDesktopRevealed && (
+                            <>
+                                <DesktopIconsLayer projectIcons={projectIcons} isMobile={isMobile} isReady={isDesktopRevealed} handleIconPositionChange={handleIconPositionChange} openProjectWindow={openProjectWindow} />
+                                <UnifiedLayer
+                                    windows={windows} notes={notes} notesVisible={notesVisible} isAdmin={isAdmin} isReady={isDesktopRevealed}
+                                    closeWindow={closeWindow} minimizeWindow={minimizeWindow} maximizeWindow={maximizeWindow} focusWindow={focusWindow}
+                                    updateWindowPosition={updateWindowPosition} handleWindowResize={handleWindowResize} handleWindowResizeEnd={handleWindowResizeEnd}
+                                    togglePin={togglePin} updateNote={updateNote} bringToFrontNote={bringToFrontNote} deleteNote={deleteNote}
+                                    permanentDeleteNote={permanentDeleteNote} restoreNote={restoreNote} addNote={addNote}
+                                />
+                                <UIOverlaysLayer
+                                    isBooting={isBooting} needsPowerOn={needsPowerOn} navToChat={navToChat} openWhatsAppList={openWhatsAppList}
+                                    testimonialContacts={testimonialContacts} showSpotlight={showSpotlight} setShowSpotlight={setShowSpotlight}
+                                    aboutData={aboutData} isAdmin={isAdmin} logout={logout} toggleNotesVisibility={toggleNotesVisibility}
+                                    notesVisible={notesVisible} isMobile={isMobile} commercialProjects={commercialProjects} openProjectWindow={openProjectWindow}
+                                />
+                            </>
+                        )}
                     </m.div>
                 </>
             )}

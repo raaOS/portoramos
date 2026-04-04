@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Check, Trash2, Loader2 } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
 import { WallpaperConfig, Wallpaper } from '@/types/about';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface WallpaperManagerProps {
     data?: WallpaperConfig;
@@ -14,6 +15,7 @@ const DEFAULT_WALLPAPERS = [
 ];
 
 export default function WallpaperManager({ data, onUpdate }: WallpaperManagerProps) {
+    const { csrfToken } = useAdminAuth();
     const [wallpapers, setWallpapers] = useState<Wallpaper[]>(DEFAULT_WALLPAPERS);
     const [activeId, setActiveId] = useState<string>('default');
     // Local state for blur — only saves to database on pointer/mouse up (not every keystroke)
@@ -69,7 +71,13 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
                     const pathParts = url.pathname.split('/o/');
                     if (pathParts.length > 1) {
                         const storagePath = decodeURIComponent(pathParts[1].split('?')[0]);
-                        await fetch(`/api/upload?path=${encodeURIComponent(storagePath)}`, { method: 'DELETE' });
+                        await fetch(`/api/upload?path=${encodeURIComponent(storagePath)}`, {
+                            method: 'DELETE',
+                            credentials: 'include',
+                            headers: {
+                                'x-csrf-token': csrfToken || ''
+                            }
+                        });
                     }
                 } catch (e) {
                     console.error("Failed to delete physical wallpaper file", e);

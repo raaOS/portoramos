@@ -24,7 +24,7 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
         { id: "gallery", title: "Photos", type: "app" },
         { id: "game", title: "Snake Game", type: "app" },
         { id: "settings", title: "System Settings", type: "app" },
-        { id: "mail", title: "Contact", type: "app" },
+        { id: "contact", title: "Contact", type: "app" },
     ];
 
     const results = [

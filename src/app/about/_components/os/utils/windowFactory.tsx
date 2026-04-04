@@ -19,6 +19,11 @@ const ChatWindow = dynamic(() => import("../windows/ChatWindow"), {
     ssr: false
 });
 
+const ContactWindow = dynamic(() => import("../windows/ContactWindow"), {
+    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
+    ssr: false
+});
+
 interface WindowFactoryProps {
     aboutData: AboutData | null | undefined;
     experienceData: ExperienceData | null | undefined;
@@ -74,6 +79,17 @@ export const createInitialWindows = ({
             content: <ChatWindow customContacts={dynamicContacts} />
         },
         {
+            id: "contact",
+            title: "Contact",
+            isOpen: false,
+            zIndex: 12,
+            noPadding: true,
+            initialPosition: { x: 240, y: 100 },
+            width: 520,
+            height: 720,
+            content: <ContactWindow />
+        },
+        {
             id: "trash-bin",
             title: "Recycle Bin",
             isOpen: false,
@@ -93,7 +109,7 @@ export const createInitialWindows = ({
             id: "projects",
             title: "Finder: Projects",
             isOpen: false,
-            zIndex: 12,
+            zIndex: 13,
             noPadding: true,
             initialPosition: { x: 50, y: 50 },
             width: 1000,

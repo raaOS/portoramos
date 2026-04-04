@@ -5,6 +5,7 @@ import { Testimonial, TestimonialData } from '@/types/testimonial';
 import { Project } from '@/types/projects';
 import { useToast } from '@/contexts/ToastContext';
 import { useAutoUpdate } from '@/hooks/useAutoUpdate';
+import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 
 export function useAdminTestimonial(csrfToken: string | null) {
     const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -53,11 +54,12 @@ export function useAdminTestimonial(csrfToken: string | null) {
         if (!topic) return null;
         setIsAiGenerating(true);
         try {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch('/api/ai/generate-testimonial', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify({ topic, messageCount })
@@ -77,11 +79,12 @@ export function useAdminTestimonial(csrfToken: string | null) {
 
     const createTestimonial = async (formData: Partial<Testimonial>) => {
         try {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch('/api/testimonial', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify(formData)
@@ -101,13 +104,14 @@ export function useAdminTestimonial(csrfToken: string | null) {
         }
     };
 
-    const updateTestimonial = async (id: number, formData: Partial<Testimonial>) => {
+    const updateTestimonial = async (id: string, formData: Partial<Testimonial>) => {
         try {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch('/api/testimonial', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify({ id, ...formData })
@@ -127,14 +131,15 @@ export function useAdminTestimonial(csrfToken: string | null) {
         }
     };
 
-    const deleteTestimonial = async (id: number) => {
+    const deleteTestimonial = async (id: string) => {
         if (!confirm('Are you sure you want to delete this testimonial?')) return;
         try {
+            const token = getWritableCsrfToken(csrfToken);
             const response = await fetch('/api/testimonial', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': csrfToken || ''
+                    'x-csrf-token': token
                 },
                 credentials: 'include',
                 body: JSON.stringify({ id })

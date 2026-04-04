@@ -27,7 +27,7 @@ export default function AdminTestimonialClient() {
     deleteTestimonial
   } = useAdminTestimonial(csrfToken);
 
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Testimonial>>({
     name: '',
     notificationText: '',
@@ -90,7 +90,7 @@ export default function AdminTestimonialClient() {
 
   const handleSave = async () => {
     const success = editingId
-      ? await updateTestimonial(editingId!, formData)
+      ? await updateTestimonial(editingId, formData)
       : await createTestimonial(formData);
 
     if (success) resetForm();

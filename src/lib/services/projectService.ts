@@ -181,7 +181,7 @@ export const projectService = {
     },
 
     async updateProject(id: string, data: UpdateProjectData): Promise<Project | null> {
-        UpdateProjectSchema.parse(data);
+        UpdateProjectSchema.parse({ ...data, id });
 
         const projectRef = db.ref(`projects/${id}`);
         const snap = await projectRef.once('value');

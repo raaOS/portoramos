@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Smile, Send, Mic } from 'lucide-react';
+import { Plus, Send, Mic } from 'lucide-react';
+import EmojiPicker from '@/components/chat/EmojiPicker';
 
 interface FullPageChatFooterProps {
     onSend: (text: string) => void;
@@ -25,19 +26,24 @@ export default function FullPageChatFooter({ onSend, isSending }: FullPageChatFo
         }
     };
 
+    const handleEmojiSelect = (emoji: string) => {
+        setInputValue(prev => prev + emoji);
+        inputRef.current?.focus();
+    };
+
     return (
-        <div className="bg-[#f0f2f5] dark:bg-[#202c33] px-4 py-3 flex items-center gap-3 shrink-0 relative z-20 pb-safe">
-            <div className="flex items-center gap-3 text-[#667781] dark:text-[#8696a0]">
-                <Plus className="w-6 h-6 cursor-not-allowed opacity-60" />
-                <Smile className="w-6 h-6 cursor-not-allowed opacity-60" />
+        <div className="z-10 flex shrink-0 items-center gap-3 border-t border-[#d1d7db] bg-[#f0f2f5] px-3 py-2.5 pb-safe dark:border-white/5 dark:bg-[#202c33]">
+            <div className="flex items-center gap-3 text-[#54656f] dark:text-[#8696a0]">
+                <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+                <Plus className="h-6 w-6 cursor-pointer hover:text-[#111b21] transition-colors dark:hover:text-white" />
             </div>
 
-            <div className="flex-1 bg-white dark:bg-[#2a3942] rounded-xl px-4 py-2 border dark:border-white/5">
+            <div className="flex-1 rounded-[10px] bg-white px-4 py-2 shadow-sm dark:bg-[#2a3942]">
                 <input
                     ref={inputRef}
                     type="text"
-                    placeholder="Type a message"
-                    className="w-full bg-transparent border-none focus:outline-none text-[#111b21] dark:text-[#e9edef] text-sm"
+                    placeholder="Ketik pesan..."
+                    className="w-full border-none bg-transparent text-[14.5px] text-[#111b21] outline-none placeholder:text-[#8696a0] focus:outline-none dark:text-[#e9edef]"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -48,16 +54,16 @@ export default function FullPageChatFooter({ onSend, isSending }: FullPageChatFo
             <button
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isSending}
-                className={`p-2.5 rounded-full flex items-center justify-center transition-all ${
+                className={`rounded-full p-2 transition-all ${
                     inputValue.trim() && !isSending
-                        ? 'bg-[#00a884] shadow-md hover:scale-110'
-                        : 'bg-transparent text-[#667781] dark:text-[#8696a0]'
+                        ? 'text-[#00a884] hover:bg-gray-200 dark:hover:bg-white/5'
+                        : 'text-[#54656f] hover:bg-gray-200 dark:text-[#8696a0] dark:hover:bg-white/5'
                 }`}
             >
                 {inputValue.trim() ? (
-                    <Send className="w-5 h-5 text-white" />
+                    <Send className="h-6 w-6" />
                 ) : (
-                    <Mic className="w-6 h-6" />
+                    <Mic className="h-6 w-6" />
                 )}
             </button>
         </div>

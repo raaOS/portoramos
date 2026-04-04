@@ -9,7 +9,7 @@ export interface ChatHistoryMessage {
 }
 
 export interface Testimonial {
-  id: number;
+  id: string;
   name: string;
   notificationText: string;
   isActive?: boolean;

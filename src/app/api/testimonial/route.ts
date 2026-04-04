@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { testimonialService } from '@/lib/services/testimonialService';
 import { validateAdminRequest } from '@/lib/auth';
+import {
+  createTestimonialSchema,
+  deleteTestimonialSchema,
+  updateTestimonialSchema,
+} from '@/lib/validations';
+import { validationError } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,8 +32,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const newTestimonial = await testimonialService.createTestimonial(body);
+    const rawBody = await request.json();
+    const validationResult = createTestimonialSchema.safeParse(rawBody);
+
+    if (!validationResult.success) {
+      return validationError(validationResult.error);
+    }
+
+    const newTestimonial = await testimonialService.createTestimonial(validationResult.data);
 
     revalidatePath('/', 'layout');
     revalidatePath('/about');
@@ -49,7 +61,14 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { id, ...updates } = await request.json();
+    const rawBody = await request.json();
+    const validationResult = updateTestimonialSchema.safeParse(rawBody);
+
+    if (!validationResult.success) {
+      return validationError(validationResult.error);
+    }
+
+    const { id, ...updates } = validationResult.data;
     const updated = await testimonialService.updateTestimonial(id, updates);
 
     if (!updated) {
@@ -76,8 +95,14 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const { id } = await request.json();
-    const success = await testimonialService.deleteTestimonial(id);
+    const rawBody = await request.json();
+    const validationResult = deleteTestimonialSchema.safeParse(rawBody);
+
+    if (!validationResult.success) {
+      return validationError(validationResult.error);
+    }
+
+    const success = await testimonialService.deleteTestimonial(validationResult.data.id);
 
     if (!success) {
       return NextResponse.json({ error: 'Testimonial not found' }, { status: 404 });

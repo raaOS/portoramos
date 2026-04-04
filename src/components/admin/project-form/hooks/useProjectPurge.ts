@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CreateProjectData, Project } from '@/types/projects';
 
-export function useProjectPurge(project?: Project) {
+export function useProjectPurge(project?: Project, csrfToken?: string | null) {
     const [sessionUploads, setSessionUploads] = useState<string[]>([]);
 
     const trackNewUpload = (url: string) => {
@@ -19,7 +19,16 @@ export function useProjectPurge(project?: Project) {
         try {
             const path = extractStoragePath(url);
             if (path && !url.startsWith('blob:')) {
-                await fetch(`/api/upload?path=${encodeURIComponent(path)}`, { method: 'DELETE' });
+                const response = await fetch(`/api/upload?path=${encodeURIComponent(path)}`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                    headers: {
+                        'x-csrf-token': csrfToken || ''
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`Delete failed with status ${response.status}`);
+                }
             }
         } catch (e) {
             console.error("Purge failed for", url, e);
@@ -48,8 +57,7 @@ export function useProjectPurge(project?: Project) {
         const urlsToPurge = [...ghostSessionUrls, ...removedOriginalUrls];
         
         if (urlsToPurge.length > 0) {
-            // Fire and forget (don't await individual deletes to speed up UI)
-            urlsToPurge.forEach(purgeUrl);
+            await Promise.allSettled(urlsToPurge.map(purgeUrl));
         }
     };
 
@@ -60,10 +68,10 @@ export function useProjectPurge(project?: Project) {
             );
             if (!confirm) return false;
 
-            sessionUploads.forEach(purgeUrl);
+            await Promise.allSettled(sessionUploads.map(purgeUrl));
         }
         return true;
     };
 
-    return { trackNewUpload, executeCleanup, handleCancelCleanup };
+    return { trackNewUpload, executeCleanup, handleCancelCleanup, purgeUrl };
 }

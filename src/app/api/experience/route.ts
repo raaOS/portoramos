@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { validateAdminRequest } from '@/lib/auth';
 import { experienceService } from '@/lib/services/experienceService';
+import { updateExperienceSchema } from '@/lib/validations';
+import { validationError } from '@/lib/api-response';
 
 export async function GET() {
   try {
@@ -22,7 +24,14 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { statistics, workExperience } = await request.json();
+    const rawBody = await request.json();
+    const validationResult = updateExperienceSchema.safeParse(rawBody);
+
+    if (!validationResult.success) {
+      return validationError(validationResult.error);
+    }
+
+    const { statistics, workExperience } = validationResult.data;
 
     // Using Partial logic in service
     const data = await experienceService.updateExperienceData({

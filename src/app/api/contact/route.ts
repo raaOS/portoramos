@@ -2,16 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebaseAdmin';
 import { ContactData, UpdateContactData, ContactContent, ContactInfo, ContactFormSettings } from '@/types/contact';
 import { validateAdminRequest } from '@/lib/auth';
+import { getContactData } from '@/lib/contact';
 
 // GET - Read contact content
 export async function GET(_request: NextRequest) {
   try {
-    const snap = await db.ref('content/contact').once('value');
-    const data = snap.val() as ContactData;
-
-    if (!data) {
-      return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
-    }
+    const data = await getContactData();
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error loading contact data:', error);
@@ -34,11 +30,8 @@ export async function PUT(request: NextRequest) {
     // Load current data from Firebase
     const contactRef = db.ref('content/contact');
     const snap = await contactRef.once('value');
-    const data = snap.val() as ContactData;
-
-    if (!data) {
-      return NextResponse.json({ error: 'Failed to load contact data' }, { status: 500 });
-    }
+    const dbData = snap.val() as ContactData | null;
+    const data = dbData || await getContactData();
 
     // Deep merge to prevent data loss on partial updates
     const updatedData: ContactData = {

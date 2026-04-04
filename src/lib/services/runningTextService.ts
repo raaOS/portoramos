@@ -15,8 +15,8 @@ const FALLBACK_RUNNING_TEXT: RunningTextData = {
 const service = new ContentService<RunningTextData>('running-text.json', FALLBACK_RUNNING_TEXT);
 
 export const runningTextService = {
-    async getRunningTextData() {
-        return await service.getData();
+    async getRunningTextData(noCache = false) {
+        return await service.getData(noCache);
     },
 
     async createItem(text: string, order?: number, isActive: boolean = true) {
