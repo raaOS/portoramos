@@ -6,22 +6,15 @@ test.describe('Grade A Public Experience', () => {
         await page.goto('/');
         await expect(page.locator('body')).toBeVisible();
 
-        // Wait for boot sequence to complete
-        // Try to find and interact with start screen if it exists
-        const startScreen = page.locator('div.fixed.inset-0.z-\\[10000\\]').first();
-        
+        const startScreen = page.getByTestId('os-start-screen');
+        const powerPrompt = page.getByText('Click or Press Space').first();
+
         try {
-            // Wait for start screen briefly
             await expect(startScreen).toBeVisible({ timeout: 5000 });
-            
-            // Click to start boot
-            await startScreen.click({ force: true });
-            await page.keyboard.press('Space');
-            
-            // Wait for start screen to disappear
-            await expect(startScreen).not.toBeVisible({ timeout: 30000 });
-        } catch (e) {
-            // Start screen might not exist or already completed
+
+            await powerPrompt.click();
+            await expect(startScreen).toBeHidden({ timeout: 8000 });
+        } catch {
             console.log('Start screen not found or boot already completed');
         }
 
@@ -32,7 +25,7 @@ test.describe('Grade A Public Experience', () => {
         
         try {
             await expect(dock).toBeVisible({ timeout: 15000 });
-        } catch (e) {
+        } catch {
             // If dock not found, check if we're on the homepage at least
             console.log('Dock not found, checking for alternative indicators');
             await expect(page.locator('body')).toContainText(/Finder|Ramos|Portfolio/i);

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef, ReactNode } from "react";
 
 // Types of focusable elements in the OS
-type ElementType = 'window' | 'stickyNote' | 'dynamicIsland';
+export type ElementType = 'window' | 'stickyNote' | 'dynamicIsland';
 
 interface ZIndexEntry {
   id: string;

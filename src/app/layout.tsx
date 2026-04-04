@@ -1,6 +1,6 @@
-import type { Metadata, Viewport } from 'next';
+﻿import type { Metadata, Viewport } from 'next';
 import { displayClassName, sansClassName } from '@/app/fonts';
-import { generateStructuredData, baseSEO } from '@/lib/seo';
+import { baseSEO } from '@/lib/seo';
 import Providers from '@/components/layout/Providers';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { LastUpdatedProvider } from '@/contexts/LastUpdatedContext';
@@ -91,7 +91,6 @@ export default async function RootLayout({
   children: React.ReactNode;
   modal: React.ReactNode;
 }) {
-  const _websiteStructuredData = generateStructuredData('website');
   const aboutData = await loadAboutData();
 
   return (
@@ -108,8 +107,8 @@ export default async function RootLayout({
         <meta name="application-version" content={APP_VERSION} />
       </head>
       {/* suppressHydrationWarning: required because browser extensions (e.g. dark mode, 
-           translators) inject attributes on <body> during SSR→hydration, causing false mismatches.
-           This is the standard Next.js pattern — see: https://nextjs.org/docs/messages/react-hydration-error */}
+           translators) inject attributes on <body> during SSRâ†’hydration, causing false mismatches.
+           This is the standard Next.js pattern â€” see: https://nextjs.org/docs/messages/react-hydration-error */}
       <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default" suppressHydrationWarning>
         {/* Skip to content - Accessibility */}
         <a

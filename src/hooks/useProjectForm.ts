@@ -15,7 +15,6 @@ export interface ProjectFormData {
     galleryItems: GalleryItem[];
     galleryGroups: GalleryGroup[];
     tags: string;
-    // external_link?: string; // Removed
     autoplay: boolean;
     muted: boolean;
     loop: boolean;
@@ -37,7 +36,7 @@ export interface ProjectFormData {
         context?: string;
         challenge?: string;
         solution?: string;
-        impact?: string; // Replaces result
+        impact?: string;
         result?: string; // Legacy
 
         // Visual Art
@@ -54,8 +53,12 @@ export interface ProjectFormData {
     comments?: Comment[];
 }
 
-export const useProjectForm = (project?: Project) => {
-    const [formData, setFormData] = useState<ProjectFormData>({
+/**
+ * Factory function to create initial form data from a project.
+ * Eliminates the previous duplication between useState init and useEffect sync.
+ */
+function createInitialFormData(project?: Project): ProjectFormData {
+    return {
         title: project?.title || '',
         client: project?.client || '',
         year: project?.year || new Date().getFullYear(),
@@ -67,7 +70,6 @@ export const useProjectForm = (project?: Project) => {
         galleryItems: [],
         galleryGroups: project?.galleryGroups || [],
         tags: project?.tags?.join(', ') || '',
-        // external_link removed
         autoplay: project?.autoplay ?? true,
         muted: project?.muted ?? true,
         loop: project?.loop ?? true,
@@ -87,14 +89,11 @@ export const useProjectForm = (project?: Project) => {
         type: project?.type || 'commercial',
 
         narrative: {
-            // Commercial
             context: project?.narrative?.context || '',
             challenge: project?.narrative?.challenge || '',
             solution: project?.narrative?.solution || '',
             impact: project?.narrative?.impact || '',
             result: project?.narrative?.result || '',
-
-            // Visual Art
             concept: project?.narrative?.concept || '',
             process: project?.narrative?.process || '',
             detail: project?.narrative?.detail || ''
@@ -105,53 +104,18 @@ export const useProjectForm = (project?: Project) => {
             afterImage: project?.comparison?.afterImage || '',
             afterType: project?.comparison?.afterType || 'image'
         }
-    });
+    };
+}
 
+export const useProjectForm = (project?: Project) => {
+    const [formData, setFormData] = useState<ProjectFormData>(() => createInitialFormData(project));
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isDetectingDimensions, setIsDetectingDimensions] = useState(false);
 
+    // Re-sync form data when the project prop changes (e.g. switching between projects)
     useEffect(() => {
         if (project) {
-            setFormData({
-                title: project.title,
-                client: project.client,
-                year: project.year,
-                description: project.description,
-                cover: project.cover,
-                coverWidth: project.coverWidth || 800,
-                coverHeight: project.coverHeight || 600,
-                gallery: '',
-                galleryItems: [],
-                galleryGroups: project.galleryGroups || [],
-                tags: project.tags?.join(', ') || '',
-                autoplay: project.autoplay ?? true,
-                muted: project.muted ?? true,
-                loop: project.loop ?? true,
-                playsInline: project.playsInline ?? true,
-                id: project.id,
-                slug: project.slug,
-                likes: project.likes ?? 0,
-                shares: project.shares ?? 0,
-                allowComments: project.allowComments ?? true,
-
-                narrative: {
-                    context: project.narrative?.context || '',
-                    challenge: project.narrative?.challenge || '',
-                    solution: project.narrative?.solution || '',
-                    impact: project.narrative?.impact || '',
-                    result: project.narrative?.result || '',
-                    concept: project.narrative?.concept || '',
-                    process: project.narrative?.process || '',
-                    detail: project.narrative?.detail || ''
-                },
-                comparison: {
-                    beforeImage: project.comparison?.beforeImage || '',
-                    beforeType: project.comparison?.beforeType || 'image',
-                    afterImage: project.comparison?.afterImage || '',
-                    afterType: project.comparison?.afterType || 'image'
-                },
-                software: project.software || []
-            });
+            setFormData(createInitialFormData(project));
         }
     }, [project?.id, project?.updatedAt, project]);
 

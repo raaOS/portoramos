@@ -1,72 +1,18 @@
 import { cache } from 'react';
-import v8 from 'v8';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { ProjectSchema, CreateProjectSchema, UpdateProjectSchema } from '@/lib/validations';
-import { db, bucket } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/firebaseAdmin';
 
-// Simple in-memory cache untuk project data (sama dengan ContentService)
-const projectCache = new Map<string, { data: unknown; timestamp: number }>();
-const PROJECT_CACHE_TTL = 30000; // 30 detik
-
-// Cache Metrics untuk Monitoring Performa
-const cacheMetrics = {
-    hits: 0,
-    misses: 0,
-    evictions: 0,
-    lastMemoryCheck: 0,
-};
-
-/**
- * Memantau penggunaan memori dan memberikan peringatan jika melebihi ambang batas.
- * Menggunakan heap_size_limit dari V8 untuk perhitungan rasio yang akurat.
- * 80% - Warning, 90% - Critical (Force Cache Clear)
- */
-function checkMemoryUsage() {
-    const now = Date.now();
-    if (now - cacheMetrics.lastMemoryCheck < 60000) return; // Maksimal sekali per menit
-
-    cacheMetrics.lastMemoryCheck = now;
-    const { heapUsed } = process.memoryUsage();
-    const { heap_size_limit } = v8.getHeapStatistics();
-    const ratio = heapUsed / heap_size_limit;
-
-    if (ratio > 0.90) {
-        console.error(`[ProjectService] CRITICAL MEMORY: ${(ratio * 100).toFixed(1)}% (${(heapUsed / 1024 / 1024).toFixed(2)}MB / ${(heap_size_limit / 1024 / 1024).toFixed(2)}MB). clearing cache.`);
-        clearProjectCache();
-        cacheMetrics.evictions++;
-    } else if (ratio > 0.80) {
-        console.warn(`[ProjectService] HIGH MEMORY WARNING: ${(ratio * 100).toFixed(1)}% (${(heapUsed / 1024 / 1024).toFixed(2)}MB).`);
-    }
-}
-
-function getProjectCacheKey(key: string): string {
-    return `project:${key}`;
-}
-
-function getFromProjectCache<T>(key: string): T | null {
-    checkMemoryUsage();
-    const cached = projectCache.get(key);
-
-    if (!cached) {
-        cacheMetrics.misses++;
-        return null;
-    }
-
-    if (Date.now() - cached.timestamp > PROJECT_CACHE_TTL) {
-        projectCache.delete(key);
-        cacheMetrics.evictions++;
-        cacheMetrics.misses++;
-        return null;
-    }
-
-    cacheMetrics.hits++;
-    return cached.data as T;
-}
-
-function setProjectCache(key: string, data: unknown): void {
-    checkMemoryUsage();
-    projectCache.set(key, { data, timestamp: Date.now() });
-}
+// Helper Submodules
+import { 
+    getProjectCacheKey, 
+    getFromProjectCache, 
+    setProjectCache, 
+    clearProjectCache, 
+    getCacheMetrics 
+} from '@/lib/services/project/projectCache';
+import { extractProjectAssets, purgeStorageAssets } from '@/lib/services/project/projectStorage';
+import { generateUniqueSlug } from '@/lib/services/project/projectSlug';
 
 function normalizeProject(project: Project): Project {
     if (!project.galleryGroups?.length) {
@@ -82,21 +28,7 @@ function normalizeProject(project: Project): Project {
     };
 }
 
-/**
- * Clear all project caches setelah CRUD operations.
- * Dipanggil otomatis setelah create/update/delete.
- */
-export function clearProjectCache(): void {
-    console.log('[ProjectService] Clearing all project caches...');
-    let count = 0;
-    for (const key of projectCache.keys()) {
-        if (key.startsWith('project:')) {
-            projectCache.delete(key);
-            count++;
-        }
-    }
-    if (count > 0) cacheMetrics.evictions += count;
-}
+export { clearProjectCache };
 
 /**
  * Cached version of getProjects for Server Components.
@@ -107,17 +39,9 @@ export const getCachedProjects = cache(async (status?: string): Promise<{ projec
 });
 
 export const projectService = {
-    /**
-     * Get all projects from Firebase.
-     * Implements Zod validation to ensure data integrity.
-     * 
-     * OPTIMIZATION: Menggunakan memory cache untuk mengurangi bandwidth.
-     * Cache di-clear otomatis setelah CRUD operations.
-     */
     async getProjects(status?: string, noCache = false): Promise<{ projects: Project[], lastUpdated: string }> {
         const cacheKey = getProjectCacheKey(`projects:${status || 'all'}`);
 
-        // Cek cache dulu (kecuali noCache=true)
         if (!noCache) {
             const cached = getFromProjectCache<{ projects: Project[], lastUpdated: string }>(cacheKey);
             if (cached) {
@@ -136,17 +60,14 @@ export const projectService = {
             const lastUpdatedSnap = await lastUpdatedRef.once('value');
             const lastUpdated = lastUpdatedSnap.val() || new Date().toISOString();
 
-            // Convert object map to array
             const projects: Project[] = Object.values(projectsObject);
 
             if (projects.length === 0) {
                 return { projects: [], lastUpdated: new Date().toISOString() };
             }
 
-            // FILTER & VALIDATE
             const validProjects: Project[] = [];
             projects.forEach(p => {
-                // Filter by status if requested
                 if (status && p.status !== status) return;
 
                 const result = ProjectSchema.safeParse(p);
@@ -157,7 +78,6 @@ export const projectService = {
                 }
             });
 
-            // SORT
             const sortedProjects = validProjects.sort(
                 (a, b) =>
                     (a.order || 0) - (b.order || 0) ||
@@ -169,7 +89,6 @@ export const projectService = {
                 lastUpdated
             };
 
-            // Simpan ke cache
             setProjectCache(cacheKey, result);
 
             return result;
@@ -217,50 +136,15 @@ export const projectService = {
         }
     },
 
-    /**
-     * Create a new project in Firebase.
-     * Cache otomatis di-clear setelah create.
-     * 
-     * FIXED (BUG-006): Slug generation dengan collision detection yang lebih robust
-     * menggunakan retry dengan timestamp + random suffix.
-     */
     async createProject(data: CreateProjectData): Promise<Project> {
         CreateProjectSchema.parse(data);
 
-        // Get current count for order
         const snapshot = await db.ref('projects').once('value');
         const currentCount = snapshot.numChildren();
 
-        // FIXED (BUG-012): Limit title length sebelum regex processing untuk mencegah bottleneck
-        const MAX_TITLE_LENGTH = 200;
-        const truncatedTitle = data.title.substring(0, MAX_TITLE_LENGTH);
-        const baseSlug = truncatedTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').substring(0, 50);
-        let slug = baseSlug;
-        let attempts = 0;
-        const MAX_ATTEMPTS = 5;
-
-        // FIXED (BUG-006): Robust collision detection dengan retry
-        while (attempts < MAX_ATTEMPTS) {
-            const projectsSnap = await db.ref('projects').orderByChild('slug').equalTo(slug).once('value');
-            if (!projectsSnap.exists()) {
-                // Slug is unique
-                break;
-            }
-
-            // Collision detected, generate new slug dengan timestamp + random
-            const timestamp = Date.now().toString(36);
-            const random = Math.random().toString(36).substring(2, 6);
-            slug = `${baseSlug}-${timestamp}${random}`;
-            attempts++;
-
-            console.log(`[ProjectService] Slug collision detected, retrying with: ${slug}`);
-        }
-
-        if (attempts >= MAX_ATTEMPTS) {
-            throw new Error('Failed to generate unique slug after maximum attempts');
-        }
-
+        const slug = await generateUniqueSlug(data.title);
         const id = `project-${Date.now()}`;
+        
         const newProject: Project = {
             ...data,
             id,
@@ -287,22 +171,15 @@ export const projectService = {
             updatedAt: new Date().toISOString(),
         };
 
-        // SAVE TO FIREBASE
         await Promise.all([
             db.ref(`projects/${id}`).set(newProject),
             db.ref('lastUpdated').set(new Date().toISOString())
         ]);
 
-        // Clear cache agar data terbaru langsung tersedia
         clearProjectCache();
-
         return newProject;
     },
 
-    /**
-     * Update an existing project in Firebase.
-     * Cache otomatis di-clear setelah update.
-     */
     async updateProject(id: string, data: UpdateProjectData): Promise<Project | null> {
         UpdateProjectSchema.parse(data);
 
@@ -312,7 +189,6 @@ export const projectService = {
 
         const currentProject = snap.val();
 
-        // Check slug uniqueness if changed
         if (data.slug && data.slug !== currentProject.slug) {
             const collisionSnap = await db.ref('projects').orderByChild('slug').equalTo(data.slug).once('value');
             if (collisionSnap.exists()) {
@@ -334,16 +210,10 @@ export const projectService = {
             db.ref('lastUpdated').set(new Date().toISOString())
         ]);
 
-        // Clear cache agar data terbaru langsung tersedia
         clearProjectCache();
-
         return updatedProject;
     },
 
-    /**
-     * Delete project from Firebase.
-     * Cache otomatis di-clear setelah delete.
-     */
     async deleteProject(id: string): Promise<boolean> {
         const projectRef = db.ref(`projects/${id}`);
         const snap = await projectRef.once('value');
@@ -351,49 +221,13 @@ export const projectService = {
 
         const project = snap.val();
 
-        // Clean up associated Storage assets
         try {
-            const assetUrls: string[] = [];
-            if (project.cover) assetUrls.push(project.cover);
-            if (project.comparison?.beforeImage) assetUrls.push(project.comparison.beforeImage);
-            if (project.comparison?.afterImage) assetUrls.push(project.comparison.afterImage);
-            if (project.galleryItems && Array.isArray(project.galleryItems)) {
-                project.galleryItems.forEach((item: { src?: string }) => {
-                    if (item.src) assetUrls.push(item.src);
-                });
-            }
-            if (project.galleryGroups && Array.isArray(project.galleryGroups)) {
-                project.galleryGroups.forEach((group: { items?: Array<{ src?: string }> }) => {
-                    group.items?.forEach(item => {
-                        if (item.src) assetUrls.push(item.src);
-                    });
-                });
-            }
-
-            // Delete each asset from Storage
-            for (const url of assetUrls) {
-                try {
-                    let storagePath = '';
-                    if (url.includes('/o/')) {
-                        const parts = url.split('/o/');
-                        storagePath = decodeURIComponent(parts[1].split('?')[0]);
-                    } else if (url.startsWith('/')) {
-                        storagePath = url.substring(1);
-                    }
-                    if (storagePath && storagePath.startsWith('assets/')) {
-                        const file = bucket.file(storagePath);
-                        const [exists] = await file.exists();
-                        if (exists) await file.delete();
-                    }
-                } catch (e) {
-                    console.warn(`[ProjectService] Failed to delete asset: ${url}`, e);
-                }
-            }
+            const assetUrls = extractProjectAssets(project);
+            await purgeStorageAssets(assetUrls);
         } catch (e) {
             console.warn('[ProjectService] Storage cleanup partial failure:', e);
         }
 
-        // Also delete associated comments
         try {
             if (project.slug) {
                 await db.ref(`comments/${project.slug}`).remove();
@@ -402,25 +236,16 @@ export const projectService = {
             console.warn('[ProjectService] Failed to cleanup comments:', e);
         }
 
-        // Remove from Firebase
         await Promise.all([
             projectRef.remove(),
             db.ref('lastUpdated').set(new Date().toISOString())
         ]);
 
-        // Clear cache agar data terbaru langsung tersedia
         clearProjectCache();
 
         return true;
     },
 
-    /**
-     * Bulk update projects in Firebase (Atomic).
-     * Cache otomatis di-clear setelah bulk operation.
-     * 
-     * FIXED (BUG-001): Menggunakan Promise.allSettled untuk parallel delete
-     * dengan proper error handling. Tidak sequential untuk performance.
-     */
     async bulkUpdateProjects(updates: { ids: string[], status?: 'published' | 'draft', delete?: boolean, reorder?: boolean }): Promise<boolean> {
         const projectsRef = db.ref('projects');
         const snap = await projectsRef.once('value');
@@ -430,55 +255,19 @@ export const projectService = {
         const firebaseUpdates: Record<string, unknown> = {};
 
         if (updates.delete) {
-            const allAssetPathsToPurge: string[] = [];
+            const allAssetUrls: string[] = [];
 
             updates.ids.forEach(id => {
                 const project = currentProjects[id];
                 if (project) {
                     firebaseUpdates[`projects/${id}`] = null;
-
-                    // Collect all assets for this project to prevent ghost files
-                    const urls: string[] = [];
-                    if (project.cover) urls.push(project.cover);
-                    if (project.comparison?.beforeImage) urls.push(project.comparison.beforeImage);
-                    if (project.comparison?.afterImage) urls.push(project.comparison.afterImage);
-
-                    if (project.galleryItems && Array.isArray(project.galleryItems)) {
-                        project.galleryItems.forEach((item: { src?: string }) => item.src && urls.push(item.src));
-                    }
-                    if (project.galleryGroups && Array.isArray(project.galleryGroups)) {
-                        project.galleryGroups.forEach((group: { items?: { src?: string }[] }) => {
-                            group.items?.forEach((item: { src?: string }) => item.src && urls.push(item.src));
-                        });
-                    }
-
-                    // Extract purely storage paths
-                    urls.forEach(url => {
-                        let path = '';
-                        if (url.includes('/o/')) {
-                            path = decodeURIComponent(url.split('/o/')[1].split('?')[0]);
-                        } else if (url.startsWith('/')) {
-                            path = url.substring(1);
-                        }
-                        if (path && path.startsWith('assets/')) {
-                            allAssetPathsToPurge.push(path);
-                        }
-                    });
+                    const projectAssets = extractProjectAssets(project);
+                    allAssetUrls.push(...projectAssets);
                 }
             });
 
-            // Await storage purge to ensure ghost files are tracked
-            if (allAssetPathsToPurge.length > 0) {
-                console.log(`[ProjectService] Bulk purging ${allAssetPathsToPurge.length} storage assets...`);
-                await Promise.allSettled(allAssetPathsToPurge.map(async (storagePath) => {
-                    try {
-                        const file = bucket.file(storagePath);
-                        const [exists] = await file.exists();
-                        if (exists) await file.delete();
-                    } catch (e) {
-                        console.warn(`[ProjectService] Failed bulk delete asset: ${storagePath}`, e);
-                    }
-                }));
+            if (allAssetUrls.length > 0) {
+                await purgeStorageAssets(allAssetUrls);
             }
 
             if (Object.keys(firebaseUpdates).length > 0) {
@@ -488,6 +277,7 @@ export const projectService = {
 
             clearProjectCache();
             return true;
+            
         } else if (updates.reorder) {
             updates.ids.forEach((id, index) => {
                 if (currentProjects[id]) {
@@ -505,26 +295,13 @@ export const projectService = {
         }
 
         firebaseUpdates['lastUpdated'] = new Date().toISOString();
-
         await db.ref().update(firebaseUpdates);
 
-        // Clear cache agar data terbaru langsung tersedia
         clearProjectCache();
-
         return true;
     },
 
-    /**
-     * Get current cache performance metrics.
-     */
     getCacheMetrics() {
-        const total = cacheMetrics.hits + cacheMetrics.misses;
-        return {
-            ...cacheMetrics,
-            size: projectCache.size,
-            hitRate: total > 0
-                ? ((cacheMetrics.hits / total) * 100).toFixed(1) + '%'
-                : '0%'
-        };
+        return getCacheMetrics();
     }
 };

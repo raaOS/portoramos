@@ -10,9 +10,13 @@ type SoundType = 'startup' | 'click' | 'window-open' | 'window-close' | 'error' 
 
 class SoundManager {
     private static instance: SoundManager;
+    private static readonly SILENT_AUDIO_DATA_URI =
+        'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
+
     private sounds: Map<SoundType, HTMLAudioElement> = new Map();
     private isMuted: boolean = false;
     private volume: number = 0.5;
+    private debugMode = process.env.NODE_ENV === 'development';
 
     private soundPaths: Record<SoundType, string> = {
         startup: getAssetPath('/sounds/startup.mp3'),
@@ -27,15 +31,20 @@ class SoundManager {
         unlock: getAssetPath('/sounds/click.mp3') // Using click sound for unlock "ceklek" effect
     };
 
-    private soundVolumes: Record<string, number> = {};
+    private soundVolumes: Partial<Record<SoundType, number>> = {};
     private isUnlocked: boolean = false;
     private pendingSounds: Set<SoundType> = new Set();
     private hasPlayedStartup: boolean = false;
     private suppressedSounds: Set<SoundType> = new Set();
 
-    // FIXED (BUG-002): Track active audio elements untuk cleanup
+    // FIXED (BUG-002): Track active audio elements for cleanup
     private activeAudioElements: Set<HTMLAudioElement> = new Set();
-    private maxActiveAudioElements: number = 20; // Limit untuk mencegah memory bloat
+    private readonly maxActiveAudioElements: number = 20;
+
+    /** Conditional debug logging — silent in production. */
+    private log(message: string, ...args: unknown[]): void {
+        if (this.debugMode) console.log(`[SoundManager] ${message}`, ...args);
+    }
 
     /**
      * Temporarily suppress a sound type for the given duration (ms).
@@ -44,14 +53,14 @@ class SoundManager {
         this.suppressedSounds.add(type);
         setTimeout(() => {
             this.suppressedSounds.delete(type);
-            console.log(`[SoundManager] Suppression lifted for "${type}".`);
+            this.log(`Suppression lifted for "${type}".`);
         }, durationMs);
     }
 
     private constructor() {
-        console.log("%c[SoundManager] v1.5-DEBUG (Autoplay-Ready)", "color: #00ff00; font-weight: bold;");
-        if (typeof window !== 'undefined') {
-            (window as unknown as { __soundManager: SoundManager }).__soundManager = this; // Attach for easy console debugging
+        this.log('v1.5 (Autoplay-Ready) initialized');
+        if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+            (window as unknown as { __soundManager: SoundManager }).__soundManager = this;
         }
     }
 
@@ -68,11 +77,11 @@ class SoundManager {
      */
     public unlock() {
         if (this.isUnlocked) return;
-        console.log('[SoundManager] Unlocking audio context silently...');
+        this.log('Unlocking audio context silently...');
         this.isUnlocked = true;
         // Play a zero-volume buffer to secure the interaction context
         try {
-            const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFRm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
+            const silentAudio = new Audio(SoundManager.SILENT_AUDIO_DATA_URI);
             silentAudio.volume = 0;
             silentAudio.play().catch(() => { });
         } catch {
@@ -87,23 +96,16 @@ class SoundManager {
     public init() {
         if (this.isUnlocked && this.pendingSounds.size === 0) return;
 
-        console.log(`[SoundManager] Interaction detected. Unlocking (pending: ${this.pendingSounds.size})...`);
+        this.log(`Interaction detected. Unlocking (pending: ${this.pendingSounds.size})...`);
 
-        // 1. Mark as potentially unlocked
-        this.isUnlocked = true;
+        // 1. Unlock audio context (idempotent — skips if already unlocked)
+        this.unlock();
 
-        // 2. Play a tiny silent buffer synchronously to secure the interaction context
-        const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFRm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
-        silentAudio.volume = 0;
-
-        // Use the synchronous part of the event to play
+        // 2. Flush pending sounds from within the interaction handler's call stack
+        // Doing it here is much more reliable than inside a .then()
         try {
-            silentAudio.play().catch(() => { });
-
-            // 3. IMPORTANT: Directly play the pending startup sound if it exists
-            // Doing it here, inside the interaction handler's call stack, is much more reliable than inside a .then()
             if (this.pendingSounds.size > 0) {
-                console.log(`[SoundManager] Triggering ${this.pendingSounds.size} pending sounds from interaction stack.`);
+                this.log(`Triggering ${this.pendingSounds.size} pending sounds from interaction stack.`);
                 const toPlay = Array.from(this.pendingSounds);
                 this.pendingSounds.clear(); // Clear BEFORE playing to avoid re-triggering issues
                 toPlay.forEach(type => this.play(type));
@@ -119,7 +121,7 @@ class SoundManager {
     public loadConfig(config: Record<string, { path: string, volume: number }>) {
         if (!config) return;
 
-        console.log('[SoundManager] Loading dynamic sound configuration:', config);
+        this.log('Loading dynamic sound configuration:', config);
         Object.entries(config).forEach(([key, setting]) => {
             const typeKey = key as SoundType;
             if (this.soundPaths[typeKey] !== undefined) {
@@ -132,14 +134,14 @@ class SoundManager {
                     const version = path.split('?v=')[1] || '1.3';
                     if (filename) {
                         path = `/sounds/${filename}?v=${version}`;
-                        console.log(`[SoundManager] Localized path for ${typeKey}: ${path}`);
+                        this.log(`Localized path for ${typeKey}: ${path}`);
                     }
                 }
 
                 this.soundPaths[typeKey] = path;
 
                 if (oldPath !== path) {
-                    console.log(`[SoundManager] Updating path for ${typeKey}: ${oldPath} -> ${path}`);
+                    this.log(`Updating path for ${typeKey}: ${oldPath} -> ${path}`);
                     this.sounds.delete(typeKey);
                 }
 
@@ -159,14 +161,14 @@ class SoundManager {
 
         // Check if this sound is temporarily suppressed
         if (this.suppressedSounds.has(type)) {
-            console.log(`[SoundManager] "${type}" is suppressed. Skipping.`);
+            this.log(`"${type}" is suppressed. Skipping.`);
             return;
         }
 
         // Protection for startup sound: only play once per session
         if (type === 'startup') {
             if (this.hasPlayedStartup) {
-                console.log('[SoundManager] Startup sound already played. Skipping.');
+                this.log('Startup sound already played. Skipping.');
                 return;
             }
             // We set it true in the success handler below to allow retries if blocked
@@ -181,16 +183,16 @@ class SoundManager {
                     console.warn(`[SoundManager] No path defined for sound type: ${type}`);
                     return;
                 }
-                console.log(`[SoundManager] Creating new Audio for ${type}: ${path}`);
+                this.log(`Creating new Audio for ${type}: ${path}`);
                 audio = new Audio(path);
                 this.sounds.set(type, audio);
             }
 
             // Priority: customVolume > Config Volume > Global Default Volume
-            const configVolume = this.soundVolumes[type as string];
+            const configVolume = this.soundVolumes[type];
             const targetVolume = customVolume ?? configVolume ?? this.volume;
 
-            console.log(`[SoundManager] Playing "${type}" at volume ${targetVolume}`);
+            this.log(`Playing "${type}" at volume ${targetVolume}`);
 
             // For very large sounds (like startup), avoid cloning on the first play 
             // to ensure metadata is handled correctly.
@@ -209,20 +211,20 @@ class SoundManager {
 
             if (playPromise !== undefined) {
                 playPromise.then(() => {
-                    console.log(`[SoundManager] Successfully started playing "${type}"`);
+                    this.log(`Successfully started playing "${type}"`);
                     if (type === 'startup') {
                         this.hasPlayedStartup = true;
                     }
                 }).catch(err => {
                     if (err.name === 'NotAllowedError') {
                         this.pendingSounds.add(type);
-                        console.info(`[SoundManager] Autoplay blocked for "${type}". Queued for interaction.`);
-                        // FIXED: Remove from tracking jika gagal
+                        this.log(`Autoplay blocked for "${type}". Queued for interaction.`);
+                        // FIXED: Remove from tracking if playback failed
                         this.untrackAudioElement(playTarget);
                         return;
                     }
                     console.warn(`[SoundManager] Playback failed for "${type}":`, err.message);
-                    // FIXED: Remove from tracking jika gagal
+                    // FIXED: Remove from tracking if playback failed
                     this.untrackAudioElement(playTarget);
                 });
             }
@@ -232,10 +234,10 @@ class SoundManager {
     }
 
     /**
-     * FIXED (BUG-002): Track audio element dan setup cleanup handler
+     * FIXED (BUG-002): Track audio element and setup cleanup handler.
      */
     private trackAudioElement(audio: HTMLAudioElement): void {
-        // Cleanup oldest elements jika mencapai limit
+        // Evict oldest element when at capacity
         if (this.activeAudioElements.size >= this.maxActiveAudioElements) {
             const oldest = this.activeAudioElements.values().next().value;
             if (oldest) {
@@ -245,32 +247,47 @@ class SoundManager {
 
         this.activeAudioElements.add(audio);
 
-        // Setup cleanup handlers
-        const cleanup = () => {
-            this.untrackAudioElement(audio);
-        };
-
+        const cleanup = () => this.untrackAudioElement(audio);
         audio.addEventListener('ended', cleanup, { once: true });
         audio.addEventListener('error', cleanup, { once: true });
     }
 
     /**
-     * FIXED (BUG-002): Remove audio element dari tracking dan cleanup
+     * FIXED (BUG-002): Remove audio element from tracking and cleanup.
+     * FIXED (BUG-003): Only destroy src for CLONED elements (not cached originals
+     * in this.sounds) — destroying cached src causes "no supported sources" errors.
      */
     private untrackAudioElement(audio: HTMLAudioElement): void {
-        if (this.activeAudioElements.has(audio)) {
-            audio.pause();
+        if (!this.activeAudioElements.has(audio)) return;
+
+        audio.pause();
+
+        const isCachedOriginal = this.isCachedAudio(audio);
+
+        if (!isCachedOriginal) {
             audio.src = '';
-            audio.load(); // Force release resources
-            this.activeAudioElements.delete(audio);
+            audio.load(); // Force release resources for clones
+        } else {
+            // Reset to start for reuse — keep src intact
+            audio.currentTime = 0;
         }
+
+        this.activeAudioElements.delete(audio);
+    }
+
+    /** Check if an audio element is one of the cached originals in this.sounds. */
+    private isCachedAudio(audio: HTMLAudioElement): boolean {
+        for (const cached of this.sounds.values()) {
+            if (cached === audio) return true;
+        }
+        return false;
     }
 
     /**
      * FIXED (BUG-002): Cleanup semua active audio elements
      */
     public cleanupAllAudio(): void {
-        console.log(`[SoundManager] Cleaning up ${this.activeAudioElements.size} active audio elements`);
+        this.log(`Cleaning up ${this.activeAudioElements.size} active audio elements`);
         this.activeAudioElements.forEach(audio => {
             audio.pause();
             audio.src = '';
@@ -281,6 +298,8 @@ class SoundManager {
             }
         });
         this.activeAudioElements.clear();
+        // Clear cached refs — their src is now invalid after cleanup above
+        this.sounds.clear();
     }
 
     public setMuted(muted: boolean) {
@@ -310,7 +329,7 @@ class SoundManager {
                 audio.src = '';
             }
             this.sounds.delete(type);
-            console.log(`[SoundManager] Cache cleared for "${type}".`);
+            this.log(`Cache cleared for "${type}".`);
         }
         // Reset startup protection so it can play again on next Power On
         if (type === 'startup') {

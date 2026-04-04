@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { m } from 'framer-motion';
 import { Grid, LayoutList, Box } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -19,20 +19,23 @@ const MODES: ModeOption[] = [
     { id: 'canvas', label: '3D Canvas', icon: Box, view: '3d', description: 'Infinite 3D exploration' },
 ];
 
-interface Props {
+const STAGGER_BASE_DELAY = 0.1;
+const STAGGER_INCREMENT = 0.05;
+
+interface DockProjectModesProps {
     onSelect?: () => void;
 }
 
-export default function DockProjectModes({ onSelect }: Props) {
+export default function DockProjectModes({ onSelect }: DockProjectModesProps) {
     const router = useRouter();
 
-    const handleModeSelect = (view: string) => {
-        if (onSelect) onSelect();
+    const handleModeSelect = useCallback((view: string) => {
+        onSelect?.();
         router.push(`/projects?view=${view}`);
-    };
+    }, [onSelect, router]);
 
     return (
-        <div className="flex flex-col gap-1 p-2 min-w-[180px]">
+        <div className="flex flex-col gap-1 p-2 min-w-[180px]" role="menu" aria-label="Select project view mode">
              {/* Title Header */}
              <div className="px-3 py-1.5 mb-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-black/40">Select View Mode</span>
@@ -42,9 +45,11 @@ export default function DockProjectModes({ onSelect }: Props) {
                 {MODES.map((mode, idx) => (
                     <m.button
                         key={mode.id}
+                        role="menuitem"
+                        aria-label={`${mode.label}: ${mode.description}`}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.05 + 0.1, duration: 0.2 }}
+                        transition={{ delay: idx * STAGGER_INCREMENT + STAGGER_BASE_DELAY, duration: 0.2 }}
                         onClick={() => handleModeSelect(mode.view)}
                         className="group flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-black/5 transition-all relative overflow-hidden text-left"
                     >

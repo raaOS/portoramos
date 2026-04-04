@@ -1,17 +1,13 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
-// Helper to handle boot sequence - detects StartScreen by its keyhole/text content
-async function handleBootSequence(page: any) {
-    // StartScreen has specific text "Click or Press Space"
-    const startScreen = page.locator('text=Click or Press Space').first();
-    
+// Helper to handle boot sequence using the StartScreen lifecycle itself.
+async function handleBootSequence(page: Page) {
+    const startScreen = page.getByTestId('os-start-screen');
+    const powerPrompt = page.getByText('Click or Press Space').first();
+
     if (await startScreen.isVisible().catch(() => false)) {
-        // Click to start boot
-        await startScreen.click();
-        await page.keyboard.press('Space');
-        
-        // Wait for boot animation (about 5 seconds based on BOOT_CONFIG)
-        await page.waitForTimeout(6000);
+        await powerPrompt.click();
+        await expect(startScreen).toBeHidden({ timeout: 8000 });
     }
 }
 

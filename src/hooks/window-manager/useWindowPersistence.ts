@@ -1,0 +1,97 @@
+import { useRef, useCallback, useEffect } from 'react';
+import { AboutData } from '@/types/about';
+
+interface UseWindowPersistenceProps {
+    aboutData?: AboutData | null;
+    csrfToken?: string;
+    isAdmin?: boolean;
+}
+
+export function useWindowPersistence({ aboutData, csrfToken, isAdmin }: UseWindowPersistenceProps) {
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const persistTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isPersistingRef = useRef(false);
+
+    // Cleanup timeouts on unmount to prevent memory leak
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+            if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
+        };
+    }, []);
+
+    /**
+     * Saves window position and default open state to the server.
+     * Only works for authenticated admins.
+     */
+    const saveWindowPreference = useCallback(async (id: string, updates: Partial<{ x: number, y: number, width: number, height: number, isOpenByDefault: boolean }>) => {
+        if (!aboutData || !isAdmin || !csrfToken) return;
+
+        // Prevent overwriting desktop layout from mobile
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+        if (isMobile) {
+            // We allow toggling 'isOpenByDefault' (pin) from mobile if needed, 
+            // but we STRIP spatial updates (x, y, width, height)
+            const spatialKeys = ['x', 'y', 'width', 'height'];
+            const hasSpatialUpdate = Object.keys(updates).some(k => spatialKeys.includes(k));
+
+            if (hasSpatialUpdate) {
+                const filteredUpdates = { ...updates };
+                delete filteredUpdates.x;
+                delete filteredUpdates.y;
+                delete filteredUpdates.width;
+                delete filteredUpdates.height;
+
+                if (Object.keys(filteredUpdates).length === 0) return;
+                updates = filteredUpdates;
+            }
+        }
+
+        // Use debounce for manual moves to avoid race conditions
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        isPersistingRef.current = true;
+
+        saveTimeoutRef.current = setTimeout(async () => {
+            try {
+                const currentPrefs = aboutData.windowPreferences || {};
+                const newPrefs = {
+                    ...currentPrefs,
+                    [id]: { ...(currentPrefs[id] || {}), ...updates }
+                };
+
+                await fetch('/api/about', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ windowPreferences: newPrefs })
+                });
+            } catch (error) {
+                console.error("[WindowManager] Failed to save preference:", error);
+            } finally {
+                persistTimeoutRef.current = setTimeout(() => {
+                    isPersistingRef.current = false;
+                    persistTimeoutRef.current = null;
+                }, 1000);
+            }
+        }, 800);
+    }, [aboutData, csrfToken, isAdmin]);
+
+    const flushWindowPositions = useCallback(async () => {
+        if (!isAdmin || !csrfToken) return;
+
+        try {
+            const { flushPositions } = await import('@/app/about/_components/os/utils/positionSync');
+            await flushPositions(csrfToken);
+        } catch (error) {
+            console.error('[WindowManager] Failed to flush:', error);
+        }
+    }, [isAdmin, csrfToken]);
+
+    return {
+        saveWindowPreference,
+        flushWindowPositions
+    };
+}

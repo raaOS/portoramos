@@ -1,110 +1,29 @@
 import { db } from '@/lib/firebaseAdmin';
+import { CacheManager } from '@/lib/cache/CacheManager';
 
 /**
- * Simple in-memory cache untuk menghindari redundant fetch.
- * Default cache di-reset setiap 30 detik.
+ * Shared cache instance for content data.
  * 
- * FIXED (BUG-007): Menambahkan max size limit dan LRU eviction policy
- * untuk mencegah unbounded memory growth.
- * 
- * NOTE: About data menggunakan TTL lebih pendek (5 detik) karena
- * positions sering berubah oleh admin.
+ * FIXED (BUG-007): Uses CacheManager with max size limit and LRU eviction
+ * to prevent unbounded memory growth.
  */
+const contentCache = new CacheManager({
+    defaultTTL: 30_000,  // 30 detik
+    maxSize: 50,
+    label: 'ContentService',
+});
 
-interface CacheEntry {
-    data: unknown;
-    timestamp: number;
-    ttl: number;
-    accessCount: number;
-    lastAccessed: number;
-}
-
-const memoryCache = new Map<string, CacheEntry>();
-const DEFAULT_CACHE_TTL = 30000; // 30 detik
-const ABOUT_CACHE_TTL = 5000;    // 5 detik (positions berubah sering)
-
-// FIXED (BUG-007): Cache size limits
-const MAX_CACHE_SIZE = 50; // Maximum number of entries
+const ABOUT_CACHE_TTL = 5000; // 5 detik (positions berubah sering)
 
 function getCacheKey(path: string): string {
     return `firebase:${path}`;
 }
 
-function evictLRU(): void {
-    if (memoryCache.size === 0) return;
-    
-    // Find least recently used entry
-    let lruKey: string | null = null;
-    let lruTime = Infinity;
-    
-    for (const [key, entry] of memoryCache.entries()) {
-        if (entry.lastAccessed < lruTime) {
-            lruTime = entry.lastAccessed;
-            lruKey = key;
-        }
-    }
-    
-    if (lruKey) {
-        console.log(`[ContentService] LRU evicting key: ${lruKey}`);
-        memoryCache.delete(lruKey);
-    }
-}
-
-function getFromCache<T>(key: string): T | null {
-    const cached = memoryCache.get(key);
-    if (!cached) return null;
-    
-    // Gunakan TTL spesifik per entry
-    if (Date.now() - cached.timestamp > cached.ttl) {
-        memoryCache.delete(key);
-        return null;
-    }
-    
-    // FIXED (BUG-007): Update access metadata untuk LRU
-    cached.accessCount++;
-    cached.lastAccessed = Date.now();
-    
-    return cached.data as T;
-}
-
-function setCache(key: string, data: unknown, ttl = DEFAULT_CACHE_TTL): void {
-    // FIXED (BUG-007): Evict oldest entries jika cache penuh
-    if (memoryCache.size >= MAX_CACHE_SIZE) {
-        evictLRU();
-    }
-    
-    const now = Date.now();
-    memoryCache.set(key, { 
-        data, 
-        timestamp: now, 
-        ttl,
-        accessCount: 1,
-        lastAccessed: now
-    });
-}
-
-function clearCache(key: string): void {
-    memoryCache.delete(key);
-}
-
-// FIXED (BUG-007): Get cache stats untuk monitoring
-export function getCacheStats(): {
-    size: number;
-    maxSize: number;
-    entries: Array<{ key: string; accessCount: number; age: number }>;
-} {
-    const now = Date.now();
-    const entries = Array.from(memoryCache.entries()).map(([key, entry]) => ({
-        key,
-        accessCount: entry.accessCount,
-        age: now - entry.timestamp
-    }));
-    
-    return {
-        size: memoryCache.size,
-        maxSize: MAX_CACHE_SIZE,
-        entries
-    };
+/**
+ * Get cache stats untuk monitoring (delegates to CacheManager).
+ */
+export function getCacheStats() {
+    return contentCache.getDetailedStats();
 }
 
 /**
@@ -129,7 +48,7 @@ export class ContentService<T> {
         this.firebasePath = `content/${nodeName}`;
         this.fallbackData = fallbackData;
         // About data pakai TTL lebih pendek karena positions sering berubah
-        this.cacheTTL = cacheTTL || (nodeName === 'about' ? ABOUT_CACHE_TTL : DEFAULT_CACHE_TTL);
+        this.cacheTTL = cacheTTL || (nodeName === 'about' ? ABOUT_CACHE_TTL : 30_000);
     }
 
     async getData(noCache = false): Promise<T> {
@@ -137,7 +56,7 @@ export class ContentService<T> {
 
         // Cek memory cache dulu (kecuali noCache=true)
         if (!noCache) {
-            const cached = getFromCache<T>(cacheKey);
+            const cached = contentCache.get<T>(cacheKey);
             if (cached) {
                 console.log(`[ContentService] Cache hit for ${this.firebasePath} (TTL: ${this.cacheTTL}ms)`);
                 return cached;
@@ -157,7 +76,7 @@ export class ContentService<T> {
             const mergedData = this.deepMerge(this.fallbackData, firebaseData);
             
             // Simpan ke cache dengan TTL spesifik
-            setCache(cacheKey, mergedData, this.cacheTTL);
+            contentCache.set(cacheKey, mergedData, this.cacheTTL);
 
             return mergedData as T;
         } catch (error) {
@@ -227,12 +146,12 @@ export class ContentService<T> {
 
             // MEDIUM FIX: Clear cache SEBELUM save untuk mencegah stale data read
             // Jika ada request antara clear dan save, mereka akan fetch dari Firebase (fresh data)
-            clearCache(getCacheKey(this.firebasePath));
+            contentCache.delete(getCacheKey(this.firebasePath));
 
             await db.ref(this.firebasePath).set(payload);
 
             // Set cache dengan data baru (optimistic update)
-            setCache(getCacheKey(this.firebasePath), data as unknown as object, this.cacheTTL);
+            contentCache.set(getCacheKey(this.firebasePath), data as unknown as object, this.cacheTTL);
 
             console.log(`[ContentService] Successfully saved data to ${this.firebasePath}`);
             return true;

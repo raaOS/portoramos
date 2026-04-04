@@ -2,34 +2,14 @@
 // File ini mengelola aset gambar dan media untuk portofolio.
 
 import type { Project, GalleryItem } from '@/types/projects';
-
-/**
- * Convert GCS storage URLs to Firebase Storage URLs.
- * storage.googleapis.com/<bucket>/<path> → firebasestorage.googleapis.com/v0/b/<bucket>/o/<path>?alt=media
- */
-function convertGcsUrl(u: string): string {
-  const gcsMatch = u.match(
-    /^https?:\/\/storage\.googleapis\.com\/([^/]+)\/(.+)$/
-  );
-  if (gcsMatch) {
-    const bucket = gcsMatch[1];
-    let path = gcsMatch[2];
-    if (!path.startsWith('assets/')) {
-        path = `assets/${path}`;
-    }
-    const converted = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media`;
-
-    return converted;
-  }
-  return u;
-}
+import { resolveStorageUrl } from '@/lib/urlResolver';
 
 export function toImageProxy(u: string) {
-  return convertGcsUrl(u);
+  return resolveStorageUrl(u);
 }
 
 export function toMediaProxy(u: string) {
-  return convertGcsUrl(u);
+  return resolveStorageUrl(u);
 }
 
 export function isVideoLink(u: string): boolean {

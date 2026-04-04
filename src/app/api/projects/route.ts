@@ -8,29 +8,9 @@ import { db } from '@/lib/firebaseAdmin';
 import { sendTelegramAlert } from '@/lib/telegram';
 import { CreateProjectSchema } from '@/lib/validations';
 import { success, created, unauthorized, serverError, validationError } from '@/lib/api-response';
+import { resolveStorageUrl } from '@/lib/urlResolver';
 
 export const dynamic = 'force-dynamic';
-
-// Convert storage.googleapis.com URLs to firebasestorage.googleapis.com format
-function convertGcsUrls(url?: string): string | undefined {
-  if (!url) return url;
-  // Early return if URL is already in firebasestorage.googleapis.com format
-  if (url.includes('firebasestorage.googleapis.com')) {
-    return url;
-  }
-  // Only convert storage.googleapis.com URLs
-  const m = url.match(/^https?:\/\/storage\.googleapis\.com\/([^/]+)\/(.+)$/);
-  if (m) {
-    const bucket = m[1];
-    let path = m[2];
-    // Database URLs are missing the 'assets/' prefix that local files were uploaded with
-    if (!path.startsWith('assets/')) {
-        path = `assets/${path}`;
-    }
-    return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media`;
-  }
-  return url;
-}
 
 // GET - Read all projects
 export async function GET(request: NextRequest) {
@@ -45,13 +25,13 @@ export async function GET(request: NextRequest) {
     // Fix GCS storage URLs → Firebase Storage URLs (prevents 403 Forbidden)
     const fixedProjects = projects.map(p => ({
       ...p,
-      cover: convertGcsUrls(p.cover),
+      cover: resolveStorageUrl(p.cover),
       galleryItems: p.galleryItems?.map(item => ({
         ...item,
-        src: convertGcsUrls(item.src),
-        poster: convertGcsUrls(item.poster),
+        src: resolveStorageUrl(item.src),
+        poster: resolveStorageUrl(item.poster ?? ''),
       })),
-      gallery: p.gallery?.map(url => convertGcsUrls(url) || url),
+      gallery: p.gallery?.map(url => resolveStorageUrl(url) || url),
     }));
 
     return success({ projects: fixedProjects, lastUpdated });

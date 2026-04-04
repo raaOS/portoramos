@@ -44,7 +44,6 @@ const ProjectListItem = memo(function ProjectListItem({
               alt={project.title} 
               className="w-full h-full object-cover" 
               priority={index < 5}
-              lazy={index >= 5}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -310,7 +309,7 @@ export default function ProjectSplitView({ projects, tag: _tag }: ProjectSplitVi
         onWheel={(e) => e.stopPropagation()}
         role="listbox"
         aria-label="Project list"
-        aria-activedescendant={activeProject?.id}
+        aria-activedescendant={activeProject?.id || undefined}
       >
         <div className="space-y-1">
           {projects.map((project, index) => (

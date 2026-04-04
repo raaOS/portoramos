@@ -1,3 +1,5 @@
+import { extractStoragePath as resolveStoragePath } from '@/lib/urlResolver';
+
 export const isVideoLink = (url: string) => {
     if (!url) return false;
     
@@ -62,8 +64,6 @@ export const detectImageDimensions = async (url: string): Promise<{ width: numbe
         throw new Error('Invalid URL');
     }
 
-
-    // Check if it's a video URL
     // Check explicit video link
     if (isVideoLink(url)) {
         return getVideoDimensions(url);
@@ -86,21 +86,7 @@ export const detectImageDimensions = async (url: string): Promise<{ width: numbe
 };
 
 /**
- * Extract path from URL (for deletion)
- * @param url - Full URL
- * @returns Path or null
+ * Extract path from URL (for deletion).
+ * Re-exports from centralized urlResolver for backward compatibility.
  */
-export function extractStoragePath(url: string): string | null {
-    try {
-        const urlObj = new URL(url);
-        // Format: https://storage.googleapis.com/BUCKET_NAME/PATH
-        const parts = urlObj.pathname.split('/');
-        if (parts.length < 2) return null;
-        // Remove bucket name (first part)
-        return parts.slice(2).join('/');
-    } catch {
-        return null;
-    }
-}
-
-
+export { resolveStoragePath as extractStoragePath };

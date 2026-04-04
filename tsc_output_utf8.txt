@@ -1,0 +1,31 @@
+﻿src/components/admin/project-form/components/GalleryGroup.tsx(5,10): error TS2305: Module '"@/types/projects"' has no exported member 'ProjectGalleryGroup'.
+src/components/admin/project-form/components/GalleryGroup.tsx(5,31): error TS2305: Module '"@/types/projects"' has no exported member 'ProjectGalleryItem'.
+src/components/admin/project-form/components/GalleryGroup.tsx(53,27): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/admin/project-form/components/GalleryGroup.tsx(53,33): error TS7006: Parameter 'itemIndex' implicitly has an 'any' type.
+src/components/admin/project-form/components/GalleryItem.tsx(4,10): error TS2305: Module '"@/types/projects"' has no exported member 'ProjectGalleryItem'.
+src/components/admin/project-form/ProjectForm.tsx(142,81): error TS2345: Argument of type 'string' is not assignable to parameter of type '"commercial" | "visual_art" | undefined'.
+src/components/admin/project-form/ProjectForm.tsx(226,37): error TS2322: Type 'ProjectFormData' is not assignable to type 'Partial<CreateProjectData | UpdateProjectData>'.
+  Type 'ProjectFormData' is not assignable to type 'Partial<UpdateProjectData>'.
+    Types of property 'tags' are incompatible.
+      Type 'string' is not assignable to type 'string[]'.
+src/components/admin/project-form/ProjectForm.tsx(230,37): error TS2322: Type '(name: string) => void' is not assignable to type '() => void'.
+  Target signature provides too few arguments. Expected 1 or more, but got 0.
+src/components/admin/project-form/ProjectForm.tsx(231,37): error TS2322: Type '(groupId: string) => void' is not assignable to type '(index: number) => void'.
+  Types of parameters 'groupId' and 'index' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+src/components/admin/project-form/ProjectForm.tsx(232,37): error TS2322: Type '(groupId: string, url: string) => boolean' is not assignable to type '(groupIndex: number, item: ProjectGalleryItem) => void'.
+  Types of parameters 'groupId' and 'groupIndex' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+src/components/admin/project-form/ProjectForm.tsx(233,37): error TS2322: Type '(groupId: string, itemIndex: number) => void' is not assignable to type '(groupIndex: number, itemIndex: number) => void'.
+  Types of parameters 'groupId' and 'groupIndex' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+src/components/admin/project-form/ProjectForm.tsx(234,37): error TS2322: Type '(groupId: string, itemIndex: number) => void' is not assignable to type '(groupIndex: number, itemIndex: number) => void'.
+  Types of parameters 'groupId' and 'groupIndex' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+src/components/admin/project-form/ProjectForm.tsx(235,37): error TS2322: Type '(groupId: string, name: string) => void' is not assignable to type '(groupIndex: number, name: string) => void'.
+  Types of parameters 'groupId' and 'groupIndex' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+src/components/admin/project-form/ProjectGalleryManager.tsx(5,48): error TS2305: Module '"@/types/projects"' has no exported member 'ProjectGalleryItem'.
+src/components/projects/ProjectSplitView.tsx(47,15): error TS2322: Type '{ kind: "image"; src: string; alt: string; className: string; priority: boolean; lazy: boolean; }' is not assignable to type 'IntrinsicAttributes & (MediaProps & RefAttributes<HTMLVideoElement>)'.
+  Property 'lazy' does not exist on type 'IntrinsicAttributes & { kind: "image"; } & MediaImageProps & RefAttributes<HTMLVideoElement>'.
+src/components/shared/components/MediaImage.tsx(43,9): error TS2578: Unused '@ts-expect-error' directive.

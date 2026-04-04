@@ -17,14 +17,19 @@ export function isVideoUrl(url: string): boolean {
     return /\.(mp4|webm|ogg)$/i.test(url)
 }
 
+// Well-known large primes for spatial hashing (minimize collision in 3D grids)
+const HASH_PRIME_X = 73856093
+const HASH_PRIME_Y = 19349663
+const HASH_PRIME_Z = 83492791
+
 /**
  * Deterministically maps a cell coordinate to a project index.
  */
 export function cellToProjectIdx(gx: number, gy: number, gz: number, projectsLength: number): number {
     if (projectsLength <= 0) return 0
     // A robust 3D hash for better project distribution even with small lists
-    const h1 = (gx * 73856093) ^ (gy * 19349663) ^ (gz * 83492791)
+    const h1 = (gx * HASH_PRIME_X) ^ (gy * HASH_PRIME_Y) ^ (gz * HASH_PRIME_Z)
     const h2 = Math.sin(h1) * 10000
-    const randomShift = Math.floor(Math.abs(Math.sin(gx + gy + gz) * 100))
-    return Math.abs(Math.floor(h2) + randomShift) % projectsLength
+    const deterministicOffset = Math.floor(Math.abs(Math.sin(gx + gy + gz) * 100))
+    return Math.abs(Math.floor(h2) + deterministicOffset) % projectsLength
 }
