@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from 'react';
 import { m } from 'framer-motion';
 
 export default function TypingIndicator() {

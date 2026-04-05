@@ -1,7 +1,7 @@
 'use client'
 
 import type { Project } from '@/types/projects'
-import { useMemo, useState, useEffect, useRef, memo } from 'react'
+import { useMemo, useEffect, useRef, memo, useDeferredValue } from 'react'
 import { LazyMotion, domAnimation, m } from 'framer-motion'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
 import ProjectSplitView from '@/components/projects/ProjectSplitView'
@@ -37,16 +37,8 @@ export default function IndexClientInner({
 }: Props) {
   const { filteredProjects } = useProjectFiltering(projects, tag, searchQuery);
   const { visibleCount, isLoadingMore, observerTarget, resetCount } = useInfiniteScroll(filteredProjects.length);
-  const [isViewTransitioning, setIsViewTransitioning] = useState(false);
-  const prevViewRef = useRef(view);
-
-  useEffect(() => {
-    if (prevViewRef.current !== view) {
-      setIsViewTransitioning(true);
-      const timer = setTimeout(() => { setIsViewTransitioning(false); prevViewRef.current = view; }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [view]);
+  const activeView = useDeferredValue(view);
+  const isViewTransitioning = activeView !== view;
 
   // RESET HANDLER: Reset scroll count when filter or tag changes
   const prevFilterHash = useRef('');
@@ -89,7 +81,7 @@ export default function IndexClientInner({
   const showLoading = isParentLoading || isViewTransitioning;
 
   return (
-    <section className={`${view === '3d' ? '' : 'pt-4 px-4'} pb-8`} data-projects-grid>
+    <section className={`${activeView === '3d' ? '' : 'pt-4 px-4'} pb-8`} data-projects-grid>
       <h1 className="sr-only">Portfolio - Creative Works & Projects</h1>
       {tag && (
         <div className="mb-6 text-center">
@@ -97,11 +89,11 @@ export default function IndexClientInner({
         </div>
       )}
       <LazyMotion features={domAnimation}>
-        <div className={view === '3d' ? 'fixed inset-0 z-0 overflow-hidden' : 'min-h-screen'}>
+        <div className={activeView === '3d' ? 'fixed inset-0 z-0 overflow-hidden' : 'min-h-screen'}>
           {showLoading ? <ViewLoadingIndicator /> : displayedProjects.length > 0 ? (
             <>
-              {view === '3d' ? <Projects3DView projects={filteredProjects} /> : view === 'grid' ? gridView : <MemoizedProjectSplitView projects={filteredProjects} tag={tag} />}
-              {view === 'grid' && (
+              {activeView === '3d' ? <Projects3DView projects={filteredProjects} /> : activeView === 'grid' ? gridView : <MemoizedProjectSplitView projects={filteredProjects} tag={tag} />}
+              {activeView === 'grid' && (
                 <>
                   <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
                   {(isLoadingMore || isParentLoading) && (

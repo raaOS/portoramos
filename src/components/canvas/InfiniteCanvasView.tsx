@@ -299,6 +299,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
     return (
         <div
             ref={containerRef}
+            data-canvas-viewport
             className="relative z-10 h-full w-full cursor-grab overflow-hidden select-none bg-[#F0F0F0] active:cursor-grabbing"
             style={{
                 touchAction: 'none',

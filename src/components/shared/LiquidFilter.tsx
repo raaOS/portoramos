@@ -1,5 +1,4 @@
-import React from 'react';
-import { m, useTransform, MotionValue, useMotionValue } from 'framer-motion';
+import { m, useTransform, type MotionValue, useMotionValue } from 'framer-motion';
 
 interface LiquidFilterProps {
   id?: string;
@@ -9,8 +8,10 @@ interface LiquidFilterProps {
 
 export default function LiquidFilter({ id = 'liquid-glass', mouseX, scrollVelocity }: LiquidFilterProps) {
   // Safe defaults
-  const safeMouseX = mouseX || useMotionValue(0);
-  const safeVelocity = scrollVelocity || useMotionValue(0);
+  const fallbackMouseX = useMotionValue(0);
+  const fallbackVelocity = useMotionValue(0);
+  const safeMouseX = mouseX ?? fallbackMouseX;
+  const safeVelocity = scrollVelocity ?? fallbackVelocity;
 
   // 1. Mouse Interaction Logic (Reactive Ripple)
   const mouseRippleX = useTransform(safeMouseX, (val) => {
@@ -33,12 +34,11 @@ export default function LiquidFilter({ id = 'liquid-glass', mouseX, scrollVeloci
   });
 
   // Combine both influences into the final frequency attributes
-  // Using explicit casting to avoid 'unknown' type errors in useTransform array
-  const baseFreqX = useTransform([mouseRippleX, scrollShimmer], (latest: any[]) => 0.01 + (latest[0] as number) + (latest[1] as number));
-  const baseFreqY = useTransform([mouseRippleY, scrollShimmer], (latest: any[]) => 0.008 + (latest[0] as number) + (latest[1] as number));
+  const baseFreqX = useTransform([mouseRippleX, scrollShimmer], (latest) => 0.01 + Number(latest[0] ?? 0) + Number(latest[1] ?? 0));
+  const baseFreqY = useTransform([mouseRippleY, scrollShimmer], (latest) => 0.008 + Number(latest[0] ?? 0) + Number(latest[1] ?? 0));
 
   // Combine into SVG frequency string format
-  const baseFrequency = useTransform([baseFreqX, baseFreqY], ([x, y]) => `${x} ${y}`);
+  const baseFrequency = useTransform([baseFreqX, baseFreqY], (latest) => `${Number(latest[0] ?? 0)} ${Number(latest[1] ?? 0)}`);
 
   return (
     <svg className="pointer-events-none absolute h-0 w-0 overflow-hidden" aria-hidden="true">

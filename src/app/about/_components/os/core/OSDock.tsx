@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Dock from './Dock';
 import AppIcon from "../ui/AppIcon";
@@ -41,6 +41,9 @@ export default function OSDock({
   isMobile = false,
 }: OSDockProps) {
   const router = useRouter();
+  const handleOpenProjects = useCallback(() => {
+    router.push('/projects');
+  }, [router]);
 
   const dockItems = useMemo(() => {
     const defaultItems = [
@@ -48,9 +51,7 @@ export default function OSDock({
         id: "projects",
         label: "Projects",
         icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />,
-        onClick: () => {
-          router.push('/projects');
-        },
+        onClick: handleOpenProjects,
         popoverContent: <DockProjectModes />
       },
       { id: "about", label: "About Me", icon: <AppIcon icon={User} color="from-gray-300 to-gray-400" />, onClick: () => onOpenWindow("about"), isOpen: isWindowOpen("about") },
@@ -61,7 +62,7 @@ export default function OSDock({
     ];
 
     return getDockItemConfig(defaultItems, aboutData?.dockConfig);
-  }, [aboutData?.dockConfig, onOpenWindow, onOpenWhatsApp, onOpenContact, onOpenNotes, onOpenTrash, isWindowOpen, notesVisible]);
+  }, [aboutData?.dockConfig, handleOpenProjects, onOpenWindow, onOpenWhatsApp, onOpenContact, onOpenNotes, onOpenTrash, isWindowOpen, notesVisible]);
 
   return (
     <div className={className}>

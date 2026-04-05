@@ -15,11 +15,6 @@ interface PickerPanelProps {
 export default function PickerPanel({ isOpen, onClose, onEmojiSelect, triggerRect }: PickerPanelProps) {
   const [activeCategory, setActiveCategory] = useState('emosi');
   const [hoveredEmoji, setHoveredEmoji] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false);
-  
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
   
   // Handle click outside and Escape
   useEffect(() => {
@@ -50,7 +45,7 @@ export default function PickerPanel({ isOpen, onClose, onEmojiSelect, triggerRec
     onClose();
   }, [onEmojiSelect, onClose]);
   
-  if (!isClient || !triggerRect) return null;
+  if (!triggerRect || typeof window === 'undefined') return null;
   
   const pickerWidth = 320;
   const windowWidth = window.innerWidth;

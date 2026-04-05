@@ -14,7 +14,6 @@ interface StartScreenProps {
 type ScreenState = "idle" | "zooming" | "showingText" | "glassReveal" | "done";
 
 const REVEAL_OVERLAP_MS = 200;
-const REVEAL_DURATION_MS = 2500;
 
 const BOOT_CONFIG = {
     keyholeZoomDuration: 2000,

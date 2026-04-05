@@ -29,20 +29,20 @@ const FREQUENCIES = {
 export const useSystemSound = () => {
     const audioContextRef = useRef<AudioContext | null>(null);
 
-    const initAudio = () => {
+    const initAudio = useCallback(() => {
         if (!audioContextRef.current) {
             audioContextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         }
         if (audioContextRef.current.state === 'suspended') {
             audioContextRef.current.resume();
         }
-    };
+    }, []);
 
     /**
      * Play a single tone with configurable oscillator and gain parameters.
      * Extracts the repeated init→oscillator→gain→connect→start→stop pattern.
      */
-    const playTone = (config: ToneConfig) => {
+    const playTone = useCallback((config: ToneConfig) => {
         initAudio();
         const ctx = audioContextRef.current;
         if (!ctx) return;
@@ -69,7 +69,7 @@ export const useSystemSound = () => {
         gain.connect(ctx.destination);
         osc.start(startTime);
         osc.stop(startTime + config.duration);
-    };
+    }, [initAudio]);
 
     const playPop = useCallback(() => {
         playTone({
@@ -78,7 +78,7 @@ export const useSystemSound = () => {
             gain: { start: 0.1, end: 0.01 },
             duration: 0.1,
         });
-    }, []);
+    }, [playTone]);
 
     const playOpen = useCallback(() => {
         playTone({
@@ -88,7 +88,7 @@ export const useSystemSound = () => {
             duration: 0.3,
             ramp: 'linear',
         });
-    }, []);
+    }, [playTone]);
 
     const playClose = useCallback(() => {
         playTone({
@@ -98,7 +98,7 @@ export const useSystemSound = () => {
             duration: 0.2,
             ramp: 'linear',
         });
-    }, []);
+    }, [playTone]);
 
     const playChime = useCallback(() => {
         const chimeNotes: ToneConfig[] = [
@@ -130,7 +130,7 @@ export const useSystemSound = () => {
             osc.start(startTime);
             osc.stop(startTime + 1);
         }
-    }, []);
+    }, [initAudio]);
 
     return { playPop, playOpen, playClose, playChime };
 };

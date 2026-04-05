@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
 import { useChatProjects } from './hooks/useChatProjects';
 import { useChatSequencer } from './hooks/useChatSequencer';
@@ -9,16 +9,27 @@ import { ChatMessages } from './components/ChatMessages';
 import { ChatFooter } from './components/ChatFooter';
 import { ChatList } from './components/ChatList';
 import type { ContactProfile, ChatMessage } from '../data/mockChats';
+import type { TestimonialData } from '@/types/testimonial';
+import { convertTestimonialToContact } from '../utils/chatUtils';
 
-export default function ChatWindow({ customContacts }: { customContacts?: Record<string, ContactProfile> }) {
+interface ChatWindowProps {
+    activeChatId?: string | null;
+    customContacts?: Record<string, ContactProfile>;
+}
+
+export default function ChatWindow({ activeChatId = null, customContacts }: ChatWindowProps) {
     const [activeContact, setActiveContact] = useState<ContactProfile | null>(null);
     const [showList, setShowList] = useState(true);
     const [input, setInput] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
     
     // Contacts state
-    const [contacts, setContacts] = useState<ContactProfile[]>(
+    const [fetchedContacts, setFetchedContacts] = useState<ContactProfile[]>(
         customContacts ? Object.values(customContacts) : []
+    );
+    const contacts = useMemo(
+        () => customContacts ? Object.values(customContacts) : fetchedContacts,
+        [customContacts, fetchedContacts]
     );
 
     // Custom Hooks
@@ -57,17 +68,21 @@ export default function ChatWindow({ customContacts }: { customContacts?: Record
         soundManager.play('typing');
     };
 
-    const selectContact = (contact: ContactProfile) => {
+    const selectContact = useCallback((contact: ContactProfile) => {
         setActiveContact(contact);
         setShowList(false);
         setVisibleMessages([]);
-    };
+    }, [setVisibleMessages]);
 
-    const goBackToList = () => {
+    const goBackToList = useCallback(() => {
         setShowList(true);
         setActiveContact(null);
         setVisibleMessages([]);
-    };
+    }, [setVisibleMessages]);
+
+    const findContactByChatId = useCallback((chatId: string) => {
+        return contacts.find((contact) => contact.id === chatId || contact.name === chatId) || null;
+    }, [contacts]);
 
     const getLastMessage = (contact: ContactProfile) => {
         const messages = contact.messages || contact.conversation || [];
@@ -77,21 +92,44 @@ export default function ChatWindow({ customContacts }: { customContacts?: Record
     };
 
     useEffect(() => {
-        if (customContacts) return; // Skip if provided via props
+        if (!activeChatId) {
+            return;
+        }
+
+        const targetContact = findContactByChatId(activeChatId);
+        if (targetContact) {
+            selectContact(targetContact);
+        }
+    }, [activeChatId, findContactByChatId, selectContact]);
+
+    useEffect(() => {
+        if (customContacts) return;
+
+        let isMounted = true;
 
         const fetchTestimonials = async () => {
             try {
-                const res = await fetch('/api/testimonials');
-                const data = await res.json();
-                if (data.success) {
-                    setContacts(data.testimonials);
+                const res = await fetch('/api/testimonial');
+                if (!res.ok) {
+                    throw new Error(`Failed to load testimonials: ${res.status}`);
+                }
+
+                const data: TestimonialData = await res.json();
+                if (isMounted) {
+                    const nextContacts = (data.testimonials || [])
+                        .filter((testimonial) => testimonial.isActive !== false)
+                        .map(convertTestimonialToContact);
+                    setFetchedContacts(nextContacts);
                 }
             } catch (err) {
                 console.error("Failed to load contacts:", err);
             }
         };
         fetchTestimonials();
-    }, []);
+        return () => {
+            isMounted = false;
+        };
+    }, [customContacts]);
 
     if (showList) {
         return <ChatList contacts={contacts} onSelect={selectContact} getLastMessage={getLastMessage} />;

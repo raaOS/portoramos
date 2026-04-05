@@ -30,6 +30,7 @@ export function CanvasCard({
     return (
         <div
             ref={(element) => registerCardRef(item.key, element)}
+            data-canvas-card={item.key}
             className="absolute left-1/2 top-1/2"
             style={{
                 width: CARD_WIDTH,

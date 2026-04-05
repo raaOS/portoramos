@@ -1,13 +1,11 @@
 import { useRef, useCallback, useEffect } from 'react';
-import { AboutData } from '@/types/about';
 
 interface UseWindowPersistenceProps {
-    aboutData?: AboutData | null;
     csrfToken?: string;
     isAdmin?: boolean;
 }
 
-export function useWindowPersistence({ aboutData, csrfToken, isAdmin }: UseWindowPersistenceProps) {
+export function useWindowPersistence({ csrfToken, isAdmin }: UseWindowPersistenceProps) {
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const persistTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isPersistingRef = useRef(false);
@@ -25,7 +23,7 @@ export function useWindowPersistence({ aboutData, csrfToken, isAdmin }: UseWindo
      * Only works for authenticated admins.
      */
     const saveWindowPreference = useCallback(async (id: string, updates: Partial<{ x: number, y: number, width: number, height: number, isOpenByDefault: boolean }>) => {
-        if (!aboutData || !isAdmin || !csrfToken) return;
+        if (!isAdmin || !csrfToken) return;
 
         // Prevent overwriting desktop layout from mobile
         const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -47,27 +45,33 @@ export function useWindowPersistence({ aboutData, csrfToken, isAdmin }: UseWindo
             }
         }
 
+        if (Object.keys(updates).length === 0) {
+            return;
+        }
+
         // Use debounce for manual moves to avoid race conditions
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         isPersistingRef.current = true;
 
         saveTimeoutRef.current = setTimeout(async () => {
             try {
-                const currentPrefs = aboutData.windowPreferences || {};
-                const newPrefs = {
-                    ...currentPrefs,
-                    [id]: { ...(currentPrefs[id] || {}), ...updates }
-                };
-
-                await fetch('/api/about', {
+                const response = await fetch('/api/about', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-Token': csrfToken
                     },
                     credentials: 'include',
-                    body: JSON.stringify({ windowPreferences: newPrefs })
+                    body: JSON.stringify({
+                        windowPreferences: {
+                            [id]: updates
+                        }
+                    })
                 });
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status ${response.status}`);
+                }
             } catch (error) {
                 console.error("[WindowManager] Failed to save preference:", error);
             } finally {
@@ -77,7 +81,7 @@ export function useWindowPersistence({ aboutData, csrfToken, isAdmin }: UseWindo
                 }, 1000);
             }
         }, 800);
-    }, [aboutData, csrfToken, isAdmin]);
+    }, [csrfToken, isAdmin]);
 
     const flushWindowPositions = useCallback(async () => {
         if (!isAdmin || !csrfToken) return;

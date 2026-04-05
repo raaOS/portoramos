@@ -33,7 +33,7 @@ export function useChatSync(initialGreeting?: string) {
                 localStorage.setItem('ramos_visitor_id', newId);
                 setVisitorId(newId);
             }
-        } catch (e) {
+        } catch {
             setVisitorId(uuidv4());
         }
     }, []);

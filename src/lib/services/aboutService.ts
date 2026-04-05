@@ -14,6 +14,46 @@ import aboutDataFallback from '@/data/about.json';
 
 const service = new ContentService<AboutData>('about.json', aboutDataFallback as unknown as AboutData);
 
+function mergeDesktopPreferences(
+    current?: DesktopPreferences,
+    updates?: DesktopPreferences
+): DesktopPreferences | undefined {
+    if (!current && !updates) {
+        return undefined;
+    }
+
+    return {
+        ...(current || {}),
+        ...(updates || {}),
+        iconPositions: {
+            ...(current?.iconPositions || {}),
+            ...(updates?.iconPositions || {}),
+        },
+    } as DesktopPreferences;
+}
+
+function mergeWindowPreferences(
+    current?: WindowPreferences,
+    updates?: WindowPreferences
+): WindowPreferences | undefined {
+    if (!current && !updates) {
+        return undefined;
+    }
+
+    const merged: WindowPreferences = {
+        ...(current || {}),
+    };
+
+    Object.entries(updates || {}).forEach(([id, preference]) => {
+        merged[id] = {
+            ...(current?.[id] || {}),
+            ...preference,
+        };
+    });
+
+    return merged;
+}
+
 /**
  * Cached version untuk Server Components.
  * Menghindari redundant fetch ke Firebase dalam satu request.
@@ -42,7 +82,7 @@ export const aboutService = {
      */
     async updateAboutData(updates: UpdateAboutData) {
         try {
-            const current = await this.getAboutData();
+            const current = await this.getAboutData(true);
             console.log('[AboutService] Updating data with:', JSON.stringify(updates).slice(0, 100) + '...');
 
             // Explicit merging since updates contains Partials
@@ -54,11 +94,11 @@ export const aboutService = {
                 designPhilosophy: { ...(current.designPhilosophy || {}), ...(updates.designPhilosophy || {}) } as DesignPhilosophy,
 
                 // OS Configuration
-                desktopPreferences: { ...current.desktopPreferences, ...(updates.desktopPreferences || {}) } as DesktopPreferences,
+                desktopPreferences: mergeDesktopPreferences(current.desktopPreferences, updates.desktopPreferences),
                 wallpaperConfig: { ...current.wallpaperConfig, ...(updates.wallpaperConfig || {}) } as WallpaperConfig,
                 dockConfig: { ...current.dockConfig, ...(updates.dockConfig || {}) } as DockPreferences,
 
-                windowPreferences: { ...current.windowPreferences, ...(updates.windowPreferences || {}) } as WindowPreferences,
+                windowPreferences: mergeWindowPreferences(current.windowPreferences, updates.windowPreferences),
                 soundConfig: { ...current.soundConfig, ...(updates.soundConfig || {}) } as SoundConfig,
                 labels: { ...(current.labels || {}), ...(updates.labels || {}) } as AboutData['labels'],
 

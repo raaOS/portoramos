@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Save, X, Sparkles, Loader2, Search } from 'lucide-react';
 import { HardSkill, HardSkillLevel } from '@/types/hardSkill';

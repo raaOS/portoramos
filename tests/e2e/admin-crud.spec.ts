@@ -11,12 +11,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Urgent2025!';
 // Helper: Login to admin via API
 async function loginAdmin(page: any, context: any) {
   console.log('[Login] Starting API login...');
-  
-  // Clear rate limit
-  try {
-    await context.request.post('/api/admin/clear-rate-limit');
-  } catch (e) {}
-  
+
   // Get CSRF token
   const csrfRes = await context.request.get('/api/admin/login');
   const csrfData = await csrfRes.json();
@@ -42,8 +37,8 @@ async function loginAdmin(page: any, context: any) {
   }
   
   // Navigate and verify
-  await page.goto('/admin');
-  await page.waitForLoadState('networkidle');
+  await page.goto('/admin', { waitUntil: 'domcontentloaded' });
+  await expect(page).not.toHaveURL(/\/admin\/login/);
   
   if (page.url().includes('/login')) {
     throw new Error('Login failed - still on login page');
@@ -66,18 +61,17 @@ test.describe('Admin Authentication', () => {
   test('should navigate to projects page', async ({ page, context }) => {
     await loginAdmin(page, context);
     
-    await page.goto('/admin/projects');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/admin/projects', { waitUntil: 'domcontentloaded' });
     
     // Verify projects page loaded
     await expect(page.locator('body')).toContainText('Projects');
-    await expect(page.locator('body')).toContainText('Tambah Project');
+    await expect(page.getByRole('button', { name: /Tambah Project/i })).toBeVisible();
   });
 
   test('should open create project modal', async ({ page, context }) => {
     await loginAdmin(page, context);
     
-    await page.goto('/admin/projects');
+    await page.goto('/admin/projects', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('button:has-text("Tambah Project")');
     
     // Click add button

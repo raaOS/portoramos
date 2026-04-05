@@ -11,7 +11,6 @@ type UseCanvasInputProps = {
 
 // — Input tuning —
 const DRAG_SENSITIVITY = 1.5    // more 1:1 hand-to-camera feel
-const SCROLL_SENSITIVITY = 1.5
 const WHEEL_DELTA_MULTIPLIER = 0.5
 const PINCH_ZOOM_MULTIPLIER = 2
 const VELOCITY_SMOOTH_FACTOR = 0.5 // more responsive velocity transitions

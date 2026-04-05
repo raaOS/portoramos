@@ -1,9 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Search, FileText, AppWindow, Command } from "lucide-react";
 import type { Project } from "@/types/projects";
+
+const SYSTEM_APPS = [
+    { id: "about", title: "About Me", type: "app" as const },
+    { id: "whatsapp", title: "WhatsApp", type: "app" as const },
+    { id: "contact", title: "Contact", type: "app" as const },
+    { id: "trash-bin", title: "Trash", type: "app" as const },
+];
+type SpotlightResult =
+    | (typeof SYSTEM_APPS)[number]
+    | { id: string; title: string; type: "project"; project: Project };
 
 interface SpotlightProps {
     isOpen: boolean;
@@ -18,47 +28,64 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
     const [selectedIndex, setSelectedIndex] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const systemApps = [
-        { id: "about", title: "About Me", type: "app" },
-        { id: "projects", title: "Launchpad", type: "app" },
-        { id: "gallery", title: "Photos", type: "app" },
-        { id: "game", title: "Snake Game", type: "app" },
-        { id: "settings", title: "System Settings", type: "app" },
-        { id: "contact", title: "Contact", type: "app" },
-    ];
-
     const results = [
-        ...systemApps.filter(app => app.title.toLowerCase().includes(query.toLowerCase())),
-        ...projects.filter(p => p.title.toLowerCase().includes(query.toLowerCase())).map(p => ({ ...p, type: 'project' }))
-    ].slice(0, 8);
+        ...SYSTEM_APPS.filter((app) => app.title.toLowerCase().includes(query.toLowerCase())),
+        ...projects
+            .filter((project) => project.title.toLowerCase().includes(query.toLowerCase()))
+            .map((project) => ({ id: project.id, title: project.title, type: "project" as const, project })),
+    ].slice(0, 8) as SpotlightResult[];
+    const safeSelectedIndex = results.length === 0 ? 0 : Math.min(selectedIndex, results.length - 1);
 
-    // Reset state saat Spotlight dibuka
-    // setState dijalankan di microtask (setTimeout 0) untuk menghindari cascading render
     useEffect(() => {
-        if (isOpen) {
-            const t = setTimeout(() => {
-                setSelectedIndex(0);
-                setQuery('');
-            }, 0);
-            inputRef.current?.focus();
-            return () => clearTimeout(t);
+        if (!isOpen) {
+            return;
         }
+
+        const timer = setTimeout(() => {
+            setSelectedIndex(0);
+            setQuery("");
+            inputRef.current?.focus();
+        }, 0);
+
+        return () => clearTimeout(timer);
     }, [isOpen]);
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "ArrowDown") {
-            setSelectedIndex(prev => (prev + 1) % results.length);
-        } else if (e.key === "ArrowUp") {
-            setSelectedIndex(prev => (prev - 1 + results.length) % results.length);
-        } else if (e.key === "Enter") {
-            const selected = results[selectedIndex];
+    const openResult = (result: (typeof results)[number]) => {
+        if (result.type === "app") {
+            onOpenApp(result.id);
+            onClose();
+            return;
+        }
+
+        onOpenProject(result.project);
+        onClose();
+    };
+
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+        if (event.key === "Escape") {
+            event.preventDefault();
+            onClose();
+            return;
+        }
+
+        if (results.length === 0) {
+            return;
+        }
+
+        if (event.key === "ArrowDown") {
+            setSelectedIndex((prev) => (prev + 1) % results.length);
+            return;
+        }
+
+        if (event.key === "ArrowUp") {
+            setSelectedIndex((prev) => (prev - 1 + results.length) % results.length);
+            return;
+        }
+
+        if (event.key === "Enter") {
+            const selected = results[safeSelectedIndex];
             if (selected) {
-                if ('type' in selected && selected.type === 'app') {
-                    onOpenApp(selected.id);
-                } else {
-                    onOpenProject(selected as Project);
-                    onClose();
-                }
+                openResult(selected);
             }
         }
     };
@@ -68,57 +95,51 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
-            className="fixed inset-0 z-[10002] flex items-start justify-center pt-[20vh] bg-black/20 pointer-events-auto print:hidden"
+            className="fixed inset-0 z-[10002] flex items-start justify-center bg-black/20 pt-[20vh] pointer-events-auto print:hidden"
             onClick={onClose}
         >
             <motion.div
-                className="w-[600px] bg-white rounded-xl border border-gray-200 overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
+                className="w-[600px] overflow-hidden rounded-xl border border-gray-200 bg-white"
+                onClick={(event) => event.stopPropagation()}
                 onKeyDown={handleKeyDown}
             >
-                {/* Search Input */}
-                <div className="flex items-center px-4 py-4 border-b border-gray-200">
-                    <Search className="text-gray-400 mr-3" size={20} />
+                <div className="flex items-center border-b border-gray-200 px-4 py-4">
+                    <Search className="mr-3 text-gray-400" size={20} />
                     <input
                         ref={inputRef}
                         type="text"
                         value={query}
-                        onChange={(e) => setQuery(e.target.value)}
+                        onChange={(event) => {
+                            setQuery(event.target.value);
+                            setSelectedIndex(0);
+                        }}
                         placeholder="Spotlight Search"
-                        className="flex-1 bg-transparent border-none outline-none text-xl text-gray-800 placeholder:text-gray-400"
+                        className="flex-1 border-none bg-transparent text-xl text-gray-800 outline-none placeholder:text-gray-400"
                     />
-                    <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-[10px] text-gray-400 font-medium">
+                    <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-400">
                         <Command size={10} />
                         <span>K</span>
                     </div>
                 </div>
 
-                {/* Results */}
                 <div className="max-h-[400px] overflow-y-auto py-2">
                     {results.length > 0 ? (
-                        results.map((res, i) => (
+                        results.map((result, index) => (
                             <div
-                                key={res.id}
-                                className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${i === selectedIndex ? 'bg-blue-500 text-white' : 'hover:bg-black/5 text-gray-700'}`}
-                                onClick={() => {
-                                    if ('type' in res && res.type === 'app') {
-                                        onOpenApp(res.id);
-                                    } else {
-                                        onOpenProject(res as Project);
-                                        onClose();
-                                    }
-                                }}
-                                onMouseEnter={() => setSelectedIndex(i)}
+                                key={result.id}
+                                className={`flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors ${
+                                    index === safeSelectedIndex ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-black/5"
+                                }`}
+                                onClick={() => openResult(result)}
+                                onMouseEnter={() => setSelectedIndex(index)}
                             >
-                                {'type' in res && res.type === 'app' ? (
-                                    <AppWindow size={18} className={i === selectedIndex ? 'text-white' : 'text-blue-500'} />
+                                {result.type === "app" ? (
+                                    <AppWindow size={18} className={index === safeSelectedIndex ? "text-white" : "text-blue-500"} />
                                 ) : (
-                                    <FileText size={18} className={i === selectedIndex ? 'text-white' : 'text-orange-500'} />
+                                    <FileText size={18} className={index === safeSelectedIndex ? "text-white" : "text-orange-500"} />
                                 )}
-                                <span className="flex-1 font-medium">{res.title}</span>
-                                {i === selectedIndex && (
-                                    <span className="text-[10px] opacity-70">Enter to Open</span>
-                                )}
+                                <span className="flex-1 font-medium">{result.title}</span>
+                                {index === safeSelectedIndex && <span className="text-[10px] opacity-70">Enter to Open</span>}
                             </div>
                         ))
                     ) : (
@@ -128,16 +149,13 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-400">
+                <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-2 text-[10px] text-gray-400">
                     <div className="flex gap-3">
-                        <span><span className="font-bold">↑↓</span> to navigate</span>
+                        <span><span className="font-bold">Up/Down</span> to navigate</span>
                         <span><span className="font-bold">Enter</span> to open</span>
                         <span><span className="font-bold">Esc</span> to close</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                        Powered by Gemini
-                    </div>
+                    <div className="flex items-center gap-1">Powered by Gemini</div>
                 </div>
             </motion.div>
         </motion.div>

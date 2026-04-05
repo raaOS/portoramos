@@ -44,6 +44,37 @@ export interface DesktopEnvironmentProps {
     initialHasBooted?: boolean;
 }
 
+type ChatContactsState = ReturnType<typeof useChatContacts>;
+
+interface DesktopMainBaseProps {
+    aboutData?: AboutData | null;
+    isMobile: boolean;
+    needsPowerOn: boolean;
+    isBooting: boolean;
+    isRevealed: boolean;
+    startScreenReady: boolean;
+    setStartScreenReady: React.Dispatch<React.SetStateAction<boolean>>;
+    handleBootComplete: () => void;
+    notesVisible: boolean;
+    setNotesVisible: React.Dispatch<React.SetStateAction<boolean>>;
+    dynamicContacts: ChatContactsState["dynamicContacts"];
+    testimonialContacts: ChatContactsState["testimonialContacts"];
+    showSpotlight: boolean;
+    setShowSpotlight: React.Dispatch<React.SetStateAction<boolean>>;
+    commercialProjects: Project[];
+    projects: Project[];
+    isAdmin: boolean;
+    csrfToken: string | null;
+}
+
+interface DesktopMainWithLogoutProps extends DesktopMainBaseProps {
+    originalLogout: () => Promise<void>;
+}
+
+interface DesktopMainProps extends DesktopMainBaseProps {
+    logout: () => void | Promise<void>;
+}
+
 export default function DesktopEnvironment({ aboutData, experienceData, hardSkillsData, projects, initialHasBooted }: DesktopEnvironmentProps) {
     const { mounted, isMobile } = useDesktopLock();
     const { needsPowerOn, isBooting, finishBooting } = useBootSequence({ initialHasBooted });
@@ -88,33 +119,33 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
             <DesktopMainWithLogout
                 aboutData={aboutData} isMobile={isMobile} needsPowerOn={needsPowerOn} isBooting={isBooting}
                 isRevealed={isRevealed} startScreenReady={startScreenReady} setStartScreenReady={setStartScreenReady} 
-                setIsRevealed={setIsRevealed} handleBootComplete={handleBootComplete} notesVisible={notesVisible}
+                handleBootComplete={handleBootComplete} notesVisible={notesVisible}
                 setNotesVisible={setNotesVisible} dynamicContacts={dynamicContacts} testimonialContacts={testimonialContacts}
                 showSpotlight={showSpotlight} setShowSpotlight={setShowSpotlight} commercialProjects={commercialProjects}
-                projects={projects} isAdmin={isAdmin} csrfToken={csrfToken || undefined} originalLogout={originalLogout}
+                projects={projects} isAdmin={isAdmin} csrfToken={csrfToken ?? null} originalLogout={originalLogout}
             />
         </DesktopProviders>
     );
 }
 
-function DesktopMainWithLogout({ originalLogout, ...props }: any) {
+function DesktopMainWithLogout({ originalLogout, ...props }: DesktopMainWithLogoutProps) {
     const { flushAll } = useLayoutPersistence();
     const handleLogout = async () => {
         await flushAll();
         clearVisitorPositions();
         await new Promise(r => setTimeout(r, 300));
-        originalLogout();
+        await originalLogout();
     };
     return <DesktopMain {...props} logout={handleLogout} />;
 }
 
 function DesktopMain({
     aboutData, isMobile, needsPowerOn, isBooting, isRevealed,
-    startScreenReady, setStartScreenReady, setIsRevealed,
+    startScreenReady, setStartScreenReady,
     handleBootComplete, notesVisible, setNotesVisible,
     dynamicContacts, testimonialContacts, showSpotlight, setShowSpotlight,
     commercialProjects, projects, isAdmin, logout, csrfToken
-}: any) {
+}: DesktopMainProps) {
     const hasHandledAppParamRef = useRef(false);
 
     const handleGoHome = useCallback(() => {
@@ -127,7 +158,7 @@ function DesktopMain({
         updateWindowPosition, handleWindowResize, handleWindowResizeEnd, togglePin
     } = useDesktopWindowContext();
 
-    const { notes, addNote, updateNote, deleteNote, permanentDeleteNote, restoreNote, bringToFrontNote } = useStickyNotes(true, isAdmin, csrfToken, requestNextZIndex);
+    const { notes, addNote, updateNote, deleteNote, permanentDeleteNote, restoreNote, bringToFrontNote } = useStickyNotes(true, isAdmin, csrfToken ?? undefined, requestNextZIndex);
     const { openProjectWindow, navToChat, openWhatsAppList, toggleNotesVisibility } = useDesktopNavigation({
         openWindow, resetWindows, dynamicContacts, ChatWindow, notesVisible, setNotesVisible,
         notes, projects, restoreNote, addNote, isAdmin, setNotesDockBouncing: () => { }

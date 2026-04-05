@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const E2E_PORT = 3100;
+const E2E_BASE_URL = `http://localhost:${E2E_PORT}`;
+
 export default defineConfig({
     testDir: './tests/e2e',
     fullyParallel: true,
@@ -8,7 +11,7 @@ export default defineConfig({
     workers: process.env.CI ? 1 : undefined,
     reporter: 'html',
     use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: E2E_BASE_URL,
         trace: 'on-first-retry',
         viewport: { width: 1280, height: 720 },
     },
@@ -20,12 +23,15 @@ export default defineConfig({
         },
     ],
 
-    /* Run your local dev server before starting the tests */
-    /*
     webServer: {
-        command: 'npm run dev',
-        url: 'http://localhost:3000',
-        reuseExistingServer: true,
+        command: `node ./node_modules/next/dist/bin/next dev -p ${E2E_PORT}`,
+        url: E2E_BASE_URL,
+        reuseExistingServer: false,
+        timeout: 120000,
+        env: {
+            ...process.env,
+            E2E_TEST: 'true',
+            NEXT_PUBLIC_SITE_URL: E2E_BASE_URL,
+        },
     },
-    */
 });

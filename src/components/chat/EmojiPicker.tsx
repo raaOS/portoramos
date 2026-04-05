@@ -40,7 +40,7 @@ export default function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
         ref={buttonRef}
         type="button"
         onClick={handleToggle}
-        className="p-2 rounded-full hover:bg-[#00a884]/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884]"
+        className="p-2 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884]"
         aria-label="Open emoji picker"
         aria-expanded={isOpen}
       >

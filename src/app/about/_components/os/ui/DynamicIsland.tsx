@@ -14,11 +14,20 @@ interface DynamicIslandProps {
     islandId?: string;
 }
 
+interface IslandNotification {
+    id: string;
+    chatId: string;
+    name: string;
+    message: string;
+    avatar: string;
+    initial: string;
+}
+
 const ISLAND_ID = 'dynamic-island';
 
 const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotifications, islandId = ISLAND_ID }: DynamicIslandProps) => {
     const { bringToFront, getZIndex } = useUnifiedZIndex();
-    const [notification, setNotification] = useState<{ id: string; name: string; message: string; avatar: string; initial: string } | null>(null);
+    const [notification, setNotification] = useState<IslandNotification | null>(null);
     const [isGracePeriod, setIsGracePeriod] = useState(false);
     const [fullMessage, setFullMessage] = useState("");
     const [visibleChars, setVisibleChars] = useState(0);
@@ -111,6 +120,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
 
             randomTesti = {
                 id: `notif-${Date.now()}`,
+                chatId: randomContact.id,
                 name: randomContact.name,
                 message: notificationMsg,
                 avatar: (randomContact.avatar && randomContact.avatar.startsWith('http'))
@@ -247,7 +257,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                                 setFullMessage("");
                                 setVisibleChars(0);
                                 setShowVerified(false);
-                                onOpenChat?.(notification.name);
+                                onOpenChat?.(notification.chatId);
                             }}
                         >
                             {/* Avatar with Elastic Bounce */}

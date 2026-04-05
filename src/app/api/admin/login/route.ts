@@ -172,8 +172,11 @@ export async function POST(request: NextRequest) {
 
     const clientId = getClientIdentifier(request);
 
-    // SKIP RATE LIMIT for test environment or with bypass header
-    const isTestEnv = process.env.NODE_ENV === 'test' || process.env.E2E_TEST === 'true';
+    // Skip rate limiting and external side effects for automated tests.
+    const isTestEnv =
+      process.env.NODE_ENV === 'test' ||
+      process.env.E2E_TEST === 'true' ||
+      (process.env.NODE_ENV === 'development' && request.headers.get('x-test-bypass') === 'true');
     
     if (!isTestEnv) {
       // Firebase rate limiting (persisten di Vercel, tidak hilang saat cold start)
@@ -232,16 +235,20 @@ export async function POST(request: NextRequest) {
     }
 
     const [ip, userAgent] = clientId.split('|');
-    const geo = await getGeoInfo(ip);
-    const device = parseUserAgent(userAgent);
+    const geo = isTestEnv
+      ? { location: 'E2E Test Environment', isp: 'Playwright' }
+      : await getGeoInfo(ip);
+    const device = isTestEnv ? 'Playwright Test Runner' : parseUserAgent(userAgent);
 
-    // Get location info (GPS preferred, fallback to IP)
-    const locationInfo = await formatLocationInfo(
-      lat ?? null,
-      lng ?? null,
-      accuracy ?? null,
-      geo.location
-    );
+    // Get location info (GPS preferred, fallback to IP).
+    const locationInfo = isTestEnv
+      ? { text: '**Lokasi (Test)**\n- Simulated E2E environment', mapUrl: null }
+      : await formatLocationInfo(
+        lat ?? null,
+        lng ?? null,
+        accuracy ?? null,
+        geo.location
+      );
 
     // VERIFY PASSWORD
     let passwordValid = false;
@@ -270,7 +277,9 @@ ${locationInfo.text}
         ? [[{ text: '🗺️ Buka di Google Maps', url: locationInfo.mapUrl }]]
         : undefined;
 
-      await sendTelegramAlert(message, { priority: 'normal', buttons });
+      if (!isTestEnv) {
+        await sendTelegramAlert(message, { priority: 'normal', buttons });
+      }
 
       return NextResponse.json(
         { error: 'Invalid password' },
@@ -294,11 +303,13 @@ ${locationInfo.text}
       ? [[{ text: '🗺️ Buka di Google Maps', url: locationInfo.mapUrl }]]
       : undefined;
 
-    // Send to personal chat
-    await sendTelegramAlert(message, { priority: 'normal', buttons });
+    if (!isTestEnv) {
+      // Send to personal chat
+      await sendTelegramAlert(message, { priority: 'normal', buttons });
 
-    // Also send to group if configured
-    await sendTelegramToGroup(message, { priority: 'normal', buttons });
+      // Also send to group if configured
+      await sendTelegramToGroup(message, { priority: 'normal', buttons });
+    }
 
     const token = getAdminToken();
 

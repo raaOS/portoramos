@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { AboutData } from "@/types/about";
+import { useState, useEffect, useCallback } from "react";
+import type { AboutData } from "@/types/about";
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { useLayoutPersistence } from "@/app/about/_components/os/contexts/LayoutPersistenceContext";
 import { useUnifiedZIndex } from "@/app/about/_components/os/context/UnifiedZIndexContext";
-import { WindowState } from "./window-manager/types";
+import type { WindowState } from "./window-manager/types";
 
 // Subhooks
 import { useWindowDimensions } from "./window-manager/useWindowDimensions";
@@ -32,7 +32,7 @@ export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin
     const { getCenterPosition, getCenterPositionStatic } = useWindowDimensions();
 
     // 2. Server Persistence & Position Saving
-    const { saveWindowPreference, flushWindowPositions } = useWindowPersistence({ aboutData, csrfToken, isAdmin });
+    const { saveWindowPreference, flushWindowPositions } = useWindowPersistence({ csrfToken, isAdmin });
 
     // 3. Initialization
     useWindowInitialization({ initialWindows, aboutData, setWindows, getCenterPositionStatic });

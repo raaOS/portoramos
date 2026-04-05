@@ -10,6 +10,7 @@ import type { AboutData } from "@/types/about";
 import type { Project } from "@/types/projects";
 import type { ContactProfile } from "../data/mockChats";
 import { useDesktopWindowContext } from "../context/DesktopWindowContext";
+import { useUnifiedZIndex } from "../context/UnifiedZIndexContext";
 import { ISLAND_ID } from "../ui/DynamicIsland";
 
 const Spotlight = dynamic(() => import("../core/Spotlight"), {
@@ -60,13 +61,20 @@ export default function UIOverlaysLayer({
     // Don't show overlays during boot sequence
     const isBootingOrStarting = isBooting || needsPowerOn;
     const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
+    const { getZIndex } = useUnifiedZIndex();
     
     // Note: Exit animation is handled by AnimatePresence when component unmounts
 
     const isWindowOpen = (id: string) => windows.find(w => w.id === id)?.isOpen ?? false;
-    // Get top window from windows array (already sorted by zIndex in context)
     const activeWindows = windows.filter(w => w.isOpen && !w.isMinimized);
-    const topWindowTitle = activeWindows[0]?.title || null;
+    const topWindow = activeWindows.reduce<typeof activeWindows[number] | null>((currentTop, candidate) => {
+        if (!currentTop) {
+            return candidate;
+        }
+
+        return getZIndex(candidate.id) > getZIndex(currentTop.id) ? candidate : currentTop;
+    }, null);
+    const topWindowTitle = topWindow?.title || null;
 
     return (
         <div className="absolute inset-0 pointer-events-none">

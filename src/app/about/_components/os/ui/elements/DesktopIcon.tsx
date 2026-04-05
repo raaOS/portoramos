@@ -21,10 +21,12 @@ interface DesktopIconProps {
 }
 
 export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false, isMobile = false, onPositionChange }: DesktopIconProps) {
-    const [imageError, setImageError] = useState(false);
-    const [videoError, setVideoError] = useState(false);
+    const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+    const [failedVideoUrl, setFailedVideoUrl] = useState<string | null>(null);
     const [hovering, setHovering] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const imageError = Boolean(imageUrl && failedImageUrl === imageUrl);
+    const videoError = Boolean(videoUrl && failedVideoUrl === videoUrl);
 
     // Handle video playback on hover
     useEffect(() => {
@@ -37,14 +39,6 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
             }
         }
     }, [hovering, isMobile]);
-
-    // Track URLs to reset error state when they change
-    const [lastUrls, setLastUrls] = useState({ imageUrl, videoUrl });
-    if (lastUrls.imageUrl !== imageUrl || lastUrls.videoUrl !== videoUrl) {
-        setImageError(false);
-        setVideoError(false);
-        setLastUrls({ imageUrl, videoUrl });
-    }
 
     // Motion Values for smooth coordinate handling (avoids jump on drag end)
     const iconX = useMotionValue(x);
@@ -157,7 +151,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                             className={`object-cover pointer-events-none transition-opacity duration-300 ${hovering && videoUrl && !videoError ? 'opacity-0' : 'opacity-100'}`}
                             sizes="(max-width: 768px) 96px, 128px"
                             draggable={false}
-                            onError={() => setImageError(true)}
+                            onError={() => setFailedImageUrl(imageUrl ?? "__missing__")}
                             priority={priority} // Important for LCP
                             loading={priority ? "eager" : "lazy"}
                             quality={60} // Thumbnails don't need 100% quality
@@ -175,7 +169,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                             preload="metadata"
                             className={`absolute inset-0 object-cover w-full h-full pointer-events-none rounded-none transition-opacity duration-300 ${(!hovering && imageUrl && !imageError) ? 'opacity-0' : 'opacity-100'}`}
                             draggable={false}
-                            onError={() => setVideoError(true)}
+                            onError={() => setFailedVideoUrl(videoUrl ?? "__missing__")}
                         />
                     )}
 

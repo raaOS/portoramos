@@ -33,7 +33,7 @@ test.describe('Grade A Public Experience', () => {
     });
 
     test('Projects page loads correctly', async ({ page }) => {
-        await page.goto('/projects');
+        await page.goto('/projects', { waitUntil: 'domcontentloaded' });
         await expect(page.locator('body')).toBeVisible();
 
         // Wait for projects section to load using data attribute
@@ -54,10 +54,11 @@ test.describe('Grade A Public Experience', () => {
     });
 
     test('Project Detail opens from Grid', async ({ page }) => {
-        await page.goto('/projects');
+        await page.goto('/projects', { waitUntil: 'domcontentloaded' });
 
         // Wait for grid to load using data attribute
         await page.waitForSelector('[data-projects-grid]', { timeout: 10000 });
+        await page.waitForSelector('a[href^="/projects/"]', { timeout: 10000 });
 
         // Find first project link - using more flexible selector
         const firstProjectLink = page.locator('a[href^="/projects/"]').first();
@@ -67,7 +68,7 @@ test.describe('Grade A Public Experience', () => {
             console.log('Navigating to project:', href);
 
             await firstProjectLink.click();
-            await expect(page).toHaveURL(new RegExp(href!));
+            await page.waitForURL(new RegExp(href!), { timeout: 15000 });
 
             // Verify project detail loads
             await expect(page.locator('h1')).toBeVisible();

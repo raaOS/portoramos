@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Smile, Mic, Send } from 'lucide-react';
+import { Plus, Mic, Send } from 'lucide-react';
 import EmojiPicker from '@/components/chat/EmojiPicker';
 
 interface ChatFooterProps {
@@ -39,12 +39,12 @@ export const ChatFooter: React.FC<ChatFooterProps> = ({ input, setInput, onSend,
                 {input.trim() ? (
                     <button
                         type="submit"
-                        className="p-2 text-[#00a884] hover:bg-gray-200 dark:hover:bg-white/5 rounded-full transition-all active:scale-95"
+                        className="p-2 text-[#00a884] rounded-full transition-all active:scale-95"
                     >
                         <Send size={24} />
                     </button>
                 ) : (
-                    <button type="button" className="p-2 text-[#54656f] hover:bg-gray-200 dark:hover:bg-white/5 rounded-full transition-all">
+                    <button type="button" className="p-2 text-[#54656f] rounded-full transition-all">
                         <Mic size={24} />
                     </button>
                 )}

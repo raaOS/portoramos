@@ -26,6 +26,10 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
     return () => clearTimeout(timer);
   }, []);
 
+  const handleProjectsLaunch = React.useCallback(() => {
+    router.push('/projects');
+  }, [router]);
+
   const handleAppLaunch = React.useCallback((appId: string) => {
     router.push(`/?app=${appId}`);
   }, [router]);
@@ -36,7 +40,7 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
         id: "projects",
         label: "Projects",
         icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />,
-        onClick: () => router.push('/projects'),
+        onClick: handleProjectsLaunch,
         popoverContent: <DockProjectModes />
       },
       {
@@ -76,7 +80,7 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
     ];
 
     return getDockItemConfig(defaultItems, dockConfig);
-  }, [isWindowOpen, dockConfig, handleAppLaunch]);
+  }, [isWindowOpen, dockConfig, handleAppLaunch, handleProjectsLaunch]);
 
   // Don't render on admin, home (OS desktop has its own), or about pages
   if (pathname?.startsWith('/admin') || pathname === '/' || pathname?.startsWith('/about')) {

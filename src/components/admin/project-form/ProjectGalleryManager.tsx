@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Plus, Image as ImageIcon, FolderPlus } from 'lucide-react';
-import { CreateProjectData, UpdateProjectData, GalleryItem, GalleryGroup } from '@/types/projects';
 import { useFirebaseUpload } from '@/app/admin/components/file-upload/hooks/useFirebaseUpload';
 import { ProjectFormData } from '@/hooks/useProjectForm';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -37,8 +36,8 @@ export default function ProjectGalleryManager(props: ProjectGalleryManagerProps)
         }
     };
 
-    const handleGroupUpload = async (groupId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
+    const handleGroupUpload = async (groupId: string, files: FileList | null) => {
+        const file = files?.[0];
         if (!file) return;
         const { url, success } = await upload(file);
         if (success) {
@@ -97,7 +96,12 @@ export default function ProjectGalleryManager(props: ProjectGalleryManagerProps)
                                 const input = document.createElement('input');
                                 input.type = 'file';
                                 input.accept = 'image/*,video/*';
-                                input.onchange = (e) => handleGroupUpload(id, e as any);
+                                input.onchange = (event: Event) => {
+                                    const target = event.currentTarget;
+                                    if (target instanceof HTMLInputElement) {
+                                        void handleGroupUpload(id, target.files);
+                                    }
+                                };
                                 input.click();
                             }}
                             onRemoveItem={(id, itemIdx) => props.removeGalleryItemFromGroup(id, itemIdx)}

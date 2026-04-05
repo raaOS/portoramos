@@ -33,10 +33,13 @@ export default class DesktopErrorBoundary extends Component<Props, State> {
     private handleSafeMode = () => {
         // Clear potential corruption sources
         try {
-            localStorage.removeItem('window-positions');
+            localStorage.removeItem('ramos-positions-v2');
             localStorage.removeItem('dock-config');
+            sessionStorage.removeItem('ramos-session-positions');
+            sessionStorage.removeItem('ramos_os_welcome_seen');
+            sessionStorage.removeItem('ramos_os_booted');
         } catch {
-            console.error("Failed to clear local storage");
+            console.error("Failed to clear local or session storage");
         }
         window.location.reload();
     };

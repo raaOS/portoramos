@@ -15,11 +15,22 @@ export function useWindowResize({
 }: UseWindowResizeProps) {
     const [isResizing, setIsResizing] = useState(false);
     const [dynamicSize, setDynamicSize] = useState({ width: initialWidth, height: initialHeight });
+    const dynamicSizeRef = useRef(dynamicSize);
+    const initialSizeRef = useRef({ width: initialWidth, height: initialHeight });
+
+    useEffect(() => {
+        dynamicSizeRef.current = dynamicSize;
+    }, [dynamicSize]);
+
+    useEffect(() => {
+        initialSizeRef.current = { width: initialWidth, height: initialHeight };
+    }, [initialWidth, initialHeight]);
 
     // Sync props to state (when not resizing)
     useEffect(() => {
         if (!isResizing) {
-            requestAnimationFrame(() => setDynamicSize({ width: initialWidth, height: initialHeight }));
+            const rafId = requestAnimationFrame(() => setDynamicSize({ width: initialWidth, height: initialHeight }));
+            return () => cancelAnimationFrame(rafId);
         }
     }, [initialWidth, initialHeight, isResizing]);
 
@@ -40,13 +51,18 @@ export function useWindowResize({
         setIsResizing(true);
         const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
         const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        const { width: latestWidth, height: latestHeight } = dynamicSizeRef.current;
+        const { width: initialWidthValue, height: initialHeightValue } = initialSizeRef.current;
+        const startWidth = latestWidth || initialWidthValue || 0;
+        const startHeight = latestHeight || initialHeightValue || 0;
         resizeStartRef.current = {
             x: clientX,
             y: clientY,
-            w: dynamicSize.width || 0,
-            h: dynamicSize.height || 0,
+            w: startWidth,
+            h: startHeight,
             dir: direction
         };
+        finalSizeRef.current = { w: startWidth, h: startHeight };
     };
 
     useEffect(() => {
@@ -94,8 +110,12 @@ export function useWindowResize({
             }
 
             if (isResizing) {
-                const finalW = finalSizeRef.current.w;
-                const finalH = finalSizeRef.current.h;
+                const { width: currentWidth, height: currentHeight } = dynamicSizeRef.current;
+                const { width: initialWidthValue, height: initialHeightValue } = initialSizeRef.current;
+                const fallbackWidth = resizeStartRef.current?.w || currentWidth || initialWidthValue || 300;
+                const fallbackHeight = resizeStartRef.current?.h || currentHeight || initialHeightValue || 200;
+                const finalW = finalSizeRef.current.w || fallbackWidth;
+                const finalH = finalSizeRef.current.h || fallbackHeight;
 
                 setDynamicSize({ width: finalW, height: finalH });
 

@@ -4,6 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { Download, FileText, Printer, Loader2 } from 'lucide-react';
 import type { Project } from '@/types/projects';
+import type { WorkExperience } from '@/types/experience';
+import type { HardSkillLevel } from '@/types/hardSkill';
 
 interface SectionProps {
     title: string;
@@ -27,6 +29,12 @@ interface CvWebHeaderProps {
     isExporting: boolean;
     onDownload: () => void;
     onPrint: () => void;
+}
+
+interface CvSkillItem {
+    tool: string;
+    level: HardSkillLevel;
+    details: string[];
 }
 
 export const CvWebHeader = ({ displayName, headline, isExporting, onDownload, onPrint }: CvWebHeaderProps) => (
@@ -69,7 +77,7 @@ export const CvPrintHeader = ({ displayName, headline }: { displayName: string, 
     </div>
 );
 
-export const CvSkills = ({ hardSkills, softSkills }: { hardSkills: any[], softSkills: string[] }) => (
+export const CvSkills = ({ hardSkills, softSkills }: { hardSkills: CvSkillItem[], softSkills: string[] }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <CvSection title="Hard Skills">
             {hardSkills.length > 0 ? (
@@ -110,7 +118,7 @@ export const CvSkills = ({ hardSkills, softSkills }: { hardSkills: any[], softSk
     </div>
 );
 
-export const CvExperience = ({ workExperience, chunkWords }: { workExperience: any[], chunkWords: (t: string) => string[] }) => (
+export const CvExperience = ({ workExperience, chunkWords }: { workExperience: WorkExperience[], chunkWords: (t: string) => string[] }) => (
     <CvSection title="Experience">
         {workExperience.length > 0 ? (
             workExperience.map((exp, idx) => (

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Plus, Send, Mic } from 'lucide-react';
 import EmojiPicker from '@/components/chat/EmojiPicker';
 
@@ -56,8 +56,8 @@ export default function FullPageChatFooter({ onSend, isSending }: FullPageChatFo
                 disabled={!inputValue.trim() || isSending}
                 className={`rounded-full p-2 transition-all ${
                     inputValue.trim() && !isSending
-                        ? 'text-[#00a884] hover:bg-gray-200 dark:hover:bg-white/5'
-                        : 'text-[#54656f] hover:bg-gray-200 dark:text-[#8696a0] dark:hover:bg-white/5'
+                        ? 'text-[#00a884]'
+                        : 'text-[#54656f] dark:text-[#8696a0]'
                 }`}
             >
                 {inputValue.trim() ? (

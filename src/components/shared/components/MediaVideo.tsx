@@ -51,7 +51,6 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
   const pathname = usePathname()
   const internalVideoRef = useRef<HTMLVideoElement | null>(null)
   const [canPlay, setCanPlay] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [shouldLoad, setShouldLoad] = useState(priority || !lazy)
   const [isMounted, setIsMounted] = useState(false)
@@ -183,7 +182,6 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
         x5-video-player-type="h5"
         onCanPlay={() => {
           setCanPlay(true)
-          setIsLoading(false)
           setHasError(false)
           if (manualPlayRef.current) {
             playIfPossible()
@@ -193,16 +191,13 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
           }
         }}
         onLoadStart={() => {
-          setIsLoading(true)
           setHasError(false)
         }}
         onError={() => {
-          setIsLoading(false)
           setHasError(true)
         }}
         onPlay={() => {
           setCanPlay(true)
-          setIsLoading(false)
           setAutoplayBlocked(false)
           setHasError(false)
         }}
