@@ -7,9 +7,10 @@ interface AppIconProps {
     color?: string;
     icon?: LucideIcon;
     imageUrl?: string;
+    priority?: boolean;
 }
 
-const AppIcon = ({ color, icon: Icon, imageUrl }: AppIconProps) => {
+const AppIcon = ({ color, icon: Icon, imageUrl, priority = false }: AppIconProps) => {
     const [imgError, setImgError] = React.useState(false);
 
     if (imageUrl && !imgError) {
@@ -23,8 +24,8 @@ const AppIcon = ({ color, icon: Icon, imageUrl }: AppIconProps) => {
                     className="w-full h-full object-cover scale-[1.01]"
                     style={{ imageRendering: 'auto', backfaceVisibility: 'hidden' }}
                     quality={75}
-                    priority={false}
-                    loading="lazy"
+                    priority={priority}
+                    loading={priority ? "eager" : "lazy"}
                     onError={() => setImgError(true)}
                 />
             </div>

@@ -2,10 +2,10 @@
 
 import React, { useRef, useEffect } from 'react';
 import { m } from 'framer-motion';
-import FullPageChatHeader from './components/FullPageChatHeader';
-import FullPageChatMessages from './components/FullPageChatMessages';
-import FullPageChatFooter from './components/FullPageChatFooter';
-import { useChatSync } from './hooks/useChatSync';
+import FullPageChatHeader from './_components/FullPageChatHeader';
+import FullPageChatMessages from './_components/FullPageChatMessages';
+import FullPageChatFooter from './_components/FullPageChatFooter';
+import { useChatSync } from '@/hooks/useChatSync';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
 
 interface FullPageChatContactInfo {

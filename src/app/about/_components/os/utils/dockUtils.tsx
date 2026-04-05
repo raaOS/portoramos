@@ -30,7 +30,7 @@ export const getDockItemConfig = (
         let icon = item.icon;
         // If a custom icon URL is set in the config, use it
         if (pref && pref.iconUrl) {
-            icon = <AppIcon imageUrl={pref.iconUrl} />;
+            icon = <AppIcon imageUrl={pref.iconUrl} priority={true} />;
         }
 
         return {

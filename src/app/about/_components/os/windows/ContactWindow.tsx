@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import FullPageChat from '@/app/contact/FullPageChat';
+import FullPageChat from '@/components/chat/FullPageChat';
 import type { ContactData } from '@/types/contact';
 
 interface FullPageChatContactInfo {
