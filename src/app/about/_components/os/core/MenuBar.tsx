@@ -13,9 +13,10 @@ interface MenuBarProps {
     };
     isAdmin?: boolean;
     onLogout?: () => void;
+    onToggleControlCenter?: () => void;
 }
 
-export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, availability, isAdmin, onLogout }: MenuBarProps) {
+export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, availability, isAdmin, onLogout, onToggleControlCenter }: MenuBarProps) {
     const [time, setTime] = useState(new Date());
 
     useEffect(() => {
@@ -95,16 +96,19 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
                 )}
 
                 {/* Icons */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 cursor-pointer" onClick={onToggleControlCenter}>
                     <Search
                         size={18}
-                        className="cursor-pointer hover:text-gray-600 sm:w-[14px] sm:h-[14px]"
-                        onClick={onSearch}
+                        className="hover:text-gray-600 sm:w-[14px] sm:h-[14px]"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (onSearch) onSearch();
+                        }}
                     />
-                    <Wifi size={18} className="cursor-pointer hover:text-gray-600 sm:w-[14px] sm:h-[14px] hidden sm:block" />
+                    <Wifi size={18} className="hover:text-gray-600 sm:w-[14px] sm:h-[14px] hidden sm:block" />
 
                     {/* Custom Battery 100% Green */}
-                    <span className="flex items-center gap-[1px] cursor-pointer" title="Battery Full (100%)" role="img" aria-label="Battery 100%">
+                    <span className="flex items-center gap-[1px]" title="Battery Full (100%)" role="img" aria-label="Battery 100%">
                         <div className="w-[22px] h-[11px] bg-[#22c55e] rounded-[2.5px] border border-[#16a34a] flex items-center justify-center">
                             <span className="text-[7px] font-bold text-black leading-none pt-[0.5px]" aria-hidden="true">100</span>
                         </div>

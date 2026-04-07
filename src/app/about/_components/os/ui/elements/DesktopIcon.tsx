@@ -18,9 +18,12 @@ interface DesktopIconProps {
     priority?: boolean;
     isMobile?: boolean;
     onPositionChange?: (id: string, x: number, y: number) => void;
+    onHoverStart?: (id: string) => void;
+    onHoverEnd?: (id: string) => void;
+    onQuickLook?: (id: string) => void;
 }
 
-export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false, isMobile = false, onPositionChange }: DesktopIconProps) {
+export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false, isMobile = false, onPositionChange, onHoverStart, onHoverEnd, onQuickLook }: DesktopIconProps) {
     const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
     const [failedVideoUrl, setFailedVideoUrl] = useState<string | null>(null);
     const [hovering, setHovering] = useState(false);
@@ -125,8 +128,8 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                 scale: 0.9, // More tactile tap
                 transition: { type: "spring", stiffness: 600, damping: 30 }
             } : undefined}
-            onMouseEnter={() => !isMobile && setHovering(true)}
-            onMouseLeave={() => !isMobile && setHovering(false)}
+            onMouseEnter={() => { if (!isMobile) setHovering(true); if (onHoverStart) onHoverStart(id); }}
+            onMouseLeave={() => { if (!isMobile) setHovering(false); if (onHoverEnd) onHoverEnd(id); }}
         >
             {children ? (
                 <div className="relative">

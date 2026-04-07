@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import Image from 'next/image';
 import type { WallpaperConfig } from '@/types/about';
+import DigitalClockWidget from './elements/DigitalClockWidget';
 
 interface DesktopBackgroundProps {
     wallpaperConfig?: WallpaperConfig;
@@ -56,6 +57,9 @@ export default function DesktopBackground({ wallpaperConfig }: DesktopBackground
                 className="absolute inset-0 bg-black/20 pointer-events-none" 
                 aria-hidden="true"
             />
+
+            {/* Desktop Clock Widget */}
+            <DigitalClockWidget />
         </div>
     );
 }

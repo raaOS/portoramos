@@ -307,7 +307,10 @@ export default function InfiniteCanvasView({ projects }: Props) {
                 perspectiveOrigin: '50% 50%',
             }}
         >
-            <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d' }}>
+            <div
+                className="pointer-events-none absolute inset-0"
+                style={{ transformStyle: 'preserve-3d' }}
+            >
                 {renderedItems.map((item) => {
                     const coverUrl = getCoverUrl(item.project)
                     const isVideo = isVideoUrl(coverUrl)

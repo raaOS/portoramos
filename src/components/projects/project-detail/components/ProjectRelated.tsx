@@ -109,7 +109,7 @@ export function ProjectRelated({ projects }: ProjectRelatedProps) {
 
 // Memoized item component to prevent unnecessary re-renders
 function ProjectRelatedItem({ project, index }: { project: Project; index: number }) {
-    const isPriority = index < 2;
+    const isPriority = index < 4;
     
     if (isPriority) {
         return (
@@ -149,7 +149,7 @@ export function ProjectRelatedColumn({ projects, column }: ProjectRelatedColumnP
 
 // Memoized column item
 function ProjectRelatedColumnItem({ project, index }: { project: Project; index: number }) {
-    const isPriority = index < 2;
+    const isPriority = index < 4;
     
     if (isPriority) {
         return (

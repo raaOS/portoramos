@@ -1,7 +1,7 @@
 'use client'
 
 import type { Project } from '@/types/projects'
-import { useMemo, useEffect, useRef, memo, useDeferredValue } from 'react'
+import { useMemo, useEffect, useRef, memo, useDeferredValue, useState } from 'react'
 import { LazyMotion, domAnimation, m } from 'framer-motion'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
 import ProjectSplitView from '@/components/projects/ProjectSplitView'
@@ -9,6 +9,9 @@ import MasonryGrid from '@/components/layout/MasonryGrid'
 import dynamic from 'next/dynamic'
 import { useProjectFiltering } from './hooks/useProjectFiltering'
 import { useInfiniteScroll } from './hooks/useInfiniteScroll'
+import { useQuickLook } from '@/hooks/useQuickLook'
+import QuickLookModal from '@/components/ui/QuickLookModal'
+import { resolveCover } from '@/lib/images'
 
 const Projects3DView = dynamic(() => import('@/components/canvas/Projects3DView'), { ssr: false })
 
@@ -40,6 +43,15 @@ export default function IndexClientInner({
   const activeView = useDeferredValue(view);
   const isViewTransitioning = activeView !== view;
 
+  // Quick Look State
+  const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null);
+  const [quickLookProject, setQuickLookProject] = useState<Project | null>(null);
+
+  useQuickLook(!!hoveredProjectId && !quickLookProject, () => {
+    const proj = filteredProjects.find(p => p.id === hoveredProjectId);
+    if (proj) setQuickLookProject(proj);
+  });
+
   // RESET HANDLER: Reset scroll count when filter or tag changes
   const prevFilterHash = useRef('');
   useEffect(() => {
@@ -58,7 +70,7 @@ export default function IndexClientInner({
   const gridView = useMemo(() => (
     <MasonryGrid width={windowWidth}>
       {displayedProjects.map((project, index) => {
-        const isPriority = index < 2;
+        const isPriority = index < 6;
         const animationProps = isPriority ? {} : {
           initial: { opacity: 0 },
           whileInView: { opacity: 1 },
@@ -70,6 +82,8 @@ export default function IndexClientInner({
             key={`${project.slug}-${index}`}
             {...animationProps}
             style={{ contentVisibility: 'auto', containIntrinsicSize: '300px', contain: 'layout paint style', transform: 'translateZ(0)' }}
+            onMouseEnter={() => setHoveredProjectId(project.id)}
+            onMouseLeave={() => setHoveredProjectId(null)}
           >
             <MemoizedProjectCardPinterest project={project} priority={isPriority} videoEnabled={true} highlightedTag={tag} />
           </m.div>
@@ -114,6 +128,22 @@ export default function IndexClientInner({
           )}
         </div>
       </LazyMotion>
+
+      {/* Quick Look Modal */}
+      {quickLookProject && (() => {
+        const cover = resolveCover(quickLookProject);
+        return (
+          <QuickLookModal
+            isOpen={!!quickLookProject}
+            onClose={() => setQuickLookProject(null)}
+            title={quickLookProject.title}
+            type={cover.kind}
+            url={cover.src}
+            metadata={quickLookProject.tags?.join(', ')}
+            onGoToDetail={() => window.location.href = `/projects/${quickLookProject.slug}`}
+          />
+        );
+      })()}
     </section>
   )
 }

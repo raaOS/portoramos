@@ -1,7 +1,10 @@
 'use client';
 
+import React, { useState } from 'react';
 import { Loader2, Languages, RotateCcw } from 'lucide-react';
 import type { Comment } from '@/lib/magic';
+import ShareSheet from '@/components/ui/ShareSheet';
+import SystemNotification from '@/components/ui/SystemNotification';
 
 interface ProjectInteractionBarProps {
     isProjectLiked: boolean;
@@ -15,6 +18,7 @@ interface ProjectInteractionBarProps {
     onScrollToComments: () => void;
     client?: string;
     year?: string | number;
+    title?: string;
 }
 
 export function ProjectInteractionBar({
@@ -28,8 +32,11 @@ export function ProjectInteractionBar({
     onTranslate,
     onScrollToComments,
     client,
-    year
+    year,
+    title = 'Project'
 }: ProjectInteractionBarProps) {
+    const [isShareOpen, setIsShareOpen] = React.useState(false);
+    const [notification, setNotification] = React.useState<{ isOpen: boolean; title: string; message?: string; type: 'success' | 'info' | 'warning' | 'error' }>({ isOpen: false, title: '', type: 'success' });
     const commentCount = comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0);
 
     return (
@@ -89,7 +96,10 @@ export function ProjectInteractionBar({
                             ? 'text-blue-500'
                             : 'text-gray-400 hover:text-blue-500'
                     }`}
-                    onClick={onShare}
+                    onClick={() => {
+                        onShare();
+                        setIsShareOpen(true);
+                    }}
                     aria-label="Share project"
                 >
                     <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,6 +147,34 @@ export function ProjectInteractionBar({
                     </span>
                 )}
             </div>
+
+            {/* Custom Share Sheet */}
+            <ShareSheet
+                isOpen={isShareOpen}
+                onClose={() => setIsShareOpen(false)}
+                url={typeof window !== 'undefined' ? window.location.href : ''}
+                title={title}
+                onCopyLink={() => {
+                    if (typeof window !== 'undefined') {
+                        navigator.clipboard.writeText(window.location.href);
+                        setNotification({
+                            isOpen: true,
+                            title: 'Link Copied',
+                            message: 'Project link copied to clipboard',
+                            type: 'success'
+                        });
+                    }
+                }}
+            />
+
+            {/* System Notification */}
+            <SystemNotification
+                isOpen={notification.isOpen}
+                onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
+                title={notification.title}
+                message={notification.message}
+                type={notification.type}
+            />
         </div>
     );
 }

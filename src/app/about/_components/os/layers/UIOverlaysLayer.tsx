@@ -23,6 +23,11 @@ const DynamicIsland = dynamic(() => import("../ui/DynamicIsland"), {
     ssr: false
 });
 
+const ControlCenter = dynamic(() => import("../ui/ControlCenter"), {
+    loading: () => null,
+    ssr: false
+});
+
 interface UIOverlaysLayerProps {
     isBooting: boolean;
     needsPowerOn: boolean;
@@ -62,6 +67,7 @@ export default function UIOverlaysLayer({
     const isBootingOrStarting = isBooting || needsPowerOn;
     const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
     const { getZIndex } = useUnifiedZIndex();
+    const [showControlCenter, setShowControlCenter] = React.useState(false);
     
     // Note: Exit animation is handled by AnimatePresence when component unmounts
 
@@ -104,6 +110,7 @@ export default function UIOverlaysLayer({
                             availability={aboutData?.hero?.availability}
                             isAdmin={isAdmin}
                             onLogout={logout}
+                            onToggleControlCenter={() => setShowControlCenter(!showControlCenter)}
                         />
                     </motion.div>
                 )}
@@ -156,6 +163,19 @@ export default function UIOverlaysLayer({
                     />
                 </div>
             )}
+
+            <AnimatePresence>
+                {showControlCenter && (
+                    <div className="absolute inset-0 pointer-events-auto z-[10001]" onClick={() => setShowControlCenter(false)}>
+                        <div onClick={e => e.stopPropagation()}>
+                            <ControlCenter 
+                                isOpen={showControlCenter} 
+                                onClose={() => setShowControlCenter(false)} 
+                            />
+                        </div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

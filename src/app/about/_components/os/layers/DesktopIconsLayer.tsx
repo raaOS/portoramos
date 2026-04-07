@@ -3,7 +3,11 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import { m } from "framer-motion";
+import { useState } from "react";
 import DesktopIcon from "../ui/elements/DesktopIcon";
+import { useQuickLook } from "@/hooks/useQuickLook";
+import QuickLookModal from "@/components/ui/QuickLookModal";
+import { resolveCover } from "@/lib/images";
 import type { Project } from "@/types/projects";
 
 const MacFolder = dynamic(() => import("../windows/MacFolder"), {
@@ -41,6 +45,14 @@ function DesktopIconsLayer({
     handleIconPositionChange,
     openProjectWindow,
 }: DesktopIconsLayerProps) {
+    const [hoveredIconId, setHoveredIconId] = useState<string | null>(null);
+    const [quickLookIcon, setQuickLookIcon] = useState<ProjectIcon | null>(null);
+
+    useQuickLook(!!hoveredIconId && !quickLookIcon, () => {
+        const icon = projectIcons.find(p => p.id === hoveredIconId);
+        if (icon) setQuickLookIcon(icon);
+    });
+
     // Debug log to verify this version of the file is being served
 
     // Parent container animation variants for staggering
@@ -76,6 +88,7 @@ function DesktopIconsLayer({
     };
 
     return (
+        <>
         <div className="absolute inset-0 pointer-events-none">
             {/* Desktop Icons Grid */}
             <m.div
@@ -102,6 +115,8 @@ function DesktopIconsLayer({
                             icon={!icon.type || icon.type !== 'folder' ? icon.icon : undefined}
                             isMobile={isMobile}
                             priority={icon.priority}
+                            onHoverStart={setHoveredIconId}
+                            onHoverEnd={(id) => setHoveredIconId(prev => prev === id ? null : prev)}
                             onPositionChange={(id, relX, relY) => {
                                 handleIconPositionChange(id, icon.x + relX, icon.y + relY);
                             }}
@@ -120,6 +135,44 @@ function DesktopIconsLayer({
             </m.div>
 
         </div>
+
+            {/* Global Quick Look Modal for Desktop */}
+            {quickLookIcon && (() => {
+                let type = 'project';
+                let url = '';
+                
+                if (quickLookIcon.data) {
+                    const cover = resolveCover(quickLookIcon.data);
+                    type = cover.kind;
+                    url = cover.src;
+                } else if (quickLookIcon.videoUrl) {
+                    type = 'video';
+                    url = quickLookIcon.videoUrl;
+                } else if (quickLookIcon.imageUrl) {
+                    type = 'image';
+                    url = quickLookIcon.imageUrl;
+                }
+
+                return (
+                    <QuickLookModal
+                        isOpen={!!quickLookIcon}
+                        onClose={() => setQuickLookIcon(null)}
+                        title={quickLookIcon.data?.title || quickLookIcon.label || 'Quick Look'}
+                        type={type as 'image' | 'video' | 'pdf' | 'text' | 'project'}
+                        url={url}
+                        metadata={quickLookIcon.data?.tags?.join(', ') || quickLookIcon.type}
+                        onGoToDetail={() => {
+                            setQuickLookIcon(null);
+                            if (quickLookIcon.data) {
+                                openProjectWindow(quickLookIcon.data);
+                            } else if (quickLookIcon.action) {
+                                quickLookIcon.action();
+                            }
+                        }}
+                    />
+                );
+            })()}
+        </>
     );
 }
 
