@@ -69,11 +69,9 @@ const nextConfig = {
       'framer-motion',
       'lucide-react',
       '@tanstack/react-query',
-      'recharts',
       'fuse.js',
       '@tabler/icons-react',
       '@tsparticles/react',
-      'react-intersection-observer',
       'react-masonry-css',
     ],
     // Enable optimistic client cache for faster navigation

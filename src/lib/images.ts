@@ -29,12 +29,6 @@ export function coverUrl(p: Project) {
   return p.cover ? toMediaProxy(p.cover) : BLANK_SVG;
 }
 
-export function galleryUrls(p: Project) {
-  if (p.gallery && p.gallery.length > 0) {
-    return p.gallery.map(src => toImageProxy(src));
-  }
-  return [];
-}
 
 export function resolveCover(p: Project): GalleryItem {
   const inferredVideo = isVideoLink(p.cover);
@@ -59,10 +53,6 @@ export function resolveCover(p: Project): GalleryItem {
   return { kind: 'image', src: coverUrl(p) };
 }
 
-export function resolveDetailCover(p: Project): GalleryItem {
-  // Same logic as resolveCover, just separate function for logical separation if needed later
-  return resolveCover(p);
-}
 
 export function resolveGallery(p: Project): GalleryItem[] {
   if (p.galleryItems && p.galleryItems.length) {
