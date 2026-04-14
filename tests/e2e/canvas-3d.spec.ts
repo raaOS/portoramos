@@ -106,7 +106,7 @@ test('3D Infinite Canvas should navigate to a project slug on real click', async
     const canvas = page.locator('[data-canvas-viewport]');
     await expect(canvas).toBeVisible();
 
-    let targetCard: Awaited<ReturnType<typeof getPrimaryVisibleCard>> = null;
+    let targetCard: any = null;
     await expect.poll(async () => {
         targetCard = await getPrimaryVisibleCard(page);
         return targetCard?.visibleArea ?? 0;
@@ -136,7 +136,7 @@ test('3D Infinite Canvas should navigate to a project slug on touch tap', async 
         const canvas = page.locator('[data-canvas-viewport]');
         await expect(canvas).toBeVisible();
 
-        let targetCard: Awaited<ReturnType<typeof getPrimaryVisibleCard>> = null;
+        let targetCard: any = null;
         await expect.poll(async () => {
             targetCard = await getPrimaryVisibleCard(page);
             return targetCard?.visibleArea ?? 0;

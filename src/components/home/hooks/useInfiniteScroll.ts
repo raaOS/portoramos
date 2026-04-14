@@ -43,8 +43,10 @@ export function useInfiniteScroll(totalItems: number) {
   const maxRef = useRef(maxVisible);
   const visibleRef = useRef(visibleCount);
 
-  maxRef.current = maxVisible;
-  visibleRef.current = visibleCount;
+  useEffect(() => {
+    maxRef.current = maxVisible;
+    visibleRef.current = visibleCount;
+  }, [maxVisible, visibleCount]);
 
   const hasMore = totalItems > 0 && visibleCount < maxVisible;
 
