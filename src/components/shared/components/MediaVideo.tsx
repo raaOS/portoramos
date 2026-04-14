@@ -9,6 +9,7 @@ export type MediaVideoProps = {
   src: string
   alt?: string
   poster?: string
+  posterPriority?: boolean
   className?: string
   sizes?: string
   priority?: boolean
@@ -33,6 +34,7 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
   src,
   alt = '',
   poster,
+  posterPriority,
   className,
   sizes,
   priority = false,
@@ -52,7 +54,7 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
   const internalVideoRef = useRef<HTMLVideoElement | null>(null)
   const [canPlay, setCanPlay] = useState(false)
   const [hasError, setHasError] = useState(false)
-  const [shouldLoad, setShouldLoad] = useState(priority || !lazy)
+  const [shouldLoad, setShouldLoad] = useState(!lazy)
   const [isMounted, setIsMounted] = useState(false)
   const [autoplayBlocked, setAutoplayBlocked] = useState(false)
   const [isMobile, setIsMobile] = useState(() => {
@@ -63,6 +65,7 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
   const manualPlayRef = useRef(false)
   const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const effectivePosterPriority = posterPriority ?? priority
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -210,8 +213,9 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
             alt={alt}
             width={width}
             height={height}
-            priority={priority}
-            loading={priority ? 'eager' : 'lazy'}
+            priority={effectivePosterPriority}
+            loading={effectivePosterPriority ? 'eager' : 'lazy'}
+            fetchPriority={effectivePosterPriority ? 'high' : 'auto'}
             sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
             className={className || "w-full h-full object-cover"}
             placeholder="blur"

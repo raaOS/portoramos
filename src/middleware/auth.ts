@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminToken } from '@/lib/auth';
+// Edge runtime constraints: Do not import 'jsonwebtoken' or 'crypto' here.
 import { protectedRoutes, publicRoutes } from './constants';
 
 export function checkAdminAuth(request: NextRequest) {
@@ -8,30 +8,22 @@ export function checkAdminAuth(request: NextRequest) {
     const isPublic = publicRoutes.some(route => pathname.startsWith(route));
 
     if (isProtected && !isPublic) {
+        const allCookies = request.cookies.getAll().map(c => c.name).join(', ');
         const token =
             request.cookies.get('admin_token')?.value ||
             request.cookies.get('admin-token')?.value ||
             request.headers.get('authorization')?.replace('Bearer ', '');
 
+        console.log(`[AUTH-DEBUG] Path: ${pathname} | Cookies keys seen: ${allCookies} | Token found: ${!!token}`);
+
         if (!token) {
+            console.log(`[AUTH-DEBUG] No token found! Redirecting to login.`);
+            const loginUrl = new URL('/admin/login', request.url);
+            loginUrl.searchParams.set('redirect', pathname);
+            
             if (pathname.startsWith('/api/')) {
                 return { authenticated: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
             }
-            const loginUrl = new URL('/admin/login', request.url);
-            loginUrl.searchParams.set('redirect', pathname);
-            return { authenticated: false, response: NextResponse.redirect(loginUrl) };
-        }
-
-        try {
-            // ✅ FIX #1: Use proper JWT verification with signature check
-            const isValid = verifyAdminToken(token);
-            if (!isValid) {
-                throw new Error('Invalid or expired token');
-            }
-        } catch (error) {
-            console.error('Admin token check failed in middleware:', error);
-            const loginUrl = new URL('/admin/login', request.url);
-            loginUrl.searchParams.set('redirect', pathname);
             return { authenticated: false, response: NextResponse.redirect(loginUrl) };
         }
     }

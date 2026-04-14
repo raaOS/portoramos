@@ -6,9 +6,10 @@ import { usePathname } from 'next/navigation';
 export default function SmoothScroll() {
     const pathname = usePathname();
     const isOsMode = pathname?.startsWith('/about-test');
+    const isProjectsRoute = pathname?.startsWith('/projects');
 
     useEffect(() => {
-        if (isOsMode) return;
+        if (isOsMode || isProjectsRoute) return;
 
         let lenis: { raf: (time: number) => void; destroy: () => void } | null = null;
         let rafId: number;
@@ -39,7 +40,7 @@ export default function SmoothScroll() {
             if (rafId) cancelAnimationFrame(rafId);
             lenis?.destroy();
         };
-    }, [isOsMode]);
+    }, [isOsMode, isProjectsRoute]);
 
     return null;
 }

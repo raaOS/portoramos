@@ -2,7 +2,7 @@
 
 import type { Project } from '@/types/projects'
 import { useMemo, useEffect, useRef, memo, useDeferredValue, useState } from 'react'
-import { LazyMotion, domAnimation, m } from 'framer-motion'
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
 import ProjectSplitView from '@/components/projects/ProjectSplitView'
 import MasonryGrid from '@/components/layout/MasonryGrid'
@@ -35,15 +35,30 @@ function ViewLoadingIndicator() {
   )
 }
 
+function SkeletonCard() {
+  return (
+    <div className="animate-pulse rounded-xl overflow-hidden bg-gray-100 dark:bg-neutral-800">
+      <div className="aspect-[4/5] bg-gray-200 dark:bg-neutral-700" />
+      <div className="p-3 space-y-2">
+        <div className="h-3 bg-gray-200 dark:bg-neutral-700 rounded w-2/3" />
+        <div className="h-2.5 bg-gray-200 dark:bg-neutral-700 rounded w-1/2" />
+      </div>
+    </div>
+  )
+}
+
+// Pre-computed skeleton array — avoids re-creating on every render
+const SKELETON_ITEMS = Array.from({ length: 6 }, (_, i) => <SkeletonCard key={`skel-${i}`} />);
+
 export default function IndexClientInner({
   projects, tag, searchQuery, windowWidth, isLoading: isParentLoading, view = 'grid'
 }: Props) {
   const { filteredProjects } = useProjectFiltering(projects, tag, searchQuery);
-  const { visibleCount, isLoadingMore, observerTarget, resetCount } = useInfiniteScroll(filteredProjects.length);
+  const { visibleCount, isLoadingMore, hasMore, resetCount, initialCount } = useInfiniteScroll(filteredProjects.length);
   const activeView = useDeferredValue(view);
   const isViewTransitioning = activeView !== view;
 
-  // Quick Look State
+  // Quick Look
   const [hoveredProjectId, setHoveredProjectId] = useState<string | null>(null);
   const [quickLookProject, setQuickLookProject] = useState<Project | null>(null);
 
@@ -52,45 +67,55 @@ export default function IndexClientInner({
     if (proj) setQuickLookProject(proj);
   });
 
-  // RESET HANDLER: Reset scroll count when filter or tag changes
+  // Reset scroll count when filter changes
   const prevFilterHash = useRef('');
   useEffect(() => {
     const hash = `${tag}-${searchQuery}-${filteredProjects.length}`;
     if (hash !== prevFilterHash.current) {
-      resetCount(6);
+      resetCount();
       prevFilterHash.current = hash;
     }
   }, [tag, searchQuery, filteredProjects.length, resetCount]);
 
-  const displayedProjects = useMemo(() => {
-    if (!filteredProjects.length) return [];
-    return Array.from({ length: visibleCount }).map((_, i) => filteredProjects[i % filteredProjects.length]);
+  // Build looping display list via modulo — 20 projects repeat seamlessly
+  const displayedItems = useMemo(() => {
+    const len = filteredProjects.length;
+    if (len === 0) return [];
+    const items: { project: Project; key: string }[] = new Array(visibleCount);
+    for (let i = 0; i < visibleCount; i++) {
+      const project = filteredProjects[i % len];
+      // Key format: slug-loopN-posN (unique per rendered instance)
+      items[i] = { project, key: `${project.slug}-L${(i / len) | 0}-${i % len}` };
+    }
+    return items;
   }, [filteredProjects, visibleCount]);
+
+  const gridPriorityCount = Math.min(initialCount, displayedItems.length);
 
   const gridView = useMemo(() => (
     <MasonryGrid width={windowWidth}>
-      {displayedProjects.map((project, index) => {
-        const isPriority = index < 6;
-        const animationProps = isPriority ? {} : {
-          initial: { opacity: 0 },
-          whileInView: { opacity: 1 },
-          viewport: { once: true, margin: "-50px" },
-          transition: { duration: 0.5 }
+      {displayedItems.map((item, index) => {
+        const isPriority = index < gridPriorityCount;
+        const animationProps = isPriority ? undefined : {
+          initial: { opacity: 0, y: 20 },
+          whileInView: { opacity: 1, y: 0 },
+          viewport: { once: true, margin: "-30px" },
+          transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }
         };
         return (
           <m.div
-            key={`${project.slug}-${index}`}
+            key={item.key}
             {...animationProps}
             style={{ contentVisibility: 'auto', containIntrinsicSize: '300px', contain: 'layout paint style', transform: 'translateZ(0)' }}
-            onMouseEnter={() => setHoveredProjectId(project.id)}
+            onMouseEnter={() => setHoveredProjectId(item.project.id)}
             onMouseLeave={() => setHoveredProjectId(null)}
           >
-            <MemoizedProjectCardPinterest project={project} priority={isPriority} videoEnabled={true} highlightedTag={tag} />
+            <MemoizedProjectCardPinterest project={item.project} priority={isPriority} videoEnabled={true} highlightedTag={tag} />
           </m.div>
         )
       })}
     </MasonryGrid>
-  ), [displayedProjects, windowWidth, tag]);
+  ), [displayedItems, windowWidth, tag, gridPriorityCount]);
 
   const showLoading = isParentLoading || isViewTransitioning;
 
@@ -104,18 +129,35 @@ export default function IndexClientInner({
       )}
       <LazyMotion features={domAnimation}>
         <div className={activeView === '3d' ? 'fixed inset-0 z-0 overflow-hidden' : 'min-h-screen'}>
-          {showLoading ? <ViewLoadingIndicator /> : displayedProjects.length > 0 ? (
+          {showLoading ? <ViewLoadingIndicator /> : displayedItems.length > 0 ? (
             <>
-              {activeView === '3d' ? <Projects3DView projects={filteredProjects} /> : activeView === 'grid' ? gridView : <MemoizedProjectSplitView projects={filteredProjects} tag={tag} />}
+              {activeView === '3d'
+                ? <Projects3DView projects={filteredProjects} />
+                : activeView === 'grid'
+                  ? gridView
+                  : <MemoizedProjectSplitView projects={filteredProjects} tag={tag} />
+              }
               {activeView === 'grid' && (
                 <>
-                  <div ref={observerTarget} className="h-10 w-full pointer-events-none" aria-hidden="true" />
-                  {(isLoadingMore || isParentLoading) && (
-                    <div className="text-center py-8 opacity-50">
-                      <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
-                      <p className="text-xs mt-2 text-gray-500">Loading more projects...</p>
-                    </div>
+                  {/* Sentinel spacer for scroll detection */}
+                  {hasMore && (
+                    <div className="h-10 w-full pointer-events-none" aria-hidden="true" />
                   )}
+
+                  {/* Loading skeletons */}
+                  <AnimatePresence>
+                    {isLoadingMore && (
+                      <m.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-4 mt-2 md:mt-4"
+                      >
+                        {SKELETON_ITEMS}
+                      </m.div>
+                    )}
+                  </AnimatePresence>
                 </>
               )}
             </>

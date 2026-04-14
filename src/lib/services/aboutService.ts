@@ -16,7 +16,7 @@ const service = new ContentService<AboutData>('about.json', aboutDataFallback as
 
 function mergeDesktopPreferences(
     current?: DesktopPreferences,
-    updates?: DesktopPreferences
+    updates?: Partial<DesktopPreferences>
 ): DesktopPreferences | undefined {
     if (!current && !updates) {
         return undefined;

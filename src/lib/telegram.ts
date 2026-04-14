@@ -79,35 +79,30 @@ export function isValidTelegramWebhookSecret(botToken: string, providedSecret?: 
 }
 
 /**
- * Send Telegram Alert with Markdown formatting
+ * Telegram Message Body interface (shared by text message functions)
  */
-export async function sendTelegramAlert(
+interface TelegramMessageBody {
+    chat_id: string;
+    text: string;
+    parse_mode: 'Markdown' | 'HTML';
+    reply_markup?: {
+        inline_keyboard: { text: string; url: string }[][];
+    };
+}
+
+/**
+ * Internal shared function for sending Telegram text messages.
+ * Used by both sendTelegramAlert and sendTelegramToGroup.
+ */
+async function sendTelegramMessage(
+    chatId: string,
+    botToken: string,
     message: string,
-    options?: {
-        buttons?: { text: string; url: string }[][],
-        priority?: string
-    }
+    options?: { buttons?: { text: string; url: string }[][] },
+    label = 'Telegram'
 ): Promise<{ success: boolean; error?: string }> {
-    const validation = validateConfig();
-
-    if (!validation.valid) {
-        console.error('[Telegram] Config error:', validation.error);
-        return { success: false, error: 'Service not configured' };
-    }
-
-    const { botToken, chatId } = validation.config;
-
     try {
         const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
-        interface TelegramMessageBody {
-            chat_id: string;
-            text: string;
-            parse_mode: 'Markdown' | 'HTML';
-            reply_markup?: {
-                inline_keyboard: { text: string; url: string }[][];
-            };
-        }
 
         const body: TelegramMessageBody = {
             chat_id: chatId,
@@ -132,15 +127,36 @@ export async function sendTelegramAlert(
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             const errorMsg = errorData.description || `HTTP ${response.status}`;
-            console.error('[Telegram] API error:', errorMsg);
+            console.error(`[${label}] API error:`, errorMsg);
             return { success: false, error: 'Failed to send message' };
         }
 
         return { success: true };
     } catch (error) {
-        console.error('[Telegram] Network error:', error);
+        console.error(`[${label}] Network error:`, error);
         return { success: false, error: 'Network error' };
     }
+}
+
+/**
+ * Send Telegram Alert with Markdown formatting
+ */
+export async function sendTelegramAlert(
+    message: string,
+    options?: {
+        buttons?: { text: string; url: string }[][],
+        priority?: string
+    }
+): Promise<{ success: boolean; error?: string }> {
+    const validation = validateConfig();
+
+    if (!validation.valid) {
+        console.error('[Telegram] Config error:', validation.error);
+        return { success: false, error: 'Service not configured' };
+    }
+
+    const { botToken, chatId } = validation.config;
+    return sendTelegramMessage(chatId, botToken, message, options, 'Telegram');
 }
 
 /**
@@ -248,50 +264,7 @@ export async function sendTelegramToGroup(
         return { success: true };
     }
 
-    try {
-        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
-        interface TelegramMessageBody {
-            chat_id: string;
-            text: string;
-            parse_mode: 'Markdown' | 'HTML';
-            reply_markup?: {
-                inline_keyboard: { text: string; url: string }[][];
-            };
-        }
-
-        const body: TelegramMessageBody = {
-            chat_id: groupId,
-            text: message,
-            parse_mode: 'Markdown',
-        };
-
-        if (options?.buttons) {
-            body.reply_markup = {
-                inline_keyboard: options.buttons
-            };
-        }
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            const errorMsg = errorData.description || `HTTP ${response.status}`;
-            console.error('[Telegram Group] API error:', errorMsg);
-            return { success: false, error: 'Failed to send message to group' };
-        }
-
-        return { success: true };
-    } catch (error) {
-        console.error('[Telegram Group] Network error:', error);
-        return { success: false, error: 'Network error' };
-    }
+    return sendTelegramMessage(groupId, botToken, message, options, 'Telegram Group');
 }
 
 // Re-export untuk backward compatibility

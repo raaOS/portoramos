@@ -81,7 +81,7 @@ export function useAdminLogin(location: LocationData | null) {
             });
 
             if (response.ok) {
-                router.push('/admin');
+                window.location.href = '/admin';
             } else {
                 // Small delay to discourage brute-force attempts
                 await new Promise((resolve) => setTimeout(resolve, 400));

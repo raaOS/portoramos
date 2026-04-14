@@ -41,10 +41,11 @@ export default function ProjectCardList({
                         kind={cover.kind}
                         src={cover.src}
                         poster={cover.poster}
+                        posterPriority={cover.kind === 'video' ? priority : undefined}
                         alt={title}
                         width={400}
                         height={300}
-                        priority={priority}
+                        priority={cover.kind === 'image' ? priority : false}
                         lazy={!priority}
                         autoplay={shouldAutoplay}
                         muted={project.muted ?? true}

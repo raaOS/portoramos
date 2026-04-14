@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Search, Wifi, Battery, Volume2 } from 'lucide-react';
@@ -18,37 +18,36 @@ const Header: React.FC = () => {
         setCurrentTime(new Date()); // eslint-disable-line
         const timer = setInterval(() => {
             setCurrentTime(new Date());
-        }, 1000);
+        }, 60_000); // Update every 60s — clock only shows HH:MM
         return () => clearInterval(timer);
     }, []);
 
-    const formatTime = (date: Date) => {
+    const formatTime = useCallback((date: Date) => {
         return date.toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
             hour12: true
         });
-    };
+    }, []);
 
-    const formatDate = (date: Date) => {
+    const formatDate = useCallback((date: Date) => {
         return date.toLocaleDateString('en-US', {
             weekday: 'short',
             month: 'short',
             day: 'numeric'
         });
-    };
+    }, []);
 
-    // Determine the current app name based on pathname
-    const getAppName = () => {
+    // Memoize app name to avoid recalculating on every timer tick
+    const appName = useMemo(() => {
         if (pathname === '/') return 'Finder';
         if (pathname?.startsWith('/projects')) return 'Portfolio';
         if (pathname?.startsWith('/cv')) return 'Resume';
         if (pathname?.startsWith('/contact')) return 'Contact';
         if (pathname?.startsWith('/about')) return 'About';
         return 'Portfolio';
-    };
+    }, [pathname]);
 
-    const appName = getAppName();
     const isProjectsPage = pathname?.startsWith('/projects');
 
     return (

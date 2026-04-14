@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { getCoverUrl, isVideoUrl } from '@/utils/canvas-helpers'
@@ -13,7 +13,7 @@ type CanvasCardProps = {
     registerVideoRef: (key: string, element: HTMLVideoElement | null) => void
 }
 
-export function CanvasCard({
+export function CanvasCardInner({
     item,
     isPriority,
     registerCardRef,
@@ -117,3 +117,5 @@ export function CanvasCard({
         </div>
     )
 }
+
+export const CanvasCard = memo(CanvasCardInner)

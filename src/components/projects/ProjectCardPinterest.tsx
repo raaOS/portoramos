@@ -61,11 +61,12 @@ export default function ProjectCardPinterest({
                         kind={cover.kind}
                         src={cover.src}
                         poster={cover.poster}
+                        posterPriority={cover.kind === 'video' ? priority : undefined}
                         alt={title}
                         // Optimized: Request 256px for thumbnails (closer to actual display size ~170-200px)
                         width={256}
                         height={Math.round(256 / ratio)}
-                        priority={priority}
+                        priority={cover.kind === 'image' ? priority : false}
                         lazy={!priority}
                         quality={75}
                         autoplay={shouldAutoplay}

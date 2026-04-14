@@ -21,7 +21,7 @@ type Props = {
 
 // — Rendering & culling thresholds —
 const REMOVAL_BATCH_INTERVAL = 100 // ms — batch DOM removals to avoid per-frame React re-renders
-const MAX_PRIORITY_IMAGES = 3
+const MAX_PRIORITY_IMAGES = 4
 const CULLING_BEHIND_THRESHOLD = 1200
 const CULLING_DISTANCE_THRESHOLD = 9000
 const PRIORITY_IMAGE_DISTANCE = 3000
@@ -61,6 +61,16 @@ export default function InfiniteCanvasView({ projects }: Props) {
     const cardNodesRef = useRef<Map<string, HTMLDivElement>>(new Map())
     const videoNodesRef = useRef<Map<string, HTMLVideoElement>>(new Map())
     const visualStateRef = useRef<Map<string, { opacity: number; grayscale: number; hidden: boolean }>>(new Map())
+
+    // Stable ref callbacks — prevents CanvasCard memo() from re-rendering on parent state change
+    const registerCardRef = useCallback((key: string, el: HTMLDivElement | null) => {
+        if (el) cardNodesRef.current.set(key, el)
+        else cardNodesRef.current.delete(key)
+    }, [])
+    const registerVideoRef = useCallback((key: string, el: HTMLVideoElement | null) => {
+        if (el) videoNodesRef.current.set(key, el)
+        else videoNodesRef.current.delete(key)
+    }, [])
 
     // — Assignment & ordering state —
     const assignmentRef = useRef<Map<string, string>>(new Map())
@@ -322,14 +332,8 @@ export default function InfiniteCanvasView({ projects }: Props) {
                             key={item.key} 
                             item={item} 
                             isPriority={shouldPriority}
-                            registerCardRef={(key, el) => {
-                                if (el) cardNodesRef.current.set(key, el)
-                                else cardNodesRef.current.delete(key)
-                            }}
-                            registerVideoRef={(key, el) => {
-                                if (el) videoNodesRef.current.set(key, el)
-                                else videoNodesRef.current.delete(key)
-                            }}
+                            registerCardRef={registerCardRef}
+                            registerVideoRef={registerVideoRef}
                         />
                     )
                 })}

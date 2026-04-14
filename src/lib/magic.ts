@@ -157,9 +157,6 @@ export function generateGenZComments(slug: string, count?: number): Comment[] {
         if (seed > 0.95) commentCount = 0; // Rare: No comments
     }
 
-    // Track replies stats (reserved for future analytics)
-    const _repliesStats = { count: 0, usedTexts: new Set<string>() };
-
     // Pick different vibes for variety
     // Don't just pick one vibe for all comments in a project, mix them up.
 

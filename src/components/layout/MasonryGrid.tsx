@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Masonry from 'react-masonry-css';
 import styles from './MasonryGrid.module.css';
 
@@ -59,23 +59,26 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         return getInitialCols();
     });
 
-    const getCols = useCallback((w: number) => {
-        if (!breakpointColumns) return 2; // Safety fallback
-        let cols = breakpointColumns.default || 2;
-
-        // Sort breakpoints descending (numeric keys)
-        const breakpoints = Object.keys(breakpointColumns)
+    // Pre-compute sorted breakpoints once — avoids re-sorting on every resize event
+    const sortedBreakpoints = useMemo(() =>
+        Object.keys(breakpointColumns)
             .filter(k => k !== 'default')
             .map(Number)
-            .sort((a, b) => b - a);
+            .sort((a, b) => b - a),
+        [breakpointColumns]
+    );
 
-        for (const bp of breakpoints) {
+    const getCols = useCallback((w: number) => {
+        if (!breakpointColumns) return 2;
+        let cols = breakpointColumns.default || 2;
+
+        for (const bp of sortedBreakpoints) {
             if (w <= bp) {
                 cols = (breakpointColumns as Record<number, number>)[bp];
             }
         }
         return cols;
-    }, [breakpointColumns]);
+    }, [breakpointColumns, sortedBreakpoints]);
 
     useEffect(() => {
         requestAnimationFrame(() => setMounted(true));
@@ -141,15 +144,7 @@ export default function MasonryGrid({ children, className = '', columns = 'defau
         return <div ref={containerRef} className="w-full" style={{ visibility: 'hidden', minHeight: '50vh' }} />;
     }
 
-    // Optimization removed: User requested true masonry layout. 
-    // Native Grid causes gaps with varying heights.
-    // We will use react-masonry-css for all sizes.
 
-    /* 
-    if (columnCount <= 2) {
-        return renderNativeGrid();
-    } 
-    */
 
     // Use manual column count ONLY if explicit width is provided (OS Window mode)
     // Otherwise, let Masonry library handle responsiveness using the breakpoint object (Main Page mode)

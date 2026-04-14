@@ -20,6 +20,7 @@ interface Metric {
  */
 export default function PerformanceMonitor() {
   const metricsRef = useRef<Map<string, Metric>>(new Map());
+  const longTaskWarningThreshold = process.env.NODE_ENV === 'development' ? 500 : 50;
 
   useReportWebVitals((metric: Metric) => {
     // Store metric for debugging
@@ -58,17 +59,17 @@ export default function PerformanceMonitor() {
     }
   });
 
-  // Monitor Long Tasks
+  // Monitor Long Tasks & Layout Shifts
   useEffect(() => {
     if (!('PerformanceObserver' in window)) return;
 
-    let observer: PerformanceObserver | null = null;
-    
+    const observers: PerformanceObserver[] = [];
+
+    // Long Tasks
     try {
-      observer = new PerformanceObserver((list) => {
+      const ltObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          // Log tasks longer than 50ms (potential INP issues)
-          if (entry.duration > 50) {
+          if (entry.duration > longTaskWarningThreshold) {
             console.warn('[Performance] Long Task detected:', {
               duration: entry.duration,
               startTime: entry.startTime,
@@ -76,28 +77,16 @@ export default function PerformanceMonitor() {
           }
         }
       });
-      
-      observer.observe({ entryTypes: ['longtask'] });
+      ltObserver.observe({ entryTypes: ['longtask'] });
+      observers.push(ltObserver);
     } catch {
       // Long tasks not supported
     }
 
-    return () => {
-      if (observer) {
-        observer.disconnect();
-      }
-    };
-  }, []);
-
-  // Monitor Layout Shifts
-  useEffect(() => {
-    if (!('PerformanceObserver' in window)) return;
-
-    let observer: PerformanceObserver | null = null;
-    let clsValue = 0;
-    
+    // Layout Shifts
     try {
-      observer = new PerformanceObserver((list) => {
+      let clsValue = 0;
+      const lsObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           const layoutShiftEntry = entry as unknown as { hadRecentInput?: boolean; value: number };
           if (!layoutShiftEntry.hadRecentInput) {
@@ -110,20 +99,14 @@ export default function PerformanceMonitor() {
           console.warn('[Performance] High CLS detected:', clsValue);
         }
       });
-      
-      observer.observe({ entryTypes: ['layout-shift'] });
+      lsObserver.observe({ entryTypes: ['layout-shift'] });
+      observers.push(lsObserver);
     } catch {
       // Layout shifts not supported
     }
 
-    return () => {
-      if (observer) {
-        observer.disconnect();
-      }
-    };
-  }, []);
+    return () => observers.forEach(o => o.disconnect());
+  }, [longTaskWarningThreshold]);
 
   return null;
 }
-
-

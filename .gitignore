@@ -67,3 +67,7 @@ debug-*.md
 projects-page.md
 test_output.log
 _a")sxsx214be5b4520cdd.md
+
+# Local temporary files
+tmp/
+ts-error.txt

@@ -1,7 +1,7 @@
 import { ContentService } from './contentService';
 import { Testimonial, TestimonialData } from '@/types/testimonial';
 import testimonialDataFallback from '@/data/testimonial.json';
-import { bucket } from '@/lib/firebaseAdmin';
+import { deleteStorageAssets } from '@/lib/services/storageCleanup';
 
 // Counter untuk menghindari collision pada timestamp yang sama
 let idCounter = 0;
@@ -90,33 +90,11 @@ export const testimonialService = {
         if (!testimonial) return false;
 
         // Cleanup Storage Assets inside Testimonial Chat
-        try {
-            const assetUrls: string[] = [];
-            testimonial.messages?.forEach(msg => {
-                if (msg.imageSrc) assetUrls.push(msg.imageSrc);
-            });
-
-            for (const url of assetUrls) {
-                try {
-                    let storagePath = '';
-                    if (url.includes('/o/')) {
-                        storagePath = decodeURIComponent(url.split('/o/')[1].split('?')[0]);
-                    } else if (url.startsWith('/assets/')) {
-                        storagePath = url.substring(1);
-                    }
-
-                    if (storagePath && storagePath.startsWith('assets/')) {
-                        const file = bucket.file(storagePath);
-                        const [exists] = await file.exists();
-                        if (exists) await file.delete();
-                    }
-                } catch (e) {
-                    console.warn(`[TestimonialService] Ghost cleanup failed for: ${url}`, e);
-                }
-            }
-        } catch (e) {
-            console.error('[TestimonialService] Storage audit failed during delete:', e);
-        }
+        const assetUrls: string[] = [];
+        testimonial.messages?.forEach(msg => {
+            if (msg.imageSrc) assetUrls.push(msg.imageSrc);
+        });
+        await deleteStorageAssets(assetUrls, 'TestimonialService');
 
         currentData.testimonials = currentData.testimonials.filter(t => t.id !== normalizedId);
         currentData.lastUpdated = new Date().toISOString();

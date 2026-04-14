@@ -1,6 +1,6 @@
 import { HardSkill, HardSkillsData } from '@/types/hardSkill';
 import { ContentService } from '@/lib/services/contentService';
-import { bucket } from '@/lib/firebaseAdmin';
+import { deleteStorageAsset } from '@/lib/services/storageCleanup';
 import hardSkillsDataFallback from '@/data/hardSkills.json';
 
 const service = new ContentService<HardSkillsData>('hardSkills.json', hardSkillsDataFallback as unknown as HardSkillsData);
@@ -27,12 +27,12 @@ async function saveHardSkills(skills: HardSkill[], message: string): Promise<boo
 async function createHardSkill(skillData: Omit<HardSkill, 'id' | 'createdAt' | 'updatedAt'>): Promise<HardSkill> {
     const currentData = await getHardSkills();
     const currentSkills = currentData.skills || [];
-
+    const now = new Date().toISOString();
     const newSkill: HardSkill = {
         id: `hard-${Date.now()}`,
         ...skillData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
     };
 
     const updatedSkills = [...currentSkills, newSkill];
@@ -69,23 +69,7 @@ async function deleteHardSkill(id: string): Promise<boolean> {
 
     // Cleanup icon from Storage if it's a firebase URL
     if (skillToDelete.iconUrl && skillToDelete.iconUrl.includes('firebasestorage.googleapis.com')) {
-        try {
-            let storagePath = '';
-            const url = skillToDelete.iconUrl;
-            if (url.includes('/o/')) {
-                storagePath = decodeURIComponent(url.split('/o/')[1].split('?')[0]);
-            } else if (url.startsWith('/assets/')) {
-                storagePath = url.substring(1);
-            }
-
-            if (storagePath && storagePath.startsWith('assets/')) {
-                const file = bucket.file(storagePath);
-                const [exists] = await file.exists();
-                if (exists) await file.delete();
-            }
-        } catch (e) {
-            console.warn(`[HardSkillService] Failed to cleanup icon for ${skillToDelete.name}:`, e);
-        }
+        await deleteStorageAsset(skillToDelete.iconUrl, 'HardSkillService');
     }
 
     const filtered = currentSkills.filter(s => s.id !== id);

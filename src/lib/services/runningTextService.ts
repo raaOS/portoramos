@@ -21,16 +21,17 @@ export const runningTextService = {
 
     async createItem(text: string, order?: number, isActive: boolean = true) {
         const data = await this.getRunningTextData();
+        const now = new Date().toISOString();
         const newItem: RunningTextItem = {
             id: uuidv4(),
             text,
             order: order || data.items.length + 1,
             isActive,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            createdAt: now,
+            updatedAt: now,
         };
         data.items.push(newItem);
-        data.lastUpdated = new Date().toISOString();
+        data.lastUpdated = now;
 
         await service.saveData(data, `Add running text: ${text}`);
         return newItem;
@@ -51,8 +52,9 @@ export const runningTextService = {
         const index = data.items.findIndex(i => i.id === id);
         if (index === -1) return null;
 
-        data.items[index] = { ...data.items[index], ...updates, updatedAt: new Date().toISOString() };
-        data.lastUpdated = new Date().toISOString();
+        const now = new Date().toISOString();
+        data.items[index] = { ...data.items[index], ...updates, updatedAt: now };
+        data.lastUpdated = now;
 
         await service.saveData(data, `Update running text item: ${data.items[index].text}`);
         return data.items[index];
@@ -69,10 +71,4 @@ export const runningTextService = {
         await service.saveData(data, `Delete running text item ID: ${id}`);
         return true;
     }
-    // The original API might rely on PUT for everything. I should check if there's specific item update logic.
-    // The API I saw earlier had:
-    // PUT for bulk update of items array.
-    // There was no specific single item update/delete exposed in the main route file I read?
-    // Actually, I should check if there's a dynamic route [id] for running text. 
-    // List dir showed running-text has 2 children. Maybe [id]?
 };

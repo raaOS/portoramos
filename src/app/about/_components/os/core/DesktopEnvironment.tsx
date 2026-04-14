@@ -98,12 +98,12 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
         aboutData, experienceData, hardSkillsData, projects, commercialProjects, dynamicContacts, isAdmin
     }), [aboutData, experienceData, hardSkillsData, projects, commercialProjects, dynamicContacts, isAdmin]);
 
-    const handleBootComplete = () => {
+    const handleBootComplete = useCallback(() => {
         if (aboutData?.soundConfig) soundManager.loadConfig(aboutData.soundConfig);
         soundManager.suppressSound('window-open', 1500);
         startTransition(() => setIsRevealed(true));
         finishBooting();
-    };
+    }, [aboutData?.soundConfig, finishBooting]);
 
     if (!mounted) {
         return <DesktopSkeleton isBooting={needsPowerOn} wallpaperUrl={aboutData?.wallpaperConfig?.collection?.find(w => w.id === aboutData.wallpaperConfig?.activeWallpaperId)?.url} />;

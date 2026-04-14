@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback, useSyncExternalStore } from 'react';
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore, memo } from 'react';
 import { motion } from 'framer-motion';
 import type { Project } from '@/types/projects';
 import MasonryGrid from '@/components/layout/MasonryGrid';
@@ -9,7 +9,7 @@ import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest';
 const INITIAL_COUNT = 5;
 const BATCH_SIZE = 24;
 
-// Static animation configs to prevent object recreation
+// Static animation config — never recreated
 const ANIMATION_CONFIG = {
     initial: { y: 30 },
     whileInView: { y: 0 },
@@ -23,31 +23,50 @@ interface UseInfiniteProjectsReturn {
     observerTarget: React.RefObject<HTMLDivElement>;
 }
 
+/**
+ * Infinite scroll hook for project detail related projects.
+ * Uses IntersectionObserver (stable — not recreated on state change).
+ */
 export function useInfiniteProjects(projects: Project[]): UseInfiniteProjectsReturn {
-    // SSR-safe mount detection without triggering set-state-in-effect lint
     const subscribe = useCallback(() => () => {}, []);
     const hasMounted = useSyncExternalStore(subscribe, () => true, () => false);
-    const [displayedProjects, setDisplayedProjects] = useState<Project[]>(() => {
-        return projects.slice(0, INITIAL_COUNT);
-    });
+
+    const [displayedProjects, setDisplayedProjects] = useState<Project[]>(() =>
+        projects.slice(0, INITIAL_COUNT)
+    );
     const [isLoading, setIsLoading] = useState(false);
     const observerTarget = useRef<HTMLDivElement>(null!);
 
+    // Refs for stable observer callback
+    const loadingRef = useRef(false);
+    const countRef = useRef(INITIAL_COUNT);
+
     const loadMore = useCallback(() => {
-        if (!hasMounted || isLoading || projects.length === 0) return;
-        
+        if (loadingRef.current || projects.length === 0) return;
+
+        loadingRef.current = true;
         setIsLoading(true);
-        const currentCount = displayedProjects.length;
-        const nextBatch: Project[] = [];
+
+        const current = countRef.current;
+        const nextBatch: Project[] = new Array(BATCH_SIZE);
         for (let i = 0; i < BATCH_SIZE; i++) {
-            nextBatch.push(projects[(currentCount + i) % projects.length]);
+            nextBatch[i] = projects[(current + i) % projects.length];
         }
-        setDisplayedProjects(prev => [...prev, ...nextBatch]);
+
+        setDisplayedProjects(prev => {
+            const next = [...prev, ...nextBatch];
+            countRef.current = next.length;
+            return next;
+        });
+
+        // Short delay for skeleton flash
         setTimeout(() => {
+            loadingRef.current = false;
             setIsLoading(false);
         }, 50);
-    }, [displayedProjects.length, hasMounted, isLoading, projects]);
+    }, [projects]);
 
+    // Stable observer — mounted once, never recreated
     useEffect(() => {
         if (!hasMounted) return;
 
@@ -57,10 +76,7 @@ export function useInfiniteProjects(projects: Project[]): UseInfiniteProjectsRet
                     loadMore();
                 }
             },
-            {
-                rootMargin: '800px 0px',
-                threshold: 0.1
-            }
+            { rootMargin: '800px 0px', threshold: 0.1 }
         );
 
         if (observerTarget.current) {
@@ -72,6 +88,30 @@ export function useInfiniteProjects(projects: Project[]): UseInfiniteProjectsRet
 
     return { displayedProjects, isLoading, observerTarget };
 }
+
+// Shared card item component — used by both ProjectRelated and ProjectRelatedColumn
+const RelatedCardItem = memo(function RelatedCardItem({
+    project,
+    index
+}: {
+    project: Project;
+    index: number;
+}) {
+    if (index < 4) {
+        return (
+            <div>
+                <ProjectCardPinterest project={project} priority={true} />
+            </div>
+        );
+    }
+
+    return (
+        <motion.div {...ANIMATION_CONFIG}>
+            <ProjectCardPinterest project={project} priority={false} />
+        </motion.div>
+    );
+});
+
 interface ProjectRelatedProps {
     projects: Project[];
 }
@@ -79,19 +119,14 @@ interface ProjectRelatedProps {
 export function ProjectRelated({ projects }: ProjectRelatedProps) {
     const { displayedProjects, isLoading, observerTarget } = useInfiniteProjects(projects);
 
-    const columnAProjects = useMemo(
-        () => displayedProjects.filter((_, idx) => idx % 2 !== 0),
-        [displayedProjects]
-    );
-
     return (
         <>
             <MasonryGrid columns="sidebar">
-                {columnAProjects.map((p: Project, index: number) => (
-                    <ProjectRelatedItem 
-                        key={`col-a-${p.slug}-${index}`} 
-                        project={p} 
-                        index={index} 
+                {displayedProjects.map((p: Project, index: number) => (
+                    <RelatedCardItem
+                        key={`related-${p.slug}-${index}`}
+                        project={p}
+                        index={index}
                     />
                 ))}
             </MasonryGrid>
@@ -107,25 +142,6 @@ export function ProjectRelated({ projects }: ProjectRelatedProps) {
     );
 }
 
-// Memoized item component to prevent unnecessary re-renders
-function ProjectRelatedItem({ project, index }: { project: Project; index: number }) {
-    const isPriority = index < 4;
-    
-    if (isPriority) {
-        return (
-            <div>
-                <ProjectCardPinterest project={project} priority={true} />
-            </div>
-        );
-    }
-    
-    return (
-        <motion.div {...ANIMATION_CONFIG}>
-            <ProjectCardPinterest project={project} priority={false} />
-        </motion.div>
-    );
-}
-
 interface ProjectRelatedColumnProps {
     projects: Project[];
     column: 'A' | 'B';
@@ -136,7 +152,7 @@ export function ProjectRelatedColumn({ projects, column }: ProjectRelatedColumnP
         <div className={column === 'B' ? 'lg:w-1/2' : ''}>
             <MasonryGrid columns="sidebar">
                 {projects.map((p: Project, index: number) => (
-                    <ProjectRelatedColumnItem
+                    <RelatedCardItem
                         key={`col-${column}-${p.slug}-${index}`}
                         project={p}
                         index={index}
@@ -144,24 +160,5 @@ export function ProjectRelatedColumn({ projects, column }: ProjectRelatedColumnP
                 ))}
             </MasonryGrid>
         </div>
-    );
-}
-
-// Memoized column item
-function ProjectRelatedColumnItem({ project, index }: { project: Project; index: number }) {
-    const isPriority = index < 4;
-    
-    if (isPriority) {
-        return (
-            <div>
-                <ProjectCardPinterest project={project} priority={true} />
-            </div>
-        );
-    }
-    
-    return (
-        <motion.div {...ANIMATION_CONFIG}>
-            <ProjectCardPinterest project={project} priority={false} />
-        </motion.div>
     );
 }

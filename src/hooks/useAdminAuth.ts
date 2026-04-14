@@ -20,6 +20,7 @@ export function useAdminAuth() {
     const abortControllerRef = useRef<AbortController | null>(null);
     const isFetchingRef = useRef(false);
     const channelRef = useRef<BroadcastChannel | null>(null);
+    const csrfTokenRef = useRef(csrfToken);
 
     const logout = async () => {
         try {
@@ -79,8 +80,9 @@ export function useAdminAuth() {
             setIsAdmin(authed);
             if (data.csrfToken) {
                 setCsrfToken(data.csrfToken);
+                csrfTokenRef.current = data.csrfToken;
                 // Broadcast token ke tab lain jika berubah
-                if (channelRef.current && data.csrfToken !== csrfToken) {
+                if (channelRef.current && data.csrfToken !== csrfTokenRef.current) {
                     channelRef.current.postMessage({ 
                         type: 'token-update', 
                         token: data.csrfToken,
@@ -89,16 +91,26 @@ export function useAdminAuth() {
                 }
             } else if (!authed) {
                 setCsrfToken('');
+                csrfTokenRef.current = '';
             }
+
+            // Normal completion
+            isFetchingRef.current = false;
+            setIsLoading(false);
         } catch (e) {
-            if (e instanceof Error && e.name === 'AbortError') return;
+            if (e instanceof Error && e.name === 'AbortError') {
+                // Jika digugurkan (komponen unmount/remount), reset isFetching tapi JANGAN ubah state loading/admin
+                isFetchingRef.current = false;
+                return;
+            }
             console.error('Failed to check admin auth:', e);
             setIsAdmin(false);
-        } finally {
+            
+            // Error completion
             isFetchingRef.current = false;
             setIsLoading(false);
         }
-    }, [csrfToken]);
+    }, []);
 
     useEffect(() => {
         // Handle explicit logout param in URL

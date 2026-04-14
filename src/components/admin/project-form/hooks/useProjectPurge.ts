@@ -1,18 +1,12 @@
 import { useState } from 'react';
 import { CreateProjectData, Project } from '@/types/projects';
+import { extractStoragePath } from '@/lib/media';
 
 export function useProjectPurge(project?: Project, csrfToken?: string | null) {
     const [sessionUploads, setSessionUploads] = useState<string[]>([]);
 
     const trackNewUpload = (url: string) => {
         setSessionUploads(prev => [...prev, url]);
-    };
-
-    const extractStoragePath = (url: string) => {
-        try {
-            const p = url.split('/o/');
-            return p[1] ? decodeURIComponent(p[1].split('?')[0]) : null;
-        } catch { return null; }
     };
 
     const purgeUrl = async (url: string) => {

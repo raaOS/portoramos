@@ -54,10 +54,11 @@ export const projectService = {
             const projectsRef = db.ref('projects');
             const lastUpdatedRef = db.ref('lastUpdated');
 
-            const projectsSnap = await projectsRef.once('value');
+            const [projectsSnap, lastUpdatedSnap] = await Promise.all([
+                projectsRef.once('value'),
+                lastUpdatedRef.once('value')
+            ]);
             const projectsObject = projectsSnap.val() || {};
-
-            const lastUpdatedSnap = await lastUpdatedRef.once('value');
             const lastUpdated = lastUpdatedSnap.val() || new Date().toISOString();
 
             const projects: Project[] = Object.values(projectsObject);

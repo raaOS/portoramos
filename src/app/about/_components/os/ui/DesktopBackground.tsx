@@ -3,7 +3,6 @@
 import { useMemo } from 'react';
 import Image from 'next/image';
 import type { WallpaperConfig } from '@/types/about';
-import DigitalClockWidget from './elements/DigitalClockWidget';
 
 interface DesktopBackgroundProps {
     wallpaperConfig?: WallpaperConfig;
@@ -29,12 +28,7 @@ export default function DesktopBackground({ wallpaperConfig }: DesktopBackground
     const blurAmount = wallpaperConfig?.blur || 0;
 
     return (
-        <div 
-            className="fixed inset-0 z-0 w-full h-full"
-            style={{
-                willChange: 'transform', // Prevent layout shifts
-            }}
-        >
+        <div className="fixed inset-0 z-0 w-full h-full">
             {/* Primary wallpaper - Priority load for LCP */}
             <Image
                 src={activeWallpaper}
@@ -47,8 +41,7 @@ export default function DesktopBackground({ wallpaperConfig }: DesktopBackground
                 className="object-cover"
                 style={{
                     filter: blurAmount > 0 ? `blur(${blurAmount}px)` : undefined,
-                    transform: 'translateZ(0)', // GPU acceleration
-                    willChange: 'transform', // Prevent jitter
+                    transform: 'translateZ(0)',
                 }}
             />
             
@@ -57,9 +50,6 @@ export default function DesktopBackground({ wallpaperConfig }: DesktopBackground
                 className="absolute inset-0 bg-black/20 pointer-events-none" 
                 aria-hidden="true"
             />
-
-            {/* Desktop Clock Widget */}
-            <DigitalClockWidget />
         </div>
     );
 }

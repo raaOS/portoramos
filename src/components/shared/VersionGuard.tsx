@@ -15,9 +15,10 @@ export default function VersionGuard() {
     const [hasUpdate, setHasUpdate] = useState(false);
     const toastIdRef = useRef<string | null>(null);
     const isCheckingRef = useRef(false);
+    const hasUpdateRef = useRef(false);
 
     const checkVersion = useCallback(async () => {
-        if (isCheckingRef.current) return;
+        if (isCheckingRef.current || hasUpdateRef.current) return;
 
         try {
             isCheckingRef.current = true;
@@ -31,8 +32,9 @@ export default function VersionGuard() {
             const data = await response.json();
             const serverVersion = data.version;
 
-            if (serverVersion && serverVersion !== APP_VERSION && !hasUpdate) {
+            if (serverVersion && serverVersion !== APP_VERSION) {
                 console.log(`[VersionGuard] New version detected: ${serverVersion} (Current: ${APP_VERSION})`);
+                hasUpdateRef.current = true;
                 setHasUpdate(true);
 
                 const id = showInfo(
@@ -43,7 +45,6 @@ export default function VersionGuard() {
                 toastIdRef.current = id;
             }
         } catch (error) {
-            // Silently ignore network errors (e.g. server restarting) to prevent console spam
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 return;
             }
@@ -51,7 +52,7 @@ export default function VersionGuard() {
         } finally {
             isCheckingRef.current = false;
         }
-    }, [showInfo, hasUpdate]);
+    }, [showInfo]);
 
     useEffect(() => {
         // Initial check after some delay to allow hydration to settle

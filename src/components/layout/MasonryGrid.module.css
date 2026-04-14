@@ -1,7 +1,6 @@
 .masonryGrid {
     display: flex;
     width: 100%;
-    will-change: auto;
 }
 
 .masonryGridColumn {
@@ -19,30 +18,20 @@
     break-inside: avoid;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
     transform: translateZ(0);
     backface-visibility: hidden;
 }
 
-/* BUG FIX: Disable transitions for users who prefer reduced motion */
+/* Disable transitions for users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
     .masonryGridColumn>div {
         transition: none;
-        will-change: auto;
     }
 }
 
-/* BUG FIX: Disable transitions on mobile to prevent flickering during scroll */
+/* Disable transitions on mobile to prevent flickering during scroll */
 @media (max-width: 768px) {
     .masonryGridColumn>div {
         transition: none;
-        will-change: auto;
     }
-}
-
-.masonryGridColumn img,
-.masonryGridColumn video {
-    will-change: transform;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-}
+}

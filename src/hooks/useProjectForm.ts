@@ -117,7 +117,8 @@ export const useProjectForm = (project?: Project) => {
         if (project) {
             setFormData(createInitialFormData(project));
         }
-    }, [project?.id, project?.updatedAt, project]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [project?.id, project?.updatedAt]);
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};

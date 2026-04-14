@@ -259,7 +259,7 @@ export const updateAboutSchema = z.object({
     professional: aboutProfessionalSchema.partial().optional(),
     softSkills: aboutSoftSkillsSchema.partial().optional(),
     designPhilosophy: designPhilosophySchema.partial().optional(),
-    desktopPreferences: desktopPreferencesSchema.optional(),
+    desktopPreferences: desktopPreferencesSchema.partial().optional(),
     wallpaperConfig: wallpaperConfigSchema.optional(),
     dockConfig: z.record(z.string(), dockItemConfigSchema).optional(),
     windowPreferences: z.record(z.string(), windowPreferenceSchema).optional(),

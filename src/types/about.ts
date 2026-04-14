@@ -183,7 +183,7 @@ export interface UpdateAboutData {
   designPhilosophy?: Partial<DesignPhilosophy>;
 
   // OS Configuration
-  desktopPreferences?: DesktopPreferences;
+  desktopPreferences?: Partial<DesktopPreferences>;
   wallpaperConfig?: WallpaperConfig;
   dockConfig?: DockPreferences;
   windowPreferences?: WindowPreferences;
