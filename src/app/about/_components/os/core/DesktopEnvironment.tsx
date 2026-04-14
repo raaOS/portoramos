@@ -103,7 +103,7 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
         soundManager.suppressSound('window-open', 1500);
         startTransition(() => setIsRevealed(true));
         finishBooting();
-    }, [aboutData?.soundConfig, finishBooting]);
+    }, [aboutData, finishBooting]);
 
     if (!mounted) {
         return <DesktopSkeleton isBooting={needsPowerOn} wallpaperUrl={aboutData?.wallpaperConfig?.collection?.find(w => w.id === aboutData.wallpaperConfig?.activeWallpaperId)?.url} />;
