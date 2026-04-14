@@ -55,9 +55,11 @@ export function useInfiniteScroll(totalItems: number) {
 
     const next = getScrollStrategy(window.innerWidth);
     strategyRef.current = next;
-    setStrategy(next);
-    setVisibleCount(Math.min(next.initialCount, maxVisible));
-    setReady(true);
+    setTimeout(() => {
+      setStrategy(next);
+      setVisibleCount(Math.min(next.initialCount, maxVisible));
+      setReady(true);
+    }, 0);
 
     let timer: ReturnType<typeof setTimeout> | null = null;
     const onResize = () => {

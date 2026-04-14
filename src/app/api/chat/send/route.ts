@@ -186,10 +186,9 @@ export async function POST(request: Request) {
 
     } catch (error: unknown) {
         console.error('[Web Chat Send Error]:', error);
-        const errMsg = error instanceof Error ? error.message : String(error);
+        // Log full error server-side only - do not expose to client
         return NextResponse.json({
-            error: 'Failed to send message',
-            details: errMsg
+            error: 'Failed to send message'
         }, { status: 500 });
     }
 }

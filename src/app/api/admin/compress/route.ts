@@ -6,30 +6,12 @@ import { validateAdminRequest } from '@/lib/auth';
 import { bucket } from '@/lib/firebaseAdmin';
 import { compressFileSchema } from '@/lib/validations';
 import { validationError } from '@/lib/api-response';
+import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
+import { getClientIP } from '@/lib/security/request';
 
-// RATE LIMITING
-const compressAttempts = new Map<string, { count: number; resetTime: number }>();
-const COMPRESS_RATE_LIMIT_WINDOW = 10 * 60 * 1000;
+const COMPRESS_RATE_LIMIT_WINDOW = 10 * 60 * 1000; // 10 minutes
 const MAX_COMPRESS_ATTEMPTS = 10;
-
-function getClientIdentifier(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  return (forwarded ? forwarded.split(',')[0].trim() : 'unknown').slice(0, 200);
-}
-
-function checkCompressRateLimit(identifier: string): { allowed: boolean; resetTime?: number } {
-  const now = Date.now();
-  const attemptData = compressAttempts.get(identifier);
-  if (!attemptData || now > attemptData.resetTime) {
-    compressAttempts.set(identifier, { count: 1, resetTime: now + COMPRESS_RATE_LIMIT_WINDOW });
-    return { allowed: true };
-  }
-  if (attemptData.count >= MAX_COMPRESS_ATTEMPTS) {
-    return { allowed: false, resetTime: attemptData.resetTime };
-  }
-  attemptData.count++;
-  return { allowed: true };
-}
+const COMPRESS_RATE_LIMIT_BLOCK = 30 * 60 * 1000; // 30 minutes block after limit
 
 export async function POST(request: NextRequest) {
   let tempInput = '';
@@ -40,10 +22,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const clientId = getClientIdentifier(request);
-    const rateLimit = checkCompressRateLimit(clientId);
+    // Use Firebase-backed rate limiting for persistence across serverless instances
+    const clientIP = getClientIP(request);
+    const rateLimit = await checkFirebaseRateLimit(
+      `compress_${clientIP}`,
+      MAX_COMPRESS_ATTEMPTS,
+      COMPRESS_RATE_LIMIT_WINDOW,
+      COMPRESS_RATE_LIMIT_BLOCK
+    );
     if (!rateLimit.allowed) {
-      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+      return NextResponse.json(
+        { error: 'Rate limit exceeded', retryAfter: rateLimit.retryAfter },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter ?? COMPRESS_RATE_LIMIT_WINDOW / 1000) } }
+      );
     }
 
     const body = await request.json().catch(() => ({}));

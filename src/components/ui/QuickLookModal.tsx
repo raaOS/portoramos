@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ExternalLink } from 'lucide-react';
-import Image from 'next/image';
+
 
 interface QuickLookModalProps {
     isOpen: boolean;
@@ -123,7 +123,6 @@ export default function QuickLookModal({ isOpen, onClose, title, type, url, meta
 
                             {(type === 'image' || type === 'project') && (
                                 <div className="relative w-full h-full min-h-[50vh] flex items-center justify-center">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img 
                                         src={url} 
                                         alt={title} 

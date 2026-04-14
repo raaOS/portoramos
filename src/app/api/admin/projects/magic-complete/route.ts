@@ -40,9 +40,9 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error('Magic Complete Error:', error instanceof Error ? error.message : error);
+        // Log full error server-side only - do not expose stack trace to client
         return NextResponse.json({
-            error: error instanceof Error ? error.message : 'Failed to complete magic operation',
-            details: error instanceof Error ? error.stack : 'Unknown error'
+            error: 'Failed to complete magic operation'
         }, { status: 500 });
     }
 }

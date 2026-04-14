@@ -1,14 +1,40 @@
 import type { NextRequest } from 'next/server';
 import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
 
+/**
+ * Get client IP address from request
+ *
+ * SECURITY: Only trust headers set by trusted proxies/CDN.
+ * - x-vercel-forwarded-for: Set by Vercel's edge network (trusted)
+ * - cf-connecting-ip: Set by Cloudflare when proxying (trusted when using Cloudflare proxy)
+ *
+ * Headers like x-forwarded-for and x-real-ip are client-spoofable
+ * and should NOT be trusted for rate limiting decisions.
+ */
 export function getClientIP(request: Request | NextRequest): string {
-    const forwarded = request.headers.get('x-forwarded-for');
-    const realIP = request.headers.get('x-real-ip');
-    const cfIP = request.headers.get('cf-connecting-ip');
+    // Vercel sets this header - cannot be spoofed from client
+    const vercelIP = request.headers.get('x-vercel-forwarded-for');
+    if (vercelIP) {
+        return vercelIP.split(',')[0].trim();
+    }
 
-    if (cfIP) return cfIP.trim();
-    if (realIP) return realIP.trim();
-    if (forwarded) return forwarded.split(',')[0].trim();
+    // Cloudflare proxy IP (trusted when using Cloudflare)
+    const cfIP = request.headers.get('cf-connecting-ip');
+    if (cfIP) {
+        return cfIP.trim();
+    }
+
+    // Fallback for non-Vercel/Cloudflare environments
+    // Note: These can be spoofed, so rate limiting based on this is not fully reliable
+    const forwarded = request.headers.get('x-forwarded-for');
+    if (forwarded) {
+        return forwarded.split(',')[0].trim();
+    }
+
+    const realIP = request.headers.get('x-real-ip');
+    if (realIP) {
+        return realIP.trim();
+    }
 
     return 'unknown';
 }

@@ -31,8 +31,8 @@ export default function WindowsLayer({ isAdmin, isReady = true }: WindowsLayerPr
         show: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.2,   // 200ms delay between each window dropping
-                delayChildren: 1.8,    // Windows start 1.8s after icons to ensure the hole is fully open
+                staggerChildren: 0.15,   // Faster staggering for snappier feel
+                delayChildren: 1.5,      // Reduced delay for better UX
             }
         }
     };
@@ -40,18 +40,15 @@ export default function WindowsLayer({ isAdmin, isReady = true }: WindowsLayerPr
     const itemVariants = {
         hidden: {
             opacity: 0,
-            scale: 0.95,
-            y: -40
+            scale: 0.9,
         },
         show: {
             opacity: 1,
             scale: 1,
-            y: 0,
             transition: {
                 type: "spring",
-                stiffness: 200,
-                damping: 20,
-                mass: 1
+                stiffness: 450,
+                damping: 28,
             }
         }
     };

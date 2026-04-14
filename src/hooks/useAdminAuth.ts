@@ -115,8 +115,10 @@ export function useAdminAuth() {
     useEffect(() => {
         // Handle explicit logout param in URL
         if (typeof window !== 'undefined' && window.location.search.includes('logged_out=true')) {
-            setIsAdmin(false);
-            setCsrfToken('');
+            setTimeout(() => {
+                setIsAdmin(false);
+                setCsrfToken('');
+            }, 0);
         }
 
         // Initial auth check

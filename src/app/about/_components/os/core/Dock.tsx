@@ -16,6 +16,8 @@ interface DockItemProps {
     shouldBounceExternal?: boolean;
     isMobile?: boolean;
     popoverContent?: React.ReactNode;
+    onPopoverToggle?: (isOpen: boolean) => void;
+    anyPopoverOpen?: boolean;
 }
 
 function DockItem({ 
@@ -26,7 +28,9 @@ function DockItem({
     mouseX, 
     shouldBounceExternal = false, 
     isMobile = false,
-    popoverContent
+    popoverContent,
+    onPopoverToggle,
+    anyPopoverOpen = false
 }: DockItemProps) {
     const ref = useRef<HTMLDivElement>(null);
     const { playPop } = useSystemSound();
@@ -42,8 +46,8 @@ function DockItem({
     const scaleSync = useTransform(distance, [-100, 0, 100], [1, hoverScaleMultiplier, 1]);
     const springScale = useSpring(scaleSync, { mass: 0.1, stiffness: 250, damping: 20 });
 
-    const width = useTransform(springScale, (s) => s * baseWidth);
-    const height = useTransform(springScale, (s) => s * baseWidth);
+    const width = useTransform(springScale, (s) => anyPopoverOpen ? baseWidth : s * baseWidth);
+    const height = useTransform(springScale, (s) => anyPopoverOpen ? baseWidth : s * baseWidth);
 
     const [bounceKey, setBounceKey] = React.useState(0);
     const [isBouncing, setIsBouncing] = React.useState(false);
@@ -59,7 +63,9 @@ function DockItem({
     const handleClick = (e: React.MouseEvent) => {
         if (popoverContent) {
             e.stopPropagation();
-            setIsPopoverOpen(!isPopoverOpen);
+            const nextState = !isPopoverOpen;
+            setIsPopoverOpen(nextState);
+            onPopoverToggle?.(nextState);
             return;
         }
         triggerAction();
@@ -74,10 +80,13 @@ function DockItem({
     // Close popover when clicking outside
     React.useEffect(() => {
         if (!isPopoverOpen) return;
-        const handleClickOutside = () => setIsPopoverOpen(false);
+        const handleClickOutside = () => {
+            setIsPopoverOpen(false);
+            onPopoverToggle?.(false);
+        };
         window.addEventListener('click', handleClickOutside);
         return () => window.removeEventListener('click', handleClickOutside);
-    }, [isPopoverOpen]);
+    }, [isPopoverOpen, onPopoverToggle]);
 
     const activeBounce = isBouncing || shouldBounceExternal;
 
@@ -146,13 +155,13 @@ function DockItem({
                         animate={{ opacity: 1, y: -20, scale: 1, x: "-50%" }}
                         exit={{ opacity: 0, y: 10, scale: 0.8, x: "-50%" }}
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                        className="absolute bottom-full left-1/2 mb-4 bg-white/80 backdrop-blur-xl border border-white/40 rounded-2xl shadow-2xl z-[100000] ring-1 ring-black/5"
+                        className="absolute bottom-full left-1/2 mb-4 bg-zinc-100 border border-white/40 rounded-2xl z-[100000] ring-1 ring-black/5"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {React.cloneElement(popoverContent as React.ReactElement, { 
                             onSelect: () => setIsPopoverOpen(false) 
                         })}
-                        <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-white/80 border-r border-b border-white/40 rotate-45" />
+                        <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-zinc-100 border-r border-b border-white/40 rotate-45" />
                     </m.div>
                 )}
             </AnimatePresence>
@@ -184,6 +193,18 @@ interface DockProps {
 export default function Dock({ items, bouncingId, config, isMobile = false }: DockProps) {
     const mouseX = useMotionValue(Infinity);
     const [isMounted, setIsMounted] = useState(false);
+    const [activePopoverId, setActivePopoverId] = useState<string | null>(null);
+
+    const handlePopoverToggle = useCallback((id: string, isOpen: boolean) => {
+        if (isOpen) {
+            setActivePopoverId(id);
+            mouseX.set(Infinity); // Reset magnification when opening
+        } else if (activePopoverId === id) {
+            setActivePopoverId(null);
+        }
+    }, [activePopoverId, mouseX]);
+
+    const anyPopoverOpen = activePopoverId !== null;
 
     // Scroll Awareness for Reactive Shimmer
     const { scrollY } = useScroll();
@@ -238,8 +259,8 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                     {!isMobile && (
                         <div
                             className="fixed bottom-0 left-1/2 h-28 z-[99999] -translate-x-1/2 cursor-default"
-                            style={{ width: hoverCaptureWidth, pointerEvents: 'auto', background: 'transparent' }}
-                            onMouseMove={(e) => mouseX.set(e.clientX)}
+                            style={{ width: hoverCaptureWidth, pointerEvents: anyPopoverOpen ? 'none' : 'auto', background: 'transparent' }}
+                            onMouseMove={(e) => !anyPopoverOpen && mouseX.set(e.clientX)}
                             onMouseLeave={() => mouseX.set(Infinity)}
                             aria-hidden="true"
                         />
@@ -249,7 +270,7 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                         role="toolbar"
                         aria-label="Application dock"
                         aria-orientation="horizontal"
-                        onMouseMove={(e) => !isMobile && mouseX.set(e.clientX)}
+                        onMouseMove={(e) => !isMobile && !anyPopoverOpen && mouseX.set(e.clientX)}
                         onMouseLeave={() => !isMobile && mouseX.set(Infinity)}
                         style={{ transform: 'translateZ(0)', willChange: 'transform' }}
                     >
@@ -298,6 +319,8 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                                     mouseX={mouseX}
                                     isOpen={item.isOpen}
                                     popoverContent={item.popoverContent}
+                                    onPopoverToggle={(isOpen) => handlePopoverToggle(item.id, isOpen)}
+                                    anyPopoverOpen={anyPopoverOpen}
                                     shouldBounceExternal={bouncingId === item.id}
                                     isMobile={isMobile}
                                 />

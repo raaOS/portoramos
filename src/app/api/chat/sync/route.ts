@@ -27,10 +27,9 @@ export async function GET(request: NextRequest) {
 
     } catch (error: unknown) {
         console.error('[Web Chat Sync Error]:', error);
-        const errMsg = error instanceof Error ? error.message : String(error);
+        // Log full error server-side only - do not expose to client
         return NextResponse.json({
-            error: 'Failed to sync messages',
-            details: errMsg
+            error: 'Failed to sync messages'
         }, { status: 500 });
     }
 }

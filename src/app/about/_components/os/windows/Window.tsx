@@ -7,7 +7,7 @@ import { useWindowResize } from "../hooks/useWindowResize";
 import { useWindowKeyboard } from "../hooks/useWindowKeyboard";
 import { WindowTitleBar } from "./components/WindowTitleBar";
 import { WindowResizeHandles } from "./components/WindowResizeHandles";
-import { getTransformOrigin, resolveDockTarget } from "../utils/windowMotion";
+import { resolveDockTarget } from "../utils/windowMotion";
 
 interface WindowProps {
     id: string;
@@ -123,51 +123,33 @@ export default function OSWindow({
         }
         : { x: activeFrame.x, y: activeFrame.y };
 
-    const transformOrigin = getTransformOrigin(
-        activeFrame,
-        dockTarget,
-        isMaximized ? "50% 20px" : "50% 26px"
-    );
+    const transformOrigin = isMaximized ? "50% 50%" : "50% 50%";
 
     const shellStyle = {
         backgroundColor: isMaximized ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.80)",
-        boxShadow: isMaximized
-            ? "0 20px 46px rgba(15, 23, 42, 0.20), 0 4px 18px rgba(15, 23, 42, 0.10)"
-            : "0 26px 60px rgba(15, 23, 42, 0.24), 0 8px 24px rgba(15, 23, 42, 0.12)",
         filter: "blur(0px) saturate(1)",
     } as const;
 
     const minimizedStyle = {
         backgroundColor: "rgba(255,255,255,0.62)",
-        boxShadow: "0 10px 24px rgba(15, 23, 42, 0.14)",
         filter: "blur(10px) saturate(0.9)",
     } as const;
 
-    const entryState = dockTarget
-        ? {
-            x: dockTopLeft.x,
-            y: dockTopLeft.y,
-            scale: dockScale * 0.9,
-            opacity: 0,
-            borderRadius: 24,
-            ...minimizedStyle,
-        }
-        : {
-            x: activeFrame.x,
-            y: activeFrame.y + 18,
-            scale: 0.94,
-            opacity: 0,
-            borderRadius: 24,
-            backgroundColor: "rgba(255,255,255,0.70)",
-            boxShadow: "0 12px 32px rgba(15, 23, 42, 0.10)",
-            filter: "blur(10px) saturate(0.92)",
-        };
+    const entryState = {
+        x: activeFrame.x,
+        y: activeFrame.y,
+        scale: 0.8,
+        opacity: 0,
+        borderRadius: 24,
+        backgroundColor: "rgba(255,255,255,0.70)",
+        filter: "blur(4px) saturate(0.92)",
+    };
 
     const minimizedState = {
-        x: dockTopLeft.x,
-        y: dockTopLeft.y,
-        scale: dockScale,
-        opacity: 0.04,
+        x: activeFrame.x,
+        y: activeFrame.y,
+        scale: 0.8,
+        opacity: 0,
         borderRadius: 26,
         ...minimizedStyle,
     };
@@ -184,58 +166,39 @@ export default function OSWindow({
     };
 
     const standardTransition = {
-        x: { type: "spring", stiffness: 280, damping: 30, mass: 0.92 },
-        y: { type: "spring", stiffness: 280, damping: 30, mass: 0.92 },
-        scale: { type: "spring", stiffness: 260, damping: 28, mass: 0.88 },
-        width: { type: "spring", stiffness: 240, damping: 30, mass: 0.96 },
-        height: { type: "spring", stiffness: 240, damping: 30, mass: 0.96 },
-        opacity: { duration: 0.22, ease: [0.32, 0.72, 0, 1] },
-        borderRadius: { duration: 0.26, ease: [0.32, 0.72, 0, 1] },
-        boxShadow: { duration: 0.3, ease: [0.32, 0.72, 0, 1] },
-        filter: { duration: 0.24, ease: [0.32, 0.72, 0, 1] },
-        backgroundColor: { duration: 0.24, ease: [0.32, 0.72, 0, 1] },
+        x: { type: "spring", stiffness: 450, damping: 28, mass: 1 },
+        y: { type: "spring", stiffness: 450, damping: 28, mass: 1 },
+        scale: { type: "spring", stiffness: 500, damping: 22, mass: 0.85 },
+        width: { type: "spring", stiffness: 350, damping: 30, mass: 1 },
+        height: { type: "spring", stiffness: 350, damping: 30, mass: 1 },
+        opacity: { duration: 0.20, ease: "easeOut" },
+        borderRadius: { duration: 0.22, ease: "easeOut" },
+        filter: { duration: 0.22, ease: "easeOut" },
+        backgroundColor: { duration: 0.22, ease: "easeOut" },
     } as const;
 
     const minimizeTransition = {
-        x: { type: "spring", stiffness: 340, damping: 34, mass: 0.82 },
-        y: { type: "spring", stiffness: 340, damping: 34, mass: 0.82 },
-        scale: { type: "spring", stiffness: 300, damping: 28, mass: 0.78 },
-        opacity: { duration: 0.18, ease: [0.4, 0, 1, 1] },
-        borderRadius: { duration: 0.2, ease: [0.4, 0, 1, 1] },
-        boxShadow: { duration: 0.2, ease: [0.4, 0, 1, 1] },
-        filter: { duration: 0.2, ease: [0.4, 0, 1, 1] },
-        backgroundColor: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+        x: { type: "spring", stiffness: 450, damping: 30, mass: 1 },
+        y: { type: "spring", stiffness: 450, damping: 30, mass: 1 },
+        scale: { type: "spring", stiffness: 500, damping: 24, mass: 0.8 },
+        opacity: { duration: 0.18, ease: "easeInOut" },
+        borderRadius: { duration: 0.2, ease: "easeInOut" },
+        filter: { duration: 0.2, ease: "easeInOut" },
+        backgroundColor: { duration: 0.2, ease: "easeInOut" },
     } as const;
 
-    const exitState = dockTarget
-        ? {
-            x: dockTopLeft.x,
-            y: dockTopLeft.y,
-            scale: dockScale * 0.82,
-            opacity: 0,
-            borderRadius: 28,
-            ...minimizedStyle,
-            transition: minimizeTransition,
-        }
-        : {
-            x: activeFrame.x,
-            y: activeFrame.y + 12,
-            scale: 0.92,
-            opacity: 0,
-            borderRadius: 26,
-            backgroundColor: "rgba(255,255,255,0.66)",
-            boxShadow: "0 10px 24px rgba(15, 23, 42, 0.10)",
-            filter: "blur(8px) saturate(0.92)",
-            transition: {
-                opacity: { duration: 0.18, ease: [0.4, 0, 1, 1] },
-                scale: { duration: 0.2, ease: [0.4, 0, 1, 1] },
-                y: { duration: 0.2, ease: [0.4, 0, 1, 1] },
-                borderRadius: { duration: 0.2, ease: [0.4, 0, 1, 1] },
-                boxShadow: { duration: 0.2, ease: [0.4, 0, 1, 1] },
-                filter: { duration: 0.2, ease: [0.4, 0, 1, 1] },
-                backgroundColor: { duration: 0.2, ease: [0.4, 0, 1, 1] },
-            },
-        };
+    const exitState = {
+        scale: 0.85,
+        opacity: 0,
+        borderRadius: 26,
+        backgroundColor: "rgba(255,255,255,0.66)",
+        filter: "blur(4px) saturate(0.92)",
+        transition: {
+            opacity: { duration: 0.12 },
+            scale: { type: "spring", stiffness: 450, damping: 30 },
+            filter: { duration: 0.12 },
+        },
+    };
 
     return (
         <AnimatePresence>
@@ -280,9 +243,11 @@ export default function OSWindow({
                         left: 0,
                         transformOrigin,
                         pointerEvents: isMinimized ? "none" : "auto",
+                        backdropFilter: isMinimized ? "none" : (isFocused ? "blur(24px) saturate(1.2)" : "blur(12px) saturate(1)"),
+                        transition: "backdrop-filter 0.3s ease",
                     }}
                     data-lenis-prevent
-                    className="flex flex-col overflow-hidden border border-white/45 will-change-transform rounded-[18px] outline-none backdrop-blur-xl"
+                    className="flex flex-col overflow-hidden border border-white/45 will-change-transform rounded-[18px] outline-none"
                 >
                     {/* Title Bar */}
                     <WindowTitleBar
@@ -295,6 +260,7 @@ export default function OSWindow({
                         onMaximize={onMaximize}
                         onTogglePin={onTogglePin}
                         onDragStart={(e) => dragControls.start(e)}
+                        onFocus={onFocus}
                     />
 
                     {/* Window Content */}

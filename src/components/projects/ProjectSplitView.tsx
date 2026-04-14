@@ -20,12 +20,12 @@ const sharedFeatures = domAnimation
 const ProjectListItem = memo(function ProjectListItem({
   project,
   isActive,
-  onClick,
+  onSelect,
   index
 }: {
   project: Project
   isActive: boolean
-  onClick: () => void
+  onSelect: (project: Project) => void
   index: number
 }) {
   return (
@@ -33,7 +33,7 @@ const ProjectListItem = memo(function ProjectListItem({
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.6) }}
-      onClick={onClick}
+      onClick={() => onSelect(project)}
       className={`group flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all ${
         isActive ? 'bg-gray-100 ring-1 ring-gray-200' : 'hover:bg-gray-50'
       }`}
@@ -219,8 +219,13 @@ export default function ProjectSplitView({ projects, tag: _tag }: ProjectSplitVi
   const activeProjectRef = useRef(activeProject)
 
   // Keep refs in sync
-  projectsRef.current = projects
-  activeProjectRef.current = activeProject
+  useEffect(() => {
+    projectsRef.current = projects;
+  }, [projects]);
+
+  useEffect(() => {
+    activeProjectRef.current = activeProject;
+  }, [activeProject]);
 
   // Debounced resize handler
   useEffect(() => {
@@ -244,7 +249,11 @@ export default function ProjectSplitView({ projects, tag: _tag }: ProjectSplitVi
     if (projects.length === 0) return
     const current = activeProjectRef.current
     const exists = current && projects.some(p => p.id === current.id)
-    if (!exists) setActiveProject(projects[0])
+    if (!exists) {
+      setTimeout(() => {
+        setActiveProject(projects[0])
+      }, 0)
+    }
   }, [projects])
 
   const handleProjectClick = useCallback((project: Project) => {
@@ -296,7 +305,7 @@ export default function ProjectSplitView({ projects, tag: _tag }: ProjectSplitVi
                 <ProjectListItem
                   project={project}
                   isActive={activeProject?.id === project.id}
-                  onClick={() => handleProjectClick(project)}
+                  onSelect={handleProjectClick}
                   index={index}
                 />
               </div>

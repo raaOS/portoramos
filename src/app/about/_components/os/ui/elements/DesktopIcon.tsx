@@ -20,10 +20,10 @@ interface DesktopIconProps {
     onPositionChange?: (id: string, x: number, y: number) => void;
     onHoverStart?: (id: string) => void;
     onHoverEnd?: (id: string) => void;
-    onQuickLook?: (id: string) => void;
+
 }
 
-export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false, isMobile = false, onPositionChange, onHoverStart, onHoverEnd, onQuickLook }: DesktopIconProps) {
+export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onClick, x = 0, y = 0, size = "medium", aspectRatio = 1, children, priority = false, isMobile = false, onPositionChange, onHoverStart, onHoverEnd }: DesktopIconProps) {
     const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
     const [failedVideoUrl, setFailedVideoUrl] = useState<string | null>(null);
     const [hovering, setHovering] = useState(false);
@@ -143,7 +143,7 @@ export default function DesktopIcon({ id, label, icon, imageUrl, videoUrl, onCli
                         minWidth: baseHeight * aspectRatio,
                         minHeight: baseHeight,
                     }}
-                    className={`relative border-2 border-white/40 group-hover:border-white/60 transition-colors bg-white/20 overflow-hidden rounded-none shadow-sm`}
+                    className={`relative border-2 border-white/40 group-hover:border-white/60 transition-colors bg-white/20 overflow-hidden rounded-none`}
                 >
                     {/* Always render Image as base layer if available and not error */}
                     {imageUrl && !imageError && (

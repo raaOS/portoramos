@@ -19,9 +19,9 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(leadsArray);
     } catch (error) {
         console.error('Error fetching leads:', error instanceof Error ? error.message : error);
+        // Log full error server-side only - do not expose to client
         return NextResponse.json({
-            error: 'Failed to fetch leads',
-            details: error instanceof Error ? error.message : 'Unknown error'
+            error: 'Failed to fetch leads'
         }, { status: 500 });
     }
 }

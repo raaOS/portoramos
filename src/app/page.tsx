@@ -12,13 +12,13 @@ export default async function Home() {
   const cookieStore = await cookies();
   const headerStore = await headers();
   
-  const hasBootedCookie = cookieStore.get('ramos_os_booted')?.value === 'true';
   const referer = headerStore.get('referer');
   const host = headerStore.get('host');
   
-  // Skip boot if cookie exists OR if navigating from our own site (internal link)
+  // Skip boot only if navigating from our own site (internal link)
+  // This allows new tabs (no referer) to show the boot animation
   const isInternalNavigation = !!(referer && host && referer.includes(host));
-  const hasBooted = !!(hasBootedCookie || isInternalNavigation);
+  const hasBooted = isInternalNavigation;
 
   // Parallel data fetching for faster TTFB
   const [aboutData, experienceData, hardSkillsData, allProjects] = await Promise.all([

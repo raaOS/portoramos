@@ -83,8 +83,8 @@ body {
 
 /* Focus Visible - WCAG 2.1 AA */
 :focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
+  outline: 1px solid var(--focus-ring);
+  outline-offset: 0px;
 }
 
 /* Skip Link */
@@ -367,4 +367,13 @@ body.os-mode-active {
     top: 0 !important;
     left: 0 !important;
     overscroll-behavior: none !important;
+}
+
+/* Remove all shadows globally in OS mode (Global Kill-Switch) */
+.os-mode-active *,
+.os-mode-active *::before,
+.os-mode-active *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: drop-shadow(none) !important;
 }

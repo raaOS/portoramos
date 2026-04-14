@@ -4,10 +4,9 @@ import { Wifi, Bluetooth, Airplay, Moon, Sun, Volume2 } from 'lucide-react';
 
 interface ControlCenterProps {
     isOpen: boolean;
-    onClose: () => void;
 }
 
-export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
+export default function ControlCenter({ isOpen }: ControlCenterProps) {
     const [wifiState, setWifiState] = useState(true);
     const [bluetoothState, setBluetoothState] = useState(true);
     const [airdropState, setAirdropState] = useState(false);
@@ -19,16 +18,17 @@ export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 0.95, y: -10, filter: 'blur(10px)' }}
-            transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-            className="fixed top-12 right-2 sm:right-4 w-[320px] rounded-2xl bg-white/70 dark:bg-black/70 backdrop-blur-3xl shadow-2xl border border-white/20 dark:border-white/10 p-4 z-[10001] text-black dark:text-white"
+            initial={{ opacity: 0, scale: 0.8, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, scale: 0.8, filter: 'blur(10px)' }}
+            transition={{ type: "spring", stiffness: 450, damping: 26, mass: 1 }}
+            style={{ transformOrigin: "center center" }}
+            className="fixed top-12 right-2 sm:right-4 w-[320px] rounded-2xl bg-white/70 dark:bg-black/70 backdrop-blur-3xl border border-white/20 dark:border-white/10 p-4 z-[10001] text-black dark:text-white"
         >
             {/* Grid 2x2 */}
             <div className="grid grid-cols-2 gap-3 mb-3">
                 {/* Connections Block */}
-                <div className="bg-white/50 dark:bg-white/10 rounded-xl p-3 flex flex-col gap-3 shadow-sm border border-black/5 dark:border-white/5">
+                <div className="bg-white/50 dark:bg-white/10 rounded-xl p-3 flex flex-col gap-3 border border-black/5 dark:border-white/5">
                     {/* Wifi */}
                     <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setWifiState(!wifiState)}>
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${wifiState ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-300'}`}>
@@ -65,7 +65,7 @@ export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
                 <div className="flex flex-col gap-3">
                     {/* Focus/DND */}
                     <div 
-                        className={`flex-1 rounded-xl p-3 flex flex-col justify-center items-center gap-2 cursor-pointer transition-colors shadow-sm border border-black/5 dark:border-white/5 ${dndState ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300' : 'bg-white/50 dark:bg-white/10'}`}
+                        className={`flex-1 rounded-xl p-3 flex flex-col justify-center items-center gap-2 cursor-pointer transition-colors border border-black/5 dark:border-white/5 ${dndState ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300' : 'bg-white/50 dark:bg-white/10'}`}
                         onClick={() => setDndState(!dndState)}
                     >
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${dndState ? 'bg-indigo-500 text-white' : 'bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-gray-200'}`}>
@@ -79,7 +79,7 @@ export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
             {/* Sliders Area */}
             <div className="space-y-3">
                 {/* Brightness Display */}
-                <div className="bg-white/50 dark:bg-white/10 rounded-xl p-3 shadow-sm border border-black/5 dark:border-white/5 flex items-center gap-3">
+                <div className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-black/5 dark:border-white/5 flex items-center gap-3">
                     <Sun size={16} className="text-gray-500 dark:text-gray-400" />
                     <div className="h-6 flex-1 bg-white dark:bg-white/5 rounded-full overflow-hidden border border-black/10 dark:border-white/10 relative">
                         <div className="absolute top-0 left-0 bottom-0 bg-white dark:bg-white/80 transition-all duration-300" style={{ width: `${brightness}%` }}></div>
@@ -98,7 +98,7 @@ export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
                 </div>
                 
                 {/* Volume Display */}
-                <div className="bg-white/50 dark:bg-white/10 rounded-xl p-3 shadow-sm border border-black/5 dark:border-white/5 flex items-center gap-3">
+                <div className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-black/5 dark:border-white/5 flex items-center gap-3">
                     <Volume2 size={16} className="text-gray-500 dark:text-gray-400" />
                     <div className="h-6 flex-1 bg-white dark:bg-white/5 rounded-full overflow-hidden border border-black/10 dark:border-white/10 relative">
                         <div className="absolute top-0 left-0 bottom-0 bg-white dark:bg-white/80 transition-all duration-300" style={{ width: `${volume}%` }}></div>

@@ -82,41 +82,40 @@ function checkShouldSkipBoot(): boolean {
     }
 }
 
-/**
- * Update the boot cookie for server-side awareness
- */
-function updateBootCookie(value: boolean) {
-    if (typeof document === 'undefined') return;
-    
-    // Set cookie for the duration of the session
-    // Using simple document.cookie to avoid extra dependencies
-    document.cookie = `${BOOT_SESSION_KEY}=${value}; path=/; samesite=lax`;
-}
+
 
 export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
     const finalConfig = { ...DEFAULT_CONFIG, ...config };
     
-    // Use lazy initialization for state - ensures check runs once on mount
+    // Use lazy initialization for state - ensures check runs consistently on server and client
     const [needsPowerOn, setNeedsPowerOn] = useState(() => {
-        // High priority: Initial state from server (prop)
+        // High priority: Initial state from server-side determine via prop
+        // On first render (hydration), this MUST match what the server saw.
+        // Since the server doesn't have sessionStorage, it assumes boot is needed.
         if (finalConfig.initialHasBooted) {
-            console.log('[BootSequence] SKIP: Prop initialHasBooted is true');
             return false;
         }
 
-        const shouldSkip = checkShouldSkipBoot();
-        return !shouldSkip;
+        return true; 
     });
-    
+
     const [isBooting, setIsBooting] = useState(false);
 
     // Mark as booted when actual boot happens
     const markAsBooted = useCallback(() => {
         if (typeof window !== 'undefined') {
             sessionStorage.setItem(BOOT_SESSION_KEY, 'true');
-            updateBootCookie(true);
         }
     }, []);
+
+    // Client-side synchronization after hydration
+    useEffect(() => {
+        // Run skip check only once after mounting to avoid hydration mismatch
+        const shouldSkip = checkShouldSkipBoot();
+        if (shouldSkip) {
+            setNeedsPowerOn(false);
+        }
+    }, [markAsBooted]);
 
     const powerOn = useCallback(() => {
         console.log('[useBootSequence] Powering on...');
