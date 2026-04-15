@@ -7,7 +7,6 @@ import { useWindowResize } from "../hooks/useWindowResize";
 import { useWindowKeyboard } from "../hooks/useWindowKeyboard";
 import { WindowTitleBar } from "./components/WindowTitleBar";
 import { WindowResizeHandles } from "./components/WindowResizeHandles";
-import { resolveDockTarget } from "../utils/windowMotion";
 
 interface WindowProps {
     id: string;
@@ -37,7 +36,7 @@ interface WindowProps {
 }
 
 export default function OSWindow({
-    id,
+    id: _id,
     title,
     children,
     isOpen,
@@ -98,7 +97,6 @@ export default function OSWindow({
 
     const measuredWidth = dynamicSize.width || width || winWidth;
     const measuredHeight = dynamicSize.height || height || 600;
-    const dockTarget = resolveDockTarget(id);
 
     const normalFrame = useMemo(() => ({
         x: initialPosition.x,
@@ -115,13 +113,6 @@ export default function OSWindow({
     }), [viewportWidth, viewportHeight]);
 
     const activeFrame = isMaximized ? maximizedFrame : normalFrame;
-    const dockScale = isSmallScreen ? 0.24 : 0.18;
-    const dockTopLeft = dockTarget
-        ? {
-            x: dockTarget.x - activeFrame.width / 2,
-            y: dockTarget.y - activeFrame.height / 2,
-        }
-        : { x: activeFrame.x, y: activeFrame.y };
 
     const transformOrigin = isMaximized ? "50% 50%" : "50% 50%";
 

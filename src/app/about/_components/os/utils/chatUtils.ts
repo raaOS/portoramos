@@ -4,7 +4,7 @@ import { getAvatarUrl } from "@/lib/avatar";
 
 export const convertTestimonialToContact = (testimonial: Testimonial): ContactProfile => {
     // 1. Use real messages if available, otherwise generate legacy fallback
-    const conversation: ChatMessage[] = (testimonial.messages && testimonial.messages.length > 0)
+    const conversation: ChatMessage[] = (Array.isArray(testimonial.messages) && testimonial.messages.length > 0)
         ? testimonial.messages.map(m => ({
             id: m.id,
             text: m.text,
@@ -57,13 +57,15 @@ export const mergeContacts = (
 ): Record<string, ContactProfile> => {
     const newContacts = { ...mockContacts };
 
-    testimonials.forEach(t => {
-        if (t.isActive !== false) { // Only active testimonials
-            const contact = convertTestimonialToContact(t);
-            // Use name as key to match existing logic/lookup
-            newContacts[contact.name] = contact;
-        }
-    });
+    if (Array.isArray(testimonials)) {
+        testimonials.forEach(t => {
+            if (t.isActive !== false) { // Only active testimonials
+                const contact = convertTestimonialToContact(t);
+                // Use name as key to match existing logic/lookup
+                newContacts[contact.name] = contact;
+            }
+        });
+    }
 
     return newContacts;
 };

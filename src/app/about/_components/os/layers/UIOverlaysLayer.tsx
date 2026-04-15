@@ -71,8 +71,8 @@ export default function UIOverlaysLayer({
     
     // Note: Exit animation is handled by AnimatePresence when component unmounts
 
-    const isWindowOpen = (id: string) => windows.find(w => w.id === id)?.isOpen ?? false;
-    const activeWindows = windows.filter(w => w.isOpen && !w.isMinimized);
+    const isWindowOpen = (id: string) => windows?.find(w => w.id === id)?.isOpen ?? false;
+    const activeWindows = (windows || []).filter(w => w.isOpen && !w.isMinimized);
     const topWindow = activeWindows.reduce<typeof activeWindows[number] | null>((currentTop, candidate) => {
         if (!currentTop) {
             return candidate;

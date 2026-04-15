@@ -3,13 +3,12 @@ import { loadAboutData } from '@/lib/about';
 import { loadExperienceData } from '@/lib/experience';
 import { loadHardSkillsData } from '@/lib/hardSkills';
 import { allProjectsAsync } from '@/lib/projects';
-import { cookies, headers } from 'next/headers';
+import { headers } from 'next/headers';
 
 // ISR: Revalidate homepage every 60 seconds
 export const revalidate = 60;
 
 export default async function Home() {
-  const cookieStore = await cookies();
   const headerStore = await headers();
   
   const referer = headerStore.get('referer');

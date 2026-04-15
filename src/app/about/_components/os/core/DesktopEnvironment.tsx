@@ -1,6 +1,6 @@
 "use client";
 
-import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, m, LazyMotion, domMax } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -156,8 +156,6 @@ function DesktopMain({
     dynamicContacts, testimonialContacts, showSpotlight, setShowSpotlight,
     commercialProjects, projects, isAdmin, logout, csrfToken
 }: DesktopMainProps) {
-    const hasHandledAppParamRef = useRef(false);
-
     const handleGoHome = useCallback(() => {
         window.location.href = '/';
     }, []);

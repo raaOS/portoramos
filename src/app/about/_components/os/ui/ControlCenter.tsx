@@ -4,9 +4,10 @@ import { Wifi, Bluetooth, Airplay, Moon, Sun, Volume2 } from 'lucide-react';
 
 interface ControlCenterProps {
     isOpen: boolean;
+    onClose?: () => void;
 }
 
-export default function ControlCenter({ isOpen }: ControlCenterProps) {
+export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCenterProps) {
     const [wifiState, setWifiState] = useState(true);
     const [bluetoothState, setBluetoothState] = useState(true);
     const [airdropState, setAirdropState] = useState(false);

@@ -47,7 +47,7 @@ export function WindowTitleBar({
                     onDragStart(e);
                 }
             }}
-            onDoubleClick={(e) => {
+            onDoubleClick={() => {
                 if (isPinned && !isAdmin) return;
                 onMaximize?.();
             }}

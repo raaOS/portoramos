@@ -31,7 +31,7 @@ export function useDesktopIcons({
     }, []);
 
     const projectIcons = useMemo(() => {
-        if (!mounted || !commercialProjects.length || !windowSize.width) return [];
+        if (!mounted || !commercialProjects || !commercialProjects.length || !windowSize.width) return [];
 
         // Merge props prefs with local state overrides
         const mergedPreferences: DesktopPreferences = {

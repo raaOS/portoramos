@@ -9,7 +9,7 @@ export function useChatProjects() {
             try {
                 const res = await fetch('/api/projects');
                 const data = await res.json();
-                if (data.success) {
+                if (data.success && Array.isArray(data.projects)) {
                     setAllProjects(data.projects);
                 }
             } catch (err) {
@@ -20,6 +20,7 @@ export function useChatProjects() {
     }, []);
 
     const getProjectById = (id: string) => {
+        if (!Array.isArray(allProjects)) return undefined;
         return allProjects.find(p => p.id === id);
     };
 

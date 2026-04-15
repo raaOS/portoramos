@@ -145,7 +145,7 @@ export function useWindowActions({
     }, [bringToFrontZIndex, setWindows]);
 
     const updateWindowPosition = useCallback((id: string, x: number, y: number) => {
-        const win = windows.find(w => w.id === id);
+        const win = windows?.find(w => w.id === id);
         saveWindowPosition(id, { 
             x, 
             y, 
@@ -153,7 +153,7 @@ export function useWindowActions({
             height: win?.height
         }, isAdmin);
         
-        setWindows(prev => prev.map(w => {
+        setWindows(prev => prev?.map(w => {
             if (w.id === id) {
                 return { ...w, initialPosition: { x, y } };
             }
@@ -166,7 +166,7 @@ export function useWindowActions({
     }, [saveWindowPreference, isAdmin, csrfToken, windows, setWindows]);
 
     const handleWindowResize = useCallback((id: string, width: number, height: number) => {
-        setWindows(prev => prev.map(w => {
+        setWindows(prev => prev?.map(w => {
             if (w.id === id) {
                 return { ...w, width, height };
             }
@@ -182,11 +182,11 @@ export function useWindowActions({
     }, [saveWindowPreference, isAdmin, csrfToken]);
 
     const togglePin = useCallback((id: string) => {
-        const targetWindow = windows.find(w => w.id === id);
+        const targetWindow = windows?.find(w => w.id === id);
         if (!targetWindow) return;
 
         const nextPinned = !targetWindow.isPinned;
-        setWindows(prev => prev.map(w => (
+        setWindows(prev => prev?.map(w => (
             w.id === id ? { ...w, isPinned: nextPinned } : w
         )));
 

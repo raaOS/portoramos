@@ -81,7 +81,7 @@ export default function ChatWindow({ activeChatId = null, customContacts }: Chat
     }, [setVisibleMessages]);
 
     const findContactByChatId = useCallback((chatId: string) => {
-        return contacts.find((contact) => contact.id === chatId || contact.name === chatId) || null;
+        return contacts?.find?.((contact) => contact.id === chatId || contact.name === chatId) || null;
     }, [contacts]);
 
     const getLastMessage = (contact: ContactProfile) => {

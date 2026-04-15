@@ -41,7 +41,8 @@ export const generateDesktopIcons = (
     // but we use item IDs to consistently pick a slot.
     availableSlots.sort((a, b) => a.y - b.y || a.x - b.x);
 
-    let visibleProjects = commercialProjects.filter((p) => p.status !== "draft");
+    const safeProjects = Array.isArray(commercialProjects) ? commercialProjects : [];
+    let visibleProjects = safeProjects.filter((p) => p.status !== "draft");
 
     if (desktopPreferences?.maxIcons) {
         visibleProjects = visibleProjects.slice(0, desktopPreferences.maxIcons);
@@ -60,7 +61,7 @@ export const generateDesktopIcons = (
     ];
 
     const generatedIcons = (desktopItems as DesktopItem[]).map((item, index: number) => {
-        const itemId = item.id;
+        const itemId = item?.id || `icon-${index}`;
         // 1. Check if we have a saved position for this ID (Admin Saved)
         const savedPos = desktopPreferences?.iconPositions?.[itemId];
 
@@ -125,7 +126,7 @@ export const generateDesktopIcons = (
         if (isVideo(project.cover)) {
             videoUrl = project.cover;
         } else if (project.galleryItems?.some((i: { kind: string; src: string }) => i.kind === "video")) {
-            videoUrl = project.galleryItems.find((i: { kind: string; src: string }) => i.kind === "video")?.src;
+            videoUrl = project.galleryItems?.find((i: { kind: string; src: string }) => i.kind === "video")?.src;
         }
 
         // Calculate aspect ratio from project dimensions, default to 16:9 for videos or 4:5 for others

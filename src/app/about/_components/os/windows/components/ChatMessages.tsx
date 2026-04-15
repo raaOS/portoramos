@@ -10,6 +10,26 @@ interface ChatMessagesProps {
     getProjectById: (id: string) => Project | undefined;
 }
 
+const ChatMediaPreview: React.FC<{ src: string; alt?: string; className?: string }> = ({ src, alt, className }) => {
+    const isVideo = src.toLowerCase().endsWith('.mp4') || src.toLowerCase().endsWith('.webm');
+
+    if (isVideo) {
+        return (
+            <video
+                src={src}
+                className={className}
+                autoPlay
+                muted
+                loop
+                playsInline
+                disablePictureInPicture
+            />
+        );
+    }
+
+    return <img src={src} alt={alt} className={className} loading="lazy" />;
+};
+
 export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isTyping, getProjectById }) => {
     return (
         <div className="flex-1 w-full overflow-y-auto px-4 py-4 flex flex-col gap-2 relative bg-[#e5ddd5] dark:bg-[#0b141a]">
@@ -32,8 +52,13 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isTyping, 
 
             <div className="flex flex-col gap-2 z-10 w-full">
                 <AnimatePresence initial={false}>
-                    {messages.map((msg) => {
-                        const project = msg.projectId ? getProjectById(msg.projectId) : null;
+                    {Array.isArray(messages) && messages.map((msg) => {
+                        const project = (msg.projectId && typeof getProjectById === 'function') 
+                            ? getProjectById(msg.projectId) 
+                            : null;
+                        
+                        // Fallback source for media if project is missing or as a primary source
+                        const mediaSrc = project?.cover || msg.imageSrc;
                         return (
                             <m.div
                                 key={msg.id}
@@ -54,28 +79,44 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isTyping, 
                                     </svg>
 
                                     {/* Message Content */}
-                                    {msg.type === 'project' && project && (
+                                    {(msg.type === 'project' || (msg.type === 'image' && msg.projectId)) && (
                                         <m.div
                                             whileHover={{ scale: 1.02 }}
                                             className="mb-2 bg-black/5 dark:bg-white/5 rounded-xl p-1.5 overflow-hidden border border-black/5 cursor-pointer block no-underline group/card"
                                         >
                                             <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-gray-100">
-                                                <img
-                                                    src={project.cover}
-                                                    alt={project.title}
-                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
-                                                />
+                                                {mediaSrc ? (
+                                                    <ChatMediaPreview
+                                                        src={mediaSrc}
+                                                        alt={project?.title || 'Project Preview'}
+                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-800">
+                                                        <span className="text-[10px] text-gray-400 uppercase font-bold">No Preview</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="p-2">
-                                                <h4 className="text-[12px] font-bold text-[#111b21] dark:text-white leading-tight uppercase line-clamp-1">{project.title}</h4>
-                                                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{project.description}</p>
-                                            </div>
+                                            {(project || msg.text) && (
+                                                <div className="p-2">
+                                                    <h4 className="text-[12px] font-bold text-[#111b21] dark:text-white leading-tight uppercase line-clamp-1">
+                                                        {project?.title || 'Project Preview'}
+                                                    </h4>
+                                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                                                        {project?.description || 'Click to view project details'}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </m.div>
                                     )}
 
-                                    {msg.type === 'image' && msg.imageSrc && (
+                                    {msg.type === 'image' && !msg.projectId && msg.imageSrc && (
                                         <div className="mb-2 rounded-xl overflow-hidden bg-gray-100 border border-black/5 aspect-[4/3] w-full max-w-[240px]">
-                                            <img src={msg.imageSrc} alt="Sent image" className="w-full h-full object-cover" />
+                                            <ChatMediaPreview 
+                                                src={msg.imageSrc} 
+                                                alt="Sent image" 
+                                                className="w-full h-full object-cover" 
+                                            />
                                         </div>
                                     )}
 
