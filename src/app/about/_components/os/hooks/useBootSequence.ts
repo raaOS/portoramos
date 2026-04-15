@@ -125,7 +125,11 @@ export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
         // Run skip check only once after mounting to avoid hydration mismatch
         const shouldSkip = checkShouldSkipBoot();
         if (shouldSkip) {
-            setNeedsPowerOn(false);
+            import('react').then(({ startTransition }) => {
+                startTransition(() => {
+                    setNeedsPowerOn(false);
+                });
+            });
         }
     }, [markAsBooted]);
 
