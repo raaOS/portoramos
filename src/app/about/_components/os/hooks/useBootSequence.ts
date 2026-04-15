@@ -97,10 +97,14 @@ export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
     // Use lazy initialization for state - ensures check runs consistently on server and client
     const [needsPowerOn, setNeedsPowerOn] = useState(() => {
         // High priority: Initial state from server-side determine via prop
-        // On first render (hydration), this MUST match what the server saw.
-        // Since the server doesn't have sessionStorage, it assumes boot is needed.
         if (finalConfig.initialHasBooted) {
             return false;
+        }
+
+        // Mid priority: Check if head script already detected and set the attribute
+        if (typeof document !== 'undefined') {
+            const isBooted = document.documentElement.getAttribute('data-os-booted') === 'true';
+            if (isBooted) return false;
         }
 
         return true; 

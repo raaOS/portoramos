@@ -101,9 +101,19 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
     const handleBootComplete = useCallback(() => {
         if (aboutData?.soundConfig) soundManager.loadConfig(aboutData.soundConfig);
         soundManager.suppressSound('window-open', 1500);
+        soundManager.suppressSound('notification', 1000); // Also suppress late notifications
         startTransition(() => setIsRevealed(true));
         finishBooting();
     }, [aboutData, finishBooting]);
+
+    // Handle initial sound suppression if boot is skipped
+    useEffect(() => {
+        if (!needsPowerOn && !isBooting) {
+            // Apply a short suppression period to prevent "audio explosion" on refresh
+            soundManager.suppressSound('window-open', 800);
+            soundManager.suppressSound('notification', 800);
+        }
+    }, [needsPowerOn, isBooting]);
 
     if (!mounted) {
         return <DesktopSkeleton isBooting={needsPowerOn} wallpaperUrl={aboutData?.wallpaperConfig?.collection?.find(w => w.id === aboutData.wallpaperConfig?.activeWallpaperId)?.url} />;
@@ -167,26 +177,31 @@ function DesktopMain({
     const { projectIcons } = useDesktopIcons({ mounted: true, commercialProjects, aboutData, handleGoHome, iconPositions });
 
     useEffect(() => {
-        if (hasHandledAppParamRef.current) return;
         if (typeof window === 'undefined') return;
 
-        const params = new URLSearchParams(window.location.search);
-        const rawApp = params.get('app');
-        if (!rawApp) {
-            hasHandledAppParamRef.current = true;
-            return;
-        }
+        const handleUrlParams = () => {
+            const params = new URLSearchParams(window.location.search);
+            const rawApp = params.get('app');
+            if (!rawApp) return;
 
-        const app = rawApp === 'mail' ? 'contact' : rawApp;
-        if (app === 'whatsapp') {
-            openWhatsAppList();
-        } else {
-            openWindow(app);
-        }
+            const app = rawApp === 'mail' ? 'contact' : rawApp;
+            if (app === 'whatsapp') {
+                openWhatsAppList();
+            } else {
+                openWindow(app);
+            }
 
-        const nextUrl = `${window.location.pathname}${window.location.hash}`;
-        window.history.replaceState({}, '', nextUrl);
-        hasHandledAppParamRef.current = true;
+            // Cleanup URL after handling
+            const nextUrl = window.location.pathname + window.location.hash;
+            window.history.replaceState({}, '', nextUrl);
+        };
+
+        // Run on mount
+        handleUrlParams();
+
+        // Optional: Listen for popstate if we want to handle back/forward with params
+        window.addEventListener('popstate', handleUrlParams);
+        return () => window.removeEventListener('popstate', handleUrlParams);
     }, [openWindow, openWhatsAppList]);
 
     const wasBootSkipped = !needsPowerOn && !isBooting;
