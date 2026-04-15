@@ -13,6 +13,7 @@ export function useAdminSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [manualExpandedMenus, setManualExpandedMenus] = useState<Record<string, boolean>>({
     '/admin/projects-group': false,
     '/admin/about-group': true,
@@ -64,6 +65,8 @@ export function useAdminSidebar() {
   return {
     isMobileMenuOpen,
     setIsMobileMenuOpen,
+    sidebarCollapsed,
+    setSidebarCollapsed,
     expandedMenus,
     toggleMenu,
     isActive

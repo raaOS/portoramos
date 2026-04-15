@@ -27,12 +27,14 @@ function AdminLayoutContent({
   titleAccent = 'bg-blue-50 text-blue-700'
 }: AdminLayoutProps) {
   const { logout } = useAdminAuth();
-  const { 
-    isMobileMenuOpen, 
-    setIsMobileMenuOpen, 
-    expandedMenus, 
-    toggleMenu, 
-    isActive 
+  const {
+    isMobileMenuOpen,
+    setIsMobileMenuOpen,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+    expandedMenus,
+    toggleMenu,
+    isActive
   } = useAdminSidebar();
 
   const handleLogout = async () => {
@@ -58,9 +60,11 @@ function AdminLayoutContent({
       )}
 
       {/* Sidebar Navigation */}
-      <AdminSidebar 
+      <AdminSidebar
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
+        sidebarCollapsed={sidebarCollapsed}
+        setSidebarCollapsed={setSidebarCollapsed}
         expandedMenus={expandedMenus}
         toggleMenu={toggleMenu}
         isActive={isActive}
@@ -68,7 +72,10 @@ function AdminLayoutContent({
       />
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 min-h-screen pt-16 md:pt-0 bg-gray-50 flex flex-col">
+      <main
+        onClick={() => !sidebarCollapsed && setSidebarCollapsed(true)}
+        className={`flex-1 min-h-screen pt-16 md:pt-0 bg-gray-50 flex flex-col cursor-pointer transition-[margin] duration-300 ease-in-out ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}
+      >
         <AdminHeader 
           title={title}
           titleIcon={titleIcon}
