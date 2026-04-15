@@ -21,7 +21,24 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
         if (sequencerRef.current) clearTimeout(sequencerRef.current);
 
         let currentIndex = 0;
-        const fullConversation = activeContact.messages || activeContact.conversation || [];
+        const fullConversation = (activeContact?.messages?.length ? activeContact.messages : null)
+            || (activeContact?.conversation?.length ? activeContact.conversation : null)
+            || [];
+
+        // Handle empty conversation - show placeholder after brief delay
+        if (fullConversation.length === 0) {
+            sequencerRef.current = setTimeout(() => {
+                setVisibleMessages([{
+                    id: Date.now(),
+                    text: "Belum ada pesan. Mulai percakapan dengan mengirim pesan!",
+                    isMe: false,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    status: 'sent' as const,
+                    type: 'text'
+                }]);
+            }, 500);
+            return;
+        }
 
         const nextStep = () => {
             if (currentIndex >= fullConversation.length) return;
@@ -34,7 +51,7 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
                     setIsRemoteTyping(false);
                     setVisibleMessages(prev => {
                         // Avoid duplicates if component re-renders
-                        if (prev.find(m => m.id === msg.id)) return prev;
+                        if (prev?.find?.(m => m.id === msg.id)) return prev;
                         return [...prev, msg];
                     });
                     soundManager.play('notification');
@@ -43,11 +60,11 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
                 }, 2000);
             } else {
                 setVisibleMessages(prev => {
-                    if (prev.find(m => m.id === msg.id)) return prev;
+                    if (prev?.find?.(m => m.id === msg.id)) return prev;
                     return [...prev, msg];
                 });
                 currentIndex++;
-                const delay = msg.type === 'image' ? 2500 : 1000;
+                const delay = (msg.type === 'image' || msg.type === 'project') ? 2500 : 1000;
                 sequencerRef.current = setTimeout(nextStep, delay);
             }
         };
