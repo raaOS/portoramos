@@ -27,7 +27,14 @@ function checkShouldSkipBoot(): boolean {
     if (typeof window === 'undefined') return false;
 
     try {
-        // 1. Check sessionStorage - already booted in this session?
+        // 1. Check DOM attribute (set by blocking head script in layout.tsx)
+        const html = document.documentElement;
+        if (html.getAttribute('data-os-booted') === 'true') {
+            console.log('[BootSequence] SKIP: Detected data-os-booted="true" on <html> (Head Script Path)');
+            return true;
+        }
+
+        // 2. Check sessionStorage - already booted in this session?
         const hasBooted = sessionStorage.getItem(BOOT_SESSION_KEY);
         if (hasBooted === 'true') {
             console.log('[BootSequence] SKIP: Already booted in this session (sessionStorage)');
@@ -105,6 +112,7 @@ export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
     const markAsBooted = useCallback(() => {
         if (typeof window !== 'undefined') {
             sessionStorage.setItem(BOOT_SESSION_KEY, 'true');
+            document.documentElement.setAttribute('data-os-booted', 'true');
         }
     }, []);
 

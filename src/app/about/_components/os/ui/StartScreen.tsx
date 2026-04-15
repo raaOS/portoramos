@@ -126,6 +126,7 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
 
     return (
         <m.div
+            id="start-screen"
             data-testid="os-start-screen"
             data-boot-state={screenState}
             className="fixed inset-0 z-[10000] h-full w-full overflow-hidden select-none print:hidden"

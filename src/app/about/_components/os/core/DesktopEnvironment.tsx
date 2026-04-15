@@ -208,7 +208,7 @@ function DesktopMain({
                         </AnimatePresence>
                     )}
                     <m.div
-                        className="relative w-full h-full overflow-hidden select-none"
+                        className="desktop-main-container relative w-full h-full overflow-hidden select-none"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: isDesktopReady ? 1 : 0 }}
                         transition={{ duration: wasBootSkipped ? 0.4 : 0.2, ease: wasBootSkipped ? [0.32, 0.72, 0, 1] : "easeOut" }}

@@ -377,3 +377,19 @@ body.os-mode-active {
     text-shadow: none !important;
     filter: drop-shadow(none) !important;
 }
+
+/* ==========================================================================
+   Boot Animation Fast-Path (Option 1)
+   Instantly bypass boot UI if sessionStorage flag is detected by head script.
+   ========================================================================== */
+[data-os-booted="true"] #start-screen {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+[data-os-booted="true"] .desktop-main-container {
+  opacity: 1 !important;
+  visibility: visible !important;
+}

@@ -1,4 +1,4 @@
-﻿import type { Metadata, Viewport } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { displayClassName, sansClassName } from '@/app/fonts';
 import { baseSEO } from '@/lib/seo';
 import Providers from '@/components/layout/Providers';
@@ -103,8 +103,20 @@ export default async function RootLayout({
 
 
         {/* Structured Data */}
-        {/* Application Version (Cache Tracking) */}
         <meta name="application-version" content={APP_VERSION} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  if (sessionStorage.getItem('ramos_os_booted') === 'true') {
+                    document.documentElement.setAttribute('data-os-booted', 'true');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       {/* suppressHydrationWarning: required because browser extensions (e.g. dark mode, 
            translators) inject attributes on <body> during SSRâ†’hydration, causing false mismatches.

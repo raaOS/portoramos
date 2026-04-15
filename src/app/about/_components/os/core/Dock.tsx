@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { m, useMotionValue, useTransform, useSpring, MotionValue, AnimatePresence, useScroll, useVelocity } from "framer-motion";
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { DockPreferences } from "@/types/about";
