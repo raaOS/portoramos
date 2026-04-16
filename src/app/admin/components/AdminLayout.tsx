@@ -41,6 +41,15 @@ function AdminLayoutContent({
     await logout();
   };
 
+  const handleContentClick = () => {
+    if (!sidebarCollapsed) {
+      setSidebarCollapsed(true);
+    }
+  };
+
+  // Dynamic margin for content area based on sidebar state
+  const contentMargin = sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64';
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile Top Bar */}
@@ -71,12 +80,12 @@ function AdminLayoutContent({
         handleLogout={handleLogout}
       />
 
-      {/* Main Content */}
-      <main
-        onClick={() => !sidebarCollapsed && setSidebarCollapsed(true)}
-        className={`flex-1 min-h-screen pt-16 md:pt-0 bg-gray-50 flex flex-col cursor-pointer transition-[margin] duration-300 ease-in-out ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}
+      {/* Main Content Wrapper - click to collapse sidebar */}
+      <div
+        onClick={handleContentClick}
+        className={`flex-1 min-h-screen pt-16 md:pt-0 bg-gray-50 flex flex-col ${contentMargin} transition-all duration-300 ease-in-out ${!sidebarCollapsed ? 'cursor-pointer' : ''}`}
       >
-        <AdminHeader 
+        <AdminHeader
           title={title}
           titleIcon={titleIcon}
           titleAccent={titleAccent}
@@ -87,7 +96,7 @@ function AdminLayoutContent({
         <div className="p-6 flex-1">
           {children}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

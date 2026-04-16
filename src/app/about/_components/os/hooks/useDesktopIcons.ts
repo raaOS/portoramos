@@ -8,6 +8,7 @@ interface UseDesktopIconsProps {
     commercialProjects: Project[];
     aboutData: AboutData | null | undefined;
     handleGoHome: () => void;
+    onOpenExplorer: () => void;
     iconPositions: Record<string, { x: number; y: number }>;
 }
 
@@ -16,6 +17,7 @@ export function useDesktopIcons({
     commercialProjects,
     aboutData,
     handleGoHome,
+    onOpenExplorer,
     iconPositions
 }: UseDesktopIconsProps) {
     // Internal window size state
@@ -45,7 +47,8 @@ export function useDesktopIcons({
             windowSize,
             commercialProjects,
             mergedPreferences,
-            handleGoHome
+            handleGoHome,
+            onOpenExplorer
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mounted, windowSize.width, windowSize.height, commercialProjects, aboutData, handleGoHome, iconPositions]);

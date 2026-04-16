@@ -88,25 +88,23 @@
   },
   "softSkills": {
     "texts": [
-      "Kreativitas & Inovasi",
-      "Problem Solving",
-      "Visual Strategy",
-      "Adaptability",
-      "Timely Delivery",
-      "Tech Savvy"
+      "Creative Art Direction",
+      "Visual Strategy & Logic",
+      "Adaptive Collaboration",
+      "Modern Workflow Optimization",
+      "Outcome-Oriented Delivery"
     ],
     "descriptions": [
-      "Selalu punya ide fresh yang nggak pasaran.",
-      "Mengemas pesan brand jadi visual yang berani, konsisten, dan mudah diingat.",
-      "Jago cari solusi praktis buat masalah desain yang rumit.",
-      "Asik diajak kerjasama, nggak baperan kalau dikasih feedback.",
-      "Deadline adalah teman, bukan musuh. Selalu on time.",
-      "Cepat nyambung sama teknologi dan tren baru."
+      "Mendefinisikan visi visual yang kuat untuk membangun identitas brand yang berkarakter dan unik.",
+      "Mengemas pesan bisnis menjadi bahasa visual yang intuitif, berani, dan fungsional di berbagai platform.",
+      "Rekan kerja strategis yang responsif terhadap feedback dan selalu mencari solusi terbaik untuk semua pihak.",
+      "Selalu terdepan dalam adopsi teknologi (AI & Automation) dan tren desain terbaru untuk efisiensi maksimal.",
+      "Berkomitmen penuh pada kualitas pixel-perfect hasil akhir dan ketepatan waktu penyelesaian proyek."
     ]
   },
   "designPhilosophy": {
-    "heading": "Philosophy of Design (Updated)",
-    "subheading": "Strategic Thinking Framework",
+    "heading": "Design Thinking",
+    "subheading": "My Creative Problem-Solving Process",
     "workflowSteps": [
       {
         "id": "discovery",

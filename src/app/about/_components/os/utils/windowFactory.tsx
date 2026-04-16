@@ -24,6 +24,11 @@ const ContactWindow = dynamic(() => import("../windows/ContactWindow"), {
     ssr: false
 });
 
+const ExplorerWindow = dynamic(() => import("../windows/ExplorerWindow"), {
+    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
+    ssr: false
+});
+
 interface WindowFactoryProps {
     aboutData: AboutData | null | undefined;
     experienceData: ExperienceData | null | undefined;
@@ -115,6 +120,17 @@ export const createInitialWindows = ({
             width: 1000,
             height: 700,
             content: null
+        },
+        {
+            id: "explorer",
+            title: "Project Explorer",
+            isOpen: false,
+            zIndex: 14,
+            noPadding: true,
+            initialPosition: { x: 120, y: 120 },
+            width: 900,
+            height: 600,
+            content: <ExplorerWindow isAdmin={isAdmin} />
         }
     ];
 };

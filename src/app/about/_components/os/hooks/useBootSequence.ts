@@ -94,17 +94,12 @@ function checkShouldSkipBoot(): boolean {
 export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
     const finalConfig = { ...DEFAULT_CONFIG, ...config };
     
-    // Use lazy initialization for state - ensures check runs consistently on server and client
+    // Use predictable initialization for state to prevent hydration mismatch.
+    // The initial state MUST be identical on server and client's first render.
     const [needsPowerOn, setNeedsPowerOn] = useState(() => {
-        // High priority: Initial state from server-side determine via prop
+        // Only depend on props/configs that are available on both server and client
         if (finalConfig.initialHasBooted) {
             return false;
-        }
-
-        // Mid priority: Check if head script already detected and set the attribute
-        if (typeof document !== 'undefined') {
-            const isBooted = document.documentElement.getAttribute('data-os-booted') === 'true';
-            if (isBooted) return false;
         }
 
         return true; 

@@ -85,7 +85,7 @@ export default function HardSkillsManager() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Hard Skills Manager</h2>
+                <h2 className="text-2xl font-bold">Skillset (Technical)</h2>
                 <button onClick={handleAdd} className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
                     <Plus size={18} /> Add New Skill
                 </button>

@@ -10,7 +10,8 @@ export const generateDesktopIcons = (
     windowSize: { width: number; height: number },
     commercialProjects: Project[],
     desktopPreferences?: DesktopPreferences,
-    handleGoHome?: () => void
+    handleGoHome?: () => void,
+    onOpenExplorer?: () => void
 ) => {
     if (!windowSize.width) return [];
 
@@ -55,7 +56,7 @@ export const generateDesktopIcons = (
             id: "shortcut-home",
             type: "folder" as const,
             label: "My Projects",
-            action: handleGoHome,
+            action: onOpenExplorer || handleGoHome,
         },
         ...visibleProjects,
     ];

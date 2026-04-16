@@ -99,8 +99,8 @@ export default function SoftSkillsSectionForm({
     return (
         <div className="space-y-6">
             <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Soft Skills</h3>
-                <p className="text-sm text-gray-600 mb-4">Daftar soft skills yang ditampilkan dalam bentuk morphing text.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Skillset (Interpersonal)</h3>
+                <p className="text-sm text-gray-600 mb-4">Daftar soft skills yang ditampilkan dalam tab Skillset di jendela About.</p>
                 <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-6">
 
                     <div className="space-y-4">

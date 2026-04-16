@@ -18,6 +18,8 @@ import {
   Music,
   Image as ImageIcon,
   Archive,
+  Brain,
+  FolderTree,
   type LucideIcon
 } from 'lucide-react';
 
@@ -39,6 +41,7 @@ export const NAV_ITEMS: NavItem[] = [
     bg: 'hover:bg-purple-50',
     children: [
       { href: '/admin/projects', label: 'List Project', icon: FolderKanban, color: 'text-purple-600', bg: 'hover:bg-purple-50' },
+      { href: '/admin/explorer', label: 'Explorer Manager', icon: Archive, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
       { href: '/admin/sequences', label: 'Bidikan Image', icon: Zap, color: 'text-yellow-500', bg: 'hover:bg-yellow-50' },
     ]
   },
@@ -53,9 +56,9 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/admin/experience', label: 'Pengalaman', icon: BriefcaseBusiness, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
       { href: '/admin/testimonial', label: 'WhatsApp Notif', icon: Quote, color: 'text-pink-600', bg: 'hover:bg-pink-50' },
       { href: '/admin/about?tab=archive', label: 'Archive', icon: Archive, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
-      { href: '/admin/about?tab=softSkills', label: 'Soft Skills', icon: Smile, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
-      { href: '/admin/about?tab=hardSkills', label: 'Hard Skills', icon: Dumbbell, color: 'text-violet-600', bg: 'hover:bg-violet-50' },
-      { href: '/admin/about?tab=philosophy', label: 'Filosofi', icon: Sparkles, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
+      { href: '/admin/about?tab=softSkills', label: 'Skillset (Soft)', icon: Brain, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
+      { href: '/admin/about?tab=hardSkills', label: 'Skillset (Hard)', icon: Brain, color: 'text-violet-600', bg: 'hover:bg-violet-50' },
+      { href: '/admin/about?tab=philosophy', label: 'Design Thinking', icon: Sparkles, color: 'text-orange-600', bg: 'hover:bg-orange-50' },
       {
         href: '/admin/os-config',
         label: 'Pengaturan OS',

@@ -172,7 +172,14 @@ function DesktopMain({
         notes, projects, restoreNote, addNote, isAdmin, setNotesDockBouncing: () => { }
     });
     const { iconPositions, handleIconPositionChange } = useDesktopLayout({ aboutData, isAdmin, csrfToken });
-    const { projectIcons } = useDesktopIcons({ mounted: true, commercialProjects, aboutData, handleGoHome, iconPositions });
+    const { projectIcons } = useDesktopIcons({ 
+        mounted: true, 
+        commercialProjects, 
+        aboutData, 
+        handleGoHome, 
+        onOpenExplorer: () => openWindow('explorer'),
+        iconPositions 
+    });
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
