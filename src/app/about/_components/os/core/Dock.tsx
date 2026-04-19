@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { m, useMotionValue, useTransform, useSpring, MotionValue, AnimatePresence, useScroll, useVelocity } from "framer-motion";
+import { m, useMotionValue, useTransform, useSpring, MotionValue, AnimatePresence, useScroll, useVelocity, useReducedMotion } from "framer-motion";
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { DockPreferences } from "@/types/about";
 import LiquidFilter from "@/components/shared/LiquidFilter";
@@ -194,6 +194,7 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
     const mouseX = useMotionValue(Infinity);
     const [isMounted, setIsMounted] = useState(false);
     const [activePopoverId, setActivePopoverId] = useState<string | null>(null);
+    const prefersReducedMotion = useReducedMotion();
 
     const handlePopoverToggle = useCallback((id: string, isOpen: boolean) => {
         if (isOpen) {
@@ -205,6 +206,7 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
     }, [activePopoverId, mouseX]);
 
     const anyPopoverOpen = activePopoverId !== null;
+    const enableLiquidEffect = !isMobile && !prefersReducedMotion;
 
     // Scroll Awareness for Reactive Shimmer
     const { scrollY } = useScroll();
@@ -284,7 +286,7 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                             {/* 1. Effect Layer: Distortion + Blur */}
                             <div 
                                 className="absolute inset-0 z-0 backdrop-blur-[3px]"
-                                style={{ filter: 'url(#liquid-glass)' }}
+                                style={enableLiquidEffect ? { filter: 'url(#liquid-glass)' } : undefined}
                             />
                             
                             {/* 2. Tint Layer: Semi-transparent white */}
@@ -327,7 +329,9 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                             ))}
                         </m.div>
 
-                        <LiquidFilter id="liquid-glass" mouseX={mouseX} scrollVelocity={scrollVelocity} />
+                        {enableLiquidEffect && (
+                            <LiquidFilter id="liquid-glass" mouseX={mouseX} scrollVelocity={scrollVelocity} />
+                        )}
                     </nav>
                 </m.div>
             )}

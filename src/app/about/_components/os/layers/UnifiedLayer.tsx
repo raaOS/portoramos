@@ -7,13 +7,12 @@ import { DraggableStickyNote } from "../ui/elements/DraggableStickyNote";
 import type { NoteData } from "../ui/elements/StickyNoteItem";
 import { useUnifiedZIndex } from "../context/UnifiedZIndexContext";
 import { WindowState } from "@/hooks/useWindowManager";
+import { useOSSystem } from "../context/OSSystemContext";
 
 interface UnifiedLayerProps {
   windows: WindowState[];
   notes: NoteData[];
-  notesVisible: boolean;
   isAdmin: boolean;
-  isReady?: boolean;
   // Window handlers
   closeWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
@@ -30,6 +29,7 @@ interface UnifiedLayerProps {
   permanentDeleteNote: (id: string) => void;
   restoreNote: (id: string) => void;
   addNote: () => void;
+  isRevealed?: boolean;
 }
 
 // Animation variants - only for container fade in
@@ -47,9 +47,7 @@ const containerVariants = {
 export default function UnifiedLayer({
   windows,
   notes,
-  notesVisible,
   isAdmin,
-  isReady = true,
   closeWindow,
   minimizeWindow,
   maximizeWindow,
@@ -64,8 +62,11 @@ export default function UnifiedLayer({
   permanentDeleteNote,
   restoreNote,
   addNote,
+  isRevealed: isRevealedProp,
 }: UnifiedLayerProps) {
   const { bringToFront, getZIndex } = useUnifiedZIndex();
+  const { notesVisible, isRevealed: isRevealedFromContext } = useOSSystem();
+  const isRevealed = isRevealedProp !== undefined ? isRevealedProp : isRevealedFromContext;
 
   // Determine which window is on top for keyboard focus
   const openWindows = windows.filter(w => w.isOpen && !w.isMinimized);
@@ -96,7 +97,7 @@ export default function UnifiedLayer({
       className="absolute inset-0 pointer-events-none"
       variants={containerVariants}
       initial="hidden"
-      animate={isReady ? "show" : "hidden"}
+      animate={isRevealed ? "show" : "hidden"}
     >
       {/* Windows Layer */}
       {windows.map((w) => (
@@ -106,7 +107,7 @@ export default function UnifiedLayer({
             isOpen={w.isOpen}
             title={w.title}
             isMinimized={w.isMinimized}
-            isMaximized={w.isMaximized} // Pastikan ini dilewatkan!
+            isMaximized={w.isMaximized}
             isFocused={w.isOpen && !w.isMinimized && getZIndex(w.id) === maxWindowZIndex}
             onClose={() => closeWindow(w.id)}
             onMinimize={() => minimizeWindow(w.id)}
@@ -124,7 +125,7 @@ export default function UnifiedLayer({
             zIndex={getZIndex(w.id)}
             noPadding={w.noPadding}
           >
-            {w.content}
+            {w.content || (w.contentFactory ? w.contentFactory() : null)}
           </OSWindow>
       ))}
 

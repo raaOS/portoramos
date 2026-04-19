@@ -32,7 +32,8 @@ export default function FullPageChat({ contactInfo, embedded = false }: FullPage
         messages, 
         sendMessage, 
         isSending, 
-        isAdminTyping 
+        isAdminTyping,
+        syncError
     } = useChatSync(contactInfo?.subtext || "👋 Halo! Ada project menarik yang bisa saya bantu? Ketik pesanmu di bawah ini, langsung masuk ke HP saya loh!");
 
     // Auto-scroll to bottom
@@ -55,6 +56,11 @@ export default function FullPageChat({ contactInfo, embedded = false }: FullPage
                 style={embedded ? undefined : { maxWidth: '480px' }}
             >
                 <FullPageChatHeader />
+                {syncError && (
+                    <div className="bg-red-500/10 text-red-500 text-[10px] py-1 px-4 text-center animate-pulse border-b border-red-500/20">
+                        ⚠️ Koneksi terganggu. Mencoba menghubungkan kembali...
+                    </div>
+                )}
                 <FullPageChatMessages 
                     messages={messages} 
                     isTyping={isAdminTyping} 

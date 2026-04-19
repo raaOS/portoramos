@@ -5,6 +5,7 @@ import type { ContactProfile } from "../data/mockChats";
 import type { NoteData } from "../ui/elements/StickyNoteItem";
 import { WindowState } from "@/hooks/useWindowManager";
 import dynamic from "next/dynamic";
+import { useOSSystem } from "../context/OSSystemContext";
 
 const ProjectDetailWrapper = dynamic(() => import("../ui/ProjectDetailWrapper"), {
     loading: () => <div className="animate-pulse bg-gray-100 dark:bg-gray-800 h-full w-full rounded" />,
@@ -15,9 +16,7 @@ interface UseDesktopNavigationProps {
     openWindow: (id: string, options?: Partial<WindowState>) => void;
     resetWindows: () => void;
     dynamicContacts: Record<string, ContactProfile>;
-    ChatWindow: React.ComponentType<{ activeChatId?: string | null; customContacts?: Record<string, ContactProfile> }>;
-    notesVisible: boolean;
-    setNotesVisible: (visible: boolean) => void;
+    ChatWindow: React.ComponentType<{ activeChatId?: string | null; customContacts?: Record<string, ContactProfile>; initialProjects?: Project[] }>;
     notes: NoteData[];
     projects: Project[];
     restoreNote: (id: string) => void;
@@ -31,8 +30,6 @@ export function useDesktopNavigation({
     resetWindows,
     dynamicContacts,
     ChatWindow,
-    notesVisible,
-    setNotesVisible,
     notes,
     projects,
     restoreNote,
@@ -40,6 +37,7 @@ export function useDesktopNavigation({
     isAdmin,
     setNotesDockBouncing
 }: UseDesktopNavigationProps) {
+    const { notesVisible, setNotesVisible } = useOSSystem();
     const router = useRouter();
 
     const handleGoHome = useCallback(() => router.push('/'), [router]);
@@ -55,16 +53,16 @@ export function useDesktopNavigation({
     // Klik Dynamic Island (dengan chatId spesifik) -> langsung buka chat
     const navToChat = useCallback((chatId?: string) => {
         openWindow("whatsapp", {
-            content: <ChatWindow activeChatId={chatId || null} customContacts={dynamicContacts} />
+            content: <ChatWindow activeChatId={chatId || null} customContacts={dynamicContacts} initialProjects={projects} />
         });
-    }, [openWindow, dynamicContacts, ChatWindow]);
+    }, [openWindow, dynamicContacts, ChatWindow, projects]);
 
     // Klik Dock WA -> buka list view (tanpa activeChatId)
     const openWhatsAppList = useCallback(() => {
         openWindow("whatsapp", {
-            content: <ChatWindow activeChatId={null} customContacts={dynamicContacts} />
+            content: <ChatWindow activeChatId={null} customContacts={dynamicContacts} initialProjects={projects} />
         });
-    }, [openWindow, dynamicContacts, ChatWindow]);
+    }, [openWindow, dynamicContacts, ChatWindow, projects]);
 
     const openContactWindow = useCallback(() => {
         openWindow("contact");

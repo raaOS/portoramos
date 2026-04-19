@@ -83,7 +83,6 @@ export const aboutService = {
     async updateAboutData(updates: UpdateAboutData) {
         try {
             const current = await this.getAboutData(true);
-            console.log('[AboutService] Updating data with:', JSON.stringify(updates).slice(0, 100) + '...');
 
             // Explicit merging since updates contains Partials
             const mergedData: AboutData = {
@@ -110,7 +109,6 @@ export const aboutService = {
                 throw new Error('ContentService failed to save data');
             }
 
-            console.log('[AboutService] Successfully updated about content');
             return mergedData;
         } catch (error) {
             console.error('[AboutService] Update failed:', error);

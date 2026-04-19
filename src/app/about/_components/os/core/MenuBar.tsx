@@ -20,8 +20,20 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
     const [time, setTime] = useState(new Date());
 
     useEffect(() => {
-        const timer = setInterval(() => setTime(new Date()), 1000);
-        return () => clearInterval(timer);
+        const updateClock = () => setTime(new Date());
+        updateClock();
+
+        const scheduleNextTick = () => {
+            const now = new Date();
+            const delay = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+            return window.setTimeout(() => {
+                updateClock();
+                timer = scheduleNextTick();
+            }, Math.max(delay, 250));
+        };
+
+        let timer = scheduleNextTick();
+        return () => window.clearTimeout(timer);
     }, []);
 
     // Format: "Sen 22 Jan 19:30"

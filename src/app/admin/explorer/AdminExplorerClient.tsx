@@ -4,16 +4,12 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
     Folder, 
     File, 
-    Image as ImageIcon, 
-    Video as VideoIcon, 
-    Plus, 
     Trash2, 
     ChevronRight, 
     ChevronLeft,
     RefreshCw,
     Search,
     Home,
-    ExternalLink,
     MoreVertical,
     FolderPlus,
     Upload,
@@ -23,9 +19,9 @@ import {
 } from 'lucide-react';
 import AdminLayout from '@/app/admin/components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
-import { AnyExplorerNode, ExplorerFolder, ExplorerFile } from '@/types/explorer';
+import { AnyExplorerNode } from '@/types/explorer';
 import AdminButton from '@/app/admin/components/AdminButton';
-import { m, AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 
@@ -45,7 +41,7 @@ export default function AdminExplorerClient() {
         error?: string;
     }>>({});
     const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const { showInfo, showError, showSuccess } = useToast();
+    const { showError, showSuccess } = useToast();
     const { csrfToken } = useAdminAuth();
 
     // Fetch nodes
@@ -183,7 +179,7 @@ export default function AdminExplorerClient() {
                 }
             }));
 
-            const updateUpload = (updates: any) => {
+            const updateUpload = (updates: Partial<typeof activeUploads[string]>) => {
                 setActiveUploads(prev => ({
                     ...prev,
                     [uploadId]: { ...prev[uploadId], ...updates }
@@ -211,7 +207,7 @@ export default function AdminExplorerClient() {
                                 const response = JSON.parse(xhr.responseText);
                                 if (response.success) resolve(response);
                                 else reject(new Error(response.error || 'Upload failed'));
-                            } catch (e) {
+                            } catch {
                                 reject(new Error('Invalid response from server'));
                             }
                         } else {
@@ -222,7 +218,7 @@ export default function AdminExplorerClient() {
                     xhr.onerror = () => reject(new Error('Network error during upload'));
                     
                     xhr.open('POST', `/api/upload`);
-                    xhr.setRequestHeader('x-csrf-token', csrfToken || getWritableCsrfToken() || '');
+                    xhr.setRequestHeader('x-csrf-token', getWritableCsrfToken(csrfToken));
                     xhr.send(formData);
                 });
 
@@ -235,7 +231,7 @@ export default function AdminExplorerClient() {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'x-csrf-token': csrfToken || getWritableCsrfToken() || ''
+                        'x-csrf-token': getWritableCsrfToken(csrfToken)
                     },
                     body: JSON.stringify({
                         type: 'file',
@@ -267,10 +263,11 @@ export default function AdminExplorerClient() {
                     const errData = await explorerRes.json();
                     throw new Error(errData.error || 'Gagal mendaftarkan file');
                 }
-            } catch (err: any) {
+            } catch (err) {
+                const message = err instanceof Error ? err.message : 'Unknown error';
                 console.error(`[Upload Error ${uploadId}]:`, err);
-                updateUpload({ status: 'error', error: err.message, progress: 0 });
-                showError(`Gagal upload "${file.name}": ${err.message}`);
+                updateUpload({ status: 'error', error: message, progress: 0 });
+                showError(`Gagal upload "${file.name}": ${message}`);
                 
                 // Keep error for 5 seconds to let user see it
                 setTimeout(() => {

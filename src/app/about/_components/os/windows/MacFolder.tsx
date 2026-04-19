@@ -29,6 +29,7 @@ interface FolderProps {
     onClick?: () => void;
     count?: number;
     isStatic?: boolean;
+    open?: boolean;
 }
 
 const MacFolder = ({
@@ -41,6 +42,7 @@ const MacFolder = ({
     onClick,
     count,
     isStatic = false,
+    open: externalOpen,
 }: FolderProps) => {
     const maxItems = 3;
     const papers = items.length > 0 ? items.slice(0, maxItems) : Array(3).fill(null);
@@ -49,7 +51,8 @@ const MacFolder = ({
         papers.push(null);
     }
 
-    const [open, setOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
     const [paperOffsets, setPaperOffsets] = useState(Array.from({ length: maxItems }, () => ({ x: 0, y: 0 })));
 
     const folderBackColor = darkenColor(color, 0.08);
@@ -58,11 +61,15 @@ const MacFolder = ({
     const paper3 = '#ffffff';
 
     const handleClick = () => {
-        if (!isStatic) {
-            setOpen(prev => !prev);
-            if (open) {
-                setPaperOffsets(Array.from({ length: maxItems }, () => ({ x: 0, y: 0 })));
-            }
+        if (!isStatic && externalOpen === undefined) {
+            setInternalOpen(prev => {
+                const next = !prev;
+                // Reset offsets when closing to avoid stale transform carry-over.
+                if (!next) {
+                    setPaperOffsets(Array.from({ length: maxItems }, () => ({ x: 0, y: 0 })));
+                }
+                return next;
+            });
         }
         // Only trigger parent navigation if folder is already open or we want valid click action
         // But aligning with React Bits, usually click toggles open. 
@@ -71,7 +78,7 @@ const MacFolder = ({
     };
 
     const handlePaperMouseMove = (e: React.MouseEvent, index: number) => {
-        if (!open) return;
+        if (!isOpen) return;
         const rect = e.currentTarget.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
@@ -123,7 +130,7 @@ const MacFolder = ({
                         className="relative transition-all duration-200 ease-in"
                         style={{
                             ...folderStyle,
-                            transform: open ? 'translateY(10px)' : undefined
+                            transform: isOpen ? 'translateY(10px)' : undefined
                         }}
                     >
                         <div
@@ -137,18 +144,18 @@ const MacFolder = ({
 
                             {/* BADGE COUNT */}
                             {count !== undefined && count > 0 && (
-                                <div className={`absolute -top-4 -right-2 z-50 bg-red-500 text-white text-[13px] font-black w-[28px] h-[28px] flex items-center justify-center rounded-full border-2 border-white shadow-md transition-opacity duration-300 shrink-0 ${open ? 'opacity-0' : 'opacity-100 delay-300'}`}>
+                                <div className={`absolute -top-4 -right-2 z-50 bg-red-500 text-white text-[13px] font-black w-[28px] h-[28px] flex items-center justify-center rounded-full border-2 border-white shadow-md transition-opacity duration-300 shrink-0 ${isOpen ? 'opacity-0' : 'opacity-100 delay-300'}`}>
                                     {count}
                                 </div>
                             )}
 
                             {papers.map((item, i) => {
                                 let sizeClasses = '';
-                                if (i === 0) sizeClasses = open ? 'w-[70%] h-[80%]' : 'w-[70%] h-[80%]';
-                                if (i === 1) sizeClasses = open ? 'w-[80%] h-[80%]' : 'w-[80%] h-[70%]';
-                                if (i === 2) sizeClasses = open ? 'w-[90%] h-[80%]' : 'w-[90%] h-[60%]';
+                                if (i === 0) sizeClasses = isOpen ? 'w-[70%] h-[80%]' : 'w-[70%] h-[80%]';
+                                if (i === 1) sizeClasses = isOpen ? 'w-[80%] h-[80%]' : 'w-[80%] h-[70%]';
+                                if (i === 2) sizeClasses = isOpen ? 'w-[90%] h-[80%]' : 'w-[90%] h-[60%]';
 
-                                const transformStyle = open
+                                const transformStyle = isOpen
                                     ? `${getOpenTransform(i)} translate(${paperOffsets[i].x}px, ${paperOffsets[i].y}px)`
                                     : undefined;
 
@@ -157,10 +164,10 @@ const MacFolder = ({
                                         key={i}
                                         onMouseMove={e => handlePaperMouseMove(e, i)}
                                         onMouseLeave={e => handlePaperMouseLeave(e, i)}
-                                        className={`absolute z-20 bottom-[10%] left-1/2 transition-all duration-300 ease-in-out ${!open ? 'transform -translate-x-1/2 translate-y-[10%] group-hover:translate-y-0' : 'hover:scale-110'
+                                        className={`absolute z-20 bottom-[10%] left-1/2 transition-all duration-300 ease-in-out ${!isOpen ? 'transform -translate-x-1/2 translate-y-[10%] group-hover:translate-y-0' : 'hover:scale-110'
                                             } ${sizeClasses}`}
                                         style={{
-                                            ...(!open ? {} : { transform: transformStyle }),
+                                            ...(!isOpen ? {} : { transform: transformStyle }),
                                             backgroundColor: i === 0 ? paper1 : i === 1 ? paper2 : paper3,
                                             borderRadius: '10px'
                                         }}
@@ -170,21 +177,21 @@ const MacFolder = ({
                                 );
                             })}
                             <div
-                                className={`absolute z-30 w-full h-full origin-bottom transition-all duration-300 ease-in-out ${!open ? 'group-hover:[transform:skew(15deg)_scaleY(0.6)]' : ''
+                                className={`absolute z-30 w-full h-full origin-bottom transition-all duration-300 ease-in-out ${!isOpen ? 'group-hover:[transform:skew(15deg)_scaleY(0.6)]' : ''
                                     }`}
                                 style={{
                                     backgroundColor: color,
                                     borderRadius: '5px 10px 10px 10px',
-                                    ...(open && { transform: 'skew(15deg) scaleY(0.6)' })
+                                    ...(isOpen && { transform: 'skew(15deg) scaleY(0.6)' })
                                 }}
                             ></div>
                             <div
-                                className={`absolute z-30 w-full h-full origin-bottom transition-all duration-300 ease-in-out ${!open ? 'group-hover:[transform:skew(-15deg)_scaleY(0.6)]' : ''
+                                className={`absolute z-30 w-full h-full origin-bottom transition-all duration-300 ease-in-out ${!isOpen ? 'group-hover:[transform:skew(-15deg)_scaleY(0.6)]' : ''
                                     }`}
                                 style={{
                                     backgroundColor: color,
                                     borderRadius: '5px 10px 10px 10px',
-                                    ...(open && { transform: 'skew(-15deg) scaleY(0.6)' })
+                                    ...(isOpen && { transform: 'skew(-15deg) scaleY(0.6)' })
                                 }}
                             ></div>
                         </div>

@@ -79,7 +79,6 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
         try {
             const { flushPositions } = await import('../utils/positionSync');
             await flushPositions(csrfToken);
-            console.log('[DesktopLayout] Flushed icons to server');
         } catch (error) {
             console.error('[DesktopLayout] Failed to flush icons:', error);
         }

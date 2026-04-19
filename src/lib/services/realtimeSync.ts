@@ -179,13 +179,13 @@ export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: Use
             if (offFn && lastUpdatedRefPath.current && listenerRef.current) {
                 try {
                     offFn(lastUpdatedRefPath.current, 'value', listenerRef.current);
-                } catch (e) { /* ignore */ }
+                } catch { /* ignore */ }
             }
             
             if (unsubscribeRef.current) {
                 try {
                     unsubscribeRef.current();
-                } catch (e) { /* ignore */ }
+                } catch { /* ignore */ }
                 unsubscribeRef.current = null;
             }
             

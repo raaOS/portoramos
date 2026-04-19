@@ -39,7 +39,7 @@ export async function handleAiCommand(
                 // Convert to ChatMessage format expected by aiChatService
                 const chatMessages = allMessages.map(m => ({
                     sender: m.sender as 'visitor' | 'admin' | 'ai',
-                    text: m.content
+                    text: m.text
                 }));
                 const aiResponse = await aiChatService.generateResponse(chatMessages as import('@/lib/chatStore').ChatMessage[]);
                 await chatStore.addAiReply(currentVisitorId, aiResponse);

@@ -4,13 +4,10 @@ import { useState, useCallback, useEffect } from "react";
 import { soundManager } from "../utils/SoundManager";
 
 interface BootSequenceConfig {
-    totalDuration: number;
     allowSkip: boolean;
-    initialHasBooted?: boolean;
 }
 
 const DEFAULT_CONFIG: BootSequenceConfig = {
-    totalDuration: 3500,
     allowSkip: true
 };
 
@@ -30,14 +27,12 @@ function checkShouldSkipBoot(): boolean {
         // 1. Check DOM attribute (set by blocking head script in layout.tsx)
         const html = document.documentElement;
         if (html.getAttribute('data-os-booted') === 'true') {
-            console.log('[BootSequence] SKIP: Detected data-os-booted="true" on <html> (Head Script Path)');
             return true;
         }
 
         // 2. Check sessionStorage - already booted in this session?
         const hasBooted = sessionStorage.getItem(BOOT_SESSION_KEY);
         if (hasBooted === 'true') {
-            console.log('[BootSequence] SKIP: Already booted in this session (sessionStorage)');
             return true;
         }
 
@@ -45,7 +40,6 @@ function checkShouldSkipBoot(): boolean {
         const urlParams = new URLSearchParams(window.location.search);
         const appParam = urlParams.get('app');
         if (appParam) {
-            console.log('[BootSequence] SKIP: Launched from dock with app param', { app: appParam });
             // Mark as booted
             sessionStorage.setItem(BOOT_SESSION_KEY, 'true');
             return true;
@@ -67,21 +61,11 @@ function checkShouldSkipBoot(): boolean {
         
         // If coming from same host (internal navigation)
         if (referrerHost && referrerHost === currentHost) {
-            console.log('[BootSequence] SKIP: Navigation from internal page (referrer check)', {
-                from: referrerHost,
-                to: currentHost
-            });
             // Mark as booted so refresh also skips
             sessionStorage.setItem(BOOT_SESSION_KEY, 'true');
             return true;
         }
 
-        console.log('[BootSequence] SHOW BOOT: Fresh session or external source', {
-            hasBooted,
-            referrerHost,
-            currentHost,
-            appParam
-        });
         return false;
     } catch (error) {
         console.error('[BootSequence] Error checking boot status:', error);
@@ -96,14 +80,7 @@ export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
     
     // Use predictable initialization for state to prevent hydration mismatch.
     // The initial state MUST be identical on server and client's first render.
-    const [needsPowerOn, setNeedsPowerOn] = useState(() => {
-        // Only depend on props/configs that are available on both server and client
-        if (finalConfig.initialHasBooted) {
-            return false;
-        }
-
-        return true; 
-    });
+    const [needsPowerOn, setNeedsPowerOn] = useState(true);
 
     const [isBooting, setIsBooting] = useState(false);
 
@@ -126,10 +103,9 @@ export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
                 });
             });
         }
-    }, [markAsBooted]);
+    }, []);
 
     const powerOn = useCallback(() => {
-        console.log('[useBootSequence] Powering on...');
         soundManager.unlock();
         soundManager.clearCache('startup');
         setNeedsPowerOn(false);
@@ -145,16 +121,10 @@ export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
 
     const skipBoot = useCallback(() => {
         if (!finalConfig.allowSkip) return;
-        console.log('[useBootSequence] Manually skipping boot sequence');
         setNeedsPowerOn(false);
         setIsBooting(false);
         markAsBooted();
     }, [finalConfig.allowSkip, markAsBooted]);
-
-    // Debug log
-    useEffect(() => {
-        console.log('[useBootSequence] State:', { needsPowerOn, isBooting });
-    }, [needsPowerOn, isBooting]);
 
     return {
         needsPowerOn,

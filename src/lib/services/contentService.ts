@@ -58,7 +58,6 @@ export class ContentService<T> {
         if (!noCache) {
             const cached = contentCache.get<T>(cacheKey);
             if (cached) {
-                console.log(`[ContentService] Cache hit for ${this.firebasePath} (TTL: ${this.cacheTTL}ms)`);
                 return cached;
             }
         }
@@ -68,7 +67,6 @@ export class ContentService<T> {
             const firebaseData = snapshot.val();
 
             if (!firebaseData) {
-                console.log(`[ContentService] No data at ${this.firebasePath}, using fallback.`);
                 return this.fallbackData;
             }
 
@@ -126,7 +124,6 @@ export class ContentService<T> {
     async saveData(data: T, _message?: string): Promise<boolean> {
         // MEDIUM FIX: Queue multiple saves to prevent race condition
         if (this.pendingSave) {
-            console.log(`[ContentService] Queuing save to ${this.firebasePath} (save in progress)`);
             await this.pendingSave;
         }
 
@@ -153,7 +150,6 @@ export class ContentService<T> {
             // Set cache dengan data baru (optimistic update)
             contentCache.set(getCacheKey(this.firebasePath), data as unknown as object, this.cacheTTL);
 
-            console.log(`[ContentService] Successfully saved data to ${this.firebasePath}`);
             return true;
         } catch (error) {
             console.error(`[ContentService] Error saving data to ${this.firebasePath}:`, error);

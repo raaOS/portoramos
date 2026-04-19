@@ -1,23 +1,43 @@
 import { useState, useEffect } from 'react';
 import type { Project } from '@/types/projects';
+import { unwrapApiPayload } from '@/lib/api-client';
 
-export function useChatProjects() {
-    const [allProjects, setAllProjects] = useState<Project[]>([]);
+export function useChatProjects(initialProjects?: Project[]) {
+    const [allProjects, setAllProjects] = useState<Project[]>(initialProjects ?? []);
 
     useEffect(() => {
+        if (initialProjects?.length) {
+            setAllProjects(initialProjects);
+            return;
+        }
+
         const fetchProjects = async () => {
             try {
                 const res = await fetch('/api/projects');
-                const data = await res.json();
-                if (data.success && Array.isArray(data.projects)) {
-                    setAllProjects(data.projects);
+                if (!res.ok) {
+                    throw new Error(`Failed to load projects: ${res.status}`);
                 }
-            } catch (err) {
-                console.error('Failed to fetch projects for chat:', err);
+
+                const data = await res.json();
+                const unwrapped = unwrapApiPayload(data);
+                
+                // Flexible unwrap: handle { projects: [...] } or direct [...]
+                let projects: Project[] = [];
+                if (unwrapped && typeof unwrapped === 'object' && 'projects' in (unwrapped as Record<string, any>)) {
+                    projects = (unwrapped as Record<string, any>).projects;
+                } else if (Array.isArray(unwrapped)) {
+                    projects = unwrapped;
+                }
+                
+                if (Array.isArray(projects)) {
+                    setAllProjects(projects);
+                }
+            } catch {
+                console.error('Failed to fetch projects for chat');
             }
         };
         fetchProjects();
-    }, []);
+    }, [initialProjects]);
 
     const getProjectById = (id: string) => {
         if (!Array.isArray(allProjects)) return undefined;

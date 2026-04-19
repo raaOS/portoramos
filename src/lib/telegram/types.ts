@@ -32,13 +32,15 @@ export interface TelegramConfig {
 // Minimal chat store interface for handlers
 export interface ChatStoreInterface {
     setAiMode: (visitorId: string, enabled: boolean) => Promise<boolean>;
-    getAllMessages: (visitorId: string) => Promise<Array<{ sender: string; content: string }>>;
-    addAiReply: (visitorId: string, response: string) => Promise<void>;
+    getAllMessages: (visitorId: string) => Promise<Array<{ sender: string; text: string }>>;
+    addAiReply: (visitorId: string, response: string) => Promise<unknown>;
     addAdminReply: (visitorId: string, text: string) => Promise<boolean>;
+    setTypingStatus: (visitorId: string, durationMs: number) => Promise<void>;
+    getTypingStatus: (visitorId: string) => Promise<boolean>;
 }
 
 // Simple message format for AI processing
 export interface SimpleMessage {
     sender: string;
-    content: string;
+    text: string;
 }

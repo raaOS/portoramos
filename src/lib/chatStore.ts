@@ -150,5 +150,17 @@ export const chatStore = {
         // Convert object to sorted array
         return (Object.values(messagesMap) as ChatMessage[])
             .sort((a, b) => a.timestamp - b.timestamp);
+    },
+
+    async setTypingStatus(visitorId: string, durationMs: number): Promise<void> {
+        const until = Date.now() + durationMs;
+        await db.ref(`typing/${visitorId}`).set(until);
+    },
+
+    async getTypingStatus(visitorId: string): Promise<boolean> {
+        const snap = await db.ref(`typing/${visitorId}`).once('value');
+        if (!snap.exists()) return false;
+        const until = snap.val() as number;
+        return until > Date.now();
     }
 };

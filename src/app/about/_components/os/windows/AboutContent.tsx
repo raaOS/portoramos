@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
-import { User, FileText, Heart, Lightbulb, Brain, type LucideIcon } from "lucide-react";
+import { User, FileText, Lightbulb, Brain, type LucideIcon } from "lucide-react";
 import type { AboutData } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
@@ -20,13 +20,12 @@ interface AboutContentProps {
 interface MenuButtonProps {
     id: 'about' | 'cv' | 'philosophy' | 'interests';
     label: string;
-    count?: string;
     icon: LucideIcon;
     activeTab: 'about' | 'cv' | 'philosophy' | 'interests';
     setActiveTab: (id: 'about' | 'cv' | 'philosophy' | 'interests') => void;
 }
 
-const MenuButton = ({ id, label, count, icon: Icon, activeTab, setActiveTab, collapsed }: MenuButtonProps & { collapsed?: boolean }) => (
+const MenuButton = ({ id, label, icon: Icon, activeTab, setActiveTab, collapsed }: MenuButtonProps & { collapsed?: boolean }) => (
     <button
         onClick={() => setActiveTab(id)}
         className={`w-full flex items-center justify-between py-2 rounded-md text-sm transition-colors overflow-hidden ${activeTab === id
@@ -107,7 +106,7 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
                 className={`flex-1 bg-white h-full overflow-y-auto overscroll-contain p-8 pb-20 about-scrollbar min-h-0 ${!sidebarCollapsed ? 'cursor-pointer' : ''}`}
                 style={{ touchAction: "pan-y" }}
             >
-                {activeTab === 'about' && <AboutTab aboutData={aboutData} hardSkillsData={hardSkillsData} />}
+                {activeTab === 'about' && <AboutTab aboutData={aboutData} />}
                 {activeTab === 'cv' && <CVTab experienceData={experienceData} />}
                 {activeTab === 'philosophy' && <PhilosophyTab aboutData={aboutData} />}
                 {activeTab === 'interests' && <InterestsTab aboutData={aboutData} hardSkillsData={hardSkillsData} />}

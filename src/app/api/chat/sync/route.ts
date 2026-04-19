@@ -20,10 +20,13 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
         }
 
-        // Fetch all messages for this visitor
-        const messages = await chatStore.getAllMessages(visitorId);
-
-        return NextResponse.json({ success: true, messages });
+        // Fetch all messages and typing status
+        const [messages, isAdminTyping] = await Promise.all([
+            chatStore.getAllMessages(visitorId),
+            chatStore.getTypingStatus(visitorId)
+        ]);
+ 
+        return NextResponse.json({ success: true, messages, isAdminTyping });
 
     } catch (error: unknown) {
         console.error('[Web Chat Sync Error]:', error);

@@ -6,26 +6,28 @@ import { AboutData } from "@/types/about";
 import { ExperienceData } from "@/types/experience";
 import { HardSkillsData } from "@/types/hardSkill";
 import { Project } from "@/types/projects";
+import { ContactData } from "@/types/contact";
 import { ContactProfile } from "../data/mockChats";
 import { getWindowPosition } from "./positionSync";
+import WindowSkeleton from "../ui/WindowSkeleton";
 
 const AboutContent = dynamic(() => import("../windows/AboutContent"), {
-    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
+    loading: () => <WindowSkeleton type="about" title="About Me" />,
     ssr: false
 });
 
 const ChatWindow = dynamic(() => import("../windows/ChatWindow"), {
-    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
+    loading: () => <WindowSkeleton type="generic" title="WhatsApp" />,
     ssr: false
 });
 
 const ContactWindow = dynamic(() => import("../windows/ContactWindow"), {
-    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
+    loading: () => <WindowSkeleton type="generic" title="Contact" />,
     ssr: false
 });
 
 const ExplorerWindow = dynamic(() => import("../windows/ExplorerWindow"), {
-    loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
+    loading: () => <WindowSkeleton type="explorer" title="Project Explorer" />,
     ssr: false
 });
 
@@ -33,6 +35,7 @@ interface WindowFactoryProps {
     aboutData: AboutData | null | undefined;
     experienceData: ExperienceData | null | undefined;
     hardSkillsData: HardSkillsData | null | undefined;
+    contactData: ContactData | null | undefined;
     projects: Project[];
     commercialProjects: Project[];
     dynamicContacts: Record<string, ContactProfile>;
@@ -43,6 +46,7 @@ export const createInitialWindows = ({
     aboutData,
     experienceData,
     hardSkillsData,
+    contactData,
     projects: _projects,
     commercialProjects: _commercialProjects,
     dynamicContacts,
@@ -66,11 +70,14 @@ export const createInitialWindows = ({
             initialPosition: { x: aboutPos.x, y: aboutPos.y },
             width: aboutPos.width,
             height: aboutPos.height,
-            content: <AboutContent 
-                aboutData={aboutData || undefined} 
-                experienceData={experienceData || undefined} 
-                hardSkillsData={hardSkillsData || undefined} 
-            />
+            content: null, // Defer to contentFactory for better consistency
+            contentFactory: () => (
+                <AboutContent 
+                    aboutData={aboutData || undefined} 
+                    experienceData={experienceData || undefined} 
+                    hardSkillsData={hardSkillsData || undefined} 
+                />
+            )
         },
         {
             id: "whatsapp",
@@ -81,7 +88,8 @@ export const createInitialWindows = ({
             initialPosition: { x: 200, y: 120 },
             width: 450,
             height: 600,
-            content: <ChatWindow customContacts={dynamicContacts} />
+            content: null,
+            contentFactory: () => <ChatWindow customContacts={dynamicContacts} initialProjects={_projects} />
         },
         {
             id: "contact",
@@ -92,7 +100,8 @@ export const createInitialWindows = ({
             initialPosition: { x: 240, y: 100 },
             width: 520,
             height: 720,
-            content: <ContactWindow />
+            content: null,
+            contentFactory: () => <ContactWindow initialData={contactData} />
         },
         {
             id: "trash-bin",
@@ -130,7 +139,8 @@ export const createInitialWindows = ({
             initialPosition: { x: 120, y: 120 },
             width: 900,
             height: 600,
-            content: <ExplorerWindow isAdmin={isAdmin} />
+            content: null,
+            contentFactory: () => <ExplorerWindow isAdmin={isAdmin} />
         }
     ];
 };

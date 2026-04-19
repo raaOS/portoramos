@@ -3,28 +3,19 @@ import { loadAboutData } from '@/lib/about';
 import { loadExperienceData } from '@/lib/experience';
 import { loadHardSkillsData } from '@/lib/hardSkills';
 import { allProjectsAsync } from '@/lib/projects';
-import { headers } from 'next/headers';
+import { loadTestimonialsData } from '@/lib/testimonial';
 
 // ISR: Revalidate homepage every 60 seconds
 export const revalidate = 60;
 
 export default async function Home() {
-  const headerStore = await headers();
-  
-  const referer = headerStore.get('referer');
-  const host = headerStore.get('host');
-  
-  // Skip boot only if navigating from our own site (internal link)
-  // This allows new tabs (no referer) to show the boot animation
-  const isInternalNavigation = !!(referer && host && referer.includes(host));
-  const hasBooted = isInternalNavigation;
-
   // Parallel data fetching for faster TTFB
-  const [aboutData, experienceData, hardSkillsData, allProjects] = await Promise.all([
+  const [aboutData, experienceData, hardSkillsData, allProjects, testimonialsData] = await Promise.all([
     loadAboutData(),
     loadExperienceData(),
     loadHardSkillsData(),
-    allProjectsAsync()
+    allProjectsAsync(),
+    loadTestimonialsData(),
   ]);
 
   const projects = (allProjects || []).filter(p => p.status !== 'draft');
@@ -36,7 +27,7 @@ export default async function Home() {
         experienceData={experienceData}
         hardSkillsData={hardSkillsData}
         projects={projects}
-        initialHasBooted={hasBooted}
+        testimonialsData={testimonialsData}
       />
     </div>
   );

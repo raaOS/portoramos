@@ -14,7 +14,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ contact, onBack, isTypin
             <div className="flex items-center gap-2">
                 <button
                     onClick={onBack}
-                    className="p-1.5 hover:bg-gray-200 rounded-full transition-colors active:bg-gray-300"
+                    className="flex items-center justify-center w-8 h-8 hover:bg-gray-200 rounded-full transition-colors active:bg-gray-300"
                 >
                     <ArrowLeft size={20} className="text-[#54656f]" />
                 </button>

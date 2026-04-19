@@ -8,6 +8,8 @@ interface ChatMessagesProps {
     messages: ChatMessage[];
     isTyping: boolean;
     getProjectById: (id: string) => Project | undefined;
+    onOpenProject: (project: Project) => void;
+    onPreviewMedia: (src: string, title: string, type: 'image' | 'video') => void;
 }
 
 const ChatMediaPreview: React.FC<{ src: string; alt?: string; className?: string }> = ({ src, alt, className }) => {
@@ -30,7 +32,13 @@ const ChatMediaPreview: React.FC<{ src: string; alt?: string; className?: string
     return <img src={src} alt={alt} className={className} loading="lazy" />;
 };
 
-export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isTyping, getProjectById }) => {
+export const ChatMessages: React.FC<ChatMessagesProps> = ({ 
+    messages, 
+    isTyping, 
+    getProjectById,
+    onOpenProject,
+    onPreviewMedia
+}) => {
     return (
         <div className="flex-1 w-full overflow-y-auto px-4 py-4 flex flex-col gap-2 relative bg-[#e5ddd5] dark:bg-[#0b141a]">
             {/* Pattern Background */}
@@ -82,6 +90,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isTyping, 
                                     {(msg.type === 'project' || (msg.type === 'image' && msg.projectId)) && (
                                         <m.div
                                             whileHover={{ scale: 1.02 }}
+                                            onClick={() => project && onOpenProject(project)}
                                             className="mb-2 bg-black/5 dark:bg-white/5 rounded-xl p-1.5 overflow-hidden border border-black/5 cursor-pointer block no-underline group/card"
                                         >
                                             <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-gray-100">
@@ -111,7 +120,15 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isTyping, 
                                     )}
 
                                     {msg.type === 'image' && !msg.projectId && msg.imageSrc && (
-                                        <div className="mb-2 rounded-xl overflow-hidden bg-gray-100 border border-black/5 aspect-[4/3] w-full max-w-[240px]">
+                                        <div 
+                                            className="mb-2 rounded-xl overflow-hidden bg-gray-100 border border-black/5 aspect-[4/3] w-full max-w-[240px] cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={() => {
+                                                if (msg.imageSrc) {
+                                                    const isVideo = msg.imageSrc.toLowerCase().endsWith('.mp4') || msg.imageSrc.toLowerCase().endsWith('.webm');
+                                                    onPreviewMedia(msg.imageSrc, 'Image Preview', isVideo ? 'video' : 'image');
+                                                }
+                                            }}
+                                        >
                                             <ChatMediaPreview 
                                                 src={msg.imageSrc} 
                                                 alt="Sent image" 

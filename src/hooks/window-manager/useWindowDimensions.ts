@@ -37,14 +37,14 @@ export function useWindowDimensions() {
         };
     }, []);
 
-    const getCenterPositionStatic = (width: number, height: number) => {
+    const getCenterPositionStatic = useCallback((width: number, height: number) => {
         const safeWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
         const safeHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
         return {
             x: Math.max(0, (safeWidth - width) / 2),
             y: Math.max(30, (safeHeight - height) / 2)
         };
-    };
+    }, []);
 
     const getCenterPosition = useCallback((w: number, h: number) => {
         const { width: safeWidth, height: safeHeight } = windowDimensions;

@@ -17,6 +17,10 @@ export async function handleAdminReply(
     }
 
     console.log('[Webhook Debug] Adding admin reply for visitor:', currentVisitorId);
+    
+    // Trigger short typing feedback on the site
+    await chatStore.setTypingStatus(currentVisitorId, 3000);
+    
     const routed = await chatStore.addAdminReply(currentVisitorId, text);
     console.log('[Webhook Debug] Admin reply result:', routed);
     

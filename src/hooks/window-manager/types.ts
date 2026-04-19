@@ -9,6 +9,7 @@ export interface WindowState {
     zIndex: number;
     noPadding?: boolean;
     content: React.ReactNode;
+    contentFactory?: () => React.ReactNode;
     initialPosition?: { x: number; y: number };
     width?: number;
     height?: number;

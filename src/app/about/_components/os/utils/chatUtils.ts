@@ -1,4 +1,4 @@
-import { Testimonial } from "@/types/testimonial";
+import { Testimonial, TestimonialData } from "@/types/testimonial";
 import { ContactProfile, ChatMessage } from "../data/mockChats";
 import { getAvatarUrl } from "@/lib/avatar";
 
@@ -68,4 +68,23 @@ export const mergeContacts = (
     }
 
     return newContacts;
+};
+
+export const buildChatContactsFromTestimonials = (
+    testimonialData?: TestimonialData | null
+): {
+    dynamicContacts: Record<string, ContactProfile>;
+    testimonialContacts: ContactProfile[];
+    allContactsList: ContactProfile[];
+} => {
+    const testimonials = testimonialData?.testimonials || [];
+    const activeTestimonials = testimonials.filter((testimonial) => testimonial.isActive !== false);
+    const testimonialContacts = activeTestimonials.map(convertTestimonialToContact);
+    const dynamicContacts = mergeContacts({}, testimonials);
+
+    return {
+        dynamicContacts,
+        testimonialContacts,
+        allContactsList: Object.values(dynamicContacts)
+    };
 };

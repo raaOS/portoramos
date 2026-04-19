@@ -12,6 +12,8 @@ import type { ContactProfile } from "../data/mockChats";
 import { useDesktopWindowContext } from "../context/DesktopWindowContext";
 import { useUnifiedZIndex } from "../context/UnifiedZIndexContext";
 import { ISLAND_ID } from "../ui/DynamicIsland";
+import { useOSSystem } from "../context/OSSystemContext";
+import { useBootSequence } from "../hooks/useBootSequence";
 
 const Spotlight = dynamic(() => import("../core/Spotlight"), {
     loading: () => null,
@@ -29,47 +31,37 @@ const ControlCenter = dynamic(() => import("../ui/ControlCenter"), {
 });
 
 interface UIOverlaysLayerProps {
-    isBooting: boolean;
-    needsPowerOn: boolean;
     navToChat: (chatId?: string) => void;
     openWhatsAppList: () => void;
     testimonialContacts: ContactProfile[];
-    showSpotlight: boolean;
-    setShowSpotlight: React.Dispatch<React.SetStateAction<boolean>>;
     aboutData?: AboutData | null;
     isAdmin: boolean;
     logout: () => void;
     toggleNotesVisibility: () => void;
-    notesVisible: boolean;
     isMobile: boolean;
     commercialProjects: Project[];
     openProjectWindow: (project: Project) => void;
 }
 
 export default function UIOverlaysLayer({
-    isBooting,
-    needsPowerOn,
     navToChat,
     openWhatsAppList,
     testimonialContacts,
-    showSpotlight,
-    setShowSpotlight,
     aboutData,
     isAdmin,
     logout,
     toggleNotesVisibility,
-    notesVisible,
     isMobile,
     commercialProjects,
     openProjectWindow
 }: UIOverlaysLayerProps) {
-    // Don't show overlays during boot sequence
+    const { isBooting, needsPowerOn } = useBootSequence();
+    const { showSpotlight, setShowSpotlight, notesVisible } = useOSSystem();
     const isBootingOrStarting = isBooting || needsPowerOn;
+    
     const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
     const { getZIndex } = useUnifiedZIndex();
     const [showControlCenter, setShowControlCenter] = React.useState(false);
-    
-    // Note: Exit animation is handled by AnimatePresence when component unmounts
 
     const isWindowOpen = (id: string) => windows?.find(w => w.id === id)?.isOpen ?? false;
     const activeWindows = (windows || []).filter(w => w.isOpen && !w.isMinimized);
@@ -77,7 +69,6 @@ export default function UIOverlaysLayer({
         if (!currentTop) {
             return candidate;
         }
-
         return getZIndex(candidate.id) > getZIndex(currentTop.id) ? candidate : currentTop;
     }, null);
     const topWindowTitle = topWindow?.title || null;
@@ -140,8 +131,6 @@ export default function UIOverlaysLayer({
                                     notesVisible={notesVisible}
                                     bouncingId={bouncingDocId}
                                     isMobile={isMobile}
-                                    commercialProjects={commercialProjects}
-                                    openProjectWindow={openProjectWindow}
                                 />
                             )}
                         </div>

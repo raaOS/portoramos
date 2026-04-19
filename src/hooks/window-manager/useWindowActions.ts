@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { ReactNode } from 'react';
 import { WindowState } from './types';
 import { AboutData } from '@/types/about';
 import { ElementType } from '@/app/about/_components/os/context/UnifiedZIndexContext';
@@ -34,6 +35,16 @@ export function useWindowActions({
 
     const openWindow = useCallback((id: string, customConfig?: Partial<WindowState>) => {
         const newZIndex = bringToFrontZIndex(id, 'window');
+
+        const resolveWindowContent = (windowState?: WindowState, overrideContent?: ReactNode) => {
+            if (overrideContent !== undefined) {
+                return overrideContent;
+            }
+            if (windowState?.content != null) {
+                return windowState.content;
+            }
+            return windowState?.contentFactory ? windowState.contentFactory() : null;
+        };
 
         setWindows(prev => {
             const existingWindow = prev.find(w => w.id === id);
@@ -75,7 +86,7 @@ export function useWindowActions({
                          ...w,
                             isMinimized: false,
                             zIndex: newZIndex,
-                            content: customConfig?.content || w.content,
+                            content: resolveWindowContent(w, customConfig?.content),
                             title: customConfig?.title || w.title,
                         };
                     }
@@ -101,7 +112,7 @@ export function useWindowActions({
                         initialPosition: w.initialPosition || initialPosition,
                         width,
                         height,
-                        content: customConfig?.content || w.content,
+                        content: resolveWindowContent(w, customConfig?.content),
                         title: customConfig?.title || w.title,
                     };
                 }

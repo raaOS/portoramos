@@ -8,32 +8,38 @@ import { ChatHeader } from './components/ChatHeader';
 import { ChatMessages } from './components/ChatMessages';
 import { ChatFooter } from './components/ChatFooter';
 import { ChatList } from './components/ChatList';
+import QuickLookModal from '@/components/ui/QuickLookModal';
+import { useDesktopWindowContext } from '../context/DesktopWindowContext';
 import type { ContactProfile, ChatMessage } from '../data/mockChats';
-import type { TestimonialData } from '@/types/testimonial';
-import { convertTestimonialToContact } from '../utils/chatUtils';
+import type { Project } from '@/types/projects';
 
 interface ChatWindowProps {
     activeChatId?: string | null;
     customContacts?: Record<string, ContactProfile>;
+    initialProjects?: Project[];
 }
 
-export default function ChatWindow({ activeChatId = null, customContacts }: ChatWindowProps) {
+export default function ChatWindow({ activeChatId = null, customContacts, initialProjects }: ChatWindowProps) {
     const [activeContact, setActiveContact] = useState<ContactProfile | null>(null);
     const [showList, setShowList] = useState(true);
     const [input, setInput] = useState('');
+    const [previewMedia, setPreviewMedia] = useState<{ 
+        src: string; 
+        title: string; 
+        type: 'image' | 'video';
+        project?: Project;
+    } | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
+    const { openWindow } = useDesktopWindowContext();
     
     // Contacts state
-    const [fetchedContacts, setFetchedContacts] = useState<ContactProfile[]>(
-        customContacts ? Object.values(customContacts) : []
-    );
     const contacts = useMemo(
-        () => customContacts ? Object.values(customContacts) : fetchedContacts,
-        [customContacts, fetchedContacts]
+        () => customContacts ? Object.values(customContacts) : [],
+        [customContacts]
     );
 
     // Custom Hooks
-    const { getProjectById } = useChatProjects();
+    const { getProjectById } = useChatProjects(initialProjects);
     const { 
         visibleMessages, 
         isRemoteTyping, 
@@ -91,45 +97,19 @@ export default function ChatWindow({ activeChatId = null, customContacts }: Chat
         return lastMsg.text.length > 30 ? lastMsg.text.substring(0, 30) + "..." : lastMsg.text;
     };
 
-    useEffect(() => {
-        if (!activeChatId) {
-            return;
+    // Handle activeChatId changes outside of Effect to avoid cascading renders
+    const [prevActiveChatId, setPrevActiveChatId] = useState(activeChatId);
+    
+    if (activeChatId !== prevActiveChatId) {
+        setPrevActiveChatId(activeChatId);
+        const target = findContactByChatId(activeChatId || "");
+        if (target) {
+            // We set state during render which is safer in React 18+ for reflecting props
+            setActiveContact(target);
+            setShowList(false);
+            setVisibleMessages([]);
         }
-
-        const targetContact = findContactByChatId(activeChatId);
-        if (targetContact) {
-            selectContact(targetContact);
-        }
-    }, [activeChatId, findContactByChatId, selectContact]);
-
-    useEffect(() => {
-        if (customContacts) return;
-
-        let isMounted = true;
-
-        const fetchTestimonials = async () => {
-            try {
-                const res = await fetch('/api/testimonial');
-                if (!res.ok) {
-                    throw new Error(`Failed to load testimonials: ${res.status}`);
-                }
-
-                const data: TestimonialData = await res.json();
-                if (isMounted) {
-                    const nextContacts = (data.testimonials || [])
-                        .filter((testimonial) => testimonial.isActive !== false)
-                        .map(convertTestimonialToContact);
-                    setFetchedContacts(nextContacts);
-                }
-            } catch (err) {
-                console.error("Failed to load contacts:", err);
-            }
-        };
-        fetchTestimonials();
-        return () => {
-            isMounted = false;
-        };
-    }, [customContacts]);
+    }
 
     if (showList) {
         return <ChatList contacts={contacts} onSelect={selectContact} getLastMessage={getLastMessage} />;
@@ -149,6 +129,16 @@ export default function ChatWindow({ activeChatId = null, customContacts }: Chat
                 messages={visibleMessages} 
                 isTyping={isRemoteTyping} 
                 getProjectById={getProjectById} 
+                onOpenProject={(project) => {
+                    const isVideo = project.cover?.toLowerCase().endsWith('.mp4') || project.cover?.toLowerCase().endsWith('.webm');
+                    setPreviewMedia({
+                        src: project.cover || '',
+                        title: project.title,
+                        type: isVideo ? 'video' : 'image',
+                        project
+                    });
+                }}
+                onPreviewMedia={(src, title, type) => setPreviewMedia({ src, title, type })}
             />
 
             <div ref={bottomRef} />
@@ -158,6 +148,15 @@ export default function ChatWindow({ activeChatId = null, customContacts }: Chat
                 setInput={setInput} 
                 onSend={handleSend} 
                 onTyping={handleTyping} 
+            />
+
+            {/* Media Preview Modal */}
+            <QuickLookModal
+                isOpen={!!previewMedia}
+                onClose={() => setPreviewMedia(null)}
+                title={previewMedia?.title || 'Preview'}
+                type={previewMedia?.type || 'image'}
+                url={previewMedia?.src || ''}
             />
         </div>
     );

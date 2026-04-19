@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebaseAdmin';
-import { AnyExplorerNode, ExplorerFolder, ExplorerFile, NodeType } from '@/types/explorer';
+import { AnyExplorerNode, ExplorerFolder, ExplorerFile } from '@/types/explorer';
 import { v4 as uuidv4 } from 'uuid';
 
 const EXPLORER_PATH = 'explorer/nodes';
@@ -110,6 +110,37 @@ export const explorerService = {
         } catch (error) {
             console.error(`[ExplorerService] Failed to rename node ${id}:`, error);
             return false;
+        }
+    },
+
+    /**
+     * Get the full path (ancestors) for a given node
+     */
+    async getPath(id: string | null): Promise<ExplorerFolder[]> {
+        if (!id) return [];
+        try {
+            const snapshot = await db.ref(EXPLORER_PATH).once('value');
+            const data = snapshot.val() as Record<string, AnyExplorerNode> | null;
+            if (!data) return [];
+
+            const path: ExplorerFolder[] = [];
+            let currentId: string | null = id;
+
+            // Prevent infinite loops just in case
+            let depth = 0;
+            while (currentId && depth < 20) {
+                const node = data[currentId] as AnyExplorerNode | undefined;
+                if (!node || node.type !== 'folder') break;
+                
+                path.unshift(node as ExplorerFolder);
+                currentId = (node.parentId === undefined || node.parentId === '') ? null : node.parentId;
+                depth++;
+            }
+
+            return path;
+        } catch (error) {
+            console.error('[ExplorerService] Failed to get path:', error);
+            return [];
         }
     }
 };

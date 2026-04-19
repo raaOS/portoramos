@@ -1,6 +1,6 @@
 "use client";
 
-import React, { startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import React, { startTransition, useCallback, useEffect, useMemo } from "react";
 import { AnimatePresence, m, LazyMotion, domMax } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -14,13 +14,17 @@ import { useChatContacts } from "../hooks/useChatContacts";
 import { useDesktopLayout } from "../hooks/useDesktopLayout";
 import { useDesktopIcons } from "../hooks/useDesktopIcons";
 import { useDesktopNavigation } from "../hooks/useDesktopNavigation";
+import { useOSSystem } from "../context/OSSystemContext";
 import type { AboutData } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
 import type { Project } from "@/types/projects";
+import type { TestimonialData } from "@/types/testimonial";
+import type { ContactData } from "@/types/contact";
 import { soundManager } from "../utils/SoundManager";
 import { createInitialWindows } from "../utils/windowFactory";
 import { clearVisitorPositions } from "../utils/positionSync";
+import type { ContactProfile } from "../data/mockChats";
 import DesktopProviders from "./DesktopProviders";
 import DesktopBackground from "../ui/DesktopBackground";
 import DesktopSkeleton from "../ui/DesktopSkeleton";
@@ -41,30 +45,19 @@ export interface DesktopEnvironmentProps {
     experienceData?: ExperienceData | null;
     hardSkillsData?: HardSkillsData | null;
     projects: Project[];
-    initialHasBooted?: boolean;
+    testimonialsData?: TestimonialData | null;
+    contactData?: ContactData | null;
 }
-
-type ChatContactsState = ReturnType<typeof useChatContacts>;
 
 interface DesktopMainBaseProps {
     aboutData?: AboutData | null;
     isMobile: boolean;
-    needsPowerOn: boolean;
-    isBooting: boolean;
-    isRevealed: boolean;
-    startScreenReady: boolean;
-    setStartScreenReady: React.Dispatch<React.SetStateAction<boolean>>;
-    handleBootComplete: () => void;
-    notesVisible: boolean;
-    setNotesVisible: React.Dispatch<React.SetStateAction<boolean>>;
-    dynamicContacts: ChatContactsState["dynamicContacts"];
-    testimonialContacts: ChatContactsState["testimonialContacts"];
-    showSpotlight: boolean;
-    setShowSpotlight: React.Dispatch<React.SetStateAction<boolean>>;
-    commercialProjects: Project[];
-    projects: Project[];
     isAdmin: boolean;
     csrfToken: string | null;
+    commercialProjects: Project[];
+    projects: Project[];
+    dynamicContacts: Record<string, ContactProfile>;
+    testimonialContacts: ContactProfile[];
 }
 
 interface DesktopMainWithLogoutProps extends DesktopMainBaseProps {
@@ -75,17 +68,11 @@ interface DesktopMainProps extends DesktopMainBaseProps {
     logout: () => void | Promise<void>;
 }
 
-export default function DesktopEnvironment({ aboutData, experienceData, hardSkillsData, projects, initialHasBooted }: DesktopEnvironmentProps) {
+export default function DesktopEnvironment({ aboutData, experienceData, hardSkillsData, projects, testimonialsData, contactData }: DesktopEnvironmentProps) {
     const { mounted, isMobile } = useDesktopLock();
-    const { needsPowerOn, isBooting, finishBooting } = useBootSequence({ initialHasBooted });
+    const { needsPowerOn, isBooting } = useBootSequence();
     const { isAdmin, csrfToken, logout: originalLogout } = useAdminAuth();
-    const { dynamicContacts, testimonialContacts } = useChatContacts();
-    const [showSpotlight, setShowSpotlight] = useState(false);
-    const [notesVisible, setNotesVisible] = useState(true);
-    const [startScreenReady, setStartScreenReady] = useState(false);
-    const [isRevealed, setIsRevealed] = useState(false);
-
-    useDesktopShortcuts({ showSpotlight, setShowSpotlight });
+    const { dynamicContacts, testimonialContacts } = useChatContacts(testimonialsData);
 
     const commercialProjects = useMemo(() => {
         if (aboutData?.desktopPreferences?.visibleProjectIds) {
@@ -95,28 +82,11 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
     }, [projects, aboutData]);
 
     const initialWindows = useMemo(() => createInitialWindows({
-        aboutData, experienceData, hardSkillsData, projects, commercialProjects, dynamicContacts, isAdmin
-    }), [aboutData, experienceData, hardSkillsData, projects, commercialProjects, dynamicContacts, isAdmin]);
-
-    const handleBootComplete = useCallback(() => {
-        if (aboutData?.soundConfig) soundManager.loadConfig(aboutData.soundConfig);
-        soundManager.suppressSound('window-open', 1500);
-        soundManager.suppressSound('notification', 1000); // Also suppress late notifications
-        startTransition(() => setIsRevealed(true));
-        finishBooting();
-    }, [aboutData, finishBooting]);
-
-    // Handle initial sound suppression if boot is skipped
-    useEffect(() => {
-        if (!needsPowerOn && !isBooting) {
-            // Apply a short suppression period to prevent "audio explosion" on refresh
-            soundManager.suppressSound('window-open', 800);
-            soundManager.suppressSound('notification', 800);
-        }
-    }, [needsPowerOn, isBooting]);
+        aboutData, experienceData, hardSkillsData, contactData, projects, commercialProjects, dynamicContacts, isAdmin
+    }), [aboutData, experienceData, hardSkillsData, contactData, projects, commercialProjects, dynamicContacts, isAdmin]);
 
     if (!mounted) {
-        return <DesktopSkeleton isBooting={needsPowerOn} wallpaperUrl={aboutData?.wallpaperConfig?.collection?.find(w => w.id === aboutData.wallpaperConfig?.activeWallpaperId)?.url} />;
+        return <DesktopSkeleton isBooting={needsPowerOn || isBooting} wallpaperUrl={aboutData?.wallpaperConfig?.collection?.find(w => w.id === aboutData.wallpaperConfig?.activeWallpaperId)?.url} />;
     }
 
     return (
@@ -127,12 +97,10 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
             isAdmin={isAdmin}
         >
             <DesktopMainWithLogout
-                aboutData={aboutData} isMobile={isMobile} needsPowerOn={needsPowerOn} isBooting={isBooting}
-                isRevealed={isRevealed} startScreenReady={startScreenReady} setStartScreenReady={setStartScreenReady} 
-                handleBootComplete={handleBootComplete} notesVisible={notesVisible}
-                setNotesVisible={setNotesVisible} dynamicContacts={dynamicContacts} testimonialContacts={testimonialContacts}
-                showSpotlight={showSpotlight} setShowSpotlight={setShowSpotlight} commercialProjects={commercialProjects}
-                projects={projects} isAdmin={isAdmin} csrfToken={csrfToken ?? null} originalLogout={originalLogout}
+                aboutData={aboutData} isMobile={isMobile} commercialProjects={commercialProjects}
+                projects={projects} isAdmin={isAdmin} csrfToken={csrfToken ?? null} 
+                originalLogout={originalLogout} dynamicContacts={dynamicContacts}
+                testimonialContacts={testimonialContacts}
             />
         </DesktopProviders>
     );
@@ -150,12 +118,18 @@ function DesktopMainWithLogout({ originalLogout, ...props }: DesktopMainWithLogo
 }
 
 function DesktopMain({
-    aboutData, isMobile, needsPowerOn, isBooting, isRevealed,
-    startScreenReady, setStartScreenReady,
-    handleBootComplete, notesVisible, setNotesVisible,
-    dynamicContacts, testimonialContacts, showSpotlight, setShowSpotlight,
-    commercialProjects, projects, isAdmin, logout, csrfToken
+    aboutData, isMobile, isAdmin, logout, csrfToken, 
+    commercialProjects, projects, dynamicContacts, testimonialContacts
 }: DesktopMainProps) {
+    const { needsPowerOn, isBooting, finishBooting } = useBootSequence();
+    const { 
+        startScreenReady, setStartScreenReady,
+        isRevealed, setIsRevealed
+    } = useOSSystem();
+    const wasBootSkipped = !needsPowerOn && !isBooting;
+
+    useDesktopShortcuts();
+
     const handleGoHome = useCallback(() => {
         window.location.href = '/';
     }, []);
@@ -168,7 +142,7 @@ function DesktopMain({
 
     const { notes, addNote, updateNote, deleteNote, permanentDeleteNote, restoreNote, bringToFrontNote } = useStickyNotes(true, isAdmin, csrfToken ?? undefined, requestNextZIndex);
     const { openProjectWindow, navToChat, openWhatsAppList, toggleNotesVisibility } = useDesktopNavigation({
-        openWindow, resetWindows, dynamicContacts, ChatWindow, notesVisible, setNotesVisible,
+        openWindow, resetWindows, dynamicContacts, ChatWindow,
         notes, projects, restoreNote, addNote, isAdmin, setNotesDockBouncing: () => { }
     });
     const { iconPositions, handleIconPositionChange } = useDesktopLayout({ aboutData, isAdmin, csrfToken });
@@ -180,6 +154,32 @@ function DesktopMain({
         onOpenExplorer: () => openWindow('explorer'),
         iconPositions 
     });
+
+    const handleBootComplete = useCallback(() => {
+        if (aboutData?.soundConfig) soundManager.loadConfig(aboutData.soundConfig);
+        soundManager.suppressSound('window-open', 1500);
+        soundManager.suppressSound('notification', 1000);
+        startTransition(() => setIsRevealed(true));
+        finishBooting();
+    }, [aboutData, finishBooting, setIsRevealed]);
+
+    // Handle initial sound suppression if boot is skipped
+    useEffect(() => {
+        if (!needsPowerOn && !isBooting) {
+            soundManager.suppressSound('window-open', 800);
+            soundManager.suppressSound('notification', 800);
+        }
+    }, [needsPowerOn, isBooting]);
+
+    // Synchronize OS states for skipped boot to ensure immediate visibility on refresh
+    useEffect(() => {
+        if (wasBootSkipped && (!isRevealed || !startScreenReady)) {
+            startTransition(() => {
+                setIsRevealed(true);
+                setStartScreenReady(true);
+            });
+        }
+    }, [wasBootSkipped, isRevealed, startScreenReady, setIsRevealed, setStartScreenReady]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -196,20 +196,15 @@ function DesktopMain({
                 openWindow(app);
             }
 
-            // Cleanup URL after handling
             const nextUrl = window.location.pathname + window.location.hash;
             window.history.replaceState({}, '', nextUrl);
         };
 
-        // Run on mount
         handleUrlParams();
-
-        // Optional: Listen for popstate if we want to handle back/forward with params
         window.addEventListener('popstate', handleUrlParams);
         return () => window.removeEventListener('popstate', handleUrlParams);
     }, [openWindow, openWhatsAppList]);
 
-    const wasBootSkipped = !needsPowerOn && !isBooting;
     const isDesktopReady = wasBootSkipped || startScreenReady;
     const isDesktopRevealed = wasBootSkipped || isRevealed;
 
@@ -240,17 +235,20 @@ function DesktopMain({
                             <>
                                 <DesktopIconsLayer projectIcons={projectIcons} isMobile={isMobile} isReady={isDesktopRevealed} handleIconPositionChange={handleIconPositionChange} openProjectWindow={openProjectWindow} />
                                 <UnifiedLayer
-                                    windows={windows} notes={notes} notesVisible={notesVisible} isAdmin={isAdmin} isReady={isDesktopRevealed}
+                                    windows={windows} notes={notes} isAdmin={isAdmin}
+                                    isRevealed={isDesktopRevealed}
                                     closeWindow={closeWindow} minimizeWindow={minimizeWindow} maximizeWindow={maximizeWindow} focusWindow={focusWindow}
                                     updateWindowPosition={updateWindowPosition} handleWindowResize={handleWindowResize} handleWindowResizeEnd={handleWindowResizeEnd}
                                     togglePin={togglePin} updateNote={updateNote} bringToFrontNote={bringToFrontNote} deleteNote={deleteNote}
                                     permanentDeleteNote={permanentDeleteNote} restoreNote={restoreNote} addNote={addNote}
                                 />
                                 <UIOverlaysLayer
-                                    isBooting={isBooting} needsPowerOn={needsPowerOn} navToChat={navToChat} openWhatsAppList={openWhatsAppList}
-                                    testimonialContacts={testimonialContacts} showSpotlight={showSpotlight} setShowSpotlight={setShowSpotlight}
-                                    aboutData={aboutData} isAdmin={isAdmin} logout={logout} toggleNotesVisibility={toggleNotesVisibility}
-                                    notesVisible={notesVisible} isMobile={isMobile} commercialProjects={commercialProjects} openProjectWindow={openProjectWindow}
+                                    navToChat={navToChat} openWhatsAppList={openWhatsAppList}
+                                    testimonialContacts={testimonialContacts}
+                                    aboutData={aboutData} isAdmin={isAdmin} logout={logout} 
+                                    toggleNotesVisibility={toggleNotesVisibility}
+                                    isMobile={isMobile} commercialProjects={commercialProjects} 
+                                    openProjectWindow={openProjectWindow}
                                 />
                             </>
                         )}

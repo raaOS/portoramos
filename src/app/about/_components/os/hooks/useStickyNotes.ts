@@ -103,7 +103,6 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                 }
             } catch (error) {
                 if (error instanceof Error && error.name === 'AbortError') {
-                    console.log('[StickyNotes] Load aborted');
                     return;
                 }
                 console.error("Failed to load notes from server:", error instanceof Error ? error.message : error);
@@ -158,7 +157,6 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                     }
                 } catch (e) {
                     if (e instanceof Error && e.name === 'AbortError') {
-                        console.log('[StickyNotes] Safe merge aborted');
                         return;
                     }
                     console.warn("[StickyNotes] Safe merge failed", e);
@@ -177,7 +175,6 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                 isModified.current = false;
             } catch (error) {
                 if (error instanceof Error && error.name === 'AbortError') {
-                    console.log('[StickyNotes] Save aborted');
                     return;
                 }
                 console.error("Failed to auto-save notes:", error instanceof Error ? error.message : error);
@@ -210,7 +207,6 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                 body: JSON.stringify(notesToFlush)
             });
             isModified.current = false;
-            console.log('[StickyNotes] Flushed notes positions');
         } catch (error) {
             console.error("[StickyNotes] Failed to flush notes:", error);
         }

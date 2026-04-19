@@ -8,6 +8,8 @@ import DesktopErrorBoundary from "../windows/DesktopErrorBoundary";
 import { WindowState } from "@/hooks/useWindowManager";
 import { AboutData } from "@/types/about";
 
+import { OSSystemProvider } from "../context/OSSystemContext";
+
 interface DesktopProvidersProps {
   children: React.ReactNode;
   initialWindows: WindowState[];
@@ -27,14 +29,16 @@ export default function DesktopProviders({
     <DesktopErrorBoundary>
       <LayoutPersistenceProvider>
         <UnifiedZIndexProvider>
-          <DesktopWindowProvider
-            initialWindows={initialWindows}
-            aboutData={aboutData}
-            csrfToken={csrfToken}
-            isAdmin={isAdmin}
-          >
-            {children}
-          </DesktopWindowProvider>
+          <OSSystemProvider>
+            <DesktopWindowProvider
+              initialWindows={initialWindows}
+              aboutData={aboutData}
+              csrfToken={csrfToken}
+              isAdmin={isAdmin}
+            >
+              {children}
+            </DesktopWindowProvider>
+          </OSSystemProvider>
         </UnifiedZIndexProvider>
       </LayoutPersistenceProvider>
     </DesktopErrorBoundary>

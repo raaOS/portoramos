@@ -144,10 +144,10 @@ export async function POST(request: Request) {
 
         // 4. Trigger AI if in AI mode
         if (isAiMode) {
-            // Await AI response in the background for UX speed, or await it if UX needs instant reflection
-            // It's usually better to let NextJS finish the request and do background task, but Vercel might kill it.
-            // For safety, we block here, or Nextjs edge allows background if we set config.
             try {
+                // Trigger typing indicator on the web
+                await chatStore.setTypingStatus(visitorId, 10000);
+                
                 // Generate reply
                 const sessionWithMessages = await chatStore.getAllMessages(visitorId);
                 const aiResponseText = await aiChatService.generateResponse(sessionWithMessages);

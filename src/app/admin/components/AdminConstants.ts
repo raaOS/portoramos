@@ -10,7 +10,6 @@ import {
   Layout,
   Smile,
   Zap,
-  Dumbbell,
   Sparkles,
   Type,
   User,
@@ -19,7 +18,6 @@ import {
   Image as ImageIcon,
   Archive,
   Brain,
-  FolderTree,
   type LucideIcon
 } from 'lucide-react';
 

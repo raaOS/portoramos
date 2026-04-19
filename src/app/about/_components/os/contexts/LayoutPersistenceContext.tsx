@@ -22,10 +22,8 @@ export function LayoutPersistenceProvider({ children }: { children: React.ReactN
     }, []);
 
     const flushAll = useCallback(async () => {
-        console.log('[LayoutPersistence] Flushing all pending saves...');
         const promises = Array.from(flushersRef.current.values()).map(flush => flush());
         await Promise.all(promises);
-        console.log('[LayoutPersistence] All pending saves flushed');
     }, []);
 
     return (

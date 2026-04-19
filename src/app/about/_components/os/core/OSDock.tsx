@@ -6,7 +6,6 @@ import Dock from './Dock';
 import AppIcon from "../ui/AppIcon";
 import { getDockItemConfig } from "../utils/dockUtils";
 import { AboutData } from '@/types/about';
-import { Project } from '@/types/projects';
 import { Grid, User, Mail, FileText, Trash2 } from 'lucide-react';
 import WhatsAppIcon from "../ui/WhatsAppIcon";
 import DockProjectModes from '../ui/DockProjectModes';
@@ -23,8 +22,6 @@ interface OSDockProps {
   bouncingId?: string | null;
   className?: string;
   isMobile?: boolean;
-  commercialProjects?: Project[];
-  openProjectWindow?: (project: Project) => void;
 }
 
 export default function OSDock({

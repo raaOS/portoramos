@@ -21,6 +21,7 @@ export function useChatSync(initialGreeting?: string) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isSending, setIsSending] = useState(false);
     const [isAdminTyping, setIsAdminTyping] = useState(false);
+    const [isPageVisible, setIsPageVisible] = useState(true);
 
     // Initial Visitor ID
     useEffect(() => {
@@ -38,6 +39,15 @@ export function useChatSync(initialGreeting?: string) {
         }
     }, []);
 
+    // Track page visibility to optimize polling
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            setIsPageVisible(document.visibilityState === 'visible');
+        };
+        window.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => window.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, []);
+
     // Greeting
     useEffect(() => {
         if (visitorId && messages.length === 0 && initialGreeting) {
@@ -50,52 +60,68 @@ export function useChatSync(initialGreeting?: string) {
         }
     }, [visitorId, initialGreeting, messages.length]);
 
-    // Polling
-    const { data: syncData } = useSWR(
+    const [syncError, setSyncError] = useState(false);
+ 
+    // Polling with Smart Interval
+    // 3 seconds when active, 30 seconds when in background
+    const { data: syncData, error: swrError } = useSWR(
         visitorId ? `/api/chat/sync?visitorId=${visitorId}` : null,
         fetcher,
-        { refreshInterval: 3000, revalidateOnFocus: false }
+        { 
+            refreshInterval: isPageVisible ? 3000 : 30000, 
+            revalidateOnFocus: true,
+            dedupingInterval: 2000,
+            onSuccess: () => setSyncError(false),
+            onError: () => setSyncError(true)
+        }
     );
-
-    // Sync Messages from Server
+ 
+    // Sync Messages and Typing Status from Server
     useEffect(() => {
-        if (syncData?.success && syncData?.messages?.length > 0) {
-            setMessages(prev => {
-                const newMessages = [...prev];
-                let hasNewAdminMessage = false;
-
-                syncData.messages.forEach((serverMsg: ChatMessage) => {
-                    const existingTempIndex = newMessages.findIndex(
-                        m => m.id.startsWith('temp-') && m.text === serverMsg.text && m.sender === serverMsg.sender
-                    );
-                    const hasConfirmed = newMessages.find(m => m.id === serverMsg.id);
-
-                    if (!hasConfirmed) {
-                        if (existingTempIndex >= 0) {
-                            newMessages[existingTempIndex] = serverMsg;
-                        } else {
-                            newMessages.push(serverMsg);
-                            if (serverMsg.sender === 'admin') hasNewAdminMessage = true;
+        if (syncData?.success) {
+            // Update typing status from server
+            if (syncData.isAdminTyping !== undefined) {
+                setIsAdminTyping(syncData.isAdminTyping);
+            }
+ 
+            if (syncData.messages?.length > 0) {
+                setMessages(prev => {
+                    const newMessages = [...prev];
+                    let hasNewAdminMessage = false;
+ 
+                    syncData.messages.forEach((serverMsg: ChatMessage) => {
+                        const existingTempIndex = newMessages.findIndex(
+                            m => m.id.startsWith('temp-') && m.text === serverMsg.text && m.sender === serverMsg.sender
+                        );
+                        const hasConfirmed = newMessages.find(m => m.id === serverMsg.id);
+ 
+                        if (!hasConfirmed) {
+                            if (existingTempIndex >= 0) {
+                                newMessages[existingTempIndex] = serverMsg;
+                            } else {
+                                newMessages.push(serverMsg);
+                                if (serverMsg.sender === 'admin') hasNewAdminMessage = true;
+                            }
                         }
+                    });
+ 
+                    if (hasNewAdminMessage) {
+                        soundManager.play('notification');
+                        setIsAdminTyping(false);
                     }
+ 
+                    // Deduplicate and Sort
+                    const uniqueMsgs: ChatMessage[] = [];
+                    const seenIds = new Set();
+                    newMessages.sort((a, b) => a.timestamp - b.timestamp).forEach(m => {
+                        if (!seenIds.has(m.id)) {
+                            seenIds.add(m.id);
+                            uniqueMsgs.push(m);
+                        }
+                    });
+                    return uniqueMsgs;
                 });
-
-                if (hasNewAdminMessage) {
-                    soundManager.play('notification');
-                    setIsAdminTyping(false);
-                }
-
-                // Deduplicate and Sort
-                const uniqueMsgs: ChatMessage[] = [];
-                const seenIds = new Set();
-                newMessages.sort((a, b) => a.timestamp - b.timestamp).forEach(m => {
-                    if (!seenIds.has(m.id)) {
-                        seenIds.add(m.id);
-                        uniqueMsgs.push(m);
-                    }
-                });
-                return uniqueMsgs;
-            });
+            }
         }
     }, [syncData]);
 
@@ -143,6 +169,7 @@ export function useChatSync(initialGreeting?: string) {
         sendMessage, 
         isSending, 
         isAdminTyping, 
-        setIsAdminTyping 
+        setIsAdminTyping,
+        syncError: syncError || !!swrError
     };
 }

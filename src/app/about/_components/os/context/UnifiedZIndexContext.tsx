@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useRef, ReactNode } from "react";
+import React, { createContext, useContext, useCallback, useRef, ReactNode, useSyncExternalStore } from "react";
 
 // Types of focusable elements in the OS
 export type ElementType = 'window' | 'stickyNote' | 'dynamicIsland';
@@ -28,12 +28,14 @@ interface UnifiedZIndexContextType {
   registerElement: (id: string, type: ElementType) => void;
   // Unregister element
   unregisterElement: (id: string) => void;
+  // Internal subscription helpers
+  _subscribe: (onStoreChange: () => void) => () => void;
+  _getSnapshot: () => number;
 }
 
 const UnifiedZIndexContext = createContext<UnifiedZIndexContextType | undefined>(undefined);
 
 const BASE_Z_INDEX = 100;
-const _MAX_Z_INDEX = 999999; // Reserved for future use
 const NORMALIZE_THRESHOLD = 900000; // Normalize when approaching max
 
 export const useUnifiedZIndex = () => {
@@ -41,6 +43,12 @@ export const useUnifiedZIndex = () => {
   if (!context) {
     throw new Error("useUnifiedZIndex must be used within UnifiedZIndexProvider");
   }
+
+  // PERFORMANCE OPTIMIZATION: Subscribe to z-index changes
+  // This triggers a re-render of ONLY the component using the hook, 
+  // instead of the entire provider tree.
+  useSyncExternalStore(context._subscribe, context._getSnapshot, context._getSnapshot);
+
   return context;
 };
 
@@ -52,17 +60,21 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
   // Use ref for immediate synchronous updates (no batching issues)
   const elementsRef = useRef<Map<string, ZIndexEntry>>(new Map());
   const topZIndexRef = useRef(BASE_Z_INDEX);
-  const [, forceUpdate] = useState({});
+  
+  // Subscription system to decouple re-renders from the provider
+  const listeners = useRef(new Set<() => void>());
 
-  // Trigger re-render when z-index changes
+  const subscribe = useCallback((onStoreChange: () => void) => {
+    listeners.current.add(onStoreChange);
+    return () => listeners.current.delete(onStoreChange);
+  }, []);
+
   const notifyUpdate = useCallback(() => {
-    forceUpdate({});
+    listeners.current.forEach(listener => listener());
   }, []);
 
   // Normalize z-indexes to prevent overflow
   const normalizeZIndexes = useCallback(() => {
-    console.log('[ZIndexManager] Normalizing z-indexes...');
-    
     const entries = Array.from(elementsRef.current.values());
     if (entries.length === 0) {
       topZIndexRef.current = BASE_Z_INDEX;
@@ -83,6 +95,11 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
   }, [notifyUpdate]);
 
   const bringToFront = useCallback((id: string, type: ElementType): number => {
+    const currentEntry = elementsRef.current.get(id);
+    if (currentEntry?.zIndex === topZIndexRef.current) {
+      return currentEntry.zIndex;
+    }
+
     // Check if we need to normalize
     if (topZIndexRef.current >= NORMALIZE_THRESHOLD) {
       if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
@@ -105,8 +122,6 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
 
     // Notify for re-render
     notifyUpdate();
-
-    console.log(`[ZIndexManager] ${type} "${id}" moved to front with z-index ${nextZIndex}`);
     return nextZIndex;
   }, [normalizeZIndexes, notifyUpdate]);
 
@@ -149,12 +164,15 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
   const registerElement = useCallback((id: string, type: ElementType) => {
     if (!elementsRef.current.has(id)) {
       elementsRef.current.set(id, { id, type, zIndex: BASE_Z_INDEX });
+      notifyUpdate();
     }
-  }, []);
+  }, [notifyUpdate]);
 
   const unregisterElement = useCallback((id: string) => {
-    elementsRef.current.delete(id);
-    notifyUpdate();
+    if (elementsRef.current.has(id)) {
+      elementsRef.current.delete(id);
+      notifyUpdate();
+    }
   }, [notifyUpdate]);
 
   const value = React.useMemo(() => ({
@@ -166,9 +184,11 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
     resetZIndexes,
     registerElement,
     unregisterElement,
+    _subscribe: subscribe,
+    _getSnapshot: () => topZIndexRef.current,
   }), [
     getZIndex, bringToFront, getTopZIndex, isOnTop, getTopElement,
-    resetZIndexes, registerElement, unregisterElement
+    resetZIndexes, registerElement, unregisterElement, subscribe
   ]);
 
   return (
