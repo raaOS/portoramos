@@ -128,13 +128,13 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
                             <div
                                 key={result.id}
                                 className={`flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors ${
-                                    index === safeSelectedIndex ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-black/5"
+                                    index === safeSelectedIndex ? "bg-black text-white" : "text-gray-700 hover:bg-black/5"
                                 }`}
                                 onClick={() => openResult(result)}
                                 onMouseEnter={() => setSelectedIndex(index)}
                             >
                                 {result.type === "app" ? (
-                                    <AppWindow size={18} className={index === safeSelectedIndex ? "text-white" : "text-blue-500"} />
+                                    <AppWindow size={18} className={index === safeSelectedIndex ? "text-white" : "text-gray-400"} />
                                 ) : (
                                     <FileText size={18} className={index === safeSelectedIndex ? "text-white" : "text-orange-500"} />
                                 )}

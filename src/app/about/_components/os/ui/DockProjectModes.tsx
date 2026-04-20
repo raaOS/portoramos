@@ -68,7 +68,7 @@ export default function DockProjectModes({ onSelect }: DockProjectModesProps) {
                             className="absolute right-3 opacity-0 group-hover:opacity-100 transition-opacity"
                             whileHover={{ x: [0, 4, 0], transition: { repeat: Infinity, duration: 1.5 } }}
                         >
-                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                             <div className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-white" />
                         </m.div>
                     </m.button>
                 ))}

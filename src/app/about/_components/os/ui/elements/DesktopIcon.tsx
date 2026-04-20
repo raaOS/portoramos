@@ -134,7 +134,7 @@ export default function DesktopIcon({
             // Layout synchronization disabled to prevent global layout shifts
             layout={false} // Disable to prevent layout sync bugs with Dock icons
 
-            className={`flex flex-col items-center gap-1 w-auto group cursor-pointer pointer-events-auto will-change-transform focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none rounded-none ${isSelected ? 'z-50' : 'z-auto'}`}
+            className={`flex flex-col items-center gap-1 w-auto group cursor-pointer pointer-events-auto will-change-transform outline-none rounded-none ${isSelected ? 'z-50' : 'z-auto'}`}
             role="button"
             aria-label={label}
             tabIndex={0}
@@ -157,7 +157,7 @@ export default function DesktopIcon({
             onMouseLeave={() => { if (!isMobile) setHovering(false); if (onHoverEnd) onHoverEnd(id); }}
         >
             {children ? (
-                <div className={`relative transition-all duration-200 ${isSelected ? 'ring-4 ring-blue-500/30 rounded-lg drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]' : ''}`}>
+                <div className={`relative transition-all duration-200 ${isSelected ? 'scale-[1.05]' : ''}`}>
                     {children}
                 </div>
             ) : showMedia ? (
@@ -168,7 +168,7 @@ export default function DesktopIcon({
                         minWidth: baseHeight * aspectRatio,
                         minHeight: baseHeight,
                     }}
-                    className={`relative border-2 transition-all duration-200 bg-white/20 overflow-hidden rounded-none ${isSelected ? 'border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.4)] scale-[1.02]' : 'border-white/40 group-hover:border-white/60'}`}
+                    className={`relative border-2 transition-all duration-200 bg-white/20 overflow-hidden rounded-none ${isSelected ? 'border-white/60 shadow-md scale-[1.02]' : 'border-white/40 group-hover:border-white/60'}`}
                 >
                     {/* Always render Image as base layer if available and not error */}
                     {imageUrl && !imageError && (
@@ -219,7 +219,7 @@ export default function DesktopIcon({
             {/* Label with macOS-style selection */}
             <div className="mt-1 px-1.5 py-0.5 rounded-[4px] relative transition-all duration-200 group-active:scale-95">
                 {/* Selection Background */}
-                <div className={`absolute inset-0 rounded-[4px] border border-white/10 transition-opacity duration-200 ${isSelected ? 'bg-blue-600/80 backdrop-blur-sm opacity-100 shadow-sm' : 'opacity-0'}`} />
+                <div className={`absolute inset-0 rounded-[4px] border border-white/5 transition-opacity duration-200 ${isSelected ? 'bg-white/20 backdrop-blur-sm opacity-100' : 'opacity-0'}`} />
                 
                 {/* Label Text */}
                 <span className={`relative text-[11px] font-medium text-center select-none truncate max-w-[80px] block transition-colors duration-200 leading-tight ${isSelected ? 'text-white' : 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]'}`}>

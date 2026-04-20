@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
 /**
- * Complete Performance Optimization & Deployment Workflow
- * From coding to 100/100 Lighthouse scores
+ * Performance Optimization Workflow
+ * Complete workflow for achieving 100/100 Lighthouse scores
  */
 
-const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
-class CompleteWorkflow {
+class PerformanceOptimizer {
   constructor() {
     this.steps = [
       {
@@ -19,38 +19,33 @@ class CompleteWorkflow {
       },
       {
         name: '2. Generate Critical CSS',
-        script: 'node scripts/generate-critical-css.js',
-        description: 'Create critical CSS for faster rendering'
+        script: 'scripts/performance/critical-css.js',
+        description: 'Extract and inline critical CSS for faster rendering'
       },
       {
-        name: '3. Run Tests',
-        command: 'npm run test:e2e',
-        description: 'Execute end-to-end tests'
+        name: '3. Optimize Next.js Config',
+        script: 'scripts/utils/optimize-next-config.js',
+        description: 'Update next.config.mjs with performance settings'
       },
       {
         name: '4. Build Application',
-        command: 'npm run build -- --webpack',
-        description: 'Build with webpack for compatibility'
+        command: 'npm run build',
+        description: 'Build with optimizations'
       },
       {
-        name: '5. Performance Analysis',
-        script: 'node scripts/analyze-bundle.js',
+        name: '5. Analyze Bundle',
+        script: 'scripts/performance/analyze-bundle.js',
         description: 'Analyze bundle size and identify issues'
       },
       {
         name: '6. Performance Testing',
-        script: 'node scripts/test-performance.js',
-        description: 'Test performance metrics'
+        script: 'scripts/performance/test.js',
+        description: 'Run performance tests'
       },
       {
         name: '7. Deploy to Vercel',
         command: 'npm run deploy',
         description: 'Deploy to production'
-      },
-      {
-        name: '8. Lighthouse Testing',
-        script: 'node scripts/run-lighthouse.js',
-        description: 'Run Lighthouse audit on deployed site'
       }
     ];
   }
@@ -58,10 +53,10 @@ class CompleteWorkflow {
   log(message, type = 'info') {
     const timestamp = new Date().toISOString();
     const colors = {
-      info: '\x1b[36m',
-      success: '\x1b[32m',
-      warning: '\x1b[33m',
-      error: '\x1b[31m',
+      info: '\x1b[36m',    // Cyan
+      success: '\x1b[32m', // Green
+      warning: '\x1b[33m', // Yellow
+      error: '\x1b[31m',   // Red
       reset: '\x1b[0m'
     };
     
@@ -77,10 +72,9 @@ class CompleteWorkflow {
       if (step.script) {
         const scriptPath = path.join(process.cwd(), step.script);
         if (fs.existsSync(scriptPath)) {
-          execSync(`node ${step.script}`, { stdio: 'inherit' });
+          execSync(`node ${scriptPath}`, { stdio: 'inherit' });
         } else {
           this.log(`   Script not found: ${step.script}`, 'warning');
-          return false;
         }
       } else if (step.command) {
         execSync(step.command, { stdio: 'inherit' });
@@ -97,7 +91,7 @@ class CompleteWorkflow {
   }
 
   async run() {
-    this.log('🎯 Complete Performance Optimization Workflow', 'info');
+    this.log('🎯 Performance Optimization Workflow Started', 'info');
     this.log('Target: 100/100 Lighthouse Scores\n', 'info');
     
     const results = [];
@@ -110,24 +104,14 @@ class CompleteWorkflow {
         this.log('\n⚠️  Workflow stopped due to failure', 'warning');
         break;
       }
-      
-      // Add delay between steps
-      if (step.name.includes('Deploy')) {
-        this.log('   ⏳ Waiting 30 seconds for deployment to complete...', 'info');
-        await this.sleep(30000);
-      }
     }
     
     this.displayResults(results);
-    this.generateFinalReport(results);
-  }
-
-  sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    this.generateReport(results);
   }
 
   displayResults(results) {
-    this.log('\n📊 Workflow Results:', 'info');
+    this.log('\n📊 Optimization Results:', 'info');
     
     results.forEach(result => {
       const status = result.success ? '✅' : '❌';
@@ -141,21 +125,19 @@ class CompleteWorkflow {
     this.log(`\n📈 Summary: ${successCount}/${totalCount} steps completed successfully`, 'info');
     
     if (successCount === totalCount) {
-      this.log('🎉 All optimizations completed! Check Lighthouse scores.', 'success');
-      this.log('\n🚀 Next steps:', 'info');
-      this.log('   1. Check Vercel deployment logs', 'info');
-      this.log('   2. Run Lighthouse audit manually', 'info');
-      this.log('   3. Monitor Core Web Vitals in production', 'info');
-      this.log('   4. Set up performance monitoring', 'info');
+      this.log('🎉 All optimizations completed! Ready for deployment.', 'success');
+      this.log('Next steps:', 'info');
+      this.log('   1. Deploy to Vercel: npm run deploy', 'info');
+      this.log('   2. Test performance: npm run test:performance', 'info');
+      this.log('   3. Run Lighthouse: npm run lighthouse', 'info');
     } else {
-      this.log('⚠️  Some steps failed. Please fix issues before proceeding.', 'warning');
+      this.log('⚠️  Some optimizations failed. Please fix issues before deployment.', 'warning');
     }
   }
 
-  generateFinalReport(results) {
+  generateReport(results) {
     const report = {
       timestamp: new Date().toISOString(),
-      workflow: 'Performance Optimization & Deployment',
       results: results,
       summary: {
         total: results.length,
@@ -163,27 +145,27 @@ class CompleteWorkflow {
         failed: results.filter(r => !r.success).length
       },
       recommendations: [
-        'Monitor Lighthouse scores after deployment',
-        'Set up performance budgets',
-        'Configure performance monitoring',
-        'Regular performance audits'
+        'Deploy to Vercel and test with Lighthouse',
+        'Monitor Core Web Vitals in production',
+        'Set up performance monitoring',
+        'Configure performance budgets'
       ]
     };
     
-    const reportPath = path.join(process.cwd(), 'complete-workflow-report.json');
+    const reportPath = path.join(process.cwd(), 'optimization-report.json');
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
     
-    this.log(`\n💾 Complete report saved to: ${reportPath}`, 'info');
+    this.log(`\n💾 Report saved to: ${reportPath}`, 'info');
   }
 }
 
 // CLI usage
 if (require.main === module) {
-  const workflow = new CompleteWorkflow();
-  workflow.run().catch(error => {
+  const optimizer = new PerformanceOptimizer();
+  optimizer.run().catch(error => {
     console.error('❌ Workflow failed:', error);
     process.exit(1);
   });
 }
 
-module.exports = { CompleteWorkflow };
+module.exports = { PerformanceOptimizer };

@@ -1,1 +1,0 @@
-src/components/projects/infinite-canvas/texture-manager.ts(2,27): error TS2307: Cannot find module './types' or its corresponding type declarations.

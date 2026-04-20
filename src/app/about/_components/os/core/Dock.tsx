@@ -116,7 +116,7 @@ function DockItem({
                 : { type: "spring", mass: 0.1, stiffness: 250, damping: 20 }
             }
             onClick={handleClick}
-            className="aspect-square rounded-[12px] flex items-center justify-center cursor-pointer relative group shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
+            className="aspect-square rounded-[12px] flex items-center justify-center cursor-pointer relative group shrink-0 focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/40 focus-visible:ring-offset-2 outline-none"
             role="button"
             aria-label={label}
             tabIndex={0}

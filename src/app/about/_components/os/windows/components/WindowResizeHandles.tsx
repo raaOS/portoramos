@@ -15,7 +15,7 @@ export function WindowResizeHandles({ onResizeStart }: WindowResizeHandlesProps)
                 onTouchStart={(e) => onResizeStart(e, 'e')}
                 onPointerDown={(e) => e.stopPropagation()}
             >
-                <div className="w-0.5 h-8 bg-gray-300 group-hover:bg-blue-500 rounded-full transition-colors" />
+                <div className="w-0.5 h-8 bg-gray-300 group-hover:bg-black/40 dark:group-hover:bg-white/40 rounded-full transition-colors" />
             </div>
             {/* Bottom Handle */}
             <div
@@ -24,7 +24,7 @@ export function WindowResizeHandles({ onResizeStart }: WindowResizeHandlesProps)
                 onTouchStart={(e) => onResizeStart(e, 's')}
                 onPointerDown={(e) => e.stopPropagation()}
             >
-                <div className="w-8 h-0.5 bg-gray-300 group-hover:bg-blue-500 rounded-full transition-colors" />
+                <div className="w-8 h-0.5 bg-gray-300 group-hover:bg-black/40 dark:group-hover:bg-white/40 rounded-full transition-colors" />
             </div>
             {/* Corner Handle with Icon */}
             <div
@@ -34,10 +34,10 @@ export function WindowResizeHandles({ onResizeStart }: WindowResizeHandlesProps)
                 onPointerDown={(e) => e.stopPropagation()}
             >
                 {/* Background hover */}
-                <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/20 active:bg-blue-500/40 transition-colors rounded-tl" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 active:bg-black/20 dark:group-hover:bg-white/10 dark:active:bg-white/20 transition-colors rounded-tl" />
                 {/* Resize Icon */}
                 <div className="absolute bottom-1 right-1 pointer-events-none">
-                    <Maximize2 className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-600 transition-colors rotate-90" />
+                    <Maximize2 className="w-3.5 h-3.5 text-gray-400 group-hover:text-black/60 dark:group-hover:text-white/60 transition-colors rotate-90" />
                 </div>
             </div>
         </>

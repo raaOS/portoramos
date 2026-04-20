@@ -24,6 +24,12 @@ tsconfig.tsbuildinfo
 
 test-results/
 
+# Local AI/tooling state
+.claude/settings.local.json
+
+# Local scratchpad (debug/one-offs)
+scratch/
+
 # Test scripts (may contain API keys/tokens)
 *-env.js
 test-*.js

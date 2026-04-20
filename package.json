@@ -22,7 +22,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "audit": "npx tsx scripts/system-audit.ts",
+    "audit": "npx tsx scripts/maintenance/audit.ts",
     "prepare": "husky"
   },
   "dependencies": {

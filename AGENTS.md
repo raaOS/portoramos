@@ -144,13 +144,17 @@ src/
 `-- proxy.ts                # Request interception entry for Next.js 16
 
 scripts/
-|-- core/
-|-- deploy/
-|-- generators/
-|-- media/
-|-- test/
-|-- utils/
-`-- (35+ utility/tool scripts)
+|-- core/                   # Development entry points (dev.js)
+|-- deploy/                 # Deployment verification and scripts
+|-- explorer/               # Explorer data management (seed, cleanup)
+|-- generators/             # Content and data generators
+|-- maintenance/            # System audit, health checks, and integrity
+|-- media/                  # Asset optimization and sound generation
+|-- performance/            # Bundle analysis and Lighthouse workflows
+|-- security/               # Env validation and password utilities
+|-- test/                   # Specialized test utilities
+|-- utils/                  # Generic script utilities
+`-- (various CLI tools)
 
 tests/e2e/                  # Playwright E2E specs
 public/                     # Assets, sounds, wallpapers, ffmpeg, css, fonts
@@ -249,7 +253,7 @@ npm run audit
 
 - `npm run dev` menjalankan `node scripts/core/dev.js`
 - `npm run build` dan `npm run deploy` memeriksa agar server dev Next tidak sedang berjalan
-- `npm run audit` menjalankan `scripts/system-audit.ts`
+- `npm run audit` menjalankan `scripts/maintenance/audit.ts`
 - `npm run dev:webpack` tersedia bila perlu fallback ke Webpack saat investigasi Turbopack/dev issues
 
 ---

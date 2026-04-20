@@ -32,7 +32,7 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
                 <div className="bg-white/50 dark:bg-white/10 rounded-xl p-3 flex flex-col gap-3 border border-black/5 dark:border-white/5">
                     {/* Wifi */}
                     <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setWifiState(!wifiState)}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${wifiState ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-300'}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${wifiState ? 'bg-zinc-900 dark:bg-white text-white dark:text-black' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-300'}`}>
                             <Wifi size={16} />
                         </div>
                         <div className="flex flex-col">
@@ -42,7 +42,7 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
                     </div>
                     {/* Bluetooth */}
                     <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setBluetoothState(!bluetoothState)}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${bluetoothState ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-300'}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${bluetoothState ? 'bg-zinc-900 dark:bg-white text-white dark:text-black' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-300'}`}>
                             <Bluetooth size={16} />
                         </div>
                         <div className="flex flex-col">
@@ -52,7 +52,7 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
                     </div>
                     {/* AirDrop */}
                     <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setAirdropState(!airdropState)}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${airdropState ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-300'}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${airdropState ? 'bg-zinc-900 dark:bg-white text-white dark:text-black' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-300'}`}>
                             <Airplay size={16} />
                         </div>
                         <div className="flex flex-col">

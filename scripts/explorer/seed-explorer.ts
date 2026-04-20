@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import dotenv from 'dotenv';
 import path from 'path';
 
-dotenv.config({ path: path.join(__dirname, '../.env.local') });
+dotenv.config({ path: path.join(__dirname, '../../.env.local') });
 
 const projectId = process.env.FIREBASE_PROJECT_ID;
 const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
@@ -131,3 +131,4 @@ seed().catch(err => {
     console.error(err);
     process.exit(1);
 });
+

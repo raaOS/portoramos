@@ -143,7 +143,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                                     <div className={`flex items-center justify-end gap-1 mt-1 -mb-1 ${msg.isMe ? 'text-[#667781] dark:text-white/60' : 'text-[#667781] dark:text-white/50'}`}>
                                         <span className="text-[9px] uppercase font-bold tracking-tighter">{msg.time}</span>
                                         {msg.isMe && (
-                                            msg.status === 'read' ? <CheckCheck className="w-3.5 h-3.5 text-blue-500" /> : <Check className="w-3 hot-3 text-gray-400" />
+                                            msg.status === 'read' ? <CheckCheck className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" /> : <Check className="w-3 h-3 text-gray-400" />
                                         )}
                                     </div>
                                 </div>

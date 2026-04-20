@@ -311,7 +311,7 @@ export default function ExplorerWindow({
                         <button 
                             disabled={historyIndex <= 0}
                             onClick={goBack}
-                            className="p-1.5 rounded-full disabled:opacity-20 transition-all text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 hover:text-blue-500"
+                            className="p-1.5 rounded-full disabled:opacity-20 transition-all text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 hover:text-black dark:hover:text-white"
                             title="Back"
                         >
                             <ChevronLeft size={20} />
@@ -319,7 +319,7 @@ export default function ExplorerWindow({
                         <button 
                             disabled={historyIndex >= history.length - 1}
                             onClick={goForward}
-                            className="p-1.5 rounded-full disabled:opacity-20 transition-all text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 hover:text-blue-500"
+                            className="p-1.5 rounded-full disabled:opacity-20 transition-all text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 hover:text-black dark:hover:text-white"
                             title="Forward"
                         >
                             <ChevronRight size={20} />
@@ -353,7 +353,7 @@ export default function ExplorerWindow({
                     <button 
                         onClick={() => fetchNodes(currentParentId)}
                         disabled={isLoading}
-                        className={`p-1.5 rounded transition-all text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 active:scale-90 ${isLoading ? 'animate-spin' : ''}`}
+                        className={`p-1.5 rounded transition-all text-gray-400 hover:text-black dark:hover:text-white active:scale-90 ${isLoading ? 'animate-spin' : ''}`}
                         title="Refresh folder content"
                     >
                         <RefreshCw size={16} />
@@ -367,7 +367,7 @@ export default function ExplorerWindow({
                             placeholder="Search..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-8 pr-3 py-1 bg-black/5 dark:bg-white/5 border border-transparent focus:border-blue-500/50 rounded-md text-xs outline-none w-32 focus:w-48 transition-all"
+                            className="pl-8 pr-3 py-1 bg-black/5 dark:bg-white/5 border border-transparent focus:border-black/20 dark:focus:border-white/20 rounded-md text-xs outline-none w-32 focus:w-48 transition-all"
                         />
                     </div>
 
@@ -378,14 +378,14 @@ export default function ExplorerWindow({
                             className="p-1 rounded transition-colors"
                             title="Grid View"
                         >
-                            <Grid size={14} className={viewMode === 'grid' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'} />
+                            <Grid size={14} className={viewMode === 'grid' ? 'text-black dark:text-white' : 'text-gray-400'} />
                         </button>
                         <button 
                             onClick={() => setViewMode('list')}
                             className="p-1 rounded transition-colors"
                             title="List View"
                         >
-                            <List size={14} className={viewMode === 'list' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'} />
+                            <List size={14} className={viewMode === 'list' ? 'text-black dark:text-white' : 'text-gray-400'} />
                         </button>
                     </div>
                 </div>
@@ -406,8 +406,8 @@ export default function ExplorerWindow({
                             exit={{ opacity: 0, y: -10 }}
                             className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-black/90 px-3 py-1 rounded-full shadow-sm border border-black/5 dark:border-white/10 z-[20] flex items-center gap-2 pointer-events-none"
                         >
-                            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Loading</span>
-                            <RefreshCw size={10} className="animate-spin text-blue-500" />
+                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Loading</span>
+                            <RefreshCw size={10} className="animate-spin text-gray-500 dark:text-gray-400" />
                         </m.div>
                     )}
                 </AnimatePresence>
@@ -460,7 +460,7 @@ export default function ExplorerWindow({
                                                             initial={{ opacity: 0, scale: 0.8 }}
                                                             animate={{ opacity: 1, scale: 1 }}
                                                             exit={{ opacity: 0, scale: 0.8 }}
-                                                            className="absolute -inset-4 bg-blue-500/15 dark:bg-blue-400/20 rounded-xl border border-blue-500/20 dark:border-blue-400/30"
+                                                            className="absolute -inset-4 bg-black/10 dark:bg-white/10 rounded-xl border border-black/5 dark:border-white/5"
                                                         />
                                                     )}
                                                 </AnimatePresence>
@@ -475,7 +475,7 @@ export default function ExplorerWindow({
                                             </div>
                                             <span className={`text-[11px] font-medium px-2 py-0.5 rounded text-center truncate max-w-full transition-colors ${
                                                 selectedNodeId === node.id 
-                                                    ? 'bg-blue-500 text-white shadow-sm' 
+                                                    ? 'bg-black/70 dark:bg-white/20 text-white shadow-md' 
                                                     : 'text-slate-700 dark:text-slate-300 group-hover:bg-black/5 dark:group-hover:bg-white/10'
                                             }`}>
                                                 {node.name}
@@ -505,7 +505,7 @@ export default function ExplorerWindow({
                                             variants={itemVariants}
                                             layout
                                             className={`flex group cursor-pointer border-b border-black/5 dark:border-white/5 relative ${
-                                                selectedNodeId === node.id ? 'z-10 bg-blue-500/5 dark:bg-blue-400/10' : 'hover:bg-black/5 dark:hover:bg-white/10'
+                                                selectedNodeId === node.id ? 'z-10 bg-black/5 dark:bg-white/10' : 'hover:bg-black/5 dark:hover:bg-white/10'
                                             }`}
                                             onClick={(e) => handleNodeClick(node, e)}
                                             onDoubleClick={(e) => handleNodeDoubleClick(node, e)}
@@ -513,19 +513,19 @@ export default function ExplorerWindow({
                                             {selectedNodeId === node.id && (
                                                 <m.div 
                                                     layoutId="selection-bar"
-                                                    className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"
+                                                    className="absolute left-0 top-0 bottom-0 w-1 bg-gray-500 dark:bg-gray-400"
                                                 />
                                             )}
                                             
                                             <div className="w-1/2 p-2 flex items-center gap-3 pl-4">
                                                 <div className="w-5 h-5 flex items-center justify-center shrink-0">
                                                     {node.type === 'folder' ? (
-                                                        <FolderIcon size={16} className="text-blue-500" />
+                                                        <FolderIcon size={16} className="text-gray-400 dark:text-gray-500" />
                                                     ) : (
                                                         <FileThumbnail file={node as ExplorerFile} size="xs" />
                                                     )}
                                                 </div>
-                                                <span className={`text-[12px] truncate ${selectedNodeId === node.id ? 'text-blue-600 dark:text-blue-400 font-semibold' : 'text-slate-700 dark:text-slate-300'}`}>
+                                                <span className={`text-[12px] truncate ${selectedNodeId === node.id ? 'text-slate-900 dark:text-white font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
                                                     {node.name}
                                                 </span>
                                             </div>
@@ -608,7 +608,7 @@ function FileThumbnail({ file, size = 'md' }: { file: ExplorerFile, size?: 'xs' 
         >
             {(!src || hasError) ? (
                 <div className="flex flex-col items-center gap-1">
-                    {isVideo ? <VideoIcon size={size === 'xs' ? 12 : 24} className="text-blue-500 opacity-60" /> : 
+                    {isVideo ? <VideoIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" /> : 
                      isImage ? <ImageIcon size={size === 'xs' ? 12 : 24} className="text-green-500 opacity-60" /> : 
                      <FileIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" />}
                 </div>
