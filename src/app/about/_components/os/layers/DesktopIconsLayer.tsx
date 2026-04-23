@@ -84,7 +84,7 @@ function DesktopIconsLayer({
                 stiffness: 400,
                 damping: 30,
                 mass: 1
-            }
+            } as any
         }
     };
 

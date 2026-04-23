@@ -10,14 +10,26 @@ interface UseFirebaseUploadOptions {
 
 interface UploadResult {
     url: string;
+    previewUrl?: string;
+    posterUrl?: string;
+    videoStats?: {
+        originalSize: number;
+        optimizedSize: number;
+        previewSize: number;
+        posterSize: number;
+    } | null;
     success: boolean;
     error?: string;
+}
+
+interface UploadOptions {
+    skipMainVideoOptimization?: boolean;
 }
 
 export function useFirebaseUpload(options: UseFirebaseUploadOptions = {}) {
     const { folder, customFilename, csrfToken } = options;
 
-    const upload = useCallback(async (file: File): Promise<UploadResult> => {
+    const upload = useCallback(async (file: File, uploadOptions: UploadOptions = {}): Promise<UploadResult> => {
         try {
             const formData = new FormData();
             formData.append('file', file);
@@ -25,6 +37,9 @@ export function useFirebaseUpload(options: UseFirebaseUploadOptions = {}) {
             const params = new URLSearchParams();
             if (folder) params.append('folder', folder);
             if (customFilename) params.append('filename', customFilename);
+            if (uploadOptions.skipMainVideoOptimization) {
+                params.append('skipMainVideoOptimization', '1');
+            }
 
             const response = await fetch(`/api/upload?${params.toString()}`, {
                 method: 'POST',
@@ -42,6 +57,9 @@ export function useFirebaseUpload(options: UseFirebaseUploadOptions = {}) {
             const data = await response.json();
             return {
                 url: data.url,
+                previewUrl: data.previewUrl,
+                posterUrl: data.posterUrl,
+                videoStats: data.videoStats,
                 success: true
             };
         } catch (error) {

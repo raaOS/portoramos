@@ -247,14 +247,32 @@ npm run clear-cache
 npm run fix-webpack
 npm run ultra-clean
 npm run audit
+npm run sync:firebase-assets
 ```
 
 ### Catatan Script
 
-- `npm run dev` menjalankan `node scripts/core/dev.js`
-- `npm run build` dan `npm run deploy` memeriksa agar server dev Next tidak sedang berjalan
-- `npm run audit` menjalankan `scripts/maintenance/audit.ts`
-- `npm run dev:webpack` tersedia bila perlu fallback ke Webpack saat investigasi Turbopack/dev issues
+- `npm run dev` menjalankan `node scripts/core/dev.js` untuk server development
+- `npm run dev:webpack` menjalankan server development dengan fallback Webpack
+- `npm run fresh-start` menghapus cache `.next` sebelum menjalankan `dev`
+- `npm run ultra-fresh` memperbaiki cache build yang korup kemudian menjalankan `dev`
+- `npm run kill-cache` menghapus cache browser/internal untuk debug UI
+- `npm run build` membuat build produksi Next.js dengan pengecekan integritas
+- `npm run build:clean` menghapus semua cache secara paksa sebelum build
+- `npm run start` menjalankan server hasil build produksi
+- `npm run pre-deploy` menjalankan pengecekan sistem (lint, types, audit) sebelum deploy
+- `npm run deploy` workflow penuh untuk persiapan deployment (pre-deploy + build)
+- `npm test` menjalankan unit tests via Vitest
+- `npm run test:watch` unit tests dalam mode interaktif (watch)
+- `npm run test:coverage` menghasilkan laporan cakupan kode (test coverage)
+- `npm run test:e2e` menjalankan E2E tests via Playwright (headless)
+- `npm run test:e2e:ui` menjalankan E2E tests dengan dashboard Playwright UI
+- `npm run lint` mengecek kualitas kode menggunakan ESLint
+- `npm run clear-cache` menghapus `.next` directory secara aman
+- `npm run fix-webpack` memperbaiki error "Webpack cache failure" yang sering muncul
+- `npm run ultra-clean` pembersihan total cache dan temporary files
+- `npm run audit` menjalankan `scripts/maintenance/audit.ts` untuk audit repo
+- `npm run sync:firebase-assets` menyinkronkan aset proyek (gambar, thumbnail) ke Firebase Storage menggunakan `scripts/utils/upload-to-firebase.ts`
 
 ---
 

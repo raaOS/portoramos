@@ -82,12 +82,14 @@ export function useFFmpeg(onStatusUpdate: (status: string) => void) {
             filters.push(`crop=${w}:${h}:${px}:${py}`);
         }
 
+        filters.push("fps=30");
         filters.push("scale='if(gt(iw,ih),-2,720)':'if(gt(iw,ih),720,-2)'");
         ffmpegArgs.push('-vf', filters.join(','));
 
         ffmpegArgs.push('-c:v', 'libx264');
-        ffmpegArgs.push('-crf', '23');
-        ffmpegArgs.push('-preset', 'fast');
+        ffmpegArgs.push('-crf', '24');
+        ffmpegArgs.push('-preset', 'slow');
+        ffmpegArgs.push('-pix_fmt', 'yuv420p');
         ffmpegArgs.push('-an');
         ffmpegArgs.push('-movflags', '+faststart');
         ffmpegArgs.push(outputName);
@@ -96,7 +98,8 @@ export function useFFmpeg(onStatusUpdate: (status: string) => void) {
 
         const data = await ffmpeg.readFile(outputName);
         const blob = new Blob([data as BlobPart], { type: 'video/mp4' });
-        return new File([blob], file.name, { type: 'video/mp4' });
+        const outputFileName = file.name.replace(/\.[^.]+$/, '') + '.mp4';
+        return new File([blob], outputFileName, { type: 'video/mp4' });
     }, [loadFFmpeg, onStatusUpdate]);
 
     return { compressVideo };

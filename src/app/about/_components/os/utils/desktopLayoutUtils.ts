@@ -1,6 +1,7 @@
 import { Project } from "@/types/projects";
 import { getProxiedUrl } from "@/lib/utils";
 import { DesktopPreferences } from "@/types/about";
+import { getVideoPreviewSource } from "@/lib/mediaPreview";
 
 type DesktopItem =
     | { id: string; type: "folder"; label: string; action?: () => void }
@@ -147,7 +148,7 @@ export const generateDesktopIcons = (
             type: project.type || 'commercial',
             data: project,
             label: project.title,
-            videoUrl: videoUrl ? getProxiedUrl(videoUrl) : undefined,
+            videoUrl: videoUrl ? getProxiedUrl(getVideoPreviewSource(videoUrl)) : undefined,
             imageUrl: posterUrl, // Use poster image for faster initial load
             aspectRatio: aspectRatio,
             x: finalX,

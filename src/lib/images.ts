@@ -3,6 +3,7 @@
 
 import type { Project, GalleryItem } from '@/types/projects';
 import { resolveStorageUrl } from '@/lib/urlResolver';
+import { getVideoPosterSource, getVideoPreviewSource, isVideoSource } from '@/lib/mediaPreview';
 
 export function toImageProxy(u: string) {
   return resolveStorageUrl(u);
@@ -13,13 +14,7 @@ export function toMediaProxy(u: string) {
 }
 
 export function isVideoLink(u: string): boolean {
-  try {
-    const s = (u || '').trim();
-    if (!s) return false;
-    const url = new URL(s, 'https://example.com');
-    const p = url.pathname.toLowerCase();
-    return p.endsWith('.mp4') || p.endsWith('.mov') || p.endsWith('.webm');
-  } catch { return false; }
+  return isVideoSource((u || '').trim());
 }
 
 const BLANK_SVG = `data:image/svg+xml;utf8,` +
@@ -30,20 +25,15 @@ export function coverUrl(p: Project) {
 }
 
 
-export function resolveCover(p: Project): GalleryItem {
-  const inferredVideo = isVideoLink(p.cover);
+function resolveCoverWithSource(p: Project, src: string): GalleryItem {
+  const inferredVideo = isVideoLink(src);
   const kind = (inferredVideo ? 'video' : 'image') as GalleryItem['kind'];
 
-  if (p.cover) {
-    // Auto-generate poster for videos: /path/to/video.mp4 -> /path/to/video.jpg
-    let posterUrl: string | undefined = undefined;
-    if (inferredVideo) {
-      posterUrl = p.cover.replace(/\.(mp4|webm|mov)$/i, '.jpg');
-    }
-
+  if (src) {
+    const posterUrl = inferredVideo ? getVideoPosterSource(p.cover) : undefined;
     return {
       kind,
-      src: toMediaProxy(p.cover),
+      src: toMediaProxy(src),
       poster: posterUrl ? toImageProxy(posterUrl) : undefined,
       width: p.coverWidth,
       height: p.coverHeight
@@ -51,6 +41,14 @@ export function resolveCover(p: Project): GalleryItem {
   }
 
   return { kind: 'image', src: coverUrl(p) };
+}
+
+export function resolveCover(p: Project): GalleryItem {
+  return resolveCoverWithSource(p, p.cover);
+}
+
+export function resolvePreviewCover(p: Project): GalleryItem {
+  return resolveCoverWithSource(p, getVideoPreviewSource(p.cover));
 }
 
 

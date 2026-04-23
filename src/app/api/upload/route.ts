@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAdminRequest } from '@/lib/auth';
 import { bucket } from '@/lib/firebaseAdmin';
+import { optimizeVideoForPortfolio } from '@/lib/videoOptimization';
+
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 // FIXED (BUG-010): Valid filename characters
 const VALID_FILENAME_REGEX = /^[a-zA-Z0-9_-]+$/;
@@ -43,11 +47,15 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
         }
 
-        const buffer = Buffer.from(await file.arrayBuffer());
+        const originalBuffer = Buffer.from(await file.arrayBuffer());
+        let buffer: Buffer<ArrayBufferLike> = originalBuffer;
+        let contentType = file.type;
 
         const { searchParams } = new URL(req.url);
         const rawCustomFilename = searchParams.get('filename');
         const folderParam = searchParams.get('folder');
+        const skipMainVideoOptimization = searchParams.get('skipMainVideoOptimization') === '1';
+        const isVideoUpload = file.type.startsWith('video/');
 
         // FIXED (BUG-010): Sanitize custom filename
         const customFilename = sanitizeFilename(rawCustomFilename);
@@ -58,7 +66,8 @@ export async function POST(req: NextRequest) {
         }
 
         // Determine Name & Folder
-        const ext = file.name.split('.').pop() || '';
+        const sourceExt = file.name.split('.').pop() || '';
+        const ext = isVideoUpload ? 'mp4' : sourceExt;
         let finalFilename: string;
         let targetDir: string;
 
@@ -72,8 +81,10 @@ export async function POST(req: NextRequest) {
             finalFilename = `${cleanName}.${ext}`;
             targetDir = 'assets/projects/comparisons';
         } else {
-            const cleanName = file.name.toLowerCase().replace(/[^a-z0-9.]/g, '-');
-            finalFilename = `${Date.now()}-${cleanName}`;
+            const cleanName = isVideoUpload
+                ? file.name.replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9]/g, '-')
+                : file.name.toLowerCase().replace(/[^a-z0-9.]/g, '-');
+            finalFilename = isVideoUpload ? `${Date.now()}-${cleanName}.mp4` : `${Date.now()}-${cleanName}`;
             
             // Respect the folder param if provided and safe
             if (folderParam && (folderParam.startsWith('assets/') || folderParam === 'temp')) {
@@ -84,22 +95,73 @@ export async function POST(req: NextRequest) {
         }
 
         const storagePath = `${targetDir}/${finalFilename}`;
+        let previewPath: string | null = null;
+        let posterPath: string | null = null;
+        let videoStats: {
+            originalSize: number;
+            optimizedSize: number;
+            previewSize: number;
+            posterSize: number;
+        } | null = null;
+
+        if (isVideoUpload) {
+            const optimized = await optimizeVideoForPortfolio(originalBuffer, {
+                allowOriginalPassthrough: file.type === 'video/mp4',
+            });
+            buffer = skipMainVideoOptimization ? originalBuffer : optimized.buffer;
+            contentType = 'video/mp4';
+            videoStats = {
+                originalSize: optimized.originalSize,
+                optimizedSize: buffer.length,
+                previewSize: optimized.previewSize,
+                posterSize: optimized.posterSize,
+            };
+
+            const basePath = storagePath.replace(/\.(mp4|webm|mov)$/i, '');
+            previewPath = `${basePath}-preview.mp4`;
+            posterPath = `${basePath}.jpg`;
+
+            await bucket.file(previewPath).save(optimized.previewBuffer, {
+                metadata: {
+                    contentType: 'video/mp4',
+                    cacheControl: 'public, max-age=31536000, immutable',
+                }
+            });
+
+            await bucket.file(posterPath).save(optimized.posterBuffer, {
+                metadata: {
+                    contentType: 'image/jpeg',
+                    cacheControl: 'public, max-age=31536000, immutable',
+                }
+            });
+        }
+
         const firebaseFile = bucket.file(storagePath);
 
         await firebaseFile.save(buffer, {
-            metadata: { contentType: file.type }
+            metadata: {
+                contentType,
+                cacheControl: 'public, max-age=31536000, immutable',
+            }
         });
 
-        const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(storagePath)}?alt=media`;
+        const publicUrl = buildFirebaseMediaUrl(storagePath);
 
         return NextResponse.json({
             url: publicUrl,
+            previewUrl: previewPath ? buildFirebaseMediaUrl(previewPath) : undefined,
+            posterUrl: posterPath ? buildFirebaseMediaUrl(posterPath) : undefined,
+            videoStats,
             success: true
         });
     } catch (e) {
         console.error('Upload Error:', e);
         return NextResponse.json({ error: e instanceof Error ? e.message : 'Upload failed' }, { status: 500 });
     }
+}
+
+function buildFirebaseMediaUrl(storagePath: string): string {
+    return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(storagePath)}?alt=media`;
 }
 
 export async function DELETE(req: NextRequest) {

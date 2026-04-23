@@ -1,4 +1,5 @@
 import { Project } from '@/types/projects'
+import { getVideoPosterSource, getVideoPreviewSource, isVideoSource } from '@/lib/mediaPreview'
 
 /**
  * Deterministic 3D hash — produces a value in [0, 1).
@@ -13,8 +14,16 @@ export function getCoverUrl(project: Project): string {
     return project.cover || '/og-image.png'
 }
 
+export function getPreviewCoverUrl(project: Project): string {
+    return project.cover ? getVideoPreviewSource(project.cover) : '/og-image.png'
+}
+
+export function getCoverPosterUrl(project: Project): string | undefined {
+    return getVideoPosterSource(project.cover)
+}
+
 export function isVideoUrl(url: string): boolean {
-    return /\.(mp4|webm|ogg)$/i.test(url)
+    return isVideoSource(url)
 }
 
 // Well-known large primes for spatial hashing (minimize collision in 3D grids)

@@ -64,12 +64,14 @@ export default function AdminFileUpload({
         try {
             const uploadPromises = files.map(async (file, index) => {
                 let fileToUpload = file;
+                let videoWasClientProcessed = false;
 
                 // VIDEO COMPRESSION / TRIM
                 if (file.type.startsWith('video/')) {
                     try {
                         const originalSize = file.size;
                         fileToUpload = await compressVideo(file, (p) => setProgress(p), trimOptions);
+                        videoWasClientProcessed = true;
                         const newSize = fileToUpload.size;
                         showSuccessToast(`Video Processed! ${(originalSize / 1024 / 1024).toFixed(2)}MB -> ${(newSize / 1024 / 1024).toFixed(2)}MB`);
                     } catch (e) {
@@ -86,9 +88,17 @@ export default function AdminFileUpload({
                 }
 
                 // IMMEDIATE UPLOAD MODE
-                const { url, success, error } = await upload(fileToUpload);
+                const { url, success, error, videoStats } = await upload(fileToUpload, {
+                    skipMainVideoOptimization: videoWasClientProcessed,
+                });
                 if (!success) {
                     throw new Error(error || 'Upload failed');
+                }
+
+                if (videoStats) {
+                    showSuccessToast(
+                        `Storage video ready: ${formatBytes(videoStats.optimizedSize)} + preview ${formatBytes(videoStats.previewSize)}`
+                    );
                 }
 
                 setProgress(((index + 1) / files.length) * 100);
@@ -269,6 +279,12 @@ export default function AdminFileUpload({
             </div>
         </>
     );
+}
+
+function formatBytes(bytes: number) {
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
 // Wrappers for Lazy Loading

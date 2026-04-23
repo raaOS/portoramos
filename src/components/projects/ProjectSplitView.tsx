@@ -6,7 +6,7 @@ import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react'
 import { Heart, Eye, X, Image as ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 import Media from '@/components/shared/Media'
-import { resolveCover } from '@/lib/images'
+import { resolvePreviewCover } from '@/lib/images'
 
 interface ProjectSplitViewProps {
   projects: Project[]
@@ -41,7 +41,7 @@ const ProjectListItem = memo(function ProjectListItem({
       {/* Thumbnail - 4:5 Aspect Ratio */}
       <div className="relative w-14 aspect-[4/5] rounded overflow-hidden flex-shrink-0 bg-gray-200">
         {project.cover ? (() => {
-          const cover = resolveCover(project);
+          const cover = resolvePreviewCover(project);
           return (
             <Media
               kind={cover.kind}
@@ -86,7 +86,7 @@ const ProjectListItem = memo(function ProjectListItem({
 
 // Memoized Preview Panel — no redundant LazyMotion wrapper
 const ProjectPreviewPanel = memo(function ProjectPreviewPanel({ project }: { project: Project }) {
-  const cover = resolveCover(project);
+  const cover = resolvePreviewCover(project);
 
   return (
     <m.div
@@ -100,8 +100,9 @@ const ProjectPreviewPanel = memo(function ProjectPreviewPanel({ project }: { pro
         {cover.kind === 'video' ? (
           <video
             src={cover.src}
+            poster={cover.poster}
             className="max-h-[50vh] w-auto object-contain"
-            autoPlay muted loop playsInline controls
+            autoPlay muted loop playsInline controls preload="metadata"
           />
         ) : cover.src ? (
           <Image
@@ -158,7 +159,7 @@ function MobilePreviewModal({ isOpen, onClose, project }: {
   project: Project | null
 }) {
   if (!project) return null
-  const cover = resolveCover(project);
+  const cover = resolvePreviewCover(project);
 
   return (
     <AnimatePresence>
@@ -178,7 +179,7 @@ function MobilePreviewModal({ isOpen, onClose, project }: {
             {/* Media */}
             <div className="relative bg-gray-100">
               {cover.kind === 'video' ? (
-                <video src={cover.src} className="w-full max-h-[50vh] object-contain" autoPlay muted loop playsInline controls />
+                <video src={cover.src} poster={cover.poster} className="w-full max-h-[50vh] object-contain" autoPlay muted loop playsInline controls preload="metadata" />
               ) : cover.src ? (
                 <Image
                   src={cover.src}

@@ -119,7 +119,7 @@ export default function WindowsLayer({ isAdmin, isReady = true }: WindowsLayerPr
                 type: "spring",
                 stiffness: 450,
                 damping: 28,
-            }
+            } as any
         }
     };
 

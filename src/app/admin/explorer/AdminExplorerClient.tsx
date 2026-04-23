@@ -24,6 +24,7 @@ import AdminButton from '@/app/admin/components/AdminButton';
 import { m } from 'motion/react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
+import { useFFmpeg } from '@/app/admin/components/file-upload/hooks';
 
 export default function AdminExplorerClient() {
     const [currentParentId, setCurrentParentId] = useState<string | null>(null);
@@ -37,12 +38,14 @@ export default function AdminExplorerClient() {
         id: string;
         name: string;
         progress: number;
-        status: 'uploading' | 'registering' | 'success' | 'error';
+        status: 'compressing' | 'uploading' | 'registering' | 'success' | 'error';
         error?: string;
     }>>({});
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const { showError, showSuccess } = useToast();
     const { csrfToken } = useAdminAuth();
+    const ignoreCompressionStatus = useCallback(() => undefined, []);
+    const { compressVideo } = useFFmpeg(ignoreCompressionStatus);
 
     // Fetch nodes
     const fetchNodes = useCallback(async (parentId: string | null) => {
@@ -187,11 +190,26 @@ export default function AdminExplorerClient() {
             };
 
             try {
+                let fileToUpload = file;
+                let videoWasClientProcessed = false;
+
+                if (file.type.startsWith('video/')) {
+                    updateUpload({ status: 'compressing', progress: 0 });
+                    try {
+                        const originalSize = file.size;
+                        fileToUpload = await compressVideo(file, (progress) => updateUpload({ progress }));
+                        videoWasClientProcessed = true;
+                        showSuccess(`Video optimized: ${(originalSize / 1024 / 1024).toFixed(2)}MB -> ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`);
+                    } catch (error) {
+                        console.warn('[AdminExplorer] Video compression failed, server will try fallback:', error);
+                    }
+                }
+
                 // 1. Upload to Storage using XMLHttpRequest to track progress
                 const formData = new FormData();
-                formData.append('file', file);
+                formData.append('file', fileToUpload);
                 
-                const uploadPromise = new Promise<{ url: string }>((resolve, reject) => {
+                const uploadPromise = new Promise<{ url: string; posterUrl?: string; videoStats?: { optimizedSize: number } }>((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     
                     xhr.upload.onprogress = (event) => {
@@ -217,7 +235,7 @@ export default function AdminExplorerClient() {
 
                     xhr.onerror = () => reject(new Error('Network error during upload'));
                     
-                    xhr.open('POST', `/api/upload`);
+                    xhr.open('POST', `/api/upload${videoWasClientProcessed ? '?skipMainVideoOptimization=1' : ''}`);
                     xhr.setRequestHeader('x-csrf-token', getWritableCsrfToken(csrfToken));
                     xhr.send(formData);
                 });
@@ -236,12 +254,13 @@ export default function AdminExplorerClient() {
                     body: JSON.stringify({
                         type: 'file',
                         parentId: currentParentId || null, // Explicitly enforce null for Root
-                        name: file.name,
+                        name: fileToUpload.name,
                         url: uploadResult.url,
-                        fileType: getFileKind(file.type),
-                        size: file.size,
+                        thumbnailUrl: uploadResult.posterUrl,
+                        fileType: getFileKind(fileToUpload.type),
+                        size: uploadResult.videoStats?.optimizedSize ?? fileToUpload.size,
                         metadata: {
-                            extension: file.name.split('.').pop()?.toLowerCase() || '',
+                            extension: fileToUpload.name.split('.').pop()?.toLowerCase() || '',
                         }
                     })
                 });
@@ -383,7 +402,8 @@ export default function AdminExplorerClient() {
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="text-sm font-semibold text-gray-900 truncate">{upload.name}</span>
                                                     <span className={`text-[10px] ${upload.status === 'error' ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-                                                        {upload.status === 'uploading' ? `Uploading... ${upload.progress}%` : 
+                                                        {upload.status === 'compressing' ? `Optimizing video... ${upload.progress}%` :
+                                                         upload.status === 'uploading' ? `Uploading... ${upload.progress}%` : 
                                                          upload.status === 'registering' ? 'Mendaftarkan file...' :
                                                          upload.status === 'success' ? 'Selesai!' : upload.error}
                                                     </span>
@@ -407,7 +427,7 @@ export default function AdminExplorerClient() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-center">
                                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase rounded-full bg-blue-100 text-blue-700">
-                                            {upload.status === 'uploading' && <Loader2 size={10} className="animate-spin" />}
+                                            {(upload.status === 'uploading' || upload.status === 'compressing') && <Loader2 size={10} className="animate-spin" />}
                                             {upload.status === 'success' ? 'COMPLETE' : 'PENDING'}
                                         </div>
                                     </td>
@@ -416,7 +436,7 @@ export default function AdminExplorerClient() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right">
                                         <div className="flex items-center justify-end">
-                                            {upload.status === 'uploading' ? (
+                                            {upload.status === 'uploading' || upload.status === 'compressing' ? (
                                                 <Loader2 size={16} className="animate-spin text-blue-400 opacity-50" />
                                             ) : upload.status === 'success' ? (
                                                 <Check size={16} className="text-green-500" />

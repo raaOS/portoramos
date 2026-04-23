@@ -184,7 +184,7 @@ export default function OSWindow({
         borderRadius: { duration: 0.22, ease: "easeOut" },
         filter: { duration: 0.22, ease: "easeOut" },
         backgroundColor: { duration: 0.22, ease: "easeOut" },
-    } as const;
+    } as any;
 
     const minimizeTransition = {
         x: { type: "spring", stiffness: 450, damping: 30, mass: 1 },
@@ -194,7 +194,7 @@ export default function OSWindow({
         borderRadius: { duration: 0.2, ease: "easeInOut" },
         filter: { duration: 0.2, ease: "easeInOut" },
         backgroundColor: { duration: 0.2, ease: "easeInOut" },
-    } as const;
+    } as any;
 
     const exitState = {
         scale: 0.85,
@@ -207,7 +207,7 @@ export default function OSWindow({
             scale: { type: "spring", stiffness: 450, damping: 30 },
             filter: { duration: 0.12 },
         },
-    };
+    } as any;
 
     return (
         <AnimatePresence>

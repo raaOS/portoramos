@@ -1,7 +1,7 @@
 import { memo, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { getCoverUrl, isVideoUrl } from '@/utils/canvas-helpers'
+import { getCoverPosterUrl, getPreviewCoverUrl, isVideoUrl } from '@/utils/canvas-helpers'
 import type { CanvasItem } from './infiniteCanvasEngine'
 
 const CARD_WIDTH = 700
@@ -25,7 +25,8 @@ export function CanvasCardInner({
     const pointerStart = useRef<{ x: number; y: number } | null>(null)
     const dragDistance = useRef(0)
 
-    const coverUrl = getCoverUrl(item.project)
+    const coverUrl = getPreviewCoverUrl(item.project)
+    const posterUrl = getCoverPosterUrl(item.project)
     const isVideo = isVideoUrl(coverUrl)
     const aspectRatio =
         item.project.coverWidth && item.project.coverHeight
@@ -79,10 +80,12 @@ export function CanvasCardInner({
                 {isVideo ? (
                     <video
                         ref={(element) => registerVideoRef(item.key, element)}
-                        src={coverUrl}
+                        data-src={coverUrl}
+                        poster={posterUrl}
                         muted
                         loop
                         playsInline
+                        preload="none"
                         className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                     />
                 ) : (

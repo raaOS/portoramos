@@ -33,7 +33,7 @@ export function WindowTitleBar({
         stiffness: 500,
         damping: 15,
         mass: 0.5
-    };
+    } as any;
 
     const handleActionFocus = (e: React.PointerEvent) => {
         e.stopPropagation();

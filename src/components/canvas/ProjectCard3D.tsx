@@ -3,7 +3,7 @@
 import { memo } from 'react'
 import Image from 'next/image'
 import { VirtualItem } from './InfiniteCanvasConstants'
-import { getCoverUrl, isVideoUrl } from '@/utils/canvas-helpers'
+import { getCoverPosterUrl, getPreviewCoverUrl, isVideoUrl } from '@/utils/canvas-helpers'
 
 type ProjectCard3DProps = {
     item: VirtualItem
@@ -21,7 +21,8 @@ const ProjectCard3D = memo(function ProjectCard3D({
     onRef,
     onNavigate
 }: ProjectCard3DProps) {
-    const coverUrl = getCoverUrl(item.project)
+    const coverUrl = getPreviewCoverUrl(item.project)
+    const posterUrl = getCoverPosterUrl(item.project)
     const isVideo = isVideoUrl(coverUrl)
     const aspect = (item.project.coverWidth && item.project.coverHeight)
         ? item.project.coverWidth / item.project.coverHeight
@@ -56,10 +57,12 @@ const ProjectCard3D = memo(function ProjectCard3D({
                 {isVideo ? (
                     <video
                         src={coverUrl}
+                        poster={posterUrl}
                         autoPlay
                         muted
                         loop
                         playsInline
+                        preload="none"
                         className="absolute inset-0 w-full h-full object-cover"
                     />
                 ) : (

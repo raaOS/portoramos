@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Project } from '@/types/projects'
-import { getCoverUrl, isVideoUrl } from '@/utils/canvas-helpers'
+import { getPreviewCoverUrl, isVideoUrl } from '@/utils/canvas-helpers'
 import {
     CANVAS_CONSTANTS,
     assignProjectsToCells,
@@ -184,7 +184,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
                 const videoNode = videoNodesRef.current.get(item.key)
                 if (videoNode) {
                     videoNode.pause()
-                    videoNode.src = ""
+                    videoNode.removeAttribute('src')
                     videoNode.load()
                 }
 
@@ -225,8 +225,8 @@ export default function InfiniteCanvasView({ projects }: Props) {
             if (videoNode) {
                 if (visualStyle.opacity > VIDEO_VISIBILITY_OPACITY && activeKeys.has(item.key)) {
                     if (videoNode.paused) {
-                        if (videoNode.src === "" || videoNode.src.endsWith("/")) {
-                            videoNode.src = getCoverUrl(item.project)
+                        if (!videoNode.getAttribute('src')) {
+                            videoNode.src = videoNode.dataset.src || getPreviewCoverUrl(item.project)
                         }
                         void videoNode.play().catch(() => undefined)
                     }
@@ -322,7 +322,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
                 style={{ transformStyle: 'preserve-3d' }}
             >
                 {renderedItems.map((item) => {
-                    const coverUrl = getCoverUrl(item.project)
+                    const coverUrl = getPreviewCoverUrl(item.project)
                     const isVideo = isVideoUrl(coverUrl)
                     const shouldPriority = !isVideo && item.dist < PRIORITY_IMAGE_DISTANCE && priorityCount < MAX_PRIORITY_IMAGES
                     if (shouldPriority) priorityCount++

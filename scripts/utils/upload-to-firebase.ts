@@ -2,7 +2,6 @@ import * as admin from 'firebase-admin';
 import * as dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs/promises';
-import mime from 'mime-types'; // need to install this or manually map extensions
 
 dotenv.config({ path: path.join(process.cwd(), '.env.local') });
 
@@ -19,7 +18,11 @@ if (!admin.apps.length) {
 }
 
 const bucket = admin.storage().bucket();
-const ASSETS_DIR = path.join(process.cwd(), 'public', 'assets');
+const OVERWRITE = process.argv.includes('--overwrite');
+const PROJECTS_ONLY = process.argv.includes('--projects');
+const ASSETS_DIR = PROJECTS_ONLY
+    ? path.join(process.cwd(), 'public', 'assets', 'projects')
+    : path.join(process.cwd(), 'public', 'assets');
 
 // Basic manual mime types since mime-types might not be installed
 const getMimeType = (filePath: string) => {
@@ -76,20 +79,19 @@ async function uploadAssets() {
                 const fileRef = bucket.file(storagePath);
                 const [exists] = await fileRef.exists();
 
-                if (exists) {
-                    // console.log(`[SKIPPED] ${storagePath} already exists.`);
+                if (exists && !OVERWRITE) {
                     skippedCount++;
                     continue;
                 }
 
-                console.log(`[UPLOADING] ${storagePath}...`);
+                console.log(`[${exists ? 'OVERWRITING' : 'UPLOADING'}] ${storagePath}...`);
                 const contentType = getMimeType(localPath);
                 
                 await bucket.upload(localPath, {
                     destination: storagePath,
                     metadata: {
                         contentType: contentType,
-                        cacheControl: 'public, max-age=31536000'
+                        cacheControl: 'public, max-age=31536000, immutable'
                     }
                 });
                 

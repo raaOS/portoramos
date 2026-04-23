@@ -206,10 +206,10 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
         }}
       />
 
-      {(poster || src) && (
+      {poster && (
         <div className={`absolute inset-0 z-10 transition-opacity duration-300 pointer-events-none ${canPlay ? 'opacity-0' : 'opacity-100'}`}>
           <Image
-            src={getProxiedUrl(poster || src)}
+            src={getProxiedUrl(poster)}
             alt={alt}
             width={width}
             height={height}

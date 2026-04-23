@@ -3,6 +3,7 @@ import { m, AnimatePresence } from 'motion/react';
 import { Check, CheckCheck } from 'lucide-react';
 import type { ChatMessage } from '../../data/mockChats';
 import type { Project } from '@/types/projects';
+import { getVideoPosterSource, getVideoPreviewSource, isVideoSource } from '@/lib/mediaPreview';
 
 interface ChatMessagesProps {
     messages: ChatMessage[];
@@ -13,17 +14,22 @@ interface ChatMessagesProps {
 }
 
 const ChatMediaPreview = React.memo(function ChatMediaPreview({ src, alt, className }: { src: string; alt?: string; className?: string }) {
-    const isVideo = src.toLowerCase().endsWith('.mp4') || src.toLowerCase().endsWith('.webm');
+    const isVideo = isVideoSource(src);
 
     if (isVideo) {
+        const previewSrc = getVideoPreviewSource(src);
+        const posterSrc = getVideoPosterSource(src);
+
         return (
             <video
-                src={src}
+                src={previewSrc}
+                poster={posterSrc}
                 className={className}
                 autoPlay
                 muted
                 loop
                 playsInline
+                preload="metadata"
                 disablePictureInPicture
             />
         );

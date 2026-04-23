@@ -7,9 +7,12 @@ interface UseFileValidationOptions {
     maxSize: number; // in MB
 }
 
+const MAX_VIDEO_UPLOAD_SIZE_MB = 200;
+
 export function useFileValidation({ accept, maxSize }: UseFileValidationOptions) {
     const validateFile = useCallback((file: File): string | null => {
-        const limit = maxSize;
+        const isVideo = file.type.startsWith('video/');
+        const limit = isVideo ? Math.max(maxSize, MAX_VIDEO_UPLOAD_SIZE_MB) : maxSize;
 
         if (file.size > limit * 1024 * 1024) {
             return `File ${file.name} is too large. Max size is ${limit}MB.`;

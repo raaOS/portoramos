@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Project } from '@/types/projects';
 import Media from '@/components/shared/Media';
-import { resolveCover } from '@/lib/images';
+import { resolvePreviewCover } from '@/lib/images';
 import { Heart, Share2, ArrowRight } from 'lucide-react';
 import { useImageProtection } from '@/hooks/useImageProtection';
 
@@ -21,7 +21,7 @@ export default function ProjectCardList({
     highlightedTag
 }: ProjectCardListProps) {
     const { slug, title, description, tags, likes, shares, client } = project;
-    const cover = resolveCover(project);
+    const cover = resolvePreviewCover(project);
     const shouldAutoplay = videoEnabled && (project.autoplay ?? true);
     const { toast, handleContextMenu } = useImageProtection();
 
