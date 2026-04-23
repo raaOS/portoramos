@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { m } from 'framer-motion';
+import { m } from 'motion/react';
 import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
 import { SadMacIcon } from './SadMacIcon';

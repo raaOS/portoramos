@@ -21,7 +21,7 @@ import AdminLayout from '@/app/admin/components/AdminLayout';
 import { useToast } from '@/contexts/ToastContext';
 import { AnyExplorerNode } from '@/types/explorer';
 import AdminButton from '@/app/admin/components/AdminButton';
-import { m } from 'framer-motion';
+import { m } from 'motion/react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 

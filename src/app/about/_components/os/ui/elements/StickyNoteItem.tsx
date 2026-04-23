@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { sanitize } from '@/lib/security/sanitization';
 
-import { m, DragControls } from 'framer-motion';
+import { m, DragControls } from 'motion/react';
 
 export interface NoteData {
     id: string;

@@ -5,6 +5,12 @@ import { AboutData } from '@/types/about';
 import { ElementType } from '@/app/about/_components/os/context/UnifiedZIndexContext';
 import { saveWindowPosition } from "@/app/about/_components/os/utils/positionSync";
 
+/** SSR-safe viewport dimensions helper */
+function getViewport() {
+    if (typeof window === 'undefined') return { width: 1440, height: 900 };
+    return { width: window.innerWidth, height: window.innerHeight };
+}
+
 interface UseWindowActionsProps {
     windows: WindowState[];
     setWindows: React.Dispatch<React.SetStateAction<WindowState[]>>;
@@ -50,13 +56,13 @@ export function useWindowActions({
             const existingWindow = prev.find(w => w.id === id);
 
             const getMobileDims = (w?: number, h?: number) => {
-                if (typeof window === 'undefined') return { width: w || 800, height: h || 600 };
-                const isMobile = window.innerWidth < 768;
+                const vp = getViewport();
+                const isMobile = vp.width < 768;
                 if (!isMobile) return { width: w || 800, height: h || 600 };
 
                 return {
-                    width: Math.min(w || 800, window.innerWidth * 0.95),
-                    height: Math.min(h || 600, window.innerHeight * 0.70)
+                    width: Math.min(w || 800, vp.width * 0.95),
+                    height: Math.min(h || 600, vp.height * 0.70)
                 };
             };
 
@@ -96,7 +102,7 @@ export function useWindowActions({
                     const rawHeight = customConfig?.height || pref?.height || w.height || 600;
 
                     const { width, height } = getMobileDims(rawWidth, rawHeight);
-                    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+                    const isMobile = getViewport().width < 768;
 
                     const initialPosition = (pref && pref.x !== undefined && pref.y !== undefined && !isMobile)
                         ? { x: pref.x, y: pref.y }

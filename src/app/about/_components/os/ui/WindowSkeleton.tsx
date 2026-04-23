@@ -35,20 +35,7 @@ export default function WindowSkeleton({ type = 'generic', title = 'Loading...' 
                 
                 <div className="flex-1 p-6 flex flex-col gap-6">
                     {type === 'explorer' ? (
-                        <>
-                            <div className="flex gap-4">
-                                <div className="h-8 w-32 bg-black/5 dark:bg-white/5 rounded-md" />
-                                <div className="h-8 w-48 bg-black/5 dark:bg-white/5 rounded-md ml-auto" />
-                            </div>
-                            <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-8">
-                                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                                    <div key={i} className="flex flex-col items-center gap-2">
-                                        <div className="w-16 h-20 bg-black/5 dark:bg-white/5 rounded-lg" />
-                                        <div className="h-2 w-12 bg-black/5 dark:bg-white/5 rounded" />
-                                    </div>
-                                ))}
-                            </div>
-                        </>
+                        null
                     ) : (
                         <>
                             <div className="h-8 w-2/3 bg-black/5 dark:bg-white/5 rounded-lg" />

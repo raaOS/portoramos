@@ -23,15 +23,15 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
     const [activeContact, setActiveContact] = useState<ContactProfile | null>(null);
     const [showList, setShowList] = useState(true);
     const [input, setInput] = useState('');
-    const [previewMedia, setPreviewMedia] = useState<{ 
-        src: string; 
-        title: string; 
+    const [previewMedia, setPreviewMedia] = useState<{
+        src: string;
+        title: string;
         type: 'image' | 'video';
         project?: Project;
     } | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const { openWindow } = useDesktopWindowContext();
-    
+
     // Contacts state
     const contacts = useMemo(
         () => customContacts ? Object.values(customContacts) : [],
@@ -40,11 +40,11 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
 
     // Custom Hooks
     const { getProjectById } = useChatProjects(initialProjects);
-    const { 
-        visibleMessages, 
-        isRemoteTyping, 
-        addMessage, 
-        setVisibleMessages 
+    const {
+        visibleMessages,
+        isRemoteTyping,
+        addMessage,
+        setVisibleMessages
     } = useChatSequencer(activeContact, showList);
 
     // Auto-scroll to bottom
@@ -52,7 +52,7 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [visibleMessages, isRemoteTyping]);
 
-    const handleSend = (e: React.FormEvent) => {
+    const handleSend = useCallback((e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim() || !activeContact) return;
 
@@ -68,11 +68,11 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
         addMessage(newMessage);
         setInput('');
         soundManager.play('click');
-    };
+    }, [input, activeContact, addMessage]);
 
-    const handleTyping = () => {
+    const handleTyping = useCallback(() => {
         soundManager.play('typing');
-    };
+    }, []);
 
     const selectContact = useCallback((contact: ContactProfile) => {
         setActiveContact(contact);
@@ -90,26 +90,23 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
         return contacts?.find?.((contact) => contact.id === chatId || contact.name === chatId) || null;
     }, [contacts]);
 
-    const getLastMessage = (contact: ContactProfile) => {
+    const getLastMessage = useCallback((contact: ContactProfile) => {
         const messages = contact.messages || contact.conversation || [];
         if (messages.length === 0) return "Tidak ada pesan";
         const lastMsg = messages[messages.length - 1];
         return lastMsg.text.length > 30 ? lastMsg.text.substring(0, 30) + "..." : lastMsg.text;
-    };
+    }, []);
 
-    // Handle activeChatId changes outside of Effect to avoid cascading renders
-    const [prevActiveChatId, setPrevActiveChatId] = useState(activeChatId);
-    
-    if (activeChatId !== prevActiveChatId) {
-        setPrevActiveChatId(activeChatId);
-        const target = findContactByChatId(activeChatId || "");
+    // Sync activeChatId changes via effect
+    useEffect(() => {
+        if (!activeChatId) return;
+        const target = findContactByChatId(activeChatId);
         if (target) {
-            // We set state during render which is safer in React 18+ for reflecting props
             setActiveContact(target);
             setShowList(false);
             setVisibleMessages([]);
         }
-    }
+    }, [activeChatId, findContactByChatId]);
 
     if (showList) {
         return <ChatList contacts={contacts} onSelect={selectContact} getLastMessage={getLastMessage} />;
@@ -119,16 +116,16 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
 
     return (
         <div className="flex flex-col h-full w-full bg-[#e5ddd5] dark:bg-[#0b141a] relative overflow-hidden text-[#111b21]">
-            <ChatHeader 
-                contact={activeContact} 
-                onBack={goBackToList} 
-                isTyping={isRemoteTyping} 
+            <ChatHeader
+                contact={activeContact}
+                onBack={goBackToList}
+                isTyping={isRemoteTyping}
             />
 
-            <ChatMessages 
-                messages={visibleMessages} 
-                isTyping={isRemoteTyping} 
-                getProjectById={getProjectById} 
+            <ChatMessages
+                messages={visibleMessages}
+                isTyping={isRemoteTyping}
+                getProjectById={getProjectById}
                 onOpenProject={(project) => {
                     const isVideo = project.cover?.toLowerCase().endsWith('.mp4') || project.cover?.toLowerCase().endsWith('.webm');
                     setPreviewMedia({
@@ -143,11 +140,11 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
 
             <div ref={bottomRef} />
 
-            <ChatFooter 
-                input={input} 
-                setInput={setInput} 
-                onSend={handleSend} 
-                onTyping={handleTyping} 
+            <ChatFooter
+                input={input}
+                setInput={setInput}
+                onSend={handleSend}
+                onTyping={handleTyping}
             />
 
             {/* Media Preview Modal */}

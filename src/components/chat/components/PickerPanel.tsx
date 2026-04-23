@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, useCallback } from 'react';
-import { m, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { POPULAR_EMOJIS, CATEGORIES } from '../data/EmojiData';
 import AnimatedEmojiPreview from './AnimatedEmojiPreview';

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { startTransition, useCallback, useEffect, useMemo } from "react";
-import { AnimatePresence, m, LazyMotion, domMax } from "framer-motion";
+import { AnimatePresence, m, LazyMotion, domMax } from "motion/react";
 import dynamic from "next/dynamic";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useLayoutPersistence } from "../contexts/LayoutPersistenceContext";

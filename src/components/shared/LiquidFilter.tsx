@@ -1,4 +1,4 @@
-import { m, useTransform, type MotionValue, useMotionValue } from 'framer-motion';
+import { m, useTransform, type MotionValue, useMotionValue } from 'motion/react';
 
 interface LiquidFilterProps {
   id?: string;

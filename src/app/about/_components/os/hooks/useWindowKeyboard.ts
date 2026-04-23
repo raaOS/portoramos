@@ -1,4 +1,4 @@
-import { KeyboardEvent } from 'react';
+import { useCallback, KeyboardEvent } from 'react';
 import { soundManager } from '../utils/SoundManager';
 
 interface UseWindowKeyboardProps {
@@ -8,7 +8,7 @@ interface UseWindowKeyboardProps {
 }
 
 export function useWindowKeyboard({ onClose, onMinimize, onMaximize }: UseWindowKeyboardProps) {
-    const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
         // Keyboard Shortcuts
         if (e.key === 'Escape') {
             e.preventDefault();
@@ -46,7 +46,7 @@ export function useWindowKeyboard({ onClose, onMinimize, onMaximize }: UseWindow
                 }
             }
         }
-    };
+    }, [onClose, onMinimize, onMaximize]);
 
     return { handleKeyDown };
 }

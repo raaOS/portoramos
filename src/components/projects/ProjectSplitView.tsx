@@ -2,7 +2,7 @@
 
 import type { Project } from '@/types/projects'
 import { useState, useEffect, useCallback, useRef, memo } from 'react'
-import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react'
 import { Heart, Eye, X, Image as ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 import Media from '@/components/shared/Media'

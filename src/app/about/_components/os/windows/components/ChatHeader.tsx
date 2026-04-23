@@ -23,6 +23,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ contact, onBack, isTypin
                         src={contact.avatar}
                         alt={contact.name}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                     />
                 </div>
                 <div className="flex flex-col ml-1">

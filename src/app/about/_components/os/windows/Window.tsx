@@ -1,12 +1,28 @@
 "use client";
 
-import React, { useRef, useEffect, useMemo } from "react";
-import { m, useDragControls, AnimatePresence } from "framer-motion";
+import React, { useRef, useEffect, useMemo, useState } from "react";
+import { m, useDragControls, AnimatePresence } from "motion/react";
 import { soundManager } from "../utils/SoundManager";
 import { useWindowResize } from "../hooks/useWindowResize";
 import { useWindowKeyboard } from "../hooks/useWindowKeyboard";
 import { WindowTitleBar } from "./components/WindowTitleBar";
 import { WindowResizeHandles } from "./components/WindowResizeHandles";
+
+// Module-level constants to avoid re-creation per render
+const SHELL_STYLE = {
+    backgroundColor: "rgba(255,255,255,0.80)",
+    filter: "blur(0px) saturate(1)",
+} as const;
+
+const SHELL_STYLE_MAXIMIZED = {
+    backgroundColor: "rgba(255,255,255,0.88)",
+    filter: "blur(0px) saturate(1)",
+} as const;
+
+const MINIMIZED_STYLE = {
+    backgroundColor: "rgba(255,255,255,0.62)",
+    filter: "blur(10px) saturate(0.9)",
+} as const;
 
 interface WindowProps {
     id: string;
@@ -36,7 +52,7 @@ interface WindowProps {
 }
 
 export default function OSWindow({
-    id: _id,
+    id,
     title,
     children,
     isOpen,
@@ -61,12 +77,24 @@ export default function OSWindow({
     animationVariant: _animationVariant,
 }: WindowProps) {
     const windowRef = useRef<HTMLDivElement>(null);
-    const isMobileWindow = typeof window !== 'undefined' && window.innerWidth < 768;
-    const isTabletWindow = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024;
-    const isSmallScreen = isMobileWindow || isTabletWindow;
-    const winWidth = isMobileWindow ? window.innerWidth : isTabletWindow ? Math.min(window.innerWidth - 32, 700) : 600;
-    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1440;
-    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 900;
+
+    // SSR-safe viewport dimensions — computed once on mount, stable across renders
+    const [viewport, setViewport] = useState({ width: 1440, height: 900 });
+    useEffect(() => {
+        setViewport({ width: window.innerWidth, height: window.innerHeight });
+    }, []);
+
+    const { isSmallScreen, winWidth } = useMemo(() => {
+        const isMobile = viewport.width < 768;
+        const isTablet = viewport.width >= 768 && viewport.width < 1024;
+        return {
+            isSmallScreen: isMobile || isTablet,
+            winWidth: isMobile ? viewport.width : isTablet ? Math.min(viewport.width - 32, 700) : 600,
+        };
+    }, [viewport.width]);
+
+    const viewportWidth = viewport.width;
+    const viewportHeight = viewport.height;
     const dragControls = useDragControls();
 
     const { handleKeyDown } = useWindowKeyboard({ onClose, onMinimize, onMaximize });
@@ -114,17 +142,7 @@ export default function OSWindow({
 
     const activeFrame = isMaximized ? maximizedFrame : normalFrame;
 
-    const transformOrigin = isMaximized ? "50% 50%" : "50% 50%";
-
-    const shellStyle = {
-        backgroundColor: isMaximized ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.80)",
-        filter: "blur(0px) saturate(1)",
-    } as const;
-
-    const minimizedStyle = {
-        backgroundColor: "rgba(255,255,255,0.62)",
-        filter: "blur(10px) saturate(0.9)",
-    } as const;
+    const shellStyle = isMaximized ? SHELL_STYLE_MAXIMIZED : SHELL_STYLE;
 
     const entryState = {
         x: activeFrame.x,
@@ -142,7 +160,7 @@ export default function OSWindow({
         scale: 0.8,
         opacity: 0,
         borderRadius: 26,
-        ...minimizedStyle,
+        ...MINIMIZED_STYLE,
     };
 
     const activeState = {
@@ -227,12 +245,13 @@ export default function OSWindow({
                     aria-modal="true"
                     role="dialog"
                     aria-label={title}
+                    data-window-id={id}
                     style={{
                         position: "absolute",
                         zIndex: zIndex,
                         top: 0,
                         left: 0,
-                        transformOrigin,
+                        transformOrigin: "50% 50%",
                         pointerEvents: isMinimized ? "none" : "auto",
                         backdropFilter: isMinimized ? "none" : (isFocused ? "blur(24px) saturate(1.2)" : "blur(12px) saturate(1)"),
                         transition: "backdrop-filter 0.3s ease",

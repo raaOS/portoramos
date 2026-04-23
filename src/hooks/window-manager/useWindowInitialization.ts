@@ -2,6 +2,12 @@ import { useEffect } from 'react';
 import { AboutData } from '@/types/about';
 import { WindowState } from './types';
 
+/** SSR-safe viewport dimensions helper */
+function getViewport() {
+    if (typeof window === 'undefined') return { width: 1440, height: 900 };
+    return { width: window.innerWidth, height: window.innerHeight };
+}
+
 interface UseWindowInitializationProps {
     initialWindows: WindowState[];
     aboutData?: AboutData | null;
@@ -27,13 +33,14 @@ export function useWindowInitialization({ initialWindows, aboutData, setWindows,
                     const isPinned = pref?.isOpenByDefault || false;
 
                     // Mobile logic
-                    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+                    const vp = getViewport();
+                    const isMobile = vp.width < 768;
                     let width = rawWidth;
                     let height = rawHeight;
 
                     if (isMobile) {
-                        width = Math.min(rawWidth, typeof window !== 'undefined' ? window.innerWidth * 0.95 : 800);
-                        height = Math.min(rawHeight, typeof window !== 'undefined' ? window.innerHeight * 0.8 : 600);
+                        width = Math.min(rawWidth, vp.width * 0.95);
+                        height = Math.min(rawHeight, vp.height * 0.8);
                     }
 
                     const initialPosition = (pref?.x !== undefined && pref?.y !== undefined && !isMobile)

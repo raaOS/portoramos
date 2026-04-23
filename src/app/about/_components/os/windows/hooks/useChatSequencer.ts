@@ -6,6 +6,7 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
     const [visibleMessages, setVisibleMessages] = useState<ChatMessage[]>([]);
     const [isRemoteTyping, setIsRemoteTyping] = useState(false);
     const sequencerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isCancelledRef = useRef(false);
 
     useEffect(() => {
         if (showList || !activeContact) {
@@ -14,6 +15,9 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
             if (sequencerRef.current) clearTimeout(sequencerRef.current);
             return;
         }
+
+        // Reset cancellation flag for new sequence
+        isCancelledRef.current = false;
 
         // Reset visibility
         setVisibleMessages([]);
@@ -28,6 +32,7 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
         // Handle empty conversation - show placeholder after brief delay
         if (fullConversation.length === 0) {
             sequencerRef.current = setTimeout(() => {
+                if (isCancelledRef.current) return;
                 setVisibleMessages([{
                     id: Date.now(),
                     text: "Belum ada pesan. Mulai percakapan dengan mengirim pesan!",
@@ -41,13 +46,14 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
         }
 
         const nextStep = () => {
-            if (currentIndex >= fullConversation.length) return;
+            if (isCancelledRef.current || currentIndex >= fullConversation.length) return;
 
             const msg = fullConversation[currentIndex];
 
             if (!msg.isMe) {
                 setIsRemoteTyping(true);
                 sequencerRef.current = setTimeout(() => {
+                    if (isCancelledRef.current) return;
                     setIsRemoteTyping(false);
                     setVisibleMessages(prev => {
                         // Avoid duplicates if component re-renders
@@ -72,6 +78,7 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
         sequencerRef.current = setTimeout(nextStep, 800);
 
         return () => {
+            isCancelledRef.current = true;
             if (sequencerRef.current) clearTimeout(sequencerRef.current);
         };
     }, [activeContact, showList]);

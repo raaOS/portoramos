@@ -9,17 +9,19 @@ export const explorerService = {
      * Get all nodes in a flat map (useful for lookups) or children of a specific folder.
      */
     async getNodes(parentId: string | null = null): Promise<AnyExplorerNode[]> {
+        const normalize = (id: any) => (!id || id === 'root' || id === 'null' || id === 'undefined') ? null : id;
+        const normalizedParentId = normalize(parentId);
+        
         try {
             const snapshot = await db.ref(EXPLORER_PATH).once('value');
             const data = snapshot.val() as Record<string, AnyExplorerNode> | null;
             
             if (!data) return [];
             
-            // Filter by parentId (handle undefined or empty string as null)
+            // Filter by parentId
             return Object.values(data).filter(node => {
-                const nodeParentId = (node.parentId === undefined || node.parentId === '') ? null : node.parentId;
-                const normalizePid = (parentId === '' || parentId === undefined) ? null : parentId;
-                return nodeParentId === normalizePid;
+                const nodeParentId = normalize(node.parentId);
+                return nodeParentId === normalizedParentId;
             });
         } catch (error) {
             console.error('[ExplorerService] Failed to get nodes:', error);
@@ -123,8 +125,9 @@ export const explorerService = {
             const data = snapshot.val() as Record<string, AnyExplorerNode> | null;
             if (!data) return [];
 
+            const normalize = (id: any) => (!id || id === 'root' || id === 'null' || id === 'undefined') ? null : id;
             const path: ExplorerFolder[] = [];
-            let currentId: string | null = id;
+            let currentId: string | null = normalize(id);
 
             // Prevent infinite loops just in case
             let depth = 0;
@@ -133,7 +136,7 @@ export const explorerService = {
                 if (!node || node.type !== 'folder') break;
                 
                 path.unshift(node as ExplorerFolder);
-                currentId = (node.parentId === undefined || node.parentId === '') ? null : node.parentId;
+                currentId = normalize(node.parentId);
                 depth++;
             }
 

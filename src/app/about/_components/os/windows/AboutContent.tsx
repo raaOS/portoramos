@@ -4,6 +4,7 @@ import { User, FileText, Lightbulb, Brain, type LucideIcon } from "lucide-react"
 import type { AboutData } from "@/types/about";
 import type { ExperienceData } from "@/types/experience";
 import type { HardSkillsData } from "@/types/hardSkill";
+import "../styles/os-scrollbar.css";
 
 // Sub-components (Clean Code: Sections extracted)
 import { AboutTab } from "../sections/AboutTab";
@@ -51,23 +52,6 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
 
     return (
         <div className="flex h-full w-full bg-[#ECECEC] font-sans">
-            <style jsx>{`
-                .about-scrollbar::-webkit-scrollbar {
-                    width: 8px;
-                }
-                .about-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .about-scrollbar::-webkit-scrollbar-thumb {
-                    background-color: rgba(0,0,0,0.1);
-                    border-radius: 4px;
-                    border: 2px solid transparent;
-                    background-clip: content-box;
-                }
-                .about-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background-color: rgba(0,0,0,0.2);
-                }
-            `}</style>
 
             {/* Sidebar (Left) */}
             <div
@@ -103,7 +87,7 @@ export default function AboutContent({ aboutData, experienceData, hardSkillsData
             <div
                 onClick={() => !sidebarCollapsed && setSidebarCollapsed(true)}
                 data-lenis-prevent
-                className={`flex-1 bg-white h-full overflow-y-auto overscroll-contain p-8 pb-20 about-scrollbar min-h-0 ${!sidebarCollapsed ? 'cursor-pointer' : ''}`}
+                className={`flex-1 bg-white h-full overflow-y-auto overscroll-contain p-8 pb-20 os-scrollbar min-h-0 ${!sidebarCollapsed ? 'cursor-pointer' : ''}`}
                 style={{ touchAction: "pan-y" }}
             >
                 {activeTab === 'about' && <AboutTab aboutData={aboutData} />}

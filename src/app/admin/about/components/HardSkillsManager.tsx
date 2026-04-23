@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'motion/react';
 import { Plus } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { HardSkill } from '@/types/hardSkill';

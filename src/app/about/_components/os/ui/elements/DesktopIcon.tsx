@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { m, useMotionValue } from "framer-motion";
+import { m, useMotionValue } from "motion/react";
 import Image from "next/image";
 import { soundManager } from "../../utils/SoundManager";
 
@@ -168,7 +168,7 @@ export default function DesktopIcon({
                         minWidth: baseHeight * aspectRatio,
                         minHeight: baseHeight,
                     }}
-                    className={`relative border-2 transition-all duration-200 bg-white/20 overflow-hidden rounded-none ${isSelected ? 'border-white/60 shadow-md scale-[1.02]' : 'border-white/40 group-hover:border-white/60'}`}
+                    className={`relative transition-all duration-200 bg-white/20 overflow-hidden rounded-none ${isSelected ? 'scale-[1.02]' : ''}`}
                 >
                     {/* Always render Image as base layer if available and not error */}
                     {imageUrl && !imageError && (
@@ -209,7 +209,7 @@ export default function DesktopIcon({
                     )}
                 </div>
             ) : (
-                <div className={`w-16 h-16 bg-white/20 rounded-none border border-white/30 flex items-center justify-center transition-colors group-hover:bg-white/30`}>
+                <div className="w-16 h-16 bg-white/20 rounded-none flex items-center justify-center transition-colors group-hover:bg-white/30">
                     <div className="text-black/80 group-hover:text-black transition-colors">
                         {icon}
                     </div>
@@ -222,7 +222,7 @@ export default function DesktopIcon({
                 <div className={`absolute inset-0 rounded-[4px] border border-white/5 transition-opacity duration-200 ${isSelected ? 'bg-white/20 backdrop-blur-sm opacity-100' : 'opacity-0'}`} />
                 
                 {/* Label Text */}
-                <span className={`relative text-[11px] font-medium text-center select-none truncate max-w-[80px] block transition-colors duration-200 leading-tight ${isSelected ? 'text-white' : 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]'}`}>
+                <span className="relative text-[11px] font-medium text-black text-center select-none truncate max-w-[80px] block transition-colors duration-200 leading-tight">
                     {label}
                 </span>
             </div>

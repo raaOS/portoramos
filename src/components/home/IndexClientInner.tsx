@@ -2,7 +2,7 @@
 
 import type { Project } from '@/types/projects'
 import { useMemo, useEffect, useRef, memo, useDeferredValue, useState } from 'react'
-import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
 import ProjectSplitView from '@/components/projects/ProjectSplitView'
 import MasonryGrid from '@/components/layout/MasonryGrid'

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { m, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "motion/react";
 import { useRetroState } from "./hooks/useRetroState";
 import { RetroBootView, RetroErrorView, RetroDetailsView } from "./retro/RetroViews";
 import "./retro/retro-os.css";

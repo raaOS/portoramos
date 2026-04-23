@@ -2,7 +2,7 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import { m } from "framer-motion";
+import { m } from "motion/react";
 import { useState } from "react";
 import DesktopIcon from "../ui/elements/DesktopIcon";
 import { useQuickLook } from "@/hooks/useQuickLook";

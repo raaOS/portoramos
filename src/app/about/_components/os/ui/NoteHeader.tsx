@@ -1,5 +1,5 @@
 import React from 'react';
-import type { DragControls } from 'framer-motion';
+import type { DragControls } from 'motion/react';
 import { X } from 'lucide-react';
 
 interface NoteHeaderProps {

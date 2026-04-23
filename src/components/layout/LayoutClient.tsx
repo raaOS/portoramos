@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
-import { LazyMotion, domAnimation, AnimatePresence, m } from 'framer-motion';
+import { LazyMotion, domAnimation, AnimatePresence, m } from 'motion/react';
 import Header from '@/components/shared/Header';
 import { WindowProvider } from '@/contexts/WindowContext';
 import GlobalDock from './GlobalDock';
@@ -51,14 +51,9 @@ export default function LayoutClient({
                     <Suspense fallback={null}>
                         {showHeader && <Header />}
                     </Suspense>
-                    <m.main 
-                        initial={{ opacity: 0 }}
-                        animate={isMounted ? { opacity: 1 } : { opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className={isContact ? "" : "pb-24"}
-                    >
+                    <main className={isContact ? "" : "pb-24"}>
                         {children}
-                    </m.main>
+                    </main>
                     {modal}
 
                     <AnimatePresence mode="wait">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { m, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'motion/react';
 import { Check, CheckCheck } from 'lucide-react';
 import type { ChatMessage } from '../../data/mockChats';
 import type { Project } from '@/types/projects';
@@ -12,7 +12,7 @@ interface ChatMessagesProps {
     onPreviewMedia: (src: string, title: string, type: 'image' | 'video') => void;
 }
 
-const ChatMediaPreview: React.FC<{ src: string; alt?: string; className?: string }> = ({ src, alt, className }) => {
+const ChatMediaPreview = React.memo(function ChatMediaPreview({ src, alt, className }: { src: string; alt?: string; className?: string }) {
     const isVideo = src.toLowerCase().endsWith('.mp4') || src.toLowerCase().endsWith('.webm');
 
     if (isVideo) {
@@ -30,11 +30,11 @@ const ChatMediaPreview: React.FC<{ src: string; alt?: string; className?: string
     }
 
     return <img src={src} alt={alt} className={className} loading="lazy" />;
-};
+});
 
-export const ChatMessages: React.FC<ChatMessagesProps> = ({ 
-    messages, 
-    isTyping, 
+export const ChatMessages: React.FC<ChatMessagesProps> = ({
+    messages,
+    isTyping,
     getProjectById,
     onOpenProject,
     onPreviewMedia
@@ -61,10 +61,10 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
             <div className="flex flex-col gap-2 z-10 w-full">
                 <AnimatePresence initial={false}>
                     {Array.isArray(messages) && messages.map((msg) => {
-                        const project = (msg.projectId && typeof getProjectById === 'function') 
-                            ? getProjectById(msg.projectId) 
+                        const project = (msg.projectId && typeof getProjectById === 'function')
+                            ? getProjectById(msg.projectId)
                             : null;
-                        
+
                         // Fallback source for media if project is missing or as a primary source
                         const mediaSrc = project?.cover || msg.imageSrc;
                         return (
@@ -120,7 +120,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                                     )}
 
                                     {msg.type === 'image' && !msg.projectId && msg.imageSrc && (
-                                        <div 
+                                        <div
                                             className="mb-2 rounded-xl overflow-hidden bg-gray-100 border border-black/5 aspect-[4/3] w-full max-w-[240px] cursor-pointer hover:opacity-90 transition-opacity"
                                             onClick={() => {
                                                 if (msg.imageSrc) {
@@ -129,10 +129,10 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                                                 }
                                             }}
                                         >
-                                            <ChatMediaPreview 
-                                                src={msg.imageSrc} 
-                                                alt="Sent image" 
-                                                className="w-full h-full object-cover" 
+                                            <ChatMediaPreview
+                                                src={msg.imageSrc}
+                                                alt="Sent image"
+                                                className="w-full h-full object-cover"
                                             />
                                         </div>
                                     )}

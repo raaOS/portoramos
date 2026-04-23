@@ -97,8 +97,11 @@ export default async function RootLayout({
     <html lang="id" suppressHydrationWarning>
       <head>
         {/* Preconnect to critical domains */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Google Fonts - Fallback for next/font to satisfy Babel/SWC conflict */}
+        <link 
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Six+Caps&display=swap" 
+          rel="stylesheet" 
+        />
 
 
 

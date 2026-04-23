@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useSyncExternalStore, memo } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import type { Project } from '@/types/projects';
 import MasonryGrid from '@/components/layout/MasonryGrid';
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest';

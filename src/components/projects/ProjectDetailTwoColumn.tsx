@@ -2,7 +2,7 @@
   
 import { useMemo, useCallback, useSyncExternalStore } from 'react';
 import type { Project, GalleryItem } from '@/types/projects';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import LightboxGallery from '@/components/ui/LightboxGallery';
 import { useProjectDetail } from './project-detail/hooks';
 import {

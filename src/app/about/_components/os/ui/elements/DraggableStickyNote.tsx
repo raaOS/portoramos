@@ -1,5 +1,5 @@
 import React from "react";
-import { m, useDragControls } from "framer-motion";
+import { m, useDragControls } from "motion/react";
 import StickyNoteItem, { NoteData } from "./StickyNoteItem";
 import { useUnifiedZIndex } from "../../context/UnifiedZIndexContext";
 

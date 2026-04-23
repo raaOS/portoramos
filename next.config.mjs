@@ -48,7 +48,7 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   // Transpile packages that need ESM handling
-  transpilePackages: [],
+  transpilePackages: ['firebase', 'motion'],
 
   // Optimize static assets
   assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
@@ -57,23 +57,6 @@ const nextConfig = {
 
   // Enable experimental features for performance
   experimental: {
-    // Enable modern bundling
-    esmExternals: true,
-    // Enable CSS optimization for tree-shaking and inlining critical CSS
-    optimizeCss: true,
-    // Optimize package imports to reduce bundle size
-    // organize imports manually for now to avoid Turbopack conflicts
-    // ... rest of experimental
-
-    optimizePackageImports: [
-      'framer-motion',
-      'lucide-react',
-      '@tanstack/react-query',
-      'fuse.js',
-      '@tabler/icons-react',
-      '@tsparticles/react',
-      'react-masonry-css',
-    ],
     // Enable optimistic client cache for faster navigation
     optimisticClientCache: true,
     // Enable scroll restoration
@@ -88,6 +71,22 @@ const nextConfig = {
 
   // Webpack optimization for performance (fallback when using --webpack flag)
   webpack: (config, { dev, isServer }) => {
+    // Fix ESM .mjs module resolution (required for framer-motion and similar packages)
+    config.module.rules.push({
+      test: /\.m?js$/,
+      resolve: {
+        fullySpecified: false,
+      },
+    });
+
+    // Tactical Aliases to resolve ESM resolution issues in Next.js 16 Webpack
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      // Map firebase subpaths to help Webpack find the correct ESM bundles via @firebase packages
+      'firebase/app': '@firebase/app',
+      'firebase/database': '@firebase/database',
+    };
+
     if (!dev && !isServer) {
       // Optimize bundle splitting for better caching and performance
       config.optimization.splitChunks = {
@@ -112,14 +111,14 @@ const nextConfig = {
           // UI library chunk
           ui: {
             name: 'ui',
-            test: /[\\/]node_modules[\\/](framer-motion|lucide-react|@tabler|@tsparticles)[\\/]/,
+            test: /[\\/]node_modules[\\/](motion|lucide-react|@tabler|@tsparticles|firebase)[\\/]/,
             chunks: 'all',
             priority: 30,
           },
           // Animation chunk
           animations: {
             name: 'animations',
-            test: /[\\/]node_modules[\\/](framer-motion|gsap)[\\/]/,
+            test: /[\\/]node_modules[\\/](motion|gsap)[\\/]/,
             chunks: 'all',
             priority: 25,
           },

@@ -2,7 +2,7 @@
 import React, { useId } from "react";
 import Particles from "@tsparticles/react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { getSparklesOptions, SparklesOptionsProps } from "./SparklesConfig";
 import { useSparkles } from "./useSparkles";
 

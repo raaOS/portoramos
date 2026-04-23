@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 const SparklesCore = dynamic(() => import("@/components/ui/Sparkles").then(mod => mod.SparklesCore), { ssr: false });
-import { AnimatePresence, motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
+import { AnimatePresence, motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "motion/react";
 import { cn, getProxiedUrl } from "@/lib/utils";
 import { IconDotsVertical } from "@tabler/icons-react";
 

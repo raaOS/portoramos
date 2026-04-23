@@ -32,7 +32,7 @@ export const WindowProvider: React.FC<WindowProviderProps> = ({
 }) => {
   const [windows, setWindows] = useState<WindowState[]>(initialWindows);
   const [bouncingDocId, setBouncingDocId] = useState<string | null>(null);
-  const [_topZIndex, _setTopZIndex] = useState(20); // Legacy, to be removed after refactoring usage
+
   const topZIndexRef = useRef(20);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 

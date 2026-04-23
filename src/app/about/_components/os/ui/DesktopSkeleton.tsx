@@ -18,8 +18,8 @@ export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkel
 
     return (
         <div className="fixed inset-0 w-full h-full overflow-hidden select-none bg-white">
-            {/* Real Wallpaper LCP Skeleton - Crucial for Speed Insights 99+ */}
-            <div className="absolute inset-0 z-0 opacity-0">
+            {/* Real Wallpaper LCP Skeleton - Instantly visible on SSG Load */}
+            <div className="absolute inset-0 z-0">
                 <Image
                     src={wallpaper}
                     alt="Desktop Wallpaper"
@@ -32,8 +32,8 @@ export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkel
                 />
             </div>
 
-            {/* Dark overlay during loading */}
-            <div className="absolute inset-0 bg-black z-1" />
+            {/* Dark overlay matching DesktopBackground */}
+            <div className="absolute inset-0 bg-black/20 z-1 pointer-events-none" />
 
             {/* Fake Menu Bar 
                 - Dipertahankan sangat samar hanya untuk memberikan sense of depth jika koneksi internet super lambat 

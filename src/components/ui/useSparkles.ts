@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
-import { useAnimation } from "framer-motion";
+import { useAnimation } from "motion/react";
 import type { Container } from "@tsparticles/engine";
 
 export function useSparkles() {

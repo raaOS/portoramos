@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
-import { m } from 'framer-motion';
+import { m } from 'motion/react';
 import FullPageChatHeader from './_components/FullPageChatHeader';
 import FullPageChatMessages from './_components/FullPageChatMessages';
 import FullPageChatFooter from './_components/FullPageChatFooter';

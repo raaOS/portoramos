@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { 
-    ChevronLeft, 
-    ChevronRight, 
-    Search, 
-    Grid, 
-    List, 
-    RefreshCw, 
+import {
+    ChevronLeft,
+    ChevronRight,
+    Search,
+    Grid,
+    List,
+    RefreshCw,
     Folder as FolderIcon,
     File as FileIcon,
     Image as ImageIcon,
@@ -15,10 +15,27 @@ import {
     Home,
     MonitorPlay,
 } from "lucide-react";
-import { m, AnimatePresence } from "framer-motion";
-import type { AnyExplorerNode, ExplorerFolder, ExplorerFile, FileKind } from "@/types/explorer";
+import { m, AnimatePresence, type Variants } from "motion/react";
+import type { AnyExplorerNode, ExplorerFolder, ExplorerFile } from "@/types/explorer";
 import MacFolder from "./MacFolder";
-import QuickLookModal from "@/components/ui/QuickLookModal";
+
+// Utility functions extracted to module scope to avoid re-creation per render
+const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '--';
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
+};
+
+const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
 
 interface ExplorerWindowProps {
     initialParentId?: string | null;
@@ -26,10 +43,9 @@ interface ExplorerWindowProps {
     onOpenFile?: (file: ExplorerFile) => void;
 }
 
-export default function ExplorerWindow({ 
-    initialParentId = null, 
-    isAdmin: _isAdmin = false,
-    onOpenFile 
+export default function ExplorerWindow({
+    initialParentId = null,
+    onOpenFile
 }: ExplorerWindowProps) {
     // Single atomic state for the entire explorer view
     const [state, setState] = useState<{
@@ -51,28 +67,40 @@ export default function ExplorerWindow({
     const [searchQuery, setSearchQuery] = useState("");
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-    const [previewNode, setPreviewNode] = useState<ExplorerFile | null>(null);
+    const [activeFile, setActiveFile] = useState<ExplorerFile | null>(null);
     const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
     const abortControllerRef = useRef<AbortController | null>(null);
     const isNavigatingRef = useRef(false);
+    const navTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const contentRef = useRef<HTMLDivElement>(null);
 
     // Animation Variants
     // Keep folder transitions smooth and avoid "pop" on back navigation.
-    const containerVariants = {
-        hidden: { opacity: 0 },
+    const openEase = [0.16, 1, 0.3, 1] as const;
+    const openTransition = { duration: 0.25, ease: openEase };
+
+    const containerVariants: Variants = {
+        hidden: { opacity: 0, scale: 0.98, y: 10 },
         visible: {
             opacity: 1,
-            transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] }
+            scale: 1,
+            y: 0,
+            transition: openTransition
+        },
+        exit: {
+            opacity: 0,
+            scale: 0.98,
+            y: 10,
+            transition: { duration: 0.16, ease: openEase }
         }
     };
 
-    const itemVariants = {
+    const itemVariants: Variants = {
         hidden: { opacity: 0, y: 6 },
         visible: {
             opacity: 1,
             y: 0,
-            transition: { duration: 0.16, ease: [0.16, 1, 0.3, 1] }
+            transition: { duration: 0.2, ease: openEase }
         },
         exit: {
             opacity: 0,
@@ -96,7 +124,7 @@ export default function ExplorerWindow({
                 signal: controller.signal
             });
             const result = await res.json();
-            
+
             if (result.success && !controller.signal.aborted) {
                 setHasLoadedOnce(true);
                 setState(prev => ({
@@ -107,8 +135,8 @@ export default function ExplorerWindow({
                     isLoading: false
                 }));
             }
-        } catch (error: any) {
-            if (error.name === 'AbortError') return;
+        } catch (error: unknown) {
+            if (error instanceof Error && error.name === 'AbortError') return;
             console.error('[Explorer] Fetch failed:', error);
             setState(prev => ({ ...prev, isLoading: false }));
         }
@@ -120,7 +148,7 @@ export default function ExplorerWindow({
         if (contentRef.current) {
             contentRef.current.scrollTo({ top: 0, behavior: 'auto' });
         }
-    }, [displayedParentId]);
+    }, [displayedParentId, activeFile?.id]);
 
 
     // Effect to handle data fetching based on currentParentId
@@ -137,83 +165,93 @@ export default function ExplorerWindow({
 
     // Navigation actions
     const navigateTo = useCallback((id: string | null, addToHistory = true) => {
-        const currentParentId = history[historyIndex] ?? null;
-        if (isNavigatingRef.current || currentParentId === id) return;
+        if (isNavigatingRef.current) return;
+
+        setActiveFile(null);
 
         if (addToHistory) {
             isNavigatingRef.current = true;
             setSelectedNodeId(null);
             setState(prev => {
+                const currentPid = prev.history[prev.historyIndex] ?? null;
+                if (currentPid === id) {
+                    isNavigatingRef.current = false;
+                    return prev;
+                }
                 const newHistory = prev.history.slice(0, prev.historyIndex + 1);
                 newHistory.push(id);
                 return {
                     ...prev,
                     history: newHistory,
                     historyIndex: newHistory.length - 1,
-                    // Note: We no longer clear nodes/pathNodes here to prevent skeleton flicker
                     isLoading: true
                 };
             });
-            setTimeout(() => { isNavigatingRef.current = false; }, 300);
+            if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+            navTimeoutRef.current = setTimeout(() => { isNavigatingRef.current = false; }, 300);
         }
-    }, [history, historyIndex]);
+    }, []);
 
     const goBack = useCallback(() => {
-        if (isNavigatingRef.current || historyIndex <= 0) return;
+        if (activeFile) {
+            setActiveFile(null);
+            return;
+        }
+
+        if (isNavigatingRef.current) return;
 
         isNavigatingRef.current = true;
         setSelectedNodeId(null);
-        setState(prev => ({ 
-            ...prev, 
-            historyIndex: prev.historyIndex - 1,
-            isLoading: true 
-        }));
-        setTimeout(() => { isNavigatingRef.current = false; }, 300);
-    }, [historyIndex]);
+        setState(prev => {
+            if (prev.historyIndex <= 0) {
+                isNavigatingRef.current = false;
+                return prev;
+            }
+            return {
+                ...prev,
+                historyIndex: prev.historyIndex - 1,
+                isLoading: true
+            };
+        });
+        if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+        navTimeoutRef.current = setTimeout(() => { isNavigatingRef.current = false; }, 300);
+    }, [activeFile]);
 
     const goForward = useCallback(() => {
-        if (isNavigatingRef.current || historyIndex >= history.length - 1) return;
+        if (activeFile) return;
+        if (isNavigatingRef.current) return;
 
         isNavigatingRef.current = true;
         setSelectedNodeId(null);
-        setState(prev => ({ 
-            ...prev, 
-            historyIndex: prev.historyIndex + 1,
-            isLoading: true 
-        }));
-        setTimeout(() => { isNavigatingRef.current = false; }, 300);
-    }, [historyIndex, history.length]);
+        setState(prev => {
+            if (prev.historyIndex >= prev.history.length - 1) {
+                isNavigatingRef.current = false;
+                return prev;
+            }
+            return {
+                ...prev,
+                historyIndex: prev.historyIndex + 1,
+                isLoading: true
+            };
+        });
+        if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+        navTimeoutRef.current = setTimeout(() => { isNavigatingRef.current = false; }, 300);
+    }, [activeFile]);
+
+    // Cleanup navigation timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+        };
+    }, []);
 
 
     // Derived filtered nodes
     const filteredNodes = useMemo(() => {
-        return nodes.filter(node => 
+        return nodes.filter(node =>
             node.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [nodes, searchQuery]);
-
-    // Gallery navigation
-    const fileNodes = useMemo(() => filteredNodes.filter(n => n.type === 'file') as ExplorerFile[], [filteredNodes]);
-    
-    const handleNextPreview = useCallback(() => {
-        if (!previewNode) return;
-        const idx = fileNodes.findIndex(n => n.id === previewNode.id);
-        if (idx < fileNodes.length - 1) {
-            const nextNode = fileNodes[idx + 1];
-            setPreviewNode(nextNode);
-            setSelectedNodeId(nextNode.id);
-        }
-    }, [previewNode, fileNodes]);
-
-    const handlePrevPreview = useCallback(() => {
-        if (!previewNode) return;
-        const idx = fileNodes.findIndex(n => n.id === previewNode.id);
-        if (idx > 0) {
-            const prevNode = fileNodes[idx - 1];
-            setPreviewNode(prevNode);
-            setSelectedNodeId(prevNode.id);
-        }
-    }, [previewNode, fileNodes]);
 
     const handleNodeClick = (node: AnyExplorerNode, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -225,22 +263,26 @@ export default function ExplorerWindow({
         if (node.type === 'folder') {
             navigateTo(node.id);
         } else if (node.type === 'file') {
-            setPreviewNode(node);
+            setActiveFile(node);
             onOpenFile?.(node);
         }
     }, [navigateTo, onOpenFile]);
 
-    const previewType: FileKind = previewNode?.fileType || 'image';
-
     // Keyboard controls
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && activeFile) {
+                e.preventDefault();
+                setActiveFile(null);
+                return;
+            }
+
             // Space to preview
-            if (e.code === 'Space' && selectedNodeId && !previewNode) {
+            if (e.code === 'Space' && selectedNodeId && !activeFile) {
                 const node = nodes.find(n => n.id === selectedNodeId);
                 if (node && node.type === 'file') {
                     e.preventDefault();
-                    setPreviewNode(node as ExplorerFile);
+                    setActiveFile(node as ExplorerFile);
                 }
             }
 
@@ -254,7 +296,7 @@ export default function ExplorerWindow({
             }
 
             // Arrow keys navigation
-            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) && !previewNode) {
+            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) && !activeFile) {
                 e.preventDefault();
                 const currentIndex = filteredNodes.findIndex(n => n.id === selectedNodeId);
                 let nextIndex = currentIndex;
@@ -264,7 +306,7 @@ export default function ExplorerWindow({
                 } else {
                     if (e.key === 'ArrowLeft') nextIndex = Math.max(0, currentIndex - 1);
                     if (e.key === 'ArrowRight') nextIndex = Math.min(filteredNodes.length - 1, currentIndex + 1);
-                    
+
                     if (viewMode === 'grid' && contentRef.current) {
                         const columns = Math.floor(contentRef.current.clientWidth / 120) || 1;
                         if (e.key === 'ArrowUp') nextIndex = Math.max(0, currentIndex - columns);
@@ -274,7 +316,7 @@ export default function ExplorerWindow({
                         if (e.key === 'ArrowDown') nextIndex = Math.min(filteredNodes.length - 1, currentIndex + 1);
                     }
                 }
-                
+
                 const nextNode = filteredNodes[nextIndex];
                 if (nextNode) setSelectedNodeId(nextNode.id);
             }
@@ -282,24 +324,9 @@ export default function ExplorerWindow({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedNodeId, nodes, previewNode, handleNodeDoubleClick, filteredNodes, viewMode]);
+    }, [selectedNodeId, nodes, activeFile, handleNodeDoubleClick, filteredNodes, viewMode]);
 
-    const formatDate = (dateStr?: string) => {
-        if (!dateStr) return '--';
-        return new Date(dateStr).toLocaleDateString('id-ID', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        });
-    };
 
-    const formatSize = (bytes: number) => {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-    };
 
     return (
         <div className="flex flex-col h-full bg-[#f6f6f6] dark:bg-[#1a1a1a] text-gray-800 dark:text-gray-200 font-sans">
@@ -308,16 +335,16 @@ export default function ExplorerWindow({
                 <div className="flex items-center gap-4">
                     {/* Navigation Buttons */}
                     <div className="flex items-center gap-1">
-                        <button 
-                            disabled={historyIndex <= 0}
+                        <button
+                            disabled={historyIndex <= 0 && !activeFile}
                             onClick={goBack}
                             className="p-1.5 rounded-full disabled:opacity-20 transition-all text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 hover:text-black dark:hover:text-white"
                             title="Back"
                         >
                             <ChevronLeft size={20} />
                         </button>
-                        <button 
-                            disabled={historyIndex >= history.length - 1}
+                        <button
+                            disabled={!!activeFile || historyIndex >= history.length - 1}
                             onClick={goForward}
                             className="p-1.5 rounded-full disabled:opacity-20 transition-all text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 hover:text-black dark:hover:text-white"
                             title="Forward"
@@ -328,7 +355,7 @@ export default function ExplorerWindow({
 
                     {/* Breadcrumbs */}
                     <div className="flex items-center text-xs font-medium text-gray-500 overflow-hidden max-w-md">
-                        <button 
+                        <button
                             onClick={() => navigateTo(null)}
                             className="hover:text-black dark:hover:text-white flex items-center gap-1 shrink-0"
                         >
@@ -337,7 +364,7 @@ export default function ExplorerWindow({
                         {pathNodes.map((node) => (
                             <React.Fragment key={node.id}>
                                 <span className="mx-1 opacity-50">/</span>
-                                <button 
+                                <button
                                     onClick={() => navigateTo(node.id)}
                                     className="hover:text-black dark:hover:text-white truncate"
                                 >
@@ -345,14 +372,20 @@ export default function ExplorerWindow({
                                 </button>
                             </React.Fragment>
                         ))}
+                        {activeFile && (
+                            <>
+                                <span className="mx-1 opacity-50">/</span>
+                                <span className="truncate text-slate-900 dark:text-white">{activeFile.name}</span>
+                            </>
+                        )}
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                     {/* Refresh Button */}
-                    <button 
+                    <button
                         onClick={() => fetchNodes(currentParentId)}
-                        disabled={isLoading}
+                        disabled={isLoading || !!activeFile}
                         className={`p-1.5 rounded transition-all text-gray-400 hover:text-black dark:hover:text-white active:scale-90 ${isLoading ? 'animate-spin' : ''}`}
                         title="Refresh folder content"
                     >
@@ -360,9 +393,10 @@ export default function ExplorerWindow({
                     </button>
 
                     {/* Search */}
+                    {!activeFile && (
                     <div className="relative group hidden sm:block">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                        <input 
+                        <input
                             type="text"
                             placeholder="Search..."
                             value={searchQuery}
@@ -370,17 +404,19 @@ export default function ExplorerWindow({
                             className="pl-8 pr-3 py-1 bg-black/5 dark:bg-white/5 border border-transparent focus:border-black/20 dark:focus:border-white/20 rounded-md text-xs outline-none w-32 focus:w-48 transition-all"
                         />
                     </div>
+                    )}
 
                     {/* View Modes */}
+                    {!activeFile && (
                     <div className="flex items-center gap-1">
-                        <button 
+                        <button
                             onClick={() => setViewMode('grid')}
                             className="p-1 rounded transition-colors"
                             title="Grid View"
                         >
                             <Grid size={14} className={viewMode === 'grid' ? 'text-black dark:text-white' : 'text-gray-400'} />
                         </button>
-                        <button 
+                        <button
                             onClick={() => setViewMode('list')}
                             className="p-1 rounded transition-colors"
                             title="List View"
@@ -388,11 +424,12 @@ export default function ExplorerWindow({
                             <List size={14} className={viewMode === 'list' ? 'text-black dark:text-white' : 'text-gray-400'} />
                         </button>
                     </div>
+                    )}
                 </div>
             </div>
 
             {/* Content Area */}
-            <div 
+            <div
                 ref={contentRef}
                 onClick={() => setSelectedNodeId(null)}
                 className="flex-1 overflow-y-auto p-6 scroll-smooth about-scrollbar overscroll-contain relative"
@@ -400,7 +437,7 @@ export default function ExplorerWindow({
                 {/* Global Fetch Progress Spinner (Very Subtle) */}
                 <AnimatePresence>
                     {isLoading && (
-                        <m.div 
+                        <m.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
@@ -413,27 +450,34 @@ export default function ExplorerWindow({
                 </AnimatePresence>
 
                 <div className="h-full">
-                    {/* Skeleton only for first-ever load; avoid flicker on Back to Root */}
-                    {!hasLoadedOnce && isLoading && nodes.length === 0 ? (
-                        <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-y-10 gap-x-4">
-                            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                                <div key={i} className="flex flex-col items-center gap-2 animate-pulse">
-                                    <div className="w-16 h-20 bg-black/5 dark:bg-white/5 rounded-lg" />
-                                    <div className="h-2 w-12 bg-black/5 dark:bg-white/5 rounded" />
-                                </div>
-                            ))}
-                        </div>
-                    ) : filteredNodes.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-4">
+                    <AnimatePresence mode="wait" initial={false}>
+                        {activeFile ? (
+                            <m.div
+                                key={`file:${activeFile.id}`}
+                                variants={containerVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit="hidden"
+                                className="h-full"
+                            >
+                                <InlineFilePreview file={activeFile} />
+                            </m.div>
+                        ) : !hasLoadedOnce && isLoading && nodes.length === 0 ? null : filteredNodes.length === 0 ? (
+                        <m.div
+                            key="empty"
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="hidden"
+                            className="flex flex-col items-center justify-center h-full text-slate-400 gap-4"
+                        >
                             <div className="w-20 h-20 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center">
                                 <Search size={32} strokeWidth={1.5} />
                             </div>
                             <p className="text-sm font-medium">No files found</p>
-                        </div>
-                    ) : (
-                        <AnimatePresence mode="wait" initial={false}>
-                            {viewMode === 'grid' ? (
-                                <m.div 
+                        </m.div>
+                    ) : viewMode === 'grid' ? (
+                                <m.div
                                     key={`grid:${displayedParentId ?? 'root'}`}
                                     variants={containerVariants}
                                     initial="hidden"
@@ -446,26 +490,13 @@ export default function ExplorerWindow({
                                             key={node.id}
                                             variants={itemVariants}
                                             layout
-                                            className={`flex flex-col items-center group cursor-pointer relative ${
-                                                selectedNodeId === node.id ? 'z-10' : 'z-0'
-                                            }`}
+                                            className={`flex flex-col items-center group cursor-pointer relative ${selectedNodeId === node.id ? 'z-10' : 'z-0'
+                                                }`}
                                             onClick={(e) => handleNodeClick(node, e)}
                                             onDoubleClick={(e) => handleNodeDoubleClick(node, e)}
                                         >
-                                            <div className="relative mb-2 pointer-events-none">
-                                                <AnimatePresence>
-                                                    {selectedNodeId === node.id && (
-                                                        <m.div 
-                                                            layoutId="selection-grid"
-                                                            initial={{ opacity: 0, scale: 0.8 }}
-                                                            animate={{ opacity: 1, scale: 1 }}
-                                                            exit={{ opacity: 0, scale: 0.8 }}
-                                                            className="absolute -inset-4 bg-black/10 dark:bg-white/10 rounded-xl border border-black/5 dark:border-white/5"
-                                                        />
-                                                    )}
-                                                </AnimatePresence>
-                                                
-                                                <div className="relative">
+                                            <div className="relative mb-2 h-[98px] w-full flex items-end justify-center pointer-events-none">
+                                                <div className="relative flex h-full items-end justify-center">
                                                     {node.type === 'folder' ? (
                                                         <MacFolder size={0.9} isStatic={true} label="" />
                                                     ) : (
@@ -473,18 +504,17 @@ export default function ExplorerWindow({
                                                     )}
                                                 </div>
                                             </div>
-                                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded text-center truncate max-w-full transition-colors ${
-                                                selectedNodeId === node.id 
-                                                    ? 'bg-black/70 dark:bg-white/20 text-white shadow-md' 
+                                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded text-center truncate max-w-full transition-colors ${selectedNodeId === node.id
+                                                    ? 'bg-black/70 dark:bg-white/20 text-white shadow-md'
                                                     : 'text-slate-700 dark:text-slate-300 group-hover:bg-black/5 dark:group-hover:bg-white/10'
-                                            }`}>
+                                                }`}>
                                                 {node.name}
                                             </span>
                                         </m.div>
                                     ))}
                                 </m.div>
                             ) : (
-                                <m.div 
+                                <m.div
                                     key={`list:${displayedParentId ?? 'root'}`}
                                     variants={containerVariants}
                                     initial="hidden"
@@ -498,25 +528,24 @@ export default function ExplorerWindow({
                                         <div className="w-1/4 p-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-l border-black/5 dark:border-white/5 pr-4">Date</div>
                                         <div className="w-1/4 p-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-l border-black/5 dark:border-white/5 text-right pr-4">Size</div>
                                     </div>
-                                    
+
                                     {filteredNodes.map(node => (
                                         <m.div
                                             key={node.id}
                                             variants={itemVariants}
                                             layout
-                                            className={`flex group cursor-pointer border-b border-black/5 dark:border-white/5 relative ${
-                                                selectedNodeId === node.id ? 'z-10 bg-black/5 dark:bg-white/10' : 'hover:bg-black/5 dark:hover:bg-white/10'
-                                            }`}
+                                            className={`flex group cursor-pointer border-b border-black/5 dark:border-white/5 relative ${selectedNodeId === node.id ? 'z-10 bg-black/5 dark:bg-white/10' : 'hover:bg-black/5 dark:hover:bg-white/10'
+                                                }`}
                                             onClick={(e) => handleNodeClick(node, e)}
                                             onDoubleClick={(e) => handleNodeDoubleClick(node, e)}
                                         >
                                             {selectedNodeId === node.id && (
-                                                <m.div 
+                                                <m.div
                                                     layoutId="selection-bar"
                                                     className="absolute left-0 top-0 bottom-0 w-1 bg-gray-500 dark:bg-gray-400"
                                                 />
                                             )}
-                                            
+
                                             <div className="w-1/2 p-2 flex items-center gap-3 pl-4">
                                                 <div className="w-5 h-5 flex items-center justify-center shrink-0">
                                                     {node.type === 'folder' ? (
@@ -538,27 +567,12 @@ export default function ExplorerWindow({
                                         </m.div>
                                     ))}
                                 </m.div>
-                            )}
-                        </AnimatePresence>
-                    )}
+                        )}
+                    </AnimatePresence>
                 </div>
-
-                {/* Quick Look Preview Portal */}
-                <QuickLookModal 
-                    isOpen={!!previewNode}
-                    onClose={() => setPreviewNode(null)}
-                    title={previewNode?.name || ''}
-                    type={previewType}
-                    url={previewNode?.url || ''}
-                    metadata={previewNode ? `${previewNode?.metadata?.extension?.toUpperCase() || ''} • ${formatSize(previewNode?.size || 0)}` : ''}
-                    hasNext={previewNode ? fileNodes.findIndex(n => n.id === previewNode?.id) < fileNodes.length - 1 : false}
-                    hasPrev={previewNode ? fileNodes.findIndex(n => n.id === previewNode?.id) > 0 : false}
-                    onNext={handleNextPreview}
-                    onPrev={handlePrevPreview}
-                />
             </div>
 
-            
+
             <style jsx>{`
                 .about-scrollbar::-webkit-scrollbar {
                     width: 6px;
@@ -584,43 +598,93 @@ export default function ExplorerWindow({
     );
 }
 
+function InlineFilePreview({ file }: { file: ExplorerFile }) {
+    const extension = file.metadata?.extension?.toUpperCase() || file.fileType.toUpperCase();
+    const dimensions = file.metadata?.width && file.metadata?.height
+        ? `${file.metadata.width} x ${file.metadata.height}`
+        : null;
+    const details = [extension, formatSize(file.size || 0), dimensions].filter(Boolean).join(' / ');
+
+    return (
+        <div className="flex h-full min-h-[360px] flex-col">
+            <div className="mb-4 flex shrink-0 items-start justify-between gap-4 border-b border-black/5 pb-3 dark:border-white/10">
+                <div className="min-w-0">
+                    <h2 className="truncate text-sm font-semibold text-slate-900 dark:text-white">{file.name}</h2>
+                    <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">{details}</p>
+                </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-hidden bg-black/[0.03] dark:bg-white/[0.04]">
+                {file.fileType === 'image' ? (
+                    <div className="flex h-full w-full items-center justify-center">
+                        <img
+                            src={file.url}
+                            alt={file.name}
+                            className="max-h-full max-w-full object-contain"
+                            draggable={false}
+                        />
+                    </div>
+                ) : file.fileType === 'video' ? (
+                    <video
+                        src={file.url}
+                        controls
+                        autoPlay
+                        className="h-full w-full bg-black object-contain"
+                    />
+                ) : file.fileType === 'pdf' || file.fileType === 'text' ? (
+                    <iframe
+                        src={file.url}
+                        title={file.name}
+                        className="h-full w-full border-0 bg-white"
+                    />
+                ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-slate-400">
+                        <FileIcon size={40} strokeWidth={1.5} />
+                        <span className="text-xs font-medium">{file.name}</span>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 function FileThumbnail({ file, size = 'md' }: { file: ExplorerFile, size?: 'xs' | 'sm' | 'md' | 'lg' }) {
     const [hasError, setHasError] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
-    
+
     // Determine the source to use for the preview
     const src = file.thumbnailUrl || file.url;
     const isVideo = file.fileType === 'video';
     const isImage = file.fileType === 'image';
 
     const sizeClasses = {
-        xs: 'w-5 h-5 rounded-sm',
-        sm: 'w-10 h-10 rounded-md',
-        md: 'w-16 h-20 rounded-lg',
-        lg: 'w-24 h-32 rounded-xl'
+        xs: 'w-5 h-5',
+        sm: 'w-10 h-10',
+        md: 'w-16 h-20',
+        lg: 'w-24 h-32'
     };
 
     return (
-        <div 
+        <div
             className={`${sizeClasses[size]} bg-white dark:bg-white/10 shadow-sm border border-black/5 dark:border-white/10 flex items-center justify-center relative overflow-hidden group-hover:shadow-md transition-shadow`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             {(!src || hasError) ? (
                 <div className="flex flex-col items-center gap-1">
-                    {isVideo ? <VideoIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" /> : 
-                     isImage ? <ImageIcon size={size === 'xs' ? 12 : 24} className="text-green-500 opacity-60" /> : 
-                     <FileIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" />}
+                    {isVideo ? <VideoIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" /> :
+                        isImage ? <ImageIcon size={size === 'xs' ? 12 : 24} className="text-green-500 opacity-60" /> :
+                            <FileIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" />}
                 </div>
             ) : isVideo ? (
-                <m.div 
+                <m.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="w-full h-full relative"
                 >
-                    <video 
-                        src={src} 
-                        className="w-full h-full object-cover" 
+                    <video
+                        src={src}
+                        className="w-full h-full object-cover"
                         muted
                         playsInline
                     />
@@ -631,17 +695,17 @@ function FileThumbnail({ file, size = 'md' }: { file: ExplorerFile, size?: 'xs' 
                     )}
                 </m.div>
             ) : (
-                <m.img 
+                <m.img
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    src={src} 
+                    src={src}
                     alt={file.name}
                     className="w-full h-full object-cover"
                     onError={() => setHasError(true)}
                     loading="lazy"
                 />
             )}
-            
+
             {/* Type Badge (Only for larger sizes) */}
             {size !== 'xs' && (
                 <div className={`absolute bottom-0 inset-x-0 h-4 bg-black/40 backdrop-blur-[2px] flex items-center justify-center transition-opacity ${isHovered ? 'opacity-100' : 'opacity-70'}`}>

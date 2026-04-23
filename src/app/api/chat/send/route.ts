@@ -70,7 +70,16 @@ export async function POST(request: Request) {
         const isAiMode = session.aiMode !== false; // Defaults to true
 
         // 2. Format message for Admin
-        let text = `🌐 *New Web Chat Message*\n_ID: ${visitorId.substring(0, 6)}_\n\n💬 "${message}"`;
+        const urgentKeywords = ["asap", "urgent", "cepat", "cepetan", "darurat", "besok", "penting", "buru-buru"];
+        const isUrgent = urgentKeywords.some(keyword => message.toLowerCase().includes(keyword));
+
+        let text = ``;
+        if (isUrgent) {
+            text += `🚨 *[KLIEN URGENT!]* 🚨\n_Pesan mengandung kata darurat/mendesak!_\n\n`;
+        }
+
+        text += `🌐 *New Web Chat Message*\n_ID: ${visitorId.substring(0, 6)}_\n\n💬 "${message}"`;
+        
         if (pageUrl) {
             text += `\n\n📄 Page: ${pageUrl}`;
         }
@@ -148,19 +157,39 @@ export async function POST(request: Request) {
                 // Trigger typing indicator on the web
                 await chatStore.setTypingStatus(visitorId, 10000);
                 
-                // Generate reply
-                const sessionWithMessages = await chatStore.getAllMessages(visitorId);
-                const aiResponseText = await aiChatService.generateResponse(sessionWithMessages);
+                let aiResponseText = "";
+                let hasApiError = false;
+                let apiErrorMessage = "";
+
+                if (isUrgent) {
+                    // Bypass AI Generation completely when urgent
+                    aiResponseText = "🚨 *PRIORITAS TINGGI*: Saya mendeteksi pesan Anda sangat penting. Pesan ini sudah dibunyikan sebagai Alarm Darurat langsung di HP pribadi Ramos. Mohon tunggu sebentar ya, beliau akan segera membalas ini secara manual!";
+                } else {
+                    // Generate normal reply
+                    const sessionWithMessages = await chatStore.getAllMessages(visitorId);
+                    const aiResponse = await aiChatService.generateResponse(sessionWithMessages);
+                    aiResponseText = aiResponse.text;
+                    hasApiError = !!aiResponse.error;
+                    apiErrorMessage = aiResponse.error || "";
+                }
 
                 // Add to Firebase store
                 const aiReplyMsg = await chatStore.addAiReply(visitorId, aiResponseText);
 
                 // Notify admin of AI reply inside the same topic
                 if (aiReplyMsg) {
+                    let adminAlertText = `🤖 *AI Auto-Reply:*\n"${aiResponseText}"`;
+                    
+                    if (isUrgent) {
+                         adminAlertText = `⚠️ <b>[URGENT BYPASS]</b> ⚠️\n\nSistem AI di-Bypass karena pesan mendesak. Sistem mengirim balasan pegangan darurat:\n"<i>${aiResponseText}</i>"\n\n<b>SEGERA BALAS SECARA MANUAL!</b>`;
+                    } else if (hasApiError) {
+                        adminAlertText = `⚠️ <b>[ALERT] API AI ERROR / LIMIT EXCEEDED!</b> ⚠️\n\n<i>Error detail: ${apiErrorMessage}</i>\n\nSistem mengirim pesan auto-reply darurat ke pengunjung:\n"<i>${aiResponseText}</i>"\n\n<b>SEGERA BALAS SECARA MANUAL!</b>`;
+                    }
+
                     const aiPayload: TelegramPayload = {
                         chat_id: targetChatId,
-                        text: `🤖 *AI Auto-Reply:*\n"${aiResponseText}"`,
-                        parse_mode: 'Markdown'
+                        text: adminAlertText,
+                        parse_mode: (hasApiError || isUrgent) ? 'HTML' : 'Markdown'
                     };
                     if (threadId) {
                         aiPayload.message_thread_id = threadId;

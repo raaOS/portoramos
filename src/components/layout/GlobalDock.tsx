@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { m } from 'framer-motion';
+import { m } from 'motion/react';
 import Dock from '@/app/about/_components/os/core/Dock';
 import AppIcon from '@/app/about/_components/os/ui/AppIcon';
 import WhatsAppIcon from '@/app/about/_components/os/ui/WhatsAppIcon';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Minus, Plus, Pin, Lock } from 'lucide-react';
-import { m } from 'framer-motion';
+import { m } from 'motion/react';
 import { soundManager } from '../../utils/SoundManager';
 
 interface WindowTitleBarProps {

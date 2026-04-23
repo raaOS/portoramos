@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { m } from "framer-motion";
+import { m } from "motion/react";
 import { CheckCircle2 } from "lucide-react";
 
 import { ContactProfile } from "../data/mockChats";

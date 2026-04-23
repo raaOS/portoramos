@@ -32,7 +32,7 @@ export const ChatList: React.FC<ChatListProps> = ({ contacts, onSelect, getLastM
                         className="flex items-center gap-3 px-4 py-3 hover:bg-[#f5f6f6] cursor-pointer border-b border-[#f0f2f5] transition-colors"
                     >
                         <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-gray-100 border border-black/5">
-                            <img src={contact.avatar} alt={contact.name} className="w-full h-full object-cover" />
+                            <img src={contact.avatar} alt={contact.name} className="w-full h-full object-cover" loading="lazy" />
                         </div>
                         <div className="flex-1 overflow-hidden">
                             <div className="flex justify-between items-center mb-0.5">
@@ -46,10 +46,10 @@ export const ChatList: React.FC<ChatListProps> = ({ contacts, onSelect, getLastM
                     </div>
                 ))}
             </div>
-            
+
             {/* Safety Footer / Pattern */}
             <div className="p-4 bg-[#f0f2f5] text-center border-t border-[#d1d7db]">
-               <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">End-to-End Encrypted</p>
+                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">End-to-End Encrypted</p>
             </div>
         </div>
     );

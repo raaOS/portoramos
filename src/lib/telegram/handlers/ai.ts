@@ -42,8 +42,14 @@ export async function handleAiCommand(
                     text: m.text
                 }));
                 const aiResponse = await aiChatService.generateResponse(chatMessages as import('@/lib/chatStore').ChatMessage[]);
-                await chatStore.addAiReply(currentVisitorId, aiResponse);
-                messages.push({ text: `🤖 *AI:* "${aiResponse}"` });
+                await chatStore.addAiReply(currentVisitorId, aiResponse.text);
+                
+                if (aiResponse.error) {
+                    messages.push({ text: `⚠️ *API Limit / Error*: ${aiResponse.error}` });
+                    messages.push({ text: `_*Fallback sent:* "\n${aiResponse.text}"_` });
+                } else {
+                    messages.push({ text: `🤖 *AI:* "${aiResponse.text}"` });
+                }
             } catch (err) {
                 console.error('[Smart Catch-up] Error:', err);
             }

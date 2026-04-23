@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { Save, Loader2, Sparkles, Plus, Trash2, ChevronDown, ChevronUp, GripVertical, RotateCcw } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 

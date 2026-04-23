@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Search, FileText, AppWindow, Command } from "lucide-react";
 import type { Project } from "@/types/projects";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useId, useRef, useState } from "react";
-import { m } from "framer-motion";
+import { m } from "motion/react";
 import { soundManager } from "../utils/SoundManager";
 
 interface StartScreenProps {

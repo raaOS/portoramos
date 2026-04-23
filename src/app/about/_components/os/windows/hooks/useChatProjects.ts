@@ -1,15 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Project } from '@/types/projects';
 import { unwrapApiPayload } from '@/lib/api-client';
 
 export function useChatProjects(initialProjects?: Project[]) {
     const [allProjects, setAllProjects] = useState<Project[]>(initialProjects ?? []);
+    const hasFetchedRef = useRef(false);
 
     useEffect(() => {
         if (initialProjects?.length) {
             setAllProjects(initialProjects);
             return;
         }
+
+        // Only fetch from API once if no initial projects provided
+        if (hasFetchedRef.current) return;
+        hasFetchedRef.current = true;
 
         const fetchProjects = async () => {
             try {
