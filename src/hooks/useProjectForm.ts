@@ -112,13 +112,14 @@ export const useProjectForm = (project?: Project) => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isDetectingDimensions, setIsDetectingDimensions] = useState(false);
 
-    // Re-sync form data when the project prop changes (e.g. switching between projects)
-    useEffect(() => {
+    // Re-sync form data when the project prop changes (Sync during render for better purity)
+    const [prevProjectMeta, setPrevProjectMeta] = useState({ id: project?.id, updatedAt: project?.updatedAt });
+    if (project?.id !== prevProjectMeta.id || project?.updatedAt !== prevProjectMeta.updatedAt) {
+        setPrevProjectMeta({ id: project?.id, updatedAt: project?.updatedAt });
         if (project) {
             setFormData(createInitialFormData(project));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [project?.id, project?.updatedAt]);
+    }
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};

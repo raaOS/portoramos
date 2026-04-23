@@ -291,7 +291,7 @@ export default function ProjectSplitView({ projects, tag: _tag }: ProjectSplitVi
 
   return (
     <LazyMotion features={sharedFeatures}>
-      <div className="flex justify-center gap-2 h-[calc(100vh-240px)]">
+      <div className="flex justify-center gap-2 h-[calc(100vh-240px)] overflow-hidden">
         {/* Left Panel - List */}
         <div
           className="w-[55%] overflow-y-auto h-full scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 overscroll-contain"

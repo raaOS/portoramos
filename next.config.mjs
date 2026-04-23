@@ -1,4 +1,4 @@
-/** @type {import('next').NextConfig} */
+﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
   // Allow development requests from multiple origins to avoid cross-origin warnings in Next.js 16
   allowedDevOrigins: [
@@ -163,6 +163,7 @@ const nextConfig = {
       { source: '/home', destination: '/', permanent: true },
       // Redirect /works to /projects - permanent redirect
       { source: '/works/:slug*', destination: '/projects/:slug*', permanent: true },
+      { source: '/project/:slug*', destination: '/projects/:slug*', permanent: true },
       // Note: trailing slash removal is handled by trailingSlash: false
     ]
   },
@@ -289,3 +290,4 @@ const withBundleAnalyzer = createBundleAnalyzer({
 });
 
 export default withBundleAnalyzer(nextConfig);
+

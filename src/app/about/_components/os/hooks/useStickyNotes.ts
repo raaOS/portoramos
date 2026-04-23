@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import type { NoteData } from '../ui/elements/StickyNoteItem';
 import { useLayoutPersistence } from '../contexts/LayoutPersistenceContext';
 
@@ -42,7 +42,9 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
     const notesRef = useRef(notes);
 
     // Sync notesRef with state
-    notesRef.current = notes;
+    useLayoutEffect(() => {
+        notesRef.current = notes;
+    }, [notes]);
 
     const { registerFlush, unregisterFlush } = useLayoutPersistence();
 

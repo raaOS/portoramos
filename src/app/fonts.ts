@@ -1,14 +1,30 @@
+import { DM_Sans, Six_Caps } from 'next/font/google';
+
 /**
- * Font Optimization Strategy (Solid Fix for Compiler Compatibility):
- * - Replaced next/font with standard CSS loading to bypass SWC compiler crashes on Windows.
- * - Same fonts (Six Caps & DM Sans) are loaded via head link in layout.tsx.
+ * Font Optimization Strategy (Next.js 16.2.2):
+ * - Using next/font/google for zero-CLS font swapping.
+ * - DM Sans is used for UI and body text.
+ * - Six Caps is used for display and headers.
  */
 
-// Critical Font Variables
-export const displayClassName = "font-display";
-export const sansClassName = "font-sans";
+export const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
+});
 
-// Handwritten font CSS variable (system fonts) - identical to previous logic
+export const sixCaps = Six_Caps({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-display',
+});
+
+// Critical Font Class Names
+export const displayClassName = sixCaps.variable;
+export const sansClassName = dmSans.variable;
+
+// Handwritten font stack (system fonts)
 const handwrittenFontStack = `
   'Comic Sans MS', 
   'Chalkboard SE', 

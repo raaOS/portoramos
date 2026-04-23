@@ -13,16 +13,13 @@ interface SystemNavFrameProps {
 }
 
 export default function SystemNavFrame({ children, title: _title, hideFooter }: SystemNavFrameProps) {
-    const [isPrintMode, setIsPrintMode] = React.useState(false);
+    const searchParams = useSearchParams();
+    const isPrintMode = searchParams?.get('print') === 'true';
     const pathname = usePathname();
 
-    React.useEffect(() => {
-        setIsPrintMode(window.location.search.includes('print=true'));
-    }, []);
-
-    const searchParams = useSearchParams();
     const view = searchParams?.get('view');
     const is3D = view === '3d';
+    const isList = view === 'list';
     const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
     const isProjects = pathname?.startsWith('/projects');
     const effectiveHideFooter = hideFooter || isContact || is3D;
@@ -40,7 +37,7 @@ export default function SystemNavFrame({ children, title: _title, hideFooter }: 
     ];
 
     return (
-        <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
+        <div className={`${(is3D || isList) ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-white dark:bg-gray-950 flex flex-col`}>
             {/* Retro System Header */}
             {showSystemHeader && (
                 <header className="sticky top-0 z-50 w-full bg-[#EFEFEF] border-b border-[#D1D1D1] h-9 flex items-center justify-between px-4 select-none print:hidden">

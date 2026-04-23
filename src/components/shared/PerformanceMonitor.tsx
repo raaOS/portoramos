@@ -88,9 +88,22 @@ export default function PerformanceMonitor() {
       let clsValue = 0;
       const lsObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          const layoutShiftEntry = entry as unknown as { hadRecentInput?: boolean; value: number };
+          const layoutShiftEntry = entry as any;
           if (!layoutShiftEntry.hadRecentInput) {
             clsValue += layoutShiftEntry.value;
+            
+            // Log the elements causing the shift for debugging
+            if (layoutShiftEntry.value > 0.01) {
+              console.warn('[Performance] Layout Shift Source:', {
+                value: layoutShiftEntry.value,
+                sources: layoutShiftEntry.sources?.map((s: any) => ({
+                  node: s.node?.nodeName,
+                  className: s.node?.className,
+                  currentRect: s.currentRect,
+                  previousRect: s.previousRect
+                }))
+              });
+            }
           }
         }
         

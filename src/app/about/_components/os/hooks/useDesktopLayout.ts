@@ -30,36 +30,40 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
 
     // Ref to track latest iconPositions without adding to dependency array
     const iconPositionsRef = React.useRef(iconPositions);
-    iconPositionsRef.current = iconPositions;
+    
+    React.useLayoutEffect(() => {
+        iconPositionsRef.current = iconPositions;
+    }, [iconPositions]);
 
     // Sync jika aboutData berubah (admin: jangan timpa localStorage, visitor: jangan timpa sessionStorage)
-    useEffect(() => {
+    const [prevAboutData, setPrevAboutData] = useState(aboutData);
+    if (aboutData !== prevAboutData) {
+        setPrevAboutData(aboutData);
         const firebase = aboutData?.desktopPreferences?.iconPositions;
-        if (!firebase) return;
-        
-        let existing: Record<string, { x: number; y: number }> = {};
-        if (isAdmin) {
-            existing = loadPositions().icons || {};
-        } else {
-            existing = loadSessionPositions().icons || {};
-        }
-        
-        // Hanya tambah icon yang belum ada di existing/state
-        // Use ref to access latest state without dependency
-        const merged = { ...iconPositionsRef.current };
-        let hasNew = false;
-        
-        Object.entries(firebase).forEach(([id, pos]) => {
-            if (!existing?.[id] && !merged[id]) {
-                merged[id] = pos as { x: number; y: number };
-                hasNew = true;
+        if (firebase) {
+            let existing: Record<string, { x: number; y: number }> = {};
+            if (isAdmin) {
+                existing = loadPositions().icons || {};
+            } else {
+                existing = loadSessionPositions().icons || {};
             }
-        });
-        
-        if (hasNew) {
-            setIconPositions(merged);
+            
+            // Hanya tambah icon yang belum ada di existing/state
+            const merged = { ...iconPositions };
+            let hasNew = false;
+            
+            Object.entries(firebase).forEach(([id, pos]) => {
+                if (!existing?.[id] && !merged[id]) {
+                    merged[id] = pos as { x: number; y: number };
+                    hasNew = true;
+                }
+            });
+            
+            if (hasNew) {
+                setIconPositions(merged);
+            }
         }
-    }, [aboutData, isAdmin]);
+    }
 
     const handleIconPositionChange = useCallback((id: string, x: number, y: number) => {
         // Update state (untuk semua agar responsif)

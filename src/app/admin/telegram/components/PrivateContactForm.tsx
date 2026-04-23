@@ -20,10 +20,6 @@ export function PrivateContactForm() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        fetchAboutData();
-    }, []);
-
     const fetchAboutData = async () => {
         try {
             const res = await fetch('/api/about');
@@ -41,6 +37,10 @@ export function PrivateContactForm() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchAboutData();
+    }, []);
 
     const handleSave = async () => {
         setSaving(true);

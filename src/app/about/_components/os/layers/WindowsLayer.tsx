@@ -4,6 +4,7 @@ import React, { useMemo, useCallback } from "react";
 import { m } from "motion/react";
 import OSWindow from "../windows/Window";
 import { useDesktopWindowContext } from "../context/DesktopWindowContext";
+import type { WindowState } from "@/hooks/window-manager/types";
 
 interface WindowsLayerProps {
     isAdmin: boolean;
@@ -28,7 +29,7 @@ const WindowItem = React.memo(function WindowItem({
     handleWindowResizeEnd,
     togglePin,
 }: {
-    w: any;
+    w: WindowState;
     isAdmin: boolean;
     isFocused: boolean;
     closeWindow: (id: string) => void;

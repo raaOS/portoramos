@@ -5,8 +5,6 @@ import AdminLayout from '../components/AdminLayout';
 import AdminTable, { type Column } from '../components/AdminTable';
 import { ExternalLink, MessageSquare } from 'lucide-react';
 
-
-
 interface Lead extends Record<string, unknown> {
     id: string;
     createdAt: string;
@@ -19,10 +17,6 @@ interface Lead extends Record<string, unknown> {
 export default function AdminLeadsClient() {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchLeads();
-    }, []);
 
     const fetchLeads = async () => {
         try {
@@ -38,10 +32,14 @@ export default function AdminLeadsClient() {
         }
     };
 
+    useEffect(() => {
+        fetchLeads();
+    }, []);
+
     const columns: Column<Lead>[] = [
         {
             key: 'createdAt',
-            label: 'Tanggal',
+            label: 'Waktu',
             sortable: true,
             render: (val: unknown) => new Date(String(val)).toLocaleString('id-ID', {
                 day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
@@ -55,13 +53,12 @@ export default function AdminLeadsClient() {
                 const contactValue = String(val);
                 let href = '#';
                 if (item.contactType === 'WhatsApp') {
-                    // Basic cleaning for WA link
                     let num = contactValue.replace(/\D/g, '');
                     if (num.startsWith('0')) num = '62' + num.substring(1);
                     if (!num.startsWith('62')) num = '62' + num;
                     href = `https://wa.me/${num}`;
                 } else {
-                    href = `mailto:${val}`;
+                    href = `mailto:${contactValue}`;
                 }
 
                 return (

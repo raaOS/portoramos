@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Save, Play, Music, Info, Upload, Loader2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { SoundConfig } from '@/types/about';
@@ -37,7 +37,7 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
         }
     };
 
-    const handlePreview = (type: string, setting: { path: string, volume: number }) => {
+    const handlePreview = useCallback((type: string, setting: { path: string, volume: number }) => {
         try {
             // Strip any old cache-bust param and add a fresh one so the browser
             // always loads the latest uploaded file instead of a stale cached version.
@@ -51,7 +51,7 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
         } catch {
             showError('Path suara tidak valid.');
         }
-    };
+    }, [showError]);
 
     const soundTypes = [
         { key: 'startup', label: 'Startup OS', description: 'Suara saat booting selesai.' },

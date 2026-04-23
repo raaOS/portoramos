@@ -76,6 +76,13 @@ export default function VersionGuard() {
         };
     }, [checkVersion]);
 
+    const handleUpdate = () => {
+        // Perform a hard-ish reload by adding a timestamp to bypass standard browser cache for the HTML
+        const url = new URL(window.location.href);
+        url.searchParams.set('reload', Date.now().toString());
+        window.location.href = url.toString();
+    };
+
     // Handle Toast click for reload
     useEffect(() => {
         if (!hasUpdate) return;
@@ -91,13 +98,6 @@ export default function VersionGuard() {
         window.addEventListener('click', handleGlobalClick);
         return () => window.removeEventListener('click', handleGlobalClick);
     }, [hasUpdate]);
-
-    const handleUpdate = () => {
-        // Perform a hard-ish reload by adding a timestamp to bypass standard browser cache for the HTML
-        const url = new URL(window.location.href);
-        url.searchParams.set('reload', Date.now().toString());
-        window.location.href = url.toString();
-    };
 
     return null; // Invisible component
 }

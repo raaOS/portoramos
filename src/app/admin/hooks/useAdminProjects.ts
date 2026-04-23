@@ -25,18 +25,20 @@ export function useAdminProjects() {
             if (!res.ok) throw new Error('Failed to fetch projects');
             return res.json();
         },
-        staleTime: POLLING.CLIENT_STALE_TIME, // 5 menit cache - hemat bandwidth
-        gcTime: 10 * 60 * 1000, // 10 menit garbage collect
+        staleTime: POLLING.CLIENT_STALE_TIME,
+        gcTime: 10 * 60 * 1000,
     });
 
     const projects = (projectsData?.data?.projects || []) as Project[];
 
-    // Sync orderedProjects when data changes
-    useEffect(() => {
+    // Sync orderedProjects when data changes (Render phase sync for purity)
+    const [prevProjectsData, setPrevProjectsData] = useState(projectsData);
+    if (projectsData !== prevProjectsData) {
+        setPrevProjectsData(projectsData);
         if (projectsData?.data?.projects) {
             setOrderedProjects(projectsData.data.projects as Project[]);
         }
-    }, [projectsData]);
+    }
 
     // 2. Fetch Comment Counts
     const { data: commentCounts } = useQuery({
@@ -78,9 +80,7 @@ export function useAdminProjects() {
             return response.json();
         },
         onSuccess: async () => {
-            // Invalidate dan force refetch dengan no-cache untuk data terbaru
             await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
-            // Refetch admin list
             await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
             showSuccess('Project berhasil dibuat');
         },
@@ -106,9 +106,7 @@ export function useAdminProjects() {
             return response.json();
         },
         onSuccess: async () => {
-            // Invalidate dan force refetch untuk data terbaru
             await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
-            // Refetch admin list
             await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
             showSuccess('Project berhasil diperbarui');
         },
@@ -132,9 +130,7 @@ export function useAdminProjects() {
             return id;
         },
         onSuccess: async () => {
-            // Invalidate dan force refetch untuk data terbaru
             await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
-            // Refetch admin list
             await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
             showSuccess('Project dihapus');
         },
@@ -161,7 +157,6 @@ export function useAdminProjects() {
         } catch (e: unknown) {
             const errorMsg = e instanceof Error ? e.message : 'Unknown error';
             showError(`Gagal memperbarui urutan: ${errorMsg}`);
-            // Rollback if needed or refetch
             queryClient.invalidateQueries({ queryKey: ['projects', 'admin'] });
         }
     }, [csrfToken, queryClient, showError]);
@@ -188,9 +183,7 @@ export function useAdminProjects() {
 
             setSelectedProjectIds(new Set());
             showSuccess(`Bulk ${action} complete`);
-            // Invalidate dan force refetch untuk data terbaru
             await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
-            // Refetch admin list
             await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
         } catch {
             showError(`Bulk ${action} failed`);
@@ -217,15 +210,11 @@ export function useAdminProjects() {
         }
     };
 
-    // Manual refresh function
     const refreshProjects = async () => {
         await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
         await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true });
     };
 
-    // REAL-TIME SYNC: Listen lastUpdated timestamp (hemat bandwidth!)
-    // Trigger refresh otomatis kalau ada CRUD di Firebase
-    // Kalau Firebase tidak tersedia, admin tetap bisa refresh manual
     useRealtimeSync({
         onUpdate: () => {
             console.log('[AdminProjects] Real-time update detected, refreshing...');
@@ -234,7 +223,7 @@ export function useAdminProjects() {
         onUnavailable: () => {
             console.log('[AdminProjects] Real-time sync unavailable, using manual refresh');
         },
-        enabled: typeof window !== 'undefined' // Hanya di browser
+        enabled: typeof window !== 'undefined'
     });
 
     return {
@@ -254,6 +243,6 @@ export function useAdminProjects() {
         toggleProjectSelection,
         selectAllProjects,
         csrfToken,
-        refreshProjects // Export manual refresh
+        refreshProjects
     };
 }

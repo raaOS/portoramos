@@ -3,6 +3,7 @@
 import React, { startTransition, useCallback, useEffect, useMemo } from "react";
 import { AnimatePresence, m, LazyMotion, domMax } from "motion/react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useLayoutPersistence } from "../contexts/LayoutPersistenceContext";
 import { useDesktopWindowContext } from "../context/DesktopWindowContext";
@@ -181,12 +182,12 @@ function DesktopMain({
         }
     }, [wasBootSkipped, isRevealed, startScreenReady, setIsRevealed, setStartScreenReady]);
 
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
+    const searchParams = useSearchParams();
 
+    // Task 3: URL Parameter handling for Link prefetching & hints
+    useEffect(() => {
         const handleUrlParams = () => {
-            const params = new URLSearchParams(window.location.search);
-            const rawApp = params.get('app');
+            const rawApp = searchParams.get('app');
             if (!rawApp) return;
 
             const app = rawApp === 'mail' ? 'contact' : rawApp;
@@ -196,14 +197,13 @@ function DesktopMain({
                 openWindow(app);
             }
 
+            // Cleanup URL after handling to keep OS experience clean
             const nextUrl = window.location.pathname + window.location.hash;
             window.history.replaceState({}, '', nextUrl);
         };
 
         handleUrlParams();
-        window.addEventListener('popstate', handleUrlParams);
-        return () => window.removeEventListener('popstate', handleUrlParams);
-    }, [openWindow, openWhatsAppList]);
+    }, [searchParams, openWindow, openWhatsAppList]);
 
     const isDesktopReady = wasBootSkipped || startScreenReady;
     const isDesktopRevealed = wasBootSkipped || isRevealed;
@@ -233,15 +233,19 @@ function DesktopMain({
                         )}
                         {isDesktopRevealed && (
                             <>
-                                <DesktopIconsLayer projectIcons={projectIcons} isMobile={isMobile} isReady={isDesktopRevealed} handleIconPositionChange={handleIconPositionChange} openProjectWindow={openProjectWindow} />
-                                <UnifiedLayer
-                                    windows={windows} notes={notes} isAdmin={isAdmin}
-                                    isRevealed={isDesktopRevealed}
-                                    closeWindow={closeWindow} minimizeWindow={minimizeWindow} maximizeWindow={maximizeWindow} focusWindow={focusWindow}
-                                    updateWindowPosition={updateWindowPosition} handleWindowResize={handleWindowResize} handleWindowResizeEnd={handleWindowResizeEnd}
-                                    togglePin={togglePin} updateNote={updateNote} bringToFrontNote={bringToFrontNote} deleteNote={deleteNote}
-                                    permanentDeleteNote={permanentDeleteNote} restoreNote={restoreNote} addNote={addNote}
-                                />
+                                <React.Suspense fallback={null}>
+                                    <DesktopIconsLayer projectIcons={projectIcons} isMobile={isMobile} isReady={isDesktopRevealed} handleIconPositionChange={handleIconPositionChange} openProjectWindow={openProjectWindow} />
+                                </React.Suspense>
+                                <React.Suspense fallback={null}>
+                                    <UnifiedLayer
+                                        windows={windows} notes={notes} isAdmin={isAdmin}
+                                        isRevealed={isDesktopRevealed}
+                                        closeWindow={closeWindow} minimizeWindow={minimizeWindow} maximizeWindow={maximizeWindow} focusWindow={focusWindow}
+                                        updateWindowPosition={updateWindowPosition} handleWindowResize={handleWindowResize} handleWindowResizeEnd={handleWindowResizeEnd}
+                                        togglePin={togglePin} updateNote={updateNote} bringToFrontNote={bringToFrontNote} deleteNote={deleteNote}
+                                        permanentDeleteNote={permanentDeleteNote} restoreNote={restoreNote} addNote={addNote}
+                                    />
+                                </React.Suspense>
                                 <UIOverlaysLayer
                                     navToChat={navToChat} openWhatsAppList={openWhatsAppList}
                                     testimonialContacts={testimonialContacts}

@@ -20,14 +20,22 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
 
     const [mounted, setMounted] = useState(false);
 
+    // Re-sync state during render phase for purity
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+    if (isOpen !== prevIsOpen) {
+        setPrevIsOpen(isOpen);
+        if (isOpen) {
+            setPin(['', '', '', '']);
+            setError(false);
+        }
+    }
+
     useEffect(() => {
         setMounted(true);
     }, []);
 
     useEffect(() => {
         if (isOpen) {
-            setPin(['', '', '', '']);
-            setError(false);
             void fetch('/api/os/verify-password', {
                 method: 'GET',
                 credentials: 'include'
@@ -41,6 +49,7 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
                 .catch((fetchError) => {
                     console.error('Failed to initialize password verification', fetchError);
                 });
+            
             const timer = setTimeout(() => {
                 const firstInput = inputRefs[0].current;
                 if (firstInput) firstInput.focus();
@@ -191,4 +200,3 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
         document.body
     );
 }
-

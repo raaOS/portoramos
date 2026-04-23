@@ -120,7 +120,7 @@ export default function IndexClientInner({
   const showLoading = isParentLoading || isViewTransitioning;
 
   return (
-    <section className={`${activeView === '3d' ? '' : 'pt-4 px-4'} pb-8`} data-projects-grid>
+    <section className={`${activeView === '3d' ? '' : 'pt-4 px-4 pb-8'}`} data-projects-grid>
       <h1 className="sr-only">Portfolio - Creative Works & Projects</h1>
       {tag && (
         <div className="mb-6 text-center">
@@ -128,7 +128,7 @@ export default function IndexClientInner({
         </div>
       )}
       <LazyMotion features={domAnimation}>
-        <div className={activeView === '3d' ? 'fixed inset-0 z-0 overflow-hidden' : 'min-h-screen'}>
+        <div className={activeView === '3d' ? 'fixed inset-0 z-0 overflow-hidden' : (activeView === 'list' ? 'h-full overflow-hidden' : 'min-h-screen')}>
           {showLoading ? <ViewLoadingIndicator /> : displayedItems.length > 0 ? (
             <>
               {activeView === '3d'

@@ -5,6 +5,7 @@ import { m, useMotionValue, useTransform, useSpring, MotionValue, AnimatePresenc
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { DockPreferences } from "@/types/about";
 import LiquidFilter from "@/components/shared/LiquidFilter";
+import Link, { useLinkStatus } from "next/link";
 
 interface DockItemProps {
     id: string;
@@ -34,6 +35,7 @@ function DockItem({
 }: DockItemProps) {
     const ref = useRef<HTMLDivElement>(null);
     const { playPop } = useSystemSound();
+    const { pending } = useLinkStatus();
 
     const distance = useTransform(mouseX, (val: number) => {
         const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
@@ -163,6 +165,22 @@ function DockItem({
                         })}
                         <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-zinc-100 border-r border-b border-white/40 rotate-45" />
                     </m.div>
+                )}
+            </AnimatePresence>
+
+            {/* Task 3: Premium Navigation Hint (Loading Ring) */}
+            <AnimatePresence>
+                {pending && (
+                    <m.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ 
+                            opacity: [0.2, 0.6, 0.2], 
+                            scale: [1, 1.2, 1],
+                        }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute inset-0 z-0 rounded-2xl bg-black/10 ring-1 ring-black/20 pointer-events-none"
+                    />
                 )}
             </AnimatePresence>
 
@@ -300,7 +318,6 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                                 }}
                             />
                         </m.div>
-
                         {/* Icon Layer (Clean and Sharp) */}
                         <m.div
                             layout
@@ -311,22 +328,44 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                                 minWidth: isMobile ? 'auto' : visibleItems.length * 64 + (visibleItems.length - 1) * 8 + 24,
                             }}
                         >
-                            {visibleItems.map((item) => (
-                                <DockItem
-                                    key={item.id}
-                                    id={item.id}
-                                    icon={item.icon}
-                                    label={item.label}
-                                    onClick={item.onClick}
-                                    mouseX={mouseX}
-                                    isOpen={item.isOpen}
-                                    popoverContent={item.popoverContent}
-                                    onPopoverToggle={(isOpen) => handlePopoverToggle(item.id, isOpen)}
-                                    anyPopoverOpen={anyPopoverOpen}
-                                    shouldBounceExternal={bouncingId === item.id}
-                                    isMobile={isMobile}
-                                />
-                            ))}
+                            {visibleItems.map((item) => {
+                                const content = (
+                                    <DockItem
+                                        key={item.id}
+                                        id={item.id}
+                                        icon={item.icon}
+                                        label={item.label}
+                                        onClick={item.onClick}
+                                        mouseX={mouseX}
+                                        isOpen={item.isOpen}
+                                        popoverContent={item.popoverContent}
+                                        onPopoverToggle={(isOpen) => handlePopoverToggle(item.id, isOpen)}
+                                        anyPopoverOpen={anyPopoverOpen}
+                                        shouldBounceExternal={bouncingId === item.id}
+                                        isMobile={isMobile}
+                                    />
+                                );
+
+                                // Task 3: Wrap compatible apps in Link for Next.js 16 prefetching & hints
+                                // Skip items with popoverContent because Link would hijack the click needed to open the popover.
+                                const isApp = ['about', 'explorer', 'contact', 'testimonial'].includes(item.id);
+                                const hasPopover = !!item.popoverContent;
+                                
+                                if (isApp && !hasPopover) {
+                                    return (
+                                        <Link 
+                                            key={item.id} 
+                                            href={`/?app=${item.id}`} 
+                                            prefetch={true} 
+                                            className="no-underline flex items-end"
+                                        >
+                                            {content}
+                                        </Link>
+                                    );
+                                }
+
+                                return content;
+                            })}
                         </m.div>
 
                         {enableLiquidEffect && (

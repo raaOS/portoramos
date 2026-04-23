@@ -130,15 +130,17 @@ export const DraggableStickyNote = ({
         };
     }, [isResizing, note.id, updateNote]);
 
-    // Update dynamic size when props change externally
-    React.useEffect(() => {
+    // Update dynamic size when props change externally (Sync during render to avoid cascading updates)
+    const [prevProps, setPrevProps] = React.useState({ w: note.width, h: note.height });
+    if (note.width !== prevProps.w || note.height !== prevProps.h) {
+        setPrevProps({ w: note.width, h: note.height });
         if (!isResizing) {
             setDynamicSize({ 
                 width: note.width || 280, 
                 height: note.height || 280 
             });
         }
-    }, [note.width, note.height, isResizing]);
+    }
 
     // Unified bring to front handler
     const handleBringToFront = React.useCallback(() => {

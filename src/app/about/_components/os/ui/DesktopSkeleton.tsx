@@ -17,7 +17,7 @@ export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkel
     }
 
     return (
-        <div className="fixed inset-0 w-full h-full overflow-hidden select-none bg-white">
+        <div className="fixed inset-0 w-full h-full overflow-hidden select-none bg-[#050505]">
             {/* Real Wallpaper LCP Skeleton - Instantly visible on SSG Load */}
             <div className="absolute inset-0 z-0">
                 <Image
@@ -25,8 +25,9 @@ export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkel
                     alt="Desktop Wallpaper"
                     fill
                     priority
+                    fetchPriority="high"
                     loading="eager"
-                    quality={60}
+                    quality={90}
                     sizes="100vw"
                     className="object-cover"
                 />
@@ -36,18 +37,18 @@ export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkel
             <div className="absolute inset-0 bg-black/20 z-1 pointer-events-none" />
 
             {/* Fake Menu Bar 
-                - Dipertahankan sangat samar hanya untuk memberikan sense of depth jika koneksi internet super lambat 
+                - Matched to MenuBar.tsx exactly
             */}
-            <div className="absolute top-0 left-0 right-0 h-9 sm:h-8 bg-white flex items-center px-4 z-[10000]">
+            <div className="absolute top-0 left-0 right-0 h-9 sm:h-8 bg-white flex items-center px-4 z-[10000] border-b border-gray-200">
                 <div className="w-16 h-3 bg-gray-200/50 rounded" />
             </div>
 
-            {/* Skeleton Grid (Desktop Icons) Dihapus
-                Alasan: Memastikan "Blank Canvas" penuh untuk animasi Staggered Materialize dari Framer Motion
+            {/* Fake Dock 
+                - Matched to UIOverlaysLayer.tsx and Dock.tsx
             */}
-
-            {/* Fake Dock */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-20 w-[90%] max-w-[450px] bg-white/95 rounded-[24px] border border-gray-200/20" />
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none z-[10000]">
+                <div className="h-[96px] sm:h-[72px] w-[90%] max-w-[450px] bg-white/95 rounded-[24px] border border-gray-200/20 shadow-[0_6px_6px_rgba(0,0,0,0.2),0_0_20px_rgba(0,0,0,0.1)]" />
+            </div>
 
         </div>
     );

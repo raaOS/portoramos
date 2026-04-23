@@ -71,59 +71,57 @@ export function useChatSync(initialGreeting?: string) {
             refreshInterval: isPageVisible ? 3000 : 30000, 
             revalidateOnFocus: true,
             dedupingInterval: 2000,
-            onSuccess: () => setSyncError(false),
+            onSuccess: (data) => {
+                setSyncError(false);
+                if (data?.success) {
+                    // Update typing status from server
+                    if (data.isAdminTyping !== undefined) {
+                        setIsAdminTyping(data.isAdminTyping);
+                    }
+
+                    if (data.messages?.length > 0) {
+                        setMessages(prev => {
+                            const newMessages = [...prev];
+                            let hasNewAdminMessage = false;
+
+                            data.messages.forEach((serverMsg: ChatMessage) => {
+                                const existingTempIndex = newMessages.findIndex(
+                                    m => m.id.startsWith('temp-') && m.text === serverMsg.text && m.sender === serverMsg.sender
+                                );
+                                const hasConfirmed = newMessages.find(m => m.id === serverMsg.id);
+
+                                if (!hasConfirmed) {
+                                    if (existingTempIndex >= 0) {
+                                        newMessages[existingTempIndex] = serverMsg;
+                                    } else {
+                                        newMessages.push(serverMsg);
+                                        if (serverMsg.sender === 'admin') hasNewAdminMessage = true;
+                                    }
+                                }
+                            });
+
+                            if (hasNewAdminMessage) {
+                                soundManager.play('notification');
+                                setIsAdminTyping(false);
+                            }
+
+                            // Deduplicate and Sort
+                            const uniqueMsgs: ChatMessage[] = [];
+                            const seenIds = new Set();
+                            newMessages.sort((a, b) => a.timestamp - b.timestamp).forEach(m => {
+                                if (!seenIds.has(m.id)) {
+                                    seenIds.add(m.id);
+                                    uniqueMsgs.push(m);
+                                }
+                            });
+                            return uniqueMsgs;
+                        });
+                    }
+                }
+            },
             onError: () => setSyncError(true)
         }
     );
- 
-    // Sync Messages and Typing Status from Server
-    useEffect(() => {
-        if (syncData?.success) {
-            // Update typing status from server
-            if (syncData.isAdminTyping !== undefined) {
-                setIsAdminTyping(syncData.isAdminTyping);
-            }
- 
-            if (syncData.messages?.length > 0) {
-                setMessages(prev => {
-                    const newMessages = [...prev];
-                    let hasNewAdminMessage = false;
- 
-                    syncData.messages.forEach((serverMsg: ChatMessage) => {
-                        const existingTempIndex = newMessages.findIndex(
-                            m => m.id.startsWith('temp-') && m.text === serverMsg.text && m.sender === serverMsg.sender
-                        );
-                        const hasConfirmed = newMessages.find(m => m.id === serverMsg.id);
- 
-                        if (!hasConfirmed) {
-                            if (existingTempIndex >= 0) {
-                                newMessages[existingTempIndex] = serverMsg;
-                            } else {
-                                newMessages.push(serverMsg);
-                                if (serverMsg.sender === 'admin') hasNewAdminMessage = true;
-                            }
-                        }
-                    });
- 
-                    if (hasNewAdminMessage) {
-                        soundManager.play('notification');
-                        setIsAdminTyping(false);
-                    }
- 
-                    // Deduplicate and Sort
-                    const uniqueMsgs: ChatMessage[] = [];
-                    const seenIds = new Set();
-                    newMessages.sort((a, b) => a.timestamp - b.timestamp).forEach(m => {
-                        if (!seenIds.has(m.id)) {
-                            seenIds.add(m.id);
-                            uniqueMsgs.push(m);
-                        }
-                    });
-                    return uniqueMsgs;
-                });
-            }
-        }
-    }, [syncData]);
 
     const sendMessage = async (text: string) => {
         if (!text.trim() || isSending || !visitorId) return;

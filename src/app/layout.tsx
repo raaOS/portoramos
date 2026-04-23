@@ -98,13 +98,6 @@ export default async function RootLayout({
       <head>
         {/* Preconnect to critical domains */}
         {/* Google Fonts - Fallback for next/font to satisfy Babel/SWC conflict */}
-        <link 
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Six+Caps&display=swap" 
-          rel="stylesheet" 
-        />
-
-
-
         {/* Structured Data */}
         <meta name="application-version" content={APP_VERSION} />
         <script

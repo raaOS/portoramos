@@ -82,8 +82,8 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
                 {/* Brightness Display */}
                 <div className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-black/5 dark:border-white/5 flex items-center gap-3">
                     <Sun size={16} className="text-gray-500 dark:text-gray-400" />
-                    <div className="h-6 flex-1 bg-white dark:bg-white/5 rounded-full overflow-hidden border border-black/10 dark:border-white/10 relative">
-                        <div className="absolute top-0 left-0 bottom-0 bg-white dark:bg-white/80 transition-all duration-300" style={{ width: `${brightness}%` }}></div>
+                    <div className="h-6 flex-1 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden border border-black/5 dark:border-white/10 relative">
+                        <div className="absolute top-0 left-0 bottom-0 bg-zinc-900 dark:bg-white transition-all duration-200" style={{ width: `${brightness}%` }}></div>
                         <input 
                             type="range" 
                             min="0" max="100" 
@@ -101,8 +101,8 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
                 {/* Volume Display */}
                 <div className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-black/5 dark:border-white/5 flex items-center gap-3">
                     <Volume2 size={16} className="text-gray-500 dark:text-gray-400" />
-                    <div className="h-6 flex-1 bg-white dark:bg-white/5 rounded-full overflow-hidden border border-black/10 dark:border-white/10 relative">
-                        <div className="absolute top-0 left-0 bottom-0 bg-white dark:bg-white/80 transition-all duration-300" style={{ width: `${volume}%` }}></div>
+                    <div className="h-6 flex-1 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden border border-black/5 dark:border-white/10 relative">
+                        <div className="absolute top-0 left-0 bottom-0 bg-zinc-900 dark:bg-white transition-all duration-200" style={{ width: `${volume}%` }}></div>
                         <input 
                             type="range" 
                             min="0" max="100" 

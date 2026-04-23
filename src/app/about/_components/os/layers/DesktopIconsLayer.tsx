@@ -2,7 +2,7 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import { m } from "motion/react";
+import { m, type Variants } from "motion/react";
 import { useState } from "react";
 import DesktopIcon from "../ui/elements/DesktopIcon";
 import { useQuickLook } from "@/hooks/useQuickLook";
@@ -57,7 +57,7 @@ function DesktopIconsLayer({
     });
 
     // Parent container animation variants for staggering
-    const containerVariants = {
+    const containerVariants: Variants = {
         hidden: { opacity: 0 },
         show: {
             opacity: 1,
@@ -69,7 +69,7 @@ function DesktopIconsLayer({
     };
 
     // Very iOS-like spring animation
-    const itemVariants = {
+    const itemVariants: Variants = {
         hidden: {
             opacity: 0,
             scale: 0.3,
@@ -80,11 +80,11 @@ function DesktopIconsLayer({
             scale: 1,
             y: 0,
             transition: {
-                type: "spring",
+                type: "spring" as const,
                 stiffness: 400,
                 damping: 30,
                 mass: 1
-            } as any
+            }
         }
     };
 

@@ -6,11 +6,17 @@ export function useChatProjects(initialProjects?: Project[]) {
     const [allProjects, setAllProjects] = useState<Project[]>(initialProjects ?? []);
     const hasFetchedRef = useRef(false);
 
-    useEffect(() => {
+    // Sync initial projects during render for purity
+    const [prevInitial, setPrevInitial] = useState(initialProjects);
+    if (initialProjects !== prevInitial) {
+        setPrevInitial(initialProjects);
         if (initialProjects?.length) {
             setAllProjects(initialProjects);
-            return;
         }
+    }
+
+    useEffect(() => {
+        if (allProjects.length > 0) return;
 
         // Only fetch from API once if no initial projects provided
         if (hasFetchedRef.current) return;
@@ -42,7 +48,7 @@ export function useChatProjects(initialProjects?: Project[]) {
             }
         };
         fetchProjects();
-    }, [initialProjects]);
+    }, [allProjects.length]);
 
     const getProjectById = (id: string) => {
         if (!Array.isArray(allProjects)) return undefined;

@@ -20,14 +20,15 @@ function ErrorFallback({ error }: { error: Error }) {
 export default async function IndexClient(props: Props) {
   const searchParams = await props.searchParams;
 
+  const tag = searchParams?.tag || ''
+  let projects = []
+  
   try {
-    const projects = await allProjectsAsync()
-    const tag = searchParams?.tag || ''
-
-    return <IndexClientInner projects={projects} tag={tag} searchQuery="" />
+    projects = await allProjectsAsync()
   } catch (e) {
     console.error('IndexClient: error', e);
-    // BUG FIX #4: Return error UI instead of throwing
     return <ErrorFallback error={e instanceof Error ? e : new Error('Unknown error')} />;
   }
+
+  return <IndexClientInner projects={projects} tag={tag} searchQuery="" />
 }
