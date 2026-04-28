@@ -96,6 +96,8 @@ export function CanvasCardInner({
                         className="pointer-events-none absolute inset-0 object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                         sizes="(max-width: 768px) 100vw, 700px"
                         priority={isPriority}
+                        loading="eager"
+                        fetchPriority={isPriority ? 'high' : 'auto'}
                     />
                 )}
 

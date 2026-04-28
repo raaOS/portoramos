@@ -46,7 +46,9 @@ export default function ManageCommentsModal({ project, onClose }: ManageComments
     }, [project.slug, showError]);
 
     useEffect(() => {
-        fetchComments();
+        Promise.resolve().then(() => {
+            fetchComments();
+        });
     }, [fetchComments]);
 
     const handleDelete = async (commentId: string) => {

@@ -2,25 +2,41 @@ import { useState, useMemo } from 'react';
 import { ProjectFormData } from '@/hooks/useProjectForm';
 import { X, Plus } from 'lucide-react';
 import { Project } from '@/types/projects';
+import { Label } from '@/types/labels';
 
 interface ProjectBasicInfoProps {
     formData: ProjectFormData;
     errors: Record<string, string>;
     updateField: <K extends keyof ProjectFormData>(field: K, value: ProjectFormData[K]) => void;
     allProjects?: Project[];
+    labels?: Label[];
 }
 
-export default function ProjectBasicInfo({ formData, errors, updateField, allProjects = [] }: ProjectBasicInfoProps) {
+export default function ProjectBasicInfo({ formData, errors, updateField, allProjects = [], labels = [] }: ProjectBasicInfoProps) {
     const [tagInput, setTagInput] = useState('');
 
-    // Calculate unique existing tags from all projects
+    // Official labels from managed database
+    const officialLabels = useMemo(() => {
+        const currentTags = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+        return labels.filter(l => !currentTags.includes(l.name.toLowerCase()));
+    }, [labels, formData.tags]);
+
+    // Calculate unique existing tags from all projects that ARE NOT official labels
     const availableTags = useMemo(() => {
         const tags = new Set<string>();
+        const officialNames = new Set(labels.map(l => l.name.toLowerCase()));
+
         allProjects.forEach(p => {
             if (p.tags) {
-                p.tags.forEach(t => tags.add(t.trim()));
+                p.tags.forEach(t => {
+                    const cleanT = t.trim();
+                    if (!officialNames.has(cleanT.toLowerCase())) {
+                        tags.add(cleanT);
+                    }
+                });
             }
         });
+        
         // Remove currently selected tags from the suggestion list
         const currentTags = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
         currentTags.forEach(t => {
@@ -30,7 +46,7 @@ export default function ProjectBasicInfo({ formData, errors, updateField, allPro
             }
         });
         return Array.from(tags).sort();
-    }, [allProjects, formData.tags]);
+    }, [allProjects, labels, formData.tags]);
 
     const currentTagsList = useMemo(() => {
         return formData.tags.split(',').map(t => t.trim()).filter(t => t);
@@ -112,7 +128,15 @@ export default function ProjectBasicInfo({ formData, errors, updateField, allPro
                         <input
                             type="number"
                             value={formData.year}
-                            onChange={(e) => updateField('year', parseInt(e.target.value) || new Date().getFullYear())}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '') {
+                                    updateField('year', 0);
+                                } else {
+                                    const num = parseInt(val);
+                                    if (!isNaN(num)) updateField('year', num);
+                                }
+                            }}
                             className={`w-full px-4 py-2.5 border rounded-none bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all ${errors.year ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
                             min="2000"
                             max={new Date().getFullYear() + 1}
@@ -221,10 +245,34 @@ export default function ProjectBasicInfo({ formData, errors, updateField, allPro
                             />
                         </div>
 
+                        {/* Official Labels Section */}
+                        {officialLabels.length > 0 && (
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-bold text-violet-500 uppercase tracking-wider">Managed Labels (Recommended)</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {officialLabels.map((label, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => handleAddTag(label.name)}
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-none text-xs border border-violet-200 text-violet-700 hover:bg-violet-50 hover:border-violet-300 transition-all group"
+                                        >
+                                            <div 
+                                                className="w-1.5 h-1.5 rounded-full" 
+                                                style={{ backgroundColor: label.color || '#8b5cf6' }}
+                                            />
+                                            <Plus className="w-3 h-3 text-violet-400 group-hover:scale-110 transition-transform" />
+                                            {label.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Suggestion / Tag Bank */}
                         {availableTags.length > 0 && (
                             <div className="space-y-1">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Quick Add from Recent</p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Other Recent Tags</p>
                                 <div className="flex flex-wrap gap-2">
                                     {availableTags.slice(0, 10).map((tag, idx) => (
                                         <button

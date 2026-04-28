@@ -10,6 +10,7 @@ import { useImageProtection } from '@/hooks/useImageProtection';
 interface ProjectCardListProps {
     project: Project;
     priority?: boolean;
+    eager?: boolean;
     videoEnabled?: boolean;
     highlightedTag?: string;
 }
@@ -17,6 +18,7 @@ interface ProjectCardListProps {
 export default function ProjectCardList({
     project,
     priority = false,
+    eager = false,
     videoEnabled = true,
     highlightedTag
 }: ProjectCardListProps) {
@@ -24,6 +26,7 @@ export default function ProjectCardList({
     const cover = resolvePreviewCover(project);
     const shouldAutoplay = videoEnabled && (project.autoplay ?? true);
     const { toast, handleContextMenu } = useImageProtection();
+    const shouldEagerLoad = cover.kind === 'image' ? (priority || eager) : priority;
 
     const displayTag = highlightedTag && tags?.some(t => t.toLowerCase() === highlightedTag.toLowerCase())
         ? tags.find(t => t.toLowerCase() === highlightedTag.toLowerCase())
@@ -42,11 +45,12 @@ export default function ProjectCardList({
                         src={cover.src}
                         poster={cover.poster}
                         posterPriority={cover.kind === 'video' ? priority : undefined}
+                        eager={shouldEagerLoad}
                         alt={title}
                         width={400}
                         height={300}
                         priority={cover.kind === 'image' ? priority : false}
-                        lazy={!priority}
+                        lazy={!shouldEagerLoad}
                         autoplay={shouldAutoplay}
                         muted={project.muted ?? true}
                         loop={project.loop ?? true}

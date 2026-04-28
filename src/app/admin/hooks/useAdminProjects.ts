@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { useToast } from '@/contexts/ToastContext';
@@ -8,6 +8,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { POLLING } from '@/lib/constants';
 import { useRealtimeSync } from '@/lib/services/realtimeSync';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
+import { Label } from '@/types/labels';
 
 export function useAdminProjects() {
     const queryClient = useQueryClient();
@@ -27,6 +28,17 @@ export function useAdminProjects() {
         },
         staleTime: POLLING.CLIENT_STALE_TIME,
         gcTime: 10 * 60 * 1000,
+    });
+
+    // 1.5 Fetch Labels
+    const { data: labels } = useQuery({
+        queryKey: ['labels'],
+        queryFn: async () => {
+            const res = await fetch('/api/about/labels');
+            if (!res.ok) return [];
+            return res.json();
+        },
+        initialData: [] as Label[]
     });
 
     const projects = (projectsData?.data?.projects || []) as Project[];
@@ -242,6 +254,7 @@ export function useAdminProjects() {
         selectedProjectIds,
         toggleProjectSelection,
         selectAllProjects,
+        labels,
         csrfToken,
         refreshProjects
     };

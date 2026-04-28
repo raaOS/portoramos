@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useMemo, useState } from "react";
-import { m, useDragControls, AnimatePresence } from "motion/react";
+import { m, useDragControls, AnimatePresence, Transition, TargetAndTransition } from "motion/react";
 import { soundManager } from "../utils/SoundManager";
 import { useWindowResize } from "../hooks/useWindowResize";
 import { useWindowKeyboard } from "../hooks/useWindowKeyboard";
@@ -79,22 +79,25 @@ export default function OSWindow({
     const windowRef = useRef<HTMLDivElement>(null);
 
     // SSR-safe viewport dimensions — computed once on mount, stable across renders
-    const [viewport, setViewport] = useState({ width: 1440, height: 900 });
-    useEffect(() => {
-        setViewport({ width: window.innerWidth, height: window.innerHeight });
-    }, []);
-
-    const { isSmallScreen, winWidth } = useMemo(() => {
-        const isMobile = viewport.width < 768;
-        const isTablet = viewport.width >= 768 && viewport.width < 1024;
-        return {
-            isSmallScreen: isMobile || isTablet,
-            winWidth: isMobile ? viewport.width : isTablet ? Math.min(viewport.width - 32, 700) : 600,
-        };
-    }, [viewport.width]);
+    const [viewport] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return { width: window.innerWidth, height: window.innerHeight };
+        }
+        return { width: 1440, height: 900 };
+    });
 
     const viewportWidth = viewport.width;
     const viewportHeight = viewport.height;
+
+    const { isSmallScreen, winWidth } = useMemo(() => {
+        const isMobile = viewportWidth < 768;
+        const isTablet = viewportWidth >= 768 && viewportWidth < 1024;
+        return {
+            isSmallScreen: isMobile || isTablet,
+            winWidth: isMobile ? viewportWidth : isTablet ? Math.min(viewportWidth - 32, 700) : 600,
+        };
+    }, [viewportWidth]);
+
     const dragControls = useDragControls();
 
     const { handleKeyDown } = useWindowKeyboard({ onClose, onMinimize, onMaximize });
@@ -184,7 +187,7 @@ export default function OSWindow({
         borderRadius: { duration: 0.22, ease: "easeOut" },
         filter: { duration: 0.22, ease: "easeOut" },
         backgroundColor: { duration: 0.22, ease: "easeOut" },
-    } as any;
+    } as Transition;
 
     const minimizeTransition = {
         x: { type: "spring", stiffness: 450, damping: 30, mass: 1 },
@@ -194,7 +197,7 @@ export default function OSWindow({
         borderRadius: { duration: 0.2, ease: "easeInOut" },
         filter: { duration: 0.2, ease: "easeInOut" },
         backgroundColor: { duration: 0.2, ease: "easeInOut" },
-    } as any;
+    } as Transition;
 
     const exitState = {
         scale: 0.85,
@@ -207,7 +210,7 @@ export default function OSWindow({
             scale: { type: "spring", stiffness: 450, damping: 30 },
             filter: { duration: 0.12 },
         },
-    } as any;
+    } as TargetAndTransition;
 
     return (
         <AnimatePresence>

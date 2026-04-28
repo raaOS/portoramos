@@ -22,7 +22,7 @@ export function useAdminSidebar() {
   });
 
   const routeExpandedMenus = useMemo(() => {
-    const isProject = pathname?.startsWith('/admin/projects') || pathname?.startsWith('/admin/sequences');
+    const isProject = pathname?.startsWith('/admin/projects');
     const isAbout = pathname?.startsWith('/admin/about') || pathname?.startsWith('/admin/experience') || pathname?.startsWith('/admin/testimonial');
     const isContact = pathname?.startsWith('/admin/contact') || pathname?.startsWith('/admin/leads') || pathname?.startsWith('/admin/telegram');
     const isOSConfig = pathname?.startsWith('/admin/about') && ['desktop', 'dock', 'stickyNotes', 'sounds', 'runningText'].includes(searchParams.get('tab') || '');

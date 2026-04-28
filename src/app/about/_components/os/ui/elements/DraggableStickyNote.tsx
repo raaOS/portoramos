@@ -181,10 +181,10 @@ export const DraggableStickyNote = ({
                     transition: {
                         y: { type: "spring", stiffness: 250, damping: 18, mass: 0.8 },
                         opacity: { duration: 0.4 }
-                    } as any
+                    }
                 }
             }}
-            transition={{ type: "none" } as any}
+            transition={{ type: "none" }}
             onDragStart={handleBringToFront}
             onDragEnd={(e, info) => {
                 const newX = (note.x || 100) + info.offset.x;

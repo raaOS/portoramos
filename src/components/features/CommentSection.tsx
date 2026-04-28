@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Comment } from '@/lib/magic';
 import dynamic from 'next/dynamic';
@@ -34,11 +34,13 @@ export default function CommentSection({
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedName = localStorage.getItem('guest-name');
-      if (savedName) {
-        setGuestName(savedName);
-      } else {
-        setIsSettingName(true); // Prompt to set name if none exists
-      }
+      React.startTransition(() => {
+        if (savedName) {
+          setGuestName(savedName);
+        } else {
+          setIsSettingName(true); // Prompt to set name if none exists
+        }
+      });
     }
   }, []);
 

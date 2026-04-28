@@ -31,7 +31,9 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
     }
 
     useEffect(() => {
-        setMounted(true);
+        React.startTransition(() => {
+            setMounted(true);
+        });
     }, []);
 
     useEffect(() => {

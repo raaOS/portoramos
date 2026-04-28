@@ -62,9 +62,17 @@ export class ContentService<T> {
             }
         }
 
+        const timeout = new Promise<null>((_, reject) => 
+            setTimeout(() => reject(new Error('Firebase timeout')), 5000)
+        );
+
         try {
-            const snapshot = await db.ref(this.firebasePath).once('value');
-            const firebaseData = snapshot.val();
+            const snapshot = await Promise.race([
+                db.ref(this.firebasePath).once('value'),
+                timeout
+            ]) as any;
+
+            const firebaseData = snapshot?.val?.() ?? snapshot?.val;
 
             if (!firebaseData) {
                 return this.fallbackData;
@@ -124,13 +132,20 @@ export class ContentService<T> {
     async saveData(data: T, _message?: string): Promise<boolean> {
         // MEDIUM FIX: Queue multiple saves to prevent race condition
         if (this.pendingSave) {
-            await this.pendingSave;
+            try {
+                await this.pendingSave;
+            } catch (err) {
+                console.warn('[ContentService] Previous save failed, proceeding with new save', err);
+            }
         }
 
         this.pendingSave = this._doSave(data, _message);
-        const result = await this.pendingSave;
-        this.pendingSave = null;
-        return result;
+        try {
+            const result = await this.pendingSave;
+            return result;
+        } finally {
+            this.pendingSave = null;
+        }
     }
 
     private async _doSave(data: T, _message?: string): Promise<boolean> {

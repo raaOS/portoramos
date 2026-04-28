@@ -39,8 +39,7 @@ export const NAV_ITEMS: NavItem[] = [
     bg: 'hover:bg-purple-50',
     children: [
       { href: '/admin/projects', label: 'List Project', icon: FolderKanban, color: 'text-purple-600', bg: 'hover:bg-purple-50' },
-      { href: '/admin/explorer', label: 'Explorer Manager', icon: Archive, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
-      { href: '/admin/sequences', label: 'Bidikan Image', icon: Zap, color: 'text-yellow-500', bg: 'hover:bg-yellow-50' },
+      { href: '/admin/explorer', label: 'Explorer Manager', icon: Archive, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' }
     ]
   },
   {

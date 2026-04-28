@@ -8,6 +8,7 @@ import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects'
 import AdminModal from '@/app/admin/components/AdminModal';
 import { useFirebaseUpload } from '@/app/admin/components/file-upload/hooks/useFirebaseUpload';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { Label } from '@/types/labels';
 
 // Custom Hooks
 import { useProjectPurge } from './hooks/useProjectPurge';
@@ -41,12 +42,13 @@ type AIUpdatableField = keyof Pick<
 interface ProjectFormProps {
     project?: Project;
     allProjects?: Project[];
+    labels?: Label[];
     onSubmit: (data: CreateProjectData | UpdateProjectData) => Promise<void>;
     onCancel: () => void;
     title: string;
 }
 
-export default function ProjectForm({ project, allProjects = [], onSubmit, onCancel, title }: ProjectFormProps) {
+export default function ProjectForm({ project, allProjects = [], labels = [], onSubmit, onCancel, title }: ProjectFormProps) {
     const {
         formData,
         errors,
@@ -296,6 +298,7 @@ export default function ProjectForm({ project, allProjects = [], onSubmit, onCan
                                     errors={errors}
                                     updateField={updateField}
                                     allProjects={allProjects}
+                                    labels={labels}
                                 />
 
                                 <ProjectNarrative

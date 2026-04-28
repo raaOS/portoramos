@@ -29,7 +29,7 @@ interface DockProjectModesProps {
 }
 
 export default function DockProjectModes({ onSelect }: DockProjectModesProps) {
-    const router = useRouter();
+    const _router = useRouter();
 
     const handleModeSelect = useCallback(() => {
         onSelect?.();

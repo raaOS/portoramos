@@ -49,7 +49,11 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
     useEffect(() => {
         try {
             const cached = localStorage.getItem(CACHE_KEY);
-            if (cached) setTranslations(JSON.parse(cached));
+            if (cached) {
+                React.startTransition(() => {
+                    setTranslations(JSON.parse(cached));
+                });
+            }
         } catch { /* ignore */ }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [project.slug]);

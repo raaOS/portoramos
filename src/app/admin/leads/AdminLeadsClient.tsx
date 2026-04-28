@@ -33,7 +33,9 @@ export default function AdminLeadsClient() {
     };
 
     useEffect(() => {
-        fetchLeads();
+        Promise.resolve().then(() => {
+            fetchLeads();
+        });
     }, []);
 
     const columns: Column<Lead>[] = [

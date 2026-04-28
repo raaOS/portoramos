@@ -10,6 +10,7 @@ import { useImageProtection } from '@/hooks/useImageProtection';
 interface ProjectCardPinterestProps {
     project: Project;
     priority?: boolean;
+    eager?: boolean;
     videoEnabled?: boolean;
     interactive?: boolean;
     highlightedTag?: string;
@@ -18,6 +19,7 @@ interface ProjectCardPinterestProps {
 export default function ProjectCardPinterest({
     project,
     priority = false,
+    eager = false,
     videoEnabled = true,
     interactive = true,
     highlightedTag,
@@ -27,6 +29,7 @@ export default function ProjectCardPinterest({
     const cover = resolvePreviewCover(project);
     const shouldAutoplay = videoEnabled && (project.autoplay ?? true);
     const { toast, handleContextMenu } = useImageProtection();
+    const shouldEagerLoad = cover.kind === 'image' ? (priority || eager) : priority;
 
     // Calculate aspect ratio for the image/video container
     const width = project.coverWidth || 800;
@@ -62,12 +65,13 @@ export default function ProjectCardPinterest({
                         src={cover.src}
                         poster={cover.poster}
                         posterPriority={cover.kind === 'video' ? priority : undefined}
+                        eager={shouldEagerLoad}
                         alt={title}
                         // Optimized: Request 256px for thumbnails (closer to actual display size ~170-200px)
                         width={256}
                         height={Math.round(256 / ratio)}
                         priority={cover.kind === 'image' ? priority : false}
-                        lazy={!priority}
+                        lazy={!shouldEagerLoad}
                         quality={75}
                         autoplay={shouldAutoplay}
                         muted={project.muted ?? true}

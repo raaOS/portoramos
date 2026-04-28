@@ -22,7 +22,9 @@ export function useHardSkills(csrfToken: string | undefined) {
   }, []);
   
   useEffect(() => {
-    fetchSkills();
+    Promise.resolve().then(() => {
+      fetchSkills();
+    });
   }, [fetchSkills]);
   
   const saveOrder = useCallback(async (newSkills: HardSkill[]) => {

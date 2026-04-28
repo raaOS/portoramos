@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import IndexClientWithAutoUpdate from '@/components/home/IndexClientWithAutoUpdate'
 import { allProjectsAsync } from '@/lib/projects'
+import { allLabelsAsync } from '@/lib/labels'
 import SystemNavFrame from '@/components/layout/SystemNavFrame'
 import ProjectsFinderHeader from './_components/ProjectsFinderHeader'
 
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 
 export default async function ProjectsPage() {
     const projects = await allProjectsAsync();
+    const labels = await allLabelsAsync();
 
     // allProjectsAsync() already filters drafts
 
@@ -25,8 +27,9 @@ export default async function ProjectsPage() {
                 <Suspense fallback={
                     <div className="px-4 sm:px-8 py-4 mt-8 h-16 bg-gray-50 animate-pulse rounded" />
                 }>
-                    <ProjectsFinderHeader itemCount={projects.length} />
+                    <ProjectsFinderHeader itemCount={projects.length} labels={labels} />
                 </Suspense>
+
 
                 <Suspense fallback={
                     <section className="py-24 px-4 text-center">

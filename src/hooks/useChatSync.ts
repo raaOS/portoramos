@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
 import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
@@ -27,15 +27,19 @@ export function useChatSync(initialGreeting?: string) {
     useEffect(() => {
         try {
             const storedId = localStorage.getItem('ramos_visitor_id');
-            if (storedId) {
-                setVisitorId(storedId);
-            } else {
-                const newId = uuidv4();
-                localStorage.setItem('ramos_visitor_id', newId);
-                setVisitorId(newId);
-            }
+            React.startTransition(() => {
+                if (storedId) {
+                    setVisitorId(storedId);
+                } else {
+                    const newId = uuidv4();
+                    localStorage.setItem('ramos_visitor_id', newId);
+                    setVisitorId(newId);
+                }
+            });
         } catch {
-            setVisitorId(uuidv4());
+            React.startTransition(() => {
+                setVisitorId(uuidv4());
+            });
         }
     }, []);
 
@@ -51,12 +55,14 @@ export function useChatSync(initialGreeting?: string) {
     // Greeting
     useEffect(() => {
         if (visitorId && messages.length === 0 && initialGreeting) {
-            setMessages([{
-                id: 'greeting',
-                text: initialGreeting,
-                sender: 'admin',
-                timestamp: Date.now(),
-            }]);
+            React.startTransition(() => {
+                setMessages([{
+                    id: 'greeting',
+                    text: initialGreeting,
+                    sender: 'admin',
+                    timestamp: Date.now(),
+                }]);
+            });
         }
     }, [visitorId, initialGreeting, messages.length]);
 
@@ -64,7 +70,7 @@ export function useChatSync(initialGreeting?: string) {
  
     // Polling with Smart Interval
     // 3 seconds when active, 30 seconds when in background
-    const { data: syncData, error: swrError } = useSWR(
+    const { data: _syncData, error: swrError } = useSWR(
         visitorId ? `/api/chat/sync?visitorId=${visitorId}` : null,
         fetcher,
         { 

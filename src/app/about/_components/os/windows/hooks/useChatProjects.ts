@@ -34,8 +34,8 @@ export function useChatProjects(initialProjects?: Project[]) {
                 
                 // Flexible unwrap: handle { projects: [...] } or direct [...]
                 let projects: Project[] = [];
-                if (unwrapped && typeof unwrapped === 'object' && 'projects' in (unwrapped as Record<string, any>)) {
-                    projects = (unwrapped as Record<string, any>).projects;
+                if (unwrapped && typeof unwrapped === 'object' && 'projects' in (unwrapped as Record<string, unknown>)) {
+                    projects = (unwrapped as Record<string, unknown>).projects as Project[];
                 } else if (Array.isArray(unwrapped)) {
                     projects = unwrapped;
                 }

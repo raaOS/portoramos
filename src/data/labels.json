@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "name": "Video & Motion",
+    "slug": "video",
+    "color": "blue"
+  },
+  {
+    "id": "2",
+    "name": "Image & Artwork",
+    "slug": "image",
+    "color": "emerald"
+  },
+  {
+    "id": "3",
+    "name": "Commercial",
+    "slug": "commercial",
+    "color": "amber"
+  },
+  {
+    "id": "4",
+    "name": "Visual Art",
+    "slug": "visual_art",
+    "color": "rose"
+  }
+]

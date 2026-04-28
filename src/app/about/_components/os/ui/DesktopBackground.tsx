@@ -26,24 +26,42 @@ export default function DesktopBackground({ wallpaperConfig }: DesktopBackground
     }, [wallpaperConfig]);
 
     const blurAmount = wallpaperConfig?.blur || 0;
+    const isVideo = useMemo(() => {
+        return activeWallpaper.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) || activeWallpaper.startsWith('data:video');
+    }, [activeWallpaper]);
 
     return (
         <div className="fixed inset-0 z-0 w-full h-full">
             {/* Primary wallpaper - Priority load for LCP */}
-            <Image
-                src={activeWallpaper}
-                alt="Desktop wallpaper"
-                fill
-                priority
-                fetchPriority="high"
-                quality={90}
-                sizes="100vw"
-                className="object-cover"
-                style={{
-                    filter: blurAmount > 0 ? `blur(${blurAmount}px)` : undefined,
-                    transform: 'translateZ(0)',
-                }}
-            />
+            {isVideo ? (
+                <video
+                    src={activeWallpaper}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover"
+                    style={{
+                        filter: blurAmount > 0 ? `blur(${blurAmount}px)` : undefined,
+                        transform: 'translateZ(0)',
+                    }}
+                />
+            ) : (
+                <Image
+                    src={activeWallpaper}
+                    alt="Desktop wallpaper"
+                    fill
+                    priority
+                    fetchPriority="high"
+                    quality={90}
+                    sizes="100vw"
+                    className="object-cover"
+                    style={{
+                        filter: blurAmount > 0 ? `blur(${blurAmount}px)` : undefined,
+                        transform: 'translateZ(0)',
+                    }}
+                />
+            )}
             
             {/* Dark overlay for better contrast */}
             <div 

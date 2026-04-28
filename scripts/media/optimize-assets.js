@@ -26,42 +26,45 @@ async function optimizeWallpaper() {
 
 async function optimizeVideos() {
     console.log('📹 Optimizing videos...');
-    if (!fs.existsSync(PROJECTS_DIR)) return;
+    const dirs = [PROJECTS_DIR, WALLPAPER_DIR];
 
-    const files = fs.readdirSync(PROJECTS_DIR).filter(f => f.endsWith('.mp4'));
+    for (const dir of dirs) {
+        if (!fs.existsSync(dir)) continue;
+        console.log(`Checking directory: ${dir}`);
+        const files = fs.readdirSync(dir).filter(f => f.endsWith('.mp4'));
 
-    for (const file of files) {
-        const input = path.join(PROJECTS_DIR, file);
-        const output = path.join(PROJECTS_DIR, file.replace('.mp4', '-opt.mp4'));
+        for (const file of files) {
+            const input = path.join(dir, file);
+            const output = path.join(dir, file.replace('.mp4', '-opt.mp4'));
 
-        // Skip if optimized version exists
-        if (fs.existsSync(output)) continue;
+            // Skip if optimized version exists
+            if (fs.existsSync(output)) continue;
 
-        console.log(`Processing ${file}...`);
+            console.log(`Processing ${file} in ${path.basename(dir)}...`);
 
-        await new Promise((resolve, reject) => {
-            ffmpeg(input)
-                .outputOptions([
-                    '-c:v libx264',
-                    '-crf 28', // Lower quality slightly for size
-                    '-preset fast',
-                    '-an' // Remove audio if not needed? User had "musik-alam" so maybe audio is needed. Let's keep audio for now but compress.
-                ])
-                // actually let's keep audio but strict bitrate
-                .videoBitrate('1000k')
-                .save(output)
-                .on('end', () => {
-                    console.log(`✅ Compressed ${file}`);
-                    // Replace original with optimized
-                    fs.unlinkSync(input);
-                    fs.renameSync(output, input);
-                    resolve();
-                })
-                .on('error', (err) => {
-                    console.error(`❌ Error compressing ${file}:`, err);
-                    reject(err);
-                });
-        });
+            await new Promise((resolve, reject) => {
+                ffmpeg(input)
+                    .outputOptions([
+                        '-c:v libx264',
+                        '-crf 28', // Lower quality slightly for size
+                        '-preset fast',
+                        '-an' // Remove audio for wallpaper/project preview to save space
+                    ])
+                    .videoBitrate('1000k')
+                    .save(output)
+                    .on('end', () => {
+                        console.log(`✅ Compressed ${file}`);
+                        // Replace original with optimized
+                        fs.unlinkSync(input);
+                        fs.renameSync(output, input);
+                        resolve();
+                    })
+                    .on('error', (err) => {
+                        console.error(`❌ Error compressing ${file}:`, err);
+                        reject(err);
+                    });
+            });
+        }
     }
 }
 

@@ -181,7 +181,8 @@ export default function DesktopIcon({
                             draggable={false}
                             onError={() => setFailedImageUrl(imageUrl ?? "__missing__")}
                             priority={priority} // Important for LCP
-                            loading={priority ? "eager" : "lazy"}
+                            loading="eager"
+                            fetchPriority={priority ? "high" : "auto"}
                             quality={60} // Thumbnails don't need 100% quality
                         />
                     )}

@@ -27,7 +27,9 @@ export default function LayoutClient({
     const [isMounted, setIsMounted] = React.useState(false);
 
     React.useEffect(() => {
-        setIsMounted(true);
+        React.startTransition(() => {
+            setIsMounted(true);
+        });
     }, []);
 
     // We want the Dock on ALL pages except Admin, OS Desktop, and fullscreen pages

@@ -65,7 +65,9 @@ export default function AdminExplorerClient() {
     }, [showError]);
 
     useEffect(() => {
-        fetchNodes(currentParentId);
+        Promise.resolve().then(() => {
+            fetchNodes(currentParentId);
+        });
     }, [currentParentId, fetchNodes]);
 
     // Navigation logic

@@ -52,9 +52,11 @@ export function useAutoUpdate<T>(
     
     let intervalId: ReturnType<typeof setInterval> | null = null;
     
-    // BUG FIX #4: Handle promise rejection dari fetchData awal
-    fetchData().catch(err => {
-      console.error('[useAutoUpdate] Initial fetch failed:', err);
+    // BUG FIX #4: Defer fetchData to avoid sync setState in effect
+    Promise.resolve().then(() => {
+      fetchData().catch(err => {
+        console.error('[useAutoUpdate] Initial fetch failed:', err);
+      });
     });
 
     if (enabled) {

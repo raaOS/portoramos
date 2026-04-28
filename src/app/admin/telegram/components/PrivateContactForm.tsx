@@ -39,7 +39,9 @@ export function PrivateContactForm() {
     };
 
     useEffect(() => {
-        fetchAboutData();
+        Promise.resolve().then(() => {
+            fetchAboutData();
+        });
     }, []);
 
     const handleSave = async () => {

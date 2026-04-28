@@ -30,7 +30,7 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
         project?: Project;
     } | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
-    const { openWindow } = useDesktopWindowContext();
+    const { openWindow: _openWindow } = useDesktopWindowContext();
 
     // Contacts state
     const contacts = useMemo(
@@ -102,11 +102,13 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
         if (!activeChatId) return;
         const target = findContactByChatId(activeChatId);
         if (target) {
-            setActiveContact(target);
-            setShowList(false);
-            setVisibleMessages([]);
+            React.startTransition(() => {
+                setActiveContact(target);
+                setShowList(false);
+                setVisibleMessages([]);
+            });
         }
-    }, [activeChatId, findContactByChatId]);
+    }, [activeChatId, findContactByChatId, setVisibleMessages]);
 
     if (showList) {
         return <ChatList contacts={contacts} onSelect={selectContact} getLastMessage={getLastMessage} />;

@@ -9,6 +9,8 @@ export type MediaImageProps = {
   className?: string
   sizes?: string
   priority?: boolean
+  eager?: boolean
+  lazy?: boolean
   width?: number
   height?: number
   blurDataURL?: string
@@ -22,12 +24,15 @@ export default function MediaImage({
   className,
   sizes,
   priority = false,
+  eager = false,
+  lazy,
   width = 1600,
   height = 1000,
   blurDataURL,
   quality,
   objectFit = 'cover',
 }: MediaImageProps) {
+  const shouldLoadEagerly = priority || eager || lazy === false
   const [isLoading, setIsLoading] = useState(!priority)
   const [hasError, setHasError] = useState(false)
 
@@ -39,7 +44,7 @@ export default function MediaImage({
         width={width}
         height={height}
         priority={priority}
-        loading={priority ? 'eager' : 'lazy'}
+        loading={shouldLoadEagerly ? 'eager' : 'lazy'}
         fetchPriority={priority ? "high" : "auto"}
         sizes={sizes || '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'}
         className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}

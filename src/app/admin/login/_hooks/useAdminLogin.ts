@@ -29,7 +29,9 @@ export function useAdminLogin(location: LocationData | null) {
     }, []);
 
     useEffect(() => {
-        fetchCSRF();
+        Promise.resolve().then(() => {
+            fetchCSRF();
+        });
     }, [fetchCSRF]);
 
     const handleSubmit = async (e: React.FormEvent) => {

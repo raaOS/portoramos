@@ -52,7 +52,7 @@ export const aiChatService = {
             const result = await geminiModel.generateContent(prompt);
             const response = await result.response;
             return { text: response.text().trim() };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("[AIChatService] Gemini error:", error);
             
             // --- GROQ FALLBACK (ANTI-MATI) ---
@@ -91,9 +91,10 @@ export const aiChatService = {
             }
 
             // Mengirim balik pesan fallback beserta flag error agar bot Telegram Admin bisa memberi Notifikasi!
+            const errorMessage = error instanceof Error ? error.message : "Unknown API Error";
             return {
                 text: "Maaf, sistem AI sedang sibuk. Mohon tunggu, pesan Anda akan segera dibalas langsung oleh Ramos.",
-                error: (error?.message || "Unknown API Error") + (groqKey ? " (And Groq Fallback also failed)" : " (No Groq Key configured for Fallback)")
+                error: errorMessage + (groqKey ? " (And Groq Fallback also failed)" : " (No Groq Key configured for Fallback)")
             };
         }
     }

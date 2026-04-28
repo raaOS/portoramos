@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { AboutData, UpdateAboutData } from '@/types/about';
 import { RunningTextItem } from '@/types/runningText';
 import { Project } from '@/types/projects';
+import { Label } from '@/types/labels';
 import { useToast } from '@/contexts/ToastContext';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 
@@ -16,6 +17,9 @@ export function useAdminAbout(csrfToken: string | null) {
     const [runningTextsLoading, setRunningTextsLoading] = useState(true);
     const { showSuccess, showError } = useToast();
 
+    const [labels, setLabels] = useState<Label[]>([]);
+    const [labelsLoading, setLabelsLoading] = useState(true);
+
     const loadAboutData = useCallback(async () => {
         try {
             setLoading(true);
@@ -27,6 +31,19 @@ export function useAdminAbout(csrfToken: string | null) {
             showError('Failed to load about content.');
         } finally {
             setLoading(false);
+        }
+    }, [showError]);
+
+    const loadLabels = useCallback(async () => {
+        try {
+            setLabelsLoading(true);
+            const response = await fetch('/api/about/labels');
+            const data = await response.json();
+            setLabels(Array.isArray(data) ? data : []);
+        } catch {
+            showError('Failed to load labels.');
+        } finally {
+            setLabelsLoading(false);
         }
     }, [showError]);
 
@@ -57,7 +74,8 @@ export function useAdminAbout(csrfToken: string | null) {
         loadAboutData();
         loadRunningTexts();
         loadProjects();
-    }, [loadAboutData, loadRunningTexts, loadProjects]);
+        loadLabels();
+    }, [loadAboutData, loadRunningTexts, loadProjects, loadLabels]);
 
     const handleUpdateAbout = async (updateData: UpdateAboutData) => {
         try {
@@ -86,6 +104,33 @@ export function useAdminAbout(csrfToken: string | null) {
             const msg = `Failed to update: ${err instanceof Error ? err.message : 'Network error'}`;
             setError(msg);
             showError(msg);
+        }
+    };
+
+    const handleUpdateLabels = async (newLabels: Label[]) => {
+        try {
+            const token = getWritableCsrfToken(csrfToken);
+            const response = await fetch('/api/about/labels', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': token
+                },
+                credentials: 'include',
+                body: JSON.stringify(newLabels)
+            });
+
+            if (response.ok) {
+                setLabels(newLabels);
+                showSuccess('Labels updated successfully.');
+                return true;
+            } else {
+                showError('Failed to update labels.');
+                return false;
+            }
+        } catch {
+            showError('Failed to update labels.');
+            return false;
         }
     };
 
@@ -163,10 +208,14 @@ export function useAdminAbout(csrfToken: string | null) {
         projects,
         runningTexts,
         runningTextsLoading,
+        labels,
+        labelsLoading,
         handleUpdateAbout,
+        handleUpdateLabels,
         handleCreateRunningText,
         handleUpdateRunningText,
         handleDeleteRunningText,
         refreshAboutData: loadAboutData
     };
+
 }

@@ -386,10 +386,10 @@ export default function ExplorerWindow({
                     <button
                         onClick={() => fetchNodes(currentParentId)}
                         disabled={isLoading || !!activeFile}
-                        className={`p-1.5 rounded transition-all text-gray-400 hover:text-black dark:hover:text-white active:scale-90 ${isLoading ? 'animate-spin' : ''}`}
+                        className={`p-1.5 rounded transition-all text-gray-400 hover:text-black dark:hover:text-white active:scale-90 flex items-center justify-center`}
                         title="Refresh folder content"
                     >
-                        <RefreshCw size={16} />
+                        <RefreshCw size={16} className={isLoading ? 'animate-spin origin-center' : ''} />
                     </button>
 
                     {/* Search */}
@@ -444,7 +444,7 @@ export default function ExplorerWindow({
                             className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-black/90 px-3 py-1 rounded-full shadow-sm border border-black/5 dark:border-white/10 z-[20] flex items-center gap-2 pointer-events-none"
                         >
                             <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Loading</span>
-                            <RefreshCw size={10} className="animate-spin text-gray-500 dark:text-gray-400" />
+                            <RefreshCw size={12} className="animate-spin origin-center text-gray-500 dark:text-gray-400" />
                         </m.div>
                     )}
                 </AnimatePresence>

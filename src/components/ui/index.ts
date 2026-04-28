@@ -17,5 +17,5 @@ export {
 export { default as Input } from './Input';
 export { default as ReadMoreDescription } from './ReadMoreDescription';
 export { default as Select } from './Select';
-export { SparklesCore } from './Sparkles';
+
 export { default as Toast } from './Toast';

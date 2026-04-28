@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import dynamic from "next/dynamic";
-const SparklesCore = dynamic(() => import("@/components/ui/Sparkles").then(mod => mod.SparklesCore), { ssr: false });
+
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "motion/react";
 import { cn, getProxiedUrl } from "@/lib/utils";
 import { IconDotsVertical } from "@tabler/icons-react";
@@ -227,19 +226,7 @@ export const Compare = ({
             left: leftPosition, // USE SPRING for handle
           }}
         >
-          {/* Sparkles Decoration */}
-          <div className="w-36 h-full [mask-image:radial-gradient(100px_at_left,white,transparent)] absolute top-1/2 -translate-y-1/2 left-0 bg-gradient-to-r from-indigo-400 via-transparent to-transparent z-20 opacity-50" />
-          <div className="w-10 h-1/2 [mask-image:radial-gradient(50px_at_left,white,transparent)] absolute top-1/2 -translate-y-1/2 left-0 bg-gradient-to-r from-cyan-400 via-transparent to-transparent z-10 opacity-100" />
-          <div className="w-10 h-3/4 top-1/2 -translate-y-1/2 absolute -right-10 [mask-image:radial-gradient(100px_at_left,white,transparent)]">
-            <MemoizedSparklesCore
-              background="transparent"
-              minSize={0.4}
-              maxSize={1}
-              particleDensity={1200}
-              className="w-full h-full"
-              particleColor="#FFFFFF"
-            />
-          </div>
+
           {showHandlebar && (
             <div className="h-5 w-5 rounded-md top-1/2 -translate-y-1/2 bg-white z-30 -right-2.5 absolute flex items-center justify-center shadow-[0px_-1px_0px_0px_#FFFFFF40]">
               <IconDotsVertical className="h-4 w-4 text-black" />
@@ -305,4 +292,4 @@ export const Compare = ({
   );
 };
 
-const MemoizedSparklesCore = React.memo(SparklesCore);
+

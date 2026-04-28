@@ -198,14 +198,18 @@ export function useTelegramConfig() {
 
     // Initial load
     useEffect(() => {
-        fetchConfig();
+        Promise.resolve().then(() => {
+            fetchConfig();
+        });
     }, [fetchConfig]);
 
     // Check status when active config changes
     useEffect(() => {
         if (activeConfig?.botToken) {
-            checkStatus(activeConfig.botToken);
-            checkWebhook();
+            Promise.resolve().then(() => {
+                checkStatus(activeConfig.botToken);
+                checkWebhook();
+            });
         }
     }, [activeConfig, checkStatus, checkWebhook]);
 

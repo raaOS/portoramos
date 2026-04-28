@@ -18,6 +18,8 @@ interface ProjectCardProps {
     handleDuplicateProject: (project: Project) => void;
     setManagingCommentsProject: (project: Project) => void;
     commentCount?: number;
+    priority?: boolean;
+    eager?: boolean;
 }
 
 export const ProjectCard = ({
@@ -29,9 +31,12 @@ export const ProjectCard = ({
     handleDeleteProject,
     handleDuplicateProject,
     setManagingCommentsProject,
-    commentCount: _commentCount = 0
+    commentCount: _commentCount = 0,
+    priority = false,
+    eager = false
 }: ProjectCardProps) => {
     const isPublished = project.status === 'published';
+    const shouldLoadEagerly = priority || eager;
 
     return (
         <div className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col overflow-hidden h-full">
@@ -58,7 +63,9 @@ export const ProjectCard = ({
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        loading="lazy"
+                        priority={priority}
+                        loading={shouldLoadEagerly ? 'eager' : 'lazy'}
+                        fetchPriority={priority ? 'high' : 'auto'}
                     />
                 )}
             </div>

@@ -7,7 +7,7 @@ interface WindowSkeletonProps {
     title?: string;
 }
 
-export default function WindowSkeleton({ type = 'generic', title = 'Loading...' }: WindowSkeletonProps) {
+export default function WindowSkeleton({ type = 'generic', title: _title = 'Loading...' }: WindowSkeletonProps) {
     return (
         <div className="flex flex-col h-full w-full bg-[#f6f6f6] dark:bg-[#1a1a1a] rounded-[18px] overflow-hidden border border-white/20 shadow-2xl animate-pulse">
             {/* Title Bar Mockup */}

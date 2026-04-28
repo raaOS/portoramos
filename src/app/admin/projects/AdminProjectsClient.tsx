@@ -62,6 +62,7 @@ export default function AdminProjectsClient() {
     selectedProjectIds,
     toggleProjectSelection,
     selectAllProjects,
+    labels,
   } = useAdminProjects();
 
   const {
@@ -144,10 +145,12 @@ export default function AdminProjectsClient() {
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={paginatedProjects.map(p => p.id)} strategy={rectSortingStrategy}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {paginatedProjects.map((project) => (
+                  {paginatedProjects.map((project, index) => (
                     <SortableProjectItem key={project.id} id={project.id}>
                       <ProjectCard
                         project={project}
+                        priority={index < 6}
+                        eager={index < 12}
                         selectedProjectIds={selectedProjectIds}
                         toggleProjectSelection={toggleProjectSelection}
                         handleToggleProjectStatus={handleToggleProjectStatus}
@@ -183,6 +186,7 @@ export default function AdminProjectsClient() {
         <ProjectForm
           project={editingProject || undefined}
           allProjects={orderedProjects}
+          labels={labels}
           title={editingProject ? 'Edit Proyek' : 'Buat Proyek Baru'}
           onCancel={() => { setShowCreateForm(false); setEditingProject(null); }}
           onSubmit={async (data) => {

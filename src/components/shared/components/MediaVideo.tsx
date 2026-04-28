@@ -10,6 +10,7 @@ export type MediaVideoProps = {
   alt?: string
   poster?: string
   posterPriority?: boolean
+  eager?: boolean
   className?: string
   sizes?: string
   priority?: boolean
@@ -35,6 +36,7 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
   alt = '',
   poster,
   posterPriority,
+  eager = false,
   className,
   sizes,
   priority = false,
@@ -66,6 +68,7 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
   const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const effectivePosterPriority = posterPriority ?? priority
+  const shouldLoadPosterEagerly = effectivePosterPriority || eager
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -214,7 +217,7 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
             width={width}
             height={height}
             priority={effectivePosterPriority}
-            loading={effectivePosterPriority ? 'eager' : 'lazy'}
+            loading={shouldLoadPosterEagerly ? 'eager' : 'lazy'}
             fetchPriority={effectivePosterPriority ? 'high' : 'auto'}
             sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
             className={className || "w-full h-full object-cover"}

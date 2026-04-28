@@ -50,12 +50,13 @@ const ProjectListItem = memo(function ProjectListItem({
               alt={project.title}
               className="w-full h-full object-cover"
               priority={cover.kind === 'image' ? index < 8 : false}
+              eager={cover.kind === 'image' ? index < 20 : index < 8}
               posterPriority={cover.kind === 'video' ? index < 8 : undefined}
               autoplay={cover.kind === 'video' ? (project.autoplay ?? true) : undefined}
               muted={cover.kind === 'video' ? (project.muted ?? true) : undefined}
               loop={cover.kind === 'video' ? (project.loop ?? true) : undefined}
               playsInline={cover.kind === 'video' ? (project.playsInline ?? true) : undefined}
-              lazy={index >= 8}
+              lazy={cover.kind === 'image' ? index >= 20 : index >= 8}
             />
           );
         })() : (

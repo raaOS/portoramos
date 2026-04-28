@@ -44,8 +44,10 @@ export function useAdminTestimonial(csrfToken: string | null) {
     }, []);
 
     useEffect(() => {
-        loadTestimonials();
-        loadProjects();
+        Promise.resolve().then(() => {
+            loadTestimonials();
+            loadProjects();
+        });
     }, [loadTestimonials, loadProjects]);
 
     const { lastUpdated, refresh } = useAutoUpdate(loadTestimonials);

@@ -43,7 +43,9 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
     }, [showError]);
 
     useEffect(() => {
-        loadNotes();
+        Promise.resolve().then(() => {
+            loadNotes();
+        });
     }, [loadNotes]);
 
     const handleSave = async () => {

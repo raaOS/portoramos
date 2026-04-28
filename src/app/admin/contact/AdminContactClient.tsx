@@ -30,7 +30,9 @@ export default function AdminContactClient() {
   }, [showError]);
 
   useEffect(() => {
-    loadContactData();
+    Promise.resolve().then(() => {
+      loadContactData();
+    });
   }, [loadContactData]);
 
   const handleUpdateContact = async (updateData: UpdateContactData) => {

@@ -24,6 +24,8 @@ import NotificationsManager from './components/NotificationsManager';
 import HardSkillsManager from './components/HardSkillsManager';
 import SoundEffectsManager from './components/SoundEffectsManager';
 
+import LabelsManager from './components/LabelsManager';
+
 // Lazy load heavy third-party components
 const DesignPhilosophyForm = dynamic(() => import('@/components/admin/about/DesignPhilosophyForm'));
 const GalleryManager = dynamic(() => import('@/components/admin/GalleryManager'), { loading: () => <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> });
@@ -34,8 +36,8 @@ export default function AdminAboutClient() {
 
   // Derive active tab from URL search parameters (Source of Truth)
   const tabParam = searchParams.get('tab');
-  const validTabs = ['professional', 'softSkills', 'hardSkills', 'runningText', 'philosophy', 'desktop', 'wallpaper', 'dock', 'stickyNotes', 'notifications', 'sounds', 'archive'];
-  type ValidTab = 'professional' | 'softSkills' | 'hardSkills' | 'runningText' | 'philosophy' | 'desktop' | 'wallpaper' | 'dock' | 'stickyNotes' | 'notifications' | 'sounds' | 'archive';
+  const validTabs = ['professional', 'softSkills', 'hardSkills', 'labels', 'runningText', 'philosophy', 'desktop', 'wallpaper', 'dock', 'stickyNotes', 'notifications', 'sounds', 'archive'];
+  type ValidTab = 'professional' | 'softSkills' | 'hardSkills' | 'labels' | 'runningText' | 'philosophy' | 'desktop' | 'wallpaper' | 'dock' | 'stickyNotes' | 'notifications' | 'sounds' | 'archive';
 
   const activeTab = (tabParam && validTabs.includes(tabParam))
     ? (tabParam as ValidTab)
@@ -49,7 +51,10 @@ export default function AdminAboutClient() {
     projects,
     runningTexts,
     runningTextsLoading,
+    labels,
+    labelsLoading,
     handleUpdateAbout,
+    handleUpdateLabels,
     handleCreateRunningText,
     handleUpdateRunningText,
     handleDeleteRunningText
@@ -147,6 +152,14 @@ export default function AdminAboutClient() {
               </div>
             )}
 
+            {activeTab === 'labels' && (
+              <LabelsManager 
+                initialLabels={labels}
+                onUpdate={handleUpdateLabels}
+                loading={labelsLoading}
+              />
+            )}
+
             {activeTab === 'philosophy' && (
               <DesignPhilosophyForm />
             )}
@@ -160,6 +173,7 @@ export default function AdminAboutClient() {
                 onDelete={handleDeleteRunningText}
               />
             )}
+
 
             {activeTab === 'wallpaper' && (
               <div className="space-y-8">

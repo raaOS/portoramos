@@ -4,19 +4,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Grid, List, Filter, Search as SearchIcon, X, Check, Box } from 'lucide-react';
 
+import { Label } from '@/types/labels';
+
 interface ProjectsFinderHeaderProps {
     itemCount: number;
+    labels?: Label[];
 }
 
-const CATEGORIES = [
-    { label: 'Semua Karya', value: '' },
-    { label: 'Video & Motion', value: 'video' },
-    { label: 'Image & Artwork', value: 'image' },
-    { label: 'Commercial', value: 'commercial' },
-    { label: 'Visual Art', value: 'visual_art' },
-];
-
-export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeaderProps) {
+export default function ProjectsFinderHeader({ itemCount, labels = [] }: ProjectsFinderHeaderProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     // FIX: Remove useTransition - not needed for simple router.push
@@ -28,6 +23,12 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
     const currentTag = searchParams?.get('tag') || '';
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef<HTMLDivElement>(null);
+
+    // Add "All" option to labels
+    const allCategories = [
+        { name: 'Semua Karya', slug: '' },
+        ...labels
+    ];
 
     useEffect(() => {
         const query = searchParams?.get('q') || '';
@@ -179,7 +180,7 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
                         aria-expanded={isFilterOpen}
                         aria-haspopup="listbox"
                     >
-                        <Filter size={12} /> {currentTag ? CATEGORIES.find(c => c.value === currentTag)?.label : 'Filter'}
+                        <Filter size={12} /> {currentTag ? allCategories.find(c => c.slug === currentTag)?.name : 'Filter'}
                     </button>
 
                     {isFilterOpen && (
@@ -188,16 +189,16 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
                             role="listbox"
                             aria-label="Filter categories"
                         >
-                            {CATEGORIES.map((cat) => (
+                            {allCategories.map((cat) => (
                                 <button
-                                    key={cat.value}
-                                    onClick={() => handleTagChange(cat.value)}
-                                    className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${currentTag === cat.value ? 'text-blue-600 font-bold' : 'text-gray-700 dark:text-gray-300'}`}
+                                    key={cat.slug}
+                                    onClick={() => handleTagChange(cat.slug)}
+                                    className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${currentTag === cat.slug ? 'text-blue-600 font-bold' : 'text-gray-700 dark:text-gray-300'}`}
                                     role="option"
-                                    aria-selected={currentTag === cat.value}
+                                    aria-selected={currentTag === cat.slug}
                                 >
-                                    {cat.label}
-                                    {currentTag === cat.value && <Check size={12} className="text-blue-600" />}
+                                    {cat.name}
+                                    {currentTag === cat.slug && <Check size={12} className="text-blue-600" />}
                                 </button>
                             ))}
                         </div>
@@ -207,3 +208,4 @@ export default function ProjectsFinderHeader({ itemCount }: ProjectsFinderHeader
         </div>
     );
 }
+

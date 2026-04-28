@@ -9,7 +9,7 @@ export const explorerService = {
      * Get all nodes in a flat map (useful for lookups) or children of a specific folder.
      */
     async getNodes(parentId: string | null = null): Promise<AnyExplorerNode[]> {
-        const normalize = (id: any) => (!id || id === 'root' || id === 'null' || id === 'undefined') ? null : id;
+        const normalize = (id: string | null | undefined) => (!id || id === 'root' || id === 'null' || id === 'undefined') ? null : id;
         const normalizedParentId = normalize(parentId);
         
         try {
@@ -32,12 +32,12 @@ export const explorerService = {
     /**
      * Get a specific node by ID
      */
-    async getNode(id: string): Promise<AnyExplorerNode | null> {
+    async getNode(nodeId: string): Promise<AnyExplorerNode | null> {
         try {
-            const snapshot = await db.ref(`${EXPLORER_PATH}/${id}`).once('value');
+            const snapshot = await db.ref(`${EXPLORER_PATH}/${nodeId}`).once('value');
             return snapshot.val();
         } catch (error) {
-            console.error(`[ExplorerService] Failed to get node ${id}:`, error);
+            console.error(`[ExplorerService] Failed to get node ${nodeId}:`, error);
             return null;
         }
     },
@@ -88,13 +88,13 @@ export const explorerService = {
      * Delete a node (folder or file)
      * TODO: Implement recursive deletion for folders if needed.
      */
-    async deleteNode(id: string): Promise<boolean> {
+    async deleteNode(nodeId: string): Promise<boolean> {
         try {
             // If it's a folder, we should also delete its children (simplified here)
-            await db.ref(`${EXPLORER_PATH}/${id}`).remove();
+            await db.ref(`${EXPLORER_PATH}/${nodeId}`).remove();
             return true;
         } catch (error) {
-            console.error(`[ExplorerService] Failed to delete node ${id}:`, error);
+            console.error(`[ExplorerService] Failed to delete node ${nodeId}:`, error);
             return false;
         }
     },
@@ -102,15 +102,15 @@ export const explorerService = {
     /**
      * Rename a node
      */
-    async renameNode(id: string, newName: string): Promise<boolean> {
+    async renameNode(nodeId: string, newName: string): Promise<boolean> {
         try {
-            await db.ref(`${EXPLORER_PATH}/${id}`).update({
+            await db.ref(`${EXPLORER_PATH}/${nodeId}`).update({
                 name: newName,
                 updatedAt: new Date().toISOString()
             });
             return true;
         } catch (error) {
-            console.error(`[ExplorerService] Failed to rename node ${id}:`, error);
+            console.error(`[ExplorerService] Failed to rename node ${nodeId}:`, error);
             return false;
         }
     },
@@ -118,16 +118,16 @@ export const explorerService = {
     /**
      * Get the full path (ancestors) for a given node
      */
-    async getPath(id: string | null): Promise<ExplorerFolder[]> {
-        if (!id) return [];
+    async getPath(nodeId: string | null): Promise<ExplorerFolder[]> {
+        if (!nodeId) return [];
         try {
             const snapshot = await db.ref(EXPLORER_PATH).once('value');
             const data = snapshot.val() as Record<string, AnyExplorerNode> | null;
             if (!data) return [];
 
-            const normalize = (id: any) => (!id || id === 'root' || id === 'null' || id === 'undefined') ? null : id;
+            const normalize = (id: string | null | undefined) => (!id || id === 'root' || id === 'null' || id === 'undefined') ? null : id;
             const path: ExplorerFolder[] = [];
-            let currentId: string | null = normalize(id);
+            let currentId: string | null = normalize(nodeId);
 
             // Prevent infinite loops just in case
             let depth = 0;

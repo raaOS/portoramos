@@ -10,8 +10,10 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
 
     useEffect(() => {
         if (showList || !activeContact) {
-            setVisibleMessages([]);
-            setIsRemoteTyping(false);
+            React.startTransition(() => {
+                setVisibleMessages([]);
+                setIsRemoteTyping(false);
+            });
             if (sequencerRef.current) clearTimeout(sequencerRef.current);
             return;
         }
@@ -20,8 +22,10 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
         isCancelledRef.current = false;
 
         // Reset visibility
-        setVisibleMessages([]);
-        setIsRemoteTyping(false);
+        React.startTransition(() => {
+            setVisibleMessages([]);
+            setIsRemoteTyping(false);
+        });
         if (sequencerRef.current) clearTimeout(sequencerRef.current);
 
         let currentIndex = 0;

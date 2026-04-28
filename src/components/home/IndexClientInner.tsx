@@ -2,7 +2,7 @@
 
 import type { Project } from '@/types/projects'
 import { useMemo, useEffect, useRef, memo, useDeferredValue, useState } from 'react'
-import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react'
+import { LazyMotion, domAnimation, m, AnimatePresence, type Transition } from 'motion/react'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
 import ProjectSplitView from '@/components/projects/ProjectSplitView'
 import MasonryGrid from '@/components/layout/MasonryGrid'
@@ -91,16 +91,18 @@ export default function IndexClientInner({
   }, [filteredProjects, visibleCount]);
 
   const gridPriorityCount = Math.min(initialCount, displayedItems.length);
+  const gridEagerCount = Math.min(Math.max(initialCount, 20), displayedItems.length);
 
   const gridView = useMemo(() => (
     <MasonryGrid width={windowWidth}>
       {displayedItems.map((item, index) => {
         const isPriority = index < gridPriorityCount;
+        const isEager = index < gridEagerCount;
         const animationProps = isPriority ? undefined : {
           initial: { opacity: 0, y: 20 },
           whileInView: { opacity: 1, y: 0 },
           viewport: { once: true, margin: "-30px" },
-          transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } as any
+          transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } as Transition
         };
         return (
           <m.div
@@ -110,12 +112,12 @@ export default function IndexClientInner({
             onMouseEnter={() => setHoveredProjectId(item.project.id)}
             onMouseLeave={() => setHoveredProjectId(null)}
           >
-            <MemoizedProjectCardPinterest project={item.project} priority={isPriority} videoEnabled={true} highlightedTag={tag} />
+            <MemoizedProjectCardPinterest project={item.project} priority={isPriority} eager={isEager} videoEnabled={true} highlightedTag={tag} />
           </m.div>
         )
       })}
     </MasonryGrid>
-  ), [displayedItems, windowWidth, tag, gridPriorityCount]);
+  ), [displayedItems, windowWidth, tag, gridPriorityCount, gridEagerCount]);
 
   const showLoading = isParentLoading || isViewTransitioning;
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Project, CreateProjectData, UpdateProjectData, GalleryItem, GalleryGroup } from '@/types/projects';
 import { isVideoLink, detectImageDimensions } from '@/lib/media';
 import { Comment } from '@/lib/magic';

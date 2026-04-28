@@ -67,7 +67,7 @@ export default function PerformanceMonitor() {
 
     // Long Tasks
     try {
-      const ltObserver = new PerformanceObserver((list) => {
+      const ltObserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
         for (const entry of list.getEntries()) {
           if (entry.duration > longTaskWarningThreshold) {
             console.warn('[Performance] Long Task detected:', {
@@ -86,17 +86,25 @@ export default function PerformanceMonitor() {
     // Layout Shifts
     try {
       let clsValue = 0;
-      const lsObserver = new PerformanceObserver((list) => {
+      const lsObserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
         for (const entry of list.getEntries()) {
-          const layoutShiftEntry = entry as any;
+          const layoutShiftEntry = entry as PerformanceEntry & {
+            hadRecentInput?: boolean;
+            value?: number;
+            sources?: Array<{
+              node?: { nodeName?: string; className?: string };
+              currentRect?: DOMRectReadOnly;
+              previousRect?: DOMRectReadOnly;
+            }>;
+          };
           if (!layoutShiftEntry.hadRecentInput) {
-            clsValue += layoutShiftEntry.value;
+            clsValue += layoutShiftEntry.value || 0;
             
             // Log the elements causing the shift for debugging
-            if (layoutShiftEntry.value > 0.01) {
+            if ((layoutShiftEntry.value || 0) > 0.01) {
               console.warn('[Performance] Layout Shift Source:', {
                 value: layoutShiftEntry.value,
-                sources: layoutShiftEntry.sources?.map((s: any) => ({
+                sources: layoutShiftEntry.sources?.map((s) => ({
                   node: s.node?.nodeName,
                   className: s.node?.className,
                   currentRect: s.currentRect,
