@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, startTransition } from 'react';
 import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
 import type { ContactProfile, ChatMessage } from '../../data/mockChats';
 
@@ -10,7 +10,7 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
 
     useEffect(() => {
         if (showList || !activeContact) {
-            React.startTransition(() => {
+            startTransition(() => {
                 setVisibleMessages([]);
                 setIsRemoteTyping(false);
             });
@@ -22,7 +22,7 @@ export function useChatSequencer(activeContact: ContactProfile | null, showList:
         isCancelledRef.current = false;
 
         // Reset visibility
-        React.startTransition(() => {
+        startTransition(() => {
             setVisibleMessages([]);
             setIsRemoteTyping(false);
         });

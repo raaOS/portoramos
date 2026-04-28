@@ -29,7 +29,7 @@ export function WindowTitleBar({
     onFocus,
 }: WindowTitleBarProps) {
     const buttonTransition = {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 500,
         damping: 15,
         mass: 0.5

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, startTransition } from 'react';
 import type { Project, GalleryGroup } from '@/types/projects';
 import type { Comment } from '@/lib/magic';
 
@@ -50,7 +50,7 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
         try {
             const cached = localStorage.getItem(CACHE_KEY);
             if (cached) {
-                React.startTransition(() => {
+                startTransition(() => {
                     setTranslations(JSON.parse(cached));
                 });
             }

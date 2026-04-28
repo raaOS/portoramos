@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, startTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lock, Loader2 } from 'lucide-react';
@@ -31,7 +31,7 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
     }
 
     useEffect(() => {
-        React.startTransition(() => {
+        startTransition(() => {
             setMounted(true);
         });
     }, []);

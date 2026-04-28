@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState, useEffect, startTransition } from 'react';
 import { usePathname } from 'next/navigation';
 import { LazyMotion, domAnimation, AnimatePresence, m } from 'motion/react';
 import Header from '@/components/shared/Header';
@@ -24,10 +24,10 @@ export default function LayoutClient({
     const isOsMode = pathname === '/' || pathname?.startsWith('/about-test') || pathname?.startsWith('/about');
     const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
 
-    const [isMounted, setIsMounted] = React.useState(false);
+    const [isMounted, setIsMounted] = useState(false);
 
-    React.useEffect(() => {
-        React.startTransition(() => {
+    useEffect(() => {
+        startTransition(() => {
             setIsMounted(true);
         });
     }, []);

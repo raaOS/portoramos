@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback, startTransition } from 'react';
 import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
 import { useChatProjects } from './hooks/useChatProjects';
 import { useChatSequencer } from './hooks/useChatSequencer';
@@ -102,7 +102,7 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
         if (!activeChatId) return;
         const target = findContactByChatId(activeChatId);
         if (target) {
-            React.startTransition(() => {
+            startTransition(() => {
                 setActiveContact(target);
                 setShowList(false);
                 setVisibleMessages([]);

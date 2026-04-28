@@ -117,7 +117,7 @@ export default function WindowsLayer({ isAdmin, isReady = true }: WindowsLayerPr
             opacity: 1,
             scale: 1,
             transition: {
-                type: "spring",
+                type: "spring" as const,
                 stiffness: 450,
                 damping: 28,
             }

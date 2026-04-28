@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, startTransition } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
 import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
@@ -27,7 +27,7 @@ export function useChatSync(initialGreeting?: string) {
     useEffect(() => {
         try {
             const storedId = localStorage.getItem('ramos_visitor_id');
-            React.startTransition(() => {
+            startTransition(() => {
                 if (storedId) {
                     setVisitorId(storedId);
                 } else {
@@ -37,7 +37,7 @@ export function useChatSync(initialGreeting?: string) {
                 }
             });
         } catch {
-            React.startTransition(() => {
+            startTransition(() => {
                 setVisitorId(uuidv4());
             });
         }
@@ -55,7 +55,7 @@ export function useChatSync(initialGreeting?: string) {
     // Greeting
     useEffect(() => {
         if (visitorId && messages.length === 0 && initialGreeting) {
-            React.startTransition(() => {
+            startTransition(() => {
                 setMessages([{
                     id: 'greeting',
                     text: initialGreeting,
