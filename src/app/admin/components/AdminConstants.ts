@@ -9,7 +9,6 @@ import {
   Monitor,
   Layout,
   Smile,
-  Zap,
   Sparkles,
   Type,
   User,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { AboutData, UpdateAboutData } from '@/types/about';
 import { RunningTextItem } from '@/types/runningText';
 import { Project } from '@/types/projects';
@@ -71,10 +71,12 @@ export function useAdminAbout(csrfToken: string | null) {
     }, []);
 
     useEffect(() => {
-        loadAboutData();
-        loadRunningTexts();
-        loadProjects();
-        loadLabels();
+        startTransition(() => {
+            loadAboutData();
+            loadRunningTexts();
+            loadProjects();
+            loadLabels();
+        });
     }, [loadAboutData, loadRunningTexts, loadProjects, loadLabels]);
 
     const handleUpdateAbout = async (updateData: UpdateAboutData) => {

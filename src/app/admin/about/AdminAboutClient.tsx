@@ -1,6 +1,6 @@
 'use client';
 
-// React hooks - useState dan useEffect diimport untuk keperluan future use
+
 import { useSearchParams } from 'next/navigation';
 import { Info, Monitor, Info as InfoIcon, X, Image as ImageIcon } from 'lucide-react';
 import dynamic from 'next/dynamic';
