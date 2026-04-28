@@ -16,10 +16,10 @@ type ScreenState = "idle" | "zooming" | "showingText" | "glassReveal" | "done";
 const REVEAL_OVERLAP_MS = 200;
 
 const BOOT_CONFIG = {
-    keyholeZoomDuration: 2000,
-    textFadeInDuration: 2000, // Diperpanjang menjadi 2 detik untuk efek natural & dramatis
-    textDisplayDuration: 3200, // Waktu tayang teks disesuaikan agar ada jeda setelah animasi selesai
-    revealDuration: 2500,
+    keyholeZoomDuration: 1200,
+    textFadeInDuration: 1000,
+    textDisplayDuration: 2000,
+    revealDuration: 1500,
     allowSkip: true,
     get showTextDelay() { return this.keyholeZoomDuration - REVEAL_OVERLAP_MS; },
     get glassRevealDelay() { return this.keyholeZoomDuration + this.textDisplayDuration - REVEAL_OVERLAP_MS; },
@@ -129,7 +129,7 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
             id="start-screen"
             data-testid="os-start-screen"
             data-boot-state={screenState}
-            className="fixed inset-0 z-[10000] h-full w-full overflow-hidden select-none print:hidden"
+            className="fixed inset-0 z-[999999] h-full w-full overflow-hidden select-none print:hidden bg-transparent"
             initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
             style={{ pointerEvents: screenState === "glassReveal" ? "none" : "auto" }}
@@ -295,12 +295,16 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
 
                     {screenState === "idle" && (
                         <m.p
-                            className="absolute -bottom-20 whitespace-nowrap text-sm font-medium uppercase tracking-[0.3em] text-[#ffffff]"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 0.8 }}
-                            transition={{ delay: 0.5 }}
+                            className="absolute -bottom-24 whitespace-nowrap text-sm font-medium uppercase tracking-[0.4em] text-white/90"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ 
+                                delay: 0.8,
+                                duration: 1,
+                                ease: "easeOut"
+                            }}
                         >
-                            Click or Press Space
+                            Click to Start
                         </m.p>
                     )}
                 </m.div>

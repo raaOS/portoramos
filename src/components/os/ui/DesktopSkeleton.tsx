@@ -15,7 +15,7 @@ export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkel
 
     // If booting, show absolutely nothing but black to prevent "Skeleton Glitch"
     if (isBooting) {
-        return <div className="fixed inset-0 bg-black z-[10001]" />;
+        return <div className="fixed inset-0 bg-black z-[999999]" />;
     }
 
     return (

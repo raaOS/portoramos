@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AnimatePresence } from 'motion/react';
-import OSWindow from '@/app/about/_components/os/windows/Window';
+import OSWindow from '@/components/os/windows/Window';
 import { useWindowContext } from '@/contexts/WindowContext';
 
 export default function WindowRenderer() {

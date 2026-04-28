@@ -1,5 +1,5 @@
 import { ContentService } from './contentService';
-import { NoteData } from '@/app/about/_components/os/ui/elements/StickyNoteItem';
+import { NoteData } from '@/components/os/ui/elements/StickyNoteItem';
 
 const FALLBACK_NOTES: NoteData[] = [
     {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Save, Pin, Star, CheckSquare } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
-import { NoteData } from '@/app/about/_components/os/ui/elements/StickyNoteItem';
+import { NoteData } from '@/components/os/ui/elements/StickyNoteItem';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { AdminNoteEditor } from './AdminNoteEditor';
 

@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import type { AboutData } from "@/types/about";
 import { useSystemSound } from "@/hooks/useSystemSound";
-import { useLayoutPersistence } from "@/app/about/_components/os/contexts/LayoutPersistenceContext";
-import { useUnifiedZIndex } from "@/app/about/_components/os/context/UnifiedZIndexContext";
+import { useLayoutPersistence } from "@/components/os/contexts/LayoutPersistenceContext";
+import { useUnifiedZIndex } from "@/components/os/context/UnifiedZIndexContext";
 import type { WindowState } from "./window-manager/types";
 
 // Subhooks

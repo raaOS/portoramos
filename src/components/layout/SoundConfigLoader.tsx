@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { soundManager } from "@/app/about/_components/os/utils/SoundManager";
+import { soundManager } from "@/components/os/utils/SoundManager";
 
 interface SoundConfigLoaderProps {
     soundConfig?: Record<string, { path: string; volume: number }> | null;

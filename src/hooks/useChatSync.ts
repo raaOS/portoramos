@@ -1,7 +1,7 @@
 import React, { useState, useEffect, startTransition } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
-import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
+import { soundManager } from '@/components/os/utils/SoundManager';
 
 interface ChatMessage {
     id: string;

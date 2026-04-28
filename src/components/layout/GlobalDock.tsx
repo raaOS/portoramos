@@ -3,13 +3,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { m } from 'motion/react';
-import Dock from '@/app/about/_components/os/core/Dock';
-import AppIcon from '@/app/about/_components/os/ui/AppIcon';
-import WhatsAppIcon from '@/app/about/_components/os/ui/WhatsAppIcon';
+import Dock from '@/components/os/core/Dock';
+import AppIcon from '@/components/os/ui/AppIcon';
+import WhatsAppIcon from '@/components/os/ui/WhatsAppIcon';
 import { useWindowContext } from '@/contexts/WindowContext';
 import { Grid, User, Mail, FileText, Trash2 } from 'lucide-react';
-import { getDockItemConfig } from '@/app/about/_components/os/utils/dockUtils';
-import DockProjectModes from '@/app/about/_components/os/ui/DockProjectModes';
+import { getDockItemConfig } from '@/components/os/utils/dockUtils';
+import DockProjectModes from '@/components/os/ui/DockProjectModes';
 import type { DockPreferences } from '@/types/about';
 
 export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {

@@ -3,19 +3,12 @@ import { displayClassName, sansClassName } from '@/app/fonts';
 import { baseSEO } from '@/lib/seo';
 import Providers from '@/components/layout/Providers';
 import { ToastProvider } from '@/contexts/ToastContext';
-import { LastUpdatedProvider } from '@/contexts/LastUpdatedContext';
-import { NavbarVisibilityProvider } from '@/contexts/NavbarVisibilityContext';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
-import LayoutClient from '@/components/layout/LayoutClient';
 import UnregisterSW from '@/components/shared/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import PerformanceMonitor from '@/components/shared/PerformanceMonitor';
-import VersionGuard from '@/components/shared/VersionGuard';
-import SmoothScroll from '@/components/layout/SmoothScroll';
-import { loadAboutData } from '@/lib/about';
-import SoundConfigLoader from '@/components/layout/SoundConfigLoader';
 import { APP_VERSION } from '@/lib/constants';
+
 import './globals.css';
 
 // ISR: Revalidate layout every 60 seconds
@@ -85,14 +78,10 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({
-  children,
-  modal
+  children
 }: {
   children: React.ReactNode;
-  modal: React.ReactNode;
 }) {
-  const aboutData = await loadAboutData();
-
   return (
     <html lang="id" suppressHydrationWarning>
       <head>
@@ -127,26 +116,18 @@ export default async function RootLayout({
           Skip to main content
         </a>
 
-        <SmoothScroll />
         <Providers>
           <ToastProvider>
-            <LastUpdatedProvider>
-              <NavbarVisibilityProvider>
-                <ErrorBoundary>
-                  <SoundConfigLoader soundConfig={aboutData?.soundConfig} />
-                  <LayoutClient modal={modal} dockConfig={aboutData?.dockConfig}>
-                    {children}
-                  </LayoutClient>
-                  <UnregisterSW />
-                  <SpeedInsights />
-                  <PerformanceMonitor />
-                  <VersionGuard />
-                </ErrorBoundary>
-              </NavbarVisibilityProvider>
-            </LastUpdatedProvider>
+            <ErrorBoundary>
+              {children}
+              <UnregisterSW />
+              <SpeedInsights />
+            </ErrorBoundary>
           </ToastProvider>
         </Providers>
       </body>
     </html>
   );
 }
+
+

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, startTransition } from 'react';
-import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
+import { soundManager } from '../../utils/SoundManager';
 import type { ContactProfile, ChatMessage } from '../../data/mockChats';
 
 export function useChatSequencer(activeContact: ContactProfile | null, showList: boolean) {

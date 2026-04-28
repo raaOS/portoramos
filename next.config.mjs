@@ -1,4 +1,4 @@
-﻿/** @type {import('next').NextConfig} */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   // Allow development requests from multiple origins to avoid cross-origin warnings in Next.js 16
   allowedDevOrigins: [
@@ -176,7 +176,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=0, stale-while-revalidate=59, must-revalidate'
+            value: 'public, s-maxage=3600, stale-while-revalidate=59, must-revalidate'
           }
         ]
       },

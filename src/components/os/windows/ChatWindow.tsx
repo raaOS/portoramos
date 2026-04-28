@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useRef, useEffect, useCallback, startTransition } from 'react';
-import { soundManager } from '@/app/about/_components/os/utils/SoundManager';
+import { soundManager } from '../utils/SoundManager';
 import { useChatProjects } from './hooks/useChatProjects';
 import { useChatSequencer } from './hooks/useChatSequencer';
 import { ChatHeader } from './components/ChatHeader';

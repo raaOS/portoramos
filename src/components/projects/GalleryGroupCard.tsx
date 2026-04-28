@@ -3,7 +3,7 @@
 import { motion } from 'motion/react';
 import type { GalleryGroup, GalleryItem } from '@/types/projects';
 import { useImageProtection } from '@/hooks/useImageProtection';
-import MacFolder from '@/app/about/_components/os/windows/MacFolder';
+import MacFolder from '@/components/os/windows/MacFolder';
 
 interface GalleryGroupCardProps {
     group: GalleryGroup;

@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { WindowState } from './types';
 import { AboutData } from '@/types/about';
-import { ElementType } from '@/app/about/_components/os/context/UnifiedZIndexContext';
-import { saveWindowPosition } from "@/app/about/_components/os/utils/positionSync";
+import { ElementType } from '@/components/os/context/UnifiedZIndexContext';
+import { saveWindowPosition } from "@/components/os/utils/positionSync";
 
 /** SSR-safe viewport dimensions helper */
 function getViewport() {

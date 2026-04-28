@@ -87,7 +87,7 @@ export function useWindowPersistence({ csrfToken, isAdmin }: UseWindowPersistenc
         if (!isAdmin || !csrfToken) return;
 
         try {
-            const { flushPositions } = await import('@/app/about/_components/os/utils/positionSync');
+            const { flushPositions } = await import('@/components/os/utils/positionSync');
             await flushPositions(csrfToken);
         } catch (error) {
             console.error('[WindowManager] Failed to flush:', error);

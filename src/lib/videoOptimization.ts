@@ -1,12 +1,10 @@
 import 'server-only';
 import { spawn } from 'child_process';
 import { randomUUID } from 'crypto';
-import { createRequire } from 'module';
 import { tmpdir } from 'os';
 import path from 'path';
 import { promises as fs } from 'fs';
 
-const require = createRequire(import.meta.url);
 
 const VIDEO_FILTER = "fps=30,scale='if(gt(iw,ih),-2,720)':'if(gt(iw,ih),720,-2)'";
 const POSTER_FILTER = "scale='if(gt(iw,ih),-2,720)':'if(gt(iw,ih),720,-2)'";
@@ -102,11 +100,12 @@ export async function optimizeVideoForPortfolio(
 }
 
 async function runFfmpeg(args: string[]): Promise<void> {
-  const ffmpegPath = resolveFfmpegPath();
+  const ffmpegPath = await resolveFfmpegPath();
 
   await new Promise<void>((resolve, reject) => {
     const child = spawn(ffmpegPath, args, { windowsHide: true });
     let stderr = '';
+
 
     child.stderr.on('data', (chunk: Buffer) => {
       stderr += chunk.toString();
@@ -124,15 +123,20 @@ async function runFfmpeg(args: string[]): Promise<void> {
   });
 }
 
-function resolveFfmpegPath(): string {
+async function resolveFfmpegPath(): Promise<string> {
   if (process.env.FFMPEG_PATH) return process.env.FFMPEG_PATH;
 
   try {
-    const ffmpegPath = require('ffmpeg-static') as string | null;
+    // Dynamic requirement to isolate from build tracing
+    const { createRequire } = await import('module');
+    const requireLocal = createRequire(import.meta.url);
+    const ffmpegPath = requireLocal('ffmpeg-static') as string | null;
     if (ffmpegPath) return ffmpegPath;
-  } catch {
-    // Fall through to PATH lookup. Useful for local development.
+  } catch (error) {
+    // Fallback to global ffmpeg in PATH
   }
 
   return 'ffmpeg';
 }
+
+
