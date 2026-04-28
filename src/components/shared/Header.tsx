@@ -3,14 +3,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Search, Wifi, Battery, Volume2 } from 'lucide-react';
+import { Search, Wifi, Volume2 } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useOSSystem } from '@/components/os/context/OSSystemContext';
 
 const Header: React.FC = () => {
     const [currentTime, setCurrentTime] = useState<Date | null>(null);
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const { trackEvent } = useAnalytics();
+    const { setShowControlCenter, showCalendar, setShowCalendar } = useOSSystem();
 
     const isPrintMode = searchParams.get('print') === 'true';
 
@@ -52,7 +54,7 @@ const Header: React.FC = () => {
 
     return (
         <header 
-            className={`fixed top-0 left-0 right-0 h-8 bg-white flex items-center justify-between px-4 z-[100] text-black text-xs select-none print:hidden ${isPrintMode ? 'border-none shadow-none' : 'shadow-sm border-b border-gray-200'}`}
+            className={`fixed top-0 left-0 right-0 h-8 bg-white/80 backdrop-blur-md flex items-center justify-between px-4 z-[100] text-black text-xs select-none print:hidden ${isPrintMode ? 'border-none shadow-none' : 'shadow-sm border-b border-gray-200'}`}
             style={isPrintMode ? { border: 'none', boxShadow: 'none' } : {}}
         >
             {/* Left Side */}
@@ -80,15 +82,35 @@ const Header: React.FC = () => {
 
             {/* Right Side */}
             <div className="flex items-center gap-3 sm:gap-5">
-                <div className="flex items-center gap-3 text-black/80">
-                    <button onClick={() => trackEvent('header_search_click', { page: pathname })} aria-label="Search">
+                <div className="flex items-center gap-3 text-black/80 cursor-pointer" onClick={() => setShowControlCenter(true)}>
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            trackEvent('header_search_click', { page: pathname });
+                        }} 
+                        aria-label="Search"
+                    >
                         <Search size={14} className="hover:text-black transition-colors" />
                     </button>
                     <Wifi size={14} />
-                    <Battery size={14} />
+                    
+                    {/* Custom Battery 100% Green - Matching OS Style */}
+                    <span className="flex items-center gap-[1px]" title="Battery Full (100%)" role="img" aria-label="Battery 100%">
+                        <div className="w-[22px] h-[11px] bg-[#22c55e] rounded-[2.5px] border border-[#16a34a] flex items-center justify-center">
+                            <span className="text-[7px] font-bold text-black leading-none pt-[0.5px]" aria-hidden="true">100</span>
+                        </div>
+                        <div className="w-[1.5px] h-[3.5px] bg-[#16a34a] rounded-r-[1px] opacity-80" />
+                    </span>
+
                     <Volume2 size={14} />
                 </div>
-                <div className="flex items-center gap-2 font-medium cursor-default">
+                <div 
+                    className="flex items-center gap-2 font-medium cursor-pointer hover:bg-black/5 px-2 py-1 rounded transition-colors"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCalendar(!showCalendar);
+                    }}
+                >
                     {currentTime && (
                         <>
                             <span>{formatDate(currentTime)}</span>

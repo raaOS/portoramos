@@ -51,6 +51,7 @@ export function WindowTitleBar({
                 if (isPinned && !isAdmin) return;
                 onMaximize?.();
             }}
+            data-testid="window-title-bar"
             className="h-8 sm:h-7 bg-[#EFEFEF] border-b border-[#D1D1D1] flex items-center justify-between px-3 shrink-0 cursor-default select-none relative z-50"
         >
             {/* Traffic Lights */}

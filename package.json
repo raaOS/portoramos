@@ -17,6 +17,8 @@
     "kill-cache": "node scripts/utils/kill-browser-cache.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "e2e": "playwright test",
+    "test:all": "npm test && npm run e2e",
     "pre-deploy": "node scripts/deploy/pre-deploy-check.js",
     "deploy": "node scripts/utils/ensure-next-dev-not-running.js && npm run pre-deploy && next build",
     "test": "vitest run",

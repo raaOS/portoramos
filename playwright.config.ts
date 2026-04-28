@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const E2E_PORT = 3100;
+const E2E_PORT = 3000;
 const E2E_BASE_URL = `http://localhost:${E2E_PORT}`;
 
 export default defineConfig({
@@ -26,7 +26,7 @@ export default defineConfig({
     webServer: {
         command: `node ./node_modules/next/dist/bin/next dev -p ${E2E_PORT}`,
         url: E2E_BASE_URL,
-        reuseExistingServer: false,
+        reuseExistingServer: true,
         timeout: 120000,
         env: {
             ...process.env,

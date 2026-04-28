@@ -5,7 +5,7 @@ import experienceFixed from '@/data/experience.json';
 
 const service = new ContentService<ExperienceData>('experience.json', experienceFixed as unknown as ExperienceData);
 
-function slugifyWorkField(value: any) {
+function slugifyWorkField(value: unknown) {
     if (typeof value !== 'string') return '';
     return value
         .toLowerCase()

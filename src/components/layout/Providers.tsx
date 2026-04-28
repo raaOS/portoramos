@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ModalProvider } from '@/contexts/ModalContext';
+import { OSSystemProvider } from '@/components/os/context/OSSystemContext';
 
 import { POLLING } from '@/lib/constants';
 
@@ -21,7 +22,9 @@ export default function Providers({ children }: { children: React.ReactNode }){
   return (
     <QueryClientProvider client={queryClient}>
       <ModalProvider>
-        {children}
+        <OSSystemProvider>
+          {children}
+        </OSSystemProvider>
       </ModalProvider>
     </QueryClientProvider>
   )

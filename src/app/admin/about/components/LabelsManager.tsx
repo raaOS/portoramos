@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Trash2, Plus, Tag, Save, AlertCircle } from 'lucide-react';
 import { Label } from '@/types/labels';
 

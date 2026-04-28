@@ -7,7 +7,7 @@ test.describe('Grade A Public Experience', () => {
         await expect(page.locator('body')).toBeVisible();
 
         const startScreen = page.getByTestId('os-start-screen');
-        const powerPrompt = page.getByText('Click or Press Space').first();
+        const powerPrompt = page.getByText('Click to Start').first();
 
         try {
             await expect(startScreen).toBeVisible({ timeout: 5000 });

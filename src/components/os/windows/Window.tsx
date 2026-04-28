@@ -249,6 +249,7 @@ export default function OSWindow({
                     role="dialog"
                     aria-label={title}
                     data-window-id={id}
+                    data-testid="window-frame"
                     style={{
                         position: "absolute",
                         zIndex: zIndex,

@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 // Helper to handle boot sequence using the StartScreen lifecycle itself.
 async function handleBootSequence(page: Page) {
     const startScreen = page.getByTestId('os-start-screen');
-    const powerPrompt = page.getByText('Click or Press Space').first();
+    const powerPrompt = page.getByText('Click to Start').first();
 
     try {
         await expect(startScreen).toBeVisible({ timeout: 5000 });

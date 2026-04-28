@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Search, Wifi, LogOut } from "lucide-react";
+import { useOSSystem } from "../context/OSSystemContext";
 
 interface MenuBarProps {
     onSearch?: () => void;
@@ -17,6 +18,7 @@ interface MenuBarProps {
 }
 
 export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, availability, isAdmin, onLogout, onToggleControlCenter }: MenuBarProps) {
+    const { showCalendar, setShowCalendar } = useOSSystem();
     const [time, setTime] = useState(new Date());
 
     useEffect(() => {
@@ -129,7 +131,13 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
                 </div>
 
                 {/* Clock */}
-                <div className="flex items-center gap-2 font-medium cursor-default">
+                <div 
+                    className="flex items-center gap-2 font-medium cursor-pointer hover:bg-black/5 px-2 py-1 rounded transition-colors"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCalendar(!showCalendar);
+                    }}
+                >
                     <span className="hidden sm:inline">{formattedDate}</span>
                     <span>{formattedTime}</span>
                 </div>

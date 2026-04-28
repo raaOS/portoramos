@@ -1,5 +1,4 @@
 import React from 'react';
-import { Maximize2 } from 'lucide-react';
 
 interface WindowResizeHandlesProps {
     onResizeStart: (e: React.MouseEvent | React.TouchEvent, direction: 'e' | 's' | 'se') => void;
@@ -10,6 +9,7 @@ export function WindowResizeHandles({ onResizeStart }: WindowResizeHandlesProps)
         <>
             {/* Right Handle (Invisible) */}
             <div
+                data-testid="window-resize-e"
                 className="absolute top-0 right-0 w-3 h-full cursor-ew-resize z-[60]"
                 onMouseDown={(e) => onResizeStart(e, 'e')}
                 onTouchStart={(e) => onResizeStart(e, 'e')}
@@ -17,6 +17,7 @@ export function WindowResizeHandles({ onResizeStart }: WindowResizeHandlesProps)
             />
             {/* Bottom Handle (Invisible) */}
             <div
+                data-testid="window-resize-s"
                 className="absolute bottom-0 left-0 w-full h-3 cursor-ns-resize z-[60]"
                 onMouseDown={(e) => onResizeStart(e, 's')}
                 onTouchStart={(e) => onResizeStart(e, 's')}
@@ -24,6 +25,7 @@ export function WindowResizeHandles({ onResizeStart }: WindowResizeHandlesProps)
             />
             {/* Corner Handle (Invisible) */}
             <div
+                data-testid="window-resize-se"
                 className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize z-[70]"
                 onMouseDown={(e) => onResizeStart(e, 'se')}
                 onTouchStart={(e) => onResizeStart(e, 'se')}

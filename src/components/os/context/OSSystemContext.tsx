@@ -13,6 +13,18 @@ interface OSSystemContextType {
   setNotesVisible: (visible: boolean) => void;
   toggleNotes: () => void;
   
+  // Control Center visibility
+  showControlCenter: boolean;
+  setShowControlCenter: (show: boolean) => void;
+  
+  // Calendar visibility
+  showCalendar: boolean;
+  setShowCalendar: (show: boolean) => void;
+  
+  brightness: number;
+  setBrightness: (val: number) => void;
+  volume: number;
+  setVolume: (val: number) => void;
   // Boot / Reveal status
   isRevealed: boolean;
   setIsRevealed: (revealed: boolean) => void;
@@ -39,6 +51,10 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
   const [notesVisible, setNotesVisible] = useState(true);
   const [isRevealed, setIsRevealed] = useState(false);
   const [startScreenReady, setStartScreenReady] = useState(false);
+  const [brightness, setBrightness] = useState(100);
+  const [volume, setVolume] = useState(50);
+  const [showControlCenter, setShowControlCenter] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const toggleSpotlight = useCallback(() => setShowSpotlight(prev => !prev), []);
   const toggleNotes = useCallback(() => setNotesVisible(prev => !prev), []);
@@ -53,11 +69,21 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
     isRevealed,
     setIsRevealed,
     startScreenReady,
-    setStartScreenReady
+    setStartScreenReady,
+    brightness,
+    setBrightness,
+    volume,
+    setVolume,
+    showControlCenter,
+    setShowControlCenter,
+    showCalendar,
+    setShowCalendar
   }), [
     showSpotlight, toggleSpotlight, 
     notesVisible, toggleNotes,
-    isRevealed, startScreenReady
+    isRevealed, startScreenReady,
+    brightness, volume,
+    showControlCenter, showCalendar
   ]);
 
   return (

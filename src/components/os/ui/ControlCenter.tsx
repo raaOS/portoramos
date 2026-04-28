@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Wifi, Bluetooth, Airplay, Moon, Sun, Volume2 } from 'lucide-react';
+import { soundManager } from '../utils/SoundManager';
+import { useOSSystem } from '../context/OSSystemContext';
 
 interface ControlCenterProps {
     isOpen: boolean;
@@ -8,12 +10,18 @@ interface ControlCenterProps {
 }
 
 export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCenterProps) {
+    const { brightness, setBrightness, volume, setVolume } = useOSSystem();
     const [wifiState, setWifiState] = useState(true);
     const [bluetoothState, setBluetoothState] = useState(true);
     const [airdropState, setAirdropState] = useState(false);
     const [dndState, setDndState] = useState(false);
-    const [brightness, setBrightness] = useState(80);
-    const [volume, setVolume] = useState(50);
+
+    // Sync volume with soundManager on mount or change
+    useEffect(() => {
+        if (isOpen) {
+            soundManager.setVolume(volume / 100);
+        }
+    }, [isOpen, volume]);
 
     if (!isOpen) return null;
 
@@ -81,7 +89,10 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
             <div className="space-y-3">
                 {/* Brightness Display */}
                 <div className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-black/5 dark:border-white/5 flex items-center gap-3">
-                    <Sun size={16} className="text-gray-500 dark:text-gray-400" />
+                    <div className="flex flex-col items-center gap-1 min-w-[32px]">
+                        <Sun size={16} className="text-gray-500 dark:text-gray-400" />
+                        <span className="text-[10px] font-medium opacity-70">{brightness}%</span>
+                    </div>
                     <div className="h-6 flex-1 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden border border-black/5 dark:border-white/10 relative">
                         <div className="absolute top-0 left-0 bottom-0 bg-zinc-900 dark:bg-white transition-all duration-200" style={{ width: `${brightness}%` }}></div>
                         <input 
@@ -89,9 +100,10 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
                             min="0" max="100" 
                             value={brightness} 
                             onChange={(e) => {
-                                setBrightness(parseInt(e.target.value));
-                                // In a real app, this would change global document filter
-                                document.documentElement.style.filter = `brightness(${(parseInt(e.target.value) / 100) * 0.5 + 0.5})`;
+                                const val = parseInt(e.target.value);
+                                setBrightness(val);
+                                // Real 0-100% brightness
+                                document.documentElement.style.filter = `brightness(${val / 100})`;
                             }}
                             className="absolute inset-0 w-full opacity-0 cursor-pointer"
                         />
@@ -100,14 +112,22 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
                 
                 {/* Volume Display */}
                 <div className="bg-white/50 dark:bg-white/10 rounded-xl p-3 border border-black/5 dark:border-white/5 flex items-center gap-3">
-                    <Volume2 size={16} className="text-gray-500 dark:text-gray-400" />
+                    <div className="flex flex-col items-center gap-1 min-w-[32px]">
+                        <Volume2 size={16} className="text-gray-500 dark:text-gray-400" />
+                        <span className="text-[10px] font-medium opacity-70">{volume}%</span>
+                    </div>
                     <div className="h-6 flex-1 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden border border-black/5 dark:border-white/10 relative">
                         <div className="absolute top-0 left-0 bottom-0 bg-zinc-900 dark:bg-white transition-all duration-200" style={{ width: `${volume}%` }}></div>
                         <input 
                             type="range" 
                             min="0" max="100" 
                             value={volume} 
-                            onChange={(e) => setVolume(parseInt(e.target.value))}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setVolume(val);
+                                // Real 0-100% volume control
+                                soundManager.setVolume(val / 100);
+                            }}
                             className="absolute inset-0 w-full opacity-0 cursor-pointer"
                         />
                     </div>

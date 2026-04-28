@@ -70,7 +70,7 @@ export class ContentService<T> {
             const snapshot = await Promise.race([
                 db.ref(this.firebasePath).once('value'),
                 timeout
-            ]) as any;
+            ]) as { val: () => unknown };
 
             const firebaseData = snapshot?.val?.() ?? snapshot?.val;
 

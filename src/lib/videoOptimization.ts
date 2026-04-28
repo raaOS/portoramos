@@ -132,7 +132,7 @@ async function resolveFfmpegPath(): Promise<string> {
     const requireLocal = createRequire(import.meta.url);
     const ffmpegPath = requireLocal('ffmpeg-static') as string | null;
     if (ffmpegPath) return ffmpegPath;
-  } catch (error) {
+  } catch {
     // Fallback to global ffmpeg in PATH
   }
 

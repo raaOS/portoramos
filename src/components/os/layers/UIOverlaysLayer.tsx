@@ -30,6 +30,10 @@ const ControlCenter = dynamic(() => import("../ui/ControlCenter"), {
     ssr: false
 });
 
+const CalendarPopout = dynamic(() => import("../ui/CalendarPopout"), {
+    ssr: false
+});
+
 interface UIOverlaysLayerProps {
     navToChat: (chatId?: string) => void;
     openWhatsAppList: () => void;
@@ -56,12 +60,16 @@ export default function UIOverlaysLayer({
     openProjectWindow
 }: UIOverlaysLayerProps) {
     const { isBooting, needsPowerOn } = useBootSequence();
-    const { showSpotlight, setShowSpotlight, notesVisible } = useOSSystem();
+    const { 
+        showSpotlight, setShowSpotlight, 
+        notesVisible, 
+        showControlCenter, setShowControlCenter,
+        showCalendar, setShowCalendar
+    } = useOSSystem();
     const isBootingOrStarting = isBooting || needsPowerOn;
     
     const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
     const { getZIndex } = useUnifiedZIndex();
-    const [showControlCenter, setShowControlCenter] = React.useState(false);
 
     const isWindowOpen = (id: string) => windows?.find(w => w.id === id)?.isOpen ?? false;
     const activeWindows = (windows || []).filter(w => w.isOpen && !w.isMinimized);
@@ -160,6 +168,22 @@ export default function UIOverlaysLayer({
                             <ControlCenter 
                                 isOpen={showControlCenter} 
                                 onClose={() => setShowControlCenter(false)} 
+                            />
+                        </div>
+                    </div>
+                )}
+            </AnimatePresence>
+            {/* Global Calendar Popout */}
+            <AnimatePresence>
+                {showCalendar && (
+                    <div 
+                        className="fixed inset-0 pointer-events-auto z-[10001]" 
+                        onClick={() => setShowCalendar(false)}
+                    >
+                        <div onClick={e => e.stopPropagation()}>
+                            <CalendarPopout 
+                                isOpen={showCalendar} 
+                                onClose={() => setShowCalendar(false)} 
                             />
                         </div>
                     </div>
