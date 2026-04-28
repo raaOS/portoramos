@@ -21,7 +21,7 @@ export const NoteFooter = ({
     onPermanentDelete,
     onDownload
 }: NoteFooterProps) => (
-    <div className="h-14 px-4 flex items-center justify-between">
+    <div className="h-10 px-4 pb-1 flex items-center justify-between">
         <div className="flex items-center gap-2 ml-auto">
             {!isDeleted ? (
                 <>

@@ -35,7 +35,13 @@ const _debounce = <T extends (...args: unknown[]) => ReturnType<T>>(func: T, wai
     };
 };
 
-export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfToken?: string, requestNextZIndex?: (id?: string) => number) => {
+export const useStickyNotes = (
+    mounted: boolean, 
+    isAdmin: boolean = false, 
+    csrfToken?: string, 
+    requestNextZIndex?: (id?: string) => number,
+    isAuthLoading: boolean = false
+) => {
     const [notes, setNotes] = useState<NoteData[]>([]);
     const [hasLoaded, setHasLoaded] = useState(false);
     const isModified = useRef(false);
@@ -51,6 +57,7 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
     // Load notes from server
     useEffect(() => {
         const controller = new AbortController();
+        let isActive = true;
         
         const loadNotes = async () => {
             try {
@@ -66,6 +73,8 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                 }
 
                 const data = await response.json();
+                if (!isActive) return;
+
                 if (Array.isArray(data) && data.length > 0) {
                     // Mobile adjustment: pull notes to visible area
                     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -84,15 +93,18 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                     });
 
                     setNotes(adjustedData);
-                    // Note: z-indexes are now managed by UnifiedZIndexContext
-                    // We keep the zIndex values in notes for persistence, but the actual
-                    // stacking is controlled by the unified system
+                    setHasLoaded(true);
                 } else {
-                    // Show welcome note ONLY if no notes exist AND it's a first-time view this session
-                    // BUG FIX #2: try-catch untuk sessionStorage
+                    // BUG FIX: If auth is still loading, wait before assuming guest!
+                    if (isAuthLoading) {
+                        return; // Will re-run when isAuthLoading becomes false
+                    }
+
+                    // Show welcome note ONLY for guests. 
+                    // Admins should see an empty state if they cleared it in CRUD.
                     try {
                         const hasSeenWelcome = sessionStorage.getItem('ramos_os_welcome_seen');
-                        if (!hasSeenWelcome) {
+                        if (!hasSeenWelcome && !isAdmin) {
                             setNotes(getInitialNotes());
                             sessionStorage.setItem('ramos_os_welcome_seen', 'true');
                         } else {
@@ -100,23 +112,39 @@ export const useStickyNotes = (mounted: boolean, isAdmin: boolean = false, csrfT
                         }
                     } catch (e) {
                         console.warn('[StickyNotes] Failed to access sessionStorage:', e);
-                        setNotes(getInitialNotes());
+                        // Fallback: only show welcome to guests on failure
+                        if (!isAdmin) {
+                            setNotes(getInitialNotes());
+                        } else {
+                            setNotes([]);
+                        }
                     }
+                    setHasLoaded(true);
                 }
             } catch (error) {
-                if (error instanceof Error && error.name === 'AbortError') {
-                    return;
-                }
+                if (error instanceof Error && error.name === 'AbortError') return;
+                
+                if (!isActive) return;
                 console.error("Failed to load notes from server:", error instanceof Error ? error.message : error);
-                setNotes(getInitialNotes());
-            } finally {
+                
+                if (isAuthLoading) return; // Wait for auth before showing error fallback
+
+                if (!isAdmin) {
+                    setNotes(getInitialNotes());
+                } else {
+                    setNotes([]);
+                }
                 setHasLoaded(true);
             }
         };
+        
         loadNotes();
         
-        return () => controller.abort();
-    }, []);
+        return () => {
+            isActive = false;
+            controller.abort();
+        };
+    }, [isAuthLoading, isAdmin]); // Re-runs when auth check finishes to resolve empty state
 
     // Auto-sync for Admins ONLY
     useEffect(() => {

@@ -153,7 +153,7 @@ export default function StickyNoteItem({
             />
 
             {!note.isCollapsed && (
-                <div className="flex-grow p-4 pt-16 overflow-hidden relative group flex flex-col">
+                <div className="flex-grow px-4 pt-12 pb-0 overflow-hidden relative group flex flex-col">
                     <div
                         ref={textAreaRef}
                         contentEditable={false}
@@ -164,7 +164,7 @@ export default function StickyNoteItem({
                         onDragStart={(e) => e.preventDefault()}
                         onPaste={handlePaste}
                         dangerouslySetInnerHTML={{ __html: sanitize.richText(note.text) || '<span>Empty note...</span>' }}
-                        className="sticky-note-content w-full h-full bg-transparent border-none outline-none resize-none text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto cursor-default"
+                        className="sticky-note-content w-full h-full bg-transparent border-none outline-none resize-none text-gray-800 text-lg leading-snug whitespace-pre-wrap overflow-y-auto cursor-default [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                         data-lenis-prevent
                         style={{
                             minHeight: '100px',
@@ -191,38 +191,33 @@ export default function StickyNoteItem({
                         onDownload={handleDownload}
                     />
 
-                    {isAdmin && onResizeStart && !note.isCollapsed && (
-                        <>
-                            <div
-                                className="absolute top-0 right-0 w-2 h-full cursor-ew-resize z-[60] group flex items-center justify-center"
-                                onMouseDown={(e) => onResizeStart(e, 'e')}
-                                onTouchStart={(e) => onResizeStart(e, 'e')}
-                                onPointerDown={(e) => e.stopPropagation()}
-                            >
-                                <div className="w-0.5 h-6 bg-black/10 group-hover:bg-black/30 rounded-full transition-colors" />
-                            </div>
-                            <div
-                                className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize z-[60] group flex items-center justify-center"
-                                onMouseDown={(e) => onResizeStart(e, 's')}
-                                onTouchStart={(e) => onResizeStart(e, 's')}
-                                onPointerDown={(e) => e.stopPropagation()}
-                            >
-                                <div className="w-6 h-0.5 bg-black/10 group-hover:bg-black/30 rounded-full transition-colors" />
-                            </div>
-                            <div
-                                className="absolute bottom-1 right-1 w-4 h-4 cursor-nwse-resize z-[70] group flex flex-col items-center justify-center"
-                                onMouseDown={(e) => onResizeStart(e, 'se')}
-                                onTouchStart={(e) => onResizeStart(e, 'se')}
-                                onPointerDown={(e) => e.stopPropagation()}
-                            >
-                                 <div className="w-full h-full flex flex-col items-end justify-end p-0.5">
-                                    <div className="w-2 h-0.5 bg-black/20 rotate-[-45deg] translate-y-[-1px]" />
-                                    <div className="w-3 h-0.5 bg-black/20 rotate-[-45deg]" />
-                                 </div>
-                            </div>
-                        </>
-                    )}
                 </div>
+            )}
+
+            {onResizeStart && !note.isCollapsed && (
+                <>
+                    {/* Right Handle (Invisible) */}
+                    <div
+                        className="absolute top-0 right-0 w-2 h-full cursor-ew-resize z-[60]"
+                        onMouseDown={(e) => onResizeStart(e, 'e')}
+                        onTouchStart={(e) => onResizeStart(e, 'e')}
+                        onPointerDown={(e) => e.stopPropagation()}
+                    />
+                    {/* Bottom Handle (Invisible) */}
+                    <div
+                        className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize z-[60]"
+                        onMouseDown={(e) => onResizeStart(e, 's')}
+                        onTouchStart={(e) => onResizeStart(e, 's')}
+                        onPointerDown={(e) => e.stopPropagation()}
+                    />
+                    {/* Corner Handle (Invisible) */}
+                    <div
+                        className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize z-[70]"
+                        onMouseDown={(e) => onResizeStart(e, 'se')}
+                        onTouchStart={(e) => onResizeStart(e, 'se')}
+                        onPointerDown={(e) => e.stopPropagation()}
+                    />
+                </>
             )}
         </m.div>
     );

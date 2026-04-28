@@ -1,4 +1,4 @@
-import React, { useState, useEffect, startTransition } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
 import { soundManager } from '@/components/os/utils/SoundManager';

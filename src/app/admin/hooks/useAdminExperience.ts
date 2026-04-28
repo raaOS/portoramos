@@ -29,6 +29,7 @@ export function useAdminExperience(csrfToken: string | null) {
     }, [showError]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         loadExperienceData();
     }, [loadExperienceData]);
 

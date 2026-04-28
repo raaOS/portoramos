@@ -17,6 +17,6 @@ const DesktopOS = dynamic(
   }
 );
 
-export default function HomeOSWrapper(props: any) {
+export default function HomeOSWrapper(props: React.ComponentProps<typeof DesktopOS>) {
   return <DesktopOS {...props} />;
 }

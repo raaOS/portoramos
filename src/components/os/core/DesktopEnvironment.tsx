@@ -59,6 +59,7 @@ interface DesktopMainBaseProps {
     projects: Project[];
     dynamicContacts: Record<string, ContactProfile>;
     testimonialContacts: ContactProfile[];
+    isAuthLoading: boolean;
 }
 
 interface DesktopMainWithLogoutProps extends DesktopMainBaseProps {
@@ -72,7 +73,7 @@ interface DesktopMainProps extends DesktopMainBaseProps {
 export default function DesktopEnvironment({ aboutData, experienceData, hardSkillsData, projects, testimonialsData, contactData }: DesktopEnvironmentProps) {
     const { mounted, isMobile } = useDesktopLock();
     const { needsPowerOn, isBooting } = useBootSequence();
-    const { isAdmin, csrfToken, logout: originalLogout } = useAdminAuth();
+    const { isAdmin, csrfToken, logout: originalLogout, isLoading: isAuthLoading } = useAdminAuth();
     const { dynamicContacts, testimonialContacts } = useChatContacts(testimonialsData);
 
     const commercialProjects = useMemo(() => {
@@ -102,6 +103,7 @@ export default function DesktopEnvironment({ aboutData, experienceData, hardSkil
                 projects={projects} isAdmin={isAdmin} csrfToken={csrfToken ?? null} 
                 originalLogout={originalLogout} dynamicContacts={dynamicContacts}
                 testimonialContacts={testimonialContacts}
+                isAuthLoading={isAuthLoading}
             />
         </DesktopProviders>
     );
@@ -120,7 +122,8 @@ function DesktopMainWithLogout({ originalLogout, ...props }: DesktopMainWithLogo
 
 function DesktopMain({
     aboutData, isMobile, isAdmin, logout, csrfToken, 
-    commercialProjects, projects, dynamicContacts, testimonialContacts
+    commercialProjects, projects, dynamicContacts, testimonialContacts,
+    isAuthLoading
 }: DesktopMainProps) {
     const { needsPowerOn, isBooting, finishBooting } = useBootSequence();
     const { 
@@ -141,10 +144,10 @@ function DesktopMain({
         updateWindowPosition, handleWindowResize, handleWindowResizeEnd, togglePin
     } = useDesktopWindowContext();
 
-    const { notes, addNote, updateNote, deleteNote, permanentDeleteNote, restoreNote, bringToFrontNote } = useStickyNotes(true, isAdmin, csrfToken ?? undefined, requestNextZIndex);
+    const { notes, addNote, updateNote, deleteNote, permanentDeleteNote, restoreNote, bringToFrontNote } = useStickyNotes(true, isAdmin, csrfToken ?? undefined, requestNextZIndex, isAuthLoading);
     const { openProjectWindow, navToChat, openWhatsAppList, toggleNotesVisibility } = useDesktopNavigation({
         openWindow, resetWindows, dynamicContacts, ChatWindow,
-        notes, projects, restoreNote, addNote, isAdmin, setNotesDockBouncing: () => { }
+        _notes: notes, projects, _restoreNote: restoreNote, _addNote: addNote, _isAdmin: isAdmin, setNotesDockBouncing: () => { }
     });
     const { iconPositions, handleIconPositionChange } = useDesktopLayout({ aboutData, isAdmin, csrfToken });
     const { projectIcons } = useDesktopIcons({ 

@@ -17,11 +17,11 @@ interface UseDesktopNavigationProps {
     resetWindows: () => void;
     dynamicContacts: Record<string, ContactProfile>;
     ChatWindow: React.ComponentType<{ activeChatId?: string | null; customContacts?: Record<string, ContactProfile>; initialProjects?: Project[] }>;
-    notes: NoteData[];
+    _notes: NoteData[];
     projects: Project[];
-    restoreNote: (id: string) => void;
-    addNote: () => void;
-    isAdmin: boolean;
+    _restoreNote: (id: string) => void;
+    _addNote: () => void;
+    _isAdmin: boolean;
     setNotesDockBouncing: (bouncing: boolean) => void;
 }
 
@@ -30,11 +30,11 @@ export function useDesktopNavigation({
     resetWindows,
     dynamicContacts,
     ChatWindow,
-    notes,
+    _notes,
     projects,
-    restoreNote,
-    addNote,
-    isAdmin,
+    _restoreNote,
+    _addNote,
+    _isAdmin,
     setNotesDockBouncing
 }: UseDesktopNavigationProps) {
     const { notesVisible, setNotesVisible } = useOSSystem();
@@ -68,29 +68,14 @@ export function useDesktopNavigation({
         openWindow("contact");
     }, [openWindow]);
 
+    // BUG FIX: Simplified toggle to pure visibility switch.
+    // Previously, this would auto-add or auto-restore notes, causing duplicates.
+    // Now it strictly respects the current state of 'notes' from CRUD/DB.
     const toggleNotesVisibility = useCallback(() => {
-        const nextState = !notesVisible;
-        setNotesVisible(nextState);
-
-        if (nextState) {
-            const hasVisibleNotes = notes.some(n => !n.isDeleted);
-            if (!hasVisibleNotes) {
-                if (notes.length > 0) {
-                    notes.forEach(n => restoreNote(n.id));
-                } else if (isAdmin) {
-                    // Create new note if toggled ON and none exist
-                    addNote();
-                }
-            }
-        } else if (notesVisible && isAdmin) {
-            // If already visible and clicked again in Admin mode, create a new one (macOS-like "New Note" shortcut)
-            addNote();
-            setNotesVisible(true); // Ensure it stays visible
-        }
-
+        setNotesVisible(!notesVisible);
         setNotesDockBouncing(true);
         setTimeout(() => setNotesDockBouncing(false), 600);
-    }, [notesVisible, setNotesVisible, notes, restoreNote, setNotesDockBouncing, isAdmin, addNote]);
+    }, [notesVisible, setNotesVisible, setNotesDockBouncing]);
 
     return {
         handleGoHome,
