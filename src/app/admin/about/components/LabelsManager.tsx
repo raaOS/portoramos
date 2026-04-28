@@ -29,10 +29,11 @@ export default function LabelsManager({
     const [labels, setLabels] = useState<Label[]>(initialLabels);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Sync with initial labels when they change
-    useEffect(() => {
+    const [prevInitialLabels, setPrevInitialLabels] = useState(initialLabels);
+    if (initialLabels !== prevInitialLabels) {
         setLabels(initialLabels);
-    }, [initialLabels]);
+        setPrevInitialLabels(initialLabels);
+    }
 
     const handleLabelChange = (index: number, field: keyof Label, value: string) => {
         const newLabels = [...labels];
