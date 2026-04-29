@@ -16,7 +16,6 @@ interface PositionData {
   notes: Record<string, NotePosition>;
 }
 
-type PersistedWindowPosition = Partial<WindowPosition> | null | undefined;
 type PersistedIconPosition = Partial<IconPosition> | null | undefined;
 
 function isFiniteNumber(value: unknown): value is number {
