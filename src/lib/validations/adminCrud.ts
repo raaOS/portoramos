@@ -216,10 +216,19 @@ const dockItemConfigSchema = z.object({
 }).strict();
 
 const windowPreferenceSchema = z.object({
+    // Legacy pixel-based
     x: z.number().optional(),
     y: z.number().optional(),
     width: z.number().positive().optional(),
     height: z.number().positive().optional(),
+    // Percentage-based for responsive positioning
+    xPct: z.number().min(0).max(100).optional(),
+    yPct: z.number().min(0).max(100).optional(),
+    widthPct: z.number().min(0).max(100).optional(),
+    heightPct: z.number().min(0).max(100).optional(),
+    // Reference screen dimensions
+    refScreenWidth: z.number().optional(),
+    refScreenHeight: z.number().optional(),
     isOpenByDefault: z.boolean().optional(),
 }).strict();
 

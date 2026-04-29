@@ -13,10 +13,19 @@ export interface NoteData {
     color: string; // Hex code
     isStarred: boolean;
     isDeleted: boolean;
+    // Legacy pixel-based (keep for fallback)
     x?: number;
     y?: number;
     width?: number;
     height?: number;
+    // Percentage-based for responsive positioning
+    xPct?: number;
+    yPct?: number;
+    widthPct?: number;
+    heightPct?: number;
+    // Reference screen dimensions (when admin saved)
+    refScreenWidth?: number;
+    refScreenHeight?: number;
     isPinned?: boolean;
     isCollapsed?: boolean;
     opacity?: number;

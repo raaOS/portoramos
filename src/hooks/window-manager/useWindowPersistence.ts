@@ -22,15 +22,20 @@ export function useWindowPersistence({ csrfToken, isAdmin }: UseWindowPersistenc
      * Saves window position and default open state to the server.
      * Only works for authenticated admins.
      */
-    const saveWindowPreference = useCallback(async (id: string, updates: Partial<{ x: number, y: number, width: number, height: number, isOpenByDefault: boolean }>) => {
+    const saveWindowPreference = useCallback(async (id: string, updates: Partial<{
+        x: number, y: number, width: number, height: number,
+        xPct: number, yPct: number, widthPct: number, heightPct: number,
+        refScreenWidth: number, refScreenHeight: number,
+        isOpenByDefault: boolean
+    }>) => {
         if (!isAdmin || !csrfToken) return;
 
         // Prevent overwriting desktop layout from mobile
         const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
         if (isMobile) {
-            // We allow toggling 'isOpenByDefault' (pin) from mobile if needed, 
-            // but we STRIP spatial updates (x, y, width, height)
-            const spatialKeys = ['x', 'y', 'width', 'height'];
+            // We allow toggling 'isOpenByDefault' (pin) from mobile if needed,
+            // but we STRIP spatial updates (x, y, width, height and percentages)
+            const spatialKeys = ['x', 'y', 'width', 'height', 'xPct', 'yPct', 'widthPct', 'heightPct'];
             const hasSpatialUpdate = Object.keys(updates).some(k => spatialKeys.includes(k));
 
             if (hasSpatialUpdate) {
@@ -39,6 +44,10 @@ export function useWindowPersistence({ csrfToken, isAdmin }: UseWindowPersistenc
                 delete filteredUpdates.y;
                 delete filteredUpdates.width;
                 delete filteredUpdates.height;
+                delete filteredUpdates.xPct;
+                delete filteredUpdates.yPct;
+                delete filteredUpdates.widthPct;
+                delete filteredUpdates.heightPct;
 
                 if (Object.keys(filteredUpdates).length === 0) return;
                 updates = filteredUpdates;

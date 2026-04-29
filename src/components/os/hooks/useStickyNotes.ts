@@ -35,6 +35,35 @@ const _debounce = <T extends (...args: unknown[]) => ReturnType<T>>(func: T, wai
     };
 };
 
+/** SSR-safe viewport helper */
+const getViewport = () => {
+    if (typeof window === 'undefined') return { width: 1440, height: 900 };
+    return { width: window.innerWidth, height: window.innerHeight };
+};
+
+/** Convert note pixel values to percentages for responsive positioning */
+const convertNoteToPercentages = (note: NoteData): NoteData => {
+    const vp = getViewport();
+    const x = note.x ?? 100;
+    const y = note.y ?? 100;
+    const width = note.width ?? 280;
+    const height = note.height ?? 280;
+
+    return {
+        ...note,
+        // Keep legacy pixel values
+        x, y, width, height,
+        // Add percentage values
+        xPct: (x / vp.width) * 100,
+        yPct: (y / vp.height) * 100,
+        widthPct: (width / vp.width) * 100,
+        heightPct: (height / vp.height) * 100,
+        // Reference screen dimensions
+        refScreenWidth: vp.width,
+        refScreenHeight: vp.height
+    };
+};
+
 export const useStickyNotes = (
     mounted: boolean, 
     isAdmin: boolean = false, 
@@ -76,20 +105,73 @@ export const useStickyNotes = (
                 if (!isActive) return;
 
                 if (Array.isArray(data) && data.length > 0) {
-                    // Mobile adjustment: pull notes to visible area
-                    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+                    // Responsive positioning: use percentage if available, fallback to pixels
+                    const vp = typeof window !== 'undefined'
+                        ? { width: window.innerWidth, height: window.innerHeight }
+                        : { width: 1440, height: 900 };
+                    const isMobile = vp.width < 768;
+
                     const adjustedData = data.map((n, i) => {
-                        if (isMobile) {
-                            const w = n.width || 280;
-                            const h = n.height || 280;
-                            // Stack with slight offset
-                            return {
-                                ...n,
-                                x: Math.max(0, (window.innerWidth - w) / 2) + (i * 10),
-                                y: Math.max(50, (window.innerHeight - h) / 2) + (i * 10)
-                            };
+                        // Calculate dimensions - prefer percentage if available
+                        let width: number;
+                        let height: number;
+
+                        if (n.widthPct !== undefined && n.heightPct !== undefined) {
+                            // Use percentage-based sizing
+                            width = (n.widthPct / 100) * vp.width;
+                            height = (n.heightPct / 100) * vp.height;
+                        } else {
+                            // Legacy pixel fallback
+                            width = n.width || 280;
+                            height = n.height || 280;
                         }
-                        return n;
+
+                        // Clamp dimensions
+                        if (isMobile) {
+                            width = Math.min(width, vp.width * 0.9);
+                            height = Math.min(height, vp.height * 0.8);
+                        } else {
+                            width = Math.min(width, vp.width * 0.95);
+                            height = Math.min(height, vp.height * 0.95);
+                        }
+                        width = Math.max(width, 200);
+                        height = Math.max(height, 150);
+
+                        // Calculate position - prefer percentage if available
+                        let x: number;
+                        let y: number;
+
+                        if (n.xPct !== undefined && n.yPct !== undefined) {
+                            // Use percentage-based positioning
+                            x = (n.xPct / 100) * vp.width;
+                            y = (n.yPct / 100) * vp.height;
+                        } else if (n.x !== undefined && n.y !== undefined && !isMobile) {
+                            // Legacy pixel fallback (desktop only)
+                            x = n.x;
+                            y = n.y;
+                        } else {
+                            // Default: stack with offset or center
+                            if (isMobile) {
+                                x = Math.max(0, (vp.width - width) / 2) + (i * 10);
+                                y = Math.max(50, (vp.height - height) / 2) + (i * 10);
+                            } else {
+                                x = (vp.width - width) / 2;
+                                y = (vp.height - height) / 2;
+                            }
+                        }
+
+                        // Clamp position to viewport
+                        const margin = 20;
+                        x = Math.max(margin, Math.min(x, vp.width - width - margin));
+                        y = Math.max(margin, Math.min(y, vp.height - height - margin));
+
+                        return {
+                            ...n,
+                            x,
+                            y,
+                            width,
+                            height
+                        };
                     });
 
                     setNotes(adjustedData);
@@ -192,6 +274,9 @@ export const useStickyNotes = (
                     console.warn("[StickyNotes] Safe merge failed", e);
                 }
 
+                // Convert to percentages for responsive positioning before saving
+                const notesWithPercentages = notesToPersist.map(convertNoteToPercentages);
+
                 await fetch('/api/sticky-notes', {
                     method: 'PUT',
                     headers: {
@@ -200,7 +285,7 @@ export const useStickyNotes = (
                     },
                     credentials: 'include',
                     signal: controller.signal,
-                    body: JSON.stringify(notesToPersist)
+                    body: JSON.stringify(notesWithPercentages)
                 });
                 isModified.current = false;
             } catch (error) {
@@ -225,8 +310,11 @@ export const useStickyNotes = (
 
         // Capture current notes state immediately
         const notesToFlush = notesRef.current;
-        
+
         try {
+            // Convert to percentages for responsive positioning before saving
+            const notesWithPercentages = notesToFlush.map(convertNoteToPercentages);
+
             await fetch('/api/sticky-notes', {
                 method: 'PUT',
                 headers: {
@@ -234,7 +322,7 @@ export const useStickyNotes = (
                     'X-CSRF-Token': csrfToken
                 },
                 credentials: 'include',
-                body: JSON.stringify(notesToFlush)
+                body: JSON.stringify(notesWithPercentages)
             });
             isModified.current = false;
         } catch (error) {

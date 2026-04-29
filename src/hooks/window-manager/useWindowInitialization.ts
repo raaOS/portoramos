@@ -26,26 +26,65 @@ export function useWindowInitialization({ initialWindows, aboutData, setWindows,
                     const w = { ...baseW, ...existing }; // keep existing state like isOpen, content, if present
 
                     const pref = aboutData?.windowPreferences?.[w.id];
-                    
-                    // Base dimensions
-                    const rawWidth = pref?.width || w.width || 800;
-                    const rawHeight = pref?.height || w.height || 600;
-                    const isPinned = pref?.isOpenByDefault || false;
 
-                    // Mobile logic
+                    // Viewport detection
                     const vp = getViewport();
                     const isMobile = vp.width < 768;
-                    let width = rawWidth;
-                    let height = rawHeight;
 
-                    if (isMobile) {
-                        width = Math.min(rawWidth, vp.width * 0.95);
-                        height = Math.min(rawHeight, vp.height * 0.8);
+                    // Calculate dimensions - prefer percentage if available
+                    let width: number;
+                    let height: number;
+
+                    if (pref?.widthPct !== undefined && pref?.heightPct !== undefined) {
+                        // Use percentage-based sizing
+                        width = (pref.widthPct / 100) * vp.width;
+                        height = (pref.heightPct / 100) * vp.height;
+                    } else {
+                        // Legacy pixel fallback
+                        width = pref?.width || w.width || 800;
+                        height = pref?.height || w.height || 600;
                     }
 
-                    const initialPosition = (pref?.x !== undefined && pref?.y !== undefined && !isMobile)
-                        ? { x: pref.x, y: pref.y }
-                        : getCenterPositionStatic(width, height);
+                    // Mobile: clamp dimensions to fit screen
+                    if (isMobile) {
+                        width = Math.min(width, vp.width * 0.95);
+                        height = Math.min(height, vp.height * 0.8);
+                    } else {
+                        // Desktop: clamp to prevent overflow
+                        width = Math.min(width, vp.width * 0.95);
+                        height = Math.min(height, vp.height * 0.95);
+                    }
+
+                    // Ensure minimum dimensions
+                    width = Math.max(width, 300);
+                    height = Math.max(height, 200);
+
+                    // Calculate position - prefer percentage if available
+                    let x: number;
+                    let y: number;
+
+                    if (pref?.xPct !== undefined && pref?.yPct !== undefined) {
+                        // Use percentage-based positioning
+                        x = (pref.xPct / 100) * vp.width;
+                        y = (pref.yPct / 100) * vp.height;
+                    } else if (pref?.x !== undefined && pref?.y !== undefined && !isMobile) {
+                        // Legacy pixel fallback (only on desktop)
+                        x = pref.x;
+                        y = pref.y;
+                    } else {
+                        // Default: center on screen
+                        const centerPos = getCenterPositionStatic(width, height);
+                        x = centerPos.x;
+                        y = centerPos.y;
+                    }
+
+                    // Clamp position to ensure window is always visible
+                    const margin = 20;
+                    x = Math.max(margin, Math.min(x, vp.width - width - margin));
+                    y = Math.max(margin, Math.min(y, vp.height - height - margin));
+
+                    const initialPosition = { x, y };
+                    const isPinned = pref?.isOpenByDefault || false;
 
                     // Hydrate content if missing but factory exists
                     let content = w.content;

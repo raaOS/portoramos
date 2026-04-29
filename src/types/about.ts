@@ -131,10 +131,19 @@ export interface DockPreferences {
 
 
 export interface WindowPreference {
+  // Legacy pixel-based (keep for fallback)
   x?: number;
   y?: number;
   width?: number;
   height?: number;
+  // Percentage-based for responsive positioning
+  xPct?: number;
+  yPct?: number;
+  widthPct?: number;
+  heightPct?: number;
+  // Reference screen dimensions (when admin saved)
+  refScreenWidth?: number;
+  refScreenHeight?: number;
   isOpenByDefault?: boolean;
 }
 

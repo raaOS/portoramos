@@ -22,7 +22,12 @@ interface UseWindowActionsProps {
     aboutData?: AboutData | null;
     isAdmin: boolean;
     csrfToken?: string;
-    saveWindowPreference: (id: string, updates: Partial<{ x: number, y: number, width: number, height: number, isOpenByDefault: boolean }>) => Promise<void>;
+    saveWindowPreference: (id: string, updates: Partial<{
+        x: number, y: number, width: number, height: number,
+        xPct: number, yPct: number, widthPct: number, heightPct: number,
+        refScreenWidth: number, refScreenHeight: number,
+        isOpenByDefault: boolean
+    }>) => Promise<void>;
 }
 
 export function useWindowActions({
@@ -163,22 +168,32 @@ export function useWindowActions({
 
     const updateWindowPosition = useCallback((id: string, x: number, y: number) => {
         const win = windows?.find(w => w.id === id);
-        saveWindowPosition(id, { 
-            x, 
-            y, 
+        saveWindowPosition(id, {
+            x,
+            y,
             width: win?.width,
             height: win?.height
         }, isAdmin);
-        
+
         setWindows(prev => prev?.map(w => {
             if (w.id === id) {
                 return { ...w, initialPosition: { x, y } };
             }
             return w;
         }));
-        
+
         if (isAdmin && csrfToken) {
-            queueMicrotask(() => saveWindowPreference(id, { x, y }));
+            // Convert pixels to percentages for responsive positioning
+            const vp = getViewport();
+            const xPct = (x / vp.width) * 100;
+            const yPct = (y / vp.height) * 100;
+
+            queueMicrotask(() => saveWindowPreference(id, {
+                x, y,  // Legacy pixel values
+                xPct, yPct,  // Percentage-based for responsive
+                refScreenWidth: vp.width,
+                refScreenHeight: vp.height
+            }));
         }
     }, [saveWindowPreference, isAdmin, csrfToken, windows, setWindows]);
 
@@ -194,7 +209,17 @@ export function useWindowActions({
     const handleWindowResizeEnd = useCallback((id: string, width: number, height: number) => {
         saveWindowPosition(id, { width, height }, isAdmin);
         if (isAdmin && csrfToken) {
-            queueMicrotask(() => saveWindowPreference(id, { width, height }));
+            // Convert pixels to percentages for responsive sizing
+            const vp = getViewport();
+            const widthPct = (width / vp.width) * 100;
+            const heightPct = (height / vp.height) * 100;
+
+            queueMicrotask(() => saveWindowPreference(id, {
+                width, height,  // Legacy pixel values
+                widthPct, heightPct,  // Percentage-based for responsive
+                refScreenWidth: vp.width,
+                refScreenHeight: vp.height
+            }));
         }
     }, [saveWindowPreference, isAdmin, csrfToken]);
 
@@ -208,11 +233,23 @@ export function useWindowActions({
         )));
 
         if (nextPinned) {
+            const x = targetWindow.initialPosition?.x || 0;
+            const y = targetWindow.initialPosition?.y || 0;
+            const width = targetWindow.width || 800;
+            const height = targetWindow.height || 600;
+
+            // Convert to percentages for responsive positioning
+            const vp = getViewport();
+            const xPct = (x / vp.width) * 100;
+            const yPct = (y / vp.height) * 100;
+            const widthPct = (width / vp.width) * 100;
+            const heightPct = (height / vp.height) * 100;
+
             void saveWindowPreference(id, {
-                x: targetWindow.initialPosition?.x || 0,
-                y: targetWindow.initialPosition?.y || 0,
-                width: targetWindow.width,
-                height: targetWindow.height,
+                x, y, width, height,  // Legacy pixel values
+                xPct, yPct, widthPct, heightPct,  // Percentage-based
+                refScreenWidth: vp.width,
+                refScreenHeight: vp.height,
                 isOpenByDefault: true
             });
         } else {

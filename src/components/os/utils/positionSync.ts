@@ -1,6 +1,8 @@
 // Sistem positions yang simple dan reliable
 // localStorage = primary source for ADMIN ONLY, Firebase = template for visitors
 
+import type { WindowPreference } from '@/types/about';
+
 const STORAGE_KEY = 'ramos-positions-v2';
 const SESSION_KEY = 'ramos-session-positions'; // For visitor session-only positions
 
@@ -19,6 +21,12 @@ type PersistedIconPosition = Partial<IconPosition> | null | undefined;
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
+}
+
+/** SSR-safe viewport dimensions helper */
+function getCurrentViewport() {
+  if (typeof window === 'undefined') return { width: 1440, height: 900 };
+  return { width: window.innerWidth, height: window.innerHeight };
 }
 
 // Load dari localStorage (ADMIN only)
@@ -72,8 +80,8 @@ export function clearVisitorPositions() {
 
 // Get position window
 export function getWindowPosition(
-  id: string, 
-  firebaseData: PersistedWindowPosition,
+  id: string,
+  firebaseData: WindowPreference | null | undefined,
   defaults: { x: number; y: number; width: number; height: number },
   isAdmin: boolean = false
 ): { x: number; y: number; width: number; height: number } {
@@ -82,18 +90,46 @@ export function getWindowPosition(
     const local = loadPositions().windows?.[id];
     if (local) return local;
   }
-  
-  // 2. Cek Firebase (Sumber utama untuk visitor)
-  if (isFiniteNumber(firebaseData?.x) && isFiniteNumber(firebaseData?.y)) {
+
+  const vp = getCurrentViewport();
+
+  // 2. Cek percentage-based position (NEW - responsive)
+  if (isFiniteNumber(firebaseData?.xPct) && isFiniteNumber(firebaseData?.yPct)) {
+    const x = (firebaseData.xPct! / 100) * vp.width;
+    const y = (firebaseData.yPct! / 100) * vp.height;
+    const width = isFiniteNumber(firebaseData?.widthPct)
+      ? (firebaseData.widthPct! / 100) * vp.width
+      : (isFiniteNumber(firebaseData?.width) ? firebaseData.width! : defaults.width);
+    const height = isFiniteNumber(firebaseData?.heightPct)
+      ? (firebaseData.heightPct! / 100) * vp.height
+      : (isFiniteNumber(firebaseData?.height) ? firebaseData.height! : defaults.height);
+
+    // Clamp to viewport with margin
+    const margin = 20;
     return {
-      x: firebaseData.x,
-      y: firebaseData.y,
-      width: isFiniteNumber(firebaseData.width) ? firebaseData.width : defaults.width,
-      height: isFiniteNumber(firebaseData.height) ? firebaseData.height : defaults.height
+      x: Math.max(margin, Math.min(x, vp.width - Math.max(width, 300) - margin)),
+      y: Math.max(margin, Math.min(y, vp.height - Math.max(height, 200) - margin)),
+      width: Math.max(300, Math.min(width, vp.width * 0.95)),
+      height: Math.max(200, Math.min(height, vp.height * 0.95))
     };
   }
-  
-  // 3. Default
+
+  // 3. Cek legacy pixel-based position (FALLBACK)
+  if (isFiniteNumber(firebaseData?.x) && isFiniteNumber(firebaseData?.y)) {
+    const width = isFiniteNumber(firebaseData?.width) ? firebaseData!.width! : defaults.width;
+    const height = isFiniteNumber(firebaseData?.height) ? firebaseData!.height! : defaults.height;
+
+    // Clamp legacy values to current viewport
+    const margin = 20;
+    return {
+      x: Math.max(margin, Math.min(firebaseData!.x!, vp.width - Math.max(width, 300) - margin)),
+      y: Math.max(margin, Math.min(firebaseData!.y!, vp.height - Math.max(height, 200) - margin)),
+      width: Math.max(300, Math.min(width, vp.width * 0.95)),
+      height: Math.max(200, Math.min(height, vp.height * 0.95))
+    };
+  }
+
+  // 4. Default
   return defaults;
 }
 
