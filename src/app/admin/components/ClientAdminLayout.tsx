@@ -1,31 +1,24 @@
 'use client';
 
-import { ReactNode, Suspense } from 'react';
+import { ReactNode, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Menu, X } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { ADMIN_PREFETCH_HREFS, warmAdminCrudQueries } from '../lib/adminQueries';
 
 // Extracted Hook & Components
 import { useAdminSidebar } from './hooks/useAdminSidebar';
 import { AdminSidebar } from './components/AdminSidebar';
-import { AdminHeader } from './components/AdminHeader';
 
-interface AdminLayoutProps {
+interface ClientAdminLayoutProps {
   children: ReactNode;
-  title: string;
-  subtitle?: string;
-  breadcrumbs?: Array<{ label: string; href?: string }>;
-  actions?: ReactNode;
-  titleIcon?: ReactNode;
-  titleAccent?: string;
 }
 
-function AdminLayoutContent({
-  children,
-  title,
-  actions,
-  titleIcon,
-  titleAccent = 'bg-blue-50 text-blue-700'
-}: AdminLayoutProps) {
+export default function ClientAdminLayout({ children }: ClientAdminLayoutProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { logout } = useAdminAuth();
   const {
     isMobileMenuOpen,
@@ -46,6 +39,24 @@ function AdminLayoutContent({
       setSidebarCollapsed(true);
     }
   };
+
+  useEffect(() => {
+    if (pathname === '/admin/login') return;
+
+    const timeout = window.setTimeout(() => {
+      ADMIN_PREFETCH_HREFS.forEach((href) => router.prefetch(href));
+      void warmAdminCrudQueries(queryClient);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [pathname, queryClient, router]);
+
+  // Do not render the sidebar layout on the login page
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
 
   // Dynamic margin for content area based on sidebar state
   const contentMargin = sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64';
@@ -85,26 +96,8 @@ function AdminLayoutContent({
         onClick={handleContentClick}
         className={`flex-1 min-h-screen pt-16 md:pt-0 bg-gray-50 flex flex-col ${contentMargin} transition-all duration-300 ease-in-out ${!sidebarCollapsed ? 'cursor-pointer' : ''}`}
       >
-        <AdminHeader
-          title={title}
-          titleIcon={titleIcon}
-          titleAccent={titleAccent}
-          actions={actions}
-        />
-
-        {/* Page Content */}
-        <div className="p-6 flex-1">
-          {children}
-        </div>
+        {children}
       </div>
     </div>
-  );
-}
-
-export default function AdminLayout(props: AdminLayoutProps) {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center text-sm text-gray-500">Loading admin...</div>}>
-      <AdminLayoutContent {...props} />
-    </Suspense>
   );
 }

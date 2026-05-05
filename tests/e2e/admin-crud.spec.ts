@@ -98,7 +98,7 @@ test.describe('API Response Standardization', () => {
   });
 
   test('should return standardized error response', async ({ request }) => {
-    const response = await request.get('/api/projects/invalid-id-12345', {
+    const response = await request.get('/api/projects/test-not-found-id', {
       headers: { 'Accept': 'application/json' }
     });
     

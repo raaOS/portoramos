@@ -1,11 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebaseAdmin';
 import { validateAdminRequest } from '@/lib/auth';
+import { CacheManager } from '@/lib/cache/CacheManager';
+
+const leadsCache = new CacheManager({
+    defaultTTL: 15_000,
+    maxSize: 3,
+    label: 'LeadsAPI',
+});
+
+const LEADS_CACHE_KEY = 'admin:leads';
 
 export async function GET(request: NextRequest) {
     try {
         if (!(await validateAdminRequest(request, { checkCsrf: false }))) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const fresh = request.nextUrl.searchParams.get('fresh') === 'true';
+        if (!fresh) {
+            const cached = leadsCache.get<unknown[]>(LEADS_CACHE_KEY);
+            if (cached) {
+                return NextResponse.json(cached);
+            }
         }
 
         const snapshot = await db.ref('leads').once('value');
@@ -15,6 +32,8 @@ export async function GET(request: NextRequest) {
         const leadsArray = Array.isArray(leads)
             ? leads
             : Object.keys(leads).map(key => ({ id: key, ...leads[key] }));
+
+        leadsCache.set(LEADS_CACHE_KEY, leadsArray);
 
         return NextResponse.json(leadsArray);
     } catch (error) {

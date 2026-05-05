@@ -5,10 +5,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { POLLING } from '@/lib/constants';
 import { useRealtimeSync } from '@/lib/services/realtimeSync';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 import { Label } from '@/types/labels';
+import {
+    ADMIN_DATA_GC_TIME,
+    ADMIN_DATA_STALE_TIME,
+    ADMIN_PLACEHOLDER_DATA,
+    ADMIN_QUERY_KEYS,
+    fetchAdminCommentCounts,
+    fetchAdminLabels,
+    fetchAdminProjects,
+    fetchAdminProjectsFresh,
+} from '../lib/adminQueries';
 
 export function useAdminProjects() {
     const queryClient = useQueryClient();
@@ -20,31 +29,26 @@ export function useAdminProjects() {
     const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
     const { data: projectsData, isLoading, error } = useQuery({
-        queryKey: ['projects', 'admin'],
-        queryFn: async () => {
-            const res = await fetch('/api/projects?fresh=true');
-            if (!res.ok) throw new Error('Failed to fetch projects');
-            return res.json();
-        },
-        staleTime: POLLING.CLIENT_STALE_TIME,
-        gcTime: 10 * 60 * 1000,
+        queryKey: ADMIN_QUERY_KEYS.projects,
+        queryFn: fetchAdminProjects,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.projects,
     });
 
     // 1.5 Fetch Labels
     const { data: labels } = useQuery({
-        queryKey: ['labels'],
-        queryFn: async () => {
-            const res = await fetch('/api/about/labels');
-            if (!res.ok) return [];
-            return res.json();
-        },
+        queryKey: ADMIN_QUERY_KEYS.labels,
+        queryFn: fetchAdminLabels,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.labels,
         initialData: [] as Label[]
     });
 
     const projects = (projectsData?.data?.projects || []) as Project[];
 
-    // Sync orderedProjects when data changes (Render phase sync for purity)
-    const [prevProjectsData, setPrevProjectsData] = useState(projectsData);
+    const [prevProjectsData, setPrevProjectsData] = useState<typeof projectsData>(undefined);
     if (projectsData !== prevProjectsData) {
         setPrevProjectsData(projectsData);
         if (projectsData?.data?.projects) {
@@ -54,23 +58,26 @@ export function useAdminProjects() {
 
     // 2. Fetch Comment Counts
     const { data: commentCounts } = useQuery({
-        queryKey: ['comments', 'counts'],
-        queryFn: async () => {
-            const res = await fetch('/api/comments');
-            if (!res.ok) throw new Error('Failed to fetch comments');
-            const data = await res.json();
-            const counts: Record<string, number> = {};
-            if (data.comments) {
-                Object.entries(data.comments).forEach(([slug, commentsList]: [string, unknown]) => {
-                    const commentsArr = Array.isArray(commentsList) ? commentsList : [];
-                    const total = commentsArr.reduce((acc, c) => acc + 1 + ((c as { replies?: unknown[] }).replies?.length || 0), 0);
-                    counts[slug] = total;
-                });
-            }
-            return counts;
-        },
+        queryKey: ADMIN_QUERY_KEYS.commentCounts,
+        queryFn: fetchAdminCommentCounts,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
         initialData: {}
     });
+
+    const refreshProjects = useCallback(async (fresh = false) => {
+        const data = fresh
+            ? await fetchAdminProjectsFresh()
+            : await queryClient.fetchQuery({
+                queryKey: ADMIN_QUERY_KEYS.projects,
+                queryFn: fetchAdminProjects,
+                staleTime: ADMIN_DATA_STALE_TIME,
+                gcTime: ADMIN_DATA_GC_TIME,
+            });
+
+        queryClient.setQueryData(ADMIN_QUERY_KEYS.projects, data);
+        return data;
+    }, [queryClient]);
 
     // 3. Mutations
     const createMutation = useMutation({
@@ -92,8 +99,8 @@ export function useAdminProjects() {
             return response.json();
         },
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
-            await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
+            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' });
+            await refreshProjects(true);
             showSuccess('Project berhasil dibuat');
         },
         onError: (err: Error) => showError(err.message || 'Failed to create project')
@@ -118,8 +125,8 @@ export function useAdminProjects() {
             return response.json();
         },
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
-            await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
+            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' });
+            await refreshProjects(true);
             showSuccess('Project berhasil diperbarui');
         },
         onError: (err: Error) => showError(err.message || 'Failed to update project')
@@ -142,8 +149,8 @@ export function useAdminProjects() {
             return id;
         },
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
-            await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
+            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' });
+            await refreshProjects(true);
             showSuccess('Project dihapus');
         },
         onError: (err: Error) => showError(err.message || 'Failed to delete project')
@@ -169,7 +176,7 @@ export function useAdminProjects() {
         } catch (e: unknown) {
             const errorMsg = e instanceof Error ? e.message : 'Unknown error';
             showError(`Gagal memperbarui urutan: ${errorMsg}`);
-            queryClient.invalidateQueries({ queryKey: ['projects', 'admin'] });
+            queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.projects });
         }
     }, [csrfToken, queryClient, showError]);
 
@@ -195,8 +202,8 @@ export function useAdminProjects() {
 
             setSelectedProjectIds(new Set());
             showSuccess(`Bulk ${action} complete`);
-            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
-            await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true, type: 'active' });
+            await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' });
+            await refreshProjects(true);
         } catch {
             showError(`Bulk ${action} failed`);
         } finally {
@@ -222,15 +229,10 @@ export function useAdminProjects() {
         }
     };
 
-    const refreshProjects = async () => {
-        await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'all' });
-        await queryClient.refetchQueries({ queryKey: ['projects', 'admin'], exact: true });
-    };
-
     useRealtimeSync({
         onUpdate: () => {
             console.log('[AdminProjects] Real-time update detected, refreshing...');
-            refreshProjects();
+            void refreshProjects(true);
         },
         onUnavailable: () => {
             console.log('[AdminProjects] Real-time sync unavailable, using manual refresh');

@@ -1,42 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import AdminLayout from '../components/AdminLayout';
+import { useQuery } from '@tanstack/react-query';
+import { AdminHeader } from '../components/components/AdminHeader';
 import AdminTable, { type Column } from '../components/AdminTable';
 import { ExternalLink, MessageSquare } from 'lucide-react';
-
-interface Lead extends Record<string, unknown> {
-    id: string;
-    createdAt: string;
-    name: string;
-    contact: string;
-    contactType: 'WhatsApp' | 'Email';
-    message: string;
-}
+import {
+    ADMIN_DATA_GC_TIME,
+    ADMIN_DATA_STALE_TIME,
+    ADMIN_PLACEHOLDER_DATA,
+    ADMIN_QUERY_KEYS,
+    fetchAdminLeads,
+    type Lead,
+} from '../lib/adminQueries';
 
 export default function AdminLeadsClient() {
-    const [leads, setLeads] = useState<Lead[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    const fetchLeads = async () => {
-        try {
-            const res = await fetch('/api/leads');
-            if (res.ok) {
-                const data = await res.json();
-                setLeads(data);
-            }
-        } catch (_error) {
-            console.error('Failed to fetch leads', _error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        Promise.resolve().then(() => {
-            fetchLeads();
-        });
-    }, []);
+    const { data: leads = [], isLoading: loading } = useQuery({
+        queryKey: ADMIN_QUERY_KEYS.leads,
+        queryFn: fetchAdminLeads,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.leads,
+    });
 
     const columns: Column<Lead>[] = [
         {
@@ -88,12 +72,13 @@ export default function AdminLeadsClient() {
     ];
 
     return (
-        <AdminLayout
-            title="Database Pesan Masuk"
-            subtitle="Pesan potensial dari Widget Chat Website"
-            titleIcon={<MessageSquare className="w-6 h-6 text-indigo-600" />}
-            titleAccent="bg-indigo-50 text-indigo-700"
-        >
+        <>
+      <AdminHeader
+        title="Database Pesan Masuk"
+        titleIcon={<MessageSquare className="w-6 h-6 text-indigo-600" />}
+        titleAccent="bg-indigo-50 text-indigo-700"
+      />
+      <div className="p-6 flex-1 space-y-6">
             <div className="space-y-6">
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
@@ -111,6 +96,7 @@ export default function AdminLeadsClient() {
                     />
                 </div>
             </div>
-        </AdminLayout>
+      </div>
+    </>
     );
 }

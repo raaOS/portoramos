@@ -9,9 +9,10 @@ import { validationError } from '@/lib/api-response';
 
 
 // GET - Read about content
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const data = await aboutService.getAboutData(true);
+    const fresh = request.nextUrl.searchParams.get('fresh') === 'true';
+    const data = await aboutService.getAboutData(fresh);
     return NextResponse.json(data);
   } catch (error) {
     console.error('[API/About] Error loading about data:', error instanceof Error ? error.message : error);

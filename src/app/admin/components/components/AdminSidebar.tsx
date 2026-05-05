@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { LayoutDashboard, Eye, LogOut, ChevronDown, ChevronRight, type LucideIcon } from 'lucide-react';
 import { NAV_ITEMS, type NavItem } from '../AdminConstants';
+import { prefetchAdminRoute } from '../../lib/adminQueries';
 
 interface AdminSidebarProps {
   isMobileMenuOpen: boolean;
@@ -31,6 +33,14 @@ export const AdminSidebar = ({
   handleLogout
 }: AdminSidebarProps) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const warmRoute = (href: string) => {
+    if (href.endsWith('-group') || href === '/admin/os-config') return;
+
+    router.prefetch(href);
+    void prefetchAdminRoute(queryClient, href);
+  };
 
   const handleNavItemClick = (item: NavItem) => {
     const isVirtualGroup = item.href.endsWith('-group') || item.href === '/admin/os-config';
@@ -42,6 +52,7 @@ export const AdminSidebar = ({
     }
 
     if (!isVirtualGroup) {
+      warmRoute(item.href);
       router.push(item.href);
     }
     if (item.children && item.children.length > 0) {
@@ -66,6 +77,8 @@ export const AdminSidebar = ({
             ${active && !hasChildren ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-900 ' + item.bg}
           `}
           style={{ paddingLeft: `${sidebarCollapsed ? '0' : '12px'}`, paddingRight: '12px' }}
+          onMouseEnter={() => warmRoute(item.href)}
+          onFocus={() => warmRoute(item.href)}
           onClick={() => handleNavItemClick(item)}
         >
           <div className="flex items-center min-w-0 flex-1 overflow-hidden">

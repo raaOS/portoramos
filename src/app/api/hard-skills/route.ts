@@ -6,7 +6,7 @@ import { HardSkill } from '@/types/hardSkill';
 import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
 
 export async function GET() {
-  const data = await hardSkillService.getHardSkills(true);
+  const data = await hardSkillService.getHardSkills();
   return NextResponse.json(data.skills);
 }
 

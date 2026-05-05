@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Pencil, MessageSquare, X, ChevronDown } from 'lucide-react';
-import AdminLayout from '../components/AdminLayout';
+import { AdminHeader } from '../components/components/AdminHeader';
 import AdminButton from '../components/AdminButton';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAdminTestimonial } from '../hooks/useAdminTestimonial';
@@ -38,36 +38,38 @@ export default function AdminTestimonialClient() {
 
   if (authLoading || (loading && testimonials.length === 0)) {
     return (
-      <AdminLayout
-        title="WhatsApp Testimonial"
-        subtitle="Memuat data..."
-        breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Testimonial' }]}
-        titleIcon={<MessageSquare className="h-5 w-5" aria-hidden />}
-        titleAccent="bg-green-50 text-green-700"
-      >
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mr-3"></div>
-          Memuat data...
+      <>
+        <AdminHeader
+          title="WhatsApp Testimonial"
+          titleIcon={<MessageSquare className="h-5 w-5" aria-hidden />}
+          titleAccent="bg-green-50 text-green-700"
+        />
+        <div className="p-6 flex-1 space-y-6">
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mr-3"></div>
+            Memuat data...
+          </div>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   if (!isAdmin) {
     return (
-      <AdminLayout
-        title="Unauthorized"
-        subtitle="Access Denied"
-        breadcrumbs={[{ label: 'Dashboard', href: '/admin' }]}
-        titleIcon={<X size={20} />}
-        titleAccent="bg-red-50 text-red-700"
-      >
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Akses Terbatas</h2>
-          <p className="text-gray-600 mb-6">Silakan login terlebih dahulu untuk mengelola Testimonial.</p>
-          <a href="/admin/login" className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">Login Sekarang</a>
+      <>
+        <AdminHeader
+          title="Unauthorized"
+          titleIcon={<X size={20} />}
+          titleAccent="bg-red-50 text-red-700"
+        />
+        <div className="p-6 flex-1 space-y-6">
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Akses Terbatas</h2>
+            <p className="text-gray-600 mb-6">Silakan login terlebih dahulu untuk mengelola Testimonial.</p>
+            <a href="/admin/login" className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">Login Sekarang</a>
+          </div>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
@@ -97,13 +99,13 @@ export default function AdminTestimonialClient() {
   };
 
   return (
-    <AdminLayout
-      title="Dynamic Island WA"
-      subtitle="Atur simulasi notifikasi WhatsApp di Dynamic Island"
-      breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'WhatsApp Notif' }]}
-      titleIcon={<MessageSquare className="h-5 w-5" aria-hidden />}
-      titleAccent="bg-green-50 text-green-700"
-    >
+    <>
+      <AdminHeader
+        title="Dynamic Island WA"
+        titleIcon={<MessageSquare className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-green-50 text-green-700"
+      />
+      <div className="p-6 flex-1 space-y-6">
       <div className="space-y-8">
         <AIGenerator onGenerate={handleAiFill} isLoading={isAiGenerating} />
 
@@ -208,6 +210,7 @@ export default function AdminTestimonialClient() {
           )}
         </div>
       </div>
-    </AdminLayout>
+      </div>
+    </>
   );
 }

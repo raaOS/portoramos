@@ -1,9 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Save, Pin, Star, CheckSquare } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { NoteData } from '@/components/os/ui/elements/StickyNoteItem';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { AdminNoteEditor } from './AdminNoteEditor';
+import {
+    ADMIN_DATA_GC_TIME,
+    ADMIN_DATA_STALE_TIME,
+    ADMIN_PLACEHOLDER_DATA,
+    ADMIN_QUERY_KEYS,
+    fetchAdminStickyNotes,
+} from '../../lib/adminQueries';
 
 const COLORS = [
     '#fef08a', // Yellow
@@ -20,33 +28,31 @@ interface StickyNotesManagerProps {
 }
 
 export default function StickyNotesManager({ }: StickyNotesManagerProps) {
+    const queryClient = useQueryClient();
     const [notes, setNotes] = useState<NoteData[]>([]);
-    const [loading, setLoading] = useState(true);
     const { showSuccess, showError } = useToast();
     const [saving, setSaving] = useState(false);
     const { csrfToken } = useAdminAuth();
 
-    const loadNotes = useCallback(async () => {
-        try {
-            setLoading(true);
-            const response = await fetch('/api/sticky-notes');
-            const data = await response.json();
-            // Data might be array directly or { notes: [] } depending on API. 
-            // Checking route.ts line 8: return NextResponse.json(data); 
-            // Assuming service.getNotes() returns the array.
-            setNotes(Array.isArray(data) ? data : []);
-        } catch {
-            showError('Gagal memuat catatan tempel.');
-        } finally {
-            setLoading(false);
-        }
-    }, [showError]);
+    const notesQuery = useQuery({
+        queryKey: ADMIN_QUERY_KEYS.stickyNotes,
+        queryFn: fetchAdminStickyNotes,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.stickyNotes,
+    });
+
+    const [prevNotesData, setPrevNotesData] = useState<typeof notesQuery.data>(undefined);
+    if (notesQuery.data && notesQuery.data !== prevNotesData) {
+        setPrevNotesData(notesQuery.data);
+        setNotes(notesQuery.data);
+    }
 
     useEffect(() => {
-        Promise.resolve().then(() => {
-            loadNotes();
-        });
-    }, [loadNotes]);
+        if (notesQuery.error) {
+            showError('Gagal memuat catatan tempel.');
+        }
+    }, [notesQuery.error, showError]);
 
     const handleSave = async () => {
         try {
@@ -62,6 +68,7 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
             });
 
             if (response.ok) {
+                queryClient.setQueryData(ADMIN_QUERY_KEYS.stickyNotes, notes);
                 showSuccess('Catatan tempel berhasil disimpan.');
             } else {
                 showError('Gagal menyimpan catatan.');
@@ -103,7 +110,7 @@ export default function StickyNotesManager({ }: StickyNotesManagerProps) {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Memuat catatan...</div>;
+    if (notesQuery.isLoading) return <div className="p-8 text-center text-gray-500">Memuat catatan...</div>;
 
     return (
         <div className="space-y-6">

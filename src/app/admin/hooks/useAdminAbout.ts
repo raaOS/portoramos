@@ -1,83 +1,75 @@
 'use client';
 
-import { useState, useEffect, useCallback, startTransition } from 'react';
+import { useCallback, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AboutData, UpdateAboutData } from '@/types/about';
 import { RunningTextItem } from '@/types/runningText';
 import { Project } from '@/types/projects';
 import { Label } from '@/types/labels';
 import { useToast } from '@/contexts/ToastContext';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
+import {
+    ADMIN_DATA_GC_TIME,
+    ADMIN_DATA_STALE_TIME,
+    ADMIN_PLACEHOLDER_DATA,
+    ADMIN_QUERY_KEYS,
+    fetchAdminAbout,
+    fetchAdminAboutFresh,
+    fetchAdminLabels,
+    fetchAdminProjects,
+    fetchAdminRunningText,
+    fetchAdminRunningTextFresh,
+} from '../lib/adminQueries';
 
 export function useAdminAbout(csrfToken: string | null) {
-    const [aboutData, setAboutData] = useState<AboutData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [runningTexts, setRunningTexts] = useState<RunningTextItem[]>([]);
-    const [runningTextsLoading, setRunningTextsLoading] = useState(true);
+    const queryClient = useQueryClient();
     const { showSuccess, showError } = useToast();
+    const [error, setError] = useState<string | null>(null);
 
-    const [labels, setLabels] = useState<Label[]>([]);
-    const [labelsLoading, setLabelsLoading] = useState(true);
+    const aboutQuery = useQuery({
+        queryKey: ADMIN_QUERY_KEYS.about,
+        queryFn: fetchAdminAbout,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.about,
+    });
 
-    const loadAboutData = useCallback(async () => {
-        try {
-            setLoading(true);
-            const response = await fetch('/api/about');
-            const data = await response.json();
-            setAboutData(data);
-        } catch (error) {
-            setError(error instanceof Error ? error.message : 'Failed to load about data');
-            showError('Failed to load about content.');
-        } finally {
-            setLoading(false);
-        }
-    }, [showError]);
+    const labelsQuery = useQuery({
+        queryKey: ADMIN_QUERY_KEYS.labels,
+        queryFn: fetchAdminLabels,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.labels,
+        initialData: [] as Label[],
+    });
 
-    const loadLabels = useCallback(async () => {
-        try {
-            setLabelsLoading(true);
-            const response = await fetch('/api/about/labels');
-            const data = await response.json();
-            setLabels(Array.isArray(data) ? data : []);
-        } catch {
-            showError('Failed to load labels.');
-        } finally {
-            setLabelsLoading(false);
-        }
-    }, [showError]);
+    const runningTextQuery = useQuery({
+        queryKey: ADMIN_QUERY_KEYS.runningText,
+        queryFn: fetchAdminRunningText,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.runningText,
+    });
 
-    const loadRunningTexts = useCallback(async () => {
-        try {
-            setRunningTextsLoading(true);
-            const response = await fetch('/api/running-text?fresh=true');
-            const data = await response.json();
-            setRunningTexts(data.items || []);
-        } catch {
-            showError('Failed to load running text.');
-        } finally {
-            setRunningTextsLoading(false);
-        }
-    }, [showError]);
+    const projectsQuery = useQuery({
+        queryKey: ADMIN_QUERY_KEYS.projects,
+        queryFn: fetchAdminProjects,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.projects,
+    });
 
-    const loadProjects = useCallback(async () => {
-        try {
-            const response = await fetch('/api/projects');
-            const data = await response.json();
-            setProjects(data?.data?.projects || []);
-        } catch (_err) {
-            console.error('Failed to load projects for selector', _err);
-        }
-    }, []);
+    const refreshAboutData = useCallback(async () => {
+        const data = await fetchAdminAboutFresh();
+        queryClient.setQueryData(ADMIN_QUERY_KEYS.about, data);
+        return data;
+    }, [queryClient]);
 
-    useEffect(() => {
-        startTransition(() => {
-            loadAboutData();
-            loadRunningTexts();
-            loadProjects();
-            loadLabels();
-        });
-    }, [loadAboutData, loadRunningTexts, loadProjects, loadLabels]);
+    const refreshRunningTexts = useCallback(async () => {
+        const data = await fetchAdminRunningTextFresh();
+        queryClient.setQueryData(ADMIN_QUERY_KEYS.runningText, data);
+        return data;
+    }, [queryClient]);
 
     const handleUpdateAbout = async (updateData: UpdateAboutData) => {
         try {
@@ -93,7 +85,12 @@ export function useAdminAbout(csrfToken: string | null) {
             });
 
             if (response.ok) {
-                await loadAboutData();
+                const result = await response.json();
+                if (result?.data) {
+                    queryClient.setQueryData(ADMIN_QUERY_KEYS.about, result.data as AboutData);
+                } else {
+                    await refreshAboutData();
+                }
                 setError(null);
                 showSuccess('About content updated successfully.');
             } else {
@@ -113,7 +110,7 @@ export function useAdminAbout(csrfToken: string | null) {
         try {
             const token = getWritableCsrfToken(csrfToken);
             const response = await fetch('/api/about/labels', {
-                method: 'POST',
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-csrf-token': token
@@ -123,13 +120,13 @@ export function useAdminAbout(csrfToken: string | null) {
             });
 
             if (response.ok) {
-                setLabels(newLabels);
+                queryClient.setQueryData(ADMIN_QUERY_KEYS.labels, newLabels);
                 showSuccess('Labels updated successfully.');
                 return true;
-            } else {
-                showError('Failed to update labels.');
-                return false;
             }
+
+            showError('Failed to update labels.');
+            return false;
         } catch {
             showError('Failed to update labels.');
             return false;
@@ -149,7 +146,7 @@ export function useAdminAbout(csrfToken: string | null) {
                 body: JSON.stringify(payload),
             });
             if (response.ok) {
-                await loadRunningTexts();
+                await refreshRunningTexts();
                 showSuccess('Running text berhasil ditambahkan.');
             } else {
                 showError('Gagal menambahkan running text.');
@@ -172,7 +169,7 @@ export function useAdminAbout(csrfToken: string | null) {
                 body: JSON.stringify(payload),
             });
             if (response.ok) {
-                await loadRunningTexts();
+                await refreshRunningTexts();
                 showSuccess('Running text diperbarui.');
             } else {
                 showError('Gagal memperbarui running text.');
@@ -193,7 +190,7 @@ export function useAdminAbout(csrfToken: string | null) {
                 credentials: 'include'
             });
             if (response.ok) {
-                await loadRunningTexts();
+                await refreshRunningTexts();
                 showSuccess('Running text dihapus.');
             } else {
                 showError('Gagal menghapus running text.');
@@ -204,20 +201,19 @@ export function useAdminAbout(csrfToken: string | null) {
     };
 
     return {
-        aboutData,
-        loading,
-        error,
-        projects,
-        runningTexts,
-        runningTextsLoading,
-        labels,
-        labelsLoading,
+        aboutData: aboutQuery.data ?? null,
+        loading: aboutQuery.isLoading,
+        error: error || (aboutQuery.error ? 'Failed to load about data' : null),
+        projects: (projectsQuery.data?.data?.projects || []) as Project[],
+        runningTexts: runningTextQuery.data?.items || [],
+        runningTextsLoading: runningTextQuery.isLoading,
+        labels: labelsQuery.data || [],
+        labelsLoading: labelsQuery.isLoading,
         handleUpdateAbout,
         handleUpdateLabels,
         handleCreateRunningText,
         handleUpdateRunningText,
         handleDeleteRunningText,
-        refreshAboutData: loadAboutData
+        refreshAboutData
     };
-
 }

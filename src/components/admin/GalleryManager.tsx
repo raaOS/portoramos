@@ -1,42 +1,52 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import { Project } from '@/types/projects';
 import { GalleryFeaturedData } from '@/types/gallery';
 import { Save, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import {
+    ADMIN_DATA_GC_TIME,
+    ADMIN_DATA_STALE_TIME,
+    ADMIN_PLACEHOLDER_DATA,
+    ADMIN_QUERY_KEYS,
+    fetchAdminGalleryFeatured,
+} from '@/app/admin/lib/adminQueries';
 
 interface GalleryManagerProps {
     projects: Project[];
 }
 
 export default function GalleryManager({ projects }: GalleryManagerProps) {
+    const queryClient = useQueryClient();
     const { showSuccess, showError } = useToast();
     const [featuredIds, setFeaturedIds] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const { csrfToken } = useAdminAuth();
 
-    // Fetch initial data
+    const galleryQuery = useQuery({
+        queryKey: ADMIN_QUERY_KEYS.galleryFeatured,
+        queryFn: fetchAdminGalleryFeatured,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.galleryFeatured,
+    });
+
+    const [prevGalleryData, setPrevGalleryData] = useState<typeof galleryQuery.data>(undefined);
+    if (galleryQuery.data && galleryQuery.data !== prevGalleryData) {
+        setPrevGalleryData(galleryQuery.data);
+        setFeaturedIds(galleryQuery.data.featuredProjectIds || []);
+    }
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await fetch('/api/gallery/featured');
-                if (res.ok) {
-                    const data: GalleryFeaturedData = await res.json();
-                    setFeaturedIds(data.featuredProjectIds || []);
-                }
-            } catch (error) {
-                console.error('Failed to fetch gallery data', error);
-                showError('Failed to load gallery settings');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [showError]);
+        if (galleryQuery.error) {
+            console.error('Failed to fetch gallery data', galleryQuery.error);
+            showError('Failed to load gallery settings');
+        }
+    }, [galleryQuery.error, showError]);
 
     const toggleSelection = (projectId: string) => {
         setFeaturedIds(prev => {
@@ -66,6 +76,10 @@ export default function GalleryManager({ projects }: GalleryManagerProps) {
             });
 
             if (!res.ok) throw new Error('Failed to save gallery');
+            queryClient.setQueryData<GalleryFeaturedData>(ADMIN_QUERY_KEYS.galleryFeatured, {
+                featuredProjectIds: featuredIds,
+                lastUpdated: new Date().toISOString(),
+            });
             showSuccess('Gallery updated successfully!');
         } catch (error) {
             console.error(error);
@@ -75,7 +89,7 @@ export default function GalleryManager({ projects }: GalleryManagerProps) {
         }
     };
 
-    if (loading) {
+    if (galleryQuery.isLoading) {
         return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-violet-600" /></div>;
     }
 

@@ -1,56 +1,63 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Testimonial, TestimonialData } from '@/types/testimonial';
 import { Project } from '@/types/projects';
 import { useToast } from '@/contexts/ToastContext';
-import { useAutoUpdate } from '@/hooks/useAutoUpdate';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
+import {
+    ADMIN_DATA_GC_TIME,
+    ADMIN_DATA_STALE_TIME,
+    ADMIN_PLACEHOLDER_DATA,
+    ADMIN_QUERY_KEYS,
+    fetchAdminProjects,
+    fetchAdminTestimonials,
+} from '../lib/adminQueries';
 
 export function useAdminTestimonial(csrfToken: string | null) {
-    const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
     const [isAiGenerating, setIsAiGenerating] = useState(false);
     const { showSuccess, showError } = useToast();
 
-    const loadTestimonials = useCallback(async () => {
-        try {
-            setLoading(true);
-            const response = await fetch('/api/testimonial');
-            if (!response.ok) throw new Error('Failed to fetch testimonials');
-            const data: TestimonialData = await response.json();
-            setTestimonials(data.testimonials);
-            setError(null);
-        } catch (_error) {
-            console.error('Error loading testimonials:', _error);
-            setError('Failed to load testimonials');
-            showError('Failed to load testimonials.');
-        } finally {
-            setLoading(false);
-        }
-    }, [showError]);
+    const testimonialQuery = useQuery({
+        queryKey: ADMIN_QUERY_KEYS.testimonial,
+        queryFn: fetchAdminTestimonials,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.testimonial,
+    });
 
-    const loadProjects = useCallback(async () => {
-        try {
-            const response = await fetch('/api/projects');
-            if (!response.ok) throw new Error('Failed to fetch projects');
-            const data = await response.json();
-            setProjects(data?.data?.projects || []);
-        } catch (_err) {
-            console.error('Error loading projects:', _err);
-        }
-    }, []);
+    const projectsQuery = useQuery({
+        queryKey: ADMIN_QUERY_KEYS.projects,
+        queryFn: fetchAdminProjects,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.projects,
+    });
 
-    useEffect(() => {
-        Promise.resolve().then(() => {
-            loadTestimonials();
-            loadProjects();
+    const currentData = testimonialQuery.data;
+
+    const setTestimonialsCache = (updater: (data: TestimonialData) => TestimonialData) => {
+        queryClient.setQueryData<TestimonialData>(ADMIN_QUERY_KEYS.testimonial, (previous) => {
+            const base = previous || {
+                testimonials: [],
+                lastUpdated: new Date().toISOString(),
+            };
+            return updater(base);
         });
-    }, [loadTestimonials, loadProjects]);
+    };
 
-    const { lastUpdated, refresh } = useAutoUpdate(loadTestimonials);
+    const refresh = async () => {
+        const data = await queryClient.fetchQuery({
+            queryKey: ADMIN_QUERY_KEYS.testimonial,
+            queryFn: fetchAdminTestimonials,
+            staleTime: 0,
+            gcTime: ADMIN_DATA_GC_TIME,
+        });
+        queryClient.setQueryData(ADMIN_QUERY_KEYS.testimonial, data);
+        return data;
+    };
 
     const generateAITestimonial = async (topic: string, messageCount: number) => {
         if (!topic) return null;
@@ -93,13 +100,22 @@ export function useAdminTestimonial(csrfToken: string | null) {
             });
 
             if (response.ok) {
-                refresh();
+                const result = await response.json();
+                if (result?.testimonial) {
+                    setTestimonialsCache((data) => ({
+                        ...data,
+                        testimonials: [...data.testimonials, result.testimonial as Testimonial],
+                        lastUpdated: new Date().toISOString(),
+                    }));
+                } else {
+                    await refresh();
+                }
                 showSuccess('Testimonial created successfully.');
                 return true;
-            } else {
-                showError('Failed to create testimonial.');
-                return false;
             }
+
+            showError('Failed to create testimonial.');
+            return false;
         } catch {
             showError('Failed to create testimonial.');
             return false;
@@ -120,13 +136,24 @@ export function useAdminTestimonial(csrfToken: string | null) {
             });
 
             if (response.ok) {
-                refresh();
+                const result = await response.json();
+                if (result?.testimonial) {
+                    setTestimonialsCache((data) => ({
+                        ...data,
+                        testimonials: data.testimonials.map((testimonial) => (
+                            testimonial.id === id ? result.testimonial as Testimonial : testimonial
+                        )),
+                        lastUpdated: new Date().toISOString(),
+                    }));
+                } else {
+                    await refresh();
+                }
                 showSuccess('Testimonial updated successfully.');
                 return true;
-            } else {
-                showError('Failed to update testimonial.');
-                return false;
             }
+
+            showError('Failed to update testimonial.');
+            return false;
         } catch {
             showError('Failed to update testimonial.');
             return false;
@@ -148,7 +175,11 @@ export function useAdminTestimonial(csrfToken: string | null) {
             });
 
             if (response.ok) {
-                refresh();
+                setTestimonialsCache((data) => ({
+                    ...data,
+                    testimonials: data.testimonials.filter((testimonial) => testimonial.id !== id),
+                    lastUpdated: new Date().toISOString(),
+                }));
                 showSuccess('Testimonial deleted successfully.');
             } else {
                 showError('Failed to delete testimonial.');
@@ -159,12 +190,12 @@ export function useAdminTestimonial(csrfToken: string | null) {
     };
 
     return {
-        testimonials,
-        projects,
-        loading,
-        error,
+        testimonials: currentData?.testimonials || [],
+        projects: (projectsQuery.data?.data?.projects || []) as Project[],
+        loading: testimonialQuery.isLoading,
+        error: testimonialQuery.error ? 'Failed to load testimonials' : null,
         isAiGenerating,
-        lastUpdated,
+        lastUpdated: currentData?.lastUpdated ? new Date(currentData.lastUpdated) : null,
         generateAITestimonial,
         createTestimonial,
         updateTestimonial,

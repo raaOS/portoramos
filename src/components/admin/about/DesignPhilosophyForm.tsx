@@ -1,9 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'motion/react';
 import { Save, Loader2, Sparkles, Plus, Trash2, ChevronDown, ChevronUp, GripVertical, RotateCcw } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import {
+    ADMIN_DATA_GC_TIME,
+    ADMIN_DATA_STALE_TIME,
+    ADMIN_PLACEHOLDER_DATA,
+    ADMIN_QUERY_KEYS,
+    fetchAdminAboutPhilosophy,
+} from '@/app/admin/lib/adminQueries';
 
 // Types - Hanya Workflow, hapus Legacy
 interface SubStep {
@@ -137,54 +145,42 @@ const DEFAULT_WORKFLOW_STEPS: WorkflowStep[] = [
 ];
 
 export default function DesignPhilosophyForm() {
+    const queryClient = useQueryClient();
     const [formData, setFormData] = useState<DesignPhilosophyData | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const { csrfToken } = useAdminAuth();
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set(['01', '02', '03', '04', '05']));
 
-    // Fetch initial data
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await fetch('/api/about/philosophy');
-                if (res.ok) {
-                    const data = await res.json();
-                    
-                    // Defensive: Ensure workflowSteps exists dengan default
-                    const safeData: DesignPhilosophyData = {
-                        heading: data.heading || 'Design Philosophy',
-                        subheading: data.subheading || 'Strategic Thinking Framework',
-                        workflowSteps: (data.workflowSteps && Array.isArray(data.workflowSteps) && data.workflowSteps.length > 0)
-                            ? data.workflowSteps 
-                            : DEFAULT_WORKFLOW_STEPS
-                    };
-                    
-                    setFormData(safeData);
-                } else {
-                    // Kalau API error, pakai default
-                    setFormData({
-                        heading: 'Design Philosophy',
-                        subheading: 'Strategic Thinking Framework',
-                        workflowSteps: DEFAULT_WORKFLOW_STEPS
-                    });
-                }
-            } catch (error) {
-                console.error('Failed to fetch philosophy data:', error);
-                // Kalau error, pakai default biar form tetap bisa dipakai
-                setFormData({
-                    heading: 'Design Philosophy',
-                    subheading: 'Strategic Thinking Framework',
-                    workflowSteps: DEFAULT_WORKFLOW_STEPS
-                });
-                setMessage({ type: 'error', text: 'Gagal mengambil data, menggunakan default' });
-            } finally {
-                setIsLoading(false);
-            }
+    const philosophyQuery = useQuery({
+        queryKey: ADMIN_QUERY_KEYS.aboutPhilosophy,
+        queryFn: fetchAdminAboutPhilosophy,
+        staleTime: ADMIN_DATA_STALE_TIME,
+        gcTime: ADMIN_DATA_GC_TIME,
+        placeholderData: ADMIN_PLACEHOLDER_DATA.about.designPhilosophy,
+    });
+
+    const [prevPhilosophyData, setPrevPhilosophyData] = useState<unknown>(undefined);
+    if (philosophyQuery.data && philosophyQuery.data !== prevPhilosophyData) {
+        setPrevPhilosophyData(philosophyQuery.data);
+        const data = philosophyQuery.data as Partial<DesignPhilosophyData>;
+        const safeData: DesignPhilosophyData = {
+            heading: data.heading || 'Design Philosophy',
+            subheading: data.subheading || 'Strategic Thinking Framework',
+            workflowSteps: (data.workflowSteps && Array.isArray(data.workflowSteps) && data.workflowSteps.length > 0)
+                ? data.workflowSteps
+                : DEFAULT_WORKFLOW_STEPS
         };
-        fetchData();
-    }, []);
+
+        setFormData(safeData);
+    } else if (philosophyQuery.error && formData === null && prevPhilosophyData !== 'error') {
+        setPrevPhilosophyData('error');
+        setFormData({
+            heading: 'Design Philosophy',
+            subheading: 'Strategic Thinking Framework',
+            workflowSteps: DEFAULT_WORKFLOW_STEPS
+        });
+    }
 
     const togglePhase = (number: string) => {
         setExpandedPhases(prev => {
@@ -274,6 +270,7 @@ export default function DesignPhilosophyForm() {
             });
 
             if (res.ok) {
+                queryClient.setQueryData(ADMIN_QUERY_KEYS.aboutPhilosophy, formData);
                 setMessage({ type: 'success', text: 'Perubahan berhasil disimpan! ✨' });
                 setTimeout(() => setMessage(null), 3000);
             } else {
@@ -286,7 +283,7 @@ export default function DesignPhilosophyForm() {
         }
     };
 
-    if (isLoading) {
+    if (philosophyQuery.isLoading || !formData) {
         return (
             <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-gray-400" />

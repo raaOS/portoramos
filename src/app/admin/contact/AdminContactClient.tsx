@@ -1,39 +1,37 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ContactData, UpdateContactData } from '@/types/contact';
-import AdminLayout from '../components/AdminLayout';
+import { AdminHeader } from '../components/components/AdminHeader';
 import { useToast } from '@/contexts/ToastContext';
 import { PhoneCall, Type, Share2, Info } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import {
+  ADMIN_DATA_GC_TIME,
+  ADMIN_DATA_STALE_TIME,
+  ADMIN_PLACEHOLDER_DATA,
+  ADMIN_QUERY_KEYS,
+  fetchAdminContact,
+} from '../lib/adminQueries';
 
 export default function AdminContactClient() {
-  const [contactData, setContactData] = useState<ContactData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'content' | 'socials' | 'labels'>('content');
   const { showSuccess, showError } = useToast();
   const { csrfToken } = useAdminAuth();
 
-  const loadContactData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/contact');
-      const data = await response.json();
-      setContactData(data);
-    } catch {
-      setError('Failed to load contact data');
-      showError('Failed to load contact data.');
-    } finally {
-      setLoading(false);
-    }
-  }, [showError]);
+  const contactQuery = useQuery({
+    queryKey: ADMIN_QUERY_KEYS.contact,
+    queryFn: fetchAdminContact,
+    staleTime: ADMIN_DATA_STALE_TIME,
+    gcTime: ADMIN_DATA_GC_TIME,
+    placeholderData: ADMIN_PLACEHOLDER_DATA.contact,
+  });
 
-  useEffect(() => {
-    Promise.resolve().then(() => {
-      loadContactData();
-    });
-  }, [loadContactData]);
+  const contactData = contactQuery.data ?? null;
+  const loading = contactQuery.isLoading;
 
   const handleUpdateContact = async (updateData: UpdateContactData) => {
     try {
@@ -48,7 +46,12 @@ export default function AdminContactClient() {
       });
 
       if (response.ok) {
-        await loadContactData(); // Re-fetch data on success
+        const result = await response.json();
+        if (result?.data) {
+          queryClient.setQueryData(ADMIN_QUERY_KEYS.contact, result.data as ContactData);
+        } else {
+          await queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.contact });
+        }
         setError(null);
         showSuccess('Contact updated successfully.');
       } else {
@@ -64,92 +67,94 @@ export default function AdminContactClient() {
 
   if (loading) {
     return (
-      <AdminLayout
-        title="Contact Page"
-        subtitle="Manage headline, subtext, and social links"
-        breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Contact' }]}
-        titleIcon={<PhoneCall className="h-5 w-5" aria-hidden />}
-        titleAccent="bg-amber-50 text-amber-700"
-      >
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+      <>
+        <AdminHeader
+          title="Contact Page"
+          titleIcon={<PhoneCall className="h-5 w-5" aria-hidden />}
+          titleAccent="bg-amber-50 text-amber-700"
+        />
+        <div className="p-6 flex-1 space-y-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+          </div>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout
-      title="Contact Page"
-      subtitle="Manage headline, subtext, and social links"
-      breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Contact' }]}
-      titleIcon={<PhoneCall className="h-5 w-5" aria-hidden />}
-      titleAccent="bg-amber-50 text-amber-700"
-    >
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        {/* Modern Tabs */}
-        <div className="border-b border-gray-200 bg-gray-50/50">
-          <nav className="flex space-x-1 px-4 py-2">
-            {[
-              { id: 'content', name: 'Page Content', icon: Type },
-              { id: 'socials', name: 'Social Media', icon: Share2 },
-              { id: 'labels', name: 'Settings', icon: Info }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as 'content' | 'socials' | 'labels')}
-                  className={`
-                    flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                    ${activeTab === tab.id
-                      ? 'bg-amber-100 text-amber-800 shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100'
-                    }
-                  `}
-                >
-                  <Icon className={`w-4 h-4 mr-2 ${activeTab === tab.id ? 'text-amber-600' : 'text-gray-400'}`} />
-                  {tab.name}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+    <>
+      <AdminHeader
+        title="Contact Page"
+        titleIcon={<PhoneCall className="h-5 w-5" aria-hidden />}
+        titleAccent="bg-amber-50 text-amber-700"
+      />
+      <div className="p-6 flex-1 space-y-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* Modern Tabs */}
+          <div className="border-b border-gray-200 bg-gray-50/50">
+            <nav className="flex space-x-1 px-4 py-2">
+              {[
+                { id: 'content', name: 'Page Content', icon: Type },
+                { id: 'socials', name: 'Social Media', icon: Share2 },
+                { id: 'labels', name: 'Settings', icon: Info }
+              ].map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as 'content' | 'socials' | 'labels')}
+                    className={`
+                      flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                      ${activeTab === tab.id
+                        ? 'bg-amber-100 text-amber-800 shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-100'
+                      }
+                    `}
+                  >
+                    <Icon className={`w-4 h-4 mr-2 ${activeTab === tab.id ? 'text-amber-600' : 'text-gray-400'}`} />
+                    {tab.name}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
 
-        <div className="p-6">
-          {activeTab === 'content' && contactData && (
-            <div className="max-w-2xl">
-              <h3 className="text-lg font-medium text-gray-900 mb-6">Edit Page Text</h3>
-              <ContactContentForm
-                data={contactData.content || { headline: '', subtext: '' }}
-                onUpdate={(data) => handleUpdateContact({ content: data })}
-              />
-            </div>
-          )}
+          <div className="p-6">
+            {activeTab === 'content' && contactData && (
+              <div className="max-w-2xl">
+                <h3 className="text-lg font-medium text-gray-900 mb-6">Edit Page Text</h3>
+                <ContactContentForm
+                  data={contactData.content || { headline: '', subtext: '' }}
+                  onUpdate={(data) => handleUpdateContact({ content: data })}
+                />
+              </div>
+            )}
 
-          {activeTab === 'labels' && contactData && (
-            <div className="max-w-2xl">
-              <h3 className="text-lg font-medium text-gray-900 mb-6">UI Labels & Settings</h3>
-              <ContactLabelsForm
-                labels={contactData.labels || {}}
-                onUpdate={(labels) => handleUpdateContact({ labels })}
-              />
-            </div>
-          )}
+            {activeTab === 'labels' && contactData && (
+              <div className="max-w-2xl">
+                <h3 className="text-lg font-medium text-gray-900 mb-6">UI Labels & Settings</h3>
+                <ContactLabelsForm
+                  labels={contactData.labels || {}}
+                  onUpdate={(labels) => handleUpdateContact({ labels })}
+                />
+              </div>
+            )}
 
-          {activeTab === 'socials' && contactData && (
-            <div className="max-w-2xl">
-              <h3 className="text-lg font-medium text-gray-900 mb-6">Manage Social Links</h3>
-              <SocialMediaForm
-                data={contactData.info.socialMedia}
-                onUpdate={(socialData) => handleUpdateContact({ info: { ...contactData.info, socialMedia: socialData } })}
-              />
-            </div>
-          )}
+            {activeTab === 'socials' && contactData && (
+              <div className="max-w-2xl">
+                <h3 className="text-lg font-medium text-gray-900 mb-6">Manage Social Links</h3>
+                <SocialMediaForm
+                  data={contactData.info.socialMedia}
+                  onUpdate={(socialData) => handleUpdateContact({ info: { ...contactData.info, socialMedia: socialData } })}
+                />
+              </div>
+            )}
 
+          </div>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 }
 

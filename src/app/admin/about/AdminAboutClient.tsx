@@ -6,7 +6,7 @@ import { Info, Monitor, Info as InfoIcon, X, Image as ImageIcon } from 'lucide-r
 import dynamic from 'next/dynamic';
 
 // Design system & hooks
-import AdminLayout from '../components/AdminLayout';
+import { AdminHeader } from '../components/components/AdminHeader';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 // New Modular Hooks & Components
@@ -64,63 +64,68 @@ export default function AdminAboutClient() {
 
   if (authLoading || (loading && !aboutData)) {
     return (
-      <AdminLayout
-        title="Kelola Konten About"
-        subtitle="Kelola bagian halaman About"
-        breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'About' }]}
-        titleIcon={<Info className="h-5 w-5" aria-hidden />}
-        titleAccent="bg-blue-50 text-blue-700"
-      >
-        <div className="flex items-center justify-center py-10 text-sm text-gray-600">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
-          Memuat data...
+      <>
+        <AdminHeader
+          title="Kelola Konten About"
+          titleIcon={<Info className="h-5 w-5" aria-hidden />}
+          titleAccent="bg-blue-50 text-blue-700"
+        />
+        <div className="p-6 flex-1 space-y-6">
+          <div className="flex items-center justify-center py-10 text-sm text-gray-600">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+            Memuat data...
+          </div>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   if (!isAdmin) {
     return (
-      <AdminLayout
-        title="Unauthorized"
-        subtitle="You need to login to access this page"
-        breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'About' }]}
-        titleIcon={<X className="h-5 w-5" aria-hidden />}
-        titleAccent="bg-red-50 text-red-700"
-      >
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <InfoIcon className="w-16 h-16 text-yellow-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Akses Terbatas</h2>
-          <p className="text-gray-600 mb-6">Sesi Anda telah berakhir atau Anda belum masuk.</p>
-          <a
-            href="/admin/login"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-          >
-            Masuk Sekarang
-          </a>
+      <>
+        <AdminHeader
+          title="Unauthorized"
+          titleIcon={<X className="h-5 w-5" aria-hidden />}
+          titleAccent="bg-red-50 text-red-700"
+        />
+        <div className="p-6 flex-1 space-y-6">
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <InfoIcon className="w-16 h-16 text-yellow-500 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Akses Terbatas</h2>
+            <p className="text-gray-600 mb-6">Sesi Anda telah berakhir atau Anda belum masuk.</p>
+            <a
+              href="/admin/login"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Masuk Sekarang
+            </a>
+          </div>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   if (!aboutData) {
     return (
-      <AdminLayout
-        title="Kelola Konten About"
-        subtitle="Kelola bagian halaman About"
-        breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'About' }]}
-        titleIcon={<Info className="h-5 w-5" aria-hidden />}
-        titleAccent="bg-blue-50 text-blue-700"
-      >
-        <div className="flex items-center justify-center py-8">
-          <p className="text-red-600">Gagal memuat data about</p>
+      <>
+        <AdminHeader
+          title="Kelola Konten About"
+          titleIcon={<Info className="h-5 w-5" aria-hidden />}
+          titleAccent="bg-blue-50 text-blue-700"
+        />
+        <div className="p-6 flex-1 space-y-6">
+          <div className="flex items-center justify-center py-8">
+            <p className="text-red-600">Gagal memuat data about</p>
+          </div>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout title="Kelola Konten About">
+    <>
+      <AdminHeader title="Kelola Konten About"/>
+      <div className="p-6 flex-1 space-y-6">
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 flex items-center justify-between">
           <span>{error}</span>
@@ -253,6 +258,7 @@ export default function AdminAboutClient() {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </div>
+    </>
   );
 }

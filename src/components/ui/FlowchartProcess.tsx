@@ -1,207 +1,209 @@
 'use client';
 
-import React from 'react';
-import { RotateCcw, Circle, Sparkles, Search, Lightbulb, Palette, GitPullRequest, FileCheck } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import type { WorkflowStep, WorkflowSubStep } from '@/types/about';
+import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { FileText, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { m, AnimatePresence } from 'motion/react';
+import type { WorkflowStep } from '@/types/about';
 
 interface FlowchartProcessProps {
   workflowSteps: WorkflowStep[];
 }
 
-const iconMap: Record<string, LucideIcon> = {
-  Search,
-  Lightbulb,
-  Palette,
-  GitPullRequest,
-  FileCheck,
-  Sparkles,
-};
+export const FlowchartProcess = ({ workflowSteps }: FlowchartProcessProps) => {
+  const [activeStepId, setActiveStepId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-// ============================================
-// COMPACT LINEAR WORKFLOW - ALL VISIBLE
-// ============================================
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
-const CompactWorkflow = ({ steps }: { steps: WorkflowStep[] }) => {
+  // Keyboard Navigation
+  const navigate = useCallback((direction: 'next' | 'prev') => {
+    if (!activeStepId || !workflowSteps) return;
+    const currentIndex = workflowSteps.findIndex(s => s.id === activeStepId);
+    if (currentIndex === -1) return;
+    
+    if (direction === 'next' && currentIndex < workflowSteps.length - 1) {
+      setActiveStepId(workflowSteps[currentIndex + 1].id);
+    } else if (direction === 'prev' && currentIndex > 0) {
+      setActiveStepId(workflowSteps[currentIndex - 1].id);
+    }
+  }, [activeStepId, workflowSteps]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!activeStepId) return;
+      if (e.key === 'ArrowRight') navigate('next');
+      if (e.key === 'ArrowLeft') navigate('prev');
+      if (e.key === 'Escape') setActiveStepId(null);
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeStepId, navigate]);
+
   // Defensive: ensure steps is array
-  if (!steps || !Array.isArray(steps) || steps.length === 0) {
+  if (!workflowSteps || !Array.isArray(workflowSteps) || workflowSteps.length === 0) {
     return <div className="text-gray-400 text-sm italic py-4">Workflow data tidak tersedia</div>;
   }
 
-  const PhaseCard = ({ step, isLast }: { step: WorkflowStep; isLast: boolean }) => {
-    const Icon = (iconMap[step.icon] ?? Sparkles) as LucideIcon;
-    const colorClasses = {
-      amber: 'bg-amber-100 border-amber-400 text-amber-800',
-      blue: 'bg-blue-100 border-blue-400 text-blue-800',
-      purple: 'bg-purple-100 border-purple-400 text-purple-800',
-      rose: 'bg-rose-100 border-rose-400 text-rose-800',
-      emerald: 'bg-emerald-100 border-emerald-400 text-emerald-800',
-    }[step.color || 'amber'];
-
-    // Defensive: ensure loopTargets is array
-    const loopTargets = step.loopTargets || [];
-
-    return (
-      <div className="relative">
-        {/* Phase Header Card */}
-        <div className={`rounded-xl border-2 p-3 ${colorClasses}`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-white/60 flex items-center justify-center">
-              <Icon className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold opacity-70">{step.number || '?'}</span>
-                <h3 className="font-bold text-sm">{step.title || 'Untitled'}</h3>
-              </div>
-              <p className="text-xs opacity-80 truncate">{step.subtitle || ''}</p>
-            </div>
-            {loopTargets.length > 0 && (
-              <div className="flex items-center gap-1 text-[10px] bg-white/50 px-2 py-1 rounded-full">
-                <RotateCcw className="w-3 h-3" />
-                <span>Iteratif</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Spacer between phase and sub-steps */}
-        <div className="flex justify-center py-2">
-          <div className="w-0.5 h-5 bg-gray-200" />
-        </div>
-
-        {/* Loop arrows for desktop */}
-        {loopTargets.length > 0 && !isLast && (
-          <div className="hidden lg:block absolute right-0 top-1/2 translate-x-[110%] -translate-y-1/2">
-            <div className="flex items-center gap-1 text-[10px] text-gray-400 whitespace-nowrap">
-              <RotateCcw className="w-3 h-3" />
-              <span>Revisi ke: {loopTargets.join(', ')}</span>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const SubStepCard = ({ 
-    sub, 
-    color, 
-    phaseNum,
-    isLast 
-  }: { 
-    sub: WorkflowSubStep; 
-    color: string; 
-    phaseNum: string;
-    isLast: boolean;
-  }) => {
-    const colorDot = {
-      amber: 'bg-amber-400',
-      blue: 'bg-blue-400',
-      purple: 'bg-purple-400',
-      rose: 'bg-rose-400',
-      emerald: 'bg-emerald-400',
-    }[color] || 'bg-gray-400';
-
-    return (
-      <div className="relative pl-8">
-        {/* Timeline connector */}
-        <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200" 
-             style={{ bottom: isLast ? '50%' : '0' }} />
-        
-        {/* Dot */}
-        <div className={`absolute left-2 top-3 w-2 h-2 rounded-full ${colorDot}`} />
-        
-        {/* Sub-step mini card */}
-        <div className="bg-white border border-gray-200 rounded-lg p-3 hover:border-gray-300 hover:shadow-sm transition-all mb-2">
-          <div className="flex items-start gap-2">
-            <span className="text-[10px] text-gray-400 font-mono mt-0.5">{phaseNum}</span>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-xs font-medium text-gray-800 truncate">{sub.title || 'Untitled'}</h4>
-              <p className="text-[10px] text-gray-500 line-clamp-1">{sub.description || ''}</p>
-            </div>
-            <Circle className="w-3 h-3 text-gray-300 flex-shrink-0" />
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const activeStep = workflowSteps.find(s => s.id === activeStepId) || null;
+  const activeIndex = workflowSteps.findIndex(s => s.id === activeStepId);
 
   return (
-    <div className="py-4 max-w-md mx-auto">
-      {/* Header */}
-      <div className="text-center mb-4">
-        <p className="text-xs text-gray-500">Alur proses desain dari awal sampai finishing</p>
-      </div>
-
-      {/* Linear Flow */}
-      <div className="space-y-0">
-        {steps.map((step, stepIdx) => {
-          // Skip invalid steps
-          if (!step) return null;
-          
-          const isLastPhase = stepIdx === steps.length - 1;
-          const subSteps = step.subSteps || [];
-          
-          return (
-            <div key={step.id || `step-${stepIdx}`} className="relative mb-6">
-              {/* Phase Header */}
-              <PhaseCard step={step} isLast={isLastPhase} />
-              
-              {/* Sub-steps container */}
-              <div className="mt-2 mb-3 space-y-2">
-                {subSteps.map((sub, subIdx) => {
-                  if (!sub) return null;
-                  const isLastSub = subIdx === subSteps.length - 1 && isLastPhase;
-                  return (
-                    <SubStepCard
-                      key={sub.id || `sub-${subIdx}`}
-                      sub={sub}
-                      color={step.color}
-                      phaseNum={step.number}
-                      isLast={isLastSub}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Legend */}
-      <div className="mt-6 p-3 bg-gray-50 rounded-lg border border-gray-100">
-        <p className="text-[10px] font-semibold text-gray-500 mb-2 uppercase">Keterangan:</p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] text-gray-600">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-amber-400" /> Discovery
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-blue-400" /> Strategy
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-purple-400" /> Execution
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-rose-400" /> Refinement
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" /> Delivery
-          </span>
-          <span className="flex items-center gap-1.5">
-            <RotateCcw className="w-3 h-3 text-gray-400" /> Revisi/Loop
-          </span>
+    <div className="w-full relative">
+      {/* Grid Area */}
+      <div className="py-4">
+        <div className="flex flex-wrap gap-8 sm:gap-10 content-start">
+            {workflowSteps.map((step) => {
+                if (!step) return null;
+                return (
+                    <div 
+                        key={step.id}
+                        onClick={() => setActiveStepId(step.id)}
+                        className="flex flex-col items-center gap-3 w-20 sm:w-24 cursor-pointer group"
+                    >
+                        {/* DOCX Icon Design */}
+                        <div className="relative w-16 h-20 sm:w-20 sm:h-24 flex flex-col items-center justify-center transition-all group-active:scale-95 group-hover:scale-105">
+                            <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-blue-600 dark:text-blue-500 mb-2 opacity-80 group-hover:opacity-100 transition-opacity drop-shadow-sm" strokeWidth={1.5} />
+                            <div className="absolute bottom-2 bg-blue-600 text-white text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-sm shadow-sm">
+                                DOCX
+                            </div>
+                        </div>
+                        {/* Label */}
+                        <span className="text-[10px] sm:text-[11px] font-medium text-center text-gray-700 dark:text-gray-300 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-3 px-1">
+                            Step {step.number} - {step.title}.docx
+                        </span>
+                    </div>
+                );
+            })}
         </div>
       </div>
+
+      {/* MODAL OVERLAY (Quick Look Style via Portal) */}
+      {mounted && createPortal(
+        <AnimatePresence>
+          {activeStep && (
+            <m.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-black/70 dark:bg-black/90 backdrop-blur-md p-4 sm:p-8"
+            >
+              {/* Close Button */}
+              <button 
+                  onClick={() => setActiveStepId(null)}
+                  className="absolute top-4 right-4 sm:top-8 sm:right-8 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all z-[60]"
+              >
+                  <X size={24} />
+              </button>
+
+              {/* Navigation Left */}
+              {activeIndex > 0 && (
+                  <button 
+                      onClick={(e) => { e.stopPropagation(); navigate('prev'); }}
+                      className="absolute left-2 sm:left-8 top-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/20 hover:scale-110 active:scale-95 transition-all z-[60]"
+                  >
+                      <ChevronLeft size={32} />
+                  </button>
+              )}
+
+              {/* Navigation Right */}
+              {activeIndex < workflowSteps.length - 1 && (
+                  <button 
+                      onClick={(e) => { e.stopPropagation(); navigate('next'); }}
+                      className="absolute right-2 sm:right-8 top-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/20 hover:scale-110 active:scale-95 transition-all z-[60]"
+                  >
+                      <ChevronRight size={32} />
+                  </button>
+              )}
+
+              {/* Main Document Preview */}
+              <m.div 
+                  key={activeStep.id}
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="w-full max-w-2xl bg-white dark:bg-[#151515] shadow-2xl rounded-xl border border-white/10 shrink-0 pointer-events-auto overflow-hidden flex flex-col"
+              >
+                  <div 
+                      data-lenis-prevent="true"
+                      className="w-full max-h-[65vh] p-8 sm:p-12 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/10 dark:[&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-black/20 dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/20 [scrollbar-width:thin]"
+                  >
+                      {/* Document Header */}
+                      <div className="mb-8 border-b-2 border-gray-100 dark:border-white/5 pb-6">
+                          <p className="text-[10px] text-gray-400 dark:text-gray-600 font-mono mb-4 uppercase tracking-widest">
+                              CONFIDENTIAL / WORKFLOW / {activeStep.number}
+                          </p>
+                          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">
+                              {activeStep.title}
+                          </h1>
+                          <p className="text-lg text-blue-600 dark:text-blue-400 font-medium mb-4">
+                              {activeStep.subtitle}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed font-serif">
+                              {activeStep.description}
+                          </p>
+                      </div>
+
+                      {/* Document Points / SubSteps */}
+                      <div className="space-y-6">
+                          {activeStep.subSteps?.map((sub, idx) => (
+                              <div key={sub.id} className="relative pl-6 sm:pl-8 group">
+                                  <div className="absolute left-0 top-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-sm bg-blue-500/20 border border-blue-500 group-hover:bg-blue-500 transition-colors"></div>
+                                  <h3 className="text-base font-bold text-gray-800 dark:text-gray-200 mb-1.5">
+                                      {idx + 1}. {sub.title}
+                                  </h3>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed font-serif">
+                                      {sub.description}
+                                  </p>
+                              </div>
+                          ))}
+                      </div>
+
+                      {/* Document Footer Note */}
+                      {activeStep.loopTargets && activeStep.loopTargets.length > 0 && (
+                          <div className="mt-12 pt-6 border-t border-gray-100 dark:border-white/5">
+                              <p className="text-[11px] text-gray-400 dark:text-gray-600 italic font-serif">
+                                  * Catatan Iterasi: Dapat berulang (loop) kembali ke tahap {activeStep.loopTargets.join(', ')}.
+                              </p>
+                          </div>
+                      )}
+                  </div>
+              </m.div>
+
+              {/* Bottom Thumbnails */}
+              <div className="mt-8 sm:mt-10 flex gap-4 sm:gap-6 justify-center w-full px-4 overflow-x-auto py-4 shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  {workflowSteps.map((step) => {
+                      const isActive = step.id === activeStep.id;
+                      return (
+                          <div 
+                              key={`thumb-${step.id}`}
+                              onClick={() => setActiveStepId(step.id)}
+                              className={`flex-shrink-0 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 w-16 sm:w-20
+                                  ${isActive ? 'scale-110 opacity-100' : 'opacity-50 hover:opacity-100 hover:scale-105'}`}
+                          >
+                              <div className={`flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl mb-2 transition-all duration-300 ${isActive ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:border-white/20'}`}>
+                                  <FileText className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={isActive ? 2 : 1.5} />
+                              </div>
+                              <span className={`text-[9px] sm:text-[10px] font-bold tracking-wider uppercase ${isActive ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'text-white/50'}`}>
+                                  STEP {step.number}
+                              </span>
+                          </div>
+                      );
+                  })}
+              </div>
+            </m.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
-};
-
-// ============================================
-// MAIN EXPORT - Hanya workflowSteps
-// ============================================
-
-export const FlowchartProcess = ({ workflowSteps }: FlowchartProcessProps) => {
-  return <CompactWorkflow steps={workflowSteps} />;
 };
 
 export default FlowchartProcess;

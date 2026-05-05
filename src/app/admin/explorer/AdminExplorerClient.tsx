@@ -17,7 +17,7 @@ import {
     Loader2,
     XCircle
 } from 'lucide-react';
-import AdminLayout from '@/app/admin/components/AdminLayout';
+import { AdminHeader } from '../components/components/AdminHeader';
 import { useToast } from '@/contexts/ToastContext';
 import { AnyExplorerNode } from '@/types/explorer';
 import AdminButton from '@/app/admin/components/AdminButton';
@@ -338,11 +338,12 @@ export default function AdminExplorerClient() {
     );
 
     return (
-        <AdminLayout 
+        <>
+      <AdminHeader 
             title="Explorer Manager" 
-            subtitle="Kelola struktur folder dan file untuk My Project di Desktop."
-            actions={toolbarActions}
-        >
+                        actions={toolbarActions}
+        />
+      <div className="p-6 flex-1 space-y-6">
             <div className="space-y-4">
                 {/* Search & Breadcrumbs */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
@@ -523,6 +524,7 @@ export default function AdminExplorerClient() {
                 multiple
                 accept="image/*,video/*,application/pdf,text/*"
             />
-        </AdminLayout>
+        </div>
+    </>
     );
 }

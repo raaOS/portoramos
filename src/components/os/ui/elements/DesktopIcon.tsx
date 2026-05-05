@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { m, useMotionValue } from "motion/react";
+import { m, useMotionValue, type PanInfo } from "motion/react";
 import Image from "next/image";
 import { soundManager } from "../../utils/SoundManager";
 
@@ -87,17 +87,16 @@ export default function DesktopIcon({
         soundManager.play('drag');
     };
 
-    const handleDragEnd = () => {
+    const handleDragEnd = (info: PanInfo) => {
         setTimeout(() => setIsDragging(false), 50); // Small delay to prevent click firing immediately after drag
 
         if (onPositionChange) {
-            // Because we are using useMotionValue mapped to x/y style, 
-            // the .get() value IS the absolute position relative to the nearest relative parent (Desktop container)
-            // provided that left/top are 0 (which they are in our style prop below)
-            const newX = iconX.get();
-            const newY = iconY.get();
-
-            onPositionChange(id, newX, newY);
+            onPositionChange(id, info.offset.x, info.offset.y);
+            
+            // Instantly reset motion values to avoid double-jump jitter
+            // The parent will re-render with new left/top immediately.
+            iconX.set(x);
+            iconY.set(y);
         }
     };
 
@@ -109,8 +108,8 @@ export default function DesktopIcon({
             dragMomentum={false}
             dragElastic={0.05}
             onDragStart={handleDragStart}
-            onDragEnd={(_e, _info) => {
-                handleDragEnd();
+            onDragEnd={(_e, info) => {
+                handleDragEnd(info);
             }}
             data-lenis-prevent
             onClick={(_e) => {

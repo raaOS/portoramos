@@ -1,176 +1,202 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
-// MEDIUM FIX: BroadcastChannel untuk sinkronisasi CSRF token antar tab
 const CHANNEL_NAME = 'admin-auth-sync';
+const AUTH_CACHE_TTL = 45_000;
 
-/**
- * Hook to check if current user is authenticated as admin
- * Uses API call since admin_token cookie is HttpOnly and cannot be read by JS
- * 
- * MEDIUM FIX: Added cross-tab synchronization and request deduplication
- */
-export function useAdminAuth() {
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [csrfToken, setCsrfToken] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
-    
-    // Refs untuk tracking
-    const abortControllerRef = useRef<AbortController | null>(null);
-    const isFetchingRef = useRef(false);
-    const channelRef = useRef<BroadcastChannel | null>(null);
-    const csrfTokenRef = useRef(csrfToken);
+interface AdminAuthSnapshot {
+    isAdmin: boolean;
+    csrfToken: string;
+    isLoading: boolean;
+}
 
-    const logout = async () => {
+let authSnapshot: AdminAuthSnapshot = {
+    isAdmin: false,
+    csrfToken: '',
+    isLoading: true,
+};
+
+let lastCheckedAt = 0;
+let inFlightAuthCheck: Promise<void> | null = null;
+let runtimeStarted = false;
+let channel: BroadcastChannel | null = null;
+let intervalId: number | null = null;
+
+const listeners = new Set<() => void>();
+
+function getSnapshot() {
+    return authSnapshot;
+}
+
+function subscribe(listener: () => void) {
+    listeners.add(listener);
+    return () => {
+        listeners.delete(listener);
+    };
+}
+
+function publish(next: Partial<AdminAuthSnapshot>) {
+    const merged = { ...authSnapshot, ...next };
+
+    if (
+        merged.isAdmin === authSnapshot.isAdmin &&
+        merged.csrfToken === authSnapshot.csrfToken &&
+        merged.isLoading === authSnapshot.isLoading
+    ) {
+        return;
+    }
+
+    authSnapshot = merged;
+    listeners.forEach((listener) => listener());
+}
+
+async function checkAuth(force = false) {
+    if (typeof window === 'undefined') return;
+
+    const now = Date.now();
+    if (!force && !authSnapshot.isLoading && now - lastCheckedAt < AUTH_CACHE_TTL) {
+        return;
+    }
+
+    if (inFlightAuthCheck && !force) {
+        return inFlightAuthCheck;
+    }
+
+    inFlightAuthCheck = (async () => {
         try {
-            // Primary logout attempt
-            await fetch('/api/admin/logout', {
-                method: 'POST',
-                headers: {
-                    'x-csrf-token': csrfToken
-                },
-                credentials: 'include'
+            const response = await fetch(`/api/admin/check-auth?t=${Date.now()}`, {
+                credentials: 'include',
+            });
+            const data = await response.json();
+            const isAdmin = data.authenticated === true;
+            const previousToken = authSnapshot.csrfToken;
+            const csrfToken = typeof data.csrfToken === 'string' ? data.csrfToken : '';
+
+            publish({
+                isAdmin,
+                csrfToken: csrfToken || (isAdmin ? previousToken : ''),
+                isLoading: false,
             });
 
-            // Optimistic clear
-            setIsAdmin(false);
-            setCsrfToken('');
+            if (channel && csrfToken && csrfToken !== previousToken) {
+                channel.postMessage({
+                    type: 'token-update',
+                    token: csrfToken,
+                    isAdmin,
+                });
+            }
+        } catch (error) {
+            console.error('Failed to check admin auth:', error);
+            publish({ isAdmin: false, csrfToken: '', isLoading: false });
+        } finally {
+            lastCheckedAt = Date.now();
+            inFlightAuthCheck = null;
+        }
+    })();
 
-            // Broadcast logout ke tab lain
-            if (channelRef.current) {
-                channelRef.current.postMessage({ type: 'logout' });
+    return inFlightAuthCheck;
+}
+
+function ensureAuthRuntime() {
+    if (typeof window === 'undefined' || runtimeStarted) return;
+    runtimeStarted = true;
+
+    if (window.location.search.includes('logged_out=true')) {
+        publish({ isAdmin: false, csrfToken: '', isLoading: false });
+    }
+
+    void checkAuth();
+
+    if ('BroadcastChannel' in window) {
+        channel = new BroadcastChannel(CHANNEL_NAME);
+        channel.onmessage = (event) => {
+            const { type, token, isAdmin } = event.data || {};
+
+            if (type === 'token-update' && typeof token === 'string') {
+                publish({
+                    csrfToken: token,
+                    isAdmin: isAdmin === true,
+                    isLoading: false,
+                });
             }
 
-            // Give the browser a moment to process cookie deletions
-            await new Promise(resolve => setTimeout(resolve, 800));
+            if (type === 'logout') {
+                publish({ isAdmin: false, csrfToken: '', isLoading: false });
+                window.location.href = '/?logged_out=true';
+            }
+        };
+    }
 
-            // Hard redirect to clear all contexts and re-render everything as visitor
-            window.location.href = '/?logged_out=true';
-        } catch (e) {
-            console.error('Logout failed, forcing redirect:', e);
-            window.location.href = '/?logged_out=error';
+    const handleVisibilityChange = () => {
+        if (!document.hidden) {
+            void checkAuth(true);
         }
     };
 
-    // MEDIUM FIX: Deduplicate concurrent auth checks
-    const checkAuth = useCallback(async (force = false) => {
-        // Skip if already fetching (unless forced)
-        if (isFetchingRef.current && !force) return;
-        
-        // Cancel previous request
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    intervalId = window.setInterval(() => {
+        if (!document.hidden) {
+            void checkAuth(true);
         }
-        abortControllerRef.current = new AbortController();
-        
-        isFetchingRef.current = true;
+    }, 60_000);
+}
 
-        try {
-            const res = await fetch(`/api/admin/check-auth?t=${Date.now()}`, {
-                credentials: 'include',
-                signal: abortControllerRef.current.signal
-            });
-            
-            if (res.status === 0) return; // Aborted
-            
-            const data = await res.json();
-            const authed = data.authenticated === true;
-            
-            setIsAdmin(authed);
-            if (data.csrfToken) {
-                setCsrfToken(data.csrfToken);
-                csrfTokenRef.current = data.csrfToken;
-                // Broadcast token ke tab lain jika berubah
-                if (channelRef.current && data.csrfToken !== csrfTokenRef.current) {
-                    channelRef.current.postMessage({ 
-                        type: 'token-update', 
-                        token: data.csrfToken,
-                        isAdmin: authed 
-                    });
-                }
-            } else if (!authed) {
-                setCsrfToken('');
-                csrfTokenRef.current = '';
-            }
+async function logoutWithSharedState() {
+    try {
+        await fetch('/api/admin/logout', {
+            method: 'POST',
+            headers: {
+                'x-csrf-token': authSnapshot.csrfToken,
+            },
+            credentials: 'include',
+        });
 
-            // Normal completion
-            isFetchingRef.current = false;
-            setIsLoading(false);
-        } catch (e) {
-            if (e instanceof Error && e.name === 'AbortError') {
-                // Jika digugurkan (komponen unmount/remount), reset isFetching tapi JANGAN ubah state loading/admin
-                isFetchingRef.current = false;
-                return;
-            }
-            console.error('Failed to check admin auth:', e);
-            setIsAdmin(false);
-            
-            // Error completion
-            isFetchingRef.current = false;
-            setIsLoading(false);
-        }
-    }, []);
+        publish({ isAdmin: false, csrfToken: '', isLoading: false });
+        lastCheckedAt = Date.now();
+        channel?.postMessage({ type: 'logout' });
+
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        window.location.href = '/?logged_out=true';
+    } catch (error) {
+        console.error('Logout failed, forcing redirect:', error);
+        publish({ isAdmin: false, csrfToken: '', isLoading: false });
+        window.location.href = '/?logged_out=error';
+    }
+}
+
+/**
+ * Shared admin auth state.
+ *
+ * Multiple admin components can call this hook without creating duplicate
+ * /api/admin/check-auth requests, polling intervals, or BroadcastChannel
+ * instances.
+ */
+export function useAdminAuth() {
+    const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
     useEffect(() => {
-        // Handle explicit logout param in URL
-        if (typeof window !== 'undefined' && window.location.search.includes('logged_out=true')) {
-            setTimeout(() => {
-                setIsAdmin(false);
-                setCsrfToken('');
-            }, 0);
-        }
-
-        // Initial auth check
-        checkAuth();
-
-        // MEDIUM FIX: Setup BroadcastChannel untuk sync antar tab
-        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-            channelRef.current = new BroadcastChannel(CHANNEL_NAME);
-            
-            channelRef.current.onmessage = (event) => {
-                const { type, token, isAdmin: adminStatus } = event.data;
-                
-                if (type === 'token-update' && token) {
-                    // Update dari tab lain
-                    setCsrfToken(token);
-                    setIsAdmin(adminStatus);
-                } else if (type === 'logout') {
-                    // Tab lain logout, sync status
-                    setIsAdmin(false);
-                    setCsrfToken('');
-                    window.location.href = '/?logged_out=true';
-                }
-            };
-        }
-
-        // MEDIUM FIX: Pause polling saat tab tidak visible
-        let interval: NodeJS.Timeout;
-        const handleVisibilityChange = () => {
-            if (document.hidden) {
-                // Pause - clear interval
-                if (interval) clearInterval(interval);
-            } else {
-                // Resume - check auth dan setup interval
-                checkAuth();
-                interval = setInterval(() => checkAuth(), 60000);
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        interval = setInterval(() => checkAuth(), 60000);
+        ensureAuthRuntime();
 
         return () => {
-            if (interval) clearInterval(interval);
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            if (abortControllerRef.current) {
-                abortControllerRef.current.abort();
+            if (listeners.size > 0) return;
+            if (intervalId) {
+                window.clearInterval(intervalId);
+                intervalId = null;
             }
-            if (channelRef.current) {
-                channelRef.current.close();
-            }
+            channel?.close();
+            channel = null;
+            runtimeStarted = false;
         };
-    }, [checkAuth]);
+    }, []);
 
-    return { isAdmin, csrfToken, isLoading, logout };
+    const logout = useCallback(async () => {
+        await logoutWithSharedState();
+    }, []);
+
+    return {
+        ...snapshot,
+        logout,
+        refreshAuth: () => checkAuth(true),
+    };
 }

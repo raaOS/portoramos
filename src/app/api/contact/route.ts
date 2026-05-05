@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebaseAdmin';
 import { ContactData, UpdateContactData, ContactContent, ContactInfo, ContactFormSettings } from '@/types/contact';
 import { validateAdminRequest } from '@/lib/auth';
-import { getContactData } from '@/lib/contact';
+import { getContactData, invalidateContactCache } from '@/lib/contact';
 
 // GET - Read contact content
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const data = await getContactData();
+    const fresh = request.nextUrl.searchParams.get('fresh') === 'true';
+    const data = await getContactData(fresh);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error loading contact data:', error);
@@ -53,6 +54,7 @@ export async function PUT(request: NextRequest) {
 
     // Save to Firebase
     await contactRef.set(updatedData);
+    invalidateContactCache();
 
     return NextResponse.json({
       success: true,

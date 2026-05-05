@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Send, Mic, Square, Loader2 } from 'lucide-react';
 import EmojiPicker from '@/components/chat/EmojiPicker';
+import { soundManager } from '@/components/os/utils/SoundManager';
 
 interface FullPageChatFooterProps {
     onSend: (text: string) => void;
@@ -143,7 +144,10 @@ export default function FullPageChatFooter({ onSend, isSending }: FullPageChatFo
                         placeholder={isTranscribing ? "Menerjemahkan suara..." : "Ketik pesan..."}
                         className="w-full border-none bg-transparent text-[14.5px] text-[#111b21] outline-none placeholder:text-[#8696a0] focus:outline-none dark:text-[#e9edef]"
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={(e) => {
+                            setInputValue(e.target.value);
+                            soundManager.play('typing');
+                        }}
                         onKeyDown={handleKeyDown}
                         disabled={isSending || isTranscribing}
                     />
