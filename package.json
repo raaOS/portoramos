@@ -52,6 +52,7 @@
     "framer-motion": "12.38.0",
     "fuse.js": "^7.1.0",
     "html-to-image": "^1.11.13",
+    "jose": "^6.2.3",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",

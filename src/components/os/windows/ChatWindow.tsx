@@ -6,7 +6,6 @@ import { useChatProjects } from './hooks/useChatProjects';
 import { useChatSequencer } from './hooks/useChatSequencer';
 import { ChatHeader } from './components/ChatHeader';
 import { ChatMessages } from './components/ChatMessages';
-import { ChatFooter } from './components/ChatFooter';
 import { ChatList } from './components/ChatList';
 import QuickLookModal from '@/components/ui/QuickLookModal';
 import { useDesktopWindowContext } from '../context/DesktopWindowContext';
@@ -142,12 +141,7 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
 
             <div ref={bottomRef} />
 
-            <ChatFooter
-                input={input}
-                setInput={setInput}
-                onSend={handleSend}
-                onTyping={handleTyping}
-            />
+            {/* ChatFooter removed as per request to only show input in contact chat */}
 
             {/* Media Preview Modal */}
             <QuickLookModal

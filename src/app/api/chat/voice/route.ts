@@ -33,7 +33,7 @@ export async function POST(request: Request) {
         if (!groqRes.ok) {
             const errorText = await groqRes.text();
             console.error('[Voice API] Groq Error:', errorText);
-            return NextResponse.json({ error: 'Failed to transcribe audio' }, { status: 500 });
+            return NextResponse.json({ error: `Groq Error: ${errorText}` }, { status: 500 });
         }
 
         const data = await groqRes.json();

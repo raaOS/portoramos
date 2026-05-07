@@ -11,6 +11,7 @@ import { isStaticAsset, addSecurityHeaders } from './middleware/utils';
 import { checkAdminAuth } from './middleware/auth';
 import { checkCSRF } from './middleware/csrf';
 
+
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
@@ -26,7 +27,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // 1. Authentication Check
-    const authResult = checkAdminAuth(request);
+    const authResult = await checkAdminAuth(request);
     if (!authResult.authenticated && authResult.response) {
         return authResult.response;
     }

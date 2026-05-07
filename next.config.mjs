@@ -206,7 +206,7 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()'
+            value: 'camera=(), microphone=(self), geolocation=(self), interest-cohort=()'
           },
           {
             key: 'Cross-Origin-Embedder-Policy',

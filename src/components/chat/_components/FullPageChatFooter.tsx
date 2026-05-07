@@ -87,7 +87,8 @@ export default function FullPageChatFooter({ onSend, isSending }: FullPageChatFo
                     onSend(data.text.trim());
                 }
             } else {
-                console.error('Transcription failed');
+                const errData = await res.json().catch(() => ({}));
+                console.error('Transcription failed:', errData.error || 'Unknown error');
             }
         } catch (error) {
             console.error('Error sending voice note:', error);

@@ -68,12 +68,12 @@ function DesktopIconsLayer({
         }
     };
 
-    // Very iOS-like spring animation
+    // Very iOS-like spring animation, but tuned to be bouncy like a popup
     const itemVariants: Variants = {
         hidden: {
             opacity: 0,
-            scale: 0.3,
-            y: 0,
+            scale: 0.4,
+            y: 20, // Start slightly lower
         },
         show: {
             opacity: 1,
@@ -81,9 +81,10 @@ function DesktopIconsLayer({
             y: 0,
             transition: {
                 type: "spring" as const,
-                stiffness: 400,
-                damping: 30,
-                mass: 1
+                stiffness: 450,
+                damping: 12, // Medium damping for a balanced bounce
+                mass: 1, 
+                opacity: { duration: 0.1 } // Fast fade so the bounce is visible
             }
         }
     };

@@ -33,17 +33,17 @@
     {
       "id": "hard-figma",
       "name": "Figma",
-      "level": "Advanced",
+      "level": "Beginner",
       "order": 3,
-      "description": "Interface design tool",
+      "description": "Interface design tool (still learning)",
       "details": [
-        "UI/UX System",
-        "Prototyping",
-        "Wireframing"
+        "Basic UI layout",
+        "Simple prototyping",
+        "Still exploring features"
       ],
       "isActive": true,
       "createdAt": "2025-01-19T00:00:00.000Z",
-      "updatedAt": "2025-01-19T00:00:00.000Z"
+      "updatedAt": "2026-05-08T00:00:00.000Z"
     },
     {
       "id": "hard-canva",
