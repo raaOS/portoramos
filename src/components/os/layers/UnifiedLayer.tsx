@@ -30,6 +30,8 @@ interface UnifiedLayerProps {
   restoreNote: (id: string) => void;
   addNote: () => void;
   isRevealed?: boolean;
+  /** Callback when a window is closed */
+  onWindowClosed?: (id: string) => void;
 }
 
 // Animation variants - only for container fade in
@@ -63,6 +65,7 @@ export default function UnifiedLayer({
   restoreNote,
   addNote,
   isRevealed: isRevealedProp,
+  onWindowClosed,
 }: UnifiedLayerProps) {
   const { bringToFront, getZIndex } = useUnifiedZIndex();
   const { notesVisible, isRevealed: isRevealedFromContext } = useOSSystem();
@@ -109,7 +112,7 @@ export default function UnifiedLayer({
             isMinimized={w.isMinimized}
             isMaximized={w.isMaximized}
             isFocused={w.isOpen && !w.isMinimized && getZIndex(w.id) === maxWindowZIndex}
-            onClose={() => closeWindow(w.id)}
+            onClose={() => { closeWindow(w.id); onWindowClosed?.(w.id); }}
             onMinimize={() => minimizeWindow(w.id)}
             onMaximize={() => maximizeWindow(w.id)}
             onFocus={() => handleWindowFocus(w.id)}
@@ -124,6 +127,7 @@ export default function UnifiedLayer({
             height={w.height || 600}
             zIndex={getZIndex(w.id)}
             noPadding={w.noPadding}
+            originRect={w.originRect}
           >
             {w.content || (w.contentFactory ? w.contentFactory() : null)}
           </OSWindow>

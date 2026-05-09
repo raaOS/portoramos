@@ -132,6 +132,10 @@ function DesktopMain({
     } = useOSSystem();
     const wasBootSkipped = !needsPowerOn && !isBooting;
 
+    // Track which icons are currently "morphed" into windows (supports multiple)
+    const [activeIconIds, setActiveIconIds] = React.useState<Set<string>>(new Set());
+
+
     useDesktopShortcuts();
 
     const handleGoHome = useCallback(() => {
@@ -145,10 +149,16 @@ function DesktopMain({
     } = useDesktopWindowContext();
 
     const { notes, addNote, updateNote, deleteNote, permanentDeleteNote, restoreNote, bringToFrontNote } = useStickyNotes(true, isAdmin, csrfToken ?? undefined, requestNextZIndex, isAuthLoading);
-    const { openProjectWindow, navToChat, openWhatsAppList, toggleNotesVisibility } = useDesktopNavigation({
+    const { openProjectWindow: baseOpenProjectWindow, navToChat, openWhatsAppList, toggleNotesVisibility } = useDesktopNavigation({
         openWindow, resetWindows, dynamicContacts, ChatWindow,
         _notes: notes, projects, _restoreNote: restoreNote, _addNote: addNote, _isAdmin: isAdmin, setNotesDockBouncing: () => { }
     });
+
+    // Wrap openProjectWindow to also track which icons are morphing
+    const openProjectWindow = useCallback((project: Project, originRect?: { x: number; y: number; width: number; height: number }) => {
+        setActiveIconIds(prev => new Set([...prev, project.id]));
+        baseOpenProjectWindow(project, originRect);
+    }, [baseOpenProjectWindow]);
     const { iconPositions, handleIconPositionChange } = useDesktopLayout({ aboutData, isAdmin, csrfToken });
     const { projectIcons } = useDesktopIcons({ 
         mounted: true, 
@@ -232,12 +242,21 @@ function DesktopMain({
                         transition={{ duration: wasBootSkipped ? 0.4 : 0.2, ease: wasBootSkipped ? [0.32, 0.72, 0, 1] : "easeOut" }}
                     >
                         {isDesktopReady && (
-                            <DesktopBackground wallpaperConfig={aboutData?.wallpaperConfig} />
+                            <DesktopBackground 
+                                wallpaperConfig={aboutData?.wallpaperConfig} 
+                                isWindowOpen={windows.some(w => w.id.startsWith('project-') && w.isOpen && !w.isMinimized)}
+                            />
                         )}
                         {isDesktopRevealed && (
                             <>
                                 <React.Suspense fallback={null}>
-                                    <DesktopIconsLayer projectIcons={projectIcons} isMobile={isMobile} isReady={isDesktopRevealed} handleIconPositionChange={handleIconPositionChange} openProjectWindow={openProjectWindow} />
+                                    <DesktopIconsLayer
+                                        projectIcons={projectIcons}
+                                        isMobile={isMobile}
+                                        isReady={isDesktopRevealed}
+                                        handleIconPositionChange={handleIconPositionChange}
+                                        openProjectWindow={openProjectWindow}
+                                    />
                                 </React.Suspense>
                                 <React.Suspense fallback={null}>
                                     <UnifiedLayer
@@ -247,6 +266,17 @@ function DesktopMain({
                                         updateWindowPosition={updateWindowPosition} handleWindowResize={handleWindowResize} handleWindowResizeEnd={handleWindowResizeEnd}
                                         togglePin={togglePin} updateNote={updateNote} bringToFrontNote={bringToFrontNote} deleteNote={deleteNote}
                                         permanentDeleteNote={permanentDeleteNote} restoreNote={restoreNote} addNote={addNote}
+                                        onWindowClosed={(id) => {
+                                            // id format: "project-${projectId}"
+                                            if (id.startsWith('project-')) {
+                                                const projectId = id.replace('project-', '');
+                                                setActiveIconIds(prev => {
+                                                    const next = new Set(prev);
+                                                    next.delete(projectId);
+                                                    return next;
+                                                });
+                                            }
+                                        }}
                                     />
                                 </React.Suspense>
                                 <UIOverlaysLayer

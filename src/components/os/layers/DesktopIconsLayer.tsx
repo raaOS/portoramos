@@ -3,7 +3,7 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import { m, type Variants } from "motion/react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import DesktopIcon from "../ui/elements/DesktopIcon";
 import { useQuickLook } from "@/hooks/useQuickLook";
 import QuickLookModal from "@/components/ui/QuickLookModal";
@@ -36,7 +36,7 @@ interface DesktopIconsLayerProps {
     isMobile: boolean;
     isReady?: boolean;
     handleIconPositionChange: (id: string, x: number, y: number) => void;
-    openProjectWindow: (project: Project) => void;
+    openProjectWindow: (project: Project, originRect?: { x: number; y: number; width: number; height: number }) => void;
 }
 
 function DesktopIconsLayer({
@@ -50,11 +50,40 @@ function DesktopIconsLayer({
     const [hoveredIconId, setHoveredIconId] = useState<string | null>(null);
     const [selectedIconId, setSelectedIconId] = useState<string | null>(null);
     const [quickLookIcon, setQuickLookIcon] = useState<ProjectIcon | null>(null);
+    // Track icon currently scaling up (open animation)
+    const [openingIconId, setOpeningIconId] = useState<string | null>(null);
+    // Track icon receiving a collapsing window (close/minimize animation) — detected LOCALLY
+    const [closingToIconId, setClosingToIconId] = useState<string | null>(null);
+    // Refs to each icon's wrapper m.div for accurate getBoundingClientRect
+    const iconRefs = useRef<Record<string, HTMLElement | null>>({});
+    // Ref to previous window states for diffing
+    const prevWindowsRef = useRef(windows);
 
-    useQuickLook(!!hoveredIconId && !quickLookIcon, () => {
-        const icon = projectIcons.find(p => p.id === hoveredIconId);
-        if (icon) setQuickLookIcon(icon);
-    });
+    // Detect window close/minimize in the SAME render cycle (no parent propagation delay)
+    useEffect(() => {
+        const prev = prevWindowsRef.current;
+        const curr = windows;
+
+        for (const currW of curr) {
+            if (!currW.id.startsWith('project-')) continue;
+            const prevW = prev.find(w => w.id === currW.id);
+            if (!prevW) continue;
+
+            const justClosed = prevW.isOpen && !currW.isOpen;
+            const justMinimized = !prevW.isMinimized && currW.isMinimized;
+
+            if (justClosed || justMinimized) {
+                const projectId = currW.id.replace('project-', '');
+                setClosingToIconId(projectId);
+                // Reset after window animation completes (~700ms for new fluid physics)
+                setTimeout(() => setClosingToIconId(null), 700);
+                break;
+            }
+        }
+
+        prevWindowsRef.current = curr;
+    }, [windows]);
+
 
     // Parent container animation variants for staggering
     const containerVariants: Variants = {
@@ -109,6 +138,7 @@ function DesktopIconsLayer({
                     return (
                         <m.div
                             key={icon.id}
+                            ref={(el) => { if (el) iconRefs.current[icon.id] = el; }}
                             variants={itemVariants}
                             className="pointer-events-none"
                             style={{
@@ -133,9 +163,37 @@ function DesktopIconsLayer({
                                 onClick={() => {
                                     setSelectedIconId(icon.id);
                                 }}
+                                activeScale={openingIconId === icon.id
+                                    ? 1.35   // Expand before window opens
+                                    : closingToIconId === icon.id
+                                        ? 1.22  // Pulse when window flies into icon
+                                        : 1}
+                                activeTransition={{
+                                    scale: {
+                                        type: "spring",
+                                        stiffness: 500,
+                                        damping: 10,
+                                        mass: 0.8,
+                                    }
+                                }}
                                 onDoubleClick={() => {
                                     if (icon.data) {
-                                        openProjectWindow(icon.data);
+                                        const el = iconRefs.current[icon.id];
+                                        const rect = el?.getBoundingClientRect();
+
+                                        // 1. Scale up icon immediately
+                                        setOpeningIconId(icon.id);
+
+                                        // 2. Open window immediately (Zero-latency for iOS feel)
+                                        openProjectWindow(icon.data!, rect ? {
+                                            x: rect.left,
+                                            y: rect.top,
+                                            width: rect.width,
+                                            height: rect.height,
+                                        } : undefined);
+
+                                        // 3. Return icon to normal after window expansion is well underway
+                                        setTimeout(() => setOpeningIconId(null), 700);
                                     } else if (icon.action) {
                                         icon.action();
                                     }

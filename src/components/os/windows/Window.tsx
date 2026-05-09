@@ -49,6 +49,10 @@ interface WindowProps {
     isAdmin?: boolean;
     animationVariant?: 'genie' | 'scale' | 'tv' | 'snap';
     isFocused?: boolean;
+    /** Origin rect from the icon that launched this window (for Apple-style morph) */
+    originRect?: { x: number; y: number; width: number; height: number };
+    /** Shared layoutId for Framer Motion layout morph animation */
+    layoutId?: string;
 }
 
 export default function OSWindow({
@@ -75,6 +79,8 @@ export default function OSWindow({
     isAdmin = false,
     isFocused = false,
     animationVariant: _animationVariant,
+    originRect,
+    layoutId,
 }: WindowProps) {
     const windowRef = useRef<HTMLDivElement>(null);
 
@@ -147,20 +153,46 @@ export default function OSWindow({
 
     const shellStyle = isMaximized ? SHELL_STYLE_MAXIMIZED : SHELL_STYLE;
 
-    const entryState = {
+    // ── Animation states based on originRect (icon position) ──
+    // When originRect is available: window expands FROM icon and shrinks BACK to icon
+    const hasOrigin = !!originRect;
+
+    // Entry: start at icon's position and size, then expand to full window
+    const entryState = hasOrigin ? {
+        x: originRect!.x,
+        y: originRect!.y,
+        width: originRect!.width,
+        height: originRect!.height,
+        opacity: 0,
+        scale: 1,
+        borderRadius: 12, // Match iOS icon radius roughly
+        backgroundColor: "rgba(255,255,255,0.40)",
+        filter: "blur(6px) saturate(0.80)",
+    } : {
         x: activeFrame.x,
         y: activeFrame.y,
-        scale: 0.8,
+        scale: 0.85,
         opacity: 0,
         borderRadius: 24,
         backgroundColor: "rgba(255,255,255,0.70)",
         filter: "blur(4px) saturate(0.92)",
     };
 
-    const minimizedState = {
+    // Minimized / Close target: shrink back into icon position
+    const minimizedState = hasOrigin ? {
+        x: originRect!.x,
+        y: originRect!.y,
+        width: originRect!.width,
+        height: originRect!.height,
+        scale: 0.45,
+        opacity: 0,
+        borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.30)",
+        filter: "blur(10px) saturate(0.6)",
+    } : {
         x: activeFrame.x,
         y: activeFrame.y,
-        scale: 0.8,
+        scale: 0.82,
         opacity: 0,
         borderRadius: 26,
         ...MINIMIZED_STYLE,
@@ -173,42 +205,51 @@ export default function OSWindow({
         opacity: 1,
         width: activeFrame.width,
         height: activeFrame.height,
-        borderRadius: isMaximized ? 14 : 18,
+        borderRadius: isMaximized ? 14 : 22, // iOS-style window radius
         ...shellStyle,
     };
 
+    // Spring physics — Deep iOS Analysis Refinement
+    // Opening: Luxurious & Fluid
     const standardTransition = {
-        x: { type: "spring", stiffness: 450, damping: 28, mass: 1 },
-        y: { type: "spring", stiffness: 450, damping: 28, mass: 1 },
-        scale: { type: "spring", stiffness: 500, damping: 22, mass: 0.85 },
-        width: { type: "spring", stiffness: 350, damping: 30, mass: 1 },
-        height: { type: "spring", stiffness: 350, damping: 30, mass: 1 },
-        opacity: { duration: 0.20, ease: "easeOut" },
-        borderRadius: { duration: 0.22, ease: "easeOut" },
-        filter: { duration: 0.22, ease: "easeOut" },
-        backgroundColor: { duration: 0.22, ease: "easeOut" },
+        x: { type: "spring", stiffness: 180, damping: 25, mass: 1 },
+        y: { type: "spring", stiffness: 180, damping: 25, mass: 1 },
+        width: { type: "spring", stiffness: 180, damping: 25, mass: 1 },
+        height: { type: "spring", stiffness: 180, damping: 25, mass: 1 },
+        scale: { type: "spring", stiffness: 180, damping: 25, mass: 1 },
+        opacity: { duration: 0.28, ease: "easeOut" },
+        borderRadius: { duration: 0.35, ease: [0.32, 0.72, 0, 1] },
+        filter: { duration: 0.3, ease: "easeOut" },
+        backgroundColor: { duration: 0.3, ease: "easeOut" },
     } as Transition;
 
+    // Minimize/close: Snappy & Responsive (Vacuum effect)
     const minimizeTransition = {
-        x: { type: "spring", stiffness: 450, damping: 30, mass: 1 },
-        y: { type: "spring", stiffness: 450, damping: 30, mass: 1 },
-        scale: { type: "spring", stiffness: 500, damping: 24, mass: 0.8 },
-        opacity: { duration: 0.18, ease: "easeInOut" },
-        borderRadius: { duration: 0.2, ease: "easeInOut" },
-        filter: { duration: 0.2, ease: "easeInOut" },
-        backgroundColor: { duration: 0.2, ease: "easeInOut" },
+        x: { type: "spring", stiffness: 220, damping: 28, mass: 1 },
+        y: { type: "spring", stiffness: 220, damping: 28, mass: 1 },
+        width: { type: "spring", stiffness: 220, damping: 28, mass: 1 },
+        height: { type: "spring", stiffness: 220, damping: 28, mass: 1 },
+        scale: { type: "spring", stiffness: 220, damping: 28, mass: 1 },
+        opacity: { duration: 0.22, ease: "easeIn" },
+        borderRadius: { duration: 0.25, ease: "easeIn" },
+        filter: { duration: 0.22, ease: "easeIn" },
+        backgroundColor: { duration: 0.22, ease: "easeIn" },
     } as Transition;
 
-    const exitState = {
+    // Exit: fly back into icon position
+    const exitState = hasOrigin ? {
+        ...minimizedState,
+        transition: minimizeTransition,
+    } as TargetAndTransition : {
         scale: 0.85,
         opacity: 0,
         borderRadius: 26,
         backgroundColor: "rgba(255,255,255,0.66)",
         filter: "blur(4px) saturate(0.92)",
         transition: {
-            opacity: { duration: 0.12 },
-            scale: { type: "spring", stiffness: 450, damping: 30 },
-            filter: { duration: 0.12 },
+            opacity: { duration: 0.16 },
+            scale: { type: "spring", stiffness: 210, damping: 28 },
+            filter: { duration: 0.16 },
         },
     } as TargetAndTransition;
 
@@ -231,7 +272,9 @@ export default function OSWindow({
                             onUpdatePosition(newX, newY);
                         }
                     }}
-                    initial={{
+                    initial={hasOrigin ? {
+                        ...entryState,
+                    } : {
                         ...entryState,
                         width: activeFrame.width,
                         height: activeFrame.height,
@@ -239,8 +282,8 @@ export default function OSWindow({
                     animate={isMinimized ? minimizedState : activeState}
                     transition={isResizing ? { duration: 0 } : (isMinimized ? minimizeTransition : standardTransition)}
                     exit={exitState}
-                    // Layout synchronization disabled to prevent cross-window glitching
-                    layout={false} 
+                    layoutId={undefined}
+                    layout={false}
 
                     onPointerDown={onFocus}
                     onKeyDown={handleKeyDown}

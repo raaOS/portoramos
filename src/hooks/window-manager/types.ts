@@ -14,4 +14,6 @@ export interface WindowState {
     width?: number;
     height?: number;
     isPinned?: boolean;
+    /** Origin rect from which the window animates (captured from icon click) */
+    originRect?: { x: number; y: number; width: number; height: number };
 }

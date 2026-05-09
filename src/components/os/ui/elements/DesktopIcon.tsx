@@ -21,7 +21,9 @@ interface DesktopIconProps {
     onHoverStart?: (id: string) => void;
     onHoverEnd?: (id: string) => void;
     isSelected?: boolean;
-    onDoubleClick?: () => void;
+    onDoubleClick?: (e: React.MouseEvent) => void;
+    activeScale?: number;
+    activeTransition?: any;
 }
 
 export default function DesktopIcon({ 
@@ -42,7 +44,9 @@ export default function DesktopIcon({
     onHoverStart, 
     onHoverEnd,
     isSelected = false,
-    onDoubleClick
+    onDoubleClick,
+    activeScale = 1,
+    activeTransition
 }: DesktopIconProps) {
     const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
     const [failedVideoUrl, setFailedVideoUrl] = useState<string | null>(null);
@@ -118,9 +122,9 @@ export default function DesktopIcon({
                     onClick();
                 }
             }}
-            onDoubleClick={(_e) => {
+            onDoubleClick={(e) => {
                 if (!isDragging && onDoubleClick) {
-                    onDoubleClick();
+                    onDoubleClick(e);
                 }
             }}
             style={{
@@ -130,8 +134,7 @@ export default function DesktopIcon({
                 x: iconX,
                 y: iconY
             }}
-            // Layout synchronization disabled to prevent global layout shifts
-            layout={false} // Disable to prevent layout sync bugs with Dock icons
+            layout={false}
 
             className={`flex flex-col items-center gap-1 w-auto group cursor-pointer pointer-events-auto will-change-transform outline-none rounded-none ${isSelected ? 'z-50' : 'z-auto'}`}
             role="button"
@@ -144,77 +147,77 @@ export default function DesktopIcon({
                     onClick();
                 }
             }}
-            whileHover={!isMobile ? { 
-                scale: 1.1, 
-                transition: { type: "spring", stiffness: 400, damping: 25 } 
-            } : undefined}
-            whileTap={!isMobile ? { 
-                scale: 0.9, // More tactile tap
-                transition: { type: "spring", stiffness: 600, damping: 30 }
-            } : undefined}
             onMouseEnter={() => { if (!isMobile) setHovering(true); if (onHoverStart) onHoverStart(id); }}
             onMouseLeave={() => { if (!isMobile) setHovering(false); if (onHoverEnd) onHoverEnd(id); }}
         >
-            {children ? (
-                <div className={`relative transition-all duration-200 ${isSelected ? 'scale-[1.05]' : ''}`}>
-                    {children}
-                </div>
-            ) : showMedia ? (
-                <div
-                    style={{
-                        height: baseHeight,
-                        width: baseHeight * aspectRatio,
-                        minWidth: baseHeight * aspectRatio,
-                        minHeight: baseHeight,
-                    }}
-                    className={`relative transition-all duration-200 bg-white/20 overflow-hidden rounded-none ${isSelected ? 'scale-[1.02]' : ''}`}
-                >
-                    {/* Always render Image as base layer if available and not error */}
-                    {imageUrl && !imageError && (
-                        <Image
-                            src={imageUrl}
-                            alt={label}
-                            fill
-                            className={`object-cover pointer-events-none transition-opacity duration-300 ${hovering && videoUrl && !videoError ? 'opacity-0' : 'opacity-100'}`}
-                            sizes="(max-width: 768px) 96px, 128px"
-                            draggable={false}
-                            onError={() => setFailedImageUrl(imageUrl ?? "__missing__")}
-                            priority={priority} // Important for LCP
-                            loading="eager"
-                            fetchPriority={priority ? "high" : "auto"}
-                            quality={60} // Thumbnails don't need 100% quality
-                        />
-                    )}
-
-                    {/* Always render Video if video exists to act as its own thumbnail fallback */}
-                    {videoUrl && !isMobile && !videoError && (
-                        <video
-                            ref={videoRef}
-                            src={videoUrl + '#t=0.1'}
-                            muted
-                            loop
-                            playsInline
-                            preload="metadata"
-                            className={`absolute inset-0 object-cover w-full h-full pointer-events-none rounded-none transition-opacity duration-300 ${(!hovering && imageUrl && !imageError) ? 'opacity-0' : 'opacity-100'}`}
-                            draggable={false}
-                            onError={() => setFailedVideoUrl(videoUrl ?? "__missing__")}
-                        />
-                    )}
-
-                    {/* Show simple loading/placeholder if everything fails */}
-                    {imageError && (!videoUrl || videoError) && (
-                         <div className="absolute inset-0 flex items-center justify-center bg-white/20">
-                             <div className="text-[10px] text-white/40 uppercase font-bold tracking-widest">No Media</div>
-                         </div>
-                    )}
-                </div>
-            ) : (
-                <div className="w-16 h-16 bg-white/20 rounded-none flex items-center justify-center transition-colors group-hover:bg-white/30">
-                    <div className="text-black/80 group-hover:text-black transition-colors">
-                        {icon}
+            {/* Icon Media Wrapper - Only this part scales during open/close animations */}
+            <m.div
+                animate={{ scale: activeScale }}
+                transition={activeTransition}
+                style={{ transformOrigin: "center center" }}
+                className="relative"
+            >
+                {children ? (
+                    <div className={`relative transition-all duration-200 ${isSelected ? 'scale-[1.05]' : ''}`}>
+                        {children}
                     </div>
-                </div>
-            )}
+                ) : showMedia ? (
+                    <div
+                        style={{
+                            height: baseHeight,
+                            width: baseHeight * aspectRatio,
+                            minWidth: baseHeight * aspectRatio,
+                            minHeight: baseHeight,
+                        }}
+                        className={`relative transition-all duration-200 bg-white/20 overflow-hidden rounded-none ${isSelected ? 'scale-[1.02]' : ''}`}
+                    >
+                        {/* Always render Image as base layer if available and not error */}
+                        {imageUrl && !imageError && (
+                            <Image
+                                src={imageUrl}
+                                alt={label}
+                                fill
+                                className={`object-cover pointer-events-none transition-opacity duration-300 ${hovering && videoUrl && !videoError ? 'opacity-0' : 'opacity-100'}`}
+                                sizes="(max-width: 768px) 96px, 128px"
+                                draggable={false}
+                                onError={() => setFailedImageUrl(imageUrl ?? "__missing__")}
+                                priority={priority} // Important for LCP
+                                loading="eager"
+                                fetchPriority={priority ? "high" : "auto"}
+                                quality={60} // Thumbnails don't need 100% quality
+                            />
+                        )}
+
+                        {/* Always render Video if video exists to act as its own thumbnail fallback */}
+                        {videoUrl && !isMobile && !videoError && (
+                            <video
+                                ref={videoRef}
+                                src={videoUrl + '#t=0.1'}
+                                muted
+                                loop
+                                playsInline
+                                preload="metadata"
+                                className={`absolute inset-0 object-cover w-full h-full pointer-events-none rounded-none transition-opacity duration-300 ${(!hovering && imageUrl && !imageError) ? 'opacity-0' : 'opacity-100'}`}
+                                draggable={false}
+                                onError={() => setFailedVideoUrl(videoUrl ?? "__missing__")}
+                            />
+                        )}
+
+                        {/* Show simple loading/placeholder if everything fails */}
+                        {imageError && (!videoUrl || videoError) && (
+                             <div className="absolute inset-0 flex items-center justify-center bg-white/20">
+                                 <div className="text-[10px] text-white/40 uppercase font-bold tracking-widest">No Media</div>
+                             </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="w-16 h-16 bg-white/20 rounded-none flex items-center justify-center transition-colors group-hover:bg-white/30">
+                        <div className="text-black/80 group-hover:text-black transition-colors">
+                            {icon}
+                        </div>
+                    </div>
+                )}
+            </m.div>
 
             {/* Label with macOS-style selection */}
             <div className="mt-1 px-1.5 py-0.5 rounded-[4px] relative transition-all duration-200 group-active:scale-95">

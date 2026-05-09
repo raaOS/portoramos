@@ -84,7 +84,8 @@ export function useWindowActions({
                     initialPosition: customConfig.initialPosition || getCenterPosition(width, height),
                     width,
                     height,
-                    content: customConfig.content
+                    content: customConfig.content,
+                    originRect: customConfig.originRect,
                 };
                 playOpen();
                 return [...prev, newWindow];
@@ -125,6 +126,7 @@ export function useWindowActions({
                         height,
                         content: resolveWindowContent(w, customConfig?.content),
                         title: customConfig?.title || w.title,
+                        originRect: customConfig?.originRect || w.originRect,
                     };
                 }
                 return w;

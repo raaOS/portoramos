@@ -43,10 +43,14 @@ export function useDesktopNavigation({
     const handleGoHome = useCallback(() => router.push('/'), [router]);
     const resetDesktopAndClose = useCallback(() => resetWindows(), [resetWindows]);
 
-    const openProjectWindow = useCallback((project: Project) => {
-        openWindow("projects", {
+    const openProjectWindow = useCallback((project: Project, originRect?: { x: number; y: number; width: number; height: number }) => {
+        openWindow(`project-${project.id}`, {
             title: `Portfolio: ${project.title}`,
-            content: <ProjectDetailWrapper project={project} projects={projects} />
+            content: <ProjectDetailWrapper project={project} projects={projects} />,
+            originRect,
+            width: 900,
+            height: 620,
+            noPadding: true,
         });
     }, [openWindow, projects]);
 

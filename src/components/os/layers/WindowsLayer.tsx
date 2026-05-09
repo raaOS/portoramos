@@ -72,6 +72,7 @@ const WindowItem = React.memo(function WindowItem({
             height={w.height || 600}
             zIndex={w.zIndex}
             noPadding={w.noPadding}
+            originRect={w.originRect}
         >
             {w.content}
         </OSWindow>
