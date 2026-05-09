@@ -103,10 +103,8 @@ export default async function RootLayout({
           }}
         />
       </head>
-      {/* suppressHydrationWarning: required because browser extensions (e.g. dark mode, 
-           translators) inject attributes on <body> during SSRâ†’hydration, causing false mismatches.
-           This is the standard Next.js pattern â€” see: https://nextjs.org/docs/messages/react-hydration-error */}
-      <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default" suppressHydrationWarning>
+      {/* suppressHydrationWarning removed: handled by Two-Pass Rendering in HomeOSWrapper */}
+      <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default">
         {/* Skip to content - Accessibility */}
         <a
           href="#main-content"

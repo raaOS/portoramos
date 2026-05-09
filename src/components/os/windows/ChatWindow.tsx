@@ -51,27 +51,6 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [visibleMessages, isRemoteTyping]);
 
-    const handleSend = useCallback((e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim() || !activeContact) return;
-
-        const newMessage: ChatMessage = {
-            id: Date.now(),
-            text: input,
-            isMe: true,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            status: 'sent' as const,
-            type: 'text'
-        };
-
-        addMessage(newMessage);
-        setInput('');
-        soundManager.play('click');
-    }, [input, activeContact, addMessage]);
-
-    const handleTyping = useCallback(() => {
-        soundManager.play('typing');
-    }, []);
 
     const selectContact = useCallback((contact: ContactProfile) => {
         setActiveContact(contact);

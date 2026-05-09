@@ -4,7 +4,6 @@ import type { Project } from '@/types/projects'
 import { useMemo, useEffect, useRef, memo, useDeferredValue, useState } from 'react'
 import { LazyMotion, domAnimation, m, AnimatePresence, type Transition } from 'motion/react'
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest'
-import ProjectSplitView from '@/components/projects/ProjectSplitView'
 import MasonryGrid from '@/components/layout/MasonryGrid'
 import dynamic from 'next/dynamic'
 import { useProjectFiltering } from './hooks/useProjectFiltering'
@@ -21,11 +20,10 @@ type Props = {
   searchQuery: string
   windowWidth?: number
   isLoading?: boolean
-  view?: 'grid' | 'list' | '3d'
+  view?: 'grid' | '3d'
 }
 
 const MemoizedProjectCardPinterest = memo(ProjectCardPinterest)
-const MemoizedProjectSplitView = memo(ProjectSplitView)
 
 function ViewLoadingIndicator() {
   return (
@@ -130,14 +128,12 @@ export default function IndexClientInner({
         </div>
       )}
       <LazyMotion features={domAnimation}>
-        <div className={activeView === '3d' ? 'fixed inset-0 z-0 overflow-hidden' : (activeView === 'list' ? 'h-full overflow-hidden' : 'min-h-screen')}>
+        <div className={activeView === '3d' ? 'fixed inset-0 z-0 overflow-hidden' : 'min-h-screen'}>
           {showLoading ? <ViewLoadingIndicator /> : displayedItems.length > 0 ? (
             <>
               {activeView === '3d'
                 ? <Projects3DView projects={filteredProjects} />
-                : activeView === 'grid'
-                  ? gridView
-                  : <MemoizedProjectSplitView projects={filteredProjects} tag={tag} />
+                : gridView
               }
               {activeView === 'grid' && (
                 <>

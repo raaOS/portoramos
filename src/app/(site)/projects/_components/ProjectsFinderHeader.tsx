@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Grid, List, Filter, Search as SearchIcon, X, Check, Box } from 'lucide-react';
+import { Grid, Filter, Search as SearchIcon, X, Check, Box } from 'lucide-react';
 
 import { Label } from '@/types/labels';
 
@@ -19,7 +19,8 @@ export default function ProjectsFinderHeader({ itemCount, labels = [] }: Project
     const [isMounted, setIsMounted] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
-    const currentView = searchParams?.get('view') || 'grid';
+    const rawView = searchParams?.get('view');
+    const currentView = rawView === '3d' ? '3d' : 'grid';
     const currentTag = searchParams?.get('tag') || '';
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef<HTMLDivElement>(null);
@@ -73,7 +74,7 @@ export default function ProjectsFinderHeader({ itemCount, labels = [] }: Project
         return () => clearTimeout(timer);
     }, [searchQuery, router, searchParams]);
 
-    const handleViewChange = (view: 'grid' | 'list' | '3d') => {
+    const handleViewChange = (view: 'grid' | '3d') => {
         if (view === currentView) return;
         const params = new URLSearchParams(searchParams?.toString());
         params.set('view', view);
@@ -138,7 +139,6 @@ export default function ProjectsFinderHeader({ itemCount, labels = [] }: Project
                     <div className="flex items-center gap-1" aria-hidden="true">
                         <div className="p-1.5 w-7 h-7" />
                         <div className="p-1.5 w-7 h-7" />
-                        <div className="p-1.5 w-7 h-7" />
                     </div>
                 ) : (
                     <div className="flex items-center gap-1">
@@ -150,15 +150,6 @@ export default function ProjectsFinderHeader({ itemCount, labels = [] }: Project
                             aria-pressed={currentView === 'grid'}
                         >
                             <Grid size={18} />
-                        </button>
-                        <button 
-                            onClick={() => handleViewChange('list')}
-                            className={`p-1 transition-all duration-200 ${currentView === 'list' ? 'text-amber-500 scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
-                            title="Tampilan List"
-                            aria-label="List view"
-                            aria-pressed={currentView === 'list'}
-                        >
-                            <List size={18} />
                         </button>
                         <button 
                             onClick={() => handleViewChange('3d')}

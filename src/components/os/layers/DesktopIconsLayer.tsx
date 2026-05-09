@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { m, type Variants } from "motion/react";
 import { useState, useRef, useEffect } from "react";
 import DesktopIcon from "../ui/elements/DesktopIcon";
-import { useQuickLook } from "@/hooks/useQuickLook";
+
 import QuickLookModal from "@/components/ui/QuickLookModal";
 import { resolveCover } from "@/lib/images";
 import type { Project } from "@/types/projects";
@@ -47,7 +47,7 @@ function DesktopIconsLayer({
     openProjectWindow,
 }: DesktopIconsLayerProps) {
     const { windows } = useDesktopWindowContext();
-    const [hoveredIconId, setHoveredIconId] = useState<string | null>(null);
+
     const [selectedIconId, setSelectedIconId] = useState<string | null>(null);
     const [quickLookIcon, setQuickLookIcon] = useState<ProjectIcon | null>(null);
     // Track icon currently scaling up (open animation)
@@ -155,8 +155,6 @@ function DesktopIconsLayer({
                                 isMobile={isMobile}
                                 priority={icon.priority}
                                 isSelected={isSelected}
-                                onHoverStart={setHoveredIconId}
-                                onHoverEnd={(id) => setHoveredIconId(prev => prev === id ? null : prev)}
                                 onPositionChange={(id, relX, relY) => {
                                     handleIconPositionChange(id, icon.x + relX, icon.y + relY);
                                 }}

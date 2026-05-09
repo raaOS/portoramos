@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { m, useMotionValue, type PanInfo } from "motion/react";
+import { m, useMotionValue, type PanInfo, type Transition } from "motion/react";
 import Image from "next/image";
 import { soundManager } from "../../utils/SoundManager";
 
@@ -18,12 +18,11 @@ interface DesktopIconProps {
     priority?: boolean;
     isMobile?: boolean;
     onPositionChange?: (id: string, x: number, y: number) => void;
-    onHoverStart?: (id: string) => void;
-    onHoverEnd?: (id: string) => void;
+
     isSelected?: boolean;
     onDoubleClick?: (e: React.MouseEvent) => void;
     activeScale?: number;
-    activeTransition?: any;
+    activeTransition?: Transition;
 }
 
 export default function DesktopIcon({ 
@@ -41,8 +40,7 @@ export default function DesktopIcon({
     priority = false, 
     isMobile = false, 
     onPositionChange, 
-    onHoverStart, 
-    onHoverEnd,
+
     isSelected = false,
     onDoubleClick,
     activeScale = 1,
@@ -147,8 +145,8 @@ export default function DesktopIcon({
                     onClick();
                 }
             }}
-            onMouseEnter={() => { if (!isMobile) setHovering(true); if (onHoverStart) onHoverStart(id); }}
-            onMouseLeave={() => { if (!isMobile) setHovering(false); if (onHoverEnd) onHoverEnd(id); }}
+            onMouseEnter={() => { if (!isMobile) setHovering(true); }}
+            onMouseLeave={() => { if (!isMobile) setHovering(false); }}
         >
             {/* Icon Media Wrapper - Only this part scales during open/close animations */}
             <m.div

@@ -6,7 +6,6 @@ import {
     ChevronRight,
     Search,
     Grid,
-    List,
     RefreshCw,
     Folder as FolderIcon,
     File as FileIcon,
@@ -65,7 +64,7 @@ export default function ExplorerWindow({
     });
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [viewMode] = useState<'grid'>('grid');
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [activeFile, setActiveFile] = useState<ExplorerFile | null>(null);
     const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -311,9 +310,6 @@ export default function ExplorerWindow({
                         const columns = Math.floor(contentRef.current.clientWidth / 120) || 1;
                         if (e.key === 'ArrowUp') nextIndex = Math.max(0, currentIndex - columns);
                         if (e.key === 'ArrowDown') nextIndex = Math.min(filteredNodes.length - 1, currentIndex + columns);
-                    } else if (viewMode === 'list') {
-                        if (e.key === 'ArrowUp') nextIndex = Math.max(0, currentIndex - 1);
-                        if (e.key === 'ArrowDown') nextIndex = Math.min(filteredNodes.length - 1, currentIndex + 1);
                     }
                 }
 
@@ -409,20 +405,9 @@ export default function ExplorerWindow({
                     {/* View Modes */}
                     {!activeFile && (
                     <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className="p-1 rounded transition-colors"
-                            title="Grid View"
-                        >
-                            <Grid size={14} className={viewMode === 'grid' ? 'text-black dark:text-white' : 'text-gray-400'} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className="p-1 rounded transition-colors"
-                            title="List View"
-                        >
-                            <List size={14} className={viewMode === 'list' ? 'text-black dark:text-white' : 'text-gray-400'} />
-                        </button>
+                        <div className="p-1 rounded opacity-100">
+                            <Grid size={14} className="text-black dark:text-white" />
+                        </div>
                     </div>
                     )}
                 </div>
@@ -476,7 +461,7 @@ export default function ExplorerWindow({
                             </div>
                             <p className="text-sm font-medium">No files found</p>
                         </m.div>
-                    ) : viewMode === 'grid' ? (
+                    ) : (
                                 <m.div
                                     key={`grid:${displayedParentId ?? 'root'}`}
                                     variants={containerVariants}
@@ -510,60 +495,6 @@ export default function ExplorerWindow({
                                                 }`}>
                                                 {node.name}
                                             </span>
-                                        </m.div>
-                                    ))}
-                                </m.div>
-                            ) : (
-                                <m.div
-                                    key={`list:${displayedParentId ?? 'root'}`}
-                                    variants={containerVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="hidden"
-                                    className="flex flex-col min-w-full"
-                                >
-                                    {/* List Header */}
-                                    <div className="flex border-b border-black/5 dark:border-white/5 bg-white/50 dark:bg-black/50 backdrop-blur-md sticky top-0 z-20">
-                                        <div className="w-1/2 p-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-10">Name</div>
-                                        <div className="w-1/4 p-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-l border-black/5 dark:border-white/5 pr-4">Date</div>
-                                        <div className="w-1/4 p-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-l border-black/5 dark:border-white/5 text-right pr-4">Size</div>
-                                    </div>
-
-                                    {filteredNodes.map(node => (
-                                        <m.div
-                                            key={node.id}
-                                            variants={itemVariants}
-                                            layout
-                                            className={`flex group cursor-pointer border-b border-black/5 dark:border-white/5 relative ${selectedNodeId === node.id ? 'z-10 bg-black/5 dark:bg-white/10' : 'hover:bg-black/5 dark:hover:bg-white/10'
-                                                }`}
-                                            onClick={(e) => handleNodeClick(node, e)}
-                                            onDoubleClick={(e) => handleNodeDoubleClick(node, e)}
-                                        >
-                                            {selectedNodeId === node.id && (
-                                                <m.div
-                                                    layoutId="selection-bar"
-                                                    className="absolute left-0 top-0 bottom-0 w-1 bg-gray-500 dark:bg-gray-400"
-                                                />
-                                            )}
-
-                                            <div className="w-1/2 p-2 flex items-center gap-3 pl-4">
-                                                <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                                                    {node.type === 'folder' ? (
-                                                        <FolderIcon size={16} className="text-gray-400 dark:text-gray-500" />
-                                                    ) : (
-                                                        <FileThumbnail file={node as ExplorerFile} size="xs" />
-                                                    )}
-                                                </div>
-                                                <span className={`text-[12px] truncate ${selectedNodeId === node.id ? 'text-slate-900 dark:text-white font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
-                                                    {node.name}
-                                                </span>
-                                            </div>
-                                            <div className="w-1/4 p-2 text-[11px] text-slate-500 flex items-center border-l border-black/5 dark:border-white/5">
-                                                {formatDate(node.updatedAt)}
-                                            </div>
-                                            <div className="w-1/4 p-2 text-[11px] text-slate-500 text-right flex items-center justify-end pr-4 border-l border-black/5 dark:border-white/5">
-                                                {node.type === 'folder' ? '--' : formatSize(node.size || 0)}
-                                            </div>
                                         </m.div>
                                     ))}
                                 </m.div>

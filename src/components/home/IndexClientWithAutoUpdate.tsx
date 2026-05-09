@@ -27,7 +27,8 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
   const searchParams = useSearchParams();
   const tag = searchParams?.get('tag') || '';
   const searchQuery = searchParams?.get('q') || '';
-  const view = (searchParams?.get('view') as 'grid' | 'list' | '3d') || 'grid';
+  const rawView = searchParams?.get('view');
+  const view = rawView === '3d' ? '3d' : 'grid';
 
   // BUG FIX #4: Sync ref with context value on mount to prevent unnecessary updates
   const prevLastUpdated = useRef<string>(

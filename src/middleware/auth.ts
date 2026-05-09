@@ -32,7 +32,7 @@ export async function checkAdminAuth(request: NextRequest) {
                 } else {
                     console.error('[AUTH-DEBUG] JWT_SECRET is not configured in environment variables');
                 }
-            } catch (err) {
+            } catch (_err) {
                 console.error(`[AUTH-DEBUG] JWT Verification failed`);
             }
         }

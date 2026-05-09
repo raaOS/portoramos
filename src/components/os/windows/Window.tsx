@@ -80,7 +80,6 @@ export default function OSWindow({
     isFocused = false,
     animationVariant: _animationVariant,
     originRect,
-    layoutId,
 }: WindowProps) {
     const windowRef = useRef<HTMLDivElement>(null);
 

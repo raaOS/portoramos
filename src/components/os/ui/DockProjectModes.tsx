@@ -2,7 +2,7 @@
 
 import React, { useCallback } from 'react';
 import { m } from 'motion/react';
-import { Grid, LayoutList, Box } from 'lucide-react';
+import { Grid, Box } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link, { useLinkStatus } from 'next/link';
 import { AnimatePresence } from 'motion/react';
@@ -17,7 +17,6 @@ interface ModeOption {
 
 const MODES: ModeOption[] = [
     { id: 'grid', label: 'Grid View', icon: Grid, view: 'grid', description: 'Pinterest style masonry' },
-    { id: 'list', label: 'List View', icon: LayoutList, view: 'list', description: 'Clean minimal rows' },
     { id: 'canvas', label: '3D Canvas', icon: Box, view: '3d', description: 'Infinite 3D exploration' },
 ];
 
