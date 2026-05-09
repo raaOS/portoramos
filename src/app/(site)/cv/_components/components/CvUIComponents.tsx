@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { Download, FileText, Printer, Loader2 } from 'lucide-react';
 import type { Project } from '@/types/projects';
 import type { WorkExperience } from '@/types/experience';

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useTransitionRouter } from 'next-view-transitions';
 import { m } from 'motion/react';
 import Dock from '@/components/os/core/Dock';
 import AppIcon from '@/components/os/ui/AppIcon';
@@ -10,10 +11,11 @@ import { useWindowContext } from '@/contexts/WindowContext';
 import { Grid, User, Mail, FileText, Trash2 } from 'lucide-react';
 import { getDockItemConfig } from '@/components/os/utils/dockUtils';
 import DockProjectModes from '@/components/os/ui/DockProjectModes';
+import { markBack } from '@/lib/navigationDirection';
 import type { DockPreferences } from '@/types/about';
 
 export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const pathname = usePathname();
   const { isWindowOpen, bouncingDocId } = useWindowContext();
 
@@ -31,6 +33,9 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
   }, [router]);
 
   const handleAppLaunch = React.useCallback((appId: string) => {
+    // Klik icon non-Projects di dock → navigate ke home (+ buka window).
+    // Secara mental model ini "balik ke home" jadi slide dari arah kiri.
+    markBack();
     router.push(`/?app=${appId}`);
   }, [router]);
 

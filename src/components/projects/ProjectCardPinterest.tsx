@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { Project } from '@/types/projects';
 import Media from '@/components/shared/Media';
 import { resolvePreviewCover } from '@/lib/images';

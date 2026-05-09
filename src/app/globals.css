@@ -393,3 +393,124 @@ body.os-mode-active {
   opacity: 1 !important;
   visibility: visible !important;
 }
+
+/* ==========================================================================
+   Page View Transitions (Opsi 2 — True Native App Slide)
+   via next-view-transitions. Halaman lama geser full ke kiri (100vw),
+   halaman baru masuk dari kanan (100vw), ketemu di tengah. Native GPU.
+   ========================================================================== */
+
+/* Cegah horizontal scrollbar flash saat snapshot slide full-width */
+html {
+  overflow-x: clip;
+}
+
+/* Skip ALL page animation kalau browser user prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(site-header),
+  ::view-transition-new(site-header),
+  ::view-transition-old(system-nav),
+  ::view-transition-new(system-nav) {
+    animation: none !important;
+  }
+}
+
+/* Default slide full viewport. Halaman lama geser ke kiri sampai hilang,
+   halaman baru masuk dari kanan full viewport.
+   Easing curve "ios-spring" terasa natural — akselerasi lembut di awal,
+   deselerasi halus di akhir (mirip transisi native iOS/macOS). */
+::view-transition-old(root) {
+  animation:
+    800ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide-out-left,
+    540ms cubic-bezier(0.4, 0, 0.2, 1) 120ms both vt-fade-out;
+}
+
+::view-transition-new(root) {
+  animation:
+    800ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide-in-right,
+    580ms cubic-bezier(0.4, 0, 0.2, 1) both vt-fade-in;
+}
+
+/* Navigasi BACK — arah slide dibalik: halaman lama geser ke kanan,
+   halaman baru masuk dari kiri (persis kayak swipe-back di iOS/Android).
+   Attribute data-vt-direction="back" di-set oleh lib/navigationDirection.ts */
+html[data-vt-direction='back']::view-transition-old(root) {
+  animation:
+    800ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide-out-right,
+    540ms cubic-bezier(0.4, 0, 0.2, 1) 120ms both vt-fade-out;
+}
+
+html[data-vt-direction='back']::view-transition-new(root) {
+  animation:
+    800ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide-in-left,
+    580ms cubic-bezier(0.4, 0, 0.2, 1) both vt-fade-in;
+}
+
+@keyframes vt-slide-out-left {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+@keyframes vt-slide-in-right {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes vt-slide-out-right {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+@keyframes vt-slide-in-left {
+  from {
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Isolate header & dock — mereka fixed, nggak boleh ikut geser bersama konten.
+   Cuma cross-fade halus saat ganti halaman. */
+::view-transition-old(site-header),
+::view-transition-new(site-header),
+::view-transition-old(system-nav),
+::view-transition-new(system-nav) {
+  animation: 420ms cubic-bezier(0.4, 0, 0.2, 1) both vt-fade-in;
+}
+::view-transition-old(site-header),
+::view-transition-old(system-nav) {
+  animation-name: vt-fade-out;
+}
+
+@keyframes vt-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

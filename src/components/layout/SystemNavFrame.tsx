@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { motion } from 'motion/react';
 import { ChevronRight, Monitor, Zap } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { markBack } from '@/lib/navigationDirection';
 
 interface SystemNavFrameProps {
     children: React.ReactNode;
@@ -40,7 +41,10 @@ export default function SystemNavFrame({ children, title: _title, hideFooter }: 
         <div className={`${(is3D || isList) ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-white dark:bg-gray-950 flex flex-col`}>
             {/* Retro System Header */}
             {showSystemHeader && (
-                <header className="sticky top-0 z-50 w-full bg-[#EFEFEF] border-b border-[#D1D1D1] h-9 flex items-center justify-between px-4 select-none print:hidden">
+                <header
+                    className="sticky top-0 z-50 w-full bg-[#EFEFEF] border-b border-[#D1D1D1] h-9 flex items-center justify-between px-4 select-none print:hidden"
+                    style={{ viewTransitionName: 'system-nav' }}
+                >
                     <div className="flex items-center gap-4">
                         {/* System OS Label */}
                         <div className="flex items-center gap-2 pr-4 border-r border-gray-300">
@@ -93,7 +97,7 @@ export default function SystemNavFrame({ children, title: _title, hideFooter }: 
                             Handcrafted with passion & Precision
                         </div>
                         <div className="flex gap-6">
-                            <Link href="/" className="text-[10px] text-gray-500 hover:text-black transition-colors uppercase tracking-widest font-bold">Back to OS</Link>
+                            <Link href="/" onClickCapture={markBack} className="text-[10px] text-gray-500 hover:text-black transition-colors uppercase tracking-widest font-bold">Back to OS</Link>
                             <Link href="/cv" className="text-[10px] text-gray-500 hover:text-black transition-colors uppercase tracking-widest font-bold">Resume</Link>
                             <Link href="/contact" className="text-[10px] text-gray-500 hover:text-black transition-colors uppercase tracking-widest font-bold">Contact</Link>
                         </div>

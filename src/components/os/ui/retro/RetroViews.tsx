@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { m } from 'motion/react';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { QRCodeSVG } from 'qrcode.react';
 import { SadMacIcon } from './SadMacIcon';
+import { markBack } from '@/lib/navigationDirection';
 
 export const RetroBootView = ({ text }: { text: string }) => (
     <m.div
@@ -123,7 +124,7 @@ export const RetroDetailsView = ({
                     </button>
                 </div>
 
-                <Link href="/" className="text-[10px] underline mt-1">{backBtn}</Link>
+                <Link href="/" onClickCapture={markBack} className="text-[10px] underline mt-1">{backBtn}</Link>
             </m.div>
         )}
     </div>

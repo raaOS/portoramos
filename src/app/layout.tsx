@@ -7,6 +7,8 @@ import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 import UnregisterSW from '@/components/shared/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import Script from 'next/script';
+import { ViewTransitions } from 'next-view-transitions';
 import { APP_VERSION } from '@/lib/constants';
 
 import './globals.css';
@@ -83,25 +85,24 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" suppressHydrationWarning>
+    <ViewTransitions>
+      <html lang="id" suppressHydrationWarning>
       <head>
         {/* Preconnect to critical domains */}
         {/* Google Fonts - Fallback for next/font to satisfy Babel/SWC conflict */}
         {/* Structured Data */}
         <meta name="application-version" content={APP_VERSION} />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  if (sessionStorage.getItem('ramos_os_booted') === 'true') {
-                    document.documentElement.setAttribute('data-os-booted', 'true');
-                  }
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
+        <Script id="os-boot-state" strategy="beforeInteractive">
+          {`
+            (function() {
+              try {
+                if (sessionStorage.getItem('ramos_os_booted') === 'true') {
+                  document.documentElement.setAttribute('data-os-booted', 'true');
+                }
+              } catch (e) {}
+            })();
+          `}
+        </Script>
       </head>
       {/* suppressHydrationWarning removed: handled by Two-Pass Rendering in HomeOSWrapper */}
       <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default">
@@ -125,6 +126,7 @@ export default async function RootLayout({
         </Providers>
       </body>
     </html>
+    </ViewTransitions>
   );
 }
 

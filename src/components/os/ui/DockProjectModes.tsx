@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { m } from 'motion/react';
 import { Grid, Box } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import Link, { useLinkStatus } from 'next/link';
+import Link from 'next/link';
+import { useTransitionRouter } from 'next-view-transitions';
 import { AnimatePresence } from 'motion/react';
 
 interface ModeOption {
@@ -28,26 +28,36 @@ interface DockProjectModesProps {
 }
 
 export default function DockProjectModes({ onSelect }: DockProjectModesProps) {
-    const _router = useRouter();
+    const router = useTransitionRouter();
+    const [pendingMode, setPendingMode] = useState<string | null>(null);
 
-    const handleModeSelect = useCallback(() => {
-        onSelect?.();
-    }, [onSelect]);
+    const handleModeSelect = useCallback(
+        (mode: ModeOption) => (e: React.MouseEvent) => {
+            // Prevent default Link navigation dan pakai useTransitionRouter
+            // biar slide animation kena trigger.
+            e.preventDefault();
+            setPendingMode(mode.id);
+            router.push(`/projects?view=${mode.view}`);
+            onSelect?.();
+        },
+        [onSelect, router],
+    );
 
     return (
         <div className="flex flex-col gap-1 p-2 min-w-[180px]" role="menu" aria-label="Select project view mode">
-             {/* Title Header */}
-             <div className="px-3 py-1.5 mb-1">
+            {/* Title Header */}
+            <div className="px-3 py-1.5 mb-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-black/40">Select View Mode</span>
             </div>
 
             <div className="flex flex-col gap-1">
                 {MODES.map((mode, idx) => (
-                    <ModeButton 
-                        key={mode.id} 
-                        mode={mode} 
-                        idx={idx} 
-                        onClick={handleModeSelect} 
+                    <ModeButton
+                        key={mode.id}
+                        mode={mode}
+                        idx={idx}
+                        pending={pendingMode === mode.id}
+                        onClick={handleModeSelect(mode)}
                     />
                 ))}
             </div>
@@ -55,9 +65,14 @@ export default function DockProjectModes({ onSelect }: DockProjectModesProps) {
     );
 }
 
-function ModeButton({ mode, idx, onClick }: { mode: ModeOption, idx: number, onClick: () => void }) {
-    const { pending } = useLinkStatus();
-    
+interface ModeButtonProps {
+    mode: ModeOption;
+    idx: number;
+    pending: boolean;
+    onClick: (e: React.MouseEvent) => void;
+}
+
+function ModeButton({ mode, idx, pending, onClick }: ModeButtonProps) {
     return (
         <Link
             href={`/projects?view=${mode.view}`}
@@ -89,7 +104,7 @@ function ModeButton({ mode, idx, onClick }: { mode: ModeOption, idx: number, onC
                 <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-100 group-hover/mode:bg-[#E6F7E8] group-active/mode:bg-[#E6F7E8] group-focus-visible/mode:bg-[#E6F7E8] transition-all shrink-0">
                     <mode.icon className="w-5 h-5 text-zinc-900 group-hover/mode:text-[#00880B] group-active/mode:text-[#00880B] group-focus-visible/mode:text-[#00880B] transition-colors" strokeWidth={1.5} />
                 </div>
-                
+
                 <div className="flex flex-col">
                     <span className="text-sm font-semibold text-zinc-900 group-hover/mode:text-[#00880B] group-active/mode:text-[#00880B] group-focus-visible/mode:text-[#00880B] leading-none mb-1 transition-colors">{mode.label}</span>
                     <span className="text-[10px] text-zinc-700 group-hover/mode:text-[#00880B] group-active/mode:text-[#00880B] group-focus-visible/mode:text-[#00880B] leading-none transition-colors">{mode.description}</span>

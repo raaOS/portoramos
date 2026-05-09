@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTransitionRouter } from 'next-view-transitions';
 import { Grid, Filter, Search as SearchIcon, X, Check, Box } from 'lucide-react';
+import { saveProjectsViewMode } from '@/lib/projectsViewMode';
 
 import { Label } from '@/types/labels';
 
@@ -13,6 +15,8 @@ interface ProjectsFinderHeaderProps {
 
 export default function ProjectsFinderHeader({ itemCount, labels = [] }: ProjectsFinderHeaderProps) {
     const router = useRouter();
+    // Router khusus untuk transisi visual saat ganti mode grid ↔ 3D canvas
+    const vtRouter = useTransitionRouter();
     const searchParams = useSearchParams();
     // FIX: Remove useTransition - not needed for simple router.push
     const [isNavigating, setIsNavigating] = useState(false);
@@ -39,6 +43,12 @@ export default function ProjectsFinderHeader({ itemCount, labels = [] }: Project
         });
         return () => cancelAnimationFrame(frame);
     }, [searchParams]);
+
+    // Persist mode terakhir agar tombol "Back to Projects" di halaman detail
+    // bisa kembali ke mode yang sama (grid atau 3D canvas).
+    useEffect(() => {
+        saveProjectsViewMode(currentView);
+    }, [currentView]);
 
     // Close filter when clicking outside
     useEffect(() => {
@@ -78,9 +88,9 @@ export default function ProjectsFinderHeader({ itemCount, labels = [] }: Project
         if (view === currentView) return;
         const params = new URLSearchParams(searchParams?.toString());
         params.set('view', view);
-        // FIX: Direct router.push without startTransition
+        // Pakai vtRouter biar ganti mode grid <-> 3D canvas dapat slide animation
         setIsNavigating(true);
-        router.push(`/projects?${params.toString()}`, { scroll: false });
+        vtRouter.push(`/projects?${params.toString()}`, { scroll: false });
         setTimeout(() => setIsNavigating(false), 300);
     };
 

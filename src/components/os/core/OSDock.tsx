@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useTransitionRouter } from 'next-view-transitions';
 import Dock from './Dock';
 import AppIcon from "../ui/AppIcon";
 import { getDockItemConfig } from "../utils/dockUtils";
@@ -37,7 +37,7 @@ export default function OSDock({
   className,
   isMobile = false,
 }: OSDockProps) {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const handleOpenProjects = useCallback(() => {
     router.push('/projects');
   }, [router]);

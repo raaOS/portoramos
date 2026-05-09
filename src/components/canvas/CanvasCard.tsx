@@ -1,6 +1,6 @@
 import { memo, useRef } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useTransitionRouter } from 'next-view-transitions'
 import { getCoverPosterUrl, getPreviewCoverUrl, isVideoUrl } from '@/utils/canvas-helpers'
 import type { CanvasItem } from './infiniteCanvasEngine'
 
@@ -19,7 +19,7 @@ export function CanvasCardInner({
     registerCardRef,
     registerVideoRef,
 }: CanvasCardProps) {
-    const router = useRouter()
+    const router = useTransitionRouter()
 
     // Drag tracking to avoid accidental clicks when panning
     const pointerStart = useRef<{ x: number; y: number } | null>(null)
