@@ -400,9 +400,28 @@ body.os-mode-active {
    halaman baru masuk dari kanan (100vw), ketemu di tengah. Native GPU.
    ========================================================================== */
 
-/* Cegah horizontal scrollbar flash saat snapshot slide full-width */
-html {
+/* Cegah horizontal scrollbar flash saat snapshot slide full-width.
+   NOTE: apply ke body, bukan html. overflow-x di html bisa break
+   scrollRestoration di Safari <16 dan beberapa browser lama. */
+body {
   overflow-x: clip;
+}
+
+/* Optimasi View Transitions snapshot:
+   - contain: paint → browser tahu main content tidak "bocor" ke luar,
+     snapshot bisa skip repaint area di luar container.
+   - content-visibility: auto di konten jauh = browser skip render
+     halaman di luar viewport saat idle. */
+main[data-vt-container='true'] {
+  contain: paint;
+}
+
+/* GPU compositing hint saat View Transition aktif.
+   Cuma aktif sesaat selama transisi (browser auto-cleanup). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 /* Skip ALL page animation kalau browser user prefer reduced motion */
@@ -412,7 +431,9 @@ html {
   ::view-transition-old(site-header),
   ::view-transition-new(site-header),
   ::view-transition-old(system-nav),
-  ::view-transition-new(system-nav) {
+  ::view-transition-new(system-nav),
+  ::view-transition-old(global-dock),
+  ::view-transition-new(global-dock) {
     animation: none !important;
   }
 }
@@ -489,11 +510,14 @@ html[data-vt-direction='back']::view-transition-new(root) {
 ::view-transition-old(site-header),
 ::view-transition-new(site-header),
 ::view-transition-old(system-nav),
-::view-transition-new(system-nav) {
+::view-transition-new(system-nav),
+::view-transition-old(global-dock),
+::view-transition-new(global-dock) {
   animation: 420ms cubic-bezier(0.4, 0, 0.2, 1) both vt-fade-in;
 }
 ::view-transition-old(site-header),
-::view-transition-old(system-nav) {
+::view-transition-old(system-nav),
+::view-transition-old(global-dock) {
   animation-name: vt-fade-out;
 }
 

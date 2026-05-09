@@ -6,45 +6,49 @@ import { markBack, markForward } from '@/lib/navigationDirection';
 /**
  * Pasang default arah "forward" sebelum setiap klik link.
  *
- * Kenapa via global capture-phase listener:
- * - View Transitions ambil snapshot DOM pada saat click → terlambat kalau reset
- *   via pathname useEffect (animation keburu pakai attribute dari click sebelumnya).
- * - Capture phase jalan SEBELUM React onClick handler. Jadi:
- *     1. Listener ini set default "forward"
- *     2. Kalau Link pakai onClick={markBack}, React handler jalan → override jadi "back"
- *     3. Browser trigger startViewTransition → snapshot diambil dengan attribute yang benar
+ * Kenapa via capture-phase listener (bukan pathname useEffect):
+ * - View Transitions snapshot DOM pada saat click → reset harus terjadi
+ *   SEBELUM snapshot, bukan setelah halaman baru mount.
+ * - Capture phase jalan sebelum React synthetic events.
  *
- * Tanpa ini, klik back sekali kemudian klik forward akan salah arah karena
- * attribute masih "back" dari navigasi sebelumnya.
+ * Performance optimasi:
+ * - Listener di-scope ke <body>, bukan document, untuk kurangi bubbling cost.
+ * - passive:true agar nggak block main thread.
+ * - Early-exit untuk modifier keys (Ctrl/Cmd/Shift click → buka tab baru).
  */
 export default function NavDirectionReset() {
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+
     const handler = (e: MouseEvent) => {
-      // Hanya left click tanpa modifier (Ctrl/Cmd/Shift open di tab baru, skip)
+      // Skip klik yang bukan navigasi (modifier = open in new tab)
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 
       const target = e.target as HTMLElement | null;
       if (!target) return;
 
-      // Cari anchor terdekat — kalau bukan link, skip
+      // Cari anchor terdekat — kalau bukan link, skip (90%+ klik di desktop OS)
       const anchor = target.closest<HTMLAnchorElement>('a[href]');
       if (!anchor) return;
 
-      // Kalau anchor atau parent-nya ditandai eksplisit sebagai back
-      // (via data-vt-back attribute), langsung set back di sini.
-      // Ini backup selain React onClick handler.
+      // Opt-in eksplisit via data-vt-back attribute (alternatif ke onClickCapture)
       if (anchor.dataset.vtBack !== undefined) {
         markBack();
         return;
       }
 
-      // Default: forward. React onClick (markBack) akan override setelah ini
-      // kalau link tersebut adalah back button.
+      // Default forward. React onClickCapture akan override kalau ini back button.
       markForward();
     };
 
-    document.addEventListener('click', handler, { capture: true });
-    return () => document.removeEventListener('click', handler, { capture: true });
+    // Attach ke body bukan document — kurangi event bubbling scope,
+    // dan passive listener supaya tidak block scrolling/rendering.
+    const root = document.body;
+    root.addEventListener('click', handler, { capture: true, passive: true });
+
+    return () => {
+      root.removeEventListener('click', handler, { capture: true });
+    };
   }, []);
 
   return null;

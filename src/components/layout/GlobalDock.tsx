@@ -103,6 +103,11 @@ export default function GlobalDock({ dockConfig }: { dockConfig?: DockPreference
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
+      style={{
+        // Isolate dari View Transitions body snapshot supaya dock tidak
+        // ikut slide 100vw bersama konten. Hanya cross-fade via CSS di globals.
+        viewTransitionName: 'global-dock',
+      }}
     >
       <div className="pointer-events-auto">
         <Dock

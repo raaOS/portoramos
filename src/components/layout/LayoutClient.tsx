@@ -67,7 +67,7 @@ export default function LayoutClient({
                     <Suspense fallback={null}>
                         {showHeader && <Header />}
                     </Suspense>
-                    <main className={isContact ? "" : "pb-24"}>
+                    <main data-vt-container="true" className={isContact ? "" : "pb-24"}>
                         {children}
                     </main>
                     {modal}
