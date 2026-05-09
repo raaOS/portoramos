@@ -22,11 +22,11 @@ function LoadingOS() {
 }
 
 export default function HomeOSWrapper(props: React.ComponentProps<typeof DesktopOS>) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = React.useSyncExternalStore(
+    () => () => { },
+    () => true,
+    () => false
+  );
 
   // First pass: render skeleton/loading (prevents hydration mismatch)
   if (!isMounted) {
