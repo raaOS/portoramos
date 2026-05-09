@@ -1,10 +1,18 @@
 /**
  * Telegram Message Sender Utilities
- * 
+ *
  * This module handles the actual HTTP requests to the Telegram Bot API.
  */
 
 import type { ReplyMarkup } from './types';
+
+interface TelegramSendMessageBody {
+    chat_id: string;
+    text: string;
+    parse_mode: 'Markdown' | 'HTML' | 'MarkdownV2';
+    message_thread_id?: number;
+    reply_markup?: ReplyMarkup;
+}
 
 /**
  * Send a message immediately without going through the queue
@@ -16,8 +24,8 @@ export async function sendImmediate(
     threadId?: number
 ) {
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    
-    const body: any = {
+
+    const body: TelegramSendMessageBody = {
         chat_id: chatId,
         text: text,
         parse_mode: 'Markdown',
@@ -61,8 +69,8 @@ export async function sendMessage(
     }
 ) {
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    
-    const body: any = {
+
+    const body: TelegramSendMessageBody = {
         chat_id: chatId,
         text: text,
         parse_mode: 'Markdown',

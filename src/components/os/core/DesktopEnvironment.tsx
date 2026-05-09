@@ -133,7 +133,9 @@ function DesktopMain({
     const wasBootSkipped = !needsPowerOn && !isBooting;
 
     // Track which icons are currently "morphed" into windows (supports multiple)
-    const [activeIconIds, setActiveIconIds] = React.useState<Set<string>>(new Set());
+    // Getter tidak dipakai karena status morph hanya dipakai oleh handlers,
+    // tapi setter perlu untuk add/delete id.
+    const [, setActiveIconIds] = React.useState<Set<string>>(new Set());
 
 
     useDesktopShortcuts();

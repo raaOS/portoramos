@@ -7,7 +7,6 @@ import {
     Search,
     Grid,
     RefreshCw,
-    Folder as FolderIcon,
     File as FileIcon,
     Image as ImageIcon,
     Video as VideoIcon,
@@ -19,7 +18,7 @@ import type { AnyExplorerNode, ExplorerFolder, ExplorerFile } from "@/types/expl
 import MacFolder from "./MacFolder";
 
 // Utility functions extracted to module scope to avoid re-creation per render
-const formatDate = (dateStr?: string) => {
+const _formatDate = (dateStr?: string) => {
     if (!dateStr) return '--';
     return new Date(dateStr).toLocaleDateString('id-ID', {
         day: '2-digit',

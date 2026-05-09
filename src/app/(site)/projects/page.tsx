@@ -6,8 +6,10 @@ import { allLabelsAsync } from '@/lib/labels'
 import SystemNavFrame from '@/components/layout/SystemNavFrame'
 import ProjectsFinderHeader from './_components/ProjectsFinderHeader'
 
-// Disable caching for Projects page to ensure immediate dock/content updates
-export const revalidate = 60;
+// Halaman ini punya filter search/tag/view yang butuh runtime params.
+// force-dynamic bypass CSR bailout untuk useSearchParams di ProjectsFinderHeader.
+// (revalidate tidak relevan karena halaman selalu di-render per request.)
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
     title: 'Projects | Ramos Portfolio',

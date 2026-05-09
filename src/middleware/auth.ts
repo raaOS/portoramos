@@ -8,13 +8,17 @@ export async function checkAdminAuth(request: NextRequest) {
     const isPublic = publicRoutes.some(route => pathname.startsWith(route));
 
     if (isProtected && !isPublic) {
-        const allCookies = request.cookies.getAll().map(c => c.name).join(', ');
         const token =
             request.cookies.get('admin_token')?.value ||
             request.cookies.get('admin-token')?.value ||
             request.headers.get('authorization')?.replace('Bearer ', '');
 
-        console.log(`[AUTH-DEBUG] Path: ${pathname} | Cookies keys seen: ${allCookies} | Token found: ${!!token}`);
+        // NOTE: debug log hanya saat development. Di production kita hindari
+        // mencetak daftar cookie dan token state ke log Vercel (noise + info leak).
+        if (process.env.NODE_ENV === 'development') {
+            const allCookies = request.cookies.getAll().map(c => c.name).join(', ');
+            console.log(`[AUTH-DEBUG] Path: ${pathname} | Cookies keys seen: ${allCookies} | Token found: ${!!token}`);
+        }
 
         let isValid = false;
         if (token) {
@@ -32,13 +36,15 @@ export async function checkAdminAuth(request: NextRequest) {
                 } else {
                     console.error('[AUTH-DEBUG] JWT_SECRET is not configured in environment variables');
                 }
-            } catch (_err) {
+            } catch {
                 console.error(`[AUTH-DEBUG] JWT Verification failed`);
             }
         }
 
         if (!isValid) {
-            console.log(`[AUTH-DEBUG] Token invalid or missing! Redirecting to login.`);
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`[AUTH-DEBUG] Token invalid or missing! Redirecting to login.`);
+            }
             const loginUrl = new URL('/admin/login', request.url);
             loginUrl.searchParams.set('redirect', pathname);
             

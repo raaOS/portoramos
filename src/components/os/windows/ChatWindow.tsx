@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo, useState, useRef, useEffect, useCallback, startTransition } from 'react';
-import { soundManager } from '../utils/SoundManager';
 import { useChatProjects } from './hooks/useChatProjects';
 import { useChatSequencer } from './hooks/useChatSequencer';
 import { ChatHeader } from './components/ChatHeader';
@@ -9,7 +8,7 @@ import { ChatMessages } from './components/ChatMessages';
 import { ChatList } from './components/ChatList';
 import QuickLookModal from '@/components/ui/QuickLookModal';
 import { useDesktopWindowContext } from '../context/DesktopWindowContext';
-import type { ContactProfile, ChatMessage } from '../data/mockChats';
+import type { ContactProfile } from '../data/mockChats';
 import type { Project } from '@/types/projects';
 
 interface ChatWindowProps {
@@ -21,7 +20,7 @@ interface ChatWindowProps {
 export default function ChatWindow({ activeChatId = null, customContacts, initialProjects }: ChatWindowProps) {
     const [activeContact, setActiveContact] = useState<ContactProfile | null>(null);
     const [showList, setShowList] = useState(true);
-    const [input, setInput] = useState('');
+    const [_input, _setInput] = useState('');
     const [previewMedia, setPreviewMedia] = useState<{
         src: string;
         title: string;
@@ -42,7 +41,7 @@ export default function ChatWindow({ activeChatId = null, customContacts, initia
     const {
         visibleMessages,
         isRemoteTyping,
-        addMessage,
+        addMessage: _addMessage,
         setVisibleMessages
     } = useChatSequencer(activeContact, showList);
 

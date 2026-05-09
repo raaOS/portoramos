@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Link } from 'next-view-transitions';
 import { ArrowLeft } from 'lucide-react';
 import {
     buildProjectsHref,
+    getProjectsViewModeServerSnapshot,
     readProjectsViewMode,
-    type ProjectsViewMode,
+    subscribeProjectsViewMode,
 } from '@/lib/projectsViewMode';
 import { markBack } from '@/lib/navigationDirection';
 
@@ -15,15 +16,14 @@ interface ProjectBackButtonProps {
 }
 
 export function ProjectBackButton({ label = 'Back to Projects' }: ProjectBackButtonProps) {
-    // Default 'grid' agar tombol tetap punya href valid di SSR & sebelum hydrate.
-    const [mode, setMode] = useState<ProjectsViewMode>('grid');
-
-    useEffect(() => {
-        // Setelah hydrate, baca mode terakhir dari sessionStorage.
-        // Kalau user sebelumnya pakai 3D canvas → balik ke 3D canvas,
-        // kalau grid → balik ke grid.
-        setMode(readProjectsViewMode());
-    }, []);
+    // SSR-safe read dari sessionStorage via useSyncExternalStore.
+    // Server snapshot selalu 'grid' (default) agar tidak hydration mismatch.
+    // Client snapshot baca sessionStorage, re-read otomatis bila mode berubah.
+    const mode = useSyncExternalStore(
+        subscribeProjectsViewMode,
+        readProjectsViewMode,
+        getProjectsViewModeServerSnapshot,
+    );
 
     return (
         <Link
