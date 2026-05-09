@@ -223,18 +223,9 @@ const nextConfig = {
           }
         ]
       },
-      // Static assets caching (production only - skip in dev to avoid Next.js warning)
-      ...(process.env.NODE_ENV === 'production' ? [
-        {
-          source: '/_next/static/(.*)',
-          headers: [
-            {
-              key: 'Cache-Control',
-              value: 'public, max-age=31536000, immutable'
-            }
-          ]
-        }
-      ] : []),
+      // Static assets caching — DIHAPUS.
+      // Next.js default untuk /_next/static sudah optimal (1 tahun immutable).
+      // Override dengan nilai identik cuma bikin build warning tanpa gain.
       {
         source: '/assets/(.*)',
         headers: [
