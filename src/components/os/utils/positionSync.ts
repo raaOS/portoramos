@@ -4,7 +4,6 @@
 import type { WindowPreference } from '@/types/about';
 
 const STORAGE_KEY = 'ramos-positions-v2';
-const SESSION_KEY = 'ramos-session-positions'; // For visitor session-only positions
 
 type WindowPosition = { x: number; y: number; width: number; height: number };
 type IconPosition = { x: number; y: number };
@@ -38,20 +37,13 @@ export function loadPositions(): Partial<PositionData> {
   return {};
 }
 
-// Load session positions (VISITOR - temporary)
+// Load session positions (VISITOR).
+// NOTE: Visitor positions no longer persisted ("refresh = reset" requirement).
+// This loader is kept for API compatibility but always returns empty for visitors.
 export function loadSessionPositions(): Partial<PositionData> {
-  if (typeof window === 'undefined') return {};
-  try {
-    const saved = sessionStorage.getItem(SESSION_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch {}
+  // Short-circuit: no writes happen, so there is nothing meaningful to load.
+  // Kept as a function (not inlined) so callers can keep the old import path.
   return {};
-}
-
-// Save session positions (VISITOR - deactivated for "refresh = reset" requirement)
-export function saveSessionPositions(_data: Partial<PositionData>) {
-  // Visitor changes are no longer persisted to any storage
-  return;
 }
 
 // Save ke localStorage
@@ -69,11 +61,13 @@ export function savePositions(data: Partial<PositionData>) {
   } catch {}
 }
 
-// Clear visitor positions (called when admin saves new template)
+// Clear visitor positions (called when admin saves new template).
+// No-op after "refresh = reset" migration — kept for API compatibility.
 export function clearVisitorPositions() {
   if (typeof window === 'undefined') return;
   try {
-    sessionStorage.removeItem(SESSION_KEY);
+    // Legacy key — remove if it still exists from older versions
+    sessionStorage.removeItem('ramos-session-positions');
   } catch {}
 }
 
@@ -156,15 +150,21 @@ export function getIconPosition(
 export function saveWindowPosition(id: string, pos: { x?: number; y?: number; width?: number; height?: number }, isAdmin: boolean = false) {
   if (!isAdmin) return; // Visitor changes are not persisted
 
-  const existing = { x: 100, y: 80, width: 900, height: 600 };
-  const updated: WindowPosition = {
-    x: pos.x ?? existing.x,
-    y: pos.y ?? existing.y,
-    width: pos.width ?? existing.width,
-    height: pos.height ?? existing.height
-  };
-  
+  // FIX: Merge dengan posisi persisted saat ini, bukan hardcoded default.
+  // Kalau user cuma drag (update x/y), width/height yang tidak di-pass
+  // harus tetap pakai nilai persisted — bukan di-reset ke default.
   const current = loadPositions();
+  const persisted = current.windows?.[id];
+  const fallback = { x: 100, y: 80, width: 900, height: 600 };
+  const base: WindowPosition = persisted ?? fallback;
+
+  const updated: WindowPosition = {
+    x: pos.x ?? base.x,
+    y: pos.y ?? base.y,
+    width: pos.width ?? base.width,
+    height: pos.height ?? base.height
+  };
+
   savePositions({
     windows: {
       ...current.windows,
@@ -189,32 +189,27 @@ export function saveIconPosition(id: string, pos: { x: number; y: number }, isAd
 
 // Save single note position (for visitor session)
 export function saveNotePosition(id: string, pos: { x?: number; y?: number; width?: number; height?: number }, isAdmin: boolean = false) {
-  const existing = { x: 100, y: 100, width: 280, height: 280 };
-  
+  if (!isAdmin) return; // Visitor changes no longer persisted (refresh = reset)
+
+  // FIX: Merge dengan posisi persisted saat ini, bukan hardcoded default.
+  const current = loadPositions();
+  const persisted = current.notes?.[id];
+  const fallback = { x: 100, y: 100, width: 280, height: 280 };
+  const base: NotePosition = persisted ?? fallback;
+
   const updated: NotePosition = {
-    x: pos.x ?? existing.x,
-    y: pos.y ?? existing.y,
-    width: pos.width ?? existing.width,
-    height: pos.height ?? existing.height
+    x: pos.x ?? base.x,
+    y: pos.y ?? base.y,
+    width: pos.width ?? base.width,
+    height: pos.height ?? base.height
   };
-  
-  if (isAdmin) {
-    const current = loadPositions();
-    savePositions({
-      notes: {
-        ...current.notes,
-        [id]: updated
-      }
-    });
-  } else {
-    const current = loadSessionPositions();
-    saveSessionPositions({
-      notes: {
-        ...current.notes,
-        [id]: updated
-      }
-    });
-  }
+
+  savePositions({
+    notes: {
+      ...current.notes,
+      [id]: updated
+    }
+  });
 }
 
 // Flush semua ke server (admin)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebaseAdmin';
 import { validateAdminRequest } from '@/lib/auth';
+import { updateSettingsSchema } from '@/lib/validations';
 
 export async function getSettingsData() {
     try {
@@ -24,15 +25,18 @@ export async function POST(request: NextRequest) {
         }
         const body = await request.json();
 
-        // Validation simple
-        if (!body.bannedWords || !Array.isArray(body.bannedWords)) {
-            return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
+        const validation = updateSettingsSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json({
+                error: 'Invalid settings payload',
+                details: validation.error.issues
+            }, { status: 400 });
         }
 
-        // Save to Firebase
-        await db.ref('settings').set(body);
+        // Save only validated data to Firebase (prevents junk fields)
+        await db.ref('settings').set(validation.data);
 
-        return NextResponse.json({ success: true, settings: body });
+        return NextResponse.json({ success: true, settings: validation.data });
     } catch (error: unknown) {
         console.error('[API/Settings] POST Error:', error);
         return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });

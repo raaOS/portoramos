@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { UpdateProjectData } from '@/types/projects';
+import { UpdateProjectData, Project } from '@/types/projects';
 import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 import { generateGenZComments } from '@/lib/magic';
@@ -17,8 +17,16 @@ export async function GET(
     const params = await props.params;
     const { id } = params;
 
-    const { projects } = await projectService.getProjects();
-    const project = projects.find(p => p.id === id);
+    // PERF FIX: Fetch langsung by id — sebelumnya load SEMUA project
+    // lalu .find() yang inefficient buat banyak project.
+    const snap = await db.ref(`projects/${id}`).once('value');
+    let project: Project | null = snap.val();
+
+    // Fallback: kalau Firebase pakai numeric/array key, cari via service
+    if (!project) {
+      const { projects } = await projectService.getProjects();
+      project = projects.find(p => p.id === id) ?? null;
+    }
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import Image from 'next/image';
-import { m } from 'motion/react';
+import { m, type Transition } from 'motion/react';
 import type { WallpaperConfig } from '@/types/about';
 
 interface DesktopBackgroundProps {
@@ -31,7 +31,7 @@ export default function DesktopBackground({ wallpaperConfig, isWindowOpen = fals
     }, [activeWallpaper]);
 
     // iOS-style background effect: scales down slightly and blurs when a window is active
-    const springTransition = { type: "spring", stiffness: 180, damping: 28, mass: 1 };
+    const springTransition: Transition = { type: "spring", stiffness: 180, damping: 28, mass: 1 };
 
     return (
         <div className="fixed inset-0 z-0 w-full h-full overflow-hidden bg-black">

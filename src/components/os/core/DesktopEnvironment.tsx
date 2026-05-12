@@ -199,25 +199,33 @@ function DesktopMain({
 
     const searchParams = useSearchParams();
 
-    // Task 3: URL Parameter handling for Link prefetching & hints
+    // URL PARAM FIX: Ref-based guard agar kombinasi `app` param hanya
+    // di-handle sekali. Sebelumnya effect bisa re-fire saat context
+    // mengupdate `openWindow` reference sementara `replaceState` belum
+    // propagate → `openWindow(app)` terpanggil dua kali.
+    const handledAppParamRef = React.useRef<string | null>(null);
+
     useEffect(() => {
-        const handleUrlParams = () => {
-            const rawApp = searchParams.get('app');
-            if (!rawApp) return;
+        const rawApp = searchParams.get('app');
+        if (!rawApp) {
+            handledAppParamRef.current = null;
+            return;
+        }
+        if (handledAppParamRef.current === rawApp) return;
+        handledAppParamRef.current = rawApp;
 
-            const app = rawApp === 'mail' ? 'contact' : rawApp;
-            if (app === 'whatsapp') {
-                openWhatsAppList();
-            } else {
-                openWindow(app);
-            }
+        const app = rawApp === 'mail' ? 'contact' : rawApp;
+        if (app === 'whatsapp') {
+            openWhatsAppList();
+        } else {
+            openWindow(app);
+        }
 
-            // Cleanup URL after handling to keep OS experience clean
+        // Cleanup URL setelah handled
+        if (typeof window !== 'undefined') {
             const nextUrl = window.location.pathname + window.location.hash;
             window.history.replaceState({}, '', nextUrl);
-        };
-
-        handleUrlParams();
+        }
     }, [searchParams, openWindow, openWhatsAppList]);
 
     const isDesktopReady = wasBootSkipped || startScreenReady;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { validateAdminRequest } from '@/lib/auth';
 import { hardSkillService } from '@/lib/services/hardSkillService';
+import { updateHardSkillSchema } from '@/lib/validations';
 
 // PUT - update hard skill
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -13,11 +14,23 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
     const body = await request.json();
 
-    const updatedSkill = await hardSkillService.updateHardSkill(id, body);
+    const validation = updateHardSkillSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json({
+        error: 'Invalid hard skill payload',
+        details: validation.error.issues
+      }, { status: 400 });
+    }
+
+    const updatedSkill = await hardSkillService.updateHardSkill(id, validation.data);
 
     if (!updatedSkill) {
       return NextResponse.json({ error: 'Skill not found' }, { status: 404 });
     }
+
+    // Revalidate setelah sukses update agar halaman ISR /about fresh
+    revalidatePath('/', 'layout');
+    revalidatePath('/about');
 
     return NextResponse.json({ success: true, skill: updatedSkill });
   } catch (error) {

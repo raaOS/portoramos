@@ -64,8 +64,19 @@ export async function POST(request: NextRequest) {
         : validationResult.data.year
     };
 
-    // Type assertion needed due to Zod schema allowing nulls that CreateProjectData doesn't
-    const newProject = await projectService.createProject(projectData as unknown as import('@/types/projects').CreateProjectData);
+    // Type assertion needed due to Zod schema allowing nulls that CreateProjectData doesn't.
+    // NOTE: `projectService.createProject` may re-validate via its own Zod schema.
+    // Kalau schema service divergen, ia throw ZodError → ditangkap di bawah
+    // dan return 400 (bukan 500) agar perilaku konsisten dengan route-level validation.
+    let newProject;
+    try {
+      newProject = await projectService.createProject(projectData as unknown as import('@/types/projects').CreateProjectData);
+    } catch (innerError) {
+      if (innerError instanceof z.ZodError) {
+        return validationError(innerError);
+      }
+      throw innerError;
+    }
 
     // --- Auto-Generate Comments (Firebase) ---
     if (validationResult.data.initialCommentCount && validationResult.data.initialCommentCount > 0) {

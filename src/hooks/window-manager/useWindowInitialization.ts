@@ -15,70 +15,66 @@ interface UseWindowInitializationProps {
     getCenterPositionStatic: (width: number, height: number) => { x: number, y: number };
 }
 
+/**
+ * Single-effect window initialization + content sync.
+ *
+ * DOUBLE-EFFECT RACE FIX: Sebelumnya ada dua useEffect dengan deps overlap
+ * yang sama-sama memodifikasi state windows via `setWindows(prev => ...)`.
+ * Saat `initialWindows` berubah keduanya fire berurutan dan bisa saling
+ * menimpa. Sekarang dikonsolidasi jadi satu effect yang melakukan
+ * reconciliation penuh (position, dimensions, content) dalam satu pass.
+ */
 export function useWindowInitialization({ initialWindows, aboutData, setWindows, getCenterPositionStatic }: UseWindowInitializationProps) {
-    // Initialize/re-initialize windows based on server preferences
     useEffect(() => {
-        const performInitialization = () => {
+        const rafId = requestAnimationFrame(() => {
             setWindows(prev => {
-                // We iterate over initialWindows to ensure every "system" window is represented
+                // Reconcile tiap system window dalam SATU pass
                 const reconciled = initialWindows.map(baseW => {
                     const existing = prev.find(w => w.id === baseW.id);
-                    const w = { ...baseW, ...existing }; // keep existing state like isOpen, content, if present
+                    // Keep existing state (isOpen, content, isPinned) jika ada
+                    const w = { ...baseW, ...existing };
 
                     const pref = aboutData?.windowPreferences?.[w.id];
-
-                    // Viewport detection
                     const vp = getViewport();
                     const isMobile = vp.width < 768;
 
-                    // Calculate dimensions - prefer percentage if available
+                    // ── Dimensions: prefer percentage, fallback ke legacy pixel ──
                     let width: number;
                     let height: number;
-
                     if (pref?.widthPct !== undefined && pref?.heightPct !== undefined) {
-                        // Use percentage-based sizing
                         width = (pref.widthPct / 100) * vp.width;
                         height = (pref.heightPct / 100) * vp.height;
                     } else {
-                        // Legacy pixel fallback
                         width = pref?.width || w.width || 800;
                         height = pref?.height || w.height || 600;
                     }
 
-                    // Mobile: clamp dimensions to fit screen
+                    // Clamp ke viewport
                     if (isMobile) {
                         width = Math.min(width, vp.width * 0.95);
                         height = Math.min(height, vp.height * 0.8);
                     } else {
-                        // Desktop: clamp to prevent overflow
                         width = Math.min(width, vp.width * 0.95);
                         height = Math.min(height, vp.height * 0.95);
                     }
-
-                    // Ensure minimum dimensions
                     width = Math.max(width, 300);
                     height = Math.max(height, 200);
 
-                    // Calculate position - prefer percentage if available
+                    // ── Position: prefer percentage, fallback legacy pixel, else centered ──
                     let x: number;
                     let y: number;
-
                     if (pref?.xPct !== undefined && pref?.yPct !== undefined) {
-                        // Use percentage-based positioning
                         x = (pref.xPct / 100) * vp.width;
                         y = (pref.yPct / 100) * vp.height;
                     } else if (pref?.x !== undefined && pref?.y !== undefined && !isMobile) {
-                        // Legacy pixel fallback (only on desktop)
                         x = pref.x;
                         y = pref.y;
                     } else {
-                        // Default: center on screen
                         const centerPos = getCenterPositionStatic(width, height);
                         x = centerPos.x;
                         y = centerPos.y;
                     }
 
-                    // Clamp position to ensure window is always visible
                     const margin = 20;
                     x = Math.max(margin, Math.min(x, vp.width - width - margin));
                     y = Math.max(margin, Math.min(y, vp.height - height - margin));
@@ -86,14 +82,19 @@ export function useWindowInitialization({ initialWindows, aboutData, setWindows,
                     const initialPosition = { x, y };
                     const isPinned = pref?.isOpenByDefault || false;
 
-                    // Hydrate content if missing but factory exists
+                    // ── Content sync: ambil fresh content dari baseW, atau hydrate via factory ──
+                    // Urutan prioritas:
+                    // 1. Kalau baseW.content fresh dan berbeda dari existing → pakai yang baru (admin update)
+                    // 2. Kalau content null dan ada factory → hydrate sekali
+                    // 3. Else pertahankan existing content
                     let content = w.content;
-                    if (content === null && baseW.contentFactory) {
+                    if (baseW.content !== null && baseW.content !== existing?.content) {
+                        content = baseW.content;
+                    } else if (content === null && baseW.contentFactory) {
                         content = baseW.contentFactory();
                     }
 
-                    // If it was already open in state, keep it open.
-                    // Otherwise, follow server preference or force 'about' (initial visibility logic).
+                    // isOpen: preserve kalau sudah open, else follow preference (kecuali 'about' yang force-open)
                     const isOpen = w.isOpen ?? (w.id === 'about' ? true : (pref?.isOpenByDefault || false));
 
                     return {
@@ -103,45 +104,17 @@ export function useWindowInitialization({ initialWindows, aboutData, setWindows,
                         isPinned,
                         width,
                         height,
-                        initialPosition
+                        initialPosition,
                     };
                 });
 
-                // Preserve any custom windows not in initialWindows (e.g. dynamic windows)
+                // Preserve custom/dynamic windows yang tidak di initialWindows (mis. project windows)
                 const dynamic = prev.filter(w => !initialWindows.some(iw => iw.id === w.id));
-                
-                return [...reconciled, ...dynamic];
-            });
-        };
 
-        const rafId = requestAnimationFrame(performInitialization);
-        return () => cancelAnimationFrame(rafId);
-    }, [aboutData, initialWindows, setWindows, getCenterPositionStatic]);
-
-    // Content Sync Effect: Update window content whenever initialWindows definitions change
-    useEffect(() => {
-        const rafId = requestAnimationFrame(() => {
-            setWindows(prev => {
-                // Ensure reconciled list is used to avoid losing windows
-                const reconciled = initialWindows.map(fresh => {
-                    const existing = prev.find(w => w.id === fresh.id);
-                    if (!existing) return fresh;
-
-                    // Update content if fresh content is available or if current content is null
-                    let updatedContent = existing.content;
-                    if (fresh.content !== null && fresh.content !== existing.content) {
-                        updatedContent = fresh.content;
-                    } else if (existing.content === null && fresh.contentFactory) {
-                        updatedContent = fresh.contentFactory();
-                    }
-
-                    return { ...existing, content: updatedContent };
-                });
-
-                const dynamic = prev.filter(w => !initialWindows.some(iw => iw.id === w.id));
                 return [...reconciled, ...dynamic];
             });
         });
+
         return () => cancelAnimationFrame(rafId);
-    }, [initialWindows, setWindows]);
+    }, [aboutData, initialWindows, setWindows, getCenterPositionStatic]);
 }

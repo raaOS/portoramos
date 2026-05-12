@@ -107,7 +107,11 @@ export function useChatSync(initialGreeting?: string) {
                             });
 
                             if (hasNewAdminMessage) {
-                                soundManager.play('notification');
+                                // Hanya bunyikan notifikasi kalau tab visible agar user
+                                // tidak ter-distract di background tab.
+                                if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+                                    soundManager.play('notification');
+                                }
                                 setIsAdminTyping(false);
                             }
 

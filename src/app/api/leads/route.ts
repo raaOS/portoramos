@@ -28,10 +28,13 @@ export async function GET(request: NextRequest) {
         const snapshot = await db.ref('leads').once('value');
         const leads = snapshot.val() || [];
 
-        // Handle both object and array formats (Admin Panel expects array)
+        // Handle both object and array formats (Admin Panel expects array).
+        // FIX: spread leads[key] FIRST, lalu override id dengan key Firebase —
+        // sebelumnya `{ id: key, ...leads[key] }` justru menimpa id yang
+        // sudah ada di object dengan push-id Firebase.
         const leadsArray = Array.isArray(leads)
             ? leads
-            : Object.keys(leads).map(key => ({ id: key, ...leads[key] }));
+            : Object.keys(leads).map(key => ({ ...leads[key], id: key }));
 
         leadsCache.set(LEADS_CACHE_KEY, leadsArray);
 

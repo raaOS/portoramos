@@ -1,83 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebaseAdmin';
+import { revalidatePath } from 'next/cache';
 import { validateAdminRequest } from '@/lib/auth';
+import { aboutService } from '@/lib/services/aboutService';
 import aboutDataFallback from '@/data/about.json';
+import { updateDesignPhilosophySchema } from '@/lib/validations';
 
-// GET Handler - Hanya return workflowSteps
+// GET Handler - Return Design Philosophy section
 export async function GET() {
     try {
-        const snapshot = await db.ref('content/about').once('value');
-        const firebaseData = snapshot.val() || {};
-
-        // Ambil dari Firebase kalau ada, kalau gak ada dari JSON fallback
-        const workflowSteps = firebaseData.designPhilosophy?.workflowSteps 
-            || aboutDataFallback.designPhilosophy?.workflowSteps 
-            || [];
+        const aboutData = await aboutService.getAboutData();
+        const philosophy = aboutData.designPhilosophy;
 
         const result = {
-            heading: firebaseData.designPhilosophy?.heading 
-                || aboutDataFallback.designPhilosophy?.heading 
-                || "Design Philosophy",
-            subheading: firebaseData.designPhilosophy?.subheading 
-                || aboutDataFallback.designPhilosophy?.subheading 
-                || "Strategic Thinking Framework",
-            workflowSteps: workflowSteps
+            heading: philosophy?.heading
+                || aboutDataFallback.designPhilosophy?.heading
+                || 'Design Philosophy',
+            subheading: philosophy?.subheading
+                || aboutDataFallback.designPhilosophy?.subheading
+                || 'Strategic Thinking Framework',
+            workflowSteps: philosophy?.workflowSteps
+                || aboutDataFallback.designPhilosophy?.workflowSteps
+                || [],
         };
 
         return NextResponse.json(result);
     } catch (error) {
         console.error('Failed to fetch Design Philosophy:', error);
-        // Return fallback data on error
         return NextResponse.json({
-            heading: aboutDataFallback.designPhilosophy?.heading || "Design Philosophy",
-            subheading: aboutDataFallback.designPhilosophy?.subheading || "Strategic Thinking Framework",
-            workflowSteps: aboutDataFallback.designPhilosophy?.workflowSteps || []
+            heading: aboutDataFallback.designPhilosophy?.heading || 'Design Philosophy',
+            subheading: aboutDataFallback.designPhilosophy?.subheading || 'Strategic Thinking Framework',
+            workflowSteps: aboutDataFallback.designPhilosophy?.workflowSteps || [],
         });
     }
 }
 
-// POST Handler (Update) - Hanya simpan workflowSteps
+// POST Handler (Update) - Route via aboutService so cache stays consistent
 export async function POST(request: NextRequest) {
     try {
-        if (!await validateAdminRequest(request)) {
+        if (!(await validateAdminRequest(request))) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const newData = await request.json();
+        const body = await request.json();
 
-        // Validate required fields
-        if (!newData.heading || !newData.subheading) {
-            return NextResponse.json(
-                { error: 'Missing required fields: heading, subheading' },
-                { status: 400 }
-            );
+        const validation = updateDesignPhilosophySchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json({
+                error: 'Invalid design philosophy payload',
+                details: validation.error.issues,
+            }, { status: 400 });
         }
 
-        // Validate workflowSteps exists
-        if (!newData.workflowSteps || !Array.isArray(newData.workflowSteps)) {
-            return NextResponse.json(
-                { error: 'Missing required field: workflowSteps' },
-                { status: 400 }
-            );
-        }
+        // CACHE-CONSISTENCY FIX: tulis via aboutService.updateAboutData sehingga
+        // contentCache(`firebase:content/about`) ikut ter-invalidate dan realtime
+        // sync tetap akurat. Sebelumnya bypass service bikin cache stale sampai TTL.
+        await aboutService.updateAboutData({
+            designPhilosophy: validation.data,
+        });
 
-        // Prepare data for storage - Hanya workflowSteps
-        const dataToSave = {
-            heading: newData.heading,
-            subheading: newData.subheading,
-            workflowSteps: newData.workflowSteps
-        };
+        // ISR revalidation — /about pakai revalidate = 60
+        revalidatePath('/', 'layout');
+        revalidatePath('/about');
 
-        // Update in Firebase Realtime Database
-        await db.ref('content/about/designPhilosophy').set(dataToSave);
-        await db.ref('content/about/lastUpdated').set(new Date().toISOString());
-
-        console.log('[API] Design Philosophy updated successfully');
-
-        return NextResponse.json({ 
-            success: true, 
-            data: dataToSave,
-            message: 'Data berhasil disimpan'
+        return NextResponse.json({
+            success: true,
+            data: validation.data,
+            message: 'Data berhasil disimpan',
         });
     } catch (error) {
         console.error('Failed to update Design Philosophy:', error);

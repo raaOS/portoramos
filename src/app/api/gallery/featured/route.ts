@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { galleryFeaturedService } from '@/lib/services/galleryFeaturedService';
 import { validateAdminRequest } from '@/lib/auth';
+import { galleryFeaturedSchema } from '@/lib/validations';
+import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
 
 export async function GET() {
     try {
@@ -18,14 +20,33 @@ export async function POST(request: NextRequest) {
         if (!(await validateAdminRequest(request))) {
             return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
         }
-        const body = await request.json();
-        const { featuredProjectIds } = body;
 
-        if (!Array.isArray(featuredProjectIds)) {
-            return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
+        // Rate limit: 10 req/menit per IP. Gallery featured list jarang diubah.
+        const clientIp = request.headers.get('x-forwarded-for') || 'unknown';
+        const rateLimit = await checkFirebaseRateLimit(
+            `gallery_featured_${clientIp}`,
+            10,
+            60_000,
+            300_000
+        );
+        if (!rateLimit.allowed) {
+            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
         }
 
-        const newData = await galleryFeaturedService.updateFeaturedData(featuredProjectIds);
+        const body = await request.json();
+
+        const validation = galleryFeaturedSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json({
+                error: 'Invalid gallery payload',
+                details: validation.error.issues,
+            }, { status: 400 });
+        }
+
+        // De-duplicate IDs sebelum save
+        const uniqueIds = Array.from(new Set(validation.data.featuredProjectIds));
+
+        const newData = await galleryFeaturedService.updateFeaturedData(uniqueIds);
 
         revalidatePath('/', 'layout');
         revalidatePath('/projects');

@@ -8,6 +8,9 @@ export async function checkAdminAuth(request: NextRequest) {
     const isPublic = publicRoutes.some(route => pathname.startsWith(route));
 
     if (isProtected && !isPublic) {
+        // STANDARD: `admin_token` — `admin-token` dibaca untuk backward-compat
+        // dengan session yang di-set oleh versi sebelumnya. Semua write path
+        // (login/logout) hanya menyentuh `admin_token` sekarang.
         const token =
             request.cookies.get('admin_token')?.value ||
             request.cookies.get('admin-token')?.value ||

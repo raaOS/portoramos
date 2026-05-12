@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { hardSkillService } from '@/lib/services/hardSkillService';
 import { validateAdminRequest } from '@/lib/auth';
-import { HardSkill } from '@/types/hardSkill';
 import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
+import { bulkUpdateHardSkillsSchema } from '@/lib/validations';
 
 export async function GET() {
   const data = await hardSkillService.getHardSkills();
@@ -25,12 +25,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
-    const skills: HardSkill[] = await request.json();
+    const body = await request.json();
 
-    // Basic validation
-    if (!Array.isArray(skills)) {
-      return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
+    // Validate with Zod — prevents malformed payload & injection
+    const validation = bulkUpdateHardSkillsSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json({
+        error: 'Invalid hard skills payload',
+        details: validation.error.issues
+      }, { status: 400 });
     }
+
+    const skills = validation.data;
 
     // Save
     const success = await hardSkillService.saveHardSkills(skills, 'Bulk update via Admin API');

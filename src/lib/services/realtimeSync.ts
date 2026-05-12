@@ -10,7 +10,7 @@
  * mounted ref checks before all state updates, and proper timeout clearing
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import type { DataSnapshot, Database, DatabaseReference } from 'firebase/database';
 
 type FirebaseDatabaseModule = typeof import('firebase/database');
@@ -140,33 +140,20 @@ interface UseRealtimeSyncOptions {
 export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: UseRealtimeSyncOptions) {
     const lastTimestampRef = useRef<string | null>(null);
     const isInitializedRef = useRef(false);
-    const unsubscribeRef = useRef<(() => void) | null>(null);
     const isActiveRef = useRef(true);
     const mountedRef = useRef(true);
     const setupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
-    const listenerRef = useRef<((snapshot: DataSnapshot) => void) | null>(null);
-    const lastUpdatedRefPath = useRef<DatabaseReference | null>(null);
 
-    const handleTimestampChange = useCallback((snapshot: DataSnapshot) => {
-        if (!mountedRef.current || !isActiveRef.current) return;
-        
-        const newTimestamp = snapshot.val() as string | null;
-        if (!newTimestamp) return;
-        
-        if (!isInitializedRef.current) {
-            lastTimestampRef.current = newTimestamp;
-            isInitializedRef.current = true;
-            return;
-        }
-        
-        if (newTimestamp !== lastTimestampRef.current) {
-            lastTimestampRef.current = newTimestamp;
-            if (mountedRef.current && isActiveRef.current) {
-                onUpdate();
-            }
-        }
-    }, [onUpdate]);
+    // LISTENER LEAK FIX: Simpan callback latest di ref agar handler yang
+    // terdaftar ke Firebase tidak pernah berubah. Kalau onUpdate berubah,
+    // kita cukup update ref-nya — tidak perlu unsubscribe/resubscribe.
+    // Ini mencegah skenario di mana listener lama bocor karena
+    // `off(ref, 'value', callback)` butuh reference yang EXACTLY sama.
+    const onUpdateRef = useRef(onUpdate);
+    const onUnavailableRef = useRef(onUnavailable);
+    useEffect(() => { onUpdateRef.current = onUpdate; }, [onUpdate]);
+    useEffect(() => { onUnavailableRef.current = onUnavailable; }, [onUnavailable]);
 
     useEffect(() => {
         if (!enabled || typeof window === 'undefined') return;
@@ -175,54 +162,67 @@ export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: Use
         mountedRef.current = true;
         abortControllerRef.current = new AbortController();
 
+        // Listener stable yang terdaftar ke Firebase. Closure membaca callback
+        // terbaru via ref sehingga tidak pernah stale dan tidak perlu re-subscribe.
+        const stableListener = (snapshot: DataSnapshot) => {
+            if (!mountedRef.current || !isActiveRef.current) return;
+
+            const newTimestamp = snapshot.val() as string | null;
+            if (!newTimestamp) return;
+
+            if (!isInitializedRef.current) {
+                lastTimestampRef.current = newTimestamp;
+                isInitializedRef.current = true;
+                return;
+            }
+
+            if (newTimestamp !== lastTimestampRef.current) {
+                lastTimestampRef.current = newTimestamp;
+                if (mountedRef.current && isActiveRef.current) {
+                    onUpdateRef.current();
+                }
+            }
+        };
+
+        // Track path ter-subscribe lokal agar cleanup match dengan registration.
+        let subscribedPath: DatabaseReference | null = null;
+
         const cleanupListener = () => {
-            if (offFn && lastUpdatedRefPath.current && listenerRef.current) {
+            if (offFn && subscribedPath) {
                 try {
-                    offFn(lastUpdatedRefPath.current, 'value', listenerRef.current);
+                    offFn(subscribedPath, 'value', stableListener);
                 } catch { /* ignore */ }
             }
-            
-            if (unsubscribeRef.current) {
-                try {
-                    unsubscribeRef.current();
-                } catch { /* ignore */ }
-                unsubscribeRef.current = null;
-            }
-            
-            listenerRef.current = null;
-            lastUpdatedRefPath.current = null;
+            subscribedPath = null;
         };
 
         const setupListener = async () => {
             if (!mountedRef.current || !isActiveRef.current) return;
-            
+
             const initialized = await initFirebaseClient(abortControllerRef.current?.signal);
-            
+
             if (!mountedRef.current || !isActiveRef.current || abortControllerRef.current?.signal.aborted) {
                 cleanupListener();
                 return;
             }
-            
+
             if (!initialized) {
                 if (mountedRef.current && isActiveRef.current) {
-                    onUnavailable?.();
+                    onUnavailableRef.current?.();
                 }
                 return;
             }
 
             if (!db || !onValueFn || !refFn || !offFn) {
                 if (mountedRef.current && isActiveRef.current) {
-                    onUnavailable?.();
+                    onUnavailableRef.current?.();
                 }
                 return;
             }
 
             try {
-                lastUpdatedRefPath.current = refFn(db, 'lastUpdated');
-                listenerRef.current = handleTimestampChange;
-                onValueFn(lastUpdatedRefPath.current, handleTimestampChange);
-                
-                unsubscribeRef.current = () => cleanupListener();
+                subscribedPath = refFn(db, 'lastUpdated');
+                onValueFn(subscribedPath, stableListener);
             } catch (error) {
                 if (mountedRef.current && isActiveRef.current) {
                     console.error('[RealtimeSync] Error setting up listener:', error);
@@ -239,22 +239,24 @@ export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: Use
         return () => {
             isActiveRef.current = false;
             mountedRef.current = false;
-            
+
             if (abortControllerRef.current) {
                 abortControllerRef.current.abort();
                 abortControllerRef.current = null;
             }
-            
+
             if (setupTimeoutRef.current) {
                 clearTimeout(setupTimeoutRef.current);
                 setupTimeoutRef.current = null;
             }
-            
+
             cleanupListener();
             isInitializedRef.current = false;
             lastTimestampRef.current = null;
         };
-    }, [enabled, handleTimestampChange, onUnavailable]);
+        // LISTENER LEAK FIX: deps tidak include onUpdate/onUnavailable lagi —
+        // callback di-akses via ref. Effect hanya re-run kalau enabled berubah.
+    }, [enabled]);
 }
 
 /**

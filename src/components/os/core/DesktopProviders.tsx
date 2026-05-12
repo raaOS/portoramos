@@ -24,7 +24,7 @@ export default function DesktopProviders({
   isAdmin
 }: DesktopProvidersProps) {
   return (
-    <DesktopErrorBoundary>
+    <DesktopErrorBoundary isAdmin={isAdmin}>
       <LayoutPersistenceProvider>
         <UnifiedZIndexProvider>
           <DesktopWindowProvider

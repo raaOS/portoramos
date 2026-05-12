@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebaseAdmin';
 import { ContactData, UpdateContactData, ContactContent, ContactInfo, ContactFormSettings } from '@/types/contact';
 import { validateAdminRequest } from '@/lib/auth';
 import { getContactData, invalidateContactCache } from '@/lib/contact';
+import { updateContactSchema } from '@/lib/validations';
 
 // GET - Read contact content
 export async function GET(request: NextRequest) {
@@ -26,7 +28,17 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const body: UpdateContactData = await request.json();
+    const rawBody = await request.json();
+
+    const validation = updateContactSchema.safeParse(rawBody);
+    if (!validation.success) {
+      return NextResponse.json({
+        error: 'Invalid contact payload',
+        details: validation.error.issues,
+      }, { status: 400 });
+    }
+
+    const body: UpdateContactData = validation.data as UpdateContactData;
 
     // Load current data from Firebase
     const contactRef = db.ref('content/contact');
@@ -55,6 +67,10 @@ export async function PUT(request: NextRequest) {
     // Save to Firebase
     await contactRef.set(updatedData);
     invalidateContactCache();
+
+    // Revalidate ISR halaman /contact
+    revalidatePath('/contact');
+    revalidatePath('/', 'layout');
 
     return NextResponse.json({
       success: true,

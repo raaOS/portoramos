@@ -22,6 +22,8 @@ let inFlightAuthCheck: Promise<void> | null = null;
 let runtimeStarted = false;
 let channel: BroadcastChannel | null = null;
 let intervalId: number | null = null;
+// CLEANUP RACE FIX: track visibility handler agar bisa di-remove saat shutdown
+let visibilityHandler: (() => void) | null = null;
 
 const listeners = new Set<() => void>();
 
@@ -133,6 +135,7 @@ function ensureAuthRuntime() {
             void checkAuth(true);
         }
     };
+    visibilityHandler = handleVisibilityChange;
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     intervalId = window.setInterval(() => {
@@ -178,15 +181,27 @@ export function useAdminAuth() {
     useEffect(() => {
         ensureAuthRuntime();
 
+        // CLEANUP RACE FIX: Jadwalkan cleanup ke microtask agar unmount→remount
+        // cepat (React StrictMode + Concurrent) tidak sempat matikan runtime
+        // padahal listener baru sudah ter-register di same tick.
+        //
+        // Urutan: unmount cleanup run → microtask scheduled → mount baru add
+        // listener → microtask jalan → lihat listeners.size > 0 → skip shutdown.
         return () => {
-            if (listeners.size > 0) return;
-            if (intervalId) {
-                window.clearInterval(intervalId);
-                intervalId = null;
-            }
-            channel?.close();
-            channel = null;
-            runtimeStarted = false;
+            queueMicrotask(() => {
+                if (listeners.size > 0) return;
+                if (intervalId !== null) {
+                    window.clearInterval(intervalId);
+                    intervalId = null;
+                }
+                if (visibilityHandler) {
+                    document.removeEventListener('visibilitychange', visibilityHandler);
+                    visibilityHandler = null;
+                }
+                channel?.close();
+                channel = null;
+                runtimeStarted = false;
+            });
         };
     }, []);
 

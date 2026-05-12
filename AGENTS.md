@@ -92,14 +92,11 @@ src/
 |-- app/                    # App Router routes dan API routes
 |   |-- @modal/
 |   |-- about/
-|   |   `-- _components/os/ # Desktop OS system utama
+|   |   `-- _components/os/ # (legacy path — folder ini sudah tidak ada)
+|   |-- (site)/             # Route group untuk homepage & public routes
 |   |-- admin/
-|   |-- api/                # 28 API route directories
-|   |-- contact/
-|   |-- cv/
+|   |-- api/                # 29 API route directories
 |   |-- lab/                # Lab/eksperimen route (kosong)
-|   |-- projects/
-|   |-- test-canvas/        # Canvas testing route
 |   |-- favicon.ico/
 |   |-- sw.js/              # Service worker route
 |   |-- error.tsx
@@ -119,6 +116,7 @@ src/
 |   |-- features/
 |   |-- home/
 |   |-- layout/             # MasonryGrid, SmoothScroll, dll.
+|   |-- os/                 # Desktop OS system utama (pindahan dari app/about)
 |   |-- projects/
 |   |-- shared/             # PerformanceMonitor, WebVitals, dll.
 |   `-- ui/
@@ -126,15 +124,15 @@ src/
 |-- contexts/               # 6 root-level contexts
 |-- data/                   # JSON/TS seed/fallback content (17 files)
 |-- dictionaries/
-|-- hooks/                  # 12 hooks + canvas/ dan window-manager/ sub-dir
+|-- hooks/                  # 11 use* hooks + index.ts + canvas/ dan window-manager/ sub-dir
 |-- lib/
 |   |-- __tests__/
 |   |-- cache/              # CacheManager.ts
 |   |-- security/           # 9 security files (rate-limit, sanitization, dll.)
-|   |-- services/           # 15 service files + project/ dan __tests__/ sub-dir
+|   |-- services/           # 16 service files + project/ dan __tests__/ sub-dir
 |   |-- telegram/
 |   |-- utils/
-|   `-- validations/        # 4 validation files (schemas, project, adminCrud)
+|   `-- validations/        # adminCrud, project, schemas, index (Zod schemas per-domain)
 |-- middleware/             # auth.ts, csrf.ts, constants.ts, utils.ts
 |-- scripts/                # beautify-firebase.ts
 |-- styles/                 # animations.css, chat-ascii.css, layout-utilities.css
@@ -163,18 +161,19 @@ public/                     # Assets, sounds, wallpapers, ffmpeg, css, fonts
 ### Catatan Struktur
 
 - `src/proxy.ts` adalah entry request pipeline untuk auth, CSRF, dan security headers.
-- `src/app/about/_components/os/` adalah pusat implementasi desktop environment.
+- `src/components/os/` adalah pusat implementasi desktop environment (bukan `src/app/about/_components/os/` seperti dokumen versi lama).
 - `src/components/canvas/` berisi eksperimen dan tampilan 3D/canvas yang sudah punya test sendiri.
 - `src/data/*.json` dan `src/data/*.ts` masih dipakai sebagai fallback/seed dan untuk beberapa service/utilitas yang membaca langsung data lokal.
 - `src/scripts/beautify-firebase.ts` terpisah dari root `scripts/` directory.
+- `/api/explorer` dan service `explorerService` tersedia untuk file-explorer virtual di admin panel.
 
 ### OS Desktop Environment Detail
 
-`src/app/about/_components/os/` memiliki sub-struktur berikut:
+`src/components/os/` memiliki sub-struktur berikut:
 
 ```text
 os/
-|-- context/                # DesktopWindowContext, UnifiedZIndexContext
+|-- context/                # DesktopWindowContext, UnifiedZIndexContext, OSSystemContext
 |-- contexts/               # LayoutPersistenceContext
 |-- core/                   # DesktopEnvironment, DesktopProviders, Dock, MenuBar, OSDock, Spotlight
 |-- data/                   # mockChats
@@ -193,7 +192,7 @@ os/
 
 ### API Routes Overview
 
-28 API route directories di `src/app/api/`:
+29 API route directories di `src/app/api/`:
 
 | Kategori | Routes |
 |----------|--------|
@@ -203,7 +202,7 @@ os/
 | **Admin** | `admin` |
 | **Media** | `media`, `upload`, `img` |
 | **System** | `analytics`, `health`, `debug`, `empty`, `os`, `revalidate`, `utils` |
-| **Data** | `leads`, `metrics`, `settings` |
+| **Data** | `leads`, `metrics`, `settings`, `explorer` |
 
 ---
 
@@ -340,29 +339,35 @@ import type { AboutData } from '@/types/about';
 | `ToastContext` | Toast notification system |
 | `WindowContext` | Window management state |
 
-### OS-Level Contexts (`src/app/about/_components/os/`)
+### OS-Level Contexts (`src/components/os/`)
 
 - `DesktopWindowContext` — window registry untuk desktop
-- `UnifiedZIndexContext` — z-index management lintas windows
+- `UnifiedZIndexContext` — z-index management lintas windows (selector-based subscription)
+- `OSSystemContext` — state sistem OS global (start screen, notes visibility, spotlight, dll.)
 - `LayoutPersistenceContext` — persist desktop layout state
+
+> **Pattern — UnifiedZIndex consumer**
+> - `useUnifiedZIndex()` — subscribe ke perubahan global; pakai ini kalau komponen render berdasarkan zIndex banyak id sekaligus (mis. `UnifiedLayer`).
+> - `useZIndexFor(id)` — subscribe **hanya** ke perubahan zIndex `id` spesifik; pakai di leaf component (mis. `DraggableStickyNote`).
+> - `useUnifiedZIndexActions()` — tanpa subscription, hanya expose mutator (`bringToFront`, `registerElement`, dll.); pakai kalau komponen tidak render berdasarkan zIndex.
 
 ### Custom Hooks (`src/hooks/`)
 
 | Hook | Kegunaan |
 |------|----------|
-| `useAdminAuth` | Admin authentication flow |
+| `useAdminAuth` | Admin authentication flow (shared module-level state) |
 | `useAnalytics` | Analytics tracking |
-| `useAutoUpdate` | Auto-update polling |
+| `useAutoUpdate` | Auto-update polling dengan interval |
 | `useChatSync` | Real-time chat synchronization |
-| `useCsrfToken` | CSRF token management |
+| `useCsrfToken` | CSRF token yang fresh, sync lintas tab via BroadcastChannel |
 | `useImageProtection` | Image right-click protection |
 | `useNavigation` | Navigation helpers |
 | `useProjectForm` | Project CRUD form logic |
 | `useQuickLook` | macOS-style Quick Look preview |
 | `useSystemSound` | System sound effects |
 | `useWindowManager` | Window management logic |
-| `canvas/` | Canvas-specific hooks |
-| `window-manager/` | Window manager sub-hooks |
+| `canvas/` | Canvas-specific hooks (sub-dir) |
+| `window-manager/` | Window manager sub-hooks (sub-dir) |
 
 ---
 
@@ -404,13 +409,14 @@ Karakteristik `ContentService` saat ini:
 | `aiChatService.ts` | AI chat responses |
 | `aiProposalService.ts` | AI proposal generation |
 | `atsService.ts` | ATS resume analysis |
-| `contentService.ts` | Generic content CRUD base |
+| `contentService.ts` | Generic content CRUD base (cache-consistent deep-merge, pendingSave queue) |
 | `experienceService.ts` | Work experience data |
+| `explorerService.ts` | Admin file-explorer virtual (folders + files) |
 | `galleryFeaturedService.ts` | Featured gallery items |
 | `hardSkillConceptService.ts` | Skill concept groupings |
 | `hardSkillService.ts` | Technical skills data |
 | `projectService.ts` | Project CRUD operations |
-| `realtimeSync.ts` | Firebase real-time synchronization |
+| `realtimeSync.ts` | Firebase real-time synchronization (lastUpdated timestamp listener) |
 | `runningTextService.ts` | Running ticker text |
 | `stickyNotesService.ts` | Desktop sticky notes |
 | `storageCleanup.ts` | Firebase storage cleanup |
@@ -601,12 +607,13 @@ Env tambahan yang muncul di codebase tapi belum di `.env.example`:
 - `NEXT_PUBLIC_GA_ID`
 - `NEXT_PUBLIC_ANALYTICS_ENDPOINT`
 - `NEXT_PUBLIC_ENABLE_WEB_VITALS`
-- `NEXT_PUBLIC_FIREBASE_API_KEY`
-- `NEXT_PUBLIC_FIREBASE_DATABASE_URL`
-- `ANALYZE`
+- `NEXT_PUBLIC_FIREBASE_API_KEY` — wajib untuk real-time sync client-side (`realtimeSync.ts`)
+- `NEXT_PUBLIC_FIREBASE_DATABASE_URL` — wajib untuk real-time sync client-side
+- `ANALYZE` — set `true` untuk bundle analyzer
 - `VERCEL_URL`
+- `GROQ_API_KEY` — optional, untuk `/api/chat/voice` (transcription)
 
-> **Catatan:** `FIREBASE_STORAGE_BUCKET` dipakai aktif di codebase tapi belum ada di `.env.example`. Pertimbangkan untuk menambahkannya.
+> **Catatan:** `FIREBASE_STORAGE_BUCKET` dan pasangan `NEXT_PUBLIC_FIREBASE_*` dipakai aktif di codebase tapi belum ada di `.env.example`. Pertimbangkan untuk menambahkannya agar onboarding developer baru lebih mulus.
 
 ---
 
@@ -757,4 +764,4 @@ Mengikuti `browserslist` di `package.json`:
 
 ---
 
-*Last updated: 2026-04-13*
+*Last updated: 2026-05-12*

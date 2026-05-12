@@ -236,67 +236,40 @@ export const useStickyNotes = (
 
         const saveNotes = async () => {
             try {
-                let notesToPersist = [...notes];
-                
-                // GHOST BUG FIX: Prevent overwriting CRUD text edits from stale frontend state
-                // We fetch the latest server state and ONLY apply our local positional/visual state before saving.
-                try {
-                    const response = await fetch(`/api/sticky-notes?force=true&t=${Date.now()}`, {
-                        signal: controller.signal
-                    });
-                    if (response.ok) {
-                        const serverData = await response.json();
-                        if (Array.isArray(serverData)) {
-                            notesToPersist = notes.map(localNote => {
-                                const serverNote = serverData.find((sn: NoteData) => sn.id === localNote.id);
-                                if (serverNote) {
-                                    // Keep server's text, color, and star status, but apply our local drag/drop/resize state
-                                    return {
-                                        ...serverNote,
-                                        x: localNote.x,
-                                        y: localNote.y,
-                                        width: localNote.width,
-                                        height: localNote.height,
-                                        zIndex: localNote.zIndex,
-                                        isPinned: localNote.isPinned,
-                                        isCollapsed: localNote.isCollapsed,
-                                        opacity: localNote.opacity
-                                    };
-                                }
-                                return localNote;
-                            });
-                        }
-                    }
-                } catch (e) {
-                    if (e instanceof Error && e.name === 'AbortError') {
-                        return;
-                    }
-                    console.warn("[StickyNotes] Safe merge failed", e);
-                }
+                // SAVE FLOW FIX: Hilangkan GET-before-save yang memicu fetch tiap
+                // drag/resize di admin. Local state sudah jadi source of truth
+                // setelah initial load karena admin-lah yang mengedit (text,
+                // color, dll.). "Ghost bug" dari dua tab admin konkuren tetap
+                // diproteksi karena save menggunakan timestamp dan
+                // `revalidatePath` pasca-save.
+                const notesWithPercentages = notesRef.current.map(convertNoteToPercentages);
 
-                // Convert to percentages for responsive positioning before saving
-                const notesWithPercentages = notesToPersist.map(convertNoteToPercentages);
-
-                await fetch('/api/sticky-notes', {
+                const response = await fetch('/api/sticky-notes', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-Token': csrfToken
+                        'X-CSRF-Token': csrfToken,
                     },
                     credentials: 'include',
                     signal: controller.signal,
-                    body: JSON.stringify(notesWithPercentages)
+                    body: JSON.stringify(notesWithPercentages),
                 });
+
+                if (!response.ok && response.status !== 304) {
+                    console.warn(`[StickyNotes] Save returned ${response.status}`);
+                    return; // Jangan clear isModified kalau gagal, biar retry di debounce berikutnya
+                }
+
                 isModified.current = false;
             } catch (error) {
                 if (error instanceof Error && error.name === 'AbortError') {
                     return;
                 }
-                console.error("Failed to auto-save notes:", error instanceof Error ? error.message : error);
+                console.error('Failed to auto-save notes:', error instanceof Error ? error.message : error);
             }
         };
 
-        const debouncedSave = setTimeout(saveNotes, 1500); // Slightly longer debounce
+        const debouncedSave = setTimeout(saveNotes, 1500);
         return () => {
             clearTimeout(debouncedSave);
             controller.abort();

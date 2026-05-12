@@ -286,3 +286,113 @@ export type UpdateExperienceInput = z.infer<typeof updateExperienceSchema>;
 export type CreateRunningTextInput = z.infer<typeof createRunningTextSchema>;
 export type UpdateRunningTextInput = z.infer<typeof updateRunningTextSchema>;
 export type UpdateAboutInput = z.infer<typeof updateAboutSchema>;
+
+
+// ─────────────────────────────────────────────────────────────
+// Hard Skills
+// ─────────────────────────────────────────────────────────────
+
+const hardSkillLevelSchema = z.enum(['Beginner', 'Intermediate', 'Advanced', 'Expert']);
+
+export const hardSkillSchema = z.object({
+    id: requiredText(120),
+    name: requiredText(120),
+    iconUrl: requiredText(1000),
+    level: hardSkillLevelSchema,
+    order: z.coerce.number().int().min(0).max(10000),
+    description: shortText(1000).optional(),
+    description_id: shortText(1000).optional(),
+    isActive: z.boolean().optional(),
+    details: z.array(shortText(500)).max(50).optional(),
+    createdAt: shortText(100),
+    updatedAt: shortText(100),
+}).strict();
+
+export const bulkUpdateHardSkillsSchema = z.array(hardSkillSchema).max(200);
+
+export const updateHardSkillSchema = hardSkillSchema
+    .partial()
+    .omit({ id: true, createdAt: true })
+    .strict()
+    .refine(
+        (payload) => Object.values(payload).some(value => value !== undefined),
+        'At least one hard skill field must be updated'
+    );
+
+// ─────────────────────────────────────────────────────────────
+// Hard Skill Concepts
+// ─────────────────────────────────────────────────────────────
+
+const hardSkillConceptBaseSchema = z.object({
+    title: requiredText(200),
+    description: requiredText(2000),
+    iconUrl: shortText(1000).optional(),
+    order: z.coerce.number().int().min(0).max(10000).optional(),
+    isActive: z.boolean().optional(),
+});
+
+export const createHardSkillConceptSchema = hardSkillConceptBaseSchema.strict();
+
+export const updateHardSkillConceptSchema = hardSkillConceptBaseSchema
+    .partial()
+    .strict()
+    .refine(
+        (payload) => Object.values(payload).some(value => value !== undefined),
+        'At least one concept field must be updated'
+    );
+
+// ─────────────────────────────────────────────────────────────
+// Sticky Notes
+// ─────────────────────────────────────────────────────────────
+
+export const stickyNoteSchema = z.object({
+    id: requiredText(120),
+    text: z.string().max(5000),
+    date: shortText(100),
+    color: requiredText(20),
+    isStarred: z.boolean(),
+    isDeleted: z.boolean(),
+    // Legacy pixel-based
+    x: z.number().optional(),
+    y: z.number().optional(),
+    width: z.number().positive().optional(),
+    height: z.number().positive().optional(),
+    // Percentage-based responsive
+    xPct: z.number().min(-100).max(200).optional(),
+    yPct: z.number().min(-100).max(200).optional(),
+    widthPct: z.number().min(0).max(100).optional(),
+    heightPct: z.number().min(0).max(100).optional(),
+    refScreenWidth: z.number().optional(),
+    refScreenHeight: z.number().optional(),
+    isPinned: z.boolean().optional(),
+    isCollapsed: z.boolean().optional(),
+    opacity: z.number().min(0).max(1).optional(),
+    zIndex: z.number().optional(),
+    fontFamily: shortText(200).optional(),
+    fontSize: z.number().min(6).max(96).optional(),
+}).strict();
+
+export const stickyNotesBulkSchema = z.array(stickyNoteSchema).max(200);
+
+// ─────────────────────────────────────────────────────────────
+// Gallery Featured
+// ─────────────────────────────────────────────────────────────
+
+export const galleryFeaturedSchema = z.object({
+    featuredProjectIds: z.array(shortText(200).min(1)).max(100),
+}).strict();
+
+// ─────────────────────────────────────────────────────────────
+// About — Design Philosophy (sub-resource)
+// ─────────────────────────────────────────────────────────────
+
+export const updateDesignPhilosophySchema = z.object({
+    heading: requiredText(200),
+    subheading: requiredText(1000),
+    workflowSteps: z.array(workflowStepSchema).max(50),
+}).strict();
+
+export type HardSkillInput = z.infer<typeof hardSkillSchema>;
+export type UpdateHardSkillInput = z.infer<typeof updateHardSkillSchema>;
+export type StickyNoteInput = z.infer<typeof stickyNoteSchema>;
+export type UpdateDesignPhilosophyInput = z.infer<typeof updateDesignPhilosophySchema>;

@@ -83,13 +83,32 @@ export default function OSWindow({
 }: WindowProps) {
     const windowRef = useRef<HTMLDivElement>(null);
 
-    // SSR-safe viewport dimensions — computed once on mount, stable across renders
-    const [viewport] = useState(() => {
+    // RESIZE FIX: viewport sekarang dynamic — rotate device / resize browser
+    // akan me-recompute maximizedFrame + clamps agar window tidak keluar layar.
+    const [viewport, setViewport] = useState(() => {
         if (typeof window !== 'undefined') {
             return { width: window.innerWidth, height: window.innerHeight };
         }
         return { width: 1440, height: 900 };
     });
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        let rafId = 0;
+        const onResize = () => {
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(() => {
+                setViewport({ width: window.innerWidth, height: window.innerHeight });
+            });
+        };
+        window.addEventListener('resize', onResize);
+        window.addEventListener('orientationchange', onResize);
+        return () => {
+            if (rafId) cancelAnimationFrame(rafId);
+            window.removeEventListener('resize', onResize);
+            window.removeEventListener('orientationchange', onResize);
+        };
+    }, []);
 
     const viewportWidth = viewport.width;
     const viewportHeight = viewport.height;

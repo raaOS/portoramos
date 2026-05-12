@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { AboutData } from "@/types/about";
 import { useSystemSound } from "@/hooks/useSystemSound";
 import { useLayoutPersistence } from "@/components/os/contexts/LayoutPersistenceContext";
-import { useUnifiedZIndex } from "@/components/os/context/UnifiedZIndexContext";
+import { useUnifiedZIndexActions } from "@/components/os/context/UnifiedZIndexContext";
 import type { WindowState } from "./window-manager/types";
 
 // Subhooks
@@ -24,7 +24,7 @@ interface UseWindowManagerProps {
 
 export const useWindowManager = ({ initialWindows, aboutData, csrfToken, isAdmin = false }: UseWindowManagerProps) => {
     const [windows, setWindows] = useState<WindowState[]>(initialWindows);
-    const { bringToFront: bringToFrontZIndex } = useUnifiedZIndex();
+    const { bringToFront: bringToFrontZIndex } = useUnifiedZIndexActions();
     const [bouncingDocId, setBouncingDocId] = useState<string | null>(null);
     const { playOpen, playClose } = useSystemSound();
 

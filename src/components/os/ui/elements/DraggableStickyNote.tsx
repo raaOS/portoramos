@@ -1,7 +1,7 @@
 import React from "react";
 import { m, useDragControls } from "motion/react";
 import StickyNoteItem, { NoteData } from "./StickyNoteItem";
-import { useUnifiedZIndex } from "../../context/UnifiedZIndexContext";
+import { useUnifiedZIndexActions, useZIndexFor } from "../../context/UnifiedZIndexContext";
 
 interface DraggableStickyNoteProps {
     note: NoteData;
@@ -26,7 +26,9 @@ export const DraggableStickyNote = ({
     isAdmin = false
 }: DraggableStickyNoteProps) => {
     const dragControls = useDragControls();
-    const { getZIndex, bringToFront } = useUnifiedZIndex();
+    // PERFORMANCE: Subscribe only to this note's zIndex. Mutator via actions hook (no subscription).
+    const unifiedZIndexValue = useZIndexFor(note.id);
+    const { bringToFront } = useUnifiedZIndexActions();
 
     // Resize Logic (Internal to avoid jitter)
     const [isResizing, setIsResizing] = React.useState(false);
@@ -151,7 +153,7 @@ export const DraggableStickyNote = ({
     }, [note.id, bringToFront, bringToFrontNote]);
 
     // Get z-index from unified system (fallback to note's stored z-index)
-    const unifiedZIndex = getZIndex(note.id) || note.zIndex || 1;
+    const unifiedZIndex = unifiedZIndexValue || note.zIndex || 1;
     // Pinned notes get a small boost but still participate in unified stacking
     const finalZIndex = note.isPinned ? Math.max(unifiedZIndex, 5000) : unifiedZIndex;
 

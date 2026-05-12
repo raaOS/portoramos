@@ -13,6 +13,12 @@ export function checkCSRF(request: NextRequest) {
             '/api/chat/send',
             '/api/webhook/telegram',
             '/api/translate',
+            // Visitor-reachable mutation endpoints yang tidak memerlukan sesi admin.
+            // Endpoint ini diproteksi oleh rate-limit dan Zod validation, bukan CSRF.
+            // Tanpa allowlist ini, visitor fresh tanpa cookie csrf_token akan 403.
+            '/api/metrics',
+            '/api/comments',
+            '/api/analytics',
         ];
         if (!allowlistPaths.includes(pathname)) {
             const csrfToken = request.headers.get('x-csrf-token');
