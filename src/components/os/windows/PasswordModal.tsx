@@ -4,6 +4,7 @@ import React, { useState, useEffect, startTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lock, Loader2 } from 'lucide-react';
+import { Z_LAYERS } from '../utils/zIndexLayers';
 
 interface PasswordModalProps {
     isOpen: boolean;
@@ -121,7 +122,10 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
     return createPortal(
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[1000000] flex items-center justify-center p-4">
+                <div
+                    className="fixed inset-0 flex items-center justify-center p-4"
+                    style={{ zIndex: Z_LAYERS.CRITICAL_MODAL }}
+                >
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}

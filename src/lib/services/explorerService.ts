@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebaseAdmin';
+﻿import { db } from '@/lib/database';
 import { AnyExplorerNode, ExplorerFolder, ExplorerFile } from '@/types/explorer';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -147,3 +147,4 @@ export const explorerService = {
         }
     }
 };
+

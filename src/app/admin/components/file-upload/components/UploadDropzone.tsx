@@ -10,7 +10,7 @@ interface UploadDropzoneProps {
     onDrop: (e: React.DragEvent) => void;
     onClick: () => void;
     onFileInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    fileInputRef: React.RefObject<HTMLInputElement>;
+    fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 export function UploadDropzone({

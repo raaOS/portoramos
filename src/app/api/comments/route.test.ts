@@ -4,7 +4,7 @@ const { refMock } = vi.hoisted(() => ({
     refMock: vi.fn(),
 }));
 
-vi.mock('@/lib/firebaseAdmin', () => ({
+vi.mock('@/lib/database', () => ({
     db: {
         ref: refMock,
     }
@@ -57,7 +57,7 @@ describe('POST /api/comments', () => {
                 };
             }
 
-            throw new Error(`Unexpected Firebase path: ${path}`);
+            throw new Error(`Unexpected CLOUDFLARE_D1 path: ${path}`);
         });
 
         const response = await POST(new Request('http://localhost/api/comments', {
@@ -111,7 +111,7 @@ describe('POST /api/comments', () => {
                 };
             }
 
-            throw new Error(`Unexpected Firebase path: ${path}`);
+            throw new Error(`Unexpected CLOUDFLARE_D1 path: ${path}`);
         });
 
         const response = await POST(new Request('http://localhost/api/comments', {
@@ -128,3 +128,4 @@ describe('POST /api/comments', () => {
         expect(body.error).toBe('Please wait 5 seconds before posting again');
     });
 });
+

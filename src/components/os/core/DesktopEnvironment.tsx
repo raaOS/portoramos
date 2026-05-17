@@ -25,6 +25,7 @@ import type { ContactData } from "@/types/contact";
 import { soundManager } from "../utils/SoundManager";
 import { createInitialWindows } from "../utils/windowFactory";
 import { clearVisitorPositions } from "../utils/positionSync";
+import { Z_LAYERS } from "../utils/zIndexLayers";
 import type { ContactProfile } from "../data/mockChats";
 import DesktopProviders from "./DesktopProviders";
 import DesktopBackground from "../ui/DesktopBackground";
@@ -37,8 +38,14 @@ const ChatWindow = dynamic(() => import("../windows/ChatWindow"), {
     loading: () => <div className="animate-pulse bg-gray-100 h-full w-full rounded" />,
     ssr: false
 });
-const StartScreen = dynamic(() => import("../ui/StartScreen"), { ssr: false, loading: () => <div className="fixed inset-0 bg-black z-[10000]" /> });
-const RetroMobileOverlay = dynamic(() => import("../ui/RetroMobileOverlay"), { loading: () => <div className="fixed inset-0 bg-[#c0c0c0] z-[10000]" />, ssr: false });
+const StartScreen = dynamic(() => import("../ui/StartScreen"), {
+    ssr: false,
+    loading: () => <div className="fixed inset-0 bg-black" style={{ zIndex: Z_LAYERS.BOOT }} />
+});
+const RetroMobileOverlay = dynamic(() => import("../ui/RetroMobileOverlay"), {
+    loading: () => <div className="fixed inset-0 bg-[#c0c0c0]" style={{ zIndex: Z_LAYERS.CHROME }} />,
+    ssr: false
+});
 
 export interface DesktopEnvironmentProps {
     children?: React.ReactNode;
@@ -179,6 +186,10 @@ function DesktopMain({
         finishBooting();
     }, [aboutData, finishBooting, setIsRevealed]);
 
+    const releaseBootCover = useCallback(() => {
+        document.documentElement.removeAttribute('data-os-needs-boot');
+    }, []);
+
     // Handle initial sound suppression if boot is skipped
     useEffect(() => {
         if (!needsPowerOn && !isBooting) {
@@ -241,7 +252,19 @@ function DesktopMain({
                                 key="start-screen" 
                                 onStart={handleBootComplete} 
                                 isActive={needsPowerOn || isBooting} 
-                                onReady={() => setStartScreenReady(true)} 
+                                onReady={() => {
+                                    // `body::before` only protects the SSR gap before
+                                    // StartScreen mounts. Keeping it during the hollow-O
+                                    // reveal blocks the desktop behind the transparent mask.
+                                    releaseBootCover();
+                                    setStartScreenReady(true);
+                                }}
+                                onReveal={() => {
+                                    // Pre-reveal desktop layers DI BELAKANG hollow-O
+                                    // supaya saat lubang membesar, user langsung lihat
+                                    // wallpaper, icons, dock, menubar — bukan layar kosong.
+                                    startTransition(() => setIsRevealed(true));
+                                }}
                             />
                         </AnimatePresence>
                     )}

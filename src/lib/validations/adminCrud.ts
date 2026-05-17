@@ -188,6 +188,12 @@ const designPhilosophySchema = z.object({
 const desktopIconPositionSchema = z.object({
     x: z.number(),
     y: z.number(),
+    // Percentage-based for responsive positioning (optional for backward compat)
+    xPct: z.number().min(-100).max(200).optional(),
+    yPct: z.number().min(-100).max(200).optional(),
+    // Reference screen dimensions when admin saved
+    refScreenWidth: z.number().positive().optional(),
+    refScreenHeight: z.number().positive().optional(),
 }).strict();
 
 const desktopPreferencesSchema = z.object({

@@ -53,12 +53,12 @@ export function usePersistentPositions(aboutData?: AboutData | null) {
     notes: {}
   });
 
-  // Load pertama kali: localStorage > Firebase > default
+  // Load pertama kali: localStorage > CLOUDFLARE_D1 > default
   useEffect(() => {
     if (isLoaded) return;
 
     const localData = loadFromStorage();
-    const firebaseData = aboutData?.windowPreferences || {};
+    const CLOUDFLARE_D1Data = aboutData?.windowPreferences || {};
 
     // Merge: localStorage priority (user sudah atur)
     const merged: PositionsState = {
@@ -67,9 +67,9 @@ export function usePersistentPositions(aboutData?: AboutData | null) {
       notes: localData.notes || {}
     };
 
-    // Windows: cek localStorage dulu, kalau gak ada pakai Firebase
-    Object.keys(firebaseData).forEach(id => {
-      const pref = firebaseData[id];
+    // Windows: cek localStorage dulu, kalau gak ada pakai CLOUDFLARE_D1
+    Object.keys(CLOUDFLARE_D1Data).forEach(id => {
+      const pref = CLOUDFLARE_D1Data[id];
       const local = localData.windows?.[id];
       
       merged.windows[id] = local || {

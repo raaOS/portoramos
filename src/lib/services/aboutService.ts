@@ -56,7 +56,7 @@ function mergeWindowPreferences(
 
 /**
  * Cached version untuk Server Components.
- * Menghindari redundant fetch ke Firebase dalam satu request.
+ * Menghindari redundant fetch ke CLOUDFLARE_D1 dalam satu request.
  */
 export const getCachedAboutData = cache(async () => {
     return aboutService.getAboutData();

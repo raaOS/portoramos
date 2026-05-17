@@ -32,17 +32,17 @@ export const ProjectToolbar = ({
                     {connectionStatus === 'connected' ? (
                         <div className="h-10 px-4 flex items-center text-sm text-green-700 bg-white rounded-lg border border-green-200 whitespace-nowrap select-none font-medium">
                             <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
-                            Firebase Connected
+                            D1 Connected
                         </div>
                     ) : connectionStatus === 'checking' ? (
                         <div className="h-10 px-4 flex items-center text-sm text-yellow-600 bg-white rounded-lg border border-yellow-200 whitespace-nowrap select-none">
                             <Loader2 className="animate-spin w-3 h-3 mr-2" />
-                            Checking Firebase...
+                            Checking D1...
                         </div>
                     ) : (
                         <div className="h-10 px-4 flex items-center text-sm text-red-600 bg-white rounded-lg border border-red-200 whitespace-nowrap select-none">
                             <AlertCircle className="w-3 h-3 mr-2" />
-                            Firebase Error
+                            D1 Error
                         </div>
                     )}
                 </div>
@@ -116,7 +116,7 @@ export const ProjectToolbar = ({
                         onClick={() => setShowSettings(true)}
                         className={`h-10 w-10 inline-flex items-center justify-center border text-sm font-medium rounded-lg focus:outline-none transition-all flex-shrink-0 ${connectionStatus === 'error' ? 'bg-white text-amber-500 border-amber-200 hover:border-amber-300' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600'
                             }`}
-                        title="Pengaturan Firebase"
+                        title="Pengaturan Data"
                     >
                         <Settings className={`h-5 w-5 ${connectionStatus === 'error' ? 'animate-pulse' : ''}`} />
                     </button>

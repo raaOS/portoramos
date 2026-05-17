@@ -68,7 +68,7 @@ export default function UnifiedLayer({
   onWindowClosed,
 }: UnifiedLayerProps) {
   const { bringToFront, getZIndex } = useUnifiedZIndex();
-  const { notesVisible, isRevealed: isRevealedFromContext } = useOSSystem();
+  const { notesVisible, isRevealed: isRevealedFromContext, hiddenNoteIds, hideNote } = useOSSystem();
   const isRevealed = isRevealedProp !== undefined ? isRevealedProp : isRevealedFromContext;
 
   // Determine which window is on top for keyboard focus
@@ -91,9 +91,15 @@ export default function UnifiedLayer({
     return newZIndex;
   };
 
-  // Combine windows and visible notes for unified rendering
-  // Filter out deleted notes
-  const visibleNotes = notesVisible ? notes.filter(n => !n.isDeleted) : [];
+  // Combine windows and visible notes for unified rendering.
+  // Filter out:
+  //  - notes yang `isDeleted` (soft-delete persisted, hanya admin yang trigger
+  //    via tombol trash di footer note)
+  //  - notes yang ada di `hiddenNoteIds` (ephemeral hide via tombol X header,
+  //    tidak persist; auto-clear saat user toggle dock icon Notes)
+  const visibleNotes = notesVisible
+    ? notes.filter(n => !n.isDeleted && !hiddenNoteIds.has(n.id))
+    : [];
 
   return (
     <m.div
@@ -149,6 +155,7 @@ export default function UnifiedLayer({
             updateNote={updateNote}
             bringToFrontNote={() => handleNoteFocus(note.id)}
             deleteNote={deleteNote}
+            hideNote={hideNote}
             permanentDeleteNote={permanentDeleteNote}
             restoreNote={restoreNote}
             addNote={addNote}

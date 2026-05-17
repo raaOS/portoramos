@@ -6,6 +6,7 @@ import { useSystemSound } from "@/hooks/useSystemSound";
 import { DockPreferences } from "@/types/about";
 import LiquidFilter from "@/components/shared/LiquidFilter";
 import Link, { useLinkStatus } from "next/link";
+import { Z_LAYERS } from "../utils/zIndexLayers";
 
 interface DockItemProps {
     id: string;
@@ -157,11 +158,12 @@ function DockItem({
                         animate={{ opacity: 1, y: -20, scale: 1, x: "-50%" }}
                         exit={{ opacity: 0, y: 10, scale: 0.8, x: "-50%" }}
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                        className="absolute bottom-full left-1/2 mb-4 bg-zinc-100 border border-white/40 rounded-2xl z-[100000] ring-1 ring-black/5"
+                        style={{ zIndex: Z_LAYERS.DOCK_POPOVER }}
+                        className="absolute bottom-full left-1/2 mb-4 bg-zinc-100 border border-white/40 rounded-2xl ring-1 ring-black/5"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {React.cloneElement(popoverContent as React.ReactElement, { 
-                            onSelect: () => setIsPopoverOpen(false) 
+                        {React.cloneElement(popoverContent as React.ReactElement<{ onSelect?: () => void }>, {
+                            onSelect: () => setIsPopoverOpen(false)
                         })}
                         <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-zinc-100 border-r border-b border-white/40 rotate-45" />
                     </m.div>
@@ -185,7 +187,7 @@ function DockItem({
             </AnimatePresence>
 
             <div className="flex items-center justify-center w-full h-full relative z-10 rounded-[12px] overflow-hidden">
-                {React.cloneElement(icon as React.ReactElement, { className: "w-full h-full" })}
+                {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-full h-full" })}
             </div>
 
         </m.div>
@@ -278,21 +280,21 @@ export default function Dock({ items, bouncingId, config, isMobile = false }: Do
                     CSS stacking context issues from page content (masonry grid etc.) */}
                     {!isMobile && (
                         <div
-                            className="fixed bottom-0 left-1/2 h-28 z-[99999] -translate-x-1/2 cursor-default"
-                            style={{ width: hoverCaptureWidth, pointerEvents: anyPopoverOpen ? 'none' : 'auto', background: 'transparent' }}
+                            className="fixed bottom-0 left-1/2 h-28 -translate-x-1/2 cursor-default"
+                            style={{ width: hoverCaptureWidth, pointerEvents: anyPopoverOpen ? 'none' : 'auto', background: 'transparent', zIndex: Z_LAYERS.DOCK }}
                             onMouseMove={(e) => !anyPopoverOpen && mouseX.set(e.clientX)}
                             onMouseLeave={() => mouseX.set(Infinity)}
                             aria-hidden="true"
                         />
                     )}
                     <nav
-                        className={`relative z-[99999] pointer-events-auto ${isMobile ? 'max-w-[90vw]' : ''}`}
+                        className={`relative pointer-events-auto ${isMobile ? 'max-w-[90vw]' : ''}`}
+                        style={{ zIndex: Z_LAYERS.DOCK, transform: 'translateZ(0)', willChange: 'transform' }}
                         role="toolbar"
                         aria-label="Application dock"
                         aria-orientation="horizontal"
                         onMouseMove={(e) => !isMobile && !anyPopoverOpen && mouseX.set(e.clientX)}
                         onMouseLeave={() => !isMobile && mouseX.set(Infinity)}
-                        style={{ transform: 'translateZ(0)', willChange: 'transform' }}
                     >
                         {/* Liquid Glass Background Structure */}
                         <m.div 

@@ -6,7 +6,7 @@ const { refMock, setMock, onceMock } = vi.hoisted(() => ({
     onceMock: vi.fn(),
 }));
 
-vi.mock('@/lib/firebaseAdmin', () => ({
+vi.mock('@/lib/database', () => ({
     db: {
         ref: refMock,
     },
@@ -58,7 +58,7 @@ describe('ContentService', () => {
 
             // Saat getData dipanggil dalam TTL, cache hit harus include updatedAt.
             // Kita stub `once` supaya never called — kalau cache hit benar,
-            // Firebase tidak ter-query lagi.
+            // CLOUDFLARE_D1 tidak ter-query lagi.
             onceMock.mockClear();
             const cached = await service.getData();
             expect(onceMock).not.toHaveBeenCalled();
@@ -105,18 +105,18 @@ describe('ContentService', () => {
     });
 
     describe('getData with deepMerge (default)', () => {
-        it('merges firebase data on top of fallback', async () => {
-            const firebaseData = {
-                title: 'From Firebase',
+        it('merges CLOUDFLARE_D1 data on top of fallback', async () => {
+            const CLOUDFLARE_D1Data = {
+                title: 'From CLOUDFLARE_D1',
                 nested: { a: 100 }, // b tidak di-override
-                // `legacy` tidak ada di Firebase
+                // `legacy` tidak ada di CLOUDFLARE_D1
             };
-            onceMock.mockResolvedValue({ val: () => firebaseData });
+            onceMock.mockResolvedValue({ val: () => CLOUDFLARE_D1Data });
 
             const service = new ContentService<Fallback>('test-merge-default.json', fallback);
             const result = await service.getData(true);
 
-            expect(result.title).toBe('From Firebase');
+            expect(result.title).toBe('From CLOUDFLARE_D1');
             expect(result.nested.a).toBe(100);
             expect(result.nested.b).toBe(2); // from fallback
             expect(result.legacy).toBe('fallback-only'); // from fallback
@@ -124,15 +124,15 @@ describe('ContentService', () => {
     });
 
     describe('getData with skipFallbackMerge', () => {
-        it('returns firebase data as-is tanpa merge', async () => {
+        it('returns CLOUDFLARE_D1 data as-is tanpa merge', async () => {
             // REGRESSION: deep merge bisa restore field yang sudah dihapus admin
-            // dari fallback JSON. skipFallbackMerge=true menghormati "Firebase = SoT".
-            const firebaseData = {
-                title: 'Only Firebase',
+            // dari fallback JSON. skipFallbackMerge=true menghormati "CLOUDFLARE_D1 = SoT".
+            const CLOUDFLARE_D1Data = {
+                title: 'Only CLOUDFLARE_D1',
                 nested: { a: 999, b: 999 },
                 // legacy sengaja dihilangkan admin
             };
-            onceMock.mockResolvedValue({ val: () => firebaseData });
+            onceMock.mockResolvedValue({ val: () => CLOUDFLARE_D1Data });
 
             const service = new ContentService<Fallback>(
                 'test-skip-merge.json',
@@ -142,7 +142,7 @@ describe('ContentService', () => {
             );
             const result = await service.getData(true);
 
-            expect(result.title).toBe('Only Firebase');
+            expect(result.title).toBe('Only CLOUDFLARE_D1');
             expect(result.nested.a).toBe(999);
             expect(result.nested.b).toBe(999);
             // legacy harus undefined, BUKAN `fallback-only`
@@ -151,8 +151,8 @@ describe('ContentService', () => {
     });
 
     describe('getData timeout', () => {
-        it('returns fallback when firebase fetch exceeds timeout', async () => {
-            // Simulate Firebase hang forever
+        it('returns fallback when CLOUDFLARE_D1 fetch exceeds timeout', async () => {
+            // Simulate CLOUDFLARE_D1 hang forever
             onceMock.mockImplementation(() => new Promise(() => {}));
 
             const service = new ContentService<Fallback>('test-timeout.json', fallback);
@@ -175,3 +175,4 @@ describe('ContentService', () => {
         });
     });
 });
+

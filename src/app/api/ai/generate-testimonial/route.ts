@@ -1,48 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
+import { getGeminiApiKey, guardAdminAiRequest } from '../_shared';
 
 /**
  * Gemini AI Integration for Testimonials
  * Generates realistic WhatsApp style testimonials.
  */
-const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_AI_API_KEY;
-
-// Rate limiting: 10 requests per minute, block 5 minutes
-const MAX_AI_REQUESTS = 10;
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const BLOCK_DURATION = 5 * 60 * 1000; // 5 minutes
-
-function getClientIdentifier(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
-  const userAgent = request.headers.get('user-agent') || 'unknown';
-  return `${ip}|${userAgent}`;
-}
-
 interface GenerateTestimonialRequest {
     topic?: string;
     messageCount?: number;
 }
 
 export async function POST(req: NextRequest) {
+    const guardResponse = await guardAdminAiRequest(req, 'ai_testimonial');
+    if (guardResponse) return guardResponse;
+
+    const API_KEY = getGeminiApiKey();
     if (!API_KEY) {
         return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
-    }
-
-    // Rate limiting check
-    const clientId = getClientIdentifier(req);
-    const rateLimit = await checkFirebaseRateLimit(
-        `ai_testimonial_${clientId}`,
-        MAX_AI_REQUESTS,
-        RATE_LIMIT_WINDOW,
-        BLOCK_DURATION
-    );
-
-    if (!rateLimit.allowed) {
-        return NextResponse.json(
-            { error: 'Too many requests. Please try again later.', retryAfter: rateLimit.retryAfter },
-            { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
-        );
     }
 
     try {

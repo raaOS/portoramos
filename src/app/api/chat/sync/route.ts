@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { chatStore } from '@/lib/chatStore';
-import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
+import { checkDataRateLimit } from '@/lib/dataRateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
         // Rate limit: 40 requests per minute, block for 1 minute
         // Keeps headroom above the client polling cadence and focus refetches.
-        const rateLimit = await checkFirebaseRateLimit(`chat_sync_${visitorId}`, 40, 60000, 60000);
+        const rateLimit = await checkDataRateLimit(`chat_sync_${visitorId}`, 40, 60000, 60000);
         if (!rateLimit.allowed) {
             return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
         }

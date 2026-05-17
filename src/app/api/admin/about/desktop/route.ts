@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 3. Update via aboutService (handles merge and Firebase sync)
+        // 3. Update via aboutService (handles merge and CLOUDFLARE_D1 sync)
         await aboutService.updateAboutData({
             desktopPreferences
         });

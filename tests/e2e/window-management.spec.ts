@@ -22,8 +22,9 @@ test.describe('Ramos OS Window Management', () => {
     });
 
     test('should open, drag, resize, and close a window', async ({ page }) => {
-        // 1. Open 'About' window from Dock (using regex to handle localization/variations like "About Me" or "Tentang Saya")
-        const aboutIcon = page.getByRole('button', { name: /About|Tentang/i });
+        // 1. Open 'About' window from the dock. A window tab can share the same accessible name,
+        // so use the stable dock id instead of a broad role/name lookup.
+        const aboutIcon = page.locator('#dock-item-about');
         await aboutIcon.click();
 
         // 2. Verify window frame is visible

@@ -6,7 +6,7 @@ const { refMock, enforceRequestRateLimitMock, getProjectsMock } = vi.hoisted(() 
     getProjectsMock: vi.fn(),
 }));
 
-vi.mock('@/lib/firebaseAdmin', () => ({
+vi.mock('@/lib/database', () => ({
     db: {
         ref: refMock,
     }
@@ -60,7 +60,7 @@ describe('POST /api/metrics', () => {
                 };
             }
 
-            throw new Error(`Unexpected Firebase path: ${path}`);
+            throw new Error(`Unexpected CLOUDFLARE_D1 path: ${path}`);
         });
 
         const response = await POST(new Request('http://localhost/api/metrics', {
@@ -80,3 +80,4 @@ describe('POST /api/metrics', () => {
         });
     });
 });
+

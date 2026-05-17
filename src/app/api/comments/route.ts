@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { validateAdminRequest } from '@/lib/auth';
-import { db } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/database';
 import { validateCommentDepth } from '@/lib/validations';
 import { success, badRequest, unauthorized, serverError, rateLimit } from '@/lib/api-response';
 import { z } from 'zod';
@@ -56,7 +56,7 @@ async function getBannedWords(): Promise<string[]> {
         const settings = rootSnap.val();
         return settings?.bannedWords || ['judol', 'slot'];
     } catch (e) {
-        console.warn('Failed to load banned words from Firebase, using fallback', e instanceof Error ? e.message : e);
+        console.warn('Failed to load banned words from CLOUDFLARE_D1, using fallback', e instanceof Error ? e.message : e);
         return ['judol', 'slot'];
     }
 }
@@ -184,3 +184,4 @@ export async function DELETE(request: NextRequest) {
         return serverError('Failed to delete comment');
     }
 }
+

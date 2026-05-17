@@ -58,7 +58,7 @@ async function test() {
     console.log('  Success:', sendData.success ? '✅' : '❌');
     
     if (sendData.success) {
-      // Wait for Firebase
+      // Wait for CLOUDFLARE_D1
       await new Promise(r => setTimeout(r, 3000));
       
       // Get session

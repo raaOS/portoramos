@@ -1,9 +1,9 @@
 /**
  * /leads command handler
- * Returns last 5 leads from Firebase Realtime Database
+ * Returns last 5 leads from the data backend.
  */
 
-import { db } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/database';
 import type { MessageToSend, ReplyMarkup } from '../types';
 
 interface Lead {
@@ -73,3 +73,4 @@ export async function handleLeadsCommand(): Promise<MessageToSend[]> {
 
     return messages;
 }
+

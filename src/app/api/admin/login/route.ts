@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminPassword, getAdminToken } from '@/lib/auth';
 import { sendTelegramAlert, sendTelegramToGroup } from '@/lib/telegram';
 import { generateCSRFToken, validateCSRFToken } from '@/lib/security';
-import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
+import { checkDataRateLimit } from '@/lib/dataRateLimit';
 import { cookies } from 'next/headers';
 import { getClientIdentifier } from '@/lib/security/request';
 
 export const dynamic = 'force-dynamic';
 
-// RATE LIMITING - 3 percobaan per 5 menit, block 30 menit (disimpan di Firebase)
+// RATE LIMITING - 3 percobaan per 5 menit, block 30 menit (disimpan di CLOUDFLARE_D1)
 const MAX_ATTEMPTS_PER_WINDOW = 3;
 const RATE_LIMIT_WINDOW = 5 * 60 * 1000;  // 5 menit
 const BLOCK_DURATION = 30 * 60 * 1000;    // 30 menit
@@ -179,8 +179,8 @@ export async function POST(request: NextRequest) {
       (process.env.NODE_ENV === 'development' && request.headers.get('x-test-bypass') === 'true');
     
     if (!isTestEnv) {
-      // Firebase rate limiting (persisten di Vercel, tidak hilang saat cold start)
-      const rateLimit = await checkFirebaseRateLimit(
+      // CLOUDFLARE_D1 rate limiting (persisten di Vercel, tidak hilang saat cold start)
+      const rateLimit = await checkDataRateLimit(
         `login_${clientId}`,
         MAX_ATTEMPTS_PER_WINDOW,
         RATE_LIMIT_WINDOW,

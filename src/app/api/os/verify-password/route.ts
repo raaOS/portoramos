@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { db } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/database';
 import { generateCSRFToken, validateCSRFToken, verifyStoredPassword } from '@/lib/security';
 import { enforceRequestRateLimit } from '@/lib/security/request';
 
@@ -110,3 +110,4 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+

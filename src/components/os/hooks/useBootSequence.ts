@@ -13,6 +13,19 @@ const DEFAULT_CONFIG: BootSequenceConfig = {
 
 const BOOT_SESSION_KEY = 'ramos_os_booted';
 
+function isBootedFastPath(): boolean {
+    if (typeof window === 'undefined') return false;
+
+    try {
+        return (
+            document.documentElement.getAttribute('data-os-booted') === 'true' ||
+            sessionStorage.getItem(BOOT_SESSION_KEY) === 'true'
+        );
+    } catch {
+        return false;
+    }
+}
+
 /**
  * Check if we should skip the boot animation
  * Solution 1: sessionStorage - persist during tab session
@@ -78,9 +91,10 @@ function checkShouldSkipBoot(): boolean {
 export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
     const finalConfig = { ...DEFAULT_CONFIG, ...config };
     
-    // Use predictable initialization for state to prevent hydration mismatch.
-    // The initial state MUST be identical on server and client's first render.
-    const [needsPowerOn, setNeedsPowerOn] = useState(true);
+    // The OS desktop is loaded client-side after HomeOSWrapper mounts. Reading
+    // the beforeInteractive fast-path here prevents a one-frame black skeleton
+    // when the current tab already completed boot and the page is refreshed.
+    const [needsPowerOn, setNeedsPowerOn] = useState(() => !isBootedFastPath());
 
     const [isBooting, setIsBooting] = useState(false);
 
@@ -88,7 +102,9 @@ export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
     const markAsBooted = useCallback(() => {
         if (typeof window !== 'undefined') {
             sessionStorage.setItem(BOOT_SESSION_KEY, 'true');
-            document.documentElement.setAttribute('data-os-booted', 'true');
+            const html = document.documentElement;
+            html.setAttribute('data-os-booted', 'true');
+            html.removeAttribute('data-os-needs-boot');
         }
     }, []);
 

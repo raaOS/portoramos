@@ -5,14 +5,14 @@ const {
     getAdminTokenMock,
     sendTelegramAlertMock,
     sendTelegramToGroupMock,
-    checkFirebaseRateLimitMock,
+    checkDataRateLimitMock,
     cookiesMock
 } = vi.hoisted(() => ({
     verifyAdminPasswordMock: vi.fn(),
     getAdminTokenMock: vi.fn(),
     sendTelegramAlertMock: vi.fn(),
     sendTelegramToGroupMock: vi.fn(),
-    checkFirebaseRateLimitMock: vi.fn(),
+    checkDataRateLimitMock: vi.fn(),
     cookiesMock: vi.fn(),
 }));
 
@@ -26,8 +26,8 @@ vi.mock('@/lib/telegram', () => ({
     sendTelegramToGroup: sendTelegramToGroupMock,
 }));
 
-vi.mock('@/lib/firebaseRateLimit', () => ({
-    checkFirebaseRateLimit: checkFirebaseRateLimitMock,
+vi.mock('@/lib/dataRateLimit', () => ({
+    checkDataRateLimit: checkDataRateLimitMock,
 }));
 
 vi.mock('next/headers', () => ({
@@ -63,7 +63,7 @@ describe('POST /api/admin/login', () => {
     });
 
     it('ignores x-test-bypass in production and still enforces rate limits', async () => {
-        checkFirebaseRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 120 });
+        checkDataRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 120 });
 
         const response = await POST(new Request('http://localhost/api/admin/login', {
             method: 'POST',
@@ -80,12 +80,12 @@ describe('POST /api/admin/login', () => {
 
         expect(response.status).toBe(429);
         expect(body.retryAfter).toBe(120);
-        expect(checkFirebaseRateLimitMock).toHaveBeenCalledTimes(1);
+        expect(checkDataRateLimitMock).toHaveBeenCalledTimes(1);
         expect(sendTelegramAlertMock).toHaveBeenCalledTimes(1);
     });
 
     it('returns sanitized 500 responses without leaking internal error details', async () => {
-        checkFirebaseRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
+        checkDataRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
         verifyAdminPasswordMock.mockImplementation(() => {
             throw new Error('scrypt config missing');
         });

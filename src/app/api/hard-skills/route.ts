@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { hardSkillService } from '@/lib/services/hardSkillService';
 import { validateAdminRequest } from '@/lib/auth';
-import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
+import { enforceRequestRateLimit } from '@/lib/security/request';
 import { bulkUpdateHardSkillsSchema } from '@/lib/validations';
 
 export async function GET() {
@@ -18,11 +18,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit: 5 requests per minute for bulk updates
-    const clientIp = request.headers.get('x-forwarded-for') || 'unknown';
-    const rateLimit = await checkFirebaseRateLimit(`hard_skills_post_${clientIp}`, 5, 60000, 300000);
+    const rateLimit = await enforceRequestRateLimit(request, 'hard_skills_post', 5, 60_000, 300_000);
 
     if (!rateLimit.allowed) {
-      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+      return NextResponse.json(
+        { error: 'Too many requests', retryAfter: rateLimit.retryAfter },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } },
+      );
     }
 
     const body = await request.json();

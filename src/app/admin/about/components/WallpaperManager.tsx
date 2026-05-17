@@ -3,6 +3,7 @@ import { Plus, Check, Trash2, Loader2 } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
 import { WallpaperConfig, Wallpaper } from '@/types/about';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { extractStoragePath } from '@/lib/media';
 
 interface WallpaperManagerProps {
     data?: WallpaperConfig;
@@ -59,26 +60,21 @@ export default function WallpaperManager({ data, onUpdate }: WallpaperManagerPro
     const handleDelete = async (id: string) => {
         const wallpaperToDelete = wallpapers.find(w => w.id === id);
 
-        if (wallpaperToDelete && wallpaperToDelete.url.includes('firebasestorage.googleapis.com')) {
+        const storagePath = wallpaperToDelete ? extractStoragePath(wallpaperToDelete.url) : null;
+        if (wallpaperToDelete && storagePath) {
             const confirmDelete = window.confirm(
                 "Hapus wallpaper ini secara permanen dari Storage?\n\nOK = Hapus fisik\nBatal = Hanya hapus dari daftar (bisa jadi sampah)"
             );
 
             if (confirmDelete) {
                 try {
-                    // Extract path from Firebase URL
-                    const url = new URL(wallpaperToDelete.url);
-                    const pathParts = url.pathname.split('/o/');
-                    if (pathParts.length > 1) {
-                        const storagePath = decodeURIComponent(pathParts[1].split('?')[0]);
-                        await fetch(`/api/upload?path=${encodeURIComponent(storagePath)}`, {
-                            method: 'DELETE',
-                            credentials: 'include',
-                            headers: {
-                                'x-csrf-token': csrfToken || ''
-                            }
-                        });
-                    }
+                    await fetch(`/api/upload?path=${encodeURIComponent(storagePath)}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: {
+                            'x-csrf-token': csrfToken || ''
+                        }
+                    });
                 } catch (e) {
                     console.error("Failed to delete physical wallpaper file", e);
                 }

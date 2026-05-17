@@ -1,6 +1,6 @@
 /**
  * Shared environment variable utilities.
- * Extracted to avoid duplication across auth, firebase, github, and telegram modules.
+ * Extracted to avoid duplication across auth, CLOUDFLARE_D1, github, and telegram modules.
  */
 
 /**

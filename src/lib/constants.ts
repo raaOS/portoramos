@@ -23,7 +23,7 @@ export const ANIMATION = {
 /**
  * Data Polling Configuration
  * 
- * NOTE: Polling interval dinaikkan untuk hemat bandwidth Firebase.
+ * NOTE: Polling interval dinaikkan untuk hemat bandwidth CLOUDFLARE_D1.
  * Default: 30 detik (non-admin), 60 detik (admin).
  * StaleTime: 5 menit untuk cache client lebih lama.
  */

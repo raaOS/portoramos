@@ -63,14 +63,17 @@ Route `/` merender desktop fullscreen yang menampilkan:
 - **Validation / Utility:** `zod`, `date-fns`, `uuid`, `fuse.js`
 - **JWT:** `jsonwebtoken`
 - **Web Performance:** `web-vitals`, `@vercel/speed-insights`
-- **Firebase Client:** `firebase` (client SDK, selain `firebase-admin` untuk server)
 
 ### External Services
 
 - **AI:** Gemini via `@google/generative-ai`
-- **Firebase:** Realtime Database + Storage + Admin SDK + Client SDK
+- **Cloudflare:** D1 untuk data aplikasi dan R2 untuk media
 - **Telegram:** bot handlers, guest/admin reply, proposal/resume helpers
 - **Analytics / Perf:** `@vercel/speed-insights`, custom web vitals hooks (`PerformanceMonitor`, `WebVitals`)
+
+### Migration Status
+
+Repo ini sudah dimigrasikan dari Firebase ke Cloudflare. Backend data aktif adalah **Cloudflare D1** dan backend media aktif adalah **Cloudflare R2**. Jangan menambahkan kembali SDK, env, aturan, script, atau dokumentasi operasional Firebase untuk data maupun media.
 
 ### Tooling
 
@@ -92,10 +95,9 @@ src/
 |-- app/                    # App Router routes dan API routes
 |   |-- @modal/
 |   |-- about/
-|   |   `-- _components/os/ # (legacy path — folder ini sudah tidak ada)
 |   |-- (site)/             # Route group untuk homepage & public routes
 |   |-- admin/
-|   |-- api/                # 29 API route directories
+|   |-- api/                # 30 API route directories
 |   |-- lab/                # Lab/eksperimen route (kosong)
 |   |-- favicon.ico/
 |   |-- sw.js/              # Service worker route
@@ -134,7 +136,6 @@ src/
 |   |-- utils/
 |   `-- validations/        # adminCrud, project, schemas, index (Zod schemas per-domain)
 |-- middleware/             # auth.ts, csrf.ts, constants.ts, utils.ts
-|-- scripts/                # beautify-firebase.ts
 |-- styles/                 # animations.css, chat-ascii.css, layout-utilities.css
 |-- tests/
 |-- types/                  # 13 type definition files
@@ -164,7 +165,6 @@ public/                     # Assets, sounds, wallpapers, ffmpeg, css, fonts
 - `src/components/os/` adalah pusat implementasi desktop environment (bukan `src/app/about/_components/os/` seperti dokumen versi lama).
 - `src/components/canvas/` berisi eksperimen dan tampilan 3D/canvas yang sudah punya test sendiri.
 - `src/data/*.json` dan `src/data/*.ts` masih dipakai sebagai fallback/seed dan untuk beberapa service/utilitas yang membaca langsung data lokal.
-- `src/scripts/beautify-firebase.ts` terpisah dari root `scripts/` directory.
 - `/api/explorer` dan service `explorerService` tersedia untuk file-explorer virtual di admin panel.
 
 ### OS Desktop Environment Detail
@@ -192,12 +192,12 @@ os/
 
 ### API Routes Overview
 
-29 API route directories di `src/app/api/`:
+30 API route directories di `src/app/api/`:
 
 | Kategori | Routes |
 |----------|--------|
 | **Content CRUD** | `about`, `experience`, `hard-skills`, `projects`, `testimonial`, `running-text`, `sticky-notes`, `gallery` |
-| **Chat / Messaging** | `chat`, `comments`, `contact`, `webhook` |
+| **Chat / Messaging** | `chat`, `comments`, `contact`, `feedback`, `webhook` |
 | **AI** | `ai`, `translate` |
 | **Admin** | `admin` |
 | **Media** | `media`, `upload`, `img` |
@@ -246,7 +246,6 @@ npm run clear-cache
 npm run fix-webpack
 npm run ultra-clean
 npm run audit
-npm run sync:firebase-assets
 ```
 
 ### Catatan Script
@@ -271,7 +270,6 @@ npm run sync:firebase-assets
 - `npm run fix-webpack` memperbaiki error "Webpack cache failure" yang sering muncul
 - `npm run ultra-clean` pembersihan total cache dan temporary files
 - `npm run audit` menjalankan `scripts/maintenance/audit.ts` untuk audit repo
-- `npm run sync:firebase-assets` menyinkronkan aset proyek (gambar, thumbnail) ke Firebase Storage menggunakan `scripts/utils/upload-to-firebase.ts`
 
 ---
 
@@ -375,10 +373,9 @@ import type { AboutData } from '@/types/about';
 
 ### Storage Model Saat Ini
 
-1. **Firebase Realtime Database** adalah backend utama untuk content service saat env tersedia
-2. **`src/data/*.json` dan `src/data/*.ts`** dipakai sebagai fallback, seed, dan sebagian data lokal
-3. **Firebase Storage** dipakai untuk media bila env storage tersedia
-4. **Firebase Client SDK** (`firebase`) dipakai untuk real-time sync dan client-side operations
+1. **Cloudflare D1** adalah backend utama untuk data aplikasi
+2. **Cloudflare R2** adalah backend media utama untuk upload gambar/video
+3. **`src/data/*.json` dan `src/data/*.ts`** dipakai sebagai fallback, seed, dan sebagian data lokal
 
 ### Service Pattern
 
@@ -395,8 +392,8 @@ const service = new ContentService('about.json', aboutDataFallback);
 
 Karakteristik `ContentService` saat ini:
 
-- menyimpan data ke Firebase node `content/<name>`
-- deep-merge Firebase data dengan fallback lokal
+- menyimpan data ke Cloudflare D1 key `content/<name>`
+- deep-merge D1 data dengan fallback lokal
 - memakai `CacheManager` dengan TTL
 - menghapus cache sebelum save untuk mencegah stale read
 - menambahkan `updatedAt` untuk payload object
@@ -416,10 +413,10 @@ Karakteristik `ContentService` saat ini:
 | `hardSkillConceptService.ts` | Skill concept groupings |
 | `hardSkillService.ts` | Technical skills data |
 | `projectService.ts` | Project CRUD operations |
-| `realtimeSync.ts` | Firebase real-time synchronization (lastUpdated timestamp listener) |
+| `realtimeSync.ts` | Cloudflare D1 polling for lastUpdated |
 | `runningTextService.ts` | Running ticker text |
 | `stickyNotesService.ts` | Desktop sticky notes |
-| `storageCleanup.ts` | Firebase storage cleanup |
+| `storageCleanup.ts` | R2 media cleanup |
 | `testimonialService.ts` | Testimonial/review data |
 | `project/` | Project service sub-modules |
 
@@ -435,8 +432,8 @@ Karakteristik `ContentService` saat ini:
 | `magic.ts` | Animation/magic utilities |
 | `chatStore.ts` | Chat state management |
 | `constants.ts` | Shared constants |
-| `firebaseRateLimit.ts` | Firebase-backed rate limiter |
-| `firebaseStorage.ts` | Firebase Storage operations |
+| `dataRateLimit.ts` | Cloudflare D1-backed rate limiter |
+| `r2Storage.ts` | Cloudflare R2 media storage operations |
 | `gemini.ts` | Gemini AI client setup |
 
 ### Caching Strategy
@@ -457,7 +454,7 @@ Karakteristik `ContentService` saat ini:
 - sticky notes
 - running text
 - gallery featured
-- contact / leads / settings / metrics
+- contact / leads / feedback / settings / metrics
 - telegram
 - lighthouse-history
 
@@ -492,7 +489,7 @@ Lokasi test tersebar di:
 - **Framework:** Playwright `^1.55.0`
 - **Config:** `playwright.config.ts`
 - **Test dir:** `tests/e2e`
-- **Base URL:** `http://localhost:3100`
+- **Base URL:** `http://localhost:3000`
 - **Browser:** Chromium (Desktop Chrome)
 
 Spec yang ada saat ini:
@@ -534,8 +531,8 @@ Spec yang ada saat ini:
 ### Rate Limiting
 
 - Rate limiting utama ada di `src/lib/security/rate-limit.ts`
-- Firebase-backed persistent limiter: `src/lib/firebaseRateLimit.ts`
-- Fallback ke in-memory hanya untuk development/testing atau saat Firebase tidak tersedia
+- Cloudflare D1-backed persistent limiter: `src/lib/dataRateLimit.ts`
+- Fallback ke in-memory hanya untuk development/testing atau saat CLOUDFLARE_D1 tidak tersedia
 
 ### Security Utilities (`src/lib/security/`)
 
@@ -582,38 +579,55 @@ Jangan membuat `middleware.ts` baru kecuali memang ada perubahan arsitektur yang
 `.env.example` adalah referensi utama. Isi aktual saat ini:
 
 ```bash
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 NEXT_PUBLIC_SITE_URL=
-FIREBASE_DATABASE_URL=
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
+NEXT_PUBLIC_GA_ID=
+NEXT_PUBLIC_ANALYTICS_ENDPOINT=
+NEXT_PUBLIC_ENABLE_WEB_VITALS=
+NEXT_PUBLIC_DATA_BACKEND=
+
+
+CLOUDFLARE_R2_ACCOUNT_ID=
+CLOUDFLARE_R2_ACCESS_KEY_ID=
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=
+CLOUDFLARE_R2_BUCKET=
+CLOUDFLARE_R2_PUBLIC_BASE_URL=
+CLOUDFLARE_D1_ACCOUNT_ID=
+CLOUDFLARE_D1_DATABASE_ID=
+CLOUDFLARE_D1_API_TOKEN=
+DATA_BACKEND=
+
 ADMIN_PASSWORD_SCRYPT=
-GEMINI_API_KEY=
-GOOGLE_GENERATIVE_AI_API_KEY=
-GOOGLE_PAGESPEED_API_KEY=
 JWT_SECRET=
 PASSWORD_SALT=
 REVALIDATION_TOKEN=
+
+GEMINI_API_KEY=
+GOOGLE_GENERATIVE_AI_API_KEY=
+GROQ_API_KEY=
+GOOGLE_PAGESPEED_API_KEY=
+
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
-FIREBASE_PROJECT_ID=
-FIREBASE_CLIENT_EMAIL=
-FIREBASE_PRIVATE_KEY=
 TELEGRAM_GROUP_ID=
+TELEGRAM_FEEDBACK_THREAD_ID=
+ANALYZE=
 ```
 
-Env tambahan yang muncul di codebase tapi belum di `.env.example`:
+Env aktif/opsional lain yang muncul di codebase:
 
-- `FIREBASE_STORAGE_BUCKET` — dipakai di `firebaseAdmin.ts`, `firebaseStorage.ts`
+- `CLOUDFLARE_R2_ACCOUNT_ID`, `CLOUDFLARE_R2_ACCESS_KEY_ID`, `CLOUDFLARE_R2_SECRET_ACCESS_KEY`, `CLOUDFLARE_R2_BUCKET`, `CLOUDFLARE_R2_PUBLIC_BASE_URL` — dipakai untuk upload dan serve media dari R2
+- `CLOUDFLARE_D1_ACCOUNT_ID`, `CLOUDFLARE_D1_DATABASE_ID`, `CLOUDFLARE_D1_API_TOKEN`, `DATA_BACKEND`, `NEXT_PUBLIC_DATA_BACKEND` — dipakai untuk backend data Cloudflare D1
 - `GOOGLE_MAPS_API_KEY`
 - `NEXT_PUBLIC_GA_ID`
 - `NEXT_PUBLIC_ANALYTICS_ENDPOINT`
 - `NEXT_PUBLIC_ENABLE_WEB_VITALS`
-- `NEXT_PUBLIC_FIREBASE_API_KEY` — wajib untuk real-time sync client-side (`realtimeSync.ts`)
-- `NEXT_PUBLIC_FIREBASE_DATABASE_URL` — wajib untuk real-time sync client-side
 - `ANALYZE` — set `true` untuk bundle analyzer
 - `VERCEL_URL`
 - `GROQ_API_KEY` — optional, untuk `/api/chat/voice` (transcription)
+- `TELEGRAM_FEEDBACK_THREAD_ID` — optional, topic Telegram khusus notifikasi feedback
 
-> **Catatan:** `FIREBASE_STORAGE_BUCKET` dan pasangan `NEXT_PUBLIC_FIREBASE_*` dipakai aktif di codebase tapi belum ada di `.env.example`. Pertimbangkan untuk menambahkannya agar onboarding developer baru lebih mulus.
+> **Catatan:** Data aplikasi memakai Cloudflare D1. Media upload/serve memakai Cloudflare R2.
 
 ---
 
@@ -635,7 +649,6 @@ Env tambahan yang muncul di codebase tapi belum di `.env.example`:
 ### Build / Deploy Notes
 
 - `npm run pre-deploy` menjalankan pengecekan sebelum build production
-- `serverExternalPackages` di `next.config.mjs` mengeksternalisasi `firebase-admin`
 - image optimization, redirects, rewrites, dan cache headers sudah dikonfigurasi di `next.config.mjs`
 - bundle analyzer aktif bila `ANALYZE=true`
 - `compiler.removeConsole` otomatis menghapus console.log di production build
@@ -680,7 +693,7 @@ Env tambahan yang muncul di codebase tapi belum di `.env.example`:
 
 ### Menambah UI OS / Window Baru
 
-1. Mulai dari `src/app/about/_components/os/`
+1. Mulai dari `src/components/os/`
 2. Tentukan apakah masuk `windows/`, `core/`, `sections/`, `layers/`, atau `ui/`
 3. Register window di `windowFactory.tsx` (`os/utils/`)
 4. Jaga agar komponen interaktif berat tetap client-only dan terisolasi
@@ -713,16 +726,16 @@ npx kill-port 3000
 npx kill-port 3100
 ```
 
-### Auth / Firebase Issues
+### Auth / Cloudflare Issues
 
-- cek env Firebase lengkap (termasuk `FIREBASE_STORAGE_BUCKET` yang tidak ada di `.env.example`)
-- cek `src/lib/firebaseAdmin.ts`
+- cek env Cloudflare D1/R2 lengkap
+- cek `src/lib/cloudflareD1.ts` dan `src/lib/r2Storage.ts`
 - cek apakah route error berasal dari proxy/auth/csrf, bukan dari UI
 
 ### E2E Issues
 
 - pastikan `ADMIN_PASSWORD` tersedia
-- Playwright menggunakan port `3100`, bukan `3000`
+- Playwright menggunakan port `3000`
 - cek `tests/e2e/.auth/` untuk stored auth state
 
 ---
@@ -764,4 +777,4 @@ Mengikuti `browserslist` di `package.json`:
 
 ---
 
-*Last updated: 2026-05-12*
+*Last updated: 2026-05-17*

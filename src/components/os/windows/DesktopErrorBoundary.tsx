@@ -2,6 +2,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { RefreshCw, Power, AlertTriangle } from "lucide-react";
+import { Z_LAYERS } from "../utils/zIndexLayers";
 
 interface Props {
     children: ReactNode;
@@ -70,7 +71,10 @@ export default class DesktopErrorBoundary extends Component<Props, State> {
             const { isAdmin } = this.props;
 
             return (
-                <div className="fixed inset-0 z-[9999] bg-[#0078D7] text-white font-mono flex flex-col items-center justify-center p-8 text-center select-none overflow-hidden">
+                <div
+                    className="fixed inset-0 bg-[#0078D7] text-white font-mono flex flex-col items-center justify-center p-8 text-center select-none overflow-hidden"
+                    style={{ zIndex: Z_LAYERS.BACKDROP }}
+                >
                     <div className="max-w-2xl w-full flex flex-col items-start text-left">
                         <span className="text-8xl mb-8">:(</span>
                         <h1 className="text-3xl mb-8">

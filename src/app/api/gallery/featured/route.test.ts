@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
     validateAdminRequestMock,
     updateFeaturedDataMock,
-    checkFirebaseRateLimitMock,
+    checkDataRateLimitMock,
     revalidatePathMock,
 } = vi.hoisted(() => ({
     validateAdminRequestMock: vi.fn(),
     updateFeaturedDataMock: vi.fn(),
-    checkFirebaseRateLimitMock: vi.fn(),
+    checkDataRateLimitMock: vi.fn(),
     revalidatePathMock: vi.fn(),
 }));
 
@@ -23,8 +23,8 @@ vi.mock('@/lib/services/galleryFeaturedService', () => ({
     },
 }));
 
-vi.mock('@/lib/firebaseRateLimit', () => ({
-    checkFirebaseRateLimit: checkFirebaseRateLimitMock,
+vi.mock('@/lib/dataRateLimit', () => ({
+    checkDataRateLimit: checkDataRateLimitMock,
 }));
 
 vi.mock('next/cache', () => ({
@@ -45,7 +45,7 @@ describe('POST /api/gallery/featured', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         validateAdminRequestMock.mockResolvedValue(true);
-        checkFirebaseRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
+        checkDataRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
         updateFeaturedDataMock.mockResolvedValue({
             featuredProjectIds: ['a', 'b'],
             lastUpdated: '2025-01-01T00:00:00Z',
@@ -59,7 +59,7 @@ describe('POST /api/gallery/featured', () => {
     });
 
     it('enforces rate limit (10 req/min)', async () => {
-        checkFirebaseRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 60 });
+        checkDataRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 60 });
         const response = await POST(buildPost({ featuredProjectIds: ['a'] }) as never);
         expect(response.status).toBe(429);
     });

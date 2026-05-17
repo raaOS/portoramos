@@ -11,7 +11,7 @@ vi.mock('next/headers', () => ({
     cookies: cookiesMock,
 }));
 
-vi.mock('@/lib/firebaseAdmin', () => ({
+vi.mock('@/lib/database', () => ({
     db: {
         ref: refMock,
     }
@@ -50,7 +50,7 @@ describe('POST /api/os/verify-password', () => {
                 };
             }
 
-            throw new Error(`Unexpected Firebase path: ${path}`);
+            throw new Error(`Unexpected CLOUDFLARE_D1 path: ${path}`);
         });
 
         const response = await POST(new Request('http://localhost/api/os/verify-password', {
@@ -94,3 +94,4 @@ describe('POST /api/os/verify-password', () => {
         expect(refMock).not.toHaveBeenCalled();
     });
 });
+

@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
     validateAdminRequestMock,
     saveNotesMock,
-    checkFirebaseRateLimitMock,
+    checkDataRateLimitMock,
     revalidatePathMock,
 } = vi.hoisted(() => ({
     validateAdminRequestMock: vi.fn(),
     saveNotesMock: vi.fn(),
-    checkFirebaseRateLimitMock: vi.fn(),
+    checkDataRateLimitMock: vi.fn(),
     revalidatePathMock: vi.fn(),
 }));
 
@@ -23,8 +23,8 @@ vi.mock('@/lib/services/stickyNotesService', () => ({
     },
 }));
 
-vi.mock('@/lib/firebaseRateLimit', () => ({
-    checkFirebaseRateLimit: checkFirebaseRateLimitMock,
+vi.mock('@/lib/dataRateLimit', () => ({
+    checkDataRateLimit: checkDataRateLimitMock,
 }));
 
 vi.mock('next/cache', () => ({
@@ -54,7 +54,7 @@ describe('PUT /api/sticky-notes', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         validateAdminRequestMock.mockResolvedValue(true);
-        checkFirebaseRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
+        checkDataRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
         saveNotesMock.mockResolvedValue([validNote]);
     });
 
@@ -66,7 +66,7 @@ describe('PUT /api/sticky-notes', () => {
     });
 
     it('rejects ketika rate limit tercapai', async () => {
-        checkFirebaseRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 60 });
+        checkDataRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 60 });
 
         const response = await PUT(buildPut([validNote]) as never);
         expect(response.status).toBe(429);

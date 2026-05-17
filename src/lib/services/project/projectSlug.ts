@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebaseAdmin';
+﻿import { db } from '@/lib/database';
 
 export async function generateUniqueSlug(title: string): Promise<string> {
     const MAX_TITLE_LENGTH = 200;
@@ -29,3 +29,4 @@ export async function generateUniqueSlug(title: string): Promise<string> {
 
     return slug;
 }
+

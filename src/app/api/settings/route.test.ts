@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+﻿import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { validateAdminRequestMock, refMock, setMock } = vi.hoisted(() => ({
     validateAdminRequestMock: vi.fn(),
@@ -10,7 +10,7 @@ vi.mock('@/lib/auth', () => ({
     validateAdminRequest: validateAdminRequestMock,
 }));
 
-vi.mock('@/lib/firebaseAdmin', () => ({
+vi.mock('@/lib/database', () => ({
     db: {
         ref: refMock,
     },
@@ -75,3 +75,4 @@ describe('POST /api/settings', () => {
         expect(response.status).toBe(200);
     });
 });
+

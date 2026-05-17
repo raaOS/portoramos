@@ -31,7 +31,7 @@ async function testSimulation() {
         return;
     }
 
-    // 2. Wait for mapping to populate in Firebase (Vercel side)
+    // 2. Wait for mapping to populate in CLOUDFLARE_D1 (Vercel side)
     console.log('\n2. Waiting 5s for Vercel to process and map Telegram notification...');
     await new Promise(r => setTimeout(r, 5000));
 
@@ -63,7 +63,7 @@ async function testSimulation() {
 
     if (webhookData.ok) {
         console.log('\n✅ TEST SUCCESS: Server is processing Telegram Webhooks correctly.');
-        console.log('Manual replies will work as long as the Visitor mapping exists in Firebase.');
+        console.log('Manual replies will work as long as the Visitor mapping exists in CLOUDFLARE_D1.');
     } else {
         console.log('\n❌ TEST FAILED: Webhook endpoint returned error.');
     }

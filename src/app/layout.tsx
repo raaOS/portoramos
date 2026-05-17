@@ -13,9 +13,6 @@ import { APP_VERSION } from '@/lib/constants';
 
 import './globals.css';
 
-// ISR: Revalidate layout every 60 seconds
-export const revalidate = 60;
-
 // Separate viewport export for Next.js 14+
 export const viewport: Viewport = {
   width: 'device-width',
@@ -96,9 +93,33 @@ export default async function RootLayout({
           {`
             (function() {
               try {
-                if (sessionStorage.getItem('ramos_os_booted') === 'true') {
-                  document.documentElement.setAttribute('data-os-booted', 'true');
+                var html = document.documentElement;
+                var booted = sessionStorage.getItem('ramos_os_booted') === 'true';
+                if (booted) {
+                  html.setAttribute('data-os-booted', 'true');
+                  return;
                 }
+                // Internal navigation tetap dianggap "already booted" supaya
+                // visitor yang pindah halaman dalam site tidak lihat boot lagi.
+                // Logic ini cermin dari useBootSequence.checkShouldSkipBoot.
+                var ref = document.referrer;
+                if (ref) {
+                  try {
+                    var refHost = new URL(ref).host;
+                    if (refHost === window.location.host) {
+                      html.setAttribute('data-os-booted', 'true');
+                      return;
+                    }
+                  } catch (e) {}
+                }
+                var search = window.location.search || '';
+                if (search.indexOf('app=') !== -1) {
+                  html.setAttribute('data-os-booted', 'true');
+                  return;
+                }
+                // Visitor fresh — flag boot cover supaya wallpaper tidak flash
+                // sebelum StartScreen mount.
+                html.setAttribute('data-os-needs-boot', 'true');
               } catch (e) {}
             })();
           `}

@@ -5,7 +5,7 @@ export async function POST() {
     if (process.env.NODE_ENV === 'development') {
       return NextResponse.json({ 
         success: true, 
-        message: 'Proxy no longer uses in-memory rate limits. Use route-level Firebase-backed limits instead.' 
+        message: 'Proxy no longer uses in-memory rate limits. Use route-level CLOUDFLARE_D1-backed limits instead.' 
       });
     } else {
       return NextResponse.json({ 

@@ -101,7 +101,7 @@ export default function ProjectDetailTwoColumn({
                         <div className="flex flex-col lg:flex-row h-full">
                             {/* Cover & Interaction Section */}
                             <div className="w-full lg:w-[45%] border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-gray-900/20">
-                                <ProjectCover project={project} cover={cover} ratio={ratio} />
+                                <ProjectCover project={project} cover={cover} ratio={ratio} isWindowMode={isWindowMode} />
 
                                 <div className="mt-6 sm:mt-8 space-y-6 sm:space-y-8 px-6 lg:px-10 pb-10">
                                     {/* Interaction Bar */}

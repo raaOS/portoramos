@@ -85,12 +85,12 @@ export default function ProjectMediaUpload({ formData, errors, isDetectingDimens
             const storagePath = extractStoragePath(url);
             if (storagePath) {
                 const confirmDelete = window.confirm(
-                    "Apakah Anda yakin ingin menghapus file ini?\n\nOK = Hapus permanen dari Firebase\nBatal = Batal menghapus"
+                    "Apakah Anda yakin ingin menghapus file ini?\n\nOK = Hapus permanen dari Storage\nBatal = Batal menghapus"
                 );
                 if (confirmDelete) {
                     const success = await deleteMedia(storagePath);
                     if (!success) {
-                        alert("Gagal menghapus file dari Firebase. Silakan coba lagi.");
+                        alert("Gagal menghapus file dari Storage. Silakan coba lagi.");
                         return; // abort UI removal if deletion fails
                     }
                 } else {

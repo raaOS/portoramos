@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { validateConfig } from '@/lib/telegram';
 import { chatStore } from '@/lib/chatStore';
 import { aiChatService } from '@/lib/services/aiChatService';
-import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
+import { checkDataRateLimit } from '@/lib/dataRateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
         }
 
         // Rate limiting per visitorId untuk mencegah spam ke Telegram
-        const rateCheck = await checkFirebaseRateLimit(
+        const rateCheck = await checkDataRateLimit(
             `chat_${visitorId}`,
             CHAT_MAX_MESSAGES,
             CHAT_WINDOW_MS,
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
             );
         }
 
-        // 1. Add message to Firebase store
+        // 1. Add message to CLOUDFLARE_D1 store
         const chatMsg = await chatStore.addVisitorMessage(visitorId, message);
 
         // 1b. Check Session and Topic Status
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
         // 3. Telegram Routing (Topics vs DM)
         const groupId = envGroupId || process.env.TELEGRAM_GROUP_ID;
         let targetChatId = groupId || adminChatId;
-        // Ensure threadId is treated as number from Firebase
+        // Ensure threadId is treated as number from CLOUDFLARE_D1
         let threadId: number | undefined = session.telegramThreadId ? Number(session.telegramThreadId) : undefined;
 
 
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
                     apiErrorMessage = aiResponse.error || "";
                 }
 
-                // Add to Firebase store
+                // Add to CLOUDFLARE_D1 store
                 const aiReplyMsg = await chatStore.addAiReply(visitorId, aiResponseText);
 
                 // Notify admin of AI reply inside the same topic

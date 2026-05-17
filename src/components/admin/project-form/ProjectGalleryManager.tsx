@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Plus, Image as ImageIcon, FolderPlus } from 'lucide-react';
-import { useFirebaseUpload } from '@/app/admin/components/file-upload/hooks/useFirebaseUpload';
+import { useStorageUpload } from '@/app/admin/components/file-upload/hooks/useStorageUpload';
 import { ProjectFormData } from '@/hooks/useProjectForm';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import GalleryItemComponent from './components/GalleryItem';
@@ -24,7 +24,7 @@ interface ProjectGalleryManagerProps {
 
 export default function ProjectGalleryManager(props: ProjectGalleryManagerProps) {
     const { csrfToken } = useAdminAuth();
-    const { upload } = useFirebaseUpload({ folder: 'projects', csrfToken: csrfToken || '' });
+    const { upload } = useStorageUpload({ folder: 'projects', csrfToken: csrfToken || '' });
 
     const handleSingleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

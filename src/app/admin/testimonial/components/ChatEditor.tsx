@@ -5,7 +5,7 @@ import { MessageSquare, Link as LinkIcon, Image as ImageIcon, CheckCheck, Trash2
 import { ChatHistoryMessage } from '@/types/testimonial';
 import { Project } from '@/types/projects';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
-import { isVideoLink } from '@/lib/media';
+import { extractStoragePath, isVideoLink } from '@/lib/media';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface ChatEditorProps {
@@ -60,27 +60,23 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
 
     const removeMessage = async (id: number) => {
         const msgToDelete = messages.find(m => m.id === id);
+        const storagePath = msgToDelete?.imageSrc ? extractStoragePath(msgToDelete.imageSrc) : null;
 
         // Physical Cleanup for Direct Uploads
-        if (msgToDelete?.imageSrc && msgToDelete.imageSrc.includes('firebasestorage.googleapis.com')) {
+        if (msgToDelete?.imageSrc && storagePath) {
             const confirmDelete = window.confirm(
                 "Pesan ini berisi gambar yang diupload ke Storage.\n\nHapus juga file aslinya dari Storage?\n\nOK = Hapus Permanen\nBatal = Hanya hapus pesan (bisa jadi sampah)"
             );
 
             if (confirmDelete) {
                 try {
-                    const url = new URL(msgToDelete.imageSrc);
-                    const pathParts = url.pathname.split('/o/');
-                    if (pathParts.length > 1) {
-                        const storagePath = decodeURIComponent(pathParts[1].split('?')[0]);
-                        await fetch(`/api/upload?path=${encodeURIComponent(storagePath)}`, {
-                            method: 'DELETE',
-                            credentials: 'include',
-                            headers: {
-                                'x-csrf-token': csrfToken || ''
-                            }
-                        });
-                    }
+                    await fetch(`/api/upload?path=${encodeURIComponent(storagePath)}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: {
+                            'x-csrf-token': csrfToken || ''
+                        }
+                    });
                 } catch (e) {
                     console.error("Failed to delete physical chat image", e);
                 }

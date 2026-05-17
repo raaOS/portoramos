@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebaseAdmin';
+﻿import { db } from '@/lib/database';
 import { CacheManager } from '@/lib/cache/CacheManager';
 
 /**
@@ -16,7 +16,7 @@ const contentCache = new CacheManager({
 const ABOUT_CACHE_TTL = 5000; // 5 detik (positions berubah sering)
 
 function getCacheKey(path: string): string {
-    return `firebase:${path}`;
+    return `d1:${path}`;
 }
 
 /**
@@ -27,28 +27,25 @@ export function getCacheStats() {
 }
 
 /**
- * Generic service to handle content storage via Firebase Realtime Database
- * 
- * OPTIMIZATION: Menambahkan memory cache untuk mengurangi bandwidth Firebase.
+ * Generic service to handle content storage via Cloudflare D1.
  * Cache TTL: Default 30 detik, tapi bisa custom (about data pakai 5 detik).
  */
 export class ContentService<T> {
-    private firebasePath: string;
+    private dataPath: string;
     private fallbackData: T;
     private cacheTTL: number;
     private skipFallbackMerge: boolean;
 
     /**
      * @param filename - Nama file JSON (tanpa .json)
-     * @param fallbackData - Data default kalau Firebase kosong/error
+     * @param fallbackData - Data default kalau remote data kosong/error
      * @param cacheTTL - Cache duration dalam ms (default: 30 detik, about: 5 detik)
-     * @param skipFallbackMerge - Jika true, Firebase jadi source of truth (tidak merge dengan fallback).
+     * @param skipFallbackMerge - Jika true, remote data jadi source of truth (tidak merge dengan fallback).
      *   Ini mencegah field yang dihapus admin muncul lagi dari fallback JSON.
      */
     constructor(filename: string, fallbackData: T, cacheTTL?: number, skipFallbackMerge = false) {
-        // Use filename without extension as the node in Firebase
         const nodeName = filename.replace('.json', '');
-        this.firebasePath = `content/${nodeName}`;
+        this.dataPath = `content/${nodeName}`;
         this.fallbackData = fallbackData;
         // About data pakai TTL lebih pendek karena positions sering berubah
         this.cacheTTL = cacheTTL || (nodeName === 'about' ? ABOUT_CACHE_TTL : 30_000);
@@ -56,7 +53,7 @@ export class ContentService<T> {
     }
 
     async getData(noCache = false): Promise<T> {
-        const cacheKey = getCacheKey(this.firebasePath);
+        const cacheKey = getCacheKey(this.dataPath);
 
         // Cek memory cache dulu (kecuali noCache=true)
         if (!noCache) {
@@ -68,18 +65,18 @@ export class ContentService<T> {
 
         let timeoutId: ReturnType<typeof setTimeout> | null = null;
         const timeout = new Promise<null>((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error('Firebase timeout')), 5000);
+            timeoutId = setTimeout(() => reject(new Error('Data backend timeout')), 5000);
         });
 
         try {
             const snapshot = await Promise.race([
-                db.ref(this.firebasePath).once('value'),
+                db.ref(this.dataPath).once('value'),
                 timeout
             ]) as { val: () => unknown };
 
-            const firebaseData = snapshot?.val?.() ?? snapshot?.val;
+            const remoteData = snapshot?.val?.() ?? snapshot?.val;
 
-            if (!firebaseData) {
+            if (!remoteData) {
                 return this.fallbackData;
             }
 
@@ -87,15 +84,15 @@ export class ContentService<T> {
             // skipFallbackMerge penting untuk domain di mana admin delete
             // field harus benar-benar hilang, bukan restored dari fallback.
             const finalData = this.skipFallbackMerge
-                ? (firebaseData as T)
-                : (this.deepMerge(this.fallbackData, firebaseData) as T);
+                ? (remoteData as T)
+                : (this.deepMerge(this.fallbackData, remoteData) as T);
 
             // Simpan ke cache dengan TTL spesifik
             contentCache.set(cacheKey, finalData, this.cacheTTL);
 
             return finalData;
         } catch (error) {
-            console.error(`[ContentService] Error loading data from ${this.firebasePath}:`, error);
+            console.error(`[ContentService] Error loading data from ${this.dataPath}:`, error);
             return this.fallbackData;
         } finally {
             // MEMORY-LEAK FIX: clear timer regardless of outcome
@@ -104,8 +101,7 @@ export class ContentService<T> {
     }
 
     /**
-     * Deep merge fallback (base) dengan firebase data (override)
-     * Firebase data menang untuk field yang sama, tapi field baru di fallback tetap kebawa
+     * Deep merge fallback (base) dengan remote data (override).
      */
     private deepMerge(base: unknown, override: unknown): unknown {
         if (override === null || override === undefined) {
@@ -169,20 +165,20 @@ export class ContentService<T> {
                 : { ...(data as Record<string, unknown>), updatedAt: new Date().toISOString() };
 
             // MEDIUM FIX: Clear cache SEBELUM save untuk mencegah stale data read
-            // Jika ada request antara clear dan save, mereka akan fetch dari Firebase (fresh data)
-            contentCache.delete(getCacheKey(this.firebasePath));
+            contentCache.delete(getCacheKey(this.dataPath));
 
-            await db.ref(this.firebasePath).set(payload);
+            await db.ref(this.dataPath).set(payload);
 
             // CRITICAL FIX: Cache `payload` (dengan updatedAt), bukan raw `data`.
             // Kalau cache tanpa updatedAt, next-read dalam TTL return data stale,
             // dan komparasi lastUpdated di client jadi broken.
-            contentCache.set(getCacheKey(this.firebasePath), payload as unknown as object, this.cacheTTL);
+            contentCache.set(getCacheKey(this.dataPath), payload as unknown as object, this.cacheTTL);
 
             return true;
         } catch (error) {
-            console.error(`[ContentService] Error saving data to ${this.firebasePath}:`, error);
+            console.error(`[ContentService] Error saving data to ${this.dataPath}:`, error);
             return false;
         }
     }
 }
+

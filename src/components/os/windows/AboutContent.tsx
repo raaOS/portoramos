@@ -48,7 +48,9 @@ const MenuButton = ({ id, label, icon: Icon, activeTab, setActiveTab, collapsed 
 
 export default function AboutContent({ aboutData, experienceData, hardSkillsData }: AboutContentProps) {
     const [activeTab, setActiveTab] = useState<'about' | 'cv' | 'philosophy' | 'interests'>('about');
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    // Default: sidebar tutup (collapsed). Visitor melihat konten full-width dulu,
+    // sidebar bisa dibuka dengan klik pada area sidebar kiri.
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
     return (
         <div className="flex h-full w-full bg-[#ECECEC] font-sans">

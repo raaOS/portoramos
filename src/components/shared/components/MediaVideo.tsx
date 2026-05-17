@@ -59,6 +59,13 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
   const [shouldLoad, setShouldLoad] = useState(!lazy)
   const [isMounted, setIsMounted] = useState(false)
   const [autoplayBlocked, setAutoplayBlocked] = useState(false)
+  // Mute state ditarik dari props ke local state supaya saat user pakai
+  // controls untuk unmute (atau saat caller minta muted=false eksplisit),
+  // kita tidak overwrite preferensi user setiap re-render.
+  const [isMuted, setIsMuted] = useState(autoplay ? true : muted)
+  // Track manual interaction supaya autoplay logic tidak menimpa user yang
+  // sudah pause / unmute via native controls.
+  const userInteractedRef = useRef(false)
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== 'undefined') return window.innerWidth < 768;
     return false;
@@ -103,9 +110,12 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
 
   const playIfPossible = useCallback(() => {
     if (!effectiveAutoplay) return
+    // Hormati pause manual dari user — jangan paksa play lagi dari intersection
+    // observer / pathname change kalau user sudah interact dengan controls.
+    if (userInteractedRef.current) return
     const el = internalVideoRef.current
     if (!el || !el.isConnected) return
-    if (muted) {
+    if (isMuted) {
       el.muted = true
       el.defaultMuted = true
     }
@@ -117,7 +127,7 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
         }
       })
     }
-  }, [effectiveAutoplay, muted])
+  }, [effectiveAutoplay, isMuted])
 
   useEffect(() => {
     const el = containerRef.current
@@ -144,7 +154,11 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
         }
         if (isPlaying && internalVideoRef.current) {
           isPlaying = false;
-          internalVideoRef.current.pause();
+          // Hanya pause kalau bukan user-controlled — kalau user sedang nonton
+          // dengan controls dan scroll sebentar, jangan ganggu sesi mereka.
+          if (!userInteractedRef.current) {
+            internalVideoRef.current.pause();
+          }
         }
       }
     }
@@ -165,11 +179,51 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
     if (effectiveAutoplay && document.visibilityState === 'visible') playIfPossible();
   }, [pathname, effectiveAutoplay, playIfPossible])
 
+  // Jika caller toggle prop muted (mis. parent state), sinkronkan ke local
+  // state — kecuali user sudah interact (dia yang pegang kendali).
+  useEffect(() => {
+    if (userInteractedRef.current) return
+    setIsMuted(autoplay ? true : muted)
+  }, [autoplay, muted])
+
+  // Manual play handler dari overlay button. Saat overlay di-click berarti
+  // user sudah interact secara eksplisit.
+  const handleManualPlay = useCallback(() => {
+    userInteractedRef.current = true
+    if (!shouldLoad) {
+      manualPlayRef.current = true
+      setShouldLoad(true)
+      return
+    }
+    const el = internalVideoRef.current
+    if (!el) return
+    setAutoplayBlocked(false)
+    const playPromise = el.play()
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Last-resort: kalau browser masih blokir, biarkan dia mute lalu retry.
+        el.muted = true
+        setIsMuted(true)
+        el.play().catch(() => {/* give up silently */})
+      })
+    }
+  }, [shouldLoad])
+
+  // Saat video native controls di-pakai, set userInteracted supaya logic
+  // autoplay re-arm tidak mengganggu pause / mute toggle.
+  const markUserInteraction = useCallback(() => {
+    userInteractedRef.current = true
+  }, [])
+
   return (
     <div ref={containerRef} className="relative w-full h-full bg-neutral-200 dark:bg-neutral-900">
       <video
         ref={setVideoRef}
-        className={`${className || "w-full h-full object-cover"} ${!controls ? 'pointer-events-none' : ''}`}
+        // pointer-events-none HANYA dipasang saat overlay autoplay-blocked
+        // sedang aktif, supaya overlay button bisa menerima click. Untuk
+        // semua kondisi normal (controls on/off), video element tetap
+        // interaktif sehingga tap-to-pause / native controls bekerja.
+        className={`${className || "w-full h-full object-cover"} ${(autoplayBlocked && !canPlay) ? 'pointer-events-none' : ''}`}
         src={shouldLoad ? getProxiedUrl(src) : undefined}
         aria-label={controls ? (alt || 'Video content') : undefined}
         title={controls ? (alt || 'Video content') : undefined}
@@ -178,11 +232,13 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
         autoPlay={effectiveAutoplay}
         // @ts-expect-error - fetchPriority attribute exists in modern browsers
         fetchPriority={priority ? "high" : "auto"}
-        muted={effectiveAutoplay || muted}
+        muted={isMuted}
         loop={loop}
         playsInline={playsInline}
         controls={controls}
-        preload={shouldLoad || priority ? "metadata" : "none"}
+        // Performance: poster image sudah dirender di atas; metadata cukup
+        // untuk progress bar. Fallback ke "none" saat lazy & belum visible.
+        preload={shouldLoad ? "metadata" : "none"}
         webkit-playsinline="true"
         x5-playsinline="true"
         x5-video-player-type="h5"
@@ -192,7 +248,7 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
           if (manualPlayRef.current) {
             playIfPossible()
             manualPlayRef.current = false
-          } else if (effectiveAutoplay) {
+          } else if (effectiveAutoplay && !userInteractedRef.current) {
             playIfPossible()
           }
         }}
@@ -206,6 +262,16 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
           setCanPlay(true)
           setAutoplayBlocked(false)
           setHasError(false)
+        }}
+        onPause={markUserInteraction}
+        onVolumeChange={() => {
+          const el = internalVideoRef.current
+          if (!el) return
+          // User toggle mute via native controls — sync state.
+          if (el.muted !== isMuted) {
+            userInteractedRef.current = true
+            setIsMuted(el.muted)
+          }
         }}
       />
 
@@ -235,15 +301,10 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(({
 
       {((autoplayBlocked && !hasError) || ((isMobile as boolean) && !shouldLoad)) && (
         <div
-          className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer group hover:bg-black/50 transition-colors"
+          className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer group hover:bg-black/50 transition-colors z-20"
           onClick={(e) => {
             e.stopPropagation()
-            if (!shouldLoad) {
-              manualPlayRef.current = true
-              setShouldLoad(true)
-              return
-            }
-            playIfPossible()
+            handleManualPlay()
           }}
         >
           <div className={`bg-white/95 rounded-full shadow-2xl transition-transform ${shouldLoad ? 'p-5 group-hover:scale-110' : 'p-6 scale-110'}`}>

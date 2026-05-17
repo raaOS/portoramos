@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { UpdateProjectData, Project } from '@/types/projects';
 import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 import { generateGenZComments } from '@/lib/magic';
-import { db } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/database';
 import { sendTelegramAlert } from '@/lib/telegram';
 import { UpdateProjectSchema } from '@/lib/validations';
 
@@ -17,12 +17,11 @@ export async function GET(
     const params = await props.params;
     const { id } = params;
 
-    // PERF FIX: Fetch langsung by id — sebelumnya load SEMUA project
+    // PERF FIX: Fetch langsung by id â€” sebelumnya load SEMUA project
     // lalu .find() yang inefficient buat banyak project.
     const snap = await db.ref(`projects/${id}`).once('value');
     let project: Project | null = snap.val();
 
-    // Fallback: kalau Firebase pakai numeric/array key, cari via service
     if (!project) {
       const { projects } = await projectService.getProjects();
       project = projects.find(p => p.id === id) ?? null;
@@ -74,13 +73,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Project not found or update failed' }, { status: 404 });
     }
 
-    // --- Auto-Generate / Append Comments (Firebase) ---
     if (rawBody.initialCommentCount && rawBody.initialCommentCount > 0) {
       try {
         console.log(`Generating ${rawBody.initialCommentCount} additional comments for ${updatedProject.slug}...`);
         const newComments = generateGenZComments(updatedProject.slug, rawBody.initialCommentCount);
 
-        // Get existing comments from Firebase
         const commentsRef = db.ref(`comments/${updatedProject.slug}`);
         const snap = await commentsRef.once('value');
         const existingComments = snap.val() || [];
@@ -99,7 +96,7 @@ export async function PUT(
 
     // --- Telegram Notification ---
     const changedFields = Object.keys(rawBody).filter(k => k !== 'initialCommentCount').join(', ');
-    const updateMessage = `✏️ **PROJECT UPDATED**\n\n**Title:** ${updatedProject.title}\n**ID:** ${updatedProject.id}\n**Changes:** ${changedFields || 'No specific fields'}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
+    const updateMessage = `âœï¸ **PROJECT UPDATED**\n\n**Title:** ${updatedProject.title}\n**ID:** ${updatedProject.id}\n**Changes:** ${changedFields || 'No specific fields'}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
     sendTelegramAlert(updateMessage).catch(err => console.error('[Telegram] Failed to send update alert:', err));
 
     revalidatePath('/', 'layout');
@@ -142,7 +139,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Project not found or delete failed' }, { status: 404 });
     }
 
-    const successMessage = `🗑️ **PROJECT DELETED**\n\n**ID:** ${id}\n**By:** Admin\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
+    const successMessage = `ðŸ—‘ï¸ **PROJECT DELETED**\n\n**ID:** ${id}\n**By:** Admin\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
     sendTelegramAlert(successMessage).catch(err => console.error('[Telegram] Failed to send delete alert:', err));
 
     revalidatePath('/', 'layout');
@@ -161,3 +158,4 @@ export async function DELETE(
     );
   }
 }
+

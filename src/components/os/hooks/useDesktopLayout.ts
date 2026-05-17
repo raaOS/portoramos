@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { AboutData } from "@/types/about";
+import { AboutData, DesktopIconPosition } from "@/types/about";
 import { getIconPosition, saveIconPosition, loadPositions, loadSessionPositions } from "../utils/positionSync";
 import { useLayoutPersistence } from "../contexts/LayoutPersistenceContext";
 
@@ -14,17 +14,17 @@ interface UseDesktopLayoutProps {
 export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLayoutProps) {
     const { registerFlush, unregisterFlush } = useLayoutPersistence();
 
-    // Load dari positionSync (localStorage untuk admin, Firebase/default untuk visitor)
-    const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>(() => {
-        const firebase = aboutData?.desktopPreferences?.iconPositions || {};
-        
+    // Load dari positionSync (localStorage untuk admin, CLOUDFLARE_D1/default untuk visitor)
+    const [iconPositions, setIconPositions] = useState<Record<string, DesktopIconPosition>>(() => {
+        const CLOUDFLARE_D1 = aboutData?.desktopPreferences?.iconPositions || {};
+
         if (isAdmin) {
-            // Admin: localStorage menimpa Firebase (buffer sesi)
+            // Admin: localStorage menimpa CLOUDFLARE_D1 (buffer sesi)
             const local = loadPositions().icons || {};
-            return { ...firebase, ...local };
+            return { ...CLOUDFLARE_D1, ...local };
         } else {
-            // Visitor: Murni Firebase (Admin's template) - Reset on refresh
-            return firebase;
+            // Visitor: Murni CLOUDFLARE_D1 (Admin's template) - Reset on refresh
+            return CLOUDFLARE_D1;
         }
     });
 
@@ -39,26 +39,26 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
     const [prevAboutData, setPrevAboutData] = useState(aboutData);
     if (aboutData !== prevAboutData) {
         setPrevAboutData(aboutData);
-        const firebase = aboutData?.desktopPreferences?.iconPositions;
-        if (firebase) {
-            let existing: Record<string, { x: number; y: number }> = {};
+        const CLOUDFLARE_D1 = aboutData?.desktopPreferences?.iconPositions;
+        if (CLOUDFLARE_D1) {
+            let existing: Record<string, DesktopIconPosition> = {};
             if (isAdmin) {
                 existing = loadPositions().icons || {};
             } else {
-                existing = loadSessionPositions().icons || {};
+                existing = (loadSessionPositions().icons as Record<string, DesktopIconPosition>) || {};
             }
-            
+
             // Hanya tambah icon yang belum ada di existing/state
             const merged = { ...iconPositions };
             let hasNew = false;
-            
-            Object.entries(firebase).forEach(([id, pos]) => {
+
+            Object.entries(CLOUDFLARE_D1).forEach(([id, pos]) => {
                 if (!existing?.[id] && !merged[id]) {
-                    merged[id] = pos as { x: number; y: number };
+                    merged[id] = pos as DesktopIconPosition;
                     hasNew = true;
                 }
             });
-            
+
             if (hasNew) {
                 setIconPositions(merged);
             }
@@ -67,14 +67,29 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
 
     const handleIconPositionChange = useCallback((id: string, x: number, y: number) => {
         // Update state (untuk semua agar responsif)
-        setIconPositions(prev => ({ ...prev, [id]: { x, y } }));
-        
-        // Save ke positionSync (localStorage untuk admin, sessionStorage untuk visitor)
+        const vp = typeof window !== 'undefined'
+            ? { width: window.innerWidth, height: window.innerHeight }
+            : { width: 1440, height: 900 };
+
+        const updated: DesktopIconPosition = {
+            x,
+            y,
+            xPct: vp.width > 0 ? (x / vp.width) * 100 : 0,
+            yPct: vp.height > 0 ? (y / vp.height) * 100 : 0,
+            refScreenWidth: vp.width,
+            refScreenHeight: vp.height,
+        };
+
+        setIconPositions(prev => ({ ...prev, [id]: updated }));
+
+        // Save ke positionSync (localStorage untuk admin, no-op untuk visitor)
         saveIconPosition(id, { x, y }, isAdmin);
     }, [isAdmin]);
 
     const getIconPos = useCallback((id: string, defaultX: number, defaultY: number) => {
-        return iconPositions[id] || getIconPosition(id, null, { x: defaultX, y: defaultY }, isAdmin);
+        const saved = iconPositions[id];
+        if (saved) return { x: saved.x, y: saved.y };
+        return getIconPosition(id, null, { x: defaultX, y: defaultY }, isAdmin);
     }, [iconPositions, isAdmin]);
 
     // Flush Icons to Server (Admin only)

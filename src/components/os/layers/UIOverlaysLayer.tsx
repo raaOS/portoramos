@@ -14,6 +14,7 @@ import { useUnifiedZIndex } from "../context/UnifiedZIndexContext";
 import { ISLAND_ID } from "../ui/DynamicIsland";
 import { useOSSystem } from "../context/OSSystemContext";
 import { useBootSequence } from "../hooks/useBootSequence";
+import { Z_LAYERS } from "../utils/zIndexLayers";
 
 const Spotlight = dynamic(() => import("../core/Spotlight"), {
     loading: () => null,
@@ -31,6 +32,11 @@ const ControlCenter = dynamic(() => import("../ui/ControlCenter"), {
 });
 
 const CalendarPopout = dynamic(() => import("../ui/CalendarPopout"), {
+    ssr: false
+});
+
+const ExitIntentFeedback = dynamic(() => import("../ui/ExitIntentFeedback"), {
+    loading: () => null,
     ssr: false
 });
 
@@ -64,9 +70,12 @@ export default function UIOverlaysLayer({
         showSpotlight, setShowSpotlight, 
         notesVisible, 
         showControlCenter, setShowControlCenter,
-        showCalendar, setShowCalendar
+        showCalendar, setShowCalendar,
+        isRevealed
     } = useOSSystem();
-    const isBootingOrStarting = isBooting || needsPowerOn;
+    // Saat hollow-O mulai membesar (`isRevealed = true`), dock & menubar sudah
+    // boleh render di belakang StartScreen supaya terlihat dari dalam lubang.
+    const isBootingOrStarting = (isBooting || needsPowerOn) && !isRevealed;
     
     const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
     const { getZIndex } = useUnifiedZIndex();
@@ -85,7 +94,6 @@ export default function UIOverlaysLayer({
         <div className="absolute inset-0 pointer-events-none">
             {/* Dynamic Island - Unified Z-index participant */}
             <DynamicIsland
-                activeWindow={topWindowTitle}
                 isBooting={isBooting}
                 onOpenChat={navToChat}
                 customNotifications={testimonialContacts}
@@ -120,7 +128,8 @@ export default function UIOverlaysLayer({
                 {!isBootingOrStarting && (
                     <motion.div 
                         key="os-dock"
-                        className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe z-[99999]"
+                        className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-safe"
+                        style={{ zIndex: Z_LAYERS.DOCK }}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
@@ -147,7 +156,10 @@ export default function UIOverlaysLayer({
             </AnimatePresence>
 
             {showSpotlight && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-auto z-[9999]">
+                <div
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-auto"
+                    style={{ zIndex: Z_LAYERS.BACKDROP }}
+                >
                     <Spotlight
                         isOpen={showSpotlight}
                         onClose={() => setShowSpotlight(false)}
@@ -163,7 +175,11 @@ export default function UIOverlaysLayer({
 
             <AnimatePresence>
                 {showControlCenter && (
-                    <div className="absolute inset-0 pointer-events-auto z-[10001]" onClick={() => setShowControlCenter(false)}>
+                    <div
+                        className="absolute inset-0 pointer-events-auto"
+                        style={{ zIndex: Z_LAYERS.POPOUT }}
+                        onClick={() => setShowControlCenter(false)}
+                    >
                         <div onClick={e => e.stopPropagation()}>
                             <ControlCenter 
                                 isOpen={showControlCenter} 
@@ -176,8 +192,9 @@ export default function UIOverlaysLayer({
             {/* Global Calendar Popout */}
             <AnimatePresence>
                 {showCalendar && (
-                    <div 
-                        className="fixed inset-0 pointer-events-auto z-[10001]" 
+                    <div
+                        className="fixed inset-0 pointer-events-auto"
+                        style={{ zIndex: Z_LAYERS.POPOUT }}
                         onClick={() => setShowCalendar(false)}
                     >
                         <div onClick={e => e.stopPropagation()}>
@@ -189,6 +206,9 @@ export default function UIOverlaysLayer({
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Exit-intent feedback — visitor only, appears on tab close attempt */}
+            {!isAdmin && !isBootingOrStarting && <ExitIntentFeedback />}
         </div>
     );
 }

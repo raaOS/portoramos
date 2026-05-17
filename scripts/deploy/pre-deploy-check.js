@@ -1,13 +1,22 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+
+const envFile = ['.env.local', '.env'].find((file) => fs.existsSync(file));
+
+if (envFile) {
+  require('dotenv').config({ path: path.resolve(envFile) });
+}
+
 console.log('🔍 Running pre-deployment checks...\n');
 
 // Check required files
 const requiredFiles = [
   'next.config.mjs',
   'package.json',
-  'tsconfig.json',
-  '.env'
+  'tsconfig.json'
 ];
 
 // Check required env variables
@@ -23,7 +32,6 @@ const buildFiles = [
 ];
 
 function checkFiles(files) {
-  const fs = require('fs');
   const missing = files.filter(file => !fs.existsSync(file));
   return missing;
 }
@@ -34,6 +42,11 @@ const missingFiles = checkFiles(requiredFiles);
 if (missingFiles.length > 0) {
   console.error('❌ Missing required files:', missingFiles);
   process.exit(1);
+}
+if (envFile) {
+  console.log(`✅ Environment file loaded: ${envFile}`);
+} else {
+  console.warn('⚠️ No local env file found (.env.local or .env). Continuing with process env.');
 }
 console.log('✅ All required files present\n');
 
@@ -49,7 +62,7 @@ console.log('📦 Checking build output...');
 const missingBuildFiles = checkFiles(buildFiles);
 if (missingBuildFiles.length > 0) {
   console.warn('⚠️ Build files missing. Running build...');
-  require('child_process').execSync('npm run build', { stdio: 'inherit' });
+  execSync('npm run build', { stdio: 'inherit' });
 } else {
   console.log('✅ Build files present\n');
 }

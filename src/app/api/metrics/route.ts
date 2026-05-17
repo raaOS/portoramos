@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebaseAdmin';
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/database';
 import { projectService } from '@/lib/services/projectService';
 import { enforceRequestRateLimit } from '@/lib/security/request';
 import { z } from 'zod';
@@ -112,3 +112,4 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to save metrics' }, { status: 500 });
     }
 }
+

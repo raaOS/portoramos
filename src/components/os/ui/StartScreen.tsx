@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useCallback, useEffect, useId, useRef, useState } from "react";
-import { m } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { soundManager } from "../utils/SoundManager";
+import { Z_LAYERS } from "../utils/zIndexLayers";
 
 interface StartScreenProps {
     onStart: () => void;
@@ -26,6 +27,18 @@ const BOOT_CONFIG = {
     get completeDelay() { return this.glassRevealDelay + this.revealDuration; }
 };
 
+// Fast-path timing when user prefers reduced motion — skip most of the cinematic
+// sequence but keep enough delay untuk sound "startup" sempat main.
+const REDUCED_MOTION_CONFIG = {
+    keyholeZoomDuration: 200,
+    textFadeInDuration: 0,
+    textDisplayDuration: 300,
+    revealDuration: 200,
+    get showTextDelay() { return this.keyholeZoomDuration; },
+    get glassRevealDelay() { return this.keyholeZoomDuration + this.textDisplayDuration; },
+    get completeDelay() { return this.glassRevealDelay + this.revealDuration; }
+};
+
 const textFadeTransition = {
     duration: BOOT_CONFIG.textFadeInDuration / 1000,
     ease: [0.4, 0, 0.2, 1], // Kurva ease yang lebih sinematik (mulai perlahan, mulus di tengah, melambat di akhir)
@@ -37,11 +50,14 @@ const revealScaleTransition = {
 } as const;
 
 const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps) => {
+    const prefersReducedMotion = useReducedMotion();
     const [screenState, setScreenState] = useState<ScreenState>("idle");
     const timersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
     const revealRafRef = useRef<number | null>(null);
     const hasStartedRef = useRef(false);
     const maskId = `hollow-o-mask-${useId().replace(/:/g, "")}`;
+
+    const activeConfig = prefersReducedMotion ? REDUCED_MOTION_CONFIG : BOOT_CONFIG;
 
     useEffect(() => {
         onReady?.();
@@ -77,7 +93,7 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
 
         queueTimer(() => {
             setScreenState("showingText");
-        }, BOOT_CONFIG.showTextDelay);
+        }, activeConfig.showTextDelay);
 
         queueTimer(() => {
             setScreenState("glassReveal");
@@ -91,13 +107,13 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
                 onReveal?.();
                 revealRafRef.current = null;
             });
-        }, BOOT_CONFIG.glassRevealDelay);
+        }, activeConfig.glassRevealDelay);
 
         queueTimer(() => {
             setScreenState("done");
             onStart();
-        }, BOOT_CONFIG.completeDelay);
-    }, [onReveal, onStart, queueTimer, screenState]);
+        }, activeConfig.completeDelay);
+    }, [onReveal, onStart, queueTimer, screenState, activeConfig]);
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -124,31 +140,44 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
     const masterFrameColor =
         screenState === "idle" || screenState === "zooming" ? "#000000" : "#ffffff";
 
+    // Reduced-motion-aware transitions: eliminate scale/opacity springs where possible.
+    const effectiveRevealScaleTransition = prefersReducedMotion
+        ? { duration: REDUCED_MOTION_CONFIG.revealDuration / 1000, ease: [0.4, 0, 0.2, 1] as const }
+        : revealScaleTransition;
+    const effectiveTextFadeTransition = prefersReducedMotion
+        ? { duration: 0.1, ease: [0.4, 0, 0.2, 1] as const }
+        : textFadeTransition;
+    const effectiveZoomTransition = prefersReducedMotion
+        ? { duration: REDUCED_MOTION_CONFIG.keyholeZoomDuration / 1000, ease: [0.4, 0, 0.2, 1] as const }
+        : { duration: BOOT_CONFIG.keyholeZoomDuration / 1000, ease: [0.76, 0, 0.24, 1] as const };
+    const zoomTargetScale = prefersReducedMotion ? 50 : 300;
+    const glassRevealTargetScale = prefersReducedMotion ? 20 : 100;
+
     return (
         <m.div
             id="start-screen"
             data-testid="os-start-screen"
             data-boot-state={screenState}
-            className="fixed inset-0 z-[999999] h-full w-full overflow-hidden select-none print:hidden bg-transparent"
+            className="fixed inset-0 h-full w-full overflow-hidden select-none print:hidden bg-transparent"
             initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
-            style={{ pointerEvents: screenState === "glassReveal" ? "none" : "auto" }}
+            style={{ pointerEvents: screenState === "glassReveal" ? "none" : "auto", zIndex: Z_LAYERS.BOOT }}
         >
             <m.div
-                className="absolute inset-0 z-[10002] overflow-hidden pointer-events-none"
+                className="absolute inset-0 overflow-hidden pointer-events-none"
                 initial={{ opacity: 0 }}
                 animate={{
                     opacity: isWordmarkVisible ? 1 : 0,
-                    scale: screenState === "glassReveal" ? 100 : 1,
+                    scale: screenState === "glassReveal" ? glassRevealTargetScale : 1,
                 }}
                 transition={{
-                    opacity: { duration: 0.35, ease: "easeInOut" },
+                    opacity: { duration: prefersReducedMotion ? 0.15 : 0.35, ease: "easeInOut" },
                     scale:
                         screenState === "glassReveal"
-                            ? revealScaleTransition
-                            : { duration: 0.6, ease: [0.76, 0, 0.24, 1] },
+                            ? effectiveRevealScaleTransition
+                            : { duration: prefersReducedMotion ? 0.15 : 0.6, ease: [0.76, 0, 0.24, 1] },
                 }}
-                style={{ transformOrigin: "50% 50%" }}
+                style={{ transformOrigin: "50% 50%", zIndex: Z_LAYERS.POPOUT_CONTENT }}
                 data-boot-layer="reveal"
             >
                 <svg
@@ -180,7 +209,7 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
                         initial={{ opacity: 1 }}
                         animate={{ opacity: screenState === "glassReveal" ? 0 : 1 }}
                         transition={{
-                            duration: screenState === "glassReveal" ? 0.35 : 0.2,
+                            duration: screenState === "glassReveal" ? (prefersReducedMotion ? 0.15 : 0.35) : 0.2,
                             ease: [0.32, 0.72, 0, 1],
                         }}
                     />
@@ -190,9 +219,9 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
                         initial={{ opacity: 0, filter: "blur(10px)" }}
                         animate={{
                             opacity: isWordmarkVisible ? 1 : 0,
-                            filter: isWordmarkVisible ? "blur(0px)" : "blur(10px)",
+                            filter: isWordmarkVisible ? "blur(0px)" : (prefersReducedMotion ? "blur(0px)" : "blur(10px)"),
                         }}
-                        transition={textFadeTransition}
+                        transition={effectiveTextFadeTransition}
                     >
                         <g fill="black">
                             <path d="M 1.8 8.545 L 0 8.545 L 0 0.145 L 3.264 0.145 Q 4.284 0.145 4.962 0.499 Q 5.64 0.853 5.97 1.441 Q 6.3 2.029 6.3 2.749 Q 6.3 3.421 5.982 4.009 Q 5.664 4.597 4.992 4.957 Q 4.32 5.317 3.252 5.317 L 1.8 5.317 L 1.8 8.545 Z M 1.8 1.645 L 1.8 4.021 L 3.156 4.021 Q 3.828 4.021 4.146 3.697 Q 4.464 3.373 4.464 2.821 Q 4.464 2.281 4.146 1.963 Q 3.828 1.645 3.156 1.645 L 1.8 1.645 Z M 6.372 8.545 L 4.332 8.545 L 2.64 4.873 L 4.572 4.873 L 6.372 8.545 Z" />
@@ -235,49 +264,49 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
             </m.div>
 
             <m.div
-                className="absolute inset-0 z-[10000]"
+                className="absolute inset-0"
                 animate={{
                     opacity: screenState === "glassReveal" ? 0 : 1,
                     backgroundColor: masterFrameColor,
                 }}
                 transition={{
                     opacity: {
-                        duration: screenState === "glassReveal" ? 0 : 0.8,
+                        duration: screenState === "glassReveal" ? 0 : (prefersReducedMotion ? 0.2 : 0.8),
                         ease: "easeInOut",
                     },
                     backgroundColor: { duration: 0 },
                 }}
+                style={{ zIndex: Z_LAYERS.CHROME }}
             />
 
             <m.div
-                className="absolute inset-0 z-[10001] flex items-center justify-center"
-                style={{ pointerEvents: screenState === "idle" ? "auto" : "none" }}
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ pointerEvents: screenState === "idle" ? "auto" : "none", zIndex: Z_LAYERS.POPOUT }}
                 onClick={screenState === "idle" ? handleClick : undefined}
                 animate={{ opacity: screenState === "idle" || screenState === "zooming" ? 1 : 0 }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
+                transition={{ duration: prefersReducedMotion ? 0.2 : 0.8, ease: "easeInOut" }}
             >
                 <m.div
                     className="relative flex cursor-pointer items-center justify-center will-change-transform"
                     layout={false}
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{
-                        scale: screenState === "idle" ? 1 : 300,
+                        scale: screenState === "idle" ? 1 : zoomTargetScale,
                         opacity: 1,
                     }}
                     transition={{
                         scale:
                             screenState === "idle"
-                                ? { type: "spring", stiffness: 260, damping: 20 }
-                                : {
-                                      duration: BOOT_CONFIG.keyholeZoomDuration / 1000,
-                                      ease: [0.76, 0, 0.24, 1],
-                                  },
-                        opacity: { duration: 0.5 },
+                                ? prefersReducedMotion
+                                    ? { duration: 0.2, ease: [0.4, 0, 0.2, 1] }
+                                    : { type: "spring", stiffness: 260, damping: 20 }
+                                : effectiveZoomTransition,
+                        opacity: { duration: prefersReducedMotion ? 0.15 : 0.5 },
                     }}
                 >
                     <m.div
                         className="relative flex items-center justify-center text-[#ffffff]"
-                        whileHover={screenState === "idle" ? { scale: 1.05 } : { scale: 1 }}
+                        whileHover={screenState === "idle" && !prefersReducedMotion ? { scale: 1.05 } : { scale: 1 }}
                         animate={{ scale: 1 }}
                         transition={{ duration: screenState === "idle" ? 0.3 : 0 }}
                     >
@@ -298,9 +327,9 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
                             className="absolute -bottom-24 whitespace-nowrap text-sm font-medium uppercase tracking-[0.4em] text-white/90"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ 
-                                delay: 0.8,
-                                duration: 1,
+                            transition={{
+                                delay: prefersReducedMotion ? 0.1 : 0.8,
+                                duration: prefersReducedMotion ? 0.2 : 1,
                                 ease: "easeOut"
                             }}
                         >

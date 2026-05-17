@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/database';
 import { ContactData, UpdateContactData, ContactContent, ContactInfo, ContactFormSettings } from '@/types/contact';
 import { validateAdminRequest } from '@/lib/auth';
 import { getContactData, invalidateContactCache } from '@/lib/contact';
@@ -40,7 +40,6 @@ export async function PUT(request: NextRequest) {
 
     const body: UpdateContactData = validation.data as UpdateContactData;
 
-    // Load current data from Firebase
     const contactRef = db.ref('content/contact');
     const snap = await contactRef.once('value');
     const dbData = snap.val() as ContactData | null;
@@ -64,7 +63,6 @@ export async function PUT(request: NextRequest) {
       lastUpdated: new Date().toISOString()
     };
 
-    // Save to Firebase
     await contactRef.set(updatedData);
     invalidateContactCache();
 
@@ -86,13 +84,12 @@ export async function PUT(request: NextRequest) {
     if (error instanceof TypeError) {
       return NextResponse.json({ error: 'Invalid data format' }, { status: 422 });
     }
-    // Check if it's a Firebase error
     if (error && typeof error === 'object' && 'code' in error) {
-      const firebaseError = error as { code: string; message: string };
-      if (firebaseError.code === 'PERMISSION_DENIED') {
+      const dataError = error as { code: string; message: string };
+      if (dataError.code === 'PERMISSION_DENIED') {
         return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
       }
-      if (firebaseError.code === 'NETWORK_ERROR') {
+      if (dataError.code === 'NETWORK_ERROR') {
         return NextResponse.json({ error: 'Database connection failed' }, { status: 503 });
       }
     }
@@ -100,3 +97,4 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to update contact data' }, { status: 500 });
   }
 }
+

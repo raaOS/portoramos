@@ -89,7 +89,7 @@ export async function POST(request: Request) {
             const text = String(msg.text ?? '').trim();
             const threadId = typeof msg.message_thread_id === 'number' ? msg.message_thread_id : undefined;
 
-            // Rate limiting check (now async - Firebase-backed)
+            // Rate limiting check (now async - CLOUDFLARE_D1-backed)
             const rateLimit = await checkRateLimit(incomingChatId);
             if (!rateLimit.allowed) {
                 console.warn(`[Telegram Webhook] Rate limit exceeded for chat ${incomingChatId}`);

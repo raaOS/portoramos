@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { generateDesktopIcons } from "../utils/desktopLayoutUtils";
-import type { DesktopPreferences, AboutData } from "@/types/about";
+import type { DesktopPreferences, AboutData, DesktopIconPosition } from "@/types/about";
 import type { Project } from "@/types/projects";
 
 interface UseDesktopIconsProps {
@@ -9,7 +9,7 @@ interface UseDesktopIconsProps {
     aboutData: AboutData | null | undefined;
     handleGoHome: () => void;
     onOpenExplorer: () => void;
-    iconPositions: Record<string, { x: number; y: number }>;
+    iconPositions: Record<string, DesktopIconPosition>;
 }
 
 export function useDesktopIcons({

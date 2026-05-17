@@ -1,19 +1,15 @@
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
-
 /**
- * Empty response endpoint - used to swallow HMR polling requests
- * Returns 204 No Content to suppress 404 errors in dev logs
+ * Empty response endpoint - used to swallow HMR polling requests.
+ *
+ * Runs on the Edge Runtime: cold-start ~10ms vs ~300-500ms on Node.
+ * No Node-only deps used here, so Edge is safe.
  */
-export async function GET() {
-  return new NextResponse(null, { status: 204 });
-}
+export const runtime = 'edge';
 
-export async function POST() {
-  return new NextResponse(null, { status: 204 });
-}
+const noContent = () => new NextResponse(null, { status: 204 });
 
-export async function HEAD() {
-  return new NextResponse(null, { status: 204 });
-}
+export async function GET() { return noContent(); }
+export async function POST() { return noContent(); }
+export async function HEAD() { return noContent(); }

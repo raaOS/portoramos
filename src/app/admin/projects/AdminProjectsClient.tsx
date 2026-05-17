@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { Loader2, X } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -14,7 +14,7 @@ import ProjectCardSkeleton from '@/components/admin/ProjectCardSkeleton';
 
 // New Modular Hooks & Components
 import { useAdminProjects } from '../hooks/useAdminProjects';
-import { useFirebaseStatus } from '../hooks/useFirebaseStatus';
+import { useDataStatus } from '../hooks/useDataStatus';
 import { ProjectToolbar } from './components/ProjectToolbar';
 import { ProjectCard } from './components/ProjectCard';
 import { Pagination } from './components/Pagination';
@@ -23,11 +23,15 @@ import { Pagination } from './components/Pagination';
 const ProjectForm = dynamic(() => import('@/components/admin/project-form/ProjectForm'), {
   loading: () => <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>
 });
-const FirebaseSettingsModal = dynamic(() => import('@/app/admin/components/FirebaseSettingsModal'), {
+const DataConnectionModal = dynamic(() => import('@/app/admin/components/DataConnectionModal'), {
   loading: () => <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>
 });
 const ManageCommentsModal = dynamic(() => import('../components/ManageCommentsModal'));
 const SecuritySettingsModal = dynamic(() => import('../components/SecuritySettingsModal'));
+
+const subscribeHydration = () => () => undefined;
+const getHydratedSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 function SortableProjectItem({ id, children }: { id: string, children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
@@ -67,7 +71,7 @@ export default function AdminProjectsClient() {
 
   const {
     connectionStatus,
-  } = useFirebaseStatus();
+  } = useDataStatus();
 
   // Local UI State
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -76,6 +80,11 @@ export default function AdminProjectsClient() {
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const isDndReady = useSyncExternalStore(
+    subscribeHydration,
+    getHydratedSnapshot,
+    getServerSnapshot
+  );
   const ITEMS_PER_PAGE = 18;
 
   // DnD Sensors
@@ -91,7 +100,6 @@ export default function AdminProjectsClient() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Actions Wrappers (Firebase is real-time, triggerSync is now a no-op but kept for compatibility)
   const handleToggleProjectStatus = (project: Project) => {
     const nextStatus = project.status === 'published' ? 'draft' : 'published';
     updateMutation.mutate({ ...project, status: nextStatus, id: project.id });
@@ -108,6 +116,28 @@ export default function AdminProjectsClient() {
       handleReorder(newItems);
     }
   };
+
+  const renderProjectCard = (project: Project, index: number) => (
+    <ProjectCard
+      project={project}
+      priority={index < 6}
+      eager={index < 12}
+      selectedProjectIds={selectedProjectIds}
+      toggleProjectSelection={toggleProjectSelection}
+      handleToggleProjectStatus={handleToggleProjectStatus}
+      setEditingProject={setEditingProject}
+      handleDeleteProject={(id) => {
+        if (confirm('Hapus proyek ini?')) deleteMutation.mutate(id);
+      }}
+      handleDuplicateProject={(p) => {
+        if (confirm(`Duplikat "${p.title}"?`)) {
+          createMutation.mutate({ ...p, title: `${p.title} (Copy)`, status: 'draft' } as CreateProjectData);
+        }
+      }}
+      setManagingCommentsProject={setManagingCommentsProject}
+      commentCount={commentCounts[project.slug] || 0}
+    />
+  );
 
   return (
     <div className="space-y-8">
@@ -142,35 +172,27 @@ export default function AdminProjectsClient() {
           </div>
         ) : (
           <>
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={paginatedProjects.map(p => p.id)} strategy={rectSortingStrategy}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {paginatedProjects.map((project, index) => (
-                    <SortableProjectItem key={project.id} id={project.id}>
-                      <ProjectCard
-                        project={project}
-                        priority={index < 6}
-                        eager={index < 12}
-                        selectedProjectIds={selectedProjectIds}
-                        toggleProjectSelection={toggleProjectSelection}
-                        handleToggleProjectStatus={handleToggleProjectStatus}
-                        setEditingProject={setEditingProject}
-                        handleDeleteProject={(id) => {
-                          if (confirm('Hapus proyek ini?')) deleteMutation.mutate(id);
-                        }}
-                        handleDuplicateProject={(p) => {
-                          if (confirm(`Duplikat "${p.title}"?`)) {
-                            createMutation.mutate({ ...p, title: `${p.title} (Copy)`, status: 'draft' } as CreateProjectData);
-                          }
-                        }}
-                        setManagingCommentsProject={setManagingCommentsProject}
-                        commentCount={commentCounts[project.slug] || 0}
-                      />
-                    </SortableProjectItem>
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
+            {isDndReady ? (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={paginatedProjects.map(p => p.id)} strategy={rectSortingStrategy}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {paginatedProjects.map((project, index) => (
+                      <SortableProjectItem key={project.id} id={project.id}>
+                        {renderProjectCard(project, index)}
+                      </SortableProjectItem>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedProjects.map((project, index) => (
+                  <div key={project.id} className="h-full">
+                    {renderProjectCard(project, index)}
+                  </div>
+                ))}
+              </div>
+            )}
 
             <Pagination
               currentPage={currentPage}
@@ -202,7 +224,7 @@ export default function AdminProjectsClient() {
       )}
 
       {showSettings && (
-        <FirebaseSettingsModal
+        <DataConnectionModal
           onCancel={() => setShowSettings(false)}
         />
       )}

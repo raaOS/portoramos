@@ -33,10 +33,10 @@ export interface NotificationChatMessage extends BaseChatMessage {
 }
 
 /**
- * Chat message for Firebase/real-time chat (Contact page)
+ * Chat message for CLOUDFLARE_D1/real-time chat (Contact page)
  * Uses string ID and timestamp number
  */
-export interface FirebaseChatMessage extends BaseChatMessage {
+export interface CLOUDFLARE_D1ChatMessage extends BaseChatMessage {
   id: string;
   sender: 'visitor' | 'admin';
   timestamp: number;
@@ -74,10 +74,10 @@ export interface TestimonialChatMessage {
 export type ChatMessage = NotificationChatMessage;
 
 /**
- * @deprecated Use FirebaseChatMessage instead.
+ * @deprecated Use CLOUDFLARE_D1ChatMessage instead.
  * Kept for backward compatibility with existing code in lib/chatStore.ts
  */
-export type ChatStoreMessage = FirebaseChatMessage;
+export type ChatStoreMessage = CLOUDFLARE_D1ChatMessage;
 
 /**
  * @deprecated Use WhatsAppChatMessage instead.

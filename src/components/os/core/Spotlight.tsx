@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { Search, FileText, AppWindow, Command } from "lucide-react";
 import type { Project } from "@/types/projects";
+import { Z_LAYERS } from "../utils/zIndexLayers";
 
 const SYSTEM_APPS = [
     { id: "about", title: "About Me", type: "app" as const },
@@ -95,7 +96,8 @@ export default function Spotlight({ isOpen, onClose, projects, onOpenProject, on
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
-            className="fixed inset-0 z-[10002] flex items-start justify-center bg-black/20 pt-[20vh] pointer-events-auto print:hidden"
+            className="fixed inset-0 flex items-start justify-center bg-black/20 pt-[20vh] pointer-events-auto print:hidden"
+            style={{ zIndex: Z_LAYERS.POPOUT_CONTENT }}
             onClick={onClose}
         >
             <motion.div

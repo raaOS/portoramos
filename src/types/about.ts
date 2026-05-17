@@ -111,11 +111,25 @@ export interface WallpaperConfig {
   blur?: number; // 0-20px
 }
 
+export interface DesktopIconPosition {
+  // Legacy pixel values — kept for backward compatibility with existing saves.
+  x: number;
+  y: number;
+  // Percentage-based (responsive). Optional supaya data lama tetap valid;
+  // kalau ada, lebih diprioritaskan daripada pixel legacy saat render.
+  xPct?: number;
+  yPct?: number;
+  // Reference screen dimensions saat admin save — dipakai untuk clamping
+  // cerdas dan fallback proporsional bila data legacy (pixel only).
+  refScreenWidth?: number;
+  refScreenHeight?: number;
+}
+
 export interface DesktopPreferences {
   visibleProjectIds: string[];
   maxIcons: number;
   layout: 'grid' | 'scattered';
-  iconPositions?: Record<string, { x: number; y: number }>; // Saved positions
+  iconPositions?: Record<string, DesktopIconPosition>; // Saved positions
 }
 
 export interface DockItemConfig {

@@ -32,6 +32,13 @@ export function useCvExport({ cvRef, displayName }: UseCvExportProps) {
                 quality: 1,
                 pixelRatio: 2, // 300 DPI equivalent
                 backgroundColor: '#ffffff',
+                filter: (node) => {
+                    const el = node as HTMLElement;
+                    if (el.classList) {
+                        return !el.classList.contains('no-print') && !el.classList.contains('print:hidden');
+                    }
+                    return true;
+                }
             });
 
             // Create PDF

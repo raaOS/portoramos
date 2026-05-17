@@ -1,10 +1,10 @@
-import { NextRequest } from 'next/server';
+﻿import { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 import { generateGenZComments } from '@/lib/magic';
-import { db } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/database';
 import { sendTelegramAlert } from '@/lib/telegram';
 import { CreateProjectSchema } from '@/lib/validations';
 import { success, created, unauthorized, serverError, validationError } from '@/lib/api-response';
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     // Jika admin minta fresh data, skip cache (noCache=true)
     const { projects, lastUpdated } = await projectService.getProjects(status, fresh);
 
-    // Fix GCS storage URLs → Firebase Storage URLs (prevents 403 Forbidden)
+    // Normalize local/R2 media paths before returning data.
     const fixedProjects = projects.map(p => ({
       ...p,
       cover: resolveStorageUrl(p.cover),
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     // Type assertion needed due to Zod schema allowing nulls that CreateProjectData doesn't.
     // NOTE: `projectService.createProject` may re-validate via its own Zod schema.
-    // Kalau schema service divergen, ia throw ZodError → ditangkap di bawah
+    // Kalau schema service divergen, ia throw ZodError â†’ ditangkap di bawah
     // dan return 400 (bukan 500) agar perilaku konsisten dengan route-level validation.
     let newProject;
     try {
@@ -78,12 +78,10 @@ export async function POST(request: NextRequest) {
       throw innerError;
     }
 
-    // --- Auto-Generate Comments (Firebase) ---
     if (validationResult.data.initialCommentCount && validationResult.data.initialCommentCount > 0) {
       try {
         const generatedComments = generateGenZComments(newProject.slug, validationResult.data.initialCommentCount);
 
-        // Save directly to Firebase
         await db.ref(`comments/${newProject.slug}`).set(generatedComments);
         console.log(`[API/Projects] Successfully generated ${generatedComments.length} comments for ${newProject.slug}`);
       } catch (commentErr) {
@@ -91,7 +89,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const successMessage = `✨ **NEW PROJECT CREATED**\n\n**Title:** ${newProject.title}\n**Client:** ${newProject.client}\n**ID:** ${newProject.id}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
+    const successMessage = `âœ¨ **NEW PROJECT CREATED**\n\n**Title:** ${newProject.title}\n**Client:** ${newProject.client}\n**ID:** ${newProject.id}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
     await sendTelegramAlert(successMessage).catch(() => { });
 
     revalidatePath('/', 'layout');
@@ -105,3 +103,4 @@ export async function POST(request: NextRequest) {
     return serverError('Failed to create project');
   }
 }
+

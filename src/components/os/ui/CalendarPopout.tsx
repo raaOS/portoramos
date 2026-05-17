@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Z_LAYERS } from '../utils/zIndexLayers';
 
 interface CalendarPopoutProps {
     isOpen: boolean;
@@ -47,7 +48,8 @@ export default function CalendarPopout({ isOpen, onClose: _onClose }: CalendarPo
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="fixed top-11 right-4 w-[280px] bg-white/80 dark:bg-black/70 backdrop-blur-2xl rounded-2xl border border-white/20 dark:border-white/10 shadow-2xl p-4 z-[10002] text-black dark:text-white overflow-hidden"
+            style={{ zIndex: Z_LAYERS.POPOUT_CONTENT }}
+            className="fixed top-11 right-4 w-[280px] bg-white/80 dark:bg-black/70 backdrop-blur-2xl rounded-2xl border border-white/20 dark:border-white/10 shadow-2xl p-4 text-black dark:text-white overflow-hidden"
         >
             {/* Header: Clock & Date */}
             <div className="mb-6 text-center">

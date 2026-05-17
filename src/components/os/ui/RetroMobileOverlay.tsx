@@ -4,6 +4,7 @@ import React from "react";
 import { m, AnimatePresence } from "motion/react";
 import { useRetroState } from "./hooks/useRetroState";
 import { RetroBootView, RetroErrorView, RetroDetailsView } from "./retro/RetroViews";
+import { Z_LAYERS } from "../utils/zIndexLayers";
 import "./retro/retro-os.css";
 
 export default function RetroMobileOverlay() {
@@ -20,7 +21,10 @@ export default function RetroMobileOverlay() {
     } = useRetroState();
 
     return (
-        <div className="fixed inset-0 z-[10000] bg-[#c0c0c0] flex items-center justify-center p-6 retro-os-container touch-none select-none overflow-hidden text-[#000]">
+        <div
+            className="fixed inset-0 bg-[#c0c0c0] flex items-center justify-center p-6 retro-os-container touch-none select-none overflow-hidden text-[#000]"
+            style={{ zIndex: Z_LAYERS.CHROME }}
+        >
             <AnimatePresence mode="wait">
                 {step === "boot" && (
                     <RetroBootView text={t.boot} />

@@ -85,6 +85,7 @@ interface TelegramMessageBody {
     chat_id: string;
     text: string;
     parse_mode: 'Markdown' | 'HTML';
+    message_thread_id?: number;
     reply_markup?: {
         inline_keyboard: { text: string; url: string }[][];
     };
@@ -98,7 +99,7 @@ async function sendTelegramMessage(
     chatId: string,
     botToken: string,
     message: string,
-    options?: { buttons?: { text: string; url: string }[][] },
+    options?: { buttons?: { text: string; url: string }[][], messageThreadId?: number },
     label = 'Telegram'
 ): Promise<{ success: boolean; error?: string }> {
     try {
@@ -114,6 +115,10 @@ async function sendTelegramMessage(
             body.reply_markup = {
                 inline_keyboard: options.buttons
             };
+        }
+
+        if (typeof options?.messageThreadId === 'number' && Number.isFinite(options.messageThreadId)) {
+            body.message_thread_id = options.messageThreadId;
         }
 
         const response = await fetch(url, {
@@ -272,3 +277,76 @@ export { getTelegramConfigSafe as getTelegramConfig };
 
 // Export internal untuk webhook use only
 export { validateConfig };
+
+/**
+ * Send Feedback notification ke Telegram.
+ *
+ * Routing priority (fallback chain):
+ *  1. Grup + topic (TELEGRAM_GROUP_ID + TELEGRAM_FEEDBACK_THREAD_ID)  → preferred
+ *  2. Grup saja (TELEGRAM_GROUP_ID)                                    → bila thread belum di-setup
+ *  3. Personal chat (TELEGRAM_CHAT_ID)                                 → fallback terakhir
+ *
+ * Ini memastikan notif selalu sampai, tanpa memaksa user set topic ID sebelum
+ * bisa pakai fitur.
+ */
+export async function sendFeedbackNotification(
+    message: string,
+    options?: { buttons?: { text: string; url: string }[][] }
+): Promise<{ success: boolean; error?: string; target: 'topic' | 'group' | 'personal' | 'none' }> {
+    const validation = validateConfig();
+    if (!validation.valid) {
+        console.error('[Feedback Telegram] Config error:', validation.error);
+        return { success: false, error: 'Service not configured', target: 'none' };
+    }
+
+    const { botToken, chatId, groupId } = validation.config;
+    const rawThreadId = cleanEnvVar('TELEGRAM_FEEDBACK_THREAD_ID');
+    const parsedThreadId = rawThreadId ? Number.parseInt(rawThreadId, 10) : NaN;
+    const threadId = Number.isFinite(parsedThreadId) ? parsedThreadId : null;
+
+    // Dev-only diagnostic: konfirmasi routing path yang dipakai.
+    if (process.env.NODE_ENV !== 'production') {
+        console.log('[Feedback Telegram] Routing diagnostic:', {
+            hasGroupId: Boolean(groupId),
+            rawThreadIdRaw: rawThreadId || '(empty)',
+            parsedThreadId: threadId,
+            willUseRoute: groupId && threadId !== null ? 'topic' : groupId ? 'group' : 'personal',
+        });
+    }
+
+    // 1. Grup + topic
+    if (groupId && threadId !== null) {
+        const result = await sendTelegramMessage(
+            groupId,
+            botToken,
+            message,
+            { buttons: options?.buttons, messageThreadId: threadId },
+            'Telegram Feedback Topic'
+        );
+        if (result.success) return { ...result, target: 'topic' };
+        console.warn('[Feedback Telegram] Topic send failed, falling back to group');
+    }
+
+    // 2. Grup saja
+    if (groupId) {
+        const result = await sendTelegramMessage(
+            groupId,
+            botToken,
+            message,
+            { buttons: options?.buttons },
+            'Telegram Feedback Group'
+        );
+        if (result.success) return { ...result, target: 'group' };
+        console.warn('[Feedback Telegram] Group send failed, falling back to personal');
+    }
+
+    // 3. Personal chat fallback
+    const result = await sendTelegramMessage(
+        chatId,
+        botToken,
+        message,
+        { buttons: options?.buttons },
+        'Telegram Feedback Personal'
+    );
+    return { ...result, target: result.success ? 'personal' : 'none' };
+}

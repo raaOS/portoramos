@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Wifi, LogOut } from "lucide-react";
 import { useOSSystem } from "../context/OSSystemContext";
+import { Z_LAYERS } from "../utils/zIndexLayers";
 
 interface MenuBarProps {
     onSearch?: () => void;
@@ -52,25 +53,29 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
     });
 
     return (
-        <div className="fixed top-0 left-0 right-0 h-9 sm:h-8 bg-white flex items-center justify-between px-3 sm:px-4 z-[10000] text-black text-xs select-none border-b border-gray-200 pointer-events-auto print:hidden">
+        <div
+            className="fixed top-0 left-0 right-0 h-9 sm:h-8 bg-white flex items-center justify-between gap-2 px-2 sm:px-3 lg:px-4 text-black text-xs select-none border-b border-gray-200 pointer-events-auto print:hidden"
+            style={{ zIndex: Z_LAYERS.CHROME }}
+        >
             {/* Left Side */}
-            <div className="flex items-center gap-4">
-                <div className="flex items-center hover:bg-black/5 px-2 py-1 rounded cursor-pointer transition-colors pb-1.5">
+            <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2 lg:gap-4">
+                <div className="flex shrink-0 items-center hover:bg-black/5 px-2 py-1 rounded cursor-pointer transition-colors pb-1.5">
                     {/* Authentic Apple Logo */}
                     <svg width="15" height="18" viewBox="0 0 17 20" fill="black" xmlns="http://www.w3.org/2000/svg">
                         <path d="M11.6661 17.6533C10.7495 18.9959 9.68947 19.9572 8.52947 20C7.61613 20 7.18947 19.6826 6.32947 19.6826C5.4628 19.6826 4.9628 19.6826 4.09613 20C3.0028 19.9714 2.05613 18.9959 1.15613 17.1666C-0.650534 13.9166 -0.563868 8.64731 2.76947 6.84865C3.8428 6.27398 4.71613 6.13131 5.5628 6.13131C6.55613 6.13131 7.22947 6.74465 8.16947 6.74465C9.09613 6.74465 9.77613 5.96598 10.9561 6.13131C11.5161 6.17398 13.0695 6.36065 14.1228 7.89398C14.0761 7.94731 12.0361 9.13131 12.0761 11.5313C12.1161 14.3473 14.5428 15.3087 14.5961 15.3487C14.5828 15.394 14.2295 16.642 13.5628 17.6133L11.6661 17.6533ZM11.1361 4.10065C11.5961 3.52598 11.9161 2.75931 11.8228 1.95665C11.0828 2.02865 10.1961 2.45798 9.66947 3.09798C9.17613 3.65798 8.7628 4.45798 8.87613 5.23131C9.69613 5.29531 10.5561 4.79398 11.1361 4.10065Z" />
                     </svg>
                 </div>
                 <div
-                    className="font-bold cursor-pointer hover:bg-black/5 px-2 py-1 rounded transition-colors hidden sm:block"
+                    className="hidden max-w-[clamp(5rem,22vw,12rem)] truncate whitespace-nowrap font-bold cursor-pointer hover:bg-black/5 px-2 py-1 rounded transition-colors sm:block"
                     onClick={onAbout}
+                    title={activeWindow}
                 >
                     {activeWindow}
                 </div>
                 {/* Menus (Hidden on mobile for simplicity) */}
-                <div className="hidden md:flex items-center gap-1 font-medium">
+                <div className="hidden lg:flex items-center gap-1 font-medium">
                     {["File", "Edit", "View", "Go", "Window", "Help"].map((menu) => (
-                        <div key={menu} className="px-3 py-1 hover:bg-black/5 rounded cursor-default transition-colors">
+                        <div key={menu} className="px-2 xl:px-3 py-1 hover:bg-black/5 rounded cursor-default transition-colors">
                             {menu}
                         </div>
                     ))}
@@ -98,19 +103,19 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
             )}
 
             {/* Right Side */}
-            <div className="flex items-center gap-3 sm:gap-5">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3 lg:gap-5">
                 {/* Availability Status */}
                 {availability && (
-                    <div className={`hidden md:flex items-center gap-2 px-2 py-0.5 rounded-full transition-colors ${availability.status === 'available' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                    <div className={`hidden lg:flex max-w-[13rem] items-center gap-2 px-2 py-0.5 rounded-full transition-colors ${availability.status === 'available' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
                         }`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${availability.status === 'available' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
+                        <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${availability.status === 'available' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
                             }`} />
-                        <span className="font-medium text-[10px] tracking-wide uppercase">{availability.text}</span>
+                        <span className="truncate font-medium text-[10px] tracking-wide uppercase">{availability.text}</span>
                     </div>
                 )}
 
                 {/* Icons */}
-                <div className="flex items-center gap-3 cursor-pointer" onClick={onToggleControlCenter}>
+                <div className="flex items-center gap-2 sm:gap-3 cursor-pointer" onClick={onToggleControlCenter}>
                     <Search
                         size={18}
                         className="hover:text-gray-600 sm:w-[14px] sm:h-[14px]"
@@ -132,13 +137,13 @@ export default function MenuBar({ onSearch, activeWindow = "Finder", onAbout, av
 
                 {/* Clock */}
                 <div 
-                    className="flex items-center gap-2 font-medium cursor-pointer hover:bg-black/5 px-2 py-1 rounded transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 font-medium cursor-pointer hover:bg-black/5 px-1.5 sm:px-2 py-1 rounded transition-colors"
                     onClick={(e) => {
                         e.stopPropagation();
                         setShowCalendar(!showCalendar);
                     }}
                 >
-                    <span className="hidden sm:inline">{formattedDate}</span>
+                    <span className="hidden lg:inline">{formattedDate}</span>
                     <span>{formattedTime}</span>
                 </div>
             </div>

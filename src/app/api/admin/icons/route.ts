@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { bucket } from '@/lib/firebaseAdmin';
 import { validateAdminRequest } from '@/lib/auth';
 import { deleteIconSchema } from '@/lib/validations';
 import { validationError } from '@/lib/api-response';
+import { buildR2PublicUrl, deleteFromR2, isR2StorageConfigured, listR2ObjectKeys } from '@/lib/r2Storage';
+import { extractStoragePath } from '@/lib/urlResolver';
 
 const FOLDER_PATH = 'assets/icons-library';
 
@@ -12,20 +13,14 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const [files] = await bucket.getFiles({ prefix: FOLDER_PATH });
+        if (!isR2StorageConfigured()) {
+            return NextResponse.json({ icons: [] });
+        }
 
-        const icons = files
-            .filter(file => {
-                const name = file.name;
-                if (name.includes('/.')) return false;
-                if (name.includes('_temp')) return false;
-                return /\.(webp|png|jpg|jpeg|svg)$/i.test(name);
-            })
-            .sort((a, b) => b.name.localeCompare(a.name))
-            .map(file => {
-                // Return Firebase Storage Public URL format
-                return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(file.name)}?alt=media`;
-            });
+        const icons = (await listR2ObjectKeys({ prefix: FOLDER_PATH }))
+            .filter(isIconKey)
+            .sort((a, b) => b.localeCompare(a))
+            .map((key) => buildR2PublicUrl(key));
 
         return NextResponse.json({ icons });
     } catch (error) {
@@ -50,15 +45,8 @@ export async function DELETE(req: NextRequest) {
 
         const { url } = validation.data;
 
-        // 1. Resolve Path from URL
-        let storagePath = '';
-        if (url.includes('/o/')) {
-            const parts = url.split('/o/');
-            const pathWithParams = parts[1].split('?')[0];
-            storagePath = decodeURIComponent(pathWithParams);
-        } else if (url.startsWith('/assets/')) {
-            storagePath = url.startsWith('/') ? url.substring(1) : url;
-        } else {
+        const storagePath = extractStoragePath(url);
+        if (!storagePath) {
             return NextResponse.json({ error: 'Invalid icon path/URL structure' }, { status: 400 });
         }
 
@@ -79,15 +67,10 @@ export async function DELETE(req: NextRequest) {
             }
         }
 
-        // Delete from Firebase Storage
         await Promise.all(targetsToDelete.map(async (targetPath) => {
             try {
-                const file = bucket.file(targetPath);
-                const [exists] = await file.exists();
-                if (exists) {
-                    await file.delete();
-                    console.log(`[IconsAPI] Deleted: ${targetPath}`);
-                }
+                await deleteR2IconIfConfigured(targetPath);
+                console.log(`[IconsAPI] Delete requested: ${targetPath}`);
             } catch (err) {
                 console.warn(`[IconsAPI] Failed to delete ${targetPath}:`, err);
             }
@@ -98,4 +81,15 @@ export async function DELETE(req: NextRequest) {
         console.error('[IconsAPI] DELETE Error:', error);
         return NextResponse.json({ error: 'Failed to delete icon' }, { status: 500 });
     }
+}
+
+function isIconKey(key: string) {
+    if (key.includes('/.')) return false;
+    if (key.includes('_temp')) return false;
+    return /\.(webp|png|jpg|jpeg|svg)$/i.test(key);
+}
+
+async function deleteR2IconIfConfigured(targetPath: string) {
+    if (!isR2StorageConfigured()) return;
+    await deleteFromR2(targetPath);
 }

@@ -4,15 +4,15 @@ import { test, expect } from '@playwright/test';
  * Admin Reply E2E Tests
  * 
  * Tests end-to-end chat flow:
- * Visitor sends message → Firebase stores it → Telegram notification → Admin replies
+ * Visitor sends message → CLOUDFLARE_D1 stores it → Telegram notification → Admin replies
  * 
  * REQUIREMENTS TO RUN:
  * - Set ENABLE_DEBUG_TESTS=true in environment
  * - OR run in development mode (NODE_ENV=development)
- * - Firebase must be configured and accessible
+ * - CLOUDFLARE_D1 must be configured and accessible
  * 
  * These tests are skipped by default in production/CI because they require
- * debug endpoints and external services (Telegram, Firebase).
+ * debug endpoints and external services (Telegram, CLOUDFLARE_D1).
  */
 
 const isDebugEnabled = () => {
@@ -53,7 +53,7 @@ test.describe('Admin Reply E2E Test', () => {
     const sendData = await sendRes.json();
     console.log('Send result:', sendData);
 
-    // Wait for Firebase
+    // Wait for CLOUDFLARE_D1
     await page.waitForTimeout(3000);
 
     // Step 2: Check session

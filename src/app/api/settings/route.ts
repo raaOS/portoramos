@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/database';
 import { validateAdminRequest } from '@/lib/auth';
 import { updateSettingsSchema } from '@/lib/validations';
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Save only validated data to Firebase (prevents junk fields)
+        // Save only validated data to CLOUDFLARE_D1 (prevents junk fields)
         await db.ref('settings').set(validation.data);
 
         return NextResponse.json({ success: true, settings: validation.data });
@@ -42,3 +42,4 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });
     }
 }
+

@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         }
 
         // CACHE-CONSISTENCY FIX: tulis via aboutService.updateAboutData sehingga
-        // contentCache(`firebase:content/about`) ikut ter-invalidate dan realtime
+        // contentCache(`CLOUDFLARE_D1:content/about`) ikut ter-invalidate dan realtime
         // sync tetap akurat. Sebelumnya bypass service bikin cache stale sampai TTL.
         await aboutService.updateAboutData({
             designPhilosophy: validation.data,

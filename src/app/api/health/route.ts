@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 
 /**
  * Health Check Endpoint
@@ -27,9 +27,9 @@ export async function GET() {
             checks.status = 'degraded';
         }
 
-        // Check Firebase connection (Real test)
+        // Check configured data backend connection.
         try {
-            const { db } = await import('@/lib/firebaseAdmin');
+            const { db, getDatabaseBackend } = await import('@/lib/database');
 
             // Perform an actual lightweight read operation with a timeout
             // This guarantees that the network connection is alive and credentials are valid
@@ -38,10 +38,11 @@ export async function GET() {
 
             await Promise.race([readPromise, timeoutPromise]);
 
-            checks.firebase = 'connected';
+            checks.database = 'connected';
+            checks.databaseBackend = getDatabaseBackend();
         } catch (error) {
-            console.error('Firebase health check failed:', error);
-            checks.firebase = 'disconnected';
+            console.error('Database health check failed:', error);
+            checks.database = 'disconnected';
             checks.status = 'degraded';
         }
 
@@ -63,3 +64,4 @@ export async function GET() {
         }, { status: 500 });
     }
 }
+

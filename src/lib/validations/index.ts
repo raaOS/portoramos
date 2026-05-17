@@ -34,6 +34,9 @@ export {
     deleteIconSchema,
     telegramWebhookSchema,
     telegramStatusSchema,
+    feedbackSubmissionSchema,
+    feedbackModerationSchema,
+    feedbackStatusEnum,
     type CreateProjectInput,
     type UpdateProjectInput,
     type CreateCommentInput,
@@ -42,6 +45,9 @@ export {
     type DeleteIconInput,
     type TelegramWebhookInput,
     type TelegramStatusInput,
+    type FeedbackSubmissionInput,
+    type FeedbackModerationInput,
+    type FeedbackStatus,
 } from './schemas';
 
 export {

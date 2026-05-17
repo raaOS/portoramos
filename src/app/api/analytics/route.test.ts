@@ -5,7 +5,7 @@ const { refMock, enforceRequestRateLimitMock } = vi.hoisted(() => ({
     enforceRequestRateLimitMock: vi.fn(),
 }));
 
-vi.mock('@/lib/firebaseAdmin', () => ({
+vi.mock('@/lib/database', () => ({
     db: {
         ref: refMock,
     }
@@ -37,7 +37,7 @@ describe('POST /api/analytics', () => {
         expect(response.headers.get('Retry-After')).toBe('30');
     });
 
-    it('validates analytics payloads before writing to Firebase', async () => {
+    it('validates analytics payloads before writing to CLOUDFLARE_D1', async () => {
         enforceRequestRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
 
         const response = await POST(new Request('http://localhost/api/analytics', {
@@ -52,3 +52,4 @@ describe('POST /api/analytics', () => {
         expect(refMock).not.toHaveBeenCalled();
     });
 });
+

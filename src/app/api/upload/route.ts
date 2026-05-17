@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAdminRequest } from '@/lib/auth';
-import { bucket } from '@/lib/firebaseAdmin';
-import { optimizeVideoForPortfolio } from '@/lib/videoOptimization';
+import {
+    buildR2PublicUrl,
+    deleteFromR2,
+    getMissingR2EnvKeys,
+    isR2StorageConfigured,
+    uploadToR2,
+} from '@/lib/r2Storage';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -42,9 +47,15 @@ export async function POST(req: NextRequest) {
         }
 
         // Basic Validation
-        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm'];
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'video/mp4', 'video/webm'];
         if (!validTypes.includes(file.type)) {
             return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
+        }
+
+        if (!isR2StorageConfigured()) {
+            return NextResponse.json({
+                error: `Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`
+            }, { status: 500 });
         }
 
         const originalBuffer = Buffer.from(await file.arrayBuffer());
@@ -97,6 +108,8 @@ export async function POST(req: NextRequest) {
         const storagePath = `${targetDir}/${finalFilename}`;
         let previewPath: string | null = null;
         let posterPath: string | null = null;
+        let previewBuffer: Buffer | null = null;
+        let posterBuffer: Buffer | null = null;
         let videoStats: {
             originalSize: number;
             optimizedSize: number;
@@ -105,11 +118,14 @@ export async function POST(req: NextRequest) {
         } | null = null;
 
         if (isVideoUpload) {
+            const { optimizeVideoForPortfolio } = await import('@/lib/videoOptimization');
             const optimized = await optimizeVideoForPortfolio(originalBuffer, {
                 allowOriginalPassthrough: file.type === 'video/mp4',
             });
             buffer = skipMainVideoOptimization ? originalBuffer : optimized.buffer;
             contentType = 'video/mp4';
+            previewBuffer = optimized.previewBuffer;
+            posterBuffer = optimized.posterBuffer;
             videoStats = {
                 originalSize: optimized.originalSize,
                 optimizedSize: buffer.length,
@@ -121,47 +137,46 @@ export async function POST(req: NextRequest) {
             previewPath = `${basePath}-preview.mp4`;
             posterPath = `${basePath}.jpg`;
 
-            await bucket.file(previewPath).save(optimized.previewBuffer, {
-                metadata: {
-                    contentType: 'video/mp4',
-                    cacheControl: 'public, max-age=31536000, immutable',
-                }
-            });
-
-            await bucket.file(posterPath).save(optimized.posterBuffer, {
-                metadata: {
-                    contentType: 'image/jpeg',
-                    cacheControl: 'public, max-age=31536000, immutable',
-                }
-            });
         }
 
-        const firebaseFile = bucket.file(storagePath);
-
-        await firebaseFile.save(buffer, {
-            metadata: {
+        const cacheControl = 'public, max-age=31536000, immutable';
+        const [r2Main] = await Promise.all([
+            uploadToR2({
+                key: storagePath,
+                body: buffer,
                 contentType,
-                cacheControl: 'public, max-age=31536000, immutable',
-            }
-        });
-
-        const publicUrl = buildFirebaseMediaUrl(storagePath);
+                cacheControl,
+            }),
+            ...(previewPath && previewBuffer
+                ? [uploadToR2({
+                    key: previewPath,
+                    body: previewBuffer,
+                    contentType: 'video/mp4',
+                    cacheControl,
+                })]
+                : []),
+            ...(posterPath && posterBuffer
+                ? [uploadToR2({
+                    key: posterPath,
+                    body: posterBuffer,
+                    contentType: 'image/jpeg',
+                    cacheControl,
+                })]
+                : []),
+        ]);
 
         return NextResponse.json({
-            url: publicUrl,
-            previewUrl: previewPath ? buildFirebaseMediaUrl(previewPath) : undefined,
-            posterUrl: posterPath ? buildFirebaseMediaUrl(posterPath) : undefined,
+            url: r2Main.url,
+            previewUrl: previewPath ? buildR2PublicUrl(previewPath) : undefined,
+            posterUrl: posterPath ? buildR2PublicUrl(posterPath) : undefined,
             videoStats,
+            storageProvider: 'r2',
             success: true
         });
     } catch (e) {
         console.error('Upload Error:', e);
         return NextResponse.json({ error: e instanceof Error ? e.message : 'Upload failed' }, { status: 500 });
     }
-}
-
-function buildFirebaseMediaUrl(storagePath: string): string {
-    return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(storagePath)}?alt=media`;
 }
 
 export async function DELETE(req: NextRequest) {
@@ -182,12 +197,13 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: 'Forbidden path' }, { status: 403 });
         }
 
-        const firebaseFile = bucket.file(storagePath);
-        const [exists] = await firebaseFile.exists();
-
-        if (exists) {
-            await firebaseFile.delete();
+        if (!isR2StorageConfigured()) {
+            return NextResponse.json({
+                error: `Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`
+            }, { status: 500 });
         }
+
+        await deleteFromR2(storagePath);
 
         return NextResponse.json({ success: true });
     } catch (e) {

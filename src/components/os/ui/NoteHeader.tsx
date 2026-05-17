@@ -6,14 +6,20 @@ interface NoteHeaderProps {
     color: string;
     colors: string[];
     onColorChange: (color: string) => void;
-    onDelete: () => void;
+    /**
+     * Tombol "X" di header memanggil ini. Tujuannya adalah ephemeral hide
+     * (per-session, tidak persist) — bukan delete. Ini supaya visitor non-admin
+     * bisa "menyingkirkan" sticky note dari layar dan memunculkannya kembali
+     * via dock icon Notes.
+     */
+    onHide: () => void;
     onToggleCollapse: () => void;
     isPinned: boolean;
     dragControls: DragControls;
 }
 
 export const NoteHeader = ({
-    onDelete,
+    onHide,
     onToggleCollapse,
     isPinned,
     dragControls
@@ -31,9 +37,9 @@ export const NoteHeader = ({
         <div className="flex items-center" onPointerDown={(e) => e.stopPropagation()}>
 
             <button
-                onClick={onDelete}
+                onClick={onHide}
                 className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-black transition-colors"
-                title="Tutup"
+                title="Sembunyikan"
             >
                 <X size={16} />
             </button>

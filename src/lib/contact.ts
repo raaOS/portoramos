@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebaseAdmin';
+﻿import { db } from '@/lib/database';
 import { CacheManager } from '@/lib/cache/CacheManager';
 import fallbackContactData from '@/data/contact.json';
 import type { ContactData } from '@/types/contact';
@@ -65,7 +65,8 @@ export async function getContactData(noCache = false): Promise<ContactData> {
         contactCache.set(CONTACT_CACHE_KEY, merged);
         return merged;
     } catch (error) {
-        console.error('Error loading contact data from Firebase:', error);
+        console.error('Error loading contact data from data backend:', error);
         return fallbackContact;
     }
 }
+

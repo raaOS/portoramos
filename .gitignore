@@ -51,7 +51,7 @@ scores.txt
 
 # Audit & temp debug files
 audit-log.txt
-firebase-audit*.json
+data-audit*.json
 probe-results*.txt
 lint-output.txt
 .audit-reports/

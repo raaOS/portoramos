@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         } 
         
         if (type === 'file') {
-            const { name, url, fileType, size, metadata } = body;
+            const { name, url, previewUrl, thumbnailUrl, fileType, size, metadata } = body;
             if (!name || !url || !fileType) {
                 return serverError('Missing required file information (name, url, or fileType)');
             }
@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
             const file = await explorerService.createFile({
                 name,
                 url,
+                previewUrl,
+                thumbnailUrl,
                 fileType,
                 parentId,
                 size,

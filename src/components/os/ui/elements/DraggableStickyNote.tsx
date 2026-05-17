@@ -8,6 +8,12 @@ interface DraggableStickyNoteProps {
     updateNote: (id: string, updates: Partial<NoteData>) => void;
     bringToFrontNote: (id: string) => void;
     deleteNote: (id: string) => void;
+    /**
+     * Ephemeral hide (per-session). Tombol X di header note pakai ini.
+     * Note tetap tersimpan di database, hanya disembunyikan dari layar
+     * sampai user klik dock icon Notes lagi.
+     */
+    hideNote: (id: string) => void;
     permanentDeleteNote: (id: string) => void;
     restoreNote: (id: string) => void;
     addNote?: () => void;
@@ -20,6 +26,7 @@ export const DraggableStickyNote = ({
     updateNote,
     bringToFrontNote,
     deleteNote,
+    hideNote,
     permanentDeleteNote,
     restoreNote,
     addNote,
@@ -206,6 +213,7 @@ export const DraggableStickyNote = ({
                 note={{ ...note, width: dynamicSize.width, height: dynamicSize.height }}
                 onUpdate={updateNote}
                 onDelete={deleteNote}
+                onHide={hideNote}
                 onPermanentDelete={permanentDeleteNote}
                 onRestore={restoreNote}
                 onAdd={addNote}

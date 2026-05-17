@@ -1,5 +1,5 @@
 // Sistem positions yang simple dan reliable
-// localStorage = primary source for ADMIN ONLY, Firebase = template for visitors
+// localStorage = primary source for ADMIN ONLY, CLOUDFLARE_D1 = template for visitors
 
 import type { WindowPreference } from '@/types/about';
 
@@ -7,15 +7,21 @@ const STORAGE_KEY = 'ramos-positions-v2';
 
 type WindowPosition = { x: number; y: number; width: number; height: number };
 type IconPosition = { x: number; y: number };
+type PersistedIconData = IconPosition & {
+  xPct?: number;
+  yPct?: number;
+  refScreenWidth?: number;
+  refScreenHeight?: number;
+};
 type NotePosition = { x: number; y: number; width: number; height: number };
 
 interface PositionData {
   windows: Record<string, WindowPosition>;
-  icons: Record<string, IconPosition>;
+  icons: Record<string, PersistedIconData>;
   notes: Record<string, NotePosition>;
 }
 
-type PersistedIconPosition = Partial<IconPosition> | null | undefined;
+type PersistedIconPosition = Partial<PersistedIconData> | null | undefined;
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
@@ -74,7 +80,7 @@ export function clearVisitorPositions() {
 // Get position window
 export function getWindowPosition(
   id: string,
-  firebaseData: WindowPreference | null | undefined,
+  CLOUDFLARE_D1Data: WindowPreference | null | undefined,
   defaults: { x: number; y: number; width: number; height: number },
   isAdmin: boolean = false
 ): { x: number; y: number; width: number; height: number } {
@@ -87,15 +93,15 @@ export function getWindowPosition(
   const vp = getCurrentViewport();
 
   // 2. Cek percentage-based position (NEW - responsive)
-  if (isFiniteNumber(firebaseData?.xPct) && isFiniteNumber(firebaseData?.yPct)) {
-    const x = (firebaseData.xPct! / 100) * vp.width;
-    const y = (firebaseData.yPct! / 100) * vp.height;
-    const width = isFiniteNumber(firebaseData?.widthPct)
-      ? (firebaseData.widthPct! / 100) * vp.width
-      : (isFiniteNumber(firebaseData?.width) ? firebaseData.width! : defaults.width);
-    const height = isFiniteNumber(firebaseData?.heightPct)
-      ? (firebaseData.heightPct! / 100) * vp.height
-      : (isFiniteNumber(firebaseData?.height) ? firebaseData.height! : defaults.height);
+  if (isFiniteNumber(CLOUDFLARE_D1Data?.xPct) && isFiniteNumber(CLOUDFLARE_D1Data?.yPct)) {
+    const x = (CLOUDFLARE_D1Data.xPct! / 100) * vp.width;
+    const y = (CLOUDFLARE_D1Data.yPct! / 100) * vp.height;
+    const width = isFiniteNumber(CLOUDFLARE_D1Data?.widthPct)
+      ? (CLOUDFLARE_D1Data.widthPct! / 100) * vp.width
+      : (isFiniteNumber(CLOUDFLARE_D1Data?.width) ? CLOUDFLARE_D1Data.width! : defaults.width);
+    const height = isFiniteNumber(CLOUDFLARE_D1Data?.heightPct)
+      ? (CLOUDFLARE_D1Data.heightPct! / 100) * vp.height
+      : (isFiniteNumber(CLOUDFLARE_D1Data?.height) ? CLOUDFLARE_D1Data.height! : defaults.height);
 
     // Clamp to viewport with margin
     const margin = 20;
@@ -108,15 +114,15 @@ export function getWindowPosition(
   }
 
   // 3. Cek legacy pixel-based position (FALLBACK)
-  if (isFiniteNumber(firebaseData?.x) && isFiniteNumber(firebaseData?.y)) {
-    const width = isFiniteNumber(firebaseData?.width) ? firebaseData!.width! : defaults.width;
-    const height = isFiniteNumber(firebaseData?.height) ? firebaseData!.height! : defaults.height;
+  if (isFiniteNumber(CLOUDFLARE_D1Data?.x) && isFiniteNumber(CLOUDFLARE_D1Data?.y)) {
+    const width = isFiniteNumber(CLOUDFLARE_D1Data?.width) ? CLOUDFLARE_D1Data!.width! : defaults.width;
+    const height = isFiniteNumber(CLOUDFLARE_D1Data?.height) ? CLOUDFLARE_D1Data!.height! : defaults.height;
 
     // Clamp legacy values to current viewport
     const margin = 20;
     return {
-      x: Math.max(margin, Math.min(firebaseData!.x!, vp.width - Math.max(width, 300) - margin)),
-      y: Math.max(margin, Math.min(firebaseData!.y!, vp.height - Math.max(height, 200) - margin)),
+      x: Math.max(margin, Math.min(CLOUDFLARE_D1Data!.x!, vp.width - Math.max(width, 300) - margin)),
+      y: Math.max(margin, Math.min(CLOUDFLARE_D1Data!.y!, vp.height - Math.max(height, 200) - margin)),
       width: Math.max(300, Math.min(width, vp.width * 0.95)),
       height: Math.max(200, Math.min(height, vp.height * 0.95))
     };
@@ -127,23 +133,85 @@ export function getWindowPosition(
 }
 
 // Get position icon
+// Prioritas: localStorage (admin) → percentage-based (responsive, cross-device) →
+// legacy pixel (clamped ke viewport aktif) → default grid slot.
 export function getIconPosition(
   id: string,
-  firebaseData: PersistedIconPosition,
+  CLOUDFLARE_D1Data: PersistedIconPosition,
   defaults: { x: number; y: number },
   isAdmin: boolean = false
 ): { x: number; y: number } {
+  const vp = getCurrentViewport();
+  // Icon minimum visibility: keep at least this many pixels dari tiap edge supaya
+  // icon nggak pernah ketutup menu bar atas atau dock bawah, dan tetap clickable.
+  const ICON_BOX = 80;      // asumsi ukuran icon (matches DesktopIcon baseHeight large)
+  const TOP_SAFE = 40;      // space untuk MenuBar
+  const BOTTOM_SAFE = 120;  // space untuk Dock
+  const SIDE_SAFE = 8;
+
+  const clamp = (x: number, y: number) => ({
+    x: Math.max(SIDE_SAFE, Math.min(x, Math.max(SIDE_SAFE, vp.width - ICON_BOX - SIDE_SAFE))),
+    y: Math.max(TOP_SAFE, Math.min(y, Math.max(TOP_SAFE, vp.height - BOTTOM_SAFE))),
+  });
+
   // 1. Cek localStorage hanya jika admin
   if (isAdmin) {
     const local = loadPositions().icons?.[id];
-    if (local) return local;
+    if (local) {
+      // Admin punya buffer lokal → prioritas. Tetap clamp supaya kalau admin
+      // pindah ke layar yang lebih kecil, iconnya nggak ilang.
+      return clamp(local.x, local.y);
+    }
   }
-  
-  if (isFiniteNumber(firebaseData?.x) && isFiniteNumber(firebaseData?.y)) {
-    return { x: firebaseData.x, y: firebaseData.y };
+
+  // 2. Percentage-based (NEW — responsive cross-device)
+  if (isFiniteNumber(CLOUDFLARE_D1Data?.xPct) && isFiniteNumber(CLOUDFLARE_D1Data?.yPct)) {
+    const x = (CLOUDFLARE_D1Data.xPct! / 100) * vp.width;
+    const y = (CLOUDFLARE_D1Data.yPct! / 100) * vp.height;
+    return clamp(x, y);
   }
-  
-  return defaults;
+
+  // 3. Legacy pixel-based — scale proporsional bila refScreen dikenal,
+  //    fallback: pakai pixel langsung lalu di-clamp.
+  if (isFiniteNumber(CLOUDFLARE_D1Data?.x) && isFiniteNumber(CLOUDFLARE_D1Data?.y)) {
+    const refW = isFiniteNumber(CLOUDFLARE_D1Data?.refScreenWidth) ? CLOUDFLARE_D1Data!.refScreenWidth! : null;
+    const refH = isFiniteNumber(CLOUDFLARE_D1Data?.refScreenHeight) ? CLOUDFLARE_D1Data!.refScreenHeight! : null;
+    if (refW && refH && refW > 0 && refH > 0) {
+      const x = (CLOUDFLARE_D1Data!.x! / refW) * vp.width;
+      const y = (CLOUDFLARE_D1Data!.y! / refH) * vp.height;
+      return clamp(x, y);
+    }
+    return clamp(CLOUDFLARE_D1Data!.x!, CLOUDFLARE_D1Data!.y!);
+  }
+
+  // 4. Default grid slot (already within viewport from desktopLayoutUtils)
+  return clamp(defaults.x, defaults.y);
+}
+
+// Save single icon position
+// Persist pixel + percentage + reference screen — supaya admin yang pakai layar
+// besar tetap responsive saat visitor buka di layar kecil/sedang.
+export function saveIconPosition(id: string, pos: { x: number; y: number }, isAdmin: boolean = false) {
+  if (!isAdmin) return; // Visitor: no persistence to follow "refresh = reset" rule
+
+  const current = loadPositions();
+  const vp = getCurrentViewport();
+  const xPct = vp.width > 0 ? (pos.x / vp.width) * 100 : 0;
+  const yPct = vp.height > 0 ? (pos.y / vp.height) * 100 : 0;
+
+  savePositions({
+    icons: {
+      ...current.icons,
+      [id]: {
+        x: pos.x,
+        y: pos.y,
+        xPct,
+        yPct,
+        refScreenWidth: vp.width,
+        refScreenHeight: vp.height,
+      }
+    }
+  });
 }
 
 // Save single window position
@@ -171,20 +239,6 @@ export function saveWindowPosition(id: string, pos: { x?: number; y?: number; wi
       [id]: updated
     }
   });
-}
-
-// Save single icon position
-export function saveIconPosition(id: string, pos: { x: number; y: number }, isAdmin: boolean = false) {
-  if (isAdmin) {
-    const current = loadPositions();
-    savePositions({
-      icons: {
-        ...current.icons,
-        [id]: pos
-      }
-    });
-  }
-  // Visitor: no persistence to follow "refresh = reset" rule
 }
 
 // Save single note position (for visitor session)

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAdminRequest } from '@/lib/auth';
-import { db } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/database';
 import { enforceRequestRateLimit } from '@/lib/security/request';
 import { z } from 'zod';
 
-// Firebase path for analytics logs
+// CLOUDFLARE_D1 path for analytics logs
 const ANALYTICS_PATH = 'analytics/logs';
 const MAX_LOGS = 100;
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
             userAgent: request.headers.get('user-agent') || 'Unknown'
         };
 
-        // Write to Firebase (async, works on Vercel)
+        // Write to CLOUDFLARE_D1 (async, works on Vercel)
         const logsSnap = await db.ref(ANALYTICS_PATH).once('value');
         const existing: AnalyticsLog[] = logsSnap.exists() ? Object.values(logsSnap.val()) : [];
 
@@ -89,3 +89,4 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ logs: [] });
     }
 }
+

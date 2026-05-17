@@ -1,7 +1,7 @@
-import { cache } from 'react';
+﻿import { cache } from 'react';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { ProjectSchema, CreateProjectSchema, UpdateProjectSchema } from '@/lib/validations';
-import { db } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/database';
 
 // Helper Submodules
 import { 
@@ -94,7 +94,7 @@ export const projectService = {
 
             return result;
         } catch (error) {
-            console.error('Error loading projects from Firebase:', error);
+            console.error('Error loading projects from data backend:', error);
             return {
                 projects: [],
                 lastUpdated: new Date().toISOString()
@@ -253,7 +253,7 @@ export const projectService = {
         if (!snap.exists()) return true;
 
         const currentProjects = snap.val();
-        const firebaseUpdates: Record<string, unknown> = {};
+        const dataUpdates: Record<string, unknown> = {};
 
         if (updates.delete) {
             const allAssetUrls: string[] = [];
@@ -261,7 +261,7 @@ export const projectService = {
             updates.ids.forEach(id => {
                 const project = currentProjects[id];
                 if (project) {
-                    firebaseUpdates[`projects/${id}`] = null;
+                    dataUpdates[`projects/${id}`] = null;
                     const projectAssets = extractProjectAssets(project);
                     allAssetUrls.push(...projectAssets);
                 }
@@ -271,9 +271,9 @@ export const projectService = {
                 await purgeStorageAssets(allAssetUrls);
             }
 
-            if (Object.keys(firebaseUpdates).length > 0) {
-                firebaseUpdates['lastUpdated'] = new Date().toISOString();
-                await db.ref().update(firebaseUpdates);
+            if (Object.keys(dataUpdates).length > 0) {
+                dataUpdates['lastUpdated'] = new Date().toISOString();
+                await db.ref().update(dataUpdates);
             }
 
             clearProjectCache();
@@ -282,21 +282,21 @@ export const projectService = {
         } else if (updates.reorder) {
             updates.ids.forEach((id, index) => {
                 if (currentProjects[id]) {
-                    firebaseUpdates[`projects/${id}/order`] = index + 1;
-                    firebaseUpdates[`projects/${id}/updatedAt`] = new Date().toISOString();
+                    dataUpdates[`projects/${id}/order`] = index + 1;
+                    dataUpdates[`projects/${id}/updatedAt`] = new Date().toISOString();
                 }
             });
         } else if (updates.status) {
             updates.ids.forEach(id => {
                 if (currentProjects[id]) {
-                    firebaseUpdates[`projects/${id}/status`] = updates.status;
-                    firebaseUpdates[`projects/${id}/updatedAt`] = new Date().toISOString();
+                    dataUpdates[`projects/${id}/status`] = updates.status;
+                    dataUpdates[`projects/${id}/updatedAt`] = new Date().toISOString();
                 }
             });
         }
 
-        firebaseUpdates['lastUpdated'] = new Date().toISOString();
-        await db.ref().update(firebaseUpdates);
+        dataUpdates['lastUpdated'] = new Date().toISOString();
+        await db.ref().update(dataUpdates);
 
         clearProjectCache();
         return true;
@@ -306,3 +306,4 @@ export const projectService = {
         return getCacheMetrics();
     }
 };
+

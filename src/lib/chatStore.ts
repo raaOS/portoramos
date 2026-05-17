@@ -1,5 +1,5 @@
 import 'server-only';
-import { db } from './firebaseAdmin';
+import { db } from './database';
 import * as crypto from 'crypto';
 
 export interface ChatMessage {
@@ -19,8 +19,8 @@ export interface ChatSession {
     lastAdminReplyTime: number;
 }
 
-// In Phase 4, we use Firebase instead of local maps.
-// Firebase structure:
+// In Phase 4, we use CLOUDFLARE_D1 instead of local maps.
+// CLOUDFLARE_D1 structure:
 // /sessions/{visitorId}: ChatSession
 // /messages/{visitorId}: Record<string, ChatMessage>
 
@@ -80,7 +80,7 @@ export const chatStore = {
     async updateSessionThreadId(visitorId: string, threadId: number) {
         // Ensure threadId is stored as number in session
         await db.ref(`sessions/${visitorId}`).update({ telegramThreadId: threadId });
-        // Map threadId to visitorId using string key for Firebase (threadId could be very large)
+        // Map threadId to visitorId using string key for CLOUDFLARE_D1 (threadId could be very large)
         await db.ref(`threadMap/${String(threadId)}`).set(visitorId);
     },
 
@@ -164,3 +164,4 @@ export const chatStore = {
         return until > Date.now();
     }
 };
+

@@ -12,6 +12,13 @@ interface OSSystemContextType {
   notesVisible: boolean;
   setNotesVisible: (visible: boolean) => void;
   toggleNotes: () => void;
+
+  // Per-note ephemeral hide (X button on note header).
+  // Beda dari `isDeleted` yang persist ke server — hidden cuma in-memory
+  // dan auto-reveal saat user klik dock icon Notes lagi.
+  hiddenNoteIds: ReadonlySet<string>;
+  hideNote: (id: string) => void;
+  unhideAllNotes: () => void;
   
   // Control Center visibility
   showControlCenter: boolean;
@@ -49,6 +56,7 @@ interface OSSystemProviderProps {
 export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) => {
   const [showSpotlight, setShowSpotlight] = useState(false);
   const [notesVisible, setNotesVisible] = useState(true);
+  const [hiddenNoteIds, setHiddenNoteIds] = useState<Set<string>>(() => new Set());
   const [isRevealed, setIsRevealed] = useState(false);
   const [startScreenReady, setStartScreenReady] = useState(false);
   const [brightness, setBrightness] = useState(100);
@@ -59,6 +67,19 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
   const toggleSpotlight = useCallback(() => setShowSpotlight(prev => !prev), []);
   const toggleNotes = useCallback(() => setNotesVisible(prev => !prev), []);
 
+  const hideNote = useCallback((id: string) => {
+    setHiddenNoteIds(prev => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
+
+  const unhideAllNotes = useCallback(() => {
+    setHiddenNoteIds(prev => (prev.size === 0 ? prev : new Set()));
+  }, []);
+
   const value = React.useMemo(() => ({
     showSpotlight,
     setShowSpotlight,
@@ -66,6 +87,9 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
     notesVisible,
     setNotesVisible,
     toggleNotes,
+    hiddenNoteIds,
+    hideNote,
+    unhideAllNotes,
     isRevealed,
     setIsRevealed,
     startScreenReady,
@@ -81,6 +105,7 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
   }), [
     showSpotlight, toggleSpotlight, 
     notesVisible, toggleNotes,
+    hiddenNoteIds, hideNote, unhideAllNotes,
     isRevealed, startScreenReady,
     brightness, volume,
     showControlCenter, showCalendar

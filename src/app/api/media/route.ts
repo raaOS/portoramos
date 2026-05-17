@@ -7,17 +7,20 @@ export async function GET(request: NextRequest) {
         return new Response('URL required', { status: 400 });
     }
 
-    // Allow Firebase Storage and legacy assets
-    const isFirebase = url.includes('storage.googleapis.com');
-    const isLocalAsset = url.startsWith('/assets/');
+    const isR2Asset = url.startsWith('/r2/assets/') || url.startsWith('/r2/temp/');
+    const isLocalAsset = url.startsWith('/assets/') || url.startsWith('assets/');
 
-    if (!isFirebase && !isLocalAsset) {
+    if (!isR2Asset && !isLocalAsset) {
         return new Response('Invalid media source', { status: 403 });
     }
 
     try {
+        const mediaUrl = url.startsWith('/')
+            ? new URL(url, request.url).toString()
+            : new URL(`/${url}`, request.url).toString();
+
         // We use a longer revalidation for media
-        const response = await fetch(url, {
+        const response = await fetch(mediaUrl, {
             next: {
                 revalidate: 86400 // Cache for 24 hours in Next.js Data Cache
             }

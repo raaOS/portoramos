@@ -15,7 +15,7 @@ The system targets hyper-fast cold start times by reducing initial bundle size, 
 - **Root_Layout**: The top-level layout component at `src/app/layout.tsx`
 - **Site_Layout**: The site-specific layout component at `src/app/(site)/layout.tsx`
 - **Homepage_Data_Loader**: The consolidated data fetching function in `src/lib/loaders.ts`
-- **Firebase_Fetch**: A network request to Firebase Realtime Database for content data
+- **Data_Backend_Fetch**: A network request to Cloudflare D1 for content data
 - **Skeleton_UI**: A minimal loading interface showing wallpaper and basic structure
 - **Bundle_Analyzer**: Next.js tool for analyzing JavaScript bundle sizes
 - **Edge_Cache**: Vercel's CDN cache layer for serving static and ISR content
@@ -23,7 +23,7 @@ The system targets hyper-fast cold start times by reducing initial bundle size, 
 - **Global_Dock**: The application dock component visible across multiple routes
 - **Window_Manager**: The system managing draggable windows in the OS environment
 - **Monitor_Component**: The desktop monitor/display wrapper component
-- **About_Data**: User profile and configuration data from Firebase
+- **About_Data**: User profile and configuration data from Cloudflare D1
 - **TTFB**: Time to First Byte - time from request to first byte of response
 - **FCP**: First Contentful Paint - time until first content renders
 - **LCP**: Largest Contentful Paint - time until largest content element renders
@@ -79,11 +79,11 @@ The system targets hyper-fast cold start times by reducing initial bundle size, 
 #### Acceptance Criteria
 
 1. THE Homepage_Data_Loader SHALL fetch all required data in one consolidated operation
-2. THE Homepage_Data_Loader SHALL NOT make 5 separate parallel Firebase_Fetch calls
+2. THE Homepage_Data_Loader SHALL NOT make 5 separate parallel Data_Backend_Fetch calls
 3. THE Homepage_Data_Loader SHALL combine about, projects, experience, skills, and testimonials into a single cache entry
-4. THE Homepage_Data_Loader SHALL use a single Firebase query when possible
+4. THE Homepage_Data_Loader SHALL use a single Cloudflare D1 query when possible
 5. THE Homepage_Data_Loader SHALL complete data fetching within 400ms (p95)
-6. WHEN Homepage_Data_Loader executes, THE system SHALL minimize Firebase connection overhead
+6. WHEN Homepage_Data_Loader executes, THE system SHALL minimize Cloudflare D1 request overhead
 7. THE Homepage_Data_Loader SHALL cache the consolidated payload with TTL of 60 seconds
 
 ### Requirement 5: Progressive OS Component Loading
@@ -140,17 +140,17 @@ The system targets hyper-fast cold start times by reducing initial bundle size, 
 5. WHEN optimization is complete, THE system SHALL pass all existing E2E tests
 6. WHEN optimization is complete, THE system SHALL pass all existing unit tests
 
-### Requirement 9: Firebase Data Optimization
+### Requirement 9: Cloudflare D1 Data Optimization
 
-**User Story:** As a developer, I want Firebase queries optimized, so that data fetching contributes minimally to cold start time.
+**User Story:** As a developer, I want Cloudflare D1 queries optimized, so that data fetching contributes minimally to cold start time.
 
 #### Acceptance Criteria
 
-1. THE Homepage_Data_Loader SHALL use Firebase connection pooling when available
-2. THE Homepage_Data_Loader SHALL minimize Firebase SDK initialization overhead
+1. THE Homepage_Data_Loader SHALL use Cloudflare D1 request reuse when available
+2. THE Homepage_Data_Loader SHALL minimize Cloudflare API request overhead
 3. THE Homepage_Data_Loader SHALL use shallow queries when full data is not required
 4. THE Homepage_Data_Loader SHALL implement request deduplication for concurrent requests
-5. WHEN multiple Homepage requests occur simultaneously, THE system SHALL deduplicate Firebase queries
+5. WHEN multiple Homepage requests occur simultaneously, THE system SHALL deduplicate Cloudflare D1 queries
 6. THE Homepage_Data_Loader SHALL use CacheManager for in-memory caching
 
 ### Requirement 10: Route-Specific Component Loading
@@ -213,13 +213,13 @@ The system targets hyper-fast cold start times by reducing initial bundle size, 
 | FCP | ~3000ms | <1.8s (p75) | Lighthouse |
 | LCP | ~5000ms | <2.5s (p75) | Lighthouse |
 | Initial Bundle | ~400KB | <200KB | Bundle Analyzer |
-| Firebase Fetches | 5 parallel | 1 consolidated | Code Review |
+| Data Backend Fetches | 5 parallel | 1 consolidated | Code Review |
 
 ### Technical Constraints
 
 - Must maintain Next.js 16.2.x compatibility
 - Must maintain React 19 compatibility
-- Must preserve existing Firebase data structure
+- Must preserve existing Cloudflare D1 data structure
 - Must maintain ISR revalidation = 60 seconds
 - Must not break existing E2E tests
 - Must maintain TypeScript strict mode compliance

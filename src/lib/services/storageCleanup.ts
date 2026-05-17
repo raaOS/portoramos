@@ -1,11 +1,11 @@
 import { extractStoragePath } from '@/lib/urlResolver';
-import { bucket } from '@/lib/firebaseAdmin';
+import { deleteFromR2, isR2StorageConfigured } from '@/lib/r2Storage';
 
 /**
- * Safely delete a Firebase Storage asset by its public URL.
+ * Safely delete a Storage asset by its public URL.
  * Extracts the storage path from the URL and verifies existence before deletion.
  * 
- * @param url - The public URL of the Firebase Storage asset
+ * @param url - The public URL of the Storage asset
  * @param label - Optional label for logging (e.g. 'HardSkillService')
  */
 export async function deleteStorageAsset(url: string, label = 'StorageCleanup'): Promise<void> {
@@ -14,17 +14,20 @@ export async function deleteStorageAsset(url: string, label = 'StorageCleanup'):
     try {
         const storagePath = extractStoragePath(url);
         if (storagePath && storagePath.startsWith('assets/')) {
-            const file = bucket.file(storagePath);
-            const [exists] = await file.exists();
-            if (exists) await file.delete();
+            await deleteFromR2IfConfigured(storagePath);
         }
     } catch (e) {
         console.warn(`[${label}] Failed to cleanup storage asset: ${url}`, e);
     }
 }
 
+async function deleteFromR2IfConfigured(storagePath: string) {
+    if (!isR2StorageConfigured()) return;
+    await deleteFromR2(storagePath);
+}
+
 /**
- * Batch delete multiple Firebase Storage assets by their public URLs.
+ * Batch delete multiple storage assets by their public URLs.
  * Uses Promise.allSettled so individual failures don't block others.
  * 
  * @param urls - Array of public URLs to delete

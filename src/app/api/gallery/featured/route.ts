@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { galleryFeaturedService } from '@/lib/services/galleryFeaturedService';
 import { validateAdminRequest } from '@/lib/auth';
 import { galleryFeaturedSchema } from '@/lib/validations';
-import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
+import { enforceRequestRateLimit } from '@/lib/security/request';
 
 export async function GET() {
     try {
@@ -22,15 +22,18 @@ export async function POST(request: NextRequest) {
         }
 
         // Rate limit: 10 req/menit per IP. Gallery featured list jarang diubah.
-        const clientIp = request.headers.get('x-forwarded-for') || 'unknown';
-        const rateLimit = await checkFirebaseRateLimit(
-            `gallery_featured_${clientIp}`,
+        const rateLimit = await enforceRequestRateLimit(
+            request,
+            'gallery_featured',
             10,
             60_000,
             300_000
         );
         if (!rateLimit.allowed) {
-            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+            return NextResponse.json(
+                { error: 'Too many requests', retryAfter: rateLimit.retryAfter },
+                { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } },
+            );
         }
 
         const body = await request.json();

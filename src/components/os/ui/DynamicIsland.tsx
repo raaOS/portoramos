@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { m } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { CheckCircle2 } from "lucide-react";
 
 import { ContactProfile } from "../data/mockChats";
@@ -7,7 +7,6 @@ import { getAvatarUrl } from "@/lib/avatar";
 import { useUnifiedZIndex } from "../context/UnifiedZIndexContext";
 
 interface DynamicIslandProps {
-    activeWindow: string | null;
     isBooting: boolean;
     onOpenChat?: (chatId?: string) => void;
     customNotifications?: ContactProfile[];
@@ -25,10 +24,17 @@ interface IslandNotification {
 
 const ISLAND_ID = 'dynamic-island';
 
-const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotifications, islandId = ISLAND_ID }: DynamicIslandProps) => {
+// Interval cycling: cepat di awal supaya visitor langsung notice,
+// melambat setelah satu putaran penuh agar tidak spam.
+const FIRST_CYCLE_INTERVAL_MS = 8000;
+const STEADY_CYCLE_INTERVAL_MS = 20000;
+const NOTIFICATION_DISPLAY_MS = 6000;
+const INITIAL_DELAY_MS = 1000;
+
+const DynamicIsland = ({ isBooting, onOpenChat, customNotifications, islandId = ISLAND_ID }: DynamicIslandProps) => {
+    const prefersReducedMotion = useReducedMotion();
     const { bringToFront, getZIndex } = useUnifiedZIndex();
     const [notification, setNotification] = useState<IslandNotification | null>(null);
-    const [isGracePeriod, setIsGracePeriod] = useState(false);
     const [fullMessage, setFullMessage] = useState("");
     const [visibleChars, setVisibleChars] = useState(0);
     const [showVerified, setShowVerified] = useState(false);
@@ -36,6 +42,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const textToggleRef = useRef<NodeJS.Timeout | null>(null);
     const currentIndexRef = useRef(0);
+    const hasCompletedFirstCycleRef = useRef(false);
 
     // Handle focus - bring island to front in unified z-index system
     const handleFocus = useCallback(() => {
@@ -44,32 +51,24 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
 
     // Register with unified z-index system on mount
     useEffect(() => {
-        // Initial registration
         handleFocus();
-    }, [handleFocus]); // Only once on mount, handleFocus is stable due to useCallback
+    }, [handleFocus]);
 
-    // Handle Active Window Grace Period
-    useEffect(() => {
-        if (activeWindow) {
-            requestAnimationFrame(() => setIsGracePeriod(true));
-            const timer = setTimeout(() => setIsGracePeriod(false), 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [activeWindow]);
-
-    // Typing effect for message - shorter max length
-    const startTypingEffect = (message: string) => {
-        // Safety: Ensure message is a string
+    // Typing effect for message — skipped when reduced-motion is preferred.
+    const startTypingEffect = useCallback((message: string) => {
         const safeMessage = typeof message === 'string' ? message : String(message || "");
-
-        // Shorten message to max characters
         const shortMessage = safeMessage.length > 22 ? safeMessage.substring(0, 22) + "..." : safeMessage;
         setFullMessage(shortMessage);
-        setVisibleChars(0);
-        let index = 0;
 
         if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
 
+        if (prefersReducedMotion) {
+            setVisibleChars(shortMessage.length);
+            return;
+        }
+
+        setVisibleChars(0);
+        let index = 0;
         typingIntervalRef.current = setInterval(() => {
             if (index < shortMessage.length) {
                 setVisibleChars(index + 1);
@@ -78,29 +77,42 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                 if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
             }
         }, 30);
-    };
+    }, [prefersReducedMotion]);
 
-    // Toggle between name and verified text
-    const startTextToggle = () => {
-        if (textToggleRef.current) clearInterval(textToggleRef.current);
+    // Toggle between name and verified text — reduced to single static switch
+    // when reduced-motion is preferred.
+    const startTextToggle = useCallback(() => {
+        if (textToggleRef.current) {
+            clearInterval(textToggleRef.current);
+            clearTimeout(textToggleRef.current);
+        }
 
         setShowVerified(false);
+
+        if (prefersReducedMotion) {
+            textToggleRef.current = setTimeout(() => {
+                setShowVerified(true);
+            }, 1200) as unknown as NodeJS.Timeout;
+            return;
+        }
 
         let toggleCount = 0;
         textToggleRef.current = setInterval(() => {
             toggleCount++;
             setShowVerified(prev => !prev);
-
             if (toggleCount >= 5) {
                 if (textToggleRef.current) clearInterval(textToggleRef.current);
             }
         }, 2000);
-    };
+    }, [prefersReducedMotion]);
 
-    const triggerNotification = React.useCallback((index?: number) => {
+    const triggerNotification = useCallback((index?: number) => {
         if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
         if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
-        if (textToggleRef.current) clearInterval(textToggleRef.current);
+        if (textToggleRef.current) {
+            clearInterval(textToggleRef.current);
+            clearTimeout(textToggleRef.current);
+        }
 
         let randomTesti;
 
@@ -131,7 +143,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
         }
 
         if (randomTesti) {
-            handleFocus(); // Bring to front when notification arrives
+            handleFocus();
             setNotification(randomTesti);
             startTypingEffect(randomTesti.message);
             startTextToggle();
@@ -142,9 +154,9 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                 setVisibleChars(0);
                 setShowVerified(false);
                 notificationTimerRef.current = null;
-            }, 6000);
+            }, NOTIFICATION_DISPLAY_MS);
         }
-    }, [customNotifications, handleFocus]);
+    }, [customNotifications, handleFocus, startTypingEffect, startTextToggle]);
 
     useEffect(() => {
         if (isBooting) return;
@@ -152,23 +164,34 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
 
         let interval: NodeJS.Timeout | null = null;
 
-        const initialDelay = setTimeout(() => {
-            // Start with first testimonial
-            triggerNotification(0);
-
-            interval = setInterval(() => {
-                // Cycle to next testimonial
+        const scheduleNext = () => {
+            const delay = hasCompletedFirstCycleRef.current
+                ? STEADY_CYCLE_INTERVAL_MS
+                : FIRST_CYCLE_INTERVAL_MS;
+            interval = setTimeout(() => {
                 currentIndexRef.current = (currentIndexRef.current + 1) % customNotifications.length;
+                if (currentIndexRef.current === 0) {
+                    hasCompletedFirstCycleRef.current = true;
+                }
                 triggerNotification(currentIndexRef.current);
-            }, 8000);
-        }, 1000);
+                scheduleNext();
+            }, delay);
+        };
+
+        const initialDelay = setTimeout(() => {
+            triggerNotification(currentIndexRef.current);
+            scheduleNext();
+        }, INITIAL_DELAY_MS);
 
         return () => {
             clearTimeout(initialDelay);
-            if (interval) clearInterval(interval);
+            if (interval) clearTimeout(interval);
             if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
             if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
-            if (textToggleRef.current) clearInterval(textToggleRef.current);
+            if (textToggleRef.current) {
+                clearInterval(textToggleRef.current);
+                clearTimeout(textToggleRef.current);
+            }
             setNotification(null);
             setFullMessage("");
             setVisibleChars(0);
@@ -176,24 +199,17 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
         };
     }, [isBooting, customNotifications, triggerNotification]);
 
-    const currentState = (notification && !isGracePeriod)
-        ? "notification"
-        : (activeWindow ? "active-window" : "idle");
+    const currentState: "idle" | "notification" = notification ? "notification" : "idle";
 
     const variants = {
         idle: {
-            width: 90,
-            height: 32,
+            scaleX: 90 / 220,
+            scaleY: 32 / 48,
             borderRadius: 20,
         },
-        active: {
-            width: 200,
-            height: 48,
-            borderRadius: 24,
-        },
         notification: {
-            width: typeof window !== 'undefined' && window.innerWidth < 400 ? '92vw' : 220,
-            height: 48,
+            scaleX: 1,
+            scaleY: 1,
             borderRadius: 24,
         },
     };
@@ -202,47 +218,54 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
 
     const zIndex = getZIndex(islandId);
 
+    const islandTransition = prefersReducedMotion
+        ? { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const }
+        : {
+              type: "spring" as const,
+              stiffness: 400,
+              damping: 28,
+              layout: { duration: 0.3 },
+          };
+
+    const avatarBounceAnimation = prefersReducedMotion
+        ? { y: 0, scaleX: 1, scaleY: 1 }
+        : {
+              y: [0, -2, 0],
+              scaleY: [1, 1.06, 0.97, 1],
+              scaleX: [1, 0.97, 1.02, 1],
+          };
+
+    const avatarBounceTransition = prefersReducedMotion
+        ? { duration: 0 }
+        : {
+              duration: 0.5,
+              repeat: Infinity,
+              repeatDelay: 3,
+              ease: [0.34, 1.56, 0.64, 1] as const,
+              times: [0, 0.4, 0.7, 1],
+          };
+
     return (
         <div
             className="fixed top-[42px] left-0 right-0 flex justify-center pointer-events-none print:hidden"
             style={{ zIndex }}
         >
-            <m.div
-                layout
-                layoutId={islandId}
-                onMouseDown={handleFocus}
-                onPointerDown={handleFocus}
-                className="bg-black overflow-hidden pointer-events-auto cursor-default border border-white/10"
-                initial="idle"
-                animate={currentState === "active-window" ? "active" : currentState}
-                variants={variants}
-                transition={{ 
-                    type: "spring", 
-                    stiffness: 400, // Slightly snappier
-                    damping: 28,
-                    layout: { duration: 0.3 } // Specific transition for layout changes
-                }}
-            >
-                <div className="w-full h-full relative flex items-center text-white px-5">
+            <div className="relative h-12 w-[min(220px,92vw)] pointer-events-none">
+                <m.div
+                    onMouseDown={handleFocus}
+                    onPointerDown={handleFocus}
+                    className="absolute inset-0 origin-center bg-black overflow-hidden pointer-events-auto cursor-default border border-white/10"
+                    initial="idle"
+                    animate={currentState}
+                    variants={variants}
+                    transition={islandTransition}
+                >
+                    <div className="w-full h-full relative flex items-center text-white px-5">
 
-                    {/* Idle State */}
+                    {/* Idle State - minimal "pill" */}
                     {currentState === "idle" && null}
 
-                    {/* Active Window State */}
-                    {currentState === "active-window" && (
-                        <m.div
-                            className="flex items-center gap-3 w-full justify-center"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                        >
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-xs font-medium truncate max-w-[140px]">
-                                {activeWindow}
-                            </span>
-                        </m.div>
-                    )}
-
-                    {/* Notification State */}
+                    {/* Notification State (WhatsApp-style testimonial) */}
                     {currentState === "notification" && notification && (
                         <m.div
                             className="flex items-center gap-3 w-full h-full cursor-pointer"
@@ -252,7 +275,10 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                             onClick={() => {
                                 if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
                                 if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
-                                if (textToggleRef.current) clearInterval(textToggleRef.current);
+                                if (textToggleRef.current) {
+                                    clearInterval(textToggleRef.current);
+                                    clearTimeout(textToggleRef.current);
+                                }
                                 setNotification(null);
                                 setFullMessage("");
                                 setVisibleChars(0);
@@ -260,21 +286,11 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                                 onOpenChat?.(notification.chatId);
                             }}
                         >
-                            {/* Avatar with Elastic Bounce */}
+                            {/* Avatar with Elastic Bounce (skipped under reduced-motion) */}
                             <m.div
                                 className="shrink-0 relative flex items-center justify-center w-7 h-7"
-                                animate={{
-                                    y: [0, -2, 0],
-                                    scaleY: [1, 1.06, 0.97, 1],
-                                    scaleX: [1, 0.97, 1.02, 1],
-                                }}
-                                transition={{
-                                    duration: 0.5,
-                                    repeat: Infinity,
-                                    repeatDelay: 3,
-                                    ease: [0.34, 1.56, 0.64, 1],
-                                    times: [0, 0.4, 0.7, 1],
-                                }}
+                                animate={avatarBounceAnimation}
+                                transition={avatarBounceTransition}
                             >
                                 <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-xs font-bold text-white">
                                     {notification.initial}
@@ -292,7 +308,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                                                 y: showVerified ? -16 : 0,
                                                 opacity: showVerified ? 0 : 1,
                                             }}
-                                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                                            transition={{ duration: prefersReducedMotion ? 0.1 : 0.25, ease: "easeInOut" }}
                                             className="absolute inset-0 font-semibold text-[12px] text-white truncate flex items-center leading-none"
                                         >
                                             {notification.name}
@@ -303,7 +319,7 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                                                 y: showVerified ? 0 : 16,
                                                 opacity: showVerified ? 1 : 0,
                                             }}
-                                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                                            transition={{ duration: prefersReducedMotion ? 0.1 : 0.25, ease: "easeInOut" }}
                                             className="absolute inset-0 inline-flex items-center gap-1 text-[10px] text-green-400 font-medium leading-none"
                                         >
                                             <CheckCircle2 className="w-2.5 h-2.5" />
@@ -323,8 +339,9 @@ const DynamicIsland = ({ activeWindow, isBooting, onOpenChat, customNotification
                             </div>
                         </m.div>
                     )}
-                </div>
-            </m.div>
+                    </div>
+                </m.div>
+            </div>
         </div>
     );
 };

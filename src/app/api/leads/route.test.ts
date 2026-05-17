@@ -6,7 +6,7 @@ const { refMock, validateAdminRequestMock } = vi.hoisted(() => ({
     validateAdminRequestMock: vi.fn(),
 }));
 
-vi.mock('@/lib/firebaseAdmin', () => ({
+vi.mock('@/lib/database', () => ({
     db: {
         ref: refMock,
     },
@@ -65,10 +65,10 @@ describe('GET /api/leads', () => {
         expect(body).toEqual(leadsArray);
     });
 
-    it('converts object format ke array dengan Firebase key sebagai id', async () => {
+    it('converts object format ke array dengan CLOUDFLARE_D1 key sebagai id', async () => {
         const leadsObject = {
-            'firebase-key-1': { name: 'Alice', message: 'Hello' },
-            'firebase-key-2': { name: 'Bob', message: 'Hi' },
+            'CLOUDFLARE_D1-key-1': { name: 'Alice', message: 'Hello' },
+            'CLOUDFLARE_D1-key-2': { name: 'Bob', message: 'Hi' },
         };
         refMock.mockReturnValue({
             once: vi.fn().mockResolvedValue({ val: () => leadsObject }),
@@ -78,16 +78,16 @@ describe('GET /api/leads', () => {
         const body = (await response.json()) as Array<{ id: string; name: string }>;
 
         expect(body).toHaveLength(2);
-        expect(body[0].id).toBe('firebase-key-1');
+        expect(body[0].id).toBe('CLOUDFLARE_D1-key-1');
         expect(body[0].name).toBe('Alice');
-        expect(body[1].id).toBe('firebase-key-2');
+        expect(body[1].id).toBe('CLOUDFLARE_D1-key-2');
     });
 
     it('tidak menimpa id internal ketika object punya id field', async () => {
         // REGRESSION: Sebelum fix, `{ id: key, ...leads[key] }` menimpa id
-        // Firebase dengan id internal — breaks admin panel mutation (butuh key).
+        // CLOUDFLARE_D1 dengan id internal — breaks admin panel mutation (butuh key).
         const leadsWithInternalId = {
-            'firebase-key-abc': {
+            'CLOUDFLARE_D1-key-abc': {
                 id: 'stale-internal-id',
                 name: 'Charlie',
             },
@@ -99,7 +99,8 @@ describe('GET /api/leads', () => {
         const response = await GET(buildRequest(true) as never);
         const body = (await response.json()) as Array<{ id: string; name: string }>;
 
-        expect(body[0].id).toBe('firebase-key-abc');
+        expect(body[0].id).toBe('CLOUDFLARE_D1-key-abc');
         expect(body[0].name).toBe('Charlie');
     });
 });
+

@@ -37,7 +37,17 @@ export interface NoteData {
 interface StickyNoteItemProps {
     note: NoteData;
     onUpdate: (id: string, updates: Partial<NoteData>) => void;
+    /**
+     * Soft-delete persisted (admin only flow). Dipakai oleh tombol trash di
+     * footer. Tidak dipakai oleh tombol X di header — itu pakai `onHide`.
+     */
     onDelete: (id: string) => void;
+    /**
+     * Ephemeral hide per session. Dipakai oleh tombol X di header sehingga
+     * visitor non-admin bisa "menutup" note tanpa menghapus dari database.
+     * Note akan muncul kembali saat user toggle dock icon Notes.
+     */
+    onHide: (id: string) => void;
     onPermanentDelete: (id: string) => void;
     onRestore: (id: string) => void;
     onAdd?: () => void;
@@ -64,6 +74,7 @@ export default function StickyNoteItem({
     note, 
     onUpdate, 
     onDelete, 
+    onHide,
     onPermanentDelete, 
     onRestore, 
     dragControls, 
@@ -155,7 +166,7 @@ export default function StickyNoteItem({
                 color={note.color}
                 colors={COLORS}
                 onColorChange={(c) => onUpdate(note.id, { color: c })}
-                onDelete={() => onDelete(note.id)}
+                onHide={() => onHide(note.id)}
                 onToggleCollapse={() => onUpdate(note.id, { isCollapsed: !note.isCollapsed })}
                 isPinned={!!note.isPinned}
                 dragControls={dragControls}

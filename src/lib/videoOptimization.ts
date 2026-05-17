@@ -1,14 +1,13 @@
 import 'server-only';
 import { spawn } from 'child_process';
-import { randomUUID } from 'crypto';
-import { tmpdir } from 'os';
-import path from 'path';
-import { promises as fs } from 'fs';
 
 
 const VIDEO_FILTER = "fps=30,scale='if(gt(iw,ih),-2,720)':'if(gt(iw,ih),720,-2)'";
 const POSTER_FILTER = "scale='if(gt(iw,ih),-2,720)':'if(gt(iw,ih),720,-2)'";
 const PREVIEW_SECONDS = 6;
+const FFMPEG_BINARY = process.platform === 'win32'
+  ? 'node_modules\\ffmpeg-static\\ffmpeg.exe'
+  : 'node_modules/ffmpeg-static/ffmpeg';
 
 export interface VideoOptimizationResult {
   buffer: Buffer;
@@ -28,84 +27,72 @@ export async function optimizeVideoForPortfolio(
   inputBuffer: Buffer,
   options: VideoOptimizationOptions = {}
 ): Promise<VideoOptimizationResult> {
-  const workDir = path.join(tmpdir(), `portfolio-video-${randomUUID()}`);
-  const inputPath = path.join(workDir, 'input');
-  const optimizedPath = path.join(workDir, 'optimized.mp4');
-  const previewPath = path.join(workDir, 'preview.mp4');
-  const posterPath = path.join(workDir, 'poster.jpg');
+  const optimizedBuffer = await runFfmpegToBuffer(inputBuffer, [
+    '-i', 'pipe:0',
+    '-vf', VIDEO_FILTER,
+    '-c:v', 'libx264',
+    '-preset', 'slow',
+    '-crf', '24',
+    '-pix_fmt', 'yuv420p',
+    '-an',
+    '-movflags', 'frag_keyframe+empty_moov',
+    '-f', 'mp4',
+    'pipe:1',
+  ]);
 
-  await fs.mkdir(workDir, { recursive: true });
+  const previewBuffer = await runFfmpegToBuffer(inputBuffer, [
+    '-i', 'pipe:0',
+    '-t', String(PREVIEW_SECONDS),
+    '-vf', VIDEO_FILTER,
+    '-c:v', 'libx264',
+    '-preset', 'slow',
+    '-crf', '24',
+    '-pix_fmt', 'yuv420p',
+    '-an',
+    '-movflags', 'frag_keyframe+empty_moov',
+    '-f', 'mp4',
+    'pipe:1',
+  ]);
 
-  try {
-    await fs.writeFile(inputPath, inputBuffer);
+  const posterBuffer = await runFfmpegToBuffer(inputBuffer, [
+    '-ss', '0.1',
+    '-i', 'pipe:0',
+    '-frames:v', '1',
+    '-vf', POSTER_FILTER,
+    '-q:v', '3',
+    '-f', 'image2pipe',
+    '-vcodec', 'mjpeg',
+    'pipe:1',
+  ]);
 
-    await runFfmpeg([
-      '-y',
-      '-i', inputPath,
-      '-vf', VIDEO_FILTER,
-      '-c:v', 'libx264',
-      '-preset', 'slow',
-      '-crf', '24',
-      '-pix_fmt', 'yuv420p',
-      '-an',
-      '-movflags', '+faststart',
-      optimizedPath,
-    ]);
+  const allowOriginalPassthrough = options.allowOriginalPassthrough ?? true;
+  const finalBuffer = allowOriginalPassthrough && optimizedBuffer.length >= inputBuffer.length
+    ? inputBuffer
+    : optimizedBuffer;
 
-    await runFfmpeg([
-      '-y',
-      '-i', inputPath,
-      '-t', String(PREVIEW_SECONDS),
-      '-vf', VIDEO_FILTER,
-      '-c:v', 'libx264',
-      '-preset', 'slow',
-      '-crf', '24',
-      '-pix_fmt', 'yuv420p',
-      '-an',
-      '-movflags', '+faststart',
-      previewPath,
-    ]);
-
-    await runFfmpeg([
-      '-y',
-      '-ss', '0.1',
-      '-i', inputPath,
-      '-frames:v', '1',
-      '-vf', POSTER_FILTER,
-      '-q:v', '3',
-      posterPath,
-    ]);
-
-    const optimizedBuffer = await fs.readFile(optimizedPath);
-    const previewBuffer = await fs.readFile(previewPath);
-    const posterBuffer = await fs.readFile(posterPath);
-
-    const allowOriginalPassthrough = options.allowOriginalPassthrough ?? true;
-    const finalBuffer = allowOriginalPassthrough && optimizedBuffer.length >= inputBuffer.length
-      ? inputBuffer
-      : optimizedBuffer;
-
-    return {
-      buffer: finalBuffer,
-      previewBuffer,
-      posterBuffer,
-      originalSize: inputBuffer.length,
-      optimizedSize: finalBuffer.length,
-      previewSize: previewBuffer.length,
-      posterSize: posterBuffer.length,
-    };
-  } finally {
-    await fs.rm(workDir, { recursive: true, force: true }).catch(() => undefined);
-  }
+  return {
+    buffer: finalBuffer,
+    previewBuffer,
+    posterBuffer,
+    originalSize: inputBuffer.length,
+    optimizedSize: finalBuffer.length,
+    previewSize: previewBuffer.length,
+    posterSize: posterBuffer.length,
+  };
 }
 
-async function runFfmpeg(args: string[]): Promise<void> {
-  const ffmpegPath = await resolveFfmpegPath();
-
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn(ffmpegPath, args, { windowsHide: true });
+async function runFfmpegToBuffer(inputBuffer: Buffer, args: string[]): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    const child = spawn(FFMPEG_BINARY, args, {
+      windowsHide: true,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
     let stderr = '';
+    const stdoutChunks: Buffer[] = [];
 
+    child.stdout.on('data', (chunk: Buffer) => {
+      stdoutChunks.push(chunk);
+    });
 
     child.stderr.on('data', (chunk: Buffer) => {
       stderr += chunk.toString();
@@ -114,29 +101,13 @@ async function runFfmpeg(args: string[]): Promise<void> {
     child.on('error', reject);
     child.on('close', (code) => {
       if (code === 0) {
-        resolve();
+        resolve(Buffer.concat(stdoutChunks));
         return;
       }
 
       reject(new Error(`FFmpeg failed with code ${code}: ${stderr.slice(-1200)}`));
     });
+
+    child.stdin.end(inputBuffer);
   });
 }
-
-async function resolveFfmpegPath(): Promise<string> {
-  if (process.env.FFMPEG_PATH) return process.env.FFMPEG_PATH;
-
-  try {
-    // Dynamic requirement to isolate from build tracing
-    const { createRequire } = await import('module');
-    const requireLocal = createRequire(import.meta.url);
-    const ffmpegPath = requireLocal('ffmpeg-static') as string | null;
-    if (ffmpegPath) return ffmpegPath;
-  } catch {
-    // Fallback to global ffmpeg in PATH
-  }
-
-  return 'ffmpeg';
-}
-
-

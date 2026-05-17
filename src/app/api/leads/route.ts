@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/database';
 import { validateAdminRequest } from '@/lib/auth';
 import { CacheManager } from '@/lib/cache/CacheManager';
 
@@ -29,9 +29,9 @@ export async function GET(request: NextRequest) {
         const leads = snapshot.val() || [];
 
         // Handle both object and array formats (Admin Panel expects array).
-        // FIX: spread leads[key] FIRST, lalu override id dengan key Firebase —
+        // FIX: spread leads[key] FIRST, lalu override id dengan key CLOUDFLARE_D1 —
         // sebelumnya `{ id: key, ...leads[key] }` justru menimpa id yang
-        // sudah ada di object dengan push-id Firebase.
+        // sudah ada di object dengan push-id CLOUDFLARE_D1.
         const leadsArray = Array.isArray(leads)
             ? leads
             : Object.keys(leads).map(key => ({ ...leads[key], id: key }));
@@ -47,3 +47,4 @@ export async function GET(request: NextRequest) {
         }, { status: 500 });
     }
 }
+

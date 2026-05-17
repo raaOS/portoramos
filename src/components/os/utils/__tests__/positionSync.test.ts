@@ -9,10 +9,22 @@ import {
     getIconPosition,
 } from '../positionSync';
 
+/**
+ * Stub window.innerWidth/innerHeight untuk deterministic tests.
+ * Harus dipanggil sebelum panggil fungsi yang baca viewport.
+ */
+function setViewport(width: number, height: number) {
+    Object.defineProperty(window, 'innerWidth', { value: width, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: height, configurable: true });
+}
+
 describe('positionSync', () => {
     beforeEach(() => {
         localStorage.clear();
         sessionStorage.clear();
+        // Default viewport yang cukup luas supaya sebagian besar test case nggak
+        // kena clamp kecuali memang di-test khusus.
+        setViewport(1920, 1080);
     });
 
     describe('saveWindowPosition', () => {
@@ -33,23 +45,19 @@ describe('positionSync', () => {
         });
 
         it('preserves existing width/height saat partial update (drag only)', () => {
-            // REGRESSION: Sebelum fix, partial update dengan hanya x/y me-reset
-            // width/height ke default 900x600 (hardcoded fallback).
             saveWindowPosition(
                 'win-drag',
                 { x: 10, y: 20, width: 1200, height: 800 },
                 true
             );
-
-            // Drag: hanya update x/y
             saveWindowPosition('win-drag', { x: 100, y: 200 }, true);
 
             const stored = loadPositions().windows?.['win-drag'];
             expect(stored).toEqual({
                 x: 100,
                 y: 200,
-                width: 1200, // preserved, BUKAN 900
-                height: 800, // preserved, BUKAN 600
+                width: 1200,
+                height: 800,
             });
         });
 
@@ -59,7 +67,6 @@ describe('positionSync', () => {
                 { x: 300, y: 400, width: 600, height: 500 },
                 true
             );
-
             saveWindowPosition('win-resize', { width: 900, height: 700 }, true);
 
             const stored = loadPositions().windows?.['win-resize'];
@@ -75,7 +82,6 @@ describe('positionSync', () => {
             saveWindowPosition('win-new', { x: 500 }, true);
 
             const stored = loadPositions().windows?.['win-new'];
-            // Default fallback: { x: 100, y: 80, width: 900, height: 600 }
             expect(stored).toEqual({ x: 500, y: 80, width: 900, height: 600 });
         });
     });
@@ -86,9 +92,19 @@ describe('positionSync', () => {
             expect(loadPositions().icons).toBeUndefined();
         });
 
-        it('saves for admin', () => {
-            saveIconPosition('icon-1', { x: 10, y: 20 }, true);
-            expect(loadPositions().icons?.['icon-1']).toEqual({ x: 10, y: 20 });
+        it('saves pixel + percentage + ref screen for admin (responsive payload)', () => {
+            setViewport(1920, 1080);
+            saveIconPosition('icon-1', { x: 192, y: 108 }, true);
+
+            const stored = loadPositions().icons?.['icon-1'];
+            expect(stored).toMatchObject({
+                x: 192,
+                y: 108,
+                xPct: 10, // 192 / 1920 * 100
+                yPct: 10, // 108 / 1080 * 100
+                refScreenWidth: 1920,
+                refScreenHeight: 1080,
+            });
         });
 
         it('merges when saving multiple icons', () => {
@@ -96,8 +112,8 @@ describe('positionSync', () => {
             saveIconPosition('icon-b', { x: 2, y: 2 }, true);
 
             const icons = loadPositions().icons;
-            expect(icons?.['icon-a']).toEqual({ x: 1, y: 1 });
-            expect(icons?.['icon-b']).toEqual({ x: 2, y: 2 });
+            expect(icons?.['icon-a']?.x).toBe(1);
+            expect(icons?.['icon-b']?.x).toBe(2);
         });
     });
 
@@ -119,8 +135,8 @@ describe('positionSync', () => {
             expect(stored).toEqual({
                 x: 150,
                 y: 250,
-                width: 400, // preserved
-                height: 400, // preserved
+                width: 400,
+                height: 400,
             });
         });
     });
@@ -138,16 +154,7 @@ describe('positionSync', () => {
 
     describe('getWindowPosition with responsive positioning', () => {
         it('menggunakan percentage-based jika tersedia', () => {
-            const viewport = { width: 1000, height: 800 };
-            // Stub innerWidth/innerHeight
-            Object.defineProperty(window, 'innerWidth', {
-                value: viewport.width,
-                configurable: true,
-            });
-            Object.defineProperty(window, 'innerHeight', {
-                value: viewport.height,
-                configurable: true,
-            });
+            setViewport(1000, 800);
 
             const result = getWindowPosition(
                 'win-pct',
@@ -161,45 +168,113 @@ describe('positionSync', () => {
                 false
             );
 
-            expect(result.x).toBeCloseTo(100); // 10% * 1000
-            expect(result.y).toBeCloseTo(160); // 20% * 800
-            expect(result.width).toBeCloseTo(500); // 50% * 1000
-            expect(result.height).toBeCloseTo(320); // 40% * 800
+            expect(result.x).toBeCloseTo(100);
+            expect(result.y).toBeCloseTo(160);
+            expect(result.width).toBeCloseTo(500);
+            expect(result.height).toBeCloseTo(320);
         });
 
-        it('falls back ke defaults kalau Firebase data kosong', () => {
+        it('falls back ke defaults kalau CLOUDFLARE_D1 data kosong', () => {
             const defaults = { x: 100, y: 80, width: 900, height: 600 };
             const result = getWindowPosition('win-empty', null, defaults, false);
             expect(result).toEqual(defaults);
         });
     });
 
-    describe('getIconPosition', () => {
-        it('uses local storage for admin if available', () => {
-            saveIconPosition('icon-admin', { x: 999, y: 999 }, true);
+    describe('getIconPosition (responsive)', () => {
+        it('menggunakan percentage-based untuk visitor saat tersedia', () => {
+            setViewport(1366, 768);
+
+            const result = getIconPosition(
+                'icon-pct',
+                { xPct: 50, yPct: 10, x: 0, y: 0 }, // pakai % 50/10 (center-ish)
+                { x: 0, y: 0 },
+                false
+            );
+
+            // 50% * 1366 = 683, 10% * 768 = 76.8
+            expect(result.x).toBeCloseTo(683);
+            expect(result.y).toBeCloseTo(76.8);
+        });
+
+        it('scale legacy pixel via refScreen saat visitor di layar beda', () => {
+            setViewport(1366, 768);
+
+            const result = getIconPosition(
+                'icon-legacy',
+                {
+                    x: 1800, y: 900,                   // pixel at admin 1920x1080
+                    refScreenWidth: 1920, refScreenHeight: 1080,
+                },
+                { x: 0, y: 0 },
+                false
+            );
+
+            // 1800/1920 * 1366 ≈ 1280.6  → below clamp max (1366 - 80 - 8 = 1278)
+            // 900/1080 * 768 = 640       → below clamp max (768 - 120 = 648)
+            expect(result.x).toBeLessThanOrEqual(1278);
+            expect(result.y).toBeLessThanOrEqual(648);
+            expect(result.x).toBeGreaterThan(1200);
+            expect(result.y).toBeGreaterThan(600);
+        });
+
+        it('clamp icon yang disave admin keluar viewport visitor', () => {
+            setViewport(800, 600);
+
+            // Admin saved icon at x=1800 (di luar 800x600 visitor)
+            const result = getIconPosition(
+                'icon-overflow',
+                { xPct: 95, yPct: 95, x: 0, y: 0 }, // 95% di viewport visitor = 760, 570
+                { x: 0, y: 0 },
+                false
+            );
+
+            // Max bound: 800 - 80 - 8 = 712 (ICON_BOX=80, SIDE_SAFE=8)
+            expect(result.x).toBeLessThanOrEqual(712);
+            // Max y: 600 - 120 = 480 (BOTTOM_SAFE=120)
+            expect(result.y).toBeLessThanOrEqual(480);
+        });
+
+        it('pakai localStorage untuk admin (tapi tetap clamp)', () => {
+            setViewport(800, 600);
+            // Admin save besar dulu, lalu di-load di viewport kecil
+            saveIconPosition('icon-admin', { x: 400, y: 300 }, true);
+
             const result = getIconPosition(
                 'icon-admin',
                 { x: 100, y: 100 },
                 { x: 0, y: 0 },
                 true
             );
-            expect(result).toEqual({ x: 999, y: 999 });
+
+            // 400, 300 masih dalam viewport 800x600 → tetap
+            expect(result.x).toBe(400);
+            expect(result.y).toBe(300);
         });
 
-        it('ignores local storage for visitor', () => {
-            // Simulate localStorage punya data (misal dari admin sebelumnya)
-            savePositions({ icons: { 'icon-v': { x: 999, y: 999 } } });
+        it('visitor: abaikan localStorage (CLOUDFLARE_D1 = source of truth)', () => {
+            setViewport(1920, 1080);
+            savePositions({
+                icons: {
+                    'icon-v': { x: 999, y: 999, xPct: 50, yPct: 50 },
+                },
+            });
+
             const result = getIconPosition(
                 'icon-v',
                 { x: 200, y: 200 },
                 { x: 0, y: 0 },
                 false
             );
-            // Visitor: pakai firebase data, bukan localStorage
-            expect(result).toEqual({ x: 200, y: 200 });
+
+            // Visitor lookup pakai CLOUDFLARE_D1Data parameter (bukan localStorage).
+            // CLOUDFLARE_D1Data = {x:200,y:200} (legacy pixel, no pct).
+            expect(result.x).toBe(200);
+            expect(result.y).toBe(200);
         });
 
-        it('falls back ke defaults kalau firebase kosong', () => {
+        it('falls back ke defaults kalau CLOUDFLARE_D1 kosong', () => {
+            setViewport(1920, 1080);
             const result = getIconPosition(
                 'icon-none',
                 null,

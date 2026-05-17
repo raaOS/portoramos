@@ -9,9 +9,14 @@ interface ProjectCoverProps {
     project: Project;
     cover: GalleryItem;
     ratio: number;
+    /**
+     * Saat true, video cover di-render dengan native controls supaya user bisa
+     * play/pause/scrub langsung dari window project tanpa harus buka lightbox.
+     */
+    isWindowMode?: boolean;
 }
 
-export function ProjectCover({ project, cover, ratio }: ProjectCoverProps) {
+export function ProjectCover({ project, cover, ratio, isWindowMode = false }: ProjectCoverProps) {
     const { toast, handleContextMenu } = useImageProtection();
 
     return (
@@ -49,6 +54,10 @@ export function ProjectCover({ project, cover, ratio }: ProjectCoverProps) {
                         muted={project.muted ?? true}
                         loop={project.loop ?? true}
                         playsInline={project.playsInline ?? true}
+                        // Window mode: aktifkan native controls untuk video supaya
+                        // user bisa play/pause/scrub langsung. Di full-page detail
+                        // tetap clean (tanpa controls) — visitor pakai lightbox.
+                        controls={isWindowMode && cover.kind === 'video'}
                     />
                     {/* Overlay hitam solid saat right-click */}
                     {toast && (

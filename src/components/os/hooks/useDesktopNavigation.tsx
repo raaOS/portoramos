@@ -37,7 +37,7 @@ export function useDesktopNavigation({
     _isAdmin,
     setNotesDockBouncing
 }: UseDesktopNavigationProps) {
-    const { notesVisible, setNotesVisible } = useOSSystem();
+    const { notesVisible, setNotesVisible, hiddenNoteIds, unhideAllNotes } = useOSSystem();
     const router = useRouter();
 
     const handleGoHome = useCallback(() => router.push('/'), [router]);
@@ -72,14 +72,26 @@ export function useDesktopNavigation({
         openWindow("contact");
     }, [openWindow]);
 
-    // BUG FIX: Simplified toggle to pure visibility switch.
-    // Previously, this would auto-add or auto-restore notes, causing duplicates.
-    // Now it strictly respects the current state of 'notes' from CRUD/DB.
+    /**
+     * Behavior dock icon Notes:
+     *  - Kalau ada note yang sedang di-"hide" (tombol X header) → unhide
+     *    semuanya supaya note kembali muncul. Ini juga otomatis pastikan
+     *    `notesVisible=true`.
+     *  - Kalau tidak ada hidden notes → toggle visibility seperti biasa
+     *    (show ↔ hide all).
+     *
+     * Pattern ini cocok dengan UX macOS: klik icon di dock = "buka kembali".
+     */
     const toggleNotesVisibility = useCallback(() => {
-        setNotesVisible(!notesVisible);
+        if (hiddenNoteIds.size > 0) {
+            unhideAllNotes();
+            if (!notesVisible) setNotesVisible(true);
+        } else {
+            setNotesVisible(!notesVisible);
+        }
         setNotesDockBouncing(true);
         setTimeout(() => setNotesDockBouncing(false), 600);
-    }, [notesVisible, setNotesVisible, setNotesDockBouncing]);
+    }, [notesVisible, setNotesVisible, hiddenNoteIds, unhideAllNotes, setNotesDockBouncing]);
 
     return {
         handleGoHome,

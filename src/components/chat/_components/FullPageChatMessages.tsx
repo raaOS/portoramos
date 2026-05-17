@@ -14,7 +14,7 @@ interface ChatMessage {
 interface FullPageChatMessagesProps {
     messages: ChatMessage[];
     isTyping: boolean;
-    bottomRef: React.RefObject<HTMLDivElement>;
+    bottomRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export default function FullPageChatMessages({ 

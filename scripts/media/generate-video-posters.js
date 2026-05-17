@@ -61,4 +61,4 @@ console.log(`   Failed: ${failCount}`);
 console.log(`   Skipped: ${mp4Files.length - successCount - failCount}`);
 console.log(`\nNext steps:`);
 console.log('1. New .jpg files generated locally.');
-console.log('2. Upload to Firebase Storage for production use.');
+console.log('2. Upload generated poster files to R2 for production use.');

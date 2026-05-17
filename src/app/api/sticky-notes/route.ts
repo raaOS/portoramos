@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { stickyNotesService } from '@/lib/services/stickyNotesService';
 import { validateAdminRequest } from '@/lib/auth';
 import { stickyNotesBulkSchema } from '@/lib/validations';
-import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
+import { enforceRequestRateLimit } from '@/lib/security/request';
 
 export async function GET(request: NextRequest) {
     try {
@@ -35,15 +35,18 @@ export async function PUT(request: NextRequest) {
 
         // Defense in depth: rate limit admin bulk writes meskipun auth sudah lolos.
         // 30 req/menit cukup untuk auto-save debounce tapi mencegah runaway loop.
-        const clientIp = request.headers.get('x-forwarded-for') || 'unknown';
-        const rateLimit = await checkFirebaseRateLimit(
-            `sticky_notes_put_${clientIp}`,
+        const rateLimit = await enforceRequestRateLimit(
+            request,
+            'sticky_notes_put',
             30,
             60_000,
             300_000
         );
         if (!rateLimit.allowed) {
-            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+            return NextResponse.json(
+                { error: 'Too many requests', retryAfter: rateLimit.retryAfter },
+                { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } },
+            );
         }
 
         const body = await request.json();

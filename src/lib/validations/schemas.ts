@@ -135,3 +135,41 @@ export type CompressFileInput = z.infer<typeof compressFileSchema>;
 export type DeleteIconInput = z.infer<typeof deleteIconSchema>;
 export type TelegramWebhookInput = z.infer<typeof telegramWebhookSchema>;
 export type TelegramStatusInput = z.infer<typeof telegramStatusSchema>;
+
+// Exit-Intent Feedback Schema
+// Visitor leaves a rating + optional message when they show intent to close the tab.
+export const feedbackSubmissionSchema = z.object({
+    // 1-5 bintang
+    rating: z.number().int().min(1).max(5),
+    // Pesan / saran / kritik singkat. Opsional, tapi kalau ada dibatasi panjang.
+    message: z.string().max(500, 'Pesan terlalu panjang (max 500 karakter)').optional(),
+    // Nama pengunjung — opsional untuk yang mau anonim.
+    name: z.string().max(50, 'Nama terlalu panjang').optional(),
+    // Konteks: page apa yang sedang dibuka saat feedback dikirim
+    fromPath: z.string().max(200).optional(),
+    // Client-generated stable ID (localStorage) — layer dedup tambahan di server
+    clientId: z.string().min(8).max(64).optional(),
+    // Device hint dari client: 'desktop' | 'tablet' | 'mobile'
+    device: z.enum(['desktop', 'tablet', 'mobile']).optional(),
+    // Timestamp (ms) saat form dibuka di client — untuk minimum-fill-time check
+    formOpenedAt: z.number().int().positive().optional(),
+    // Sumber feedback — sekarang cuma exit-intent, ke depan bisa guestbook dll
+    source: z.enum(['exit-intent', 'guestbook', 'chat']).optional(),
+    // Honeypot. Non-empty values must pass validation so the route can return
+    // a silent success response instead of revealing bot detection.
+    website_url: z.string().max(200, 'Honeypot value too long').optional(),
+}).strict();
+
+export type FeedbackSubmissionInput = z.infer<typeof feedbackSubmissionSchema>;
+
+// Status moderation untuk persistence — dipakai admin panel nanti
+export type FeedbackStatus = 'pending' | 'approved' | 'hidden' | 'deleted';
+export const feedbackStatusEnum = z.enum(['pending', 'approved', 'hidden', 'deleted']);
+
+// Admin action untuk update status (akan dipakai admin panel)
+export const feedbackModerationSchema = z.object({
+    status: feedbackStatusEnum,
+    isPublic: z.boolean().optional(),
+}).strict();
+
+export type FeedbackModerationInput = z.infer<typeof feedbackModerationSchema>;

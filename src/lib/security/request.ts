@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
+import { checkDataRateLimit } from '@/lib/dataRateLimit';
 
 /**
  * Get client IP address from request
@@ -54,7 +54,7 @@ export async function enforceRequestRateLimit(
     windowMs: number,
     blockMs: number
 ) {
-    return checkFirebaseRateLimit(
+    return checkDataRateLimit(
         getClientIdentifier(request, scope),
         maxAttempts,
         windowMs,

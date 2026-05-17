@@ -394,6 +394,39 @@ body.os-mode-active {
   visibility: visible !important;
 }
 
+html[data-os-booted="true"] .desktop-skeleton-overlay {
+  background: rgb(0 0 0 / 0.05) !important;
+}
+
+/* ==========================================================================
+   Boot Cover (anti-flash for fresh visitors)
+   --------------------------------------------------------------------------
+   Visitor pertama kali ke site harus lihat boot animation, bukan wallpaper
+   muncul sekejap baru ditutup boot screen. Kita SSR `DesktopSkeleton` yang
+   render wallpaper untuk LCP — tanpa cover, wallpaper itu sempat ke-paint
+   sebelum StartScreen mount → glitch.
+
+   Kita pakai `data-os-needs-boot` (di-set via beforeInteractive script di
+   layout.tsx, sebelum render apapun) untuk render solid black overlay dan
+   sembunyikan skeleton sampai StartScreen ambil alih. Setelah boot selesai,
+   `useBootSequence.markAsBooted` set `data-os-booted="true"` dan cover
+   otomatis hilang via CSS rule di bawah.
+   ========================================================================== */
+html[data-os-needs-boot="true"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: #000;
+  /* Z-index taruh DI BAWAH BOOT (999_999) tapi DI ATAS semua lapisan desktop:
+     CHROME (10_000), DOCK (99_999), DOCK_POPOVER (100_000). Cover ini cuma
+     untuk masking wallpaper SSR sebelum StartScreen mount. */
+  z-index: 500000;
+  pointer-events: none;
+}
+html[data-os-booted="true"] body::before {
+  display: none;
+}
+
 /* ==========================================================================
    Page View Transitions (Opsi 2 — True Native App Slide)
    via next-view-transitions. Halaman lama geser full ke kiri (100vw),

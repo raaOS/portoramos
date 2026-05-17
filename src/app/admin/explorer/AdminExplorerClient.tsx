@@ -211,7 +211,7 @@ export default function AdminExplorerClient() {
                 const formData = new FormData();
                 formData.append('file', fileToUpload);
                 
-                const uploadPromise = new Promise<{ url: string; posterUrl?: string; videoStats?: { optimizedSize: number } }>((resolve, reject) => {
+                const uploadPromise = new Promise<{ url: string; previewUrl?: string; posterUrl?: string; videoStats?: { optimizedSize: number } }>((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     
                     xhr.upload.onprogress = (event) => {
@@ -258,6 +258,7 @@ export default function AdminExplorerClient() {
                         parentId: currentParentId || null, // Explicitly enforce null for Root
                         name: fileToUpload.name,
                         url: uploadResult.url,
+                        previewUrl: uploadResult.previewUrl,
                         thumbnailUrl: uploadResult.posterUrl,
                         fileType: getFileKind(fileToUpload.type),
                         size: uploadResult.videoStats?.optimizedSize ?? fileToUpload.size,

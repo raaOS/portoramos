@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateViralMetrics, generateGenZComments } from '@/lib/magic';
 import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
-import { db } from '@/lib/firebaseAdmin';
+import { db } from '@/lib/database';
 
 export async function POST(req: NextRequest) {
     if (!(await validateAdminRequest(req))) {
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing projectId or slug' }, { status: 400 });
         }
 
-        // 1. Update Project Metrics in Firebase
+        // 1. Update Project Metrics in CLOUDFLARE_D1
         const metrics = generateViralMetrics();
         const updatedProject = await projectService.updateProject(projectId, {
             id: projectId,
@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Project not found' }, { status: 404 });
         }
 
-        // 2. Generate and Update Comments in Firebase
-        // Since comments don't have a dedicated service yet, we use direct Firebase path
+        // 2. Generate and Update Comments in CLOUDFLARE_D1
+        // Since comments don't have a dedicated service yet, we use direct CLOUDFLARE_D1 path
         const newComments = generateGenZComments(slug);
         await db.ref(`comments/${slug}`).set(newComments);
 
@@ -46,3 +46,4 @@ export async function POST(req: NextRequest) {
         }, { status: 500 });
     }
 }
+

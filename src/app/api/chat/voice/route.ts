@@ -1,12 +1,31 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { enforceRequestRateLimit } from '@/lib/security/request';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request) {
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+const ALLOWED_AUDIO_TYPES = new Set([
+    'audio/webm',
+    'audio/wav',
+    'audio/x-wav',
+    'audio/mpeg',
+    'audio/mp4',
+    'audio/ogg',
+]);
+
+export async function POST(request: NextRequest) {
     try {
         const groqKey = process.env.GROQ_API_KEY;
         if (!groqKey) {
             return NextResponse.json({ error: 'Groq API Key not configured' }, { status: 500 });
+        }
+
+        const rateLimit = await enforceRequestRateLimit(request, 'chat_voice', 6, 60 * 1000, 5 * 60 * 1000);
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: 'Too many voice requests. Please try again later.', retryAfter: rateLimit.retryAfter },
+                { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } },
+            );
         }
 
         const formData = await request.formData();
@@ -14,6 +33,14 @@ export async function POST(request: Request) {
 
         if (!file) {
             return NextResponse.json({ error: 'No audio file provided' }, { status: 400 });
+        }
+
+        if (file.size > MAX_AUDIO_BYTES) {
+            return NextResponse.json({ error: 'Audio file is too large' }, { status: 413 });
+        }
+
+        if (file.type && !ALLOWED_AUDIO_TYPES.has(file.type)) {
+            return NextResponse.json({ error: 'Unsupported audio file type' }, { status: 400 });
         }
 
         // Forward to Groq Whisper API

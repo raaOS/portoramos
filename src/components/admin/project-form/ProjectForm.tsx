@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { useProjectForm, type ProjectFormData } from '@/hooks/useProjectForm';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import AdminModal from '@/app/admin/components/AdminModal';
-import { useFirebaseUpload } from '@/app/admin/components/file-upload/hooks/useFirebaseUpload';
+import { useStorageUpload } from '@/app/admin/components/file-upload/hooks/useStorageUpload';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { Label } from '@/types/labels';
 
@@ -67,7 +67,7 @@ export default function ProjectForm({ project, allProjects = [], labels = [], on
     } = useProjectForm(project);
 
     const { csrfToken } = useAdminAuth();
-    const { upload } = useFirebaseUpload({ folder: 'projects', csrfToken: csrfToken || '' });
+    const { upload } = useStorageUpload({ folder: 'projects', csrfToken: csrfToken || '' });
     
     // Extracted Hooks
     const { 

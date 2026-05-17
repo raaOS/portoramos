@@ -11,6 +11,7 @@ export function checkCSRF(request: NextRequest) {
             '/api/admin/login',
             '/api/admin/logout',
             '/api/chat/send',
+            '/api/chat/voice',
             '/api/webhook/telegram',
             '/api/translate',
             // Visitor-reachable mutation endpoints yang tidak memerlukan sesi admin.
@@ -19,6 +20,7 @@ export function checkCSRF(request: NextRequest) {
             '/api/metrics',
             '/api/comments',
             '/api/analytics',
+            '/api/feedback',
         ];
         if (!allowlistPaths.includes(pathname)) {
             const csrfToken = request.headers.get('x-csrf-token');

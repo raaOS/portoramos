@@ -1,8 +1,8 @@
 /**
- * Image Optimization Utilities untuk Firebase Storage
+ * Image optimization utilities untuk media statis/R2.
  * 
  * Mengurangi bandwidth dengan:
- * 1. Generate resized image URL (Firebase Storage tidak support on-the-fly resize)
+ * 1. Generate resized image URL saat variant tersedia
  * 2. Lazy loading dengan Intersection Observer
  * 3. WebP format detection
  */
@@ -26,11 +26,7 @@ const SIZE_CONFIG: Record<ImageSize, ImageDimensions> = {
 /**
  * Generate optimized image URL.
  * 
- * NOTE: Firebase Storage tidak mendukung on-the-fly resize seperti Cloudinary.
- * Untuk truly optimized images, gunakan Firebase Extension "Resize Images" atau
- * upload multiple sizes saat upload.
- * 
- * Sementara ini function mengembalikan URL asli dengan cache headers.
+ * Sementara ini function mengembalikan URL asli.
  */
 export function getOptimizedImageUrl(
     url: string,
@@ -38,17 +34,11 @@ export function getOptimizedImageUrl(
 ): string {
     if (!url || url.startsWith('data:')) return url;
     
-    // Jika sudah ada size parameter (dari Firebase Resize Extension), gunakan itu
+    // Jika sudah ada size suffix dari pipeline upload, gunakan itu.
     if (url.includes('_thumb.') || url.includes('_medium.')) {
         return url;
     }
     
-    // Untuk Firebase Storage, kita bisa tambahkan alt=media untuk direct download
-    // dan memastikan caching bekerja dengan baik
-    // const separator = url.includes('?') ? '&' : '?';
-    
-    // Add cache-busting version untuk cache control
-    // Firebase Storage sudah mendukung Cache-Control headers
     return url;
 }
 
@@ -69,8 +59,7 @@ export function supportsWebP(): boolean {
 /**
  * Generate srcset untuk responsive images
  * 
- * NOTE: Ini hanya berfungsi jika Anda sudah upload multiple sizes ke Firebase Storage
- * menggunakan Firebase Extension "Resize Images" atau manual.
+ * NOTE: Ini hanya berfungsi jika multiple sizes sudah dibuat saat upload.
  */
 export function generateSrcSet(
     baseUrl: string,
@@ -78,7 +67,7 @@ export function generateSrcSet(
 ): string {
     if (!baseUrl || baseUrl.startsWith('data:')) return '';
     
-    // Jika menggunakan Firebase Resize Extension, URL akan seperti:
+    // Jika menggunakan generated variants, URL akan seperti:
     // baseUrl: https://.../image.jpg
     // thumb: https://.../image_thumb.jpg
     // medium: https://.../image_medium.jpg

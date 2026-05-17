@@ -1,6 +1,6 @@
 import { Project } from "@/types/projects";
 import { getProxiedUrl } from "@/lib/utils";
-import { DesktopPreferences } from "@/types/about";
+import { DesktopPreferences, DesktopIconPosition } from "@/types/about";
 import { getVideoPreviewSource } from "@/lib/mediaPreview";
 
 type DesktopItem =
@@ -65,14 +65,47 @@ export const generateDesktopIcons = (
     const generatedIcons = (desktopItems as DesktopItem[]).map((item, index: number) => {
         const itemId = item?.id || `icon-${index}`;
         // 1. Check if we have a saved position for this ID (Admin Saved)
-        const savedPos = desktopPreferences?.iconPositions?.[itemId];
+        const savedPos: DesktopIconPosition | undefined = desktopPreferences?.iconPositions?.[itemId];
+
+        // Clamp icon ke viewport aktif (safe margin untuk menu bar atas & dock bawah)
+        // supaya icon yang di-save admin di layar besar nggak ke-cut di layar kecil.
+        const SIDE_SAFE = 8;
+        const TOP_SAFE = topOffset;
+        const BOTTOM_SAFE = bottomOffset;
+        const ICON_BOX = 80;
+        const clampIcon = (cx: number, cy: number) => ({
+            x: Math.max(SIDE_SAFE, Math.min(cx, Math.max(SIDE_SAFE, windowSize.width - ICON_BOX - SIDE_SAFE))),
+            y: Math.max(TOP_SAFE, Math.min(cy, Math.max(TOP_SAFE, windowSize.height - BOTTOM_SAFE))),
+        });
 
         let slotIndex, slot, finalX, finalY;
 
         if (savedPos) {
-            // USE SAVED POSITION (Override Grid)
-            finalX = savedPos.x;
-            finalY = savedPos.y;
+            // Resolusi posisi — prioritas percentage (responsive), baru pixel legacy.
+            let resolvedX: number;
+            let resolvedY: number;
+
+            if (typeof savedPos.xPct === 'number' && typeof savedPos.yPct === 'number') {
+                resolvedX = (savedPos.xPct / 100) * windowSize.width;
+                resolvedY = (savedPos.yPct / 100) * windowSize.height;
+            } else if (
+                typeof savedPos.refScreenWidth === 'number' &&
+                typeof savedPos.refScreenHeight === 'number' &&
+                savedPos.refScreenWidth > 0 &&
+                savedPos.refScreenHeight > 0
+            ) {
+                // Legacy pixel + ref screen → scale proporsional ke viewport saat ini.
+                resolvedX = (savedPos.x / savedPos.refScreenWidth) * windowSize.width;
+                resolvedY = (savedPos.y / savedPos.refScreenHeight) * windowSize.height;
+            } else {
+                // Legacy pixel tanpa ref → pakai langsung, tapi tetap di-clamp.
+                resolvedX = savedPos.x;
+                resolvedY = savedPos.y;
+            }
+
+            const clamped = clampIcon(resolvedX, resolvedY);
+            finalX = clamped.x;
+            finalY = clamped.y;
         } else {
             // FALLBACK TO GRID
             slotIndex = index % Math.max(1, availableSlots.length);

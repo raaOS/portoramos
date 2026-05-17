@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Wifi, Bluetooth, Airplay, Moon, Sun, Volume2 } from 'lucide-react';
 import { soundManager } from '../utils/SoundManager';
 import { useOSSystem } from '../context/OSSystemContext';
+import { Z_LAYERS } from '../utils/zIndexLayers';
 
 interface ControlCenterProps {
     isOpen: boolean;
@@ -31,8 +32,8 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, scale: 0.8, filter: 'blur(10px)' }}
             transition={{ type: "spring", stiffness: 450, damping: 26, mass: 1 }}
-            style={{ transformOrigin: "center center" }}
-            className="fixed top-12 right-2 sm:right-4 w-[320px] rounded-2xl bg-white/70 dark:bg-black/70 backdrop-blur-3xl border border-white/20 dark:border-white/10 p-4 z-[10001] text-black dark:text-white"
+            style={{ transformOrigin: "center center", zIndex: Z_LAYERS.POPOUT }}
+            className="fixed top-12 right-2 sm:right-4 w-[320px] rounded-2xl bg-white/70 dark:bg-black/70 backdrop-blur-3xl border border-white/20 dark:border-white/10 p-4 text-black dark:text-white"
         >
             {/* Grid 2x2 */}
             <div className="grid grid-cols-2 gap-3 mb-3">

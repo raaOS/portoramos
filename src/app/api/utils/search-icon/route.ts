@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { validateAdminRequest } from '@/lib/auth';
+import { enforceRequestRateLimit } from '@/lib/security/request';
 
 export async function POST(req: NextRequest) {
     try {
+        if (!(await validateAdminRequest(req))) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const rateLimit = await enforceRequestRateLimit(req, 'icon_search', 20, 60 * 1000, 5 * 60 * 1000);
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please try again later.', retryAfter: rateLimit.retryAfter },
+                { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } },
+            );
+        }
+
         const { query } = await req.json();
 
-        if (!query) {
+        if (!query || typeof query !== 'string') {
             return NextResponse.json({ error: 'Query is required' }, { status: 400 });
         }
 
         // Normalize query: "Adobe Photoshop" -> "photoshop", "C++" -> "cplusplus" (special cases)
-        let slug = query.toLowerCase().trim();
+        let slug = query.slice(0, 80).toLowerCase().trim();
 
         // Common mappings
         const mappings: Record<string, string> = {
@@ -47,7 +61,7 @@ export async function POST(req: NextRequest) {
             // Simple Icons (Official CDN)
             `https://cdn.simpleicons.org/${slug}`,
             // Simple Icons (Fallback generic)
-            `https://cdn.simpleicons.org/${query.toLowerCase().replace(/ /g, '')}`
+            `https://cdn.simpleicons.org/${slug.replace(/ /g, '')}`
         ];
 
         for (const url of candidates) {

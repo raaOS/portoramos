@@ -19,6 +19,7 @@ export interface ExplorerFile extends ExplorerNode {
     type: 'file';
     fileType: FileKind;
     url: string;
+    previewUrl?: string;
     thumbnailUrl?: string; // High res thumb
     size?: number; // bytes
     metadata?: {

@@ -3,6 +3,7 @@
     {
       "id": "hard-ps",
       "name": "Adobe Photoshop",
+      "iconUrl": "https://cdn.simpleicons.org/adobephotoshop",
       "level": "Expert",
       "order": 1,
       "description": "Expert image manipulation tool",
@@ -18,6 +19,7 @@
     {
       "id": "hard-ai",
       "name": "Adobe Illustrator",
+      "iconUrl": "https://cdn.simpleicons.org/adobeillustrator",
       "level": "Expert",
       "order": 2,
       "description": "Vector graphics editor",
@@ -33,6 +35,7 @@
     {
       "id": "hard-figma",
       "name": "Figma",
+      "iconUrl": "https://cdn.simpleicons.org/figma",
       "level": "Beginner",
       "order": 3,
       "description": "Interface design tool (still learning)",
@@ -48,6 +51,7 @@
     {
       "id": "hard-canva",
       "name": "Canva",
+      "iconUrl": "https://cdn.simpleicons.org/canva",
       "level": "Intermediate",
       "order": 4,
       "description": "Graphic design platform",

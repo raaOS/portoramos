@@ -6,8 +6,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import {
     useFileValidation,
     useFFmpeg,
-    useFirebaseUpload,
-    useImageCompression
+    useStorageUpload
 } from './file-upload/hooks';
 import {
     UploadProgress,
@@ -50,8 +49,7 @@ export default function AdminFileUpload({
     // Hooks
     const { validateFiles } = useFileValidation({ accept, maxSize });
     const { compressVideo } = useFFmpeg(setStatus);
-    const { upload } = useFirebaseUpload({ folder, customFilename, csrfToken: _csrfToken || '' });
-    const { compressImageServer } = useImageCompression(_csrfToken || '');
+    const { upload } = useStorageUpload({ folder, customFilename, csrfToken: _csrfToken || '' });
 
     const executeUpload = useCallback(async (
         files: File[],
@@ -104,24 +102,6 @@ export default function AdminFileUpload({
                 setProgress(((index + 1) / files.length) * 100);
                 const finalUrl = url;
 
-                const isImageFile = file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.icns');
-
-                if (isImageFile) {
-                    // Extract storage path from Firebase URL
-                    const urlObj = new URL(url);
-                    const pathParts = urlObj.pathname.split('/o/');
-                    if (pathParts.length > 1) {
-                        const publicPath = decodeURIComponent(pathParts[1].split('?')[0]);
-                        const { success: compSuccess, stats, newPath } = await compressImageServer(publicPath);
-                        if (compSuccess && stats) {
-                            showSuccessToast(`${file.name} Optimized! (${stats.originalSize} -> ${stats.newSize}). Saved ${stats.saved}`);
-                            if (newPath && newPath !== publicPath) {
-                                // Since it's Firebase, the URL structure for alt=media remains the same even if content changes
-                                // but we might need to refresh tokens or just trust the overwrite
-                            }
-                        }
-                    }
-                }
                 return finalUrl;
             });
 
@@ -144,7 +124,7 @@ export default function AdminFileUpload({
             setProgress(0);
             onUploadEnd?.();
         }
-    }, [compressVideo, upload, compressImageServer, onUpload, onUploadStart, onUploadEnd, showSuccessToast, showError, showWarning, autoUpload, onFileSelect]);
+    }, [compressVideo, upload, onUpload, onUploadStart, onUploadEnd, showSuccessToast, showError, showWarning, autoUpload, onFileSelect]);
 
     const handleFiles = useCallback(async (files: FileList) => {
         if (disabled) return;

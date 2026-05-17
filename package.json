@@ -25,10 +25,12 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "audit": "npx tsx scripts/maintenance/audit.ts",
-    "sync:firebase-assets": "npx tsx scripts/utils/upload-to-firebase.ts --overwrite --projects",
+    "db:bootstrap:d1": "npx tsx scripts/cloudflare/bootstrap-d1.ts",
+    "db:test": "npx tsx scripts/cloudflare/test-env.ts",
     "prepare": "husky"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1047.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -44,8 +46,6 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "ffmpeg-static": "^5.3.0",
-    "firebase": "^12.10.0",
-    "firebase-admin": "^13.6.1",
     "framer-motion": "12.38.0",
     "fuse.js": "^7.1.0",
     "html-to-image": "^1.11.13",
@@ -82,8 +82,8 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/mime-types": "^3.0.1",
     "@types/node": "^20.19.33",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-v8": "^4.0.18",
@@ -117,6 +117,9 @@
     "@tootallnate/once": "^3.0.1",
     "fast-xml-parser": "^5.5.9",
     "flatted": "^3.3.3",
-    "undici": "^7.5.0"
+    "undici": "^7.5.0",
+    "next": {
+      "postcss": "^8.5.14"
+    }
   }
 }

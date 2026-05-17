@@ -1,4 +1,5 @@
-import { bucket } from '@/lib/firebaseAdmin';
+import { deleteFromR2, isR2StorageConfigured } from '@/lib/r2Storage';
+import { extractStoragePath } from '@/lib/urlResolver';
 import type { Project } from '@/types/projects';
 
 export function extractProjectAssets(project: Project): string[] {
@@ -28,13 +29,7 @@ export async function purgeStorageAssets(urls: string[]): Promise<void> {
     const allAssetPathsToPurge: string[] = [];
 
     urls.forEach(url => {
-        let storagePath = '';
-        if (url.includes('/o/')) {
-            const parts = url.split('/o/');
-            storagePath = decodeURIComponent(parts[1].split('?')[0]);
-        } else if (url.startsWith('/')) {
-            storagePath = url.substring(1);
-        }
+        const storagePath = extractStoragePath(url);
         
         if (storagePath && storagePath.startsWith('assets/')) {
             allAssetPathsToPurge.push(storagePath);
@@ -45,12 +40,15 @@ export async function purgeStorageAssets(urls: string[]): Promise<void> {
         console.log(`[ProjectService] Bulk purging ${allAssetPathsToPurge.length} storage assets...`);
         await Promise.allSettled(allAssetPathsToPurge.map(async (storagePath) => {
             try {
-                const file = bucket.file(storagePath);
-                const [exists] = await file.exists();
-                if (exists) await file.delete();
+                await deleteFromR2IfConfigured(storagePath);
             } catch (e) {
                 console.warn(`[ProjectService] Failed bulk delete asset: ${storagePath}`, e);
             }
         }));
     }
+}
+
+async function deleteFromR2IfConfigured(storagePath: string) {
+    if (!isR2StorageConfigured()) return;
+    await deleteFromR2(storagePath);
 }

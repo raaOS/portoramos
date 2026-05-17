@@ -6,6 +6,7 @@ import {
   Quote,
   Users,
   Send,
+  MessageSquareText,
   Monitor,
   Layout,
   Smile,
@@ -82,6 +83,7 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { href: '/admin/contact', label: 'Pengaturan Kontak', icon: PhoneCall, color: 'text-amber-600', bg: 'hover:bg-amber-50' },
       { href: '/admin/leads', label: 'Pesan Masuk', icon: Users, color: 'text-indigo-600', bg: 'hover:bg-indigo-50' },
+      { href: '/admin/feedback', label: 'Feedback Visitor', icon: MessageSquareText, color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
       { href: '/admin/telegram', label: 'Bot Telegram', icon: Send, color: 'text-sky-500', bg: 'hover:bg-sky-50' },
     ]
   }

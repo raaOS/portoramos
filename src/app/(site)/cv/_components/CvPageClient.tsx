@@ -16,8 +16,7 @@ import {
     CvWebHeader, 
     CvPrintHeader, 
     CvSkills, 
-    CvExperience, 
-    CvProjects 
+    CvExperience 
 } from './components/CvUIComponents';
 
 type Props = {
@@ -38,10 +37,10 @@ export default function CvPageClient({
   const cvRef = useRef<HTMLDivElement>(null);
 
   const displayName = 'Ramos';
-  const headline = 'Graphic Designer & Visual Strategist';
+  const headline = 'Graphic Designer';
   const summary = aboutData?.professional?.bio?.content ?? 'Desainer Grafis senior dengan fokus pada solusi visual yang strategis dan berdampak nyata.';
   
-  const { isExporting, handlePrint, handleDownloadPDF } = useCvExport({ cvRef, displayName });
+  const { handlePrint } = useCvExport({ cvRef, displayName });
 
   useEffect(() => {
     if (shouldAutoPrint) {
@@ -76,14 +75,20 @@ export default function CvPageClient({
   }, [hardSkillsData]);
 
   const workExperience = experienceData?.workExperience ?? [];
-  const topProjects = useMemo(() => projects?.slice(0, 3) ?? [], [projects]);
 
   return (
     <SystemNavFrame>
       <div className="min-h-screen bg-[#F0F0F0] text-gray-900 selection:bg-red-100 selection:text-red-900">
         <style>{`
           @media print {
-            body { background: white !important; }
+            @page {
+              size: auto;
+              margin: 0mm;
+            }
+            body {
+              background: white !important;
+              margin: 15mm 20mm !important;
+            }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             .cv-container { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
@@ -98,8 +103,6 @@ export default function CvPageClient({
           <CvWebHeader 
             displayName={displayName}
             headline={headline}
-            isExporting={isExporting}
-            onDownload={handleDownloadPDF}
             onPrint={handlePrint}
           />
 
@@ -113,31 +116,12 @@ export default function CvPageClient({
 
             <div className="space-y-10 relative z-10">
               <CvSection title="Ringkasan Profesional" accent>
-                <p className="text-base md:text-xl text-gray-800 leading-relaxed font-medium">{summary}</p>
+                <p className="text-sm md:text-base text-gray-700 leading-relaxed font-medium">{summary}</p>
               </CvSection>
 
               <CvSkills hardSkills={hardSkills} softSkills={softSkills} />
 
               <CvExperience workExperience={workExperience} chunkWords={chunkWords} />
-
-              <CvProjects topProjects={topProjects} totalProjects={projects?.length || 0} />
-
-              <div className="pt-4 flex justify-end print:hidden">
-                <button
-                  onClick={handleDownloadPDF}
-                  disabled={isExporting}
-                  className="inline-flex items-center gap-2 rounded-full bg-black text-white px-6 py-3 text-sm font-semibold shadow-lg hover:bg-red-600 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
-                >
-                  {isExporting ? <Loader2 size={20} className="animate-spin" /> : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                  )}
-                  {isExporting ? 'Menyiapkan PDF...' : 'Download sekarang'}
-                </button>
-              </div>
             </div>
           </section>
         </div>

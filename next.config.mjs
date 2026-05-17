@@ -28,9 +28,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'i.ibb.co' },
       { protocol: 'https', hostname: 'postimg.cc' },
       { protocol: 'https', hostname: 'i.postimg.cc' },
-      { protocol: 'https', hostname: 'images2.imgbox.com' },
-      { protocol: 'https', hostname: 'storage.googleapis.com' },
-      { protocol: 'https', hostname: 'firebasestorage.googleapis.com' }
+      { protocol: 'https', hostname: 'images2.imgbox.com' }
     ],
     // Enable optimization in production only
     unoptimized: process.env.NODE_ENV === 'development',
@@ -48,7 +46,7 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   // Transpile packages that need ESM handling
-  transpilePackages: ['firebase', 'motion'],
+  transpilePackages: ['motion'],
 
   // Optimize static assets
   assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
@@ -66,9 +64,6 @@ const nextConfig = {
   // Turbopack configuration (Next.js 16 Stable Bundler)
   turbopack: {},
 
-  // Externalize heavy server dependencies to fix Vercel lambda size limits
-  serverExternalPackages: ['firebase-admin'],
-
   // Webpack optimization for performance (fallback when using --webpack flag)
   webpack: (config, { dev, isServer }) => {
     // Fix ESM .mjs module resolution (required for framer-motion and similar packages)
@@ -78,14 +73,6 @@ const nextConfig = {
         fullySpecified: false,
       },
     });
-
-    // Tactical Aliases to resolve ESM resolution issues in Next.js 16 Webpack
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      // Map firebase subpaths to help Webpack find the correct ESM bundles via @firebase packages
-      'firebase/app': '@firebase/app',
-      'firebase/database': '@firebase/database',
-    };
 
     if (!dev && !isServer) {
       // Optimize bundle splitting for better caching and performance
@@ -111,7 +98,7 @@ const nextConfig = {
           // UI library chunk
           ui: {
             name: 'ui',
-            test: /[\\/]node_modules[\\/](motion|lucide-react|@tabler|@tsparticles|firebase)[\\/]/,
+            test: /[\\/]node_modules[\\/](motion|lucide-react|@tabler|@tsparticles)[\\/]/,
             chunks: 'all',
             priority: 30,
           },
@@ -269,7 +256,12 @@ const nextConfig = {
 
   // Compiler optimizations
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    // In production, strip console.* calls EXCEPT console.error / console.warn
+    // so real errors and security warnings (CSRF, rate-limit, etc.) still surface
+    // in server logs and browser consoles for diagnosis.
+    removeConsole: process.env.NODE_ENV === 'production'
+      ? { exclude: ['error', 'warn'] }
+      : false,
   },
 }
 

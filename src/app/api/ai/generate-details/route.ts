@@ -1,25 +1,115 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkFirebaseRateLimit } from '@/lib/firebaseRateLimit';
+import { getGeminiApiKey, guardAdminAiRequest } from '../_shared';
 
 /**
  * Gemini AI Integration
  * Generates project details using Google's Gemini API.
  */
-const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_AI_API_KEY;
-
-// Rate limiting: 10 requests per minute, block 5 minutes
-const MAX_AI_REQUESTS = 10;
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const BLOCK_DURATION = 5 * 60 * 1000; // 5 minutes
-
 // API Timeout: 30 seconds
 const API_TIMEOUT = 30000;
+const REMOTE_MEDIA_TIMEOUT = 10000;
+const MAX_REMOTE_MEDIA_BYTES = 8 * 1024 * 1024;
+const MAX_BASE64_CHARS = Math.ceil(MAX_REMOTE_MEDIA_BYTES * 1.4);
 
-function getClientIdentifier(request: NextRequest): string {
-    const forwarded = request.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
-    const userAgent = request.headers.get('user-agent') || 'unknown';
-    return `${ip}|${userAgent}`;
+const DEFAULT_ALLOWED_REMOTE_MEDIA_HOSTS = [
+    'images.unsplash.com',
+    'plus.unsplash.com',
+    'picsum.photos',
+    'i.ibb.co',
+    'i.postimg.cc',
+    'images2.imgbox.com',
+    'ui-avatars.com',
+    'via.placeholder.com',
+] as const;
+
+const ALLOWED_REMOTE_MIME_PREFIXES = ['image/', 'video/mp4', 'video/webm'];
+
+function validateRemoteMediaUrl(rawUrl: string) {
+    let parsed: URL;
+    try {
+        parsed = new URL(rawUrl);
+    } catch {
+        throw new Error('Invalid image URL');
+    }
+
+    if (parsed.protocol !== 'https:') {
+        throw new Error('Only HTTPS media URLs are allowed');
+    }
+
+    if (!getAllowedRemoteMediaHosts().has(parsed.hostname)) {
+        throw new Error('Unsupported remote media host');
+    }
+
+    return parsed;
+}
+
+function getAllowedRemoteMediaHosts() {
+    const hosts = new Set<string>(DEFAULT_ALLOWED_REMOTE_MEDIA_HOSTS);
+    const publicBaseUrl = process.env.CLOUDFLARE_R2_PUBLIC_BASE_URL;
+
+    if (publicBaseUrl?.startsWith('https://')) {
+        try {
+            hosts.add(new URL(publicBaseUrl).hostname);
+        } catch {
+            // Ignore invalid optional config; upload/serve paths validate this separately.
+        }
+    }
+
+    return hosts;
+}
+
+async function fetchUrlAsBase64(parsed: URL) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REMOTE_MEDIA_TIMEOUT);
+
+    try {
+        const response = await fetch(parsed, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            },
+            signal: controller.signal,
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch media: ${response.statusText}`);
+        }
+
+        const contentLength = Number(response.headers.get('content-length') || 0);
+        if (contentLength > MAX_REMOTE_MEDIA_BYTES) {
+            throw new Error('Remote media is too large');
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!ALLOWED_REMOTE_MIME_PREFIXES.some((prefix) => contentType.startsWith(prefix))) {
+            throw new Error('Remote URL did not return a supported media type');
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        if (arrayBuffer.byteLength > MAX_REMOTE_MEDIA_BYTES) {
+            throw new Error('Remote media is too large');
+        }
+
+        return Buffer.from(arrayBuffer).toString('base64');
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
+
+async function fetchRemoteMediaAsBase64(rawUrl: string) {
+    return fetchUrlAsBase64(validateRemoteMediaUrl(rawUrl));
+}
+
+async function fetchLocalMediaAsBase64(rawPath: string, requestUrl: string) {
+    const normalizedPath = rawPath.startsWith('/') ? rawPath : `/${rawPath}`;
+    const isAllowedPath = normalizedPath.startsWith('/r2/assets/')
+        || normalizedPath.startsWith('/r2/temp/')
+        || normalizedPath.startsWith('/assets/');
+
+    if (!isAllowedPath) {
+        throw new Error('Unsupported local media path');
+    }
+
+    return fetchUrlAsBase64(new URL(normalizedPath, requestUrl));
 }
 
 interface GenerateDetailsRequest {
@@ -31,24 +121,12 @@ interface GenerateDetailsRequest {
 }
 
 export async function POST(req: NextRequest) {
+    const guardResponse = await guardAdminAiRequest(req, 'ai_details');
+    if (guardResponse) return guardResponse;
+
+    const API_KEY = getGeminiApiKey();
     if (!API_KEY) {
         return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
-    }
-
-    // Rate limiting check
-    const clientId = getClientIdentifier(req);
-    const rateLimit = await checkFirebaseRateLimit(
-        `ai_details_${clientId}`,
-        MAX_AI_REQUESTS,
-        RATE_LIMIT_WINDOW,
-        BLOCK_DURATION
-    );
-
-    if (!rateLimit.allowed) {
-        return NextResponse.json(
-            { error: 'Too many requests. Please try again later.', retryAfter: rateLimit.retryAfter },
-            { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
-        );
     }
 
     try {
@@ -64,45 +142,15 @@ export async function POST(req: NextRequest) {
         if (imageBase64) {
             // Direct base64 input (e.g. from Client FileReader)
             base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+            if (base64Data.length > MAX_BASE64_CHARS) {
+                return NextResponse.json({ error: 'Image payload is too large' }, { status: 413 });
+            }
         } else if (imageUrl) {
-            if (imageUrl.startsWith('/assets/') || imageUrl.startsWith('assets/') || imageUrl.includes('/o/')) {
-                // Firebase Storage / Local Path
-                let storagePath = imageUrl;
-                if (imageUrl.includes('/o/')) {
-                    const parts = imageUrl.split('/o/');
-                    storagePath = decodeURIComponent(parts[1].split('?')[0]);
-                } else {
-                    storagePath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
-                }
-
-                try {
-                    const { bucket } = await import('@/lib/firebaseAdmin');
-                    const [buffer] = await bucket.file(storagePath).download();
-                    base64Data = buffer.toString('base64');
-                } catch (err: unknown) {
-                    // Fallback to fetch if it's a full URL
-                    if (imageUrl.startsWith('http')) {
-                        const imageRes = await fetch(imageUrl);
-                        if (imageRes.ok) {
-                            const arrayBuffer = await imageRes.arrayBuffer();
-                            base64Data = Buffer.from(arrayBuffer).toString('base64');
-                        } else {
-                            throw new Error(`Cloud fetch failed: ${imageUrl}`);
-                        }
-                    } else {
-                        throw err;
-                    }
-                }
+            if (imageUrl.startsWith('/r2/') || imageUrl.startsWith('r2/') || imageUrl.startsWith('/assets/') || imageUrl.startsWith('assets/')) {
+                base64Data = await fetchLocalMediaAsBase64(imageUrl, req.url);
             } else if (imageUrl.startsWith('http')) {
                 // External Remote URL
-                const imageRes = await fetch(imageUrl, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                    }
-                });
-                if (!imageRes.ok) throw new Error(`Failed to fetch image: ${imageRes.statusText}`);
-                const arrayBuffer = await imageRes.arrayBuffer();
-                base64Data = Buffer.from(arrayBuffer).toString('base64');
+                base64Data = await fetchRemoteMediaAsBase64(imageUrl);
             }
         }
 
