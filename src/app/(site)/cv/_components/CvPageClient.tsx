@@ -4,42 +4,36 @@ import { useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { AboutData } from '@/types/about';
 import type { ExperienceData } from '@/types/experience';
-import type { Project } from '@/types/projects';
 import type { HardSkillsData } from '@/types/hardSkill';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
-import { Loader2 } from 'lucide-react';
 
 // Extracted Sub-components & Hook
 import { useCvExport } from './hooks/useCvExport';
-import { 
-    CvSection, 
-    CvWebHeader, 
-    CvPrintHeader, 
-    CvSkills, 
-    CvExperience 
+import {
+  CvSection,
+  CvWebHeader,
+  CvPrintHeader,
+  CvSkills,
+  CvExperience,
 } from './components/CvUIComponents';
 
 type Props = {
   aboutData: AboutData | null;
   experienceData: ExperienceData | null;
-  projects: Project[];
   hardSkillsData: HardSkillsData | null;
 };
 
-export default function CvPageClient({
-  aboutData,
-  experienceData,
-  projects,
-  hardSkillsData
-}: Props) {
+export default function CvPageClient({ aboutData, experienceData, hardSkillsData }: Props) {
   const searchParams = useSearchParams();
   const shouldAutoPrint = searchParams?.get('print') === 'true';
   const cvRef = useRef<HTMLDivElement>(null);
 
   const displayName = 'Ramos';
   const headline = 'Graphic Designer';
-  const summary = aboutData?.professional?.bio?.content ?? 'Desainer Grafis senior dengan fokus pada solusi visual yang strategis dan berdampak nyata.';
-  
+  const summary =
+    aboutData?.professional?.bio?.content ??
+    'Desainer Grafis senior dengan fokus pada solusi visual yang strategis dan berdampak nyata.';
+
   const { handlePrint } = useCvExport({ cvRef, displayName });
 
   useEffect(() => {
@@ -64,13 +58,13 @@ export default function CvPageClient({
   const hardSkills = useMemo(() => {
     const skills = hardSkillsData?.skills || [];
     return skills
-      .filter(s => s.isActive !== false)
+      .filter((s) => s.isActive !== false)
       .slice(0, 10)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map(s => ({
+      .map((s) => ({
         tool: s.name,
         level: s.level,
-        details: s.details || []
+        details: s.details || [],
       }));
   }, [hardSkillsData]);
 
@@ -99,24 +93,22 @@ export default function CvPageClient({
           }
         `}</style>
 
-        <div className="container max-w-4xl mx-auto px-4 py-12 md:py-20 space-y-8 cv-container">
-          <CvWebHeader 
-            displayName={displayName}
-            headline={headline}
-            onPrint={handlePrint}
-          />
+        <div className="cv-container container mx-auto max-w-4xl space-y-8 px-4 py-12 md:py-20">
+          <CvWebHeader displayName={displayName} headline={headline} onPrint={handlePrint} />
 
           <CvPrintHeader displayName={displayName} headline={headline} />
 
-          <section 
+          <section
             ref={cvRef}
-            className="cv-section border-2 border-black/5 md:border-black/5 rounded-3xl p-6 md:p-10 shadow-xl bg-white relative overflow-hidden"
+            className="cv-section relative overflow-hidden rounded-3xl border-2 border-black/5 bg-white p-6 shadow-xl md:border-black/5 md:p-10"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-red-50/50 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none no-print" />
+            <div className="no-print pointer-events-none absolute right-0 top-0 -mr-16 -mt-16 h-32 w-32 rounded-full bg-red-50/50 blur-3xl" />
 
-            <div className="space-y-10 relative z-10">
+            <div className="relative z-10 space-y-10">
               <CvSection title="Ringkasan Profesional" accent>
-                <p className="text-sm md:text-base text-gray-700 leading-relaxed font-medium">{summary}</p>
+                <p className="text-sm font-medium leading-relaxed text-gray-700 md:text-base">
+                  {summary}
+                </p>
               </CvSection>
 
               <CvSkills hardSkills={hardSkills} softSkills={softSkills} />

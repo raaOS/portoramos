@@ -6,27 +6,28 @@ import { getGeminiApiKey, guardAdminAiRequest } from '../_shared';
  * Generates realistic WhatsApp style testimonials.
  */
 interface GenerateTestimonialRequest {
-    topic?: string;
-    messageCount?: number;
+  topic?: string;
+  messageCount?: number;
 }
 
 export async function POST(req: NextRequest) {
-    const guardResponse = await guardAdminAiRequest(req, 'ai_testimonial');
-    if (guardResponse) return guardResponse;
+  const guardResponse = await guardAdminAiRequest(req, 'ai_testimonial');
+  if (guardResponse) return guardResponse;
 
-    const API_KEY = getGeminiApiKey();
-    if (!API_KEY) {
-        return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
-    }
+  const API_KEY = getGeminiApiKey();
+  if (!API_KEY) {
+    return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
+  }
 
-    try {
-        const { topic = 'Desain Ads', messageCount = 3 } = await req.json() as GenerateTestimonialRequest;
+  try {
+    const { topic = 'Desain Ads', messageCount = 3 } =
+      (await req.json()) as GenerateTestimonialRequest;
 
-        // Call Gemini API
-        const model = 'gemini-flash-latest';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+    // Call Gemini API
+    const model = 'gemini-flash-latest';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
 
-        const prompt = `BERTINDAK SEBAGAI: Seorang klien yang sangat puas dengan hasil kerja seorang Creative Designer (Ramos).
+    const prompt = `BERTINDAK SEBAGAI: Seorang klien yang sangat puas dengan hasil kerja seorang Creative Designer (Ramos).
         
         TOPIK PROJECT: ${topic}
         JUMLAH PESAN: ${messageCount} (Satu rangkaian percakapan)
@@ -62,42 +63,46 @@ export async function POST(req: NextRequest) {
           ]
         }`;
 
-        const requestBody = {
-            contents: [{
-                parts: [{ text: prompt }]
-            }],
-            generationConfig: {
-                response_mime_type: "application/json"
-            }
-        };
+    const requestBody = {
+      contents: [
+        {
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        response_mime_type: 'application/json',
+      },
+    };
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    });
 
-        if (!response.ok) {
-            const txt = await response.text();
-            throw new Error(`Gemini API Error: ${txt}`);
-        }
-
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!text) {
-            throw new Error('No response from AI');
-        }
-
-        // Clean markdown and parse
-        const jsonText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(jsonText);
-
-        return NextResponse.json(parsed);
-
-    } catch (error: unknown) {
-        console.error('AI Generate Testimonial Error:', error);
-        const errorMsg = error instanceof Error ? error.message : 'Internal Server Error';
-        return NextResponse.json({ error: errorMsg }, { status: 500 });
+    if (!response.ok) {
+      const txt = await response.text();
+      throw new Error(`Gemini API Error: ${txt}`);
     }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) {
+      throw new Error('No response from AI');
+    }
+
+    // Clean markdown and parse
+    const jsonText = text
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+    const parsed = JSON.parse(jsonText);
+
+    return NextResponse.json(parsed);
+  } catch (error: unknown) {
+    console.error('AI Generate Testimonial Error:', error);
+    const errorMsg = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
+  }
 }

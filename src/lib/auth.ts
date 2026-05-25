@@ -24,7 +24,9 @@ function timingSafeEqualString(a: string, b: string): boolean {
 
 export const verifyAdminPassword = (password: string): boolean => {
   if (!ADMIN_PASSWORD_SCRYPT || !PASSWORD_SALT) {
-    throw new Error('Admin password security not configured - please set ADMIN_PASSWORD_SCRYPT and PASSWORD_SALT in your environment variables');
+    throw new Error(
+      'Admin password security not configured - please set ADMIN_PASSWORD_SCRYPT and PASSWORD_SALT in your environment variables'
+    );
   }
 
   if (!password || password.length < 8) {
@@ -40,15 +42,11 @@ export const getAdminToken = (): string => {
     throw new Error('JWT_SECRET is not configured');
   }
 
-  return sign(
-    { sub: 'admin', role: 'admin', iat: Math.floor(Date.now() / 1000) },
-    JWT_SECRET,
-    {
-      expiresIn: '2h',
-      issuer: 'portfolio-admin',
-      audience: 'admin-panel'
-    }
-  );
+  return sign({ sub: 'admin', role: 'admin', iat: Math.floor(Date.now() / 1000) }, JWT_SECRET, {
+    expiresIn: '2h',
+    issuer: 'portfolio-admin',
+    audience: 'admin-panel',
+  });
 };
 
 export const verifyAdminToken = (token: string): boolean => {
@@ -59,7 +57,7 @@ export const verifyAdminToken = (token: string): boolean => {
   try {
     const payload = verify(token, JWT_SECRET, {
       issuer: 'portfolio-admin',
-      audience: 'admin-panel'
+      audience: 'admin-panel',
     });
 
     if (typeof payload === 'object' && payload !== null && 'sub' in payload) {
@@ -74,7 +72,7 @@ export const verifyAdminToken = (token: string): boolean => {
 /**
  * Validates both Admin Auth (JWT/Cookie) and CSRF Token.
  * Recommended for all POST/PUT/DELETE admin routes.
- * 
+ *
  * @param request The incoming NextRequest
  * @param options Configuration for validation
  * @returns boolean indicating if the request is valid
@@ -109,8 +107,7 @@ export const checkAdminAuth = (request: NextRequest): boolean => {
   try {
     const authHeader = request.headers.get('authorization');
     const cookieToken =
-      request.cookies.get('admin_token')?.value ||
-      request.cookies.get('admin-token')?.value;
+      request.cookies.get('admin_token')?.value || request.cookies.get('admin-token')?.value;
 
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);

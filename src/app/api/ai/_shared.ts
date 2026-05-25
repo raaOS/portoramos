@@ -7,12 +7,7 @@ const RATE_LIMIT_WINDOW = 60 * 1000;
 const BLOCK_DURATION = 5 * 60 * 1000;
 
 export function getGeminiApiKey() {
-  return (
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
-    process.env.GEMINI_API_KEY ||
-    process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_AI_API_KEY ||
-    ''
-  );
+  return process.env.GEMINI_API_KEY || '';
 }
 
 export async function guardAdminAiRequest(req: NextRequest, scope: string) {
@@ -25,13 +20,13 @@ export async function guardAdminAiRequest(req: NextRequest, scope: string) {
     scope,
     MAX_AI_REQUESTS,
     RATE_LIMIT_WINDOW,
-    BLOCK_DURATION,
+    BLOCK_DURATION
   );
 
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: 'Too many requests. Please try again later.', retryAfter: rateLimit.retryAfter },
-      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
     );
   }
 

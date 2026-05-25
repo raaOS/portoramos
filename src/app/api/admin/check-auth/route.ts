@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   const response = NextResponse.json({
     authenticated: isAuthenticated,
-    csrfToken: csrfToken
+    csrfToken: csrfToken,
   });
 
   // Aggressively set/refresh the CSRF cookie to ensure persistence sync
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7, // 7 days
-    path: '/'
+    path: '/',
   });
 
   // Prevent browser caching of the auth status

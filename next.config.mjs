@@ -9,7 +9,7 @@ const nextConfig = {
     '127.0.0.1:3000',
     '192.168.100.57:3000',
     '127.0.0.1',
-    'localhost'
+    'localhost',
   ],
   // Enable React Compiler for automatic optimization
   reactCompiler: true,
@@ -28,7 +28,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'i.ibb.co' },
       { protocol: 'https', hostname: 'postimg.cc' },
       { protocol: 'https', hostname: 'i.postimg.cc' },
-      { protocol: 'https', hostname: 'images2.imgbox.com' }
+      { protocol: 'https', hostname: 'images2.imgbox.com' },
     ],
     // Enable optimization in production only
     unoptimized: process.env.NODE_ENV === 'development',
@@ -59,74 +59,30 @@ const nextConfig = {
     optimisticClientCache: true,
     // Enable scroll restoration
     scrollRestoration: true,
+    // Inline critical CSS via critters to reduce render-blocking CSS on cold start.
+    // critters sudah ada di devDependencies; tanpa flag ini fitur tidak aktif.
+    optimizeCss: true,
+    // Tree-shake barrel imports untuk paket icon/animation/utility yang dipakai
+    // banyak di OS desktop. Mengurangi ukuran bundle client pada cold start.
+    optimizePackageImports: ['lucide-react', '@tabler/icons-react', 'date-fns', 'motion'],
   },
 
-  // Turbopack configuration (Next.js 16 Stable Bundler)
+  // Turbopack configuration (Next.js 16 Stable Bundler).
+  // Default Turbopack sudah handle splitChunks/treeshaking/moduleIds secara optimal.
   turbopack: {},
 
-  // Webpack optimization for performance (fallback when using --webpack flag)
-  webpack: (config, { dev, isServer }) => {
-    // Fix ESM .mjs module resolution (required for framer-motion and similar packages)
+  // Webpack config HANYA dipakai sebagai fallback via `npm run dev:webpack`.
+  // Build production di Vercel pakai Turbopack (Next 16 default), jadi custom
+  // splitChunks yang dulu ada di sini adalah dead config dan sudah dihapus.
+  // .mjs resolution rule tetap dipertahankan untuk fallback dev webpack.
+  webpack: (config) => {
+    // Fix ESM .mjs module resolution untuk paket yang masih ESM-only (motion).
     config.module.rules.push({
       test: /\.m?js$/,
       resolve: {
         fullySpecified: false,
       },
     });
-
-    if (!dev && !isServer) {
-      // Optimize bundle splitting for better caching and performance
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          // Vendor chunk for node_modules
-          vendor: {
-            name: 'vendor',
-            chunks: 'all',
-            test: /[\\/]node_modules[\\/]/,
-            priority: 20,
-          },
-          // Common chunk for shared code
-          common: {
-            name: 'common',
-            minChunks: 2,
-            chunks: 'all',
-            priority: 10,
-            reuseExistingChunk: true,
-            enforce: true,
-          },
-          // UI library chunk
-          ui: {
-            name: 'ui',
-            test: /[\\/]node_modules[\\/](motion|lucide-react|@tabler|@tsparticles)[\\/]/,
-            chunks: 'all',
-            priority: 30,
-          },
-          // Animation chunk
-          animations: {
-            name: 'animations',
-            test: /[\\/]node_modules[\\/](motion|gsap)[\\/]/,
-            chunks: 'all',
-            priority: 25,
-          },
-        },
-      };
-
-      // Optimize module IDs for better caching
-      config.optimization.moduleIds = 'deterministic';
-      config.optimization.chunkIds = 'deterministic';
-
-      // Enable tree shaking
-      config.optimization.usedExports = true;
-      config.optimization.sideEffects = false;
-
-      // Remove moment.js locales to reduce bundle size
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'moment$': 'moment/moment.js',
-      };
-    }
-
     return config;
   },
   async rewrites() {
@@ -135,13 +91,13 @@ const nextConfig = {
       // Handle __webpack_hmr requests to suppress 404 errors in logs
       {
         source: '/__webpack_hmr',
-        destination: '/api/empty'
+        destination: '/api/empty',
       },
       {
         source: '/events',
-        destination: '/api/empty'
-      }
-    ]
+        destination: '/api/empty',
+      },
+    ];
   },
   async redirects() {
     return [
@@ -152,20 +108,21 @@ const nextConfig = {
       { source: '/works/:slug*', destination: '/projects/:slug*', permanent: true },
       { source: '/project/:slug*', destination: '/projects/:slug*', permanent: true },
       // Note: trailing slash removal is handled by trailingSlash: false
-    ]
+    ];
   },
   async headers() {
     return [
-      // Cache control for static JS/CSS files (re-enabled after fix)
-      // Cache control for Home page (HTML)
+      // Cache control for Home page (HTML).
+      // s-maxage diselaraskan dengan ISR `revalidate = 60` di src/app/(site)/page.tsx
+      // supaya edge cache tidak menahan HTML lebih lama dari ISR window.
       {
         source: '/',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=3600, stale-while-revalidate=59, must-revalidate'
-          }
-        ]
+            value: 'public, s-maxage=60, stale-while-revalidate=300, must-revalidate',
+          },
+        ],
       },
       {
         source: '/(.*)',
@@ -173,42 +130,40 @@ const nextConfig = {
           // Security Headers for Best Practices 100
           {
             key: 'X-DNS-Prefetch-Control',
-            value: 'on'
+            value: 'on',
           },
           {
             key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload'
+            value: 'max-age=63072000; includeSubDomains; preload',
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin'
+            value: 'origin-when-cross-origin',
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(self), geolocation=(self), interest-cohort=()'
+            value: 'camera=(), microphone=(self), geolocation=(self), interest-cohort=()',
           },
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'unsafe-none'
+            value: 'unsafe-none',
           },
           {
             key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin'
+            value: 'same-origin',
           },
-          // Resource hints
-          {
-            key: 'Link',
-            value: '<https://fonts.googleapis.com>; rel=preconnect; crossorigin=anonymous'
-          }
-        ]
+          // Catatan: preconnect ke fonts.googleapis.com di-drop karena project
+          // memakai next/font/google yang self-host font ke /_next/static.
+          // Preconnect ke domain yang tidak dipakai hanya menambah overhead DNS.
+        ],
       },
       // Static assets caching — DIHAPUS.
       // Next.js default untuk /_next/static sudah optimal (1 tahun immutable).
@@ -218,11 +173,12 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: process.env.NODE_ENV === 'development'
-              ? 'no-cache, no-store, must-revalidate'
-              : 'public, max-age=31536000, immutable'
-          }
-        ]
+            value:
+              process.env.NODE_ENV === 'development'
+                ? 'no-cache, no-store, must-revalidate'
+                : 'public, max-age=31536000, immutable',
+          },
+        ],
       },
       // API caching
       {
@@ -230,19 +186,19 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate'
+            value: 'no-cache, no-store, must-revalidate',
           },
           {
             key: 'Pragma',
-            value: 'no-cache'
+            value: 'no-cache',
           },
           {
             key: 'Expires',
-            value: '0'
-          }
-        ]
-      }
-    ]
+            value: '0',
+          },
+        ],
+      },
+    ];
   },
   // Production optimizations
   productionBrowserSourceMaps: false,
@@ -259,11 +215,9 @@ const nextConfig = {
     // In production, strip console.* calls EXCEPT console.error / console.warn
     // so real errors and security warnings (CSRF, rate-limit, etc.) still surface
     // in server logs and browser consoles for diagnosis.
-    removeConsole: process.env.NODE_ENV === 'production'
-      ? { exclude: ['error', 'warn'] }
-      : false,
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
-}
+};
 
 // Next.js Restart: fix hydration mismatch v1
 import createBundleAnalyzer from '@next/bundle-analyzer';
@@ -273,4 +227,3 @@ const withBundleAnalyzer = createBundleAnalyzer({
 });
 
 export default withBundleAnalyzer(nextConfig);
-

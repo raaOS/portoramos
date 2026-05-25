@@ -3,293 +3,487 @@
 import { useState, useRef, useCallback } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import {
-    useFileValidation,
-    useFFmpeg,
-    useStorageUpload
-} from './file-upload/hooks';
-import {
-    UploadProgress,
-    UploadDropzone
-} from './file-upload/components';
-import type { AdminFileUploadProps } from './file-upload/types';
+import { useFileValidation, useFFmpeg, useStorageUpload } from './file-upload/hooks';
+import { UploadProgress, UploadDropzone } from './file-upload/components';
+import type { AdminFileUploadProps, UploadedAsset } from './file-upload/types';
 
 // Import wrappers for lazy loading
 import ImageCropper from '@/components/admin/ImageCropper';
 import VideoTrimmer from '@/components/admin/VideoTrimmer';
 
 export default function AdminFileUpload({
-    onUpload,
-    accept = 'image/*,video/*',
-    multiple = true,
-    maxFiles = 10,
-    maxSize = 10,
-    className = '',
-    disabled = false,
-    enableCrop = false,
-    enableVideoTrim = false,
-    autoUpload = true,
-    onFileSelect,
+  onUpload,
+  onUploadResult,
+  accept = 'image/*,video/*',
+  multiple = true,
+  maxFiles = 10,
+  maxSize = 10,
+  className = '',
+  disabled = false,
+  enableCrop = false,
+  enableVideoTrim = false,
+  autoUpload = true,
+  onFileSelect,
+  folder,
+  customFilename,
+  onUploadStart,
+  onUploadEnd,
+  onUploadProgress,
+  customValidator,
+}: AdminFileUploadProps) {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [status, setStatus] = useState<string>('');
+  const [progress, setProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showSuccess: showSuccessToast, showError, showWarning } = useToast();
+  const { csrfToken: _csrfToken } = useAdminAuth();
+
+  // Cropping & Trimming State
+  const [activeCrop, setActiveCrop] = useState<{ src: string; file: File } | null>(null);
+  const [activeTrim, setActiveTrim] = useState<{ file: File } | null>(null);
+
+  // Hooks
+  const { validateFiles } = useFileValidation({ accept, maxSize });
+  const { compressVideo } = useFFmpeg(setStatus);
+  const { upload, uploadVideoDirectToR2 } = useStorageUpload({
     folder,
     customFilename,
-    onUploadStart,
-    onUploadEnd
-}: AdminFileUploadProps) {
-    const [isDragOver, setIsDragOver] = useState(false);
-    const [status, setStatus] = useState<string>('');
-    const [progress, setProgress] = useState(0);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const { showSuccess: showSuccessToast, showError, showWarning } = useToast();
-    const { csrfToken: _csrfToken } = useAdminAuth();
+    csrfToken: _csrfToken || '',
+  });
 
-    // Cropping & Trimming State
-    const [activeCrop, setActiveCrop] = useState<{ src: string; file: File } | null>(null);
-    const [activeTrim, setActiveTrim] = useState<{ file: File } | null>(null);
-
-    // Hooks
-    const { validateFiles } = useFileValidation({ accept, maxSize });
-    const { compressVideo } = useFFmpeg(setStatus);
-    const { upload } = useStorageUpload({ folder, customFilename, csrfToken: _csrfToken || '' });
-
-    const executeUpload = useCallback(async (
-        files: File[],
-        trimOptions?: { start: number; end: number; crop?: { x: number; y: number; width: number; height: number } | null }
+  const executeUpload = useCallback(
+    async (
+      files: File[],
+      trimOptions?: {
+        start: number;
+        end: number;
+        crop?: { x: number; y: number; width: number; height: number } | null;
+      }
     ) => {
-        setStatus('starting');
-        setProgress(0);
-        onUploadStart?.();
+      const fileProgress = new Array(files.length).fill(0);
+      const reportProgress = (value: number) => {
+        const next = Math.min(100, Math.max(0, Math.round(value)));
+        setProgress(next);
+        onUploadProgress?.(next);
+      };
+      const reportFileProgress = (index: number, value: number) => {
+        fileProgress[index] = Math.min(100, Math.max(0, Math.round(value)));
+        const total = fileProgress.reduce((sum, item) => sum + item, 0);
+        reportProgress(total / files.length);
+      };
 
-        try {
-            const uploadPromises = files.map(async (file, index) => {
-                let fileToUpload = file;
-                let videoWasClientProcessed = false;
+      setStatus('starting');
+      reportProgress(0);
+      onUploadStart?.();
 
-                // VIDEO COMPRESSION / TRIM
-                if (file.type.startsWith('video/')) {
-                    try {
-                        const originalSize = file.size;
-                        fileToUpload = await compressVideo(file, (p) => setProgress(p), trimOptions);
-                        videoWasClientProcessed = true;
-                        const newSize = fileToUpload.size;
-                        showSuccessToast(`Video Processed! ${(originalSize / 1024 / 1024).toFixed(2)}MB -> ${(newSize / 1024 / 1024).toFixed(2)}MB`);
-                    } catch (e) {
-                        console.error('Client compression failed, falling back to original', e);
-                        showWarning('Compression engine offline. Uploading original file...');
-                    }
-                }
+      try {
+        const uploadPromises = files.map(async (file, index) => {
+          let fileToUpload = file;
+          let videoWasClientProcessed = false;
 
-                // DEFERRED UPLOAD MODE
-                if (autoUpload === false && onFileSelect) {
-                    onFileSelect(fileToUpload);
-                    const blobUrl = URL.createObjectURL(fileToUpload);
-                    return blobUrl;
-                }
+          const isVideo = file.type.startsWith('video/');
+          const isWallpaperVideo = isVideo && folder === 'wallpapers';
 
-                // IMMEDIATE UPLOAD MODE
-                const { url, success, error, videoStats } = await upload(fileToUpload, {
-                    skipMainVideoOptimization: videoWasClientProcessed,
-                });
-                if (!success) {
-                    throw new Error(error || 'Upload failed');
-                }
-
-                if (videoStats) {
-                    showSuccessToast(
-                        `Storage video ready: ${formatBytes(videoStats.optimizedSize)} + preview ${formatBytes(videoStats.previewSize)}`
-                    );
-                }
-
-                setProgress(((index + 1) / files.length) * 100);
-                const finalUrl = url;
-
-                return finalUrl;
-            });
-
-            const results = await Promise.all(uploadPromises);
-            onUpload(results);
-
-            if (autoUpload !== false) {
-                showSuccessToast('All files processed successfully.');
+          // ---------- WALLPAPER VIDEO: direct-to-R2 path ----------
+          // Wallpaper videos go straight to Cloudflare R2 via a
+          // presigned PUT URL, bypassing the Vercel function body
+          // limit (4.5 MB on Hobby) that was failing the upload with
+          // "Failed to parse body as FormData". The poster is captured
+          // in-browser (canvas) so the server never has to decode the
+          // mp4 just to make a thumbnail.
+          if (isWallpaperVideo && !trimOptions) {
+            setStatus('Capturing poster frame...');
+            reportFileProgress(index, 2);
+            let posterBlob: Blob | null = null;
+            try {
+              const { captureVideoPoster } = await import('@/lib/videoPoster');
+              const captured = await captureVideoPoster(file);
+              posterBlob = captured.blob;
+            } catch (e) {
+              console.warn('Poster capture failed (will skip):', e);
             }
 
-            setStatus('Upload Complete!');
-            setProgress(100);
+            setStatus('Uploading Video...');
+            reportFileProgress(index, 5);
+            const result = await uploadVideoDirectToR2(file, {
+              posterBlob,
+              onUploadProgress: (networkProgress) => {
+                // 5 → 95 reserved for actual upload bytes
+                reportFileProgress(index, 5 + (networkProgress / 100) * 90);
+              },
+            });
+            if (!result.success) {
+              throw new Error(result.error || 'Direct R2 upload failed');
+            }
+            setStatus('Finalizing...');
+            reportFileProgress(index, 100);
+            return {
+              url: result.url,
+              previewUrl: result.previewUrl,
+              posterUrl: result.posterUrl,
+            } as UploadedAsset;
+          }
 
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        } catch (err: unknown) {
-            console.error(err);
-            showError(`Process failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
-        } finally {
-            setStatus('');
-            setProgress(0);
-            onUploadEnd?.();
-        }
-    }, [compressVideo, upload, onUpload, onUploadStart, onUploadEnd, showSuccessToast, showError, showWarning, autoUpload, onFileSelect]);
+          // VIDEO COMPRESSION / TRIM (non-wallpaper or trim flow)
+          if (isVideo) {
+            // Skip client-side compression untuk:
+            //  1. Video dengan trim/crop options (perlu ffmpeg client)
+            //  2. Video < 50MB tanpa trim — server ffmpeg native 5-10×
+            //     lebih cepat dari WASM browser. Untuk file moderate
+            //     net wall-clock LEBIH cepat upload original lalu
+            //     compress di server, daripada compress dulu di client
+            //     (CPU-bound) baru upload.
+            //  3. File > 50MB tetap pakai client compression supaya
+            //     network upload-nya tidak besar (hemat bandwidth user).
+            const SKIP_CLIENT_THRESHOLD = 50 * 1024 * 1024; // 50MB
+            const hasTrim = !!trimOptions;
+            const shouldClientCompress = hasTrim || file.size > SKIP_CLIENT_THRESHOLD;
 
-    const handleFiles = useCallback(async (files: FileList) => {
-        if (disabled) return;
-        const fileArray = Array.from(files);
+            if (shouldClientCompress) {
+              try {
+                const originalSize = file.size;
+                // Wallpapers fill the whole screen, so they need a
+                // visibly higher target than e.g. project thumbnails.
+                // Bump the encoder to the `high` profile (1080p,
+                // CRF 20) for that folder and keep the existing
+                // `standard` (720p, CRF 24) for the rest.
+                const profile = folder === 'wallpapers' ? 'high' : 'standard';
+                fileToUpload = await compressVideo(
+                  file,
+                  (p) => reportFileProgress(index, Math.min(70, p * 0.7)),
+                  { trimOptions, profile }
+                );
+                reportFileProgress(index, 72);
+                videoWasClientProcessed = true;
+                const newSize = fileToUpload.size;
+                showSuccessToast(
+                  `Video Processed! ${(originalSize / 1024 / 1024).toFixed(2)}MB -> ${(newSize / 1024 / 1024).toFixed(2)}MB`
+                );
+              } catch (e) {
+                console.error('Client compression failed, falling back to original', e);
+                showWarning('Compression engine offline. Uploading original file...');
+              }
+            }
+            // Else: lewati client compression. Server ffmpeg native
+            // akan handle. Status default akan diset ke
+            // "Processing Video on Server..." setelah upload selesai.
+          }
 
-        if (fileArray.length > maxFiles) {
-            showError(`Too many files. Maximum ${maxFiles} files allowed`);
-            return;
-        }
+          // DEFERRED UPLOAD MODE
+          if (autoUpload === false && onFileSelect) {
+            onFileSelect(fileToUpload);
+            const blobUrl = URL.createObjectURL(fileToUpload);
+            reportFileProgress(index, 100);
+            return { url: blobUrl } as UploadedAsset;
+          }
 
-        const validationErrors = validateFiles(fileArray);
-        if (validationErrors.length > 0) {
-            showError(`Invalid files: ${validationErrors.join(', ')}`);
-            return;
-        }
+          // IMMEDIATE UPLOAD MODE
+          const isUploadingVideo = fileToUpload.type.startsWith('video/');
+          // Progress allocation tergantung apakah client sudah compress.
+          // - Client-compressed: 0-72 untuk encode (sudah dilaporkan), 72-90 upload network, 95-100 finalize
+          // - Server-compressed: 0-90 upload network, 90-100 server processing
+          const uploadStart = videoWasClientProcessed ? 72 : 0;
+          const uploadSpan = videoWasClientProcessed ? 18 : 90;
 
-        // Handle crop for single image
-        if (enableCrop && fileArray.length === 1 && fileArray[0].type.startsWith('image/')) {
-            const file = fileArray[0];
-            const reader = new FileReader();
-            reader.onload = () => {
-                setActiveCrop({ src: reader.result as string, file });
-            };
-            reader.readAsDataURL(file);
-            return;
-        }
+          setStatus(isUploadingVideo ? 'Uploading Video...' : 'Uploading to Storage...');
+          reportFileProgress(index, uploadStart);
+          const { url, success, error, videoStats, imageStats, audioStats, previewUrl, posterUrl } =
+            await upload(fileToUpload, {
+              skipMainVideoOptimization: videoWasClientProcessed,
+              onUploadProgress: (networkProgress) => {
+                reportFileProgress(index, uploadStart + (networkProgress / 100) * uploadSpan);
+                if (networkProgress >= 100) {
+                  setStatus(
+                    isUploadingVideo ? 'Processing Video on Server...' : 'Processing Upload...'
+                  );
+                }
+              },
+            });
+          if (!success) {
+            throw new Error(error || 'Upload failed');
+          }
+          setStatus('Finalizing...');
+          reportFileProgress(index, 95);
 
-        // Handle trim for single video
-        if (enableVideoTrim && fileArray.length === 1 && fileArray[0].type.startsWith('video/')) {
-            setActiveTrim({ file: fileArray[0] });
-            return;
-        }
+          if (videoStats) {
+            showSuccessToast(
+              `Storage video ready: ${formatBytes(videoStats.optimizedSize)} + preview ${formatBytes(videoStats.previewSize)}`
+            );
+          }
 
-        executeUpload(fileArray);
-    }, [disabled, maxFiles, validateFiles, executeUpload, enableCrop, enableVideoTrim, showError]);
+          if (imageStats && imageStats.optimizedSize < imageStats.originalSize) {
+            const ratio = Math.max(
+              0,
+              Math.round((1 - imageStats.optimizedSize / imageStats.originalSize) * 100)
+            );
+            showSuccessToast(
+              `Image compressed: ${formatBytes(imageStats.originalSize)} -> ${formatBytes(imageStats.optimizedSize)} (-${ratio}%)`
+            );
+          }
 
-    // Crop handlers
-    const handleCropComplete = async (croppedBlob: Blob) => {
-        if (!activeCrop) return;
-        const croppedFile = new File([croppedBlob], activeCrop.file.name, {
-            type: activeCrop.file.type,
-            lastModified: Date.now(),
+          if (audioStats && audioStats.optimizedSize < audioStats.originalSize) {
+            const ratio = Math.max(
+              0,
+              Math.round((1 - audioStats.optimizedSize / audioStats.originalSize) * 100)
+            );
+            showSuccessToast(
+              `Audio compressed: ${formatBytes(audioStats.originalSize)} -> ${formatBytes(audioStats.optimizedSize)} (-${ratio}%)`
+            );
+          }
+
+          reportFileProgress(index, 100);
+
+          return { url, previewUrl, posterUrl } as UploadedAsset;
         });
-        setActiveCrop(null);
-        executeUpload([croppedFile]);
-    };
 
-    const handleCropCancel = () => setActiveCrop(null);
-
-    // Trim handlers
-    const handleTrimConfirm = (
-        start: number,
-        end: number,
-        crop?: { x: number; y: number; width: number; height: number } | null
-    ) => {
-        if (!activeTrim) return;
-        const file = activeTrim.file;
-        setActiveTrim(null);
-        executeUpload([file], { start, end, crop });
-    };
-
-    const handleTrimCancel = () => setActiveTrim(null);
-
-    // Drag & drop handlers
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        if (!disabled) setIsDragOver(true);
-    }, [disabled]);
-
-    const handleDragLeave = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-    }, []);
-
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        if (!disabled && e.dataTransfer.files.length > 0) {
-            handleFiles(e.dataTransfer.files);
+        const results = await Promise.all(uploadPromises);
+        const urlResults = results.map((r) => r.url);
+        onUpload(urlResults);
+        if (onUploadResult) {
+          onUploadResult(results);
         }
-    }, [disabled, handleFiles]);
 
-    const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            handleFiles(e.target.files);
+        if (autoUpload !== false) {
+          showSuccessToast('All files processed successfully.');
         }
-    }, [handleFiles]);
 
-    const handleClick = useCallback(() => {
-        if (!disabled && fileInputRef.current) {
-            fileInputRef.current.click();
+        setStatus('Upload Complete!');
+        reportProgress(100);
+
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      } catch (err: unknown) {
+        console.error(err);
+        showError(`Process failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      } finally {
+        setStatus('');
+        setProgress(0);
+        onUploadEnd?.();
+      }
+    },
+    [
+      compressVideo,
+      upload,
+      uploadVideoDirectToR2,
+      onUpload,
+      onUploadResult,
+      onUploadStart,
+      onUploadEnd,
+      onUploadProgress,
+      showSuccessToast,
+      showError,
+      showWarning,
+      autoUpload,
+      onFileSelect,
+      folder,
+    ]
+  );
+
+  const handleFiles = useCallback(
+    async (files: FileList) => {
+      if (disabled) return;
+      const fileArray = Array.from(files);
+
+      if (fileArray.length > maxFiles) {
+        showError(`Too many files. Maximum ${maxFiles} files allowed`);
+        return;
+      }
+
+      const validationErrors = validateFiles(fileArray);
+      if (validationErrors.length > 0) {
+        showError(`Invalid files: ${validationErrors.join(', ')}`);
+        return;
+      }
+
+      // Domain-specific validator (mis. resolusi minimum untuk wallpaper).
+      // Dipanggil setelah validasi dasar lolos supaya tidak perlu read
+      // metadata video kalau file size-nya sudah lebih dari batas.
+      if (customValidator) {
+        try {
+          const customError = await customValidator(fileArray);
+          if (customError) {
+            showError(customError);
+            return;
+          }
+        } catch (err) {
+          console.error('customValidator threw', err);
+          showError(err instanceof Error ? err.message : 'Validasi file gagal');
+          return;
         }
-    }, [disabled]);
+      }
 
-    return (
-        <>
-            {/* Modals */}
-            {activeCrop && (
-                <ImageCropperWrapper
-                    src={activeCrop.src}
-                    onConfirm={handleCropComplete}
-                    onCancel={handleCropCancel}
-                />
-            )}
+      // Handle crop for single image
+      if (enableCrop && fileArray.length === 1 && fileArray[0].type.startsWith('image/')) {
+        const file = fileArray[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+          setActiveCrop({ src: reader.result as string, file });
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
 
-            {activeTrim && (
-                <VideoTrimmerWrapper
-                    file={activeTrim.file}
-                    onConfirm={handleTrimConfirm}
-                    onCancel={handleTrimCancel}
-                />
-            )}
+      // Handle trim for single video
+      if (enableVideoTrim && fileArray.length === 1 && fileArray[0].type.startsWith('video/')) {
+        setActiveTrim({ file: fileArray[0] });
+        return;
+      }
 
-            {/* Upload Area */}
-            <div className={`w-full ${className}`}>
-                {status ? (
-                    <UploadProgress status={status} progress={progress} />
-                ) : (
-                    <UploadDropzone
-                        isDragOver={isDragOver}
-                        disabled={disabled}
-                        accept={accept}
-                        multiple={multiple}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        onClick={handleClick}
-                        onFileInput={handleFileInput}
-                        fileInputRef={fileInputRef}
-                    />
-                )}
-            </div>
-        </>
-    );
+      executeUpload(fileArray);
+    },
+    [
+      disabled,
+      maxFiles,
+      validateFiles,
+      executeUpload,
+      enableCrop,
+      enableVideoTrim,
+      showError,
+      customValidator,
+    ]
+  );
+
+  // Crop handlers
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!activeCrop) return;
+    const croppedFile = new File([croppedBlob], activeCrop.file.name, {
+      type: activeCrop.file.type,
+      lastModified: Date.now(),
+    });
+    setActiveCrop(null);
+    executeUpload([croppedFile]);
+  };
+
+  const handleCropCancel = () => setActiveCrop(null);
+
+  // Trim handlers
+  const handleTrimConfirm = (
+    start: number,
+    end: number,
+    crop?: { x: number; y: number; width: number; height: number } | null
+  ) => {
+    if (!activeTrim) return;
+    const file = activeTrim.file;
+    setActiveTrim(null);
+    executeUpload([file], { start, end, crop });
+  };
+
+  const handleTrimCancel = () => setActiveTrim(null);
+
+  // Drag & drop handlers
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!disabled) setIsDragOver(true);
+    },
+    [disabled]
+  );
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      if (!disabled && e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+      }
+    },
+    [disabled, handleFiles]
+  );
+
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleFiles(e.target.files);
+      }
+    },
+    [handleFiles]
+  );
+
+  const handleClick = useCallback(() => {
+    if (!disabled && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, [disabled]);
+
+  return (
+    <>
+      {/* Modals */}
+      {activeCrop && (
+        <ImageCropperWrapper
+          src={activeCrop.src}
+          onConfirm={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
+
+      {activeTrim && (
+        <VideoTrimmerWrapper
+          file={activeTrim.file}
+          onConfirm={handleTrimConfirm}
+          onCancel={handleTrimCancel}
+        />
+      )}
+
+      {/* Upload Area */}
+      <div className={`w-full ${className}`}>
+        {status ? (
+          <UploadProgress status={status} progress={progress} />
+        ) : (
+          <UploadDropzone
+            isDragOver={isDragOver}
+            disabled={disabled}
+            accept={accept}
+            multiple={multiple}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleClick}
+            onFileInput={handleFileInput}
+            fileInputRef={fileInputRef}
+          />
+        )}
+      </div>
+    </>
+  );
 }
 
 function formatBytes(bytes: number) {
-    if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
 // Wrappers for Lazy Loading
 function ImageCropperWrapper({
-    src,
-    onConfirm,
-    onCancel
+  src,
+  onConfirm,
+  onCancel,
 }: {
-    src: string;
-    onConfirm: (b: Blob) => void;
-    onCancel: () => void;
+  src: string;
+  onConfirm: (b: Blob) => void;
+  onCancel: () => void;
 }) {
-    return <ImageCropper imageSrc={src} onCropComplete={onConfirm} onCancel={onCancel} />;
+  return <ImageCropper imageSrc={src} onCropComplete={onConfirm} onCancel={onCancel} />;
 }
 
 function VideoTrimmerWrapper({
-    file,
-    onConfirm,
-    onCancel
+  file,
+  onConfirm,
+  onCancel,
 }: {
-    file: File;
-    onConfirm: (s: number, e: number, c?: { x: number; y: number; width: number; height: number } | null) => void;
-    onCancel: () => void;
+  file: File;
+  onConfirm: (
+    s: number,
+    e: number,
+    c?: { x: number; y: number; width: number; height: number } | null
+  ) => void;
+  onCancel: () => void;
 }) {
-    return <VideoTrimmer file={file} onConfirm={onConfirm} onCancel={onCancel} />;
+  return <VideoTrimmer file={file} onConfirm={onConfirm} onCancel={onCancel} />;
 }
 
 // Re-export hooks and components

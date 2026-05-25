@@ -12,52 +12,47 @@ import { checkDataRateLimit } from '@/lib/dataRateLimit';
  * and should NOT be trusted for rate limiting decisions.
  */
 export function getClientIP(request: Request | NextRequest): string {
-    // Vercel sets this header - cannot be spoofed from client
-    const vercelIP = request.headers.get('x-vercel-forwarded-for');
-    if (vercelIP) {
-        return vercelIP.split(',')[0].trim();
-    }
+  // Vercel sets this header - cannot be spoofed from client
+  const vercelIP = request.headers.get('x-vercel-forwarded-for');
+  if (vercelIP) {
+    return vercelIP.split(',')[0].trim();
+  }
 
-    // Cloudflare proxy IP (trusted when using Cloudflare)
-    const cfIP = request.headers.get('cf-connecting-ip');
-    if (cfIP) {
-        return cfIP.trim();
-    }
+  // Cloudflare proxy IP (trusted when using Cloudflare)
+  const cfIP = request.headers.get('cf-connecting-ip');
+  if (cfIP) {
+    return cfIP.trim();
+  }
 
-    // Fallback for non-Vercel/Cloudflare environments
-    // Note: These can be spoofed, so rate limiting based on this is not fully reliable
-    const forwarded = request.headers.get('x-forwarded-for');
-    if (forwarded) {
-        return forwarded.split(',')[0].trim();
-    }
+  // Fallback for non-Vercel/Cloudflare environments
+  // Note: These can be spoofed, so rate limiting based on this is not fully reliable
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
 
-    const realIP = request.headers.get('x-real-ip');
-    if (realIP) {
-        return realIP.trim();
-    }
+  const realIP = request.headers.get('x-real-ip');
+  if (realIP) {
+    return realIP.trim();
+  }
 
-    return 'unknown';
+  return 'unknown';
 }
 
 export function getClientIdentifier(request: Request | NextRequest, scope?: string): string {
-    const ip = getClientIP(request);
-    const userAgent = request.headers.get('user-agent') || 'unknown';
-    const baseIdentifier = `${ip}|${userAgent}`;
+  const ip = getClientIP(request);
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+  const baseIdentifier = `${ip}|${userAgent}`;
 
-    return scope ? `${scope}:${baseIdentifier}` : baseIdentifier;
+  return scope ? `${scope}:${baseIdentifier}` : baseIdentifier;
 }
 
 export async function enforceRequestRateLimit(
-    request: Request | NextRequest,
-    scope: string,
-    maxAttempts: number,
-    windowMs: number,
-    blockMs: number
+  request: Request | NextRequest,
+  scope: string,
+  maxAttempts: number,
+  windowMs: number,
+  blockMs: number
 ) {
-    return checkDataRateLimit(
-        getClientIdentifier(request, scope),
-        maxAttempts,
-        windowMs,
-        blockMs
-    );
+  return checkDataRateLimit(getClientIdentifier(request, scope), maxAttempts, windowMs, blockMs);
 }

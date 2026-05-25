@@ -25,7 +25,7 @@ export default function PerformanceMonitor() {
   useReportWebVitals((metric: Metric) => {
     // Store metric for debugging
     metricsRef.current.set(metric.name, metric);
-    
+
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
       console.log(`[Web Vitals] ${metric.name}:`, {
@@ -99,7 +99,7 @@ export default function PerformanceMonitor() {
           };
           if (!layoutShiftEntry.hadRecentInput) {
             clsValue += layoutShiftEntry.value || 0;
-            
+
             // Log the elements causing the shift for debugging
             if ((layoutShiftEntry.value || 0) > 0.01) {
               console.warn('[Performance] Layout Shift Source:', {
@@ -108,13 +108,13 @@ export default function PerformanceMonitor() {
                   node: s.node?.nodeName,
                   className: s.node?.className,
                   currentRect: s.currentRect,
-                  previousRect: s.previousRect
-                }))
+                  previousRect: s.previousRect,
+                })),
               });
             }
           }
         }
-        
+
         // Log significant layout shifts
         if (clsValue > 0.1) {
           console.warn('[Performance] High CLS detected:', clsValue);
@@ -126,7 +126,7 @@ export default function PerformanceMonitor() {
       // Layout shifts not supported
     }
 
-    return () => observers.forEach(o => o.disconnect());
+    return () => observers.forEach((o) => o.disconnect());
   }, [longTaskWarningThreshold]);
 
   return null;

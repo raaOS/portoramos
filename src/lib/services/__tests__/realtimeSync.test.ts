@@ -32,12 +32,7 @@ describe('Realtime Sync Logic', () => {
 
   it('uses the lastUpdated version marker', () => {
     const versionPath = 'lastUpdated';
-    const expensivePaths = [
-      'projects',
-      'projects/project-1',
-      'content',
-      'content/about',
-    ];
+    const expensivePaths = ['projects', 'projects/project-1', 'content', 'content/about'];
 
     expect(versionPath.split('/')).toHaveLength(1);
     expect(expensivePaths).not.toContain(versionPath);
@@ -54,8 +49,8 @@ describe('Content Service Cache with Different TTLs', () => {
       ttl: ABOUT_TTL,
     };
 
-    expect((now + 3000) - cacheEntry.timestamp <= cacheEntry.ttl).toBe(true);
-    expect((now + 6000) - cacheEntry.timestamp > cacheEntry.ttl).toBe(true);
+    expect(now + 3000 - cacheEntry.timestamp <= cacheEntry.ttl).toBe(true);
+    expect(now + 6000 - cacheEntry.timestamp > cacheEntry.ttl).toBe(true);
   });
 
   it('caches projects for 30 seconds', () => {
@@ -67,8 +62,8 @@ describe('Content Service Cache with Different TTLs', () => {
       ttl: PROJECT_TTL,
     };
 
-    expect((now + 15000) - cacheEntry.timestamp <= cacheEntry.ttl).toBe(true);
-    expect((now + 35000) - cacheEntry.timestamp > cacheEntry.ttl).toBe(true);
+    expect(now + 15000 - cacheEntry.timestamp <= cacheEntry.ttl).toBe(true);
+    expect(now + 35000 - cacheEntry.timestamp > cacheEntry.ttl).toBe(true);
   });
 
   it('clears project cache entries on CRUD operations', () => {

@@ -34,10 +34,10 @@ setTimeout(() => {
     '.turbo',
     '.swc',
     'dist',
-    'build'
+    'build',
   ];
 
-  cacheDirs.forEach(dir => {
+  cacheDirs.forEach((dir) => {
     const fullPath = path.join(process.cwd(), dir);
     if (fs.existsSync(fullPath)) {
       console.log(`💥 Removing ${dir}...`);

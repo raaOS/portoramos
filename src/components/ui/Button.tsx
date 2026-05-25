@@ -1,11 +1,11 @@
-"use client"
-import React from 'react'
+'use client';
+import React from 'react';
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
-  loading?: boolean
-}
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
+};
 
 const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary:
@@ -16,13 +16,13 @@ const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
     'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 disabled:bg-red-400 disabled:opacity-70',
   ghost:
     'bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-500 disabled:text-gray-400',
-}
+};
 
 const sizes: Record<NonNullable<ButtonProps['size']>, string> = {
   sm: 'px-3 py-1.5 text-sm rounded-md',
   md: 'px-4 py-2 text-sm rounded-lg',
   lg: 'px-5 py-3 text-base rounded-lg',
-}
+};
 
 export default function Button({
   className = '',
@@ -33,24 +33,24 @@ export default function Button({
   children,
   ...props
 }: ButtonProps) {
-  const isDisabled = disabled || loading
-  
+  const isDisabled = disabled || loading;
+
   return (
     <button
       {...props}
       disabled={isDisabled}
       aria-disabled={isDisabled ? 'true' : 'false'}
       aria-busy={loading ? 'true' : 'false'}
-      className={`inline-flex items-center justify-center font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition ${
+      className={`inline-flex items-center justify-center font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${
         variants[variant]
       } ${sizes[size]} ${isDisabled ? 'cursor-not-allowed' : ''} ${className}`}
     >
       {loading ? (
         <>
-          <svg 
-            className="w-4 h-4 mr-2 animate-spin" 
-            viewBox="0 0 24 24" 
-            fill="none" 
+          <svg
+            className="mr-2 h-4 w-4 animate-spin"
+            viewBox="0 0 24 24"
+            fill="none"
             stroke="currentColor"
             aria-hidden="true"
           >
@@ -62,6 +62,5 @@ export default function Button({
       ) : null}
       {children}
     </button>
-  )
+  );
 }
-

@@ -1,6 +1,6 @@
 /**
  * API Response Utilities
- * 
+ *
  * Standardizes API response format across all routes.
  * Ensures consistent error handling and response structure.
  */
@@ -42,18 +42,14 @@ export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 /**
  * Type guard to check if response is success
  */
-export function isSuccess<T>(
-  response: ApiResponse<T>
-): response is ApiSuccessResponse<T> {
+export function isSuccess<T>(response: ApiResponse<T>): response is ApiSuccessResponse<T> {
   return response.success === true;
 }
 
 /**
  * Type guard to check if response is error
  */
-export function isError<T>(
-  response: ApiResponse<T>
-): response is ApiErrorResponse {
+export function isError<T>(response: ApiResponse<T>): response is ApiErrorResponse {
   return response.success === false;
 }
 
@@ -73,8 +69,8 @@ export function success<T>(
     success: true,
     data,
     meta: {
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   };
   if (message) {
     response.message = message;
@@ -95,7 +91,9 @@ export function created<T>(
 /**
  * Create a success response for deletion operations
  */
-export function deleted(message: string = 'Deleted successfully'): NextResponse<ApiSuccessResponse<null>> {
+export function deleted(
+  message: string = 'Deleted successfully'
+): NextResponse<ApiSuccessResponse<null>> {
   return success(null, message, 200);
 }
 
@@ -106,16 +104,13 @@ export function deleted(message: string = 'Deleted successfully'): NextResponse<
 /**
  * Create a bad request error response
  */
-export function badRequest(
-  error: string,
-  details?: unknown
-): NextResponse<ApiErrorResponse> {
+export function badRequest(error: string, details?: unknown): NextResponse<ApiErrorResponse> {
   const response: ApiErrorResponse = {
     success: false,
     error,
     meta: {
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   };
   if (details) {
     response.details = details;
@@ -126,17 +121,15 @@ export function badRequest(
 /**
  * Create an unauthorized error response
  */
-export function unauthorized(
-  error: string = 'Unauthorized'
-): NextResponse<ApiErrorResponse> {
+export function unauthorized(error: string = 'Unauthorized'): NextResponse<ApiErrorResponse> {
   return NextResponse.json(
     {
       success: false,
       error,
       errorCode: 'UNAUTHORIZED',
       meta: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     },
     { status: 401 }
   );
@@ -145,17 +138,15 @@ export function unauthorized(
 /**
  * Create a forbidden error response
  */
-export function forbidden(
-  error: string = 'Forbidden'
-): NextResponse<ApiErrorResponse> {
+export function forbidden(error: string = 'Forbidden'): NextResponse<ApiErrorResponse> {
   return NextResponse.json(
     {
       success: false,
       error,
       errorCode: 'FORBIDDEN',
       meta: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     },
     { status: 403 }
   );
@@ -164,17 +155,15 @@ export function forbidden(
 /**
  * Create a not found error response
  */
-export function notFound(
-  error: string = 'Resource not found'
-): NextResponse<ApiErrorResponse> {
+export function notFound(error: string = 'Resource not found'): NextResponse<ApiErrorResponse> {
   return NextResponse.json(
     {
       success: false,
       error,
       errorCode: 'NOT_FOUND',
       meta: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     },
     { status: 404 }
   );
@@ -193,12 +182,12 @@ export function rateLimit(
       error,
       errorCode: 'RATE_LIMITED',
       meta: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     },
     {
       status: 429,
-      headers: { 'Retry-After': String(retryAfter) }
+      headers: { 'Retry-After': String(retryAfter) },
     }
   );
 }
@@ -215,8 +204,8 @@ export function serverError(
     error,
     errorCode: 'INTERNAL_ERROR',
     meta: {
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   };
   if (details) {
     response.details = details;
@@ -233,7 +222,7 @@ export function serverError(
  */
 export function validationError(zodError: ZodError): NextResponse<ApiErrorResponse> {
   const formattedErrors = zodError.format();
-  
+
   return NextResponse.json(
     {
       success: false,
@@ -241,8 +230,8 @@ export function validationError(zodError: ZodError): NextResponse<ApiErrorRespon
       errorCode: 'VALIDATION_ERROR',
       details: formattedErrors,
       meta: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     },
     { status: 400 }
   );
@@ -259,7 +248,7 @@ export function logError(route: string, error: unknown): void {
   const timestamp = new Date().toISOString();
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorStack = error instanceof Error ? error.stack : undefined;
-  
+
   console.error(`[API Error] ${timestamp} | ${route}:`, errorMessage);
   if (errorStack) {
     console.error('Stack:', errorStack);
@@ -273,9 +262,7 @@ export function logError(route: string, error: unknown): void {
 /**
  * Safely parse API response with type checking
  */
-export async function parseApiResponse<T>(
-  response: Response
-): Promise<ApiResponse<T>> {
+export async function parseApiResponse<T>(response: Response): Promise<ApiResponse<T>> {
   const data = await response.json();
   return data as ApiResponse<T>;
 }
@@ -293,10 +280,6 @@ export function handleApiResponse<T>(
   if (isSuccess(response)) {
     handlers.onSuccess(response.data, response.message);
   } else {
-    handlers.onError(
-      response.errorCode || 'UNKNOWN_ERROR',
-      response.error,
-      response.details
-    );
+    handlers.onError(response.errorCode || 'UNKNOWN_ERROR', response.error, response.details);
   }
 }

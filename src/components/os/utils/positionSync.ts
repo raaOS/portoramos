@@ -55,13 +55,13 @@ export function loadSessionPositions(): Partial<PositionData> {
 // Save ke localStorage
 export function savePositions(data: Partial<PositionData>) {
   if (typeof window === 'undefined') return;
-  
+
   try {
     const current = loadPositions();
     const merged = {
       windows: { ...current.windows, ...data.windows },
       icons: { ...current.icons, ...data.icons },
-      notes: { ...current.notes, ...data.notes }
+      notes: { ...current.notes, ...data.notes },
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
   } catch {}
@@ -98,10 +98,14 @@ export function getWindowPosition(
     const y = (CLOUDFLARE_D1Data.yPct! / 100) * vp.height;
     const width = isFiniteNumber(CLOUDFLARE_D1Data?.widthPct)
       ? (CLOUDFLARE_D1Data.widthPct! / 100) * vp.width
-      : (isFiniteNumber(CLOUDFLARE_D1Data?.width) ? CLOUDFLARE_D1Data.width! : defaults.width);
+      : isFiniteNumber(CLOUDFLARE_D1Data?.width)
+        ? CLOUDFLARE_D1Data.width!
+        : defaults.width;
     const height = isFiniteNumber(CLOUDFLARE_D1Data?.heightPct)
       ? (CLOUDFLARE_D1Data.heightPct! / 100) * vp.height
-      : (isFiniteNumber(CLOUDFLARE_D1Data?.height) ? CLOUDFLARE_D1Data.height! : defaults.height);
+      : isFiniteNumber(CLOUDFLARE_D1Data?.height)
+        ? CLOUDFLARE_D1Data.height!
+        : defaults.height;
 
     // Clamp to viewport with margin
     const margin = 20;
@@ -109,22 +113,32 @@ export function getWindowPosition(
       x: Math.max(margin, Math.min(x, vp.width - Math.max(width, 300) - margin)),
       y: Math.max(margin, Math.min(y, vp.height - Math.max(height, 200) - margin)),
       width: Math.max(300, Math.min(width, vp.width * 0.95)),
-      height: Math.max(200, Math.min(height, vp.height * 0.95))
+      height: Math.max(200, Math.min(height, vp.height * 0.95)),
     };
   }
 
   // 3. Cek legacy pixel-based position (FALLBACK)
   if (isFiniteNumber(CLOUDFLARE_D1Data?.x) && isFiniteNumber(CLOUDFLARE_D1Data?.y)) {
-    const width = isFiniteNumber(CLOUDFLARE_D1Data?.width) ? CLOUDFLARE_D1Data!.width! : defaults.width;
-    const height = isFiniteNumber(CLOUDFLARE_D1Data?.height) ? CLOUDFLARE_D1Data!.height! : defaults.height;
+    const width = isFiniteNumber(CLOUDFLARE_D1Data?.width)
+      ? CLOUDFLARE_D1Data!.width!
+      : defaults.width;
+    const height = isFiniteNumber(CLOUDFLARE_D1Data?.height)
+      ? CLOUDFLARE_D1Data!.height!
+      : defaults.height;
 
     // Clamp legacy values to current viewport
     const margin = 20;
     return {
-      x: Math.max(margin, Math.min(CLOUDFLARE_D1Data!.x!, vp.width - Math.max(width, 300) - margin)),
-      y: Math.max(margin, Math.min(CLOUDFLARE_D1Data!.y!, vp.height - Math.max(height, 200) - margin)),
+      x: Math.max(
+        margin,
+        Math.min(CLOUDFLARE_D1Data!.x!, vp.width - Math.max(width, 300) - margin)
+      ),
+      y: Math.max(
+        margin,
+        Math.min(CLOUDFLARE_D1Data!.y!, vp.height - Math.max(height, 200) - margin)
+      ),
       width: Math.max(300, Math.min(width, vp.width * 0.95)),
-      height: Math.max(200, Math.min(height, vp.height * 0.95))
+      height: Math.max(200, Math.min(height, vp.height * 0.95)),
     };
   }
 
@@ -144,9 +158,9 @@ export function getIconPosition(
   const vp = getCurrentViewport();
   // Icon minimum visibility: keep at least this many pixels dari tiap edge supaya
   // icon nggak pernah ketutup menu bar atas atau dock bawah, dan tetap clickable.
-  const ICON_BOX = 80;      // asumsi ukuran icon (matches DesktopIcon baseHeight large)
-  const TOP_SAFE = 40;      // space untuk MenuBar
-  const BOTTOM_SAFE = 120;  // space untuk Dock
+  const ICON_BOX = 80; // asumsi ukuran icon (matches DesktopIcon baseHeight large)
+  const TOP_SAFE = 40; // space untuk MenuBar
+  const BOTTOM_SAFE = 120; // space untuk Dock
   const SIDE_SAFE = 8;
 
   const clamp = (x: number, y: number) => ({
@@ -174,8 +188,12 @@ export function getIconPosition(
   // 3. Legacy pixel-based — scale proporsional bila refScreen dikenal,
   //    fallback: pakai pixel langsung lalu di-clamp.
   if (isFiniteNumber(CLOUDFLARE_D1Data?.x) && isFiniteNumber(CLOUDFLARE_D1Data?.y)) {
-    const refW = isFiniteNumber(CLOUDFLARE_D1Data?.refScreenWidth) ? CLOUDFLARE_D1Data!.refScreenWidth! : null;
-    const refH = isFiniteNumber(CLOUDFLARE_D1Data?.refScreenHeight) ? CLOUDFLARE_D1Data!.refScreenHeight! : null;
+    const refW = isFiniteNumber(CLOUDFLARE_D1Data?.refScreenWidth)
+      ? CLOUDFLARE_D1Data!.refScreenWidth!
+      : null;
+    const refH = isFiniteNumber(CLOUDFLARE_D1Data?.refScreenHeight)
+      ? CLOUDFLARE_D1Data!.refScreenHeight!
+      : null;
     if (refW && refH && refW > 0 && refH > 0) {
       const x = (CLOUDFLARE_D1Data!.x! / refW) * vp.width;
       const y = (CLOUDFLARE_D1Data!.y! / refH) * vp.height;
@@ -191,7 +209,11 @@ export function getIconPosition(
 // Save single icon position
 // Persist pixel + percentage + reference screen — supaya admin yang pakai layar
 // besar tetap responsive saat visitor buka di layar kecil/sedang.
-export function saveIconPosition(id: string, pos: { x: number; y: number }, isAdmin: boolean = false) {
+export function saveIconPosition(
+  id: string,
+  pos: { x: number; y: number },
+  isAdmin: boolean = false
+) {
   if (!isAdmin) return; // Visitor: no persistence to follow "refresh = reset" rule
 
   const current = loadPositions();
@@ -209,13 +231,17 @@ export function saveIconPosition(id: string, pos: { x: number; y: number }, isAd
         yPct,
         refScreenWidth: vp.width,
         refScreenHeight: vp.height,
-      }
-    }
+      },
+    },
   });
 }
 
 // Save single window position
-export function saveWindowPosition(id: string, pos: { x?: number; y?: number; width?: number; height?: number }, isAdmin: boolean = false) {
+export function saveWindowPosition(
+  id: string,
+  pos: { x?: number; y?: number; width?: number; height?: number },
+  isAdmin: boolean = false
+) {
   if (!isAdmin) return; // Visitor changes are not persisted
 
   // FIX: Merge dengan posisi persisted saat ini, bukan hardcoded default.
@@ -230,19 +256,23 @@ export function saveWindowPosition(id: string, pos: { x?: number; y?: number; wi
     x: pos.x ?? base.x,
     y: pos.y ?? base.y,
     width: pos.width ?? base.width,
-    height: pos.height ?? base.height
+    height: pos.height ?? base.height,
   };
 
   savePositions({
     windows: {
       ...current.windows,
-      [id]: updated
-    }
+      [id]: updated,
+    },
   });
 }
 
 // Save single note position (for visitor session)
-export function saveNotePosition(id: string, pos: { x?: number; y?: number; width?: number; height?: number }, isAdmin: boolean = false) {
+export function saveNotePosition(
+  id: string,
+  pos: { x?: number; y?: number; width?: number; height?: number },
+  isAdmin: boolean = false
+) {
   if (!isAdmin) return; // Visitor changes no longer persisted (refresh = reset)
 
   // FIX: Merge dengan posisi persisted saat ini, bukan hardcoded default.
@@ -255,14 +285,14 @@ export function saveNotePosition(id: string, pos: { x?: number; y?: number; widt
     x: pos.x ?? base.x,
     y: pos.y ?? base.y,
     width: pos.width ?? base.width,
-    height: pos.height ?? base.height
+    height: pos.height ?? base.height,
   };
 
   savePositions({
     notes: {
       ...current.notes,
-      [id]: updated
-    }
+      [id]: updated,
+    },
   });
 }
 
@@ -270,24 +300,24 @@ export function saveNotePosition(id: string, pos: { x?: number; y?: number; widt
 export async function flushPositions(csrfToken: string): Promise<boolean> {
   try {
     const positions = loadPositions();
-    
+
     const payload = {
       windowPreferences: positions.windows || {},
       desktopPreferences: {
-        iconPositions: positions.icons || {}
-      }
+        iconPositions: positions.icons || {},
+      },
     };
-    
+
     const res = await fetch('/api/about', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-Token': csrfToken
+        'X-CSRF-Token': csrfToken,
       },
       credentials: 'include',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
-    
+
     return res.ok;
   } catch {
     return false;

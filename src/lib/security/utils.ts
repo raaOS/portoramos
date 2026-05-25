@@ -1,1 +1,1 @@
-export { getClientIP, getClientIdentifier, enforceRequestRateLimit } from './request'
+export { getClientIP, getClientIdentifier, enforceRequestRateLimit } from './request';

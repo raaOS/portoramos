@@ -1,42 +1,44 @@
-import React from "react";
-import { DockPreferences } from "@/types/about";
-import AppIcon from "../ui/AppIcon";
+import React from 'react';
+import { DockPreferences } from '@/types/about';
+import AppIcon from '../ui/AppIcon';
 
 interface DockItem {
-    id: string;
-    label: string;
-    icon: React.ReactNode;
-    onClick: () => void;
-    isOpen?: boolean;
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  href?: string;
+  isOpen?: boolean;
+  popoverContent?: React.ReactNode;
 }
 
 /**
  * Merges default dock items with the user's configuration from the database.
  * This ensures that labels and icons can be customized via the Admin Panel,
  * and these changes are reflected consistently across all pages.
+ *
+ * Tidak ada lagi whitelist debug per-item — semua item menghormati
+ * `isHidden` di config sehingga admin panel benar-benar berfungsi.
  */
-export const getDockItemConfig = (
-    defaultItems: DockItem[],
-    config?: DockPreferences
-): DockItem[] => {
-    return defaultItems.filter(item => {
-        if (item.id === 'whatsapp') return true; // Always show whatsapp for now to debug
-        if (!config) return true;
-        const itemConfig = config[item.id];
-        return !itemConfig?.isHidden;
-    }).map(item => {
-        const pref = config?.[item.id];
+export const getDockItemConfig = <T extends DockItem>(
+  defaultItems: T[],
+  config?: DockPreferences
+): T[] => {
+  if (!config) return defaultItems;
 
-        let icon = item.icon;
-        // If a custom icon URL is set in the config, use it
-        if (pref && pref.iconUrl) {
-            icon = <AppIcon imageUrl={pref.iconUrl} priority={true} />;
-        }
+  return defaultItems
+    .filter((item) => !config[item.id]?.isHidden)
+    .map((item) => {
+      const pref = config[item.id];
+      if (!pref) return item;
 
-        return {
-            ...item,
-            label: pref?.label || item.label, // Use custom label if available
-            icon
-        };
+      const next: T = { ...item };
+      if (pref.iconUrl) {
+        next.icon = <AppIcon imageUrl={pref.iconUrl} priority />;
+      }
+      if (pref.label) {
+        next.label = pref.label;
+      }
+      return next;
     });
 };

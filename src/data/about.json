@@ -74,7 +74,7 @@
   },
   "professional": {
     "contacts": {
-      "email": "ra.920710@gmail.com",
+      "email": "ramosapply@gmail.com",
       "whatsapp": "08817472310",
       "linkedin": "linkedin.com/in/ramos-design"
     },
@@ -368,18 +368,8 @@
     "activeWallpaperId": "w-1772328106931-f1zil1wt3",
     "collection": [
       {
-        "id": "default",
-        "url": "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070",
-        "name": "Cyberpunk"
-      },
-      {
-        "id": "minimal",
-        "url": "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=2070",
-        "name": "Alps"
-      },
-      {
         "id": "w-1772328106931-f1zil1wt3",
-        "url": "/wallpapers/1772328103874-4nb3gn114vgo-wallaper.png",
+        "url": "/wallpapers/1772328103874-4nb3gn114vgo-wallaper.webp",
         "name": "Custom Wallpaper"
       }
     ],

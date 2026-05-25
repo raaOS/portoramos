@@ -13,16 +13,9 @@ export function LastUpdatedProvider({ children }: { children: ReactNode }) {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // Memoize value to prevent unnecessary re-renders
-  const value = useMemo(
-    () => ({ lastUpdated, setLastUpdated }),
-    [lastUpdated]
-  );
+  const value = useMemo(() => ({ lastUpdated, setLastUpdated }), [lastUpdated]);
 
-  return (
-    <LastUpdatedContext.Provider value={value}>
-      {children}
-    </LastUpdatedContext.Provider>
-  );
+  return <LastUpdatedContext.Provider value={value}>{children}</LastUpdatedContext.Provider>;
 }
 
 export function useLastUpdated() {

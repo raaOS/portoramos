@@ -21,16 +21,20 @@
   --text-primary: #111111;
   --text-secondary: #374151;
   --text-muted: #6b7280;
-  
+
   /* Typography */
-  --font-sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans:
+    'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
   --font-display: 'Six Caps', 'Arial Narrow', Arial, sans-serif;
-  --font-handwritten: 'Comic Sans MS', 'Chalkboard SE', 'Bradley Hand', 'Marker Felt', 'Segoe Print', cursive, sans-serif;
-  
+  --font-handwritten:
+    'Comic Sans MS', 'Chalkboard SE', 'Bradley Hand', 'Marker Felt', 'Segoe Print', cursive,
+    sans-serif;
+
   /* Focus */
   --focus-ring: #52525b;
   --focus-ring-offset: 2px;
-  
+
   /* Spacing */
   --container-padding: 24px;
   --container-max-width: 1200px;
@@ -170,7 +174,7 @@ body {
     transition: none !important;
     will-change: auto !important;
   }
-  
+
   .project-card img,
   .project-card video,
   [data-project-card] img,
@@ -185,15 +189,15 @@ body {
     --text-secondary: #000000;
     --text-muted: #333333;
   }
-  
+
   .dark {
     --text-secondary: #ffffff;
     --text-muted: #cccccc;
   }
-  
+
   button,
   a,
-  [role="button"] {
+  [role='button'] {
     border: 2px solid currentColor;
   }
 }
@@ -217,10 +221,10 @@ body {
 /* Minimum touch target size - WCAG 2.5.5 */
 button,
 a,
-[role="button"],
-input[type="button"],
-input[type="submit"],
-input[type="reset"] {
+[role='button'],
+input[type='button'],
+input[type='submit'],
+input[type='reset'] {
   min-height: 44px;
   min-width: 44px;
 }
@@ -261,15 +265,15 @@ textarea,
   :root {
     --container-padding: 16px;
   }
-  
+
   .text-6xl {
     font-size: 3rem;
   }
-  
+
   .text-8xl {
     font-size: 4rem;
   }
-  
+
   .text-9xl {
     font-size: 5rem;
   }
@@ -279,15 +283,15 @@ textarea,
   :root {
     --container-padding: 12px;
   }
-  
+
   .text-6xl {
     font-size: 2.5rem;
   }
-  
+
   .text-8xl {
     font-size: 3rem;
   }
-  
+
   .text-9xl {
     font-size: 3.5rem;
   }
@@ -305,48 +309,48 @@ textarea,
     box-shadow: none !important;
     text-shadow: none !important;
   }
-  
+
   a,
   a:visited {
     text-decoration: underline;
   }
-  
+
   /* 
   a[href]::after {
     content: " (" attr(href) ")";
   }
   */
-  
+
   abbr[title]::after {
-    content: " (" attr(title) ")";
+    content: ' (' attr(title) ')';
   }
-  
+
   pre {
     white-space: pre-wrap !important;
   }
-  
+
   pre,
   blockquote {
     border: 1px solid #999;
     page-break-inside: avoid;
   }
-  
+
   thead {
     display: table-header-group;
   }
-  
+
   tr,
   img {
     page-break-inside: avoid;
   }
-  
+
   p,
   h2,
   h3 {
     orphans: 3;
     widows: 3;
   }
-  
+
   h2,
   h3 {
     page-break-after: avoid;
@@ -358,43 +362,43 @@ textarea,
    ========================================================================== */
 html.os-mode-active,
 body.os-mode-active {
-    overflow: hidden !important;
-    height: 100vh !important;
-    width: 100vw !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    overscroll-behavior: none !important;
+  overflow: hidden !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  overscroll-behavior: none !important;
 }
 
 /* Remove all shadows globally in OS mode (Global Kill-Switch) */
 .os-mode-active *,
 .os-mode-active *::before,
 .os-mode-active *::after {
-    box-shadow: none !important;
-    text-shadow: none !important;
-    filter: drop-shadow(none) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: drop-shadow(none) !important;
 }
 
 /* ==========================================================================
    Boot Animation Fast-Path (Option 1)
    Instantly bypass boot UI if sessionStorage flag is detected by head script.
    ========================================================================== */
-[data-os-booted="true"] #start-screen {
+[data-os-booted='true'] #start-screen {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
   z-index: -1 !important;
 }
 
-[data-os-booted="true"] .desktop-main-container {
+[data-os-booted='true'] .desktop-main-container {
   opacity: 1 !important;
   visibility: visible !important;
 }
 
-html[data-os-booted="true"] .desktop-skeleton-overlay {
+html[data-os-booted='true'] .desktop-skeleton-overlay {
   background: rgb(0 0 0 / 0.05) !important;
 }
 
@@ -412,8 +416,8 @@ html[data-os-booted="true"] .desktop-skeleton-overlay {
    `useBootSequence.markAsBooted` set `data-os-booted="true"` dan cover
    otomatis hilang via CSS rule di bawah.
    ========================================================================== */
-html[data-os-needs-boot="true"] body::before {
-  content: "";
+html[data-os-needs-boot='true'] body::before {
+  content: '';
   position: fixed;
   inset: 0;
   background: #000;
@@ -423,7 +427,7 @@ html[data-os-needs-boot="true"] body::before {
   z-index: 500000;
   pointer-events: none;
 }
-html[data-os-booted="true"] body::before {
+html[data-os-booted='true'] body::before {
   display: none;
 }
 

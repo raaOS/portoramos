@@ -1,7 +1,13 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/database';
-import { ContactData, UpdateContactData, ContactContent, ContactInfo, ContactFormSettings } from '@/types/contact';
+import {
+  ContactData,
+  UpdateContactData,
+  ContactContent,
+  ContactInfo,
+  ContactFormSettings,
+} from '@/types/contact';
 import { validateAdminRequest } from '@/lib/auth';
 import { getContactData, invalidateContactCache } from '@/lib/contact';
 import { updateContactSchema } from '@/lib/validations';
@@ -22,20 +28,20 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     if (!(await validateAdminRequest(request))) {
-      return NextResponse.json(
-        { error: 'Unauthorized or invalid CSRF token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const rawBody = await request.json();
 
     const validation = updateContactSchema.safeParse(rawBody);
     if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid contact payload',
-        details: validation.error.issues,
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'Invalid contact payload',
+          details: validation.error.issues,
+        },
+        { status: 400 }
+      );
     }
 
     const body: UpdateContactData = validation.data as UpdateContactData;
@@ -43,24 +49,30 @@ export async function PUT(request: NextRequest) {
     const contactRef = db.ref('content/contact');
     const snap = await contactRef.once('value');
     const dbData = snap.val() as ContactData | null;
-    const data = dbData || await getContactData();
+    const data = dbData || (await getContactData());
 
     // Deep merge to prevent data loss on partial updates
     const updatedData: ContactData = {
-      content: body.content ? { ...data.content, ...body.content } as ContactContent : data.content,
-      info: body.info ? {
-        ...data.info,
-        ...body.info,
-        // Deep merge socialMedia to prevent overwriting
-        socialMedia: body.info.socialMedia 
-          ? { ...(data.info?.socialMedia || {}), ...body.info.socialMedia }
-          : data.info?.socialMedia,
-      } as ContactInfo : data.info,
-      formSettings: body.formSettings ? {
-        ...data.formSettings,
-        ...body.formSettings,
-      } as ContactFormSettings : data.formSettings,
-      lastUpdated: new Date().toISOString()
+      content: body.content
+        ? ({ ...data.content, ...body.content } as ContactContent)
+        : data.content,
+      info: body.info
+        ? ({
+            ...data.info,
+            ...body.info,
+            // Deep merge socialMedia to prevent overwriting
+            socialMedia: body.info.socialMedia
+              ? { ...(data.info?.socialMedia || {}), ...body.info.socialMedia }
+              : data.info?.socialMedia,
+          } as ContactInfo)
+        : data.info,
+      formSettings: body.formSettings
+        ? ({
+            ...data.formSettings,
+            ...body.formSettings,
+          } as ContactFormSettings)
+        : data.formSettings,
+      lastUpdated: new Date().toISOString(),
     };
 
     await contactRef.set(updatedData);
@@ -72,11 +84,11 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: updatedData
+      data: updatedData,
     });
   } catch (error) {
     console.error('Error updating contact data:', error);
-    
+
     // FIXED (BUG-008): More specific error handling
     if (error instanceof SyntaxError) {
       return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
@@ -93,8 +105,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ error: 'Database connection failed' }, { status: 503 });
       }
     }
-    
+
     return NextResponse.json({ error: 'Failed to update contact data' }, { status: 500 });
   }
 }
-

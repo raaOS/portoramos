@@ -8,7 +8,7 @@ import { FolderKanban } from 'lucide-react';
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Admin - Projects Management',
   description: 'Manage portfolio projects',
-  path: '/admin/projects'
+  path: '/admin/projects',
 });
 
 export default function AdminProjectsPage() {
@@ -19,8 +19,10 @@ export default function AdminProjectsPage() {
         titleIcon={<FolderKanban className="h-5 w-5" aria-hidden />}
         titleAccent="bg-purple-50 text-purple-700"
       />
-      <div className="p-6 flex-1">
-        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading projects data...</div>}>
+      <div className="flex-1 p-6">
+        {/* PERF: fallback null. Client pakai placeholderData dari React Query
+            sehingga UI langsung punya data, tanpa flash teks "Loading...". */}
+        <Suspense fallback={null}>
           <AdminProjectsClient />
         </Suspense>
       </div>

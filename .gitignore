@@ -26,9 +26,13 @@ test-results/
 
 # Local AI/tooling state
 .claude/settings.local.json
+.playwright-cli/
 
 # Local scratchpad (debug/one-offs)
 scratch/
+
+# Local job-bot browser sessions
+.job-bot/
 
 # Test scripts (may contain API keys/tokens)
 *-env.js

@@ -34,7 +34,7 @@ export default function AdminTable<T extends Record<string, unknown> = Record<st
   sortDirection,
   className = '',
   onEdit,
-  onDelete
+  onDelete,
 }: AdminTableProps<T>) {
   const handleSort = (key: string) => {
     if (!onSort) return;
@@ -49,11 +49,21 @@ export default function AdminTable<T extends Record<string, unknown> = Record<st
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="p-8 text-center">
-          <div className="text-gray-400 mb-4">
-            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+          <div className="mb-4 text-gray-400">
+            <svg
+              className="mx-auto h-12 w-12"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
             </svg>
           </div>
           <p className="text-gray-600">{emptyMessage}</p>
@@ -63,7 +73,9 @@ export default function AdminTable<T extends Record<string, unknown> = Record<st
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden ${className}`}>
+    <div
+      className={`overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm ${className}`}
+    >
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -71,8 +83,9 @@ export default function AdminTable<T extends Record<string, unknown> = Record<st
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
-                    } ${column.className || ''}`}
+                  className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 ${
+                    column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
+                  } ${column.className || ''}`}
                   onClick={column.sortable ? () => handleSort(column.key) : undefined}
                 >
                   <div className="flex items-center space-x-1">
@@ -80,24 +93,34 @@ export default function AdminTable<T extends Record<string, unknown> = Record<st
                     {column.sortable && (
                       <div className="flex flex-col">
                         <svg
-                          className={`w-3 h-3 ${sortKey === column.key && sortDirection === 'asc'
-                            ? 'text-blue-600'
-                            : 'text-gray-400'
-                            }`}
+                          className={`h-3 w-3 ${
+                            sortKey === column.key && sortDirection === 'asc'
+                              ? 'text-blue-600'
+                              : 'text-gray-400'
+                          }`}
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
-                          <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                          <path
+                            fillRule="evenodd"
+                            d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         <svg
-                          className={`w-3 h-3 ${sortKey === column.key && sortDirection === 'desc'
-                            ? 'text-blue-600'
-                            : 'text-gray-400'
-                            }`}
+                          className={`h-3 w-3 ${
+                            sortKey === column.key && sortDirection === 'desc'
+                              ? 'text-blue-600'
+                              : 'text-gray-400'
+                          }`}
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          <path
+                            fillRule="evenodd"
+                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                     )}
@@ -105,30 +128,32 @@ export default function AdminTable<T extends Record<string, unknown> = Record<st
                 </th>
               ))}
               {(onEdit || onDelete) && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Actions
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 bg-white">
             {data.map((item, index) => (
               <tr key={String(item.id || index)} className="hover:bg-gray-50">
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${column.className || ''}`}
+                    className={`whitespace-nowrap px-6 py-4 text-sm text-gray-900 ${column.className || ''}`}
                   >
-                    {column.render ? column.render(item[column.key], item) : (item[column.key] as React.ReactNode)}
+                    {column.render
+                      ? column.render(item[column.key], item)
+                      : (item[column.key] as React.ReactNode)}
                   </td>
                 ))}
                 {(onEdit || onDelete) && (
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
                     <div className="flex space-x-2">
                       {onEdit && (
                         <button
                           onClick={() => onEdit(item)}
-                          className="w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 flex items-center justify-center gap-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-all font-medium"
+                          className="flex h-8 w-8 items-center justify-center gap-1.5 rounded-lg bg-indigo-50 font-medium text-indigo-700 transition-all hover:bg-indigo-100 sm:w-auto sm:px-3 sm:py-1.5"
                           title="Edit"
                         >
                           <Pencil className="h-4 w-4" aria-hidden />
@@ -138,7 +163,7 @@ export default function AdminTable<T extends Record<string, unknown> = Record<st
                       {onDelete && (
                         <button
                           onClick={() => onDelete(item.id as number)}
-                          className="w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 flex items-center justify-center gap-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 transition-all font-medium"
+                          className="flex h-8 w-8 items-center justify-center gap-1.5 rounded-lg bg-rose-50 font-medium text-rose-700 transition-all hover:bg-rose-100 sm:w-auto sm:px-3 sm:py-1.5"
                           title="Delete"
                         >
                           <Trash2 className="h-4 w-4" aria-hidden />

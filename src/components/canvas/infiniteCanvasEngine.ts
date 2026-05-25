@@ -1,352 +1,375 @@
-'use client'
+'use client';
 
-import type { Project } from '@/types/projects'
+import type { Project } from '@/types/projects';
 
 export const CANVAS_CONSTANTS = {
-    perspective: 1000,
-    cellSize: 2200,
-    renderRadius: 2,
-    maxDeltaTime: 32,
-    targetFrameTime: 16.66,
-    maxActiveItems: 100,
-    cullingDistanceThreshold: 500,
-    maxCacheMultiplier: 2,
-    cacheTrimRatio: 0.1,
-    screenWidth: 1800,
-    screenHeight: 1200,
-    edgeFadeStart: 1.2,
-    edgeFadeRange: 0.8,
-    grayscaleRange: 500,
-    grayscaleSmoothing: 0.18,
-    opacitySmoothing: 0.22,
-    minVisibleOpacity: 0.05,
-    fadeCloseStart: -500,
-    fadeCloseRange: 1300,
-    blurCloseRange: 130,
-    grayscaleStart: -4500,
-    fadeFarStart: -5000,
-    fadeFarRange: 2000,
-    blurFarRange: 200,
-    clipClose: 1200,
-    clipFar: -8000,
-} as const
+  perspective: 1000,
+  cellSize: 2200,
+  renderRadius: 2,
+  maxDeltaTime: 32,
+  targetFrameTime: 16.66,
+  maxActiveItems: 100,
+  cullingDistanceThreshold: 500,
+  maxCacheMultiplier: 2,
+  cacheTrimRatio: 0.1,
+  screenWidth: 1800,
+  screenHeight: 1200,
+  edgeFadeStart: 1.2,
+  edgeFadeRange: 0.8,
+  grayscaleRange: 500,
+  grayscaleSmoothing: 0.18,
+  opacitySmoothing: 0.22,
+  minVisibleOpacity: 0.05,
+  fadeCloseStart: -500,
+  fadeCloseRange: 1300,
+  blurCloseRange: 130,
+  grayscaleStart: -4500,
+  fadeFarStart: -5000,
+  fadeFarRange: 2000,
+  blurFarRange: 200,
+  clipClose: 1200,
+  clipFar: -8000,
+} as const;
 
 export type Point3D = {
-    x: number
-    y: number
-    z: number
-}
+  x: number;
+  y: number;
+  z: number;
+};
 
 export type CellPosition = {
-    key: string
-    gx: number
-    gy: number
-    gz: number
-    itemX: number
-    itemY: number
-    itemZ: number
-    dist: number
-}
+  key: string;
+  gx: number;
+  gy: number;
+  gz: number;
+  itemX: number;
+  itemY: number;
+  itemZ: number;
+  dist: number;
+};
 
 export type CanvasItem = {
-    key: string
-    project: Project
-    x: number
-    y: number
-    z: number
-    scale: number
-    rotation: number
-    dist: number
-}
+  key: string;
+  project: Project;
+  x: number;
+  y: number;
+  z: number;
+  scale: number;
+  rotation: number;
+  dist: number;
+};
 
 export type VisualState = {
-    opacity: number
-    grayscale: number
-}
+  opacity: number;
+  grayscale: number;
+};
 
 export type VisualStyle = {
-    opacity: number
-    hidden: boolean
-    grayscale: number
-    filter: string
-    transform: string
-    zIndex: string
-}
+  opacity: number;
+  hidden: boolean;
+  grayscale: number;
+  filter: string;
+  transform: string;
+  zIndex: string;
+};
 
 export function hash3D(x: number, y: number, z: number): number {
-    const hash = Math.sin(x * 12.9898 + y * 78.233 + z * 45.123) * 43758.5453123
-    return hash - Math.floor(hash)
+  const hash = Math.sin(x * 12.9898 + y * 78.233 + z * 45.123) * 43758.5453123;
+  return hash - Math.floor(hash);
 }
 
 export function buildCellKey(x: number, y: number, z: number): string {
-    return `${x}_${y}_${z}`
+  return `${x}_${y}_${z}`;
 }
 
 export function buildCellPositions(camera: Point3D): CellPosition[] {
-    const centerCellX = Math.floor(camera.x / CANVAS_CONSTANTS.cellSize)
-    const centerCellY = Math.floor(camera.y / CANVAS_CONSTANTS.cellSize)
-    const centerCellZ = Math.floor(camera.z / CANVAS_CONSTANTS.cellSize)
-    const positions: CellPosition[] = []
+  const centerCellX = Math.floor(camera.x / CANVAS_CONSTANTS.cellSize);
+  const centerCellY = Math.floor(camera.y / CANVAS_CONSTANTS.cellSize);
+  const centerCellZ = Math.floor(camera.z / CANVAS_CONSTANTS.cellSize);
+  const positions: CellPosition[] = [];
 
-    for (let x = -CANVAS_CONSTANTS.renderRadius; x <= CANVAS_CONSTANTS.renderRadius; x++) {
-        for (let y = -CANVAS_CONSTANTS.renderRadius; y <= CANVAS_CONSTANTS.renderRadius; y++) {
-            for (let z = -CANVAS_CONSTANTS.renderRadius; z <= CANVAS_CONSTANTS.renderRadius; z++) {
-                const gx = centerCellX + x
-                const gy = centerCellY + y
-                const gz = centerCellZ + z
-                const xSeed = hash3D(gx + 1, gy, gz)
-                const ySeed = hash3D(gx, gy + 1, gz)
-                const zSeed = hash3D(gx, gy, gz + 1)
-                const itemX = gx * CANVAS_CONSTANTS.cellSize + (xSeed * 1.2 - 0.6) * CANVAS_CONSTANTS.cellSize
-                const itemY = gy * CANVAS_CONSTANTS.cellSize + (ySeed * 1.2 - 0.6) * CANVAS_CONSTANTS.cellSize
-                const itemZ = gz * CANVAS_CONSTANTS.cellSize + (zSeed * 1.2 - 0.6) * CANVAS_CONSTANTS.cellSize
-                const dist = Math.sqrt(
-                    (itemX - camera.x) ** 2 +
-                    (itemY - camera.y) ** 2 +
-                    (itemZ - camera.z) ** 2
-                )
+  for (let x = -CANVAS_CONSTANTS.renderRadius; x <= CANVAS_CONSTANTS.renderRadius; x++) {
+    for (let y = -CANVAS_CONSTANTS.renderRadius; y <= CANVAS_CONSTANTS.renderRadius; y++) {
+      for (let z = -CANVAS_CONSTANTS.renderRadius; z <= CANVAS_CONSTANTS.renderRadius; z++) {
+        const gx = centerCellX + x;
+        const gy = centerCellY + y;
+        const gz = centerCellZ + z;
+        const xSeed = hash3D(gx + 1, gy, gz);
+        const ySeed = hash3D(gx, gy + 1, gz);
+        const zSeed = hash3D(gx, gy, gz + 1);
+        const itemX =
+          gx * CANVAS_CONSTANTS.cellSize + (xSeed * 1.2 - 0.6) * CANVAS_CONSTANTS.cellSize;
+        const itemY =
+          gy * CANVAS_CONSTANTS.cellSize + (ySeed * 1.2 - 0.6) * CANVAS_CONSTANTS.cellSize;
+        const itemZ =
+          gz * CANVAS_CONSTANTS.cellSize + (zSeed * 1.2 - 0.6) * CANVAS_CONSTANTS.cellSize;
+        const dist = Math.sqrt(
+          (itemX - camera.x) ** 2 + (itemY - camera.y) ** 2 + (itemZ - camera.z) ** 2
+        );
 
-                positions.push({
-                    key: buildCellKey(gx, gy, gz),
-                    gx,
-                    gy,
-                    gz,
-                    itemX,
-                    itemY,
-                    itemZ,
-                    dist,
-                })
-            }
-        }
+        positions.push({
+          key: buildCellKey(gx, gy, gz),
+          gx,
+          gy,
+          gz,
+          itemX,
+          itemY,
+          itemZ,
+          dist,
+        });
+      }
     }
+  }
 
-    return positions.sort((a, b) => a.dist - b.dist)
+  return positions.sort((a, b) => a.dist - b.dist);
 }
 
 function resolveProjectIdForCell(
-    cellKey: string,
-    cellSeed: number,
-    projects: Project[],
-    assignedProjectIds: Set<string>,
-    projectById: Map<string, Project>,
-    persistedAssignments: Map<string, string>
+  cellKey: string,
+  cellSeed: number,
+  projects: Project[],
+  assignedProjectIds: Set<string>,
+  projectById: Map<string, Project>,
+  persistedAssignments: Map<string, string>
 ): string {
-    const persistedProjectId = persistedAssignments.get(cellKey)
-    if (persistedProjectId && !assignedProjectIds.has(persistedProjectId) && projectById.has(persistedProjectId)) {
-        return persistedProjectId
-    }
+  const persistedProjectId = persistedAssignments.get(cellKey);
+  if (
+    persistedProjectId &&
+    !assignedProjectIds.has(persistedProjectId) &&
+    projectById.has(persistedProjectId)
+  ) {
+    return persistedProjectId;
+  }
 
-    const startIndex = Math.floor(cellSeed * projects.length) % projects.length
-    for (let attempt = 0; attempt < projects.length; attempt++) {
-        const project = projects[(startIndex + attempt) % projects.length]
-        if (!assignedProjectIds.has(project.id)) {
-            return project.id
-        }
+  const startIndex = Math.floor(cellSeed * projects.length) % projects.length;
+  for (let attempt = 0; attempt < projects.length; attempt++) {
+    const project = projects[(startIndex + attempt) % projects.length];
+    if (!assignedProjectIds.has(project.id)) {
+      return project.id;
     }
+  }
 
-    return projects[startIndex]?.id ?? projects[0].id
+  return projects[startIndex]?.id ?? projects[0].id;
 }
 
 function easeOutQuint(x: number): number {
-    return 1 - Math.pow(1 - x, 5)
+  return 1 - Math.pow(1 - x, 5);
 }
 
 export function assignProjectsToCells(args: {
-    cellPositions: CellPosition[]
-    projects: Project[]
-    persistedAssignments: Map<string, string>
-    insertionOrder: string[]
-    projectById: Map<string, Project>
+  cellPositions: CellPosition[];
+  projects: Project[];
+  persistedAssignments: Map<string, string>;
+  insertionOrder: string[];
+  projectById: Map<string, Project>;
 }): {
-    items: CanvasItem[]
-    assignments: Map<string, string>
-    insertionOrder: string[]
+  items: CanvasItem[];
+  assignments: Map<string, string>;
+  insertionOrder: string[];
 } {
-    const { cellPositions, projects, persistedAssignments, insertionOrder, projectById } = args
+  const { cellPositions, projects, persistedAssignments, insertionOrder, projectById } = args;
 
-    if (projects.length === 0) {
-        return {
-            items: [],
-            assignments: new Map(persistedAssignments),
-            insertionOrder: [...insertionOrder],
-        }
-    }
-
-    const nextAssignments = new Map<string, string>()
-    const nextInsertionOrder = [...insertionOrder]
-    const assignedProjectIds = new Set<string>()
-    const items: CanvasItem[] = []
-
-    // Pass 1: Keep existing assignments for the current cell positions
-    for (const position of cellPositions) {
-        const persistedId = persistedAssignments.get(position.key)
-        if (persistedId && projectById.has(persistedId) && !assignedProjectIds.has(persistedId)) {
-            nextAssignments.set(position.key, persistedId)
-            assignedProjectIds.add(persistedId)
-        }
-    }
-
-    // Pass 2: Assign projects to new cells or cells that lost their assignment
-    for (const position of cellPositions) {
-        if (nextAssignments.has(position.key)) {
-            continue
-        }
-
-        const seed = Math.abs(hash3D(position.gx, position.gy, position.gz))
-        const projectId = resolveProjectIdForCell(
-            position.key,
-            seed,
-            projects,
-            assignedProjectIds,
-            projectById,
-            nextAssignments
-        )
-
-        nextAssignments.set(position.key, projectId)
-        assignedProjectIds.add(projectId)
-
-        if (!nextInsertionOrder.includes(position.key)) {
-            nextInsertionOrder.push(position.key)
-        }
-    }
-
-    for (const position of cellPositions) {
-        const projectId = nextAssignments.get(position.key)!
-        items.push({
-            key: position.key,
-            project: projectById.get(projectId) ?? projects[0],
-            x: position.itemX,
-            y: position.itemY,
-            z: position.itemZ,
-            scale: 1,
-            rotation: 0,
-            dist: position.dist,
-        })
-    }
-
-    // Maintain the top N items by distance, but the assignments are now stable
+  if (projects.length === 0) {
     return {
-        items: items
-            .sort((a, b) => a.dist - b.dist)
-            .slice(0, CANVAS_CONSTANTS.maxActiveItems),
-        assignments: nextAssignments,
-        insertionOrder: nextInsertionOrder,
+      items: [],
+      assignments: new Map(persistedAssignments),
+      insertionOrder: [...insertionOrder],
+    };
+  }
+
+  const nextAssignments = new Map<string, string>();
+  const nextInsertionOrder = [...insertionOrder];
+  const assignedProjectIds = new Set<string>();
+  const items: CanvasItem[] = [];
+
+  // Pass 1: Keep existing assignments for the current cell positions
+  for (const position of cellPositions) {
+    const persistedId = persistedAssignments.get(position.key);
+    if (persistedId && projectById.has(persistedId) && !assignedProjectIds.has(persistedId)) {
+      nextAssignments.set(position.key, persistedId);
+      assignedProjectIds.add(persistedId);
     }
+  }
+
+  // Pass 2: Assign projects to new cells or cells that lost their assignment
+  for (const position of cellPositions) {
+    if (nextAssignments.has(position.key)) {
+      continue;
+    }
+
+    const seed = Math.abs(hash3D(position.gx, position.gy, position.gz));
+    const projectId = resolveProjectIdForCell(
+      position.key,
+      seed,
+      projects,
+      assignedProjectIds,
+      projectById,
+      nextAssignments
+    );
+
+    nextAssignments.set(position.key, projectId);
+    assignedProjectIds.add(projectId);
+
+    if (!nextInsertionOrder.includes(position.key)) {
+      nextInsertionOrder.push(position.key);
+    }
+  }
+
+  for (const position of cellPositions) {
+    const projectId = nextAssignments.get(position.key)!;
+    items.push({
+      key: position.key,
+      project: projectById.get(projectId) ?? projects[0],
+      x: position.itemX,
+      y: position.itemY,
+      z: position.itemZ,
+      scale: 1,
+      rotation: 0,
+      dist: position.dist,
+    });
+  }
+
+  // Maintain the top N items by distance, but the assignments are now stable
+  return {
+    items: items.sort((a, b) => a.dist - b.dist).slice(0, CANVAS_CONSTANTS.maxActiveItems),
+    assignments: nextAssignments,
+    insertionOrder: nextInsertionOrder,
+  };
 }
 
 export function pruneAssignmentState(args: {
-    assignments: Map<string, string>
-    insertionOrder: string[]
-    activeKeys: Set<string>
-    maxEntries: number
+  assignments: Map<string, string>;
+  insertionOrder: string[];
+  activeKeys: Set<string>;
+  maxEntries: number;
 }): {
-    assignments: Map<string, string>
-    insertionOrder: string[]
+  assignments: Map<string, string>;
+  insertionOrder: string[];
 } {
-    const { assignments, insertionOrder, activeKeys, maxEntries } = args
+  const { assignments, insertionOrder, activeKeys, maxEntries } = args;
 
-    // Only prune if we are significantly over the limit to avoid frequent shuffling
-    if (assignments.size <= maxEntries) {
-        return { assignments, insertionOrder }
+  // Only prune if we are significantly over the limit to avoid frequent shuffling
+  if (assignments.size <= maxEntries) {
+    return { assignments, insertionOrder };
+  }
+
+  const nextAssignments = new Map(assignments);
+  const trimCount = Math.max(1, Math.floor(assignments.size * CANVAS_CONSTANTS.cacheTrimRatio));
+  let removed = 0;
+
+  // Prune starting from the oldest items in insertionOrder
+  for (const key of insertionOrder) {
+    if (removed >= trimCount) {
+      break;
     }
-
-    const nextAssignments = new Map(assignments)
-    const trimCount = Math.max(1, Math.floor(assignments.size * CANVAS_CONSTANTS.cacheTrimRatio))
-    let removed = 0
-
-    // Prune starting from the oldest items in insertionOrder
-    for (const key of insertionOrder) {
-        if (removed >= trimCount) {
-            break
-        }
-        if (activeKeys.has(key)) {
-            continue
-        }
-        if (nextAssignments.delete(key)) {
-            removed += 1
-        }
+    if (activeKeys.has(key)) {
+      continue;
     }
-
-    const nextInsertionOrder = insertionOrder.filter((key) => nextAssignments.has(key))
-
-    return {
-        assignments: nextAssignments,
-        insertionOrder: nextInsertionOrder,
+    if (nextAssignments.delete(key)) {
+      removed += 1;
     }
+  }
+
+  const nextInsertionOrder = insertionOrder.filter((key) => nextAssignments.has(key));
+
+  return {
+    assignments: nextAssignments,
+    insertionOrder: nextInsertionOrder,
+  };
 }
 
 export function computeVisualStyle(args: {
-    item: CanvasItem
-    camera: Point3D
-    previousOpacity: number
-    previousGrayscale: number
+  item: CanvasItem;
+  camera: Point3D;
+  previousOpacity: number;
+  previousGrayscale: number;
 }): VisualStyle {
-    const { item, camera, previousOpacity, previousGrayscale } = args
-    const dx = item.x - camera.x
-    const dy = item.y - camera.y
-    const dz = item.z - camera.z
+  const { item, camera, previousOpacity, previousGrayscale } = args;
+  const dx = item.x - camera.x;
+  const dy = item.y - camera.y;
+  const dz = item.z - camera.z;
 
-    let targetOpacity = 1
-    let blur = 0
-    let targetGrayscale = 0
+  let targetOpacity = 1;
+  let blur = 0;
+  let targetGrayscale = 0;
 
-    // Forward (Close-up) Fading
-    if (dz > CANVAS_CONSTANTS.fadeCloseStart) {
-        const t = Math.min(1, Math.max(0, (dz - CANVAS_CONSTANTS.fadeCloseStart) / CANVAS_CONSTANTS.fadeCloseRange))
-        targetOpacity = 1 - easeOutQuint(t)
-        blur = Math.min(12, Math.max(0, (dz - CANVAS_CONSTANTS.fadeCloseStart) / CANVAS_CONSTANTS.blurCloseRange))
-    }
+  // Forward (Close-up) Fading
+  if (dz > CANVAS_CONSTANTS.fadeCloseStart) {
+    const t = Math.min(
+      1,
+      Math.max(0, (dz - CANVAS_CONSTANTS.fadeCloseStart) / CANVAS_CONSTANTS.fadeCloseRange)
+    );
+    targetOpacity = 1 - easeOutQuint(t);
+    blur = Math.min(
+      12,
+      Math.max(0, (dz - CANVAS_CONSTANTS.fadeCloseStart) / CANVAS_CONSTANTS.blurCloseRange)
+    );
+  }
 
-    // Backward (Far) Fading & Grayscale
-    if (dz < CANVAS_CONSTANTS.grayscaleStart) {
-        targetGrayscale = Math.min(
-            100,
-            Math.max(0, ((CANVAS_CONSTANTS.grayscaleStart - dz) / CANVAS_CONSTANTS.grayscaleRange) * 100)
-        )
-    }
+  // Backward (Far) Fading & Grayscale
+  if (dz < CANVAS_CONSTANTS.grayscaleStart) {
+    targetGrayscale = Math.min(
+      100,
+      Math.max(0, ((CANVAS_CONSTANTS.grayscaleStart - dz) / CANVAS_CONSTANTS.grayscaleRange) * 100)
+    );
+  }
 
-    if (dz < CANVAS_CONSTANTS.fadeFarStart) {
-        const t = Math.min(1, Math.max(0, (CANVAS_CONSTANTS.fadeFarStart - dz) / CANVAS_CONSTANTS.fadeFarRange))
-        targetOpacity = 1 - easeOutQuint(t)
-        blur = Math.max(blur, Math.min(15, Math.max(0, (CANVAS_CONSTANTS.fadeFarStart - dz) / CANVAS_CONSTANTS.blurFarRange)))
-    }
+  if (dz < CANVAS_CONSTANTS.fadeFarStart) {
+    const t = Math.min(
+      1,
+      Math.max(0, (CANVAS_CONSTANTS.fadeFarStart - dz) / CANVAS_CONSTANTS.fadeFarRange)
+    );
+    targetOpacity = 1 - easeOutQuint(t);
+    blur = Math.max(
+      blur,
+      Math.min(
+        15,
+        Math.max(0, (CANVAS_CONSTANTS.fadeFarStart - dz) / CANVAS_CONSTANTS.blurFarRange)
+      )
+    );
+  }
 
-    // Radial (Edge) Fading
-    const scaleFactor = CANVAS_CONSTANTS.perspective / Math.max(1, CANVAS_CONSTANTS.perspective - dz)
-    const normalizedX = (dx * scaleFactor) / CANVAS_CONSTANTS.screenWidth
-    const normalizedY = (dy * scaleFactor) / CANVAS_CONSTANTS.screenHeight
-    const radialDistance = Math.sqrt(normalizedX ** 2 + normalizedY ** 2)
+  // Radial (Edge) Fading
+  const scaleFactor = CANVAS_CONSTANTS.perspective / Math.max(1, CANVAS_CONSTANTS.perspective - dz);
+  const normalizedX = (dx * scaleFactor) / CANVAS_CONSTANTS.screenWidth;
+  const normalizedY = (dy * scaleFactor) / CANVAS_CONSTANTS.screenHeight;
+  const radialDistance = Math.sqrt(normalizedX ** 2 + normalizedY ** 2);
 
-    if (radialDistance > CANVAS_CONSTANTS.edgeFadeStart) {
-        const t = Math.min(1, (radialDistance - CANVAS_CONSTANTS.edgeFadeStart) / CANVAS_CONSTANTS.edgeFadeRange)
-        targetOpacity *= (1 - easeOutQuint(t))
-    }
+  if (radialDistance > CANVAS_CONSTANTS.edgeFadeStart) {
+    const t = Math.min(
+      1,
+      (radialDistance - CANVAS_CONSTANTS.edgeFadeStart) / CANVAS_CONSTANTS.edgeFadeRange
+    );
+    targetOpacity *= 1 - easeOutQuint(t);
+  }
 
-    // Final Clipping
-    if (dz > CANVAS_CONSTANTS.clipClose || dz < CANVAS_CONSTANTS.clipFar) {
-        targetOpacity = 0
-    }
+  // Final Clipping
+  if (dz > CANVAS_CONSTANTS.clipClose || dz < CANVAS_CONSTANTS.clipFar) {
+    targetOpacity = 0;
+  }
 
-    // Smoothing with Easing
-    const lerpOpacity = previousOpacity + (targetOpacity - previousOpacity) * CANVAS_CONSTANTS.opacitySmoothing
-    const lerpGrayscale = previousGrayscale + (targetGrayscale - previousGrayscale) * CANVAS_CONSTANTS.grayscaleSmoothing
+  // Smoothing with Easing
+  const lerpOpacity =
+    previousOpacity + (targetOpacity - previousOpacity) * CANVAS_CONSTANTS.opacitySmoothing;
+  const lerpGrayscale =
+    previousGrayscale + (targetGrayscale - previousGrayscale) * CANVAS_CONSTANTS.grayscaleSmoothing;
 
-    const isHidden = lerpOpacity <= CANVAS_CONSTANTS.minVisibleOpacity
-    const filterParts: string[] = []
+  const isHidden = lerpOpacity <= CANVAS_CONSTANTS.minVisibleOpacity;
+  const filterParts: string[] = [];
 
-    if (blur > 0.5 && lerpOpacity > 0.1) {
-        filterParts.push(`blur(${Math.min(10, blur).toFixed(1)}px)`)
-    }
-    if (lerpGrayscale > 1) {
-        filterParts.push(`grayscale(${lerpGrayscale.toFixed(0)}%)`)
-    }
+  if (blur > 0.5 && lerpOpacity > 0.1) {
+    filterParts.push(`blur(${Math.min(10, blur).toFixed(1)}px)`);
+  }
+  if (lerpGrayscale > 1) {
+    filterParts.push(`grayscale(${lerpGrayscale.toFixed(0)}%)`);
+  }
 
-    return {
-        opacity: lerpOpacity,
-        hidden: isHidden,
-        grayscale: lerpGrayscale,
-        filter: filterParts.join(' ') || 'none',
-        transform: `translate3d(calc(-50% + ${dx.toFixed(2)}px), calc(-50% + ${dy.toFixed(2)}px), ${dz.toFixed(2)}px) scale(${item.scale})`,
-        zIndex: Math.round(10000 + dz).toString(),
-    }
+  return {
+    opacity: lerpOpacity,
+    hidden: isHidden,
+    grayscale: lerpGrayscale,
+    filter: filterParts.join(' ') || 'none',
+    transform: `translate3d(calc(-50% + ${dx.toFixed(2)}px), calc(-50% + ${dy.toFixed(2)}px), ${dz.toFixed(2)}px) scale(${item.scale})`,
+    zIndex: Math.round(10000 + dz).toString(),
+  };
 }

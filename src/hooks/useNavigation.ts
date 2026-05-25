@@ -8,30 +8,36 @@ export function useNavigation() {
   const pathname = usePathname();
   const [isNavigating, setIsNavigating] = useState(false);
 
-  const navigate = useCallback((href: string) => {
-    if (pathname === href) return;
-    
-    setIsNavigating(true);
-    router.push(href);
-    
-    // Reset navigation state immediately
-    setIsNavigating(false);
-  }, [router, pathname]);
+  const navigate = useCallback(
+    (href: string) => {
+      if (pathname === href) return;
 
-  const navigateWithScroll = useCallback((href: string) => {
-    if (pathname === href) return;
-    
-    setIsNavigating(true);
-    router.push(href);
-    
-    // Reset navigation state immediately
-    setIsNavigating(false);
-  }, [router, pathname]);
+      setIsNavigating(true);
+      router.push(href);
+
+      // Reset navigation state immediately
+      setIsNavigating(false);
+    },
+    [router, pathname]
+  );
+
+  const navigateWithScroll = useCallback(
+    (href: string) => {
+      if (pathname === href) return;
+
+      setIsNavigating(true);
+      router.push(href);
+
+      // Reset navigation state immediately
+      setIsNavigating(false);
+    },
+    [router, pathname]
+  );
 
   return {
     navigate,
     navigateWithScroll,
     isNavigating,
-    pathname
+    pathname,
   };
 }

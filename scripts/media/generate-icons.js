@@ -13,13 +13,13 @@ if (!fs.existsSync(iconsDir)) {
 }
 
 // Generate SVG icons for different sizes
-sizes.forEach(size => {
+sizes.forEach((size) => {
   const svgContent = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="#000000"/>
-  <circle cx="${size/2}" cy="${size/2}" r="${Math.round(size * 0.28)}" stroke="white" stroke-width="${Math.round(size * 0.028)}" fill="none"/>
-  <path d="M${Math.round(size * 0.25)} ${size/2}L${Math.round(size * 0.42)} ${Math.round(size * 0.67)}L${Math.round(size * 0.75)} ${Math.round(size * 0.33)}" stroke="white" stroke-width="${Math.round(size * 0.042)}" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="${size / 2}" cy="${size / 2}" r="${Math.round(size * 0.28)}" stroke="white" stroke-width="${Math.round(size * 0.028)}" fill="none"/>
+  <path d="M${Math.round(size * 0.25)} ${size / 2}L${Math.round(size * 0.42)} ${Math.round(size * 0.67)}L${Math.round(size * 0.75)} ${Math.round(size * 0.33)}" stroke="white" stroke-width="${Math.round(size * 0.042)}" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
-  
+
   const svgPath = path.join(iconsDir, `icon-${size}x${size}.svg`);
   fs.writeFileSync(svgPath, svgContent);
   console.log(`Generated: icon-${size}x${size}.svg`);
@@ -41,15 +41,19 @@ const htmlContent = `<!DOCTYPE html>
   <h1>PWA Icons</h1>
   <p>Right-click on each icon and save as PNG with the corresponding filename.</p>
   <div class="icon-grid">
-    ${sizes.map(size => `
+    ${sizes
+      .map(
+        (size) => `
     <div class="icon-item">
       <h3>icon-${size}x${size}.png</h3>
       <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="#000000"/>
-        <circle cx="${size/2}" cy="${size/2}" r="${Math.round(size * 0.28)}" stroke="white" stroke-width="${Math.round(size * 0.028)}" fill="none"/>
-        <path d="M${Math.round(size * 0.25)} ${size/2}L${Math.round(size * 0.42)} ${Math.round(size * 0.67)}L${Math.round(size * 0.75)} ${Math.round(size * 0.33)}" stroke="white" stroke-width="${Math.round(size * 0.042)}" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="${size / 2}" cy="${size / 2}" r="${Math.round(size * 0.28)}" stroke="white" stroke-width="${Math.round(size * 0.028)}" fill="none"/>
+        <path d="M${Math.round(size * 0.25)} ${size / 2}L${Math.round(size * 0.42)} ${Math.round(size * 0.67)}L${Math.round(size * 0.75)} ${Math.round(size * 0.33)}" stroke="white" stroke-width="${Math.round(size * 0.042)}" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-    </div>`).join('')}
+    </div>`
+      )
+      .join('')}
   </div>
 </body>
 </html>`;

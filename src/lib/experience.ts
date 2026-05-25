@@ -12,4 +12,3 @@ export async function loadExperienceData(): Promise<ExperienceData | null> {
     return null;
   }
 }
-

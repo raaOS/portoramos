@@ -1,22 +1,22 @@
 /* Shared OS scrollbar styles — used by AboutContent, ExplorerWindow */
 .os-scrollbar::-webkit-scrollbar {
-    width: 6px;
+  width: 6px;
 }
 .os-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 .os-scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgba(0,0,0,0.1);
-    border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
 }
 .os-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0,0,0,0.2);
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 /* Dark mode */
 .dark .os-scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgba(255,255,255,0.1);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 .dark .os-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255,255,255,0.2);
+  background-color: rgba(255, 255, 255, 0.2);
 }

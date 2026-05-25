@@ -279,36 +279,35 @@ img {
 function generateCriticalCSS() {
   try {
     console.log('🎨 Generating critical CSS...');
-    
+
     // Create critical CSS file
     const criticalCSSPath = path.join(process.cwd(), 'public', 'css', 'critical.css');
     const dir = path.dirname(criticalCSSPath);
-    
+
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    
+
     fs.writeFileSync(criticalCSSPath, criticalCSS);
-    
+
     // Calculate size
     const size = Buffer.byteLength(criticalCSS, 'utf8');
     const sizeKB = (size / 1024).toFixed(2);
-    
+
     console.log(`✅ Critical CSS generated: ${sizeKB}KB`);
     console.log(`📁 Saved to: ${criticalCSSPath}`);
-    
+
     return {
       success: true,
       size,
       sizeKB,
-      path: criticalCSSPath
+      path: criticalCSSPath,
     };
-    
   } catch (error) {
     console.error('❌ Critical CSS generation failed:', error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }

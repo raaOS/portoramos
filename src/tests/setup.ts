@@ -14,7 +14,7 @@ vi.mock('next-view-transitions', () => ({
     React.createElement(
       'a',
       { href: typeof href === 'string' ? href : href.toString(), ...props },
-      children,
+      children
     ),
   useTransitionRouter: () => ({
     push: vi.fn(),

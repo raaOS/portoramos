@@ -5,61 +5,63 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 type Language = 'en' | 'id';
 
 interface LanguageContextType {
-    language: Language;
-    setLanguage: (lang: Language) => void;
-    toggleLanguage: () => void;
-    t: (en: string, id: string) => string; // Helper for simple text switching
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  toggleLanguage: () => void;
+  t: (en: string, id: string) => string; // Helper for simple text switching
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-    const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>('en');
 
-    useEffect(() => {
-        // Load saved language or default to 'en'
-        // BUG FIX #2: try-catch untuk localStorage
-        try {
-            const savedLang = localStorage.getItem('pixel_portfolio_lang') as Language;
-            if (savedLang && (savedLang === 'en' || savedLang === 'id')) {
-                requestAnimationFrame(() => setLanguage(savedLang));
-            }
-        } catch (e) {
-            console.warn('[LanguageContext] Failed to load language from localStorage:', e);
-        }
-    }, []);
+  useEffect(() => {
+    // Load saved language or default to 'en'
+    // BUG FIX #2: try-catch untuk localStorage
+    try {
+      const savedLang = localStorage.getItem('pixel_portfolio_lang') as Language;
+      if (savedLang && (savedLang === 'en' || savedLang === 'id')) {
+        requestAnimationFrame(() => setLanguage(savedLang));
+      }
+    } catch (e) {
+      console.warn('[LanguageContext] Failed to load language from localStorage:', e);
+    }
+  }, []);
 
-    const handleSetLanguage = (lang: Language) => {
-        setLanguage(lang);
-        // BUG FIX #2: try-catch untuk localStorage
-        try {
-            localStorage.setItem('pixel_portfolio_lang', lang);
-        } catch (e) {
-            console.warn('[LanguageContext] Failed to save language to localStorage:', e);
-        }
-    };
+  const handleSetLanguage = (lang: Language) => {
+    setLanguage(lang);
+    // BUG FIX #2: try-catch untuk localStorage
+    try {
+      localStorage.setItem('pixel_portfolio_lang', lang);
+    } catch (e) {
+      console.warn('[LanguageContext] Failed to save language to localStorage:', e);
+    }
+  };
 
-    const toggleLanguage = () => {
-        handleSetLanguage(language === 'en' ? 'id' : 'en');
-    };
+  const toggleLanguage = () => {
+    handleSetLanguage(language === 'en' ? 'id' : 'en');
+  };
 
-    // Helper to get text based on current language
-    // Usage: t('Hello', 'Halo')
-    const t = (en: string, id: string) => {
-        return language === 'en' ? en : (id || en); // Fallback to EN if ID is empty
-    };
+  // Helper to get text based on current language
+  // Usage: t('Hello', 'Halo')
+  const t = (en: string, id: string) => {
+    return language === 'en' ? en : id || en; // Fallback to EN if ID is empty
+  };
 
-    return (
-        <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, toggleLanguage, t }}>
-            {children}
-        </LanguageContext.Provider>
-    );
+  return (
+    <LanguageContext.Provider
+      value={{ language, setLanguage: handleSetLanguage, toggleLanguage, t }}
+    >
+      {children}
+    </LanguageContext.Provider>
+  );
 }
 
 export function useLanguage() {
-    const context = useContext(LanguageContext);
-    if (context === undefined) {
-        throw new Error('useLanguage must be used within a LanguageProvider');
-    }
-    return context;
+  const context = useContext(LanguageContext);
+  if (context === undefined) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
 }

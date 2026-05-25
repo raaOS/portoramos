@@ -4,6 +4,7 @@ import React, { useState, useEffect, startTransition } from 'react';
 import { motion } from 'motion/react';
 import { Comment } from '@/lib/magic';
 import dynamic from 'next/dynamic';
+import { useToast } from '@/contexts/ToastContext';
 
 const AITranslator = dynamic(() => import('@/components/features/AITranslator'), { ssr: false });
 
@@ -19,7 +20,7 @@ export default function CommentSection({
   slug,
   comments,
   setComments,
-  className = ''
+  className = '',
 }: CommentSectionProps) {
   // Guest Identity State
   const [guestName, setGuestName] = useState('');
@@ -29,6 +30,7 @@ export default function CommentSection({
   // Comment Input State
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showWarning } = useToast();
 
   // Load Guest Name from localStorage (Client-side only)
   useEffect(() => {
@@ -63,7 +65,7 @@ export default function CommentSection({
       name: guestName,
       time: new Date().toISOString(),
       likes: 0,
-      replies: []
+      replies: [],
     };
 
     const updatedComments = [newComment, ...comments];
@@ -80,14 +82,14 @@ export default function CommentSection({
         body: JSON.stringify({
           slug: slug,
           comment: newComment,
-          website_url: '' // Anti-spam honeypot (must be empty)
-        })
+          website_url: '', // Anti-spam honeypot (must be empty)
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         if (response.status === 429) {
-          alert("Terlalu banyak komentar! Tunggu 10 detik.");
+          showWarning('Terlalu banyak komentar! Tunggu 10 detik.');
         } else {
           console.error('Server error:', errorData);
         }
@@ -129,11 +131,10 @@ export default function CommentSection({
 
   return (
     <div className={`space-y-4 ${className}`}>
-
       {/* Accordion Toggle */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between py-2 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors group"
+        className="group flex w-full items-center justify-between py-2 text-gray-500 transition-colors hover:text-gray-900 dark:hover:text-white"
       >
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-widest">
@@ -142,7 +143,10 @@ export default function CommentSection({
           {comments.length > 0 && !isOpen && (
             <div className="flex -space-x-2">
               {comments.slice(0, 3).map((c, i) => (
-                <div key={i} className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-800 border-2 border-white dark:border-gray-900 flex items-center justify-center text-[8px] font-bold uppercase text-gray-400">
+                <div
+                  key={i}
+                  className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-[8px] font-bold uppercase text-gray-400 dark:border-gray-900 dark:bg-gray-800"
+                >
                   {c.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
               ))}
@@ -150,7 +154,7 @@ export default function CommentSection({
           )}
         </div>
         <svg
-          className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -165,29 +169,33 @@ export default function CommentSection({
         animate={{
           height: isOpen ? 'auto' : 0,
           opacity: isOpen ? 1 : 0,
-          marginBottom: isOpen ? 24 : 0
+          marginBottom: isOpen ? 24 : 0,
         }}
         transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
         className="overflow-hidden"
       >
         <div className="space-y-8 py-2">
           {comments.length === 0 ? (
-            <p className="text-center text-[11px] text-gray-400 py-4 italic">Belum ada komentar. Jadilah yang pertama! ✨</p>
+            <p className="py-4 text-center text-[11px] italic text-gray-400">
+              Belum ada komentar. Jadilah yang pertama! ✨
+            </p>
           ) : (
             comments.map((comment) => (
               <div key={comment.id} className="group">
                 <div className="flex gap-4">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white text-[13px] font-bold uppercase shadow-lg">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-[13px] font-bold uppercase text-white shadow-lg">
                     {comment.name?.charAt(0)?.toUpperCase() || '?'}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">{comment.name}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-baseline gap-2">
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        {comment.name}
+                      </span>
                       <span className="text-[10px] text-gray-400">
                         {formatRelativeTime(comment.createdAt || comment.time || '')}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">
                       {comment.text}
                     </p>
                     <AITranslator text={comment.text} compact={true} />
@@ -195,22 +203,22 @@ export default function CommentSection({
                 </div>
                 {/* Render Replies (Read-Only) */}
                 {comment.replies && comment.replies.length > 0 && (
-                  <div className="ml-13 mt-4 space-y-4 border-l-2 border-gray-100 dark:border-gray-800 pl-4">
+                  <div className="ml-13 mt-4 space-y-4 border-l-2 border-gray-100 pl-4 dark:border-gray-800">
                     {comment.replies.map((reply) => (
                       <div key={reply.id} className="flex gap-3">
-                        <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center text-gray-600 dark:text-gray-400 text-[10px] font-bold uppercase ring-1 ring-gray-200 dark:ring-gray-700">
+                        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold uppercase text-gray-600 ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700">
                           {reply.name?.charAt(0)?.toUpperCase() || '?'}
                         </div>
                         <div className="flex-1">
-                          <div className="flex items-baseline gap-2 mb-1">
-                            <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{reply.name}</span>
+                          <div className="mb-1 flex items-baseline gap-2">
+                            <span className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                              {reply.name}
+                            </span>
                             <span className="text-[9px] text-gray-400">
                               {formatRelativeTime(reply.createdAt || reply.time || '')}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-700 dark:text-gray-400">
-                            {reply.text}
-                          </p>
+                          <p className="text-xs text-gray-700 dark:text-gray-400">{reply.text}</p>
                           <AITranslator text={reply.text} compact={true} />
                         </div>
                       </div>
@@ -224,10 +232,10 @@ export default function CommentSection({
       </motion.div>
 
       {/* Input Section - Moved Below Toggle & List */}
-      <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+      <div className="border-t border-gray-100 pt-4 dark:border-gray-800">
         {!guestName || isSettingName ? (
           <div className="space-y-4">
-            <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
+            <p className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
               Isi namamu dulu untuk mulai berkomentar 😊
             </p>
             <div className="flex gap-2">
@@ -237,12 +245,12 @@ export default function CommentSection({
                 onChange={(e) => setTempGuestName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                 placeholder="Ketik namamu..."
-                className="flex-1 bg-transparent border-none border-b border-black/10 dark:border-white/10 px-0 py-2.5 text-sm focus:border-red-500 dark:text-white transition-all outline-none focus:outline-none focus:ring-0"
+                className="flex-1 border-b border-none border-black/10 bg-transparent px-0 py-2.5 text-sm outline-none transition-all focus:border-red-500 focus:outline-none focus:ring-0 dark:border-white/10 dark:text-white"
               />
               <button
                 onClick={handleSaveName}
                 disabled={!tempGuestName.trim()}
-                className="bg-[#E60023] hover:bg-[#ad001b] text-white px-6 py-2.5 rounded-full text-sm font-bold transition-colors disabled:opacity-50 border-none outline-none shadow-sm"
+                className="rounded-full border-none bg-[#E60023] px-6 py-2.5 text-sm font-bold text-white shadow-sm outline-none transition-colors hover:bg-[#ad001b] disabled:opacity-50"
               >
                 Simpan
               </button>
@@ -250,8 +258,8 @@ export default function CommentSection({
           </div>
         ) : (
           <div className="relative">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
                 Komentar sebagai <span className="text-red-500">{guestName}</span>
               </p>
               <button
@@ -259,7 +267,7 @@ export default function CommentSection({
                   setTempGuestName(guestName);
                   setIsSettingName(true);
                 }}
-                className="text-[11px] text-gray-300 hover:text-red-500 transition-colors underline decoration-dotted underline-offset-4"
+                className="text-[11px] text-gray-300 underline decoration-dotted underline-offset-4 transition-colors hover:text-red-500"
               >
                 Ganti nama
               </button>
@@ -271,14 +279,14 @@ export default function CommentSection({
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
                 placeholder="Tulis komentar..."
-                className="w-full bg-transparent border-none border-b border-black/10 dark:border-white/10 px-0 py-3 text-sm focus:border-red-500 dark:text-white transition-all outline-none focus:outline-none focus:ring-0 pr-12"
+                className="w-full border-b border-none border-black/10 bg-transparent px-0 py-3 pr-12 text-sm outline-none transition-all focus:border-red-500 focus:outline-none focus:ring-0 dark:border-white/10 dark:text-white"
               />
               <button
                 onClick={handlePostComment}
                 disabled={!commentText.trim() || isSubmitting}
-                className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-red-500 hover:text-red-600 transition-colors disabled:opacity-30"
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-red-500 transition-colors hover:text-red-600 disabled:opacity-30"
               >
-                <svg className="w-5 h-5 rotate-90" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 rotate-90" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                 </svg>
               </button>

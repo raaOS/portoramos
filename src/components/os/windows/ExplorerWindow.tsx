@@ -1,751 +1,779 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
-    ChevronLeft,
-    ChevronRight,
-    Search,
-    Grid,
-    RefreshCw,
-    File as FileIcon,
-    Image as ImageIcon,
-    Video as VideoIcon,
-    Home,
-    MonitorPlay,
-    AlertTriangle,
-    ExternalLink,
-} from "lucide-react";
-import { m, AnimatePresence, type Variants } from "motion/react";
-import type { AnyExplorerNode, ExplorerFolder, ExplorerFile } from "@/types/explorer";
-import { getVideoPosterSource, getVideoPreviewSource } from "@/lib/mediaPreview";
-import MacFolder from "./MacFolder";
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Grid,
+  RefreshCw,
+  File as FileIcon,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  Home,
+  MonitorPlay,
+  AlertTriangle,
+  ExternalLink,
+} from 'lucide-react';
+import { m, AnimatePresence, type Variants } from 'motion/react';
+import type { AnyExplorerNode, ExplorerFolder, ExplorerFile } from '@/types/explorer';
+import { getVideoPosterSource, getVideoPreviewSource } from '@/lib/mediaPreview';
+import MacFolder from './MacFolder';
 
 // Utility functions extracted to module scope to avoid re-creation per render
 const _formatDate = (dateStr?: string) => {
-    if (!dateStr) return '--';
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-    });
+  if (!dateStr) return '--';
+  return new Date(dateStr).toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 };
 
 const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
 const withVideoStartTime = (src?: string | null) => {
-    if (!src) return '';
+  if (!src) return '';
 
-    try {
-        const url = new URL(src, window.location.origin);
-        if (!url.hash) url.hash = 't=0.1';
-        return url.toString();
-    } catch {
-        return src.includes('#') ? src : `${src}#t=0.1`;
-    }
+  try {
+    const url = new URL(src, window.location.origin);
+    if (!url.hash) url.hash = 't=0.1';
+    return url.toString();
+  } catch {
+    return src.includes('#') ? src : `${src}#t=0.1`;
+  }
 };
 
 const getVideoSources = (url: string) => {
-    const primary = url;
-    const preview = getVideoPreviewSource(url);
-    return Array.from(new Set([primary, preview].filter(Boolean)));
+  const primary = url;
+  const preview = getVideoPreviewSource(url);
+  return Array.from(new Set([primary, preview].filter(Boolean)));
 };
 
 interface ExplorerWindowProps {
-    initialParentId?: string | null;
-    isAdmin?: boolean;
-    onOpenFile?: (file: ExplorerFile) => void;
+  initialParentId?: string | null;
+  isAdmin?: boolean;
+  onOpenFile?: (file: ExplorerFile) => void;
 }
 
 export default function ExplorerWindow({
-    initialParentId = null,
-    onOpenFile
+  initialParentId = null,
+  onOpenFile,
 }: ExplorerWindowProps) {
-    // Single atomic state for the entire explorer view
-    const [state, setState] = useState<{
-        history: (string | null)[];
-        historyIndex: number;
-        displayedParentId: string | null;
-        nodes: AnyExplorerNode[];
-        pathNodes: ExplorerFolder[];
-        isLoading: boolean;
-    }>({
-        history: [initialParentId],
-        historyIndex: 0,
-        displayedParentId: initialParentId,
-        nodes: [],
-        pathNodes: [],
-        isLoading: true
+  // Single atomic state for the entire explorer view
+  const [state, setState] = useState<{
+    history: (string | null)[];
+    historyIndex: number;
+    displayedParentId: string | null;
+    nodes: AnyExplorerNode[];
+    pathNodes: ExplorerFolder[];
+    isLoading: boolean;
+  }>({
+    history: [initialParentId],
+    historyIndex: 0,
+    displayedParentId: initialParentId,
+    nodes: [],
+    pathNodes: [],
+    isLoading: true,
+  });
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode] = useState<'grid'>('grid');
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [activeFile, setActiveFile] = useState<ExplorerFile | null>(null);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isNavigatingRef = useRef(false);
+  const navTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Animation Variants
+  // Keep folder transitions smooth and avoid "pop" on back navigation.
+  const openEase = [0.16, 1, 0.3, 1] as const;
+  const openTransition = { duration: 0.25, ease: openEase };
+
+  const containerVariants: Variants = {
+    hidden: { opacity: 0, scale: 0.98, y: 10 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: openTransition,
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.98,
+      y: 10,
+      transition: { duration: 0.16, ease: openEase },
+    },
+  };
+
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 6 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.2, ease: openEase },
+    },
+    exit: {
+      opacity: 0,
+      transition: { duration: 0.12 },
+    },
+  };
+
+  const { history, historyIndex, displayedParentId, nodes, pathNodes, isLoading } = state;
+  const currentParentId = useMemo(() => history[historyIndex] ?? null, [history, historyIndex]);
+
+  const fetchNodes = useCallback(async (parentId: string | null) => {
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    const effectiveId = parentId || 'root';
+    setState((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      const res = await fetch(`/api/explorer?parentId=${effectiveId}&path=true&_t=${Date.now()}`, {
+        signal: controller.signal,
+      });
+      const result = await res.json();
+
+      if (result.success && !controller.signal.aborted) {
+        setHasLoadedOnce(true);
+        setState((prev) => ({
+          ...prev,
+          displayedParentId: parentId ?? null,
+          nodes: result.data?.nodes || [],
+          pathNodes: result.data?.path || [],
+          isLoading: false,
+        }));
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') return;
+      console.error('[Explorer] Fetch failed:', error);
+      setState((prev) => ({ ...prev, isLoading: false }));
+    }
+  }, []);
+
+  // Reset scroll only when the displayed folder actually changes.
+  // This prevents a "jump" during loading (especially noticeable on Back to Root).
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [displayedParentId, activeFile?.id]);
+
+  // Effect to handle data fetching based on currentParentId
+  useEffect(() => {
+    // Defer to avoid cascading-render lint (setState inside effect body).
+    const t = window.setTimeout(() => {
+      fetchNodes(currentParentId);
+    }, 0);
+    return () => {
+      window.clearTimeout(t);
+      abortControllerRef.current?.abort();
+    };
+  }, [currentParentId, fetchNodes]);
+
+  // Navigation actions
+  const navigateTo = useCallback((id: string | null, addToHistory = true) => {
+    if (isNavigatingRef.current) return;
+
+    setActiveFile(null);
+
+    if (addToHistory) {
+      isNavigatingRef.current = true;
+      setSelectedNodeId(null);
+      setState((prev) => {
+        const currentPid = prev.history[prev.historyIndex] ?? null;
+        if (currentPid === id) {
+          isNavigatingRef.current = false;
+          return prev;
+        }
+        const newHistory = prev.history.slice(0, prev.historyIndex + 1);
+        newHistory.push(id);
+        return {
+          ...prev,
+          history: newHistory,
+          historyIndex: newHistory.length - 1,
+          isLoading: true,
+        };
+      });
+      if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+      navTimeoutRef.current = setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 300);
+    }
+  }, []);
+
+  const goBack = useCallback(() => {
+    if (activeFile) {
+      setActiveFile(null);
+      return;
+    }
+
+    if (isNavigatingRef.current) return;
+
+    isNavigatingRef.current = true;
+    setSelectedNodeId(null);
+    setState((prev) => {
+      if (prev.historyIndex <= 0) {
+        isNavigatingRef.current = false;
+        return prev;
+      }
+      return {
+        ...prev,
+        historyIndex: prev.historyIndex - 1,
+        isLoading: true,
+      };
     });
+    if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+    navTimeoutRef.current = setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 300);
+  }, [activeFile]);
 
-    const [searchQuery, setSearchQuery] = useState("");
-    const [viewMode] = useState<'grid'>('grid');
-    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-    const [activeFile, setActiveFile] = useState<ExplorerFile | null>(null);
-    const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-    const abortControllerRef = useRef<AbortController | null>(null);
-    const isNavigatingRef = useRef(false);
-    const navTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const contentRef = useRef<HTMLDivElement>(null);
+  const goForward = useCallback(() => {
+    if (activeFile) return;
+    if (isNavigatingRef.current) return;
 
-    // Animation Variants
-    // Keep folder transitions smooth and avoid "pop" on back navigation.
-    const openEase = [0.16, 1, 0.3, 1] as const;
-    const openTransition = { duration: 0.25, ease: openEase };
+    isNavigatingRef.current = true;
+    setSelectedNodeId(null);
+    setState((prev) => {
+      if (prev.historyIndex >= prev.history.length - 1) {
+        isNavigatingRef.current = false;
+        return prev;
+      }
+      return {
+        ...prev,
+        historyIndex: prev.historyIndex + 1,
+        isLoading: true,
+      };
+    });
+    if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+    navTimeoutRef.current = setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 300);
+  }, [activeFile]);
 
-    const containerVariants: Variants = {
-        hidden: { opacity: 0, scale: 0.98, y: 10 },
-        visible: {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            transition: openTransition
-        },
-        exit: {
-            opacity: 0,
-            scale: 0.98,
-            y: 10,
-            transition: { duration: 0.16, ease: openEase }
-        }
+  // Cleanup navigation timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
     };
+  }, []);
 
-    const itemVariants: Variants = {
-        hidden: { opacity: 0, y: 6 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.2, ease: openEase }
-        },
-        exit: {
-            opacity: 0,
-            transition: { duration: 0.12 }
-        }
-    };
+  // Derived filtered nodes
+  const filteredNodes = useMemo(() => {
+    return nodes.filter((node) => node.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [nodes, searchQuery]);
 
-    const { history, historyIndex, displayedParentId, nodes, pathNodes, isLoading } = state;
-    const currentParentId = useMemo(() => history[historyIndex] ?? null, [history, historyIndex]);
+  const handleNodeClick = (node: AnyExplorerNode, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedNodeId(node.id);
+  };
 
-    const fetchNodes = useCallback(async (parentId: string | null) => {
-        if (abortControllerRef.current) abortControllerRef.current.abort();
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
+  const handleNodeDoubleClick = useCallback(
+    (node: AnyExplorerNode, e?: React.MouseEvent | React.KeyboardEvent) => {
+      e?.stopPropagation();
+      if (node.type === 'folder') {
+        navigateTo(node.id);
+      } else if (node.type === 'file') {
+        setActiveFile(node);
+        onOpenFile?.(node);
+      }
+    },
+    [navigateTo, onOpenFile]
+  );
 
-        const effectiveId = parentId || 'root';
-        setState(prev => ({ ...prev, isLoading: true }));
-
-        try {
-            const res = await fetch(`/api/explorer?parentId=${effectiveId}&path=true&_t=${Date.now()}`, {
-                signal: controller.signal
-            });
-            const result = await res.json();
-
-            if (result.success && !controller.signal.aborted) {
-                setHasLoadedOnce(true);
-                setState(prev => ({
-                    ...prev,
-                    displayedParentId: parentId ?? null,
-                    nodes: result.data?.nodes || [],
-                    pathNodes: result.data?.path || [],
-                    isLoading: false
-                }));
-            }
-        } catch (error: unknown) {
-            if (error instanceof Error && error.name === 'AbortError') return;
-            console.error('[Explorer] Fetch failed:', error);
-            setState(prev => ({ ...prev, isLoading: false }));
-        }
-    }, []);
-
-    // Reset scroll only when the displayed folder actually changes.
-    // This prevents a "jump" during loading (especially noticeable on Back to Root).
-    useEffect(() => {
-        if (contentRef.current) {
-            contentRef.current.scrollTo({ top: 0, behavior: 'auto' });
-        }
-    }, [displayedParentId, activeFile?.id]);
-
-
-    // Effect to handle data fetching based on currentParentId
-    useEffect(() => {
-        // Defer to avoid cascading-render lint (setState inside effect body).
-        const t = window.setTimeout(() => {
-            fetchNodes(currentParentId);
-        }, 0);
-        return () => {
-            window.clearTimeout(t);
-            abortControllerRef.current?.abort();
-        };
-    }, [currentParentId, fetchNodes]);
-
-    // Navigation actions
-    const navigateTo = useCallback((id: string | null, addToHistory = true) => {
-        if (isNavigatingRef.current) return;
-
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && activeFile) {
+        e.preventDefault();
         setActiveFile(null);
+        return;
+      }
 
-        if (addToHistory) {
-            isNavigatingRef.current = true;
-            setSelectedNodeId(null);
-            setState(prev => {
-                const currentPid = prev.history[prev.historyIndex] ?? null;
-                if (currentPid === id) {
-                    isNavigatingRef.current = false;
-                    return prev;
-                }
-                const newHistory = prev.history.slice(0, prev.historyIndex + 1);
-                newHistory.push(id);
-                return {
-                    ...prev,
-                    history: newHistory,
-                    historyIndex: newHistory.length - 1,
-                    isLoading: true
-                };
-            });
-            if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
-            navTimeoutRef.current = setTimeout(() => { isNavigatingRef.current = false; }, 300);
+      // Space to preview
+      if (e.code === 'Space' && selectedNodeId && !activeFile) {
+        const node = nodes.find((n) => n.id === selectedNodeId);
+        if (node && node.type === 'file') {
+          e.preventDefault();
+          setActiveFile(node as ExplorerFile);
         }
-    }, []);
+      }
 
-    const goBack = useCallback(() => {
-        if (activeFile) {
-            setActiveFile(null);
-            return;
+      // Enter to open/navigate
+      if (e.key === 'Enter' && selectedNodeId) {
+        const node = nodes.find((n) => n.id === selectedNodeId);
+        if (node) {
+          e.preventDefault();
+          handleNodeDoubleClick(node);
+        }
+      }
+
+      // Arrow keys navigation
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) && !activeFile) {
+        e.preventDefault();
+        const currentIndex = filteredNodes.findIndex((n) => n.id === selectedNodeId);
+        let nextIndex = currentIndex;
+
+        if (currentIndex === -1) {
+          nextIndex = 0;
+        } else {
+          if (e.key === 'ArrowLeft') nextIndex = Math.max(0, currentIndex - 1);
+          if (e.key === 'ArrowRight')
+            nextIndex = Math.min(filteredNodes.length - 1, currentIndex + 1);
+
+          if (viewMode === 'grid' && contentRef.current) {
+            const columns = Math.floor(contentRef.current.clientWidth / 120) || 1;
+            if (e.key === 'ArrowUp') nextIndex = Math.max(0, currentIndex - columns);
+            if (e.key === 'ArrowDown')
+              nextIndex = Math.min(filteredNodes.length - 1, currentIndex + columns);
+          }
         }
 
-        if (isNavigatingRef.current) return;
-
-        isNavigatingRef.current = true;
-        setSelectedNodeId(null);
-        setState(prev => {
-            if (prev.historyIndex <= 0) {
-                isNavigatingRef.current = false;
-                return prev;
-            }
-            return {
-                ...prev,
-                historyIndex: prev.historyIndex - 1,
-                isLoading: true
-            };
-        });
-        if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
-        navTimeoutRef.current = setTimeout(() => { isNavigatingRef.current = false; }, 300);
-    }, [activeFile]);
-
-    const goForward = useCallback(() => {
-        if (activeFile) return;
-        if (isNavigatingRef.current) return;
-
-        isNavigatingRef.current = true;
-        setSelectedNodeId(null);
-        setState(prev => {
-            if (prev.historyIndex >= prev.history.length - 1) {
-                isNavigatingRef.current = false;
-                return prev;
-            }
-            return {
-                ...prev,
-                historyIndex: prev.historyIndex + 1,
-                isLoading: true
-            };
-        });
-        if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
-        navTimeoutRef.current = setTimeout(() => { isNavigatingRef.current = false; }, 300);
-    }, [activeFile]);
-
-    // Cleanup navigation timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
-        };
-    }, []);
-
-
-    // Derived filtered nodes
-    const filteredNodes = useMemo(() => {
-        return nodes.filter(node =>
-            node.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [nodes, searchQuery]);
-
-    const handleNodeClick = (node: AnyExplorerNode, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setSelectedNodeId(node.id);
+        const nextNode = filteredNodes[nextIndex];
+        if (nextNode) setSelectedNodeId(nextNode.id);
+      }
     };
 
-    const handleNodeDoubleClick = useCallback((node: AnyExplorerNode, e?: React.MouseEvent | React.KeyboardEvent) => {
-        e?.stopPropagation();
-        if (node.type === 'folder') {
-            navigateTo(node.id);
-        } else if (node.type === 'file') {
-            setActiveFile(node);
-            onOpenFile?.(node);
-        }
-    }, [navigateTo, onOpenFile]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNodeId, nodes, activeFile, handleNodeDoubleClick, filteredNodes, viewMode]);
 
-    // Keyboard controls
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && activeFile) {
-                e.preventDefault();
-                setActiveFile(null);
-                return;
-            }
-
-            // Space to preview
-            if (e.code === 'Space' && selectedNodeId && !activeFile) {
-                const node = nodes.find(n => n.id === selectedNodeId);
-                if (node && node.type === 'file') {
-                    e.preventDefault();
-                    setActiveFile(node as ExplorerFile);
-                }
-            }
-
-            // Enter to open/navigate
-            if (e.key === 'Enter' && selectedNodeId) {
-                const node = nodes.find(n => n.id === selectedNodeId);
-                if (node) {
-                    e.preventDefault();
-                    handleNodeDoubleClick(node);
-                }
-            }
-
-            // Arrow keys navigation
-            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) && !activeFile) {
-                e.preventDefault();
-                const currentIndex = filteredNodes.findIndex(n => n.id === selectedNodeId);
-                let nextIndex = currentIndex;
-
-                if (currentIndex === -1) {
-                    nextIndex = 0;
-                } else {
-                    if (e.key === 'ArrowLeft') nextIndex = Math.max(0, currentIndex - 1);
-                    if (e.key === 'ArrowRight') nextIndex = Math.min(filteredNodes.length - 1, currentIndex + 1);
-
-                    if (viewMode === 'grid' && contentRef.current) {
-                        const columns = Math.floor(contentRef.current.clientWidth / 120) || 1;
-                        if (e.key === 'ArrowUp') nextIndex = Math.max(0, currentIndex - columns);
-                        if (e.key === 'ArrowDown') nextIndex = Math.min(filteredNodes.length - 1, currentIndex + columns);
-                    }
-                }
-
-                const nextNode = filteredNodes[nextIndex];
-                if (nextNode) setSelectedNodeId(nextNode.id);
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedNodeId, nodes, activeFile, handleNodeDoubleClick, filteredNodes, viewMode]);
-
-
-
-    return (
-        <div className="flex flex-col h-full bg-[#f6f6f6] dark:bg-[#1a1a1a] text-gray-800 dark:text-gray-200 font-sans">
-            {/* Toolbar */}
-            <div className="h-10 border-b border-gray-200 dark:border-white/10 flex items-center justify-between px-4 sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10">
-                <div className="flex items-center gap-4">
-                    {/* Navigation Buttons */}
-                    <div className="flex items-center gap-1">
-                        <button
-                            disabled={historyIndex <= 0 && !activeFile}
-                            onClick={goBack}
-                            className="p-1.5 disabled:opacity-20 transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 active:scale-95 active:text-[#03AC0E] dark:active:text-[#03AC0E]"
-                            title="Back"
-                        >
-                            <ChevronLeft size={20} />
-                        </button>
-                        <button
-                            disabled={!!activeFile || historyIndex >= history.length - 1}
-                            onClick={goForward}
-                            className="p-1.5 disabled:opacity-20 transition-all text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 active:scale-95 active:text-[#03AC0E] dark:active:text-[#03AC0E]"
-                            title="Forward"
-                        >
-                            <ChevronRight size={20} />
-                        </button>
-                    </div>
-
-                    {/* Breadcrumbs */}
-                    <div className="flex items-center text-xs font-medium text-gray-500 overflow-hidden max-w-md">
-                        <button
-                            onClick={() => navigateTo(null)}
-                            className="hover:text-black dark:hover:text-white flex items-center gap-1 shrink-0"
-                        >
-                            <Home size={14} /> Root
-                        </button>
-                        {pathNodes.map((node) => (
-                            <React.Fragment key={node.id}>
-                                <span className="mx-1 opacity-50">/</span>
-                                <button
-                                    onClick={() => navigateTo(node.id)}
-                                    className="hover:text-black dark:hover:text-white truncate"
-                                >
-                                    {node.name}
-                                </button>
-                            </React.Fragment>
-                        ))}
-                        {activeFile && (
-                            <>
-                                <span className="mx-1 opacity-50">/</span>
-                                <span className="truncate text-slate-900 dark:text-white">{activeFile.name}</span>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    {/* Refresh Button */}
-                    <button
-                        onClick={() => fetchNodes(currentParentId)}
-                        disabled={isLoading || !!activeFile}
-                        className={`p-1.5 rounded transition-all text-gray-400 hover:text-black dark:hover:text-white active:scale-90 flex items-center justify-center`}
-                        title="Refresh folder content"
-                    >
-                        <RefreshCw size={16} className={isLoading ? 'animate-spin origin-center' : ''} />
-                    </button>
-
-                    {/* Search */}
-                    {!activeFile && (
-                    <div className="relative group hidden sm:block">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-8 pr-3 py-1 bg-black/5 dark:bg-white/5 border border-transparent focus:border-black/20 dark:focus:border-white/20 rounded-md text-xs outline-none w-32 focus:w-48 transition-all"
-                        />
-                    </div>
-                    )}
-
-                    {/* View Modes */}
-                    {!activeFile && (
-                    <div className="flex items-center gap-1">
-                        <div className="p-1 rounded opacity-100">
-                            <Grid size={14} className="text-black dark:text-white" />
-                        </div>
-                    </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Content Area */}
-            <div
-                ref={contentRef}
-                onClick={() => setSelectedNodeId(null)}
-                className="flex-1 overflow-y-auto p-6 scroll-smooth about-scrollbar overscroll-contain relative"
+  return (
+    <div className="flex h-full flex-col bg-[#f6f6f6] font-sans text-gray-800 dark:bg-[#1a1a1a] dark:text-gray-200">
+      {/* Toolbar */}
+      <div className="sticky top-0 z-10 flex h-10 items-center justify-between border-b border-gray-200 bg-white/80 px-4 backdrop-blur-md dark:border-white/10 dark:bg-black/80">
+        <div className="flex items-center gap-4">
+          {/* Navigation Buttons */}
+          <div className="flex items-center gap-1">
+            <button
+              disabled={historyIndex <= 0 && !activeFile}
+              onClick={goBack}
+              className="p-1.5 text-gray-500 transition-all hover:text-gray-700 active:scale-95 active:text-[#03AC0E] disabled:opacity-20 dark:hover:text-gray-300 dark:active:text-[#03AC0E]"
+              title="Back"
             >
-                {/* Global Fetch Progress Spinner (Very Subtle) */}
-                <AnimatePresence>
-                    {isLoading && (
-                        <m.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-black/90 px-3 py-1 rounded-full shadow-sm border border-black/5 dark:border-white/10 z-[20] flex items-center gap-2 pointer-events-none"
-                        >
-                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Loading</span>
-                            <RefreshCw size={12} className="animate-spin origin-center text-gray-500 dark:text-gray-400" />
-                        </m.div>
-                    )}
-                </AnimatePresence>
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              disabled={!!activeFile || historyIndex >= history.length - 1}
+              onClick={goForward}
+              className="p-1.5 text-gray-500 transition-all hover:text-gray-700 active:scale-95 active:text-[#03AC0E] disabled:opacity-20 dark:hover:text-gray-300 dark:active:text-[#03AC0E]"
+              title="Forward"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
 
-                <div className="h-full">
-                    <AnimatePresence mode="wait" initial={false}>
-                        {activeFile ? (
-                            <m.div
-                                key={`file:${activeFile.id}`}
-                                variants={containerVariants}
-                                initial="hidden"
-                                animate="visible"
-                                exit="hidden"
-                                className="h-full"
-                            >
-                                <InlineFilePreview file={activeFile} />
-                            </m.div>
-                        ) : !hasLoadedOnce && isLoading && nodes.length === 0 ? null : filteredNodes.length === 0 ? (
-                        <m.div
-                            key="empty"
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="hidden"
-                            className="flex flex-col items-center justify-center h-full text-slate-400 gap-4"
-                        >
-                            <div className="w-20 h-20 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center">
-                                <Search size={32} strokeWidth={1.5} />
-                            </div>
-                            <p className="text-sm font-medium">No files found</p>
-                        </m.div>
-                    ) : (
-                                <m.div
-                                    key={`grid:${displayedParentId ?? 'root'}`}
-                                    variants={containerVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="hidden"
-                                    className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-y-10 gap-x-4"
-                                >
-                                    {filteredNodes.map(node => (
-                                        <m.div
-                                            key={node.id}
-                                            variants={itemVariants}
-                                            layout
-                                            className={`flex flex-col items-center group cursor-pointer relative ${selectedNodeId === node.id ? 'z-10' : 'z-0'
-                                                }`}
-                                            onClick={(e) => handleNodeClick(node, e)}
-                                            onDoubleClick={(e) => handleNodeDoubleClick(node, e)}
-                                        >
-                                            <div className="relative mb-2 h-[98px] w-full flex items-end justify-center pointer-events-none">
-                                                <div className="relative flex h-full items-end justify-center">
-                                                    {node.type === 'folder' ? (
-                                                        <MacFolder size={0.9} isStatic={true} label="" />
-                                                    ) : (
-                                                        <FileThumbnail file={node as ExplorerFile} />
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded text-center truncate max-w-full transition-colors ${selectedNodeId === node.id
-                                                    ? 'bg-black/70 dark:bg-white/20 text-white shadow-md'
-                                                    : 'text-slate-700 dark:text-slate-300 group-hover:bg-black/5 dark:group-hover:bg-white/10'
-                                                }`}>
-                                                {node.name}
-                                            </span>
-                                        </m.div>
-                                    ))}
-                                </m.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            </div>
-
-
-            <style jsx>{`
-                .about-scrollbar::-webkit-scrollbar {
-                    width: 6px;
-                }
-                .about-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .about-scrollbar::-webkit-scrollbar-thumb {
-                    background-color: rgba(0,0,0,0.1);
-                    border-radius: 4px;
-                }
-                .about-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background-color: rgba(0,0,0,0.2);
-                }
-                :global(.dark) .about-scrollbar::-webkit-scrollbar-thumb {
-                    background-color: rgba(255,255,255,0.1);
-                }
-                :global(.dark) .about-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background-color: rgba(255,255,255,0.2);
-                }
-            `}</style>
+          {/* Breadcrumbs */}
+          <div className="flex max-w-md items-center overflow-hidden text-xs font-medium text-gray-500">
+            <button
+              onClick={() => navigateTo(null)}
+              className="flex shrink-0 items-center gap-1 hover:text-black dark:hover:text-white"
+            >
+              <Home size={14} /> Root
+            </button>
+            {pathNodes.map((node) => (
+              <React.Fragment key={node.id}>
+                <span className="mx-1 opacity-50">/</span>
+                <button
+                  onClick={() => navigateTo(node.id)}
+                  className="truncate hover:text-black dark:hover:text-white"
+                >
+                  {node.name}
+                </button>
+              </React.Fragment>
+            ))}
+            {activeFile && (
+              <>
+                <span className="mx-1 opacity-50">/</span>
+                <span className="truncate text-slate-900 dark:text-white">{activeFile.name}</span>
+              </>
+            )}
+          </div>
         </div>
-    );
+
+        <div className="flex items-center gap-3">
+          {/* Refresh Button */}
+          <button
+            onClick={() => fetchNodes(currentParentId)}
+            disabled={isLoading || !!activeFile}
+            className={`flex items-center justify-center rounded p-1.5 text-gray-400 transition-all hover:text-black active:scale-90 dark:hover:text-white`}
+            title="Refresh folder content"
+          >
+            <RefreshCw size={16} className={isLoading ? 'origin-center animate-spin' : ''} />
+          </button>
+
+          {/* Search */}
+          {!activeFile && (
+            <div className="group relative hidden sm:block">
+              <Search
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                size={14}
+              />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-32 rounded-md border border-transparent bg-black/5 py-1 pl-8 pr-3 text-xs outline-none transition-all focus:w-48 focus:border-black/20 dark:bg-white/5 dark:focus:border-white/20"
+              />
+            </div>
+          )}
+
+          {/* View Modes */}
+          {!activeFile && (
+            <div className="flex items-center gap-1">
+              <div className="rounded p-1 opacity-100">
+                <Grid size={14} className="text-black dark:text-white" />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Content Area */}
+      <div
+        ref={contentRef}
+        onClick={() => setSelectedNodeId(null)}
+        className="about-scrollbar relative flex-1 overflow-y-auto overscroll-contain scroll-smooth p-6"
+      >
+        {/* Global Fetch Progress Spinner (Very Subtle) */}
+        <AnimatePresence>
+          {isLoading && (
+            <m.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="pointer-events-none absolute left-1/2 top-2 z-[20] flex -translate-x-1/2 items-center gap-2 rounded-full border border-black/5 bg-white/90 px-3 py-1 shadow-sm dark:border-white/10 dark:bg-black/90"
+            >
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                Loading
+              </span>
+              <RefreshCw
+                size={12}
+                className="origin-center animate-spin text-gray-500 dark:text-gray-400"
+              />
+            </m.div>
+          )}
+        </AnimatePresence>
+
+        <div className="h-full">
+          <AnimatePresence mode="wait" initial={false}>
+            {activeFile ? (
+              <m.div
+                key={`file:${activeFile.id}`}
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                className="h-full"
+              >
+                <InlineFilePreview file={activeFile} />
+              </m.div>
+            ) : !hasLoadedOnce && isLoading && nodes.length === 0 ? null : filteredNodes.length ===
+              0 ? (
+              <m.div
+                key="empty"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                className="flex h-full flex-col items-center justify-center gap-4 text-slate-400"
+              >
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 dark:bg-white/5">
+                  <Search size={32} strokeWidth={1.5} />
+                </div>
+                <p className="text-sm font-medium">No files found</p>
+              </m.div>
+            ) : (
+              <m.div
+                key={`grid:${displayedParentId ?? 'root'}`}
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-x-4 gap-y-10"
+              >
+                {filteredNodes.map((node) => (
+                  <m.div
+                    key={node.id}
+                    variants={itemVariants}
+                    layout
+                    className={`group relative flex cursor-pointer flex-col items-center ${
+                      selectedNodeId === node.id ? 'z-10' : 'z-0'
+                    }`}
+                    onClick={(e) => handleNodeClick(node, e)}
+                    onDoubleClick={(e) => handleNodeDoubleClick(node, e)}
+                  >
+                    <div className="pointer-events-none relative mb-2 flex h-[98px] w-full items-end justify-center">
+                      <div className="relative flex h-full items-end justify-center">
+                        {node.type === 'folder' ? (
+                          <MacFolder size={0.9} isStatic={true} label="" />
+                        ) : (
+                          <FileThumbnail file={node as ExplorerFile} />
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      className={`max-w-full truncate rounded px-2 py-0.5 text-center text-[11px] font-medium transition-colors ${
+                        selectedNodeId === node.id
+                          ? 'bg-black/70 text-white shadow-md dark:bg-white/20'
+                          : 'text-slate-700 group-hover:bg-black/5 dark:text-slate-300 dark:group-hover:bg-white/10'
+                      }`}
+                    >
+                      {node.name}
+                    </span>
+                  </m.div>
+                ))}
+              </m.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .about-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .about-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .about-scrollbar::-webkit-scrollbar-thumb {
+          background-color: rgba(0, 0, 0, 0.1);
+          border-radius: 4px;
+        }
+        .about-scrollbar::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(0, 0, 0, 0.2);
+        }
+        :global(.dark) .about-scrollbar::-webkit-scrollbar-thumb {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+        :global(.dark) .about-scrollbar::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(255, 255, 255, 0.2);
+        }
+      `}</style>
+    </div>
+  );
 }
 
 function InlineFilePreview({ file }: { file: ExplorerFile }) {
-    const extension = file.metadata?.extension?.toUpperCase() || file.fileType.toUpperCase();
-    const dimensions = file.metadata?.width && file.metadata?.height
-        ? `${file.metadata.width} x ${file.metadata.height}`
-        : null;
-    const details = [extension, formatSize(file.size || 0), dimensions].filter(Boolean).join(' / ');
+  const extension = file.metadata?.extension?.toUpperCase() || file.fileType.toUpperCase();
+  const dimensions =
+    file.metadata?.width && file.metadata?.height
+      ? `${file.metadata.width} x ${file.metadata.height}`
+      : null;
+  const details = [extension, formatSize(file.size || 0), dimensions].filter(Boolean).join(' / ');
 
-    return (
-        <div className="flex h-full min-h-[360px] flex-col">
-            <div className="mb-4 flex shrink-0 items-start justify-between gap-4 border-b border-black/5 pb-3 dark:border-white/10">
-                <div className="min-w-0">
-                    <h2 className="truncate text-sm font-semibold text-slate-900 dark:text-white">{file.name}</h2>
-                    <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">{details}</p>
-                </div>
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-hidden bg-black/[0.03] dark:bg-white/[0.04]">
-                {file.fileType === 'image' ? (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <img
-                            src={file.url}
-                            alt={file.name}
-                            className="max-h-full max-w-full object-contain"
-                            draggable={false}
-                        />
-                    </div>
-                ) : file.fileType === 'video' ? (
-                    <ExplorerVideoPreview key={file.id} file={file} />
-                ) : file.fileType === 'pdf' || file.fileType === 'text' ? (
-                    <iframe
-                        src={file.url}
-                        title={file.name}
-                        className="h-full w-full border-0 bg-white"
-                    />
-                ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-slate-400">
-                        <FileIcon size={40} strokeWidth={1.5} />
-                        <span className="text-xs font-medium">{file.name}</span>
-                    </div>
-                )}
-            </div>
+  return (
+    <div className="flex h-full min-h-[360px] flex-col">
+      <div className="mb-4 flex shrink-0 items-start justify-between gap-4 border-b border-black/5 pb-3 dark:border-white/10">
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+            {file.name}
+          </h2>
+          <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+            {details}
+          </p>
         </div>
-    );
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-hidden bg-black/[0.03] dark:bg-white/[0.04]">
+        {file.fileType === 'image' ? (
+          <div className="flex h-full w-full items-center justify-center">
+            <img
+              src={file.url}
+              alt={file.name}
+              className="max-h-full max-w-full object-contain"
+              draggable={false}
+            />
+          </div>
+        ) : file.fileType === 'video' ? (
+          <ExplorerVideoPreview key={file.id} file={file} />
+        ) : file.fileType === 'pdf' || file.fileType === 'text' ? (
+          <iframe src={file.url} title={file.name} className="h-full w-full border-0 bg-white" />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-slate-400">
+            <FileIcon size={40} strokeWidth={1.5} />
+            <span className="text-xs font-medium">{file.name}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function ExplorerVideoPreview({ file }: { file: ExplorerFile }) {
-    const sources = useMemo(() => {
-        return Array.from(new Set([
-            file.url,
-            file.previewUrl,
-            ...getVideoSources(file.url),
-        ].filter(Boolean)));
-    }, [file.previewUrl, file.url]);
-    const poster = useMemo(() => file.thumbnailUrl || getVideoPosterSource(file.url), [file.thumbnailUrl, file.url]);
-    const [sourceIndex, setSourceIndex] = useState(0);
-    const [hasLoaded, setHasLoaded] = useState(false);
-    const [hasError, setHasError] = useState(false);
-    const source = sources[sourceIndex] || file.url;
+  const sources = useMemo(() => {
+    return Array.from(
+      new Set([file.url, file.previewUrl, ...getVideoSources(file.url)].filter(Boolean))
+    );
+  }, [file.previewUrl, file.url]);
+  const poster = useMemo(
+    () => file.thumbnailUrl || getVideoPosterSource(file.url),
+    [file.thumbnailUrl, file.url]
+  );
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const source = sources[sourceIndex] || file.url;
 
-    const handleError = useCallback(() => {
-        if (sourceIndex < sources.length - 1) {
-            setSourceIndex((current) => current + 1);
-            setHasLoaded(false);
-            return;
-        }
-
-        setHasError(true);
-    }, [sourceIndex, sources.length]);
-
-    if (hasError) {
-        return (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center text-white">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
-                    <AlertTriangle className="h-7 w-7 text-amber-300" />
-                </div>
-                <div className="max-w-md space-y-2">
-                    <h3 className="text-sm font-semibold">Video tidak bisa dimuat</h3>
-                    <p className="text-xs leading-relaxed text-white/65">
-                        Browser tidak menerima stream video dari storage. Coba buka file langsung atau upload ulang video dari Admin Explorer.
-                    </p>
-                </div>
-                <a
-                    href={file.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/15"
-                >
-                    Buka file asli
-                    <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-            </div>
-        );
+  const handleError = useCallback(() => {
+    if (sourceIndex < sources.length - 1) {
+      setSourceIndex((current) => current + 1);
+      setHasLoaded(false);
+      return;
     }
 
+    setHasError(true);
+  }, [sourceIndex, sources.length]);
+
+  if (hasError) {
     return (
-        <div className="relative h-full w-full bg-black">
-            {!hasLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-950 text-xs font-medium text-white/55">
-                    Memuat video...
-                </div>
-            )}
-            <video
-                key={source}
-                src={withVideoStartTime(source)}
-                poster={poster}
-                controls
-                preload="metadata"
-                playsInline
-                className="relative z-10 h-full w-full bg-black object-contain"
-                onLoadedData={() => setHasLoaded(true)}
-                onCanPlay={() => setHasLoaded(true)}
-                onError={handleError}
-            />
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center text-white">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
+          <AlertTriangle className="h-7 w-7 text-amber-300" />
         </div>
+        <div className="max-w-md space-y-2">
+          <h3 className="text-sm font-semibold">Video tidak bisa dimuat</h3>
+          <p className="text-xs leading-relaxed text-white/65">
+            Browser tidak menerima stream video dari storage. Coba buka file langsung atau upload
+            ulang video dari Admin Explorer.
+          </p>
+        </div>
+        <a
+          href={file.url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/15"
+        >
+          Buka file asli
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      </div>
     );
+  }
+
+  return (
+    <div className="relative h-full w-full bg-black">
+      {!hasLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-950 text-xs font-medium text-white/55">
+          Memuat video...
+        </div>
+      )}
+      <video
+        key={source}
+        src={withVideoStartTime(source)}
+        poster={poster}
+        controls
+        preload="metadata"
+        playsInline
+        className="relative z-10 h-full w-full bg-black object-contain"
+        onLoadedData={() => setHasLoaded(true)}
+        onCanPlay={() => setHasLoaded(true)}
+        onError={handleError}
+      />
+    </div>
+  );
 }
 
-function FileThumbnail({ file, size = 'md' }: { file: ExplorerFile, size?: 'xs' | 'sm' | 'md' | 'lg' }) {
-    const [hasError, setHasError] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
+function FileThumbnail({
+  file,
+  size = 'md',
+}: {
+  file: ExplorerFile;
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+}) {
+  const [hasError, setHasError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
-    const isVideo = file.fileType === 'video';
-    const isImage = file.fileType === 'image';
-    const videoPoster = isVideo ? file.thumbnailUrl || getVideoPosterSource(file.url) : undefined;
-    const videoPreview = isVideo ? getVideoPreviewSource(file.url) || file.url : undefined;
-    const src = isVideo ? videoPoster || videoPreview : file.thumbnailUrl || file.url;
+  const isVideo = file.fileType === 'video';
+  const isImage = file.fileType === 'image';
+  const videoPoster = isVideo ? file.thumbnailUrl || getVideoPosterSource(file.url) : undefined;
+  const videoPreview = isVideo ? getVideoPreviewSource(file.url) || file.url : undefined;
+  const src = isVideo ? videoPoster || videoPreview : file.thumbnailUrl || file.url;
 
-    const sizeClasses = {
-        xs: 'w-5 h-5',
-        sm: 'w-10 h-10',
-        md: 'w-16 h-20',
-        lg: 'w-24 h-32'
-    };
+  const sizeClasses = {
+    xs: 'w-5 h-5',
+    sm: 'w-10 h-10',
+    md: 'w-16 h-20',
+    lg: 'w-24 h-32',
+  };
 
-    return (
-        <div
-            className={`${sizeClasses[size]} bg-white dark:bg-white/10 shadow-sm border border-black/5 dark:border-white/10 flex items-center justify-center relative overflow-hidden group-hover:shadow-md transition-shadow`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-        >
-            {(!src || hasError) ? (
-                <div className="flex flex-col items-center gap-1">
-                    {isVideo ? <VideoIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" /> :
-                        isImage ? <ImageIcon size={size === 'xs' ? 12 : 24} className="text-green-500 opacity-60" /> :
-                            <FileIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" />}
-                </div>
-            ) : isVideo ? (
-                <m.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="w-full h-full relative"
-                >
-                    {videoPoster ? (
-                        <img
-                            src={videoPoster}
-                            alt={file.name}
-                            className="w-full h-full object-cover"
-                            draggable={false}
-                            onError={() => setHasError(true)}
-                        />
-                    ) : (
-                        <video
-                            src={withVideoStartTime(videoPreview)}
-                            className="w-full h-full object-cover"
-                            muted
-                            playsInline
-                            preload="metadata"
-                            onLoadedData={() => setHasError(false)}
-                            onError={() => setHasError(true)}
-                        />
-                    )}
-                    {size !== 'xs' && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <MonitorPlay size={size === 'sm' ? 14 : 20} className="text-white drop-shadow-md" />
-                        </div>
-                    )}
-                </m.div>
-            ) : (
-                <m.img
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    src={src}
-                    alt={file.name}
-                    className="w-full h-full object-cover"
-                    onError={() => setHasError(true)}
-                    loading="lazy"
-                />
-            )}
-
-            {/* Type Badge (Only for larger sizes) */}
-            {size !== 'xs' && (
-                <div className={`absolute bottom-0 inset-x-0 h-4 bg-black/40 backdrop-blur-[2px] flex items-center justify-center transition-opacity ${isHovered ? 'opacity-100' : 'opacity-70'}`}>
-                    <span className="text-[7px] font-black text-white uppercase tracking-tighter">
-                        {file.metadata?.extension || file.fileType}
-                    </span>
-                </div>
-            )}
+  return (
+    <div
+      className={`${sizeClasses[size]} relative flex items-center justify-center overflow-hidden border border-black/5 bg-white shadow-sm transition-shadow group-hover:shadow-md dark:border-white/10 dark:bg-white/10`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {!src || hasError ? (
+        <div className="flex flex-col items-center gap-1">
+          {isVideo ? (
+            <VideoIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" />
+          ) : isImage ? (
+            <ImageIcon size={size === 'xs' ? 12 : 24} className="text-green-500 opacity-60" />
+          ) : (
+            <FileIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" />
+          )}
         </div>
-    );
+      ) : isVideo ? (
+        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative h-full w-full">
+          {videoPoster ? (
+            <img
+              src={videoPoster}
+              alt={file.name}
+              className="h-full w-full object-cover"
+              draggable={false}
+              onError={() => setHasError(true)}
+            />
+          ) : (
+            <video
+              src={withVideoStartTime(videoPreview)}
+              className="h-full w-full object-cover"
+              muted
+              playsInline
+              preload="metadata"
+              onLoadedData={() => setHasError(false)}
+              onError={() => setHasError(true)}
+            />
+          )}
+          {size !== 'xs' && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 transition-opacity group-hover:opacity-100">
+              <MonitorPlay size={size === 'sm' ? 14 : 20} className="text-white drop-shadow-md" />
+            </div>
+          )}
+        </m.div>
+      ) : (
+        <m.img
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          src={src}
+          alt={file.name}
+          className="h-full w-full object-cover"
+          onError={() => setHasError(true)}
+          loading="lazy"
+        />
+      )}
+
+      {/* Type Badge (Only for larger sizes) */}
+      {size !== 'xs' && (
+        <div
+          className={`absolute inset-x-0 bottom-0 flex h-4 items-center justify-center bg-black/40 backdrop-blur-[2px] transition-opacity ${isHovered ? 'opacity-100' : 'opacity-70'}`}
+        >
+          <span className="text-[7px] font-black uppercase tracking-tighter text-white">
+            {file.metadata?.extension || file.fileType}
+          </span>
+        </div>
+      )}
+    </div>
+  );
 }

@@ -13,30 +13,26 @@ const CACHE_TTL = 60_000; // 1 minute
  * Cached data fetcher with React.cache (request deduplication)
  * and global cache (cross-request persistence)
  */
-export function createCachedFetcher<T>(
-  key: string,
-  fetcher: () => Promise<T>,
-  ttl = CACHE_TTL
-) {
+export function createCachedFetcher<T>(key: string, fetcher: () => Promise<T>, ttl = CACHE_TTL) {
   // Use React.cache for request deduplication within same render
   const cachedFetcher = cache(async (): Promise<T> => {
     // Check global cache first
     const cached = globalCache.get(key);
     const now = Date.now();
-    
+
     if (cached && now - cached.timestamp < ttl) {
       return cached.data as T;
     }
-    
+
     // Fetch fresh data
     const data = await fetcher();
-    
+
     // Store in global cache
     globalCache.set(key, { data, timestamp: now });
-    
+
     return data;
   });
-  
+
   return cachedFetcher;
 }
 

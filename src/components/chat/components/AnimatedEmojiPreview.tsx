@@ -1,4 +1,4 @@
-"use client"
+'use client';
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
@@ -10,7 +10,7 @@ interface AnimatedEmojiPreviewProps {
 
 export default function AnimatedEmojiPreview({ unicode }: AnimatedEmojiPreviewProps) {
   const [animationData, setAnimationData] = useState<unknown>(null);
-  
+
   useEffect(() => {
     const loadAnimation = async () => {
       try {
@@ -25,9 +25,9 @@ export default function AnimatedEmojiPreview({ unicode }: AnimatedEmojiPreviewPr
     };
     loadAnimation();
   }, [unicode]);
-  
+
   if (!animationData) return null;
-  
+
   return (
     <Lottie
       animationData={animationData}

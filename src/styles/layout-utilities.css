@@ -1,116 +1,116 @@
 /* Layout Utilities */
 
 .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 /* Thin Scrollbar */
 .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: #d1d5db transparent;
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  width: 6px;
+  height: 6px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #d1d5db;
-    border-radius: 3px;
+  background-color: #d1d5db;
+  border-radius: 3px;
 }
 
 .scrollbar-thin:hover::-webkit-scrollbar-thumb {
-    background-color: #9ca3af;
+  background-color: #9ca3af;
 }
 
 .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
-    background-color: #d1d5db;
+  background-color: #d1d5db;
 }
 
 .scrollbar-thumb-gray-400::-webkit-scrollbar-thumb {
-    background-color: #9ca3af;
+  background-color: #9ca3af;
 }
 
 .scrollbar-track-transparent::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 /* Overscroll Behavior - Prevent scroll chaining */
 .overscroll-contain {
-    overscroll-behavior: contain;
+  overscroll-behavior: contain;
 }
 
 /* Aspect Ratio Containers */
 .aspect-ratio-container {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
 }
 
 .aspect-ratio-container.aspect-auto {
-    height: auto;
-    min-height: 400px;
-    max-height: 80vh;
-    max-width: 100%;
+  height: auto;
+  min-height: 400px;
+  max-height: 80vh;
+  max-width: 100%;
 }
 
 .aspect-ratio-container.aspect-square {
-    aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 1;
 }
 
 .aspect-ratio-container.aspect-landscape {
-    aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 9;
 }
 
 @media (max-width: 768px) {
-    .aspect-ratio-container.aspect-auto {
-        min-height: 300px;
-        max-height: 60vh;
-    }
+  .aspect-ratio-container.aspect-auto {
+    min-height: 300px;
+    max-height: 60vh;
+  }
 }
 
 .portrait-video-container {
-    max-width: 400px;
-    margin: 0 auto;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .landscape-video-container {
-    width: 100%;
+  width: 100%;
 }
 
 .square-video-container {
-    max-width: 500px;
-    margin: 0 auto;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 /* 3D Effects */
 .perspective-1000 {
-    perspective: 1000px;
+  perspective: 1000px;
 }
 
 .perspective-2000 {
-    perspective: 2000px;
+  perspective: 2000px;
 }
 
 .transform-style-preserve-3d {
-    transform-style: preserve-3d;
+  transform-style: preserve-3d;
 }

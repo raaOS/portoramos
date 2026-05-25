@@ -19,9 +19,8 @@ export function generateBlurDataURL(_imageUrl: string): string {
   `;
 
   // Use btoa for browser, Buffer for server
-  const base64 = typeof window !== 'undefined'
-    ? btoa(shimmer)
-    : Buffer.from(shimmer).toString('base64');
+  const base64 =
+    typeof window !== 'undefined' ? btoa(shimmer) : Buffer.from(shimmer).toString('base64');
 
   return `data:image/svg+xml;base64,${base64}`;
 }

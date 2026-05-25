@@ -8,7 +8,7 @@
   "r2_buckets": [
     {
       "binding": "MEDIA_BUCKET",
-      "bucket_name": "portofolio"
-    }
-  ]
+      "bucket_name": "portofolio",
+    },
+  ],
 }

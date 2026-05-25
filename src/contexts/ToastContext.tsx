@@ -21,7 +21,11 @@ interface ToastContextType {
   showWarning: (message: string, duration?: number) => string;
   showLoading: (message: string) => string;
   updateToast: (id: string, updates: Partial<Omit<ToastData, 'id'>>) => void;
-  toast: (options: { type: 'error' | 'success' | 'info' | 'warning'; text: string; duration?: number }) => string;
+  toast: (options: {
+    type: 'error' | 'success' | 'info' | 'warning';
+    text: string;
+    duration?: number;
+  }) => string;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -37,13 +41,20 @@ export function useToast() {
 interface ToastProviderProps {
   children: ReactNode;
   maxToasts?: number;
-  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center' | 'center';
+  position?:
+    | 'top-right'
+    | 'top-left'
+    | 'bottom-right'
+    | 'bottom-left'
+    | 'top-center'
+    | 'bottom-center'
+    | 'center';
 }
 
 export function ToastProvider({
   children,
   maxToasts = 5,
-  position = 'top-right'
+  position = 'top-right',
 }: ToastProviderProps) {
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
@@ -51,57 +62,71 @@ export function ToastProvider({
     return `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }, []);
 
-  const showToast = useCallback((toast: Omit<ToastData, 'id'>) => {
-    const id = generateId();
-    const newToast: ToastData = {
-      id,
-      duration: 5000,
-      ...toast,
-    };
+  const showToast = useCallback(
+    (toast: Omit<ToastData, 'id'>) => {
+      const id = generateId();
+      const newToast: ToastData = {
+        id,
+        duration: 5000,
+        ...toast,
+      };
 
-    setToasts(prev => {
-      const updated = [newToast, ...prev];
-      // Limit the number of toasts
-      return updated.slice(0, maxToasts);
-    });
+      setToasts((prev) => {
+        const updated = [newToast, ...prev];
+        // Limit the number of toasts
+        return updated.slice(0, maxToasts);
+      });
 
-    return id;
-  }, [generateId, maxToasts]);
+      return id;
+    },
+    [generateId, maxToasts]
+  );
 
   const hideToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
   const hideAllToasts = useCallback(() => {
     setToasts([]);
   }, []);
 
-  const showSuccess = useCallback((message: string, duration?: number) => {
-    return showToast({ message, type: 'success', duration });
-  }, [showToast]);
+  const showSuccess = useCallback(
+    (message: string, duration?: number) => {
+      return showToast({ message, type: 'success', duration });
+    },
+    [showToast]
+  );
 
-  const showError = useCallback((message: string, duration?: number) => {
-    return showToast({ message, type: 'error', duration: duration || 6000 });
-  }, [showToast]);
+  const showError = useCallback(
+    (message: string, duration?: number) => {
+      return showToast({ message, type: 'error', duration: duration || 6000 });
+    },
+    [showToast]
+  );
 
-  const showInfo = useCallback((message: string, duration?: number) => {
-    return showToast({ message, type: 'info', duration });
-  }, [showToast]);
+  const showInfo = useCallback(
+    (message: string, duration?: number) => {
+      return showToast({ message, type: 'info', duration });
+    },
+    [showToast]
+  );
 
-  const showWarning = useCallback((message: string, duration?: number) => {
-    return showToast({ message, type: 'warning', duration });
-  }, [showToast]);
+  const showWarning = useCallback(
+    (message: string, duration?: number) => {
+      return showToast({ message, type: 'warning', duration });
+    },
+    [showToast]
+  );
 
-  const showLoading = useCallback((message: string) => {
-    return showToast({ message, type: 'saving', persistent: true });
-  }, [showToast]);
+  const showLoading = useCallback(
+    (message: string) => {
+      return showToast({ message, type: 'saving', persistent: true });
+    },
+    [showToast]
+  );
 
   const updateToast = useCallback((id: string, updates: Partial<Omit<ToastData, 'id'>>) => {
-    setToasts(prev =>
-      prev.map(toast =>
-        toast.id === id ? { ...toast, ...updates } : toast
-      )
-    );
+    setToasts((prev) => prev.map((toast) => (toast.id === id ? { ...toast, ...updates } : toast)));
   }, []);
 
   const getPositionClasses = () => {
@@ -123,28 +148,49 @@ export function ToastProvider({
     }
   };
 
-  const toast = useCallback((options: { type: 'error' | 'success' | 'info' | 'warning'; text: string; duration?: number }) => {
-    return showToast({
-      message: options.text,
-      type: options.type,
-      duration: options.duration
-    });
-  }, [showToast]);
+  const toast = useCallback(
+    (options: {
+      type: 'error' | 'success' | 'info' | 'warning';
+      text: string;
+      duration?: number;
+    }) => {
+      return showToast({
+        message: options.text,
+        type: options.type,
+        duration: options.duration,
+      });
+    },
+    [showToast]
+  );
 
   // Memoize context value to prevent re-renders when toasts list changes
   // but the methods remain the same
-  const contextValue: ToastContextType = useMemo(() => ({
-    showToast,
-    hideToast,
-    hideAllToasts,
-    showSuccess,
-    showError,
-    showInfo,
-    showWarning,
-    showLoading,
-    updateToast,
-    toast,
-  }), [showToast, hideToast, hideAllToasts, showSuccess, showError, showInfo, showWarning, showLoading, updateToast, toast]);
+  const contextValue: ToastContextType = useMemo(
+    () => ({
+      showToast,
+      hideToast,
+      hideAllToasts,
+      showSuccess,
+      showError,
+      showInfo,
+      showWarning,
+      showLoading,
+      updateToast,
+      toast,
+    }),
+    [
+      showToast,
+      hideToast,
+      hideAllToasts,
+      showSuccess,
+      showError,
+      showInfo,
+      showWarning,
+      showLoading,
+      updateToast,
+      toast,
+    ]
+  );
 
   return (
     <ToastContext.Provider value={contextValue}>
@@ -152,7 +198,7 @@ export function ToastProvider({
 
       {/* Toast Container */}
       <div
-        className={`fixed z-50 flex flex-col space-y-2 pointer-events-none ${getPositionClasses()}`}
+        className={`pointer-events-none fixed z-50 flex flex-col space-y-2 ${getPositionClasses()}`}
         style={{ maxWidth: '400px' }}
       >
         {toasts.map((toast) => (
@@ -175,12 +221,15 @@ export function useToastAsync() {
   const toast = useToast();
 
   const executeWithToast = useCallback(
-    async (operation: () => Promise<unknown>, options: {
-      loadingMessage?: string;
-      successMessage?: string;
-      errorMessage?: string;
-      showSuccess?: boolean;
-    } = {}) => {
+    async (
+      operation: () => Promise<unknown>,
+      options: {
+        loadingMessage?: string;
+        successMessage?: string;
+        errorMessage?: string;
+        showSuccess?: boolean;
+      } = {}
+    ) => {
       const {
         loadingMessage = 'Loading...',
         successMessage = 'Operation completed successfully',

@@ -11,17 +11,17 @@ function extractScores(reportPath) {
   try {
     const content = fs.readFileSync(reportPath, 'utf8');
     const data = JSON.parse(content);
-    
+
     // Find category scores
     const categories = data.categories || {};
-    
+
     const scores = {
       performance: Math.round((categories.performance?.score || 0) * 100),
       accessibility: Math.round((categories.accessibility?.score || 0) * 100),
       'best-practices': Math.round((categories['best-practices']?.score || 0) * 100),
-      seo: Math.round((categories.seo?.score || 0) * 100)
+      seo: Math.round((categories.seo?.score || 0) * 100),
     };
-    
+
     // Find individual metrics
     const audits = data.audits || {};
     const metrics = {
@@ -29,9 +29,9 @@ function extractScores(reportPath) {
       lcp: Math.round((audits['largest-contentful-paint']?.score || 0) * 100),
       cls: Math.round((audits['cumulative-layout-shift']?.score || 0) * 100),
       tbt: Math.round((audits['total-blocking-time']?.score || 0) * 100),
-      si: Math.round((audits['speed-index']?.score || 0) * 100)
+      si: Math.round((audits['speed-index']?.score || 0) * 100),
     };
-    
+
     return { scores, metrics };
   } catch (error) {
     console.error('Error reading report:', error.message);
@@ -40,14 +40,11 @@ function extractScores(reportPath) {
 }
 
 function main() {
-  const reports = [
-    'lighthouse-home-vercel.json',
-    'lighthouse-about-vercel.json'
-  ];
-  
+  const reports = ['lighthouse-home-vercel.json', 'lighthouse-about-vercel.json'];
+
   console.log('📊 Current Lighthouse Scores\n');
-  
-  reports.forEach(report => {
+
+  reports.forEach((report) => {
     const result = extractScores(report);
     if (result) {
       const page = report.includes('home') ? 'Homepage' : 'About Page';

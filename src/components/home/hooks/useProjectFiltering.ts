@@ -1,4 +1,4 @@
-"use client"
+'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type { Project } from '@/types/projects';
 
@@ -20,7 +20,9 @@ export function useProjectFiltering(projects: Project[], tag: string, searchQuer
 
   useEffect(() => {
     isMountedRef.current = true;
-    return () => { isMountedRef.current = false; };
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   // Debounce search query
@@ -35,22 +37,24 @@ export function useProjectFiltering(projects: Project[], tag: string, searchQuer
   useEffect(() => {
     if (debouncedSearchQuery) {
       const timeoutId = setTimeout(() => {
-        import('fuse.js').then((FuseModule) => {
-          if (!isMountedRef.current) return;
-          const Fuse = FuseModule.default || FuseModule;
-          setFuseInstance(prev => {
-            if (!prev) {
-              return new Fuse(projects, {
-                keys: ['title', 'description', 'client', 'tags'],
-                threshold: 0.3,
-                includeScore: true,
-              }) as unknown as FuseInstance<Project>;
-            } else {
-              prev.setCollection(projects);
-              return prev;
-            }
-          });
-        }).catch(err => console.error('[useProjectFiltering] Fuse.js load failed:', err));
+        import('fuse.js')
+          .then((FuseModule) => {
+            if (!isMountedRef.current) return;
+            const Fuse = FuseModule.default || FuseModule;
+            setFuseInstance((prev) => {
+              if (!prev) {
+                return new Fuse(projects, {
+                  keys: ['title', 'description', 'client', 'tags'],
+                  threshold: 0.3,
+                  includeScore: true,
+                }) as unknown as FuseInstance<Project>;
+              } else {
+                prev.setCollection(projects);
+                return prev;
+              }
+            });
+          })
+          .catch((err) => console.error('[useProjectFiltering] Fuse.js load failed:', err));
       }, 100);
       return () => clearTimeout(timeoutId);
     }
@@ -60,18 +64,19 @@ export function useProjectFiltering(projects: Project[], tag: string, searchQuer
     let result = projects;
     if (tag) {
       const lowerTag = tag.toLowerCase();
-      result = result.filter((p) =>
-        (p.tags || []).some((t) => t.toLowerCase() === lowerTag) ||
-        (p.type && p.type.toLowerCase() === lowerTag)
+      result = result.filter(
+        (p) =>
+          (p.tags || []).some((t) => t.toLowerCase() === lowerTag) ||
+          (p.type && p.type.toLowerCase() === lowerTag)
       );
     }
     if (debouncedSearchQuery && fuseInstance) {
       const searchResults = fuseInstance.search(debouncedSearchQuery);
       const searchedProjectIds = new Set(searchResults.map((r) => r.item.id));
       if (tag) {
-        result = result.filter(p => searchedProjectIds.has(p.id));
+        result = result.filter((p) => searchedProjectIds.has(p.id));
       } else {
-        result = searchResults.map(r => projects.find(p => p.id === r.item.id) || r.item);
+        result = searchResults.map((r) => projects.find((p) => p.id === r.item.id) || r.item);
       }
     }
     return result;

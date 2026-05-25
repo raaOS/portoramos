@@ -1,6 +1,6 @@
 /**
  * 🚨 ATURAN EMAS - JANGAN DIHAPUS / JANGAN DIGANTI NAMA 🚨
- * 
+ *
  * JANGAN PERNAH mengganti nama file ini menjadi 'middleware.ts'.
  * Project ini menggunakan Next.js 16/Kustom yang mewajibkan konvensi 'proxy.ts'.
  * Mengubahnya ke 'middleware.ts' akan merusak sistem dan memicu peringatan deprecation.
@@ -11,35 +11,32 @@ import { isStaticAsset, addSecurityHeaders } from './middleware/utils';
 import { checkAdminAuth } from './middleware/auth';
 import { checkCSRF } from './middleware/csrf';
 
-
 export async function proxy(request: NextRequest) {
-    const { pathname } = request.nextUrl;
+  const { pathname } = request.nextUrl;
 
-    // Skip middleware for static assets
-    if (isStaticAsset(pathname)) {
-        return NextResponse.next();
-    }
+  // Skip middleware for static assets
+  if (isStaticAsset(pathname)) {
+    return NextResponse.next();
+  }
 
-    // 0. CSRF Protection for Mutations
-    const csrfResult = checkCSRF(request);
-    if (!csrfResult.isValid && csrfResult.response) {
-        return csrfResult.response;
-    }
+  // 0. CSRF Protection for Mutations
+  const csrfResult = checkCSRF(request);
+  if (!csrfResult.isValid && csrfResult.response) {
+    return csrfResult.response;
+  }
 
-    // 1. Authentication Check
-    const authResult = await checkAdminAuth(request);
-    if (!authResult.authenticated && authResult.response) {
-        return authResult.response;
-    }
+  // 1. Authentication Check
+  const authResult = await checkAdminAuth(request);
+  if (!authResult.authenticated && authResult.response) {
+    return authResult.response;
+  }
 
-    // 2. Route-level persistent rate limiting is enforced inside mutating handlers.
-    // Keep proxy focused on auth, CSRF, and security headers so behavior stays consistent in serverless.
-    const response = NextResponse.next();
-    return addSecurityHeaders(response);
+  // 2. Route-level persistent rate limiting is enforced inside mutating handlers.
+  // Keep proxy focused on auth, CSRF, and security headers so behavior stays consistent in serverless.
+  const response = NextResponse.next();
+  return addSecurityHeaders(response);
 }
 
 export const config = {
-    matcher: [
-        '/((?!_next/static|_next/image|favicon.ico|public/|admin\\.html).*)',
-    ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|public/|admin\\.html).*)'],
 };

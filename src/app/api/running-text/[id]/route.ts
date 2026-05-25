@@ -6,52 +6,55 @@ import { updateRunningTextSchema } from '@/lib/validations';
 import { validationError } from '@/lib/api-response';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    // Check admin authentication
-    if (!(await validateAdminRequest(request))) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Check admin authentication
+  if (!(await validateAdminRequest(request))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { id } = await params;
+    const rawBody = await request.json();
+    const validationResult = updateRunningTextSchema.safeParse(rawBody);
+
+    if (!validationResult.success) {
+      return validationError(validationResult.error);
     }
 
-    try {
-        const { id } = await params;
-        const rawBody = await request.json();
-        const validationResult = updateRunningTextSchema.safeParse(rawBody);
+    const updatedItem = await runningTextService.updateItem(id, validationResult.data);
 
-        if (!validationResult.success) {
-            return validationError(validationResult.error);
-        }
-
-        const updatedItem = await runningTextService.updateItem(id, validationResult.data);
-
-        if (!updatedItem) {
-            return NextResponse.json({ error: 'Item not found' }, { status: 404 });
-        }
-
-        revalidatePath('/', 'layout');
-
-        return NextResponse.json(updatedItem);
-    } catch {
-        return NextResponse.json({ error: 'Failed to update item' }, { status: 500 });
+    if (!updatedItem) {
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
+
+    revalidatePath('/', 'layout');
+
+    return NextResponse.json(updatedItem);
+  } catch {
+    return NextResponse.json({ error: 'Failed to update item' }, { status: 500 });
+  }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    // Check admin authentication
-    if (!(await validateAdminRequest(request))) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // Check admin authentication
+  if (!(await validateAdminRequest(request))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { id } = await params;
+    const success = await runningTextService.deleteItem(id);
+
+    if (!success) {
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
-    try {
-        const { id } = await params;
-        const success = await runningTextService.deleteItem(id);
+    revalidatePath('/', 'layout');
 
-        if (!success) {
-            return NextResponse.json({ error: 'Item not found' }, { status: 404 });
-        }
-
-        revalidatePath('/', 'layout');
-
-        return NextResponse.json({ success: true });
-    } catch {
-        return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 });
-    }
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 });
+  }
 }

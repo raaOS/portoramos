@@ -6,12 +6,12 @@ import AdminLeadsClient from './AdminLeadsClient';
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Admin - Leads & Messages',
   description: 'Manage messages from contact forms',
-  path: '/admin/leads'
+  path: '/admin/leads',
 });
 
 export default function AdminLeadsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading leads data...</div>}>
+    <Suspense fallback={null}>
       <AdminLeadsClient />
     </Suspense>
   );

@@ -1,23 +1,23 @@
-import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
-import { allProjectsAsync, getProjectBySlugAsync } from '@/lib/projects'
-import ProjectDetailTwoColumn from '@/components/projects/ProjectDetailTwoColumn'
-import { resolveCover, resolveGallery } from '@/lib/images'
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { allProjectsAsync, getProjectBySlugAsync } from '@/lib/projects';
+import ProjectDetailTwoColumn from '@/components/projects/ProjectDetailTwoColumn';
+import { resolveCover, resolveGallery } from '@/lib/images';
 
 export const revalidate = 60;
 
 interface ProjectPageProps {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
-  const { slug } = await params
-  const project = await getProjectBySlugAsync(slug)
+  const { slug } = await params;
+  const project = await getProjectBySlugAsync(slug);
 
   if (!project) {
     return {
       title: 'Project Not Found',
-    }
+    };
   }
 
   return {
@@ -28,25 +28,24 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
       description: project.description || `Project ${project.title} oleh Ramos.`,
       images: [project.cover || '/placeholder.jpg'],
     },
-  }
+  };
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  const { slug } = await params
-  const projects = await allProjectsAsync()
-  const project = projects.find(p => p.slug === slug && p.status !== 'draft')
+  const { slug } = await params;
+  const projects = await allProjectsAsync();
+  const project = projects.find((p) => p.slug === slug && p.status !== 'draft');
 
   if (!project) {
-    notFound()
+    notFound();
   }
 
-  const otherProjects = projects.filter(p => p.id !== project.id)
-  const cover = resolveCover(project)
-  const gallery = resolveGallery(project)
+  const otherProjects = projects.filter((p) => p.id !== project.id);
+  const cover = resolveCover(project);
+  const gallery = resolveGallery(project);
 
-  const ratio = (project.coverWidth && project.coverHeight)
-    ? project.coverWidth / project.coverHeight
-    : 16 / 9
+  const ratio =
+    project.coverWidth && project.coverHeight ? project.coverWidth / project.coverHeight : 16 / 9;
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-900">
@@ -59,5 +58,5 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         isWindowMode={false}
       />
     </main>
-  )
+  );
 }

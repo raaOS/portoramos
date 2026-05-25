@@ -13,26 +13,16 @@ if (envFile) {
 console.log('🔍 Running pre-deployment checks...\n');
 
 // Check required files
-const requiredFiles = [
-  'next.config.mjs',
-  'package.json',
-  'tsconfig.json'
-];
+const requiredFiles = ['next.config.mjs', 'package.json', 'tsconfig.json'];
 
 // Check required env variables
-const requiredEnvVars = [
-  'NEXT_PUBLIC_SITE_URL'
-];
+const requiredEnvVars = ['NEXT_PUBLIC_SITE_URL'];
 
 // Check for build output
-const buildFiles = [
-  '.next/static',
-  '.next/server',
-  '.next/types'
-];
+const buildFiles = ['.next/static', '.next/server', '.next/types'];
 
 function checkFiles(files) {
-  const missing = files.filter(file => !fs.existsSync(file));
+  const missing = files.filter((file) => !fs.existsSync(file));
   return missing;
 }
 
@@ -51,7 +41,7 @@ if (envFile) {
 console.log('✅ All required files present\n');
 
 console.log('🔐 Checking environment variables...');
-const missingEnvVars = requiredEnvVars.filter(v => !process.env[v]);
+const missingEnvVars = requiredEnvVars.filter((v) => !process.env[v]);
 if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingEnvVars);
   process.exit(1);

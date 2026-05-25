@@ -3,276 +3,343 @@ import type { ReactNode } from 'react';
 import { WindowState } from './types';
 import { AboutData } from '@/types/about';
 import { ElementType } from '@/components/os/context/UnifiedZIndexContext';
-import { saveWindowPosition } from "@/components/os/utils/positionSync";
+import { saveWindowPosition } from '@/components/os/utils/positionSync';
 
 /** SSR-safe viewport dimensions helper */
 function getViewport() {
-    if (typeof window === 'undefined') return { width: 1440, height: 900 };
-    return { width: window.innerWidth, height: window.innerHeight };
+  if (typeof window === 'undefined') return { width: 1440, height: 900 };
+  return { width: window.innerWidth, height: window.innerHeight };
 }
 
 interface UseWindowActionsProps {
-    windows: WindowState[];
-    setWindows: React.Dispatch<React.SetStateAction<WindowState[]>>;
-    setBouncingDocId: React.Dispatch<React.SetStateAction<string | null>>;
-    bringToFrontZIndex: (id: string, type: ElementType) => number;
-    playOpen: () => void;
-    playClose: () => void;
-    getCenterPosition: (w: number, h: number) => { x: number, y: number };
-    aboutData?: AboutData | null;
-    isAdmin: boolean;
-    csrfToken?: string;
-    saveWindowPreference: (id: string, updates: Partial<{
-        x: number, y: number, width: number, height: number,
-        xPct: number, yPct: number, widthPct: number, heightPct: number,
-        refScreenWidth: number, refScreenHeight: number,
-        isOpenByDefault: boolean
-    }>) => Promise<void>;
+  windows: WindowState[];
+  setWindows: React.Dispatch<React.SetStateAction<WindowState[]>>;
+  setBouncingDocId: React.Dispatch<React.SetStateAction<string | null>>;
+  bringToFrontZIndex: (id: string, type: ElementType) => number;
+  playOpen: () => void;
+  playClose: () => void;
+  getCenterPosition: (w: number, h: number) => { x: number; y: number };
+  aboutData?: AboutData | null;
+  isAdmin: boolean;
+  csrfToken?: string;
+  saveWindowPreference: (
+    id: string,
+    updates: Partial<{
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      xPct: number;
+      yPct: number;
+      widthPct: number;
+      heightPct: number;
+      refScreenWidth: number;
+      refScreenHeight: number;
+      isOpenByDefault: boolean;
+    }>
+  ) => Promise<void>;
 }
 
 export function useWindowActions({
-    windows,
-    setWindows,
-    setBouncingDocId,
-    bringToFrontZIndex,
-    playOpen,
-    playClose,
-    getCenterPosition,
-    aboutData,
-    isAdmin,
-    csrfToken,
-    saveWindowPreference
+  windows,
+  setWindows,
+  setBouncingDocId,
+  bringToFrontZIndex,
+  playOpen,
+  playClose,
+  getCenterPosition,
+  aboutData,
+  isAdmin,
+  csrfToken,
+  saveWindowPreference,
 }: UseWindowActionsProps) {
+  const openWindow = useCallback(
+    (id: string, customConfig?: Partial<WindowState>) => {
+      const newZIndex = bringToFrontZIndex(id, 'window');
 
-    const openWindow = useCallback((id: string, customConfig?: Partial<WindowState>) => {
-        const newZIndex = bringToFrontZIndex(id, 'window');
+      const resolveWindowContent = (windowState?: WindowState, overrideContent?: ReactNode) => {
+        if (overrideContent !== undefined) {
+          return overrideContent;
+        }
+        if (windowState?.content != null) {
+          return windowState.content;
+        }
+        return windowState?.contentFactory ? windowState.contentFactory() : null;
+      };
 
-        const resolveWindowContent = (windowState?: WindowState, overrideContent?: ReactNode) => {
-            if (overrideContent !== undefined) {
-                return overrideContent;
-            }
-            if (windowState?.content != null) {
-                return windowState.content;
-            }
-            return windowState?.contentFactory ? windowState.contentFactory() : null;
+      setWindows((prev) => {
+        const existingWindow = prev.find((w) => w.id === id);
+
+        const getMobileDims = (w?: number, h?: number) => {
+          const vp = getViewport();
+          const isMobile = vp.width < 768;
+          if (!isMobile) return { width: w || 800, height: h || 600 };
+
+          return {
+            width: Math.min(w || 800, vp.width * 0.95),
+            height: Math.min(h || 600, vp.height * 0.7),
+          };
         };
 
-        setWindows(prev => {
-            const existingWindow = prev.find(w => w.id === id);
+        if (!existingWindow && customConfig) {
+          const { width, height } = getMobileDims(customConfig.width, customConfig.height);
 
-            const getMobileDims = (w?: number, h?: number) => {
-                const vp = getViewport();
-                const isMobile = vp.width < 768;
-                if (!isMobile) return { width: w || 800, height: h || 600 };
+          const newWindow: WindowState = {
+            title: 'Window',
+            noPadding: false,
+            ...customConfig,
+            id,
+            isOpen: true,
+            zIndex: newZIndex,
+            initialPosition: customConfig.initialPosition || getCenterPosition(width, height),
+            width,
+            height,
+            content: customConfig.content,
+            originRect: customConfig.originRect,
+          };
+          playOpen();
+          return [...prev, newWindow];
+        }
 
-                return {
-                    width: Math.min(w || 800, vp.width * 0.95),
-                    height: Math.min(h || 600, vp.height * 0.70)
-                };
+        return prev.map((w) => {
+          if (w.id === id) {
+            if (w.isOpen) {
+              return {
+                ...w,
+                isMinimized: false,
+                zIndex: newZIndex,
+                content: resolveWindowContent(w, customConfig?.content),
+                title: customConfig?.title || w.title,
+              };
+            }
+
+            const pref = aboutData?.windowPreferences?.[id];
+            const rawWidth = customConfig?.width || pref?.width || w.width || 800;
+            const rawHeight = customConfig?.height || pref?.height || w.height || 600;
+
+            const { width, height } = getMobileDims(rawWidth, rawHeight);
+            const isMobile = getViewport().width < 768;
+
+            const initialPosition =
+              pref && pref.x !== undefined && pref.y !== undefined && !isMobile
+                ? { x: pref.x, y: pref.y }
+                : getCenterPosition(width, height);
+
+            if (!w.isOpen) playOpen();
+
+            return {
+              ...w,
+              isOpen: true,
+              isMinimized: false,
+              zIndex: newZIndex,
+              initialPosition: w.initialPosition || initialPosition,
+              width,
+              height,
+              content: resolveWindowContent(w, customConfig?.content),
+              title: customConfig?.title || w.title,
+              originRect: customConfig?.originRect || w.originRect,
             };
-
-            if (!existingWindow && customConfig) {
-                const { width, height } = getMobileDims(customConfig.width, customConfig.height);
-
-                const newWindow: WindowState = {
-                    title: 'Window',
-                    noPadding: false,
-                    ...customConfig,
-                    id,
-                    isOpen: true,
-                    zIndex: newZIndex,
-                    initialPosition: customConfig.initialPosition || getCenterPosition(width, height),
-                    width,
-                    height,
-                    content: customConfig.content,
-                    originRect: customConfig.originRect,
-                };
-                playOpen();
-                return [...prev, newWindow];
-            }
-
-            return prev.map(w => {
-                if (w.id === id) {
-                    if (w.isOpen) {
-                        return {
-                         ...w,
-                            isMinimized: false,
-                            zIndex: newZIndex,
-                            content: resolveWindowContent(w, customConfig?.content),
-                            title: customConfig?.title || w.title,
-                        };
-                    }
-
-                    const pref = aboutData?.windowPreferences?.[id];
-                    const rawWidth = customConfig?.width || pref?.width || w.width || 800;
-                    const rawHeight = customConfig?.height || pref?.height || w.height || 600;
-
-                    const { width, height } = getMobileDims(rawWidth, rawHeight);
-                    const isMobile = getViewport().width < 768;
-
-                    const initialPosition = (pref && pref.x !== undefined && pref.y !== undefined && !isMobile)
-                        ? { x: pref.x, y: pref.y }
-                        : getCenterPosition(width, height);
-
-                    if (!w.isOpen) playOpen();
-
-                    return {
-                        ...w,
-                        isOpen: true,
-                        isMinimized: false,
-                        zIndex: newZIndex,
-                        initialPosition: w.initialPosition || initialPosition,
-                        width,
-                        height,
-                        content: resolveWindowContent(w, customConfig?.content),
-                        title: customConfig?.title || w.title,
-                        originRect: customConfig?.originRect || w.originRect,
-                    };
-                }
-                return w;
-            });
+          }
+          return w;
         });
-    }, [aboutData, playOpen, getCenterPosition, bringToFrontZIndex, setWindows]);
+      });
+    },
+    [aboutData, playOpen, getCenterPosition, bringToFrontZIndex, setWindows]
+  );
 
-    const closeWindow = useCallback((id: string) => {
-        setWindows(prev => prev.map(w => {
-            if (w.id === id) {
-                return { ...w, isOpen: false, isMinimized: false, isMaximized: false };
-            }
-            return w;
-        }));
-        playClose();
-    }, [playClose, setWindows]);
+  const closeWindow = useCallback(
+    (id: string) => {
+      setWindows((prev) =>
+        prev.map((w) => {
+          if (w.id === id) {
+            return { ...w, isOpen: false, isMinimized: false, isMaximized: false };
+          }
+          return w;
+        })
+      );
+      playClose();
+    },
+    [playClose, setWindows]
+  );
 
-    const minimizeWindow = useCallback((id: string) => {
-        setWindows(prev => prev.map(w => {
-            if (w.id === id) return { ...w, isMinimized: true };
-            return w;
-        }));
-        setBouncingDocId(id);
-    }, [setWindows, setBouncingDocId]);
+  const minimizeWindow = useCallback(
+    (id: string) => {
+      setWindows((prev) =>
+        prev.map((w) => {
+          if (w.id === id) return { ...w, isMinimized: true };
+          return w;
+        })
+      );
+      setBouncingDocId(id);
+    },
+    [setWindows, setBouncingDocId]
+  );
 
-    const maximizeWindow = useCallback((id: string) => {
-        const newZIndex = bringToFrontZIndex(id, 'window');
-        setWindows(prev => prev.map(w => {
-            if (w.id === id) return { ...w, isMaximized: !w.isMaximized, zIndex: newZIndex };
-            return w;
-        }));
-    }, [bringToFrontZIndex, setWindows]);
+  const maximizeWindow = useCallback(
+    (id: string) => {
+      const newZIndex = bringToFrontZIndex(id, 'window');
+      setWindows((prev) =>
+        prev.map((w) => {
+          if (w.id === id) return { ...w, isMaximized: !w.isMaximized, zIndex: newZIndex };
+          return w;
+        })
+      );
+    },
+    [bringToFrontZIndex, setWindows]
+  );
 
-    const focusWindow = useCallback((id: string) => {
-        const newZIndex = bringToFrontZIndex(id, 'window');
-        setWindows(prev => prev.map(w => {
-            if (w.id === id) return { ...w, zIndex: newZIndex };
-            return w;
-        }));
-    }, [bringToFrontZIndex, setWindows]);
+  const focusWindow = useCallback(
+    (id: string) => {
+      const newZIndex = bringToFrontZIndex(id, 'window');
+      setWindows((prev) =>
+        prev.map((w) => {
+          if (w.id === id) return { ...w, zIndex: newZIndex };
+          return w;
+        })
+      );
+    },
+    [bringToFrontZIndex, setWindows]
+  );
 
-    const updateWindowPosition = useCallback((id: string, x: number, y: number) => {
-        const win = windows?.find(w => w.id === id);
-        saveWindowPosition(id, {
+  const updateWindowPosition = useCallback(
+    (id: string, x: number, y: number) => {
+      const win = windows?.find((w) => w.id === id);
+      saveWindowPosition(
+        id,
+        {
+          x,
+          y,
+          width: win?.width,
+          height: win?.height,
+        },
+        isAdmin
+      );
+
+      setWindows((prev) =>
+        prev?.map((w) => {
+          if (w.id === id) {
+            return { ...w, initialPosition: { x, y } };
+          }
+          return w;
+        })
+      );
+
+      if (isAdmin && csrfToken) {
+        // Convert pixels to percentages for responsive positioning
+        const vp = getViewport();
+        const xPct = (x / vp.width) * 100;
+        const yPct = (y / vp.height) * 100;
+
+        queueMicrotask(() =>
+          saveWindowPreference(id, {
             x,
-            y,
-            width: win?.width,
-            height: win?.height
-        }, isAdmin);
+            y, // Legacy pixel values
+            xPct,
+            yPct, // Percentage-based for responsive
+            refScreenWidth: vp.width,
+            refScreenHeight: vp.height,
+          })
+        );
+      }
+    },
+    [saveWindowPreference, isAdmin, csrfToken, windows, setWindows]
+  );
 
-        setWindows(prev => prev?.map(w => {
-            if (w.id === id) {
-                return { ...w, initialPosition: { x, y } };
-            }
-            return w;
-        }));
+  const handleWindowResize = useCallback(
+    (id: string, width: number, height: number) => {
+      setWindows((prev) =>
+        prev?.map((w) => {
+          if (w.id === id) {
+            return { ...w, width, height };
+          }
+          return w;
+        })
+      );
+    },
+    [setWindows]
+  );
 
-        if (isAdmin && csrfToken) {
-            // Convert pixels to percentages for responsive positioning
-            const vp = getViewport();
-            const xPct = (x / vp.width) * 100;
-            const yPct = (y / vp.height) * 100;
+  const handleWindowResizeEnd = useCallback(
+    (id: string, width: number, height: number) => {
+      saveWindowPosition(id, { width, height }, isAdmin);
+      if (isAdmin && csrfToken) {
+        // Convert pixels to percentages for responsive sizing
+        const vp = getViewport();
+        const widthPct = (width / vp.width) * 100;
+        const heightPct = (height / vp.height) * 100;
 
-            queueMicrotask(() => saveWindowPreference(id, {
-                x, y,  // Legacy pixel values
-                xPct, yPct,  // Percentage-based for responsive
-                refScreenWidth: vp.width,
-                refScreenHeight: vp.height
-            }));
-        }
-    }, [saveWindowPreference, isAdmin, csrfToken, windows, setWindows]);
+        queueMicrotask(() =>
+          saveWindowPreference(id, {
+            width,
+            height, // Legacy pixel values
+            widthPct,
+            heightPct, // Percentage-based for responsive
+            refScreenWidth: vp.width,
+            refScreenHeight: vp.height,
+          })
+        );
+      }
+    },
+    [saveWindowPreference, isAdmin, csrfToken]
+  );
 
-    const handleWindowResize = useCallback((id: string, width: number, height: number) => {
-        setWindows(prev => prev?.map(w => {
-            if (w.id === id) {
-                return { ...w, width, height };
-            }
-            return w;
-        }));
-    }, [setWindows]);
+  const togglePin = useCallback(
+    (id: string) => {
+      const targetWindow = windows?.find((w) => w.id === id);
+      if (!targetWindow) return;
 
-    const handleWindowResizeEnd = useCallback((id: string, width: number, height: number) => {
-        saveWindowPosition(id, { width, height }, isAdmin);
-        if (isAdmin && csrfToken) {
-            // Convert pixels to percentages for responsive sizing
-            const vp = getViewport();
-            const widthPct = (width / vp.width) * 100;
-            const heightPct = (height / vp.height) * 100;
+      const nextPinned = !targetWindow.isPinned;
+      setWindows((prev) => prev?.map((w) => (w.id === id ? { ...w, isPinned: nextPinned } : w)));
 
-            queueMicrotask(() => saveWindowPreference(id, {
-                width, height,  // Legacy pixel values
-                widthPct, heightPct,  // Percentage-based for responsive
-                refScreenWidth: vp.width,
-                refScreenHeight: vp.height
-            }));
-        }
-    }, [saveWindowPreference, isAdmin, csrfToken]);
+      if (nextPinned) {
+        const x = targetWindow.initialPosition?.x || 0;
+        const y = targetWindow.initialPosition?.y || 0;
+        const width = targetWindow.width || 800;
+        const height = targetWindow.height || 600;
 
-    const togglePin = useCallback((id: string) => {
-        const targetWindow = windows?.find(w => w.id === id);
-        if (!targetWindow) return;
+        // Convert to percentages for responsive positioning
+        const vp = getViewport();
+        const xPct = (x / vp.width) * 100;
+        const yPct = (y / vp.height) * 100;
+        const widthPct = (width / vp.width) * 100;
+        const heightPct = (height / vp.height) * 100;
 
-        const nextPinned = !targetWindow.isPinned;
-        setWindows(prev => prev?.map(w => (
-            w.id === id ? { ...w, isPinned: nextPinned } : w
-        )));
+        void saveWindowPreference(id, {
+          x,
+          y,
+          width,
+          height, // Legacy pixel values
+          xPct,
+          yPct,
+          widthPct,
+          heightPct, // Percentage-based
+          refScreenWidth: vp.width,
+          refScreenHeight: vp.height,
+          isOpenByDefault: true,
+        });
+      } else {
+        void saveWindowPreference(id, { isOpenByDefault: false });
+      }
+    },
+    [saveWindowPreference, windows, setWindows]
+  );
 
-        if (nextPinned) {
-            const x = targetWindow.initialPosition?.x || 0;
-            const y = targetWindow.initialPosition?.y || 0;
-            const width = targetWindow.width || 800;
-            const height = targetWindow.height || 600;
+  const resetWindows = useCallback(() => {
+    setWindows((prev) =>
+      prev.map((w) => ({ ...w, isOpen: false, isMinimized: false, isMaximized: false }))
+    );
+  }, [setWindows]);
 
-            // Convert to percentages for responsive positioning
-            const vp = getViewport();
-            const xPct = (x / vp.width) * 100;
-            const yPct = (y / vp.height) * 100;
-            const widthPct = (width / vp.width) * 100;
-            const heightPct = (height / vp.height) * 100;
-
-            void saveWindowPreference(id, {
-                x, y, width, height,  // Legacy pixel values
-                xPct, yPct, widthPct, heightPct,  // Percentage-based
-                refScreenWidth: vp.width,
-                refScreenHeight: vp.height,
-                isOpenByDefault: true
-            });
-        } else {
-            void saveWindowPreference(id, { isOpenByDefault: false });
-        }
-    }, [saveWindowPreference, windows, setWindows]);
-
-    const resetWindows = useCallback(() => {
-        setWindows(prev => prev.map(w => ({ ...w, isOpen: false, isMinimized: false, isMaximized: false })));
-    }, [setWindows]);
-
-    return {
-        openWindow,
-        closeWindow,
-        minimizeWindow,
-        maximizeWindow,
-        focusWindow,
-        updateWindowPosition,
-        handleWindowResize,
-        handleWindowResizeEnd,
-        togglePin,
-        resetWindows
-    };
+  return {
+    openWindow,
+    closeWindow,
+    minimizeWindow,
+    maximizeWindow,
+    focusWindow,
+    updateWindowPosition,
+    handleWindowResize,
+    handleWindowResizeEnd,
+    togglePin,
+    resetWindows,
+  };
 }

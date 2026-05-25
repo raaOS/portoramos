@@ -18,10 +18,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     if (!(await validateAdminRequest(request))) {
-      return NextResponse.json(
-        { message: 'Unauthorized or invalid CSRF token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const rawBody = await request.json();
@@ -36,7 +33,7 @@ export async function PUT(request: NextRequest) {
     // Using Partial logic in service
     const data = await experienceService.updateExperienceData({
       statistics,
-      workExperience
+      workExperience,
     });
 
     revalidatePath('/', 'layout');

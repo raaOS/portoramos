@@ -3,8 +3,21 @@
 import { useState, useSyncExternalStore } from 'react';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/projects';
 import { Loader2, X } from 'lucide-react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import dynamic from 'next/dynamic';
 
@@ -18,13 +31,22 @@ import { useDataStatus } from '../hooks/useDataStatus';
 import { ProjectToolbar } from './components/ProjectToolbar';
 import { ProjectCard } from './components/ProjectCard';
 import { Pagination } from './components/Pagination';
+import { useConfirm } from '@/components/admin/ConfirmDialog';
 
 // Lazy load heavy modals
 const ProjectForm = dynamic(() => import('@/components/admin/project-form/ProjectForm'), {
-  loading: () => <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>
+  loading: () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
+      <Loader2 className="animate-spin text-white" />
+    </div>
+  ),
 });
 const DataConnectionModal = dynamic(() => import('@/app/admin/components/DataConnectionModal'), {
-  loading: () => <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>
+  loading: () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
+      <Loader2 className="animate-spin text-white" />
+    </div>
+  ),
 });
 const ManageCommentsModal = dynamic(() => import('../components/ManageCommentsModal'));
 const SecuritySettingsModal = dynamic(() => import('../components/SecuritySettingsModal'));
@@ -33,8 +55,10 @@ const subscribeHydration = () => () => undefined;
 const getHydratedSnapshot = () => true;
 const getServerSnapshot = () => false;
 
-function SortableProjectItem({ id, children }: { id: string, children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+function SortableProjectItem({ id, children }: { id: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -50,6 +74,7 @@ function SortableProjectItem({ id, children }: { id: string, children: React.Rea
 
 export default function AdminProjectsClient() {
   useAdminAuth();
+  const { confirm } = useConfirm();
 
   // Custom Hooks
   const {
@@ -69,9 +94,7 @@ export default function AdminProjectsClient() {
     labels,
   } = useAdminProjects();
 
-  const {
-    connectionStatus,
-  } = useDataStatus();
+  const { connectionStatus } = useDataStatus();
 
   // Local UI State
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -126,12 +149,29 @@ export default function AdminProjectsClient() {
       toggleProjectSelection={toggleProjectSelection}
       handleToggleProjectStatus={handleToggleProjectStatus}
       setEditingProject={setEditingProject}
-      handleDeleteProject={(id) => {
-        if (confirm('Hapus proyek ini?')) deleteMutation.mutate(id);
+      handleDeleteProject={async (id) => {
+        const ok = await confirm({
+          title: 'Hapus proyek ini?',
+          message: 'Proyek akan dihapus permanen, termasuk semua relasi-nya.',
+          confirmText: 'Hapus',
+          cancelText: 'Batal',
+          tone: 'danger',
+        });
+        if (ok) deleteMutation.mutate(id);
       }}
-      handleDuplicateProject={(p) => {
-        if (confirm(`Duplikat "${p.title}"?`)) {
-          createMutation.mutate({ ...p, title: `${p.title} (Copy)`, status: 'draft' } as CreateProjectData);
+      handleDuplicateProject={async (p) => {
+        const ok = await confirm({
+          title: `Duplikat "${p.title}"?`,
+          message: 'Salinan baru akan disimpan sebagai draft, kamu bisa edit lalu publish.',
+          confirmText: 'Duplikat',
+          cancelText: 'Batal',
+        });
+        if (ok) {
+          createMutation.mutate({
+            ...p,
+            title: `${p.title} (Copy)`,
+            status: 'draft',
+          } as CreateProjectData);
         }
       }}
       setManagingCommentsProject={setManagingCommentsProject}
@@ -147,7 +187,7 @@ export default function AdminProjectsClient() {
         isBulkUpdating={isBulkUpdating}
         allProjectsLength={orderedProjects.length}
         handleBulkUpdate={handleBulkUpdate}
-        selectAllProjects={() => selectAllProjects(orderedProjects.map(p => p.id))}
+        selectAllProjects={() => selectAllProjects(orderedProjects.map((p) => p.id))}
         setShowSecurityModal={setShowSecurityModal}
         setShowSettings={setShowSettings}
         setShowCreateForm={setShowCreateForm}
@@ -155,27 +195,36 @@ export default function AdminProjectsClient() {
 
       <>
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
             <X className="h-5 w-5 text-red-500" />
             <p className="text-sm text-red-700">Failed to load projects</p>
           </div>
         )}
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => <ProjectCardSkeleton key={i} />)}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <ProjectCardSkeleton key={i} />
+            ))}
           </div>
         ) : orderedProjects.length === 0 ? (
-          <div className="text-center py-20 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <p className="text-gray-500 text-lg mb-2">Project tidak ditemukan</p>
-            <p className="text-gray-400 text-sm">Buat project pertama Anda untuk memulai</p>
+          <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 py-20 text-center">
+            <p className="mb-2 text-lg text-gray-500">Project tidak ditemukan</p>
+            <p className="text-sm text-gray-400">Buat project pertama Anda untuk memulai</p>
           </div>
         ) : (
           <>
             {isDndReady ? (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={paginatedProjects.map(p => p.id)} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={paginatedProjects.map((p) => p.id)}
+                  strategy={rectSortingStrategy}
+                >
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {paginatedProjects.map((project, index) => (
                       <SortableProjectItem key={project.id} id={project.id}>
                         {renderProjectCard(project, index)}
@@ -185,7 +234,7 @@ export default function AdminProjectsClient() {
                 </SortableContext>
               </DndContext>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {paginatedProjects.map((project, index) => (
                   <div key={project.id} className="h-full">
                     {renderProjectCard(project, index)}
@@ -210,7 +259,10 @@ export default function AdminProjectsClient() {
           allProjects={orderedProjects}
           labels={labels}
           title={editingProject ? 'Edit Proyek' : 'Buat Proyek Baru'}
-          onCancel={() => { setShowCreateForm(false); setEditingProject(null); }}
+          onCancel={() => {
+            setShowCreateForm(false);
+            setEditingProject(null);
+          }}
           onSubmit={async (data) => {
             if (editingProject) {
               await updateMutation.mutateAsync(data as UpdateProjectData);
@@ -223,11 +275,7 @@ export default function AdminProjectsClient() {
         />
       )}
 
-      {showSettings && (
-        <DataConnectionModal
-          onCancel={() => setShowSettings(false)}
-        />
-      )}
+      {showSettings && <DataConnectionModal onCancel={() => setShowSettings(false)} />}
 
       {managingCommentsProject && (
         <ManageCommentsModal
@@ -236,11 +284,7 @@ export default function AdminProjectsClient() {
         />
       )}
 
-      {showSecurityModal && (
-        <SecuritySettingsModal
-          onClose={() => setShowSecurityModal(false)}
-        />
-      )}
+      {showSecurityModal && <SecuritySettingsModal onClose={() => setShowSecurityModal(false)} />}
     </div>
   );
 }

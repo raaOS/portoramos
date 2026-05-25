@@ -7,6 +7,7 @@ import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 import UnregisterSW from '@/components/shared/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import DevWebVitalsGate from '@/components/shared/DevWebVitalsGate';
 import Script from 'next/script';
 import { ViewTransitions } from 'next-view-transitions';
 import { APP_VERSION } from '@/lib/constants';
@@ -30,7 +31,8 @@ export const metadata: Metadata = {
     default: baseSEO.title,
     template: `%s | ${baseSEO.title}`,
   },
-  description: 'Portofolio kreatif Ramos berisi project desain digital, UI/UX, dan visual yang berfokus pada storytelling, detail, dan pengalaman pengguna yang halus.',
+  description:
+    'Portofolio kreatif Ramos berisi project desain digital, UI/UX, dan visual yang berfokus pada storytelling, detail, dan pengalaman pengguna yang halus.',
   keywords: baseSEO.keywords,
   authors: [{ name: baseSEO.author }],
   creator: baseSEO.author,
@@ -76,27 +78,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
-  children
-}: {
-  children: React.ReactNode;
-}) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ViewTransitions>
       <html lang="id" suppressHydrationWarning>
-      <head>
-        {/* Preconnect to critical domains */}
-        {/* Google Fonts - Fallback for next/font to satisfy Babel/SWC conflict */}
-        {/* Structured Data */}
-        <meta name="application-version" content={APP_VERSION} />
-        <Script id="os-boot-state" strategy="beforeInteractive">
-          {`
+        <head>
+          {/* Preconnect to critical domains */}
+          {/* Google Fonts - Fallback for next/font to satisfy Babel/SWC conflict */}
+          {/* Structured Data */}
+          <meta name="application-version" content={APP_VERSION} />
+          <Script id="os-boot-state" strategy="beforeInteractive">
+            {`
             (function() {
               try {
                 var html = document.documentElement;
                 var booted = sessionStorage.getItem('ramos_os_booted') === 'true';
                 if (booted) {
                   html.setAttribute('data-os-booted', 'true');
+                  html.removeAttribute('data-os-needs-boot');
                   return;
                 }
                 // Internal navigation tetap dianggap "already booted" supaya
@@ -108,6 +107,7 @@ export default async function RootLayout({
                     var refHost = new URL(ref).host;
                     if (refHost === window.location.host) {
                       html.setAttribute('data-os-booted', 'true');
+                      html.removeAttribute('data-os-needs-boot');
                       return;
                     }
                   } catch (e) {}
@@ -115,40 +115,45 @@ export default async function RootLayout({
                 var search = window.location.search || '';
                 if (search.indexOf('app=') !== -1) {
                   html.setAttribute('data-os-booted', 'true');
+                  html.removeAttribute('data-os-needs-boot');
                   return;
                 }
-                // Visitor fresh — flag boot cover supaya wallpaper tidak flash
-                // sebelum StartScreen mount.
-                html.setAttribute('data-os-needs-boot', 'true');
+                var path = window.location.pathname || '/';
+                if (path === '/') {
+                  // Boot cover hanya untuk homepage OS; route non-OS tidak
+                  // punya StartScreen yang akan melepas overlay hitam ini.
+                  html.setAttribute('data-os-needs-boot', 'true');
+                  return;
+                }
+                html.removeAttribute('data-os-needs-boot');
               } catch (e) {}
             })();
           `}
-        </Script>
-      </head>
-      {/* suppressHydrationWarning removed: handled by Two-Pass Rendering in HomeOSWrapper */}
-      <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default">
-        {/* Skip to content - Accessibility */}
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100000] focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-black"
-          aria-label="Skip to main content"
-        >
-          Skip to main content
-        </a>
+          </Script>
+        </head>
+        {/* suppressHydrationWarning removed: handled by Two-Pass Rendering in HomeOSWrapper */}
+        <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default">
+          {/* Skip to content - Accessibility */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100000] focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-black focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-black"
+            aria-label="Skip to main content"
+          >
+            Skip to main content
+          </a>
 
-        <Providers>
-          <ToastProvider>
-            <ErrorBoundary>
-              {children}
-              <UnregisterSW />
-              <SpeedInsights />
-            </ErrorBoundary>
-          </ToastProvider>
-        </Providers>
-      </body>
-    </html>
+          <Providers>
+            <ToastProvider>
+              <ErrorBoundary>
+                {children}
+                <UnregisterSW />
+                {process.env.VERCEL ? <SpeedInsights /> : null}
+                <DevWebVitalsGate />
+              </ErrorBoundary>
+            </ToastProvider>
+          </Providers>
+        </body>
+      </html>
     </ViewTransitions>
   );
 }
-
-

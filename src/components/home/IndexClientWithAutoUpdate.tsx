@@ -11,19 +11,25 @@ import IndexClientInner from './IndexClientInner';
 type Props = {
   initialProjects?: Project[];
   windowWidth?: number;
-}
+};
 
 interface ProjectsResponse {
   projects: Project[];
   lastUpdated: string;
 }
 
-export default function IndexClientWithAutoUpdate({ initialProjects: serverProjects = [], windowWidth }: Props) {
+export default function IndexClientWithAutoUpdate({
+  initialProjects: serverProjects = [],
+  windowWidth,
+}: Props) {
   // Safe context access
   const context = useLastUpdated();
   const contextLastUpdated = context?.lastUpdated;
   // Use useMemo to avoid recreating function on every render
-  const setLastUpdated = useMemo(() => context?.setLastUpdated || (() => { }), [context?.setLastUpdated]);
+  const setLastUpdated = useMemo(
+    () => context?.setLastUpdated || (() => {}),
+    [context?.setLastUpdated]
+  );
   const searchParams = useSearchParams();
   const tag = searchParams?.get('tag') || '';
   const searchQuery = searchParams?.get('q') || '';
@@ -36,10 +42,13 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
   );
 
   // BUG FIX #2: useCallback untuk mencegah stale closure dan restart interval
-  // BUG FIX #8: Gunakan base URL dari environment atau relative path
+  // BUG FIX #8: Di client component, pakai relative path supaya browser
+  // otomatis pakai origin saat ini. Sebelumnya pakai NEXT_PUBLIC_SITE_URL
+  // yang kalau di-set ke URL produksi, fetch dari localhost akan gagal
+  // karena cross-origin (CORS) atau Vercel deployment down → menampilkan
+  // "TypeError: Failed to fetch" di dev.
   const fetchProjects = useCallback(async (): Promise<ProjectsResponse> => {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
-    const response = await fetch(`${baseUrl}/api/projects?status=published`);
+    const response = await fetch('/api/projects?status=published');
     if (!response.ok) {
       throw new Error('Failed to fetch projects');
     }
@@ -47,22 +56,18 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
     // API wraps response in { success, data: { projects, lastUpdated } }
     // Extract the inner data object
     return json.data ?? json;
-  }, [])
+  }, []);
 
   // BUG FIX #5: Valid timestamp untuk initialData
-  const initialData = serverProjects.length > 0
-    ? {
-      projects: serverProjects,
-      lastUpdated: new Date().toISOString() // Gunakan timestamp sekarang, bukan string kosong
-    }
-    : undefined;
+  const initialData =
+    serverProjects.length > 0
+      ? {
+          projects: serverProjects,
+          lastUpdated: new Date().toISOString(), // Gunakan timestamp sekarang, bukan string kosong
+        }
+      : undefined;
 
-  const {
-    data,
-    isError,
-    error,
-    isLoading
-  } = useQuery({
+  const { data, isError, error, isLoading } = useQuery({
     queryKey: ['projects', 'published'],
     queryFn: fetchProjects,
     refetchInterval: POLLING.UPDATE_INTERVAL,
@@ -103,7 +108,7 @@ export default function IndexClientWithAutoUpdate({ initialProjects: serverProje
     <div>
       {/* BUG FIX #5: Error state indicator */}
       {isError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-sm text-center">
+        <div className="border border-red-200 bg-red-50 px-4 py-2 text-center text-sm text-red-700">
           Gagal memuat data terbaru. Menampilkan data cache.
         </div>
       )}

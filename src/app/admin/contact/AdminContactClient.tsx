@@ -39,10 +39,10 @@ export default function AdminContactClient() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-csrf-token': csrfToken
+          'x-csrf-token': csrfToken,
         },
         credentials: 'include',
-        body: JSON.stringify(updateData)
+        body: JSON.stringify(updateData),
       });
 
       if (response.ok) {
@@ -56,12 +56,18 @@ export default function AdminContactClient() {
         showSuccess('Contact updated successfully.');
       } else {
         const errorData = await response.json().catch(() => ({}));
-        setError(`Failed to update contact: ${errorData.error || response.statusText} (${response.status})`);
-        showError(`Failed to update contact: ${errorData.error || response.statusText} (${response.status})`);
+        setError(
+          `Failed to update contact: ${errorData.error || response.statusText} (${response.status})`
+        );
+        showError(
+          `Failed to update contact: ${errorData.error || response.statusText} (${response.status})`
+        );
       }
     } catch (err) {
       setError(`Failed to update contact: ${err instanceof Error ? err.message : 'Network error'}`);
-      showError(`Failed to update contact: ${err instanceof Error ? err.message : 'Network error'}`);
+      showError(
+        `Failed to update contact: ${err instanceof Error ? err.message : 'Network error'}`
+      );
     }
   };
 
@@ -73,9 +79,9 @@ export default function AdminContactClient() {
           titleIcon={<PhoneCall className="h-5 w-5" aria-hidden />}
           titleAccent="bg-amber-50 text-amber-700"
         />
-        <div className="p-6 flex-1 space-y-6">
+        <div className="flex-1 space-y-6 p-6">
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-amber-600"></div>
           </div>
         </div>
       </>
@@ -89,30 +95,30 @@ export default function AdminContactClient() {
         titleIcon={<PhoneCall className="h-5 w-5" aria-hidden />}
         titleAccent="bg-amber-50 text-amber-700"
       />
-      <div className="p-6 flex-1 space-y-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="flex-1 space-y-6 p-6">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           {/* Modern Tabs */}
           <div className="border-b border-gray-200 bg-gray-50/50">
             <nav className="flex space-x-1 px-4 py-2">
               {[
                 { id: 'content', name: 'Page Content', icon: Type },
                 { id: 'socials', name: 'Social Media', icon: Share2 },
-                { id: 'labels', name: 'Settings', icon: Info }
+                { id: 'labels', name: 'Settings', icon: Info },
               ].map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as 'content' | 'socials' | 'labels')}
-                    className={`
-                      flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                      ${activeTab === tab.id
+                    className={`flex items-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                      activeTab === tab.id
                         ? 'bg-amber-100 text-amber-800 shadow-sm'
                         : 'text-gray-600 hover:bg-gray-100'
-                      }
-                    `}
+                    } `}
                   >
-                    <Icon className={`w-4 h-4 mr-2 ${activeTab === tab.id ? 'text-amber-600' : 'text-gray-400'}`} />
+                    <Icon
+                      className={`mr-2 h-4 w-4 ${activeTab === tab.id ? 'text-amber-600' : 'text-gray-400'}`}
+                    />
                     {tab.name}
                   </button>
                 );
@@ -123,7 +129,7 @@ export default function AdminContactClient() {
           <div className="p-6">
             {activeTab === 'content' && contactData && (
               <div className="max-w-2xl">
-                <h3 className="text-lg font-medium text-gray-900 mb-6">Edit Page Text</h3>
+                <h3 className="mb-6 text-lg font-medium text-gray-900">Edit Page Text</h3>
                 <ContactContentForm
                   data={contactData.content || { headline: '', subtext: '' }}
                   onUpdate={(data) => handleUpdateContact({ content: data })}
@@ -133,7 +139,7 @@ export default function AdminContactClient() {
 
             {activeTab === 'labels' && contactData && (
               <div className="max-w-2xl">
-                <h3 className="text-lg font-medium text-gray-900 mb-6">UI Labels & Settings</h3>
+                <h3 className="mb-6 text-lg font-medium text-gray-900">UI Labels & Settings</h3>
                 <ContactLabelsForm
                   labels={contactData.labels || {}}
                   onUpdate={(labels) => handleUpdateContact({ labels })}
@@ -143,14 +149,15 @@ export default function AdminContactClient() {
 
             {activeTab === 'socials' && contactData && (
               <div className="max-w-2xl">
-                <h3 className="text-lg font-medium text-gray-900 mb-6">Manage Social Links</h3>
+                <h3 className="mb-6 text-lg font-medium text-gray-900">Manage Social Links</h3>
                 <SocialMediaForm
                   data={contactData.info.socialMedia}
-                  onUpdate={(socialData) => handleUpdateContact({ info: { ...contactData.info, socialMedia: socialData } })}
+                  onUpdate={(socialData) =>
+                    handleUpdateContact({ info: { ...contactData.info, socialMedia: socialData } })
+                  }
                 />
               </div>
             )}
-
           </div>
         </div>
       </div>
@@ -176,12 +183,10 @@ function ContactLabelsForm({ labels, onUpdate }: ContactLabelsFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Chat Button Text
-        </label>
+        <label className="mb-2 block text-sm font-semibold text-gray-700">Chat Button Text</label>
         <input
           type="text"
-          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 transition-all focus:border-amber-500 focus:ring-2 focus:ring-amber-500"
           placeholder="Chat Langsung"
           value={form.chatButtonText || ''}
           onChange={(e) => setForm({ ...form, chatButtonText: e.target.value })}
@@ -191,7 +196,7 @@ function ContactLabelsForm({ labels, onUpdate }: ContactLabelsFormProps) {
       <div className="pt-4">
         <button
           type="submit"
-          className="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-black transition-colors shadow-sm"
+          className="rounded-lg bg-gray-900 px-6 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-black"
         >
           Save Settings
         </button>
@@ -216,14 +221,17 @@ function ContactContentForm({ data, onUpdate }: ContactContentFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="mb-2 block text-sm font-semibold text-gray-700">
           Headline (Judul Utama)
         </label>
-        <p className="text-sm text-gray-500 mb-6">Kelola link media sosial dan kontak yang muncul di folder &quot;Contact&quot; pada About OS.</p>
+        <p className="mb-6 text-sm text-gray-500">
+          Kelola link media sosial dan kontak yang muncul di folder &quot;Contact&quot; pada About
+          OS.
+        </p>
         <textarea
           required
           rows={3}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all font-mono text-sm"
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 font-mono text-sm transition-all focus:border-amber-500 focus:ring-2 focus:ring-amber-500"
           placeholder="Let's Create..."
           value={form.headline}
           onChange={(e) => setForm({ ...form, headline: e.target.value })}
@@ -231,13 +239,13 @@ function ContactContentForm({ data, onUpdate }: ContactContentFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="mb-2 block text-sm font-semibold text-gray-700">
           Subtext (Deskripsi)
         </label>
         <textarea
           required
           rows={3}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 transition-all focus:border-amber-500 focus:ring-2 focus:ring-amber-500"
           placeholder="We build digital experiences..."
           value={form.subtext}
           onChange={(e) => setForm({ ...form, subtext: e.target.value })}
@@ -247,7 +255,7 @@ function ContactContentForm({ data, onUpdate }: ContactContentFormProps) {
       <div className="pt-4">
         <button
           type="submit"
-          className="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-black transition-colors shadow-sm"
+          className="rounded-lg bg-gray-900 px-6 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-black"
         >
           Save Content
         </button>
@@ -273,19 +281,19 @@ function SocialMediaForm({ data, onUpdate }: SocialMediaFormProps) {
     { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/username' },
     { key: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/username' },
     { key: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/username' },
-    { key: 'behance', label: 'Behance', placeholder: 'https://behance.net/username' }
+    { key: 'behance', label: 'Behance', placeholder: 'https://behance.net/username' },
   ];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {platforms.map((p) => (
         <div key={p.key}>
-          <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+          <label className="mb-1 block text-sm font-medium capitalize text-gray-700">
             {p.label}
           </label>
           <input
             type="text"
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 transition-all focus:border-amber-500 focus:ring-2 focus:ring-amber-500"
             placeholder={p.placeholder}
             value={form[p.key] || ''}
             onChange={(e) => setForm({ ...form, [p.key]: e.target.value })}
@@ -296,7 +304,7 @@ function SocialMediaForm({ data, onUpdate }: SocialMediaFormProps) {
       <div className="pt-4">
         <button
           type="submit"
-          className="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-black transition-colors shadow-sm"
+          className="rounded-lg bg-gray-900 px-6 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-black"
         >
           Update Social Links
         </button>

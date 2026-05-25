@@ -1,23 +1,39 @@
 /* Centralized Animations */
 
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 @keyframes marquee-reverse {
-  0% { transform: translateX(-50%); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 @keyframes gallery-marquee {
-  0% { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-25%, 0, 0); }
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-25%, 0, 0);
+  }
 }
 
 @keyframes scroll-vertical {
-  0% { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(0, -50%, 0); }
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, -50%, 0);
+  }
 }
 
 @keyframes fadeIn {

@@ -56,11 +56,11 @@ export function useAutoUpdate<T>(
       if (cancelled) return;
 
       fetchData()
-        .catch(err => console.error('[useAutoUpdate] Initial fetch failed:', err))
+        .catch((err) => console.error('[useAutoUpdate] Initial fetch failed:', err))
         .finally(() => {
           if (cancelled || !enabled || !isMountedRef.current) return;
           intervalId = setInterval(() => {
-            fetchData().catch(err => {
+            fetchData().catch((err) => {
               console.error('[useAutoUpdate] Interval fetch failed:', err);
             });
           }, interval);

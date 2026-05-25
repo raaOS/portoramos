@@ -42,7 +42,7 @@ export const POPULAR_EMOJIS: EmojiItem[] = [
   { unicode: '1f61b', char: '😛', name: 'tongue', category: 'emosi' },
   { unicode: '1f61d', char: '😝', name: 'tongue wink', category: 'emosi' },
   { unicode: '1f61c', char: '😜', name: 'wink tongue', category: 'emosi' },
-  
+
   // Hewan (12 emoji)
   { unicode: '1f436', char: '🐶', name: 'dog', category: 'hewan' },
   { unicode: '1f431', char: '🐱', name: 'cat', category: 'hewan' },
@@ -56,7 +56,7 @@ export const POPULAR_EMOJIS: EmojiItem[] = [
   { unicode: '1f40d', char: '🐍', name: 'snake', category: 'hewan' },
   { unicode: '1f426', char: '🐦', name: 'bird', category: 'hewan' },
   { unicode: '1f986', char: '🦆', name: 'duck', category: 'hewan' },
-  
+
   // Makanan & Minuman (12 emoji)
   { unicode: '1f389', char: '🎉', name: 'party', category: 'makanan' },
   { unicode: '1f382', char: '🎂', name: 'cake', category: 'makanan' },
@@ -70,7 +70,7 @@ export const POPULAR_EMOJIS: EmojiItem[] = [
   { unicode: '1f367', char: '🍧', name: 'shaved ice', category: 'makanan' },
   { unicode: '1f36a', char: '🍪', name: 'cookie', category: 'makanan' },
   { unicode: '1f36b', char: '🍫', name: 'chocolate', category: 'makanan' },
-  
+
   // Aktivitas & Objek (15 emoji)
   { unicode: '1f3b5', char: '🎵', name: 'music', category: 'objek' },
   { unicode: '1f4a1', char: '💡', name: 'lightbulb', category: 'objek' },
@@ -87,7 +87,7 @@ export const POPULAR_EMOJIS: EmojiItem[] = [
   { unicode: '1f511', char: '🔑', name: 'key', category: 'objek' },
   { unicode: '1f514', char: '🔔', name: 'bell', category: 'objek' },
   { unicode: '23f0', char: '⏰', name: 'alarm', category: 'objek' },
-  
+
   // Tangan & Gestur (12 emoji)
   { unicode: '1f44b', char: '👋', name: 'wave', category: 'tangan' },
   { unicode: '270c', char: '✌️', name: 'victory', category: 'tangan' },
@@ -101,7 +101,7 @@ export const POPULAR_EMOJIS: EmojiItem[] = [
   { unicode: '1f590', char: '🖐', name: 'open hand', category: 'tangan' },
   { unicode: '1f595', char: '🖕', name: 'middle finger', category: 'tangan' },
   { unicode: '1f44e', char: '👎', name: 'thumbs down', category: 'tangan' },
-  
+
   // Alam & Cuaca (12 emoji)
   { unicode: '2600', char: '☀️', name: 'sun', category: 'alam' },
   { unicode: '1f319', char: '🌙', name: 'moon', category: 'alam' },

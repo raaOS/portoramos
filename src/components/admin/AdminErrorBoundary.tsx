@@ -12,7 +12,10 @@ interface AdminErrorBoundaryProps {
   fallback?: ReactNode;
 }
 
-export class AdminErrorBoundary extends Component<AdminErrorBoundaryProps, AdminErrorBoundaryState> {
+export class AdminErrorBoundary extends Component<
+  AdminErrorBoundaryProps,
+  AdminErrorBoundaryState
+> {
   constructor(props: AdminErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -37,57 +40,67 @@ export class AdminErrorBoundary extends Component<AdminErrorBoundaryProps, Admin
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback || (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <div className="flex-shrink-0">
-                <svg className="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+      return (
+        this.props.fallback || (
+          <div className="flex min-h-screen items-center justify-center bg-gray-50">
+            <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+              <div className="mb-4 flex items-center">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-8 w-8 text-red-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-medium text-gray-900">Admin Error</h3>
+                </div>
               </div>
-              <div className="ml-3">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Admin Error
-                </h3>
-              </div>
-            </div>
-            
-            <div className="mt-2">
-              <p className="text-sm text-gray-500">
-                {this.state.error ? this.state.error.message : 'Something went wrong in the admin panel.'}
-              </p>
-            </div>
 
-            {this.state.error && (
-              <div className="mt-4 p-3 bg-gray-50 rounded-md">
-                <p className="text-xs text-gray-600">
-                  <strong>Error:</strong> {this.state.error.name}
+              <div className="mt-2">
+                <p className="text-sm text-gray-500">
+                  {this.state.error
+                    ? this.state.error.message
+                    : 'Something went wrong in the admin panel.'}
                 </p>
-                <p className="text-xs text-gray-600">
-                  <strong>Time:</strong> {new Date().toLocaleString()}
-                </p>
               </div>
-            )}
-            
-            <div className="mt-6 flex space-x-3">
-              <button
-                onClick={this.handleRetry}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                Try Again
-              </button>
-              <button
-                onClick={this.handleGoHome}
-                className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              >
-                Go Home
-              </button>
+
+              {this.state.error && (
+                <div className="mt-4 rounded-md bg-gray-50 p-3">
+                  <p className="text-xs text-gray-600">
+                    <strong>Error:</strong> {this.state.error.name}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    <strong>Time:</strong> {new Date().toLocaleString()}
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-6 flex space-x-3">
+                <button
+                  onClick={this.handleRetry}
+                  className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={this.handleGoHome}
+                  className="flex-1 rounded-md bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                  Go Home
+                </button>
+              </div>
             </div>
-
-
           </div>
-        </div>
+        )
       );
     }
 

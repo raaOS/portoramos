@@ -28,7 +28,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     if (!(await validateAdminRequest(request))) {
       return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });

@@ -1,4 +1,4 @@
-"use client"
+'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface ScrollStrategy {
@@ -16,8 +16,8 @@ const MAX_LOOPS = 5;
 
 export function getScrollStrategy(width: number): ScrollStrategy {
   if (width >= 1280) return { initialCount: 12, batchSize: 6, preloadThreshold: 600 };
-  if (width >= 1024) return { initialCount: 9,  batchSize: 6, preloadThreshold: 500 };
-  if (width >= 640)  return { initialCount: 8,  batchSize: 4, preloadThreshold: 400 };
+  if (width >= 1024) return { initialCount: 9, batchSize: 6, preloadThreshold: 500 };
+  if (width >= 640) return { initialCount: 8, batchSize: 4, preloadThreshold: 400 };
   return { initialCount: 6, batchSize: 4, preloadThreshold: 300 };
 }
 
@@ -95,7 +95,7 @@ export function useInfiniteScroll(totalItems: number) {
     // Single rAF + microtask — fast enough for skeleton flash, no double delay
     requestAnimationFrame(() => {
       setTimeout(() => {
-        setVisibleCount(prev => {
+        setVisibleCount((prev) => {
           const next = Math.min(prev + strategyRef.current.batchSize, maxRef.current);
           visibleRef.current = next;
           return next;

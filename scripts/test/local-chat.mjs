@@ -22,22 +22,22 @@ async function test() {
     body: JSON.stringify({
       message: 'Hello from local test!',
       visitorId: TEST_VISITOR_ID,
-      pageUrl: '/contact'
-    })
+      pageUrl: '/contact',
+    }),
   });
-  
+
   const sendData = await sendRes.json();
   console.log('Result:', sendData.success ? '✅ Success' : '❌ Failed');
   console.log('');
 
   // Wait for CLOUDFLARE_D1
-  await new Promise(r => setTimeout(r, 2000));
+  await new Promise((r) => setTimeout(r, 2000));
 
   // Step 2: Check session
   console.log('🔍 Step 2: Checking session...');
   const sessionRes = await fetch(`${BASE_URL}/api/debug/chat-session?visitorId=${TEST_VISITOR_ID}`);
   const sessionData = await sessionRes.json();
-  
+
   if (sessionData.session?.telegramThreadId) {
     console.log('✅ Topic created! Thread ID:', sessionData.session.telegramThreadId);
   } else {
@@ -52,10 +52,10 @@ async function test() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       visitorId: TEST_VISITOR_ID,
-      text: 'Hello! This is admin reply from local test.'
-    })
+      text: 'Hello! This is admin reply from local test.',
+    }),
   });
-  
+
   const replyData = await replyRes.json();
   console.log('Result:', replyData.success ? '✅ Reply added' : '❌ Failed');
   console.log('Admin messages count:', replyData.totalAdminMessages);
@@ -65,7 +65,7 @@ async function test() {
   console.log('✅ Step 4: Verifying messages...');
   const verifyRes = await fetch(`${BASE_URL}/api/debug/chat-session?visitorId=${TEST_VISITOR_ID}`);
   const verifyData = await verifyRes.json();
-  
+
   console.log('All messages:');
   verifyData.messages?.forEach((m, i) => {
     const icon = m.sender === 'visitor' ? '👤' : '🤖';
@@ -77,7 +77,9 @@ async function test() {
   console.log(replyData.success ? '✅ Test PASSED!' : '❌ Test FAILED!');
   console.log('');
   console.log('To test webhook manually:');
-  console.log(`  curl -X POST "${BASE_URL}/api/debug/simulate-reply" \\\n    -H "Content-Type: application/json" \\\n    -d '{"visitorId":"${TEST_VISITOR_ID}","text":"Another reply"}'`);
+  console.log(
+    `  curl -X POST "${BASE_URL}/api/debug/simulate-reply" \\\n    -H "Content-Type: application/json" \\\n    -d '{"visitorId":"${TEST_VISITOR_ID}","text":"Another reply"}'`
+  );
 }
 
 test().catch(console.error);

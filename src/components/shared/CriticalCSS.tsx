@@ -64,7 +64,7 @@ export default function CriticalCSS() {
               transition-duration: 0.01ms !important;
             }
           }
-        `
+        `,
       }}
     />
   );

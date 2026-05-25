@@ -1,6 +1,6 @@
 /**
  * Hooks Barrel Export
- * 
+ *
  * Centralized exports for all custom hooks.
  * Usage: import { useAdminAuth, useToast } from '@/hooks';
  */

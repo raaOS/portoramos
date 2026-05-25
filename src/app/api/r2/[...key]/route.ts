@@ -5,146 +5,146 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type RouteContext = {
-    params: Promise<{ key: string[] }>;
+  params: Promise<{ key: string[] }>;
 };
 
 export async function GET(request: NextRequest, context: RouteContext) {
-    return serveR2Object(request, context, false);
+  return serveR2Object(request, context, false);
 }
 
 export async function HEAD(request: NextRequest, context: RouteContext) {
-    return serveR2Object(request, context, true);
+  return serveR2Object(request, context, true);
 }
 
 export async function OPTIONS() {
-    return new NextResponse(null, { headers: buildCorsHeaders() });
+  return new NextResponse(null, { headers: buildCorsHeaders() });
 }
 
 async function serveR2Object(request: NextRequest, context: RouteContext, headOnly: boolean) {
-    if (!isR2StorageConfigured()) {
-        return NextResponse.json({ error: 'Cloudflare R2 is not configured' }, { status: 503 });
+  if (!isR2StorageConfigured()) {
+    return NextResponse.json({ error: 'Cloudflare R2 is not configured' }, { status: 503 });
+  }
+
+  const { key: keyParts } = await context.params;
+  const key = keyParts.map(decodeURIComponent).join('/');
+
+  if (!isAllowedKey(key)) {
+    return new NextResponse('Not Found', { status: 404, headers: buildCorsHeaders() });
+  }
+
+  try {
+    const range = request.headers.get('range');
+    if (headOnly) {
+      const object = await headR2Object(key);
+      const headers = buildObjectHeaders({
+        key,
+        contentType: object.ContentType,
+        contentLength: object.ContentLength,
+        cacheControl: object.CacheControl,
+        etag: object.ETag,
+        lastModified: object.LastModified,
+      });
+
+      return new NextResponse(null, { status: 200, headers });
     }
 
-    const { key: keyParts } = await context.params;
-    const key = keyParts.map(decodeURIComponent).join('/');
+    const object = await getR2Object(key, range);
 
-    if (!isAllowedKey(key)) {
-        return new NextResponse('Not Found', { status: 404, headers: buildCorsHeaders() });
+    const headers = buildObjectHeaders({
+      key,
+      contentType: object.ContentType,
+      contentLength: object.ContentLength,
+      cacheControl: object.CacheControl,
+      etag: object.ETag,
+      lastModified: object.LastModified,
+      contentRange: 'ContentRange' in object ? object.ContentRange : undefined,
+    });
+
+    const status = range && headers.has('content-range') ? 206 : 200;
+    const body = toWebStream(object.Body);
+
+    return new NextResponse(body, { status, headers });
+  } catch (error) {
+    const statusCode = getErrorStatus(error);
+    if (statusCode === 404) {
+      return new NextResponse('Not Found', { status: 404, headers: buildCorsHeaders() });
     }
 
-    try {
-        const range = request.headers.get('range');
-        if (headOnly) {
-            const object = await headR2Object(key);
-            const headers = buildObjectHeaders({
-                key,
-                contentType: object.ContentType,
-                contentLength: object.ContentLength,
-                cacheControl: object.CacheControl,
-                etag: object.ETag,
-                lastModified: object.LastModified,
-            });
-
-            return new NextResponse(null, { status: 200, headers });
-        }
-
-        const object = await getR2Object(key, range);
-
-        const headers = buildObjectHeaders({
-            key,
-            contentType: object.ContentType,
-            contentLength: object.ContentLength,
-            cacheControl: object.CacheControl,
-            etag: object.ETag,
-            lastModified: object.LastModified,
-            contentRange: 'ContentRange' in object ? object.ContentRange : undefined,
-        });
-
-        const status = range && headers.has('content-range') ? 206 : 200;
-        const body = toWebStream(object.Body);
-
-        return new NextResponse(body, { status, headers });
-    } catch (error) {
-        const statusCode = getErrorStatus(error);
-        if (statusCode === 404) {
-            return new NextResponse('Not Found', { status: 404, headers: buildCorsHeaders() });
-        }
-
-        console.error('[R2Proxy] Failed to serve object:', error);
-        return new NextResponse('Storage error', { status: 502, headers: buildCorsHeaders() });
-    }
+    console.error('[R2Proxy] Failed to serve object:', error);
+    return new NextResponse('Storage error', { status: 502, headers: buildCorsHeaders() });
+  }
 }
 
 function buildObjectHeaders(input: {
-    key: string;
-    contentType?: string;
-    contentLength?: number;
-    cacheControl?: string;
-    etag?: string;
-    lastModified?: Date;
-    contentRange?: string;
+  key: string;
+  contentType?: string;
+  contentLength?: number;
+  cacheControl?: string;
+  etag?: string;
+  lastModified?: Date;
+  contentRange?: string;
 }) {
-    const headers = new Headers(buildCorsHeaders());
-    headers.set('accept-ranges', 'bytes');
-    headers.set('cache-control', input.cacheControl || 'public, max-age=31536000, immutable');
-    headers.set('content-type', input.contentType || contentTypeForKey(input.key));
+  const headers = new Headers(buildCorsHeaders());
+  headers.set('accept-ranges', 'bytes');
+  headers.set('cache-control', input.cacheControl || 'public, max-age=31536000, immutable');
+  headers.set('content-type', input.contentType || contentTypeForKey(input.key));
 
-    if (typeof input.contentLength === 'number') {
-        headers.set('content-length', String(input.contentLength));
-    }
-    if (input.etag) headers.set('etag', input.etag);
-    if (input.lastModified) headers.set('last-modified', input.lastModified.toUTCString());
-    if (input.contentRange) headers.set('content-range', input.contentRange);
+  if (typeof input.contentLength === 'number') {
+    headers.set('content-length', String(input.contentLength));
+  }
+  if (input.etag) headers.set('etag', input.etag);
+  if (input.lastModified) headers.set('last-modified', input.lastModified.toUTCString());
+  if (input.contentRange) headers.set('content-range', input.contentRange);
 
-    return headers;
+  return headers;
 }
 
 function buildCorsHeaders() {
-    return {
-        'access-control-allow-origin': '*',
-        'access-control-allow-methods': 'GET, HEAD, OPTIONS',
-        'access-control-allow-headers': 'range, if-none-match, if-modified-since',
-        'access-control-expose-headers': 'accept-ranges, content-length, content-range, etag',
-    };
+  return {
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, HEAD, OPTIONS',
+    'access-control-allow-headers': 'range, if-none-match, if-modified-since',
+    'access-control-expose-headers': 'accept-ranges, content-length, content-range, etag',
+  };
 }
 
 function isAllowedKey(key: string) {
-    if (!key || key.includes('..') || key.includes('\\')) return false;
-    return key.startsWith('assets/') || key.startsWith('temp/');
+  if (!key || key.includes('..') || key.includes('\\')) return false;
+  return key.startsWith('assets/') || key.startsWith('temp/');
 }
 
 function toWebStream(body: unknown): ReadableStream | null {
-    if (!body) return null;
+  if (!body) return null;
 
-    if (typeof (body as { transformToWebStream?: unknown }).transformToWebStream === 'function') {
-        return (body as { transformToWebStream: () => ReadableStream }).transformToWebStream();
-    }
+  if (typeof (body as { transformToWebStream?: unknown }).transformToWebStream === 'function') {
+    return (body as { transformToWebStream: () => ReadableStream }).transformToWebStream();
+  }
 
-    return body as ReadableStream;
+  return body as ReadableStream;
 }
 
 function getErrorStatus(error: unknown) {
-    const candidate = error as { $metadata?: { httpStatusCode?: number }; name?: string };
-    if (candidate.$metadata?.httpStatusCode) return candidate.$metadata.httpStatusCode;
-    if (candidate.name === 'NoSuchKey' || candidate.name === 'NotFound') return 404;
-    return 500;
+  const candidate = error as { $metadata?: { httpStatusCode?: number }; name?: string };
+  if (candidate.$metadata?.httpStatusCode) return candidate.$metadata.httpStatusCode;
+  if (candidate.name === 'NoSuchKey' || candidate.name === 'NotFound') return 404;
+  return 500;
 }
 
 function contentTypeForKey(key: string) {
-    const ext = key.split('.').pop()?.toLowerCase();
-    const types: Record<string, string> = {
-        jpg: 'image/jpeg',
-        jpeg: 'image/jpeg',
-        png: 'image/png',
-        webp: 'image/webp',
-        gif: 'image/gif',
-        svg: 'image/svg+xml',
-        mp4: 'video/mp4',
-        webm: 'video/webm',
-        mov: 'video/quicktime',
-        pdf: 'application/pdf',
-        txt: 'text/plain; charset=utf-8',
-    };
+  const ext = key.split('.').pop()?.toLowerCase();
+  const types: Record<string, string> = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    gif: 'image/gif',
+    svg: 'image/svg+xml',
+    mp4: 'video/mp4',
+    webm: 'video/webm',
+    mov: 'video/quicktime',
+    pdf: 'application/pdf',
+    txt: 'text/plain; charset=utf-8',
+  };
 
-    return types[ext || ''] || 'application/octet-stream';
+  return types[ext || ''] || 'application/octet-stream';
 }

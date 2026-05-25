@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import React from "react";
-import { LayoutPersistenceProvider } from "../contexts/LayoutPersistenceContext";
-import { UnifiedZIndexProvider } from "../context/UnifiedZIndexContext";
-import { DesktopWindowProvider } from "../context/DesktopWindowContext";
-import DesktopErrorBoundary from "../windows/DesktopErrorBoundary";
-import { WindowState } from "@/hooks/useWindowManager";
-import { AboutData } from "@/types/about";
+import React from 'react';
+import { LayoutPersistenceProvider } from '../contexts/LayoutPersistenceContext';
+import { UnifiedZIndexProvider } from '../context/UnifiedZIndexContext';
+import { DesktopWindowProvider } from '../context/DesktopWindowContext';
+import DesktopErrorBoundary from '../windows/DesktopErrorBoundary';
+import { WindowState } from '@/hooks/useWindowManager';
+import { AboutData } from '@/types/about';
 
 interface DesktopProvidersProps {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ export default function DesktopProviders({
   initialWindows,
   aboutData,
   csrfToken,
-  isAdmin
+  isAdmin,
 }: DesktopProvidersProps) {
   return (
     <DesktopErrorBoundary isAdmin={isAdmin}>

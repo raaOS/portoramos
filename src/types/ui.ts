@@ -1,5 +1,5 @@
 export interface ToastState {
-    text: string;
-    type: 'success' | 'error' | 'info' | 'warning';
-    duration?: number;
+  text: string;
+  type: 'success' | 'error' | 'info' | 'warning';
+  duration?: number;
 }

@@ -1,47 +1,54 @@
-import type { Metadata } from 'next'
-import { Suspense } from 'react'
-import IndexClientWithAutoUpdate from '@/components/home/IndexClientWithAutoUpdate'
-import { allProjectsAsync } from '@/lib/projects'
-import { allLabelsAsync } from '@/lib/labels'
-import SystemNavFrame from '@/components/layout/SystemNavFrame'
-import ProjectsFinderHeader from './_components/ProjectsFinderHeader'
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import IndexClientWithAutoUpdate from '@/components/home/IndexClientWithAutoUpdate';
+import { allProjectsAsync } from '@/lib/projects';
+import { allLabelsAsync } from '@/lib/labels';
+import SystemNavFrame from '@/components/layout/SystemNavFrame';
+import QueryProvider from '@/components/layout/QueryProvider';
+import ProjectsFinderHeader from './_components/ProjectsFinderHeader';
 
-// Halaman ini punya filter search/tag/view yang butuh runtime params.
-// force-dynamic bypass CSR bailout untuk useSearchParams di ProjectsFinderHeader.
-// (revalidate tidak relevan karena halaman selalu di-render per request.)
-export const dynamic = 'force-dynamic';
+// Public catalog can be cached by Vercel. Search/tag/view state is handled in
+// client components wrapped with Suspense, so the shell can stay ISR-backed.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
-    title: 'Projects | Ramos Portfolio',
-    description: 'Daftar lengkap project desain dan pengembangan oleh Ramos.',
-}
+  title: 'Projects | Ramos Portfolio',
+  description: 'Daftar lengkap project desain dan pengembangan oleh Ramos.',
+};
 
 export default async function ProjectsPage() {
-    const projects = await allProjectsAsync();
-    const labels = await allLabelsAsync();
+  const projects = await allProjectsAsync();
+  const labels = await allLabelsAsync();
 
-    // allProjectsAsync() already filters drafts
+  // allProjectsAsync() already filters drafts
 
-    return (
-        <SystemNavFrame>
-            <main id="main-content" role="main" className="flex-1 bg-white">
-                {/* Integrated Finder Header - Wrapped in Suspense for useSearchParams */}
-                <Suspense fallback={
-                    <div className="px-4 sm:px-8 py-4 mt-8 h-16 bg-gray-50 animate-pulse rounded" />
-                }>
-                    <ProjectsFinderHeader itemCount={projects.length} labels={labels} />
-                </Suspense>
+  return (
+    <SystemNavFrame>
+      <main id="main-content" role="main" className="flex-1 bg-white">
+        {/* Integrated Finder Header - Wrapped in Suspense for useSearchParams */}
+        <Suspense
+          fallback={
+            <div className="mt-8 h-16 animate-pulse rounded bg-gray-50 px-4 py-4 sm:px-8" />
+          }
+        >
+          <ProjectsFinderHeader itemCount={projects.length} labels={labels} />
+        </Suspense>
 
-
-                <Suspense fallback={
-                    <section className="py-24 px-4 text-center">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                        <p className="mt-4 text-[10px] font-bold uppercase tracking-widest text-gray-500">Memuat koleksi project...</p>
-                    </section>
-                }>
-                    <IndexClientWithAutoUpdate initialProjects={projects} />
-                </Suspense>
-            </main>
-        </SystemNavFrame>
-    );
+        <Suspense
+          fallback={
+            <section className="px-4 py-24 text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900"></div>
+              <p className="mt-4 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                Memuat koleksi project...
+              </p>
+            </section>
+          }
+        >
+          <QueryProvider>
+            <IndexClientWithAutoUpdate initialProjects={projects} />
+          </QueryProvider>
+        </Suspense>
+      </main>
+    </SystemNavFrame>
+  );
 }

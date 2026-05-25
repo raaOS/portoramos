@@ -9,10 +9,7 @@ import { sendTelegramAlert } from '@/lib/telegram';
 import { UpdateProjectSchema } from '@/lib/validations';
 
 // GET - Read single project
-export async function GET(
-  request: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const params = await props.params;
     const { id } = params;
@@ -24,7 +21,7 @@ export async function GET(
 
     if (!project) {
       const { projects } = await projectService.getProjects();
-      project = projects.find(p => p.id === id) ?? null;
+      project = projects.find((p) => p.id === id) ?? null;
     }
 
     if (!project) {
@@ -39,16 +36,10 @@ export async function GET(
 }
 
 // PUT - Update project (admin only)
-export async function PUT(
-  request: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     if (!(await validateAdminRequest(request))) {
-      return NextResponse.json(
-        { error: 'Unauthorized or invalid CSRF token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const params = await props.params;
@@ -67,7 +58,10 @@ export async function PUT(
     const { id: _validatedId, ...updateData } = validationResult.data;
 
     // 1. Update Project
-    const updatedProject = await projectService.updateProject(id, updateData as UpdateProjectData & { initialCommentCount?: number });
+    const updatedProject = await projectService.updateProject(
+      id,
+      updateData as UpdateProjectData & { initialCommentCount?: number }
+    );
 
     if (!updatedProject) {
       return NextResponse.json({ error: 'Project not found or update failed' }, { status: 404 });
@@ -75,7 +69,9 @@ export async function PUT(
 
     if (rawBody.initialCommentCount && rawBody.initialCommentCount > 0) {
       try {
-        console.log(`Generating ${rawBody.initialCommentCount} additional comments for ${updatedProject.slug}...`);
+        console.log(
+          `Generating ${rawBody.initialCommentCount} additional comments for ${updatedProject.slug}...`
+        );
         const newComments = generateGenZComments(updatedProject.slug, rawBody.initialCommentCount);
 
         const commentsRef = db.ref(`comments/${updatedProject.slug}`);
@@ -84,7 +80,7 @@ export async function PUT(
 
         const combinedComments = [
           ...(Array.isArray(existingComments) ? existingComments : []),
-          ...newComments
+          ...newComments,
         ];
 
         await commentsRef.set(combinedComments);
@@ -95,9 +91,13 @@ export async function PUT(
     }
 
     // --- Telegram Notification ---
-    const changedFields = Object.keys(rawBody).filter(k => k !== 'initialCommentCount').join(', ');
+    const changedFields = Object.keys(rawBody)
+      .filter((k) => k !== 'initialCommentCount')
+      .join(', ');
     const updateMessage = `âœï¸ **PROJECT UPDATED**\n\n**Title:** ${updatedProject.title}\n**ID:** ${updatedProject.id}\n**Changes:** ${changedFields || 'No specific fields'}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
-    sendTelegramAlert(updateMessage).catch(err => console.error('[Telegram] Failed to send update alert:', err));
+    sendTelegramAlert(updateMessage).catch((err) =>
+      console.error('[Telegram] Failed to send update alert:', err)
+    );
 
     revalidatePath('/', 'layout');
     revalidatePath('/projects');
@@ -106,7 +106,7 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      project: updatedProject
+      project: updatedProject,
     });
   } catch (error) {
     console.error('Error updating project:', error);
@@ -118,16 +118,10 @@ export async function PUT(
 }
 
 // DELETE - Delete project (admin only)
-export async function DELETE(
-  request: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     if (!(await validateAdminRequest(request))) {
-      return NextResponse.json(
-        { error: 'Unauthorized or invalid CSRF token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const params = await props.params;
@@ -140,7 +134,9 @@ export async function DELETE(
     }
 
     const successMessage = `ðŸ—‘ï¸ **PROJECT DELETED**\n\n**ID:** ${id}\n**By:** Admin\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
-    sendTelegramAlert(successMessage).catch(err => console.error('[Telegram] Failed to send delete alert:', err));
+    sendTelegramAlert(successMessage).catch((err) =>
+      console.error('[Telegram] Failed to send delete alert:', err)
+    );
 
     revalidatePath('/', 'layout');
     revalidatePath('/projects');
@@ -148,7 +144,7 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Project deleted successfully'
+      message: 'Project deleted successfully',
     });
   } catch (error) {
     console.error('Error deleting project:', error);
@@ -158,4 +154,3 @@ export async function DELETE(
     );
   }
 }
-

@@ -1,35 +1,36 @@
-import type { Metadata } from 'next'
+import type { Metadata } from 'next';
 import type { Project } from '@/types/projects';
 
 // Dynamic site URL detection
 function getDynamicSiteUrl(): string {
   // In production, use environment variable
   if (process.env.NODE_ENV === 'production') {
-    return process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio.example.com'
+    return process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio.example.com';
   }
 
   // In development, try to detect from browser if available
   if (typeof window !== 'undefined') {
-    return window.location.origin
+    return window.location.origin;
   }
 
   // Fallback for server-side rendering in development
-  return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 }
 
 // Base SEO configuration
 export const baseSEO = {
   title: 'Ramos – Creative Portfolio',
-  description: 'Portofolio kreatif Ramos berisi project desain digital, UI/UX, dan visual yang berfokus pada storytelling, detail, dan pengalaman pengguna yang halus.',
+  description:
+    'Portofolio kreatif Ramos berisi project desain digital, UI/UX, dan visual yang berfokus pada storytelling, detail, dan pengalaman pengguna yang halus.',
   keywords: ['portfolio', 'desain', 'ui/ux', 'creative', 'digital design', 'visual design'],
   author: 'Ramos',
   get siteUrl() {
-    return getDynamicSiteUrl()
+    return getDynamicSiteUrl();
   },
   image: '/images/og-default.jpg',
   locale: 'id_ID',
-  type: 'website'
-}
+  type: 'website',
+};
 
 // Generate metadata for pages
 export function generateMetadata({
@@ -40,22 +41,22 @@ export function generateMetadata({
   path = '',
   type = 'website',
   publishedTime,
-  modifiedTime
+  modifiedTime,
 }: {
-  title?: string
-  description?: string
-  keywords?: string[]
-  image?: string
-  path?: string
-  type?: 'website' | 'article'
-  publishedTime?: string
-  modifiedTime?: string
+  title?: string;
+  description?: string;
+  keywords?: string[];
+  image?: string;
+  path?: string;
+  type?: 'website' | 'article';
+  publishedTime?: string;
+  modifiedTime?: string;
 }): Metadata {
-  const fullTitle = title ? `${title} | ${baseSEO.title}` : baseSEO.title
-  const fullDescription = description || baseSEO.description
-  const fullImage = image || baseSEO.image
-  const url = `${baseSEO.siteUrl}${path}`
-  const allKeywords = [...baseSEO.keywords, ...keywords]
+  const fullTitle = title ? `${title} | ${baseSEO.title}` : baseSEO.title;
+  const fullDescription = description || baseSEO.description;
+  const fullImage = image || baseSEO.image;
+  const url = `${baseSEO.siteUrl}${path}`;
+  const allKeywords = [...baseSEO.keywords, ...keywords];
 
   return {
     title: fullTitle,
@@ -108,7 +109,7 @@ export function generateMetadata({
         'max-snippet': -1,
       },
     },
-  }
+  };
 }
 
 // Generate metadata for project pages
@@ -118,17 +119,20 @@ export function generateProjectMetadata(project: Project): Metadata {
     'portfolio',
     ...(project.tags || []),
     ...(project.client ? [project.client] : []),
-    ...(project.year ? [project.year.toString()] : [])
-  ]
+    ...(project.year ? [project.year.toString()] : []),
+  ];
 
   // Enhanced fallback description
-  const fallbackDesc = `${project.title} - A ${project.tags?.[0] || 'creative'} project by Ramos` +
+  const fallbackDesc =
+    `${project.title} - A ${project.tags?.[0] || 'creative'} project by Ramos` +
     (project.client ? ` for ${project.client}` : '') +
     (project.year ? ` (${project.year})` : '') +
     '. Explore the details, visuals, and story behind this work.';
 
   const description = project.description
-    ? (project.description.length > 160 ? project.description.substring(0, 157) + '...' : project.description)
+    ? project.description.length > 160
+      ? project.description.substring(0, 157) + '...'
+      : project.description
     : fallbackDesc;
 
   return generateMetadata({
@@ -139,27 +143,30 @@ export function generateProjectMetadata(project: Project): Metadata {
     path: `/projects/${project.slug}`,
     type: 'article',
     publishedTime: project.createdAt,
-    modifiedTime: project.updatedAt
-  })
+    modifiedTime: project.updatedAt,
+  });
 }
 
 // Generate structured data (JSON-LD)
 interface ProjectStructuredData {
-    title: string;
-    description: string;
-    cover: string;
-    tags?: string[];
-    client?: string;
-    year?: number;
+  title: string;
+  description: string;
+  cover: string;
+  tags?: string[];
+  client?: string;
+  year?: number;
 }
 
 interface PersonStructuredData {
-    socialLinks?: string[];
+  socialLinks?: string[];
 }
 
 type StructuredDataType = ProjectStructuredData | PersonStructuredData | Record<string, unknown>;
 
-export function generateStructuredData(type: 'website' | 'portfolio' | 'project' | 'person', data?: StructuredDataType) {
+export function generateStructuredData(
+  type: 'website' | 'portfolio' | 'project' | 'person',
+  data?: StructuredDataType
+) {
   const baseStructuredData = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -168,14 +175,14 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
     url: baseSEO.siteUrl,
     author: {
       '@type': 'Person',
-      name: baseSEO.author
+      name: baseSEO.author,
     },
     publisher: {
       '@type': 'Organization',
       name: baseSEO.title,
-      url: baseSEO.siteUrl
-    }
-  }
+      url: baseSEO.siteUrl,
+    },
+  };
 
   switch (type) {
     case 'website':
@@ -184,9 +191,9 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
         potentialAction: {
           '@type': 'SearchAction',
           target: `${baseSEO.siteUrl}/search?q={search_term_string}`,
-          'query-input': 'required name=search_term_string'
-        }
-      }
+          'query-input': 'required name=search_term_string',
+        },
+      };
 
     case 'portfolio':
       return {
@@ -194,11 +201,11 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
         '@type': 'CollectionPage',
         name: 'Portfolio',
         description: 'Collection of creative projects and digital solutions',
-        url: `${baseSEO.siteUrl}/portfolio`
-      }
+        url: `${baseSEO.siteUrl}/portfolio`,
+      };
 
     case 'project': {
-      if (!data) return baseStructuredData
+      if (!data) return baseStructuredData;
       const projectData = data as ProjectStructuredData;
 
       return {
@@ -210,24 +217,24 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
         image: projectData.cover,
         author: {
           '@type': 'Person',
-          name: baseSEO.author
+          name: baseSEO.author,
         },
         publisher: {
           '@type': 'Organization',
           name: baseSEO.title,
-          url: baseSEO.siteUrl
+          url: baseSEO.siteUrl,
         },
         keywords: projectData.tags?.join(', '),
         ...(projectData.client && {
           client: {
             '@type': 'Organization',
-            name: projectData.client
-          }
+            name: projectData.client,
+          },
         }),
         ...(projectData.year && {
-          dateCreated: `${projectData.year}-01-01`
-        })
-      }
+          dateCreated: `${projectData.year}-01-01`,
+        }),
+      };
     }
 
     case 'person': {
@@ -240,20 +247,20 @@ export function generateStructuredData(type: 'website' | 'portfolio' | 'project'
         image: baseSEO.siteUrl + '/images/profile.jpg', // Assuming profile image path
         sameAs: [
           // Add links if available in data
-          ...(personData?.socialLinks || [])
+          ...(personData?.socialLinks || []),
         ],
         jobTitle: 'Creative Designer & Visual Storyteller',
         worksFor: {
           '@type': 'Organization',
-          name: 'Freelance'
+          name: 'Freelance',
         },
         description: baseSEO.description,
-        knowsAbout: ['Graphic Design', 'UI/UX', 'Motion Graphics', 'Visual Identity']
-      }
+        knowsAbout: ['Graphic Design', 'UI/UX', 'Motion Graphics', 'Visual Identity'],
+      };
     }
 
     default:
-      return baseStructuredData
+      return baseStructuredData;
   }
 }
 
@@ -266,9 +273,9 @@ export function generateBreadcrumbStructuredData(items: Array<{ name: string; ur
       '@type': 'ListItem',
       position: index + 1,
       name: item.name,
-      item: item.url
-    }))
-  }
+      item: item.url,
+    })),
+  };
 }
 
 // Sitemap utilities
@@ -277,50 +284,54 @@ export function generateSitemapUrls(projects: Project[]) {
     {
       url: '/',
       priority: 1.0,
-      changefreq: 'weekly'
+      changefreq: 'weekly',
     },
     {
       url: '/projects',
       priority: 0.9,
-      changefreq: 'weekly'
+      changefreq: 'weekly',
     },
     {
       url: '/contact',
       priority: 0.7,
-      changefreq: 'monthly'
-    }
-  ]
+      changefreq: 'monthly',
+    },
+  ];
 
-  const projectUrls = projects.map(project => ({
+  const projectUrls = projects.map((project) => ({
     url: `/projects/${project.slug}`,
     priority: 0.9,
-    changefreq: 'monthly'
-  }))
+    changefreq: 'monthly',
+  }));
 
-  return [...baseUrls, ...projectUrls]
+  return [...baseUrls, ...projectUrls];
 }
 
 export function generateSitemap(projects: Project[]): string {
-  const urls = generateSitemapUrls(projects)
-  const siteUrl = baseSEO.siteUrl
+  const urls = generateSitemapUrls(projects);
+  const siteUrl = baseSEO.siteUrl;
 
-  const urlElements = urls.map(({ url, priority, changefreq }) => `
+  const urlElements = urls
+    .map(
+      ({ url, priority, changefreq }) => `
   <url>
     <loc>${siteUrl}${url}</loc>
     <priority>${priority}</priority>
     <changefreq>${changefreq}</changefreq>
     <lastmod>${new Date().toISOString()}</lastmod>
-  </url>`).join('')
+  </url>`
+    )
+    .join('');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urlElements}
-</urlset>`
+</urlset>`;
 }
 
 // Generate project structured data (JSON-LD)
 export function generateProjectStructuredData(project: Project): string {
-  const structuredData = generateStructuredData('project', project)
-  return JSON.stringify(structuredData)
+  const structuredData = generateStructuredData('project', project);
+  return JSON.stringify(structuredData);
 }
 
 // SEO utilities
@@ -331,15 +342,15 @@ export const seoUtils = {
       { url: '', priority: 1.0, changefreq: 'weekly' },
       { url: '/about', priority: 0.8, changefreq: 'monthly' },
       { url: '/contact', priority: 0.8, changefreq: 'monthly' },
-    ]
+    ];
 
-    const projectPages = projects.map(project => ({
+    const projectPages = projects.map((project) => ({
       url: `/projects/${project.slug}`,
       priority: 0.9,
-      changefreq: 'monthly'
-    }))
+      changefreq: 'monthly',
+    }));
 
-    return [...staticPages, ...projectPages]
+    return [...staticPages, ...projectPages];
   },
 
   // Generate robots.txt content
@@ -347,18 +358,18 @@ export const seoUtils = {
     return `User-agent: *
 Allow: /
 
-Sitemap: ${baseSEO.siteUrl}/sitemap.xml`
+Sitemap: ${baseSEO.siteUrl}/sitemap.xml`;
   },
 
   // Validate and clean meta description
   cleanMetaDescription: (description: string, maxLength = 160) => {
     return description.length > maxLength
       ? description.substring(0, maxLength - 3) + '...'
-      : description
+      : description;
   },
 
   // Generate canonical URL
   generateCanonicalUrl: (path: string) => {
-    return `${baseSEO.siteUrl}${path}`
-  }
-}
+    return `${baseSEO.siteUrl}${path}`;
+  },
+};

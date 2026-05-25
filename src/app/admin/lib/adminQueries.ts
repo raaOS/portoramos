@@ -70,8 +70,9 @@ export interface Lead extends Record<string, unknown> {
   message: string;
 }
 
-const placeholderHardSkills = ((hardSkillsFallback as unknown as { skills?: Partial<HardSkill>[] }).skills || [])
-  .map((skill) => ({ iconUrl: '', ...skill })) as HardSkill[];
+const placeholderHardSkills = (
+  (hardSkillsFallback as unknown as { skills?: Partial<HardSkill>[] }).skills || []
+).map((skill) => ({ iconUrl: '', ...skill })) as HardSkill[];
 
 const placeholderTestimonial = testimonialFallback as unknown as TestimonialData;
 const placeholderTestimonials = {
@@ -107,9 +108,7 @@ async function fetchJson<T>(url: string): Promise<T> {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     const message =
-      typeof errorData?.error === 'string'
-        ? errorData.error
-        : `Request failed: ${response.status}`;
+      typeof errorData?.error === 'string' ? errorData.error : `Request failed: ${response.status}`;
     throw new Error(message);
   }
 
@@ -159,21 +158,17 @@ export function fetchAdminGalleryFeatured() {
 }
 
 export function fetchAdminHardSkills() {
-  return fetchJson<HardSkill[]>('/api/hard-skills').then((data) => (
+  return fetchJson<HardSkill[]>('/api/hard-skills').then((data) =>
     Array.isArray(data) ? data : []
-  ));
+  );
 }
 
 export function fetchAdminLabels() {
-  return fetchJson<Label[]>('/api/about/labels').then((data) => (
-    Array.isArray(data) ? data : []
-  ));
+  return fetchJson<Label[]>('/api/about/labels').then((data) => (Array.isArray(data) ? data : []));
 }
 
 export function fetchAdminLeads() {
-  return fetchJson<Lead[]>('/api/leads').then((data) => (
-    Array.isArray(data) ? data : []
-  ));
+  return fetchJson<Lead[]>('/api/leads').then((data) => (Array.isArray(data) ? data : []));
 }
 
 export function fetchAdminProjects() {
@@ -193,20 +188,16 @@ export function fetchAdminRunningTextFresh() {
 }
 
 export function fetchAdminStickyNotes() {
-  return fetchJson<NoteData[]>('/api/sticky-notes').then((data) => (
+  return fetchJson<NoteData[]>('/api/sticky-notes').then((data) =>
     Array.isArray(data) ? data : []
-  ));
+  );
 }
 
 export function fetchAdminTestimonials() {
   return fetchJson<TestimonialData>('/api/testimonial');
 }
 
-function prefetch<T>(
-  queryClient: QueryClient,
-  queryKey: QueryKey,
-  queryFn: () => Promise<T>
-) {
+function prefetch<T>(queryClient: QueryClient, queryKey: QueryKey, queryFn: () => Promise<T>) {
   return queryClient.prefetchQuery({
     queryKey,
     queryFn,
@@ -218,53 +209,77 @@ function prefetch<T>(
 function prefetchJobsForRoute(href: string) {
   if (href.startsWith('/admin/projects')) {
     return [
-      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.projects, fetchAdminProjects),
-      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.labels, fetchAdminLabels),
-      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.commentCounts, fetchAdminCommentCounts),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.projects, fetchAdminProjects),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.labels, fetchAdminLabels),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.commentCounts, fetchAdminCommentCounts),
     ];
   }
 
   if (href.startsWith('/admin/about')) {
     const jobs = [
       (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.about, fetchAdminAbout),
-      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.projects, fetchAdminProjects),
-      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.labels, fetchAdminLabels),
-      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.runningText, fetchAdminRunningText),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.projects, fetchAdminProjects),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.labels, fetchAdminLabels),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.runningText, fetchAdminRunningText),
     ];
 
     if (href.includes('tab=hardSkills')) {
-      jobs.push((queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.hardSkills, fetchAdminHardSkills));
+      jobs.push((queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.hardSkills, fetchAdminHardSkills)
+      );
     }
     if (href.includes('tab=stickyNotes')) {
-      jobs.push((queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.stickyNotes, fetchAdminStickyNotes));
+      jobs.push((queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.stickyNotes, fetchAdminStickyNotes)
+      );
     }
     if (href.includes('tab=archive')) {
-      jobs.push((queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.galleryFeatured, fetchAdminGalleryFeatured));
+      jobs.push((queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.galleryFeatured, fetchAdminGalleryFeatured)
+      );
     }
     if (href.includes('tab=philosophy')) {
-      jobs.push((queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.aboutPhilosophy, fetchAdminAboutPhilosophy));
+      jobs.push((queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.aboutPhilosophy, fetchAdminAboutPhilosophy)
+      );
     }
 
     return jobs;
   }
 
   if (href.startsWith('/admin/experience')) {
-    return [(queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.experience, fetchAdminExperience)];
+    return [
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.experience, fetchAdminExperience),
+    ];
   }
 
   if (href.startsWith('/admin/testimonial')) {
     return [
-      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.testimonial, fetchAdminTestimonials),
-      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.projects, fetchAdminProjects),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.testimonial, fetchAdminTestimonials),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.projects, fetchAdminProjects),
     ];
   }
 
   if (href.startsWith('/admin/contact')) {
-    return [(queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.contact, fetchAdminContact)];
+    return [
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.contact, fetchAdminContact),
+    ];
   }
 
   if (href.startsWith('/admin/leads')) {
-    return [(queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.leads, fetchAdminLeads)];
+    return [
+      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.leads, fetchAdminLeads),
+    ];
   }
 
   return [];

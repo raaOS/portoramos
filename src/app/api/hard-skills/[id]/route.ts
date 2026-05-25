@@ -16,10 +16,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const validation = updateHardSkillSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid hard skill payload',
-        details: validation.error.issues
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'Invalid hard skill payload',
+          details: validation.error.issues,
+        },
+        { status: 400 }
+      );
     }
 
     const updatedSkill = await hardSkillService.updateHardSkill(id, validation.data);
@@ -40,7 +43,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 // DELETE - delete hard skill
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     if (!(await validateAdminRequest(request))) {
       return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });

@@ -5,15 +5,18 @@ class SharedObserver {
 
   constructor() {
     if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
-      this.observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          const cb = this.callbacks.get(entry.target);
-          if (cb) cb(entry);
-        });
-      }, {
-        threshold: 0.25,
-        rootMargin: '100px 0px 100px 0px'
-      });
+      this.observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const cb = this.callbacks.get(entry.target);
+            if (cb) cb(entry);
+          });
+        },
+        {
+          threshold: 0.25,
+          rootMargin: '100px 0px 100px 0px',
+        }
+      );
     }
   }
 

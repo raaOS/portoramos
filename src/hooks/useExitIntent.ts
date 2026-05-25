@@ -3,14 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 
 interface UseExitIntentOptions {
-    /** Disable hook entirely (mis. saat di-skip via session flag) */
-    enabled?: boolean;
-    /** Minimum waktu user harus di halaman sebelum trigger aktif (ms). Default: 15 detik */
-    minEngagementMs?: number;
-    /** Delay start sebelum listener attached (ms). Default: sama dengan minEngagementMs */
-    startDelayMs?: number;
-    /** Batas atas pixel Y dari mouse untuk trigger. Default: 50 */
-    triggerThresholdPx?: number;
+  /** Disable hook entirely (mis. saat di-skip via session flag) */
+  enabled?: boolean;
+  /** Minimum waktu user harus di halaman sebelum trigger aktif (ms). Default: 15 detik */
+  minEngagementMs?: number;
+  /** Delay start sebelum listener attached (ms). Default: sama dengan minEngagementMs */
+  startDelayMs?: number;
+  /** Batas atas pixel Y dari mouse untuk trigger. Default: 50 */
+  triggerThresholdPx?: number;
 }
 
 /**
@@ -25,45 +25,45 @@ interface UseExitIntentOptions {
  *   (sessionStorage/localStorage) kalau mau throttle across navigations.
  */
 export function useExitIntent({
-    enabled = true,
-    minEngagementMs = 15_000,
-    startDelayMs,
-    triggerThresholdPx = 50,
+  enabled = true,
+  minEngagementMs = 15_000,
+  startDelayMs,
+  triggerThresholdPx = 50,
 }: UseExitIntentOptions = {}): boolean {
-    const [triggered, setTriggered] = useState(false);
-    const firedRef = useRef(false);
+  const [triggered, setTriggered] = useState(false);
+  const firedRef = useRef(false);
 
-    useEffect(() => {
-        if (!enabled) return;
-        if (typeof window === 'undefined') return;
+  useEffect(() => {
+    if (!enabled) return;
+    if (typeof window === 'undefined') return;
 
-        // Skip di mobile/tablet — exit-intent via mouse tidak ada
-        const isCoarsePointer = window.matchMedia?.('(pointer: coarse)').matches;
-        if (isCoarsePointer) return;
+    // Skip di mobile/tablet — exit-intent via mouse tidak ada
+    const isCoarsePointer = window.matchMedia?.('(pointer: coarse)').matches;
+    if (isCoarsePointer) return;
 
-        const delay = typeof startDelayMs === 'number' ? startDelayMs : minEngagementMs;
-        let active = false;
-        let armTimer: ReturnType<typeof setTimeout> | null = null;
+    const delay = typeof startDelayMs === 'number' ? startDelayMs : minEngagementMs;
+    let active = false;
+    let armTimer: ReturnType<typeof setTimeout> | null = null;
 
-        const handleMouseOut = (e: MouseEvent) => {
-            if (!active || firedRef.current) return;
-            // relatedTarget null + mouse dekat top = kursor meninggalkan viewport ke atas
-            if (!e.relatedTarget && e.clientY <= triggerThresholdPx) {
-                firedRef.current = true;
-                setTriggered(true);
-            }
-        };
+    const handleMouseOut = (e: MouseEvent) => {
+      if (!active || firedRef.current) return;
+      // relatedTarget null + mouse dekat top = kursor meninggalkan viewport ke atas
+      if (!e.relatedTarget && e.clientY <= triggerThresholdPx) {
+        firedRef.current = true;
+        setTriggered(true);
+      }
+    };
 
-        armTimer = setTimeout(() => {
-            active = true;
-            document.addEventListener('mouseout', handleMouseOut);
-        }, delay);
+    armTimer = setTimeout(() => {
+      active = true;
+      document.addEventListener('mouseout', handleMouseOut);
+    }, delay);
 
-        return () => {
-            if (armTimer) clearTimeout(armTimer);
-            document.removeEventListener('mouseout', handleMouseOut);
-        };
-    }, [enabled, minEngagementMs, startDelayMs, triggerThresholdPx]);
+    return () => {
+      if (armTimer) clearTimeout(armTimer);
+      document.removeEventListener('mouseout', handleMouseOut);
+    };
+  }, [enabled, minEngagementMs, startDelayMs, triggerThresholdPx]);
 
-    return triggered;
+  return triggered;
 }

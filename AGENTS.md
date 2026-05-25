@@ -37,12 +37,12 @@ Route `/` merender desktop fullscreen yang menampilkan:
 
 ### Core
 
-| Technology | Current Version | Catatan |
-|------------|-----------------|---------|
-| Next.js | `^16.2.1` | App Router, `proxy.ts`, React Compiler enabled |
-| React | `^19.2.1` | UI runtime |
-| TypeScript | `^5.4.5` | `strict: true` |
-| Tailwind CSS | `^3.4.7` | Utility-first styling |
+| Technology   | Current Version | Catatan                                        |
+| ------------ | --------------- | ---------------------------------------------- |
+| Next.js      | `^16.2.1`       | App Router, `proxy.ts`, React Compiler enabled |
+| React        | `^19.2.1`       | UI runtime                                     |
+| TypeScript   | `^5.4.5`        | `strict: true`                                 |
+| Tailwind CSS | `^3.4.7`        | Utility-first styling                          |
 
 ### Dependencies Penting
 
@@ -194,15 +194,15 @@ os/
 
 30 API route directories di `src/app/api/`:
 
-| Kategori | Routes |
-|----------|--------|
-| **Content CRUD** | `about`, `experience`, `hard-skills`, `projects`, `testimonial`, `running-text`, `sticky-notes`, `gallery` |
-| **Chat / Messaging** | `chat`, `comments`, `contact`, `feedback`, `webhook` |
-| **AI** | `ai`, `translate` |
-| **Admin** | `admin` |
-| **Media** | `media`, `upload`, `img` |
-| **System** | `analytics`, `health`, `debug`, `empty`, `os`, `revalidate`, `utils` |
-| **Data** | `leads`, `metrics`, `settings`, `explorer` |
+| Kategori             | Routes                                                                                                     |
+| -------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Content CRUD**     | `about`, `experience`, `hard-skills`, `projects`, `testimonial`, `running-text`, `sticky-notes`, `gallery` |
+| **Chat / Messaging** | `chat`, `comments`, `contact`, `feedback`, `webhook`                                                       |
+| **AI**               | `ai`, `translate`                                                                                          |
+| **Admin**            | `admin`                                                                                                    |
+| **Media**            | `media`, `upload`, `img`                                                                                   |
+| **System**           | `analytics`, `health`, `debug`, `empty`, `os`, `revalidate`, `utils`                                       |
+| **Data**             | `leads`, `metrics`, `settings`, `explorer`                                                                 |
 
 ---
 
@@ -248,9 +248,57 @@ npm run ultra-clean
 npm run audit
 ```
 
+### Telegram Bot CLI
+
+Repo punya dua bot Telegram independen: **main bot** (`@WebPortofolioBot`,
+token `TELEGRAM_BOT_TOKEN`) untuk chat visitor + admin commands, dan
+**job hunter bot** (`@ramos_job_hunter_bot`, token `JOB_BOT_TELEGRAM_TOKEN`)
+untuk `/scan`, `/search`, `/apply` di topic Job Hunter.
+
+Halaman admin `/admin/telegram` sengaja **tidak** ada — manajemen webhook
+dilakukan via CLI di bawah ini supaya tidak ada misclick "Fix Webhook"
+yang nge-set webhook prod saat dev di lokal. Default semua command jalan
+ke kedua bot; pakai `--bot=main` atau `--bot=job` untuk satu bot saja.
+
+```bash
+# cek status webhook + pending updates kedua bot
+npm run telegram:webhook-info
+npm run telegram:webhook-info -- --bot=main
+npm run telegram:webhook-info -- --bot=job
+
+# set webhook ke NEXT_PUBLIC_SITE_URL (atau override pakai --base=https://...)
+npm run telegram:set-webhook
+npm run telegram:set-webhook -- --base=https://yourdomain.com
+
+# clear pending queue (drop+restore webhook secara aman)
+npm run telegram:clear-pending
+```
+
+#### Job Hunter Bot di lokal
+
+Saat `npm run dev` dijalankan, orchestrator otomatis spawn job hunter
+poller bersamaan dengan Next.js dev server (selama `JOB_BOT_TELEGRAM_TOKEN`
+ada di `.env.local`). Tanpa ini, callback dari tombol Apply/Detail di
+Telegram tidak terdeliver karena webhook job bot tidak ter-set ke
+localhost.
+
+Output kedua proses di-prefix: `[next]` untuk Next.js, `[job-bot]` untuk
+poller. Poller auto-restart kalau crash dengan exponential backoff.
+
+```bash
+# default: dev server + job hunter poller
+npm run dev
+
+# skip poller (mis. saat offline atau test tanpa Telegram)
+npm run dev -- --no-job-bot
+
+# poller saja, tanpa Next.js (jarang dipakai)
+npm run job-bot:poll
+```
+
 ### Catatan Script
 
-- `npm run dev` menjalankan `node scripts/core/dev.js` untuk server development
+- `npm run dev` menjalankan `node scripts/core/dev.js` untuk server development (auto-spawn job hunter Telegram poller bila `JOB_BOT_TELEGRAM_TOKEN` ada)
 - `npm run dev:webpack` menjalankan server development dengan fallback Webpack
 - `npm run fresh-start` menghapus cache `.next` sebelum menjalankan `dev`
 - `npm run ultra-fresh` memperbaiki cache build yang korup kemudian menjalankan `dev`
@@ -270,6 +318,10 @@ npm run audit
 - `npm run fix-webpack` memperbaiki error "Webpack cache failure" yang sering muncul
 - `npm run ultra-clean` pembersihan total cache dan temporary files
 - `npm run audit` menjalankan `scripts/maintenance/audit.ts` untuk audit repo
+- `npm run telegram:webhook-info` menampilkan webhook URL + pending updates untuk main bot dan job hunter bot
+- `npm run telegram:set-webhook` set webhook kedua bot ke `NEXT_PUBLIC_SITE_URL` (atau `--base=https://...`)
+- `npm run telegram:clear-pending` clear pending updates Telegram tanpa break webhook (drop + restore)
+- `npm run job-bot:poll` polling job hunter bot di lokal (alternatif webhook untuk dev)
 
 ---
 
@@ -328,14 +380,14 @@ import type { AboutData } from '@/types/about';
 
 ### Root Contexts (`src/contexts/`)
 
-| Context | Kegunaan |
-|---------|----------|
-| `LanguageContext` | i18n language switching |
-| `LastUpdatedContext` | Track last updated timestamps |
-| `ModalContext` | Modal state management |
-| `NavbarVisibilityContext` | Navbar show/hide state |
-| `ToastContext` | Toast notification system |
-| `WindowContext` | Window management state |
+| Context                   | Kegunaan                      |
+| ------------------------- | ----------------------------- |
+| `LanguageContext`         | i18n language switching       |
+| `LastUpdatedContext`      | Track last updated timestamps |
+| `ModalContext`            | Modal state management        |
+| `NavbarVisibilityContext` | Navbar show/hide state        |
+| `ToastContext`            | Toast notification system     |
+| `WindowContext`           | Window management state       |
 
 ### OS-Level Contexts (`src/components/os/`)
 
@@ -345,27 +397,28 @@ import type { AboutData } from '@/types/about';
 - `LayoutPersistenceContext` — persist desktop layout state
 
 > **Pattern — UnifiedZIndex consumer**
+>
 > - `useUnifiedZIndex()` — subscribe ke perubahan global; pakai ini kalau komponen render berdasarkan zIndex banyak id sekaligus (mis. `UnifiedLayer`).
 > - `useZIndexFor(id)` — subscribe **hanya** ke perubahan zIndex `id` spesifik; pakai di leaf component (mis. `DraggableStickyNote`).
 > - `useUnifiedZIndexActions()` — tanpa subscription, hanya expose mutator (`bringToFront`, `registerElement`, dll.); pakai kalau komponen tidak render berdasarkan zIndex.
 
 ### Custom Hooks (`src/hooks/`)
 
-| Hook | Kegunaan |
-|------|----------|
-| `useAdminAuth` | Admin authentication flow (shared module-level state) |
-| `useAnalytics` | Analytics tracking |
-| `useAutoUpdate` | Auto-update polling dengan interval |
-| `useChatSync` | Real-time chat synchronization |
-| `useCsrfToken` | CSRF token yang fresh, sync lintas tab via BroadcastChannel |
-| `useImageProtection` | Image right-click protection |
-| `useNavigation` | Navigation helpers |
-| `useProjectForm` | Project CRUD form logic |
-| `useQuickLook` | macOS-style Quick Look preview |
-| `useSystemSound` | System sound effects |
-| `useWindowManager` | Window management logic |
-| `canvas/` | Canvas-specific hooks (sub-dir) |
-| `window-manager/` | Window manager sub-hooks (sub-dir) |
+| Hook                 | Kegunaan                                                    |
+| -------------------- | ----------------------------------------------------------- |
+| `useAdminAuth`       | Admin authentication flow (shared module-level state)       |
+| `useAnalytics`       | Analytics tracking                                          |
+| `useAutoUpdate`      | Auto-update polling dengan interval                         |
+| `useChatSync`        | Real-time chat synchronization                              |
+| `useCsrfToken`       | CSRF token yang fresh, sync lintas tab via BroadcastChannel |
+| `useImageProtection` | Image right-click protection                                |
+| `useNavigation`      | Navigation helpers                                          |
+| `useProjectForm`     | Project CRUD form logic                                     |
+| `useQuickLook`       | macOS-style Quick Look preview                              |
+| `useSystemSound`     | System sound effects                                        |
+| `useWindowManager`   | Window management logic                                     |
+| `canvas/`            | Canvas-specific hooks (sub-dir)                             |
+| `window-manager/`    | Window manager sub-hooks (sub-dir)                          |
 
 ---
 
@@ -400,41 +453,41 @@ Karakteristik `ContentService` saat ini:
 
 ### Active Services (`src/lib/services/`)
 
-| Service | Domain |
-|---------|--------|
-| `aboutService.ts` | About/profile data |
-| `aiChatService.ts` | AI chat responses |
-| `aiProposalService.ts` | AI proposal generation |
-| `atsService.ts` | ATS resume analysis |
-| `contentService.ts` | Generic content CRUD base (cache-consistent deep-merge, pendingSave queue) |
-| `experienceService.ts` | Work experience data |
-| `explorerService.ts` | Admin file-explorer virtual (folders + files) |
-| `galleryFeaturedService.ts` | Featured gallery items |
-| `hardSkillConceptService.ts` | Skill concept groupings |
-| `hardSkillService.ts` | Technical skills data |
-| `projectService.ts` | Project CRUD operations |
-| `realtimeSync.ts` | Cloudflare D1 polling for lastUpdated |
-| `runningTextService.ts` | Running ticker text |
-| `stickyNotesService.ts` | Desktop sticky notes |
-| `storageCleanup.ts` | R2 media cleanup |
-| `testimonialService.ts` | Testimonial/review data |
-| `project/` | Project service sub-modules |
+| Service                      | Domain                                                                     |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `aboutService.ts`            | About/profile data                                                         |
+| `aiChatService.ts`           | AI chat responses                                                          |
+| `aiProposalService.ts`       | AI proposal generation                                                     |
+| `atsService.ts`              | ATS resume analysis                                                        |
+| `contentService.ts`          | Generic content CRUD base (cache-consistent deep-merge, pendingSave queue) |
+| `experienceService.ts`       | Work experience data                                                       |
+| `explorerService.ts`         | Admin file-explorer virtual (folders + files)                              |
+| `galleryFeaturedService.ts`  | Featured gallery items                                                     |
+| `hardSkillConceptService.ts` | Skill concept groupings                                                    |
+| `hardSkillService.ts`        | Technical skills data                                                      |
+| `projectService.ts`          | Project CRUD operations                                                    |
+| `realtimeSync.ts`            | Cloudflare D1 polling for lastUpdated                                      |
+| `runningTextService.ts`      | Running ticker text                                                        |
+| `stickyNotesService.ts`      | Desktop sticky notes                                                       |
+| `storageCleanup.ts`          | R2 media cleanup                                                           |
+| `testimonialService.ts`      | Testimonial/review data                                                    |
+| `project/`                   | Project service sub-modules                                                |
 
 ### Key Lib Utilities
 
-| File | Kegunaan |
-|------|----------|
-| `urlResolver.ts` | Centralized URL resolution |
-| `seo.ts` | SEO metadata generation |
-| `api-response.ts` | Standardized API response helpers |
-| `imageOptimization.ts` | Image optimization utilities |
-| `media.ts` | Media file handling |
-| `magic.ts` | Animation/magic utilities |
-| `chatStore.ts` | Chat state management |
-| `constants.ts` | Shared constants |
-| `dataRateLimit.ts` | Cloudflare D1-backed rate limiter |
-| `r2Storage.ts` | Cloudflare R2 media storage operations |
-| `gemini.ts` | Gemini AI client setup |
+| File                   | Kegunaan                               |
+| ---------------------- | -------------------------------------- |
+| `urlResolver.ts`       | Centralized URL resolution             |
+| `seo.ts`               | SEO metadata generation                |
+| `api-response.ts`      | Standardized API response helpers      |
+| `imageOptimization.ts` | Image optimization utilities           |
+| `media.ts`             | Media file handling                    |
+| `magic.ts`             | Animation/magic utilities              |
+| `chatStore.ts`         | Chat state management                  |
+| `constants.ts`         | Shared constants                       |
+| `dataRateLimit.ts`     | Cloudflare D1-backed rate limiter      |
+| `r2Storage.ts`         | Cloudflare R2 media storage operations |
+| `gemini.ts`            | Gemini AI client setup                 |
 
 ### Caching Strategy
 
@@ -536,17 +589,17 @@ Spec yang ada saat ini:
 
 ### Security Utilities (`src/lib/security/`)
 
-| File | Kegunaan |
-|------|----------|
-| `rate-limit.ts` | Rate limiting logic |
-| `sanitization.ts` | Input sanitization |
-| `validation.ts` | Input validation |
-| `password.ts` | Password hashing (scrypt) |
-| `token.ts` | Token generation/verification |
-| `request.ts` | Request security helpers |
-| `client-csrf.ts` | Client-side CSRF |
-| `types.ts` | Security type definitions |
-| `utils.ts` | Security utilities |
+| File              | Kegunaan                      |
+| ----------------- | ----------------------------- |
+| `rate-limit.ts`   | Rate limiting logic           |
+| `sanitization.ts` | Input sanitization            |
+| `validation.ts`   | Input validation              |
+| `password.ts`     | Password hashing (scrypt)     |
+| `token.ts`        | Token generation/verification |
+| `request.ts`      | Request security helpers      |
+| `client-csrf.ts`  | Client-side CSRF              |
+| `types.ts`        | Security type definitions     |
+| `utils.ts`        | Security utilities            |
 
 ### Security Headers
 
@@ -603,7 +656,6 @@ PASSWORD_SALT=
 REVALIDATION_TOKEN=
 
 GEMINI_API_KEY=
-GOOGLE_GENERATIVE_AI_API_KEY=
 GROQ_API_KEY=
 GOOGLE_PAGESPEED_API_KEY=
 
@@ -777,4 +829,4 @@ Mengikuti `browserslist` di `package.json`:
 
 ---
 
-*Last updated: 2026-05-17*
+_Last updated: 2026-05-17_

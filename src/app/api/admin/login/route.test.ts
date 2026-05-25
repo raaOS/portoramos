@@ -1,37 +1,37 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-    verifyAdminPasswordMock,
-    getAdminTokenMock,
-    sendTelegramAlertMock,
-    sendTelegramToGroupMock,
-    checkDataRateLimitMock,
-    cookiesMock
+  verifyAdminPasswordMock,
+  getAdminTokenMock,
+  sendTelegramAlertMock,
+  sendTelegramToGroupMock,
+  checkDataRateLimitMock,
+  cookiesMock,
 } = vi.hoisted(() => ({
-    verifyAdminPasswordMock: vi.fn(),
-    getAdminTokenMock: vi.fn(),
-    sendTelegramAlertMock: vi.fn(),
-    sendTelegramToGroupMock: vi.fn(),
-    checkDataRateLimitMock: vi.fn(),
-    cookiesMock: vi.fn(),
+  verifyAdminPasswordMock: vi.fn(),
+  getAdminTokenMock: vi.fn(),
+  sendTelegramAlertMock: vi.fn(),
+  sendTelegramToGroupMock: vi.fn(),
+  checkDataRateLimitMock: vi.fn(),
+  cookiesMock: vi.fn(),
 }));
 
 vi.mock('@/lib/auth', () => ({
-    verifyAdminPassword: verifyAdminPasswordMock,
-    getAdminToken: getAdminTokenMock,
+  verifyAdminPassword: verifyAdminPasswordMock,
+  getAdminToken: getAdminTokenMock,
 }));
 
 vi.mock('@/lib/telegram', () => ({
-    sendTelegramAlert: sendTelegramAlertMock,
-    sendTelegramToGroup: sendTelegramToGroupMock,
+  sendTelegramAlert: sendTelegramAlertMock,
+  sendTelegramToGroup: sendTelegramToGroupMock,
 }));
 
 vi.mock('@/lib/dataRateLimit', () => ({
-    checkDataRateLimit: checkDataRateLimitMock,
+  checkDataRateLimit: checkDataRateLimitMock,
 }));
 
 vi.mock('next/headers', () => ({
-    cookies: cookiesMock,
+  cookies: cookiesMock,
 }));
 
 import { POST } from './route';
@@ -39,71 +39,78 @@ import { POST } from './route';
 const originalNodeEnv = process.env.NODE_ENV;
 
 describe('POST /api/admin/login', () => {
-    beforeEach(() => {
-        vi.resetAllMocks();
-        (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
+  beforeEach(() => {
+    vi.resetAllMocks();
+    (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
 
-        cookiesMock.mockResolvedValue({
-            get: vi.fn().mockReturnValue({ value: 'a'.repeat(64) })
-        });
-
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-            json: async () => ({
-                status: 'success',
-                country: 'Indonesia',
-                city: 'Jakarta',
-                isp: 'Test ISP'
-            })
-        }));
+    cookiesMock.mockResolvedValue({
+      get: vi.fn().mockReturnValue({ value: 'a'.repeat(64) }),
     });
 
-    afterAll(() => {
-        (process.env as Record<string, string | undefined>).NODE_ENV = originalNodeEnv;
-        vi.unstubAllGlobals();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        json: async () => ({
+          status: 'success',
+          country: 'Indonesia',
+          city: 'Jakarta',
+          isp: 'Test ISP',
+        }),
+      })
+    );
+  });
+
+  afterAll(() => {
+    (process.env as Record<string, string | undefined>).NODE_ENV = originalNodeEnv;
+    vi.unstubAllGlobals();
+  });
+
+  it('ignores x-test-bypass in production and still enforces rate limits', async () => {
+    checkDataRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 120 });
+
+    const response = await POST(
+      new Request('http://localhost/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-csrf-token': 'a'.repeat(64),
+          'x-test-bypass': 'true',
+          'x-forwarded-for': '203.0.113.1',
+          'user-agent': 'Mozilla/5.0 Chrome',
+        },
+        body: JSON.stringify({ password: 'IgnoredBecauseRateLimited123!' }),
+      }) as never
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(body.retryAfter).toBe(120);
+    expect(checkDataRateLimitMock).toHaveBeenCalledTimes(1);
+    expect(sendTelegramAlertMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns sanitized 500 responses without leaking internal error details', async () => {
+    checkDataRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
+    verifyAdminPasswordMock.mockImplementation(() => {
+      throw new Error('scrypt config missing');
     });
 
-    it('ignores x-test-bypass in production and still enforces rate limits', async () => {
-        checkDataRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 120 });
+    const response = await POST(
+      new Request('http://localhost/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-csrf-token': 'a'.repeat(64),
+          'x-forwarded-for': '203.0.113.1',
+          'user-agent': 'Mozilla/5.0 Chrome',
+        },
+        body: JSON.stringify({ password: 'ValidLength123!' }),
+      }) as never
+    );
+    const body = await response.json();
 
-        const response = await POST(new Request('http://localhost/api/admin/login', {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json',
-                'x-csrf-token': 'a'.repeat(64),
-                'x-test-bypass': 'true',
-                'x-forwarded-for': '203.0.113.1',
-                'user-agent': 'Mozilla/5.0 Chrome'
-            },
-            body: JSON.stringify({ password: 'IgnoredBecauseRateLimited123!' })
-        }) as never);
-        const body = await response.json();
-
-        expect(response.status).toBe(429);
-        expect(body.retryAfter).toBe(120);
-        expect(checkDataRateLimitMock).toHaveBeenCalledTimes(1);
-        expect(sendTelegramAlertMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('returns sanitized 500 responses without leaking internal error details', async () => {
-        checkDataRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
-        verifyAdminPasswordMock.mockImplementation(() => {
-            throw new Error('scrypt config missing');
-        });
-
-        const response = await POST(new Request('http://localhost/api/admin/login', {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json',
-                'x-csrf-token': 'a'.repeat(64),
-                'x-forwarded-for': '203.0.113.1',
-                'user-agent': 'Mozilla/5.0 Chrome'
-            },
-            body: JSON.stringify({ password: 'ValidLength123!' })
-        }) as never);
-        const body = await response.json();
-
-        expect(response.status).toBe(500);
-        expect(body).toEqual({ error: 'Authentication service error' });
-        expect(body).not.toHaveProperty('details');
-    });
+    expect(response.status).toBe(500);
+    expect(body).toEqual({ error: 'Authentication service error' });
+    expect(body).not.toHaveProperty('details');
+  });
 });

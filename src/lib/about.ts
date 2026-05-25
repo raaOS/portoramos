@@ -1,21 +1,36 @@
-import { aboutService } from '@/lib/services/aboutService';
-import type { AboutData, AboutHero, AboutProfessional, AboutSoftSkills, DesignPhilosophy, WallpaperConfig, DockPreferences, SoundConfig, WindowPreferences, AboutIslandNotification } from '@/types/about';
+import { aboutService, getCachedAboutData } from '@/lib/services/aboutService';
+import type {
+  AboutData,
+  AboutHero,
+  AboutProfessional,
+  AboutSoftSkills,
+  DesignPhilosophy,
+  WallpaperConfig,
+  DockPreferences,
+  SoundConfig,
+  WindowPreferences,
+  AboutIslandNotification,
+} from '@/types/about';
 
-// Use cached data by default for performance
-// Cache is invalidated explicitly when admin updates data
+// Use cached data by default for performance.
+// `getCachedAboutData` dibungkus React cache() untuk per-request dedup.
+// Cache is invalidated explicitly when admin updates data.
 export async function loadAboutData(): Promise<AboutData | null> {
   try {
-    const data = await aboutService.getAboutData();
-    return data;
+    return await getCachedAboutData();
   } catch (error) {
     console.error('Error loading about data:', error);
     return null;
   }
 }
 
-// Invalidate cache when admin updates about data
+// Invalidate cache when admin updates about data.
+// Catatan: React cache() di getCachedAboutData hanya hidup selama satu request,
+// jadi panggilan dari request berikutnya otomatis baca dari ContentService cache
+// (atau D1 kalau cache 5s sudah expire). invalidateAboutCache di bawah memaksa
+// bypass ContentService cache supaya admin update langsung kelihatan.
 export function invalidateAboutCache(): void {
-  // Force next read to bypass cache
+  // Force next read to bypass ContentService cache.
   aboutService.getAboutData(true).catch(() => {});
 }
 
@@ -50,7 +65,7 @@ export async function loadOSConfig(): Promise<{
 } | null> {
   const data = await loadAboutData();
   if (!data) return null;
-  
+
   return {
     wallpaperConfig: data.wallpaperConfig,
     dockConfig: data.dockConfig,

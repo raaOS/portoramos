@@ -7,7 +7,7 @@ import { useWindowContext } from '@/contexts/WindowContext';
 
 export default function WindowRenderer() {
   const { windows, closeWindow } = useWindowContext();
-  const openWindows = windows.filter(w => w.isOpen && !w.isMinimized);
+  const openWindows = windows.filter((w) => w.isOpen && !w.isMinimized);
 
   if (openWindows.length === 0) {
     return null;

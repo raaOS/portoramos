@@ -10,11 +10,12 @@ export const dynamic = 'force-dynamic';
 
 // RATE LIMITING - 3 percobaan per 5 menit, block 30 menit (disimpan di CLOUDFLARE_D1)
 const MAX_ATTEMPTS_PER_WINDOW = 3;
-const RATE_LIMIT_WINDOW = 5 * 60 * 1000;  // 5 menit
-const BLOCK_DURATION = 30 * 60 * 1000;    // 30 menit
+const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 menit
+const BLOCK_DURATION = 30 * 60 * 1000; // 30 menit
 
 // Prefer server-only key, keep public fallback for backward compatibility.
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+const GOOGLE_MAPS_API_KEY =
+  process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 function parseUserAgent(ua: string) {
   let os = 'Unknown OS';
@@ -45,7 +46,7 @@ async function getGeoInfo(ip: string) {
     if (data.status === 'success') {
       return {
         location: `${data.city}, ${data.country}`,
-        isp: data.isp
+        isp: data.isp,
       };
     }
   } catch {
@@ -112,7 +113,7 @@ async function formatLocationInfo(
   // Fallback to IP location
   return {
     text: `📍 **Lokasi (IP)**\n• ${ipLocation}`,
-    mapUrl: null
+    mapUrl: null,
   };
 }
 
@@ -129,7 +130,7 @@ export async function GET() {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 3600, // 1 hour
-    path: '/'
+    path: '/',
   });
 
   // Prevent browser caching of CSRF token
@@ -155,19 +156,13 @@ export async function POST(request: NextRequest) {
     const sessionCsrfToken = cookieStore.get('csrf_token')?.value;
 
     if (!csrfToken || !sessionCsrfToken) {
-      return NextResponse.json(
-        { error: 'Invalid or missing CSRF token' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Invalid or missing CSRF token' }, { status: 403 });
     }
 
     const isValid = validateCSRFToken(csrfToken, sessionCsrfToken);
 
     if (!isValid) {
-      return NextResponse.json(
-        { error: 'Invalid CSRF token' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
     }
 
     const clientId = getClientIdentifier(request);
@@ -177,7 +172,7 @@ export async function POST(request: NextRequest) {
       process.env.NODE_ENV === 'test' ||
       process.env.E2E_TEST === 'true' ||
       (process.env.NODE_ENV === 'development' && request.headers.get('x-test-bypass') === 'true');
-    
+
     if (!isTestEnv) {
       // CLOUDFLARE_D1 rate limiting (persisten di Vercel, tidak hilang saat cold start)
       const rateLimit = await checkDataRateLimit(
@@ -207,31 +202,25 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error: 'Too many login attempts. Please try again later.',
-            retryAfter: rateLimit.retryAfter
+            retryAfter: rateLimit.retryAfter,
           },
           {
             status: 429,
-            headers: { 'Retry-After': String(rateLimit.retryAfter) }
+            headers: { 'Retry-After': String(rateLimit.retryAfter) },
           }
         );
       }
     }
 
-    const { password, lat, lng, accuracy } = await request.json() as LoginRequestBody;
+    const { password, lat, lng, accuracy } = (await request.json()) as LoginRequestBody;
 
     // VALIDASI INPUT STRICT
     if (!password || typeof password !== 'string') {
-      return NextResponse.json(
-        { error: 'Password is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Password is required' }, { status: 400 });
     }
 
     if (password.length < 8) {
-      return NextResponse.json(
-        { error: 'Invalid password' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
 
     const [ip, userAgent] = clientId.split('|');
@@ -243,12 +232,7 @@ export async function POST(request: NextRequest) {
     // Get location info (GPS preferred, fallback to IP).
     const locationInfo = isTestEnv
       ? { text: '**Lokasi (Test)**\n- Simulated E2E environment', mapUrl: null }
-      : await formatLocationInfo(
-        lat ?? null,
-        lng ?? null,
-        accuracy ?? null,
-        geo.location
-      );
+      : await formatLocationInfo(lat ?? null, lng ?? null, accuracy ?? null, geo.location);
 
     // VERIFY PASSWORD
     let passwordValid = false;
@@ -256,10 +240,7 @@ export async function POST(request: NextRequest) {
       passwordValid = verifyAdminPassword(password);
     } catch {
       // Jika auth config error, jangan expose ke user
-      return NextResponse.json(
-        { error: 'Authentication service error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Authentication service error' }, { status: 500 });
     }
 
     if (!passwordValid) {
@@ -281,10 +262,7 @@ ${locationInfo.text}
         await sendTelegramAlert(message, { priority: 'normal', buttons });
       }
 
-      return NextResponse.json(
-        { error: 'Invalid password' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
 
     // SUCCESS
@@ -324,17 +302,13 @@ ${locationInfo.text}
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 2 * 60 * 60, // 2 jam (sesuai JWT expiry)
-      path: '/'
+      path: '/',
       // Hapus domain untuk kompatibilitas Vercel
     });
 
     return response;
-
   } catch (error: unknown) {
     console.error('[Admin Login] Authentication failed:', error);
-    return NextResponse.json(
-      { error: 'Authentication failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
   }
 }

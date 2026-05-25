@@ -13,16 +13,9 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Memoize value to prevent unnecessary re-renders
-  const value = useMemo(
-    () => ({ isModalOpen, setIsModalOpen }),
-    [isModalOpen]
-  );
+  const value = useMemo(() => ({ isModalOpen, setIsModalOpen }), [isModalOpen]);
 
-  return (
-    <ModalContext.Provider value={value}>
-      {children}
-    </ModalContext.Provider>
-  );
+  return <ModalContext.Provider value={value}>{children}</ModalContext.Provider>;
 }
 
 export function useModal() {

@@ -1,95 +1,132 @@
+'use client';
+
 import { useEffect, useRef } from 'react';
 
 const POLL_INTERVAL_MS = 5000;
 
 async function fetchDataVersion(): Promise<string | null> {
-    const response = await fetch('/api/data/version', { cache: 'no-store' });
-    if (!response.ok) return null;
-    const data = await response.json().catch(() => null) as { lastUpdated?: string | null } | null;
-    return data?.lastUpdated || null;
+  const response = await fetch('/api/data/version', { cache: 'no-store' });
+  if (!response.ok) return null;
+  const data = (await response.json().catch(() => null)) as { lastUpdated?: string | null } | null;
+  return data?.lastUpdated || null;
 }
 
 interface UseRealtimeSyncOptions {
-    onUpdate: () => void;
-    onUnavailable?: () => void;
-    enabled?: boolean;
+  onUpdate: () => void;
+  onUnavailable?: () => void;
+  enabled?: boolean;
 }
 
-export function useRealtimeSync({ onUpdate, onUnavailable, enabled = true }: UseRealtimeSyncOptions) {
-    const lastTimestampRef = useRef<string | null>(null);
-    const isInitializedRef = useRef(false);
-    const isActiveRef = useRef(true);
-    const mountedRef = useRef(true);
-    const intervalRef = useRef<NodeJS.Timeout | null>(null);
-    const onUpdateRef = useRef(onUpdate);
-    const onUnavailableRef = useRef(onUnavailable);
+type Subscriber = {
+  onUpdate: () => void;
+  onUnavailable?: () => void;
+};
 
-    useEffect(() => { onUpdateRef.current = onUpdate; }, [onUpdate]);
-    useEffect(() => { onUnavailableRef.current = onUnavailable; }, [onUnavailable]);
+// Module-level shared runtime. Polling jalan sekali untuk semua subscriber
+// sehingga pindah antar halaman admin tidak memicu reset interval +
+// re-initialize timestamp. Ini pemicu utama "burst" request dan refetch yang
+// bikin transisi terasa lambat.
+let lastTimestamp: string | null = null;
+let isInitialized = false;
+let intervalId: ReturnType<typeof setInterval> | null = null;
+let pollInFlight = false;
 
-    useEffect(() => {
-        if (!enabled || typeof window === 'undefined') return;
+const subscribers = new Set<Subscriber>();
 
-        isActiveRef.current = true;
-        mountedRef.current = true;
+async function pollOnce() {
+  if (pollInFlight) return;
+  pollInFlight = true;
+  try {
+    const newTimestamp = await fetchDataVersion();
 
-        const poll = async () => {
-            if (!mountedRef.current || !isActiveRef.current) return;
+    if (!newTimestamp) {
+      subscribers.forEach((sub) => sub.onUnavailable?.());
+      return;
+    }
 
-            try {
-                const newTimestamp = await fetchDataVersion();
-                if (!newTimestamp) {
-                    onUnavailableRef.current?.();
-                    return;
-                }
+    if (!isInitialized) {
+      lastTimestamp = newTimestamp;
+      isInitialized = true;
+      return;
+    }
 
-                if (!isInitializedRef.current) {
-                    lastTimestampRef.current = newTimestamp;
-                    isInitializedRef.current = true;
-                    return;
-                }
+    if (newTimestamp !== lastTimestamp) {
+      lastTimestamp = newTimestamp;
+      subscribers.forEach((sub) => sub.onUpdate());
+    }
+  } catch {
+    subscribers.forEach((sub) => sub.onUnavailable?.());
+  } finally {
+    pollInFlight = false;
+  }
+}
 
-                if (newTimestamp !== lastTimestampRef.current) {
-                    lastTimestampRef.current = newTimestamp;
-                    onUpdateRef.current();
-                }
-            } catch {
-                if (mountedRef.current && isActiveRef.current) {
-                    onUnavailableRef.current?.();
-                }
-            }
-        };
+function ensureRuntime() {
+  if (typeof window === 'undefined' || intervalId !== null) return;
+  void pollOnce();
+  intervalId = setInterval(() => {
+    if (typeof document !== 'undefined' && document.hidden) return;
+    void pollOnce();
+  }, POLL_INTERVAL_MS);
+}
 
-        void poll();
-        intervalRef.current = setInterval(poll, POLL_INTERVAL_MS);
+function maybeStopRuntime() {
+  if (subscribers.size === 0 && intervalId !== null) {
+    clearInterval(intervalId);
+    intervalId = null;
+    // NOTE: kita biarkan `lastTimestamp` & `isInitialized` tetap supaya
+    // saat ada subscriber baru muncul, kita tidak nge-fire onUpdate palsu
+    // karena re-initialize. Reset hanya saat halaman benar-benar reload.
+  }
+}
 
-        return () => {
-            isActiveRef.current = false;
-            mountedRef.current = false;
+export function useRealtimeSync({
+  onUpdate,
+  onUnavailable,
+  enabled = true,
+}: UseRealtimeSyncOptions) {
+  const onUpdateRef = useRef(onUpdate);
+  const onUnavailableRef = useRef(onUnavailable);
 
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-            }
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
+  useEffect(() => {
+    onUnavailableRef.current = onUnavailable;
+  }, [onUnavailable]);
 
-            isInitializedRef.current = false;
-            lastTimestampRef.current = null;
-        };
-    }, [enabled]);
+  useEffect(() => {
+    if (!enabled || typeof window === 'undefined') return;
+
+    const subscriber: Subscriber = {
+      onUpdate: () => onUpdateRef.current(),
+      onUnavailable: () => onUnavailableRef.current?.(),
+    };
+
+    subscribers.add(subscriber);
+    ensureRuntime();
+
+    return () => {
+      subscribers.delete(subscriber);
+      // Defer stop ke microtask supaya unmount→remount cepat (StrictMode /
+      // navigation transition) tidak nge-restart polling.
+      queueMicrotask(maybeStopRuntime);
+    };
+  }, [enabled]);
 }
 
 export async function checkForUpdates(lastKnownTimestamp: string | null): Promise<{
-    hasUpdate: boolean;
-    newTimestamp: string | null;
+  hasUpdate: boolean;
+  newTimestamp: string | null;
 }> {
-    try {
-        const newTimestamp = await fetchDataVersion();
-        return {
-            hasUpdate: Boolean(newTimestamp && newTimestamp !== lastKnownTimestamp),
-            newTimestamp: newTimestamp || lastKnownTimestamp,
-        };
-    } catch (error) {
-        console.error('[RealtimeSync] Check for updates failed:', error);
-        return { hasUpdate: false, newTimestamp: lastKnownTimestamp };
-    }
+  try {
+    const newTimestamp = await fetchDataVersion();
+    return {
+      hasUpdate: Boolean(newTimestamp && newTimestamp !== lastKnownTimestamp),
+      newTimestamp: newTimestamp || lastKnownTimestamp,
+    };
+  } catch (error) {
+    console.error('[RealtimeSync] Check for updates failed:', error);
+    return { hasUpdate: false, newTimestamp: lastKnownTimestamp };
+  }
 }

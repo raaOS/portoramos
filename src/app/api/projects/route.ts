@@ -18,20 +18,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || undefined;
     const fresh = searchParams.get('fresh') === 'true';
-    
+
     // Jika admin minta fresh data, skip cache (noCache=true)
     const { projects, lastUpdated } = await projectService.getProjects(status, fresh);
 
     // Normalize local/R2 media paths before returning data.
-    const fixedProjects = projects.map(p => ({
+    const fixedProjects = projects.map((p) => ({
       ...p,
       cover: resolveStorageUrl(p.cover),
-      galleryItems: p.galleryItems?.map(item => ({
+      galleryItems: p.galleryItems?.map((item) => ({
         ...item,
         src: resolveStorageUrl(item.src),
         poster: resolveStorageUrl(item.poster ?? ''),
       })),
-      gallery: p.gallery?.map(url => resolveStorageUrl(url) || url),
+      gallery: p.gallery?.map((url) => resolveStorageUrl(url) || url),
     }));
 
     return success({ projects: fixedProjects, lastUpdated });
@@ -59,9 +59,10 @@ export async function POST(request: NextRequest) {
     // Convert year to number if it's a string
     const projectData = {
       ...validationResult.data,
-      year: typeof validationResult.data.year === 'string'
-        ? parseInt(validationResult.data.year, 10)
-        : validationResult.data.year
+      year:
+        typeof validationResult.data.year === 'string'
+          ? parseInt(validationResult.data.year, 10)
+          : validationResult.data.year,
     };
 
     // Type assertion needed due to Zod schema allowing nulls that CreateProjectData doesn't.
@@ -70,7 +71,9 @@ export async function POST(request: NextRequest) {
     // dan return 400 (bukan 500) agar perilaku konsisten dengan route-level validation.
     let newProject;
     try {
-      newProject = await projectService.createProject(projectData as unknown as import('@/types/projects').CreateProjectData);
+      newProject = await projectService.createProject(
+        projectData as unknown as import('@/types/projects').CreateProjectData
+      );
     } catch (innerError) {
       if (innerError instanceof z.ZodError) {
         return validationError(innerError);
@@ -78,19 +81,27 @@ export async function POST(request: NextRequest) {
       throw innerError;
     }
 
-    if (validationResult.data.initialCommentCount && validationResult.data.initialCommentCount > 0) {
+    if (
+      validationResult.data.initialCommentCount &&
+      validationResult.data.initialCommentCount > 0
+    ) {
       try {
-        const generatedComments = generateGenZComments(newProject.slug, validationResult.data.initialCommentCount);
+        const generatedComments = generateGenZComments(
+          newProject.slug,
+          validationResult.data.initialCommentCount
+        );
 
         await db.ref(`comments/${newProject.slug}`).set(generatedComments);
-        console.log(`[API/Projects] Successfully generated ${generatedComments.length} comments for ${newProject.slug}`);
+        console.log(
+          `[API/Projects] Successfully generated ${generatedComments.length} comments for ${newProject.slug}`
+        );
       } catch (commentErr) {
         console.warn('[API/Projects] Failed to auto-generate comments:', commentErr);
       }
     }
 
     const successMessage = `âœ¨ **NEW PROJECT CREATED**\n\n**Title:** ${newProject.title}\n**Client:** ${newProject.client}\n**ID:** ${newProject.id}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
-    await sendTelegramAlert(successMessage).catch(() => { });
+    await sendTelegramAlert(successMessage).catch(() => {});
 
     revalidatePath('/', 'layout');
     revalidatePath('/projects');
@@ -103,4 +114,3 @@ export async function POST(request: NextRequest) {
     return serverError('Failed to create project');
   }
 }
-

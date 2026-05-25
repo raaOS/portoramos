@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import crypto from 'crypto';
@@ -27,7 +26,10 @@ export async function POST(request: NextRequest) {
     const signatureBuffer = Buffer.from(signature);
     const digestBuffer = Buffer.from(digest);
 
-    if (signatureBuffer.length !== digestBuffer.length || !crypto.timingSafeEqual(signatureBuffer, digestBuffer)) {
+    if (
+      signatureBuffer.length !== digestBuffer.length ||
+      !crypto.timingSafeEqual(signatureBuffer, digestBuffer)
+    ) {
       return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
     }
 
@@ -45,7 +47,6 @@ export async function POST(request: NextRequest) {
     console.log('[Revalidate] Webhook received & revalidated all paths');
 
     return NextResponse.json({ revalidated: true, now: Date.now() });
-
   } catch (err) {
     console.error('[Revalidate] Error:', err instanceof Error ? err.message : err);
     return NextResponse.json({ message: 'Error revalidating' }, { status: 500 });

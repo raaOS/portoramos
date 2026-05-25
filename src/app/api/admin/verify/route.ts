@@ -6,8 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const token =
-      request.cookies.get('admin_token')?.value ||
-      request.cookies.get('admin-token')?.value;
+      request.cookies.get('admin_token')?.value || request.cookies.get('admin-token')?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -19,10 +18,7 @@ export async function GET(request: NextRequest) {
     const valid = verifyAdminToken(token);
 
     if (!valid) {
-      return NextResponse.json(
-        { authenticated: false, error: 'Invalid token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ authenticated: false, error: 'Invalid token' }, { status: 401 });
     }
 
     return NextResponse.json({ authenticated: true });

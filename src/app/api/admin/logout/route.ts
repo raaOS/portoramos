@@ -21,7 +21,7 @@ export async function POST() {
       expires: new Date(0),
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const
+      sameSite: 'lax' as const,
     };
 
     response.cookies.set('admin_token', '', cookieOptions);

@@ -15,7 +15,7 @@ interface State {
 
 /**
  * Generic Error Boundary Component
- * 
+ *
  * Catches JavaScript errors in child components and renders fallback UI.
  * Prevents white screen crashes.
  */
@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('[ErrorBoundary] Caught error:', error);
     console.error('[ErrorBoundary] Component stack:', errorInfo.componentStack);
-    
+
     this.props.onError?.(error, errorInfo);
   }
 
@@ -43,20 +43,20 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-8">
+        <div className="flex min-h-screen items-center justify-center bg-gray-900 p-8 text-white">
           <div className="max-w-md text-center">
-            <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
-            <p className="text-gray-400 mb-6">
+            <h2 className="mb-4 text-2xl font-bold">Something went wrong</h2>
+            <p className="mb-6 text-gray-400">
               We apologize for the inconvenience. Please refresh the page or try again later.
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
+              className="rounded-lg bg-blue-600 px-6 py-3 font-medium transition-colors hover:bg-blue-700"
             >
               Refresh Page
             </button>
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-6 text-left text-sm text-red-400 bg-gray-800 p-4 rounded">
+              <details className="mt-6 rounded bg-gray-800 p-4 text-left text-sm text-red-400">
                 <summary>Error Details (Dev Only)</summary>
                 <pre className="mt-2 overflow-auto">
                   {this.state.error.message}
@@ -96,32 +96,32 @@ export class DesktopErrorBoundary extends Component<{ children: ReactNode }, Sta
   render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-black">
-          <div className="bg-gray-800 rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl border border-gray-700">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-white text-2xl">
+        <div className="flex min-h-screen items-center justify-center bg-black">
+          <div className="mx-4 w-full max-w-md rounded-xl border border-gray-700 bg-gray-800 p-8 shadow-2xl">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500 text-2xl text-white">
                 ⚠️
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">System Error</h2>
-                <p className="text-gray-400 text-sm">Ramos OS encountered a problem</p>
+                <p className="text-sm text-gray-400">Ramos OS encountered a problem</p>
               </div>
             </div>
-            
-            <p className="text-gray-300 mb-6">
+
+            <p className="mb-6 text-gray-300">
               The desktop environment crashed unexpectedly. Your data has been preserved.
             </p>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={() => window.location.reload()}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                className="flex-1 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
               >
                 Restart System
               </button>
               <button
-                onClick={() => window.location.href = '/'}
-                className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                onClick={() => (window.location.href = '/')}
+                className="flex-1 rounded-lg bg-gray-700 px-4 py-2 font-medium text-white transition-colors hover:bg-gray-600"
               >
                 Safe Mode
               </button>
@@ -139,16 +139,15 @@ export class DesktopErrorBoundary extends Component<{ children: ReactNode }, Sta
  * Section-specific Error Boundary
  * Renders smaller fallback for non-critical sections
  */
-export class SectionErrorBoundary extends Component<{ 
-  children: ReactNode; 
-  sectionName: string;
-  fallback?: ReactNode;
-}, State> {
-  constructor(props: { 
-    children: ReactNode; 
+export class SectionErrorBoundary extends Component<
+  {
+    children: ReactNode;
     sectionName: string;
     fallback?: ReactNode;
-  }) {
+  },
+  State
+> {
+  constructor(props: { children: ReactNode; sectionName: string; fallback?: ReactNode }) {
     super(props);
     this.state = { hasError: false, error: null };
   }
@@ -168,16 +167,16 @@ export class SectionErrorBoundary extends Component<{
       }
 
       return (
-        <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
-          <h3 className="text-red-800 font-semibold mb-2">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+          <h3 className="mb-2 font-semibold text-red-800">
             ⚠️ {this.props.sectionName} failed to load
           </h3>
-          <p className="text-red-600 text-sm">
+          <p className="text-sm text-red-600">
             This section encountered an error. Other parts of the application may still work.
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="mt-4 text-sm text-red-700 hover:text-red-800 underline"
+            className="mt-4 text-sm text-red-700 underline hover:text-red-800"
           >
             Try Again
           </button>
@@ -197,15 +196,12 @@ export function useAsyncErrorHandler() {
   const handleError = (error: unknown, context: string): void => {
     const err = error instanceof Error ? error : new Error(String(error));
     console.error(`[AsyncError:${context}]`, err);
-    
+
     // Could integrate with error tracking service here
     // Sentry.captureException(err);
   };
 
-  const wrapAsync = async <T,>(
-    promise: Promise<T>,
-    context: string
-  ): Promise<T | null> => {
+  const wrapAsync = async <T,>(promise: Promise<T>, context: string): Promise<T | null> => {
     try {
       return await promise;
     } catch (error) {

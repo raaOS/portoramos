@@ -35,7 +35,7 @@ function toContactInfo(data?: ContactData): FullPageChatContactInfo | undefined 
     email: data.info?.email,
     socialMedia: data.info?.socialMedia,
     headline: data.content?.headline,
-    subtext: data.content?.subtext
+    subtext: data.content?.subtext,
   };
 }
 
@@ -45,7 +45,7 @@ export default function ContactWindow({ initialData }: ContactWindowProps) {
     revalidateOnFocus: false,
     revalidateIfStale: false,
     shouldRetryOnError: false,
-    revalidateOnMount: !initialData
+    revalidateOnMount: !initialData,
   });
 
   return <FullPageChat embedded contactInfo={toContactInfo(data)} />;

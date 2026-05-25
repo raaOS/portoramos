@@ -36,7 +36,10 @@ export default {
     object.writeHttpMetadata(headers);
     headers.set('etag', object.httpEtag);
     headers.set('accept-ranges', 'bytes');
-    headers.set('cache-control', headers.get('cache-control') || 'public, max-age=31536000, immutable');
+    headers.set(
+      'cache-control',
+      headers.get('cache-control') || 'public, max-age=31536000, immutable'
+    );
 
     if (!headers.get('content-type')) {
       headers.set('content-type', contentTypeForKey(key));

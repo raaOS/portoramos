@@ -1,5 +1,5 @@
-'use client'
-import React from 'react'
+'use client';
+import React from 'react';
 
 // Custom arrow icon for the select dropdown
 const SelectArrow = () => (
@@ -11,13 +11,13 @@ const SelectArrow = () => (
 );
 
 type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
-  label?: string
-  hint?: string
-  error?: string
-  required?: boolean
-  className?: string
-  selectClassName?: string
-}
+  label?: string;
+  hint?: string;
+  error?: string;
+  required?: boolean;
+  className?: string;
+  selectClassName?: string;
+};
 
 export default function Select({
   label,
@@ -30,28 +30,32 @@ export default function Select({
   children,
   ...props
 }: SelectProps) {
-  const generatedId = React.useId()
-  const selectId = id || generatedId
-  const hintId = `${selectId}-hint`
-  const errorId = `${selectId}-error`
+  const generatedId = React.useId();
+  const selectId = id || generatedId;
+  const hintId = `${selectId}-hint`;
+  const errorId = `${selectId}-error`;
 
   const commonClasses = `block w-full pl-3 pr-10 py-2 border rounded-md transition-colors duration-200 ease-in-out bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 appearance-none disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed ${
-    error 
-      ? 'border-red-400 text-red-900 focus:ring-red-500 focus:border-red-500' 
+    error
+      ? 'border-red-400 text-red-900 focus:ring-red-500 focus:border-red-500'
       : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
   } ${selectClassName}`;
 
-  const ariaDescribedBy = [
-    error ? errorId : null,
-    hint && !error ? hintId : null,
-    props['aria-describedby']
-  ].filter(Boolean).join(' ') || undefined;
+  const ariaDescribedBy =
+    [error ? errorId : null, hint && !error ? hintId : null, props['aria-describedby']]
+      .filter(Boolean)
+      .join(' ') || undefined;
 
   return (
     <div className={className}>
       {label && (
-        <label htmlFor={selectId} className="block text-sm font-medium text-gray-700 mb-1">
-          {label} {required && <span className="text-red-600" aria-label="required">*</span>}
+        <label htmlFor={selectId} className="mb-1 block text-sm font-medium text-gray-700">
+          {label}{' '}
+          {required && (
+            <span className="text-red-600" aria-label="required">
+              *
+            </span>
+          )}
         </label>
       )}
       <div className="relative">
@@ -78,5 +82,5 @@ export default function Select({
         </p>
       )}
     </div>
-  )
+  );
 }

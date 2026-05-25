@@ -1,0 +1,21 @@
+.next
+node_modules
+dist
+build
+coverage
+playwright-report
+test-results
+.vercel
+.turbo
+
+package-lock.json
+
+public
+.playwright-cli
+.agents
+tests/e2e/.auth
+efek robek
+
+*.log
+lint_output.txt
+lint_output_utf8.txt

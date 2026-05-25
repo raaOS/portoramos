@@ -1,6 +1,6 @@
 /**
  * Chat Message Types - Consolidated
- * 
+ *
  * This file contains all chat message type definitions used across the application.
  * Previously scattered across multiple files, now centralized for consistency.
  */
@@ -68,7 +68,7 @@ export interface TestimonialChatMessage {
 // ============================================
 
 /**
- * @deprecated Use NotificationChatMessage instead. 
+ * @deprecated Use NotificationChatMessage instead.
  * Kept for backward compatibility with existing code in types/about.ts
  */
 export type ChatMessage = NotificationChatMessage;

@@ -9,8 +9,8 @@ import { NextResponse } from 'next/server';
 export const runtime = 'edge';
 
 export async function GET() {
-    return new NextResponse('Service worker disabled', {
-        status: 410,
-        headers: { 'content-type': 'text/plain; charset=utf-8' },
-    });
+  return new NextResponse('Service worker disabled', {
+    status: 410,
+    headers: { 'content-type': 'text/plain; charset=utf-8' },
+  });
 }

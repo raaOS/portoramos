@@ -4,23 +4,22 @@ import CvPageClient from '@/app/(site)/cv/_components/CvPageClient';
 import { loadAboutData } from '@/lib/about';
 import { loadExperienceData } from '@/lib/experience';
 import { loadHardSkillsData } from '@/lib/hardSkills';
-import { allProjectsAsync } from '@/lib/projects';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Resume | Ramos',
-  description: 'Resume versi ATS-friendly untuk screening cepat: ringkasan, skills, dan pengalaman.',
-  path: '/cv'
+  description:
+    'Resume versi ATS-friendly untuk screening cepat: ringkasan, skills, dan pengalaman.',
+  path: '/cv',
 });
 
 // Selalu render dinamis agar data CV mengikuti perubahan data portofolio terbaru
 export const revalidate = 0;
 
 export default async function CvPage() {
-  const [aboutData, experienceData, hardSkillsData, projects] = await Promise.all([
+  const [aboutData, experienceData, hardSkillsData] = await Promise.all([
     loadAboutData(),
     loadExperienceData(),
     loadHardSkillsData(),
-    allProjectsAsync()
   ]);
 
   return (
@@ -28,7 +27,6 @@ export default async function CvPage() {
       aboutData={aboutData}
       experienceData={experienceData}
       hardSkillsData={hardSkillsData}
-      projects={projects}
     />
   );
 }

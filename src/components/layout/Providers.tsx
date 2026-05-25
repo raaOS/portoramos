@@ -1,31 +1,20 @@
-"use client"
+'use client';
 
-import { useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ModalProvider } from '@/contexts/ModalContext';
 import { OSSystemProvider } from '@/components/os/context/OSSystemContext';
 
-import { POLLING } from '@/lib/constants';
-
-export default function Providers({ children }: { children: React.ReactNode }){
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: POLLING.CLIENT_STALE_TIME, // 5 menit - hemat bandwidth
-        gcTime: 10 * 60 * 1000, // Garbage collect after 10 menit
-        refetchOnWindowFocus: false,
-        retry: 1,
-      }
-    }
-  }));
-
+/**
+ * Root client providers.
+ *
+ * QueryClientProvider sengaja DIHAPUS dari sini — react-query hanya dipakai di
+ * admin pages dan `/projects` (`IndexClientWithAutoUpdate`). Bungkus sub-tree
+ * yang relevan dengan {@link QueryProvider} supaya homepage (OS desktop) dan
+ * route public sederhana tidak ikut menanggung chunk `@tanstack/react-query`.
+ */
+export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ModalProvider>
-        <OSSystemProvider>
-          {children}
-        </OSSystemProvider>
-      </ModalProvider>
-    </QueryClientProvider>
-  )
+    <ModalProvider>
+      <OSSystemProvider>{children}</OSSystemProvider>
+    </ModalProvider>
+  );
 }

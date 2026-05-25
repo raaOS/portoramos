@@ -15,51 +15,51 @@ class PerformanceOptimizer {
       {
         name: '1. Code Quality Check',
         command: 'npm run lint',
-        description: 'Check code quality and fix issues'
+        description: 'Check code quality and fix issues',
       },
       {
         name: '2. Generate Critical CSS',
         script: 'scripts/performance/critical-css.js',
-        description: 'Extract and inline critical CSS for faster rendering'
+        description: 'Extract and inline critical CSS for faster rendering',
       },
       {
         name: '3. Optimize Next.js Config',
         script: 'scripts/utils/optimize-next-config.js',
-        description: 'Update next.config.mjs with performance settings'
+        description: 'Update next.config.mjs with performance settings',
       },
       {
         name: '4. Build Application',
         command: 'npm run build',
-        description: 'Build with optimizations'
+        description: 'Build with optimizations',
       },
       {
         name: '5. Analyze Bundle',
         script: 'scripts/performance/analyze-bundle.js',
-        description: 'Analyze bundle size and identify issues'
+        description: 'Analyze bundle size and identify issues',
       },
       {
         name: '6. Performance Testing',
         script: 'scripts/performance/test.js',
-        description: 'Run performance tests'
+        description: 'Run performance tests',
       },
       {
         name: '7. Deploy to Vercel',
         command: 'npm run deploy',
-        description: 'Deploy to production'
-      }
+        description: 'Deploy to production',
+      },
     ];
   }
 
   log(message, type = 'info') {
     const timestamp = new Date().toISOString();
     const colors = {
-      info: '\x1b[36m',    // Cyan
+      info: '\x1b[36m', // Cyan
       success: '\x1b[32m', // Green
       warning: '\x1b[33m', // Yellow
-      error: '\x1b[31m',   // Red
-      reset: '\x1b[0m'
+      error: '\x1b[31m', // Red
+      reset: '\x1b[0m',
     };
-    
+
     const color = colors[type] || colors.info;
     console.log(`${color}[${timestamp}] ${message}${colors.reset}`);
   }
@@ -67,7 +67,7 @@ class PerformanceOptimizer {
   async runStep(step) {
     this.log(`\n🚀 Starting: ${step.name}`, 'info');
     this.log(`   ${step.description}`, 'info');
-    
+
     try {
       if (step.script) {
         const scriptPath = path.join(process.cwd(), step.script);
@@ -79,10 +79,9 @@ class PerformanceOptimizer {
       } else if (step.command) {
         execSync(step.command, { stdio: 'inherit' });
       }
-      
+
       this.log(`   ✅ Completed: ${step.name}`, 'success');
       return true;
-      
     } catch (error) {
       this.log(`   ❌ Failed: ${step.name}`, 'error');
       this.log(`   Error: ${error.message}`, 'error');
@@ -93,37 +92,37 @@ class PerformanceOptimizer {
   async run() {
     this.log('🎯 Performance Optimization Workflow Started', 'info');
     this.log('Target: 100/100 Lighthouse Scores\n', 'info');
-    
+
     const results = [];
-    
+
     for (const step of this.steps) {
       const success = await this.runStep(step);
       results.push({ step: step.name, success });
-      
+
       if (!success) {
         this.log('\n⚠️  Workflow stopped due to failure', 'warning');
         break;
       }
     }
-    
+
     this.displayResults(results);
     this.generateReport(results);
   }
 
   displayResults(results) {
     this.log('\n📊 Optimization Results:', 'info');
-    
-    results.forEach(result => {
+
+    results.forEach((result) => {
       const status = result.success ? '✅' : '❌';
       const color = result.success ? '\x1b[32m' : '\x1b[31m';
       console.log(`${color}${status} ${result.step}\x1b[0m`);
     });
-    
-    const successCount = results.filter(r => r.success).length;
+
+    const successCount = results.filter((r) => r.success).length;
     const totalCount = results.length;
-    
+
     this.log(`\n📈 Summary: ${successCount}/${totalCount} steps completed successfully`, 'info');
-    
+
     if (successCount === totalCount) {
       this.log('🎉 All optimizations completed! Ready for deployment.', 'success');
       this.log('Next steps:', 'info');
@@ -141,20 +140,20 @@ class PerformanceOptimizer {
       results: results,
       summary: {
         total: results.length,
-        successful: results.filter(r => r.success).length,
-        failed: results.filter(r => !r.success).length
+        successful: results.filter((r) => r.success).length,
+        failed: results.filter((r) => !r.success).length,
       },
       recommendations: [
         'Deploy to Vercel and test with Lighthouse',
         'Monitor Core Web Vitals in production',
         'Set up performance monitoring',
-        'Configure performance budgets'
-      ]
+        'Configure performance budgets',
+      ],
     };
-    
+
     const reportPath = path.join(process.cwd(), 'optimization-report.json');
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-    
+
     this.log(`\n💾 Report saved to: ${reportPath}`, 'info');
   }
 }
@@ -162,7 +161,7 @@ class PerformanceOptimizer {
 // CLI usage
 if (require.main === module) {
   const optimizer = new PerformanceOptimizer();
-  optimizer.run().catch(error => {
+  optimizer.run().catch((error) => {
     console.error('❌ Workflow failed:', error);
     process.exit(1);
   });

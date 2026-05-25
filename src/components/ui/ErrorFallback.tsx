@@ -18,7 +18,7 @@ export function ErrorFallback({
   title = 'Something went wrong',
   description = 'An unexpected error occurred. Please try again.',
   showDetails = process.env.NODE_ENV === 'development',
-  variant = 'page'
+  variant = 'page',
 }: ErrorFallbackProps) {
   const { showError } = useToast();
 
@@ -32,7 +32,8 @@ export function ErrorFallback({
 
   const handleReportError = () => {
     // In a real app, you would send this to your error reporting service
-    navigator.clipboard.writeText(error.stack || error.message)
+    navigator.clipboard
+      .writeText(error.stack || error.message)
       .then(() => {
         showError('Error details copied to clipboard');
       })
@@ -56,9 +57,9 @@ export function ErrorFallback({
 
   return (
     <div className={getVariantClasses()}>
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 text-center shadow-lg dark:bg-gray-800">
         {/* Error Icon */}
-        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
           <svg
             className="h-6 w-6 text-red-600 dark:text-red-400"
             fill="none"
@@ -75,28 +76,24 @@ export function ErrorFallback({
         </div>
 
         {/* Error Content */}
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          {title}
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          {description}
-        </p>
+        <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-white">{title}</h3>
+        <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">{description}</p>
 
         {/* Error Details (Development Only) */}
         {showDetails && (
-          <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-md text-left">
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+          <div className="mb-6 rounded-md bg-gray-50 p-3 text-left dark:bg-gray-700">
+            <h4 className="mb-2 text-sm font-medium text-gray-900 dark:text-white">
               Error Details:
             </h4>
-            <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap break-words">
+            <pre className="whitespace-pre-wrap break-words text-xs text-gray-600 dark:text-gray-300">
               {error.message}
             </pre>
             {error.stack && (
               <details className="mt-2">
-                <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
+                <summary className="cursor-pointer text-xs text-gray-500 dark:text-gray-400">
                   Stack Trace
                 </summary>
-                <pre className="text-xs text-gray-500 dark:text-gray-400 mt-1 whitespace-pre-wrap break-words">
+                <pre className="mt-1 whitespace-pre-wrap break-words text-xs text-gray-500 dark:text-gray-400">
                   {error.stack}
                 </pre>
               </details>
@@ -105,17 +102,12 @@ export function ErrorFallback({
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex flex-col justify-center gap-3 sm:flex-row">
           <button
             onClick={handleRetry}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -128,14 +120,9 @@ export function ErrorFallback({
 
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -149,14 +136,9 @@ export function ErrorFallback({
           {showDetails && (
             <button
               onClick={handleReportError}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -186,7 +168,13 @@ export function PageErrorFallback({ error, resetError }: { error: Error; resetEr
   );
 }
 
-export function ComponentErrorFallback({ error, resetError }: { error: Error; resetError: () => void }) {
+export function ComponentErrorFallback({
+  error,
+  resetError,
+}: {
+  error: Error;
+  resetError: () => void;
+}) {
   return (
     <ErrorFallback
       error={error}
@@ -198,7 +186,13 @@ export function ComponentErrorFallback({ error, resetError }: { error: Error; re
   );
 }
 
-export function InlineErrorFallback({ error, resetError }: { error: Error; resetError: () => void }) {
+export function InlineErrorFallback({
+  error,
+  resetError,
+}: {
+  error: Error;
+  resetError: () => void;
+}) {
   return (
     <ErrorFallback
       error={error}

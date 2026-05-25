@@ -9,15 +9,15 @@ import { CreateProjectSchema, UpdateProjectSchema } from './project';
 // Helper: Limit nested object depth (reserved for future use)
 // const MAX_DEPTH = 5;
 
-
-
 // Project Schemas
-export const projectTechnologySchema = z.string()
-    .min(1, 'Technology name cannot be empty')
-    .max(50, 'Technology name too long (max 50 characters)')
-    .trim();
+export const projectTechnologySchema = z
+  .string()
+  .min(1, 'Technology name cannot be empty')
+  .max(50, 'Technology name too long (max 50 characters)')
+  .trim();
 
-export const projectGalleryItemSchema = z.object({
+export const projectGalleryItemSchema = z
+  .object({
     kind: z.enum(['image', 'video']),
     src: z.string().url('Invalid URL format').max(500, 'URL too long'),
     alt: z.string().max(200).optional(),
@@ -25,14 +25,17 @@ export const projectGalleryItemSchema = z.object({
     height: z.number().int().positive().optional(),
     isActive: z.boolean().optional(),
     poster: z.string().url().max(500).optional(),
-}).strict();
+  })
+  .strict();
 
-export const projectComparisonSchema = z.object({
+export const projectComparisonSchema = z
+  .object({
     beforeImage: z.string().max(500, 'Image URL too long'),
     afterImage: z.string().max(500, 'Image URL too long'),
     beforeLabel: z.string().max(100).optional(),
     afterLabel: z.string().max(100).optional(),
-}).strict();
+  })
+  .strict();
 
 export const createProjectSchema = CreateProjectSchema;
 
@@ -42,89 +45,101 @@ export const updateProjectSchema = UpdateProjectSchema;
 const MAX_COMMENT_DEPTH = 3;
 
 const baseCommentSchema = z.object({
-    id: z.string().min(1),
-    text: z.string().max(1000, 'Comment too long (max 1000 characters)').optional(),
-    comment: z.string().max(1000, 'Comment too long').optional(),
-    name: z.string().max(100, 'Name too long').optional(),
-    author: z.string().max(100, 'Author name too long').optional(),
-    time: z.string().optional(),
-    createdAt: z.string().optional(),
-    likes: z.number().int().min(0).optional(),
-    likedByMe: z.boolean().optional(),
+  id: z.string().min(1),
+  text: z.string().max(1000, 'Comment too long (max 1000 characters)').optional(),
+  comment: z.string().max(1000, 'Comment too long').optional(),
+  name: z.string().max(100, 'Name too long').optional(),
+  author: z.string().max(100, 'Author name too long').optional(),
+  time: z.string().optional(),
+  createdAt: z.string().optional(),
+  likes: z.number().int().min(0).optional(),
+  likedByMe: z.boolean().optional(),
 });
 
 type CommentType = z.infer<typeof baseCommentSchema> & {
-    replies?: CommentType[];
+  replies?: CommentType[];
 };
 
 export const commentSchema: z.ZodType<CommentType> = baseCommentSchema.extend({
-    replies: z.lazy(() => z.array(commentSchema).max(50, 'Too many replies')).optional()
+  replies: z.lazy(() => z.array(commentSchema).max(50, 'Too many replies')).optional(),
 }) as z.ZodType<CommentType>;
 
 // Validate comment depth
 export function validateCommentDepth(comment: CommentType, depth: number = 0): boolean {
-    if (depth > MAX_COMMENT_DEPTH) {
-        return false;
-    }
+  if (depth > MAX_COMMENT_DEPTH) {
+    return false;
+  }
 
-    if (comment.replies && Array.isArray(comment.replies)) {
-        return comment.replies.every((reply: CommentType) =>
-            validateCommentDepth(reply, depth + 1)
-        );
-    }
+  if (comment.replies && Array.isArray(comment.replies)) {
+    return comment.replies.every((reply: CommentType) => validateCommentDepth(reply, depth + 1));
+  }
 
-    return true;
+  return true;
 }
 
-export const createCommentSchema = z.object({
+export const createCommentSchema = z
+  .object({
     slug: z.string().min(1, 'Slug is required').max(200),
     comments: z.array(commentSchema).max(1000, 'Too many comments'),
     website_url: z.string().max(0, 'Honeypot triggered').optional(), // Honeypot field
-}).strict();
+  })
+  .strict();
 
 // Upload Schemas
 export const uploadFileSchema = z.object({
-    filename: z.string()
-        .max(100, 'Filename too long')
-        .regex(/^[a-zA-Z0-9._-]+$/, 'Invalid filename characters')
-        .refine(name => !name.startsWith('.'), 'Filename cannot start with dot')
-        .refine(name => !name.includes('..'), 'Path traversal not allowed')
-        .optional(),
+  filename: z
+    .string()
+    .max(100, 'Filename too long')
+    .regex(/^[a-zA-Z0-9._-]+$/, 'Invalid filename characters')
+    .refine((name) => !name.startsWith('.'), 'Filename cannot start with dot')
+    .refine((name) => !name.includes('..'), 'Path traversal not allowed')
+    .optional(),
 
-    folder: z.enum(['temp', 'comparisons', 'projects', 'wallpapers', 'icons-library'])
-        .optional(),
+  folder: z.enum(['temp', 'comparisons', 'projects', 'wallpapers', 'icons-library']).optional(),
 });
 
 // Contact Schemas
-export const updateContactSchema = z.object({
+export const updateContactSchema = z
+  .object({
     content: z.record(z.string(), z.unknown()).optional(),
     info: z.record(z.string(), z.unknown()).optional(),
     formSettings: z.record(z.string(), z.unknown()).optional(),
-}).strict();
+  })
+  .strict();
 
 // Settings Schemas
-export const updateSettingsSchema = z.object({
+export const updateSettingsSchema = z
+  .object({
     bannedWords: z.array(z.string().max(50)).max(1000).optional(),
     maintenanceMode: z.boolean().optional(),
     allowComments: z.boolean().optional(),
-}).passthrough(); // Allow additional fields for flexibility
+  })
+  .passthrough(); // Allow additional fields for flexibility
 
 // Admin Operation Schemas
-export const compressFileSchema = z.object({
-    filePath: z.string().min(1, 'File path is required')
-}).strict();
+export const compressFileSchema = z
+  .object({
+    filePath: z.string().min(1, 'File path is required'),
+  })
+  .strict();
 
-export const deleteIconSchema = z.object({
-    url: z.string().min(1, 'URL is required')
-}).strict();
+export const deleteIconSchema = z
+  .object({
+    url: z.string().min(1, 'URL is required'),
+  })
+  .strict();
 
-export const telegramWebhookSchema = z.object({
-    url: z.string().url('Invalid webhook URL')
-}).strict();
+export const telegramWebhookSchema = z
+  .object({
+    url: z.string().url('Invalid webhook URL'),
+  })
+  .strict();
 
-export const telegramStatusSchema = z.object({
-    token: z.string().min(1, 'Bot token is required')
-}).strict();
+export const telegramStatusSchema = z
+  .object({
+    token: z.string().min(1, 'Bot token is required'),
+  })
+  .strict();
 
 // Export type inference
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
@@ -138,7 +153,8 @@ export type TelegramStatusInput = z.infer<typeof telegramStatusSchema>;
 
 // Exit-Intent Feedback Schema
 // Visitor leaves a rating + optional message when they show intent to close the tab.
-export const feedbackSubmissionSchema = z.object({
+export const feedbackSubmissionSchema = z
+  .object({
     // 1-5 bintang
     rating: z.number().int().min(1).max(5),
     // Pesan / saran / kritik singkat. Opsional, tapi kalau ada dibatasi panjang.
@@ -158,7 +174,8 @@ export const feedbackSubmissionSchema = z.object({
     // Honeypot. Non-empty values must pass validation so the route can return
     // a silent success response instead of revealing bot detection.
     website_url: z.string().max(200, 'Honeypot value too long').optional(),
-}).strict();
+  })
+  .strict();
 
 export type FeedbackSubmissionInput = z.infer<typeof feedbackSubmissionSchema>;
 
@@ -167,9 +184,11 @@ export type FeedbackStatus = 'pending' | 'approved' | 'hidden' | 'deleted';
 export const feedbackStatusEnum = z.enum(['pending', 'approved', 'hidden', 'deleted']);
 
 // Admin action untuk update status (akan dipakai admin panel)
-export const feedbackModerationSchema = z.object({
+export const feedbackModerationSchema = z
+  .object({
     status: feedbackStatusEnum,
     isPublic: z.boolean().optional(),
-}).strict();
+  })
+  .strict();
 
 export type FeedbackModerationInput = z.infer<typeof feedbackModerationSchema>;

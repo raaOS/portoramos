@@ -12,14 +12,14 @@ export default function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  
+
   const handleToggle = () => {
     if (!isOpen && buttonRef.current) {
       setTriggerRect(buttonRef.current.getBoundingClientRect());
     }
     setIsOpen(!isOpen);
   };
-  
+
   useEffect(() => {
     const handleResize = () => {
       if (isOpen && buttonRef.current) {
@@ -33,20 +33,22 @@ export default function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
       window.removeEventListener('scroll', handleResize, true);
     };
   }, [isOpen]);
-  
+
   return (
     <>
       <button
         ref={buttonRef}
         type="button"
         onClick={handleToggle}
-        className="p-2 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884]"
+        className="inline-flex items-center justify-center rounded-full p-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884]"
         aria-label="Open emoji picker"
         aria-expanded={isOpen}
       >
-        <Smile className={`w-6 h-6 transition-colors ${isOpen ? 'text-[#00a884]' : 'text-[#8696a0] hover:text-[#00a884]'}`} />
+        <Smile
+          className={`h-6 w-6 transition-colors ${isOpen ? 'text-[#00a884]' : 'text-[#8696a0] hover:text-[#00a884]'}`}
+        />
       </button>
-      
+
       <PickerPanel
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}

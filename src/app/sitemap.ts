@@ -1,11 +1,11 @@
-import { MetadataRoute } from 'next'
-import { allProjectsAsync } from '@/lib/projects'
+import { MetadataRoute } from 'next';
+import { allProjectsAsync } from '@/lib/projects';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://ramos-portofolio.vercel.app'
+  const baseUrl = 'https://ramos-portofolio.vercel.app';
 
   // Ambil semua project
-  const projects = await allProjectsAsync()
+  const projects = await allProjectsAsync();
 
   // URL statis (halaman tetap)
   const staticUrls: MetadataRoute.Sitemap = [
@@ -39,19 +39,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.6,
     },
-  ]
+  ];
 
   // URL dinamis dari project
   const projectUrls: MetadataRoute.Sitemap = projects
     .filter((project) => project.status !== 'draft') // Hanya publish project
     .map((project) => ({
       url: `${baseUrl}/projects/${project.slug}`,
-      lastModified: project.updatedAt
-        ? new Date(project.updatedAt)
-        : new Date(),
+      lastModified: project.updatedAt ? new Date(project.updatedAt) : new Date(),
       changeFrequency: 'monthly' as const,
       priority: 0.8,
-    }))
+    }));
 
-  return [...staticUrls, ...projectUrls]
+  return [...staticUrls, ...projectUrls];
 }

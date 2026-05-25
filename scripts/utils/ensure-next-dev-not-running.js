@@ -32,7 +32,7 @@ function isPortActive(port, host = '127.0.0.1') {
     [
       `Port ${port} sedang dipakai. Kemungkinan \`npm run dev\` masih berjalan.`,
       'Hentikan dev server dulu sebelum menjalankan build atau clear-cache.',
-      'Ini mencegah folder `.next/dev` terhapus saat server masih aktif.'
+      'Ini mencegah folder `.next/dev` terhapus saat server masih aktif.',
     ].join('\n')
   );
 

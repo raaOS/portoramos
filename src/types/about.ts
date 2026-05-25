@@ -14,7 +14,7 @@ export interface AboutHero {
   capColor?: string;
   availability?: {
     status: 'available' | 'booked' | 'limited';
-    text: string;     // e.g. "Available for new projects"
+    text: string; // e.g. "Available for new projects"
     text_id?: string; // e.g. "Tersedia untuk proyek baru"
   };
 }
@@ -29,7 +29,6 @@ export interface AboutMotto {
 export interface AboutBio {
   content: string;
   content_id?: string;
-
 }
 
 export interface AboutContacts {
@@ -97,12 +96,17 @@ export interface DesignPhilosophy {
   workflowSteps: WorkflowStep[];
 }
 
-
 // OS Configuration Types
 export interface Wallpaper {
   id: string;
   url: string;
   name?: string;
+  /**
+   * Optional poster image URL for video wallpapers. Generated server-side by
+   * the upload pipeline (`/api/upload`) so the admin grid and skeleton screens
+   * have an instant thumbnail without having to decode the MP4.
+   */
+  posterUrl?: string;
 }
 
 export interface WallpaperConfig {
@@ -141,8 +145,6 @@ export interface DockItemConfig {
 export interface DockPreferences {
   [key: string]: DockItemConfig;
 }
-
-
 
 export interface WindowPreference {
   // Legacy pixel-based (keep for fallback)
@@ -187,7 +189,6 @@ export interface AboutData {
   windowPreferences?: WindowPreferences;
   islandNotifications?: AboutIslandNotification[];
   soundConfig?: SoundConfig;
-
 
   labels?: {
     experienceTitle?: string;

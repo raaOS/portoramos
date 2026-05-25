@@ -18,7 +18,7 @@ export default function AdminModal({
   title,
   children,
   actions,
-  size = 'md'
+  size = 'md',
 }: AdminModalProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -45,12 +45,12 @@ export default function AdminModal({
     md: 'max-w-lg',
     lg: 'max-w-2xl',
     xl: 'max-w-4xl',
-    '2xl': 'max-w-6xl'
+    '2xl': 'max-w-6xl',
   };
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-2 sm:px-4 pb-20 text-center sm:block sm:p-0">
+      <div className="flex min-h-screen items-center justify-center px-2 pb-20 pt-4 text-center sm:block sm:p-0 sm:px-4">
         {/* Backdrop */}
         <div
           className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
@@ -59,48 +59,63 @@ export default function AdminModal({
 
         {/* Modal */}
         <div
-          className={`inline-flex flex-col align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full max-h-[90vh] ${sizeClasses[size]}`}
+          className={`inline-flex max-h-[90vh] w-full transform flex-col overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle ${sizeClasses[size]}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="bg-white px-4 sm:px-6 py-4 border-b border-gray-200 flex-shrink-0">
+          <div className="flex-shrink-0 border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate pr-2">{title}</h3>
+              <h3 className="truncate pr-2 text-base font-semibold text-gray-900 sm:text-lg">
+                {title}
+              </h3>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md p-1"
+                className="rounded-md p-1 text-gray-400 transition-colors hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="Close modal"
               >
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-5 w-5 sm:h-6 sm:w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
           </div>
 
           {/* Content */}
-          <div className="bg-white px-4 sm:px-6 py-4 flex-1 overflow-y-auto min-h-0 overscroll-contain" data-lenis-prevent>
+          <div
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-4 py-4 sm:px-6"
+            data-lenis-prevent
+          >
             {children}
           </div>
 
           {/* Footer */}
           {(actions || (
-            <div className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:justify-end sm:space-x-3 sm:space-y-0">
               <AdminButton variant="secondary" onClick={onClose} className="w-full sm:w-auto">
                 Cancel
               </AdminButton>
             </div>
           )) && (
-              <div className="bg-gray-50 px-4 sm:px-6 py-4 border-t border-gray-200 flex-shrink-0">
-                {actions || (
-                  <div className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-3">
-                    <AdminButton variant="secondary" onClick={onClose} className="w-full sm:w-auto">
-                      Cancel
-                    </AdminButton>
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="flex-shrink-0 border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
+              {actions || (
+                <div className="flex flex-col space-y-2 sm:flex-row sm:justify-end sm:space-x-3 sm:space-y-0">
+                  <AdminButton variant="secondary" onClick={onClose} className="w-full sm:w-auto">
+                    Cancel
+                  </AdminButton>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

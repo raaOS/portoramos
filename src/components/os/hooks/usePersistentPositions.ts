@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { AboutData } from '@/types/about';
@@ -50,7 +50,7 @@ export function usePersistentPositions(aboutData?: AboutData | null) {
   const positionsRef = useRef<PositionsState>({
     windows: {},
     icons: {},
-    notes: {}
+    notes: {},
   });
 
   // Load pertama kali: localStorage > CLOUDFLARE_D1 > default
@@ -64,32 +64,32 @@ export function usePersistentPositions(aboutData?: AboutData | null) {
     const merged: PositionsState = {
       windows: {},
       icons: localData.icons || {},
-      notes: localData.notes || {}
+      notes: localData.notes || {},
     };
 
     // Windows: cek localStorage dulu, kalau gak ada pakai CLOUDFLARE_D1
-    Object.keys(CLOUDFLARE_D1Data).forEach(id => {
+    Object.keys(CLOUDFLARE_D1Data).forEach((id) => {
       const pref = CLOUDFLARE_D1Data[id];
       const local = localData.windows?.[id];
-      
+
       merged.windows[id] = local || {
         x: pref?.x ?? 100,
         y: pref?.y ?? 80,
         width: pref?.width ?? 900,
-        height: pref?.height ?? 600
+        height: pref?.height ?? 600,
       };
     });
 
     // Icon positions dari aboutData
     if (aboutData?.desktopPreferences?.iconPositions) {
-      merged.icons = { 
+      merged.icons = {
         ...aboutData.desktopPreferences.iconPositions,
-        ...localData.icons // localStorage menang
+        ...localData.icons, // localStorage menang
       };
     }
 
     positionsRef.current = merged;
-    
+
     // Use queueMicrotask to avoid synchronous setState warning
     queueMicrotask(() => {
       setIsLoaded(true);
@@ -106,15 +106,18 @@ export function usePersistentPositions(aboutData?: AboutData | null) {
     return positionsRef.current.icons[id] || defaults;
   }, []);
 
-  const getNotePosition = useCallback((id: string, defaults: { x: number; y: number; width: number; height: number }) => {
-    return positionsRef.current.notes[id] || defaults;
-  }, []);
+  const getNotePosition = useCallback(
+    (id: string, defaults: { x: number; y: number; width: number; height: number }) => {
+      return positionsRef.current.notes[id] || defaults;
+    },
+    []
+  );
 
   // Update position (real-time, auto-save)
   const updateWindowPosition = useCallback((id: string, pos: Partial<WindowPosition>) => {
     positionsRef.current.windows[id] = {
       ...positionsRef.current.windows[id],
-      ...pos
+      ...pos,
     };
     saveToStorage(positionsRef.current);
   }, []);
@@ -124,33 +127,36 @@ export function usePersistentPositions(aboutData?: AboutData | null) {
     saveToStorage(positionsRef.current);
   }, []);
 
-  const updateNotePosition = useCallback((id: string, pos: { x: number; y: number; width: number; height: number }) => {
-    positionsRef.current.notes[id] = pos;
-    saveToStorage(positionsRef.current);
-  }, []);
+  const updateNotePosition = useCallback(
+    (id: string, pos: { x: number; y: number; width: number; height: number }) => {
+      positionsRef.current.notes[id] = pos;
+      saveToStorage(positionsRef.current);
+    },
+    []
+  );
 
   // Flush all ke server (admin only)
   const flushPositions = useCallback(async (csrfToken?: string) => {
     if (!csrfToken) return;
-    
+
     try {
       const payload = {
         windowPreferences: positionsRef.current.windows,
         desktopPreferences: {
-          iconPositions: positionsRef.current.icons
-        }
+          iconPositions: positionsRef.current.icons,
+        },
       };
 
       await fetch('/api/about', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken
+          'X-CSRF-Token': csrfToken,
         },
         credentials: 'include',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
-      
+
       console.log('[Positions] Flushed to server');
     } catch (error) {
       console.error('[Positions] Failed to flush:', error);
@@ -165,6 +171,6 @@ export function usePersistentPositions(aboutData?: AboutData | null) {
     updateWindowPosition,
     updateIconPosition,
     updateNotePosition,
-    flushPositions
+    flushPositions,
   };
 }

@@ -44,7 +44,7 @@ export interface Project {
   comparison?: {
     beforeImage: string; // URL
     beforeType?: 'image' | 'video';
-    afterImage: string;  // URL
+    afterImage: string; // URL
     afterType?: 'image' | 'video';
   };
   gallery?: string[];

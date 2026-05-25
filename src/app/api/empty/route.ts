@@ -10,6 +10,12 @@ export const runtime = 'edge';
 
 const noContent = () => new NextResponse(null, { status: 204 });
 
-export async function GET() { return noContent(); }
-export async function POST() { return noContent(); }
-export async function HEAD() { return noContent(); }
+export async function GET() {
+  return noContent();
+}
+export async function POST() {
+  return noContent();
+}
+export async function HEAD() {
+  return noContent();
+}

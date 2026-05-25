@@ -26,10 +26,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     if (!(await validateAdminRequest(request))) {
-      return NextResponse.json(
-        { error: 'Unauthorized or invalid CSRF token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const rawBody = await request.json();
@@ -55,10 +52,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     if (!(await validateAdminRequest(request))) {
-      return NextResponse.json(
-        { error: 'Unauthorized or invalid CSRF token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const rawBody = await request.json();
@@ -89,10 +83,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     if (!(await validateAdminRequest(request))) {
-      return NextResponse.json(
-        { error: 'Unauthorized or invalid CSRF token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
     const rawBody = await request.json();

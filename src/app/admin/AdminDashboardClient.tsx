@@ -19,7 +19,7 @@ export default function AdminDashboardClient() {
 
   // Render minimal loader while redirecting
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center">
       <div className="animate-pulse text-gray-400">Loading dashboard...</div>
     </div>
   );

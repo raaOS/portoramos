@@ -1,4 +1,4 @@
 export interface GalleryFeaturedData {
-    featuredProjectIds: string[];
-    lastUpdated: string;
+  featuredProjectIds: string[];
+  lastUpdated: string;
 }

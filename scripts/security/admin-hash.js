@@ -9,15 +9,15 @@ const crypto = require('crypto');
 
 /**
  * Generate a scrypt hash for a password
- * @param {string} password 
- * @param {string} salt 
+ * @param {string} password
+ * @param {string} salt
  * @returns {string} 64-byte hex encoded hash (128 chars)
  */
 function generateAdminHash(password, salt) {
   if (!password || password.length < 8) {
     throw new Error('Password must be at least 8 characters');
   }
-  
+
   if (!salt || salt.length < 8) {
     throw new Error('Salt must be at least 8 characters');
   }
@@ -28,7 +28,7 @@ function generateAdminHash(password, salt) {
 
 /**
  * Generate a secure random salt
- * @param {number} length 
+ * @param {number} length
  * @returns {string} Hex encoded salt
  */
 function generateSecureSalt(length = 16) {
@@ -37,9 +37,9 @@ function generateSecureSalt(length = 16) {
 
 /**
  * Verify if a password matches a hash
- * @param {string} password 
- * @param {string} salt 
- * @param {string} hash 
+ * @param {string} password
+ * @param {string} salt
+ * @param {string} hash
  * @returns {boolean}
  */
 function verifyAdminHash(password, salt, hash) {
@@ -79,7 +79,6 @@ function main() {
     console.log(`ADMIN_PASSWORD_SCRYPT="${hash}"`);
     console.log(`PASSWORD_SALT="${salt}"`);
     console.log('─'.repeat(50));
-
   } else if (command === 'verify') {
     const password = args[1];
     const salt = args[2];
@@ -96,7 +95,6 @@ function main() {
     } else {
       console.log('❌ HASH MISMATCH! Authentication will fail.');
     }
-
   } else {
     console.log('Available commands:');
     console.log('  generate <password> [salt] - Generate a new scrypt hash');

@@ -16,7 +16,7 @@ class PerformanceMonitor {
       cls: null,
       tbt: null,
       si: null,
-      ttfb: null
+      ttfb: null,
     };
     this.thresholds = {
       fcp: { good: 1800, poor: 3000 },
@@ -24,7 +24,7 @@ class PerformanceMonitor {
       cls: { good: 0.1, poor: 0.25 },
       tbt: { good: 200, poor: 600 },
       si: { good: 3400, poor: 5800 },
-      ttfb: { good: 800, poor: 1800 }
+      ttfb: { good: 800, poor: 1800 },
     };
   }
 
@@ -78,7 +78,7 @@ class PerformanceMonitor {
         const observer = new PerformanceObserver((list) => {
           const entries = list.getEntries();
           for (const entry of entries) {
-            if (!(entry.hadRecentInput)) {
+            if (!entry.hadRecentInput) {
               clsValue += entry.value;
             }
           }
@@ -100,7 +100,8 @@ class PerformanceMonitor {
         const observer = new PerformanceObserver((list) => {
           const entries = list.getEntries();
           for (const entry of entries) {
-            if (entry.startTime < 6000) { // Only consider first 6 seconds
+            if (entry.startTime < 6000) {
+              // Only consider first 6 seconds
               tbtValue += entry.duration - 50;
             }
           }
@@ -117,10 +118,10 @@ class PerformanceMonitor {
 
   getScore(metric, value) {
     if (value === null) return 'N/A';
-    
+
     const threshold = this.thresholds[metric];
     if (!threshold) return 'Unknown';
-    
+
     if (metric === 'cls') {
       if (value <= threshold.good) return 'Good';
       if (value <= threshold.poor) return 'Needs Improvement';
@@ -134,26 +135,30 @@ class PerformanceMonitor {
 
   getScoreColor(score) {
     switch (score) {
-      case 'Good': return '✅';
-      case 'Needs Improvement': return '⚠️';
-      case 'Poor': return '❌';
-      default: return '❓';
+      case 'Good':
+        return '✅';
+      case 'Needs Improvement':
+        return '⚠️';
+      case 'Poor':
+        return '❌';
+      default:
+        return '❓';
     }
   }
 
   async collectMetrics() {
     console.log('📊 Collecting Core Web Vitals...\n');
-    
+
     const [fcp, lcp, cls, tbt] = await Promise.all([
       this.measureFCP(),
       this.measureLCP(),
       this.measureCLS(),
-      this.measureTBT()
+      this.measureTBT(),
     ]);
 
     // Calculate SI from existing data
     this.metrics.si = Math.max(fcp || 0, lcp || 0) * 1.1;
-    
+
     // TTFB from navigation timing
     if ('performance' in window) {
       const navigation = performance.getEntriesByType('navigation')[0];
@@ -167,64 +172,86 @@ class PerformanceMonitor {
 
   displayResults() {
     console.log('🎯 Core Web Vitals Results:\n');
-    
+
     const metrics = [
       { name: 'First Contentful Paint (FCP)', value: this.metrics.fcp, unit: 'ms' },
       { name: 'Largest Contentful Paint (LCP)', value: this.metrics.lcp, unit: 'ms' },
       { name: 'Cumulative Layout Shift (CLS)', value: this.metrics.cls, unit: '' },
       { name: 'Total Blocking Time (TBT)', value: this.metrics.tbt, unit: 'ms' },
       { name: 'Speed Index (SI)', value: this.metrics.si, unit: 'ms' },
-      { name: 'Time to First Byte (TTFB)', value: this.metrics.ttfb, unit: 'ms' }
+      { name: 'Time to First Byte (TTFB)', value: this.metrics.ttfb, unit: 'ms' },
     ];
 
-    metrics.forEach(metric => {
-      const score = this.getScore(metric.name.toLowerCase().includes('fcp') ? 'fcp' : 
-                                 metric.name.toLowerCase().includes('lcp') ? 'lcp' :
-                                 metric.name.toLowerCase().includes('cls') ? 'cls' :
-                                 metric.name.toLowerCase().includes('tbt') ? 'tbt' :
-                                 metric.name.toLowerCase().includes('si') ? 'si' : 'ttfb', 
-                                 metric.value);
+    metrics.forEach((metric) => {
+      const score = this.getScore(
+        metric.name.toLowerCase().includes('fcp')
+          ? 'fcp'
+          : metric.name.toLowerCase().includes('lcp')
+            ? 'lcp'
+            : metric.name.toLowerCase().includes('cls')
+              ? 'cls'
+              : metric.name.toLowerCase().includes('tbt')
+                ? 'tbt'
+                : metric.name.toLowerCase().includes('si')
+                  ? 'si'
+                  : 'ttfb',
+        metric.value
+      );
       const color = this.getScoreColor(score);
-      
-      console.log(`${color} ${metric.name}: ${metric.value ? metric.value.toFixed(2) : 'N/A'}${metric.unit} (${score})`);
+
+      console.log(
+        `${color} ${metric.name}: ${metric.value ? metric.value.toFixed(2) : 'N/A'}${metric.unit} (${score})`
+      );
     });
 
     console.log('\n📈 Performance Summary:');
-    
+
     const scores = {
       fcp: this.getScore('fcp', this.metrics.fcp),
       lcp: this.getScore('lcp', this.metrics.lcp),
       cls: this.getScore('cls', this.metrics.cls),
-      tbt: this.getScore('tbt', this.metrics.tbt)
+      tbt: this.getScore('tbt', this.metrics.tbt),
     };
 
-    const goodCount = Object.values(scores).filter(s => s === 'Good').length;
+    const goodCount = Object.values(scores).filter((s) => s === 'Good').length;
     const totalCount = Object.keys(scores).length;
-    
+
     console.log(`   Good: ${goodCount}/${totalCount} metrics`);
-    console.log(`   Needs Improvement: ${Object.values(scores).filter(s => s === 'Needs Improvement').length}/${totalCount} metrics`);
-    console.log(`   Poor: ${Object.values(scores).filter(s => s === 'Poor').length}/${totalCount} metrics`);
+    console.log(
+      `   Needs Improvement: ${Object.values(scores).filter((s) => s === 'Needs Improvement').length}/${totalCount} metrics`
+    );
+    console.log(
+      `   Poor: ${Object.values(scores).filter((s) => s === 'Poor').length}/${totalCount} metrics`
+    );
 
     // Recommendations
     console.log('\n💡 Recommendations:');
     if (scores.lcp !== 'Good') {
-      console.log('   • Optimize Largest Contentful Paint (LCP) - compress images, preload critical resources');
+      console.log(
+        '   • Optimize Largest Contentful Paint (LCP) - compress images, preload critical resources'
+      );
     }
     if (scores.cls !== 'Good') {
-      console.log('   • Fix Cumulative Layout Shift (CLS) - add width/height to images, avoid layout shifts');
+      console.log(
+        '   • Fix Cumulative Layout Shift (CLS) - add width/height to images, avoid layout shifts'
+      );
     }
     if (scores.fcp !== 'Good') {
-      console.log('   • Improve First Contentful Paint (FCP) - inline critical CSS, optimize fonts');
+      console.log(
+        '   • Improve First Contentful Paint (FCP) - inline critical CSS, optimize fonts'
+      );
     }
     if (scores.tbt !== 'Good') {
-      console.log('   • Reduce Total Blocking Time (TBT) - code split, defer non-critical JavaScript');
+      console.log(
+        '   • Reduce Total Blocking Time (TBT) - code split, defer non-critical JavaScript'
+      );
     }
   }
 
   async run() {
     await this.collectMetrics();
     this.displayResults();
-    
+
     // Save results to file
     const resultsPath = path.join(process.cwd(), 'performance-results.json');
     fs.writeFileSync(resultsPath, JSON.stringify(this.metrics, null, 2));

@@ -1,4 +1,4 @@
-"use client"
+'use client';
 import React from 'react';
 import { motion } from 'motion/react';
 import { Save, X, Sparkles, Loader2, Search } from 'lucide-react';
@@ -25,43 +25,45 @@ export default function SkillEditor({
   onSave,
   onAutoIcon,
   onAiGenerate,
-  setEditForm
+  setEditForm,
 }: SkillEditorProps) {
   const updateFormDetail = (index: number, value: string) => {
     const newDetails = [...(editForm.details || ['', '', '', ''])];
     newDetails[index] = value;
     setEditForm({ ...editForm, details: newDetails });
   };
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
-      className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6 space-y-4"
+      className="mb-6 space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-6"
     >
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-lg">{isAdding ? 'Add New Skill' : 'Edit Skill'}</h3>
-        <button onClick={onClose} aria-label="Close editor"><X size={20} /></button>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-bold">{isAdding ? 'Add New Skill' : 'Edit Skill'}</h3>
+        <button onClick={onClose} aria-label="Close editor">
+          <X size={20} />
+        </button>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium mb-1">Skill Name</label>
+          <label className="mb-1 block text-sm font-medium">Skill Name</label>
           <input
             type="text"
             value={editForm.name}
-            onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-            className="w-full p-2 border rounded-lg"
+            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+            className="w-full rounded-lg border p-2"
             placeholder="e.g. Photoshop"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Level</label>
+          <label className="mb-1 block text-sm font-medium">Level</label>
           <select
             value={editForm.level}
-            onChange={e => setEditForm({ ...editForm, level: e.target.value as HardSkillLevel })}
-            className="w-full p-2 border rounded-lg"
+            onChange={(e) => setEditForm({ ...editForm, level: e.target.value as HardSkillLevel })}
+            className="w-full rounded-lg border p-2"
           >
             <option value="Beginner">Beginner</option>
             <option value="Intermediate">Intermediate</option>
@@ -70,34 +72,38 @@ export default function SkillEditor({
           </select>
         </div>
         <div>
-          <div className="flex justify-between items-center mb-1">
+          <div className="mb-1 flex items-center justify-between">
             <label className="block text-sm font-medium">Icon URL (SVG)</label>
             <button
               onClick={onAutoIcon}
               disabled={isSearchingIcon || !editForm.name}
-              className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium bg-blue-50 px-2 py-1 rounded-md"
+              className="flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 transition-colors hover:text-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSearchingIcon ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
+              {isSearchingIcon ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Search size={12} />
+              )}
               {isSearchingIcon ? 'Searching...' : 'Find Icon'}
             </button>
           </div>
           <input
             type="text"
             value={editForm.iconUrl}
-            onChange={e => setEditForm({ ...editForm, iconUrl: e.target.value })}
-            className="w-full p-2 border rounded-lg"
+            onChange={(e) => setEditForm({ ...editForm, iconUrl: e.target.value })}
+            className="w-full rounded-lg border p-2"
             placeholder="https://cdn..."
           />
         </div>
       </div>
-      
+
       <div>
-        <div className="flex justify-between items-center mb-1">
+        <div className="mb-1 flex items-center justify-between">
           <label className="block text-sm font-medium">Capabilities (4 Points)</label>
           <button
             onClick={onAiGenerate}
             disabled={isGenerating || !editForm.name}
-            className="text-xs flex items-center gap-1 text-purple-600 hover:text-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium bg-purple-50 px-2 py-1 rounded-md"
+            className="flex items-center gap-1 rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-600 transition-colors hover:text-purple-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
             {isGenerating ? 'Thinking...' : 'AI Auto-Fill'}
@@ -109,24 +115,21 @@ export default function SkillEditor({
               key={idx}
               type="text"
               value={detail}
-              onChange={e => updateFormDetail(idx, e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              onChange={(e) => updateFormDetail(idx, e.target.value)}
+              className="w-full rounded-lg border p-2"
               placeholder={`Capability ${idx + 1}`}
             />
           ))}
         </div>
       </div>
-      
+
       <div className="flex justify-end gap-2 pt-2">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-        >
+        <button onClick={onClose} className="rounded-lg border px-4 py-2 hover:bg-gray-50">
           Cancel
         </button>
         <button
           onClick={() => onSave(editForm)}
-          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 flex items-center gap-2"
+          className="flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800"
         >
           <Save size={18} /> Save Changes
         </button>

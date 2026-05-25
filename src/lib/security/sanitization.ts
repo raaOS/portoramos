@@ -1,173 +1,173 @@
 export function sanitizeInput(input: string): string {
-    return input
-        .trim()
-        .replace(/[<>]/g, '') // Remove potential HTML tags
-        .substring(0, 1000) // Limit length
+  return input
+    .trim()
+    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .substring(0, 1000); // Limit length
 }
 
 const ALLOWED_RICH_TEXT_TAGS = new Set([
-    'b',
-    'strong',
-    'i',
-    'em',
-    'u',
-    's',
-    'br',
-    'p',
-    'div',
-    'span',
-    'ul',
-    'ol',
-    'li',
-    'h1',
-    'h2',
-    'h3',
-    'input',
+  'b',
+  'strong',
+  'i',
+  'em',
+  'u',
+  's',
+  'br',
+  'p',
+  'div',
+  'span',
+  'ul',
+  'ol',
+  'li',
+  'h1',
+  'h2',
+  'h3',
+  'input',
 ]);
 
 const BLOCKED_RICH_TEXT_TAGS = new Set([
-    'script',
-    'style',
-    'iframe',
-    'object',
-    'embed',
-    'applet',
-    'meta',
-    'link',
-    'base',
-    'form',
+  'script',
+  'style',
+  'iframe',
+  'object',
+  'embed',
+  'applet',
+  'meta',
+  'link',
+  'base',
+  'form',
 ]);
 
 function sanitizeRichTextWithDom(input: string): string {
-    if (typeof DOMParser === 'undefined' || typeof document === 'undefined') {
-        return sanitize.html(input);
+  if (typeof DOMParser === 'undefined' || typeof document === 'undefined') {
+    return sanitize.html(input);
+  }
+
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(`<div>${input}</div>`, 'text/html');
+  const sourceRoot = parsed.body.firstElementChild;
+
+  if (!sourceRoot) {
+    return '';
+  }
+
+  const cleanDoc = document.implementation.createHTMLDocument('');
+  const cleanRoot = cleanDoc.createElement('div');
+
+  const sanitizeNode = (node: Node): Node | null => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return cleanDoc.createTextNode(node.textContent || '');
     }
 
-    const parser = new DOMParser();
-    const parsed = parser.parseFromString(`<div>${input}</div>`, 'text/html');
-    const sourceRoot = parsed.body.firstElementChild;
-
-    if (!sourceRoot) {
-        return '';
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return null;
     }
 
-    const cleanDoc = document.implementation.createHTMLDocument('');
-    const cleanRoot = cleanDoc.createElement('div');
+    const element = node as HTMLElement;
+    const tag = element.tagName.toLowerCase();
 
-    const sanitizeNode = (node: Node): Node | null => {
-        if (node.nodeType === Node.TEXT_NODE) {
-            return cleanDoc.createTextNode(node.textContent || '');
-        }
+    if (BLOCKED_RICH_TEXT_TAGS.has(tag)) {
+      return cleanDoc.createTextNode(element.textContent || '');
+    }
 
-        if (node.nodeType !== Node.ELEMENT_NODE) {
-            return null;
-        }
+    const sanitizedChildren = Array.from(element.childNodes)
+      .map((child) => sanitizeNode(child))
+      .filter((child): child is Node => child !== null);
 
-        const element = node as HTMLElement;
-        const tag = element.tagName.toLowerCase();
+    if (!ALLOWED_RICH_TEXT_TAGS.has(tag)) {
+      const fragment = cleanDoc.createDocumentFragment();
+      sanitizedChildren.forEach((child) => fragment.appendChild(child));
+      return fragment;
+    }
 
-        if (BLOCKED_RICH_TEXT_TAGS.has(tag)) {
-            return cleanDoc.createTextNode(element.textContent || '');
-        }
+    const sanitizedElement = cleanDoc.createElement(tag);
 
-        const sanitizedChildren = Array.from(element.childNodes)
-            .map(child => sanitizeNode(child))
-            .filter((child): child is Node => child !== null);
+    if (tag === 'input') {
+      const inputType = (element.getAttribute('type') || '').toLowerCase();
+      if (inputType !== 'checkbox') {
+        return cleanDoc.createTextNode('');
+      }
 
-        if (!ALLOWED_RICH_TEXT_TAGS.has(tag)) {
-            const fragment = cleanDoc.createDocumentFragment();
-            sanitizedChildren.forEach(child => fragment.appendChild(child));
-            return fragment;
-        }
+      sanitizedElement.setAttribute('type', 'checkbox');
+      sanitizedElement.setAttribute('disabled', '');
+      if (element.hasAttribute('checked')) {
+        sanitizedElement.setAttribute('checked', '');
+      }
+      if (element.hasAttribute('data-note-checklist-item')) {
+        sanitizedElement.setAttribute('data-note-checklist-item', 'true');
+      }
+    }
 
-        const sanitizedElement = cleanDoc.createElement(tag);
+    if (tag === 'div' && element.hasAttribute('data-note-checklist')) {
+      sanitizedElement.setAttribute('data-note-checklist', 'true');
+    }
 
-        if (tag === 'input') {
-            const inputType = (element.getAttribute('type') || '').toLowerCase();
-            if (inputType !== 'checkbox') {
-                return cleanDoc.createTextNode('');
-            }
+    if (tag === 'span' && element.hasAttribute('data-note-checklist-label')) {
+      sanitizedElement.setAttribute('data-note-checklist-label', 'true');
+    }
 
-            sanitizedElement.setAttribute('type', 'checkbox');
-            sanitizedElement.setAttribute('disabled', '');
-            if (element.hasAttribute('checked')) {
-                sanitizedElement.setAttribute('checked', '');
-            }
-            if (element.hasAttribute('data-note-checklist-item')) {
-                sanitizedElement.setAttribute('data-note-checklist-item', 'true');
-            }
-        }
+    sanitizedChildren.forEach((child) => sanitizedElement.appendChild(child));
+    return sanitizedElement;
+  };
 
-        if (tag === 'div' && element.hasAttribute('data-note-checklist')) {
-            sanitizedElement.setAttribute('data-note-checklist', 'true');
-        }
+  Array.from(sourceRoot.childNodes).forEach((node) => {
+    const cleanNode = sanitizeNode(node);
+    if (cleanNode) {
+      cleanRoot.appendChild(cleanNode);
+    }
+  });
 
-        if (tag === 'span' && element.hasAttribute('data-note-checklist-label')) {
-            sanitizedElement.setAttribute('data-note-checklist-label', 'true');
-        }
-
-        sanitizedChildren.forEach(child => sanitizedElement.appendChild(child));
-        return sanitizedElement;
-    };
-
-    Array.from(sourceRoot.childNodes).forEach(node => {
-        const cleanNode = sanitizeNode(node);
-        if (cleanNode) {
-            cleanRoot.appendChild(cleanNode);
-        }
-    });
-
-    return cleanRoot.innerHTML.substring(0, 50000);
+  return cleanRoot.innerHTML.substring(0, 50000);
 }
 
 /**
  * Set of utility functions for sanitizing user input.
  */
 export const sanitize = {
-    /**
-     * Escapes HTML special characters to prevent XSS.
-     * 
-     * @param input - The string to sanitize.
-     * @returns The escaped string.
-     */
-    html: (input: string): string => {
-        if (typeof input !== 'string') return ''
-        return input
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#x27;')
-            .substring(0, 10000)
-    },
+  /**
+   * Escapes HTML special characters to prevent XSS.
+   *
+   * @param input - The string to sanitize.
+   * @returns The escaped string.
+   */
+  html: (input: string): string => {
+    if (typeof input !== 'string') return '';
+    return input
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .substring(0, 10000);
+  },
 
-    /**
-     * Allows basic HTML formatting (bold, italic, lists) but strips dangerous tags and attributes.
-     * Used for content generated by trusted Admin rich text editors.
-     */
-    richText: (input: string): string => {
-        if (typeof input !== 'string') return ''
+  /**
+   * Allows basic HTML formatting (bold, italic, lists) but strips dangerous tags and attributes.
+   * Used for content generated by trusted Admin rich text editors.
+   */
+  richText: (input: string): string => {
+    if (typeof input !== 'string') return '';
 
-        return sanitizeRichTextWithDom(input);
-    },
+    return sanitizeRichTextWithDom(input);
+  },
 
-    email: (input: string): string => {
-        return input.toLowerCase().trim().substring(0, 254)
-    },
+  email: (input: string): string => {
+    return input.toLowerCase().trim().substring(0, 254);
+  },
 
-    filename: (input: string): string => {
-        return input
-            .replace(/[^a-zA-Z0-9._-]/g, '_')
-            .substring(0, 255)
-            .replace(/^[._]/, 'file')
-    },
+  filename: (input: string): string => {
+    return input
+      .replace(/[^a-zA-Z0-9._-]/g, '_')
+      .substring(0, 255)
+      .replace(/^[._]/, 'file');
+  },
 
-    sql: (input: string): string => {
-        return input
-            .replace(/[';"\\]/g, '')
-            .replace(/--/g, '')
-            .replace(/\/\*|\*\//g, '')
-            .trim()
-            .substring(0, 1000)
-    },
-}
+  sql: (input: string): string => {
+    return input
+      .replace(/[';"\\]/g, '')
+      .replace(/--/g, '')
+      .replace(/\/\*|\*\//g, '')
+      .trim()
+      .substring(0, 1000);
+  },
+};

@@ -1,17 +1,19 @@
-import { allProjectsAsync } from '@/lib/projects'
-import IndexClientInner from './IndexClientInner'
+import { allProjectsAsync } from '@/lib/projects';
+import IndexClientInner from './IndexClientInner';
 
 type Props = {
-  searchParams?: { tag?: string }
-}
+  searchParams?: { tag?: string };
+};
 
 // BUG FIX #4: Error fallback component
 function ErrorFallback({ error }: { error: Error }) {
   return (
-    <section className="pt-4 pb-8 px-4">
-      <div className="p-12 border-2 border-dashed border-red-300 rounded-lg text-center">
-        <p className="text-red-600 text-lg mb-2">Gagal memuat projects</p>
-        <p className="text-gray-500 text-sm">{error.message || 'Terjadi kesalahan saat memuat data'}</p>
+    <section className="px-4 pb-8 pt-4">
+      <div className="rounded-lg border-2 border-dashed border-red-300 p-12 text-center">
+        <p className="mb-2 text-lg text-red-600">Gagal memuat projects</p>
+        <p className="text-sm text-gray-500">
+          {error.message || 'Terjadi kesalahan saat memuat data'}
+        </p>
       </div>
     </section>
   );
@@ -20,15 +22,15 @@ function ErrorFallback({ error }: { error: Error }) {
 export default async function IndexClient(props: Props) {
   const searchParams = await props.searchParams;
 
-  const tag = searchParams?.tag || ''
-  let projects = []
-  
+  const tag = searchParams?.tag || '';
+  let projects = [];
+
   try {
-    projects = await allProjectsAsync()
+    projects = await allProjectsAsync();
   } catch (e) {
     console.error('IndexClient: error', e);
     return <ErrorFallback error={e instanceof Error ? e : new Error('Unknown error')} />;
   }
 
-  return <IndexClientInner projects={projects} tag={tag} searchQuery="" />
+  return <IndexClientInner projects={projects} tag={tag} searchQuery="" />;
 }

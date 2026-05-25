@@ -6,14 +6,13 @@ import AdminExperienceClient from './AdminExperienceClient';
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Admin - Experience Management',
   description: 'Manage professional experience and skills',
-  path: '/admin/experience'
+  path: '/admin/experience',
 });
 
 export default function AdminExperiencePage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading experience data...</div>}>
+    <Suspense fallback={null}>
       <AdminExperienceClient />
     </Suspense>
   );
 }
-

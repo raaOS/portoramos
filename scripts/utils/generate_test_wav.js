@@ -38,11 +38,11 @@ buffer.writeUInt32LE(dataSize, 40);
 
 // Write data
 for (let i = 0; i < numSamples; i++) {
-    const t = i / sampleRate;
-    const sample = volume * Math.sin(2 * Math.PI * frequency * t);
-    // Convert -1.0..1.0 to -32768..32767
-    const intSample = Math.max(-32768, Math.min(32767, sample * 32767));
-    buffer.writeInt16LE(intSample, 44 + i * 2);
+  const t = i / sampleRate;
+  const sample = volume * Math.sin(2 * Math.PI * frequency * t);
+  // Convert -1.0..1.0 to -32768..32767
+  const intSample = Math.max(-32768, Math.min(32767, sample * 32767));
+  buffer.writeInt16LE(intSample, 44 + i * 2);
 }
 
 const outputPath = path.join(__dirname, '../../public/sounds/synthetic_test.wav');

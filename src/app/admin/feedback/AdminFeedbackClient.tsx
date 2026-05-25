@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Clock, EyeOff, RefreshCw, Star, Trash2 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
+import { useConfirm } from '@/components/admin/ConfirmDialog';
 import type { FeedbackStatus } from '@/lib/validations';
 
 type FeedbackFilter = FeedbackStatus | 'all';
@@ -72,6 +73,7 @@ function statusClass(status?: FeedbackStatus) {
 
 export default function AdminFeedbackClient() {
   const { csrfToken, isAdmin, isLoading: authLoading } = useAdminAuth();
+  const { confirm } = useConfirm();
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [filter, setFilter] = useState<FeedbackFilter>('all');
   const [isLoading, setIsLoading] = useState(true);
@@ -96,7 +98,7 @@ export default function AdminFeedbackClient() {
       const response = await fetch(`/api/feedback?status=${filter}&limit=200`, {
         credentials: 'include',
       });
-      const payload = await response.json() as ApiResponse<FeedbackListPayload>;
+      const payload = (await response.json()) as ApiResponse<FeedbackListPayload>;
       if (!response.ok || !payload.success) {
         throw new Error(payload.success ? 'Failed to load feedback' : payload.error);
       }
@@ -130,7 +132,11 @@ export default function AdminFeedbackClient() {
         },
         body: JSON.stringify({ status, isPublic }),
       });
-      const payload = await response.json() as ApiResponse<{ id: string; status: FeedbackStatus; isPublic: boolean }>;
+      const payload = (await response.json()) as ApiResponse<{
+        id: string;
+        status: FeedbackStatus;
+        isPublic: boolean;
+      }>;
       if (!response.ok || !payload.success) {
         throw new Error(payload.success ? 'Failed to update feedback' : payload.error);
       }
@@ -143,7 +149,14 @@ export default function AdminFeedbackClient() {
   };
 
   const deleteFeedback = async (id: string) => {
-    if (!confirm('Hapus feedback ini secara permanen?')) return;
+    const ok = await confirm({
+      title: 'Hapus feedback?',
+      message: 'Feedback akan dihapus permanen dan tidak bisa dipulihkan.',
+      confirmText: 'Hapus',
+      cancelText: 'Batal',
+      tone: 'danger',
+    });
+    if (!ok) return;
     setBusyId(id);
     setError(null);
 
@@ -155,7 +168,7 @@ export default function AdminFeedbackClient() {
           'x-csrf-token': getWritableCsrfToken(csrfToken),
         },
       });
-      const payload = await response.json() as ApiResponse<{ id: string }>;
+      const payload = (await response.json()) as ApiResponse<{ id: string }>;
       if (!response.ok || !payload.success) {
         throw new Error(payload.success ? 'Failed to delete feedback' : payload.error);
       }
@@ -180,7 +193,9 @@ export default function AdminFeedbackClient() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Feedback Visitor</h1>
-          <p className="mt-1 text-sm text-gray-500">Moderasi rating exit-intent sebelum ditampilkan publik.</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Moderasi rating exit-intent sebelum ditampilkan publik.
+          </p>
         </div>
         <button
           type="button"
@@ -227,14 +242,21 @@ export default function AdminFeedbackClient() {
             const status = item.status ?? 'pending';
 
             return (
-              <article key={item.id} className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+              <article
+                key={item.id}
+                className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
+              >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 flex-1 space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${statusClass(status)}`}>
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${statusClass(status)}`}
+                      >
                         {status}
                       </span>
-                      <span className="text-sm font-medium text-gray-900">{item.name || 'Anonymous'}</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {item.name || 'Anonymous'}
+                      </span>
                       <span className="text-sm text-gray-400">{formatDate(item.createdAt)}</span>
                     </div>
 

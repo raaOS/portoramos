@@ -1,6 +1,13 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useCallback, useRef, ReactNode, useSyncExternalStore } from "react";
+import React, {
+  createContext,
+  useContext,
+  useCallback,
+  useRef,
+  ReactNode,
+  useSyncExternalStore,
+} from 'react';
 
 // Types of focusable elements in the OS
 export type ElementType = 'window' | 'stickyNote' | 'dynamicIsland';
@@ -54,7 +61,7 @@ const NORMALIZE_THRESHOLD = 900000; // Normalize when approaching max
 export const useUnifiedZIndex = () => {
   const context = useContext(UnifiedZIndexContext);
   if (!context) {
-    throw new Error("useUnifiedZIndex must be used within UnifiedZIndexProvider");
+    throw new Error('useUnifiedZIndex must be used within UnifiedZIndexProvider');
   }
   // Subscribe to global tick so consumer re-renders on ANY z-index change.
   useSyncExternalStore(context._subscribe, context._getGlobalTick, context._getGlobalTick);
@@ -69,7 +76,7 @@ export const useUnifiedZIndex = () => {
 export const useUnifiedZIndexActions = () => {
   const context = useContext(UnifiedZIndexContext);
   if (!context) {
-    throw new Error("useUnifiedZIndexActions must be used within UnifiedZIndexProvider");
+    throw new Error('useUnifiedZIndexActions must be used within UnifiedZIndexProvider');
   }
   return context;
 };
@@ -85,7 +92,7 @@ export const useUnifiedZIndexActions = () => {
 export const useZIndexFor = (id: string): number => {
   const context = useContext(UnifiedZIndexContext);
   if (!context) {
-    throw new Error("useZIndexFor must be used within UnifiedZIndexProvider");
+    throw new Error('useZIndexFor must be used within UnifiedZIndexProvider');
   }
   const subscribe = useCallback(
     (onChange: () => void) => context._subscribeToId(id, onChange),
@@ -101,7 +108,7 @@ export const useZIndexFor = (id: string): number => {
 export const useTopZIndexId = (): string | null => {
   const context = useContext(UnifiedZIndexContext);
   if (!context) {
-    throw new Error("useTopZIndexId must be used within UnifiedZIndexProvider");
+    throw new Error('useTopZIndexId must be used within UnifiedZIndexProvider');
   }
   return useSyncExternalStore(context._subscribe, context._getTopId, context._getTopId);
 };
@@ -125,7 +132,9 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
 
   const subscribe = useCallback((onStoreChange: () => void) => {
     listeners.current.add(onStoreChange);
-    return () => { listeners.current.delete(onStoreChange); };
+    return () => {
+      listeners.current.delete(onStoreChange);
+    };
   }, []);
 
   const subscribeToId = useCallback((id: string, onStoreChange: () => void) => {
@@ -145,12 +154,12 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
 
   const notifyGlobal = useCallback(() => {
     globalTickRef.current += 1;
-    listeners.current.forEach(listener => listener());
+    listeners.current.forEach((listener) => listener());
   }, []);
 
   const notifyId = useCallback((id: string) => {
     const set = idListeners.current.get(id);
-    if (set) set.forEach(listener => listener());
+    if (set) set.forEach((listener) => listener());
   }, []);
 
   const updateTopId = useCallback(() => {
@@ -195,38 +204,41 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
     notifyGlobal();
   }, [notifyGlobal, notifyId, updateTopId]);
 
-  const bringToFront = useCallback((id: string, type: ElementType): number => {
-    const currentEntry = elementsRef.current.get(id);
-    // Idempotent: kalau element ini memang sudah on-top, return zIndex lama.
-    // BUGFIX: Sebelumnya cek `currentEntry?.zIndex === topZIndexRef.current`
-    // yang salah, karena element baru register dengan zIndex=BASE juga memenuhi
-    // kondisi saat topZIndexRef masih BASE — bringToFront jadi no-op di kasus itu.
-    if (currentEntry && topIdRef.current === id) {
-      return currentEntry.zIndex;
-    }
-
-    // Check if we need to normalize
-    if (topZIndexRef.current >= NORMALIZE_THRESHOLD) {
-      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-        window.requestIdleCallback(() => normalizeZIndexes());
-      } else {
-        setTimeout(normalizeZIndexes, 100);
+  const bringToFront = useCallback(
+    (id: string, type: ElementType): number => {
+      const currentEntry = elementsRef.current.get(id);
+      // Idempotent: kalau element ini memang sudah on-top, return zIndex lama.
+      // BUGFIX: Sebelumnya cek `currentEntry?.zIndex === topZIndexRef.current`
+      // yang salah, karena element baru register dengan zIndex=BASE juga memenuhi
+      // kondisi saat topZIndexRef masih BASE — bringToFront jadi no-op di kasus itu.
+      if (currentEntry && topIdRef.current === id) {
+        return currentEntry.zIndex;
       }
-    }
 
-    // Get next z-index
-    const nextZIndex = topZIndexRef.current + 1;
-    topZIndexRef.current = nextZIndex;
+      // Check if we need to normalize
+      if (topZIndexRef.current >= NORMALIZE_THRESHOLD) {
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          window.requestIdleCallback(() => normalizeZIndexes());
+        } else {
+          setTimeout(normalizeZIndexes, 100);
+        }
+      }
 
-    // Update element
-    elementsRef.current.set(id, { id, type, zIndex: nextZIndex });
-    topIdRef.current = id;
+      // Get next z-index
+      const nextZIndex = topZIndexRef.current + 1;
+      topZIndexRef.current = nextZIndex;
 
-    // Notify: only the element whose zIndex changed + global listeners (for top-id).
-    notifyId(id);
-    notifyGlobal();
-    return nextZIndex;
-  }, [normalizeZIndexes, notifyId, notifyGlobal]);
+      // Update element
+      elementsRef.current.set(id, { id, type, zIndex: nextZIndex });
+      topIdRef.current = id;
+
+      // Notify: only the element whose zIndex changed + global listeners (for top-id).
+      notifyId(id);
+      notifyGlobal();
+      return nextZIndex;
+    },
+    [normalizeZIndexes, notifyId, notifyGlobal]
+  );
 
   const getZIndex = useCallback((id: string): number => {
     return elementsRef.current.get(id)?.zIndex ?? BASE_Z_INDEX;
@@ -254,45 +266,58 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
     notifyGlobal();
   }, [notifyGlobal, notifyId]);
 
-  const registerElement = useCallback((id: string, type: ElementType) => {
-    if (!elementsRef.current.has(id)) {
-      elementsRef.current.set(id, { id, type, zIndex: BASE_Z_INDEX });
-      notifyId(id);
-      notifyGlobal();
-    }
-  }, [notifyGlobal, notifyId]);
-
-  const unregisterElement = useCallback((id: string) => {
-    if (elementsRef.current.has(id)) {
-      elementsRef.current.delete(id);
-      if (topIdRef.current === id) updateTopId();
-      notifyId(id);
-      notifyGlobal();
-    }
-  }, [notifyGlobal, notifyId, updateTopId]);
-
-  const value = React.useMemo(() => ({
-    getZIndex,
-    bringToFront,
-    getTopZIndex,
-    isOnTop,
-    getTopElement,
-    resetZIndexes,
-    registerElement,
-    unregisterElement,
-    _subscribe: subscribe,
-    _subscribeToId: subscribeToId,
-    _getZIndexFor: getZIndex,
-    _getTopId: () => topIdRef.current,
-    _getGlobalTick: () => globalTickRef.current,
-  }), [
-    getZIndex, bringToFront, getTopZIndex, isOnTop, getTopElement,
-    resetZIndexes, registerElement, unregisterElement, subscribe, subscribeToId
-  ]);
-
-  return (
-    <UnifiedZIndexContext.Provider value={value}>
-      {children}
-    </UnifiedZIndexContext.Provider>
+  const registerElement = useCallback(
+    (id: string, type: ElementType) => {
+      if (!elementsRef.current.has(id)) {
+        elementsRef.current.set(id, { id, type, zIndex: BASE_Z_INDEX });
+        notifyId(id);
+        notifyGlobal();
+      }
+    },
+    [notifyGlobal, notifyId]
   );
+
+  const unregisterElement = useCallback(
+    (id: string) => {
+      if (elementsRef.current.has(id)) {
+        elementsRef.current.delete(id);
+        if (topIdRef.current === id) updateTopId();
+        notifyId(id);
+        notifyGlobal();
+      }
+    },
+    [notifyGlobal, notifyId, updateTopId]
+  );
+
+  const value = React.useMemo(
+    () => ({
+      getZIndex,
+      bringToFront,
+      getTopZIndex,
+      isOnTop,
+      getTopElement,
+      resetZIndexes,
+      registerElement,
+      unregisterElement,
+      _subscribe: subscribe,
+      _subscribeToId: subscribeToId,
+      _getZIndexFor: getZIndex,
+      _getTopId: () => topIdRef.current,
+      _getGlobalTick: () => globalTickRef.current,
+    }),
+    [
+      getZIndex,
+      bringToFront,
+      getTopZIndex,
+      isOnTop,
+      getTopElement,
+      resetZIndexes,
+      registerElement,
+      unregisterElement,
+      subscribe,
+      subscribeToId,
+    ]
+  );
+
+  return <UnifiedZIndexContext.Provider value={value}>{children}</UnifiedZIndexContext.Provider>;
 };

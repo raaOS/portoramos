@@ -7,7 +7,6 @@ import { invalidateAboutCache } from '@/lib/about';
 import { updateAboutSchema } from '@/lib/validations';
 import { validationError } from '@/lib/api-response';
 
-
 // GET - Read about content
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +14,10 @@ export async function GET(request: NextRequest) {
     const data = await aboutService.getAboutData(fresh);
     return NextResponse.json(data);
   } catch (error) {
-    console.error('[API/About] Error loading about data:', error instanceof Error ? error.message : error);
+    console.error(
+      '[API/About] Error loading about data:',
+      error instanceof Error ? error.message : error
+    );
     return NextResponse.json({ error: 'Failed to load about data' }, { status: 500 });
   }
 }
@@ -41,21 +43,24 @@ export async function PUT(request: NextRequest) {
 
     // Invalidate cache agar visitor langsung lihat perubahan
     invalidateAboutCache();
-    
+
     // Revalidate ISR pages
     revalidatePath('/', 'layout');
     revalidatePath('/about');
 
     return NextResponse.json({
       success: true,
-      data: updatedData
+      data: updatedData,
     });
   } catch (error: unknown) {
     console.error('[API/About] Update Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({
-      error: 'Failed to update about data',
-      details: errorMessage
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to update about data',
+        details: errorMessage,
+      },
+      { status: 500 }
+    );
   }
 }

@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ error, errorInfo });
-    
+
     // Call custom error handler if provided
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
@@ -40,15 +40,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     console.error('ErrorBoundary caught an error:', error.message);
   }
 
-
-
   render() {
     if (this.state.hasError && this.state.error) {
-      return this.props.fallback || (
-        <PageErrorFallback
-          error={this.state.error}
-          resetError={() => this.setState({ hasError: false, error: undefined, errorInfo: undefined })}
-        />
+      return (
+        this.props.fallback || (
+          <PageErrorFallback
+            error={this.state.error}
+            resetError={() =>
+              this.setState({ hasError: false, error: undefined, errorInfo: undefined })
+            }
+          />
+        )
       );
     }
 
@@ -67,7 +69,7 @@ export function useErrorHandler() {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       // Prevent default browser behavior
       event.preventDefault();
-      
+
       // Simple console log without any dynamic imports
       console.error('Unhandled promise rejection:', event.reason);
     };

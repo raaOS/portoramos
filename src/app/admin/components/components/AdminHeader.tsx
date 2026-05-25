@@ -13,18 +13,16 @@ export const AdminHeader = ({
   title,
   titleIcon,
   titleAccent = 'bg-blue-50 text-blue-700',
-  actions
+  actions,
 }: AdminHeaderProps) => {
   return (
-    <div className="bg-white border-b border-gray-200 px-6 py-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="border-b border-gray-200 bg-white px-6 py-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           {titleIcon && (
-            <div className={`p-2 rounded-lg ${titleAccent} bg-opacity-10`}>
-              {titleIcon}
-            </div>
+            <div className={`rounded-lg p-2 ${titleAccent} bg-opacity-10`}>{titleIcon}</div>
           )}
-          <h1 className="text-xl font-bold text-gray-900 leading-tight">{title}</h1>
+          <h1 className="text-xl font-bold leading-tight text-gray-900">{title}</h1>
         </div>
         <div className="flex items-center gap-3">
           {actions && <div className="flex items-center gap-3">{actions}</div>}

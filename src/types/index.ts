@@ -1,6 +1,6 @@
 /**
  * Types Barrel Export
- * 
+ *
  * Centralized exports for all type definitions.
  * Usage: import { AboutData, Project, ContactData } from '@/types';
  */
@@ -32,7 +32,7 @@ export type {
   UpdateAboutData,
   AboutIslandNotification,
   ContactProfile,
-  TrailItem
+  TrailItem,
 } from './about';
 
 // Chat types (single source of truth for ChatMessage)

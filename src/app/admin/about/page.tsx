@@ -6,19 +6,13 @@ import AdminAboutClient from './AdminAboutClient';
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Admin - About Management',
   description: 'Manage about page content',
-  path: '/admin/about'
+  path: '/admin/about',
 });
-
-
 
 export default function AdminAboutPage() {
   return (
-    <Suspense fallback={<div>Loading about data...</div>}>
+    <Suspense fallback={null}>
       <AdminAboutClient />
     </Suspense>
   );
 }
-
-
-
-

@@ -26,10 +26,10 @@ const cacheDirs = [
   '.vercel',
   '.next/cache/webpack',
   '.next/cache/eslint',
-  '.next/cache/typescript'
+  '.next/cache/typescript',
 ];
 
-cacheDirs.forEach(dir => {
+cacheDirs.forEach((dir) => {
   const fullPath = path.join(process.cwd(), dir);
   if (fs.existsSync(fullPath)) {
     console.log(`📁 Removing ${dir}...`);

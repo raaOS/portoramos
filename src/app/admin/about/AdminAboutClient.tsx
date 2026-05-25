@@ -1,6 +1,5 @@
 'use client';
 
-
 import { useSearchParams } from 'next/navigation';
 import { Info, Monitor, Info as InfoIcon, X, Image as ImageIcon } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -25,10 +24,13 @@ import HardSkillsManager from './components/HardSkillsManager';
 import SoundEffectsManager from './components/SoundEffectsManager';
 
 import LabelsManager from './components/LabelsManager';
+import AdminLoading from '@/components/admin/AdminLoading';
 
 // Lazy load heavy third-party components
 const DesignPhilosophyForm = dynamic(() => import('@/components/admin/about/DesignPhilosophyForm'));
-const GalleryManager = dynamic(() => import('@/components/admin/GalleryManager'), { loading: () => <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> });
+const GalleryManager = dynamic(() => import('@/components/admin/GalleryManager'), {
+  loading: () => <AdminLoading size="default" />,
+});
 
 export default function AdminAboutClient() {
   const { csrfToken } = useAdminAuth();
@@ -36,16 +38,43 @@ export default function AdminAboutClient() {
 
   // Derive active tab from URL search parameters (Source of Truth)
   const tabParam = searchParams.get('tab');
-  const validTabs = ['professional', 'softSkills', 'hardSkills', 'labels', 'runningText', 'philosophy', 'desktop', 'wallpaper', 'dock', 'stickyNotes', 'notifications', 'sounds', 'archive'];
-  type ValidTab = 'professional' | 'softSkills' | 'hardSkills' | 'labels' | 'runningText' | 'philosophy' | 'desktop' | 'wallpaper' | 'dock' | 'stickyNotes' | 'notifications' | 'sounds' | 'archive';
+  const validTabs = [
+    'professional',
+    'softSkills',
+    'hardSkills',
+    'labels',
+    'runningText',
+    'philosophy',
+    'desktop',
+    'wallpaper',
+    'dock',
+    'stickyNotes',
+    'notifications',
+    'sounds',
+    'archive',
+  ];
+  type ValidTab =
+    | 'professional'
+    | 'softSkills'
+    | 'hardSkills'
+    | 'labels'
+    | 'runningText'
+    | 'philosophy'
+    | 'desktop'
+    | 'wallpaper'
+    | 'dock'
+    | 'stickyNotes'
+    | 'notifications'
+    | 'sounds'
+    | 'archive';
 
-  const activeTab = (tabParam && validTabs.includes(tabParam))
-    ? (tabParam as ValidTab)
-    : 'professional';
+  const activeTab =
+    tabParam && validTabs.includes(tabParam) ? (tabParam as ValidTab) : 'professional';
 
   // Custom Hook for Data management
   const {
     aboutData,
+    isPlaceholderData: aboutIsPlaceholder,
     loading,
     error,
     projects,
@@ -57,7 +86,7 @@ export default function AdminAboutClient() {
     handleUpdateLabels,
     handleCreateRunningText,
     handleUpdateRunningText,
-    handleDeleteRunningText
+    handleDeleteRunningText,
   } = useAdminAbout(csrfToken);
 
   const { isAdmin, isLoading: authLoading } = useAdminAuth();
@@ -70,11 +99,8 @@ export default function AdminAboutClient() {
           titleIcon={<Info className="h-5 w-5" aria-hidden />}
           titleAccent="bg-blue-50 text-blue-700"
         />
-        <div className="p-6 flex-1 space-y-6">
-          <div className="flex items-center justify-center py-10 text-sm text-gray-600">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
-            Memuat data...
-          </div>
+        <div className="flex-1 space-y-6 p-6">
+          <AdminLoading size="default" />
         </div>
       </>
     );
@@ -88,14 +114,14 @@ export default function AdminAboutClient() {
           titleIcon={<X className="h-5 w-5" aria-hidden />}
           titleAccent="bg-red-50 text-red-700"
         />
-        <div className="p-6 flex-1 space-y-6">
+        <div className="flex-1 space-y-6 p-6">
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <InfoIcon className="w-16 h-16 text-yellow-500 mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Akses Terbatas</h2>
-            <p className="text-gray-600 mb-6">Sesi Anda telah berakhir atau Anda belum masuk.</p>
+            <InfoIcon className="mb-4 h-16 w-16 text-yellow-500" />
+            <h2 className="mb-2 text-2xl font-bold text-gray-900">Akses Terbatas</h2>
+            <p className="mb-6 text-gray-600">Sesi Anda telah berakhir atau Anda belum masuk.</p>
             <a
               href="/admin/login"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700"
             >
               Masuk Sekarang
             </a>
@@ -113,7 +139,7 @@ export default function AdminAboutClient() {
           titleIcon={<Info className="h-5 w-5" aria-hidden />}
           titleAccent="bg-blue-50 text-blue-700"
         />
-        <div className="p-6 flex-1 space-y-6">
+        <div className="flex-1 space-y-6 p-6">
           <div className="flex items-center justify-center py-8">
             <p className="text-red-600">Gagal memuat data about</p>
           </div>
@@ -124,141 +150,133 @@ export default function AdminAboutClient() {
 
   return (
     <>
-      <AdminHeader title="Kelola Konten About"/>
-      <div className="p-6 flex-1 space-y-6">
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 flex items-center justify-between">
-          <span>{error}</span>
-        </div>
-      )}
+      <AdminHeader title="Kelola Konten About" />
+      <div className="flex-1 space-y-6 p-6">
+        {error && (
+          <div className="mb-6 flex items-center justify-between rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+            <span>{error}</span>
+          </div>
+        )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[500px] w-full">
-        <div className="bg-white">
-          <div className="p-6 lg:p-8">
-            {activeTab === 'professional' && (
-              <ProfessionalSectionForm
-                data={aboutData.professional}
-                heroData={aboutData.hero}
-                projects={projects}
-                onUpdate={handleUpdateAbout}
-              />
-            )}
-
-            {activeTab === 'softSkills' && (
-              <SoftSkillsSectionForm
-                data={aboutData.softSkills}
-                onUpdate={(data) => handleUpdateAbout({ softSkills: data })}
-              />
-            )}
-
-            {activeTab === 'hardSkills' && (
-              <div className="space-y-8">
-                <HardSkillsManager />
-              </div>
-            )}
-
-            {activeTab === 'labels' && (
-              <LabelsManager 
-                initialLabels={labels}
-                onUpdate={handleUpdateLabels}
-                loading={labelsLoading}
-              />
-            )}
-
-            {activeTab === 'philosophy' && (
-              <DesignPhilosophyForm />
-            )}
-
-            {activeTab === 'runningText' && (
-              <RunningTextPanel
-                items={runningTexts}
-                loading={runningTextsLoading}
-                onCreate={handleCreateRunningText}
-                onUpdate={handleUpdateRunningText}
-                onDelete={handleDeleteRunningText}
-              />
-            )}
-
-
-            {activeTab === 'wallpaper' && (
-              <div className="space-y-8">
-                <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4 mb-6">
-                  <h3 className="font-bold text-cyan-800 flex items-center gap-2">
-                    <ImageIcon className="w-5 h-5" /> Konfigurasi Wallpaper & Tema
-                  </h3>
-                  <p className="text-sm text-cyan-600 mt-1">
-                    Ganti latar belakang desktop dan atur transparansi window.
-                  </p>
-                </div>
-                <WallpaperManager
-                  data={aboutData.wallpaperConfig}
-                  onUpdate={(data) => handleUpdateAbout({ wallpaperConfig: data })}
-                />
-              </div>
-            )}
-
-            {activeTab === 'desktop' && (
-              <div className="space-y-8">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <h3 className="font-bold text-blue-800 flex items-center gap-2">
-                    <Monitor className="w-5 h-5" /> Konfigurasi Ikon Desktop
-                  </h3>
-                  <p className="text-sm text-blue-600 mt-1">
-                    Atur shortcut aplikasi dan file yang tampil di halaman utama.
-                  </p>
-                </div>
-                <DesktopProjectsForm
+        <div className="min-h-[500px] w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="bg-white">
+            <div className="p-6 lg:p-8">
+              {activeTab === 'professional' && (
+                <ProfessionalSectionForm
+                  data={aboutData.professional}
+                  heroData={aboutData.hero}
                   projects={projects}
-                  data={aboutData.desktopPreferences}
-                  onUpdate={(data) => handleUpdateAbout({ desktopPreferences: data })}
+                  onUpdate={handleUpdateAbout}
                 />
-              </div>
-            )}
+              )}
 
-            {activeTab === 'dock' && (
-              <div className="space-y-8">
-                <DockConfigForm
-                  data={aboutData?.dockConfig || {}}
-                  onUpdate={(data) => handleUpdateAbout({ dockConfig: data })}
+              {activeTab === 'softSkills' && (
+                <SoftSkillsSectionForm
+                  data={aboutData.softSkills}
+                  onUpdate={(data) => handleUpdateAbout({ softSkills: data })}
                 />
-              </div>
-            )}
+              )}
 
+              {activeTab === 'hardSkills' && (
+                <div className="space-y-8">
+                  <HardSkillsManager />
+                </div>
+              )}
 
-
-            {activeTab === 'stickyNotes' && (
-              <div className="space-y-8">
-                <StickyNotesManager />
-              </div>
-            )}
-
-            {activeTab === 'notifications' && (
-              <div className="space-y-8">
-                <NotificationsManager
-                  notifications={aboutData?.islandNotifications || []}
-                  onUpdate={(data) => handleUpdateAbout({ islandNotifications: data })}
+              {activeTab === 'labels' && (
+                <LabelsManager
+                  initialLabels={labels}
+                  onUpdate={handleUpdateLabels}
+                  loading={labelsLoading}
                 />
-              </div>
-            )}
+              )}
 
-            {activeTab === 'sounds' && (
-              <div className="space-y-8">
-                <SoundEffectsManager
-                  config={aboutData?.soundConfig || {}}
-                  onUpdate={(data) => handleUpdateAbout({ soundConfig: data })}
+              {activeTab === 'philosophy' && <DesignPhilosophyForm />}
+
+              {activeTab === 'runningText' && (
+                <RunningTextPanel
+                  items={runningTexts}
+                  loading={runningTextsLoading}
+                  onCreate={handleCreateRunningText}
+                  onUpdate={handleUpdateRunningText}
+                  onDelete={handleDeleteRunningText}
                 />
-              </div>
-            )}
+              )}
 
-            {activeTab === 'archive' && (
-              <GalleryManager
-                projects={projects}
-              />
-            )}
+              {activeTab === 'wallpaper' && (
+                <div className="space-y-8">
+                  <div className="mb-6 rounded-lg border border-cyan-200 bg-cyan-50 p-4">
+                    <h3 className="flex items-center gap-2 font-bold text-cyan-800">
+                      <ImageIcon className="h-5 w-5" /> Konfigurasi Wallpaper & Tema
+                    </h3>
+                    <p className="mt-1 text-sm text-cyan-600">
+                      Ganti latar belakang desktop dan atur transparansi window.
+                    </p>
+                  </div>
+                  <WallpaperManager
+                    data={aboutData.wallpaperConfig}
+                    onUpdate={(data) => handleUpdateAbout({ wallpaperConfig: data })}
+                    isLoading={aboutIsPlaceholder}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'desktop' && (
+                <div className="space-y-8">
+                  <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                    <h3 className="flex items-center gap-2 font-bold text-blue-800">
+                      <Monitor className="h-5 w-5" /> Konfigurasi Ikon Desktop
+                    </h3>
+                    <p className="mt-1 text-sm text-blue-600">
+                      Atur shortcut aplikasi dan file yang tampil di halaman utama.
+                    </p>
+                  </div>
+                  <DesktopProjectsForm
+                    projects={projects}
+                    data={aboutData.desktopPreferences}
+                    onUpdate={(data) => handleUpdateAbout({ desktopPreferences: data })}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'dock' && (
+                <div className="space-y-8">
+                  <DockConfigForm
+                    data={aboutData?.dockConfig || {}}
+                    onUpdate={(data) => handleUpdateAbout({ dockConfig: data })}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'stickyNotes' && (
+                <div className="space-y-8">
+                  <StickyNotesManager />
+                </div>
+              )}
+
+              {activeTab === 'notifications' && (
+                <div className="space-y-8">
+                  <NotificationsManager
+                    notifications={aboutData?.islandNotifications || []}
+                    onUpdate={(data) => handleUpdateAbout({ islandNotifications: data })}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'sounds' && (
+                <div className="space-y-8">
+                  <SoundEffectsManager
+                    config={aboutData?.soundConfig || {}}
+                    onUpdate={(data) => handleUpdateAbout({ soundConfig: data })}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'archive' && <GalleryManager projects={projects} />}
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </>
   );
 }

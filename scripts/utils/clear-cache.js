@@ -34,7 +34,9 @@ async function main() {
 
   if (devRunning && !force) {
     console.error('Dev server terdeteksi di port 3000. Hentikan dulu sebelum menghapus cache.');
-    console.error('Gunakan `npm run clear-cache -- --force` hanya jika kamu memang sengaja ingin reset state dev saat ini.');
+    console.error(
+      'Gunakan `npm run clear-cache -- --force` hanya jika kamu memang sengaja ingin reset state dev saat ini.'
+    );
     process.exit(1);
   }
 

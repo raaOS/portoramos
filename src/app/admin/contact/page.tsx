@@ -5,10 +5,9 @@ import AdminContactClient from './AdminContactClient';
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Admin - Contact Management',
   description: 'Manage contact page content and form settings',
-  path: '/admin/contact'
+  path: '/admin/contact',
 });
 
 export default function AdminContactPage() {
   return <AdminContactClient />;
 }
-

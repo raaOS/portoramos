@@ -8,23 +8,23 @@ import Script from 'next/script';
  */
 
 export default function Analytics() {
-    const gaId = process.env.NEXT_PUBLIC_GA_ID;
-    const isProduction = process.env.NODE_ENV === 'production';
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+  const isProduction = process.env.NODE_ENV === 'production';
 
-    // Only load analytics in production
-    if (!isProduction || !gaId) {
-        return null;
-    }
+  // Only load analytics in production
+  if (!isProduction || !gaId) {
+    return null;
+  }
 
-    return (
-        <>
-            {/* Google Analytics */}
-            <Script
-                src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-                strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-                {`
+  return (
+    <>
+      {/* Google Analytics */}
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+        strategy="afterInteractive"
+      />
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
@@ -32,9 +32,9 @@ export default function Analytics() {
             page_path: window.location.pathname,
           });
         `}
-            </Script>
-        </>
-    );
+      </Script>
+    </>
+  );
 }
 
 /**
@@ -42,9 +42,9 @@ export default function Analytics() {
  * Usage: trackEvent('button_click', { button_name: 'cta' })
  */
 export function trackEvent(eventName: string, eventParams?: Record<string, unknown>) {
-    if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', eventName, eventParams);
-    }
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', eventName, eventParams);
+  }
 }
 
 /**
@@ -52,9 +52,9 @@ export function trackEvent(eventName: string, eventParams?: Record<string, unkno
  * Usage: trackPageView('/about')
  */
 export function trackPageView(url: string) {
-    if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('config', process.env.NEXT_PUBLIC_GA_ID!, {
-            page_path: url,
-        });
-    }
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('config', process.env.NEXT_PUBLIC_GA_ID!, {
+      page_path: url,
+    });
+  }
 }

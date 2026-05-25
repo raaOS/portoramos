@@ -6,6 +6,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 type R2Config = {
   accountId: string;
@@ -90,7 +91,9 @@ function encodeR2Key(key: string) {
 export function buildR2PublicUrl(key: string) {
   const config = readR2Config();
   if (!config) {
-    throw new Error(`Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`);
+    throw new Error(
+      `Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`
+    );
   }
 
   return `${config.publicBaseUrl}/${encodeR2Key(key)}`;
@@ -106,16 +109,20 @@ export function isR2PublicUrl(src?: string | null) {
 export async function uploadToR2({ key, body, contentType, cacheControl }: UploadToR2Input) {
   const config = readR2Config();
   if (!config) {
-    throw new Error(`Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`);
+    throw new Error(
+      `Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`
+    );
   }
 
-  await getR2Client(config).send(new PutObjectCommand({
-    Bucket: config.bucket,
-    Key: key,
-    Body: body,
-    ContentType: contentType,
-    CacheControl: cacheControl,
-  }));
+  await getR2Client(config).send(
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+      CacheControl: cacheControl,
+    })
+  );
 
   return {
     key,
@@ -123,58 +130,128 @@ export async function uploadToR2({ key, body, contentType, cacheControl }: Uploa
   };
 }
 
+/**
+ * Generate a short-lived presigned PUT URL so the browser can upload large
+ * binaries (mainly video wallpapers >4.5 MB) directly to R2 without going
+ * through the Vercel function body parser, which caps FormData at the
+ * platform request body limit.
+ *
+ * The URL is bound to a specific `key`, `contentType`, and `cacheControl`,
+ * so the client cannot upload to arbitrary paths or overwrite arbitrary
+ * objects — those are decided on the server before signing.
+ */
+export async function createR2PresignedPutUrl({
+  key,
+  contentType,
+  cacheControl = 'public, max-age=31536000, immutable',
+  expiresInSeconds = 600, // 10 menit, cukup untuk upload + retry sekali.
+}: {
+  key: string;
+  contentType: string;
+  cacheControl?: string;
+  expiresInSeconds?: number;
+}): Promise<{
+  uploadUrl: string;
+  publicUrl: string;
+  key: string;
+  cacheControl: string;
+  expiresInSeconds: number;
+}> {
+  const config = readR2Config();
+  if (!config) {
+    throw new Error(
+      `Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`
+    );
+  }
+
+  const command = new PutObjectCommand({
+    Bucket: config.bucket,
+    Key: key,
+    ContentType: contentType,
+    CacheControl: cacheControl,
+  });
+
+  const uploadUrl = await getSignedUrl(getR2Client(config), command, {
+    expiresIn: expiresInSeconds,
+  });
+
+  return {
+    uploadUrl,
+    publicUrl: buildR2PublicUrl(key),
+    key,
+    cacheControl,
+    expiresInSeconds,
+  };
+}
+
 export async function headR2Object(key: string) {
   const config = readR2Config();
   if (!config) {
-    throw new Error(`Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`);
+    throw new Error(
+      `Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`
+    );
   }
 
-  return getR2Client(config).send(new HeadObjectCommand({
-    Bucket: config.bucket,
-    Key: key,
-  }));
+  return getR2Client(config).send(
+    new HeadObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+    })
+  );
 }
 
 export async function getR2Object(key: string, range?: string | null) {
   const config = readR2Config();
   if (!config) {
-    throw new Error(`Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`);
+    throw new Error(
+      `Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`
+    );
   }
 
-  return getR2Client(config).send(new GetObjectCommand({
-    Bucket: config.bucket,
-    Key: key,
-    Range: range || undefined,
-  }));
+  return getR2Client(config).send(
+    new GetObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+      Range: range || undefined,
+    })
+  );
 }
 
 export async function deleteFromR2(key: string) {
   const config = readR2Config();
   if (!config) {
-    throw new Error(`Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`);
+    throw new Error(
+      `Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`
+    );
   }
 
-  await getR2Client(config).send(new DeleteObjectCommand({
-    Bucket: config.bucket,
-    Key: key,
-  }));
+  await getR2Client(config).send(
+    new DeleteObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+    })
+  );
 }
 
 export async function listR2ObjectKeys({ prefix }: ListR2ObjectsInput) {
   const config = readR2Config();
   if (!config) {
-    throw new Error(`Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`);
+    throw new Error(
+      `Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`
+    );
   }
 
   const keys: string[] = [];
   let continuationToken: string | undefined;
 
   do {
-    const response = await getR2Client(config).send(new ListObjectsV2Command({
-      Bucket: config.bucket,
-      Prefix: prefix,
-      ContinuationToken: continuationToken,
-    }));
+    const response = await getR2Client(config).send(
+      new ListObjectsV2Command({
+        Bucket: config.bucket,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      })
+    );
 
     response.Contents?.forEach((item) => {
       if (item.Key) keys.push(item.Key);

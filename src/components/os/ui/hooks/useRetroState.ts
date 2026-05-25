@@ -4,26 +4,26 @@ import { useState, useEffect, useCallback } from 'react';
 import { soundManager } from '../../utils/SoundManager';
 
 export function useRetroState() {
-  const [step, setStep] = useState<"boot" | "error" | "details">("boot");
+  const [step, setStep] = useState<'boot' | 'error' | 'details'>('boot');
   const [progress, setProgress] = useState(0);
-  const [locale] = useState<"id" | "en">(() => {
+  const [locale] = useState<'id' | 'en'>(() => {
     if (typeof Intl !== 'undefined') {
       try {
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const indonesianTz = ["Asia/Jakarta", "Asia/Pontianak", "Asia/Makassar", "Asia/Jayapura"];
-        if (indonesianTz.includes(tz)) return "id";
-      } catch { }
+        const indonesianTz = ['Asia/Jakarta', 'Asia/Pontianak', 'Asia/Makassar', 'Asia/Jayapura'];
+        if (indonesianTz.includes(tz)) return 'id';
+      } catch {}
     }
-    return "en";
+    return 'en';
   });
   const [copied, setCopied] = useState(false);
   const [siteUrl] = useState(() => {
     if (typeof window !== 'undefined') return window.location.origin;
-    return "";
+    return '';
   });
 
   useEffect(() => {
-    if (step === "error") {
+    if (step === 'error') {
       soundManager.play('error');
     }
   }, [step]);
@@ -43,13 +43,13 @@ export function useRetroState() {
   }, []);
 
   useEffect(() => {
-    if (step === "boot") {
-      const timer = setTimeout(() => setStep("error"), 2000);
+    if (step === 'boot') {
+      const timer = setTimeout(() => setStep('error'), 2000);
       return () => clearTimeout(timer);
     }
-    if (step === "details") {
+    if (step === 'details') {
       const interval = setInterval(() => {
-        setProgress(p => (p < 100 ? p + 2 : p));
+        setProgress((p) => (p < 100 ? p + 2 : p));
       }, 50);
       return () => clearInterval(interval);
     }
@@ -79,33 +79,35 @@ export function useRetroState() {
 
   const t = {
     id: {
-      boot: "Memuat Macintosh OS...",
-      title: "Akses Terbatas",
-      errorTitle: "Smartphone tidak cocok untuk pengalaman ini.",
-      errorMessage: "Portfolio ini merupakan simulasi Desktop OS utuh yang memerlukan layar lebar. Smartphone Anda tidak memiliki cukup 'Creative RAM' untuk merendernya.",
-      errorCode: "Peringatan: HARAP GUNAKAN LAPTOP/PC",
-      restartBtn: "Buka di Desktop",
-      loadingTrans: "Menyiapkan tautan sinkronisasi...",
-      qrInstruction: "Pindai disket ini untuk pindah ke Desktop.",
-      backBtn: "Kembali ke Beranda",
-      copyBtn: "Salin Link",
-      copied: "Tersalin!",
-      shareBtn: "Bagikan"
+      boot: 'Memuat Macintosh OS...',
+      title: 'Akses Terbatas',
+      errorTitle: 'Smartphone tidak cocok untuk pengalaman ini.',
+      errorMessage:
+        "Portfolio ini merupakan simulasi Desktop OS utuh yang memerlukan layar lebar. Smartphone Anda tidak memiliki cukup 'Creative RAM' untuk merendernya.",
+      errorCode: 'Peringatan: HARAP GUNAKAN LAPTOP/PC',
+      restartBtn: 'Buka di Desktop',
+      loadingTrans: 'Menyiapkan tautan sinkronisasi...',
+      qrInstruction: 'Pindai disket ini untuk pindah ke Desktop.',
+      backBtn: 'Kembali ke Beranda',
+      copyBtn: 'Salin Link',
+      copied: 'Tersalin!',
+      shareBtn: 'Bagikan',
     },
     en: {
-      boot: "Loading Macintosh OS...",
-      title: "Access Restricted",
-      errorTitle: "Smartphone is not suitable for this OS.",
-      errorMessage: "This portfolio is a full Desktop OS simulation. Your smartphone lacks the 'Creative Canvas' required to render the full installation.",
-      errorCode: "Notice: PLEASE SWITCH TO DESKTOP/PC",
-      restartBtn: "Open in Desktop",
-      loadingTrans: "Preparing sync interface...",
-      qrInstruction: "Scan this disk to switch to Desktop.",
-      backBtn: "Back to Home",
-      copyBtn: "Copy Link",
-      copied: "Copied!",
-      shareBtn: "Share"
-    }
+      boot: 'Loading Macintosh OS...',
+      title: 'Access Restricted',
+      errorTitle: 'Smartphone is not suitable for this OS.',
+      errorMessage:
+        "This portfolio is a full Desktop OS simulation. Your smartphone lacks the 'Creative Canvas' required to render the full installation.",
+      errorCode: 'Notice: PLEASE SWITCH TO DESKTOP/PC',
+      restartBtn: 'Open in Desktop',
+      loadingTrans: 'Preparing sync interface...',
+      qrInstruction: 'Scan this disk to switch to Desktop.',
+      backBtn: 'Back to Home',
+      copyBtn: 'Copy Link',
+      copied: 'Copied!',
+      shareBtn: 'Share',
+    },
   }[locale];
 
   return {
@@ -117,6 +119,6 @@ export function useRetroState() {
     siteUrl,
     handleCopy,
     handleShare,
-    t
+    t,
   };
 }

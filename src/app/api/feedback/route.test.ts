@@ -67,4 +67,3 @@ describe('/api/feedback', () => {
     expect(body.errorCode).toBe('UNAUTHORIZED');
   });
 });
-

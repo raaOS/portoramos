@@ -18,12 +18,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit: 5 requests per minute for bulk updates
-    const rateLimit = await enforceRequestRateLimit(request, 'hard_skills_post', 5, 60_000, 300_000);
+    const rateLimit = await enforceRequestRateLimit(
+      request,
+      'hard_skills_post',
+      5,
+      60_000,
+      300_000
+    );
 
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many requests', retryAfter: rateLimit.retryAfter },
-        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
       );
     }
 
@@ -32,10 +38,13 @@ export async function POST(request: NextRequest) {
     // Validate with Zod — prevents malformed payload & injection
     const validation = bulkUpdateHardSkillsSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid hard skills payload',
-        details: validation.error.issues
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'Invalid hard skills payload',
+          details: validation.error.issues,
+        },
+        { status: 400 }
+      );
     }
 
     const skills = validation.data;
