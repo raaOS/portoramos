@@ -45,7 +45,7 @@ export default function HomeOSWrapper(props: DesktopEnvironmentProps) {
     return cfg.collection?.find((w) => w.id === cfg.activeWallpaperId)?.url;
   }, [props.aboutData]);
 
-  const [DesktopOS, setDesktopOS] = useState<DesktopComponent | null>(cachedDesktopOS);
+  const [DesktopOS, setDesktopOS] = useState<DesktopComponent | null>(() => cachedDesktopOS);
 
   useEffect(() => {
     let cancelled = false;
