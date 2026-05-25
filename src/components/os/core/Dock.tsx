@@ -318,9 +318,14 @@ interface DockProps {
   isMobile?: boolean;
 }
 
+// Module-level flag to track client-side hydration.
+// Persists across client-side page transitions to bypass the 1-frame hydration guard
+// and render the full Dock synchronously during view transitions.
+let isClientHydrated = false;
+
 export default function Dock({ items, bouncingId, isMobile = false }: DockProps) {
   const mouseX = useMotionValue(Infinity);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(isClientHydrated);
   const [activePopoverId, setActivePopoverId] = useState<string | null>(null);
 
   // Stable callback (functional setState). Sebelumnya callback recreated setiap
@@ -350,9 +355,11 @@ export default function Dock({ items, bouncingId, isMobile = false }: DockProps)
   }, [anyPopoverOpen, closePopover]);
 
   useEffect(() => {
+    isClientHydrated = true;
     const frame = requestAnimationFrame(() => setIsMounted(true));
     return () => cancelAnimationFrame(frame);
   }, []);
+
 
   const dockBaseWidth = items.length > 0 ? items.length * 64 + (items.length - 1) * 8 + 24 : 0;
   const hoverCaptureWidth = dockBaseWidth + 160;

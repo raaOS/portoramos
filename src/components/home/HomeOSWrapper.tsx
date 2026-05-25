@@ -34,6 +34,10 @@ function shouldLoadDesktopImmediately() {
  * Important: jangan ubah jadi dynamic({ ssr: false }) tanpa loading skeleton —
  * itu malah buang manfaat SSR yang sudah dipakai untuk LCP wallpaper.
  */
+// Module-level cache for the dynamically imported DesktopOS component.
+// Resolves synchronously on returning to the home page, preventing 1-frame skeleton glitches.
+let cachedDesktopOS: DesktopComponent | null = null;
+
 export default function HomeOSWrapper(props: DesktopEnvironmentProps) {
   const wallpaperUrl = useMemo(() => {
     const cfg = props.aboutData?.wallpaperConfig;
@@ -41,7 +45,7 @@ export default function HomeOSWrapper(props: DesktopEnvironmentProps) {
     return cfg.collection?.find((w) => w.id === cfg.activeWallpaperId)?.url;
   }, [props.aboutData]);
 
-  const [DesktopOS, setDesktopOS] = useState<DesktopComponent | null>(null);
+  const [DesktopOS, setDesktopOS] = useState<DesktopComponent | null>(cachedDesktopOS);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,8 +55,10 @@ export default function HomeOSWrapper(props: DesktopEnvironmentProps) {
     const start = () => {
       import('@/components/os/core/DesktopEnvironmentClient')
         .then((mod) => {
+          cachedDesktopOS = mod.default;
           if (!cancelled) setDesktopOS(() => mod.default);
         })
+
         .catch((err) => {
           console.error('[HomeOSWrapper] Failed to load DesktopOS chunk:', err);
         });
