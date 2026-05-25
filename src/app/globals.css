@@ -470,7 +470,9 @@ main[data-vt-container='true'] {
   ::view-transition-old(system-nav),
   ::view-transition-new(system-nav),
   ::view-transition-old(global-dock),
-  ::view-transition-new(global-dock) {
+  ::view-transition-new(global-dock),
+  ::view-transition-old(dock-popover),
+  ::view-transition-new(dock-popover) {
     animation: none !important;
   }
 }
@@ -542,20 +544,62 @@ html[data-vt-direction='back']::view-transition-new(root) {
   }
 }
 
-/* Isolate header & dock — mereka fixed, nggak boleh ikut geser bersama konten.
-   Cuma cross-fade halus saat ganti halaman. */
+/* Fixed chrome isolation: header/nav cross-fade. */
 ::view-transition-old(site-header),
 ::view-transition-new(site-header),
 ::view-transition-old(system-nav),
-::view-transition-new(system-nav),
-::view-transition-old(global-dock),
-::view-transition-new(global-dock) {
+::view-transition-new(system-nav) {
   animation: 420ms cubic-bezier(0.4, 0, 0.2, 1) both vt-fade-in;
 }
 ::view-transition-old(site-header),
-::view-transition-old(system-nav),
-::view-transition-old(global-dock) {
+::view-transition-old(system-nav) {
   animation-name: vt-fade-out;
+}
+
+/* Dock pakai shared view-transition-name 'global-dock' yang dipasang di
+   slot persistent (src/components/layout/GlobalDockSlot.tsx) di level
+   non-lazy. Element ini selalu ada di kedua snapshot lintas semua
+   navigasi, sehingga browser pair old/new dengan benar.
+
+   Kenapa pakai `display: none` di old snapshot, bukan `animation: none`?
+   `animation: none` membuat opacity stuck di nilai initial (1) selama
+   durasi transition (~800ms), jadi old snapshot tetap full-visible di
+   atas new snapshot — terlihat sebagai "double dock". Plus konten
+   transient seperti popover (mis. SELECT VIEW MODE) yang ke-capture
+   di old snapshot ikut nyangkut sampai transition selesai.
+
+   Dengan `display: none`, old snapshot benar-benar dikeluarkan dari
+   rendering. New snapshot (yang representasi live element) langsung
+   tampil di posisi yang sama persis (slot persistent menjamin rect
+   identik), jadi visual-nya: dock diam, popover hilang instan,
+   tidak ada flicker. */
+::view-transition-group(global-dock),
+::view-transition-image-pair(global-dock) {
+  animation: none !important;
+}
+::view-transition-old(global-dock) {
+  animation: none !important;
+  display: none !important;
+}
+::view-transition-new(global-dock) {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+/* Dock popover (mis. SELECT VIEW MODE di dock Projects) di-isolate dari
+   snapshot 'global-dock' supaya bbox dock tetap konsisten old↔new.
+   Popover hanya ada saat user buka popover di route lama; di route baru
+   popover sudah hilang, jadi pair-nya exit-only. Tampilkan instan
+   menghilang (display:none) tanpa fade. */
+::view-transition-group(dock-popover),
+::view-transition-image-pair(dock-popover),
+::view-transition-old(dock-popover),
+::view-transition-new(dock-popover) {
+  animation: none !important;
+}
+::view-transition-old(dock-popover),
+::view-transition-new(dock-popover) {
+  display: none !important;
 }
 
 @keyframes vt-fade-out {

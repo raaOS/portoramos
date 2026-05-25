@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'motion/react';
 import MenuBar from '../core/MenuBar';
 import { OSDock } from '../core/Dock';
+import { DockPortal } from '@/components/layout/GlobalDockSlot';
 
 import type { AboutData } from '@/types/about';
 import type { Project } from '@/types/projects';
@@ -132,15 +133,7 @@ export default function UIOverlaysLayer({
       <AnimatePresence mode="wait">
         {/* Dock Container - hidden during boot */}
         {!isBootingOrStarting && (
-          <motion.div
-            key="os-dock"
-            className="pb-safe pointer-events-none fixed bottom-4 left-0 right-0 flex justify-center"
-            style={{ zIndex: Z_LAYERS.DOCK }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.15 }}
-          >
+          <DockPortal>
             <div className="pointer-events-auto">
               {aboutData && (
                 <OSDock
@@ -157,7 +150,7 @@ export default function UIOverlaysLayer({
                 />
               )}
             </div>
-          </motion.div>
+          </DockPortal>
         )}
       </AnimatePresence>
 

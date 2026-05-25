@@ -43,6 +43,12 @@ export default function DockProjectModes({ onSelect }: DockProjectModesProps) {
   const router = useTransitionRouter();
   const [pendingMode, setPendingMode] = useState<string | null>(null);
 
+  // Preload NonOSChrome as soon as the popover mounts to act as a fast safety net
+  React.useEffect(() => {
+    import('@/components/layout/NonOSChrome').catch(() => {});
+  }, []);
+
+
   const handleModeSelect = useCallback(
     (mode: ModeOption) => (e: React.MouseEvent) => {
       // Prevent default Link navigation dan pakai useTransitionRouter

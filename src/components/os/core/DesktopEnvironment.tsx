@@ -323,6 +323,22 @@ function DesktopMain({
   const isDesktopReady = wasBootSkipped || startScreenReady;
   const isDesktopRevealed = wasBootSkipped || isRevealed;
 
+  // Preload NonOSChrome dynamically so navigation to /projects is instant and dock doesn't slide
+  useEffect(() => {
+    if (isDesktopRevealed) {
+      const preload = () => {
+        import('@/components/layout/NonOSChrome').catch(() => {});
+      };
+      if (typeof window !== 'undefined') {
+        if ('requestIdleCallback' in window) {
+          window.requestIdleCallback(preload);
+        } else {
+          setTimeout(preload, 1000);
+        }
+      }
+    }
+  }, [isDesktopRevealed]);
+
   return (
     <LazyMotion features={domMax}>
       {isMobile ? (

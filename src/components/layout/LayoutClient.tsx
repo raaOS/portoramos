@@ -4,6 +4,9 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import type { DockPreferences } from '@/types/about';
+import GlobalDockSlot from './GlobalDockSlot';
+import { GlobalDock } from '@/components/os/core/Dock';
+import { WindowProvider } from '@/contexts/WindowContext';
 
 /**
  * NonOSChrome (motion + Header + Dock + WindowRenderer + ControlCenter +
@@ -39,18 +42,37 @@ export default function LayoutClient({
   const isOsMode =
     pathname === '/' || pathname?.startsWith('/about-test') || pathname?.startsWith('/about');
 
-  if (isAdminRequest || isOsMode) {
-    return (
+  // Slot dock yang persistent: dirender di level non-lazy supaya element
+  // dengan viewTransitionName 'global-dock' selalu ada di kedua snapshot
+  // saat navigasi `/` ↔ non-OS. OSDock & GlobalDock portal kontennya
+  // ke slot ini. Admin tidak butuh dock.
+  //
+  // PENTING: slot dirender di posisi yang SAMA di kedua branch (terakhir,
+  // di luar conditional) agar React reconciler tidak unmount/remount node-nya
+  // saat pathname berubah. Kalau slot pernah unmount, DOM element dengan
+  // viewTransitionName lenyap di tengah transisi → fallback ke root animation
+  // → dock terlihat ikut slide.
+  const showDockSlot = !isAdminRequest;
+  const showGlobalDock = !isAdminRequest && !isOsMode;
+
+  const content =
+    isAdminRequest || isOsMode ? (
       <>
         {children}
         {modal}
       </>
+    ) : (
+      <NonOSChrome modal={modal}>
+        {children}
+      </NonOSChrome>
     );
-  }
 
   return (
-    <NonOSChrome modal={modal} dockConfig={dockConfig}>
-      {children}
-    </NonOSChrome>
+    <WindowProvider>
+      {content}
+      {showDockSlot && <GlobalDockSlot />}
+      {showGlobalDock && <GlobalDock dockConfig={dockConfig} />}
+    </WindowProvider>
   );
 }
+

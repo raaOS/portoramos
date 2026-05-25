@@ -28,6 +28,7 @@ import { useWindowContext } from '@/contexts/WindowContext';
 import { getDockItemConfig } from '../utils/dockUtils';
 import { markBack } from '@/lib/navigationDirection';
 import { Z_LAYERS } from '../utils/zIndexLayers';
+import { DockPortal } from '@/components/layout/GlobalDockSlot';
 
 const LINK_BOUNCE_DELAY_MS = 280;
 
@@ -253,7 +254,17 @@ function DockItem({
             animate={{ opacity: 1, y: -20, scale: 1, x: '-50%' }}
             exit={{ opacity: 0, y: 10, scale: 0.8, x: '-50%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            style={{ zIndex: Z_LAYERS.DOCK_POPOVER }}
+            // viewTransitionName: pisahkan popover dari snapshot 'global-dock'.
+            // Tanpa ini, popover ikut tertangkap di snapshot dock dan
+            // memperbesar bbox snapshot OLD jauh ke atas (popover extend ~200px
+            // di atas dock). Akibatnya `::view-transition-group(global-dock)`
+            // jadi punya size/position berbeda antara OLD dan NEW → walau
+            // animation:none, NEW dock snapshot dirender dengan offset di
+            // dalam group → user lihat "dock ikut slide sepersekian detik".
+            // Dengan name sendiri, popover punya pair (exit-only di route
+            // tujuan) yang dimatikan via display:none di globals.css. Slot
+            // dock jadi tetap kecil dan konsisten.
+            style={{ zIndex: Z_LAYERS.DOCK_POPOVER, viewTransitionName: 'dock-popover' }}
             className="absolute bottom-full left-1/2 mb-4 rounded-2xl border border-white/40 bg-zinc-100 ring-1 ring-black/5"
             onClick={(e) => e.stopPropagation()}
           >
@@ -395,11 +406,7 @@ export default function Dock({ items, bouncingId, isMobile = false }: DockProps)
 
   return (
     <div className="print:hidden">
-      <m.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-      >
+      <div>
         {/* Hit-area transparan: capture mouse move di atas konten halaman
                     (mis. masonry grid) supaya magnifikasi tetap bekerja terlepas
                     dari stacking context. Hanya mode desktop. */}
@@ -503,7 +510,7 @@ export default function Dock({ items, bouncingId, isMobile = false }: DockProps)
             })}
           </div>
         </nav>
-      </m.div>
+      </div>
     </div>
   );
 }
@@ -607,17 +614,11 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
   }
 
   return (
-    <div
-      className="pb-safe pointer-events-none fixed bottom-4 left-0 right-0 flex justify-center"
-      style={{
-        zIndex: 99999,
-        viewTransitionName: 'global-dock',
-      }}
-    >
+    <DockPortal>
       <div className="pointer-events-auto">
         <Dock items={dockItems} bouncingId={bouncingDocId} isMobile={isMobile} />
       </div>
-    </div>
+    </DockPortal>
   );
 }
 
