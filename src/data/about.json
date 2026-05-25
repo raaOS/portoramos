@@ -141,7 +141,9 @@
             "status": "default"
           }
         ],
-        "nextSteps": ["strategy"],
+        "nextSteps": [
+          "strategy"
+        ],
         "loopTargets": []
       },
       {
@@ -179,8 +181,12 @@
             "status": "default"
           }
         ],
-        "nextSteps": ["execution"],
-        "loopTargets": ["discovery"]
+        "nextSteps": [
+          "execution"
+        ],
+        "loopTargets": [
+          "discovery"
+        ]
       },
       {
         "id": "execution",
@@ -217,8 +223,13 @@
             "status": "default"
           }
         ],
-        "nextSteps": ["approval"],
-        "loopTargets": ["strategy", "execution"]
+        "nextSteps": [
+          "approval"
+        ],
+        "loopTargets": [
+          "strategy",
+          "execution"
+        ]
       },
       {
         "id": "approval",
@@ -255,8 +266,14 @@
             "status": "default"
           }
         ],
-        "nextSteps": ["delivery"],
-        "loopTargets": ["execution", "strategy", "discovery"]
+        "nextSteps": [
+          "delivery"
+        ],
+        "loopTargets": [
+          "execution",
+          "strategy",
+          "discovery"
+        ]
       },
       {
         "id": "delivery",
@@ -300,18 +317,13 @@
   },
   "desktopPreferences": {
     "visibleProjectIds": [
-      "gen-1766512146544-14",
-      "gen-1766512146544-3",
-      "gen-1766512146544-5",
       "gen-1766512146544-0",
-      "gen-1766512146544-10",
-      "gen-1766512146544-16",
-      "gen-1766512146544-17",
-      "gen-1766512146544-18",
-      "gen-1766512146544-20",
-      "gen-1766512146544-19"
+      "gen-1766512146544-1",
+      "gen-1766512146544-2",
+      "gen-1766512146544-14",
+      "gen-1766512146544-3"
     ],
-    "maxIcons": 10,
+    "maxIcons": 5,
     "layout": "scattered",
     "iconPositions": {
       "gen-1766512146544-3": {
@@ -711,5 +723,6 @@
       ]
     }
   ],
-  "lastUpdated": "2026-03-02T20:00:57.907Z"
+  "lastUpdated": "2026-03-02T20:00:57.907Z",
+  "updatedAt": "2026-05-25T21:34:16.327Z"
 }

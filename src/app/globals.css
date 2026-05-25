@@ -573,7 +573,10 @@ html[data-vt-direction='back']::view-transition-new(root) {
    tampil di posisi yang sama persis (slot persistent menjamin rect
    identik), jadi visual-nya: dock diam, popover hilang instan,
    tidak ada flicker. */
-::view-transition-group(global-dock),
+::view-transition-group(global-dock) {
+  animation-duration: 800ms !important;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
 ::view-transition-image-pair(global-dock) {
   animation: none !important;
 }
@@ -618,4 +621,12 @@ html[data-vt-direction='back']::view-transition-new(root) {
   to {
     opacity: 1;
   }
+}
+
+/* Force hide tooltips immediately when dock popover is closing to prevent flickering/clipping during transitions */
+html[data-dock-popover-closing='true'] [data-dock-tooltip="true"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: none !important;
 }

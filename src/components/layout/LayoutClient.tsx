@@ -28,6 +28,8 @@ const NonOSChrome = dynamic(() => import('./NonOSChrome'), {
   ssr: false,
 });
 
+import { LazyMotion, domAnimation } from 'motion/react';
+
 export default function LayoutClient({
   children,
   modal,
@@ -69,9 +71,11 @@ export default function LayoutClient({
 
   return (
     <WindowProvider>
-      {content}
-      {showDockSlot && <GlobalDockSlot />}
-      {showGlobalDock && <GlobalDock dockConfig={dockConfig} />}
+      <LazyMotion features={domAnimation}>
+        {content}
+        {showDockSlot && <GlobalDockSlot />}
+        {showGlobalDock && <GlobalDock dockConfig={dockConfig} />}
+      </LazyMotion>
     </WindowProvider>
   );
 }

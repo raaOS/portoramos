@@ -70,6 +70,7 @@ interface DockItemProps {
   isPopoverOpen: boolean;
   onTogglePopover: () => void;
   anyPopoverOpen: boolean;
+  disableTooltips?: boolean;
 }
 
 function DockItem({
@@ -85,6 +86,7 @@ function DockItem({
   isPopoverOpen,
   onTogglePopover,
   anyPopoverOpen,
+  disableTooltips = false,
 }: DockItemProps) {
   const ref = useRef<HTMLDivElement>(null);
   const navigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -241,8 +243,11 @@ function DockItem({
       tabIndex={isLinkWrapped ? -1 : 0}
       onKeyDown={handleKeyDown}
     >
-      {!isMobile && !isPopoverOpen && (
-        <div className="pointer-events-none absolute -top-12 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded border border-black/5 bg-white px-2 py-1 text-[10px] font-medium text-black opacity-0 transition-opacity group-hover:opacity-100">
+      {!isMobile && !isPopoverOpen && !anyPopoverOpen && !disableTooltips && (
+        <div
+          data-dock-tooltip="true"
+          className={`pointer-events-none absolute -top-12 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded border border-black/5 bg-white px-2 py-1 text-[10px] font-medium text-black opacity-0 transition-opacity ${anyPopoverOpen || disableTooltips ? '' : 'group-hover:opacity-100'}`}
+        >
           {label}
         </div>
       )}
@@ -327,14 +332,44 @@ export default function Dock({ items, bouncingId, isMobile = false }: DockProps)
   const mouseX = useMotionValue(Infinity);
   const [isMounted, setIsMounted] = useState(isClientHydrated);
   const [activePopoverId, setActivePopoverId] = useState<string | null>(null);
+  const [disableTooltips, setDisableTooltips] = useState(false);
+  const prevPopoverIdRef = useRef<string | null>(null);
+
+  // Suppress tooltips for 1000ms when any popover is closed (e.g. view mode selected)
+  // to cover the page transition gap and prevent flash overlays.
+  useEffect(() => {
+    if (prevPopoverIdRef.current !== null && activePopoverId === null) {
+      setDisableTooltips(true);
+      const timer = setTimeout(() => setDisableTooltips(false), 1000);
+      return () => clearTimeout(timer);
+    }
+    prevPopoverIdRef.current = activePopoverId;
+  }, [activePopoverId]);
 
   // Stable callback (functional setState). Sebelumnya callback recreated setiap
   // render → DockItem.useEffect ngedaftar/clean-up window listener berkali-kali.
   const togglePopover = useCallback((id: string) => {
-    setActivePopoverId((prev) => (prev === id ? null : id));
+    setActivePopoverId((prev) => {
+      if (prev === id) {
+        if (typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-dock-popover-closing', 'true');
+          setTimeout(() => {
+            document.documentElement.removeAttribute('data-dock-popover-closing');
+          }, 1000);
+        }
+        return null;
+      }
+      return id;
+    });
   }, []);
 
   const closePopover = useCallback(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-dock-popover-closing', 'true');
+      setTimeout(() => {
+        document.documentElement.removeAttribute('data-dock-popover-closing');
+      }, 1000);
+    }
     setActivePopoverId(null);
   }, []);
 
@@ -492,6 +527,7 @@ export default function Dock({ items, bouncingId, isMobile = false }: DockProps)
                   anyPopoverOpen={anyPopoverOpen}
                   shouldBounceExternal={bouncingId === item.id}
                   isMobile={isMobile}
+                  disableTooltips={disableTooltips}
                 />
               );
 

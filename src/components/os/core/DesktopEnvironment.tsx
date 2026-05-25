@@ -91,10 +91,12 @@ export default function DesktopEnvironment({
   const { dynamicContacts, testimonialContacts } = useChatContacts(testimonialsData);
 
   const commercialProjects = useMemo(() => {
-    if (aboutData?.desktopPreferences?.visibleProjectIds) {
-      return projects.filter((p) => aboutData.desktopPreferences?.visibleProjectIds.includes(p.id));
+    const visibleIds = aboutData?.desktopPreferences?.visibleProjectIds;
+    if (visibleIds && visibleIds.length > 0) {
+      const filtered = projects.filter((p) => visibleIds.includes(p.id));
+      if (filtered.length > 0) return filtered;
     }
-    return projects.filter((p) => p.type !== 'visual_art');
+    return projects;
   }, [projects, aboutData]);
 
   const initialWindows = useMemo(
