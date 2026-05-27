@@ -317,15 +317,6 @@ async function sendWithButtons(
   });
 }
 
-/** @deprecated gunakan sendWithButtons untuk multi-row support */
-async function sendWithButton(
-  config: JobBotConfig,
-  text: string,
-  button: { text: string; callbackData: string },
-  threadId?: number
-) {
-  await sendWithButtons(config, text, [[button]], threadId);
-}
 
 /**
  * Sumber scan yang didukung. Bot menampilkan picker saat user kirim /scan,

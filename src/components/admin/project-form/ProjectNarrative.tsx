@@ -18,7 +18,7 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
 
   return (
     <div className="space-y-6">
-      <div className="rounded-none border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="rounded-none border border-gray-200 bg-white p-4">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-gray-900">
           <span
             className={`h-1.5 w-1.5 rounded-full ${isCommercial ? 'bg-purple-500' : 'bg-pink-500'}`}

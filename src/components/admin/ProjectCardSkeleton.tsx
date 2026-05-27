@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function ProjectCardSkeleton() {
   return (
-    <div className="flex h-full animate-pulse flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="flex h-full animate-pulse flex-col overflow-hidden rounded-xl border border-gray-200 bg-white">
       {/* Image Skeleton */}
       <div className="relative aspect-video w-full bg-gray-200" />
 

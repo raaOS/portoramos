@@ -41,17 +41,18 @@ export const ADMIN_QUERY_KEYS = {
 
 export const ADMIN_PREFETCH_HREFS = [
   '/admin/projects',
-  '/admin/experience',
-  '/admin/testimonial',
-  '/admin/contact',
-  '/admin/leads',
-  '/admin/about?tab=professional',
-  '/admin/about?tab=softSkills',
-  '/admin/about?tab=hardSkills',
-  '/admin/about?tab=runningText',
-  '/admin/about?tab=desktop',
-  '/admin/about?tab=stickyNotes',
-  '/admin/about?tab=archive',
+  '/admin/content/experience',
+  '/admin/communications/notifications',
+  '/admin/communications/contacts',
+  '/admin/communications/messages',
+  '/admin/content/profile',
+  '/admin/content/skills',
+  '/admin/content/archive',
+  '/admin/system/appearance',
+  '/admin/system/widgets',
+  '/admin/system/dock',
+  '/admin/system/sounds',
+  '/admin/content/labels',
 ] as const;
 
 export interface AdminProjectsResponse {
@@ -218,68 +219,96 @@ function prefetchJobsForRoute(href: string) {
     ];
   }
 
-  if (href.startsWith('/admin/about')) {
-    const jobs = [
+  if (href.startsWith('/admin/content/profile')) {
+    return [
       (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.about, fetchAdminAbout),
       (queryClient: QueryClient) =>
         prefetch(queryClient, ADMIN_QUERY_KEYS.projects, fetchAdminProjects),
       (queryClient: QueryClient) =>
-        prefetch(queryClient, ADMIN_QUERY_KEYS.labels, fetchAdminLabels),
-      (queryClient: QueryClient) =>
-        prefetch(queryClient, ADMIN_QUERY_KEYS.runningText, fetchAdminRunningText),
+        prefetch(queryClient, ADMIN_QUERY_KEYS.aboutPhilosophy, fetchAdminAboutPhilosophy),
     ];
-
-    if (href.includes('tab=hardSkills')) {
-      jobs.push((queryClient: QueryClient) =>
-        prefetch(queryClient, ADMIN_QUERY_KEYS.hardSkills, fetchAdminHardSkills)
-      );
-    }
-    if (href.includes('tab=stickyNotes')) {
-      jobs.push((queryClient: QueryClient) =>
-        prefetch(queryClient, ADMIN_QUERY_KEYS.stickyNotes, fetchAdminStickyNotes)
-      );
-    }
-    if (href.includes('tab=archive')) {
-      jobs.push((queryClient: QueryClient) =>
-        prefetch(queryClient, ADMIN_QUERY_KEYS.galleryFeatured, fetchAdminGalleryFeatured)
-      );
-    }
-    if (href.includes('tab=philosophy')) {
-      jobs.push((queryClient: QueryClient) =>
-        prefetch(queryClient, ADMIN_QUERY_KEYS.aboutPhilosophy, fetchAdminAboutPhilosophy)
-      );
-    }
-
-    return jobs;
   }
 
-  if (href.startsWith('/admin/experience')) {
+  if (href.startsWith('/admin/content/skills')) {
+    return [
+      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.about, fetchAdminAbout),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.hardSkills, fetchAdminHardSkills),
+    ];
+  }
+
+  if (href.startsWith('/admin/content/archive')) {
+    return [
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.projects, fetchAdminProjects),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.galleryFeatured, fetchAdminGalleryFeatured),
+    ];
+  }
+
+  if (href.startsWith('/admin/content/experience')) {
     return [
       (queryClient: QueryClient) =>
         prefetch(queryClient, ADMIN_QUERY_KEYS.experience, fetchAdminExperience),
     ];
   }
 
-  if (href.startsWith('/admin/testimonial')) {
+  if (href.startsWith('/admin/content/labels')) {
     return [
       (queryClient: QueryClient) =>
-        prefetch(queryClient, ADMIN_QUERY_KEYS.testimonial, fetchAdminTestimonials),
+        prefetch(queryClient, ADMIN_QUERY_KEYS.labels, fetchAdminLabels),
+    ];
+  }
+
+  if (href.startsWith('/admin/system/appearance')) {
+    return [
+      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.about, fetchAdminAbout),
       (queryClient: QueryClient) =>
         prefetch(queryClient, ADMIN_QUERY_KEYS.projects, fetchAdminProjects),
     ];
   }
 
-  if (href.startsWith('/admin/contact')) {
+  if (href.startsWith('/admin/system/widgets')) {
+    return [
+      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.about, fetchAdminAbout),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.runningText, fetchAdminRunningText),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.stickyNotes, fetchAdminStickyNotes),
+    ];
+  }
+
+  if (href.startsWith('/admin/system/dock') || href.startsWith('/admin/system/sounds')) {
+    return [
+      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.about, fetchAdminAbout),
+    ];
+  }
+
+  if (href.startsWith('/admin/communications/notifications')) {
+    return [
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.testimonial, fetchAdminTestimonials),
+      (queryClient: QueryClient) =>
+        prefetch(queryClient, ADMIN_QUERY_KEYS.projects, fetchAdminProjects),
+      (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.about, fetchAdminAbout),
+    ];
+  }
+
+  if (href.startsWith('/admin/communications/contacts')) {
     return [
       (queryClient: QueryClient) =>
         prefetch(queryClient, ADMIN_QUERY_KEYS.contact, fetchAdminContact),
     ];
   }
 
-  if (href.startsWith('/admin/leads')) {
+  if (href.startsWith('/admin/communications/messages')) {
     return [
       (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.leads, fetchAdminLeads),
     ];
+  }
+
+  if (href.startsWith('/admin/communications/feedback')) {
+    return [];
   }
 
   return [];

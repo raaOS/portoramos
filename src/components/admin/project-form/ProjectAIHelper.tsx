@@ -164,7 +164,7 @@ export default function ProjectAIHelper({
   };
 
   return (
-    <div className="relative mb-6 overflow-hidden rounded-none border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="relative mb-6 overflow-hidden rounded-none border border-gray-200 bg-white p-5">
       {/* Background design elements */}
       <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-violet-100 opacity-50 blur-3xl"></div>
 

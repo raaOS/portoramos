@@ -266,6 +266,7 @@ const DynamicIsland = ({
 
   return (
     <div
+      data-testid="dynamic-island"
       className="pointer-events-none fixed left-0 right-0 top-[42px] flex justify-center print:hidden"
       style={{ zIndex }}
     >

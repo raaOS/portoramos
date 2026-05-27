@@ -132,7 +132,7 @@ export default function DevWebVitalsOverlay() {
   return (
     <div
       data-dev-overlay="web-vitals"
-      className="fixed bottom-3 right-3 z-[2147483646] select-none font-mono text-[11px]"
+      className="fixed bottom-24 right-3 md:bottom-3 md:right-3 z-[2147483646] select-none font-mono text-[11px]"
       aria-hidden="true"
     >
       {collapsed ? (

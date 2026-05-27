@@ -14,7 +14,7 @@ export default function GalleryItem({ item, onRemove, onToggleActive }: GalleryI
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-lg border bg-gray-50 transition-all hover:shadow-md ${item.isActive === false ? 'opacity-50 grayscale' : 'border-gray-200'}`}
+      className={`group relative overflow-hidden rounded-lg border bg-gray-50 transition-all ${item.isActive === false ? 'opacity-50 grayscale' : 'border-gray-200'}`}
     >
       <div
         className="relative flex aspect-square cursor-pointer items-center justify-center bg-black"
@@ -43,7 +43,7 @@ export default function GalleryItem({ item, onRemove, onToggleActive }: GalleryI
           e.stopPropagation();
           onRemove();
         }}
-        className="absolute right-2 top-2 z-10 rounded-full bg-red-500 p-1.5 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+        className="absolute right-2 top-2 z-10 rounded-full bg-red-500 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
       >
         <X size={14} />
       </button>

@@ -396,7 +396,14 @@ export default function Dock({ items, bouncingId, isMobile = false }: DockProps)
   }, []);
 
 
-  const dockBaseWidth = items.length > 0 ? items.length * 64 + (items.length - 1) * 8 + 24 : 0;
+  const filteredItems = useMemo(() => {
+    if (isMobile) {
+      return items.filter((item) => item.id !== 'trash');
+    }
+    return items;
+  }, [items, isMobile]);
+
+  const dockBaseWidth = filteredItems.length > 0 ? filteredItems.length * 64 + (filteredItems.length - 1) * 8 + 24 : 0;
   const hoverCaptureWidth = dockBaseWidth + 160;
 
   const handleMouseMove = useCallback(
@@ -494,7 +501,7 @@ export default function Dock({ items, bouncingId, isMobile = false }: DockProps)
                 'linear-gradient(180deg, rgba(255,255,255,0.44) 0%, rgba(255,255,255,0.24) 46%, rgba(255,255,255,0.16) 100%)',
               border: '1px solid rgba(255, 255, 255, 0.52)',
               boxShadow:
-                'inset 0 1px 0 rgba(255,255,255,0.72), inset 0 -1px 0 rgba(0,0,0,0.08), 0 18px 46px rgba(0,0,0,0.28)',
+                'inset 0 1px 0 rgba(255,255,255,0.72), inset 0 -1px 0 rgba(0,0,0,0.08)',
             }}
           >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.35),transparent_58%)]" />
@@ -504,14 +511,14 @@ export default function Dock({ items, bouncingId, isMobile = false }: DockProps)
           <div
             className={`relative z-10 flex items-end ${
               isMobile
-                ? 'scrollbar-hide h-[72px] gap-5 overflow-x-auto px-5 py-3'
+                ? 'scrollbar-hide h-[72px] gap-3 overflow-x-auto px-4 py-3'
                 : 'h-[96px] gap-2 px-3 py-4'
             }`}
             style={{
               minWidth: isMobile ? 'auto' : dockBaseWidth,
             }}
           >
-            {items.map((item) => {
+            {filteredItems.map((item) => {
               const dockItem = (
                 <DockItem
                   key={item.id}
@@ -564,6 +571,7 @@ export default function Dock({ items, bouncingId, isMobile = false }: DockProps)
  */
 export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
   const pathname = usePathname();
+  const router = useTransitionRouter();
   const { isWindowOpen, bouncingDocId } = useWindowContext();
   const [isMobile, setIsMobile] = useState(false);
 
@@ -589,8 +597,16 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
         id: 'projects',
         label: 'Projects',
         icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />,
-        onClick: () => {},
-        popoverContent: <DockProjectModes />,
+        onClick: isMobile
+          ? () => {
+              if (typeof document !== 'undefined') {
+                document.documentElement.removeAttribute('data-vt-direction');
+              }
+              router.push('/projects');
+            }
+          : () => {},
+        href: isMobile ? '/projects' : undefined,
+        popoverContent: isMobile ? undefined : <DockProjectModes />,
       },
       {
         id: 'about',
@@ -629,7 +645,7 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
       },
     ];
     return getDockItemConfig(items, dockConfig);
-  }, [markNav, dockConfig]);
+  }, [markNav, dockConfig, isMobile, router]);
 
   // Status `isOpen` di-merge tanpa membuat ulang icon/popoverContent —
   // mencegah re-create React elements setiap mutasi window state.
@@ -727,7 +743,8 @@ export function OSDock({
         label: 'Projects',
         icon: <AppIcon icon={Grid} color="from-zinc-700 to-zinc-900" />,
         onClick: handleOpenProjects,
-        popoverContent: <DockProjectModes />,
+        href: isMobile ? '/projects' : undefined,
+        popoverContent: isMobile ? undefined : <DockProjectModes />,
       },
       {
         id: 'about',
@@ -769,6 +786,7 @@ export function OSDock({
     onOpenContact,
     onOpenNotes,
     onOpenTrash,
+    isMobile,
   ]);
 
   const dockItems = useMemo<DockItemData[]>(() => {

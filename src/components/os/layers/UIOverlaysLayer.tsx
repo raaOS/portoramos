@@ -14,7 +14,6 @@ import { useDesktopWindowContext } from '../context/DesktopWindowContext';
 import { useUnifiedZIndex } from '../context/UnifiedZIndexContext';
 import { ISLAND_ID } from '../ui/DynamicIsland';
 import { useOSSystem } from '../context/OSSystemContext';
-import { useBootSequence } from '../hooks/useBootSequence';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 
 const Spotlight = dynamic(() => import('../core/Spotlight'), {
@@ -52,6 +51,8 @@ interface UIOverlaysLayerProps {
   isMobile: boolean;
   commercialProjects: Project[];
   openProjectWindow: (project: Project) => void;
+  needsPowerOn: boolean;
+  isBooting: boolean;
 }
 
 export default function UIOverlaysLayer({
@@ -65,8 +66,9 @@ export default function UIOverlaysLayer({
   isMobile,
   commercialProjects,
   openProjectWindow,
+  needsPowerOn,
+  isBooting,
 }: UIOverlaysLayerProps) {
-  const { isBooting, needsPowerOn } = useBootSequence();
   const {
     showSpotlight,
     setShowSpotlight,
@@ -79,7 +81,8 @@ export default function UIOverlaysLayer({
   } = useOSSystem();
   // Saat hollow-O mulai membesar (`isRevealed = true`), dock & menubar sudah
   // boleh render di belakang StartScreen supaya terlihat dari dalam lubang.
-  const isBootingOrStarting = (isBooting || needsPowerOn) && !isRevealed;
+  const isBootSequenceActive = isBooting || needsPowerOn;
+  const isBootingOrStarting = isBootSequenceActive && !isRevealed;
 
   const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
   const { getZIndex } = useUnifiedZIndex();
@@ -101,7 +104,7 @@ export default function UIOverlaysLayer({
     <div className="pointer-events-none absolute inset-0">
       {/* Dynamic Island - Unified Z-index participant */}
       <DynamicIsland
-        isBooting={isBooting}
+        isBooting={isBootSequenceActive}
         onOpenChat={navToChat}
         customNotifications={testimonialContacts}
         islandId={ISLAND_ID}
@@ -204,7 +207,7 @@ export default function UIOverlaysLayer({
       </AnimatePresence>
 
       {/* Exit-intent feedback — visitor only, appears on tab close attempt */}
-      {!isAdmin && !isBootingOrStarting && <ExitIntentFeedback />}
+      {!isAdmin && !isBootSequenceActive && <ExitIntentFeedback />}
     </div>
   );
 }

@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
     // VERIFY PASSWORD
     let passwordValid = false;
     try {
-      passwordValid = verifyAdminPassword(password);
+      passwordValid = await verifyAdminPassword(password);
     } catch {
       // Jika auth config error, jangan expose ke user
       return NextResponse.json({ error: 'Authentication service error' }, { status: 500 });

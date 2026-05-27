@@ -187,6 +187,7 @@ export const DraggableStickyNote = ({
       dragListener={false}
       dragMomentum={false}
       data-lenis-prevent
+      data-testid="sticky-note"
       animate={note.isDeleted ? { opacity: 0, scale: 0.8 } : 'show'}
       initial="hidden"
       variants={{

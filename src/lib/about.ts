@@ -1,4 +1,4 @@
-import { aboutService, getCachedAboutData } from '@/lib/services/aboutService';
+import { getCachedAboutData } from '@/lib/services/aboutService';
 import type {
   AboutData,
   AboutHero,
@@ -30,8 +30,10 @@ export async function loadAboutData(): Promise<AboutData | null> {
 // (atau D1 kalau cache 5s sudah expire). invalidateAboutCache di bawah memaksa
 // bypass ContentService cache supaya admin update langsung kelihatan.
 export function invalidateAboutCache(): void {
-  // Force next read to bypass ContentService cache.
-  aboutService.getAboutData(true).catch(() => {});
+  // DEPRECATED: do nothing.
+  // ContentService.saveData already updates the memory cache with the new data.
+  // Calling getAboutData(true) immediately after save hits D1 read replicas
+  // before they sync, caching stale data and causing UI state reversion.
 }
 
 // ===== SECTION-SPECIFIC LOADERS =====

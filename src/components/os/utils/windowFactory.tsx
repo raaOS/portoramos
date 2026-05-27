@@ -40,6 +40,7 @@ interface WindowFactoryProps {
   commercialProjects: Project[];
   dynamicContacts: Record<string, ContactProfile>;
   isAdmin?: boolean;
+  isMobile?: boolean;
 }
 
 export const createInitialWindows = ({
@@ -51,6 +52,7 @@ export const createInitialWindows = ({
   commercialProjects: _commercialProjects,
   dynamicContacts,
   isAdmin = false,
+  isMobile = false,
 }: WindowFactoryProps): WindowState[] => {
   // About window - pakai positionSync untuk get posisi
   const aboutPos = getWindowPosition(
@@ -64,7 +66,7 @@ export const createInitialWindows = ({
     {
       id: 'about',
       title: 'Finder: About Me',
-      isOpen: true,
+      isOpen: isMobile ? false : true,
       zIndex: 10,
       noPadding: true,
       initialPosition: { x: aboutPos.x, y: aboutPos.y },

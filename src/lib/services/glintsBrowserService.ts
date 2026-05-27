@@ -78,7 +78,7 @@ function hasTerm(haystack: string, term: string): boolean {
  */
 function parseGlintsCardBlock(
   rawText: string,
-  jobUrl: string
+  _jobUrl: string
 ): {
   title: string;
   company?: string;

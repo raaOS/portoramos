@@ -117,6 +117,15 @@ export function useDesktopNavigation({
     setTimeout(() => setNotesDockBouncing(false), 600);
   }, [notesVisible, setNotesVisible, hiddenNoteIds, unhideAllNotes, setNotesDockBouncing]);
 
+  const showNotes = useCallback(() => {
+    unhideAllNotes();
+    if (!notesVisible) {
+      setNotesVisible(true);
+    }
+    setNotesDockBouncing(true);
+    setTimeout(() => setNotesDockBouncing(false), 600);
+  }, [notesVisible, setNotesVisible, unhideAllNotes, setNotesDockBouncing]);
+
   return {
     handleGoHome,
     resetDesktopAndClose,
@@ -125,5 +134,6 @@ export function useDesktopNavigation({
     openWhatsAppList,
     openContactWindow,
     toggleNotesVisibility,
+    showNotes,
   };
 }

@@ -1,26 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
 /**
- * HIGH FIX: Eliminate double auth check
- * Server-side (page.tsx) already verified admin_token cookie and JWT validity.
- * If we reach this client component, auth is guaranteed by server.
- * Just redirect to projects dashboard immediately without extra API call.
+ * Admin Dashboard Client - Landing page for /admin.
+ * The desktop OS shell is rendered by the layout (ClientAdminLayout).
+ * This component is intentionally empty since the layout already shows
+ * the full desktop interface with zone folder icons.
  */
 export default function AdminDashboardClient() {
-  const router = useRouter();
-
-  useEffect(() => {
-    // Server already verified auth, just redirect to projects
-    router.push('/admin/projects');
-  }, [router]);
-
-  // Render minimal loader while redirecting
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="animate-pulse text-gray-400">Loading dashboard...</div>
-    </div>
-  );
+  // The desktop shell is rendered by the layout wrapper.
+  // This page simply acts as the root container.
+  return null;
 }

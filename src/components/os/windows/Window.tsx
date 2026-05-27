@@ -155,12 +155,12 @@ export default function OSWindow({
 
   const normalFrame = useMemo(
     () => ({
-      x: initialPosition.x,
-      y: initialPosition.y,
-      width: measuredWidth,
-      height: measuredHeight,
+      x: isSmallScreen ? 8 : initialPosition.x,
+      y: isSmallScreen ? 44 : initialPosition.y, // 36px menubar + 8px gap
+      width: isSmallScreen ? viewportWidth - 16 : measuredWidth,
+      height: isSmallScreen ? viewportHeight - 146 : measuredHeight, // leaves room for dock + generous gap margins
     }),
-    [initialPosition.x, initialPosition.y, measuredWidth, measuredHeight]
+    [isSmallScreen, initialPosition.x, initialPosition.y, measuredWidth, measuredHeight, viewportWidth, viewportHeight]
   );
 
   const maximizedFrame = useMemo(
@@ -175,7 +175,16 @@ export default function OSWindow({
 
   const activeFrame = isMaximized ? maximizedFrame : normalFrame;
 
-  const shellStyle = isMaximized ? SHELL_STYLE_MAXIMIZED : SHELL_STYLE;
+  const shellStyle = useMemo(() => {
+    const base = isMaximized ? SHELL_STYLE_MAXIMIZED : SHELL_STYLE;
+    if (isSmallScreen) {
+      return {
+        ...base,
+        backgroundColor: 'rgba(255, 255, 255, 0.94)', // More opaque fallback for mobile legibility
+      };
+    }
+    return base;
+  }, [isMaximized, isSmallScreen]);
 
   // ── Animation states based on originRect (icon position) ──
   // When originRect is available: window expands FROM icon and shrinks BACK to icon
@@ -337,9 +346,11 @@ export default function OSWindow({
             pointerEvents: isMinimized ? 'none' : 'auto',
             backdropFilter: isMinimized
               ? 'none'
-              : isFocused
-                ? 'blur(24px) saturate(1.2)'
-                : 'blur(12px) saturate(1)',
+              : isSmallScreen
+                ? 'none' // Disable GPU intensive backdrop filter on mobile
+                : isFocused
+                  ? 'blur(24px) saturate(1.2)'
+                  : 'blur(12px) saturate(1)',
             transition: 'backdrop-filter 0.3s ease',
           }}
           data-lenis-prevent

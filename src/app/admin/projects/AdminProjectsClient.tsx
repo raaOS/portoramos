@@ -180,7 +180,7 @@ export default function AdminProjectsClient() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-6 md:p-8">
       <ProjectToolbar
         connectionStatus={connectionStatus}
         selectedProjectIds={selectedProjectIds}
@@ -202,7 +202,7 @@ export default function AdminProjectsClient() {
         )}
 
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
             {[...Array(6)].map((_, i) => (
               <ProjectCardSkeleton key={i} />
             ))}
@@ -224,7 +224,7 @@ export default function AdminProjectsClient() {
                   items={paginatedProjects.map((p) => p.id)}
                   strategy={rectSortingStrategy}
                 >
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
                     {paginatedProjects.map((project, index) => (
                       <SortableProjectItem key={project.id} id={project.id}>
                         {renderProjectCard(project, index)}
@@ -234,7 +234,7 @@ export default function AdminProjectsClient() {
                 </SortableContext>
               </DndContext>
             ) : (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
                 {paginatedProjects.map((project, index) => (
                   <div key={project.id} className="h-full">
                     {renderProjectCard(project, index)}

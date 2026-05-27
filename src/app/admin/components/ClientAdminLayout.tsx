@@ -2,115 +2,86 @@
 
 import { ReactNode, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Menu, X } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { ADMIN_PREFETCH_HREFS, warmAdminCrudQueries } from '../lib/adminQueries';
+import { warmAdminCrudQueries } from '../lib/adminQueries';
 import { ConfirmDialogProvider } from '@/components/admin/ConfirmDialog';
-
-// Extracted Hook & Components
-import { useAdminSidebar } from './hooks/useAdminSidebar';
-import { AdminSidebar } from './components/AdminSidebar';
+import { useAdminDesktop } from '../desktop/useAdminDesktop';
+import AdminDesktopShell from '../desktop/AdminDesktopShell';
+import { APP_ROUTE_MAP } from '../desktop/registry';
 
 interface ClientAdminLayoutProps {
   children: ReactNode;
 }
 
+/**
+ * Maps a Next.js pathname (e.g. /admin/content/profile) to the desktop appId.
+ */
+function pathnameToAppId(pathname: string): string | null {
+  for (const [appId, route] of Object.entries(APP_ROUTE_MAP)) {
+    if (pathname === route || pathname.startsWith(route + '/')) {
+      return appId;
+    }
+  }
+  return null;
+}
+
 export default function ClientAdminLayout({ children }: ClientAdminLayoutProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { logout } = useAdminAuth();
-  const {
-    isMobileMenuOpen,
-    setIsMobileMenuOpen,
-    sidebarCollapsed,
-    setSidebarCollapsed,
-    expandedMenus,
-    toggleMenu,
-    isActive,
-  } = useAdminSidebar();
+  const { windows, openFolderId, actions } = useAdminDesktop();
+  const warmedRef = useRef(false);
+  const deepLinkedRef = useRef(false);
 
   const handleLogout = async () => {
     await logout();
   };
 
-  const handleContentClick = () => {
-    if (!sidebarCollapsed) {
-      setSidebarCollapsed(true);
-    }
-  };
-
-  const warmedRef = useRef(false);
-
+  // Prefetch admin data once per session
   useEffect(() => {
     if (pathname === '/admin/login') return;
-    // PERF: warm query + RSC prefetch hanya sekali per sesi admin (tidak
-    // re-run tiap navigasi). Pakai ref guard agar saat user baru login dan
-    // pathname pindah dari /admin/login ke /admin/projects, warm tetap jalan.
     if (warmedRef.current) return;
     warmedRef.current = true;
 
     const timeout = window.setTimeout(() => {
-      ADMIN_PREFETCH_HREFS.forEach((href) => router.prefetch(href));
       void warmAdminCrudQueries(queryClient);
     }, 0);
 
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [pathname, queryClient, router]);
+    return () => window.clearTimeout(timeout);
+  }, [pathname, queryClient]);
 
-  // Do not render the sidebar layout on the login page
+  // Deep-link: if user visits a sub-route directly (e.g. /admin/content/experience),
+  // auto-open the corresponding window on the desktop.
+  useEffect(() => {
+    if (pathname === '/admin/login' || pathname === '/admin') return;
+    if (deepLinkedRef.current) return;
+
+    const appId = pathnameToAppId(pathname);
+    if (appId) {
+      deepLinkedRef.current = true;
+      // Small delay to ensure desktop is mounted
+      const timeout = window.setTimeout(() => {
+        actions.openApp('', appId);
+      }, 100);
+      return () => window.clearTimeout(timeout);
+    }
+  }, [pathname, actions]);
+
+  // Login page: don't render the desktop shell
   if (pathname === '/admin/login') {
     return <ConfirmDialogProvider>{children}</ConfirmDialogProvider>;
   }
 
-  // Dynamic margin for content area based on sidebar state
-  const contentMargin = sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64';
-
+  // Admin Desktop Shell (replaces old sidebar layout)
   return (
     <ConfirmDialogProvider>
-      <div className="flex min-h-screen bg-gray-50">
-        {/* Mobile Top Bar */}
-        <div className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 md:hidden">
-          <span className="text-lg font-bold">Admin Panel</span>
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 text-gray-600"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-
-        {/* Sidebar Overlay (Mobile) */}
-        {isMobileMenuOpen && (
-          <div
-            className="fixed inset-0 z-40 bg-black/50 md:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
-
-        {/* Sidebar Navigation */}
-        <AdminSidebar
-          isMobileMenuOpen={isMobileMenuOpen}
-          setIsMobileMenuOpen={setIsMobileMenuOpen}
-          sidebarCollapsed={sidebarCollapsed}
-          setSidebarCollapsed={setSidebarCollapsed}
-          expandedMenus={expandedMenus}
-          toggleMenu={toggleMenu}
-          isActive={isActive}
-          handleLogout={handleLogout}
-        />
-
-        {/* Main Content Wrapper - click to collapse sidebar */}
-        <div
-          onClick={handleContentClick}
-          className={`flex min-h-screen flex-1 flex-col bg-gray-50 pt-16 md:pt-0 ${contentMargin} transition-all duration-300 ease-in-out ${!sidebarCollapsed ? 'cursor-pointer' : ''}`}
-        >
-          {children}
-        </div>
-      </div>
+      <AdminDesktopShell
+        windows={windows}
+        openFolderId={openFolderId}
+        actions={actions}
+        onLogout={handleLogout}
+      />
     </ConfirmDialogProvider>
   );
 }

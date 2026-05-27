@@ -32,7 +32,14 @@
 
 /* Disable transitions on mobile to prevent flickering during scroll */
 @media (max-width: 768px) {
+  .masonryGridColumn {
+    padding-right: 8px; /* Tighter column gap on mobile */
+  }
+  .masonryGridColumn:last-child {
+    padding-right: 0;
+  }
   .masonryGridColumn > div {
     transition: none;
+    margin-bottom: 8px; /* Tighter row gap on mobile */
   }
 }

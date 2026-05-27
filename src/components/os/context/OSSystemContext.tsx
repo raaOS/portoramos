@@ -57,6 +57,14 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
   const [showSpotlight, setShowSpotlight] = useState(false);
   const [notesVisible, setNotesVisible] = useState(true);
   const [hiddenNoteIds, setHiddenNoteIds] = useState<Set<string>>(() => new Set());
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setTimeout(() => {
+        setNotesVisible(false);
+      }, 0);
+    }
+  }, []);
   const [isRevealed, setIsRevealed] = useState(false);
   const [startScreenReady, setStartScreenReady] = useState(false);
   const [brightness, setBrightness] = useState(100);

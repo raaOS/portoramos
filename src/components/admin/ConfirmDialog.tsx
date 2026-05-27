@@ -197,7 +197,7 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
           // <dialog> element itself, not the inner card.
           if (e.target === dialogRef.current) cancel();
         }}
-        className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-transparent p-0 shadow-2xl backdrop:bg-black/55 backdrop:backdrop-blur-sm"
+        className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-transparent p-0 backdrop:bg-black/55 backdrop:backdrop-blur-sm"
       >
         {pending && (
           <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white">

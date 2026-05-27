@@ -59,7 +59,7 @@ export default function AdminModal({
 
         {/* Modal */}
         <div
-          className={`inline-flex max-h-[90vh] w-full transform flex-col overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle ${sizeClasses[size]}`}
+          className={`inline-flex max-h-[90vh] w-full transform flex-col overflow-hidden rounded-lg bg-white text-left align-bottom transition-all sm:my-8 sm:align-middle ${sizeClasses[size]}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

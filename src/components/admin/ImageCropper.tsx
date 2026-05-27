@@ -44,7 +44,7 @@ export default function ImageCropper({ imageSrc, onCropComplete, onCancel }: Ima
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-2 sm:p-4">
-      <div className="flex h-full max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl sm:max-h-[90vh]">
+      <div className="flex h-full max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-white sm:max-h-[90vh]">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b p-3 sm:p-4">
           <h3 className="text-lg font-bold text-gray-800">Crop Image</h3>

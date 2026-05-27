@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { AboutData } from '@/types/about';
-import { useSystemSound } from '@/hooks/useSystemSound';
 import { useLayoutPersistence } from '@/components/os/contexts/LayoutPersistenceContext';
 import { useUnifiedZIndexActions } from '@/components/os/context/UnifiedZIndexContext';
 import type { WindowState } from './window-manager/types';
@@ -31,7 +30,6 @@ export const useWindowManager = ({
   const [windows, setWindows] = useState<WindowState[]>(initialWindows);
   const { bringToFront: bringToFrontZIndex } = useUnifiedZIndexActions();
   const [bouncingDocId, setBouncingDocId] = useState<string | null>(null);
-  const { playOpen, playClose } = useSystemSound();
 
   // 1. Diagnostics & Dimensions
   const { getCenterPosition, getCenterPositionStatic } = useWindowDimensions();
@@ -58,8 +56,6 @@ export const useWindowManager = ({
     setWindows,
     setBouncingDocId,
     bringToFrontZIndex,
-    playOpen,
-    playClose,
     getCenterPosition,
     aboutData,
     isAdmin,

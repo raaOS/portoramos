@@ -419,7 +419,7 @@ export default function ProjectBasicInfo({
                   }}
                   className={`flex items-center gap-2 rounded-none border px-3 py-1.5 text-xs font-bold uppercase transition-all ${
                     isSelected
-                      ? 'border-violet-600 bg-violet-600 text-white shadow-md'
+                      ? 'border-violet-600 bg-violet-600 text-white'
                       : 'border-gray-200 bg-white text-gray-500 hover:border-violet-300 hover:text-violet-600'
                   }`}
                 >

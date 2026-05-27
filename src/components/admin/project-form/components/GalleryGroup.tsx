@@ -26,7 +26,7 @@ export default function GalleryGroup({
     <div className="space-y-4 rounded-xl border border-gray-200 bg-gray-50/50 p-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
-          <div className="rounded-lg border border-gray-100 bg-white p-1.5 shadow-sm">
+          <div className="rounded-lg border border-gray-100 bg-white p-1.5">
             <Type size={14} className="text-gray-400" />
           </div>
           <input

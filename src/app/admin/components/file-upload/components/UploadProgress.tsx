@@ -15,13 +15,13 @@ export function UploadProgress({ status, progress }: UploadProgressProps) {
       <div className="flex flex-col items-center justify-center space-y-3">
         <div className="relative">
           {isComplete ? (
-            <div className="animate-in zoom-in relative rounded-2xl border border-green-100 bg-white p-3 shadow-sm duration-300">
+            <div className="animate-in zoom-in relative rounded-xl border border-green-100 bg-white p-3 duration-300">
               <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
           ) : (
             <>
               <div className="absolute inset-0 animate-pulse rounded-full bg-violet-500 opacity-20 blur-xl"></div>
-              <div className="relative rounded-2xl border border-violet-100 bg-white p-3 shadow-sm">
+              <div className="relative rounded-xl border border-violet-100 bg-white p-3">
                 <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
               </div>
             </>
@@ -37,7 +37,7 @@ export function UploadProgress({ status, progress }: UploadProgressProps) {
 
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-[0_0_10px_rgba(139,92,246,0.3)] transition-all duration-300 ease-out"
+            className="h-full rounded-full bg-violet-600 transition-all duration-300 ease-out"
             style={{ width: `${progress}%` }}
           ></div>
         </div>

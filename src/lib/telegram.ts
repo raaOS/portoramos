@@ -90,7 +90,7 @@ interface TelegramMessageBody {
   parse_mode: 'Markdown' | 'HTML';
   message_thread_id?: number;
   reply_markup?: {
-    inline_keyboard: { text: string; url: string }[][];
+    inline_keyboard: { text: string; url?: string; callback_data?: string }[][];
   };
 }
 
@@ -102,7 +102,7 @@ async function sendTelegramMessage(
   chatId: string,
   botToken: string,
   message: string,
-  options?: { buttons?: { text: string; url: string }[][]; messageThreadId?: number },
+  options?: { buttons?: { text: string; url?: string; callback_data?: string }[][]; messageThreadId?: number },
   label = 'Telegram'
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -152,7 +152,7 @@ async function sendTelegramMessage(
 export async function sendTelegramAlert(
   message: string,
   options?: {
-    buttons?: { text: string; url: string }[][];
+    buttons?: { text: string; url?: string; callback_data?: string }[][];
     priority?: string;
   }
 ): Promise<{ success: boolean; error?: string }> {

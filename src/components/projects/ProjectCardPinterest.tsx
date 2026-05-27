@@ -56,7 +56,7 @@ export default function ProjectCardPinterest({
       {...hrefProps}
       onClick={onClick}
       data-project-card
-      className={`project-card relative z-0 mb-2 block md:mb-6 ${isInteractive ? 'group cursor-pointer hover:z-10' : ''}`}
+      className={`project-card relative z-0 mb-0 block md:mb-6 ${isInteractive ? 'group cursor-pointer hover:z-10' : ''}`}
     >
       {/* Outer: scale saja (tanpa overflow-hidden agar rounded tidak hilang saat hover)
                 Inner: overflow-hidden + rounded untuk clip gambar */}
@@ -100,7 +100,7 @@ export default function ProjectCardPinterest({
       </div>
 
       {/* Project Info */}
-      <div className="mt-3 space-y-1 px-1">
+      <div className="hidden md:block mt-3 space-y-1 px-1">
         <div className="flex items-baseline justify-between gap-4">
           <p className="truncate text-sm font-medium leading-tight text-gray-900 decoration-1 underline-offset-2 group-hover:underline dark:text-gray-100">
             {title}

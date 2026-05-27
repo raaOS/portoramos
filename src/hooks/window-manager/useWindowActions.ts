@@ -16,8 +16,6 @@ interface UseWindowActionsProps {
   setWindows: React.Dispatch<React.SetStateAction<WindowState[]>>;
   setBouncingDocId: React.Dispatch<React.SetStateAction<string | null>>;
   bringToFrontZIndex: (id: string, type: ElementType) => number;
-  playOpen: () => void;
-  playClose: () => void;
   getCenterPosition: (w: number, h: number) => { x: number; y: number };
   aboutData?: AboutData | null;
   isAdmin: boolean;
@@ -45,14 +43,14 @@ export function useWindowActions({
   setWindows,
   setBouncingDocId,
   bringToFrontZIndex,
-  playOpen,
-  playClose,
   getCenterPosition,
   aboutData,
   isAdmin,
   csrfToken,
   saveWindowPreference,
 }: UseWindowActionsProps) {
+  // Sound ownership lives in Window.tsx / WindowTitleBar.tsx through SoundManager.
+  // Keep state actions silent so opening/closing a window cannot emit duplicate sounds.
   const openWindow = useCallback(
     (id: string, customConfig?: Partial<WindowState>) => {
       const newZIndex = bringToFrontZIndex(id, 'window');
@@ -97,7 +95,6 @@ export function useWindowActions({
             content: customConfig.content,
             originRect: customConfig.originRect,
           };
-          playOpen();
           return [...prev, newWindow];
         }
 
@@ -125,8 +122,6 @@ export function useWindowActions({
                 ? { x: pref.x, y: pref.y }
                 : getCenterPosition(width, height);
 
-            if (!w.isOpen) playOpen();
-
             return {
               ...w,
               isOpen: true,
@@ -144,7 +139,7 @@ export function useWindowActions({
         });
       });
     },
-    [aboutData, playOpen, getCenterPosition, bringToFrontZIndex, setWindows]
+    [aboutData, getCenterPosition, bringToFrontZIndex, setWindows]
   );
 
   const closeWindow = useCallback(
@@ -157,9 +152,8 @@ export function useWindowActions({
           return w;
         })
       );
-      playClose();
     },
-    [playClose, setWindows]
+    [setWindows]
   );
 
   const minimizeWindow = useCallback(

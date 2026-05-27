@@ -158,7 +158,7 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
 
   return (
     <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4 duration-200">
-      <div className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl">
+      <div className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg bg-white">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b p-4">
           <div>
@@ -194,7 +194,7 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
           />
 
           {/* Controls Overlay (Top Right) */}
-          <div className="absolute right-4 top-4 z-10 flex flex-col gap-2 rounded bg-white p-2 text-xs shadow-lg">
+          <div className="absolute right-4 top-4 z-10 flex flex-col gap-2 rounded bg-white p-2 text-xs">
             <span className="flex items-center gap-1 font-bold uppercase text-gray-500">
               <Maximize2 size={12} /> Ratio
             </span>
@@ -310,7 +310,7 @@ export default function VideoTrimmer({ file, onConfirm, onCancel }: VideoTrimmer
               </button>
               <button
                 onClick={() => onConfirm(range[0], range[1], croppedAreaPixels)}
-                className="rounded-md bg-violet-600 px-6 py-2 text-sm font-medium text-white shadow-sm hover:bg-violet-700"
+                className="rounded-md bg-violet-600 px-6 py-2 text-sm font-medium text-white hover:bg-violet-700"
               >
                 Process Video
               </button>

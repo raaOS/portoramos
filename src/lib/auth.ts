@@ -4,13 +4,14 @@ import { sign, verify } from 'jsonwebtoken';
 import { validateCSRFToken } from '@/lib/security';
 import { cookies } from 'next/headers';
 import { cleanEnvVar } from '@/lib/utils/env';
+import { db } from '@/lib/database';
 
 // Clean auth system - scrypt only (most secure)
 const ADMIN_PASSWORD_SCRYPT = cleanEnvVar('ADMIN_PASSWORD_SCRYPT');
 const PASSWORD_SALT = cleanEnvVar('PASSWORD_SALT');
 const JWT_SECRET = cleanEnvVar('JWT_SECRET');
 
-function hashPasswordScrypt(password: string, salt: string): string {
+export function hashPasswordScrypt(password: string, salt: string): string {
   const key = crypto.scryptSync(password, salt, 64);
   return key.toString('hex');
 }
@@ -22,15 +23,33 @@ function timingSafeEqualString(a: string, b: string): boolean {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
-export const verifyAdminPassword = (password: string): boolean => {
-  if (!ADMIN_PASSWORD_SCRYPT || !PASSWORD_SALT) {
-    throw new Error(
-      'Admin password security not configured - please set ADMIN_PASSWORD_SCRYPT and PASSWORD_SALT in your environment variables'
-    );
-  }
-
+export const verifyAdminPassword = async (password: string): Promise<boolean> => {
   if (!password || password.length < 8) {
     return false;
+  }
+
+  if (!PASSWORD_SALT) {
+    throw new Error('PASSWORD_SALT is not configured in your environment variables');
+  }
+
+  // 1. Check Database First
+  try {
+    const dbHashSnap = await db.ref('settings/adminPassword').once('value');
+    const dbHash = dbHashSnap.val();
+
+    if (dbHash && typeof dbHash === 'string') {
+      const hashedInput = hashPasswordScrypt(password, PASSWORD_SALT);
+      return timingSafeEqualString(hashedInput, dbHash);
+    }
+  } catch (error) {
+    console.error('[Auth] Failed to check DB for password, falling back to ENV:', error);
+  }
+
+  // 2. Fallback to Environment Variables
+  if (!ADMIN_PASSWORD_SCRYPT) {
+    throw new Error(
+      'Admin password security not configured - please set ADMIN_PASSWORD_SCRYPT in your environment variables or Database'
+    );
   }
 
   const hashedInput = hashPasswordScrypt(password, PASSWORD_SALT);

@@ -91,9 +91,7 @@ describe('POST /api/admin/login', () => {
 
   it('returns sanitized 500 responses without leaking internal error details', async () => {
     checkDataRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
-    verifyAdminPasswordMock.mockImplementation(() => {
-      throw new Error('scrypt config missing');
-    });
+    verifyAdminPasswordMock.mockRejectedValue(new Error('scrypt config missing'));
 
     const response = await POST(
       new Request('http://localhost/api/admin/login', {

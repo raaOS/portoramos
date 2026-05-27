@@ -7,6 +7,7 @@ import { DEFAULT_WALLPAPER_URL } from '../utils/zIndexLayers';
 interface DesktopBackgroundProps {
   wallpaperConfig?: WallpaperConfig;
   isWindowOpen?: boolean;
+  isMobile?: boolean;
 }
 
 /**
@@ -16,6 +17,7 @@ interface DesktopBackgroundProps {
 export default function DesktopBackground({
   wallpaperConfig,
   isWindowOpen = false,
+  isMobile = false,
 }: DesktopBackgroundProps) {
   const prefersReducedMotion = useReducedMotion();
 
@@ -40,8 +42,8 @@ export default function DesktopBackground({
   }, [activeWallpaper]);
 
   // iOS-style background effect: scales down slightly and blurs when a window is active.
-  // Reduced-motion: skip spring entirely — langsung set filter static tanpa scale shift.
-  const springTransition: Transition = prefersReducedMotion
+  // Reduced-motion or mobile: skip spring entirely — langsung set filter static tanpa scale shift.
+  const springTransition: Transition = prefersReducedMotion || isMobile
     ? { duration: 0 }
     : { type: 'spring', stiffness: 180, damping: 28, mass: 1 };
 
@@ -50,7 +52,7 @@ export default function DesktopBackground({
   // di-resize sharp di build pipeline + Next/Image, jadi aman di-scale.
   const idleScale = isVideo ? 1 : 1.08;
 
-  const animateTarget = prefersReducedMotion
+  const animateTarget = prefersReducedMotion || isMobile
     ? {
         scale: 1,
         filter: `blur(${blurAmount}px)`,

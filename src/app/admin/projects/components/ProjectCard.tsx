@@ -39,7 +39,7 @@ export const ProjectCard = ({
   const shouldLoadEagerly = priority || eager;
 
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:shadow-lg">
+    <div className="group flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all duration-200 hover:border-gray-300">
       <div className="relative aspect-video overflow-hidden bg-gray-100">
         {/* Selection Checkbox Overlay */}
         <div
@@ -50,7 +50,7 @@ export const ProjectCard = ({
             type="checkbox"
             checked={selectedProjectIds.has(project.id)}
             onChange={() => toggleProjectSelection(project.id)}
-            className="h-5 w-5 cursor-pointer rounded border-gray-300 text-violet-600 shadow-sm focus:ring-violet-500"
+            className="h-5 w-5 cursor-pointer rounded border-gray-300 text-violet-600 focus:ring-violet-500"
           />
         </div>
 
@@ -124,28 +124,28 @@ export const ProjectCard = ({
         >
           <button
             onClick={() => setEditingProject(project)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition-all hover:bg-violet-50 hover:text-violet-600"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-violet-50 hover:text-violet-600"
             title="Edit Project"
           >
             <Pencil className="h-4 w-4" />
           </button>
           <button
             onClick={() => handleDuplicateProject(project)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition-all hover:bg-blue-50 hover:text-blue-600"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-blue-50 hover:text-blue-600"
             title="Duplicate Project"
           >
             <Copy className="h-4 w-4" />
           </button>
           <button
             onClick={() => handleDeleteProject(project.id)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition-all hover:bg-red-50 hover:text-red-600"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-red-50 hover:text-red-600"
             title="Delete Project"
           >
             <Trash2 className="h-4 w-4" />
           </button>
           <button
             onClick={() => setManagingCommentsProject(project)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition-all hover:bg-violet-50 hover:text-violet-600"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-violet-50 hover:text-violet-600"
             title="Manage Comments"
           >
             <MessageCircle className="h-4 w-4 shrink-0" />

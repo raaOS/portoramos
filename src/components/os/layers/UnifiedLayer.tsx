@@ -108,6 +108,8 @@ export default function UnifiedLayer({
 
   return (
     <m.div
+      data-testid="unified-layer"
+      data-notes-visible={notesVisible ? 'true' : 'false'}
       className="pointer-events-none absolute inset-0"
       variants={containerVariants}
       initial="hidden"

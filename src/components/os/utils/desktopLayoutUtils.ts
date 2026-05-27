@@ -44,7 +44,10 @@ export const generateDesktopIcons = (
   const safeProjects = Array.isArray(commercialProjects) ? commercialProjects : [];
   let visibleProjects = safeProjects.filter((p) => p.status !== 'draft');
 
-  if (desktopPreferences?.maxIcons) {
+  if (isMobile) {
+    // Sembunyikan ikon proyek individual di mobile agar wallpaper bersih & bebas tumpang tindih
+    visibleProjects = [];
+  } else if (desktopPreferences?.maxIcons) {
     visibleProjects = visibleProjects.slice(0, desktopPreferences.maxIcons);
   }
 

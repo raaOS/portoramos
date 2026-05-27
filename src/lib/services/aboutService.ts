@@ -11,6 +11,7 @@ import {
   SoundConfig,
 } from '@/types/about';
 import aboutDataFallback from '@/data/about.json';
+import { deleteStorageAssets } from '@/lib/services/storageCleanup';
 
 const service = new ContentService<AboutData>(
   'about.json',
@@ -55,6 +56,32 @@ function mergeWindowPreferences(
   });
 
   return merged;
+}
+
+/**
+ * Extract all media URLs from AboutData for storage cleanup.
+ */
+function extractAboutAssets(data: AboutData): string[] {
+  const assets: string[] = [];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ((data.hero as any)?.avatarUrl) assets.push((data.hero as any).avatarUrl);
+
+  if (data.wallpaperConfig?.collection) {
+    data.wallpaperConfig.collection.forEach((w) => {
+      if (w.url) assets.push(w.url);
+      if (w.posterUrl) assets.push(w.posterUrl);
+    });
+  }
+
+  if (data.soundConfig) {
+    if (data.soundConfig.startupSound?.path) assets.push(data.soundConfig.startupSound.path);
+    if (data.soundConfig.notificationSound?.path) assets.push(data.soundConfig.notificationSound.path);
+    if (data.soundConfig.errorSound?.path) assets.push(data.soundConfig.errorSound.path);
+    if (data.soundConfig.successSound?.path) assets.push(data.soundConfig.successSound.path);
+  }
+
+  return assets;
 }
 
 /**
@@ -119,9 +146,20 @@ export const aboutService = {
         lastUpdated: new Date().toISOString(),
       };
 
+      const oldAssets = extractAboutAssets(current);
+      const newAssets = extractAboutAssets(mergedData);
+      const orphanedAssets = oldAssets.filter((url) => !newAssets.includes(url));
+
       const success = await service.saveData(mergedData, 'Update about page content');
       if (!success) {
         throw new Error('ContentService failed to save data');
+      }
+
+      // Cleanup storage asynchronously (fire and forget to not block UI response)
+      if (orphanedAssets.length > 0) {
+        deleteStorageAssets(orphanedAssets, 'AboutService').catch((e) =>
+          console.warn('[AboutService] Failed to clean up orphaned assets:', e)
+        );
       }
 
       return mergedData;

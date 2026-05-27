@@ -24,24 +24,20 @@ export function useAdminSidebar() {
   const routeExpandedMenus = useMemo(() => {
     const isProject = pathname?.startsWith('/admin/projects');
     const isAbout =
-      pathname?.startsWith('/admin/about') ||
-      pathname?.startsWith('/admin/experience') ||
-      pathname?.startsWith('/admin/testimonial');
+      pathname?.startsWith('/admin/content') ||
+      pathname?.startsWith('/admin/communications/notifications');
     const isContact =
-      pathname?.startsWith('/admin/contact') || pathname?.startsWith('/admin/leads');
-    const isOSConfig =
-      pathname?.startsWith('/admin/about') &&
-      ['desktop', 'dock', 'stickyNotes', 'sounds', 'runningText'].includes(
-        searchParams.get('tab') || ''
-      );
+      pathname?.startsWith('/admin/communications') &&
+      !pathname?.startsWith('/admin/communications/notifications');
+    const isOSConfig = pathname?.startsWith('/admin/system');
 
     return {
       '/admin/projects-group': isProject,
-      '/admin/about-group': isAbout,
+      '/admin/about-group': isAbout || isOSConfig,
       '/admin/contact-group': isContact,
       '/admin/os-config': isOSConfig,
     };
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   const expandedMenus = useMemo(
     () => ({

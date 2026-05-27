@@ -124,7 +124,7 @@ export default function GalleryManager({ projects }: GalleryManagerProps) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center rounded-lg bg-violet-600 px-4 py-2 font-medium text-white shadow-sm transition-colors hover:bg-violet-700 disabled:opacity-50"
+          className="inline-flex items-center rounded-lg bg-violet-600 px-4 py-2 font-medium text-white transition-colors hover:bg-violet-700 disabled:opacity-50"
         >
           {saving ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -174,7 +174,7 @@ export default function GalleryManager({ projects }: GalleryManagerProps) {
 
               {isSelected && (
                 <div className="absolute inset-0 flex items-center justify-center bg-violet-600/40">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full border-4 border-white bg-violet-600 text-xl font-bold text-white shadow-xl">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border-4 border-white bg-violet-600 text-xl font-bold text-white">
                     {selectedIndex + 1}
                   </div>
                 </div>

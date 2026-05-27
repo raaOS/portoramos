@@ -3,7 +3,9 @@ import { getTelegramConfigSafe, isValidTelegramWebhookSecret } from '@/lib/teleg
 import { checkRateLimit } from '@/lib/telegram/rateLimiter';
 import { validateWebhookData } from '@/lib/telegram/validators';
 import { checkIsAdmin, logWebhookDebug } from '@/lib/telegram/helpers';
-import { sendImmediate, sendMessage } from '@/lib/telegram/sender';
+import { sendImmediate, sendMessage, answerCallbackQuery, editMessageText } from '@/lib/telegram/sender';
+import { db } from '@/lib/database';
+import { hashPasswordScrypt } from '@/lib/auth';
 import { chatStore } from '@/lib/chatStore';
 import { cleanEnvVar } from '@/lib/utils/env';
 import type { MessageToSend } from '@/lib/telegram/types';
@@ -71,7 +73,82 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const webhookBody = body as { message?: Record<string, unknown> };
+    const webhookBody = body as { message?: Record<string, unknown>, callback_query?: Record<string, unknown> };
+
+    // --- CALLBACK QUERY HANDLING (Inline Buttons) ---
+    if (webhookBody.callback_query) {
+      const cbQuery = webhookBody.callback_query as Record<string, unknown>;
+      const callbackId = String(cbQuery['id'] || '');
+      const data = String(cbQuery['data'] || '');
+      const cbMessage = cbQuery['message'] as Record<string, unknown> | undefined;
+      const incomingChatId = String(cbMessage?.chat ? (cbMessage.chat as Record<string, unknown>).id : '');
+      const messageId = Number(cbMessage?.message_id);
+      
+      // Verify admin authorization for this action
+      const isAdminAction = checkIsAdmin(incomingChatId, adminChatId, groupId);
+
+      if (!isAdminAction) {
+        await answerCallbackQuery(callbackId, botToken, { text: 'Unauthorized', showAlert: true });
+        return NextResponse.json({ ok: true });
+      }
+
+      if (data === 'otp_reject') {
+        const otpSnap = await db.ref('settings/adminOtp').once('value');
+        const otpData = otpSnap.val();
+
+        if (otpData && otpData.status === 'pending') {
+          // Update status ke rejected agar di-polling oleh UI
+          await db.ref('settings/adminOtp').set({
+            status: 'rejected',
+            expiresAt: Date.now() + 60 * 1000, // biarkan hidup 1 menit agar UI sempat polling
+          });
+
+          await editMessageText(incomingChatId, messageId, '🚨 **Akses Digagalkan!**\nUpaya ganti sandi telah diblokir. UI penyusup akan langsung dikunci.', botToken);
+          await answerCallbackQuery(callbackId, botToken, { text: 'Akses diblokir!' });
+        } else {
+          await editMessageText(incomingChatId, messageId, '⚠️ **Sesi Kadaluarsa**\nSesi permintaan ganti sandi sudah tidak aktif.', botToken);
+          await answerCallbackQuery(callbackId, botToken, { text: 'Sesi sudah kadaluarsa', showAlert: true });
+        }
+        return NextResponse.json({ ok: true });
+      }
+
+      if (data === 'otp_approve') {
+        const otpSnap = await db.ref('settings/adminOtp').once('value');
+        const otpData = otpSnap.val();
+
+        if (otpData && otpData.status === 'pending') {
+          const salt = process.env.PASSWORD_SALT;
+          if (!salt) {
+            await answerCallbackQuery(callbackId, botToken, { text: 'Error konfigurasi server', showAlert: true });
+            return NextResponse.json({ ok: true });
+          }
+
+          // Generate OTP
+          const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+          const codeHash = hashPasswordScrypt(otpCode, salt);
+
+          // Update status ke approved beserta Hash OTP-nya
+          await db.ref('settings/adminOtp').set({
+            status: 'approved',
+            codeHash: codeHash,
+            expiresAt: Date.now() + 5 * 60 * 1000,
+          });
+
+          await editMessageText(incomingChatId, messageId, `✅ **Persetujuan Diterima**\n\nGunakan kode OTP berikut:\n\`${otpCode}\`\n\n(Berlaku 5 menit)`, botToken);
+          await answerCallbackQuery(callbackId, botToken, { text: 'Persetujuan Diterima!' });
+        } else {
+          await editMessageText(incomingChatId, messageId, '⚠️ **Sesi Kadaluarsa**\nSesi permintaan ganti sandi sudah tidak aktif.', botToken);
+          await answerCallbackQuery(callbackId, botToken, { text: 'Sesi sudah kadaluarsa', showAlert: true });
+        }
+        return NextResponse.json({ ok: true });
+      }
+      
+      // Default jika callback tidak dikenali
+      await answerCallbackQuery(callbackId, botToken, { text: 'Aksi tidak dikenal' });
+      return NextResponse.json({ ok: true });
+    }
+
+    // --- MESSAGE HANDLING ---
 
     if (webhookBody.message && typeof webhookBody.message.text === 'string') {
       const msg = webhookBody.message as Record<string, unknown>;

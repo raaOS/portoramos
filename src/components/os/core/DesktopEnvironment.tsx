@@ -40,7 +40,28 @@ const ChatWindow = dynamic(() => import('../windows/ChatWindow'), {
 });
 const StartScreen = dynamic(() => import('../ui/StartScreen'), {
   ssr: false,
-  loading: () => <div className="fixed inset-0 bg-black" style={{ zIndex: Z_LAYERS.BOOT }} />,
+  loading: () => (
+    <div
+      className="fixed inset-0 flex h-full w-full select-none items-center justify-center overflow-hidden bg-black print:hidden"
+      style={{ zIndex: Z_LAYERS.BOOT }}
+    >
+      <div className="relative flex items-center justify-center">
+        <svg
+          width="80"
+          height="120"
+          viewBox="0 0 24 36"
+          fill="#ffffff"
+          className="relative overflow-visible"
+        >
+          <circle cx="12" cy="10" r="9" />
+          <path d="M8 16 L4 32 C 3 35, 21 35, 20 32 L16 16 Z" />
+        </svg>
+        <p className="absolute -bottom-24 whitespace-nowrap text-sm font-medium uppercase tracking-[0.4em] text-white/90">
+          Click to Start
+        </p>
+      </div>
+    </div>
+  ),
 });
 const RetroMobileOverlay = dynamic(() => import('../ui/RetroMobileOverlay'), {
   loading: () => <div className="fixed inset-0 bg-[#c0c0c0]" style={{ zIndex: Z_LAYERS.CHROME }} />,
@@ -59,6 +80,9 @@ export interface DesktopEnvironmentProps {
 
 interface DesktopMainBaseProps {
   aboutData?: AboutData | null;
+  experienceData?: ExperienceData | null;
+  hardSkillsData?: HardSkillsData | null;
+  contactData?: ContactData | null;
   isMobile: boolean;
   isAdmin: boolean;
   csrfToken: string | null;
@@ -71,10 +95,12 @@ interface DesktopMainBaseProps {
 
 interface DesktopMainWithLogoutProps extends DesktopMainBaseProps {
   originalLogout: () => Promise<void>;
+  bootSequence: ReturnType<typeof useBootSequence>;
 }
 
 interface DesktopMainProps extends DesktopMainBaseProps {
   logout: () => void | Promise<void>;
+  bootSequence: ReturnType<typeof useBootSequence>;
 }
 
 export default function DesktopEnvironment({
@@ -86,7 +112,8 @@ export default function DesktopEnvironment({
   contactData,
 }: DesktopEnvironmentProps) {
   const { mounted, isMobile } = useDesktopLock();
-  const { needsPowerOn, isBooting } = useBootSequence();
+  const bootSequence = useBootSequence();
+  const { needsPowerOn, isBooting } = bootSequence;
   const { isAdmin, csrfToken, logout: originalLogout, isLoading: isAuthLoading } = useAdminAuth();
   const { dynamicContacts, testimonialContacts } = useChatContacts(testimonialsData);
 
@@ -110,6 +137,7 @@ export default function DesktopEnvironment({
         commercialProjects,
         dynamicContacts,
         isAdmin,
+        isMobile,
       }),
     [
       aboutData,
@@ -120,6 +148,7 @@ export default function DesktopEnvironment({
       commercialProjects,
       dynamicContacts,
       isAdmin,
+      isMobile,
     ]
   );
 
@@ -145,6 +174,9 @@ export default function DesktopEnvironment({
     >
       <DesktopMainWithLogout
         aboutData={aboutData}
+        experienceData={experienceData}
+        hardSkillsData={hardSkillsData}
+        contactData={contactData}
         isMobile={isMobile}
         commercialProjects={commercialProjects}
         projects={projects}
@@ -154,6 +186,7 @@ export default function DesktopEnvironment({
         dynamicContacts={dynamicContacts}
         testimonialContacts={testimonialContacts}
         isAuthLoading={isAuthLoading}
+        bootSequence={bootSequence}
       />
     </DesktopProviders>
   );
@@ -172,6 +205,9 @@ function DesktopMainWithLogout({ originalLogout, ...props }: DesktopMainWithLogo
 
 function DesktopMain({
   aboutData,
+  experienceData,
+  hardSkillsData,
+  contactData,
   isMobile,
   isAdmin,
   logout,
@@ -181,8 +217,9 @@ function DesktopMain({
   dynamicContacts,
   testimonialContacts,
   isAuthLoading,
+  bootSequence,
 }: DesktopMainProps) {
-  const { needsPowerOn, isBooting, finishBooting } = useBootSequence();
+  const { needsPowerOn, isBooting, finishBooting } = bootSequence;
   const { startScreenReady, setStartScreenReady, isRevealed, setIsRevealed } = useOSSystem();
   const wasBootSkipped = !needsPowerOn && !isBooting;
 
@@ -226,6 +263,7 @@ function DesktopMain({
     navToChat,
     openWhatsAppList,
     toggleNotesVisibility,
+    showNotes,
   } = useDesktopNavigation({
     openWindow,
     resetWindows,
@@ -261,13 +299,18 @@ function DesktopMain({
     iconPositions,
   });
 
+  useEffect(() => {
+    if (aboutData?.soundConfig) {
+      soundManager.loadConfig(aboutData.soundConfig);
+    }
+  }, [aboutData?.soundConfig]);
+
   const handleBootComplete = useCallback(() => {
-    if (aboutData?.soundConfig) soundManager.loadConfig(aboutData.soundConfig);
     soundManager.suppressSound('window-open', 1500);
     soundManager.suppressSound('notification', 1000);
     startTransition(() => setIsRevealed(true));
     finishBooting();
-  }, [aboutData, finishBooting, setIsRevealed]);
+  }, [finishBooting, setIsRevealed]);
 
   const releaseBootCover = useCallback(() => {
     document.documentElement.removeAttribute('data-os-needs-boot');
@@ -311,6 +354,8 @@ function DesktopMain({
     const app = rawApp === 'mail' ? 'contact' : rawApp;
     if (app === 'whatsapp') {
       openWhatsAppList();
+    } else if (app === 'notes') {
+      showNotes();
     } else {
       openWindow(app);
     }
@@ -320,7 +365,7 @@ function DesktopMain({
       const nextUrl = window.location.pathname + window.location.hash;
       window.history.replaceState({}, '', nextUrl);
     }
-  }, [searchParams, openWindow, openWhatsAppList]);
+  }, [searchParams, openWindow, openWhatsAppList, showNotes]);
 
   const isDesktopReady = wasBootSkipped || startScreenReady;
   const isDesktopRevealed = wasBootSkipped || isRevealed;
@@ -343,8 +388,14 @@ function DesktopMain({
 
   return (
     <LazyMotion features={domMax}>
-      {isMobile ? (
-        <RetroMobileOverlay />
+      {false ? (
+        <RetroMobileOverlay
+          aboutData={aboutData}
+          experienceData={experienceData}
+          hardSkillsData={hardSkillsData}
+          projects={projects}
+          contactData={contactData}
+        />
       ) : (
         <>
           {(needsPowerOn || isBooting) && (
@@ -364,6 +415,8 @@ function DesktopMain({
                   // Pre-reveal desktop layers DI BELAKANG hollow-O
                   // supaya saat lubang membesar, user langsung lihat
                   // wallpaper, icons, dock, menubar — bukan layar kosong.
+                  soundManager.suppressSound('window-open', 2500);
+                  soundManager.suppressSound('notification', 1500);
                   startTransition(() => setIsRevealed(true));
                 }}
               />
@@ -381,6 +434,7 @@ function DesktopMain({
             {isDesktopReady && (
               <DesktopBackground
                 wallpaperConfig={aboutData?.wallpaperConfig}
+                isMobile={isMobile}
                 isWindowOpen={windows.some(
                   (w) => w.id.startsWith('project-') && w.isOpen && !w.isMinimized
                 )}
@@ -441,6 +495,8 @@ function DesktopMain({
                   isMobile={isMobile}
                   commercialProjects={commercialProjects}
                   openProjectWindow={openProjectWindow}
+                  needsPowerOn={needsPowerOn}
+                  isBooting={isBooting}
                 />
               </>
             )}

@@ -111,7 +111,7 @@ export default function SecuritySettingsModal({ onClose }: SecuritySettingsModal
               {words.map((word) => (
                 <div
                   key={word}
-                  className="group flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-sm shadow-sm transition-all hover:border-gray-300"
+                  className="group flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-sm transition-all hover:border-gray-300"
                 >
                   <span>{word}</span>
                   <button
