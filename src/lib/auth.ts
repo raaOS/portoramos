@@ -5,6 +5,7 @@ import { validateCSRFToken } from '@/lib/security';
 import { cookies } from 'next/headers';
 import { cleanEnvVar } from '@/lib/utils/env';
 import { db } from '@/lib/database';
+import { logAdminActivity } from '@/lib/services/auditLogger';
 
 // Clean auth system - scrypt only (most secure)
 const ADMIN_PASSWORD_SCRYPT = cleanEnvVar('ADMIN_PASSWORD_SCRYPT');
@@ -117,6 +118,14 @@ export const validateAdminRequest = async (
     if (!csrfHeader || !csrfCookie || !validateCSRFToken(csrfHeader, csrfCookie)) {
       return false;
     }
+  }
+
+  if (isMutation) {
+    await logAdminActivity(request, `Admin ${request.method} ${request.nextUrl.pathname}`, {
+      stage: 'accepted',
+    }).catch((error) => {
+      console.error('[Audit] Failed to log admin request:', error);
+    });
   }
 
   return true;

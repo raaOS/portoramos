@@ -43,6 +43,7 @@ interface CacheMetrics {
 }
 
 export class CacheManager {
+  private static readonly instances = new Set<CacheManager>();
   private readonly store = new Map<string, CacheEntry>();
   private readonly defaultTTL: number;
   private readonly maxSize: number;
@@ -59,6 +60,18 @@ export class CacheManager {
     this.maxSize = options.maxSize ?? 50;
     this.label = options.label ?? 'CacheManager';
     this.enableMetrics = options.enableMetrics ?? false;
+    CacheManager.instances.add(this);
+  }
+
+  static clearAll(): Array<{ label: string; entriesCleared: number }> {
+    return Array.from(CacheManager.instances).map((instance) => {
+      const entriesCleared = instance.size;
+      instance.clear();
+      return {
+        label: instance.label,
+        entriesCleared,
+      };
+    });
   }
 
   /**

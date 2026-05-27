@@ -1,0 +1,53 @@
+import { db } from '@/lib/database';
+import type { NextRequest } from 'next/server';
+
+export interface AuditLog {
+  id?: string;
+  action: string;
+  metadata?: Record<string, unknown>;
+  timestamp: string;
+}
+
+/**
+ * Logs an administrative activity to the database.
+ * Uses Cloudflare D1 via the database wrapper.
+ */
+export async function logActivity(action: string, metadata?: Record<string, unknown>): Promise<void> {
+  try {
+    const payload: AuditLog = {
+      action,
+      metadata,
+      timestamp: new Date().toISOString(),
+    };
+
+    // push() generates a unique ID and saves the payload
+    await db.ref('audit_logs').push(payload);
+  } catch (error) {
+    console.error('[AuditLogger] Failed to log activity:', error);
+  }
+}
+
+function getRequestMetadata(request: NextRequest): Record<string, unknown> {
+  const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  const realIp = request.headers.get('x-real-ip');
+  const ip = forwardedFor || realIp || 'unknown';
+
+  return {
+    method: request.method,
+    path: request.nextUrl.pathname,
+    ip,
+    userAgent: request.headers.get('user-agent') || 'unknown',
+  };
+}
+
+export async function logAdminActivity(
+  request: NextRequest,
+  action: string,
+  metadata?: Record<string, unknown>
+): Promise<void> {
+  await logActivity(action, {
+    category: 'admin',
+    ...getRequestMetadata(request),
+    ...metadata,
+  });
+}

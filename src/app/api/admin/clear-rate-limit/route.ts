@@ -1,8 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { checkAdminAuth } from '@/lib/auth';
+import { logAdminActivity } from '@/lib/services/auditLogger';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    if (!checkAdminAuth(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     if (process.env.NODE_ENV === 'development') {
+      await logAdminActivity(request, 'Clear admin rate-limit cache').catch((error) => {
+        console.error('[Audit] Failed to log clear rate-limit:', error);
+      });
+
       return NextResponse.json({
         success: true,
         message:

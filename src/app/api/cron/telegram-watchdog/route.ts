@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const JOB_BOT_LOCAL_LEASE_KEY = 'telegramJobBotLocalLease';
+const WATCHDOG_STATUS_KEY = 'telegramWatchdogStatus';
 
 interface JobBotLocalLease {
   mode?: string;
@@ -21,6 +22,17 @@ interface TelegramWebhookInfo {
   url?: string;
   pending_update_count?: number;
   last_error_message?: string;
+}
+
+async function writeWatchdogStatus(status: Record<string, unknown>) {
+  try {
+    await db.ref(WATCHDOG_STATUS_KEY).set({
+      ...status,
+      checkedAt: Date.now(),
+    });
+  } catch (error) {
+    console.error('[Telegram Watchdog] Failed to write status:', error);
+  }
 }
 
 function json(data: Record<string, unknown>, status = 200) {
@@ -120,6 +132,14 @@ export async function GET(request: Request) {
   const activeLease = getActiveLease(lease);
 
   if (activeLease) {
+    await writeWatchdogStatus({
+      ok: true,
+      action: 'skipped',
+      reason: 'local-dev-lease-active',
+      leaseExpiresAt: activeLease.expiresAt,
+      leaseHeartbeatAt: activeLease.heartbeatAt,
+    });
+
     return json({
       ok: true,
       action: 'skipped',
@@ -136,6 +156,13 @@ export async function GET(request: Request) {
     if (lease) {
       await db.ref(JOB_BOT_LOCAL_LEASE_KEY).remove();
     }
+
+    await writeWatchdogStatus({
+      ok: true,
+      action: 'healthy',
+      webhookUrl: currentWebhookUrl,
+      pendingUpdates: Number(info.pending_update_count ?? 0),
+    });
 
     return json({
       ok: true,
@@ -156,6 +183,15 @@ export async function GET(request: Request) {
   if (lease) {
     await db.ref(JOB_BOT_LOCAL_LEASE_KEY).remove();
   }
+
+  await writeWatchdogStatus({
+    ok: true,
+    action: 'restored',
+    previousWebhookUrl: currentWebhookUrl || null,
+    webhookUrl: expectedWebhookUrl,
+    droppedPendingUpdates: true,
+    previousPendingUpdates: Number(info.pending_update_count ?? 0),
+  });
 
   return json({
     ok: true,

@@ -52,6 +52,12 @@ export function invalidateContactCache() {
   contactCache.delete(CONTACT_CACHE_KEY);
 }
 
+export function clearContactCache() {
+  const entriesCleared = contactCache.size;
+  contactCache.clear();
+  return entriesCleared;
+}
+
 export async function getContactData(noCache = false): Promise<ContactData> {
   if (!noCache) {
     const cached = contactCache.get<ContactData>(CONTACT_CACHE_KEY);

@@ -3,6 +3,7 @@ import { validateAdminRequest, verifyAdminPassword, hashPasswordScrypt } from '@
 import { db } from '@/lib/database';
 import { sendTelegramAlert } from '@/lib/telegram';
 import { getClientIdentifier } from '@/lib/security/request';
+import { logAdminActivity } from '@/lib/services/auditLogger';
 
 export const dynamic = 'force-dynamic';
 
@@ -114,6 +115,12 @@ Seseorang baru saja berhasil mengubah sandi admin Anda menggunakan OTP.
 
     await sendTelegramAlert(alertMessage, {
       priority: 'high'
+    });
+
+    await logAdminActivity(request, 'Admin password changed', {
+      ip,
+    }).catch((error) => {
+      console.error('[Audit] Failed to log password change:', error);
     });
 
     // 7. Response Sukses

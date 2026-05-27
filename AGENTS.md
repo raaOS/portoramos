@@ -303,17 +303,24 @@ ada webhook. Kalau proses dimatikan paksa sebelum restore, jalankan
 `npm run telegram:set-webhook -- --bot=job`.
 
 Selama local polling aktif, `scripts/core/dev.js` menulis lease heartbeat ke
-D1 key `telegramJobBotLocalLease`. Vercel Cron
-`/api/cron/telegram-watchdog` jalan setiap 5 menit dan hanya restore webhook
-job bot kalau lease tersebut sudah expired atau tidak ada. Ini mencegah
-cron merebut webhook saat local dev masih sengaja berjalan, sekaligus
-memulihkan production bila terminal/PC mati tanpa Ctrl+C.
+D1 key `telegramJobBotLocalLease`. External watchdog/cron pihak ketiga
+menembak `/api/cron/telegram-watchdog` setiap 5 menit dan route tersebut
+hanya restore webhook job bot kalau lease sudah expired atau tidak ada.
+Ini mencegah watchdog merebut webhook saat local dev masih sengaja berjalan,
+sekaligus memulihkan production bila terminal/PC mati tanpa Ctrl+C.
 
 Output kedua proses di-prefix: `[next]` untuk Next.js, `[job-bot]` untuk
 poller. Poller auto-restart kalau crash dengan exponential backoff. Setelah
 restore webhook berhasil, log dev menampilkan dua command bantuan:
 `npm run telegram:webhook-info` untuk cek status/pending dan
 `npm run telegram:set-webhook -- --bot=job` untuk recovery manual.
+Indikator Watchdog di admin menubar membaca status nyata dari
+`/api/admin/telegram-watchdog-status` (webhook Telegram, pending update,
+lease local, dan last watchdog run), sementara badge `cron-job.org` di popout
+hanya visual pendukung scheduler external.
+Indikator D1 membaca `/api/health` dan menampilkan latency read D1 asli.
+Indikator Network menggabungkan `navigator.onLine` dengan ping `/api/health`
+agar bisa membedakan browser offline, API tidak terjangkau, dan API degraded.
 
 ```bash
 # default: dev server + job hunter poller
@@ -679,6 +686,8 @@ CLOUDFLARE_D1_ACCOUNT_ID=
 CLOUDFLARE_D1_DATABASE_ID=
 CLOUDFLARE_D1_API_TOKEN=
 DATA_BACKEND=
+CLOUDFLARE_ZONE_ID=
+CLOUDFLARE_CACHE_PURGE_TOKEN=
 
 ADMIN_PASSWORD_SCRYPT=
 JWT_SECRET=
@@ -701,6 +710,7 @@ Env aktif/opsional lain yang muncul di codebase:
 
 - `CLOUDFLARE_R2_ACCOUNT_ID`, `CLOUDFLARE_R2_ACCESS_KEY_ID`, `CLOUDFLARE_R2_SECRET_ACCESS_KEY`, `CLOUDFLARE_R2_BUCKET`, `CLOUDFLARE_R2_PUBLIC_BASE_URL` — dipakai untuk upload dan serve media dari R2
 - `CLOUDFLARE_D1_ACCOUNT_ID`, `CLOUDFLARE_D1_DATABASE_ID`, `CLOUDFLARE_D1_API_TOKEN`, `DATA_BACKEND`, `NEXT_PUBLIC_DATA_BACKEND` — dipakai untuk backend data Cloudflare D1
+- `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_CACHE_PURGE_TOKEN` — opsional untuk tombol Admin > Clear Cache agar bisa purge Cloudflare CDN/R2 edge cache. Token harus punya permission Zone.Cache Purge.
 - `GOOGLE_MAPS_API_KEY`
 - `NEXT_PUBLIC_GA_ID`
 - `NEXT_PUBLIC_ANALYTICS_ENDPOINT`
@@ -710,7 +720,7 @@ Env aktif/opsional lain yang muncul di codebase:
 - `GROQ_API_KEY` — optional, untuk `/api/chat/voice` (transcription)
 - `TELEGRAM_FEEDBACK_THREAD_ID` — optional, topic Telegram khusus notifikasi feedback
 - `CRON_SECRET` — wajib di Vercel agar `/api/cron/telegram-watchdog` bisa
-  dipanggil aman oleh Vercel Cron
+  dipanggil aman oleh external watchdog via header `Authorization: Bearer <CRON_SECRET>`
 
 > **Catatan:** Data aplikasi memakai Cloudflare D1. Media upload/serve memakai Cloudflare R2.
 
@@ -720,7 +730,7 @@ Env aktif/opsional lain yang muncul di codebase:
 
 ### Vercel
 
-`vercel.json` saat ini:
+`vercel.json` saat ini (tanpa native Vercel Cron karena batasan akun Hobby):
 
 ```json
 {
@@ -732,15 +742,19 @@ Env aktif/opsional lain yang muncul di codebase:
   "functions": {
     "src/app/api/upload/route.ts": { "maxDuration": 60, "memory": 1024 },
     "src/app/api/cron/telegram-watchdog/route.ts": { "maxDuration": 30 }
-  },
-  "crons": [
-    {
-      "path": "/api/cron/telegram-watchdog",
-      "schedule": "*/5 * * * *"
-    }
-  ]
+  }
 }
 ```
+
+> **Catatan Akun Hobby Vercel:**
+> Akun Vercel Hobby dibatasi hanya boleh memiliki cron job harian (maksimal sekali sehari). Oleh karena itu, scheduler `crons` bawaan dihapus dari `vercel.json` agar proses deploy tidak ditolak oleh Vercel.
+>
+> **Solusi Pemulihan Webhook 5 Menit:**
+> Gunakan layanan cron pihak ketiga yang gratis seperti [cron-job.org](https://cron-job.org/) untuk menembak endpoint `/api/cron/telegram-watchdog` setiap 5 menit dengan konfigurasi:
+> - **Method**: `GET`
+> - **URL**: `https://<domain-anda>.vercel.app/api/cron/telegram-watchdog`
+> - **Header**: `Authorization: Bearer <CRON_SECRET>`
+
 
 ### Build / Deploy Notes
 

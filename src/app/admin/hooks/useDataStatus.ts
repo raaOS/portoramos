@@ -3,10 +3,25 @@
 import { useEffect, useSyncExternalStore } from 'react';
 
 type ConnectionStatus = 'connected' | 'error' | 'checking' | 'disconnected';
+type ServerStatus = 'online' | 'checking' | 'degraded' | 'offline';
+
+interface HealthPayload {
+  status?: string;
+  timestamp?: string;
+  database?: string;
+  databaseBackend?: string;
+  databaseLatencyMs?: number;
+  environment?: string;
+}
 
 interface DataStatusSnapshot {
   isLoading: boolean;
   connectionStatus: ConnectionStatus;
+  serverStatus: ServerStatus;
+  latencyMs: number | null;
+  lastCheckedAt: number | null;
+  errorMessage: string | null;
+  health: HealthPayload | null;
 }
 
 const POLL_INTERVAL_MS = 30_000;
@@ -17,11 +32,21 @@ const POLL_INTERVAL_MS = 30_000;
 const SERVER_SNAPSHOT: DataStatusSnapshot = Object.freeze({
   isLoading: false,
   connectionStatus: 'checking',
+  serverStatus: 'checking',
+  latencyMs: null,
+  lastCheckedAt: null,
+  errorMessage: null,
+  health: null,
 });
 
 let snapshot: DataStatusSnapshot = {
   isLoading: false,
   connectionStatus: 'checking',
+  serverStatus: 'checking',
+  latencyMs: null,
+  lastCheckedAt: null,
+  errorMessage: null,
+  health: null,
 };
 
 let runtimeStarted = false;
@@ -49,7 +74,12 @@ function publish(next: Partial<DataStatusSnapshot>) {
   const merged = { ...snapshot, ...next };
   if (
     merged.isLoading === snapshot.isLoading &&
-    merged.connectionStatus === snapshot.connectionStatus
+    merged.connectionStatus === snapshot.connectionStatus &&
+    merged.serverStatus === snapshot.serverStatus &&
+    merged.latencyMs === snapshot.latencyMs &&
+    merged.lastCheckedAt === snapshot.lastCheckedAt &&
+    merged.errorMessage === snapshot.errorMessage &&
+    merged.health === snapshot.health
   ) {
     return;
   }
@@ -62,18 +92,57 @@ async function checkStatusInternal() {
   if (inFlight) return inFlight;
 
   inFlight = (async () => {
+    const startedAt = performance.now();
     try {
-      publish({ connectionStatus: 'checking' });
-      const response = await fetch('/api/health');
-      const data = await response.json();
+      if (!navigator.onLine) {
+        publish({
+          isLoading: false,
+          connectionStatus: 'error',
+          serverStatus: 'offline',
+          latencyMs: null,
+          lastCheckedAt: Date.now(),
+          errorMessage: 'Browser sedang offline',
+          health: null,
+        });
+        return;
+      }
+
+      publish({ connectionStatus: 'checking', serverStatus: 'checking', errorMessage: null });
+      const response = await fetch('/api/health', { cache: 'no-store' });
+      const latencyMs = Math.round(performance.now() - startedAt);
+      const data = (await response.json()) as HealthPayload;
 
       if (data.database === 'connected' && data.databaseBackend === 'cloudflare-d1') {
-        publish({ isLoading: false, connectionStatus: 'connected' });
+        publish({
+          isLoading: false,
+          connectionStatus: 'connected',
+          serverStatus: response.ok ? 'online' : 'degraded',
+          latencyMs,
+          lastCheckedAt: Date.now(),
+          errorMessage: null,
+          health: data,
+        });
       } else {
-        publish({ isLoading: false, connectionStatus: 'disconnected' });
+        publish({
+          isLoading: false,
+          connectionStatus: 'disconnected',
+          serverStatus: response.ok ? 'online' : 'degraded',
+          latencyMs,
+          lastCheckedAt: Date.now(),
+          errorMessage: 'D1 tidak berhasil dibaca dari /api/health',
+          health: data,
+        });
       }
-    } catch {
-      publish({ isLoading: false, connectionStatus: 'error' });
+    } catch (error) {
+      publish({
+        isLoading: false,
+        connectionStatus: 'error',
+        serverStatus: 'offline',
+        latencyMs: null,
+        lastCheckedAt: Date.now(),
+        errorMessage: error instanceof Error ? error.message : 'API health tidak terjangkau',
+        health: null,
+      });
     } finally {
       inFlight = null;
     }
@@ -112,6 +181,11 @@ export function useDataStatus() {
   return {
     isLoading: current.isLoading,
     connectionStatus: current.connectionStatus,
+    serverStatus: current.serverStatus,
+    latencyMs: current.latencyMs,
+    lastCheckedAt: current.lastCheckedAt,
+    errorMessage: current.errorMessage,
+    health: current.health,
     deployStatus: 'idle' as const,
     checkStatus: checkStatusInternal,
     triggerSync: async () => Promise.resolve(),

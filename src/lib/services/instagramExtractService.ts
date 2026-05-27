@@ -440,3 +440,9 @@ function composeSourceText(input: {
 export function __resetInstagramExtractCacheForTesting(): void {
   cache.clear();
 }
+
+export function clearInstagramExtractCache(): number {
+  const entriesCleared = cache.size;
+  cache.clear();
+  return entriesCleared;
+}

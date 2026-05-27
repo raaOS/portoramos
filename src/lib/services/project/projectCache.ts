@@ -50,6 +50,12 @@ export function clearProjectCache(): void {
   projectCache.deleteByPrefix('project:');
 }
 
+export function clearAllProjectCache(): number {
+  const entriesCleared = projectCache.size;
+  projectCache.clear();
+  return entriesCleared;
+}
+
 export function getCacheMetrics() {
   return projectCache.getMetrics();
 }

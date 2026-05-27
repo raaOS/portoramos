@@ -1,11 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { checkAdminAuth } from '@/lib/auth';
+import { logAdminActivity } from '@/lib/services/auditLogger';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
+    const wasAuthenticated = checkAdminAuth(request);
+
+    if (wasAuthenticated) {
+      await logAdminActivity(request, 'Admin logout').catch((error) => {
+        console.error('[Audit] Failed to log admin logout:', error);
+      });
+    }
 
     const response = NextResponse.json({ message: 'Logged out successfully' });
 

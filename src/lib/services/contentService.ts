@@ -1,5 +1,6 @@
-﻿import { db } from '@/lib/database';
+import { db } from '@/lib/database';
 import { CacheManager } from '@/lib/cache/CacheManager';
+import { logActivity } from '@/lib/services/auditLogger';
 
 /**
  * Shared cache instance for content data.
@@ -24,6 +25,12 @@ function getCacheKey(path: string): string {
  */
 export function getCacheStats() {
   return contentCache.getDetailedStats();
+}
+
+export function clearContentCache() {
+  const entriesCleared = contentCache.size;
+  contentCache.clear();
+  return entriesCleared;
 }
 
 /**
@@ -172,6 +179,10 @@ export class ContentService<T> {
       // Kalau cache tanpa updatedAt, next-read dalam TTL return data stale,
       // dan komparasi lastUpdated di client jadi broken.
       contentCache.set(getCacheKey(this.dataPath), payload as unknown as object, this.cacheTTL);
+
+      // Log the activity (await to prevent serverless function termination before write finishes)
+      const actionMessage = _message ? `Update ${this.dataPath}: ${_message}` : `Update ${this.dataPath}`;
+      await logActivity(actionMessage).catch((err) => console.error('[Audit] Failed to log:', err));
 
       return true;
     } catch (error) {

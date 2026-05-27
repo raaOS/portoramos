@@ -5,6 +5,7 @@ import { generateCSRFToken, validateCSRFToken } from '@/lib/security';
 import { checkDataRateLimit } from '@/lib/dataRateLimit';
 import { cookies } from 'next/headers';
 import { getClientIdentifier } from '@/lib/security/request';
+import { logAdminActivity } from '@/lib/services/auditLogger';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,12 @@ const BLOCK_DURATION = 30 * 60 * 1000; // 30 menit
 // Prefer server-only key, keep public fallback for backward compatibility.
 const GOOGLE_MAPS_API_KEY =
   process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+async function auditLogin(request: NextRequest, action: string, metadata?: Record<string, unknown>) {
+  await logAdminActivity(request, action, metadata).catch((error) => {
+    console.error('[Audit] Failed to log admin login activity:', error);
+  });
+}
 
 function parseUserAgent(ua: string) {
   let os = 'Unknown OS';
@@ -156,12 +163,14 @@ export async function POST(request: NextRequest) {
     const sessionCsrfToken = cookieStore.get('csrf_token')?.value;
 
     if (!csrfToken || !sessionCsrfToken) {
+      await auditLogin(request, 'Admin login rejected', { reason: 'missing-csrf' });
       return NextResponse.json({ error: 'Invalid or missing CSRF token' }, { status: 403 });
     }
 
     const isValid = validateCSRFToken(csrfToken, sessionCsrfToken);
 
     if (!isValid) {
+      await auditLogin(request, 'Admin login rejected', { reason: 'invalid-csrf' });
       return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
     }
 
@@ -199,6 +208,12 @@ export async function POST(request: NextRequest) {
 
         await sendTelegramAlert(message, { priority: 'high' });
 
+        await auditLogin(request, 'Admin login blocked by rate limit', {
+          retryAfter: rateLimit.retryAfter,
+          device,
+          location: geo.location,
+        });
+
         return NextResponse.json(
           {
             error: 'Too many login attempts. Please try again later.',
@@ -216,10 +231,12 @@ export async function POST(request: NextRequest) {
 
     // VALIDASI INPUT STRICT
     if (!password || typeof password !== 'string') {
+      await auditLogin(request, 'Admin login rejected', { reason: 'missing-password' });
       return NextResponse.json({ error: 'Password is required' }, { status: 400 });
     }
 
     if (password.length < 8) {
+      await auditLogin(request, 'Admin login failed', { reason: 'invalid-password-length' });
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
 
@@ -262,6 +279,11 @@ ${locationInfo.text}
         await sendTelegramAlert(message, { priority: 'normal', buttons });
       }
 
+      await auditLogin(request, 'Admin login failed', {
+        device,
+        location: geo.location,
+      });
+
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
 
@@ -288,6 +310,11 @@ ${locationInfo.text}
       // Also send to group if configured
       await sendTelegramToGroup(message, { priority: 'normal', buttons });
     }
+
+    await auditLogin(request, 'Admin login success', {
+      device,
+      location: geo.location,
+    });
 
     const token = getAdminToken();
 

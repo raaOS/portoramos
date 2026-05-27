@@ -4,6 +4,7 @@ import { db } from '@/lib/database';
 import { sendTelegramAlert } from '@/lib/telegram';
 import { getClientIdentifier } from '@/lib/security/request';
 import { randomUUID } from 'node:crypto';
+import { logAdminActivity } from '@/lib/services/auditLogger';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,6 +85,13 @@ Ada upaya penggantian sandi Admin dari perangkat yang berhasil memasukkan sandi 
       console.error('[OTP Request] Failed to send Telegram alert:', telegramRes.error);
       return NextResponse.json({ error: 'Gagal mengirim peringatan ke Telegram' }, { status: 500 });
     }
+
+    await logAdminActivity(request, 'Admin password OTP approval requested', {
+      requestId,
+      ip,
+    }).catch((error) => {
+      console.error('[Audit] Failed to log OTP request:', error);
+    });
 
     // 6. Response Sukses
     return NextResponse.json({

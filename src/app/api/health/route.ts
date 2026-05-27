@@ -32,6 +32,7 @@ export async function GET() {
 
       // Perform an actual lightweight read operation with a timeout
       // This guarantees that the network connection is alive and credentials are valid
+      const dbStart = Date.now();
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout')), 5000)
       );
@@ -41,6 +42,7 @@ export async function GET() {
 
       checks.database = 'connected';
       checks.databaseBackend = getDatabaseBackend();
+      checks.databaseLatencyMs = Date.now() - dbStart;
     } catch (error) {
       console.error('Database health check failed:', error);
       checks.database = 'disconnected';

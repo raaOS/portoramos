@@ -8,6 +8,7 @@ import { db } from '@/lib/database';
 import { hashPasswordScrypt } from '@/lib/auth';
 import { chatStore } from '@/lib/chatStore';
 import { cleanEnvVar } from '@/lib/utils/env';
+import { logActivity } from '@/lib/services/auditLogger';
 import type { MessageToSend } from '@/lib/telegram/types';
 import {
   handleAiCommand,
@@ -176,6 +177,11 @@ export async function POST(request: Request) {
 
           await editMessageText(incomingChatId, messageId, '🚨 **Akses Digagalkan!**\nUpaya ganti sandi telah diblokir. UI penyusup akan langsung dikunci.', botToken);
           await answerCallbackQuery(callbackId, botToken, { text: 'Akses diblokir!' });
+          await logActivity('Admin password OTP rejected from Telegram', {
+            category: 'admin',
+            requestId,
+            telegramChatId: incomingChatId,
+          });
         } else {
           await respondToInactiveOtpSession(
             sessionState,
@@ -214,6 +220,11 @@ export async function POST(request: Request) {
 
           await editMessageText(incomingChatId, messageId, `✅ **Persetujuan Diterima**\n\nGunakan kode OTP berikut:\n\`${otpCode}\`\n\n(Berlaku 5 menit)`, botToken);
           await answerCallbackQuery(callbackId, botToken, { text: 'Persetujuan Diterima!' });
+          await logActivity('Admin password OTP approved from Telegram', {
+            category: 'admin',
+            requestId,
+            telegramChatId: incomingChatId,
+          });
         } else {
           await respondToInactiveOtpSession(
             sessionState,
