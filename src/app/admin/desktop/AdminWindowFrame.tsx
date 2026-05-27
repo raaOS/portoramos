@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import type { AdminWindowState, AdminDesktopActions } from './types';
 
 interface AdminWindowFrameProps {
@@ -9,16 +9,71 @@ interface AdminWindowFrameProps {
   children: React.ReactNode;
 }
 
+/* ── Spring constants ─────────────────────────────────────────────
+ * tension  → how hard the spring pulls back (higher = snappier)
+ * friction → how much energy is lost per frame (lower = bouncier)
+ *
+ * With tension 0.08 and friction 0.82 the window will overshoot
+ * its rest position ~3 times before settling — very Compiz-like.
+ * ────────────────────────────────────────────────────────────── */
+const SPRING_TENSION  = 0.08;
+const SPRING_FRICTION = 0.82;
+
+// How much mouse velocity influences each axis
+const SKEW_FACTOR    = 6;      // degrees per px/ms
+const STRETCH_FACTOR = 0.025;  // scale per px/ms
+
+function clamp(v: number, lo: number, hi: number) {
+  return Math.min(hi, Math.max(lo, v));
+}
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+// ── Physics value: current, velocity, target ───────────────────
+interface SpringState {
+  skewX: number;
+  scaleX: number;
+  scaleY: number;
+}
+
+const SPRING_REST: SpringState = { skewX: 0, scaleX: 1, scaleY: 1 };
+
+function springRest(): SpringState {
+  return { ...SPRING_REST };
+}
+
+// ────────────────────────────────────────────────────────────────
+
 export default function AdminWindowFrame({
   state,
   actions,
   children,
 }: AdminWindowFrameProps) {
+  const windowRef = useRef<HTMLDivElement | null>(null);
+
+  // Spring simulation state (mutable, never causes re-render)
+  const springCur = useRef<SpringState>(springRest());
+  const springVel = useRef<SpringState>(springRest()); // velocity — rest values don't matter, overwritten
+  const springTgt = useRef<SpringState>(springRest());
+  const rafId     = useRef<number | null>(null);
+
+  // Drag bookkeeping
   const dragRef = useRef<{
     startX: number;
     startY: number;
     originX: number;
     originY: number;
+    lastX: number;
+    lastY: number;
+    lastTime: number;
+    smoothVx: number;
+    smoothVy: number;
+    reducedMotion: boolean;
   } | null>(null);
 
   const resizeRef = useRef<{
@@ -28,49 +83,186 @@ export default function AdminWindowFrame({
     originH: number;
   } | null>(null);
 
-  // ─── Drag logic ───
+  const dragCleanupRef   = useRef<(() => void) | null>(null);
+  const resizeCleanupRef = useRef<(() => void) | null>(null);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      dragCleanupRef.current?.();
+      resizeCleanupRef.current?.();
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+    };
+  }, []);
+
+  /* ── Apply spring values to DOM ────────────────────────────── */
+  const applySpring = useCallback(() => {
+    const el = windowRef.current;
+    if (!el) return;
+    const c = springCur.current;
+    el.style.setProperty('--jw-skew',   `${c.skewX.toFixed(3)}deg`);
+    el.style.setProperty('--jw-sx',     c.scaleX.toFixed(4));
+    el.style.setProperty('--jw-sy',     c.scaleY.toFixed(4));
+  }, []);
+
+  /* ── Start / continue the RAF spring loop ──────────────────── */
+  const ensureSpringLoop = useCallback(() => {
+    if (rafId.current !== null) return; // already running
+
+    const tick = () => {
+      const cur = springCur.current;
+      const vel = springVel.current;
+      const tgt = springTgt.current;
+
+      let settled = true;
+
+      for (const k of ['skewX', 'scaleX', 'scaleY'] as const) {
+        const force = (tgt[k] - cur[k]) * SPRING_TENSION;
+        vel[k]  = (vel[k] + force) * SPRING_FRICTION;
+        cur[k] += vel[k];
+
+        if (Math.abs(vel[k]) > 0.001 || Math.abs(tgt[k] - cur[k]) > 0.001) {
+          settled = false;
+        }
+      }
+
+      applySpring();
+
+      if (settled && !dragRef.current) {
+        // Snap to exact rest to avoid sub-pixel leftovers
+        Object.assign(cur, springRest());
+        applySpring();
+        windowRef.current?.classList.remove('admin-window-wobbling');
+        rafId.current = null;
+      } else {
+        rafId.current = requestAnimationFrame(tick);
+      }
+    };
+
+    rafId.current = requestAnimationFrame(tick);
+  }, [applySpring]);
+
+  /* ═══════════════════════════════════════════════════════════════
+     DRAG
+     ═══════════════════════════════════════════════════════════════ */
   const handleDragStart = useCallback(
     (e: React.MouseEvent) => {
       if (state.isMaximized) return;
       e.preventDefault();
       actions.bringToFront(state.id);
+      dragCleanupRef.current?.();
+
+      const reduced = prefersReducedMotion();
+
       dragRef.current = {
         startX: e.clientX,
         startY: e.clientY,
         originX: state.x,
         originY: state.y,
+        lastX: e.clientX,
+        lastY: e.clientY,
+        lastTime: performance.now(),
+        smoothVx: 0,
+        smoothVy: 0,
+        reducedMotion: reduced,
       };
 
-      const handleMove = (ev: MouseEvent) => {
-        if (!dragRef.current) return;
-        const dx = ev.clientX - dragRef.current.startX;
-        const dy = ev.clientY - dragRef.current.startY;
-        actions.updatePosition(
-          state.id,
-          dragRef.current.originX + dx,
-          dragRef.current.originY + dy
-        );
+      // Disable CSS transition — RAF takes over
+      windowRef.current?.classList.add('admin-window-wobbling');
+
+      // Reset velocity so previous bounce doesn't bleed in
+      springVel.current = { skewX: 0, scaleX: 0, scaleY: 0 };
+      springTgt.current = springRest();
+
+      if (!reduced) ensureSpringLoop();
+
+      /* ── mousemove ─────────────────────────────────────────── */
+      const onMove = (ev: MouseEvent) => {
+        const d = dragRef.current;
+        if (!d) return;
+
+        const dx = ev.clientX - d.startX;
+        const dy = ev.clientY - d.startY;
+
+        // Move window position (React state)
+        actions.updatePosition(state.id, d.originX + dx, d.originY + dy);
+
+        // Velocity (px/ms) with exponential smoothing
+        const now     = performance.now();
+        const dt      = Math.max(1, now - d.lastTime);
+        const rawVx   = (ev.clientX - d.lastX) / dt;
+        const rawVy   = (ev.clientY - d.lastY) / dt;
+        d.smoothVx    = d.smoothVx * 0.6 + rawVx * 0.4;
+        d.smoothVy    = d.smoothVy * 0.6 + rawVy * 0.4;
+
+        d.lastX    = ev.clientX;
+        d.lastY    = ev.clientY;
+        d.lastTime = now;
+
+        if (d.reducedMotion) return;
+
+        const vx = clamp(d.smoothVx, -6, 6);
+        const vy = clamp(d.smoothVy, -6, 6);
+
+        // Set spring targets based on drag velocity
+        const tgt = springTgt.current;
+        tgt.skewX  = clamp(vx * -SKEW_FACTOR, -12, 12);
+
+        const speed = Math.hypot(vx, vy);
+        const s = Math.min(speed, 4) * STRETCH_FACTOR;
+        tgt.scaleX = 1 + s;
+        tgt.scaleY = 1 - s * 0.5;
       };
 
-      const handleUp = () => {
+      /* ── idle decay: relax targets when mouse stops ────────── */
+      const idleInterval = setInterval(() => {
+        const d = dragRef.current;
+        if (!d) return;
+        if (performance.now() - d.lastTime > 50) {
+          springTgt.current = springRest();
+          d.smoothVx = 0;
+          d.smoothVy = 0;
+        }
+      }, 60);
+
+      /* ── mouseup ───────────────────────────────────────────── */
+      const onUp = () => {
+        clearInterval(idleInterval);
         dragRef.current = null;
-        window.removeEventListener('mousemove', handleMove);
-        window.removeEventListener('mouseup', handleUp);
+
+        // Spring targets back to rest — the RAF loop will animate the bounce
+        springTgt.current = springRest();
+
+        // If reduced motion, hard-reset everything now
+        if (reduced) {
+          springCur.current = springRest();
+          springVel.current = { skewX: 0, scaleX: 0, scaleY: 0 };
+          applySpring();
+          windowRef.current?.classList.remove('admin-window-wobbling');
+        }
+
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        dragCleanupRef.current = null;
       };
 
-      window.addEventListener('mousemove', handleMove);
-      window.addEventListener('mouseup', handleUp);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      dragCleanupRef.current = onUp;
     },
-    [state.id, state.x, state.y, state.isMaximized, actions]
+    [state.id, state.x, state.y, state.isMaximized, actions, ensureSpringLoop, applySpring],
   );
 
-  // ─── Resize logic ───
+  /* ═══════════════════════════════════════════════════════════════
+     RESIZE (unchanged from original)
+     ═══════════════════════════════════════════════════════════════ */
   const handleResizeStart = useCallback(
     (e: React.MouseEvent) => {
       if (state.isMaximized) return;
       e.preventDefault();
       e.stopPropagation();
       actions.bringToFront(state.id);
+      resizeCleanupRef.current?.();
       resizeRef.current = {
         startX: e.clientX,
         startY: e.clientY,
@@ -85,22 +277,27 @@ export default function AdminWindowFrame({
         actions.updateSize(
           state.id,
           Math.max(480, resizeRef.current.originW + dx),
-          Math.max(320, resizeRef.current.originH + dy)
+          Math.max(320, resizeRef.current.originH + dy),
         );
       };
 
-      const handleUp = () => {
+      const cleanupResize = () => {
         resizeRef.current = null;
         window.removeEventListener('mousemove', handleMove);
-        window.removeEventListener('mouseup', handleUp);
+        window.removeEventListener('mouseup', cleanupResize);
+        resizeCleanupRef.current = null;
       };
 
       window.addEventListener('mousemove', handleMove);
-      window.addEventListener('mouseup', handleUp);
+      window.addEventListener('mouseup', cleanupResize);
+      resizeCleanupRef.current = cleanupResize;
     },
-    [state.id, state.width, state.height, state.isMaximized, actions]
+    [state.id, state.width, state.height, state.isMaximized, actions],
   );
 
+  /* ═══════════════════════════════════════════════════════════════
+     RENDER
+     ═══════════════════════════════════════════════════════════════ */
   if (state.isMinimized) return null;
 
   const Icon = state.icon;
@@ -118,6 +315,7 @@ export default function AdminWindowFrame({
 
   return (
     <div
+      ref={windowRef}
       className={`admin-window ${isMax ? 'admin-window-maximized' : ''}`}
       style={style}
       onMouseDown={() => actions.bringToFront(state.id)}

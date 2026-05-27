@@ -117,9 +117,7 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
   const [cacheSteps, setCacheSteps] = useState<ClearCacheProgressStep[]>(createInitialCacheSteps);
   const [canCloseCacheProgress, setCanCloseCacheProgress] = useState(true);
   const [isClearingCache, setIsClearingCache] = useState(false);
-  const [isOnline, setIsOnline] = useState(() =>
-    typeof navigator === 'undefined' ? true : navigator.onLine
-  );
+  const [isOnline, setIsOnline] = useState(true);
   const [watchdogStatus, setWatchdogStatus] = useState<WatchdogStatusData>({
     status: 'checking',
   });
@@ -326,6 +324,8 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
   };
 
   React.useEffect(() => {
+    setIsOnline(navigator.onLine);
+
     const update = () => {
       setTime(
         new Date().toLocaleTimeString('id-ID', {

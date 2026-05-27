@@ -1,12 +1,37 @@
 'use client';
 
-import React, { useRef, useEffect, useMemo, useState } from 'react';
+import React, { useRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { m, useDragControls, AnimatePresence, Transition, TargetAndTransition } from 'motion/react';
 import { soundManager } from '../utils/SoundManager';
 import { useWindowResize } from '../hooks/useWindowResize';
 import { useWindowKeyboard } from '../hooks/useWindowKeyboard';
 import { WindowTitleBar } from './components/WindowTitleBar';
 import { WindowResizeHandles } from './components/WindowResizeHandles';
+
+/* ── Spring constants ───────────────────────────────────────────── */
+const SPRING_TENSION  = 0.08;
+const SPRING_FRICTION = 0.82;
+const SKEW_FACTOR    = 6;      
+const STRETCH_FACTOR = 0.025;  
+
+function clamp(v: number, lo: number, hi: number) {
+  return Math.min(hi, Math.max(lo, v));
+}
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+interface SpringState {
+  skewX: number;
+  scaleX: number;
+  scaleY: number;
+}
+const SPRING_REST: SpringState = { skewX: 0, scaleX: 1, scaleY: 1 };
+function springRest(): SpringState { return { ...SPRING_REST }; }
 
 // Module-level constants to avoid re-creation per render
 const SHELL_STYLE = {
@@ -82,6 +107,67 @@ export default function OSWindow({
   originRect,
 }: WindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
+
+  // ── Jelly Physics State ──
+  const springCur = useRef<SpringState>(springRest());
+  const springVel = useRef<SpringState>(springRest());
+  const springTgt = useRef<SpringState>(springRest());
+  const rafId     = useRef<number | null>(null);
+
+  const jellyDragRef = useRef<{
+    lastX: number;
+    lastY: number;
+    lastTime: number;
+    smoothVx: number;
+    smoothVy: number;
+    reducedMotion: boolean;
+  } | null>(null);
+  
+  const idleIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+      if (idleIntervalRef.current) clearInterval(idleIntervalRef.current);
+    };
+  }, []);
+
+  const applySpring = useCallback(() => {
+    const el = windowRef.current;
+    if (!el) return;
+    const c = springCur.current;
+    el.style.setProperty('--jw-skew', `${c.skewX.toFixed(3)}deg`);
+    el.style.setProperty('--jw-sx', c.scaleX.toFixed(4));
+    el.style.setProperty('--jw-sy', c.scaleY.toFixed(4));
+  }, []);
+
+  const ensureSpringLoop = useCallback(() => {
+    if (rafId.current !== null) return;
+    const tick = () => {
+      const cur = springCur.current;
+      const vel = springVel.current;
+      const tgt = springTgt.current;
+      let settled = true;
+
+      for (const k of ['skewX', 'scaleX', 'scaleY'] as const) {
+        const force = (tgt[k] - cur[k]) * SPRING_TENSION;
+        vel[k]  = (vel[k] + force) * SPRING_FRICTION;
+        cur[k] += vel[k];
+        if (Math.abs(vel[k]) > 0.001 || Math.abs(tgt[k] - cur[k]) > 0.001) settled = false;
+      }
+
+      applySpring();
+      if (settled && !jellyDragRef.current) {
+        Object.assign(cur, springRest());
+        applySpring();
+        rafId.current = null;
+      } else {
+        rafId.current = requestAnimationFrame(tick);
+      }
+    };
+    rafId.current = requestAnimationFrame(tick);
+  }, [applySpring]);
 
   // RESIZE FIX: viewport sekarang dynamic — rotate device / resize browser
   // akan me-recompute maximizedFrame + clamps agar window tidak keluar layar.
@@ -302,14 +388,85 @@ export default function OSWindow({
           dragListener={false}
           dragMomentum={false}
           dragElastic={0}
+          onDragStart={(e, info) => {
+            if (isMaximized || isResizing || isSmallScreen || (isPinned && !isAdmin)) return;
+            const reduced = prefersReducedMotion();
+            jellyDragRef.current = {
+              lastX: info.point.x,
+              lastY: info.point.y,
+              lastTime: performance.now(),
+              smoothVx: 0,
+              smoothVy: 0,
+              reducedMotion: reduced,
+            };
+            springVel.current = { skewX: 0, scaleX: 0, scaleY: 0 };
+            springTgt.current = springRest();
+            
+            if (!reduced) ensureSpringLoop();
+            
+            if (idleIntervalRef.current) clearInterval(idleIntervalRef.current);
+            idleIntervalRef.current = setInterval(() => {
+              const d = jellyDragRef.current;
+              if (!d) return;
+              if (performance.now() - d.lastTime > 50) {
+                springTgt.current = springRest();
+                d.smoothVx = 0;
+                d.smoothVy = 0;
+              }
+            }, 60);
+          }}
+          onDrag={(e, info) => {
+            const d = jellyDragRef.current;
+            if (!d) return;
+            const now = performance.now();
+            const dt = Math.max(1, now - d.lastTime);
+            const rawVx = (info.point.x - d.lastX) / dt;
+            const rawVy = (info.point.y - d.lastY) / dt;
+            
+            d.smoothVx = d.smoothVx * 0.6 + rawVx * 0.4;
+            d.smoothVy = d.smoothVy * 0.6 + rawVy * 0.4;
+            d.lastX = info.point.x;
+            d.lastY = info.point.y;
+            d.lastTime = now;
+            
+            if (d.reducedMotion) return;
+            
+            const vx = clamp(d.smoothVx, -6, 6);
+            const vy = clamp(d.smoothVy, -6, 6);
+            
+            const tgt = springTgt.current;
+            tgt.skewX = clamp(vx * -SKEW_FACTOR, -12, 12);
+            
+            const speed = Math.hypot(vx, vy);
+            const s = Math.min(speed, 4) * STRETCH_FACTOR;
+            tgt.scaleX = 1 + s;
+            tgt.scaleY = 1 - s * 0.5;
+          }}
           onDragEnd={(e, info) => {
-            // We only want to update position if NOT maximizing/minimizing
-            // and either NOT pinned or is Admin
+            if (idleIntervalRef.current) {
+              clearInterval(idleIntervalRef.current);
+              idleIntervalRef.current = null;
+            }
+            
+            const reduced = jellyDragRef.current?.reducedMotion;
+            jellyDragRef.current = null;
+            springTgt.current = springRest();
+            
+            if (reduced) {
+              springCur.current = springRest();
+              springVel.current = { skewX: 0, scaleX: 0, scaleY: 0 };
+              applySpring();
+            }
+            
             if (!isMaximized && !isMinimized && (!isPinned || isAdmin) && onUpdatePosition) {
               const newX = initialPosition.x + info.offset.x;
               const newY = initialPosition.y + info.offset.y;
               onUpdatePosition(newX, newY);
             }
+          }}
+          transformTemplate={(_, generated) => {
+            // Integrate jelly physics with Framer Motion's transform
+            return `${generated} skew(var(--jw-skew, 0deg)) scale(var(--jw-sx, 1), var(--jw-sy, 1))`;
           }}
           initial={
             hasOrigin
