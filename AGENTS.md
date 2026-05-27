@@ -302,6 +302,13 @@ job bot ke URL webhook sebelumnya, atau ke URL HTTPS production dari
 ada webhook. Kalau proses dimatikan paksa sebelum restore, jalankan
 `npm run telegram:set-webhook -- --bot=job`.
 
+Selama local polling aktif, `scripts/core/dev.js` menulis lease heartbeat ke
+D1 key `telegramJobBotLocalLease`. Vercel Cron
+`/api/cron/telegram-watchdog` jalan setiap 5 menit dan hanya restore webhook
+job bot kalau lease tersebut sudah expired atau tidak ada. Ini mencegah
+cron merebut webhook saat local dev masih sengaja berjalan, sekaligus
+memulihkan production bila terminal/PC mati tanpa Ctrl+C.
+
 Output kedua proses di-prefix: `[next]` untuk Next.js, `[job-bot]` untuk
 poller. Poller auto-restart kalau crash dengan exponential backoff. Setelah
 restore webhook berhasil, log dev menampilkan dua command bantuan:
@@ -677,6 +684,7 @@ ADMIN_PASSWORD_SCRYPT=
 JWT_SECRET=
 PASSWORD_SALT=
 REVALIDATION_TOKEN=
+CRON_SECRET=
 
 GEMINI_API_KEY=
 GROQ_API_KEY=
@@ -701,6 +709,8 @@ Env aktif/opsional lain yang muncul di codebase:
 - `VERCEL_URL`
 - `GROQ_API_KEY` — optional, untuk `/api/chat/voice` (transcription)
 - `TELEGRAM_FEEDBACK_THREAD_ID` — optional, topic Telegram khusus notifikasi feedback
+- `CRON_SECRET` — wajib di Vercel agar `/api/cron/telegram-watchdog` bisa
+  dipanggil aman oleh Vercel Cron
 
 > **Catatan:** Data aplikasi memakai Cloudflare D1. Media upload/serve memakai Cloudflare R2.
 
@@ -717,7 +727,18 @@ Env aktif/opsional lain yang muncul di codebase:
   "version": 2,
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "regions": ["sin1"],
+  "functions": {
+    "src/app/api/upload/route.ts": { "maxDuration": 60, "memory": 1024 },
+    "src/app/api/cron/telegram-watchdog/route.ts": { "maxDuration": 30 }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/telegram-watchdog",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }
 ```
 

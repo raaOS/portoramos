@@ -32,6 +32,15 @@
     },
     "src/app/api/chat/send/route.ts": {
       "maxDuration": 20
+    },
+    "src/app/api/cron/telegram-watchdog/route.ts": {
+      "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/telegram-watchdog",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }

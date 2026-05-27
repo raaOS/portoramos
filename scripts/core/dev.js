@@ -28,6 +28,10 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 
+const JOB_BOT_LOCAL_LEASE_KEY = 'telegramJobBotLocalLease';
+const JOB_BOT_LOCAL_LEASE_TTL_MS = 2 * 60 * 1000;
+const JOB_BOT_LOCAL_LEASE_HEARTBEAT_MS = 30 * 1000;
+
 function resolveNextCli() {
   try {
     return require.resolve('next/dist/bin/next');
@@ -142,6 +146,89 @@ async function telegramRequest(token, method, body) {
   }
 }
 
+function getD1ConfigForDevLease() {
+  const accountId =
+    loadEnvFlag('CLOUDFLARE_D1_ACCOUNT_ID') || loadEnvFlag('CLOUDFLARE_R2_ACCOUNT_ID');
+  const databaseId = loadEnvFlag('CLOUDFLARE_D1_DATABASE_ID');
+  const apiToken = loadEnvFlag('CLOUDFLARE_D1_API_TOKEN') || loadEnvFlag('CLOUDFLARE_API_TOKEN');
+
+  if (!accountId || !databaseId || !apiToken) return null;
+  return { accountId, databaseId, apiToken };
+}
+
+let d1SchemaReady = null;
+
+async function queryD1ForDevLease(sql, params = []) {
+  const config = getD1ConfigForDevLease();
+  if (!config) {
+    throw new Error('Cloudflare D1 env belum lengkap');
+  }
+
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${config.accountId}/d1/database/${config.databaseId}/query`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.apiToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ sql, params }),
+    }
+  );
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.success) {
+    const detail = payload?.errors
+      ?.map((error) => error.message)
+      .filter(Boolean)
+      .join('; ');
+    throw new Error(detail || `Cloudflare D1 HTTP ${response.status}`);
+  }
+
+  const result = payload.result?.[0];
+  if (result?.success === false) {
+    throw new Error(result.error || 'Cloudflare D1 SQL failed');
+  }
+
+  return result?.results || [];
+}
+
+async function ensureD1SchemaForDevLease() {
+  if (!d1SchemaReady) {
+    d1SchemaReady = queryD1ForDevLease(`
+      CREATE TABLE IF NOT EXISTS app_kv (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      ) STRICT
+    `).then(() => undefined);
+  }
+
+  return d1SchemaReady;
+}
+
+async function getD1ValueForDevLease(key) {
+  await ensureD1SchemaForDevLease();
+  const rows = await queryD1ForDevLease('SELECT value FROM app_kv WHERE key = ? LIMIT 1', [key]);
+  if (!rows[0]) return null;
+  return JSON.parse(rows[0].value);
+}
+
+async function setD1ValueForDevLease(key, value) {
+  await ensureD1SchemaForDevLease();
+  await queryD1ForDevLease(
+    `INSERT INTO app_kv (key, value, updated_at)
+     VALUES (?, ?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    [key, JSON.stringify(value), new Date().toISOString()]
+  );
+}
+
+async function deleteD1ValueForDevLease(key) {
+  await ensureD1SchemaForDevLease();
+  await queryD1ForDevLease('DELETE FROM app_kv WHERE key = ?', [key]);
+}
+
 const COLOR = {
   reset: '\x1b[0m',
   next: '\x1b[36m', // cyan
@@ -165,10 +252,78 @@ function pipeWithPrefix(child, label, color) {
 const children = new Set();
 let shuttingDown = false;
 let jobBotWebhookRestore = null;
+let jobBotLocalLease = null;
+let jobBotLocalLeaseTimer = null;
 
 function trackChild(child) {
   children.add(child);
   child.on('exit', () => children.delete(child));
+}
+
+function buildJobBotLocalLease(restoreUrl, currentWebhookUrl) {
+  const now = Date.now();
+  return {
+    mode: 'local-polling',
+    ownerId: crypto.randomUUID(),
+    startedAt: now,
+    heartbeatAt: now,
+    expiresAt: now + JOB_BOT_LOCAL_LEASE_TTL_MS,
+    restoreWebhookUrl: restoreUrl,
+    previousWebhookUrl: currentWebhookUrl || '',
+  };
+}
+
+async function writeJobBotLocalLease() {
+  if (!jobBotLocalLease) return;
+
+  const now = Date.now();
+  jobBotLocalLease = {
+    ...jobBotLocalLease,
+    heartbeatAt: now,
+    expiresAt: now + JOB_BOT_LOCAL_LEASE_TTL_MS,
+  };
+
+  await setD1ValueForDevLease(JOB_BOT_LOCAL_LEASE_KEY, jobBotLocalLease);
+}
+
+async function startJobBotLocalLease(restoreUrl, currentWebhookUrl) {
+  jobBotLocalLease = buildJobBotLocalLease(restoreUrl, currentWebhookUrl);
+  await writeJobBotLocalLease();
+
+  jobBotLocalLeaseTimer = setInterval(() => {
+    writeJobBotLocalLease().catch((error) => {
+      console.warn(
+        `${COLOR.warn}[dev] gagal update lease watchdog job bot: ${error.message}${COLOR.reset}`
+      );
+    });
+  }, JOB_BOT_LOCAL_LEASE_HEARTBEAT_MS);
+  jobBotLocalLeaseTimer.unref?.();
+}
+
+function stopJobBotLocalLeaseHeartbeat() {
+  if (jobBotLocalLeaseTimer) {
+    clearInterval(jobBotLocalLeaseTimer);
+    jobBotLocalLeaseTimer = null;
+  }
+}
+
+async function removeJobBotLocalLease() {
+  stopJobBotLocalLeaseHeartbeat();
+  if (!jobBotLocalLease) return;
+
+  const ownerId = jobBotLocalLease.ownerId;
+  jobBotLocalLease = null;
+
+  try {
+    const current = await getD1ValueForDevLease(JOB_BOT_LOCAL_LEASE_KEY);
+    if (current && typeof current === 'object' && current.ownerId === ownerId) {
+      await deleteD1ValueForDevLease(JOB_BOT_LOCAL_LEASE_KEY);
+    }
+  } catch (error) {
+    console.warn(
+      `${COLOR.warn}[dev] gagal hapus lease watchdog job bot: ${error.message}${COLOR.reset}`
+    );
+  }
 }
 
 async function prepareJobBotLocalMode(token) {
@@ -203,13 +358,24 @@ async function prepareJobBotLocalMode(token) {
   }
 
   try {
+    await startJobBotLocalLease(restoreUrl, currentWebhookUrl);
+  } catch (error) {
+    console.warn(
+      `${COLOR.warn}[dev] job hunter poller di-skip: gagal membuat lease watchdog di D1 (${error.message}).${COLOR.reset}`
+    );
+    return false;
+  }
+
+  try {
     await telegramRequest(token, 'deleteWebhook', { drop_pending_updates: true });
     jobBotWebhookRestore = { token, webhookUrl: restoreUrl };
     console.log(
-      `${COLOR.warn}[dev] job bot webhook dilepas untuk local polling; pending=${currentPending} dibuang. Restore target: ${restoreUrl}${COLOR.reset}`
+      `${COLOR.warn}[dev] job bot webhook dilepas untuk local polling; pending=${currentPending} dibuang. Restore target: ${restoreUrl}\n` +
+        `[dev] watchdog Vercel aktif: webhook akan dipulihkan otomatis kalau heartbeat local berhenti.${COLOR.reset}`
     );
     return true;
   } catch (error) {
+    await removeJobBotLocalLease();
     console.warn(
       `${COLOR.warn}[dev] gagal melepas webhook job bot: ${error.message}. Poller lokal di-skip supaya tidak konflik getUpdates/webhook.${COLOR.reset}`
     );
@@ -231,6 +397,7 @@ async function restoreJobBotWebhook() {
       max_connections: 40,
       drop_pending_updates: true,
     });
+    await removeJobBotLocalLease();
     console.log(
       `${COLOR.warn}[dev] job bot webhook production dipulihkan: ${restore.webhookUrl}\n` +
         `[dev] cek status webhook + pending: npm run telegram:webhook-info\n` +
