@@ -22,9 +22,9 @@ export interface SeenJobRecord {
   lastSeenAt: string;
   /** Berapa kali lowongan ini muncul di scan (cumulative) */
   seenCount: number;
-  /** True kalau user pernah klik tombol Apply untuk lowongan ini */
+  /** True kalau user pernah klik tombol Cek untuk lowongan ini */
   applied: boolean;
-  /** ISO timestamp saat user klik Apply */
+  /** ISO timestamp saat user klik Cek */
   appliedAt?: string;
 }
 
@@ -128,7 +128,7 @@ export async function recordSeenJobs(
 }
 
 /**
- * Tandai sebuah lowongan sebagai sudah di-apply oleh user.
+ * Tandai sebuah lowongan sebagai sudah diproses oleh user.
  * Idempoten: aman dipanggil berulang.
  */
 export async function markJobApplied(url: string): Promise<void> {
@@ -145,7 +145,7 @@ export async function markJobApplied(url: string): Promise<void> {
       lastSeenAt: existing.lastSeenAt,
     };
   } else {
-    // Edge case: user apply tanpa scan dulu (mis. /apply [url] manual).
+    // Edge case: user cek tanpa scan dulu (mis. /cek [url] manual).
     store.jobs[key] = {
       firstSeenAt: now,
       lastSeenAt: now,

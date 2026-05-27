@@ -73,23 +73,6 @@ function shouldHandleThread(message: TelegramMessage, config: JobBotConfig): boo
   return message.message_thread_id === config.threadId;
 }
 
-function formatResults(results: JobSearchResult[]): string {
-  if (results.length === 0) {
-    return '_Belum ada hasil otomatis. Buka link fallback, lalu kirim `/job_apply [link/detail]`._';
-  }
-
-  return results
-    .slice(0, 8)
-    .map((job, index) => {
-      const score = typeof job.score === 'number' ? `Match: ${job.score}%` : 'Match: n/a';
-      const company = job.company ? ` - ${job.company}` : '';
-      const location = job.location ? ` (${job.location})` : '';
-      const redFlags = job.redFlags?.length ? `\n   Red flag: ${job.redFlags.join(', ')}` : '';
-      return `${index + 1}. [${job.title}](${job.url})${company}${location}\n   ${score}${redFlags}`;
-    })
-    .join('\n\n');
-}
-
 /**
  * Format job card untuk pesan /scan satu-per-satu.
  * Layout meniru tampilan card Glints (judul, perusahaan, gaji, kategori,
@@ -97,7 +80,7 @@ function formatResults(results: JobSearchResult[]): string {
  *
  * `previousSeenStatus` adalah snapshot status lowongan SEBELUM scan ini berjalan.
  * - null         → lowongan baru pertama kali muncul → badge "🆕 Baru"
- * - applied=true → user sudah pernah klik Apply      → badge "✅ Sudah dilamar"
+ * - applied=true → user sudah pernah klik Cek        → badge "✅ Sudah dilamar"
  * - seenCount=N  → lowongan ini muncul ke-N kalinya  → badge "👁 Sudah dilihat (Nx)"
  */
 function formatJobCard(
@@ -187,22 +170,6 @@ function formatJobCard(
   return lines.join('\n');
 }
 
-function helpText(): string {
-  return (
-    '*Job Hunter Commands*\n\n' +
-    '`/scan` - Pilih sumber lowongan (Glints atau JobStreet) lalu scan\n' +
-    '`/search [keyword]` - Cari loker dari keyword\n' +
-    '`/apply [link/detail]` - Buat CV ATS + cover letter\n' +
-    '`/session` - Cek session login Glints\n' +
-    '`/help` - Tampilkan bantuan\n\n' +
-    '*Cara apply:*\n' +
-    '1. Kirim `/scan` lalu pilih *Glints* atau *JobStreet*.\n' +
-    '2. Klik *Apply #n* untuk siapkan paket lamaran (CV PDF + cover letter + pesan HR).\n' +
-    '3. Klik tombol *Buka di App / Buka di JobStreet* untuk submit manual di platform asal.\n\n' +
-    'Alias lama tetap bisa: `/job_scan`, `/job_search`, `/job_apply`, `/job_help`.'
-  );
-}
-
 function splitMessage(text: string, limit = 3500): string[] {
   if (text.length <= limit) return [text];
 
@@ -238,53 +205,52 @@ async function send(config: JobBotConfig, text: string, threadId?: number) {
 /**
  * Marker zero-width yang ditempel di awal pesan prompt ForceReply.
  * Saat user reply ke pesan ini, dispatcher mendeteksi marker di
- * `reply_to_message.text` dan men-route balik ke handler `/apply` dengan
- * teks balasan user dijadikan argumen. Mirror dari pola yang dipakai
- * bot utama (`src/lib/telegram/handlers/apply.ts`) supaya UX konsisten.
+ * `reply_to_message.text` dan men-route balik ke handler `/cek` dengan
+ * teks balasan user dijadikan argumen.
  */
-const APPLY_PROMPT_MARKER = '\u200B\u2063\u200B';
+const CEK_PROMPT_MARKER = '\u200B\u2063\u200B';
 
 /**
- * Pending-apply state: in-memory map dari `${chatId}:${threadId}` ke
+ * Pending-cek state: in-memory map dari `${chatId}:${threadId}` ke
  * timestamp expiry. Dipakai sebagai fallback kalau user tidak benar-benar
  * "reply" ke prompt (banyak kasus user di desktop/web Telegram cuma
  * mengetik di input field tanpa hold-reply, jadi pesan masuk sebagai
  * pesan biasa, bukan reply_to_message).
  *
  * TTL 5 menit sudah cukup luas — kalau user lebih lama dari itu state
- * di-clear dan user ketik ulang `/apply` saja. State juga di-consume
+ * di-clear dan user ketik ulang `/cek` saja. State juga di-consume
  * (delete) saat input pertama valid masuk supaya pesan random berikutnya
  * tidak tertangkap.
  */
-const PENDING_APPLY_TTL_MS = 5 * 60 * 1000;
-const pendingApplyState = new Map<string, number>();
+const PENDING_CEK_TTL_MS = 5 * 60 * 1000;
+const pendingCekState = new Map<string, number>();
 
 function pendingKey(chatId: string, threadId?: number): string {
   return `${chatId}:${threadId ?? 'main'}`;
 }
 
-function setPendingApply(chatId: string, threadId?: number) {
-  pendingApplyState.set(pendingKey(chatId, threadId), Date.now() + PENDING_APPLY_TTL_MS);
+function setPendingCek(chatId: string, threadId?: number) {
+  pendingCekState.set(pendingKey(chatId, threadId), Date.now() + PENDING_CEK_TTL_MS);
 }
 
-function consumePendingApply(chatId: string, threadId?: number): boolean {
+function consumePendingCek(chatId: string, threadId?: number): boolean {
   const key = pendingKey(chatId, threadId);
-  const expiry = pendingApplyState.get(key);
+  const expiry = pendingCekState.get(key);
   if (!expiry) return false;
-  pendingApplyState.delete(key);
+  pendingCekState.delete(key);
   if (Date.now() > expiry) return false;
   return true;
 }
 
-async function sendApplyForceReplyPrompt(config: JobBotConfig, threadId?: number) {
+async function sendCekForceReplyPrompt(config: JobBotConfig, threadId?: number) {
   const text =
-    APPLY_PROMPT_MARKER +
+    CEK_PROMPT_MARKER +
     '*Paste link loker di sini...*\n\n' +
     '_Reply ke pesan ini_ dengan:\n' +
     '• Link Instagram (`/p/`, `/reel/`, `/tv/`) — di-OCR otomatis\n' +
     '• Link Glints / JobStreet / LinkedIn / Kalibrr\n' +
     '• Atau paste deskripsi loker langsung sebagai teks\n\n' +
-    'Bot akan menyiapkan paket apply: CV ATS PDF, cover letter, pesan HR.';
+    'Bot akan mengecek lowongan dan menyiapkan CV ATS PDF, cover letter, pesan HR.';
 
   await sendJobBotMessage(config.botToken, config.adminChatId, text, threadId ?? config.threadId, {
     force_reply: true,
@@ -293,9 +259,9 @@ async function sendApplyForceReplyPrompt(config: JobBotConfig, threadId?: number
   });
 
   // Catat state pending. Pesan non-command berikutnya dari topic ini
-  // (dalam window 5 menit) akan diperlakukan sebagai input apply, baik
+  // (dalam window 5 menit) akan diperlakukan sebagai input cek, baik
   // user benar-benar "reply" ke prompt atau hanya mengetik biasa.
-  setPendingApply(config.adminChatId, threadId ?? config.threadId);
+  setPendingCek(config.adminChatId, threadId ?? config.threadId);
 }
 
 async function sendWithButtons(
@@ -389,7 +355,7 @@ async function executeScan(source: ScanSource, config: JobBotConfig, threadId?: 
     config,
     `Ditemukan ${response.results.length} lowongan ` +
       `(🆕 ${newCount} baru, 👁 ${repeatCount} berulang, ✅ ${appliedCount} sudah dilamar). ` +
-      'Klik Apply di lowongan yang mau diproses.',
+      'Klik Cek di lowongan yang mau diproses.',
     threadId
   );
 
@@ -400,9 +366,9 @@ async function executeScan(source: ScanSource, config: JobBotConfig, threadId?: 
     // dibuka di aplikasi mobile Glints (universal link). Untuk JobStreet, link
     // ke halaman web detail (yang punya tombol "Lamaran Cepat" sungguhan).
     // JobStreet juga mendapat tombol "📋 Detail" untuk lihat Tanggung Jawab +
-    // Kualifikasi tanpa harus commit ke Apply flow.
+    // Kualifikasi tanpa harus commit ke cek flow.
     const buttonRow: Array<{ text: string; callbackData?: string; url?: string }> = [
-      { text: `Apply #${number}`, callbackData: `apply:${number}` },
+      { text: `Cek #${number}`, callbackData: `cek:${number}` },
     ];
     if (source === 'jobstreet') {
       buttonRow.push({ text: '📋 Detail', callbackData: `detail:${number}` });
@@ -413,39 +379,13 @@ async function executeScan(source: ScanSource, config: JobBotConfig, threadId?: 
   }
 }
 
-async function handleSearch(config: JobBotConfig, text: string, threadId?: number) {
-  const query = argText(text);
-  if (!query) {
-    await send(
-      config,
-      'Masukkan keyword. Contoh: `/job_search graphic designer remote Indonesia`',
-      threadId
-    );
-    return;
-  }
-
-  await send(config, `*Cari loker:* ${query}`, threadId);
-  const { jobHuntService } = await import('@/lib/services/jobHuntService');
-  const response = await jobHuntService.searchJobs(query);
-  const links = response.searchLinks.map((link) => `- [${link.label}](${link.url})`).join('\n');
-
-  await send(
-    config,
-    `*Job Search:* ${response.query}\n\n` +
-      `${response.analysis}\n\n` +
-      `*Hasil:*\n${formatResults(response.results)}\n\n` +
-      `*Fallback:*\n${links}`,
-    threadId
-  );
-}
-
-async function handleApply(config: JobBotConfig, text: string, threadId?: number) {
+async function handleCek(config: JobBotConfig, text: string, threadId?: number) {
   const detail = argText(text);
   if (!detail) {
     // Empty argument → ForceReply prompt. User cukup tap pesan, ketik
     // link/deskripsi, kirim. Dispatcher men-route balasan kembali ke
     // handler ini sebagai input.
-    await sendApplyForceReplyPrompt(config, threadId);
+    await sendCekForceReplyPrompt(config, threadId);
     return;
   }
 
@@ -457,14 +397,14 @@ async function handleApply(config: JobBotConfig, text: string, threadId?: number
         'Pakai alur ini:\n' +
         '1. Kirim /scan untuk cari shortlist Glints Design.\n' +
         '2. Buka salah satu lowongan dari hasil scan.\n' +
-        '3. Kirim /apply [link lowongan spesifik] atau paste deskripsi lowongannya.\n\n' +
-        'Kalau Glints memblokir bot saat baca link, paste isi lowongannya langsung setelah /apply.',
+        '3. Kirim /cek [link lowongan spesifik] atau paste deskripsi lowongannya.\n\n' +
+        'Kalau Glints memblokir bot saat baca link, paste isi lowongannya langsung setelah /cek.',
       threadId
     );
     return;
   }
 
-  await send(config, '*Menyiapkan paket apply...*', threadId);
+  await send(config, '*Mengecek lowongan dan menyiapkan paket apply...*', threadId);
   const { jobHuntService } = await import('@/lib/services/jobHuntService');
 
   // Tandai applied di seen-store untuk URL spesifik (idempoten kalau sudah ditandai
@@ -485,7 +425,7 @@ async function handleApply(config: JobBotConfig, text: string, threadId?: number
         'Session Glints belum ada.\n\n' +
           'Jalankan sekali di terminal:\n' +
           'npm run job-bot:glints-login\n\n' +
-          'Login manual di browser yang terbuka. Setelah session tersimpan, ulangi /apply [link Glints].',
+          'Login manual di browser yang terbuka. Setelah session tersimpan, ulangi /cek [link Glints].',
         threadId
       );
       return;
@@ -497,7 +437,7 @@ async function handleApply(config: JobBotConfig, text: string, threadId?: number
         'Browser session Glints terbuka, tapi detail lowongan belum bisa dibaca jelas.\n\n' +
           'Coba refresh session:\n' +
           'npm run job-bot:glints-login\n\n' +
-          'Atau paste deskripsi lowongan langsung setelah /apply.',
+          'Atau paste deskripsi lowongan langsung setelah /cek.',
         threadId
       );
       return;
@@ -510,7 +450,7 @@ async function handleApply(config: JobBotConfig, text: string, threadId?: number
           'Solusi cepat:\n' +
           '1. Buka lowongan di browser.\n' +
           '2. Copy judul, company, requirement, dan job description.\n' +
-          '3. Kirim ulang: /apply [paste deskripsi lowongan]\n\n' +
+          '3. Kirim ulang: /cek [paste deskripsi lowongan]\n\n' +
           'Nanti bot tetap bisa bikin CV ATS + cover letter dari teks lowongannya.',
         threadId
       );
@@ -521,7 +461,7 @@ async function handleApply(config: JobBotConfig, text: string, threadId?: number
       await send(
         config,
         'Detail lowongan sudah bisa diproses, tapi AI generator gagal karena GEMINI_API_KEY/quota bermasalah.\n\n' +
-          'Perbaiki API key/quota Gemini dulu, lalu ulangi /apply. Untuk sementara bot belum bisa bikin CV ATS + cover letter tanpa AI.',
+          'Perbaiki API key/quota Gemini dulu, lalu ulangi /cek. Untuk sementara bot belum bisa bikin CV ATS + cover letter tanpa AI.',
         threadId
       );
       return;
@@ -547,8 +487,8 @@ async function handleApply(config: JobBotConfig, text: string, threadId?: number
   await send(config, '*Cover Letter / Proposal:*\n\n' + applyPackage.proposal, threadId);
 }
 
-async function handleApplyUrl(config: JobBotConfig, url: string, threadId?: number) {
-  await handleApply(config, `/apply ${url}`, threadId);
+async function handleCekUrl(config: JobBotConfig, url: string, threadId?: number) {
+  await handleCek(config, `/cek ${url}`, threadId);
 }
 
 async function handleScanSourceCallback(
@@ -662,14 +602,14 @@ async function handleDetailCallback(
   }
 }
 
-async function handleApplyCallback(
+async function handleCekCallback(
   config: JobBotConfig,
   callbackId: string,
   data: string,
   message?: TelegramMessage
 ) {
   const threadId = message?.message_thread_id ?? config.threadId;
-  const index = Number.parseInt(data.replace('apply:', ''), 10);
+  const index = Number.parseInt(data.replace('cek:', ''), 10);
   const job = Number.isFinite(index) ? await getShortlistJob(index) : null;
 
   if (!job) {
@@ -686,22 +626,9 @@ async function handleApplyCallback(
   // user tetap tahu lowongan ini dia sudah klik). Idempoten.
   await markJobApplied(job.url);
 
-  await answerJobBotCallback(config.botToken, callbackId, `Apply #${index} diproses`);
-  await send(config, `Memproses apply #${index}: ${job.title}`, threadId);
-  await handleApplyUrl(config, job.url, threadId);
-}
-
-async function handleSession(config: JobBotConfig, threadId?: number) {
-  const { hasGlintsSession } = await import('@/lib/services/glintsBrowserService');
-  const hasSession = await hasGlintsSession();
-
-  await send(
-    config,
-    hasSession
-      ? 'Session Glints tersedia. /apply [link Glints] akan mencoba baca halaman via browser session.'
-      : 'Session Glints belum ada. Jalankan: npm run job-bot:glints-login',
-    threadId
-  );
+  await answerJobBotCallback(config.botToken, callbackId, `Cek #${index} diproses`);
+  await send(config, `Memproses cek #${index}: ${job.title}`, threadId);
+  await handleCekUrl(config, job.url, threadId);
 }
 
 export async function handleJobBotUpdate(
@@ -717,8 +644,8 @@ export async function handleJobBotUpdate(
     if (callbackMessage && !isAllowedChat(callbackMessage, config)) return;
     if (callbackMessage && !shouldHandleThread(callbackMessage, config)) return;
 
-    if (data.startsWith('apply:')) {
-      await handleApplyCallback(config, callback.id, data, callbackMessage);
+    if (data.startsWith('cek:')) {
+      await handleCekCallback(config, callback.id, data, callbackMessage);
     } else if (data.startsWith('scanSrc:')) {
       await handleScanSourceCallback(config, callback.id, data, callbackMessage);
     } else if (data.startsWith('detail:')) {
@@ -736,29 +663,28 @@ export async function handleJobBotUpdate(
 
   const threadId = message.message_thread_id ?? config.threadId;
 
-  // ForceReply intercept: kalau pesan ini adalah reply ke prompt `/apply`
-  // (text prompt dibungkus APPLY_PROMPT_MARKER), perlakukan teks user
-  // sebagai argumen `/apply` dan dispatch lewat handler reguler.
+  // ForceReply intercept: kalau pesan ini adalah reply ke prompt `/cek`
+  // (text prompt dibungkus CEK_PROMPT_MARKER), perlakukan teks user
+  // sebagai argumen `/cek` dan dispatch lewat handler reguler.
   const replyTo = message.reply_to_message;
   const repliedFromBot = replyTo?.from?.is_bot === true;
   const repliedText = typeof replyTo?.text === 'string' ? replyTo.text : '';
-  const isReplyToApplyPrompt =
-    !!replyTo && repliedFromBot && repliedText.startsWith(APPLY_PROMPT_MARKER);
+  const isReplyToCekPrompt = !!replyTo && repliedFromBot && repliedText.startsWith(CEK_PROMPT_MARKER);
 
   // Fallback pending-state: kalau bukan command dan kita baru saja kirim
-  // prompt apply ke topic ini, treat input sebagai argumen apply meski
+  // prompt cek ke topic ini, treat input sebagai argumen cek meski
   // pesan tidak benar-benar "reply" ke prompt. Banyak client Telegram
   // (terutama desktop/web) tidak otomatis lock reply mode setelah
   // ForceReply, jadi user yang ketik biasa saja juga harus tertangkap.
   const chatIdStr = String(message.chat?.id ?? '');
   const startsAsCommand = text.startsWith('/');
-  const isPendingApplyFallback = !startsAsCommand && consumePendingApply(chatIdStr, threadId);
+  const isPendingCekFallback = !startsAsCommand && consumePendingCek(chatIdStr, threadId);
 
-  if (isReplyToApplyPrompt || isPendingApplyFallback) {
+  if (isReplyToCekPrompt || isPendingCekFallback) {
     try {
-      await handleApply(config, `/apply ${text}`, threadId);
+      await handleCek(config, `/cek ${text}`, threadId);
     } catch (error) {
-      console.error('[JobBot] Apply (reply) error:', error);
+      console.error('[JobBot] Cek (reply) error:', error);
       await send(config, '*Job bot error.* Coba lagi atau cek log server.', threadId);
     }
     return;
@@ -768,38 +694,17 @@ export async function handleJobBotUpdate(
   const shortCommandsAllowed = typeof config.threadId === 'number' && threadId === config.threadId;
 
   try {
+    if (!shortCommandsAllowed) {
+      return;
+    }
+
     switch (command) {
-      case '/job_scan':
       case '/scan':
-        if (command === '/scan' && !shortCommandsAllowed) break;
         await handleScan(config, threadId);
         break;
-      case '/job_search':
-      case '/search':
-        if (command === '/search' && !shortCommandsAllowed) break;
-        await handleSearch(config, text, threadId);
+      case '/cek':
+        await handleCek(config, text, threadId);
         break;
-      case '/job_apply':
-      case '/apply':
-        if (command === '/apply' && !shortCommandsAllowed) break;
-        await handleApply(config, text, threadId);
-        break;
-      case '/job_session':
-      case '/session':
-        if (command === '/session' && !shortCommandsAllowed) break;
-        await handleSession(config, threadId);
-        break;
-      case '/job_help':
-      case '/job_ping':
-      case '/help':
-      case '/ping':
-        if ((command === '/help' || command === '/ping') && !shortCommandsAllowed) break;
-        await send(config, helpText(), threadId);
-        break;
-      default:
-        if (command.startsWith('/job_')) {
-          await send(config, 'Command job hunter tidak dikenal. Coba `/job_help`.', threadId);
-        }
     }
   } catch (error) {
     console.error('[JobBot] Handler error:', error);

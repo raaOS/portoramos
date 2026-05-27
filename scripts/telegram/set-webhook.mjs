@@ -9,12 +9,17 @@
 //   npm run telegram:set-webhook -- --bot=main
 //   npm run telegram:set-webhook -- --bot=job
 //   npm run telegram:set-webhook -- --base=https://mydomain.com
+//   npm run telegram:set-webhook -- --keep-pending
 
 import { parseBotFilter, ensureToken, tg, resolveBaseUrl } from './common.mjs';
 
 function parseBaseFlag() {
   const arg = process.argv.find((a) => a.startsWith('--base='));
   return arg ? arg.slice('--base='.length).replace(/\/$/, '') : '';
+}
+
+function shouldDropPendingUpdates() {
+  return !process.argv.includes('--keep-pending');
 }
 
 const baseUrl = parseBaseFlag() || resolveBaseUrl();
@@ -29,6 +34,7 @@ if (!/^https:\/\//.test(baseUrl)) {
 }
 
 const bots = parseBotFilter();
+const dropPendingUpdates = shouldDropPendingUpdates();
 
 for (const bot of bots) {
   console.log(`\n${bot.label}`);
@@ -43,11 +49,12 @@ for (const bot of bots) {
     secret_token: secret,
     allowed_updates: ['message', 'callback_query'],
     max_connections: 40,
-    drop_pending_updates: false,
+    drop_pending_updates: dropPendingUpdates,
   });
 
   if (data.ok) {
     console.log(`  set -> ${url}`);
+    console.log(`  pending updates : ${dropPendingUpdates ? 'dropped' : 'kept'}`);
   } else {
     console.error(`  failed: ${data.description}`);
   }

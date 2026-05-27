@@ -12,6 +12,9 @@
  * Behavior:
  *   - All child stdout/stderr is piped through with a `[name]` prefix so
  *     logs stay readable.
+ *   - Before the job bot poller starts, Telegram webhook mode is disabled
+ *     with drop_pending_updates=true, then restored to the production HTTPS
+ *     webhook when the dev process exits normally.
  *   - The poller auto-restarts on crash (1.5s backoff) so a transient
  *     Telegram timeout doesn't leave buttons unresponsive for the rest
  *     of the dev session.
@@ -23,6 +26,7 @@ const { spawn } = require('child_process');
 const net = require('net');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 function resolveNextCli() {
   try {
@@ -81,6 +85,63 @@ function loadEnvFlag(key) {
   return process.env[key] || '';
 }
 
+function trimTrailingSlash(value) {
+  return value.trim().replace(/\/+$/, '');
+}
+
+function buildJobBotWebhookSecret(token) {
+  return crypto.createHash('sha256').update(`job-telegram-webhook:${token}`).digest('hex');
+}
+
+function isHttpsUrl(value) {
+  try {
+    return new URL(value).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function resolveExpectedJobBotWebhookUrl() {
+  const baseUrl = trimTrailingSlash(
+    loadEnvFlag('JOB_BOT_WEBHOOK_BASE_URL') || loadEnvFlag('NEXT_PUBLIC_SITE_URL')
+  );
+
+  if (!baseUrl || !isHttpsUrl(baseUrl)) return '';
+  return `${baseUrl}/api/webhook/job-telegram`;
+}
+
+async function telegramRequest(token, method, body) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${token}/${method}`,
+      body
+        ? {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          }
+        : { signal: controller.signal }
+    );
+
+    const data = await response.json().catch(() => ({
+      ok: false,
+      description: `Telegram returned HTTP ${response.status}`,
+    }));
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.description || `${method} failed with HTTP ${response.status}`);
+    }
+
+    return data;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 const COLOR = {
   reset: '\x1b[0m',
   next: '\x1b[36m', // cyan
@@ -102,13 +163,90 @@ function pipeWithPrefix(child, label, color) {
 }
 
 const children = new Set();
+let shuttingDown = false;
+let jobBotWebhookRestore = null;
 
 function trackChild(child) {
   children.add(child);
   child.on('exit', () => children.delete(child));
 }
 
-function shutdown(code) {
+async function prepareJobBotLocalMode(token) {
+  let currentWebhookUrl = '';
+  let currentPending = 0;
+
+  try {
+    const info = await telegramRequest(token, 'getWebhookInfo');
+    currentWebhookUrl = info.result?.url || '';
+    currentPending = Number(info.result?.pending_update_count ?? 0);
+  } catch (error) {
+    console.warn(
+      `${COLOR.warn}[dev] gagal membaca webhook job bot: ${error.message}. Poller lokal di-skip supaya tidak bentrok.${COLOR.reset}`
+    );
+    return false;
+  }
+
+  const expectedWebhookUrl = resolveExpectedJobBotWebhookUrl();
+  const restoreUrl = currentWebhookUrl || expectedWebhookUrl;
+
+  if (currentWebhookUrl && expectedWebhookUrl && currentWebhookUrl !== expectedWebhookUrl) {
+    console.warn(
+      `${COLOR.warn}[dev] webhook job bot saat ini berbeda dari env. Restore akan memakai URL sebelumnya: ${currentWebhookUrl}${COLOR.reset}`
+    );
+  }
+
+  if (!restoreUrl || !isHttpsUrl(restoreUrl)) {
+    console.warn(
+      `${COLOR.warn}[dev] job hunter poller di-skip: tidak ada URL HTTPS untuk restore webhook. Set JOB_BOT_WEBHOOK_BASE_URL=https://domain-vercel atau NEXT_PUBLIC_SITE_URL=https://domain-vercel.${COLOR.reset}`
+    );
+    return false;
+  }
+
+  try {
+    await telegramRequest(token, 'deleteWebhook', { drop_pending_updates: true });
+    jobBotWebhookRestore = { token, webhookUrl: restoreUrl };
+    console.log(
+      `${COLOR.warn}[dev] job bot webhook dilepas untuk local polling; pending=${currentPending} dibuang. Restore target: ${restoreUrl}${COLOR.reset}`
+    );
+    return true;
+  } catch (error) {
+    console.warn(
+      `${COLOR.warn}[dev] gagal melepas webhook job bot: ${error.message}. Poller lokal di-skip supaya tidak konflik getUpdates/webhook.${COLOR.reset}`
+    );
+    return false;
+  }
+}
+
+async function restoreJobBotWebhook() {
+  if (!jobBotWebhookRestore) return;
+
+  const restore = jobBotWebhookRestore;
+  jobBotWebhookRestore = null;
+
+  try {
+    await telegramRequest(restore.token, 'setWebhook', {
+      url: restore.webhookUrl,
+      secret_token: buildJobBotWebhookSecret(restore.token),
+      allowed_updates: ['message', 'callback_query'],
+      max_connections: 40,
+      drop_pending_updates: true,
+    });
+    console.log(
+      `${COLOR.warn}[dev] job bot webhook production dipulihkan: ${restore.webhookUrl}\n` +
+        `[dev] cek status webhook + pending: npm run telegram:webhook-info\n` +
+        `[dev] recovery kalau status NOT SET/MISMATCH: npm run telegram:set-webhook -- --bot=job${COLOR.reset}`
+    );
+  } catch (error) {
+    console.error(
+      `${COLOR.warn}[dev] gagal restore job bot webhook: ${error.message}. Jalankan: npm run telegram:set-webhook -- --bot=job${COLOR.reset}`
+    );
+  }
+}
+
+async function shutdown(code) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
   for (const child of children) {
     try {
       child.kill('SIGTERM');
@@ -116,11 +254,17 @@ function shutdown(code) {
       /* ignore */
     }
   }
+
+  await restoreJobBotWebhook();
   process.exit(code ?? 0);
 }
 
-process.on('SIGINT', () => shutdown(0));
-process.on('SIGTERM', () => shutdown(0));
+process.on('SIGINT', () => {
+  void shutdown(0);
+});
+process.on('SIGTERM', () => {
+  void shutdown(0);
+});
 
 function startNextDev(port) {
   const forwardedArgs = process.argv.slice(2).filter((a) => a !== '--no-job-bot');
@@ -144,11 +288,11 @@ function startNextDev(port) {
   child.on('exit', (code) => {
     // If the dev server dies, take everything down — that's the primary
     // process; the poller alone has no value.
-    shutdown(code ?? 0);
+    void shutdown(code ?? 0);
   });
 }
 
-function startJobBotPoller() {
+async function startJobBotPoller() {
   if (process.argv.includes('--no-job-bot')) {
     console.log(`${COLOR.warn}[dev] job hunter poller di-skip (--no-job-bot)${COLOR.reset}`);
     return;
@@ -168,6 +312,13 @@ function startJobBotPoller() {
   let backoffMs = 1500;
   const maxBackoffMs = 15000;
 
+  if (!fs.existsSync(pollerScript)) {
+    console.log(
+      `${COLOR.warn}[dev] job hunter poller di-skip (scripts/job-bot/poll.ts tidak ditemukan)${COLOR.reset}`
+    );
+    return;
+  }
+
   // tsx ships as a devDependency so we can resolve its CLI directly and
   // skip the slow `npx` PATH lookup. Resolving the file path also lets
   // spawn use Node directly (no shell), which avoids Node 24's deprecation
@@ -183,6 +334,9 @@ function startJobBotPoller() {
     );
     return;
   }
+
+  const prepared = await prepareJobBotLocalMode(token);
+  if (!prepared) return;
 
   function spawnPoller() {
     const child = spawn(process.execPath, [tsxCli, pollerScript], {
@@ -218,5 +372,5 @@ function startJobBotPoller() {
     process.exit(1);
   });
   startNextDev(port);
-  startJobBotPoller();
+  await startJobBotPoller();
 })();

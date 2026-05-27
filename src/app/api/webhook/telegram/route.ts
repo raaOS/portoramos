@@ -10,18 +10,10 @@ import { chatStore } from '@/lib/chatStore';
 import { cleanEnvVar } from '@/lib/utils/env';
 import type { MessageToSend } from '@/lib/telegram/types';
 import {
-  handleLeadsCommand,
-  handleProposalCommand,
-  handleResumeCommand,
-  handleJobsCommand,
-  handleApplyCommand,
-  handleGlintsCommand,
   handleAiCommand,
   handleAdminReply,
   handleGuestMessage,
-  handleHelpCommand,
 } from '@/lib/telegram/handlers';
-import { APPLY_PROMPT_MARKER } from '@/lib/telegram/handlers/apply';
 
 /**
  * SECURITY HARDENED Telegram Webhook
@@ -33,6 +25,82 @@ import { APPLY_PROMPT_MARKER } from '@/lib/telegram/handlers/apply';
  * - Proper error handling
  * - Modular command handlers
  */
+
+interface AdminOtpSession {
+  status?: string;
+  requestId?: string;
+  expiresAt?: number;
+  codeHash?: string;
+}
+
+function parseCallbackData(data: string) {
+  const separatorIndex = data.indexOf(':');
+  if (separatorIndex < 0) {
+    return { action: data, requestId: '' };
+  }
+
+  return {
+    action: data.slice(0, separatorIndex),
+    requestId: data.slice(separatorIndex + 1),
+  };
+}
+
+function commandOf(text: string): string {
+  return text.trim().split(/\s+/)[0].split('@')[0].toLowerCase();
+}
+
+function getPendingOtpSessionState(
+  otpData: AdminOtpSession | null,
+  requestId: string
+): 'active' | 'expired' | 'stale' {
+  if (!requestId || !otpData || typeof otpData !== 'object') {
+    return 'stale';
+  }
+
+  if (otpData.status !== 'pending' || otpData.requestId !== requestId) {
+    return 'stale';
+  }
+
+  if (typeof otpData.expiresAt !== 'number' || Date.now() > otpData.expiresAt) {
+    return 'expired';
+  }
+
+  return 'active';
+}
+
+async function respondToInactiveOtpSession(
+  state: 'expired' | 'stale',
+  incomingChatId: string,
+  messageId: number,
+  callbackId: string,
+  botToken: string
+) {
+  if (state === 'expired') {
+    await db.ref('settings/adminOtp').remove();
+    await editMessageText(
+      incomingChatId,
+      messageId,
+      '**Sesi Kadaluarsa**\nSesi permintaan ganti sandi sudah tidak aktif.',
+      botToken
+    );
+    await answerCallbackQuery(callbackId, botToken, {
+      text: 'Sesi sudah kadaluarsa',
+      showAlert: true,
+    });
+    return;
+  }
+
+  await editMessageText(
+    incomingChatId,
+    messageId,
+    '**Sesi Tidak Valid**\nTombol ini berasal dari permintaan lama. Silakan request OTP ulang.',
+    botToken
+  );
+  await answerCallbackQuery(callbackId, botToken, {
+    text: 'Tombol lama tidak valid. Request OTP ulang.',
+    showAlert: true,
+  });
+}
 
 export async function POST(request: Request) {
   try {
@@ -80,6 +148,7 @@ export async function POST(request: Request) {
       const cbQuery = webhookBody.callback_query as Record<string, unknown>;
       const callbackId = String(cbQuery['id'] || '');
       const data = String(cbQuery['data'] || '');
+      const { action, requestId } = parseCallbackData(data);
       const cbMessage = cbQuery['message'] as Record<string, unknown> | undefined;
       const incomingChatId = String(cbMessage?.chat ? (cbMessage.chat as Record<string, unknown>).id : '');
       const messageId = Number(cbMessage?.message_id);
@@ -92,31 +161,39 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
-      if (data === 'otp_reject') {
+      if (action === 'otp_reject') {
         const otpSnap = await db.ref('settings/adminOtp').once('value');
-        const otpData = otpSnap.val();
+        const otpData = otpSnap.val() as AdminOtpSession | null;
+        const sessionState = getPendingOtpSessionState(otpData, requestId);
 
-        if (otpData && otpData.status === 'pending') {
+        if (sessionState === 'active') {
           // Update status ke rejected agar di-polling oleh UI
           await db.ref('settings/adminOtp').set({
             status: 'rejected',
+            requestId,
             expiresAt: Date.now() + 60 * 1000, // biarkan hidup 1 menit agar UI sempat polling
           });
 
           await editMessageText(incomingChatId, messageId, '🚨 **Akses Digagalkan!**\nUpaya ganti sandi telah diblokir. UI penyusup akan langsung dikunci.', botToken);
           await answerCallbackQuery(callbackId, botToken, { text: 'Akses diblokir!' });
         } else {
-          await editMessageText(incomingChatId, messageId, '⚠️ **Sesi Kadaluarsa**\nSesi permintaan ganti sandi sudah tidak aktif.', botToken);
-          await answerCallbackQuery(callbackId, botToken, { text: 'Sesi sudah kadaluarsa', showAlert: true });
+          await respondToInactiveOtpSession(
+            sessionState,
+            incomingChatId,
+            messageId,
+            callbackId,
+            botToken
+          );
         }
         return NextResponse.json({ ok: true });
       }
 
-      if (data === 'otp_approve') {
+      if (action === 'otp_approve') {
         const otpSnap = await db.ref('settings/adminOtp').once('value');
-        const otpData = otpSnap.val();
+        const otpData = otpSnap.val() as AdminOtpSession | null;
+        const sessionState = getPendingOtpSessionState(otpData, requestId);
 
-        if (otpData && otpData.status === 'pending') {
+        if (sessionState === 'active') {
           const salt = process.env.PASSWORD_SALT;
           if (!salt) {
             await answerCallbackQuery(callbackId, botToken, { text: 'Error konfigurasi server', showAlert: true });
@@ -130,6 +207,7 @@ export async function POST(request: Request) {
           // Update status ke approved beserta Hash OTP-nya
           await db.ref('settings/adminOtp').set({
             status: 'approved',
+            requestId,
             codeHash: codeHash,
             expiresAt: Date.now() + 5 * 60 * 1000,
           });
@@ -137,8 +215,13 @@ export async function POST(request: Request) {
           await editMessageText(incomingChatId, messageId, `✅ **Persetujuan Diterima**\n\nGunakan kode OTP berikut:\n\`${otpCode}\`\n\n(Berlaku 5 menit)`, botToken);
           await answerCallbackQuery(callbackId, botToken, { text: 'Persetujuan Diterima!' });
         } else {
-          await editMessageText(incomingChatId, messageId, '⚠️ **Sesi Kadaluarsa**\nSesi permintaan ganti sandi sudah tidak aktif.', botToken);
-          await answerCallbackQuery(callbackId, botToken, { text: 'Sesi sudah kadaluarsa', showAlert: true });
+          await respondToInactiveOtpSession(
+            sessionState,
+            incomingChatId,
+            messageId,
+            callbackId,
+            botToken
+          );
         }
         return NextResponse.json({ ok: true });
       }
@@ -157,19 +240,8 @@ export async function POST(request: Request) {
       const threadId =
         typeof msg.message_thread_id === 'number' ? msg.message_thread_id : undefined;
 
-      // ForceReply conversational flow: kalau pesan ini reply ke prompt
-      // /apply (teks pesan target diawali APPLY_PROMPT_MARKER), treat
-      // input user sebagai argumen `/apply` dan dispatch lewat command path
-      // normal. Strict mode: hanya pesan yang BENAR-BENAR reply ke prompt
-      // tersebut yang ke-route, bukan pesan random.
       const replyTo = msg.reply_to_message as Record<string, unknown> | undefined;
-      const repliedFromBot =
-        (replyTo?.from as Record<string, unknown> | undefined)?.is_bot === true;
-      const repliedText = typeof replyTo?.text === 'string' ? replyTo.text : '';
-      const isReplyToApplyPrompt =
-        !!replyTo && repliedFromBot && repliedText.startsWith(APPLY_PROMPT_MARKER);
-
-      const effectiveText = isReplyToApplyPrompt ? `/apply ${text}` : text;
+      const chatType = String((msg.chat as Record<string, unknown>)?.type ?? '');
 
       // Rate limiting check (now async - CLOUDFLARE_D1-backed)
       const rateLimit = await checkRateLimit(incomingChatId);
@@ -200,25 +272,20 @@ export async function POST(request: Request) {
       // Find visitor context
       let currentVisitorId: string | null = null;
 
-      // Skip visitor resolution kalau reply ini menuju prompt /apply,
-      // supaya tidak salah dikira admin reply ke visitor.
-      if (!isReplyToApplyPrompt) {
-        if (threadId) {
-          currentVisitorId = await chatStore.getVisitorByThreadId(threadId);
-        } else if ((msg.reply_to_message as Record<string, unknown>)?.message_id) {
-          const replyMsgId = Number((msg.reply_to_message as Record<string, unknown>).message_id);
-          currentVisitorId = await chatStore.getVisitorByMessageId(replyMsgId);
-        }
+      if (threadId) {
+        currentVisitorId = await chatStore.getVisitorByThreadId(threadId);
+      } else if (replyTo?.message_id) {
+        const replyMsgId = Number(replyTo.message_id);
+        currentVisitorId = await chatStore.getVisitorByMessageId(replyMsgId);
       }
 
       // Process messages to send
       const messagesToSend = await processMessage({
-        text: effectiveText,
+        text,
         isAdmin,
         currentVisitorId,
-        chatId: incomingChatId,
-        botToken,
         threadId,
+        chatType,
       });
 
       // Send all messages
@@ -241,55 +308,32 @@ interface ProcessMessageParams {
   text: string;
   isAdmin: boolean;
   currentVisitorId: string | null;
-  chatId: string;
-  botToken: string;
   threadId?: number;
+  chatType?: string;
 }
 
 async function processMessage({
   text,
   isAdmin,
   currentVisitorId,
-  chatId,
-  botToken,
   threadId,
+  chatType,
 }: ProcessMessageParams): Promise<MessageToSend[]> {
   const jobBotThreadIdRaw = cleanEnvVar('JOB_BOT_THREAD_ID');
   const jobBotThreadId = jobBotThreadIdRaw ? Number.parseInt(jobBotThreadIdRaw, 10) : NaN;
   const isJobBotThread = Number.isFinite(jobBotThreadId) && threadId === jobBotThreadId;
 
-  if (isJobBotThread || text.startsWith('/job_')) {
+  // Main/CS bot owns visitor chat, security callbacks, and `/ai` only.
+  // Job hunter commands live exclusively in the job bot topic.
+  if (isJobBotThread) {
     return [];
   }
 
-  // --- ADMIN COMMANDS ---
   if (isAdmin) {
     if (text.startsWith('/')) {
-      const command = text.split(' ')[0];
+      const command = commandOf(text);
 
       switch (command) {
-        case '/leads':
-          return await handleLeadsCommand();
-
-        case '/prop':
-          return await handleProposalCommand(text, chatId, botToken, threadId);
-
-        case '/resume':
-        case '/cv':
-          return await handleResumeCommand(text, chatId, botToken, threadId);
-
-        case '/jobs':
-          return await handleJobsCommand(text, chatId, botToken, threadId);
-
-        case '/glints':
-          return await handleGlintsCommand(chatId, botToken, threadId);
-
-        case '/apply':
-          return await handleApplyCommand(text, chatId, botToken, threadId);
-
-        case '/help':
-          return handleHelpCommand();
-
         case '/ai':
           return await handleAiCommand(
             currentVisitorId,
@@ -297,25 +341,23 @@ async function processMessage({
           );
 
         default:
-          return [{ text: '❓ Command tidak dikenal. Coba /help' }];
+          return [];
       }
     } else if (currentVisitorId) {
-      // Admin manual reply
       return await handleAdminReply(
         text,
         currentVisitorId,
         chatStore as unknown as import('@/lib/telegram/types').ChatStoreInterface
       );
-    } else if (!currentVisitorId && isAdmin) {
-      return [
-        {
-          text: '❌ _Tidak dapat menemukan sesi visitor. Pastikan Anda reply di topik yang benar atau tunggu visitor mengirim pesan pertama._',
-        },
-      ];
     }
+
+    return [];
   }
 
-  // --- GUEST LOGIC ---
+  if (chatType && chatType !== 'private') {
+    return [];
+  }
+
   console.log('[Webhook Debug] Guest message received (not admin)');
   return handleGuestMessage();
 }

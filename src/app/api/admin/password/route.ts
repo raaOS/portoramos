@@ -57,7 +57,13 @@ export async function POST(request: NextRequest) {
     const otpSnap = await db.ref('settings/adminOtp').once('value');
     const otpData = otpSnap.val();
 
-    if (!otpData || typeof otpData !== 'object' || !otpData.codeHash || !otpData.expiresAt) {
+    if (
+      !otpData ||
+      typeof otpData !== 'object' ||
+      otpData.status !== 'approved' ||
+      !otpData.codeHash ||
+      !otpData.expiresAt
+    ) {
       return NextResponse.json({ error: 'Sesi OTP tidak ditemukan atau sudah kadaluarsa. Silakan request ulang.' }, { status: 400 });
     }
 
@@ -95,7 +101,9 @@ export async function POST(request: NextRequest) {
 
     // 6. Kirim Telegram Alert dengan Panic Button
     const clientId = getClientIdentifier(request);
-    const [ip, userAgent] = clientId.split('|');
+    const pipeIdx = clientId.indexOf('|');
+    const ip = pipeIdx > -1 ? clientId.substring(0, pipeIdx) : clientId;
+    const userAgent = pipeIdx > -1 ? clientId.substring(pipeIdx + 1) : 'unknown';
 
     const alertMessage = `⚠️ **SANDI ADMIN BERHASIL DIUBAH**
 

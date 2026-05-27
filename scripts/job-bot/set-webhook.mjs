@@ -17,6 +17,7 @@ function clean(value) {
 
 const token = clean(process.env.JOB_BOT_TELEGRAM_TOKEN);
 const siteUrl = clean(process.env.JOB_BOT_WEBHOOK_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL);
+const dropPendingUpdates = !process.argv.includes('--keep-pending');
 
 if (!token) {
   throw new Error('JOB_BOT_TELEGRAM_TOKEN is missing');
@@ -39,7 +40,7 @@ const response = await fetch(`https://api.telegram.org/bot${token}/setWebhook`, 
     url: webhookUrl,
     secret_token: secretToken,
     allowed_updates: ['message', 'callback_query'],
-    drop_pending_updates: false,
+    drop_pending_updates: dropPendingUpdates,
   }),
 });
 
@@ -50,6 +51,7 @@ console.log(
       ok: data.ok,
       description: data.description,
       webhookUrl,
+      pendingUpdates: dropPendingUpdates ? 'dropped' : 'kept',
     },
     null,
     2

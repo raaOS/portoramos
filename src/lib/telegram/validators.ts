@@ -44,6 +44,10 @@ export function validateWebhookData(body: unknown): ValidationResult {
     return { valid: false, error: 'Invalid message format' };
   }
 
+  if (webhookBody.callback_query && typeof webhookBody.callback_query !== 'object') {
+    return { valid: false, error: 'Invalid callback_query format' };
+  }
+
   if (webhookBody.message?.text && typeof webhookBody.message.text !== 'string') {
     return { valid: false, error: 'Invalid text format' };
   }

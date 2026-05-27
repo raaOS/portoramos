@@ -9,7 +9,7 @@ export interface InlineKeyboardMarkup {
 /**
  * Telegram ForceReply markup. Memunculkan reply UI di client supaya user
  * langsung diminta membalas pesan ini. Dipakai untuk conversational flow
- * (mis. /apply tanpa argumen → bot prompt link → user reply dengan link).
+ * (mis. bot prompt link → user reply dengan link).
  *
  * Spec: https://core.telegram.org/bots/api#forcereply
  */

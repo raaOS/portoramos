@@ -68,7 +68,7 @@ Route `/` merender desktop fullscreen yang menampilkan:
 
 - **AI:** Gemini via `@google/generative-ai`
 - **Cloudflare:** D1 untuk data aplikasi dan R2 untuk media
-- **Telegram:** bot handlers, guest/admin reply, proposal/resume helpers
+- **Telegram:** main/CS bot untuk visitor/admin reply + OTP; job hunter bot untuk `/scan` dan `/cek`
 - **Analytics / Perf:** `@vercel/speed-insights`, custom web vitals hooks (`PerformanceMonitor`, `WebVitals`)
 
 ### Migration Status
@@ -250,10 +250,20 @@ npm run audit
 
 ### Telegram Bot CLI
 
-Repo punya dua bot Telegram independen: **main bot** (`@WebPortofolioBot`,
-token `TELEGRAM_BOT_TOKEN`) untuk chat visitor + admin commands, dan
-**job hunter bot** (`@ramos_job_hunter_bot`, token `JOB_BOT_TELEGRAM_TOKEN`)
-untuk `/scan`, `/search`, `/apply` di topic Job Hunter.
+Repo punya dua bot Telegram independen dengan batas command yang sengaja
+minimal:
+
+- **main / CS bot** (`@WebPortofolioBot`, token `TELEGRAM_BOT_TOKEN`) untuk
+  chat visitor, admin reply, notifikasi security/login, OTP approval, dan
+  command admin `/ai` saja.
+- **job hunter bot** (`@ramos_job_hunter_bot`, token `JOB_BOT_TELEGRAM_TOKEN`)
+  untuk command `/scan` dan `/cek` saja di topic Job Hunter
+  (`JOB_BOT_THREAD_ID`).
+
+Jangan menambahkan command job hunting ke main bot. Jangan menambahkan command
+CS/security ke job hunter bot. Kalau dua bot berada dalam group yang sama,
+`JOB_BOT_THREAD_ID` adalah pagar topic untuk job hunter; main bot harus
+mengabaikan topic tersebut.
 
 Halaman admin `/admin/telegram` sengaja **tidak** ada — manajemen webhook
 dilakukan via CLI di bawah ini supaya tidak ada misclick "Fix Webhook"
@@ -266,11 +276,12 @@ npm run telegram:webhook-info
 npm run telegram:webhook-info -- --bot=main
 npm run telegram:webhook-info -- --bot=job
 
-# set webhook ke NEXT_PUBLIC_SITE_URL (atau override pakai --base=https://...)
+# set webhook ke NEXT_PUBLIC_SITE_URL dan drop pending update by default
+# (override base pakai --base=https://..., atau tambah --keep-pending bila perlu)
 npm run telegram:set-webhook
 npm run telegram:set-webhook -- --base=https://yourdomain.com
 
-# clear pending queue (drop+restore webhook secara aman)
+# clear pending queue manual (drop+restore webhook secara aman)
 npm run telegram:clear-pending
 ```
 
@@ -278,12 +289,24 @@ npm run telegram:clear-pending
 
 Saat `npm run dev` dijalankan, orchestrator otomatis spawn job hunter
 poller bersamaan dengan Next.js dev server (selama `JOB_BOT_TELEGRAM_TOKEN`
-ada di `.env.local`). Tanpa ini, callback dari tombol Apply/Detail di
-Telegram tidak terdeliver karena webhook job bot tidak ter-set ke
-localhost.
+ada di `.env.local`). Tanpa ini, callback dari tombol hasil `/scan` dan
+`/cek` di Telegram tidak terdeliver karena webhook job bot tidak ter-set
+ke localhost.
+
+Sebelum poller lokal aktif, orchestrator otomatis memanggil Telegram
+`deleteWebhook` dengan `drop_pending_updates=true` supaya tidak ada pending
+queue lama dan tidak bentrok dengan mode webhook production. Saat dev process
+berhenti normal (Ctrl+C / Next dev mati), orchestrator mengembalikan webhook
+job bot ke URL webhook sebelumnya, atau ke URL HTTPS production dari
+`JOB_BOT_WEBHOOK_BASE_URL` / `NEXT_PUBLIC_SITE_URL` bila sebelumnya belum
+ada webhook. Kalau proses dimatikan paksa sebelum restore, jalankan
+`npm run telegram:set-webhook -- --bot=job`.
 
 Output kedua proses di-prefix: `[next]` untuk Next.js, `[job-bot]` untuk
-poller. Poller auto-restart kalau crash dengan exponential backoff.
+poller. Poller auto-restart kalau crash dengan exponential backoff. Setelah
+restore webhook berhasil, log dev menampilkan dua command bantuan:
+`npm run telegram:webhook-info` untuk cek status/pending dan
+`npm run telegram:set-webhook -- --bot=job` untuk recovery manual.
 
 ```bash
 # default: dev server + job hunter poller
@@ -298,7 +321,7 @@ npm run job-bot:poll
 
 ### Catatan Script
 
-- `npm run dev` menjalankan `node scripts/core/dev.js` untuk server development (auto-spawn job hunter Telegram poller bila `JOB_BOT_TELEGRAM_TOKEN` ada)
+- `npm run dev` menjalankan `node scripts/core/dev.js` untuk server development (auto-spawn job hunter Telegram poller bila `JOB_BOT_TELEGRAM_TOKEN` ada, auto drop pending + restore webhook job bot)
 - `npm run dev:webpack` menjalankan server development dengan fallback Webpack
 - `npm run fresh-start` menghapus cache `.next` sebelum menjalankan `dev`
 - `npm run ultra-fresh` memperbaiki cache build yang korup kemudian menjalankan `dev`
@@ -319,7 +342,7 @@ npm run job-bot:poll
 - `npm run ultra-clean` pembersihan total cache dan temporary files
 - `npm run audit` menjalankan `scripts/maintenance/audit.ts` untuk audit repo
 - `npm run telegram:webhook-info` menampilkan webhook URL + pending updates untuk main bot dan job hunter bot
-- `npm run telegram:set-webhook` set webhook kedua bot ke `NEXT_PUBLIC_SITE_URL` (atau `--base=https://...`)
+- `npm run telegram:set-webhook` set webhook kedua bot ke `NEXT_PUBLIC_SITE_URL` (atau `--base=https://...`) dan drop pending update by default
 - `npm run telegram:clear-pending` clear pending updates Telegram tanpa break webhook (drop + restore)
 - `npm run job-bot:poll` polling job hunter bot di lokal (alternatif webhook untuk dev)
 
