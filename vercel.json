@@ -9,6 +9,9 @@
       "maxDuration": 60,
       "memory": 1024
     },
+    "src/app/r2/[...key]/route.ts": {
+      "maxDuration": 60
+    },
     "src/app/api/ai/generate-details/route.ts": {
       "maxDuration": 30
     },

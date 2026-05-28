@@ -26,6 +26,8 @@ function pathnameToAppId(pathname: string): string | null {
   return null;
 }
 
+import { BackgroundUploadProvider } from '@/contexts/BackgroundUploadContext';
+
 export default function ClientAdminLayout({ children }: ClientAdminLayoutProps) {
   const pathname = usePathname();
   const queryClient = useQueryClient();
@@ -76,12 +78,14 @@ export default function ClientAdminLayout({ children }: ClientAdminLayoutProps) 
   // Admin Desktop Shell (replaces old sidebar layout)
   return (
     <ConfirmDialogProvider>
-      <AdminDesktopShell
-        windows={windows}
-        openFolderId={openFolderId}
-        actions={actions}
-        onLogout={handleLogout}
-      />
+      <BackgroundUploadProvider>
+        <AdminDesktopShell
+          windows={windows}
+          openFolderId={openFolderId}
+          actions={actions}
+          onLogout={handleLogout}
+        />
+      </BackgroundUploadProvider>
     </ConfirmDialogProvider>
   );
 }

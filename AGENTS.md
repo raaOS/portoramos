@@ -192,14 +192,14 @@ os/
 
 ### API Routes Overview
 
-30 API route directories di `src/app/api/`:
+31 API route directories di `src/app/api/`:
 
 | Kategori             | Routes                                                                                                     |
 | -------------------- | ---------------------------------------------------------------------------------------------------------- |
 | **Content CRUD**     | `about`, `experience`, `hard-skills`, `projects`, `testimonial`, `running-text`, `sticky-notes`, `gallery` |
 | **Chat / Messaging** | `chat`, `comments`, `contact`, `feedback`, `webhook`                                                       |
 | **AI**               | `ai`, `translate`                                                                                          |
-| **Admin**            | `admin`                                                                                                    |
+| **Admin**            | `admin`, `admin/storage-stats` (per-category D1↔R2 breakdown untuk panel Storage)                          |
 | **Media**            | `media`, `upload`, `img`                                                                                   |
 | **System**           | `analytics`, `health`, `debug`, `empty`, `os`, `revalidate`, `utils`                                       |
 | **Data**             | `leads`, `metrics`, `settings`, `explorer`                                                                 |
@@ -417,14 +417,61 @@ import type { AboutData } from '@/types/about';
 
 ### Root Contexts (`src/contexts/`)
 
-| Context                   | Kegunaan                      |
-| ------------------------- | ----------------------------- |
-| `LanguageContext`         | i18n language switching       |
-| `LastUpdatedContext`      | Track last updated timestamps |
-| `ModalContext`            | Modal state management        |
-| `NavbarVisibilityContext` | Navbar show/hide state        |
-| `ToastContext`            | Toast notification system     |
-| `WindowContext`           | Window management state       |
+| Context                   | Kegunaan                                                          |
+| ------------------------- | ----------------------------------------------------------------- |
+| `LanguageContext`         | i18n language switching                                           |
+| `LastUpdatedContext`      | Track last updated timestamps                                     |
+| `ModalContext`            | Modal state management                                            |
+| `NavbarVisibilityContext` | Navbar show/hide state                                            |
+| `ToastContext`            | Toast notification system                                         |
+| `WindowContext`           | Window management state                                           |
+| `BackgroundUploadContext` | Antrian upload wallpaper di background (admin-only, lihat bawah)  |
+
+> **Pattern — BackgroundUploadContext (admin)**
+>
+> Hidup di tingkat `AdminDesktopShell` (lewat `BackgroundUploadProvider`
+> di `ClientAdminLayout`). User drop file video wallpaper, context
+> menjalankan flow direct-to-R2 dengan client-side compression:
+>
+> 1. Validasi (1920×1080 min, 60 MB max) di `WallpaperManager`
+> 2. Decode dimensi via `readVideoDimensions` (single byte-range read)
+> 3. **Skip-on-good-source heuristic per profile** — kalau source
+>    sudah cocok (mis. 4K 50 MB untuk Ultra) → pass-through tanpa
+>    encode WASM yang mahal
+> 4. Compress kalau perlu (`useFFmpeg.compressVideo` dengan profile
+>    'high' atau 'ultra')
+> 5. Capture poster JPG dari `fileToUpload` (post-compress) via
+>    `captureVideoPoster`
+> 6. POST `/api/upload/presign` → signed PUT URL
+> 7. PUT bytes ke R2 (bypass Vercel body-size limit)
+> 8. POST `/api/upload?folder=wallpapers&skipImageOptimization=1`
+>    untuk poster JPG (skip transcode supaya `.jpg` konsisten dengan
+>    konvensi side-car)
+> 9. Finalize: `PUT /api/about` dengan `wallpaperConfig` baru
+>
+> Step finalize **harus** lewat `/api/about` (bukan endpoint lain seperti
+> `/api/admin/system` yang tidak ada di repo) dengan partial
+> `UpdateAboutData` di top-level — karena `updateAboutSchema.strict()`
+> akan menolak envelope `{ updates: ... }`.
+>
+> Concurrency: encode di-serialize via `compressChainRef` (WASM ffmpeg
+> single-threaded, dua encode paralel = file korup). Finalize
+> di-serialize via `finalizeChainRef` supaya read-modify-write
+> `wallpaperConfig.collection` tidak last-write-wins. Network upload
+> tetap paralel.
+>
+> Setelah save, context push hasilnya ke
+> `queryClient.setQueryData(ADMIN_QUERY_KEYS.about)` + `mutate('/api/about',
+> data, { revalidate: false })`. Pakai `revalidate: false` supaya tidak
+> trigger fetch berikutnya yang bisa balik dengan cached server response
+> (race window kecil tapi nyata saat upload back-to-back).
+>
+> Status detail dari WASM ffmpeg (mis. `"Compressing 35% - ~12s
+> remaining"`) di-route ke task aktif via `encodingTaskIdRef` dan
+> tampil di tooltip CloudUpload icon menubar admin.
+>
+> Detail lengkap (encoder settings, profile, audit logic) ada di
+> section "Wallpaper Upload Pipeline" di bawah.
 
 ### OS-Level Contexts (`src/components/os/`)
 
@@ -553,6 +600,217 @@ Karakteristik `ContentService` saat ini:
 JSON files: `about.json`, `contact.json`, `experience.json`, `gallery-featured.json`, `hardSkillConcepts.json`, `hardSkills.json`, `leads.json`, `lighthouse-history.json`, `metrics.json`, `projects.json`, `running-text.json`, `settings.json`, `sticky-notes.json`, `telegram.json`, `testimonial.json`
 
 TS files: `fallback-content.ts`, `trailPlaceholders.ts`
+
+### D1 Path Semantics (Penting)
+
+`db.ref(path)` di `src/lib/database.ts` memparse path bertingkat dengan
+separator `/` lalu menulis ke key parent dengan field nested. Contoh:
+
+- `db.ref('content/about').set(x)` menulis ke **row D1 `content`** dengan
+  field `about = x`. Bukan ke row literal `"content/about"`.
+- `db.ref('content/about').once('value')` membaca lewat path yang sama,
+  jadi konsisten dengan write.
+- `db.ref(\`projects/${id}\`).set(...)` juga nested di parent `projects`.
+
+Sebaliknya, helper mentah di `src/lib/cloudflareD1.ts` **tidak** menafsirkan
+`/` sebagai nested path:
+
+- `getD1Value('content/about')` mencari row dengan key string literal
+  `"content/about"`. Bukan field nested di row `content`.
+- `setD1Value('content/about', x)` membuat row literal terpisah.
+
+Karena itu **jangan campur** dua API ini untuk path yang sama. Konvensi
+saat ini:
+
+- Untuk content domain (`about`, `projects`, `experience`, dll.) selalu
+  lewat service di `src/lib/services/` (yang internal pakai `db.ref(...)`).
+- `getD1Value` / `setD1Value` mentah hanya untuk:
+  - top-level key datar (mis. `analytics`, `audit_logs`, `lastUpdated`,
+    `settings`, dst.)
+  - inspeksi diagnostik di script CLI yang sengaja mau melihat row
+    literal
+
+Kalau ditemukan duplikasi historis (row literal `content/<x>` paralel
+dengan field nested di `content`), pakai migrasi:
+
+```bash
+npx tsx scripts/cloudflare/migrate-legacy-content-rows.ts            # dry-run
+npx tsx scripts/cloudflare/migrate-legacy-content-rows.ts --apply    # eksekusi
+npx tsx scripts/cloudflare/migrate-legacy-content-rows.ts --apply --force --yes
+```
+
+`--force` dipakai kalau kedua sisi isinya berbeda — script tetap pakai
+field nested sebagai source of truth (karena UI dan API menulis ke
+sana) dan menghapus row literal yang stale.
+
+### Storage Convention: Video Side-Car Files
+
+Pipeline upload (`src/app/api/upload/route.ts` + `src/lib/videoOptimization.ts`)
+menulis tiga file untuk setiap video:
+
+- `<base>.mp4` — file utama (dirujuk D1)
+- `<base>-preview.mp4` — preview clip (tidak dirujuk D1; tidak dibuat
+  untuk wallpaper karena flow direct-to-R2 skip preview)
+- `<base>.jpg` — poster image (dirujuk D1 lewat `posterUrl` untuk
+  wallpaper; di-derive untuk project)
+
+Helper `getVideoPosterSource` dan `getVideoPreviewSource` di
+`src/lib/mediaPreview.ts` menurunkan URL side-car dari URL main video
+saat render. Untuk **wallpaper**, `posterUrl` selalu tersimpan eksplisit
+di D1 sehingga `DesktopBackground` tidak bergantung pada derivasi —
+fallback derivasi tetap ada untuk entry lama yang belum punya
+`posterUrl`.
+
+**Konsekuensi untuk audit:** kalau script audit naive cuma membandingkan
+URL D1 vs listing R2, side-car akan ke-flag sebagai orphan dan cleanup
+otomatis akan menghapus poster + preview untuk semua video. Audit-audit
+yang sudah ada di repo (`scripts/cloudflare/audit-orphan-*` dan endpoint
+`/api/admin/storage-stats`) sudah memperhitungkan side-car: untuk setiap
+key `<base>.(mp4|webm|mov)` yang dirujuk, mereka juga menganggap
+`<base>-preview.mp4`, `<base>.jpg`, dan `<base>.webp` sebagai referenced.
+
+> **Penting (post-2026-05):** poster wallpaper baru disimpan sebagai
+> `.jpg` (bukan `.webp` seperti era transcode JPG→WebP). `useStorageUpload`
+> kirim `?skipImageOptimization=1` saat upload poster supaya server
+> `/api/upload` skip transcode → file akhir konsisten dengan konvensi
+> side-car `<base>.jpg`. Wallpaper lama yang sudah keburu tersimpan
+> sebagai `.webp` tetap valid (audit + cleanup tracker dua-duanya).
+
+### Wallpaper Upload Pipeline (penting untuk AI yang akan modify)
+
+Upload video wallpaper di admin **tidak lewat path** `/api/upload`
+FormData biasa. Live wallpaper tipikal 30-50 MB lewat batas body parser
+Vercel function (4.5 MB Hobby), jadi pipeline ada dua jalur paralel:
+
+#### Jalur direct-to-R2 (default untuk wallpaper)
+
+Konsumer: `BackgroundUploadContext.enqueueWallpaperUpload`. Flow:
+
+1. Validasi pre-upload di `WallpaperManager.validateWallpaperFiles`
+   - Min resolusi 1920×1080
+   - Max ceiling **60 MB** (`MAX_WALLPAPER_FILE_SIZE`)
+2. Compress di browser via WASM ffmpeg (`useFFmpeg.compressVideo`)
+   - **Skip kalau source sudah cocok** dengan profile target:
+     - `high` (1440p): skip kalau ≤ 25 MB & lebar ≤ 2560 px
+     - `ultra` (2160p): skip kalau ≤ 50 MB & lebar ≤ 3840 px
+   - Encode kalau di luar skip-budget. Profile + setting di sub-section
+     "Encoder Settings" di bawah.
+3. Capture poster JPG dari first frame (`captureVideoPoster`,
+   q=0.82, max 1920 wide) — pakai `fileToUpload` yang sudah
+   di-compress, bukan original.
+4. POST `/api/upload/presign` → dapatkan signed PUT URL
+5. PUT bytes ke R2 langsung (bypass Vercel function body limit)
+6. POST `/api/upload?folder=wallpapers&skipImageOptimization=1` untuk
+   poster JPG (file kecil, fits body limit)
+7. Finalize: PUT `/api/about` dengan `wallpaperConfig` baru
+   (top-level partial, validated by `updateAboutSchema.strict()`)
+
+Concurrency:
+- WASM ffmpeg single-threaded → encode di-serialize via
+  `compressChainRef` (Promise mutex)
+- Network upload paralel (per task)
+- Finalize di-serialize via `finalizeChainRef` supaya read-modify-write
+  `wallpaperConfig.collection` tidak last-write-wins
+
+Setelah finalize sukses, context push snapshot ke
+`queryClient.setQueryData(ADMIN_QUERY_KEYS.about)` + `mutate('/api/about',
+data, { revalidate: false })`. Pakai `revalidate: false` supaya tidak
+trigger fetch berikutnya yang bisa balik dengan cached server response
+(race window kecil tapi nyata saat upload back-to-back).
+
+#### Jalur FormData fallback (`/api/upload` POST biasa)
+
+Server-side ceiling per type (di-enforce di route handler awal):
+- Image: 30 MB (sharp decode RGBA buffer ~width×height×4)
+- Video: 60 MB (match wallpaper ceiling; bigger files harus pakai
+  direct-to-R2 path)
+- Audio: 25 MB
+
+Jalur ini masih dipakai untuk:
+- Project asset upload (image/video <60 MB)
+- Sound effects (audio)
+- Poster JPG side-car dari direct-to-R2 wallpaper flow
+
+#### Encoder Settings (untuk live wallpaper portfolio)
+
+Setting di-tune untuk **motion graphics / particle / CGI** (umum di live
+wallpaper), bukan live-action:
+
+| Knob | Sebelum (era lama) | Sekarang | Alasan |
+| --- | --- | --- | --- |
+| Preset (server) | `slow` | `medium` | `slow` 5-10× lebih lambat tanpa quality bump signifikan untuk content motion graphics |
+| Preset (client WASM) | `medium` (sempat) → **`fast`** | — | WASM single-thread, `medium` butuh 150-300s untuk 30s 4K vs 50-100s di `fast`. Quality drop ~5-10% di scene complex, hampir tidak terlihat untuk ambient motion |
+| `-tune film` | aktif | dihapus | Bias ke film grain pattern → buang detail di gradient halus motion graphics |
+| `fps=30` filter | aktif | dihapus | Drop frame kalau source 60 fps → judder di pan/particle |
+| CRF (high) | 20 | 18 | Lebih agresif untuk gradient halus tanpa file size meledak |
+| Maxrate cap | tidak ada | `8M` (high), `18M` (ultra), `3M` (standard) | Anti-VBR-spike yang bikin browser drop frame |
+| GOP / keyint | default 250 | `60` eksplisit | Loop seam wallpaper tidak macroblocking (keyframe selalu dekat akhir clip pendek) |
+| `+faststart` (client) / `frag_keyframe+empty_moov` (server pipe) | partial | konsisten | moov atom di awal → browser start playback <500 ms |
+
+Profile-nya identik antara client (`useFFmpeg.PROFILE_PRESETS`) dan
+server (`videoOptimization.PROFILES`):
+
+| Profile | Resolusi | CRF | Maxrate | Use case |
+| --- | --- | --- | --- | --- |
+| `standard` | 720p | 24 | 3M | project thumbnail, gallery |
+| `high` | 1440p | 18 | 8M | default wallpaper — sweet spot 1080p s/d 24" QHD; 4K masih tajam |
+| `ultra` | 2160p | 20 | 18M | wallpaper untuk monitor 4K target |
+
+Toggle High/Ultra di `WallpaperManager` persisted via `sessionStorage`
+(per-tab, bukan localStorage cross-session — mencegah preference bocor
+antar admin di shared computer).
+
+#### Vercel & Cloudflare bandwidth (jangan halusinasi cost)
+
+URL public R2 di repo ini = `/r2/<key>` (di-set lewat
+`CLOUDFLARE_R2_PUBLIC_BASE_URL=/r2`). Setiap visitor request wallpaper:
+
+```
+Browser GET /r2/assets/wallpapers/xxx.mp4
+    → Vercel edge → Vercel Node function (`/r2/[...key]/route.ts`)
+    → AWS SDK GetObject ke R2 (server-to-server)
+    → stream bytes balik ke Vercel function
+    → Vercel function stream ke browser
+```
+
+**Implikasi:**
+- Bytes wallpaper **lewat** Vercel function — bukan direct dari R2 CDN.
+  Counts as Vercel **Fast Origin Transfer** (10 GB cap Hobby) dan
+  **Fast Data Transfer** (100 GB cap Hobby).
+- `/r2/[...key]/route.ts` set header `cache-control` + **`cdn-cache-control`**
+  eksplisit (Vercel-specific) supaya edge cache aktif terlepas dari
+  `dynamic = 'force-dynamic'`. Tanpa `cdn-cache-control`, setiap request
+  bisa invoke function = origin transfer cost.
+- `maxDuration: 60` di `vercel.json` untuk `src/app/r2/[...key]/route.ts`
+  supaya streaming wallpaper besar (50 MB di koneksi 10 Mbps ~40s)
+  tidak ke-cut Vercel default 10s.
+
+Untuk skala portfolio 250 visitor/bulan:
+- Storage R2: ~60 MB total (5 wallpaper × 12 MB) → free tier 10 GB
+- Egress R2 → Vercel: 0 cost (R2 egress gratis)
+- Cache-HIT ratio diharapkan tinggi (1 tahun immutable cache) → cold-cache
+  cuma ~10 region × 12 MB ≈ 120 MB origin transfer/bulan
+- Total bandwidth ke browser: 250 × 12 MB ≈ 3 GB/bulan dari 100 GB cap
+
+#### Sidekick: Storage breakdown audit logic
+
+Endpoint `/api/admin/storage-stats` membandingkan D1 vs R2 per kategori.
+Logic memisahkan **dua jenis path**:
+
+1. **`primaryPathsInPrefix`** — D1 *eksplisit* nunjuk (url + posterUrl
+   yang tersimpan). Hanya ini yang dihitung dangling. Kalau D1 bilang
+   "saya nunjuk X" tapi X tidak ada di R2 → real dangling.
+2. **`derivedSidecarPaths`** — path yang *kemungkinan* di-generate
+   pipeline (preview clip, poster auto-generate `.jpg` ATAU `.webp`).
+   Set ini cuma untuk filter orphan; kalau muncul di R2 dianggap
+   referenced. **Ketidakhadiran-nya bukan dangling.**
+
+Tanpa pemisahan ini, audit akan flag MISMATCH palsu untuk wallpaper
+yang skipPreview (preview tidak dibuat tapi diharapkan ada) atau
+wallpaper era poster `.webp` (audit hardcode `.jpg`). Kalau menambah
+side-car convention baru di pipeline, update **kedua**:
+- `src/app/api/admin/storage-stats/route.ts` (dashboard live)
+- `scripts/cloudflare/audit-orphan-{wallpapers,projects}.ts` (CLI cleanup)
 
 ---
 
@@ -809,6 +1067,82 @@ Env aktif/opsional lain yang muncul di codebase:
 4. Jaga agar komponen interaktif berat tetap client-only dan terisolasi
 5. Manfaatkan hooks di `os/hooks/` untuk logika desktop (boot, layout, lock, navigation, dll.)
 
+### Audit & Cleanup Storage (R2 ↔ D1)
+
+Indikator Database di admin menubar punya panel "Storage breakdown" yang
+membandingkan jumlah asset di D1 vs R2 per kategori (Wallpaper, Project,
+Hard Skill Icons), dibreakdown image vs video. Setiap kategori
+menampilkan:
+
+- Badge `sync` / `mismatch` di kanan label
+- Dua kotak hitung: `D1 (database)` dan `R2 (bucket)` masing-masing
+  dengan total + breakdown image/video
+- Kalimat note plain-language yang menjelaskan kenapa angka D1 dan R2
+  bisa berbeda (mis. side-car untuk video) atau apa yang menyebabkan
+  status mismatch
+- Tombol `?` di header section yang membuka glossary (D1, R2,
+  side-car, orphan, dangling, sync) — supaya admin non-teknis bisa
+  baca panel tanpa harus tahu skema
+
+Sumber data:
+
+- Endpoint: `GET /api/admin/storage-stats`
+- Hook: `src/app/admin/hooks/useStorageStats.ts` (lazy fetch saat popout dibuka)
+- UI: section di `DatabasePopout` (`src/app/admin/desktop/AdminStatusPopouts.tsx`)
+- Cache server: 30 detik in-memory + in-flight promise dedup supaya
+  ListObjectsV2 tidak ke-spam
+
+Field ekstra di response yang dipakai UI:
+
+- `note` — kalimat penjelasan per-kategori, di-generate server-side
+  via `describeCategory()`
+- `sidecarCount` — jumlah file pendamping (preview/poster) yang
+  ada di R2 untuk video kategori tersebut
+
+Badge `sync` artinya R2 cocok dengan D1; `mismatch` muncul kalau ada
+orphan (R2 punya file tanpa referensi D1) atau dangling (D1 nunjuk
+file yang sudah hilang dari R2). Selisih hitungan D1 vs R2 yang
+disebabkan side-car **bukan** mismatch.
+
+CLI yang relevan untuk audit/cleanup:
+
+```bash
+# Wallpaper desktop
+npx tsx scripts/cloudflare/audit-orphan-wallpapers.ts             # report saja
+npx tsx scripts/cloudflare/audit-orphan-wallpapers.ts --json
+npx tsx scripts/cloudflare/audit-orphan-wallpapers.ts --delete-orphans
+npx tsx scripts/cloudflare/audit-orphan-wallpapers.ts --delete-orphans --yes
+
+# Asset project (cover, gallery, before/after)
+npx tsx scripts/cloudflare/audit-orphan-projects.ts
+npx tsx scripts/cloudflare/audit-orphan-projects.ts --delete-orphans
+
+# Hapus entry wallpaper yang R2-nya hilang (dangling) dari D1
+npx tsx scripts/cloudflare/clear-dangling-wallpapers.ts            # interaktif
+npx tsx scripts/cloudflare/clear-dangling-wallpapers.ts --dry-run
+npx tsx scripts/cloudflare/clear-dangling-wallpapers.ts --yes
+
+# Inspeksi diagnostik (read-only, aman)
+npx tsx scripts/cloudflare/inspect-d1-keys.ts
+npx tsx scripts/cloudflare/inspect-wallpaper-config.ts             # raw vs merged view
+npx tsx scripts/cloudflare/inspect-project-refs.ts                 # cross-check sebelum delete
+
+# Smoke test endpoint storage-stats (butuh ADMIN_PASSWORD)
+node scripts/test/storage-stats-smoke.mjs
+```
+
+**Aturan emas sebelum hapus:**
+
+1. Jalankan audit tanpa flag `--delete-*` dulu — pelajari output.
+2. Untuk file yang masuk daftar orphan, cross-check via
+   `inspect-project-refs.ts` (atau script setara) bahwa nama file-nya
+   tidak menjadi konvensi side-car (`-preview.mp4`, `.jpg`) untuk
+   video utama yang masih dirujuk.
+3. Audit & endpoint sudah side-car aware sejak versi terakhir, tapi
+   verifikasi manual tetap wajib untuk delete batch besar.
+4. R2 dan D1 sama-sama tidak punya undo bawaan untuk operasi destructive
+   ini — sekali dihapus harus re-upload dari source.
+
 ---
 
 ## Troubleshooting
@@ -887,4 +1221,4 @@ Mengikuti `browserslist` di `package.json`:
 
 ---
 
-_Last updated: 2026-05-17_
+_Last updated: 2026-05-29_

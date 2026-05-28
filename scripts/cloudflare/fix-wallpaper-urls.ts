@@ -24,26 +24,10 @@ loadEnv({ path: '.env.local' });
 loadEnv({ path: '.env' });
 
 import {
-  getD1Value,
-  setD1Value,
   isD1Configured,
   getMissingD1EnvKeys,
 } from '../../src/lib/cloudflareD1';
-
-interface Wallpaper {
-  id: string;
-  url: string;
-  name?: string;
-}
-interface WallpaperConfig {
-  activeWallpaperId?: string;
-  collection?: Wallpaper[];
-  blur?: number;
-}
-interface AboutLike {
-  wallpaperConfig?: WallpaperConfig;
-  [key: string]: unknown;
-}
+import { aboutService } from '../../src/lib/services/aboutService';
 
 const PUBLIC_DIR = 'public';
 
@@ -64,7 +48,7 @@ async function main() {
     process.exit(1);
   }
 
-  const about = await getD1Value<AboutLike>('content/about');
+  const about = await aboutService.getAboutData(true);
   if (!about) {
     console.log('content/about tidak ada di D1, tidak ada yang perlu di-sync.');
     return;
@@ -100,18 +84,15 @@ async function main() {
     return;
   }
 
-  const newAbout: AboutLike = {
-    ...about,
+  const newAbout = {
     wallpaperConfig: {
       ...(cfg || {}),
       collection: updated,
     },
-    // ContentService schema: timestamp diserialize sebagai updatedAt
-    updatedAt: new Date().toISOString(),
-  };
+  } as Parameters<typeof aboutService.updateAboutData>[0];
 
-  await setD1Value('content/about', newAbout);
-  console.log('D1 updated.');
+  await aboutService.updateAboutData(newAbout);
+  console.log('D1 updated via aboutService (nested write).');
 }
 
 main().catch((err) => {

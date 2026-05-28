@@ -9,10 +9,13 @@ import {
 } from '@/lib/r2Storage';
 
 export const runtime = 'nodejs';
-// Ditingkatkan dari 60s. Encode video 1080p ~30 detik dengan preset `fast`
-// + parallelize 2-3 task biasanya selesai 30-60s; preset `slow` sebelumnya
-// bisa 90-180s untuk file besar. 300s = batas Vercel Pro/Hobby tier nodejs.
-export const maxDuration = 300;
+// IMPORTANT: Vercel.json menetapkan `functions["src/app/api/upload/route.ts"].maxDuration = 60`
+// (Hobby tier ceiling). Nilai di sini harus tidak melebihi yang di vercel.json
+// supaya konsisten saat di-preview/local dan agar deploy tidak ditolak.
+// Note: untuk wallpaper video besar, BackgroundUploadContext sudah pakai
+// path direct-to-R2 (presign + PUT) yang bypass route ini sepenuhnya, jadi
+// 60 detik di sini cukup untuk image/audio + poster JPG.
+export const maxDuration = 60;
 
 // FIXED (BUG-010): Valid filename characters
 const VALID_FILENAME_REGEX = /^[a-zA-Z0-9_-]+$/;
@@ -187,6 +190,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
     }
 
+    // Server-side size ceilings. Keeping this hard cap server-side
+    // (in addition to client validation) prevents bypasses via direct
+    // /api/upload POST or DevTools tampering. Limits are picked to
+    // match the dominant use case of each media type:
+    //   - Image  : 30 MB. Sharp decode RGBA buffer is ~width*height*4
+    //              bytes; 30 MB JPEG ≈ 30-40 megapixel ≈ 120-160 MB
+    //              raw — fits in 1024 MB Vercel function memory with
+    //              headroom for re-encode pipelines.
+    //   - Video  : 60 MB. Match `MAX_WALLPAPER_FILE_SIZE` di
+    //              WallpaperManager. /api/upload/presign juga punya
+    //              200 MB ceiling sendiri tapi itu untuk direct-to-R2
+    //              path; FormData-based upload di sini harus stricter.
+    //   - Audio  : 25 MB. SoundEffect biasanya pendek (<30 detik).
+    const isVideoUpload = file.type.startsWith('video/');
+    const isImageUpload = file.type.startsWith('image/');
+    const isAudioUpload = file.type.startsWith('audio/');
+
+    const MAX_IMAGE_BYTES = 30 * 1024 * 1024;
+    const MAX_VIDEO_BYTES_FORMDATA = 60 * 1024 * 1024;
+    const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+
+    if (isImageUpload && file.size > MAX_IMAGE_BYTES) {
+      return NextResponse.json(
+        {
+          error: `Image ${(file.size / 1024 / 1024).toFixed(1)} MB melewati batas ${MAX_IMAGE_BYTES / 1024 / 1024} MB.`,
+        },
+        { status: 413 }
+      );
+    }
+    if (isVideoUpload && file.size > MAX_VIDEO_BYTES_FORMDATA) {
+      return NextResponse.json(
+        {
+          error: `Video ${(file.size / 1024 / 1024).toFixed(1)} MB melewati batas ${MAX_VIDEO_BYTES_FORMDATA / 1024 / 1024} MB untuk upload langsung. Pakai direct-to-R2 path untuk file besar.`,
+        },
+        { status: 413 }
+      );
+    }
+    if (isAudioUpload && file.size > MAX_AUDIO_BYTES) {
+      return NextResponse.json(
+        {
+          error: `Audio ${(file.size / 1024 / 1024).toFixed(1)} MB melewati batas ${MAX_AUDIO_BYTES / 1024 / 1024} MB.`,
+        },
+        { status: 413 }
+      );
+    }
+
     if (!isR2StorageConfigured()) {
       return NextResponse.json(
         {
@@ -204,9 +253,18 @@ export async function POST(req: NextRequest) {
     const rawCustomFilename = searchParams.get('filename');
     const folderParam = searchParams.get('folder');
     const skipMainVideoOptimization = searchParams.get('skipMainVideoOptimization') === '1';
-    const isVideoUpload = file.type.startsWith('video/');
-    const isImageUpload = file.type.startsWith('image/');
-    const isAudioUpload = file.type.startsWith('audio/');
+    // Client (poster side-car capture di flow direct-to-R2) sudah
+    // generate JPG q82 dari canvas; tidak perlu re-encode ke WebP
+    // di server karena:
+    //   1. WebP transcode merusak side-car convention `<base>.jpg`
+    //      yang dipakai `lib/mediaPreview.ts` untuk derive poster URL.
+    //   2. JPG q82 dari canvas sudah ~80-200 KB di 1080p — sweet spot.
+    //      Re-encode ke WebP hanya hemat ~10-20%, tidak worth break
+    //      kontrak.
+    // Flag ini opt-in supaya tidak break flow image upload reguler
+    // (yang masih benefit dari WebP transcode).
+    const skipImageOptimization = searchParams.get('skipImageOptimization') === '1';
+    const requestedProfile = searchParams.get('profile');
     const isWallpaperFolder = folderParam === 'wallpapers';
 
     // FIXED (BUG-010): Sanitize custom filename
@@ -233,7 +291,7 @@ export async function POST(req: NextRequest) {
     let audioStats: { originalSize: number; optimizedSize: number } | null = null;
     let optimizedExtensionOverride: string | null = null;
 
-    if (isImageUpload && IMAGE_TRANSCODE_TYPES.has(file.type)) {
+    if (isImageUpload && IMAGE_TRANSCODE_TYPES.has(file.type) && !skipImageOptimization) {
       const optimized = await optimizeImageBuffer(originalBuffer, file.type);
       buffer = optimized.buffer;
       contentType = optimized.contentType;
@@ -328,6 +386,30 @@ export async function POST(req: NextRequest) {
 
     if (isVideoUpload) {
       const { optimizeVideoForPortfolio } = await import('@/lib/videoOptimization');
+
+      // Determine the encode profile.
+      //   1. Explicit `?profile=` from the client wins (so callers can
+      //      offer "Standard / High / Ultra" UI).
+      //   2. Otherwise default to `high` for wallpapers, `standard` for
+      //      everything else.
+      //
+      // Note: untuk wallpaper, default flow di admin sekarang adalah
+      // direct-to-R2 (presign + PUT) yang sudah meng-compress di
+      // browser via WASM ffmpeg ke profile `high` (1440p). Path ini
+      // hanya kena kalau ada caller yang sengaja POST FormData ke
+      // /api/upload?folder=wallpapers (mis. tooling lama atau script).
+      // Jangan andalkan path ini sebagai jalur utama kompresi
+      // wallpaper karena 60-detik maxDuration Hobby tier akan
+      // bottleneck untuk video besar.
+      const ALLOWED_PROFILES = new Set(['standard', 'high', 'ultra'] as const);
+      type Profile = 'standard' | 'high' | 'ultra';
+      const profile: Profile =
+        requestedProfile && ALLOWED_PROFILES.has(requestedProfile as Profile)
+          ? (requestedProfile as Profile)
+          : isWallpaperFolder
+            ? 'high'
+            : 'standard';
+
       const optimized = await optimizeVideoForPortfolio(originalBuffer, {
         // Wallpapers prioritize a small, predictable on-disk size, so
         // never pass the original through even if the encoder happens
@@ -335,10 +417,7 @@ export async function POST(req: NextRequest) {
         // existing behavior to preserve quality on already-optimized
         // source MP4s.
         allowOriginalPassthrough: isWallpaperFolder ? false : file.type === 'video/mp4',
-        // Wallpapers fill the whole screen, so push them through the
-        // higher-resolution profile (1080p, CRF 20) instead of the
-        // 720p default used by project media thumbnails.
-        profile: isWallpaperFolder ? 'high' : 'standard',
+        profile,
         // Wallpaper TIDAK butuh preview clip 6s — wallpaper diputar
         // full di desktop background. Preview cuma dipakai untuk
         // hover preview di explorer/admin, yang tidak relevan untuk

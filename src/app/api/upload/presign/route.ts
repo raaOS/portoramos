@@ -32,7 +32,18 @@ export const runtime = 'nodejs';
 
 const ALLOWED_FOLDERS = new Set(['wallpapers']);
 const ALLOWED_EXTENSIONS = new Set(['mp4', 'webm', 'mov']);
-const MAX_VIDEO_SIZE_BYTES = 200 * 1024 * 1024; // 200 MB hard ceiling.
+// Match dengan `MAX_WALLPAPER_FILE_SIZE` di
+// `WallpaperManager.tsx` dan `MAX_CLIENT_COMPRESS_SIZE` di
+// `BackgroundUploadContext.tsx`. Ceiling 60 MB:
+//   - Client validation reject upload > 60 MB sebelum hit network.
+//   - Server-side enforcement di sini sebagai safety net kalau ada
+//     bypass DevTools / direct API call.
+//   - Live wallpaper 4K dari source internet tipikal 30-50 MB, jadi
+//     ceiling 60 MB cukup longgar untuk pass-through Ultra profile.
+//   - File > 60 MB akan merusak Lighthouse LCP visitor mobile dan
+//     bikin Vercel function bandwidth (Fast Origin Transfer 10 GB
+//     Hobby) habis terlalu cepat saat cold-cache hit.
+const MAX_VIDEO_SIZE_BYTES = 60 * 1024 * 1024; // 60 MB hard ceiling.
 
 interface PresignRequestBody {
   folder?: string;

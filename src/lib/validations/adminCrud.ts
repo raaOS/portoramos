@@ -254,7 +254,10 @@ const wallpaperSchema = z
 
 const wallpaperConfigSchema = z
   .object({
-    activeWallpaperId: requiredText(120),
+    // Boleh string kosong saat semua wallpaper dihapus — public site
+    // akan fallback ke `DEFAULT_WALLPAPER_URL` ketika value kosong.
+    // Tetap dibatasi `max(120)` untuk konsistensi storage.
+    activeWallpaperId: z.string().trim().max(120),
     collection: z.array(wallpaperSchema).max(100),
     blur: z.coerce.number().min(0).max(20).optional(),
   })

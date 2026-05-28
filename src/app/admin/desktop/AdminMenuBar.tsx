@@ -17,6 +17,8 @@ import {
 import { useToast } from '@/contexts/ToastContext';
 import { useCsrfToken } from '@/hooks/useCsrfToken';
 import type { WatchdogStatusData } from './AdminStatusPopouts';
+import { useBackgroundUpload } from '@/contexts/BackgroundUploadContext';
+import { CloudUpload } from 'lucide-react';
 
 interface AdminMenuBarProps {
   onLogout: () => Promise<void>;
@@ -117,7 +119,39 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
   const [cacheSteps, setCacheSteps] = useState<ClearCacheProgressStep[]>(createInitialCacheSteps);
   const [canCloseCacheProgress, setCanCloseCacheProgress] = useState(true);
   const [isClearingCache, setIsClearingCache] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
+  // Initialize from `navigator.onLine` lazily (SSR-safe) supaya tidak
+  // perlu setState di useEffect untuk seed initial value — yang
+  // di-reject oleh `react-hooks/set-state-in-effect` rule.
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    if (typeof navigator === 'undefined') return true;
+    return navigator.onLine;
+  });
+  const { hasActiveUploads, totalProgress, tasks } = useBackgroundUpload();
+  const totalUploadCount = tasks.length;
+  const completedUploadCount = tasks.filter((t) => t.status === 'complete').length;
+  const erroredUploadCount = tasks.filter((t) => t.status === 'error').length;
+  const inFlightUploadProgress = Math.round(totalProgress);
+  // Tooltip multi-line: list semua file dengan status individual.
+  // Format: "filename — status (xx%)" plus statusDetail kalau ada
+  // (mis. "Compressing 35% - ~12s remaining" dari WASM ffmpeg).
+  // Plain text supaya kompatibel dengan native title attribute.
+  const uploadTooltip = React.useMemo(() => {
+    if (!tasks.length) return '';
+    const header = `${completedUploadCount}/${totalUploadCount} done · ${inFlightUploadProgress}% rata-rata`;
+    const rows = tasks.map((t) => {
+      const pct = Math.round(t.progress);
+      const label =
+        t.status === 'complete'
+          ? '✓ done'
+          : t.status === 'error'
+            ? `✗ error${t.error ? ` (${t.error})` : ''}`
+            : t.statusDetail
+              ? `${t.status} ${pct}% — ${t.statusDetail}`
+              : `${t.status} ${pct}%`;
+      return `• ${t.filename} — ${label}`;
+    });
+    return [header, '', ...rows].join('\n');
+  }, [tasks, completedUploadCount, totalUploadCount, inFlightUploadProgress]);
   const [watchdogStatus, setWatchdogStatus] = useState<WatchdogStatusData>({
     status: 'checking',
   });
@@ -324,8 +358,6 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
   };
 
   React.useEffect(() => {
-    setIsOnline(navigator.onLine);
-
     const update = () => {
       setTime(
         new Date().toLocaleTimeString('id-ID', {
@@ -429,7 +461,6 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
           <Wifi className={`h-3.5 w-3.5 transition-colors ${netColorClass}`} />
         </button>
 
-        {/* Telegram Watchdog Status Button */}
         <button
           ref={watchdogAnchorRef}
           type="button"
@@ -443,6 +474,21 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
         >
           <Bot className={`h-3.5 w-3.5 transition-colors ${watchdogColorClass}`} />
         </button>
+
+        {hasActiveUploads && (
+          <button
+            className="admin-menubar-status-btn text-blue-500 cursor-default"
+            title={uploadTooltip}
+            aria-label={`Uploads ${completedUploadCount} of ${totalUploadCount} complete${
+              erroredUploadCount > 0 ? `, ${erroredUploadCount} failed` : ''
+            }, ${inFlightUploadProgress} percent average`}
+          >
+            <CloudUpload className="h-3.5 w-3.5 animate-pulse" />
+            <span className="ml-1 text-[10px] font-mono">
+              {completedUploadCount}/{totalUploadCount} · {inFlightUploadProgress}%
+            </span>
+          </button>
+        )}
 
         <span className="admin-menubar-time">{time}</span>
 

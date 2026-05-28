@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Plus, Check, Trash2, Loader2, Pencil, Play } from 'lucide-react';
-import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
-import type { UploadedAsset } from '@/app/admin/components/file-upload/types';
 import { WallpaperConfig, Wallpaper } from '@/types/about';
+import { useBackgroundUpload, type WallpaperUploadProfile } from '@/contexts/BackgroundUploadContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { extractStoragePath, isVideoLink } from '@/lib/media';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
@@ -30,6 +29,39 @@ interface WallpaperManagerProps {
 // tajam tanpa harus download asset 2K.
 const PREVIEW_WIDTH = 800;
 const PREVIEW_HEIGHT = 450;
+
+// Hard ceiling untuk file wallpaper. Match dengan
+// `MAX_CLIENT_COMPRESS_SIZE` di BackgroundUploadContext supaya validation
+// admin-side dan compress-side konsisten. Live wallpaper 4K dari source
+// internet tipikal 30-50 MB, jadi 60 MB cukup longgar untuk pass-through
+// Ultra; di sisi lain mencegah upload 100+ MB raw export yang merusak
+// Lighthouse LCP visitor mobile.
+const MAX_WALLPAPER_FILE_SIZE = 60 * 1024 * 1024;
+
+// Persisted toggle: admin pilih sekali, apply untuk semua upload sampai
+// mereka ubah lagi. Simpan di sessionStorage (bukan localStorage) supaya:
+//   1. Pilihan bertahan di tab yang sama (admin tidak harus re-pick
+//      tiap kali pindah halaman).
+//   2. Tab baru / browser restart = preference fresh — penting di
+//      shared computer (kantor) supaya admin lain tidak warisan
+//      pilihan dari sesi sebelumnya.
+//
+// Default: 'high' (1440p) — sweet spot untuk monitor 1080p / 24" QHD.
+const PROFILE_STORAGE_KEY = 'admin.wallpaper-upload-profile';
+const VALID_PROFILES: readonly WallpaperUploadProfile[] = ['high', 'ultra'] as const;
+
+function readStoredProfile(): WallpaperUploadProfile {
+  if (typeof window === 'undefined') return 'high';
+  try {
+    const raw = window.sessionStorage.getItem(PROFILE_STORAGE_KEY);
+    if (raw && (VALID_PROFILES as readonly string[]).includes(raw)) {
+      return raw as WallpaperUploadProfile;
+    }
+  } catch {
+    // Quota / disabled storage → fallback default.
+  }
+  return 'high';
+}
 
 /**
  * Untuk URL Unsplash kita inject query param `w` dan `q` agar CDN-nya melayani
@@ -68,11 +100,30 @@ export default function WallpaperManager({
   const [activeId, setActiveId] = useState<string>(data?.activeWallpaperId || (data?.collection?.[0]?.id ?? ''));
   // Local state for blur — only saves to database on pointer/mouse up (not every keystroke)
   const [blurValue, setBlurValue] = useState<number>(data?.blur || 0);
-  const [isUploading, setIsUploading] = useState(false);
+  // Encode profile untuk wallpaper upload. Persisted di localStorage
+  // supaya pilihan admin (mis. monitor 4K → Ultra) bertahan lintas
+  // session. Default: 'high' (1440p).
+  const [uploadProfile, setUploadProfile] = useState<WallpaperUploadProfile>(() =>
+    readStoredProfile()
+  );
+  const handleProfileChange = useCallback((next: WallpaperUploadProfile) => {
+    setUploadProfile(next);
+    try {
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(PROFILE_STORAGE_KEY, next);
+      }
+    } catch {
+      // Quota / private mode — preference cuma berlaku untuk session ini.
+    }
+  }, []);
+  const { enqueueWallpaperUpload, hasActiveUploads } = useBackgroundUpload();
+  
   // Track wallpaper card mana yang user hover/active untuk lazy-play video.
   // Tanpa ini semua video di-autoplay → bandwidth habis & preview gambar
   // lain ikut antri.
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Rename UI state. `renamingId` toggles a card into edit mode and
   // `renameDraft` is the in-progress text. We commit on Enter / blur and
@@ -88,7 +139,19 @@ export default function WallpaperManager({
     }
   }, [renamingId]);
 
-  // Sync state with props in render
+  // Sync local state from props using the React-recommended
+  // derived-state-during-render pattern.
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  //
+  // Pakai `lastData` marker untuk mendeteksi identity change pada
+  // `data`. Ketika React Query mengubah snapshot (mis. setelah upload
+  // baru selesai), reference berubah → kita re-sync local state ke
+  // value baru, lalu update marker. Ini SATU render extra per
+  // perubahan eksternal, bukan loop.
+  //
+  // Catatan: jangan pindahkan ke useEffect — react-hooks v6+ rule
+  // `set-state-in-effect` melarang setState di dalam effect untuk
+  // kasus sync-from-props seperti ini.
   const [lastData, setLastData] = useState(data);
   if (data && data !== lastData) {
     if (data.collection && data.collection.length > 0) {
@@ -98,68 +161,85 @@ export default function WallpaperManager({
       setWallpapers([]);
       setActiveId('');
     }
-    // Sync local blur value when external data changes (e.g. initial load)
     setBlurValue(data.blur ?? 0);
     setLastData(data);
   }
 
-  const handleUpload = (assets: UploadedAsset[]) => {
-    if (!assets || assets.length === 0) return;
+  const handleFileDrop = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
 
-    const newWallpapers: Wallpaper[] = assets.map((asset) => ({
-      id: `w-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      url: asset.url,
-      // Persist poster JPG when the upload was a video so the admin
-      // grid (and any downstream UI) can show a thumbnail without
-      // decoding the MP4. For images this is left undefined.
-      posterUrl: asset.posterUrl,
-      name: 'Custom Wallpaper',
-    }));
+    // Validate
+    const error = await validateWallpaperFiles(fileArray);
+    if (error) {
+      alert(error); // Alternatively use toast
+      return;
+    }
 
-    const newCollection = [...wallpapers, ...newWallpapers];
-    setWallpapers(newCollection);
-    // Auto-select the first new wallpaper
-    const newActiveId = newWallpapers[0].id;
-    setActiveId(newActiveId);
-
-    onUpdate({
-      activeWallpaperId: newActiveId,
-      collection: newCollection,
-      blur: data?.blur,
-    });
+    // Process all files in background dengan profile yang dipilih.
+    for (const file of fileArray) {
+      enqueueWallpaperUpload(file, { profile: uploadProfile });
+    }
+    
+    // Clear input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   /**
    * Validasi pre-upload khusus wallpaper.
    *
-   * Untuk video: enforce resolusi minimum 1920x1080 supaya saat tampil
-   * fullscreen sebagai wallpaper desktop, browser tidak harus upsample
-   * (yang bikin frame pecah). Image: tidak divalidasi di sini karena
-   * pipeline upload sudah re-encode dan resize via sharp.
+   * Untuk video:
+   *   - Enforce resolusi minimum 1920x1080 supaya saat tampil
+   *     fullscreen sebagai wallpaper desktop, browser tidak harus
+   *     upsample (yang bikin frame pecah).
+   *   - Enforce ceiling 60 MB. Live wallpaper > 60 MB bikin LCP
+   *     visitor mobile terjun bebas dan re-encode WASM browser bisa
+   *     OOM tab. Admin diminta export ulang ke target sesuai profile
+   *     dulu (1440p untuk High, 2160p untuk Ultra).
+   *
+   * Image: tidak divalidasi di sini karena pipeline upload sudah
+   * re-encode dan resize via sharp.
    */
-  const validateWallpaperFiles = useCallback(async (files: File[]): Promise<string | null> => {
-    for (const file of files) {
-      if (!file.type.startsWith('video/')) continue;
-      try {
-        const dim = await readVideoDimensions(file);
-        const check = checkMinResolution(dim, 1920, 1080);
-        if (!check.ok) {
+  const validateWallpaperFiles = useCallback(
+    async (files: File[]): Promise<string | null> => {
+      const targetLabel = uploadProfile === 'ultra' ? '2160p (~30-50 MB)' : '1440p (~10-20 MB)';
+      for (const file of files) {
+        if (!file.type.startsWith('video/')) continue;
+
+        // 1) Size ceiling — fail fast sebelum metadata read.
+        if (file.size > MAX_WALLPAPER_FILE_SIZE) {
           return (
-            `Video "${file.name}" beresolusi ${check.width}x${check.height}. ` +
-            `Wallpaper video minimal 1920x1080 supaya tampilan tidak pecah ` +
-            `saat di-fullscreen. Silakan upload versi resolusi lebih tinggi.`
+            `Video "${file.name}" berukuran ${(file.size / 1024 / 1024).toFixed(1)} MB, ` +
+            `melewati batas ${MAX_WALLPAPER_FILE_SIZE / 1024 / 1024} MB. ` +
+            `Export ulang ke ${targetLabel} dulu, lalu upload lagi.`
           );
         }
-      } catch (err) {
-        console.error('validateWallpaperFiles: gagal baca metadata', err);
-        return (
-          `Tidak bisa membaca metadata video "${file.name}". ` +
-          `Pastikan file tidak rusak dan formatnya MP4/WebM.`
-        );
+
+        // 2) Resolusi minimum.
+        try {
+          const dim = await readVideoDimensions(file);
+          const check = checkMinResolution(dim, 1920, 1080);
+          if (!check.ok) {
+            return (
+              `Video "${file.name}" beresolusi ${check.width}x${check.height}. ` +
+              `Wallpaper video minimal 1920x1080 supaya tampilan tidak pecah ` +
+              `saat di-fullscreen. Silakan upload versi resolusi lebih tinggi.`
+            );
+          }
+        } catch (err) {
+          console.error('validateWallpaperFiles: gagal baca metadata', err);
+          return (
+            `Tidak bisa membaca metadata video "${file.name}". ` +
+            `Pastikan file tidak rusak dan formatnya MP4/WebM.`
+          );
+        }
       }
-    }
-    return null;
-  }, []);
+      return null;
+    },
+    [uploadProfile]
+  );
 
   const handleDelete = async (id: string) => {
     const wallpaperToDelete = wallpapers.find((w) => w.id === id);
@@ -179,14 +259,17 @@ export default function WallpaperManager({
       if (confirmDelete) {
         // Build the list of side-car files we generated for this asset.
         // For video wallpapers the upload pipeline writes a `-preview.mp4`
-        // and a `.jpg` poster next to the main file; clean them up so
-        // the bucket does not accumulate orphans.
+        // and a poster (`.jpg` from server ffmpeg, atau `.webp` setelah
+        // server sharp transcode di flow direct-to-R2). Untuk safety
+        // tracking dua extension supaya residual lama (sebelum sharp
+        // transcode) maupun upload baru sama-sama ke-cleanup.
         const candidatePaths = new Set<string>();
         candidatePaths.add(storagePath);
         if (isVideoLink(wallpaperToDelete.url)) {
           const base = storagePath.replace(/\.(mp4|webm|mov)$/i, '');
           candidatePaths.add(`${base}-preview.mp4`);
           candidatePaths.add(`${base}.jpg`);
+          candidatePaths.add(`${base}.webp`);
         }
         const posterPath = wallpaperToDelete.posterUrl
           ? extractStoragePath(wallpaperToDelete.posterUrl)
@@ -334,6 +417,85 @@ export default function WallpaperManager({
               </p>
             </div>
 
+            {/* Encode Quality Toggle */}
+            <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Upload Quality
+                  </label>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    Kualitas encode untuk video wallpaper baru. Pilihan
+                    bertahan sampai tab ini ditutup.
+                  </p>
+                </div>
+                {hasActiveUploads && (
+                  <span
+                    className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-amber-700"
+                    title="Ubah profile selesai upload selesai"
+                  >
+                    Locked
+                  </span>
+                )}
+              </div>
+              <div
+                role="radiogroup"
+                aria-label="Wallpaper encode profile"
+                className="grid grid-cols-2 gap-2"
+              >
+                {(
+                  [
+                    {
+                      value: 'high' as WallpaperUploadProfile,
+                      label: 'High',
+                      sub: '1440p · CRF 18',
+                      hint: 'Sweet spot untuk monitor 1080p / 24" QHD. ~10-20 MB.',
+                    },
+                    {
+                      value: 'ultra' as WallpaperUploadProfile,
+                      label: 'Ultra',
+                      sub: '2160p · CRF 20',
+                      hint: 'Pakai kalau target monitor 4K. ~30-50 MB.',
+                    },
+                  ] as const
+                ).map((opt) => {
+                  const isSelected = uploadProfile === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      disabled={hasActiveUploads}
+                      onClick={() => handleProfileChange(opt.value)}
+                      title={opt.hint}
+                      className={`flex flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-left transition-all ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-200'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                      } ${
+                        hasActiveUploads
+                          ? 'cursor-not-allowed opacity-60'
+                          : 'cursor-pointer'
+                      }`}
+                    >
+                      <span className="text-sm font-semibold">{opt.label}</span>
+                      <span
+                        className={`font-mono text-[10px] uppercase tracking-wider ${
+                          isSelected ? 'text-blue-600' : 'text-gray-500'
+                        }`}
+                      >
+                        {opt.sub}
+                      </span>
+                      <span className="mt-1 text-[11px] leading-snug text-gray-500">
+                        {opt.hint}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {/* Active Wallpaper Hero (Optional Visual Emphasis) */}
 
@@ -362,47 +524,58 @@ export default function WallpaperManager({
 
               {/* Clean Upload Area */}
               <div
-                className={`border-3 relative aspect-video rounded-xl border-dashed ${isUploading ? 'border-amber-400 bg-amber-50/20' : 'border-gray-200 bg-gray-50/50 hover:border-blue-400 hover:bg-blue-50/10'} group flex flex-col items-center justify-center gap-4 overflow-hidden transition-all`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  if (e.dataTransfer.files) handleFileDrop(e.dataTransfer.files);
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                className={`border-3 relative aspect-video rounded-xl border-dashed cursor-pointer ${
+                  hasActiveUploads 
+                    ? 'border-amber-400 bg-amber-50/20' 
+                    : isDragOver 
+                      ? 'border-blue-500 bg-blue-50/20' 
+                      : 'border-gray-200 bg-gray-50/50 hover:border-blue-400 hover:bg-blue-50/10'
+                } group flex flex-col items-center justify-center gap-4 overflow-hidden transition-all`}
               >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="video/mp4,video/webm"
+                  multiple
+                  onChange={(e) => e.target.files && handleFileDrop(e.target.files)}
+                />
                 <div
-                  className={`pointer-events-none rounded-full p-4 text-blue-500 shadow-sm transition-transform ${isUploading ? 'bg-amber-50' : 'bg-white group-hover:scale-110'}`}
+                  className={`pointer-events-none rounded-full p-4 shadow-sm transition-transform ${
+                    hasActiveUploads ? 'bg-amber-50 text-amber-500' : 'bg-white text-blue-500 group-hover:scale-110'
+                  }`}
                 >
-                  {isUploading ? (
-                    <Loader2 size={32} className="animate-spin text-amber-500" />
+                  {hasActiveUploads ? (
+                    <Loader2 size={32} className="animate-spin" />
                   ) : (
                     <Plus size={32} />
                   )}
                 </div>
                 <div className="pointer-events-none text-center">
                   <h4 className="font-semibold text-gray-700">
-                    {isUploading ? 'Mengupload...' : 'Upload New'}
+                    {hasActiveUploads ? 'Uploading in background...' : 'Upload Video'}
                   </h4>
                   <p className="mt-1 text-xs text-gray-400">
-                    {isUploading ? 'Harap tunggu...' : 'Image atau video. Video min. 1920x1080.'}
+                    {hasActiveUploads
+                      ? 'Safe to close window'
+                      : `Min. 1920x1080 · Max. ${MAX_WALLPAPER_FILE_SIZE / 1024 / 1024} MB · Encode ${
+                          uploadProfile === 'ultra' ? 'Ultra (2160p)' : 'High (1440p)'
+                        }`}
                   </p>
-                </div>
-                {/* Keep the uploader mounted while processing so its
-                            internal progress state can render over the card. */}
-                <div
-                  className={`absolute inset-0 transition-opacity duration-200 [&>div>div[role=button]]:h-full [&>div]:h-full ${
-                    isUploading
-                      ? 'pointer-events-none bg-white/95 p-4 opacity-100 backdrop-blur-sm'
-                      : 'opacity-0'
-                  }`}
-                >
-                  <AdminFileUpload
-                    folder="wallpapers"
-                    accept="image/*,video/mp4,video/webm"
-                    disabled={isUploading}
-                    className="flex h-full items-center justify-center"
-                    onUpload={() => {
-                      /* handled via onUploadResult */
-                    }}
-                    onUploadResult={handleUpload}
-                    onUploadStart={() => setIsUploading(true)}
-                    onUploadEnd={() => setIsUploading(false)}
-                    customValidator={validateWallpaperFiles}
-                  />
                 </div>
               </div>
             </div>

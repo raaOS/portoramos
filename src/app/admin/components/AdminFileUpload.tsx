@@ -144,9 +144,12 @@ export default function AdminFileUpload({
                 const originalSize = file.size;
                 // Wallpapers fill the whole screen, so they need a
                 // visibly higher target than e.g. project thumbnails.
-                // Bump the encoder to the `high` profile (1080p,
+                // Bump the encoder to the `high` profile (1440p,
                 // CRF 20) for that folder and keep the existing
                 // `standard` (720p, CRF 24) for the rest.
+                // 1440p match dengan server `optimizeVideoForPortfolio.high`
+                // dan dengan path direct-to-R2 di BackgroundUploadContext —
+                // konsisten lewat semua jalur upload wallpaper.
                 const profile = folder === 'wallpapers' ? 'high' : 'standard';
                 fileToUpload = await compressVideo(
                   file,

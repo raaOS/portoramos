@@ -262,6 +262,11 @@ export function useStorageUpload(options: UseStorageUploadOptions = {}) {
             const posterParams = new URLSearchParams();
             posterParams.append('folder', folder || 'wallpapers');
             posterParams.append('filename', baseName);
+            // Skip server-side transcode JPG → WebP supaya side-car
+            // poster tetap konsisten dengan konvensi `<base>.jpg`
+            // yang dipakai `lib/mediaPreview.ts` untuk derive poster
+            // URL. JPG q82 dari canvas sudah cukup kecil.
+            posterParams.append('skipImageOptimization', '1');
 
             const posterData = await postFormDataWithProgress(
               `/api/upload?${posterParams.toString()}`,

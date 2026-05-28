@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { m, useReducedMotion, type Transition } from 'motion/react';
 import type { WallpaperConfig } from '@/types/about';
 import { DEFAULT_WALLPAPER_URL } from '../utils/zIndexLayers';
+import { getVideoPosterSource, isVideoSource } from '@/lib/mediaPreview';
 
 interface DesktopBackgroundProps {
   wallpaperConfig?: WallpaperConfig;
@@ -21,25 +22,80 @@ export default function DesktopBackground({
 }: DesktopBackgroundProps) {
   const prefersReducedMotion = useReducedMotion();
 
-  const activeWallpaper = useMemo(() => {
-    if (!wallpaperConfig?.activeWallpaperId) {
-      return DEFAULT_WALLPAPER_URL;
-    }
-    const resolved = wallpaperConfig.collection?.find(
-      (w) => w.id === wallpaperConfig.activeWallpaperId
-    )?.url;
-
-    const isValidUrl = resolved && (resolved.startsWith('/') || resolved.startsWith('http'));
-    return isValidUrl ? resolved : DEFAULT_WALLPAPER_URL;
+  // Resolve the active wallpaper entry (not just URL) so we can also
+  // pick up the side-car poster image if the upload pipeline produced
+  // one. Falls back to the JPG side-car convention (`<base>.jpg`) when
+  // posterUrl wasn't persisted on older entries.
+  const activeEntry = useMemo(() => {
+    if (!wallpaperConfig?.activeWallpaperId) return null;
+    return (
+      wallpaperConfig.collection?.find(
+        (w) => w.id === wallpaperConfig.activeWallpaperId
+      ) ?? null
+    );
   }, [wallpaperConfig]);
 
+  const activeWallpaper = useMemo(() => {
+    const resolved = activeEntry?.url;
+    const isValidUrl = resolved && (resolved.startsWith('/') || resolved.startsWith('http'));
+    return isValidUrl ? resolved : DEFAULT_WALLPAPER_URL;
+  }, [activeEntry]);
+
   const blurAmount = wallpaperConfig?.blur || 0;
-  const isVideo = useMemo(() => {
-    return (
-      activeWallpaper.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) ||
-      activeWallpaper.startsWith('data:video')
-    );
-  }, [activeWallpaper]);
+  const isVideo = useMemo(() => isVideoSource(activeWallpaper), [activeWallpaper]);
+
+  const posterUrl = useMemo(() => {
+    if (!isVideo) return undefined;
+    return activeEntry?.posterUrl || getVideoPosterSource(activeWallpaper);
+  }, [isVideo, activeEntry, activeWallpaper]);
+
+  // Bandwidth-aware playback decision.
+  //
+  //   1. `prefers-reduced-data` (`navigator.connection.saveData`) → user
+  //      has explicitly opted into low-data mode (e.g. iOS Low Data
+  //      mode, Android Data Saver). Show poster only, never download
+  //      the MP4.
+  //   2. Effective connection type `2g` / `slow-2g` → assume metered or
+  //      degraded mobile network. Show poster only.
+  //   3. Otherwise stream the full MP4 with `preload="metadata"` so the
+  //      browser only fetches enough bytes to start playback rather
+  //      than the entire file up front.
+  //
+  // We re-evaluate when the connection changes (Network Information API
+  // emits `change`) so a user who switches from wifi → cellular gets
+  // downgraded automatically without a reload.
+  const [shouldPlayVideo, setShouldPlayVideo] = useState(true);
+
+  useEffect(() => {
+    if (!isVideo) return;
+    if (typeof navigator === 'undefined') return;
+
+    const conn = (
+      navigator as Navigator & {
+        connection?: {
+          saveData?: boolean;
+          effectiveType?: string;
+          addEventListener?: (type: 'change', listener: () => void) => void;
+          removeEventListener?: (type: 'change', listener: () => void) => void;
+        };
+      }
+    ).connection;
+
+    const decide = () => {
+      if (!conn) {
+        setShouldPlayVideo(true);
+        return;
+      }
+      const slow = conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g';
+      setShouldPlayVideo(!conn.saveData && !slow);
+    };
+
+    decide();
+    conn?.addEventListener?.('change', decide);
+    return () => {
+      conn?.removeEventListener?.('change', decide);
+    };
+  }, [isVideo]);
 
   // iOS-style background effect: scales down slightly and blurs when a window is active.
   // Reduced-motion or mobile: skip spring entirely — langsung set filter static tanpa scale shift.
@@ -77,20 +133,56 @@ export default function DesktopBackground({
       >
         {/* Primary wallpaper - Priority load for LCP */}
         {isVideo ? (
-          // Fill 100% via object-cover, TANPA scale 1.08 supaya
-          // video tidak ke-upsample (yang bikin pecah). Resolusi
-          // video sebaiknya >= 1920x1080 untuk display modern;
-          // validasi resolusi minimum di-enforce saat upload via
-          // admin (lihat WallpaperManager).
-          <video
-            src={activeWallpaper}
-            autoPlay={!prefersReducedMotion}
-            muted
-            loop
-            playsInline
-            className="h-full w-full object-cover"
-            style={{ transform: 'translateZ(0)' }}
-          />
+          // Bandwidth-aware video wallpaper.
+          //
+          //   - `poster` shows the side-car JPG instantly (one HTTP
+          //     request, ~30-80 KB) so the screen is not black while
+          //     the MP4 buffers. This is the LCP for the desktop on
+          //     first paint when video is involved.
+          //   - `preload="metadata"` tells the browser to fetch only
+          //     the moov atom + a few KB of header so it can start
+          //     playback, not the entire 1440p MP4 up front.
+          //   - On `saveData` / 2g connections we don't render the
+          //     <video> at all — we fall back to the poster as a still
+          //     image. Visitor menghemat bandwidth, dan halaman tetap
+          //     punya wallpaper visual yang masuk akal.
+          shouldPlayVideo ? (
+            <video
+              src={activeWallpaper}
+              poster={posterUrl}
+              autoPlay={!prefersReducedMotion}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              className="h-full w-full object-cover"
+              style={{ transform: 'translateZ(0)' }}
+            />
+          ) : posterUrl ? (
+            <Image
+              src={posterUrl}
+              alt="Desktop wallpaper"
+              fill
+              priority
+              fetchPriority="high"
+              quality={75}
+              sizes="100vw"
+              className="object-cover"
+              style={{ transform: 'translateZ(0)' }}
+            />
+          ) : (
+            <Image
+              src={DEFAULT_WALLPAPER_URL}
+              alt="Desktop wallpaper"
+              fill
+              priority
+              fetchPriority="high"
+              quality={75}
+              sizes="100vw"
+              className="object-cover"
+              style={{ transform: 'translateZ(0)' }}
+            />
+          )
         ) : (
           <Image
             src={activeWallpaper}

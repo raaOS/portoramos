@@ -101,6 +101,20 @@ export async function bootstrapD1Schema() {
   return schemaPromise;
 }
 
+/**
+ * Read a single D1 row by its **literal key**.
+ *
+ * IMPORTANT: this does NOT follow nested paths. `db.ref('content/about')`
+ * splits paths and writes to the parent key (`content`) with field
+ * `about`. If you need that nested view, go through `db.ref(...)` or
+ * the corresponding service (e.g. `aboutService.getAboutData()`),
+ * never `getD1Value('content/about')` directly — those two read
+ * different rows.
+ *
+ * Use this only for top-level domain keys that are written as full
+ * strings (`projects`, `audit_logs`, `analytics`, etc.) or for
+ * intentional inspection of the raw row.
+ */
 export async function getD1Value<T = unknown>(key: string): Promise<T | null> {
   const rows = await queryD1<{ value: string }>(
     `SELECT value FROM ${D1_TABLE_NAME} WHERE key = ? LIMIT 1`,
@@ -136,6 +150,17 @@ export async function getAllD1Values(): Promise<Record<string, unknown>> {
   }, {});
 }
 
+/**
+ * Write a single D1 row by its **literal key**.
+ *
+ * Same caveat as `getD1Value`: paths with `/` are NOT interpreted as
+ * nested. Calling `setD1Value('content/about', x)` creates a separate
+ * row from what `db.ref('content/about').set(x)` writes (the latter
+ * stores nested under the `content` row).
+ *
+ * If you want the nested write that the admin UI and `/api/about`
+ * expect, go through the corresponding service.
+ */
 export async function setD1Value(key: string, value: unknown) {
   await bootstrapD1Schema();
   await queryD1(

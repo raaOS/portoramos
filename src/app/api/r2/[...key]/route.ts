@@ -86,7 +86,20 @@ function buildObjectHeaders(input: {
 }) {
   const headers = new Headers(buildCorsHeaders());
   headers.set('accept-ranges', 'bytes');
-  headers.set('cache-control', input.cacheControl || 'public, max-age=31536000, immutable');
+
+  // Cache-Control untuk browser. Default 1 tahun immutable (R2 keys
+  // are content-addressed lewat timestamp filename, jadi aman
+  // immutable — overwrite tidak terjadi).
+  const cacheValue = input.cacheControl || 'public, max-age=31536000, immutable';
+  headers.set('cache-control', cacheValue);
+
+  // CDN-Cache-Control: Vercel-specific header yang JAMIN edge cache
+  // aktif terlepas dari `dynamic = 'force-dynamic'` di route. Tanpa
+  // ini, Vercel bisa skip edge cache karena `force-dynamic` dan
+  // setiap request invoke function = origin transfer cost.
+  // Reference: https://vercel.com/docs/edge-network/headers/cache-control-headers
+  headers.set('cdn-cache-control', cacheValue);
+
   headers.set('content-type', input.contentType || contentTypeForKey(input.key));
 
   if (typeof input.contentLength === 'number') {
