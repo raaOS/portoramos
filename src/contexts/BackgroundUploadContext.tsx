@@ -12,7 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ADMIN_QUERY_KEYS } from '@/app/admin/lib/adminQueries';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 import { UploadedAsset } from '@/app/admin/components/file-upload/types';
-import { AboutData, WallpaperConfig } from '@/types/about';
+import { AboutData } from '@/types/about';
 import { readVideoDimensions } from '@/lib/videoMeta';
 
 /**
@@ -337,10 +337,20 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
           posterUrl: result.posterUrl,
         };
 
-        // Serialize finalize across concurrent uploads. Each upload waits
-        // for the previous one's read-modify-write to commit so the
-        // `current.wallpaperConfig.collection` snapshot we merge against
-        // already includes the previous wallpaper.
+        // Serialize finalize across concurrent uploads in this tab.
+        // Each upload waits for the previous one's collection write to
+        // commit before proceeding. The atomic endpoint
+        // (`/api/about/wallpaper-collection`) handles the actual
+        // read-modify-write on the server, so this in-tab mutex is
+        // mostly belt-and-suspenders for back-to-back drag/drops where
+        // the order of inserts matters to the user (the visible order
+        // in WallpaperManager grid).
+        //
+        // Caveat: this mutex does NOT protect across tabs or admins.
+        // The server endpoint reduces the cross-client racing window
+        // to milliseconds, but does not eliminate it. See route
+        // documentation at
+        // src/app/api/about/wallpaper-collection/route.ts for details.
         const previousChain = finalizeChainRef.current;
         const finalizePromise = previousChain
           .catch((prevErr) => {
@@ -358,21 +368,6 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
           .then(async () => {
             const token = getWritableCsrfToken(csrfToken);
 
-            // Read the freshest about payload from D1 (not the cached
-            // copy; otherwise we'd lose updates made between uploads).
-            const res = await fetch('/api/about?fresh=true', {
-              credentials: 'include',
-              cache: 'no-store',
-            });
-            if (!res.ok) {
-              throw new Error(`Failed to load current about data (${res.status})`);
-            }
-            const aboutData = (await res.json()) as AboutData;
-            const config: WallpaperConfig = aboutData.wallpaperConfig || {
-              activeWallpaperId: '',
-              collection: [],
-            };
-
             const newWallpaper = {
               id: `w-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               url: newAsset.url,
@@ -380,27 +375,22 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
               name: 'Custom Wallpaper',
             };
 
-            const newCollection = [...(config.collection || []), newWallpaper];
-
-            // /api/about expects a partial UpdateAboutData at top level
-            // (validated by updateAboutSchema.strict()). Anything wrapped
-            // in `{ updates: ... }` is rejected as an unknown key.
-            const payload: { wallpaperConfig: WallpaperConfig } = {
-              wallpaperConfig: {
-                ...config,
-                activeWallpaperId: newWallpaper.id,
-                collection: newCollection,
-              },
-            };
-
-            const updateRes = await fetch('/api/about', {
-              method: 'PUT',
+            // Atomic add via dedicated endpoint. Server reads the
+            // freshest collection, appends, and writes back in one
+            // function invocation — no client-side read-modify-write
+            // window where two tabs could overlap.
+            const updateRes = await fetch('/api/about/wallpaper-collection', {
+              method: 'POST',
               credentials: 'include',
               headers: {
                 'Content-Type': 'application/json',
                 'x-csrf-token': token,
               },
-              body: JSON.stringify(payload),
+              body: JSON.stringify({
+                action: 'add',
+                wallpaper: newWallpaper,
+                makeActive: true,
+              }),
             });
 
             if (!updateRes.ok) {
