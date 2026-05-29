@@ -68,6 +68,21 @@ async function findDuplicates(): Promise<DupRow[]> {
   const contentBag = (all['content'] as ContentBag | undefined) || {};
   const nestedFields = new Set(Object.keys(contentBag));
 
+  // Safety: if the canonical "content" row is missing or empty, every
+  // literal "content/<x>" row would be flagged as a non-duplicate
+  // (because the nested side has nothing to compare to). The script
+  // would then either no-op or, with --force, silently DELETE the
+  // legacy literal rows that are now the only copy of that data.
+  // Refuse to proceed in that case.
+  if (Object.keys(contentBag).length === 0) {
+    const literalContentKeys = keys.filter((k) => k.startsWith('content/'));
+    if (literalContentKeys.length > 0) {
+      throw new Error(
+        `D1 row "content" is empty/missing but legacy literal rows exist (${literalContentKeys.length}). Refusing to proceed — the literals may be the only remaining copy of that data. Investigate the nested write path before running this migration.`
+      );
+    }
+  }
+
   // Literal rows that look like "content/<name>" where the field also
   // exists nested under the "content" row.
   const dups: DupRow[] = [];

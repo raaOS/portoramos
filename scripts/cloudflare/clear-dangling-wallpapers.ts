@@ -96,6 +96,19 @@ async function main() {
     console.log(`  - ${w.id} ${w.url}`);
   }
 
+  // ── Safety bail-out ─────────────────────────────────────────────
+  // If R2 listing returned zero keys for the wallpaper prefix, we are
+  // probably hitting a transient R2 issue or a misconfigured bucket
+  // path — every wallpaper in D1 would look dangling, and the script
+  // would wipe the entire collection. Refuse to proceed.
+  if (r2Keys.size === 0) {
+    console.error(
+      `\nABORT: R2 listing for prefix "${PREFIX}" returned zero keys. Refusing to wipe the wallpaper collection — investigate R2 connectivity / prefix first.`
+    );
+    process.exitCode = 2;
+    return;
+  }
+
   if (dryRun) {
     console.log('\n--dry-run aktif, tidak ada tulisan ke D1.');
     return;

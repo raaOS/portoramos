@@ -165,9 +165,53 @@ async function confirmPrompt(question: string): Promise<boolean> {
   }
 }
 
-async function deleteOrphans(orphans: ReportRow[], skipConfirm: boolean) {
+async function deleteOrphans(
+  orphans: ReportRow[],
+  totalR2Objects: number,
+  totalReferenced: number,
+  skipConfirm: boolean
+) {
   if (orphans.length === 0) {
     console.log('Tidak ada orphan untuk dihapus.');
+    return;
+  }
+
+  // ── Safety bail-outs ─────────────────────────────────────────────
+  //
+  // These guards are intentionally paranoid. The audit logic has not
+  // been verified end-to-end against the production R2 + D1 dataset,
+  // so we refuse to proceed automatically when the diff looks too
+  // large to plausibly be a real orphan situation.
+
+  // 1. If D1 returned zero references, something almost certainly
+  //    went wrong (D1 outage, schema mismatch, projectService
+  //    misbehaving). Without any references, EVERY R2 object would
+  //    look orphan — a script that proceeds here would delete the
+  //    entire bucket prefix.
+  if (totalReferenced === 0) {
+    console.error(
+      'ABORT: D1 returned zero references. This is almost certainly a read failure, not a real "everything is orphan" situation. Refusing to delete anything.'
+    );
+    process.exitCode = 2;
+    return;
+  }
+
+  // 2. Threshold: if the script wants to delete more than 20% of all
+  //    R2 objects in the prefix, bail out. Real orphan ratios are
+  //    typically <5%; anything higher suggests the audit logic
+  //    missed a reference category (e.g. a new side-car convention
+  //    that wasn't added to extractProjectAssets). Better to have
+  //    the operator investigate manually than to nuke half a bucket.
+  const ratio = totalR2Objects > 0 ? orphans.length / totalR2Objects : 0;
+  const threshold = 0.2;
+  if (ratio > threshold) {
+    console.error(
+      `ABORT: orphan ratio is ${(ratio * 100).toFixed(1)}% (${orphans.length} of ${totalR2Objects}), above the ${threshold * 100}% safety threshold.`
+    );
+    console.error(
+      'This usually means a reference category is missing from the audit — investigate before deleting. If the high ratio is truly intended (e.g. mass cleanup after a deliberate purge), invoke the delete manually with deleteFromR2 instead.'
+    );
+    process.exitCode = 2;
     return;
   }
 
@@ -215,7 +259,7 @@ async function main() {
 
   if (wantDelete) {
     console.log('');
-    await deleteOrphans(result.orphans, skipConfirm);
+    await deleteOrphans(result.orphans, result.totalR2Objects, result.totalReferenced, skipConfirm);
   }
 
   if (!wantDelete && (result.orphans.length > 0 || result.dangling.length > 0)) {

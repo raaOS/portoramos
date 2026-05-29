@@ -170,9 +170,39 @@ async function confirm(question: string): Promise<boolean> {
   }
 }
 
-async function deleteOrphans(orphans: ReportRow[], skipConfirm: boolean) {
+async function deleteOrphans(
+  orphans: ReportRow[],
+  totalR2Objects: number,
+  totalReferenced: number,
+  skipConfirm: boolean
+) {
   if (orphans.length === 0) {
     console.log('Tidak ada orphan untuk dihapus.');
+    return;
+  }
+
+  // ── Safety bail-outs ─────────────────────────────────────────────
+  // Same paranoia as audit-orphan-projects. If D1 returned no
+  // references (likely a read failure) or the orphan ratio is
+  // implausibly high (likely a missing reference category), bail
+  // out instead of nuking the bucket.
+  if (totalReferenced === 0) {
+    console.error(
+      'ABORT: D1 returned zero references. Refusing to delete anything; investigate D1 read path first.'
+    );
+    process.exitCode = 2;
+    return;
+  }
+  const ratio = totalR2Objects > 0 ? orphans.length / totalR2Objects : 0;
+  const threshold = 0.2;
+  if (ratio > threshold) {
+    console.error(
+      `ABORT: orphan ratio ${(ratio * 100).toFixed(1)}% (${orphans.length}/${totalR2Objects}) above ${threshold * 100}% safety threshold.`
+    );
+    console.error(
+      'Investigate before deleting — may indicate audit logic missed a reference category.'
+    );
+    process.exitCode = 2;
     return;
   }
 
@@ -220,7 +250,12 @@ async function main() {
 
   if (wantDelete) {
     console.log('');
-    await deleteOrphans(result.orphans, skipConfirm);
+    await deleteOrphans(
+      result.orphans,
+      result.totalR2Objects,
+      result.totalReferenced,
+      skipConfirm
+    );
   }
 
   if (!wantDelete && (result.orphans.length > 0 || result.dangling.length > 0)) {
