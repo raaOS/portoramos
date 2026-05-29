@@ -7,23 +7,42 @@ import { spawn } from 'child_process';
  *
  * Profiles tuned untuk live wallpaper portfolio (motion graphics, particle,
  * CGI) — bukan live-action. Beda penting dengan setup lama:
- *   - Tidak pakai `-tune film` (yang bias ke film grain pattern).
- *   - Tidak pakai `fps=30` filter — preserve native source fps.
- *   - Bitrate cap eksplisit untuk anti-VBR-spike yang bikin browser
- *     stutter saat playback wallpaper di loop.
- *   - GOP 60 frame supaya loop seam tidak macroblocking.
+ *   - Tidak pakai `-tune film` (bias ke film grain pattern, salah untuk
+ *     motion graphics / particle / CGI yang umum di live wallpaper).
+ *   - Tidak pakai `fps=30` filter — preserve native source fps untuk
+ *     source 60 fps (mainstream motion graphics).
+ *   - Cap `-r 60` (anti-runaway) supaya source 120/240 fps tidak
+ *     menghabiskan bitrate untuk frame yang tidak akan dilihat di
+ *     display web (mayoritas 60 Hz). Source ≤ 60 fps tidak terpengaruh.
+ *   - Bitrate cap eksplisit (`-maxrate`/`-bufsize`) supaya playback
+ *     loop tidak terbentur VBR spike yang bisa bikin frame drop saat
+ *     decode di browser.
+ *   - GOP 60 frame supaya keyframe selalu dekat akhir clip pendek
+ *     (loop seam wallpaper tidak macroblocking di re-buffer).
  *   - `+faststart` agar moov atom di awal → browser start playback cepat.
  *
+ * Profile spec:
  *   - 'standard' : 720p,  CRF 24, 3 Mbps cap (project thumbnails / gallery)
  *   - 'high'     : 1440p, CRF 18, 8 Mbps cap (default wallpaper — sweet
  *                  spot 1080p s/d 24" QHD; 4K masih tajam)
  *   - 'ultra'    : 2160p, CRF 20, 18 Mbps cap (4K wallpaper)
  *
- * Performance optimization:
+ * Performance:
  *   - Preset `medium` (bukan `slow` atau `fast`). Trade-off encode
- *     ~2× dari fast, quality jauh lebih baik untuk motion graphics.
+ *     ~2× dari fast, quality jauh lebih baik untuk motion graphics
+ *     pada budget x264 SSE/AVX yang tersedia di Vercel runtime.
  *   - Main + preview + poster di-spawn parallel via Promise.all.
  *   - `skipPreview: true` melewati preview encode untuk wallpaper.
+ *
+ * Limitations yang tidak ditutup di sini:
+ *   - Cap `-r 60` murni heuristik. Belum di-A/B test apakah hasilnya
+ *     terlihat lebih baik di scene motion-heavy 240 fps dibanding
+ *     preserve native fps. Kalau ternyata di scene tertentu cap ini
+ *     malah membuat playback terasa kurang halus, perlu eksperimen
+ *     ulang per-profile.
+ *   - Preset `medium` vs `slow` tidak di-A/B test pada repo ini —
+ *     pilihan ini diambil dari rule of thumb x264 community, bukan
+ *     hasil benchmark di video wallpaper portfolio sendiri.
  */
 export type VideoOptimizationProfile = 'standard' | 'high' | 'ultra';
 
@@ -32,6 +51,14 @@ const FFMPEG_BINARY =
   process.platform === 'win32'
     ? 'node_modules\\ffmpeg-static\\ffmpeg.exe'
     : 'node_modules/ffmpeg-static/ffmpeg';
+
+/**
+ * Hard ceiling untuk output framerate. Source ≤ 60 fps lewat tanpa
+ * perubahan; source > 60 fps di-decimate ke 60 fps. Display web
+ * mayoritas 60 Hz refresh rate, frame di atas itu tidak terlihat
+ * dan cuma menggerogoti bitrate budget yang sudah di-cap.
+ */
+const MAX_OUTPUT_FPS = 60;
 
 interface ProfileSpec {
   targetHeight: number;
@@ -133,6 +160,12 @@ export async function optimizeVideoForPortfolio(
       '60',
       '-keyint_min',
       '60',
+      // Cap output fps. ffmpeg -r di output side: source ≤ 60 fps
+      // lewat unchanged, source > 60 fps di-decimate. Lihat docblock
+      // file untuk alasannya (display 60 Hz, bitrate budget ditarik
+      // ke frame yang terlihat).
+      '-r',
+      String(MAX_OUTPUT_FPS),
       '-pix_fmt',
       'yuv420p',
       '-an',
@@ -167,6 +200,8 @@ export async function optimizeVideoForPortfolio(
         '60',
         '-keyint_min',
         '60',
+        '-r',
+        String(MAX_OUTPUT_FPS),
         '-pix_fmt',
         'yuv420p',
         '-an',

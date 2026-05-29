@@ -19,11 +19,12 @@ interface TrimOptions {
  *     halus motion graphics.
  *   - Tidak pakai `fps=30` filter — kalau source 60 fps biarkan 60 fps
  *     supaya motion smooth seperti source.
+ *   - Cap output `-r 60` di pipeline — source > 60 fps di-decimate
+ *     supaya bitrate budget yang sudah di-cap via `-maxrate` tidak
+ *     habis untuk frame yang tidak akan terlihat di display 60 Hz.
  *   - CRF agak agresif (18/20) supaya visual nyaris lossless.
- *   - Preset `medium` (bukan `fast`) — encode WASM 2× lebih lama tapi
- *     macroblocking di gradient hilang.
- *   - Bitrate cap eksplisit untuk anti-VBR-spike yang bikin browser
- *     skip frame saat playback.
+ *   - Bitrate cap eksplisit (`-maxrate`/`-bufsize`) supaya browser
+ *     tidak terhantam VBR spike yang bisa drop frame saat playback.
  *
  * `quality`:
  *   - 'standard' : 720p,  CRF 24 (default for project media; small files).
@@ -37,6 +38,17 @@ interface TrimOptions {
  * Profil ini match 1:1 dengan server `optimizeVideoForPortfolio.PROFILES`
  * (lihat `src/lib/videoOptimization.ts`) supaya output konsisten lewat
  * jalur upload manapun.
+ *
+ * Honest caveats yang TIDAK ditutup di repo ini:
+ *   - Klaim relatif tentang quality (mis. preset `fast` vs `medium`)
+ *     diambil dari rule-of-thumb x264 community / dokumentasi ffmpeg
+ *     generik. Belum ada A/B test pada source video portfolio asli
+ *     untuk konfirmasi numbernya.
+ *   - Cap `-r 60` heuristik. Belum di-validasi apakah hasilnya
+ *     terlihat lebih baik atau lebih buruk untuk source 120/240 fps
+ *     dibanding preserve native fps.
+ *   - Encode time hanya estimasi kasar (single thread WASM, system
+ *     dependent). Bukan benchmark.
  *
  * The numeric scaler is constructed from `targetHeight` so portrait clips
  * keep their aspect ratio (match short edge to target).
@@ -165,19 +177,24 @@ export function useFFmpeg(onStatusUpdate: (status: string) => void) {
 
       ffmpegArgs.push('-c:v', 'libx264');
       ffmpegArgs.push('-crf', profile.crf);
-      // Preset `fast` — sweet spot untuk WASM ffmpeg di browser.
+      // Preset `fast` di sisi klien (WASM).
       // Trade-off vs `medium`:
-      //   - `medium` di WASM: ~3× wall-clock dari `fast` (single
-      //     thread). Untuk encode 30s 4K source, medium butuh
-      //     ~150-300 detik vs fast ~50-100 detik.
-      //   - Quality drop dari medium ke fast: ~5-10% di scene complex
-      //     (motion estimation kurang teliti). Untuk live wallpaper
-      //     ambient motion, drop ini hampir tidak terlihat.
-      //   - 5 quality knobs lain (CRF 18, maxrate cap, GOP eksplisit,
-      //     no `-tune film`, no `fps=30` drop) berkontribusi 80%+
-      //     ke quality bump dari versi lama, tidak tergantung preset.
-      // Server-side ffmpeg native pakai `medium` karena native multi-
-      // thread tidak terkena penalty WASM yang sama.
+      //   - WASM ffmpeg single thread, jadi preset apapun cost-nya
+      //     wall-clock-nya proporsional terhadap "complexity" preset.
+      //     Pengamatan informal di developer machine: `medium` butuh
+      //     sekitar 2-3× wall-clock dari `fast` untuk source 4K 30
+      //     detik. Belum di-A/B test rigorous, jadi rasionya bisa
+      //     beda di hardware lain.
+      //   - x264 docs menjelaskan `fast` mengurangi motion estimation
+      //     teliti dibanding `medium`. Quality drop di scene complex
+      //     "biasanya" ada tapi besarnya tergantung content; saya
+      //     belum mengukur untuk video portfolio sendiri.
+      //   - Knob lain (CRF agresif, maxrate cap, GOP eksplisit, no
+      //     `-tune film`, no `fps=30` drop, cap `-r 60`) lebih
+      //     dominan untuk profile motion graphics ambient yang
+      //     dipakai sebagai wallpaper.
+      // Server-side ffmpeg native pakai `medium` karena native
+      // multi-thread tidak terkena penalty WASM yang sama.
       ffmpegArgs.push('-preset', 'fast');
       // Bitrate cap eksplisit. Tanpa ini, x264 bisa pop bitrate ke
       // 30+ Mbps dadakan saat scene complex, browser drop frame karena
@@ -192,6 +209,19 @@ export function useFFmpeg(onStatusUpdate: (status: string) => void) {
       // keyframe dekat akhir clip pendek manapun.
       ffmpegArgs.push('-g', '60');
       ffmpegArgs.push('-keyint_min', '60');
+      // Cap output framerate ke 60 fps. Source ≤ 60 fps tidak terdampak
+      // (lewat 1:1). Source > 60 fps (mis. screen capture iPhone 120
+      // fps, slowmo 240 fps) di-decimate ke 60 fps. Display web
+      // mayoritas 60 Hz refresh, frame di atas itu tidak terlihat
+      // tapi tetap menggerogoti bitrate budget yang sudah di-cap
+      // via maxrate. Cap ini mempertahankan bitrate budget untuk
+      // frame yang akan terlihat.
+      //
+      // Catatan jujur: cap ini belum di-A/B test pada repo ini.
+      // Heuristik dari rule of thumb x264 community + asumsi target
+      // display web. Kalau ada kasus di mana ini terasa kurang halus,
+      // perlu eksperimen ulang per profile.
+      ffmpegArgs.push('-r', '60');
       ffmpegArgs.push('-pix_fmt', 'yuv420p');
       ffmpegArgs.push('-an');
       // `+faststart` pindah moov atom ke awal file → browser bisa
