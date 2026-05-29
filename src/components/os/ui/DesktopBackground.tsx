@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { m, useReducedMotion, type Transition } from 'motion/react';
 import type { WallpaperConfig } from '@/types/about';
 import { DEFAULT_WALLPAPER_URL } from '../utils/zIndexLayers';
-import { getVideoPosterSource, isVideoSource } from '@/lib/mediaPreview';
+import { getVideoPosterCandidates, isVideoSource } from '@/lib/mediaPreview';
 
 interface DesktopBackgroundProps {
   wallpaperConfig?: WallpaperConfig;
@@ -44,10 +44,84 @@ export default function DesktopBackground({
   const blurAmount = wallpaperConfig?.blur || 0;
   const isVideo = useMemo(() => isVideoSource(activeWallpaper), [activeWallpaper]);
 
-  const posterUrl = useMemo(() => {
-    if (!isVideo) return undefined;
-    return activeEntry?.posterUrl || getVideoPosterSource(activeWallpaper);
+  // Poster candidates: explicit `posterUrl` from D1 wins (current
+  // pipeline always persists it for new wallpapers). Otherwise we
+  // derive `[<base>.jpg, <base>.webp]` — `.jpg` is the current
+  // convention, `.webp` is the legacy era.
+  //
+  // Caveat we do NOT solve here: when there are multiple candidates,
+  // a wallpaper entry from the .webp era pays one 404 round trip per
+  // cold load. The proper fix is backfilling `posterUrl` on those
+  // D1 entries via
+  // `scripts/cloudflare/backfill-wallpaper-poster-urls.ts`.
+  const posterCandidates = useMemo(() => {
+    if (!isVideo) return [] as string[];
+    if (activeEntry?.posterUrl) return [activeEntry.posterUrl];
+    return getVideoPosterCandidates(activeWallpaper);
   }, [isVideo, activeEntry, activeWallpaper]);
+
+  // The seed is candidates[0] — used synchronously for the initial
+  // <video poster> so the happy path (posterUrl persisted, .jpg side-
+  // car exists) renders with 0 extra round trips.
+  const seedPoster = posterCandidates[0];
+
+  // Probe override: set asynchronously by the effect below ONLY when
+  // a later candidate (e.g. .webp) loads after the seed (.jpg) 404s.
+  // Tagged with `forSeed` so a stale override from a previous wallpaper
+  // is automatically ignored when the seed changes (no synchronous
+  // setState-in-effect required to reset).
+  const [probedOverride, setProbedOverride] = useState<{ url: string; forSeed: string } | null>(
+    null
+  );
+
+  // Derive the poster URL: prefer the override if it was resolved for
+  // the current seed, otherwise the seed itself.
+  const posterUrl = probedOverride?.forSeed === seedPoster ? probedOverride.url : seedPoster;
+
+  useEffect(() => {
+    // Skip probe when a single candidate exists. Either we have an
+    // explicit posterUrl from D1 (trusted) or no candidates at all
+    // (non-video).
+    if (typeof window === 'undefined') return;
+    if (posterCandidates.length <= 1) return;
+
+    const seed = posterCandidates[0];
+    let cancelled = false;
+    let activeImg: HTMLImageElement | null = null;
+
+    const tryNext = (index: number) => {
+      if (cancelled) return;
+      if (index >= posterCandidates.length) return;
+      const url = posterCandidates[index];
+      const img = new window.Image();
+      activeImg = img;
+      img.onload = () => {
+        if (cancelled) return;
+        // Only override if probe found a candidate other than the
+        // seed (which is already the default). Avoids a redundant
+        // state update for the happy path where candidates[0] succeeds.
+        if (url !== seed) {
+          setProbedOverride({ url, forSeed: seed });
+        }
+      };
+      img.onerror = () => {
+        if (cancelled) return;
+        tryNext(index + 1);
+      };
+      img.src = url;
+    };
+
+    tryNext(0);
+
+    return () => {
+      cancelled = true;
+      if (activeImg) {
+        activeImg.onload = null;
+        activeImg.onerror = null;
+        activeImg.src = '';
+      }
+    };
+  }, [posterCandidates]);
 
   // Bandwidth-aware playback decision.
   //

@@ -4,6 +4,7 @@ import {
   buildR2PublicUrl,
   deleteFromR2,
   getMissingR2EnvKeys,
+  headR2Object,
   isR2StorageConfigured,
   uploadToR2,
 } from '@/lib/r2Storage';
@@ -472,6 +473,58 @@ export async function POST(req: NextRequest) {
           ]
         : []),
     ]);
+
+    // Best-effort cleanup of legacy .webp poster at the same base.
+    //
+    // The old transcode pipeline wrote posters as `<base>.webp`. The
+    // current pipeline writes `<base>.jpg`. When an admin re-uploads
+    // a video to a deterministic key (e.g. via `customFilename`), the
+    // new write does not overwrite the legacy `.webp` because it has
+    // a different extension — it lingers in R2 as an orphan that
+    // audit scripts will flag.
+    //
+    // Why this is safe to do here:
+    //   1. We're inside the video upload branch, so we just wrote a
+    //      new `<base>.mp4` to the same key.
+    //   2. A `<base>.webp` at that same key can only have come from
+    //      a previous upload to that same key (no other code path
+    //      writes that pattern).
+    //   3. We never touch other extensions or other keys.
+    //
+    // Why we tolerate 404:
+    //   New uploads (most cases) won't have a `.webp` at the new
+    //   timestamped key. HEAD returning NotFound is the expected,
+    //   silent fast-path.
+    //
+    // Why this is best-effort, not awaited as a hard dependency:
+    //   The video upload itself already succeeded. If R2 is degraded
+    //   right now and HEAD/DELETE fails for transient reasons, we
+    //   don't want to fail the user's upload. The leftover orphan can
+    //   be picked up by `audit-orphan-projects.ts` later.
+    if (isVideoUpload && posterPath) {
+      const legacyWebpKey = posterPath.replace(/\.jpg$/i, '.webp');
+      // Skip if posterPath wasn't actually .jpg (defensive — current
+      // code always writes .jpg, but the regex above is non-throwing
+      // and could fall through on future change).
+      if (legacyWebpKey !== posterPath) {
+        try {
+          await headR2Object(legacyWebpKey);
+          // HEAD succeeded → file exists → delete.
+          await deleteFromR2(legacyWebpKey);
+        } catch (e: unknown) {
+          const err = e as { name?: string; $metadata?: { httpStatusCode?: number } };
+          const code = err?.$metadata?.httpStatusCode;
+          if (code !== 404 && err?.name !== 'NotFound' && err?.name !== 'NoSuchKey') {
+            // Real error (network, permission). Log and move on.
+            console.warn(
+              '[Upload] Legacy .webp poster cleanup failed (non-fatal):',
+              legacyWebpKey,
+              e
+            );
+          }
+        }
+      }
+    }
 
     return NextResponse.json({
       url: r2Main.url,
