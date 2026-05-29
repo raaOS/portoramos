@@ -673,8 +673,30 @@ key `<base>.(mp4|webm|mov)` yang dirujuk, mereka juga menganggap
 > `.jpg` (bukan `.webp` seperti era transcode JPG→WebP). `useStorageUpload`
 > kirim `?skipImageOptimization=1` saat upload poster supaya server
 > `/api/upload` skip transcode → file akhir konsisten dengan konvensi
-> side-car `<base>.jpg`. Wallpaper lama yang sudah keburu tersimpan
-> sebagai `.webp` tetap valid (audit + cleanup tracker dua-duanya).
+> side-car `<base>.jpg`.
+>
+> Wallpaper lama yang posternya `.webp`:
+>
+> - **Audit script** (`audit-orphan-*`) dan **endpoint storage-stats**
+>   sama-sama track `.jpg` dan `.webp` sebagai valid sidecar, jadi
+>   tidak ke-flag orphan.
+> - **Runtime di `DesktopBackground`**: kalau entry tidak punya
+>   `posterUrl` eksplisit di D1, helper `getVideoPosterCandidates`
+>   return kandidat `[<base>.jpg, <base>.webp]`. Komponen seed
+>   `<video poster>` ke kandidat pertama (sync, 0-RTT happy path),
+>   lalu probe kandidat berikutnya kalau yang pertama 404. Berarti
+>   entry era `.webp` tetap dapat poster, tapi pay 1 RTT 404 di
+>   cold path tiap render.
+> - **Permanent fix tersedia**: jalankan
+>   `npx tsx scripts/cloudflare/backfill-wallpaper-poster-urls.ts --apply`
+>   sekali saja untuk backfill `posterUrl` ke D1. Setelah itu
+>   probe runtime tidak diperlukan lagi.
+>
+> **Re-upload behavior:** kalau upload baru menulis `<base>.jpg`
+> di key yang sama dengan video lama yang punya `<base>.webp`,
+> server `/api/upload` best-effort hapus `<base>.webp` (HEAD lalu
+> DELETE). Cleanup ini tidak fail upload kalau gagal — orphan akan
+> dipungut audit script berikutnya.
 
 ### Wallpaper Upload Pipeline (penting untuk AI yang akan modify)
 
@@ -1127,6 +1149,10 @@ npx tsx scripts/cloudflare/inspect-d1-keys.ts
 npx tsx scripts/cloudflare/inspect-wallpaper-config.ts             # raw vs merged view
 npx tsx scripts/cloudflare/inspect-project-refs.ts                 # cross-check sebelum delete
 
+# Backfill posterUrl untuk wallpaper era .webp (one-time)
+npx tsx scripts/cloudflare/backfill-wallpaper-poster-urls.ts             # dry-run
+npx tsx scripts/cloudflare/backfill-wallpaper-poster-urls.ts --apply
+
 # Smoke test endpoint storage-stats (butuh ADMIN_PASSWORD)
 node scripts/test/storage-stats-smoke.mjs
 ```
@@ -1142,6 +1168,47 @@ node scripts/test/storage-stats-smoke.mjs
    verifikasi manual tetap wajib untuk delete batch besar.
 4. R2 dan D1 sama-sama tidak punya undo bawaan untuk operasi destructive
    ini — sekali dihapus harus re-upload dari source.
+
+**Safety guards di script destructive (post-2026-05):**
+
+Script `audit-orphan-*` dan `clear-dangling-wallpapers` punya
+bail-out otomatis kalau diff "tidak masuk akal":
+
+- `audit-orphan-*` exit code 2 kalau `totalReferenced === 0` (D1 read
+  failure → semua R2 object akan kelihatan orphan) atau orphan ratio
+  melewati 20% (kemungkinan reference category miss di audit logic).
+- `clear-dangling-wallpapers` exit code 2 kalau R2 listing untuk
+  prefix wallpaper return zero keys (R2 transient → semua D1 entry
+  kelihatan dangling).
+- `migrate-legacy-content-rows` throw error kalau row "content"
+  nested kosong tapi ada legacy `content/<x>` rows — script tidak
+  punya source of truth untuk verifikasi duplikasi, refuse to
+  proceed.
+
+Threshold 20% di `audit-orphan-*` cukup longgar untuk audit normal
+(tipikal <5%) tapi cukup ketat untuk mendeteksi bug logic yang
+catastrophic. Kalau memang butuh hapus > 20% (mass cleanup setelah
+purge sengaja), pakai `deleteFromR2` direct lewat script ad-hoc
+yang acknowledge resiko itu eksplisit.
+
+### Atomic Wallpaper Collection Updates
+
+Untuk operasi pada `wallpaperConfig.collection` (add/remove/setActive),
+endpoint dedicated:
+
+- `POST /api/about/wallpaper-collection` dengan body
+  `{ action: 'add' | 'remove' | 'setActive', ... }`
+- Read-modify-write dijalankan di server function (single instance),
+  bukan di klien. Window race antar tab/admin turun dari ~detik
+  (klien RTT) ke ~milidetik (server RTT D1).
+- **Tidak full distributed CAS:** dua Vercel function instance
+  paralel masih bisa interleave di window ms. Untuk admin portfolio
+  (1-2 user) ini cukup; untuk skenario admin multi-tab heavy, perlu
+  SQL-level lock yang D1 HTTP API tidak expose.
+- `BackgroundUploadContext` sudah migrate ke endpoint ini untuk
+  `add`. Delete/setActive di `WallpaperManager` masih lewat
+  `/api/about` PUT (belum migrate). Migrasi penuh di follow-up
+  task.
 
 ---
 
@@ -1221,4 +1288,4 @@ Mengikuti `browserslist` di `package.json`:
 
 ---
 
-_Last updated: 2026-05-29_
+_Last updated: 2026-05-30_
