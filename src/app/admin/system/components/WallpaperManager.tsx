@@ -2,8 +2,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image';
 import { Plus, Check, Trash2, Loader2, Pencil, Play } from 'lucide-react';
 import { WallpaperConfig, Wallpaper } from '@/types/about';
+import type { AboutData } from '@/types/about';
 import { useBackgroundUpload, type WallpaperUploadProfile } from '@/contexts/BackgroundUploadContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useQueryClient } from '@tanstack/react-query';
+import { ADMIN_QUERY_KEYS } from '@/app/admin/lib/adminQueries';
+import { mutate as swrMutate } from 'swr';
 import { extractStoragePath, isVideoLink } from '@/lib/media';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import { readVideoDimensions, checkMinResolution } from '@/lib/videoMeta';
@@ -164,6 +168,113 @@ export default function WallpaperManager({
     setBlurValue(data.blur ?? 0);
     setLastData(data);
   }
+
+  // ── Self-healing posterUrl backfill ─────────────────────────────
+  //
+  // Why this is here:
+  //   Older wallpaper entries (pre-poster-field, restored backups,
+  //   or legacy `.webp` poster era) often have `posterUrl` undefined
+  //   in D1. At runtime, `DesktopBackground` works around that by
+  //   probing `<base>.jpg` then `<base>.webp` — costs one 404 RTT
+  //   per cold load when the answer is `.webp`.
+  //
+  //   Rather than ask the user to remember running a CLI script, we
+  //   trigger the backfill transparently when they open the
+  //   appearance panel. The endpoint is admin-only, idempotent, and
+  //   no-op when nothing needs healing — so calling it on every
+  //   panel mount is cheap. Effect deps tied to the actual collection
+  //   shape so re-runs only happen when the data they would inspect
+  //   actually changed.
+  //
+  //   Failure mode: any error is swallowed. We never block the UI
+  //   on this; the user can still manage wallpapers normally even
+  //   if the backfill HTTP call fails.
+  const queryClient = useQueryClient();
+  // Fingerprint = entries that would be candidates for backfill.
+  // If none is missing posterUrl, the value collapses to '' and the
+  // effect's dependency stays stable across re-renders.
+  //
+  // Computed inline (no useMemo) because the React Compiler
+  // optimizes plain reads automatically and the lint rule
+  // `react-hooks/preserve-manual-memoization` rejects manual memo
+  // for derived values like this.
+  const collectionFingerprint = (data?.collection || [])
+    .filter((w) => !w.posterUrl && w.url)
+    .map((w) => w.id)
+    .join('|');
+
+  const lastHealedFingerprintRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!collectionFingerprint) return;
+    if (lastHealedFingerprintRef.current === collectionFingerprint) return;
+
+    let cancelled = false;
+    const controller = new AbortController();
+    lastHealedFingerprintRef.current = collectionFingerprint;
+
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/wallpaper-poster-backfill', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-csrf-token': csrfToken || '',
+          },
+          // No body — endpoint reads everything it needs from D1.
+          body: '{}',
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          // Non-200: log once and bail. Don't show user-facing error
+          // since this is a background self-heal, not an action they
+          // initiated.
+          console.warn(
+            `[WallpaperManager] poster backfill returned ${res.status}, skipping`
+          );
+          return;
+        }
+
+        const body = (await res.json().catch(() => null)) as {
+          success?: boolean;
+          result?: { backfilled: number };
+        } | null;
+
+        if (cancelled) return;
+        if (!body?.success) return;
+        const backfilled = body.result?.backfilled ?? 0;
+        if (backfilled === 0) return;
+
+        // Endpoint wrote new posterUrl values to D1. Refresh the
+        // about cache so the next render of any consumer (this
+        // panel, the public site after revalidation) sees the
+        // healed entries. We refetch instead of merging by hand
+        // because the endpoint did not return the full new
+        // AboutData snapshot.
+        const refreshRes = await fetch('/api/about?fresh=true', {
+          credentials: 'include',
+          cache: 'no-store',
+        });
+        if (!refreshRes.ok) return;
+        const refreshed = (await refreshRes.json()) as AboutData;
+        if (cancelled) return;
+
+        queryClient.setQueryData(ADMIN_QUERY_KEYS.about, refreshed);
+        await swrMutate('/api/about', refreshed, { revalidate: false });
+      } catch (e) {
+        // AbortError on unmount is expected — quietly ignore.
+        if ((e as { name?: string })?.name === 'AbortError') return;
+        console.warn('[WallpaperManager] poster backfill self-heal failed:', e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [collectionFingerprint, csrfToken, queryClient]);
 
   const handleFileDrop = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);

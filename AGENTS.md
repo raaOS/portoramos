@@ -199,7 +199,7 @@ os/
 | **Content CRUD**     | `about`, `experience`, `hard-skills`, `projects`, `testimonial`, `running-text`, `sticky-notes`, `gallery` |
 | **Chat / Messaging** | `chat`, `comments`, `contact`, `feedback`, `webhook`                                                       |
 | **AI**               | `ai`, `translate`                                                                                          |
-| **Admin**            | `admin`, `admin/storage-stats` (per-category D1↔R2 breakdown untuk panel Storage)                          |
+| **Admin**            | `admin`, `admin/storage-stats` (per-category D1↔R2 breakdown untuk panel Storage), `admin/wallpaper-poster-backfill` (self-heal posterUrl di D1) |
 | **Media**            | `media`, `upload`, `img`                                                                                   |
 | **System**           | `analytics`, `health`, `debug`, `empty`, `os`, `revalidate`, `utils`                                       |
 | **Data**             | `leads`, `metrics`, `settings`, `explorer`                                                                 |
@@ -687,7 +687,16 @@ key `<base>.(mp4|webm|mov)` yang dirujuk, mereka juga menganggap
 >   lalu probe kandidat berikutnya kalau yang pertama 404. Berarti
 >   entry era `.webp` tetap dapat poster, tapi pay 1 RTT 404 di
 >   cold path tiap render.
-> - **Permanent fix tersedia**: jalankan
+> - **Self-healing otomatis**: saat admin membuka panel
+>   "Appearance / Wallpaper" (`WallpaperManager`), komponen otomatis
+>   memanggil `POST /api/admin/wallpaper-poster-backfill` kalau
+>   ada entry yang belum punya `posterUrl`. Endpoint admin-only ini
+>   probe R2 untuk `<base>.jpg` lalu `<base>.webp`, dan tulis
+>   `posterUrl` ke D1 saat ketemu. Idempotent dan no-op kalau tidak
+>   ada yang perlu di-fix. Setelah self-heal sukses, query cache
+>   admin (React Query + SWR) di-refresh supaya UI langsung
+>   menampilkan poster yang sudah ter-backfill.
+> - **Permanent fix manual (alternatif CLI)**: jalankan
 >   `npx tsx scripts/cloudflare/backfill-wallpaper-poster-urls.ts --apply`
 >   sekali saja untuk backfill `posterUrl` ke D1. Setelah itu
 >   probe runtime tidak diperlukan lagi.
