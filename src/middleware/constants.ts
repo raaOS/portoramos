@@ -1,5 +1,27 @@
-export const protectedRoutes = ['/admin', '/api/upload'];
-export const publicRoutes = ['/admin/login'];
+// Protected routes — proxy menjalankan auth check + sliding-window
+// token refresh untuk request yang match prefix di sini.
+//
+// `/api/admin` ditambahkan supaya endpoint admin (termasuk
+// `/api/admin/verify` yang dipakai BackgroundUploadContext sebagai
+// heartbeat) lewat proxy auth pipeline. Tanpa ini, sliding refresh
+// tidak akan trigger pada heartbeat ping → session admin bisa expired
+// di tengah upload wallpaper besar.
+//
+// Catatan: route handler `/api/admin/*` umumnya sudah memanggil
+// `validateAdminRequest`/`checkAdminAuth` sendiri. Adding ke proxy
+// adalah extra layer (defense-in-depth) — kalau proxy reject, handler
+// tidak kepanggil; kalau proxy approve, handler tetap re-validate.
+export const protectedRoutes = ['/admin', '/api/admin', '/api/upload'];
+
+// Public routes — explicitly excluded dari auth check meski match
+// `protectedRoutes`. Login endpoints harus di sini supaya user yang
+// belum login bisa pernah login. Logout juga public supaya user dengan
+// session expired tetap bisa clear cookie sisa.
+export const publicRoutes = [
+  '/admin/login',
+  '/api/admin/login',
+  '/api/admin/logout',
+];
 
 // Note: RATE_LIMIT_* previously defined here was removed. Rate limiting is
 // enforced inside mutating handlers via `enforceRequestRateLimit` /

@@ -1,6 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
+import { jwtVerify, SignJWT } from 'jose';
 import { protectedRoutes, publicRoutes } from './constants';
+
+// Sliding window refresh: kalau sisa umur token < threshold, set ulang cookie
+// dengan TTL fresh. Tujuannya supaya admin yang aktif (mis. lagi upload
+// wallpaper besar yang compress 5-15 menit) tidak ke-logout di tengah jalan.
+// Idle 2 jam tetap expire — sesuai durability sebelumnya.
+const TOKEN_TTL_SECONDS = 2 * 60 * 60; // 2 jam, match getAdminToken
+const REFRESH_THRESHOLD_SECONDS = 30 * 60; // refresh kalau sisa < 30 menit
+
+async function maybeRefreshAdminToken(
+  payload: { exp?: number },
+  response: NextResponse
+): Promise<void> {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || !payload.exp) return;
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const remaining = payload.exp - nowSec;
+  if (remaining > REFRESH_THRESHOLD_SECONDS) return;
+
+  // Token mau habis — issue ulang dengan klaim & TTL identik dengan
+  // getAdminToken di lib/auth.ts. Pakai jose karena proxy/middleware
+  // jalan di Edge runtime; jsonwebtoken (Node-only) tidak bisa dipakai
+  // di sini.
+  try {
+    const secretKey = new TextEncoder().encode(secret);
+    const fresh = await new SignJWT({ sub: 'admin', role: 'admin' })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt(nowSec)
+      .setIssuer('portfolio-admin')
+      .setAudience('admin-panel')
+      .setExpirationTime(nowSec + TOKEN_TTL_SECONDS)
+      .sign(secretKey);
+
+    response.cookies.set('admin_token', fresh, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: TOKEN_TTL_SECONDS,
+    });
+  } catch (error) {
+    // Refresh failure non-fatal — token lama masih valid sampai exp.
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[AUTH-DEBUG] Token refresh failed (non-fatal):', error);
+    }
+  }
+}
 
 export async function checkAdminAuth(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -29,6 +76,7 @@ export async function checkAdminAuth(request: NextRequest) {
     }
 
     let isValid = false;
+    let verifiedPayload: { exp?: number } | null = null;
     if (token) {
       try {
         const secret = process.env.JWT_SECRET;
@@ -40,6 +88,7 @@ export async function checkAdminAuth(request: NextRequest) {
           });
           if (payload && payload.sub === 'admin') {
             isValid = true;
+            verifiedPayload = payload as { exp?: number };
           }
         } else {
           console.error('[AUTH-DEBUG] JWT_SECRET is not configured in environment variables');
@@ -63,6 +112,18 @@ export async function checkAdminAuth(request: NextRequest) {
         };
       }
       return { authenticated: false, response: NextResponse.redirect(loginUrl) };
+    }
+
+    // Token valid — sliding refresh kalau mau habis. Caller akan menerima
+    // response dengan cookie baru kalau di-refresh; kalau tidak, returnkan
+    // null supaya proxy lanjut dengan NextResponse.next() biasa.
+    if (verifiedPayload) {
+      const refreshResponse = NextResponse.next();
+      await maybeRefreshAdminToken(verifiedPayload, refreshResponse);
+      const refreshedCookie = refreshResponse.cookies.get('admin_token');
+      if (refreshedCookie) {
+        return { authenticated: true, refreshResponse };
+      }
     }
   }
 

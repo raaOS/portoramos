@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { mutate as mutateSWR } from 'swr';
 import { useDataStatus } from '../hooks/useDataStatus';
-import { DatabasePopout, NetworkPopout, WatchdogPopout, SettingsPopout } from './AdminStatusPopouts';
+import { DatabasePopout, NetworkPopout, WatchdogPopout, SettingsPopout, UploadsPopout } from './AdminStatusPopouts';
 import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import { ActivityLogModal } from '../components/ActivityLogModal';
 import {
@@ -24,7 +24,7 @@ interface AdminMenuBarProps {
   onLogout: () => Promise<void>;
 }
 
-type OpenPopout = 'db' | 'net' | 'settings' | 'watchdog' | null;
+type OpenPopout = 'db' | 'net' | 'settings' | 'watchdog' | 'uploads' | null;
 
 type ServerCacheStep = {
   name: string;
@@ -112,6 +112,7 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
   const dbAnchorRef = useRef<HTMLButtonElement | null>(null);
   const netAnchorRef = useRef<HTMLButtonElement | null>(null);
   const watchdogAnchorRef = useRef<HTMLButtonElement | null>(null);
+  const uploadsAnchorRef = useRef<HTMLButtonElement | null>(null);
   const settingsAnchorRef = useRef<HTMLButtonElement | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showActivityLog, setShowActivityLog] = useState(false);
@@ -126,11 +127,21 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
     if (typeof navigator === 'undefined') return true;
     return navigator.onLine;
   });
-  const { hasActiveUploads, totalProgress, tasks } = useBackgroundUpload();
+  const { hasActiveUploads, totalProgress, tasks, removeTask } = useBackgroundUpload();
   const totalUploadCount = tasks.length;
   const completedUploadCount = tasks.filter((t) => t.status === 'complete').length;
   const erroredUploadCount = tasks.filter((t) => t.status === 'error').length;
   const inFlightUploadProgress = Math.round(totalProgress);
+  // Icon color state: prioritas active > complete-recent > idle.
+  // Hijau muncul saat ada task complete yang belum di-auto-remove (3 detik
+  // window per context), kasih admin sinyal "selesai" tanpa harus buka popout.
+  const hasRecentlyCompleted =
+    !hasActiveUploads && tasks.some((t) => t.status === 'complete');
+  const cloudIconColorClass = hasActiveUploads
+    ? 'text-blue-500'
+    : hasRecentlyCompleted
+      ? 'text-emerald-500'
+      : 'text-zinc-400';
   // Tooltip multi-line: list semua file dengan status individual.
   // Format: "filename — status (xx%)" plus statusDetail kalau ada
   // (mis. "Compressing 35% - ~12s remaining" dari WASM ffmpeg).
@@ -475,20 +486,33 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
           <Bot className={`h-3.5 w-3.5 transition-colors ${watchdogColorClass}`} />
         </button>
 
-        {hasActiveUploads && (
-          <button
-            className="admin-menubar-status-btn text-blue-500 cursor-default"
-            title={uploadTooltip}
-            aria-label={`Uploads ${completedUploadCount} of ${totalUploadCount} complete${
-              erroredUploadCount > 0 ? `, ${erroredUploadCount} failed` : ''
-            }, ${inFlightUploadProgress} percent average`}
-          >
-            <CloudUpload className="h-3.5 w-3.5 animate-pulse" />
-            <span className="ml-1 text-[10px] font-mono">
-              {completedUploadCount}/{totalUploadCount} · {inFlightUploadProgress}%
-            </span>
-          </button>
-        )}
+        <button
+          ref={uploadsAnchorRef}
+          type="button"
+          onClick={() => togglePopout('uploads')}
+          className={`admin-menubar-status-btn relative ${cloudIconColorClass} ${
+            openPopout === 'uploads' ? 'admin-menubar-status-btn-active' : ''
+          }`}
+          title={uploadTooltip || 'Background uploads — tidak ada task aktif'}
+          aria-label={
+            tasks.length === 0
+              ? 'Background uploads, no active tasks. Click to view panel.'
+              : `Uploads ${completedUploadCount} of ${totalUploadCount} complete${
+                  erroredUploadCount > 0 ? `, ${erroredUploadCount} failed` : ''
+                }, ${inFlightUploadProgress} percent average. Click to view details.`
+          }
+          aria-expanded={openPopout === 'uploads'}
+        >
+          <CloudUpload
+            className={`h-3.5 w-3.5 ${hasActiveUploads ? 'animate-pulse' : ''}`}
+          />
+          {erroredUploadCount > 0 && (
+            <span
+              className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-rose-500 ring-1 ring-white"
+              aria-hidden="true"
+            />
+          )}
+        </button>
 
         <span className="admin-menubar-time">{time}</span>
 
@@ -549,6 +573,14 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
         status={watchdogStatus}
         onRefresh={refreshWatchdogStatus}
         isRefreshing={isRefreshingWatchdog}
+      />
+      <UploadsPopout
+        isOpen={openPopout === 'uploads'}
+        onClose={() => setOpenPopout(null)}
+        anchorRef={uploadsAnchorRef}
+        tasks={tasks}
+        totalProgress={totalProgress}
+        onRemoveTask={removeTask}
       />
 
       <SettingsPopout

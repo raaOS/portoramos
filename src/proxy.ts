@@ -31,6 +31,14 @@ export async function proxy(request: NextRequest) {
     return authResult.response;
   }
 
+  // 1b. Sliding-window token refresh: kalau auth memutuskan token harus
+  // di-refresh (sisa < 30 menit), kembalikan response dengan Set-Cookie
+  // baru. Tanpa ini, admin yang lagi upload wallpaper besar (compress
+  // 5-15 menit) bisa ke-logout di tengah jalan.
+  if (authResult.refreshResponse) {
+    return addSecurityHeaders(authResult.refreshResponse);
+  }
+
   // 2. Route-level persistent rate limiting is enforced inside mutating handlers.
   // Keep proxy focused on auth, CSRF, and security headers so behavior stays consistent in serverless.
   const response = NextResponse.next();
