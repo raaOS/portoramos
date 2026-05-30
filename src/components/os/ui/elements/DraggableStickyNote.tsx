@@ -2,6 +2,7 @@ import React from 'react';
 import { m, useDragControls } from 'motion/react';
 import StickyNoteItem, { NoteData } from './StickyNoteItem';
 import { useUnifiedZIndexActions, useZIndexFor } from '../../context/UnifiedZIndexContext';
+import { useJellyDrag } from '../../hooks/useJellyDrag';
 
 interface DraggableStickyNoteProps {
   note: NoteData;
@@ -42,6 +43,14 @@ export const DraggableStickyNote = ({
   const [dynamicSize, setDynamicSize] = React.useState({
     width: note.width || 280,
     height: note.height || 280,
+  });
+
+  // ── Jelly Physics ──
+  // Single source of truth lewat useJellyDrag (shared dengan Window). Disable kalau
+  // note pinned (drag disabled juga) atau resizing (cegah race jelly state vs resize).
+  const jellyEnabled = !note.isPinned && !isResizing;
+  const { attachRef, onDragStart, onDrag, onDragEnd, transformTemplate } = useJellyDrag({
+    enabled: jellyEnabled,
   });
 
   // Resize Handlers Refs
@@ -166,11 +175,10 @@ export const DraggableStickyNote = ({
     }
   }
 
-  // Unified bring to front handler
+  // Unified bring to front handler. Origin transform '50% 50%' (sama dengan Window) —
+  // squash & stretch dengan skew sudah memberi sense of "tarikan" tanpa anchor di grab point.
   const handleBringToFront = React.useCallback(() => {
-    // Register this note with unified z-index system
     bringToFront(note.id, 'stickyNote');
-    // Also call the parent's handler for any side effects
     bringToFrontNote(note.id);
   }, [note.id, bringToFront, bringToFrontNote]);
 
@@ -182,10 +190,12 @@ export const DraggableStickyNote = ({
   return (
     <m.div
       key={note.id}
-      drag={!note.isPinned && !isResizing}
+      ref={attachRef}
+      drag={jellyEnabled}
       dragControls={dragControls}
       dragListener={false}
       dragMomentum={false}
+      dragElastic={0}
       data-lenis-prevent
       data-testid="sticky-note"
       animate={note.isDeleted ? { opacity: 0, scale: 0.8 } : 'show'}
@@ -210,8 +220,13 @@ export const DraggableStickyNote = ({
         },
       }}
       transition={{ type: 'spring' as const }}
-      onDragStart={handleBringToFront}
-      onDragEnd={(e, info) => {
+      onDragStart={(e, info) => {
+        handleBringToFront();
+        onDragStart(e, info);
+      }}
+      onDrag={onDrag}
+      onDragEnd={(_, info) => {
+        onDragEnd();
         const newX = (note.x || 100) + info.offset.x;
         const newY = (note.y || 100) + info.offset.y;
         updateNote(note.id, { x: newX, y: newY });
@@ -219,10 +234,12 @@ export const DraggableStickyNote = ({
       onPointerDown={handleBringToFront}
       layout={false} // CRITICAL GPU OFF-LOAD: Disable automatic layout reflow animations
       className="pointer-events-auto absolute will-change-transform"
+      transformTemplate={transformTemplate}
       style={{
         left: 0,
         top: 0,
         zIndex: finalZIndex,
+        transformOrigin: '50% 50%',
       }}
     >
       <StickyNoteItem
