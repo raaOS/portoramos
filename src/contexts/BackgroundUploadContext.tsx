@@ -151,6 +151,63 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
     ? activeTasks.reduce((sum, t) => sum + t.progress, 0) / activeTasks.length
     : 0;
 
+  // ── Session keep-alive heartbeat ────────────────────────────────
+  // JWT TTL admin = 2 jam (lihat lib/auth.ts). Compress wallpaper 4K
+  // bisa makan 5-15 menit, plus admin sering multitask di tab lain
+  // selama proses jalan. Tanpa heartbeat, sliding refresh di proxy
+  // tidak akan trigger (tab idle = no requests = no refresh) dan
+  // session expired di tengah upload → redirect ke login → context
+  // reload → progress hilang.
+  //
+  // Solusi: ping `/api/admin/verify` setiap 5 menit selama ada task
+  // aktif. Endpoint ini ringan (cuma cek token), dan setiap call
+  // melewati proxy yang akan refresh token kalau sisa < 30 menit.
+  useEffect(() => {
+    if (!hasActiveUploads) return;
+
+    const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
+
+    const ping = () => {
+      fetch('/api/admin/verify', {
+        credentials: 'include',
+        cache: 'no-store',
+        // Best-effort — kalau gagal (network blip, server error),
+        // upload tetap lanjut. Heartbeat bukan critical path.
+      }).catch((err) => {
+        console.warn('[BackgroundUpload] session heartbeat failed:', err);
+      });
+    };
+
+    // Ping sekali langsung supaya kalau token sudah hampir habis di
+    // saat upload dimulai, refresh kicks-in segera (tidak nunggu 5
+    // menit pertama).
+    ping();
+    const intervalId = setInterval(ping, HEARTBEAT_INTERVAL_MS);
+    return () => clearInterval(intervalId);
+  }, [hasActiveUploads]);
+
+  // ── Unload guard ────────────────────────────────────────────────
+  // Browser dialog "Leave site?" saat user mau close tab / navigate
+  // away saat upload masih jalan. Tidak bisa cegah sepenuhnya (browser
+  // modern hanya tampilkan generic message), tapi cukup untuk warning
+  // ke admin sebelum kehilangan progress.
+  useEffect(() => {
+    if (!hasActiveUploads) return;
+
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Modern browsers ignore custom message dan tampilkan generic prompt
+      // mereka sendiri. Tapi `returnValue` HARUS truthy non-empty string;
+      // empty string bisa diperlakukan sebagai "no value" → dialog tidak
+      // muncul di sebagian browser. Pesan ini tidak akan kelihatan ke
+      // user, hanya untuk trigger dialog.
+      e.returnValue = 'Upload sedang berjalan';
+      return 'Upload sedang berjalan';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasActiveUploads]);
+
   const enqueueWallpaperUpload = useCallback(
     async (file: File, options?: { profile?: WallpaperUploadProfile }) => {
       const profile = options?.profile ?? DEFAULT_WALLPAPER_PROFILE;
@@ -170,9 +227,158 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
 
       try {
         const isVideo = file.type.startsWith('video/');
-        if (!isVideo) {
-          throw new Error('Only video wallpapers are supported via background upload at this time.');
+        const isImage = file.type.startsWith('image/');
+
+        if (!isVideo && !isImage) {
+          throw new Error(
+            `File type ${file.type || 'unknown'} tidak didukung. ` +
+              `Pakai video (mp4/webm) atau image (jpg/png/webp/avif/heic/heif).`
+          );
         }
+
+        // ── IMAGE PATH ────────────────────────────────────────────
+        // Image jauh lebih simpel dari video:
+        //   - Tidak perlu WASM ffmpeg compress (server `/api/upload`
+        //     sudah punya sharp pipeline yang resize ke max 3840px +
+        //     transcode ke WebP q82). Output 1080p tipikal 200-400 KB.
+        //   - Tidak perlu poster side-car (image-nya sendiri jadi
+        //     "poster"-nya).
+        //   - Tidak perlu direct-to-R2 presign (image <30 MB fit di
+        //     Vercel function body limit, lewat /api/upload langsung).
+        //   - Tidak perlu serialize encode chain (sharp di server
+        //     paralel-friendly).
+        //
+        // Hemat bandwidth visitor: WebP q82 ~30-50% lebih kecil dari
+        // JPEG q85, dengan quality visually identical.
+        if (isImage) {
+          updateTask(taskId, { status: 'uploading', progress: 5 });
+
+          // Upload via FormData. Tidak pakai `skipImageOptimization`
+          // → server transcode ke WebP + resize ke 4K-ready dimension.
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const token = getWritableCsrfToken(csrfToken);
+          const uploadRes = await fetch(
+            '/api/upload?folder=wallpapers',
+            {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'x-csrf-token': token },
+              body: formData,
+            }
+          );
+
+          if (!uploadRes.ok) {
+            const errBody = await uploadRes
+              .json()
+              .catch(() => ({}) as { error?: string });
+            throw new Error(
+              errBody.error || `Image upload gagal (${uploadRes.status})`
+            );
+          }
+
+          const uploadBody = (await uploadRes.json()) as {
+            url?: string;
+            error?: string;
+          };
+          if (!uploadBody.url) {
+            throw new Error('Image upload returned tidak ada URL');
+          }
+
+          updateTask(taskId, { status: 'finalizing', progress: 90 });
+
+          // Finalize: append ke wallpaperConfig.collection lewat
+          // endpoint atomic yang sama dengan video flow. Tanpa
+          // posterUrl karena image-nya sendiri yang ditampilkan
+          // langsung di DesktopBackground (`isVideoSource()` return
+          // false → image render path).
+          const previousChain = finalizeChainRef.current;
+          const finalizePromise = previousChain
+            .catch((prevErr) => {
+              if (prevErr) {
+                console.warn(
+                  '[BackgroundUpload] previous finalize in chain failed, continuing:',
+                  prevErr
+                );
+              }
+              return undefined;
+            })
+            .then(async () => {
+              const newWallpaper = {
+                id: `w-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                url: uploadBody.url!,
+                name: 'Custom Wallpaper',
+                // posterUrl SENGAJA tidak diisi — image bukan video,
+                // tidak butuh poster sidecar.
+              };
+
+              const updateRes = await fetch(
+                '/api/about/wallpaper-collection',
+                {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': token,
+                  },
+                  body: JSON.stringify({
+                    action: 'add',
+                    wallpaper: newWallpaper,
+                    makeActive: true,
+                  }),
+                }
+              );
+
+              if (!updateRes.ok) {
+                const errBody = await updateRes
+                  .json()
+                  .catch(() => ({}) as { error?: string; details?: string });
+                throw new Error(
+                  errBody.error ||
+                    errBody.details ||
+                    `Failed to save wallpaper config (${updateRes.status})`
+                );
+              }
+
+              const updateBody = (await updateRes
+                .json()
+                .catch(() => null)) as
+                | { success?: boolean; data?: AboutData }
+                | null;
+
+              if (updateBody?.data) {
+                queryClient.setQueryData(
+                  ADMIN_QUERY_KEYS.about,
+                  updateBody.data
+                );
+                await mutate('/api/about', updateBody.data, {
+                  revalidate: false,
+                });
+              } else {
+                await queryClient.invalidateQueries({
+                  queryKey: ADMIN_QUERY_KEYS.about,
+                });
+                await mutate('/api/about');
+              }
+            });
+
+          finalizeChainRef.current = finalizePromise.catch((err) => {
+            console.warn(
+              '[BackgroundUpload] finalize chain link rejected:',
+              err
+            );
+            return undefined;
+          });
+          await finalizePromise;
+
+          updateTask(taskId, { status: 'complete', progress: 100 });
+          showSuccess(`Wallpaper image "${file.name}" berhasil diupload!`);
+          setTimeout(() => removeTask(taskId), 3000);
+          return;
+        }
+
+        // ── VIDEO PATH (existing flow) ────────────────────────────
 
         // ── 1. Decide whether to client-compress ─────────────────────
         // Baca dimensi sekali dari File (gratis, byte-range metadata).

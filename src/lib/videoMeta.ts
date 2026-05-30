@@ -6,10 +6,25 @@
  * Berguna untuk: validasi resolusi minimum sebelum admin commit upload
  * (mis. wallpaper minta minimal 1920x1080).
  */
+/**
+ * Dimensi video lengkap (width × height + durasi). Diisi oleh
+ * `readVideoDimensions`.
+ */
 export interface VideoDimensions {
   width: number;
   height: number;
   durationSeconds: number;
+}
+
+/**
+ * Dimensi 2D minimal — cukup untuk validasi resolusi (`checkMinResolution`).
+ * Berlaku untuk video DAN image. Image dimensi diambil via
+ * `detectImageDimensions` di `lib/media.ts`, video via `readVideoDimensions`
+ * di file ini.
+ */
+export interface MediaDimensions {
+  width: number;
+  height: number;
 }
 
 const METADATA_TIMEOUT_MS = 8000;
@@ -71,16 +86,17 @@ export interface MinResolutionCheck {
 }
 
 /**
- * Cek apakah video memenuhi resolusi minimum. Untuk wallpaper desktop yang
- * tampil fullscreen, target minimum 1920x1080 supaya `object-cover` di layar
- * 1080p+ tidak harus upsample (yang bikin pecah).
+ * Cek apakah media memenuhi resolusi minimum. Berlaku untuk video maupun
+ * image. Untuk wallpaper desktop yang tampil fullscreen, target minimum
+ * 1920x1080 supaya `object-cover` di layar 1080p+ tidak harus upsample
+ * (yang bikin pecah).
  *
- * Catatan: video portrait juga oke selama dimensi terbesar >= minWidth dan
+ * Catatan: portrait juga oke selama dimensi terbesar >= minWidth dan
  * lainnya >= minHeight. Tapi karena wallpaper desktop landscape-first, kita
  * enforce orientasi standar.
  */
 export function checkMinResolution(
-  dim: VideoDimensions,
+  dim: MediaDimensions,
   minWidth = 1920,
   minHeight = 1080
 ): MinResolutionCheck {

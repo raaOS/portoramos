@@ -8,7 +8,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { ADMIN_QUERY_KEYS } from '@/app/admin/lib/adminQueries';
 import { mutate as swrMutate } from 'swr';
-import { extractStoragePath, isVideoLink } from '@/lib/media';
+import { extractStoragePath, isVideoLink, detectImageDimensions } from '@/lib/media';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import { readVideoDimensions, checkMinResolution } from '@/lib/videoMeta';
 
@@ -313,38 +313,111 @@ export default function WallpaperManager({
    * Image: tidak divalidasi di sini karena pipeline upload sudah
    * re-encode dan resize via sharp.
    */
+  /**
+   * Validate semua file (video & image) sebelum di-enqueue.
+   *
+   * Video:
+   *   - Size ≤ 60 MB (ceiling pipeline)
+   *   - Min 1920×1080 (FullHD baseline)
+   *
+   * Image:
+   *   - Size ≤ 30 MB (ceiling /api/upload route)
+   *   - Min 1920×1080 (sama dengan video supaya tidak pecah saat
+   *     fullscreen di display HD/4K)
+   *   - Server akan auto resize ke max 3840px + transcode ke WebP q82
+   *     supaya bandwidth visitor tetap hemat.
+   */
   const validateWallpaperFiles = useCallback(
     async (files: File[]): Promise<string | null> => {
       const targetLabel = uploadProfile === 'ultra' ? '2160p (~30-50 MB)' : '1440p (~10-20 MB)';
       for (const file of files) {
-        if (!file.type.startsWith('video/')) continue;
+        const isVideo = file.type.startsWith('video/');
+        const isImage = file.type.startsWith('image/');
 
-        // 1) Size ceiling — fail fast sebelum metadata read.
-        if (file.size > MAX_WALLPAPER_FILE_SIZE) {
+        if (!isVideo && !isImage) {
           return (
-            `Video "${file.name}" berukuran ${(file.size / 1024 / 1024).toFixed(1)} MB, ` +
-            `melewati batas ${MAX_WALLPAPER_FILE_SIZE / 1024 / 1024} MB. ` +
-            `Export ulang ke ${targetLabel} dulu, lalu upload lagi.`
+            `File "${file.name}" tipe-nya ${file.type || 'unknown'}. ` +
+            `Wallpaper hanya mendukung video (mp4/webm) atau image ` +
+            `(jpg/png/webp/avif/heic/heif).`
           );
         }
 
-        // 2) Resolusi minimum.
-        try {
-          const dim = await readVideoDimensions(file);
-          const check = checkMinResolution(dim, 1920, 1080);
-          if (!check.ok) {
+        if (isVideo) {
+          // 1) Size ceiling video — fail fast sebelum metadata read.
+          if (file.size > MAX_WALLPAPER_FILE_SIZE) {
             return (
-              `Video "${file.name}" beresolusi ${check.width}x${check.height}. ` +
-              `Wallpaper video minimal 1920x1080 supaya tampilan tidak pecah ` +
-              `saat di-fullscreen. Silakan upload versi resolusi lebih tinggi.`
+              `Video "${file.name}" berukuran ${(file.size / 1024 / 1024).toFixed(1)} MB, ` +
+              `melewati batas ${MAX_WALLPAPER_FILE_SIZE / 1024 / 1024} MB. ` +
+              `Export ulang ke ${targetLabel} dulu, lalu upload lagi.`
             );
           }
-        } catch (err) {
-          console.error('validateWallpaperFiles: gagal baca metadata', err);
-          return (
-            `Tidak bisa membaca metadata video "${file.name}". ` +
-            `Pastikan file tidak rusak dan formatnya MP4/WebM.`
-          );
+
+          // 2) Resolusi minimum video.
+          try {
+            const dim = await readVideoDimensions(file);
+            const check = checkMinResolution(dim, 1920, 1080);
+            if (!check.ok) {
+              return (
+                `Video "${file.name}" beresolusi ${check.width}x${check.height}. ` +
+                `Wallpaper video minimal 1920x1080 supaya tampilan tidak pecah ` +
+                `saat di-fullscreen. Silakan upload versi resolusi lebih tinggi.`
+              );
+            }
+          } catch (err) {
+            console.error('validateWallpaperFiles: gagal baca metadata video', err);
+            return (
+              `Tidak bisa membaca metadata video "${file.name}". ` +
+              `Pastikan file tidak rusak dan formatnya MP4/WebM.`
+            );
+          }
+        }
+
+        if (isImage) {
+          // 1) Size ceiling image — match server `/api/upload` MAX_IMAGE_BYTES.
+          const MAX_IMAGE_SIZE = 30 * 1024 * 1024;
+          if (file.size > MAX_IMAGE_SIZE) {
+            return (
+              `Image "${file.name}" berukuran ${(file.size / 1024 / 1024).toFixed(1)} MB, ` +
+              `melewati batas ${MAX_IMAGE_SIZE / 1024 / 1024} MB. ` +
+              `Compress dulu (JPEG quality 85% biasanya cukup) lalu upload lagi.`
+            );
+          }
+
+          // 2) Resolusi minimum image — SKIP untuk HEIC/HEIF.
+          //
+          // Browser non-Safari (Chrome/Firefox di Windows/Linux) tidak
+          // decode HEIC native, jadi `<img>` validation akan gagal
+          // walau file-nya valid. Server-side sharp bisa decode HEIC/
+          // HEIF; defer validation ke server, dan kalau resolusinya
+          // di bawah minimum, server akan tolak via response 413/400
+          // (saat sharp pipeline menghasilkan dimensi sub-1080).
+          //
+          // Untuk format yang browser support langsung (JPEG/PNG/WebP/
+          // AVIF di browser modern), validate di client supaya feedback
+          // instant.
+          const isHeic = file.type === 'image/heic' || file.type === 'image/heif';
+          if (!isHeic) {
+            const objectUrl = URL.createObjectURL(file);
+            try {
+              const dim = await detectImageDimensions(objectUrl);
+              const check = checkMinResolution(dim, 1920, 1080);
+              if (!check.ok) {
+                return (
+                  `Image "${file.name}" beresolusi ${check.width}x${check.height}. ` +
+                  `Wallpaper image minimal 1920x1080 supaya tampilan tidak pecah ` +
+                  `saat di-fullscreen. Silakan upload versi resolusi lebih tinggi.`
+                );
+              }
+            } catch (err) {
+              console.error('validateWallpaperFiles: gagal baca metadata image', err);
+              return (
+                `Tidak bisa membaca metadata image "${file.name}". ` +
+                `Pastikan file tidak rusak dan formatnya JPG/PNG/WebP/AVIF/HEIC/HEIF.`
+              );
+            } finally {
+              URL.revokeObjectURL(objectUrl);
+            }
+          }
         }
       }
       return null;
@@ -661,7 +734,7 @@ export default function WallpaperManager({
                   type="file"
                   ref={fileInputRef}
                   className="hidden"
-                  accept="video/mp4,video/webm"
+                  accept="video/mp4,video/webm,image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif"
                   multiple
                   onChange={(e) => e.target.files && handleFileDrop(e.target.files)}
                 />

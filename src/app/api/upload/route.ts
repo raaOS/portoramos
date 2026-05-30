@@ -39,6 +39,15 @@ const IMAGE_TRANSCODE_TYPES = new Set([
 ]);
 const IMAGE_MAX_DIMENSION = 3840; // 4K-class max edge; wallpapers downscale, smaller pass through.
 const IMAGE_OUTPUT_QUALITY = 82;
+// Wallpaper-specific tuning. Konteks: wallpaper di-render fullscreen via
+// `object-cover` + scale 1.08 (breathing). Untuk portfolio scale (250
+// visitor/bulan), 4K output (1-2 MB per image) overkill — sebagian besar
+// visitor di 1080p/1440p, dan 4K monitor < 5% market share. 2560px cap
+// (1440p/QHD-ready) + q80 menghasilkan 200-500 KB per image → 4-5× lebih
+// hemat bandwidth, dengan slight upscale (+50%) di 4K monitor yang
+// hampir tidak terlihat untuk static image wallpaper.
+const WALLPAPER_IMAGE_MAX_DIMENSION = 2560;
+const WALLPAPER_IMAGE_OUTPUT_QUALITY = 80;
 
 function sanitizeFilename(input: string | null): string | null {
   if (!input) return null;
@@ -69,6 +78,75 @@ interface OptimizedImageResult {
 }
 
 /**
+ * Custom error thrown when wallpaper image fails server-side dimension
+ * validation. Caller di POST handler tangkap ini dan return 413
+ * supaya pesan error sampai ke admin UI dengan jelas.
+ */
+class WallpaperImageTooSmallError extends Error {
+  constructor(
+    public readonly width: number,
+    public readonly height: number,
+    public readonly minWidth: number,
+    public readonly minHeight: number
+  ) {
+    super(
+      `Wallpaper image ${width}x${height} di bawah minimum ${minWidth}x${minHeight}. ` +
+        `Upload versi resolusi lebih tinggi.`
+    );
+    this.name = 'WallpaperImageTooSmallError';
+  }
+}
+
+/**
+ * Validate dimensi image untuk wallpaper SEBELUM transcode. Sharp
+ * `withoutEnlargement: true` artinya sub-1080p source tetap kecil di
+ * output → wallpaper akan pecah saat fullscreen. Reject di sini dengan
+ * pesan yang jelas.
+ *
+ * Dipanggil hanya untuk wallpaper folder + format yang sharp bisa decode.
+ * Format animated/SVG tidak melewati pipeline transcode jadi tidak
+ * butuh validation ini.
+ */
+async function assertWallpaperImageDimensions(
+  inputBuffer: Buffer,
+  minWidth = 1920,
+  minHeight = 1080
+): Promise<void> {
+  const { default: sharp } = await import('sharp');
+  const metadata = await sharp(inputBuffer, { failOn: 'none' }).metadata();
+
+  // EXIF rotation: kalau image punya orientation 5/6/7/8, sharp swap
+  // width/height saat .rotate() tapi metadata report dimensi pre-rotation.
+  // Hitung effective dimensions (post-rotate) supaya validation cocok
+  // dengan yang akan ditampilkan visitor.
+  const orientation = metadata.orientation ?? 1;
+  const isRotated = orientation >= 5 && orientation <= 8;
+  const effectiveWidth = isRotated
+    ? (metadata.height ?? 0)
+    : (metadata.width ?? 0);
+  const effectiveHeight = isRotated
+    ? (metadata.width ?? 0)
+    : (metadata.height ?? 0);
+
+  if (!effectiveWidth || !effectiveHeight) {
+    // Sharp tidak bisa baca dimensi → biarkan optimizeImageBuffer
+    // yang gagal nanti dengan pesan generic. Tidak throw di sini
+    // supaya tidak block format yang sharp metadata mungkin tidak
+    // dukung tapi pipeline-nya bisa.
+    return;
+  }
+
+  if (effectiveWidth < minWidth || effectiveHeight < minHeight) {
+    throw new WallpaperImageTooSmallError(
+      effectiveWidth,
+      effectiveHeight,
+      minWidth,
+      minHeight
+    );
+  }
+}
+
+/**
  * Compresses an image buffer to WebP using sharp.
  *
  * Returns the compressed buffer when smaller than the original; otherwise
@@ -78,19 +156,25 @@ interface OptimizedImageResult {
  */
 async function optimizeImageBuffer(
   inputBuffer: Buffer,
-  inputType: string
+  inputType: string,
+  options: { isWallpaper?: boolean } = {}
 ): Promise<OptimizedImageResult> {
-  const { default: sharp } = await import('sharp');
+  const { default: sharp } = await import('sharp');  const maxDimension = options.isWallpaper
+    ? WALLPAPER_IMAGE_MAX_DIMENSION
+    : IMAGE_MAX_DIMENSION;
+  const quality = options.isWallpaper
+    ? WALLPAPER_IMAGE_OUTPUT_QUALITY
+    : IMAGE_OUTPUT_QUALITY;
 
   const pipeline = sharp(inputBuffer, { failOn: 'none' })
     .rotate() // Honor EXIF orientation, then strip metadata implicitly.
     .resize({
-      width: IMAGE_MAX_DIMENSION,
-      height: IMAGE_MAX_DIMENSION,
+      width: maxDimension,
+      height: maxDimension,
       fit: 'inside',
       withoutEnlargement: true,
     })
-    .webp({ quality: IMAGE_OUTPUT_QUALITY, effort: 4 });
+    .webp({ quality, effort: 4 });
 
   const { data, info } = await pipeline.toBuffer({ resolveWithObject: true });
 
@@ -268,6 +352,31 @@ export async function POST(req: NextRequest) {
     const requestedProfile = searchParams.get('profile');
     const isWallpaperFolder = folderParam === 'wallpapers';
 
+    // Wallpaper-specific format restrictions.
+    //
+    // GIF tidak boleh untuk wallpaper desktop:
+    //   - Animated GIF di-loop terus → distracting saat user kerja
+    //     (window/dock di atas wallpaper). UX sangat buruk dan tidak
+    //     bisa di-pause user.
+    //   - File size GIF jauh lebih besar dari WebP/MP4 untuk content
+    //     animasi serupa → ngikis bandwidth tanpa benefit.
+    //   - Kalau admin mau wallpaper bergerak, jalur yang tepat adalah
+    //     video (mp4/webm) yang sudah punya pipeline compress + poster.
+    //
+    // SVG juga di-reject di sini supaya konsisten — wallpaper desktop
+    // bukan use case untuk vector logo/icon.
+    if (isWallpaperFolder && (file.type === 'image/gif' || file.type === 'image/svg+xml')) {
+      return NextResponse.json(
+        {
+          error:
+            `Format ${file.type} tidak didukung untuk wallpaper desktop. ` +
+            `Pakai JPG/PNG/WebP/AVIF/HEIC/HEIF untuk static image, ` +
+            `atau MP4/WebM untuk animated wallpaper.`,
+        },
+        { status: 415 }
+      );
+    }
+
     // FIXED (BUG-010): Sanitize custom filename
     const customFilename = sanitizeFilename(rawCustomFilename);
     if (rawCustomFilename && !customFilename) {
@@ -293,7 +402,18 @@ export async function POST(req: NextRequest) {
     let optimizedExtensionOverride: string | null = null;
 
     if (isImageUpload && IMAGE_TRANSCODE_TYPES.has(file.type) && !skipImageOptimization) {
-      const optimized = await optimizeImageBuffer(originalBuffer, file.type);
+      // Wallpaper: enforce min 1920x1080 sebelum transcode. Sharp
+      // resize `withoutEnlargement: true` tidak akan upscale sub-1080p
+      // source, jadi output akan pecah di fullscreen. Reject di sini
+      // dengan WallpaperImageTooSmallError yang ditangkap outer catch
+      // sebagai 413.
+      if (isWallpaperFolder) {
+        await assertWallpaperImageDimensions(originalBuffer, 1920, 1080);
+      }
+
+      const optimized = await optimizeImageBuffer(originalBuffer, file.type, {
+        isWallpaper: isWallpaperFolder,
+      });
       buffer = optimized.buffer;
       contentType = optimized.contentType;
       optimizedExtensionOverride = optimized.extension;
@@ -538,6 +658,15 @@ export async function POST(req: NextRequest) {
     });
   } catch (e) {
     console.error('Upload Error:', e);
+
+    // Wallpaper image dimension validation: surface ke client sebagai
+    // 413 Payload Too Large dengan pesan asli supaya admin UI bisa
+    // tampilkan ke admin "image kurang dari 1920x1080, upload yang
+    // lebih besar". 500 generic akan hilangkan info diagnostik ini.
+    if (e instanceof WallpaperImageTooSmallError) {
+      return NextResponse.json({ error: e.message }, { status: 413 });
+    }
+
     return NextResponse.json(
       { error: e instanceof Error ? e.message : 'Upload failed' },
       { status: 500 }
