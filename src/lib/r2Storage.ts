@@ -1,4 +1,5 @@
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
@@ -86,6 +87,10 @@ function getR2Client(config: R2Config) {
 
 function encodeR2Key(key: string) {
   return key.split('/').map(encodeURIComponent).join('/');
+}
+
+function encodeCopySource(bucket: string, key: string) {
+  return `${bucket}/${encodeR2Key(key)}`;
 }
 
 export function buildR2PublicUrl(key: string) {
@@ -231,6 +236,28 @@ export async function deleteFromR2(key: string) {
       Key: key,
     })
   );
+}
+
+export async function copyR2Object(sourceKey: string, destinationKey: string) {
+  const config = readR2Config();
+  if (!config) {
+    throw new Error(
+      `Cloudflare R2 env is incomplete. Missing: ${getMissingR2EnvKeys().join(', ')}`
+    );
+  }
+
+  await getR2Client(config).send(
+    new CopyObjectCommand({
+      Bucket: config.bucket,
+      CopySource: encodeCopySource(config.bucket, sourceKey),
+      Key: destinationKey,
+    })
+  );
+
+  return {
+    key: destinationKey,
+    url: buildR2PublicUrl(destinationKey),
+  };
 }
 
 export async function listR2ObjectKeys({ prefix }: ListR2ObjectsInput) {

@@ -93,8 +93,25 @@ export const useStickyNotes = (
 
     const loadNotes = async () => {
       try {
-        // Add timestamp and force=true to prevent caching
-        const response = await fetch(`/api/sticky-notes?t=${Date.now()}&force=true`, {
+        // Cache-busting strategy split by role:
+        //
+        // - Admin: tetap force-fresh (`t=...&force=true`) supaya admin
+        //   yang baru ngedit di panel langsung lihat hasilnya saat
+        //   navigasi balik ke desktop, tanpa harus full reload.
+        // - Visitor (non-admin): biarkan response dapat di-cache di
+        //   browser. /api/sticky-notes saat ini set
+        //   `Cache-Control: no-cache` di header global (lihat
+        //   `next.config.mjs` headers `/api/(.*)`), tapi tanpa query
+        //   bust kita masih dapat HTTP-level dedup di SWR-style mounts
+        //   (kembali ke /, navigasi internal) dan menghindari D1 round
+        //   trip yang tidak perlu setiap mount desktop.
+        //
+        // Net effect untuk visitor: 1 D1 read per page load (bukan per
+        // mount) dan TTFB sticky-notes panel turun saat refresh.
+        const url = isAdmin
+          ? `/api/sticky-notes?t=${Date.now()}&force=true`
+          : '/api/sticky-notes';
+        const response = await fetch(url, {
           signal: controller.signal,
         });
 

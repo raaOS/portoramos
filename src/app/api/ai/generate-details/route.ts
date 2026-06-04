@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getGeminiApiKey, guardAdminAiRequest } from '../_shared';
+import { getGeminiApiKey, getOpenRouterApiKey, guardAdminAiRequest } from '../_shared';
+import { createHash } from 'node:crypto';
+import { CacheManager } from '@/lib/cache/CacheManager';
+import { deleteD1Value, getD1Value, isD1Configured, setD1Value } from '@/lib/cloudflareD1';
 
 /**
  * Gemini AI Integration
@@ -10,6 +13,45 @@ const API_TIMEOUT = 30000;
 const REMOTE_MEDIA_TIMEOUT = 10000;
 const MAX_REMOTE_MEDIA_BYTES = 8 * 1024 * 1024;
 const MAX_BASE64_CHARS = Math.ceil(MAX_REMOTE_MEDIA_BYTES * 1.4);
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const PROMPT_VERSION = 'project-details-v2';
+
+const modelCandidates = ['gemini-flash-latest', 'gemini-2.0-flash-lite', 'gemini-2.0-flash'];
+const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_IMAGE_MODEL_CANDIDATES = [
+  'openai/gpt-4o-mini',
+  'openai/gpt-4.1-nano',
+  'google/gemini-2.5-flash-lite',
+  'nvidia/nemotron-nano-12b-v2-vl:free',
+  'moonshotai/kimi-k2.6:free',
+  'google/gemma-4-26b-a4b-it:free',
+] as const;
+const OPENROUTER_VIDEO_MODEL_CANDIDATES = [
+  'google/gemini-2.5-flash-lite',
+  'google/gemini-2.5-flash',
+  'nvidia/nemotron-nano-12b-v2-vl:free',
+  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+  'google/gemma-4-26b-a4b-it:free',
+] as const;
+
+const generateDetailsCache = new CacheManager({
+  defaultTTL: CACHE_TTL_MS,
+  maxSize: 100,
+  label: 'AiGenerateDetailsCache',
+});
+
+interface GenerateDetailsCacheRecord {
+  data: Record<string, unknown>;
+  expiresAt: number;
+  createdAt: number;
+}
+
+interface ProviderFailure {
+  provider: 'gemini' | 'openrouter';
+  status: number;
+  body: string;
+  model: string;
+}
 
 const DEFAULT_ALLOWED_REMOTE_MEDIA_HOSTS = [
   'images.unsplash.com',
@@ -90,7 +132,11 @@ async function fetchUrlAsBase64(parsed: URL) {
       throw new Error('Remote media is too large');
     }
 
-    return Buffer.from(arrayBuffer).toString('base64');
+    const mimeType = contentType.split(';')[0]?.trim() || guessMimeTypeFromPath(parsed.pathname);
+    return {
+      base64Data: Buffer.from(arrayBuffer).toString('base64'),
+      mimeType,
+    };
   } finally {
     clearTimeout(timeoutId);
   }
@@ -114,6 +160,221 @@ async function fetchLocalMediaAsBase64(rawPath: string, requestUrl: string) {
   return fetchUrlAsBase64(new URL(normalizedPath, requestUrl));
 }
 
+function parseInlineBase64(payload: string) {
+  const match = payload.match(/^data:([^;]+);base64,([\s\S]*)$/);
+  if (match) {
+    return {
+      base64Data: match[2],
+      mimeType: match[1],
+    };
+  }
+
+  return {
+    base64Data: payload,
+    mimeType: 'image/jpeg',
+  };
+}
+
+function guessMimeTypeFromPath(pathname: string) {
+  const ext = pathname.split('.').pop()?.toLowerCase() || '';
+  if (ext === 'mp4') return 'video/mp4';
+  if (ext === 'webm') return 'video/webm';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'webp') return 'image/webp';
+  return 'image/jpeg';
+}
+
+function buildCacheKey(input: {
+  base64Data: string;
+  mimeType: string;
+  style: string;
+  maxTitleWords: number;
+  sentenceCount: number;
+}) {
+  const mediaHash = createHash('sha256').update(input.base64Data).digest('hex');
+  const optionHash = createHash('sha256')
+    .update(
+      JSON.stringify({
+        promptVersion: PROMPT_VERSION,
+        mimeType: input.mimeType,
+        style: input.style,
+        maxTitleWords: input.maxTitleWords,
+        sentenceCount: input.sentenceCount,
+      })
+    )
+    .digest('hex');
+
+  return `generate-details:${mediaHash}:${optionHash}`;
+}
+
+async function readCachedDetails(cacheKey: string) {
+  const memoryCached = generateDetailsCache.get<Record<string, unknown>>(cacheKey);
+  if (memoryCached) return memoryCached;
+
+  if (!isD1Configured()) return null;
+
+  try {
+    const persisted = await getD1Value<GenerateDetailsCacheRecord>(cacheKey);
+    if (!persisted?.data || typeof persisted.expiresAt !== 'number') {
+      return null;
+    }
+
+    if (Date.now() > persisted.expiresAt) {
+      await deleteD1Value(cacheKey);
+      return null;
+    }
+
+    generateDetailsCache.set(cacheKey, persisted.data, persisted.expiresAt - Date.now());
+    return persisted.data;
+  } catch (error) {
+    console.warn('[AI Generate] Persistent cache read failed:', error);
+    return null;
+  }
+}
+
+async function writeCachedDetails(cacheKey: string, data: Record<string, unknown>) {
+  generateDetailsCache.set(cacheKey, data);
+
+  if (!isD1Configured()) return;
+
+  try {
+    const now = Date.now();
+    await setD1Value(cacheKey, {
+      data,
+      createdAt: now,
+      expiresAt: now + CACHE_TTL_MS,
+    } satisfies GenerateDetailsCacheRecord);
+  } catch (error) {
+    console.warn('[AI Generate] Persistent cache write failed:', error);
+  }
+}
+
+function isRetryableGeminiFailure(status: number, body: string) {
+  return (
+    status === 429 ||
+    status === 503 ||
+    status === 404 ||
+    /quota|rate.?limit|too many requests|not found|unavailable/i.test(body)
+  );
+}
+
+function toFriendlyGeminiError(status: number, body: string) {
+  if (/quota|rate.?limit|too many requests/i.test(body) || status === 429) {
+    return 'Gemini quota sedang habis untuk semua model yang dicoba. Isi manual dulu atau coba lagi nanti.';
+  }
+
+  if (/not found/i.test(body) || status === 404) {
+    return 'Model Gemini yang tersedia di API key ini tidak bisa dipakai untuk generate detail.';
+  }
+
+  return `Gemini API Error: ${body}`;
+}
+
+function isRetryableOpenRouterFailure(status: number, body: string) {
+  return (
+    status === 400 ||
+    status === 402 ||
+    status === 404 ||
+    status === 408 ||
+    status === 409 ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504 ||
+    /quota|rate.?limit|too many requests|not found|unavailable|insufficient|credit|model/i.test(
+      body
+    )
+  );
+}
+
+function toFriendlyOpenRouterError(status: number, body: string) {
+  if (status === 401 || /invalid.*key|unauthorized/i.test(body)) {
+    return 'OpenRouter API key tidak valid. Cek OPENROUTER_API_KEY di .env.local.';
+  }
+
+  if (status === 402 || /credit|balance|payment|insufficient/i.test(body)) {
+    return 'OpenRouter belum punya credit/akses cukup untuk model vision yang dicoba.';
+  }
+
+  if (status === 429 || /quota|rate.?limit|too many requests/i.test(body)) {
+    return 'OpenRouter sedang kena rate limit. Coba lagi nanti atau pakai model lain.';
+  }
+
+  if (status === 404 || /not found|model/i.test(body)) {
+    return 'Model vision OpenRouter yang dicoba tidak tersedia untuk key ini.';
+  }
+
+  return `OpenRouter API Error: ${body}`;
+}
+
+function toFriendlyProviderError(failure: ProviderFailure | null) {
+  if (!failure) return 'No response from AI';
+
+  if (failure.provider === 'openrouter') {
+    return toFriendlyOpenRouterError(failure.status, failure.body);
+  }
+
+  return toFriendlyGeminiError(failure.status, failure.body);
+}
+
+function getOpenRouterModelCandidates(mimeType: string) {
+  if (mimeType.startsWith('video/')) {
+    return OPENROUTER_VIDEO_MODEL_CANDIDATES;
+  }
+
+  return OPENROUTER_IMAGE_MODEL_CANDIDATES;
+}
+
+function buildOpenRouterMediaPart(mimeType: string, base64Data: string) {
+  const dataUrl = `data:${mimeType};base64,${base64Data}`;
+
+  if (mimeType.startsWith('video/')) {
+    return {
+      type: 'video_url',
+      video_url: {
+        url: dataUrl,
+      },
+    };
+  }
+
+  return {
+    type: 'image_url',
+    image_url: {
+      url: dataUrl,
+    },
+  };
+}
+
+function extractOpenRouterText(data: Record<string, unknown>) {
+  const choices = data.choices;
+  if (!Array.isArray(choices)) return '';
+
+  const firstChoice = choices[0] as { message?: { content?: unknown } } | undefined;
+  const content = firstChoice?.message?.content;
+
+  if (typeof content === 'string') return content;
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') return part;
+        if (
+          part &&
+          typeof part === 'object' &&
+          'text' in part &&
+          typeof (part as { text?: unknown }).text === 'string'
+        ) {
+          return (part as { text: string }).text;
+        }
+        return '';
+      })
+      .join('');
+  }
+
+  return '';
+}
+
 interface GenerateDetailsRequest {
   imageUrl?: string;
   imageBase64?: string;
@@ -126,9 +387,13 @@ export async function POST(req: NextRequest) {
   const guardResponse = await guardAdminAiRequest(req, 'ai_details');
   if (guardResponse) return guardResponse;
 
-  const API_KEY = getGeminiApiKey();
-  if (!API_KEY) {
-    return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
+  const geminiApiKey = getGeminiApiKey();
+  const openRouterApiKey = getOpenRouterApiKey();
+  if (!geminiApiKey && !openRouterApiKey) {
+    return NextResponse.json(
+      { error: 'AI provider not configured. Set GEMINI_API_KEY or OPENROUTER_API_KEY.' },
+      { status: 500 }
+    );
   }
 
   try {
@@ -146,10 +411,13 @@ export async function POST(req: NextRequest) {
 
     // Check if local file or remote URL
     let base64Data = '';
+    let mimeType = 'image/jpeg';
 
     if (imageBase64) {
       // Direct base64 input (e.g. from Client FileReader)
-      base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      const parsedInline = parseInlineBase64(imageBase64);
+      base64Data = parsedInline.base64Data;
+      mimeType = parsedInline.mimeType;
       if (base64Data.length > MAX_BASE64_CHARS) {
         return NextResponse.json({ error: 'Image payload is too large' }, { status: 413 });
       }
@@ -160,17 +428,32 @@ export async function POST(req: NextRequest) {
         imageUrl.startsWith('/assets/') ||
         imageUrl.startsWith('assets/')
       ) {
-        base64Data = await fetchLocalMediaAsBase64(imageUrl, req.url);
+        const localMedia = await fetchLocalMediaAsBase64(imageUrl, req.url);
+        base64Data = localMedia.base64Data;
+        mimeType = localMedia.mimeType;
       } else if (imageUrl.startsWith('http')) {
         // External Remote URL
-        base64Data = await fetchRemoteMediaAsBase64(imageUrl);
+        const remoteMedia = await fetchRemoteMediaAsBase64(imageUrl);
+        base64Data = remoteMedia.base64Data;
+        mimeType = remoteMedia.mimeType;
       }
     }
 
-    // Call Gemini API
-    // CRITICAL: Using 'gemini-flash-latest' as confirmed by scripts/magic-caption.js
-    const model = 'gemini-flash-latest';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+    if (!base64Data) {
+      return NextResponse.json({ error: 'Unable to read media payload' }, { status: 400 });
+    }
+
+    const cacheKey = buildCacheKey({
+      base64Data,
+      mimeType,
+      style,
+      maxTitleWords,
+      sentenceCount,
+    });
+    const cached = await readCachedDetails(cacheKey);
+    if (cached) {
+      return NextResponse.json({ ...cached, cached: true });
+    }
 
     const prompt = `Analisis gambar ini secara mendalam. 
         BERTINDAK SEBAGAI: Desainer yang fokus pada detail, kualitas eksekusi, dan kejujuran dalam berkarya.
@@ -228,14 +511,6 @@ export async function POST(req: NextRequest) {
           }
         }`;
 
-    // Detect Mime Type
-    const ext = imageUrl?.split('.').pop()?.toLowerCase() || '';
-    let mimeType = 'image/jpeg';
-    if (ext === 'mp4') mimeType = 'video/mp4';
-    else if (ext === 'webm') mimeType = 'video/webm';
-    else if (ext === 'png') mimeType = 'image/png';
-    else if (ext === 'webp') mimeType = 'image/webp';
-
     const requestBody = {
       contents: [
         {
@@ -255,32 +530,123 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    let text = '';
+    let lastFailure: ProviderFailure | null = null;
 
-    let response;
-    try {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeoutId);
+    if (geminiApiKey) {
+      for (const model of modelCandidates) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+        let response: Response;
+        try {
+          response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+
+        if (!response.ok) {
+          const body = await response.text();
+          lastFailure = { provider: 'gemini', status: response.status, body, model };
+
+          if (isRetryableGeminiFailure(response.status, body)) {
+            console.warn(`[AI Generate] Gemini model ${model} unavailable, trying fallback.`);
+            continue;
+          }
+
+          break;
+        }
+
+        const data = await response.json();
+        text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (text) {
+          console.log(`[AI Generate] Project details generated via ${model}`);
+          break;
+        }
+
+        lastFailure = { provider: 'gemini', status: 500, body: 'No response from AI', model };
+      }
     }
 
-    if (!response.ok) {
-      const txt = await response.text();
-      return NextResponse.json({ error: `Gemini API Error: ${txt}` }, { status: response.status });
-    }
+    if (!text && openRouterApiKey) {
+      const mediaPart = buildOpenRouterMediaPart(mimeType, base64Data);
 
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      for (const model of getOpenRouterModelCandidates(mimeType)) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+        let response: Response;
+        try {
+          response = await fetch(OPENROUTER_ENDPOINT, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${openRouterApiKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+              'X-Title': 'Portfolio Shared Admin',
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                {
+                  role: 'user',
+                  content: [{ type: 'text', text: prompt }, mediaPart],
+                },
+              ],
+              temperature: 0.35,
+              max_tokens: 1400,
+            }),
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+
+        if (!response.ok) {
+          const body = await response.text();
+          lastFailure = { provider: 'openrouter', status: response.status, body, model };
+
+          if (isRetryableOpenRouterFailure(response.status, body)) {
+            console.warn(`[AI Generate] OpenRouter model ${model} unavailable, trying fallback.`);
+            continue;
+          }
+
+          break;
+        }
+
+        const data = (await response.json()) as Record<string, unknown>;
+        text = extractOpenRouterText(data);
+        if (text) {
+          console.log(`[AI Generate] Project details generated via OpenRouter ${model}`);
+          break;
+        }
+
+        lastFailure = {
+          provider: 'openrouter',
+          status: 500,
+          body: 'No response from AI',
+          model,
+        };
+      }
+    }
 
     if (!text) {
-      return NextResponse.json({ error: 'No response from AI' }, { status: 500 });
+      const status = lastFailure?.status || 500;
+      return NextResponse.json(
+        {
+          error: toFriendlyProviderError(lastFailure),
+          model: lastFailure?.model,
+          provider: lastFailure?.provider,
+        },
+        { status }
+      );
     }
 
     // Clean markdown and parse JSON safely
@@ -296,6 +662,8 @@ export async function POST(req: NextRequest) {
       console.error('[AI Generate] JSON parse error:', parseError);
       return NextResponse.json({ error: 'Invalid JSON response from AI' }, { status: 500 });
     }
+
+    await writeCachedDetails(cacheKey, parsed);
 
     return NextResponse.json(parsed);
   } catch (error: unknown) {

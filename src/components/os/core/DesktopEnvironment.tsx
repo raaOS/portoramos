@@ -28,8 +28,8 @@ import { clearVisitorPositions } from '../utils/positionSync';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 import type { ContactProfile } from '../data/mockChats';
 import DesktopProviders from './DesktopProviders';
-import DesktopBackground from '../ui/DesktopBackground';
 import DesktopSkeleton from '../ui/DesktopSkeleton';
+import { useBackgroundEffect } from '@/components/home/BackgroundEffectContext';
 
 const DesktopIconsLayer = dynamic(() => import('../layers/DesktopIconsLayer'), { ssr: false });
 const UnifiedLayer = dynamic(() => import('../layers/UnifiedLayer'), { ssr: false });
@@ -62,10 +62,6 @@ const StartScreen = dynamic(() => import('../ui/StartScreen'), {
       </div>
     </div>
   ),
-});
-const RetroMobileOverlay = dynamic(() => import('../ui/RetroMobileOverlay'), {
-  loading: () => <div className="fixed inset-0 bg-[#c0c0c0]" style={{ zIndex: Z_LAYERS.CHROME }} />,
-  ssr: false,
 });
 
 export interface DesktopEnvironmentProps {
@@ -153,16 +149,7 @@ export default function DesktopEnvironment({
   );
 
   if (!mounted) {
-    return (
-      <DesktopSkeleton
-        isBooting={needsPowerOn || isBooting}
-        wallpaperUrl={
-          aboutData?.wallpaperConfig?.collection?.find(
-            (w) => w.id === aboutData.wallpaperConfig?.activeWallpaperId
-          )?.url
-        }
-      />
-    );
+    return <DesktopSkeleton isBooting={needsPowerOn || isBooting} />;
   }
 
   return (
@@ -370,6 +357,41 @@ function DesktopMain({
   const isDesktopReady = wasBootSkipped || startScreenReady;
   const isDesktopRevealed = wasBootSkipped || isRevealed;
 
+  // Bridge ke `BackgroundEffectContext` (provider hidup di HomeOSWrapper).
+  // DesktopBackground sekarang di-render di level wrapper supaya `<video>`
+  // tidak ke-remount; tapi efek blur+scale saat project window terbuka
+  // tetap perlu trigger dari sini karena state `windows` lokal ke
+  // DesktopMain.
+  const { setIsWindowOpen } = useBackgroundEffect();
+  const isProjectWindowOpen = useMemo(
+    () =>
+      windows.some(
+        (w) => w.id.startsWith('project-') && w.isOpen && !w.isMinimized
+      ),
+    [windows]
+  );
+  useEffect(() => {
+    setIsWindowOpen(isProjectWindowOpen);
+  }, [isProjectWindowOpen, setIsWindowOpen]);
+  useEffect(() => {
+    // Pastikan saat DesktopMain unmount (mis. logout / route change),
+    // background effect kembali ke neutral. Kalau dibiarkan true,
+    // wallpaper sisa-blur saat user balik ke desktop.
+    return () => setIsWindowOpen(false);
+  }, [setIsWindowOpen]);
+
+  // Pre-mount desktop layers as soon as StartScreen is mounted (sebelum
+  // hollow-O pecah). Tujuannya: chunk JS untuk DesktopIconsLayer / UnifiedLayer
+  // / UIOverlaysLayer sudah selesai di-import dan sticky-notes sudah ter-fetch
+  // saat user pertama kali melihat desktop. Tanpa pre-mount, semua chunk + API
+  // request baru kicked-off saat reveal, dan user melihat wallpaper kosong
+  // selama beberapa ratus milidetik di belakang lubang.
+  //
+  // Layers yang di-mount tetap invisible secara visual sampai `isRevealed`
+  // true (lihat opacity wrapper di JSX bawah), dan StartScreen di
+  // `Z_LAYERS.BOOT` menutupi semuanya — jadi tidak ada flash.
+  const isDesktopMounted = wasBootSkipped || startScreenReady;
+
   // Preload NonOSChrome dynamically so navigation to /projects is instant and dock doesn't slide
   useEffect(() => {
     if (isDesktopRevealed) {
@@ -388,16 +410,7 @@ function DesktopMain({
 
   return (
     <LazyMotion features={domMax}>
-      {false ? (
-        <RetroMobileOverlay
-          aboutData={aboutData}
-          experienceData={experienceData}
-          hardSkillsData={hardSkillsData}
-          projects={projects}
-          contactData={contactData}
-        />
-      ) : (
-        <>
+      <>
           {(needsPowerOn || isBooting) && (
             <AnimatePresence>
               <StartScreen
@@ -431,17 +444,41 @@ function DesktopMain({
               ease: wasBootSkipped ? [0.32, 0.72, 0, 1] : 'easeOut',
             }}
           >
-            {isDesktopReady && (
-              <DesktopBackground
-                wallpaperConfig={aboutData?.wallpaperConfig}
-                isMobile={isMobile}
-                isWindowOpen={windows.some(
-                  (w) => w.id.startsWith('project-') && w.isOpen && !w.isMinimized
-                )}
-              />
-            )}
-            {isDesktopRevealed && (
-              <>
+            {/*
+             * DesktopBackground TIDAK lagi di-render di sini. Wallpaper
+             * hidup di `HomeOSWrapper` supaya `<video>` element stable
+             * lintas transisi skeleton -> DesktopOS dan mounted flip,
+             * sehingga browser cuma fetch sekali (lihat header
+             * BackgroundEffectContext untuk konteks). Efek blur+scale
+             * saat project window terbuka di-bridge lewat
+             * `BackgroundEffectContext` — effect di bawah memantau
+             * `windows` dan push state ke context.
+             *
+             * Layer di bawah pre-mount segera setelah StartScreen siap
+             * (`isDesktopMounted`) supaya chunk JS DesktopIconsLayer /
+             * UnifiedLayer / UIOverlaysLayer dan sticky-notes API
+             * sudah siap saat user pertama kali melihat desktop. Tanpa
+             * pre-mount, semua chunk + API request baru kicked-off
+             * saat reveal -> wallpaper kosong selama beberapa ratus ms
+             * di belakang lubang. Visibility di-gate via opacity —
+             * StartScreen di z=BOOT menutupi semuanya sampai hollow-O
+             * pecah. `pointer-events-none` saat belum revealed wajib
+             * supaya icon/dock di belakang StartScreen tidak menerima
+             * klik yang seharusnya men-trigger boot.
+             */}
+            {isDesktopMounted && (
+              <div
+                className="absolute inset-0"
+                style={{
+                  opacity: isDesktopRevealed ? 1 : 0,
+                  pointerEvents: isDesktopRevealed ? 'auto' : 'none',
+                  // Tidak transition opacity — layer harus instan visible
+                  // bersamaan dengan hollow-O reveal. Animasi entrance
+                  // (icons stagger, notes fade) di-handle di masing-masing
+                  // layer, di-trigger lewat `isRevealed`.
+                }}
+                aria-hidden={!isDesktopRevealed}
+              >
                 <React.Suspense fallback={null}>
                   <DesktopIconsLayer
                     projectIcons={projectIcons}
@@ -498,11 +535,10 @@ function DesktopMain({
                   needsPowerOn={needsPowerOn}
                   isBooting={isBooting}
                 />
-              </>
+              </div>
             )}
           </m.div>
         </>
-      )}
     </LazyMotion>
   );
 }

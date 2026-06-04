@@ -76,7 +76,16 @@ export default function DesktopBackground({
 
   // Derive the poster URL: prefer the override if it was resolved for
   // the current seed, otherwise the seed itself.
-  const posterUrl = probedOverride?.forSeed === seedPoster ? probedOverride.url : seedPoster;
+  //
+  // Edge case: untuk image wallpaper, `seedPoster` dan `probedOverride`
+  // sama-sama undefined/null. Tanpa explicit null-check, ekspresi
+  // `probedOverride?.forSeed === seedPoster` menghasilkan
+  // `undefined === undefined` (true) → akses `.url` ke null = crash.
+  // Karena itu kita require `probedOverride` truthy dulu.
+  const posterUrl =
+    probedOverride && probedOverride.forSeed === seedPoster
+      ? probedOverride.url
+      : seedPoster;
 
   useEffect(() => {
     // Skip probe when a single candidate exists. Either we have an
@@ -138,7 +147,25 @@ export default function DesktopBackground({
   // We re-evaluate when the connection changes (Network Information API
   // emits `change`) so a user who switches from wifi → cellular gets
   // downgraded automatically without a reload.
-  const [shouldPlayVideo, setShouldPlayVideo] = useState(true);
+  //
+  // CRITICAL: initial value via lazy useState init agar evaluasi
+  // saveData/2g terjadi SEBELUM render pertama. Sebelumnya pakai
+  // `useState(true)` + effect → first render selalu mount <video>
+  // dengan `preload="metadata"`, browser kicks off metadata fetch
+  // (~5-10KB) walaupun visitor di mode saveData/2g. Effect baru
+  // re-render switch ke <Image> SETELAH fetch sudah ke-trigger. Lazy
+  // init pre-empt seluruh waste itu.
+  const [shouldPlayVideo, setShouldPlayVideo] = useState(() => {
+    if (typeof navigator === 'undefined') return true; // SSR safe default
+    const conn = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
+    if (!conn) return true;
+    const slow = conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g';
+    return !conn.saveData && !slow;
+  });
 
   useEffect(() => {
     if (!isVideo) return;
@@ -155,6 +182,9 @@ export default function DesktopBackground({
       }
     ).connection;
 
+    // Initial decide() di useState init sudah handle first render.
+    // Effect ini hanya untuk subscribe perubahan connection runtime
+    // (mis. wifi → cellular), bukan first evaluation.
     const decide = () => {
       if (!conn) {
         setShouldPlayVideo(true);
@@ -164,7 +194,6 @@ export default function DesktopBackground({
       setShouldPlayVideo(!conn.saveData && !slow);
     };
 
-    decide();
     conn?.addEventListener?.('change', decide);
     return () => {
       conn?.removeEventListener?.('change', decide);

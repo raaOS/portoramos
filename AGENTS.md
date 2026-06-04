@@ -120,26 +120,24 @@ src/
 |   |-- layout/             # MasonryGrid, SmoothScroll, dll.
 |   |-- os/                 # Desktop OS system utama (pindahan dari app/about)
 |   |-- projects/
-|   |-- shared/             # PerformanceMonitor, WebVitals, dll.
-|   `-- ui/
+|   |-- shared/             # PerformanceMonitor, dll.
+|   `-- ui/                 # Compare, ErrorFallback, ReadMoreDescription, Toast, FlowchartProcess, LightboxGallery, ShareSheet, SystemNotification, QuickLookModal
 |-- constants/              # skillIcons.tsx
-|-- contexts/               # 6 root-level contexts
-|-- data/                   # JSON/TS seed/fallback content (17 files)
+|-- contexts/               # 6 root-level contexts (lihat State Management & Contexts di bawah)
+|-- data/                   # JSON/TS seed/fallback content (10 JSON + 1 TS)
 |-- dictionaries/
-|-- hooks/                  # 11 use* hooks + index.ts + canvas/ dan window-manager/ sub-dir
+|-- hooks/                  # 10 use* hooks + canvas/ dan window-manager/ sub-dir
 |-- lib/
 |   |-- __tests__/
-|   |-- cache/              # CacheManager.ts
+|   |-- cache/              # CacheManager.ts, clearApplicationCache.ts
 |   |-- security/           # 9 security files (rate-limit, sanitization, dll.)
-|   |-- services/           # 16 service files + project/ dan __tests__/ sub-dir
+|   |-- services/           # 20 service files + project/ dan __tests__/ sub-dir
 |   |-- telegram/
 |   |-- utils/
 |   `-- validations/        # adminCrud, project, schemas, index (Zod schemas per-domain)
 |-- middleware/             # auth.ts, csrf.ts, constants.ts, utils.ts
-|-- styles/                 # animations.css, chat-ascii.css, layout-utilities.css
-|-- tests/
-|-- types/                  # 13 type definition files
-|-- utils/                  # blurDataURL, canvas-helpers, cropImage
+|-- types/                  # 12 granular type files (no barrel — import path langsung)
+|-- utils/                  # canvas-helpers, cropImage
 `-- proxy.ts                # Request interception entry for Next.js 16
 
 scripts/
@@ -175,20 +173,45 @@ public/                     # Assets, sounds, wallpapers, ffmpeg, css, fonts
 os/
 |-- context/                # DesktopWindowContext, UnifiedZIndexContext, OSSystemContext
 |-- contexts/               # LayoutPersistenceContext
-|-- core/                   # DesktopEnvironment, DesktopProviders, Dock, MenuBar, OSDock, Spotlight
+|-- core/                   # DesktopEnvironment, DesktopEnvironmentClient, DesktopProviders, Dock, MenuBar, Spotlight
 |-- data/                   # mockChats
 |-- hooks/                  # 11 hooks (boot, chat, icons, layout, lock, navigation, shortcuts, ...)
-|-- layers/                 # DesktopIconsLayer, UIOverlaysLayer, UnifiedLayer, WindowsLayer
-|-- sections/               # AboutTab, ArchiveTab, CVTab, InterestsTab, PhilosophyTab
-|-- ui/                     # 12+ UI components + elements/, hooks/, retro/ sub-dir
-|   |-- elements/           # DesktopIcon, DraggableStickyNote, StickyNoteItem, dll.
-|   |-- hooks/
-|   `-- retro/              # RetroViews (retro mobile overlay)
-|-- utils/                  # SoundManager, chatUtils, desktopLayoutUtils, dockUtils, positionSync, windowFactory, windowMotion
-`-- windows/                # Window, AboutContent, ChatWindow, ContactWindow, MacFolder, PasswordModal, DesktopErrorBoundary
+|-- layers/                 # DesktopIconsLayer, UIOverlaysLayer, UnifiedLayer
+|-- sections/               # AboutTab, CVTab, InterestsTab, PhilosophyTab
+|-- ui/                     # 14 UI components + elements/ sub-dir
+|   `-- elements/           # DesktopIcon, DraggableStickyNote, StickyNoteItem, dll.
+|-- utils/                  # SoundManager, chatUtils, desktopLayoutUtils, dockUtils, positionSync, windowFactory
+`-- windows/                # Window, AboutContent, ChatWindow, ContactWindow, MacFolder, ExplorerWindow, DesktopErrorBoundary
     |-- components/
     `-- hooks/              # useWindowKeyboard, useWindowResize
 ```
+
+#### Design Decisions (Intentional, jangan "perbaiki" tanpa konfirmasi)
+
+**Background blur+scale hanya trigger untuk window dengan id `project-*`**
+
+Lokasi: `DesktopEnvironment.tsx` → prop `isWindowOpen` ke `DesktopBackground`:
+
+```tsx
+isWindowOpen={windows.some(
+  (w) => w.id.startsWith('project-') && w.isOpen && !w.isMinimized
+)}
+```
+
+Window lain (Chat, Contact, About, Mac Folder, Spotlight, Password modal)
+**sengaja tidak** trigger blur+scale background. Alasannya:
+
+- Project window adalah konten utama — efek depth dramatis sesuai untuk
+  "diving into a project case study" feel ala iOS app open transition.
+- Window utility (Chat, Contact, dll.) sifatnya quick-action — blur background
+  dramatis terasa overkill dan mengurangi attention ke konten window itu
+  sendiri.
+
+Kalau ada keinginan ke depan untuk extend blur ke window lain, pertimbangkan
+**per-window-type tuning** (mis. blur lebih ringan untuk Chat, lebih kuat
+untuk project) bukan blanket apply ke semua. Alternatif: tambah field
+`wantsBackgroundBlur` di `WindowState` interface supaya factory yang decide
+per-window.
 
 ### API Routes Overview
 
@@ -375,8 +398,14 @@ npm run job-bot:poll
 ### Import Patterns
 
 ```ts
-import { Button } from '@/components/ui/Button';
+// Import langsung ke file masing-masing — TIDAK ada barrel index untuk
+// `@/types`, `@/hooks`, atau `@/components/ui` (barrel-barrel itu dihapus
+// karena 0 importer dan menyebabkan dead-tree). Granular path lebih
+// eksplisit dan tree-shake friendly.
 import type { AboutData } from '@/types/about';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { Compare } from '@/components/ui/Compare'; // named export
+import Toast from '@/components/ui/Toast'; // default export — pola per-file beda-beda
 ```
 
 ### Component Guidance
@@ -392,7 +421,9 @@ import type { AboutData } from '@/types/about';
 - Gunakan CSS variables untuk theme/runtime values
 - Pakai `clsx` dan `tailwind-merge` untuk conditional className
 - Untuk styling kompleks atau scoped animation, pakai CSS terpisah hanya jika memang lebih jelas
-- CSS terpisah ada di `src/styles/` (animations, layout-utilities) dan `src/app/globals.css`
+- CSS terpisah: `src/app/globals.css` (entry global Tailwind), `src/components/os/styles/os-scrollbar.css` (scoped untuk About window),
+  `src/components/layout/MasonryGrid.module.css` (CSS module), dan `src/app/admin/desktop/admin-desktop.css` (admin shell). `src/styles/`
+  sebelumnya berisi `animations.css` + `layout-utilities.css` tapi keduanya 0-importer dan sudah dihapus.
 
 ### Framework-Specific Notes
 
@@ -419,7 +450,6 @@ import type { AboutData } from '@/types/about';
 
 | Context                   | Kegunaan                                                          |
 | ------------------------- | ----------------------------------------------------------------- |
-| `LanguageContext`         | i18n language switching                                           |
 | `LastUpdatedContext`      | Track last updated timestamps                                     |
 | `ModalContext`            | Modal state management                                            |
 | `NavbarVisibilityContext` | Navbar show/hide state                                            |
@@ -492,11 +522,10 @@ import type { AboutData } from '@/types/about';
 | -------------------- | ----------------------------------------------------------- |
 | `useAdminAuth`       | Admin authentication flow (shared module-level state)       |
 | `useAnalytics`       | Analytics tracking                                          |
-| `useAutoUpdate`      | Auto-update polling dengan interval                         |
 | `useChatSync`        | Real-time chat synchronization                              |
 | `useCsrfToken`       | CSRF token yang fresh, sync lintas tab via BroadcastChannel |
+| `useExitIntent`      | Detect mouse leave intent (untuk feedback prompt)           |
 | `useImageProtection` | Image right-click protection                                |
-| `useNavigation`      | Navigation helpers                                          |
 | `useProjectForm`     | Project CRUD form logic                                     |
 | `useQuickLook`       | macOS-style Quick Look preview                              |
 | `useSystemSound`     | System sound effects                                        |
@@ -541,8 +570,6 @@ Karakteristik `ContentService` saat ini:
 | ---------------------------- | -------------------------------------------------------------------------- |
 | `aboutService.ts`            | About/profile data                                                         |
 | `aiChatService.ts`           | AI chat responses                                                          |
-| `aiProposalService.ts`       | AI proposal generation                                                     |
-| `atsService.ts`              | ATS resume analysis                                                        |
 | `contentService.ts`          | Generic content CRUD base (cache-consistent deep-merge, pendingSave queue) |
 | `experienceService.ts`       | Work experience data                                                       |
 | `explorerService.ts`         | Admin file-explorer virtual (folders + files)                              |
@@ -557,6 +584,43 @@ Karakteristik `ContentService` saat ini:
 | `testimonialService.ts`      | Testimonial/review data                                                    |
 | `project/`                   | Project service sub-modules                                                |
 
+> **Pattern — Explorer Service (admin file manager)**
+>
+> `explorerService.ts` mengelola virtual file explorer di admin panel.
+> Nodes (folder/file) disimpan di D1 path `explorer/nodes`, media
+> disimpan di R2 prefix `assets/explorer/<parent-id>/`.
+>
+> **Storage key design:** R2 key memakai **folder ID** (UUID), bukan
+> nama folder. Ini sengaja — rename/move folder TIDAK perlu rename
+> massal file R2 di dalamnya. Contoh path:
+> `assets/explorer/a1b2c3d4/image-e5f6g7h8.webp`.
+>
+> **Delete strategy (D1-first):** `deleteNode` menghapus D1 entries
+> DULU, baru best-effort R2 cleanup. Alasan: dangling D1 refs
+> (D1 → missing R2) break UI dengan gambar 404, sedangkan orphan R2
+> (R2 ada tanpa D1 ref) tidak terlihat user dan detectable via
+> `/api/admin/storage-stats`. Jangan balik ke pola "R2 first, throw
+> if fail" — itu menyebabkan D1 + R2 mismatch kalau R2 delete parsial.
+>
+> **TOCTOU guard (rename/move):** Sebelum `db.ref().update()`,
+> service re-read node untuk verifikasi masih ada. Firebase `.update()`
+> pada path non-existent = silent create, yang bisa resurrect node
+> yang sudah dihapus concurrent admin lain. Guard ini narrowing race
+> window; true atomicity butuh D1 transaction yang belum supported
+> abstraction layer saat ini.
+>
+> **Rename/move = full R2 copy:** S3/R2 tidak punya native rename.
+> `copyFileStorage()` melakukan server-side COPY → D1 update → DELETE
+> source. Untuk file besar (video 50+ MB), copy bisa lambat. Ini
+> inherent platform limitation. Side-car files (preview, poster)
+> ikut di-copy kalau ada.
+>
+> **Storage stats integration:** kategori `explorer` di
+> `/api/admin/storage-stats` HARUS punya `includeVideoSidecars: true`
+> supaya sidecar video (-preview.mp4, .jpg poster) tidak muncul
+> sebagai orphan di dashboard. Ini sama dengan pola projects dan
+> wallpapers.
+
 ### Key Lib Utilities
 
 | File                   | Kegunaan                               |
@@ -564,7 +628,6 @@ Karakteristik `ContentService` saat ini:
 | `urlResolver.ts`       | Centralized URL resolution             |
 | `seo.ts`               | SEO metadata generation                |
 | `api-response.ts`      | Standardized API response helpers      |
-| `imageOptimization.ts` | Image optimization utilities           |
 | `media.ts`             | Media file handling                    |
 | `magic.ts`             | Animation/magic utilities              |
 | `chatStore.ts`         | Chat state management                  |
@@ -576,8 +639,9 @@ Karakteristik `ContentService` saat ini:
 ### Caching Strategy
 
 - **Route ISR:** mayoritas halaman utama memakai `revalidate = 60`
-- **React request deduplication:** utilitas di `src/lib/cache.ts`
-- **In-memory content cache:** `CacheManager` di `src/lib/cache/CacheManager.ts`
+- **React request deduplication:** `cache()` dari `react` di-wrap di service loader (mis. `loadHomepageData` di `src/lib/loaders.ts`)
+- **In-memory content cache:** `CacheManager` di `src/lib/cache/CacheManager.ts` (per-domain TTL)
+- **Edge cache:** `cdn-cache-control` 1 tahun immutable di `src/app/api/r2/[...key]/route.ts`
 - **API revalidation:** banyak mutation route memanggil `revalidatePath()`
 
 ### Content Domains yang Aktif
@@ -597,9 +661,18 @@ Karakteristik `ContentService` saat ini:
 
 ### Data Files (`src/data/`)
 
-JSON files: `about.json`, `contact.json`, `experience.json`, `gallery-featured.json`, `hardSkillConcepts.json`, `hardSkills.json`, `leads.json`, `lighthouse-history.json`, `metrics.json`, `projects.json`, `running-text.json`, `settings.json`, `sticky-notes.json`, `telegram.json`, `testimonial.json`
+JSON files (10): `about.json`, `contact.json`, `experience.json`,
+`gallery-featured.json`, `hardSkills.json`, `labels.json`, `projects.json`,
+`running-text.json`, `sticky-notes.json`, `testimonial.json`
 
-TS files: `fallback-content.ts`, `trailPlaceholders.ts`
+TS files (1): `fallback-content.ts` — hanya `FALLBACK_HARD_SKILL_CONCEPTS`
+yang aktif, dipakai oleh `hardSkillConceptService.ts`. Konstanta dummy
+untuk experience/hard-skills sebelumnya sudah dihapus karena masing-masing
+service sudah baca dari JSON langsung.
+
+Catatan: hardSkillConcepts.json tidak ada di disk — service pakai in-memory
+fallback. `leads`, `lighthouse-history`, `metrics`, `settings`, `telegram`
+hanya tersimpan di Cloudflare D1, tidak ada file lokal.
 
 ### D1 Path Semantics (Penting)
 
@@ -1029,11 +1102,20 @@ Env aktif/opsional lain yang muncul di codebase:
   "framework": "nextjs",
   "regions": ["sin1"],
   "functions": {
-    "src/app/api/upload/route.ts": { "maxDuration": 60, "memory": 1024 },
+    "src/app/api/upload/route.ts": { "maxDuration": 60 },
     "src/app/api/cron/telegram-watchdog/route.ts": { "maxDuration": 30 }
   }
 }
 ```
+
+> **Catatan Active CPU Billing (post-migrasi Vercel):**
+> Field `memory` di config function sengaja dihapus. Vercel sudah migrate ke
+> model billing **Active CPU + Provisioned Memory** sebagai default — di
+> model baru ini setting manual `memory` di-ignore dan Vercel emit warning
+> saat build (`Provided 'memory' setting ... is ignored on Active CPU
+> billing`). Memory allocation untuk function di-handle otomatis oleh
+> Fluid Compute. Jangan re-add field `memory` walaupun history config lama
+> punya — itu cuma jadi noise tanpa efek.
 
 > **Catatan Akun Hobby Vercel:**
 > Akun Vercel Hobby dibatasi hanya boleh memiliki cron job harian (maksimal sekali sehari). Oleh karena itu, scheduler `crons` bawaan dihapus dari `vercel.json` agar proses deploy tidak ditolak oleh Vercel.
@@ -1056,10 +1138,108 @@ Env aktif/opsional lain yang muncul di codebase:
 ### Performance Notes
 
 - `@vercel/speed-insights` sudah terpasang di root layout
-- custom performance/web-vitals components: `src/components/shared/PerformanceMonitor.tsx`, `src/components/shared/WebVitals.tsx`
+- custom performance/web-vitals component: `src/components/shared/PerformanceMonitor.tsx`
+  (file `WebVitals.tsx` dihapus karena dead code — hanya `PerformanceMonitor`
+  yang aktif via `useReportWebVitals` Next built-in)
 - halaman utama dan project pages memakai ISR 60 detik
 - critical CSS inlining via `critters` + `experimental.optimizeCss`
 - package imports optimized via `experimental.optimizePackageImports`
+
+### Vercel Hobby Free Tier Guard Rails
+
+Repo ini sengaja di-tune untuk tetap di **Vercel Hobby (free)**. Hobby
+plan tidak punya overage billing — kalau hit limit, deployment auto-pause
+sampai reset bulan berikutnya, **bukan** kena tagihan. Artinya tidak ada
+"hard-cap setting" yang perlu di-toggle; yang perlu kita lakukan hanya
+**hindari hit limit di tengah bulan** karena itu = downtime.
+
+Beberapa pattern di code yang sengaja di-tune untuk hemat budget dan
+**JANGAN diturunkan** tanpa alasan kuat:
+
+#### Polling intervals (semua dinaikkan untuk hemat invocations)
+
+| Hook | Interval Sebelum | Interval Sekarang | Alasan |
+| --- | --- | --- | --- |
+| `useChatSync` (`/api/chat/sync`) | 3s active / 30s bg | **8s active / 60s bg** | Visitor portfolio tidak ekspektasi sub-second chat. 3s = 14,400 invocations/24h per tab. |
+| `useRealtimeSync` (`/api/data/version`) | 5s | **30s** | Admin-only consumer; refresh 30s cukup. /api/data/version sudah Edge runtime tapi panggilan tetap counted. |
+
+Polling baru = ~6× lebih hemat invocations untuk admin/realtime path,
+~3× lebih hemat untuk chat polling. Untuk 250 visitor/bulan ini selisih
+puluhan ribu invocations dari budget 1M.
+
+#### Cron job (`/api/cron/telegram-watchdog`)
+
+External cron-job.org saat ini dikonfigurasi tiap **5 menit** =
+8,640 invocations/bulan murni dari watchdog. Kalau Telegram webhook
+recovery delay sampai 15 menit acceptable, ubah cron interval ke 15 menit
+di cron-job.org dashboard → hemat 5,760 invocations/bulan tanpa downside
+(hanya restore webhook lebih lambat saat dev tab di-kill paksa). Ini
+manual setting di cron-job.org, bukan di repo.
+
+#### Image optimization
+
+Vercel Hobby kasih limit **5,000 source images / bulan**. `next/image`
+counter terpicu setiap unique URL × size × quality combination. Anti-pattern
+yang harus dihindari:
+
+- Render banyak image di gallery dengan `priority={false}` tapi tanpa `loading="lazy"`
+- Pakai source URL eksternal (Unsplash, Imgbox, dll.) untuk asset yang
+  sering muncul → tambahkan `unoptimized` flag jika source sudah optimize
+  sendiri (Unsplash punya `?auto=format&q=80` query yang sama bagusnya)
+- Generate ulang transform untuk image yang seharusnya statis
+
+Saat ini fallback content di `src/data/fallback-content.ts` (hanya
+`FALLBACK_HARD_SKILL_CONCEPTS`) tidak pakai URL eksternal. Kalau ke
+depan ada penambahan fallback dengan URL eksternal (Unsplash, dll.),
+tambahkan `unoptimized` di komponen render-nya supaya tidak boros
+quota Image Optimization Vercel.
+
+#### Bandwidth (`/r2/[...key]`)
+
+Wallpaper video lewat Vercel function (per section "Wallpaper Upload
+Pipeline"). `cache-control` + `cdn-cache-control` 1 tahun immutable
+sudah diset, jadi cache hit ratio harus tinggi. Kalau ada perubahan ke
+route handler `src/app/api/r2/[...key]/route.ts`, **jangan hapus
+`cdn-cache-control` header** — Vercel skip edge cache karena route punya
+`dynamic = 'force-dynamic'` tanpa header eksplisit itu, dan setiap
+request invoke function = origin transfer cost.
+
+#### Hobby Plan = Free Hard-Cap by Design
+
+Vercel Hobby **tidak punya overage billing**. Kalau usage hit limit:
+
+- Deployment di-pause / di-throttle otomatis
+- **Tidak ada** credit card charge (Hobby tidak butuh payment method)
+- Reset di awal bulan billing berikutnya
+
+Artinya kamu **mathematically tidak bisa kena tagihan** selama plan tetap
+Hobby. "Spend Management" yang muncul sebagai feature highlight di
+dashboard Billing adalah **fitur Pro** — di Hobby, panel itu tidak
+applicable karena tidak ada on-demand usage yang bisa di-cap.
+
+Verifikasi sekali sebelum tenang:
+
+1. Vercel dashboard → Settings → Billing → tab **Invoices** → harus
+   kosong atau hanya `$0.00` entries
+2. Section **Payment Methods** → harus kosong (no card on file)
+
+Kalau dua-duanya bersih, hard-cap by Hobby plan terkonfirmasi. Tidak ada
+setting tambahan yang perlu di-toggle.
+
+Yang perlu di-monitor (di tab **Usage**) bukan billing tapi proximity ke
+limit-limit di tabel atas. Threshold action:
+
+- **<50%** semua metric: aman, no action needed
+- **50-75%**: investigate metric apa yang trending naik. Cek apakah ada
+  endpoint baru yang spam invocations atau image transformation yang
+  tidak di-cache.
+- **75-90%**: actively reduce — turunkan polling interval lagi, cache
+  lebih agresif, atau move endpoint sederhana ke Edge runtime.
+- **>90%**: project akan auto-pause segera. Siap-siap downtime sampai
+  reset bulan depan, atau upgrade ke Pro untuk lanjut.
+
+Setting "Spending Limit $0" di steering versi sebelumnya tidak applicable
+di Hobby — instruksi itu dihapus dari panduan ini.
 
 ---
 

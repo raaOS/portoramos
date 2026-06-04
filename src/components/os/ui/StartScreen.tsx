@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { m, useReducedMotion } from 'motion/react';
+import { m, useMotionValue, useReducedMotion, useSpring } from 'motion/react';
 import { soundManager } from '../utils/SoundManager';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 
@@ -61,15 +61,27 @@ const revealScaleTransition = {
   ease: [0.76, 0, 0.24, 1],
 } as const;
 
+const KEY_TILT_MAX_DEGREES = 10;
+const KEY_TILT_SPRING = { stiffness: 150, damping: 20, mass: 0.4 } as const;
+
 const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps) => {
   const prefersReducedMotion = useReducedMotion();
   const [screenState, setScreenState] = useState<ScreenState>('idle');
   const timersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const revealRafRef = useRef<number | null>(null);
+  const tiltRafRef = useRef<number | null>(null);
+  const latestTiltPointRef = useRef<{ x: number; y: number; width: number; height: number } | null>(
+    null
+  );
   const hasStartedRef = useRef(false);
   const maskId = `hollow-o-mask-${useId().replace(/:/g, '')}`;
 
   const activeConfig = prefersReducedMotion ? REDUCED_MOTION_CONFIG : BOOT_CONFIG;
+
+  const tiltX = useMotionValue(0);
+  const tiltY = useMotionValue(0);
+  const rotateX = useSpring(tiltX, KEY_TILT_SPRING);
+  const rotateY = useSpring(tiltY, KEY_TILT_SPRING);
 
   useEffect(() => {
     onReady?.();
@@ -82,6 +94,10 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
 
       if (revealRafRef.current !== null) {
         window.cancelAnimationFrame(revealRafRef.current);
+      }
+
+      if (tiltRafRef.current !== null) {
+        window.cancelAnimationFrame(tiltRafRef.current);
       }
     };
   }, []);
@@ -145,6 +161,61 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleClick, screenState]);
+
+  const resetTilt = useCallback(() => {
+    latestTiltPointRef.current = null;
+
+    if (tiltRafRef.current !== null) {
+      window.cancelAnimationFrame(tiltRafRef.current);
+      tiltRafRef.current = null;
+    }
+
+    tiltX.set(0);
+    tiltY.set(0);
+  }, [tiltX, tiltY]);
+
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (screenState !== 'idle' || prefersReducedMotion) {
+        return;
+      }
+
+      const bounds = event.currentTarget.getBoundingClientRect();
+      if (bounds.width === 0 || bounds.height === 0) {
+        return;
+      }
+
+      latestTiltPointRef.current = {
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+        width: bounds.width,
+        height: bounds.height,
+      };
+
+      if (tiltRafRef.current !== null) {
+        return;
+      }
+
+      tiltRafRef.current = window.requestAnimationFrame(() => {
+        tiltRafRef.current = null;
+        const point = latestTiltPointRef.current;
+        if (!point) return;
+
+        const nx = (point.x / point.width) * 2 - 1;
+        const ny = (point.y / point.height) * 2 - 1;
+
+        tiltY.set(nx * KEY_TILT_MAX_DEGREES);
+        tiltX.set(-ny * KEY_TILT_MAX_DEGREES);
+      });
+    },
+    [prefersReducedMotion, screenState, tiltX, tiltY]
+  );
+
+  useEffect(() => {
+    if (!isActive || screenState !== 'idle' || prefersReducedMotion) {
+      resetTilt();
+    }
+  }, [isActive, prefersReducedMotion, resetTilt, screenState]);
 
   if (!isActive || screenState === 'done') {
     return null;
@@ -282,11 +353,31 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
         className="absolute inset-0 flex items-center justify-center"
         style={{ pointerEvents: screenState === 'idle' ? 'auto' : 'none', zIndex: Z_LAYERS.POPOUT }}
         onClick={screenState === 'idle' ? handleClick : undefined}
+        onPointerMove={
+          screenState === 'idle' && !prefersReducedMotion ? handlePointerMove : undefined
+        }
+        onPointerLeave={resetTilt}
         animate={{ opacity: screenState === 'idle' || screenState === 'zooming' ? 1 : 0 }}
         transition={{ duration: prefersReducedMotion ? 0.2 : 0.8, ease: 'easeInOut' }}
       >
         <m.div
-          className="relative flex cursor-pointer items-center justify-center will-change-transform"
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: screenState === 'idle' ? 1 : 0 }}
+          transition={{
+            duration: prefersReducedMotion ? 0.2 : screenState === 'idle' ? 1.2 : 0.18,
+            ease: 'easeOut',
+          }}
+          style={{
+            background:
+              'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.06) 22%, rgba(0,0,0,0) 58%), radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 48%, rgba(0,0,0,0.62) 100%)',
+          }}
+        />
+        <m.div
+          className={`relative flex cursor-pointer items-center justify-center ${
+            screenState === 'idle' ? 'will-change-transform' : ''
+          }`}
           layout={false}
           initial={{ scale: 0, opacity: 0 }}
           animate={{
@@ -310,17 +401,48 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
             }
             animate={{ scale: 1 }}
             transition={{ duration: screenState === 'idle' ? 0.3 : 0 }}
+            style={
+              screenState === 'idle'
+                ? {
+                    transformPerspective: 500,
+                    rotateX,
+                    rotateY,
+                  }
+                : undefined
+            }
           >
-            <svg
-              width="80"
-              height="120"
-              viewBox="0 0 24 36"
-              fill="#ffffff"
-              className="relative overflow-visible"
+            <m.div
+              className={`flex items-center justify-center ${
+                screenState === 'idle' ? 'will-change-transform' : ''
+              }`}
+              animate={
+                screenState === 'idle' && !prefersReducedMotion
+                  ? { scale: [1, 1.08, 1] }
+                  : { scale: 1 }
+              }
+              transition={
+                screenState === 'idle' && !prefersReducedMotion
+                  ? { duration: 3.2, ease: 'easeInOut', repeat: Infinity }
+                  : { duration: 0 }
+              }
+              style={{
+                filter:
+                  screenState === 'idle'
+                    ? 'drop-shadow(0 18px 32px rgba(255,255,255,0.22))'
+                    : 'none',
+              }}
             >
-              <circle cx="12" cy="10" r="9" />
-              <path d="M8 16 L4 32 C 3 35, 21 35, 20 32 L16 16 Z" />
-            </svg>
+              <svg
+                width="80"
+                height="120"
+                viewBox="0 0 24 36"
+                fill="#ffffff"
+                className="relative overflow-visible"
+              >
+                <circle cx="12" cy="10" r="9" />
+                <path d="M8 16 L4 32 C 3 35, 21 35, 20 32 L16 16 Z" />
+              </svg>
+            </m.div>
           </m.div>
 
           {screenState === 'idle' && (

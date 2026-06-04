@@ -10,6 +10,10 @@ export function getGeminiApiKey() {
   return process.env.GEMINI_API_KEY || '';
 }
 
+export function getOpenRouterApiKey() {
+  return process.env.OPENROUTER_API_KEY || '';
+}
+
 export async function guardAdminAiRequest(req: NextRequest, scope: string) {
   if (!(await validateAdminRequest(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

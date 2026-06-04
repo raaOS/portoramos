@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Check } from 'lucide-react';
+import { getIconMap } from '@/constants/skillIcons';
 import { getProxiedUrl } from '@/lib/utils';
 import type { AboutData } from '@/types/about';
 import type { HardSkillsData } from '@/types/hardSkill';
@@ -8,6 +9,19 @@ import type { HardSkillsData } from '@/types/hardSkill';
 interface InterestsTabProps {
   aboutData: AboutData | null | undefined;
   hardSkillsData: HardSkillsData | null | undefined;
+}
+
+const hardSkillIconMap = getIconMap('h-5 w-5');
+
+function getLocalHardSkillIcon(name: string) {
+  const normalizedName = name.toLowerCase();
+
+  if (normalizedName.includes('photoshop')) return hardSkillIconMap.photoshop;
+  if (normalizedName.includes('illustrator')) return hardSkillIconMap.illustrator;
+  if (normalizedName.includes('figma')) return hardSkillIconMap.figma;
+  if (normalizedName.includes('canva')) return hardSkillIconMap.canva;
+
+  return null;
 }
 
 export const InterestsTab = ({ aboutData, hardSkillsData }: InterestsTabProps) => {
@@ -52,12 +66,12 @@ export const InterestsTab = ({ aboutData, hardSkillsData }: InterestsTabProps) =
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {hardSkills.map((skill, idx) => (
               <div
-                key={idx}
+                key={skill.id || idx}
                 className="group flex flex-col gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4 transition-all duration-300 hover:border-[#42b549]/20 hover:bg-white"
               >
                 <div className="flex items-center gap-3">
-                  {skill.iconUrl && (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-100 bg-white shadow-sm">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-100 bg-white shadow-sm">
+                    {getLocalHardSkillIcon(skill.name) || (
                       <Image
                         src={getProxiedUrl(skill.iconUrl)}
                         alt={skill.name}
@@ -65,8 +79,8 @@ export const InterestsTab = ({ aboutData, hardSkillsData }: InterestsTabProps) =
                         height={20}
                         className="object-contain"
                       />
-                    </div>
-                  )}
+                    )}
+                  </div>
                   <h3 className="text-sm font-bold text-gray-900">{skill.name}</h3>
                 </div>
 

@@ -121,12 +121,8 @@ async function assertWallpaperImageDimensions(
   // dengan yang akan ditampilkan visitor.
   const orientation = metadata.orientation ?? 1;
   const isRotated = orientation >= 5 && orientation <= 8;
-  const effectiveWidth = isRotated
-    ? (metadata.height ?? 0)
-    : (metadata.width ?? 0);
-  const effectiveHeight = isRotated
-    ? (metadata.width ?? 0)
-    : (metadata.height ?? 0);
+  const effectiveWidth = isRotated ? (metadata.height ?? 0) : (metadata.width ?? 0);
+  const effectiveHeight = isRotated ? (metadata.width ?? 0) : (metadata.height ?? 0);
 
   if (!effectiveWidth || !effectiveHeight) {
     // Sharp tidak bisa baca dimensi → biarkan optimizeImageBuffer
@@ -137,12 +133,7 @@ async function assertWallpaperImageDimensions(
   }
 
   if (effectiveWidth < minWidth || effectiveHeight < minHeight) {
-    throw new WallpaperImageTooSmallError(
-      effectiveWidth,
-      effectiveHeight,
-      minWidth,
-      minHeight
-    );
+    throw new WallpaperImageTooSmallError(effectiveWidth, effectiveHeight, minWidth, minHeight);
   }
 }
 
@@ -159,12 +150,9 @@ async function optimizeImageBuffer(
   inputType: string,
   options: { isWallpaper?: boolean } = {}
 ): Promise<OptimizedImageResult> {
-  const { default: sharp } = await import('sharp');  const maxDimension = options.isWallpaper
-    ? WALLPAPER_IMAGE_MAX_DIMENSION
-    : IMAGE_MAX_DIMENSION;
-  const quality = options.isWallpaper
-    ? WALLPAPER_IMAGE_OUTPUT_QUALITY
-    : IMAGE_OUTPUT_QUALITY;
+  const { default: sharp } = await import('sharp');
+  const maxDimension = options.isWallpaper ? WALLPAPER_IMAGE_MAX_DIMENSION : IMAGE_MAX_DIMENSION;
+  const quality = options.isWallpaper ? WALLPAPER_IMAGE_OUTPUT_QUALITY : IMAGE_OUTPUT_QUALITY;
 
   const pipeline = sharp(inputBuffer, { failOn: 'none' })
     .rotate() // Honor EXIF orientation, then strip metadata implicitly.
@@ -650,6 +638,11 @@ export async function POST(req: NextRequest) {
       url: r2Main.url,
       previewUrl: previewPath ? buildR2PublicUrl(previewPath) : undefined,
       posterUrl: posterPath ? buildR2PublicUrl(posterPath) : undefined,
+      storagePath,
+      previewPath: previewPath || undefined,
+      posterPath: posterPath || undefined,
+      finalFilename,
+      contentType,
       videoStats,
       imageStats,
       audioStats,

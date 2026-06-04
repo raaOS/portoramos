@@ -171,6 +171,39 @@ export async function setD1Value(key: string, value: unknown) {
   );
 }
 
+export async function compareAndSetD1Value(
+  key: string,
+  expectedValue: unknown | null,
+  nextValue: unknown
+) {
+  await bootstrapD1Schema();
+
+  const now = new Date().toISOString();
+  const nextJson = JSON.stringify(nextValue);
+
+  if (expectedValue === null || expectedValue === undefined) {
+    const rows = await queryD1<{ key: string }>(
+      `INSERT INTO ${D1_TABLE_NAME} (key, value, updated_at)
+         SELECT ?, ?, ?
+         WHERE NOT EXISTS (SELECT 1 FROM ${D1_TABLE_NAME} WHERE key = ?)
+         RETURNING key`,
+      [key, nextJson, now, key]
+    );
+    return rows.length > 0;
+  }
+
+  const expectedJson = JSON.stringify(expectedValue);
+  const rows = await queryD1<{ key: string }>(
+    `UPDATE ${D1_TABLE_NAME}
+       SET value = ?, updated_at = ?
+       WHERE key = ? AND value = ?
+       RETURNING key`,
+    [nextJson, now, key, expectedJson]
+  );
+
+  return rows.length > 0;
+}
+
 export async function deleteD1Value(key: string) {
   await bootstrapD1Schema();
   await queryD1(`DELETE FROM ${D1_TABLE_NAME} WHERE key = ?`, [key]);

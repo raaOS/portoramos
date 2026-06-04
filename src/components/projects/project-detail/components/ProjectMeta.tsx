@@ -13,7 +13,7 @@ interface ProjectMetaProps {
 export function ProjectMeta({
   project,
   translations,
-  isWindowMode: _isWindowMode,
+  isWindowMode = false,
 }: ProjectMetaProps) {
   // Memoize icon map to prevent recreation on every render
   // MUST be called before any early return (Rules of Hooks)
@@ -26,6 +26,52 @@ export function ProjectMeta({
     (project.software && project.software.length > 0);
 
   if (!hasMeta) return null;
+
+  if (isWindowMode) {
+    return (
+      <div className="mb-4 border-t border-gray-100 pt-4 dark:border-gray-800">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+          {project.role && (
+            <MetaItem label={translations ? 'Role' : 'Peran'}>
+              {translations?.role || project.role}
+            </MetaItem>
+          )}
+
+          {project.software && project.software.length > 0 && (
+            <MetaItem label="Software">
+              <div className="flex items-center gap-2">
+                {project.software.map((s) => (
+                  <SoftwareIcon key={s} name={s} iconMap={iconMap} />
+                ))}
+              </div>
+            </MetaItem>
+          )}
+
+          {project.timeline && (
+            <MetaItem label={translations ? 'Timeline' : 'Waktu'}>
+              {translations?.timeline || project.timeline}
+            </MetaItem>
+          )}
+
+          {project.team && (
+            <MetaItem label={translations ? 'Team' : 'Tim'}>
+              {translations?.team || project.team}
+            </MetaItem>
+          )}
+
+          <MetaItem label={translations ? 'Type' : 'Tipe'}>
+            {translations
+              ? project.type === 'commercial'
+                ? 'Commercial Project'
+                : 'Visual Art'
+              : project.type === 'commercial'
+                ? 'Project Komersial'
+                : 'Karya Visual'}
+          </MetaItem>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-6">
@@ -95,6 +141,19 @@ export function ProjectMeta({
                 : 'Karya Visual'}
           </p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function MetaItem({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <h3 className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400">
+        {label}
+      </h3>
+      <div className="truncate text-[13px] font-medium leading-5 text-gray-900 dark:text-white">
+        {children}
       </div>
     </div>
   );

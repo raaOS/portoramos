@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { AnimatePresence, motion } from 'motion/react';
 import type { Comment } from '@/lib/magic';
 
 // Lazy load heavy CommentSection component
@@ -14,6 +15,11 @@ interface ProjectCommentsProps {
   comments: Comment[];
   setComments: (comments: Comment[]) => void;
   allowComments?: boolean;
+  sectionId?: string;
+  withDivider?: boolean;
+  isVisible?: boolean;
+  animated?: boolean;
+  className?: string;
 }
 
 export function ProjectComments({
@@ -21,12 +27,44 @@ export function ProjectComments({
   comments,
   setComments,
   allowComments = true,
+  sectionId,
+  withDivider = true,
+  isVisible = true,
+  animated = false,
+  className = '',
 }: ProjectCommentsProps) {
   if (!allowComments) return null;
 
-  return (
-    <div className="border-t border-gray-200 pt-6 dark:border-gray-800">
+  const content = (
+    <div
+      id={sectionId}
+      className={[
+        withDivider ? 'border-t border-gray-200 pt-6 dark:border-gray-800' : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <CommentSection slug={slug} comments={comments} setComments={setComments} />
     </div>
+  );
+
+  if (!animated) return isVisible ? content : null;
+
+  return (
+    <AnimatePresence initial={false}>
+      {isVisible && (
+        <motion.div
+          key="project-comments-panel"
+          initial={{ height: 0, opacity: 0, y: -10 }}
+          animate={{ height: 'auto', opacity: 1, y: 0 }}
+          exit={{ height: 0, opacity: 0, y: -10 }}
+          transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+          className="overflow-hidden"
+        >
+          {content}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

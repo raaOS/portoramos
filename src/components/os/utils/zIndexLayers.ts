@@ -15,7 +15,7 @@
  *   DESKTOP_BASE        0           wallpaper, icons layer
  *   WINDOW_RUNTIME      100..~9k    di-manage UnifiedZIndexContext
  *   BACKDROP            9_999       dimmer untuk spotlight / overlay
- *   CHROME              10_000      menu bar, retro overlay fallback
+ *   CHROME              10_000      menu bar, top-of-desktop overlays
  *   POPOUT              10_001      control center, calendar wrapper
  *   POPOUT_CONTENT      10_002      spotlight panel, calendar popout, boot reveal layer
  *   DOCK                99_999      OS dock + dock hover capture

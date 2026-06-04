@@ -10,16 +10,19 @@ import {
   RefreshCw,
   Search,
   Home,
-  MoreVertical,
   FolderPlus,
   Upload,
   Check,
   Loader2,
   XCircle,
+  Pencil,
+  FolderInput,
 } from 'lucide-react';
 import { AdminHeader } from '../../components/components/AdminHeader';
+import { ExplorerFormatBadge } from '@/components/ui/ExplorerFormatBadge';
 import { useToast } from '@/contexts/ToastContext';
-import { AnyExplorerNode } from '@/types/explorer';
+import { getExplorerActualFormat, getExplorerNodeDisplayName } from '@/lib/utils/explorerName';
+import { AnyExplorerNode, ExplorerFolder } from '@/types/explorer';
 import AdminButton from '@/app/admin/components/AdminButton';
 import { m } from 'motion/react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -28,14 +31,39 @@ import { useFFmpeg } from '@/app/admin/components/file-upload/hooks';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import AdminLoading from '@/components/admin/AdminLoading';
 
+type UploadResult = {
+  url: string;
+  previewUrl?: string;
+  posterUrl?: string;
+  storagePath?: string;
+  previewPath?: string;
+  posterPath?: string;
+  finalFilename?: string;
+  contentType?: string;
+  videoStats?: { optimizedSize: number };
+  imageStats?: { optimizedSize: number };
+  audioStats?: { optimizedSize: number };
+};
+
+type MoveTarget = {
+  id: string | null;
+  label: string;
+};
+
 export default function AdminExplorerClient() {
   const [currentParentId, setCurrentParentId] = useState<string | null>(null);
   const [history, setHistory] = useState<(string | null)[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [nodes, setNodes] = useState<AnyExplorerNode[]>([]);
+  const [pathNodes, setPathNodes] = useState<ExplorerFolder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [moveDialog, setMoveDialog] = useState<{
+    node: AnyExplorerNode;
+    targets: MoveTarget[];
+    selectedParentId: string | null;
+  } | null>(null);
   const [activeUploads, setActiveUploads] = useState<
     Record<
       string,
@@ -54,16 +82,30 @@ export default function AdminExplorerClient() {
   const ignoreCompressionStatus = useCallback(() => undefined, []);
   const { compressVideo } = useFFmpeg(ignoreCompressionStatus);
   const { confirm, prompt } = useConfirm();
+  const compressChainRef = React.useRef<Promise<void>>(Promise.resolve());
+  const currentParentIdRef = React.useRef<string | null>(null);
+  const historyIndexRef = React.useRef(-1);
+
+  useEffect(() => {
+    currentParentIdRef.current = currentParentId;
+  }, [currentParentId]);
+
+  useEffect(() => {
+    historyIndexRef.current = historyIndex;
+  }, [historyIndex]);
 
   // Fetch nodes
   const fetchNodes = useCallback(
     async (parentId: string | null) => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/explorer?parentId=${parentId || ''}&_t=${Date.now()}`);
+        const res = await fetch(
+          `/api/explorer?parentId=${parentId || ''}&path=true&_t=${Date.now()}`
+        );
         const result = await res.json();
         if (result.success && result.data?.nodes) {
           setNodes(result.data.nodes);
+          setPathNodes(result.data.path || []);
         }
       } catch (error) {
         console.error('[AdminExplorer] Fetch error:', error);
@@ -85,14 +127,19 @@ export default function AdminExplorerClient() {
   const navigateTo = useCallback(
     (id: string | null, addToHistory = true) => {
       if (addToHistory) {
-        const newHistory = history.slice(0, historyIndex + 1);
-        newHistory.push(id);
-        setHistory(newHistory);
-        setHistoryIndex(newHistory.length - 1);
+        setHistory((prev) => {
+          const newHistory = prev.slice(0, (historyIndexRef.current ?? -1) + 1);
+          newHistory.push(id);
+          return newHistory;
+        });
+        setHistoryIndex((prev) => {
+          historyIndexRef.current = prev + 1;
+          return prev + 1;
+        });
       }
       setCurrentParentId(id);
     },
-    [history, historyIndex]
+    []
   );
 
   const goBack = useCallback(() => {
@@ -102,6 +149,49 @@ export default function AdminExplorerClient() {
       setCurrentParentId(history[newIndex]);
     }
   }, [history, historyIndex]);
+
+  const buildMoveTargets = useCallback(
+    (allNodes: AnyExplorerNode[], nodeToMove: AnyExplorerNode) => {
+      const folders = allNodes.filter((node): node is ExplorerFolder => node.type === 'folder');
+      const folderMap = new Map(folders.map((folder) => [folder.id, folder]));
+
+      const isDescendant = (folderId: string) => {
+        let current = folderMap.get(folderId);
+        let depth = 0;
+        while (current && depth < 100) {
+          if (current.parentId === nodeToMove.id) return true;
+          current = current.parentId ? folderMap.get(current.parentId) : undefined;
+          depth++;
+        }
+        return false;
+      };
+
+      const labelFor = (folder: ExplorerFolder) => {
+        const parts = [folder.name];
+        let current = folder.parentId ? folderMap.get(folder.parentId) : undefined;
+        let depth = 0;
+        while (current && depth < 100) {
+          parts.unshift(current.name);
+          current = current.parentId ? folderMap.get(current.parentId) : undefined;
+          depth++;
+        }
+        return parts.join(' / ');
+      };
+
+      return [
+        { id: null, label: 'Root' },
+        ...folders
+          .filter((folder) => {
+            if (folder.id === nodeToMove.id) return false;
+            if (nodeToMove.type === 'folder' && isDescendant(folder.id)) return false;
+            return true;
+          })
+          .map((folder) => ({ id: folder.id, label: labelFor(folder) }))
+          .sort((a, b) => a.label.localeCompare(b.label)),
+      ];
+    },
+    []
+  );
 
   // CRUD Handlers
   const handleCreateFolder = async () => {
@@ -149,9 +239,13 @@ export default function AdminExplorerClient() {
   };
 
   const handleDeleteNode = async (node: AnyExplorerNode) => {
+    const nodeLabel = getExplorerNodeDisplayName(node);
     const ok = await confirm({
       title: `Hapus ${node.type === 'folder' ? 'folder' : 'file'}?`,
-      message: `"${node.name}" akan dihapus permanen.`,
+      message:
+        node.type === 'folder'
+          ? `"${nodeLabel}" dan semua isi foldernya akan dihapus permanen dari D1 dan storage Explorer.`
+          : `"${nodeLabel}" akan dihapus permanen dari D1 dan storage Explorer.`,
       confirmText: 'Hapus',
       cancelText: 'Batal',
       tone: 'danger',
@@ -178,9 +272,105 @@ export default function AdminExplorerClient() {
     }
   };
 
-  const getFileKind = (mimeType: string): 'image' | 'video' | 'pdf' | 'text' => {
+  const handleRenameNode = async (node: AnyExplorerNode) => {
+    const currentLabel = getExplorerNodeDisplayName(node);
+    const name = await prompt({
+      title: `Rename ${node.type === 'folder' ? 'folder' : 'file'}`,
+      message:
+        node.type === 'file'
+          ? 'Nama file dan key storage Explorer akan disinkronkan.'
+          : 'Nama folder di Explorer akan diperbarui.',
+      defaultValue: currentLabel,
+      placeholder: 'Nama baru',
+      confirmText: 'Simpan',
+      maxLength: 120,
+      validate: (value) => {
+        if (/[\\/]/.test(value)) return 'Nama tidak boleh berisi slash';
+        return null;
+      },
+    });
+    if (!name || name === currentLabel) return;
+
+    try {
+      const res = await fetch('/api/explorer', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': getWritableCsrfToken(csrfToken),
+        },
+        body: JSON.stringify({
+          action: 'rename',
+          id: node.id,
+          name,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Gagal rename');
+      }
+
+      showSuccess('Nama berhasil diperbarui');
+      fetchNodes(currentParentId);
+    } catch (error) {
+      console.error(error);
+      showError(error instanceof Error ? error.message : 'Gagal rename');
+    }
+  };
+
+  const handleOpenMoveDialog = async (node: AnyExplorerNode) => {
+    try {
+      const res = await fetch(`/api/explorer?all=true&_t=${Date.now()}`);
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || 'Gagal memuat daftar folder');
+      }
+      setMoveDialog({
+        node,
+        targets: buildMoveTargets(result.data.nodes || [], node),
+        selectedParentId: node.parentId || null,
+      });
+    } catch (error) {
+      console.error(error);
+      showError(error instanceof Error ? error.message : 'Gagal membuka pemindahan');
+    }
+  };
+
+  const handleSubmitMove = async () => {
+    if (!moveDialog) return;
+
+    try {
+      const res = await fetch('/api/explorer', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': getWritableCsrfToken(csrfToken),
+        },
+        body: JSON.stringify({
+          action: 'move',
+          id: moveDialog.node.id,
+          parentId: moveDialog.selectedParentId,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Gagal memindahkan');
+      }
+
+      showSuccess('Item berhasil dipindahkan');
+      setMoveDialog(null);
+      fetchNodes(currentParentId);
+    } catch (error) {
+      console.error(error);
+      showError(error instanceof Error ? error.message : 'Gagal memindahkan');
+    }
+  };
+
+  const getFileKind = (mimeType: string): 'image' | 'video' | 'audio' | 'pdf' | 'text' => {
     if (mimeType.startsWith('image/')) return 'image';
     if (mimeType.startsWith('video/')) return 'video';
+    if (mimeType.startsWith('audio/')) return 'audio';
     if (mimeType === 'application/pdf') return 'pdf';
     return 'text';
   };
@@ -188,6 +378,30 @@ export default function AdminExplorerClient() {
   const handleUploadFile = () => {
     fileInputRef.current?.click();
   };
+
+  const cleanupUploadedAssets = useCallback(
+    async (uploadResult: UploadResult) => {
+      const paths = [
+        uploadResult.storagePath,
+        uploadResult.previewPath,
+        uploadResult.posterPath,
+      ].filter((path): path is string => Boolean(path));
+      await Promise.all(
+        paths.map((path) =>
+          fetch(`/api/upload?path=${encodeURIComponent(path)}`, {
+            method: 'DELETE',
+            headers: {
+              'x-csrf-token': getWritableCsrfToken(csrfToken),
+            },
+          }).catch((error) => {
+            console.warn('[AdminExplorer] Failed to rollback uploaded asset:', path, error);
+          })
+        )
+      );
+    },
+    [csrfToken]
+  );
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -195,9 +409,9 @@ export default function AdminExplorerClient() {
     // Reset input immediately so same file can be chosen again
     if (fileInputRef.current) fileInputRef.current.value = '';
 
-    // Mark overall uploading state
     setIsUploading(true);
-    for (const file of filesArray) {
+
+    const uploadPromises = filesArray.map(async (file) => {
       const uploadId = Math.random().toString(36).substring(7);
 
       // Add to active uploads state for Optimistic UI
@@ -224,31 +438,35 @@ export default function AdminExplorerClient() {
 
         if (file.type.startsWith('video/')) {
           updateUpload({ status: 'compressing', progress: 0 });
-          try {
-            const originalSize = file.size;
-            fileToUpload = await compressVideo(file, (progress) => updateUpload({ progress }));
-            videoWasClientProcessed = true;
-            showSuccess(
-              `Video optimized: ${(originalSize / 1024 / 1024).toFixed(2)}MB -> ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`
-            );
-          } catch (error) {
-            console.warn(
-              '[AdminExplorer] Video compression failed, server will try fallback:',
-              error
-            );
-          }
+          await new Promise<void>((resolve, reject) => {
+            compressChainRef.current = compressChainRef.current
+              .then(async () => {
+                try {
+                  const originalSize = file.size;
+                  fileToUpload = await compressVideo(file, (progress) =>
+                    updateUpload({ progress })
+                  );
+                  videoWasClientProcessed = true;
+                  showSuccess(
+                    `Video optimized: ${(originalSize / 1024 / 1024).toFixed(2)}MB -> ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`
+                  );
+                } catch (error) {
+                  console.warn(
+                    '[AdminExplorer] Video compression failed, server will try fallback:',
+                    error
+                  );
+                }
+              })
+              .then(resolve)
+              .catch(reject);
+          });
         }
 
         // 1. Upload to Storage using XMLHttpRequest to track progress
         const formData = new FormData();
         formData.append('file', fileToUpload);
 
-        const uploadPromise = new Promise<{
-          url: string;
-          previewUrl?: string;
-          posterUrl?: string;
-          videoStats?: { optimizedSize: number };
-        }>((resolve, reject) => {
+        const uploadPromise = new Promise<UploadResult>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
 
           xhr.upload.onprogress = (event) => {
@@ -274,10 +492,13 @@ export default function AdminExplorerClient() {
 
           xhr.onerror = () => reject(new Error('Network error during upload'));
 
-          xhr.open(
-            'POST',
-            `/api/upload${videoWasClientProcessed ? '?skipMainVideoOptimization=1' : ''}`
-          );
+          const params = new URLSearchParams({
+            folder: `assets/explorer/${currentParentIdRef.current || 'root'}`,
+          });
+          if (videoWasClientProcessed) {
+            params.set('skipMainVideoOptimization', '1');
+          }
+          xhr.open('POST', `/api/upload?${params.toString()}`);
           xhr.setRequestHeader('x-csrf-token', getWritableCsrfToken(csrfToken));
           xhr.send(formData);
         });
@@ -287,6 +508,14 @@ export default function AdminExplorerClient() {
         // 2. Register in Explorer DB
         updateUpload({ status: 'registering', progress: 100 });
 
+        const registeredName = uploadResult.finalFilename || fileToUpload.name;
+        const actualExtension = registeredName.split('.').pop()?.toLowerCase() || '';
+        const storedSize =
+          uploadResult.videoStats?.optimizedSize ??
+          uploadResult.imageStats?.optimizedSize ??
+          uploadResult.audioStats?.optimizedSize ??
+          fileToUpload.size;
+
         const explorerRes = await fetch('/api/explorer', {
           method: 'POST',
           headers: {
@@ -295,24 +524,39 @@ export default function AdminExplorerClient() {
           },
           body: JSON.stringify({
             type: 'file',
-            parentId: currentParentId || null, // Explicitly enforce null for Root
-            name: fileToUpload.name,
+            parentId: currentParentId || null,
+            name: file.name,
             url: uploadResult.url,
             previewUrl: uploadResult.previewUrl,
             thumbnailUrl: uploadResult.posterUrl,
+            storageKey: uploadResult.storagePath,
+            previewKey: uploadResult.previewPath,
+            thumbnailKey: uploadResult.posterPath,
+            mimeType: uploadResult.contentType || fileToUpload.type,
+            originalName: file.name,
             fileType: getFileKind(fileToUpload.type),
-            size: uploadResult.videoStats?.optimizedSize ?? fileToUpload.size,
+            size: storedSize,
             metadata: {
-              extension: fileToUpload.name.split('.').pop()?.toLowerCase() || '',
+              extension: actualExtension,
+              actualExtension,
+              ownedBy: 'explorer',
             },
           }),
         });
 
-        if (explorerRes.ok) {
-          updateUpload({ status: 'success' });
-          // Refresh data
-          fetchNodes(currentParentId);
+        const explorerPayload = await explorerRes.json().catch(() => null);
 
+        if (explorerRes.ok && explorerPayload?.success && explorerPayload.data) {
+          const createdFile = explorerPayload.data as AnyExplorerNode;
+          if (
+            createdFile.type === 'file' &&
+            createdFile.parentId === (currentParentIdRef.current || null)
+          ) {
+            setNodes((prev) =>
+              prev.some((node) => node.id === createdFile.id) ? prev : [...prev, createdFile]
+            );
+          }
+          updateUpload({ status: 'success' });
           // Cleanup success item after 3 seconds
           setTimeout(() => {
             setActiveUploads((prev) => {
@@ -322,8 +566,8 @@ export default function AdminExplorerClient() {
             });
           }, 3000);
         } else {
-          const errData = await explorerRes.json();
-          throw new Error(errData.error || 'Gagal mendaftarkan file');
+          await cleanupUploadedAssets(uploadResult);
+          throw new Error(explorerPayload?.error || 'Gagal mendaftarkan file');
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
@@ -340,14 +584,19 @@ export default function AdminExplorerClient() {
           });
         }, 5000);
       }
-    }
+    });
 
+    await Promise.allSettled(uploadPromises);
+
+    await fetchNodes(currentParentIdRef.current);
     setIsUploading(false);
   };
 
   // Filtered nodes
   const filteredNodes = useMemo(() => {
-    return nodes.filter((node) => node.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    return nodes.filter((node) =>
+      getExplorerNodeDisplayName(node).toLowerCase().includes(searchQuery.toLowerCase())
+    );
   }, [nodes, searchQuery]);
 
   const toolbarActions = (
@@ -390,12 +639,19 @@ export default function AdminExplorerClient() {
               >
                 <Home size={14} /> Root
               </button>
-              <ChevronRight size={14} className="text-gray-300" />
-              <span className="truncate font-medium text-gray-900">
-                {currentParentId
-                  ? nodes.find((n) => n.id === currentParentId)?.name || 'Folder'
-                  : 'Root'}
-              </span>
+              {pathNodes.map((folder) => (
+                <React.Fragment key={folder.id}>
+                  <ChevronRight size={14} className="text-gray-300" />
+                  <button
+                    onClick={() => navigateTo(folder.id)}
+                    className={`truncate transition-colors hover:text-blue-600 ${
+                      folder.id === currentParentId ? 'font-medium text-gray-900' : ''
+                    }`}
+                  >
+                    {folder.name}
+                  </button>
+                </React.Fragment>
+              ))}
             </div>
 
             <div className="relative">
@@ -421,10 +677,10 @@ export default function AdminExplorerClient() {
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Item
                   </th>
-                  <th className="px-6 py-3 text-left text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
                     Date Created
                   </th>
                   <th className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -544,7 +800,16 @@ export default function AdminExplorerClient() {
                           >
                             {node.type === 'folder' ? <Folder size={18} /> : <File size={18} />}
                           </div>
-                          <span className="text-sm font-medium">{node.name}</span>
+                          <div className="min-w-0">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <span className="truncate text-sm font-medium">
+                                {getExplorerNodeDisplayName(node)}
+                              </span>
+                              {node.type === 'file' && (
+                                <ExplorerFormatBadge format={getExplorerActualFormat(node)} />
+                              )}
+                            </div>
+                          </div>
                           {node.type === 'folder' && (
                             <ChevronRight
                               size={14}
@@ -564,17 +829,25 @@ export default function AdminExplorerClient() {
                       <td className="whitespace-nowrap px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
+                            onClick={() => handleRenameNode(node)}
+                            className="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 transition-all hover:bg-blue-50 hover:text-blue-600"
+                            title="Rename"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleOpenMoveDialog(node)}
+                            className="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+                            title="Pindah"
+                          >
+                            <FolderInput size={16} />
+                          </button>
+                          <button
                             onClick={() => handleDeleteNode(node)}
                             className="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 transition-all hover:bg-red-50 hover:text-red-500"
                             title="Hapus"
                           >
                             <Trash2 size={16} />
-                          </button>
-                          <button
-                            className="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 transition-all hover:bg-gray-100 hover:text-gray-600"
-                            title="Settings"
-                          >
-                            <MoreVertical size={16} />
                           </button>
                         </div>
                       </td>
@@ -585,6 +858,60 @@ export default function AdminExplorerClient() {
             </table>
           </div>
         </div>
+        {moveDialog && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
+              <div className="border-b border-gray-100 px-5 py-4">
+                <h2 className="text-base font-semibold text-gray-900">Pindah item</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Pilih folder tujuan untuk "{getExplorerNodeDisplayName(moveDialog.node)}".
+                </p>
+              </div>
+              <div className="space-y-2 px-5 py-4">
+                <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Folder tujuan
+                </label>
+                <select
+                  value={moveDialog.selectedParentId || 'root'}
+                  onChange={(event) =>
+                    setMoveDialog((current) =>
+                      current
+                        ? {
+                            ...current,
+                            selectedParentId:
+                              event.target.value === 'root' ? null : event.target.value,
+                          }
+                        : current
+                    )
+                  }
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                >
+                  {moveDialog.targets.map((target) => (
+                    <option key={target.id || 'root'} value={target.id || 'root'}>
+                      {target.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 border-t border-gray-100 bg-gray-50 px-5 py-3">
+                <button
+                  type="button"
+                  onClick={() => setMoveDialog(null)}
+                  className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmitMove}
+                  className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                >
+                  Pindah
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Hidden File Input */}
         <input
           type="file"

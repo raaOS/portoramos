@@ -1,17 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
 import type { GalleryItem } from '@/types/projects';
 import Media from '@/components/shared/Media';
 import { getProxiedUrl } from '@/lib/utils';
+import { DesktopWindowContext } from '@/components/os/context/DesktopWindowContext';
 
 interface LightboxGalleryProps {
   items: GalleryItem[];
   initialIndex?: number;
   onClose: () => void;
   groupName?: string;
+  windowId?: string; // Optional virtual window ID to maximize instead of browser fullscreen
 }
 
 export default function LightboxGallery({
@@ -19,9 +21,57 @@ export default function LightboxGallery({
   initialIndex = 0,
   onClose,
   groupName,
+  windowId,
 }: LightboxGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const validItems = items.filter((item) => item.isActive !== false);
+
+  const desktopContext = useContext(DesktopWindowContext);
+
+  const isWindowMaximized = desktopContext && windowId
+    ? desktopContext.windows.find((w) => w.id === windowId)?.isMaximized || false
+    : false;
+
+  const showActiveFullscreenState = windowId && desktopContext ? isWindowMaximized : isFullscreen;
+
+  const toggleFullscreen = useCallback(() => {
+    if (windowId && desktopContext) {
+      desktopContext.maximizeWindow(windowId);
+    } else {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch((err) => {
+          console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+        });
+        setIsFullscreen(true);
+      } else {
+        document.exitFullscreen().catch(() => {});
+        setIsFullscreen(false);
+      }
+    }
+  }, [windowId, desktopContext]);
+
+  useEffect(() => {
+    if (windowId && desktopContext) return;
+
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, [windowId, desktopContext]);
+
+  // Auto exit fullscreen on unmount
+  useEffect(() => {
+    return () => {
+      if (windowId && desktopContext) return;
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    };
+  }, [windowId, desktopContext]);
 
   // Navigation handlers
   const handleNext = useCallback(() => {
@@ -43,13 +93,15 @@ export default function LightboxGallery({
   );
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    window.addEventListener('keydown', handleKeyDown);
+    if (!windowId || !desktopContext) {
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
     return () => {
       document.body.style.overflow = 'auto';
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
     };
-  }, [handleKeyDown]);
+  }, [handleKeyDown, windowId, desktopContext]);
 
   if (validItems.length === 0) return null;
 
@@ -62,7 +114,11 @@ export default function LightboxGallery({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/95 backdrop-blur-sm"
+        className={
+          windowId && desktopContext
+            ? "absolute inset-0 z-30 flex items-center justify-center bg-black/95 backdrop-blur-sm"
+            : "fixed inset-0 z-[100000] flex items-center justify-center bg-black/95 backdrop-blur-sm"
+        }
       >
         {/* Header / Top Bar */}
         <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/50 to-transparent p-4">
@@ -70,13 +126,22 @@ export default function LightboxGallery({
             {groupName && <span className="mr-2 opacity-70">{groupName} &bull;</span>}
             {currentIndex + 1} / {validItems.length}
           </div>
-          <button
-            onClick={onClose}
-            className="inline-flex items-center justify-center rounded-full bg-black/20 p-2 text-white/70 transition-all hover:bg-black/40 hover:text-white"
-            aria-label="Close lightbox"
-          >
-            <X className="h-6 w-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleFullscreen}
+              className="inline-flex items-center justify-center rounded-full bg-black/20 p-2 text-white/70 transition-all hover:bg-black/40 hover:text-white"
+              aria-label={showActiveFullscreenState ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >
+              {showActiveFullscreenState ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+            </button>
+            <button
+              onClick={onClose}
+              className="inline-flex items-center justify-center rounded-full bg-black/20 p-2 text-white/70 transition-all hover:bg-black/40 hover:text-white"
+              aria-label="Close lightbox"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
         </div>
 
         {/* Main Content Area */}
@@ -93,7 +158,7 @@ export default function LightboxGallery({
                 kind="video"
                 src={currentItem.src}
                 poster={currentItem.poster}
-                className="max-h-full max-w-full rounded-sm object-contain shadow-2xl"
+                className="max-h-full max-w-full rounded-none object-contain shadow-2xl"
                 autoplay={true}
                 muted={false}
                 loop={true}
@@ -104,8 +169,9 @@ export default function LightboxGallery({
               <img
                 src={getProxiedUrl(currentItem.src)}
                 alt={currentItem.alt || `Gallery Image ${currentIndex + 1}`}
-                className="max-h-full max-w-full select-none rounded-sm object-contain shadow-2xl"
+                className="max-h-full max-w-full select-none rounded-none object-contain shadow-2xl"
                 draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
               />
             )}
           </motion.div>
@@ -121,7 +187,7 @@ export default function LightboxGallery({
                       e.stopPropagation();
                       setCurrentIndex(index);
                     }}
-                    className={`relative h-12 w-12 flex-shrink-0 overflow-hidden border-2 transition-all duration-300 sm:h-16 sm:w-16 ${
+                    className={`relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-none border-2 transition-all duration-300 sm:h-16 sm:w-16 ${
                       index === currentIndex
                         ? 'z-10 scale-105 border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]'
                         : 'border-white/10 opacity-40 hover:scale-105 hover:opacity-100'
@@ -133,7 +199,9 @@ export default function LightboxGallery({
                           <img
                             src={getProxiedUrl(item.poster)}
                             alt=""
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-cover rounded-none"
+                            draggable={false}
+                            onContextMenu={(e) => e.preventDefault()}
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-white/50">
@@ -150,7 +218,9 @@ export default function LightboxGallery({
                       <img
                         src={getProxiedUrl(item.src)}
                         alt=""
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover rounded-none"
+                        draggable={false}
+                        onContextMenu={(e) => e.preventDefault()}
                       />
                     )}
                   </button>

@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAdminRequest } from '@/lib/auth';
-import {
-  isR2StorageConfigured,
-  listR2ObjectKeys,
-  getMissingR2EnvKeys,
-} from '@/lib/r2Storage';
+import { isR2StorageConfigured, listR2ObjectKeys, getMissingR2EnvKeys } from '@/lib/r2Storage';
 import { extractStoragePath } from '@/lib/urlResolver';
 import { aboutService } from '@/lib/services/aboutService';
 import { projectService } from '@/lib/services/projectService';
 import { hardSkillService } from '@/lib/services/hardSkillService';
+import { explorerService } from '@/lib/services/explorerService';
 import { extractProjectAssets } from '@/lib/services/project/projectStorage';
 
 /**
@@ -104,11 +101,7 @@ function bumpCounts(counts: KindCounts, kind: MediaKind) {
   counts[kind] += 1;
 }
 
-function dedupePushKind(
-  counts: KindCounts,
-  seen: Set<string>,
-  url: string | null | undefined
-) {
+function dedupePushKind(counts: KindCounts, seen: Set<string>, url: string | null | undefined) {
   if (!url) return;
   if (seen.has(url)) return;
   seen.add(url);
@@ -267,18 +260,14 @@ async function runStats(): Promise<StorageStatsResponse> {
   // renders partial data.
   const [aboutData, projectsBundle, hardSkillData] = await Promise.all([
     safeCollect('aboutService', warnings, () => aboutService.getAboutData(true), null),
-    safeCollect(
-      'projectService',
-      warnings,
-      () => projectService.getProjects(undefined, true),
-      { projects: [], lastUpdated: '' }
-    ),
-    safeCollect(
-      'hardSkillService',
-      warnings,
-      () => hardSkillService.getHardSkills(true),
-      { skills: [], lastUpdated: '' } as Awaited<ReturnType<typeof hardSkillService.getHardSkills>>
-    ),
+    safeCollect('projectService', warnings, () => projectService.getProjects(undefined, true), {
+      projects: [],
+      lastUpdated: '',
+    }),
+    safeCollect('hardSkillService', warnings, () => hardSkillService.getHardSkills(true), {
+      skills: [],
+      lastUpdated: '',
+    } as Awaited<ReturnType<typeof hardSkillService.getHardSkills>>),
   ]);
 
   // ── Wallpapers ───────────────────────────────────────────────
@@ -315,6 +304,36 @@ async function runStats(): Promise<StorageStatsResponse> {
       });
     }
   }
+
+  const explorerRefs: BuildArgs['references'] = [];
+  const explorerNodes = await explorerService.getAllNodes();
+  for (const node of explorerNodes) {
+    if (node.type !== 'file') continue;
+    explorerRefs.push({
+      url: node.url,
+      storagePath: node.storageKey || extractStoragePath(node.url),
+    });
+    if (node.previewUrl || node.previewKey) {
+      explorerRefs.push({
+        url: node.previewUrl || node.previewKey || '',
+        storagePath:
+          node.previewKey || (node.previewUrl ? extractStoragePath(node.previewUrl) : null),
+      });
+    }
+    if (node.thumbnailUrl || node.thumbnailKey) {
+      explorerRefs.push({
+        url: node.thumbnailUrl || node.thumbnailKey || '',
+        storagePath:
+          node.thumbnailKey || (node.thumbnailUrl ? extractStoragePath(node.thumbnailUrl) : null),
+      });
+    }
+  }
+  const explorerManagedRefs = explorerRefs.filter((ref) =>
+    ref.storagePath?.startsWith('assets/explorer/')
+  );
+  const explorerLegacyRefs = explorerRefs.filter((ref) =>
+    ref.storagePath?.startsWith('assets/media/')
+  );
 
   // Build per-category stats. R2 listing is parallelized inside
   // buildCategory's await chain via Promise.all here.
@@ -360,6 +379,30 @@ async function runStats(): Promise<StorageStatsResponse> {
         danglingPaths: [],
         sidecarCount: 0,
       },
+      {
+        id: 'explorer',
+        label: 'Explorer Files',
+        prefix: 'assets/explorer/',
+        d1: countByKind(explorerManagedRefs),
+        r2: emptyCounts(),
+        orphans: 0,
+        dangling: 0,
+        orphanKeys: [],
+        danglingPaths: [],
+        sidecarCount: 0,
+      },
+      {
+        id: 'explorerLegacy',
+        label: 'Explorer Legacy Media',
+        prefix: 'assets/media/',
+        d1: countByKind(explorerLegacyRefs),
+        r2: emptyCounts(),
+        orphans: 0,
+        dangling: 0,
+        orphanKeys: [],
+        danglingPaths: [],
+        sidecarCount: 0,
+      },
     ];
   } else {
     categories = await Promise.all([
@@ -382,6 +425,23 @@ async function runStats(): Promise<StorageStatsResponse> {
         label: 'Hard Skill Icons',
         prefix: 'assets/icons-library/',
         references: iconRefs,
+      }),
+      buildCategory({
+        id: 'explorer',
+        label: 'Explorer Files',
+        prefix: 'assets/explorer/',
+        references: explorerManagedRefs,
+        // FIX (BUG-2): Explorer videos produce sidecar files (-preview.mp4,
+        // .jpg poster) via the upload pipeline, same as projects/wallpapers.
+        // Without this flag, those sidecars appear as "orphan" in the admin
+        // storage dashboard and a naive cleanup would delete them.
+        includeVideoSidecars: true,
+      }),
+      buildCategory({
+        id: 'explorerLegacy',
+        label: 'Explorer Legacy Media',
+        prefix: 'assets/media/',
+        references: explorerLegacyRefs,
       }),
     ]);
   }
@@ -470,6 +530,21 @@ function describeCategory(cat: CategoryStats): string {
       return `${cat.orphans} icon di R2 tidak dipakai skill manapun.`;
     }
     return `${cat.d1.total} icon URL tersimpan di D1.`;
+  }
+
+  if (cat.id === 'explorer' || cat.id === 'explorerLegacy') {
+    if (cat.d1.total === 0 && cat.r2.total === 0) {
+      return cat.id === 'explorer'
+        ? 'Belum ada file Explorer di namespace baru.'
+        : 'Tidak ada file Explorer legacy di assets/media.';
+    }
+    if (cat.dangling > 0) {
+      return `${cat.dangling} file Explorer merujuk object R2 yang hilang.`;
+    }
+    if (cat.orphans > 0) {
+      return `${cat.orphans} object R2 di prefix ini tidak punya referensi Explorer.`;
+    }
+    return `${cat.d1.total} URL Explorer tersinkron dengan ${cat.r2.total} object R2.`;
   }
 
   return '';

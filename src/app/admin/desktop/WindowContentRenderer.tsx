@@ -43,6 +43,11 @@ const ExplorerPanel = dynamic(
   { loading: () => <AdminLoading size="page" /> }
 );
 
+const EventPagesPanel = dynamic(
+  () => import('@/app/admin/projects/event-pages/AdminEventPagesClient'),
+  { loading: () => <AdminLoading size="page" /> }
+);
+
 const AppearancePanel = dynamic(
   () => import('./panels/AppearancePanel'),
   { loading: () => <AdminLoading size="page" /> }
@@ -91,6 +96,7 @@ const PANEL_MAP: Record<string, React.ComponentType> = {
   archive: ArchivePanel,
   labels: LabelsPanel,
   explorer: ExplorerPanel,
+  eventPages: EventPagesPanel,
   appearance: AppearancePanel,
   dock: DockPanel,
   widgets: WidgetsPanel,

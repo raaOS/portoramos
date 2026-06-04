@@ -1,58 +1,42 @@
 import React from 'react';
-import Image from 'next/image';
-import { DEFAULT_WALLPAPER_URL, Z_LAYERS } from '../utils/zIndexLayers';
+import { Z_LAYERS } from '../utils/zIndexLayers';
 
 interface DesktopSkeletonProps {
-  wallpaperUrl?: string;
   isBooting?: boolean;
 }
 
-export default function DesktopSkeleton({ wallpaperUrl, isBooting }: DesktopSkeletonProps) {
-  const isValidUrl =
-    wallpaperUrl && (wallpaperUrl.startsWith('/') || wallpaperUrl.startsWith('http'));
-  const wallpaper = isValidUrl ? wallpaperUrl : DEFAULT_WALLPAPER_URL;
-
-  const isVideo =
-    wallpaper.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) || wallpaper.startsWith('data:video');
-
-  // If booting, show absolutely nothing but black to prevent "Skeleton Glitch"
+/**
+ * Skeleton overlay shown sebelum DesktopOS chunk siap dan saat
+ * `useDesktopLock` masih mounted=false.
+ *
+ * Catatan kunci (post-2026-06): skeleton ini SENGAJA tidak render
+ * wallpaper-nya sendiri. Wallpaper (`DesktopBackground`) sekarang hidup
+ * di level `HomeOSWrapper`, jadi SSR -> hydration -> chunk swap ->
+ * mounted flip semua tetap pakai DOM `<video>` yang sama. Tujuannya
+ * mencegah video element ke-remount tiga kali (dulu setiap remount =
+ * fetch ulang dari awal -> visitor lihat poster JPG / layar hitam
+ * selama beberapa detik sebelum video pertama play).
+ *
+ * Yang masih jadi tanggung jawab skeleton:
+ *   - Black-on-boot mode untuk fase StartScreen ("click to start").
+ *   - Subtle dim overlay supaya icons stagger animation di
+ *     DesktopMain tidak terasa pop-in dari wallpaper kosong.
+ */
+export default function DesktopSkeleton({ isBooting }: DesktopSkeletonProps) {
   if (isBooting) {
     return <div className="fixed inset-0 bg-black" style={{ zIndex: Z_LAYERS.BOOT }} />;
   }
 
   return (
-    <div className="fixed inset-0 h-full w-full select-none overflow-hidden bg-[#050505]">
-      {/* Real Wallpaper LCP Skeleton - Instantly visible on SSG Load */}
-      {/* Image: scale 1.08 untuk efek breathing iOS. Video: tanpa scale
-                supaya tidak ke-upsample (yang bikin pecah) — fill 100% via
-                object-cover, konsisten dengan DesktopBackground. */}
-      <div className={`absolute inset-0 z-0 ${isVideo ? '' : 'scale-[1.08]'}`}>
-        {isVideo ? (
-          <video
-            src={wallpaper}
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <Image
-            src={wallpaper}
-            alt="Desktop Wallpaper"
-            fill
-            priority
-            fetchPriority="high"
-            loading="eager"
-            quality={75}
-            sizes="100vw"
-            className="object-cover"
-          />
-        )}
-      </div>
-
-      {/* Dark overlay matching DesktopBackground */}
-      <div className="desktop-skeleton-overlay z-1 pointer-events-none absolute inset-0 bg-black/20" />
+    <div
+      className="pointer-events-none fixed inset-0 select-none"
+      // Sit ABOVE DesktopBackground (z-0) tapi di bawah konten desktop.
+      // Subtle dim untuk cover gap pre-icons-mount tanpa menutupi
+      // wallpaper sepenuhnya.
+      style={{ zIndex: 1 }}
+      aria-hidden="true"
+    >
+      <div className="absolute inset-0 bg-black/20" />
     </div>
   );
 }

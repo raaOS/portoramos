@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useSyncExternalStore } from 'react';
 import { Eye, LogOut, Wifi, Database, Settings, Bot } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -102,6 +102,38 @@ function summarizeServerSteps(steps?: ServerCacheStep[]): {
   };
 }
 
+// SSR-safe online status helpers untuk `useSyncExternalStore`.
+//
+// Kenapa pattern ini, bukan `useState(() => navigator.onLine)`?
+// useState initializer tetap dijalankan di server (typeof navigator
+// undefined → return true) DAN di client. Kalau client offline saat
+// hydration, snapshot client (false) ≠ snapshot server (true) → React
+// emit "hydration mismatch" warning untuk attribute className yang
+// di-derive dari `isOnline` (mis. `text-rose-500` vs `text-amber-500`
+// di icon Wifi).
+//
+// `useSyncExternalStore` resmi dari React khusus untuk kasus ini:
+// snapshot server konstan (`true`), snapshot client bisa beda — React
+// akan PATCH client state setelah hydration tanpa mismatch warning.
+function subscribeOnline(callback: () => void) {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('online', callback);
+  window.addEventListener('offline', callback);
+  return () => {
+    window.removeEventListener('online', callback);
+    window.removeEventListener('offline', callback);
+  };
+}
+
+function getOnlineSnapshot() {
+  if (typeof navigator === 'undefined') return true;
+  return navigator.onLine;
+}
+
+function getOnlineServerSnapshot() {
+  return true;
+}
+
 export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -120,13 +152,25 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
   const [cacheSteps, setCacheSteps] = useState<ClearCacheProgressStep[]>(createInitialCacheSteps);
   const [canCloseCacheProgress, setCanCloseCacheProgress] = useState(true);
   const [isClearingCache, setIsClearingCache] = useState(false);
-  // Initialize from `navigator.onLine` lazily (SSR-safe) supaya tidak
-  // perlu setState di useEffect untuk seed initial value — yang
-  // di-reject oleh `react-hooks/set-state-in-effect` rule.
-  const [isOnline, setIsOnline] = useState<boolean>(() => {
-    if (typeof navigator === 'undefined') return true;
-    return navigator.onLine;
-  });
+  // Online status via `useSyncExternalStore` — pattern resmi React untuk
+  // baca state browser-only (window/navigator) tanpa hydration mismatch.
+  //
+  // Server snapshot selalu `true` (asumsi online). Client snapshot baca
+  // `navigator.onLine` saat render. Karena SSR menghasilkan markup
+  // berdasarkan server snapshot, lalu hydration React akan PATCH ke
+  // client snapshot di pass berikutnya tanpa warning — itu memang
+  // semantic yang `useSyncExternalStore` enforce.
+  //
+  // Sebelumnya pakai `useState(() => navigator.onLine)` — initializer
+  // jalan di server (return true) dan di client (return navigator.onLine).
+  // Kalau client offline saat hydration, React lihat 'true' di SSR HTML
+  // tapi 'false' di first render client → mismatch attribute (className
+  // Wifi text-rose vs text-amber).
+  const isOnline = useSyncExternalStore(
+    subscribeOnline,
+    getOnlineSnapshot,
+    getOnlineServerSnapshot
+  );
   const { hasActiveUploads, totalProgress, tasks, removeTask } = useBackgroundUpload();
   const totalUploadCount = tasks.length;
   const completedUploadCount = tasks.filter((t) => t.status === 'complete').length;
@@ -380,15 +424,8 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
     update();
     const interval = setInterval(update, 30_000);
 
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
     return () => {
       clearInterval(interval);
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
     };
   }, []);
 

@@ -16,9 +16,11 @@ export const protectedRoutes = ['/admin', '/api/admin', '/api/upload'];
 // Public routes — explicitly excluded dari auth check meski match
 // `protectedRoutes`. Login endpoints harus di sini supaya user yang
 // belum login bisa pernah login. Logout juga public supaya user dengan
-// session expired tetap bisa clear cookie sisa.
+// session expired tetap bisa clear cookie sisa. Check-auth harus public
+// karena endpoint itu memang menjawab status auth untuk visitor/admin.
 export const publicRoutes = [
   '/admin/login',
+  '/api/admin/check-auth',
   '/api/admin/login',
   '/api/admin/logout',
 ];

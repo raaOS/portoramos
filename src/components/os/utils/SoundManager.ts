@@ -181,9 +181,10 @@ class SoundManager {
     // di-block oleh browser autoplay policy. Cukup queue type-nya — saat
     // user interaksi, init() akan flush dan instansiasi Audio yang benar.
     //
-    // Penting untuk RetroMobileOverlay yang play 'error' saat boot tanpa
-    // ada interaksi sebelumnya → tanpa gate ini, mobile selalu fetch
-    // ~35KB error.wav sia-sia di first paint.
+    // Penting untuk komponen yang play sound saat boot (mis. error sound
+    // di state error startup) sebelum interaksi pertama → tanpa gate ini,
+    // browser fetch ~35KB audio sia-sia di first paint walaupun audio
+    // belum bisa diputar.
     if (!this.isUnlocked) {
       this.pendingSounds.add(type);
       this.log(`Audio context locked. Queued "${type}" without fetching.`);

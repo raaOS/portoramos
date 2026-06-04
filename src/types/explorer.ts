@@ -1,5 +1,5 @@
 export type NodeType = 'folder' | 'file';
-export type FileKind = 'image' | 'video' | 'pdf' | 'text';
+export type FileKind = 'image' | 'video' | 'audio' | 'pdf' | 'text';
 
 export interface ExplorerNode {
   id: string;
@@ -21,12 +21,19 @@ export interface ExplorerFile extends ExplorerNode {
   url: string;
   previewUrl?: string;
   thumbnailUrl?: string; // High res thumb
+  storageKey?: string;
+  previewKey?: string;
+  thumbnailKey?: string;
+  mimeType?: string;
+  originalName?: string;
   size?: number; // bytes
   metadata?: {
     width?: number;
     height?: number;
     duration?: number; // for video
     extension: string;
+    actualExtension?: string;
+    ownedBy?: 'explorer' | 'external';
   };
 }
 

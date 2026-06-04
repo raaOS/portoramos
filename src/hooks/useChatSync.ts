@@ -70,13 +70,23 @@ export function useChatSync(initialGreeting?: string) {
 
   const [syncError, setSyncError] = useState(false);
 
-  // Polling with Smart Interval
-  // 3 seconds when active, 30 seconds when in background
+  // Polling with Smart Interval — Vercel Hobby Free Tier guard.
+  //
+  // Sebelumnya: 3s active / 30s background. Untuk 1 visitor yang buka chat
+  // window 5 menit = 100 invocations dari satu visitor. Worst case (tab
+  // dibiarkan open semalam) = 14,400 invocations dari satu user. Itu
+  // gerogoti budget invocation 1M/bulan tanpa value real karena visitor
+  // portfolio tidak ekspektasi sub-second message arrival.
+  //
+  // Sekarang: 8s active / 60s background. Latency reply dari admin
+  // sekarang max 8 detik (acceptable untuk chat asynchronous portfolio),
+  // tapi invocations turun ~62%. Untuk skala 250 visitor/bulan ini
+  // bedanya signifikan dari "boros" jadi "hemat ratusan invocations".
   const { data: _syncData, error: swrError } = useSWR(
     visitorId ? `/api/chat/sync?visitorId=${visitorId}` : null,
     fetcher,
     {
-      refreshInterval: isPageVisible ? 3000 : 30000,
+      refreshInterval: isPageVisible ? 8000 : 60000,
       revalidateOnFocus: true,
       dedupingInterval: 2000,
       onSuccess: (data) => {

@@ -2,7 +2,15 @@
 
 import { useEffect, useRef } from 'react';
 
-const POLL_INTERVAL_MS = 5000;
+// Vercel Hobby Free Tier guard — interval 5s adalah peninggalan era
+// "instant admin sync" yang berlebihan untuk skala portfolio. Hitungan
+// kasar: admin tab open 1 jam = 720 polls = 720 invocations untuk single
+// admin session, sementara payload dari `/api/data/version` cuma version
+// string (~50 bytes). Naikkan ke 30s mengurangi invocations 6×; admin
+// tetap dapat update otomatis dalam ≤30s, atau bisa manual refresh kalau
+// urgent. /api/data/version juga sudah Edge runtime jadi cost per panggil
+// rendah, tapi panggilan yang tidak perlu tetap counted di limit.
+const POLL_INTERVAL_MS = 30000;
 
 async function fetchDataVersion(): Promise<string | null> {
   const response = await fetch('/api/data/version', { cache: 'no-store' });

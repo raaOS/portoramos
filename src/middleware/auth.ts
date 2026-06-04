@@ -52,7 +52,7 @@ async function maybeRefreshAdminToken(
 export async function checkAdminAuth(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
-  const isPublic = publicRoutes.some((route) => pathname.startsWith(route));
+  const isPublic = publicRoutes.some((route) => pathname === route);
 
   if (isProtected && !isPublic) {
     // STANDARD: `admin_token` — `admin-token` dibaca untuk backward-compat
