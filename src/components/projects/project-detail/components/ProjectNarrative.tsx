@@ -3,6 +3,7 @@
 import type { Project } from '@/types/projects';
 import ReadMoreDescription from '@/components/ui/ReadMoreDescription';
 import { useMemo } from 'react';
+import { motion } from 'motion/react';
 
 interface ProjectNarrativeProps {
   project: Project;
@@ -108,27 +109,41 @@ export function ProjectNarrative({
       <div className="react-tabs-container">
         {/* Tab List Base Line - Consolidated to prevent flickering */}
         <div className="relative z-10 w-full border-b border-black/10 dark:border-white/10">
-          <div className="flex items-end px-0">
+          <div className="relative flex items-end px-0">
+            {/* Animated Pill — single persistent element, moves via layout animation */}
+            <motion.div
+              className={`absolute -bottom-px h-full rounded-t-md z-10 ${tabStyles[activeTab].bg}`}
+              layoutId={`activeNarrativeTabPill-${project.id}`}
+              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              style={{
+                left: `${(tabs.findIndex(t => t.id === activeTab) / tabs.length) * 100}%`,
+                width: `${100 / tabs.length}%`,
+              }}
+            />
+            {/* Anti-Ghosting Shield */}
+            <motion.div
+              className={`absolute -bottom-px h-[4px] z-30 ${tabStyles[activeTab].bg}`}
+              layoutId={`activeNarrativeTabShield-${project.id}`}
+              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              style={{
+                left: `${(tabs.findIndex(t => t.id === activeTab) / tabs.length) * 100}%`,
+                width: `${100 / tabs.length}%`,
+              }}
+            />
+
             {tabs.map((tab, idx) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => onTabChange(tab.id)}
-                  className={`relative -mb-[1px] flex items-center justify-center px-5 py-1.5 text-sm font-bold outline-none transition-all duration-150 sm:px-8 ${
+                  className={`relative -mb-[1px] flex flex-1 items-center justify-center px-5 py-1.5 text-sm font-bold outline-none transition-colors duration-150 sm:px-8 ${
                     isActive
-                      ? `${tabStyles[tab.id].bg} z-20 -mb-px rounded-b-none rounded-t-md text-white transition-all duration-150`
-                      : 'z-0 border-x border-t border-transparent bg-transparent text-gray-400 hover:text-gray-600'
+                      ? 'z-20 text-white'
+                      : 'z-0 text-gray-400 hover:text-gray-600'
                   } ${idx === 0 ? 'ml-0' : ''} `}
                 >
                   <span className="relative z-10 text-center">{tab.label}</span>
-
-                  {/* Anti-Ghosting Shield: Force-covers the baseline at the point of contact */}
-                  {isActive && (
-                    <div
-                      className={`absolute -bottom-px left-0 right-0 h-[4px] ${tabStyles[tab.id].bg} z-30`}
-                    />
-                  )}
                 </button>
               );
             })}

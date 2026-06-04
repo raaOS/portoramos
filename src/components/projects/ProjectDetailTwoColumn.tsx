@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useCallback, useSyncExternalStore } from 'react';
+import { useMemo, useCallback, useState, useSyncExternalStore } from 'react';
 import type { Project, GalleryItem } from '@/types/projects';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Info, BookOpen, Image, MessageSquare } from 'lucide-react';
 import LightboxGallery from '@/components/ui/LightboxGallery';
 import { useProjectDetail } from './project-detail/hooks';
 import {
@@ -58,12 +59,22 @@ export default function ProjectDetailTwoColumn({
     handleProjectShare,
     translateAll,
   } = useProjectDetail({ project });
+  const [activeWindowTab, setActiveWindowTab] = useState<'overview' | 'story' | 'gallery'>('overview');
+  const [isLeftColumnHovered, setIsLeftColumnHovered] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+
+  const commentsSectionId = useMemo(() => `comments-section-${project.id}`, [project.id]);
 
   const handleScrollToComments = useCallback(() => {
+    if (isWindowMode) {
+      setIsCommentsOpen(prev => !prev);
+      return;
+    }
+
     setTimeout(() => {
-      document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById(commentsSectionId)?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
-  }, []);
+  }, [commentsSectionId, isWindowMode]);
 
   // Memoize container class to prevent recreation
   const containerClassName = useMemo(() => {
@@ -87,6 +98,280 @@ export default function ProjectDetailTwoColumn({
     return displayedProjects.filter((_, idx) => idx % 2 === 0);
   }, [displayedProjects, isWindowMode]);
 
+  const projectBadges = (
+    <div className="mt-4 flex flex-wrap gap-1.5 sm:gap-2">
+      {project.client && (
+        <span className="inline-flex h-5 items-center rounded-full bg-gray-100 px-3 text-xs leading-none text-gray-600 transition-colors duration-300 dark:bg-gray-800 dark:text-gray-400">
+          {project.client}
+        </span>
+      )}
+      {project.year && (
+        <span className="inline-flex h-5 items-center rounded-full bg-gray-100 px-3 text-xs leading-none text-gray-600 transition-colors duration-300 dark:bg-gray-800 dark:text-gray-400">
+          {project.year}
+        </span>
+      )}
+    </div>
+  );
+
+  const renderEngagementPanel = (className = '', commentsWithDivider = true) => (
+    <div className={className}>
+      {/* Interaction Bar */}
+      <ProjectInteractionBar
+        isProjectLiked={isProjectLiked}
+        metrics={metrics}
+        comments={comments}
+        translations={translations}
+        translateLoading={translateLoading}
+        onLike={handleProjectLike}
+        onShare={handleProjectShare}
+        onTranslate={translateAll}
+        onScrollToComments={handleScrollToComments}
+      />
+
+      {!isWindowMode && projectBadges}
+
+      {/* Comments Section */}
+      <ProjectComments
+        slug={project.slug}
+        comments={comments}
+        setComments={setComments}
+        allowComments={project.allowComments}
+        sectionId={commentsSectionId}
+        withDivider={commentsWithDivider}
+        isVisible={!isWindowMode}
+        animated={isWindowMode}
+      />
+    </div>
+  );
+
+  if (isWindowMode) {
+    const windowTabs = [
+      { id: 'overview' as const, label: translations ? 'Overview' : 'Ringkasan', icon: Info, show: true },
+      { id: 'story' as const, label: translations ? 'Story' : 'Proses', icon: BookOpen, show: !!project.narrative },
+      { id: 'gallery' as const, label: translations ? 'Gallery' : 'Galeri', icon: Image, show: gallery.length > 0, count: gallery.length },
+    ].filter(t => t.show);
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="flex flex-col md:flex-row h-full w-full overflow-hidden bg-white dark:bg-black transition-colors duration-300 select-text"
+      >
+        {/* Left Column: Media & Core Interaction */}
+        <div 
+          onMouseEnter={() => setIsLeftColumnHovered(true)}
+          onMouseLeave={() => { setIsLeftColumnHovered(false); setIsCommentsOpen(false); }}
+          className="relative w-full md:w-[42%] flex items-center justify-center border-b md:border-b-0 md:border-r border-black/10 dark:border-white/10 bg-gray-50/50 dark:bg-gray-900/10 h-full overflow-hidden" 
+          data-no-window-drag
+        >
+          {/* Cover + Icons wrapper — icons positioned relative to the media, not the column */}
+          <div 
+            className="relative w-full transition-[padding] duration-300 ease-out"
+            style={{ padding: isLeftColumnHovered ? '0 24px' : '0' }}
+          >
+            <ProjectCover project={project} cover={cover} ratio={ratio} isWindowMode={true} />
+            
+            {/* Vertical Interaction Bar — centered vertically relative to image */}
+            <motion.div 
+              className="absolute right-1 inset-y-0 z-20 flex items-center"
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: isLeftColumnHovered ? 0 : 50, opacity: isLeftColumnHovered ? 1 : 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            >
+              <ProjectInteractionBar
+                isProjectLiked={isProjectLiked}
+                metrics={metrics}
+                comments={comments}
+                translations={translations}
+                translateLoading={translateLoading}
+                onLike={handleProjectLike}
+                onShare={handleProjectShare}
+                onTranslate={translateAll}
+                onScrollToComments={handleScrollToComments}
+                orientation="vertical"
+                projectSlug={project.slug}
+              />
+            </motion.div>
+          </div>
+
+          {/* Comments Overlay — slides up from bottom on comment icon click */}
+          <AnimatePresence>
+            {isCommentsOpen && (
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                className="absolute inset-0 z-30 flex flex-col bg-white/95 dark:bg-black/95 backdrop-blur-xl"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-black/5 dark:border-white/10 flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare size={14} className="text-indigo-500" />
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                      {translations ? 'Reviews' : 'Ulasan'}
+                    </span>
+                    {comments.length > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 font-bold">
+                        {comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setIsCommentsOpen(false)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  </button>
+                </div>
+                {/* Scrollable comments content */}
+                <div className="flex-1 overflow-y-auto p-4">
+                  <ProjectComments
+                    slug={project.slug}
+                    comments={comments}
+                    setComments={setComments}
+                    allowComments={project.allowComments}
+                    sectionId={commentsSectionId}
+                    withDivider={false}
+                    isVisible={true}
+                    animated={false}
+                    className="w-full"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Right Column: Tabbed Content (Header, Tabs Navigation, Tab Panels) */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-black" data-no-window-drag>
+          {/* Header & Meta (Fixed Top of Right Column) */}
+          <div className="p-5 sm:p-6 border-b border-black/5 dark:border-white/5 flex-shrink-0">
+            <ProjectHeader project={project} translations={translations} isWindowMode={true} />
+          </div>
+
+          {/* Tabs Navigation Bar (Mac/iOS-style segment control) */}
+          <div className="px-5 sm:px-6 py-3 border-b border-black/5 dark:border-white/5 bg-gray-50/30 dark:bg-gray-900/5 flex-shrink-0">
+            <div className="relative flex bg-gray-100/80 dark:bg-gray-900/60 p-1 rounded-xl gap-1">
+              {/* Persistent animated pill — prevents animation jump bug */}
+              <motion.div
+                className="absolute inset-y-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm z-0"
+                layoutId={`activeWindowTabPill-${project.id}`}
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                style={{
+                  left: `calc(${(windowTabs.findIndex(t => t.id === activeWindowTab) / windowTabs.length) * 100}% + 4px)`,
+                  width: `calc(${100 / windowTabs.length}% - ${windowTabs.length > 1 ? '4px' : '8px'})`,
+                }}
+              />
+              {windowTabs.map((tab) => {
+                const isActive = activeWindowTab === tab.id;
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveWindowTab(tab.id)}
+                    className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors duration-200 outline-none ${
+                      isActive
+                        ? 'text-gray-900 dark:text-white'
+                        : 'text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-100'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5 text-center">
+                      <Icon size={14} className={isActive ? 'text-indigo-600 dark:text-indigo-400' : ''} />
+                      <span>{tab.label}</span>
+                      {tab.count !== undefined && tab.count > 0 && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                          isActive 
+                            ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400' 
+                            : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                        }`}>
+                          {tab.count}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tab Content Panel (Independent Internal Scrolling) */}
+          <div className="flex-grow flex-1 h-0 overflow-y-auto p-5 sm:p-6">
+            <AnimatePresence mode="wait">
+              {activeWindowTab === 'overview' && (
+                <motion.div
+                  key="overview"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                  className="space-y-6"
+                >
+                  {projectBadges}
+                  <ProjectMeta project={project} translations={translations} isWindowMode={true} />
+                  
+                  <div className="border-t border-black/5 dark:border-white/5 pt-4">
+                    <h4 className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 mb-3">
+                      {translations ? 'About Project' : 'Tentang Proyek'}
+                    </h4>
+                    <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                      {translations?.description || project.description}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeWindowTab === 'story' && (
+                <motion.div
+                  key="story"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                  className="story-tab-container -mt-8"
+                >
+                  <ProjectNarrative
+                    project={project}
+                    translations={translations}
+                    activeTab={activeNarrativeTab}
+                    onTabChange={setActiveNarrativeTab}
+                  />
+                </motion.div>
+              )}
+
+              {activeWindowTab === 'gallery' && (
+                <motion.div
+                  key="gallery"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                  className="space-y-4"
+                >
+                  <h4 className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 mb-2">
+                    {translations ? 'Project Gallery' : 'Galeri Proyek'}
+                  </h4>
+                  <ProjectGallery project={project} gallery={gallery} onGroupClick={setActiveGalleryGroup} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Lightbox */}
+        {activeGalleryGroup && (
+          <LightboxGallery
+            items={activeGalleryGroup.items}
+            groupName={activeGalleryGroup.name}
+            onClose={() => setActiveGalleryGroup(null)}
+          />
+        )}
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -105,6 +390,8 @@ export default function ProjectDetailTwoColumn({
             <div className="flex h-full flex-col lg:flex-row">
               {/* Cover & Interaction Section */}
               <div className="w-full border-b border-gray-100 bg-gray-50 dark:border-white/10 dark:bg-gray-900/20 lg:w-[45%] lg:border-b-0 lg:border-r">
+
+
                 <ProjectCover
                   project={project}
                   cover={cover}
@@ -112,48 +399,32 @@ export default function ProjectDetailTwoColumn({
                   isWindowMode={isWindowMode}
                 />
 
-                <div className="mt-6 space-y-6 px-6 pb-10 sm:mt-8 sm:space-y-8 lg:px-10">
-                  {/* Interaction Bar */}
-                  <ProjectInteractionBar
-                    isProjectLiked={isProjectLiked}
-                    metrics={metrics}
-                    comments={comments}
-                    translations={translations}
-                    translateLoading={translateLoading}
-                    onLike={handleProjectLike}
-                    onShare={handleProjectShare}
-                    onTranslate={translateAll}
-                    onScrollToComments={handleScrollToComments}
-                    client={project.client}
-                    year={project.year}
-                  />
-
-                  {/* Comments Section */}
-                  <ProjectComments
-                    slug={project.slug}
-                    comments={comments}
-                    setComments={setComments}
-                    allowComments={project.allowComments}
-                  />
-                </div>
+                {!isWindowMode &&
+                  renderEngagementPanel(
+                    'mt-6 space-y-6 px-6 pb-10 sm:mt-8 sm:space-y-8 lg:px-10'
+                  )}
               </div>
 
               {/* Details Section */}
               <div className="flex w-full flex-col lg:w-[55%]">
                 <div className="p-4 sm:p-6 lg:p-8">
                   {/* Header */}
-                  <ProjectHeader
-                    project={project}
-                    translations={translations}
-                    isWindowMode={isWindowMode}
-                  />
+                  {!isWindowMode && (
+                    <ProjectHeader
+                      project={project}
+                      translations={translations}
+                      isWindowMode={isWindowMode}
+                    />
+                  )}
 
                   {/* Meta Info */}
-                  <ProjectMeta
-                    project={project}
-                    translations={translations}
-                    isWindowMode={isWindowMode}
-                  />
+                  {!isWindowMode && (
+                    <ProjectMeta
+                      project={project}
+                      translations={translations}
+                      isWindowMode={isWindowMode}
+                    />
+                  )}
 
                   {/* Narrative Tabs */}
                   <ProjectNarrative
@@ -169,6 +440,8 @@ export default function ProjectDetailTwoColumn({
                     gallery={gallery}
                     onGroupClick={setActiveGalleryGroup}
                   />
+
+
                 </div>
               </div>
             </div>
