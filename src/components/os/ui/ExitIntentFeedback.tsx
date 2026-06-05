@@ -3,9 +3,10 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { Star, X, Heart, Send } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { useExitIntent } from '@/hooks/useExitIntent';
 import { useToast } from '@/contexts/ToastContext';
+import { POPULAR_EMOJIS } from '@/components/chat/data/EmojiData';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 
 /**
@@ -32,6 +33,16 @@ const SESSION_SENT_KEY = 'ramos_exit_feedback_sent';
 const CLIENT_ID_KEY = 'ramos_client_id';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
+
+function getEmojiByName(name: string, fallback: string) {
+  return POPULAR_EMOJIS.find((emoji) => emoji.name === name)?.char ?? fallback;
+}
+
+const FEEDBACK_EMOJIS = {
+  heart: getEmojiByName('heart', '\u2764\uFE0F'),
+  success: getEmojiByName('smiling heart', '\u{1F970}'),
+  star: getEmojiByName('star', '\u2B50'),
+} as const;
 
 /**
  * Baca session flags sekali di client. Server selalu return true (enabled)
@@ -263,7 +274,21 @@ export default function ExitIntentFeedback() {
                 {/* Header */}
                 <div className="mb-4 text-center">
                   <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-orange-100">
-                    <Heart size={22} className="text-orange-500" fill="currentColor" />
+                    <motion.span 
+                      className="inline-block text-[22px] leading-none origin-center" 
+                      aria-hidden="true"
+                      animate={prefersReducedMotion ? {} : { 
+                        scale: [1, 1.2, 1, 1.2, 1],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        times: [0, 0.1, 0.2, 0.3, 1],
+                        ease: "easeInOut"
+                      }}
+                    >
+                      {FEEDBACK_EMOJIS.heart}
+                    </motion.span>
                   </div>
                   <h2 id="exit-feedback-title" className="text-lg font-semibold text-gray-900">
                     Eh, sebelum pergi...
@@ -278,22 +303,33 @@ export default function ExitIntentFeedback() {
                   {[1, 2, 3, 4, 5].map((n) => {
                     const active = n <= (hoverRating || rating);
                     return (
-                      <button
+                      <motion.button
                         key={n}
                         type="button"
                         onClick={() => setRating(n)}
                         onMouseEnter={() => setHoverRating(n)}
                         onMouseLeave={() => setHoverRating(0)}
                         aria-label={`${n} bintang`}
-                        className="p-1 transition-transform active:scale-90"
+                        className="p-1 origin-center"
+                        initial={false}
+                        animate={{
+                          scale: active ? 1.15 : 0.95,
+                          opacity: active ? 1 : 0.3,
+                          filter: active 
+                            ? 'grayscale(0%) drop-shadow(0 4px 8px rgba(245,158,11,0.32))' 
+                            : 'grayscale(100%) drop-shadow(0 0px 0px rgba(0,0,0,0))'
+                        }}
+                        whileHover={{ 
+                          scale: active ? 1.25 : 1.05, 
+                          opacity: active ? 1 : 0.7 
+                        }}
+                        whileTap={{ scale: 0.85 }}
+                        transition={springTransition}
                       >
-                        <Star
-                          size={30}
-                          className={active ? 'text-amber-400' : 'text-gray-200'}
-                          fill={active ? 'currentColor' : 'none'}
-                          strokeWidth={active ? 0 : 1.5}
-                        />
-                      </button>
+                        <span className="block text-[30px] leading-none" aria-hidden="true">
+                          {FEEDBACK_EMOJIS.star}
+                        </span>
+                      </motion.button>
                     );
                   })}
                 </div>
@@ -381,10 +417,22 @@ export default function ExitIntentFeedback() {
 }
 
 function SuccessView({ onClose }: { onClose: () => void }) {
+  const prefersReducedMotion = useReducedMotion();
+  
   return (
     <div className="px-6 pb-6 pt-8 text-center">
       <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 to-green-100">
-        <Heart size={26} className="text-emerald-600" fill="currentColor" />
+        <motion.span 
+          className="inline-block text-[26px] leading-none origin-center" 
+          aria-hidden="true"
+          animate={prefersReducedMotion ? {} : { 
+            rotate: [0, -15, 15, -15, 15, 0],
+            scale: [0.8, 1.2, 1.2, 1.2, 1.2, 1]
+          }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          {FEEDBACK_EMOJIS.success}
+        </motion.span>
       </div>
       <h2 className="mb-1 text-lg font-semibold text-gray-900">Makasih banyak!</h2>
       <p className="mb-5 text-sm leading-relaxed text-gray-500">

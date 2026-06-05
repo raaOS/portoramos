@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Info, BookOpen, Image, MessageSquare } from 'lucide-react';
 import LightboxGallery from '@/components/ui/LightboxGallery';
 import { useProjectDetail } from './project-detail/hooks';
+import { getTranslation } from './project-detail/utils/translations';
 import {
   ProjectBackButton,
   ProjectCover,
@@ -145,10 +146,13 @@ export default function ProjectDetailTwoColumn({
   );
 
   if (isWindowMode) {
+    const hasGroupedGallery = project.galleryGroups && project.galleryGroups.length > 0;
+    const totalGalleryCount = gallery.length + (project.galleryGroups?.reduce((acc, g) => acc + g.items.length, 0) || 0);
+
     const windowTabs = [
       { id: 'overview' as const, label: translations ? 'Overview' : 'Ringkasan', icon: Info, show: true },
       { id: 'story' as const, label: translations ? 'Story' : 'Proses', icon: BookOpen, show: !!project.narrative },
-      { id: 'gallery' as const, label: translations ? 'Gallery' : 'Galeri', icon: Image, show: gallery.length > 0, count: gallery.length },
+      { id: 'gallery' as const, label: translations ? 'Gallery' : 'Galeri', icon: Image, show: gallery.length > 0 || hasGroupedGallery, count: totalGalleryCount },
     ].filter(t => t.show);
 
     return (
@@ -317,7 +321,7 @@ export default function ProjectDetailTwoColumn({
                       {translations ? 'About Project' : 'Tentang Proyek'}
                     </h4>
                     <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                      {translations?.description || project.description}
+                      {getTranslation(translations, 'description') || project.description}
                     </p>
                   </div>
                 </motion.div>
@@ -353,7 +357,13 @@ export default function ProjectDetailTwoColumn({
                   <h4 className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 mb-2">
                     {translations ? 'Project Gallery' : 'Galeri Proyek'}
                   </h4>
-                  <ProjectGallery project={project} gallery={gallery} onGroupClick={setActiveGalleryGroup} />
+                  <ProjectGallery
+                    project={project}
+                    gallery={gallery}
+                    onGroupClick={setActiveGalleryGroup}
+                    isWindowMode={isWindowMode}
+                    translations={translations}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -439,6 +449,8 @@ export default function ProjectDetailTwoColumn({
                     project={project}
                     gallery={gallery}
                     onGroupClick={setActiveGalleryGroup}
+                    isWindowMode={isWindowMode}
+                    translations={translations}
                   />
 
 

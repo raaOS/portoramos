@@ -6,31 +6,40 @@ interface CVTabProps {
 }
 
 export const CVTab = ({ experienceData }: CVTabProps) => (
-  <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-500">
-    <h1 className="text-xl font-bold tracking-tight text-gray-900">Curriculum Vitae</h1>
-    <div className="space-y-8">
+  <div className="animate-in fade-in slide-in-from-bottom-2 min-w-0 space-y-6 duration-500">
+    <h1 className="about-heading break-words text-xl font-bold tracking-tight text-gray-900">
+      Curriculum Vitae
+    </h1>
+    <div className="cv-grid">
       {experienceData?.workExperience.map((job, idx) => (
-        <div key={idx} className="group">
-          <h3 className="mb-1 text-lg font-bold text-gray-900">{job.position}</h3>
-          <div className="flex flex-col items-start space-y-1">
-            <span className="text-sm font-extrabold text-orange-600">{job.company}</span>
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400/80">
-              {job.duration} • {job.year}
-            </span>
+        <article
+          key={idx}
+          className="group cv-card flex min-w-0 flex-col rounded-2xl border border-gray-100 bg-gray-50/30 p-5 transition-all duration-300 hover:border-black/10 hover:bg-white"
+        >
+          <div className="flex flex-col">
+            <h3 className="break-words text-base font-semibold tracking-tight text-gray-900">
+              {job.position}
+            </h3>
+            <div className="mt-0.5 break-words text-[15px] text-gray-800">
+              {job.company}
+            </div>
+            <div className="mt-0.5 break-words text-sm text-gray-500">
+              {job.year} <span className="mx-1">·</span> {job.duration}
+            </div>
           </div>
-          <div className="mt-4">
-            <ul className="space-y-3">
+          <div className="mt-4 pt-2">
+            <ul className="space-y-2.5">
               {job.description.map((desc, dIdx) => (
                 <li
                   key={dIdx}
-                  className="text-justify text-[14px] leading-relaxed text-gray-600/90"
+                  className="break-words text-left text-[14px] leading-relaxed text-gray-600/90"
                 >
                   {desc}
                 </li>
               ))}
             </ul>
           </div>
-        </div>
+        </article>
       )) || <p className="italic text-gray-500">No experience data found.</p>}
     </div>
   </div>
