@@ -74,40 +74,7 @@ export const updateExperienceSchema = z
     'At least one experience field must be updated'
   );
 
-export const runningTextItemSchema = z.object({
-  id: requiredText(120),
-  text: requiredText(240),
-  order: z.coerce.number().int().min(0).max(10000),
-  isActive: z.boolean(),
-  createdAt: shortText(100).optional(),
-  updatedAt: shortText(100).optional(),
-});
 
-export const createRunningTextSchema = z
-  .object({
-    text: requiredText(240),
-    order: z.coerce.number().int().min(0).max(10000).optional(),
-    isActive: z.boolean().optional(),
-  })
-  .strict();
-
-export const bulkUpdateRunningTextSchema = z
-  .object({
-    items: z.array(runningTextItemSchema).max(100),
-  })
-  .strict();
-
-export const updateRunningTextSchema = z
-  .object({
-    text: requiredText(240).optional(),
-    order: z.coerce.number().int().min(0).max(10000).optional(),
-    isActive: z.boolean().optional(),
-  })
-  .strict()
-  .refine(
-    (payload) => Object.values(payload).some((value) => value !== undefined),
-    'At least one running text field must be updated'
-  );
 
 const trailItemSchema = z
   .object({
@@ -352,8 +319,7 @@ export const updateAboutSchema = z
 export type CreateTestimonialInput = z.infer<typeof createTestimonialSchema>;
 export type UpdateTestimonialInput = z.infer<typeof updateTestimonialSchema>;
 export type UpdateExperienceInput = z.infer<typeof updateExperienceSchema>;
-export type CreateRunningTextInput = z.infer<typeof createRunningTextSchema>;
-export type UpdateRunningTextInput = z.infer<typeof updateRunningTextSchema>;
+
 export type UpdateAboutInput = z.infer<typeof updateAboutSchema>;
 
 // ─────────────────────────────────────────────────────────────

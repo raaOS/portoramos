@@ -3,7 +3,6 @@
 import { useCallback, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AboutData, UpdateAboutData } from '@/types/about';
-import { RunningTextItem } from '@/types/runningText';
 import { useToast } from '@/contexts/ToastContext';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 import {
@@ -13,8 +12,6 @@ import {
   ADMIN_QUERY_KEYS,
   fetchAdminAbout,
   fetchAdminAboutFresh,
-  fetchAdminRunningText,
-  fetchAdminRunningTextFresh,
 } from '../lib/adminQueries';
 
 export function useAdminSystem(csrfToken: string | null) {
@@ -31,13 +28,7 @@ export function useAdminSystem(csrfToken: string | null) {
     refetchOnMount: 'always',
   });
 
-  const runningTextQuery = useQuery({
-    queryKey: ADMIN_QUERY_KEYS.runningText,
-    queryFn: fetchAdminRunningText,
-    staleTime: ADMIN_DATA_STALE_TIME,
-    gcTime: ADMIN_DATA_GC_TIME,
-    placeholderData: ADMIN_PLACEHOLDER_DATA.runningText,
-  });
+
 
   const refreshAboutData = useCallback(async () => {
     const data = await fetchAdminAboutFresh();
@@ -45,11 +36,7 @@ export function useAdminSystem(csrfToken: string | null) {
     return data;
   }, [queryClient]);
 
-  const refreshRunningTexts = useCallback(async () => {
-    const data = await fetchAdminRunningTextFresh();
-    queryClient.setQueryData(ADMIN_QUERY_KEYS.runningText, data);
-    return data;
-  }, [queryClient]);
+
 
   const handleUpdateSystem = async (updateData: UpdateAboutData) => {
     try {
@@ -86,75 +73,13 @@ export function useAdminSystem(csrfToken: string | null) {
     }
   };
 
-  const handleCreateRunningText = async (payload: { text: string; order?: number; isActive?: boolean }) => {
-    try {
-      const token = getWritableCsrfToken(csrfToken);
-      const response = await fetch('/api/running-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        await refreshRunningTexts();
-        showSuccess('Running text created.');
-      } else {
-        showError('Failed to create running text.');
-      }
-    } catch {
-      showError('Failed to create running text.');
-    }
-  };
 
-  const handleUpdateRunningText = async (id: string, payload: Partial<RunningTextItem>) => {
-    try {
-      const token = getWritableCsrfToken(csrfToken);
-      const response = await fetch(`/api/running-text/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        await refreshRunningTexts();
-        showSuccess('Running text updated.');
-      } else {
-        showError('Failed to update running text.');
-      }
-    } catch {
-      showError('Failed to update running text.');
-    }
-  };
-
-  const handleDeleteRunningText = async (id: string) => {
-    try {
-      const token = getWritableCsrfToken(csrfToken);
-      const response = await fetch(`/api/running-text/${id}`, {
-        method: 'DELETE',
-        headers: { 'x-csrf-token': token },
-        credentials: 'include',
-      });
-      if (response.ok) {
-        await refreshRunningTexts();
-        showSuccess('Running text deleted.');
-      } else {
-        showError('Failed to delete running text.');
-      }
-    } catch {
-      showError('Failed to delete running text.');
-    }
-  };
 
   return {
     systemData: aboutQuery.data ?? null,
     loading: aboutQuery.isLoading,
     isPlaceholderData: aboutQuery.isPlaceholderData,
     error,
-    runningTexts: runningTextQuery.data?.items || [],
-    runningTextsLoading: runningTextQuery.isLoading,
     handleUpdateSystem,
-    handleCreateRunningText,
-    handleUpdateRunningText,
-    handleDeleteRunningText,
   };
 }

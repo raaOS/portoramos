@@ -6,7 +6,6 @@ import { AdminAuthGuard } from '../../components/AdminAuthGuard';
 import { AdminHeader } from '../../components/components/AdminHeader';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAdminSystem } from '../../hooks/useAdminSystem';
-import RunningTextPanel from '../components/RunningTextPanel';
 import StickyNotesManager from '../components/StickyNotesManager';
 import AdminLoading from '@/components/admin/AdminLoading';
 
@@ -16,14 +15,9 @@ function WidgetsClientContent() {
     systemData,
     loading,
     error,
-    runningTexts,
-    runningTextsLoading,
-    handleCreateRunningText,
-    handleUpdateRunningText,
-    handleDeleteRunningText,
   } = useAdminSystem(csrfToken);
 
-  const [activeSubTab, setActiveSubTab] = useState<'sticky' | 'ticker'>('sticky');
+  const [activeSubTab, setActiveSubTab] = useState<'sticky'>('sticky');
 
   if (loading && !systemData) {
     return (
@@ -71,32 +65,11 @@ function WidgetsClientContent() {
             <Smile className="h-4 w-4" />
             Catatan Tempel (Sticky Notes)
           </button>
-          <button
-            onClick={() => setActiveSubTab('ticker')}
-            className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-semibold transition-all ${
-              activeSubTab === 'ticker'
-                ? 'border-yellow-600 text-yellow-600'
-                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-            }`}
-          >
-            <Type className="h-4 w-4" />
-            Teks Berjalan (Running Ticker)
-          </button>
         </div>
 
         {/* Tab Content */}
         <div className="min-h-[500px] w-full overflow-hidden rounded-lg border border-gray-200 bg-white p-6 shadow-sm lg:p-8">
-          {activeSubTab === 'sticky' ? (
-            <StickyNotesManager />
-          ) : (
-            <RunningTextPanel
-              items={runningTexts}
-              loading={runningTextsLoading}
-              onCreate={handleCreateRunningText}
-              onUpdate={handleUpdateRunningText}
-              onDelete={handleDeleteRunningText}
-            />
-          )}
+          <StickyNotesManager />
         </div>
       </div>
     </>

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { User, FileText, Lightbulb, Brain, type LucideIcon } from 'lucide-react';
 import type { AboutData } from '@/types/about';
 import type { ExperienceData } from '@/types/experience';
 import type { HardSkillsData } from '@/types/hardSkill';
 import '../styles/os-scrollbar.css';
+import '../styles/about-responsive.css';
 
 // Sub-components (Clean Code: Sections extracted)
 import { AboutTab } from '../sections/AboutTab';
@@ -26,6 +27,8 @@ interface MenuButtonProps {
   setActiveTab: (id: 'about' | 'cv' | 'philosophy' | 'interests') => void;
 }
 
+const AUTO_COLLAPSE_BREAKPOINT = 700;
+
 const MenuButton = ({
   id,
   label,
@@ -46,7 +49,7 @@ const MenuButton = ({
         <Icon size={16} />
       </div>
       <span
-        className={`overflow-hidden whitespace-normal text-left leading-tight transition-all duration-300 ${collapsed ? 'w-0 opacity-0' : 'ml-1 w-auto opacity-100'}`}
+        className={`about-sidebar-text overflow-hidden whitespace-normal text-left leading-tight transition-all duration-300 ${collapsed ? 'w-0 opacity-0' : 'ml-1 w-auto opacity-100'}`}
       >
         {label}
       </span>
@@ -59,20 +62,53 @@ export default function AboutContent({
   experienceData,
   hardSkillsData,
 }: AboutContentProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastCompactLayoutRef = useRef<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<'about' | 'cv' | 'philosophy' | 'interests'>('about');
-  // Default: sidebar tutup (collapsed). Visitor melihat konten full-width dulu,
-  // sidebar bisa dibuka dengan klik pada area sidebar kiri.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const syncLayout = (width: number) => {
+      const isCompact = width <= AUTO_COLLAPSE_BREAKPOINT;
+
+      if (isCompact && lastCompactLayoutRef.current !== true) {
+        setSidebarCollapsed(true);
+      }
+
+      lastCompactLayoutRef.current = isCompact;
+    };
+
+    syncLayout(container.getBoundingClientRect().width);
+
+    if (typeof ResizeObserver === 'undefined') return;
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      syncLayout(entry.contentRect.width);
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="flex h-full w-full bg-[#ECECEC] font-sans">
+    <div
+      ref={containerRef}
+      className="about-container flex h-full w-full min-w-0 bg-[#ECECEC] font-sans"
+    >
       {/* Sidebar (Left) */}
       <div
         onClick={() => sidebarCollapsed && setSidebarCollapsed(false)}
-        className={`${sidebarCollapsed ? 'w-[72px]' : 'w-[72px] md:w-[200px]'} relative z-20 flex shrink-0 flex-col gap-1 overflow-hidden border-r border-[#D1D1D1] bg-[#E3E3E3]/50 p-3 pt-4 transition-[width] duration-300 ease-in-out ${sidebarCollapsed ? 'cursor-pointer hover:bg-black/5' : ''}`}
+        data-no-window-drag
+        aria-label={sidebarCollapsed ? 'Open About sidebar' : 'About sidebar'}
+        className={`about-sidebar ${sidebarCollapsed ? 'collapsed cursor-pointer hover:bg-black/5' : 'expanded'} relative z-20 flex shrink-0 flex-col gap-1 overflow-hidden border-r border-[#D1D1D1] bg-[#E3E3E3]/50 p-3 pt-4 transition-[width] duration-300 ease-in-out`}
       >
         <div
-          className={`mb-1 overflow-hidden whitespace-nowrap px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}
+          className={`about-sidebar-header mb-1 overflow-hidden whitespace-nowrap px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}
         >
           Personal
         </div>
@@ -120,7 +156,7 @@ export default function AboutContent({
               <FileText size={16} />
             </div>
             <span
-              className={`overflow-hidden whitespace-nowrap leading-tight transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0' : 'ml-1 w-auto opacity-100'}`}
+              className={`about-sidebar-download-text overflow-hidden whitespace-nowrap leading-tight transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0' : 'ml-1 w-auto opacity-100'}`}
             >
               Download CV
             </span>
@@ -131,16 +167,20 @@ export default function AboutContent({
       {/* Content Area (Right) */}
       <div
         onClick={() => !sidebarCollapsed && setSidebarCollapsed(true)}
-        data-lenis-prevent
-        className={`os-scrollbar h-full min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white p-8 pb-20 ${!sidebarCollapsed ? 'cursor-pointer' : ''}`}
-        style={{ touchAction: 'pan-y' }}
+        className={`relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white ${!sidebarCollapsed ? 'cursor-pointer' : ''}`}
       >
-        {activeTab === 'about' && <AboutTab aboutData={aboutData} />}
-        {activeTab === 'cv' && <CVTab experienceData={experienceData} />}
-        {activeTab === 'philosophy' && <PhilosophyTab aboutData={aboutData} />}
-        {activeTab === 'interests' && (
-          <InterestsTab aboutData={aboutData} hardSkillsData={hardSkillsData} />
-        )}
+        <div
+          data-lenis-prevent
+          className="about-content-area os-scrollbar min-w-0 flex-1 overflow-y-auto overscroll-contain p-8 pb-12"
+          style={{ touchAction: 'pan-y' }}
+        >
+          {activeTab === 'about' && <AboutTab aboutData={aboutData} />}
+          {activeTab === 'cv' && <CVTab experienceData={experienceData} />}
+          {activeTab === 'philosophy' && <PhilosophyTab aboutData={aboutData} />}
+          {activeTab === 'interests' && (
+            <InterestsTab aboutData={aboutData} hardSkillsData={hardSkillsData} />
+          )}
+        </div>
       </div>
     </div>
   );

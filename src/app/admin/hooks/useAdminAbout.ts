@@ -3,7 +3,6 @@
 import { useCallback, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AboutData, UpdateAboutData } from '@/types/about';
-import { RunningTextItem } from '@/types/runningText';
 import { Project } from '@/types/projects';
 import { Label } from '@/types/labels';
 import { useToast } from '@/contexts/ToastContext';
@@ -17,8 +16,6 @@ import {
   fetchAdminAboutFresh,
   fetchAdminLabels,
   fetchAdminProjects,
-  fetchAdminRunningText,
-  fetchAdminRunningTextFresh,
 } from '../lib/adminQueries';
 
 export function useAdminAbout(csrfToken: string | null) {
@@ -49,13 +46,7 @@ export function useAdminAbout(csrfToken: string | null) {
     initialData: [] as Label[],
   });
 
-  const runningTextQuery = useQuery({
-    queryKey: ADMIN_QUERY_KEYS.runningText,
-    queryFn: fetchAdminRunningText,
-    staleTime: ADMIN_DATA_STALE_TIME,
-    gcTime: ADMIN_DATA_GC_TIME,
-    placeholderData: ADMIN_PLACEHOLDER_DATA.runningText,
-  });
+
 
   const projectsQuery = useQuery({
     queryKey: ADMIN_QUERY_KEYS.projects,
@@ -71,11 +62,7 @@ export function useAdminAbout(csrfToken: string | null) {
     return data;
   }, [queryClient]);
 
-  const refreshRunningTexts = useCallback(async () => {
-    const data = await fetchAdminRunningTextFresh();
-    queryClient.setQueryData(ADMIN_QUERY_KEYS.runningText, data);
-    return data;
-  }, [queryClient]);
+
 
   const handleUpdateAbout = async (updateData: UpdateAboutData) => {
     try {
@@ -139,76 +126,7 @@ export function useAdminAbout(csrfToken: string | null) {
     }
   };
 
-  const handleCreateRunningText = async (payload: {
-    text: string;
-    order?: number;
-    isActive?: boolean;
-  }) => {
-    try {
-      const token = getWritableCsrfToken(csrfToken);
-      const response = await fetch('/api/running-text', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': token,
-        },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        await refreshRunningTexts();
-        showSuccess('Running text berhasil ditambahkan.');
-      } else {
-        showError('Gagal menambahkan running text.');
-      }
-    } catch {
-      showError('Gagal menambahkan running text.');
-    }
-  };
 
-  const handleUpdateRunningText = async (id: string, payload: Partial<RunningTextItem>) => {
-    try {
-      const token = getWritableCsrfToken(csrfToken);
-      const response = await fetch(`/api/running-text/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': token,
-        },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        await refreshRunningTexts();
-        showSuccess('Running text diperbarui.');
-      } else {
-        showError('Gagal memperbarui running text.');
-      }
-    } catch {
-      showError('Gagal memperbarui running text.');
-    }
-  };
-
-  const handleDeleteRunningText = async (id: string) => {
-    try {
-      const token = getWritableCsrfToken(csrfToken);
-      const response = await fetch(`/api/running-text/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'x-csrf-token': token,
-        },
-        credentials: 'include',
-      });
-      if (response.ok) {
-        await refreshRunningTexts();
-        showSuccess('Running text dihapus.');
-      } else {
-        showError('Gagal menghapus running text.');
-      }
-    } catch {
-      showError('Gagal menghapus running text.');
-    }
-  };
 
   return {
     aboutData: aboutQuery.data ?? null,
@@ -225,15 +143,10 @@ export function useAdminAbout(csrfToken: string | null) {
     isFetching: aboutQuery.isFetching,
     error: error || (aboutQuery.error ? 'Failed to load about data' : null),
     projects: (projectsQuery.data?.data?.projects || []) as Project[],
-    runningTexts: runningTextQuery.data?.items || [],
-    runningTextsLoading: runningTextQuery.isLoading,
     labels: labelsQuery.data || [],
     labelsLoading: labelsQuery.isLoading,
     handleUpdateAbout,
     handleUpdateLabels,
-    handleCreateRunningText,
-    handleUpdateRunningText,
-    handleDeleteRunningText,
     refreshAboutData,
   };
 }

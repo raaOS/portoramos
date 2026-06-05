@@ -6,7 +6,6 @@ import type { GalleryFeaturedData } from '@/types/gallery';
 import type { HardSkill } from '@/types/hardSkill';
 import type { Label } from '@/types/labels';
 import type { Project } from '@/types/projects';
-import type { RunningTextData } from '@/types/runningText';
 import type { TestimonialData } from '@/types/testimonial';
 import type { NoteData } from '@/components/os/ui/elements/StickyNoteItem';
 import aboutFallback from '@/data/about.json';
@@ -16,7 +15,6 @@ import galleryFeaturedFallback from '@/data/gallery-featured.json';
 import hardSkillsFallback from '@/data/hardSkills.json';
 import labelsFallback from '@/data/labels.json';
 import projectsFallback from '@/data/projects.json';
-import runningTextFallback from '@/data/running-text.json';
 import stickyNotesFallback from '@/data/sticky-notes.json';
 import testimonialFallback from '@/data/testimonial.json';
 
@@ -34,7 +32,6 @@ export const ADMIN_QUERY_KEYS = {
   labels: ['admin', 'labels'] as const,
   leads: ['admin', 'leads'] as const,
   projects: ['projects', 'admin'] as const,
-  runningText: ['admin', 'running-text'] as const,
   stickyNotes: ['admin', 'sticky-notes'] as const,
   testimonial: ['admin', 'testimonial'] as const,
 };
@@ -98,7 +95,6 @@ export const ADMIN_PLACEHOLDER_DATA = {
       lastUpdated: new Date(0).toISOString(),
     },
   } satisfies AdminProjectsResponse,
-  runningText: runningTextFallback as RunningTextData,
   stickyNotes: stickyNotesFallback as NoteData[],
   testimonial: placeholderTestimonials,
 };
@@ -180,13 +176,7 @@ export function fetchAdminProjectsFresh() {
   return fetchJson<AdminProjectsResponse>('/api/projects?fresh=true');
 }
 
-export function fetchAdminRunningText() {
-  return fetchJson<RunningTextData>('/api/running-text');
-}
 
-export function fetchAdminRunningTextFresh() {
-  return fetchJson<RunningTextData>('/api/running-text?fresh=true');
-}
 
 export function fetchAdminStickyNotes() {
   return fetchJson<NoteData[]>('/api/sticky-notes').then((data) =>
@@ -272,8 +262,6 @@ function prefetchJobsForRoute(href: string) {
     return [
       (queryClient: QueryClient) => prefetch(queryClient, ADMIN_QUERY_KEYS.about, fetchAdminAbout),
       (queryClient: QueryClient) =>
-        prefetch(queryClient, ADMIN_QUERY_KEYS.runningText, fetchAdminRunningText),
-      (queryClient: QueryClient) =>
         prefetch(queryClient, ADMIN_QUERY_KEYS.stickyNotes, fetchAdminStickyNotes),
     ];
   }
@@ -330,7 +318,6 @@ export function warmAdminCrudQueries(queryClient: QueryClient) {
     prefetch(queryClient, ADMIN_QUERY_KEYS.contact, fetchAdminContact),
     prefetch(queryClient, ADMIN_QUERY_KEYS.leads, fetchAdminLeads),
     prefetch(queryClient, ADMIN_QUERY_KEYS.labels, fetchAdminLabels),
-    prefetch(queryClient, ADMIN_QUERY_KEYS.runningText, fetchAdminRunningText),
     prefetch(queryClient, ADMIN_QUERY_KEYS.commentCounts, fetchAdminCommentCounts),
   ]);
 }

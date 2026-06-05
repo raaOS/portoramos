@@ -5,18 +5,15 @@ import { Smile, Type } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAdminSystem } from '@/app/admin/hooks/useAdminSystem';
 import StickyNotesManager from '@/app/admin/system/components/StickyNotesManager';
-import RunningTextPanel from '@/app/admin/system/components/RunningTextPanel';
 import AdminLoading from '@/components/admin/AdminLoading';
 
 export default function WidgetsPanel() {
   const { csrfToken } = useAdminAuth();
   const {
     systemData, loading, error,
-    runningTexts, runningTextsLoading,
-    handleCreateRunningText, handleUpdateRunningText, handleDeleteRunningText,
   } = useAdminSystem(csrfToken);
 
-  const [activeSubTab, setActiveSubTab] = useState<'sticky' | 'ticker'>('sticky');
+  const [activeSubTab, setActiveSubTab] = useState<'sticky'>('sticky');
 
   if (loading && !systemData) return <AdminLoading size="default" />;
 
@@ -48,31 +45,10 @@ export default function WidgetsPanel() {
           <Smile className="h-4 w-4" />
           Sticky Notes
         </button>
-        <button
-          onClick={() => setActiveSubTab('ticker')}
-          className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-semibold transition-all ${
-            activeSubTab === 'ticker'
-              ? 'border-yellow-600 text-yellow-600'
-              : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-          }`}
-        >
-          <Type className="h-4 w-4" />
-          Running Ticker
-        </button>
       </div>
 
       <div className="min-h-[400px] w-full rounded-lg border border-gray-200 bg-white p-6">
-        {activeSubTab === 'sticky' ? (
-          <StickyNotesManager />
-        ) : (
-          <RunningTextPanel
-            items={runningTexts}
-            loading={runningTextsLoading}
-            onCreate={handleCreateRunningText}
-            onUpdate={handleUpdateRunningText}
-            onDelete={handleDeleteRunningText}
-          />
-        )}
+        <StickyNotesManager />
       </div>
     </div>
   );
