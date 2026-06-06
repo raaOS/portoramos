@@ -67,7 +67,7 @@ export default function UnifiedLayer({
   isRevealed: isRevealedProp,
   onWindowClosed,
 }: UnifiedLayerProps) {
-  const { bringToFront, getZIndex } = useUnifiedZIndex();
+  const { bringToFront, getZIndex, registerElement, unregisterElement } = useUnifiedZIndex();
   const {
     notesVisible,
     isRevealed: isRevealedFromContext,
@@ -75,26 +75,7 @@ export default function UnifiedLayer({
     hideNote,
   } = useOSSystem();
   const isRevealed = isRevealedProp !== undefined ? isRevealedProp : isRevealedFromContext;
-
-  // Determine which window is on top for keyboard focus
-  const openWindows = windows.filter((w) => w.isOpen && !w.isMinimized);
-  const maxWindowZIndex = Math.max(...openWindows.map((w) => getZIndex(w.id)), 0);
-
-  // Handle window focus with unified z-index
-  const handleWindowFocus = (id: string) => {
-    const newZIndex = bringToFront(id, 'window');
-    // Also call the original focus handler for any side effects
-    focusWindow(id);
-    return newZIndex;
-  };
-
-  // Handle note focus with unified z-index
-  const handleNoteFocus = (id: string) => {
-    const newZIndex = bringToFront(id, 'stickyNote');
-    // Also call the original bringToFront
-    bringToFrontNote(id);
-    return newZIndex;
-  };
+  const registeredElementIdsRef = React.useRef(new Set<string>());
 
   // Combine windows and visible notes for unified rendering.
   // Filter out:
@@ -102,9 +83,59 @@ export default function UnifiedLayer({
   //    via tombol trash di footer note)
   //  - notes yang ada di `hiddenNoteIds` (ephemeral hide via tombol X header,
   //    tidak persist; auto-clear saat user toggle dock icon Notes)
-  const visibleNotes = notesVisible
-    ? notes.filter((n) => !n.isDeleted && !hiddenNoteIds.has(n.id))
-    : [];
+  const visibleNotes = React.useMemo(
+    () => (notesVisible ? notes.filter((n) => !n.isDeleted && !hiddenNoteIds.has(n.id)) : []),
+    [hiddenNoteIds, notes, notesVisible]
+  );
+
+  React.useEffect(() => {
+    const nextIds = new Set<string>();
+
+    windows.forEach((window) => {
+      if (!window.isOpen || window.isMinimized) return;
+      nextIds.add(window.id);
+      if (!registeredElementIdsRef.current.has(window.id)) {
+        registerElement(window.id, 'window', window.zIndex);
+      }
+    });
+
+    visibleNotes.forEach((note) => {
+      nextIds.add(note.id);
+      if (!registeredElementIdsRef.current.has(note.id)) {
+        registerElement(note.id, 'stickyNote', note.zIndex);
+      }
+    });
+
+    registeredElementIdsRef.current.forEach((id) => {
+      if (!nextIds.has(id)) {
+        unregisterElement(id);
+      }
+    });
+
+    registeredElementIdsRef.current = nextIds;
+  }, [registerElement, unregisterElement, visibleNotes, windows]);
+
+  React.useEffect(() => {
+    return () => {
+      registeredElementIdsRef.current.forEach((id) => unregisterElement(id));
+      registeredElementIdsRef.current.clear();
+    };
+  }, [unregisterElement]);
+
+  // Determine which window is on top for keyboard focus
+  const openWindows = windows.filter((w) => w.isOpen && !w.isMinimized);
+  const maxWindowZIndex = Math.max(...openWindows.map((w) => getZIndex(w.id)), 0);
+
+  // Handle window focus with unified z-index
+  const handleWindowFocus = (id: string) => {
+    focusWindow(id);
+  };
+
+  // Handle note focus with unified z-index
+  const handleNoteFocus = (id: string) => {
+    bringToFront(id, 'stickyNote');
+    bringToFrontNote(id);
+  };
 
   return (
     <m.div
@@ -115,6 +146,32 @@ export default function UnifiedLayer({
       initial="hidden"
       animate={isRevealed ? 'show' : 'hidden'}
     >
+      {/* Sticky Notes Layer - Unified with Windows */}
+      {visibleNotes.map((note) => (
+        <div
+          key={`note-${note.id}`}
+          className="pointer-events-none"
+          style={{
+            position: 'absolute',
+            zIndex: getZIndex(note.id),
+            willChange: 'auto',
+          }}
+        >
+          <DraggableStickyNote
+            note={note}
+            updateNote={updateNote}
+            bringToFrontNote={() => handleNoteFocus(note.id)}
+            deleteNote={deleteNote}
+            hideNote={hideNote}
+            permanentDeleteNote={permanentDeleteNote}
+            restoreNote={restoreNote}
+            addNote={addNote}
+            isAdmin={isAdmin}
+            zIndex={getZIndex(note.id)}
+          />
+        </div>
+      ))}
+
       {/* Windows Layer */}
       {windows.map((w) => (
         <OSWindow
@@ -147,32 +204,6 @@ export default function UnifiedLayer({
         >
           {w.content || (w.contentFactory ? w.contentFactory() : null)}
         </OSWindow>
-      ))}
-
-      {/* Sticky Notes Layer - Unified with Windows */}
-      {visibleNotes.map((note) => (
-        <div
-          key={`note-${note.id}`}
-          className="pointer-events-none"
-          style={{
-            position: 'absolute',
-            zIndex: getZIndex(note.id),
-            willChange: 'auto',
-          }}
-        >
-          <DraggableStickyNote
-            note={note}
-            updateNote={updateNote}
-            bringToFrontNote={() => handleNoteFocus(note.id)}
-            deleteNote={deleteNote}
-            hideNote={hideNote}
-            permanentDeleteNote={permanentDeleteNote}
-            restoreNote={restoreNote}
-            addNote={addNote}
-            isAdmin={isAdmin}
-            zIndex={getZIndex(note.id)}
-          />
-        </div>
       ))}
     </m.div>
   );

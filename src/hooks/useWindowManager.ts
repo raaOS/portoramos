@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { AboutData } from '@/types/about';
 import { useLayoutPersistence } from '@/components/os/contexts/LayoutPersistenceContext';
-import { useUnifiedZIndexActions } from '@/components/os/context/UnifiedZIndexContext';
+import {
+  useUnifiedZIndexActions,
+  type ElementType,
+} from '@/components/os/context/UnifiedZIndexContext';
 import type { WindowState } from './window-manager/types';
 
 // Subhooks
@@ -73,9 +76,9 @@ export const useWindowManager = ({
 
   // Request next z-index
   const requestNextZIndex = useCallback(
-    (id?: string) => {
+    (id?: string, type: ElementType = 'window') => {
       const elementId = id || `temp-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-      return bringToFrontZIndex(elementId, 'window');
+      return bringToFrontZIndex(elementId, type);
     },
     [bringToFrontZIndex]
   );

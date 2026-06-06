@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { m, useMotionValue, type PanInfo, type Transition } from 'motion/react';
 import Image from 'next/image';
 import { soundManager } from '../../utils/SoundManager';
+import type { DesktopIconSize } from '@/types/about';
 
 interface DesktopIconProps {
   id: string;
@@ -12,12 +13,14 @@ interface DesktopIconProps {
   onClick: () => void;
   x?: number;
   y?: number;
-  size?: 'small' | 'medium' | 'large';
+  size?: DesktopIconSize;
   aspectRatio?: number;
   children?: React.ReactNode;
   priority?: boolean;
   isMobile?: boolean;
   onPositionChange?: (id: string, x: number, y: number) => void;
+  onFocus?: () => void;
+  onSizeChange?: (size: DesktopIconSize) => void;
 
   isSelected?: boolean;
   onDoubleClick?: (e: React.MouseEvent) => void;
@@ -40,6 +43,8 @@ export default function DesktopIcon({
   priority = false,
   isMobile = false,
   onPositionChange,
+  onFocus,
+  onSizeChange,
 
   isSelected = false,
   onDoubleClick,
@@ -70,6 +75,15 @@ export default function DesktopIcon({
   const iconY = useMotionValue(y);
 
   const [isDragging, setIsDragging] = useState(false);
+
+  const requestSizeStep = (direction: 1 | -1) => {
+    if (!onSizeChange) return;
+    const sizes: DesktopIconSize[] = ['small', 'medium', 'large'];
+    const currentIndex = sizes.indexOf(size);
+    const nextIndex = Math.max(0, Math.min(sizes.length - 1, currentIndex + direction));
+    const nextSize = sizes[nextIndex];
+    if (nextSize !== size) onSizeChange(nextSize);
+  };
 
   // Sync MotionValues with props when parent updates them (e.g. initial load or reset)
   useEffect(() => {
@@ -137,7 +151,27 @@ export default function DesktopIcon({
       role="button"
       aria-label={label}
       tabIndex={0}
+      onPointerDown={() => {
+        onFocus?.();
+      }}
+      onFocus={() => {
+        onFocus?.();
+      }}
       onKeyDown={(e) => {
+        if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=')) {
+          e.preventDefault();
+          onFocus?.();
+          requestSizeStep(1);
+          return;
+        }
+
+        if ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.key === '_')) {
+          e.preventDefault();
+          onFocus?.();
+          requestSizeStep(-1);
+          return;
+        }
+
         if ((e.key === 'Enter' || e.key === ' ') && !isDragging) {
           e.preventDefault();
           soundManager.play('click');

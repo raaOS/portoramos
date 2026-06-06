@@ -8,8 +8,10 @@ import DesktopIcon from '../ui/elements/DesktopIcon';
 
 import QuickLookModal from '@/components/ui/QuickLookModal';
 import { resolveCover } from '@/lib/images';
+import type { DesktopIconSize } from '@/types/about';
 import type { Project } from '@/types/projects';
 import { useDesktopWindowContext } from '../context/DesktopWindowContext';
+import { useUnifiedZIndex } from '../context/UnifiedZIndexContext';
 
 const MacFolder = dynamic(() => import('../windows/MacFolder'), {
   loading: () => <div className="h-16 w-16 animate-pulse rounded-lg bg-gray-200/50" />,
@@ -29,13 +31,26 @@ interface ProjectIcon {
   data?: Project;
   action?: () => void;
   priority?: boolean;
+  zIndex?: number;
+  size?: DesktopIconSize;
 }
 
 interface DesktopIconsLayerProps {
   projectIcons: ProjectIcon[];
   isMobile: boolean;
+  isAdmin: boolean;
   isReady?: boolean;
   handleIconPositionChange: (id: string, x: number, y: number) => void;
+  handleIconZIndexChange: (
+    id: string,
+    zIndex: number,
+    position: { x: number; y: number }
+  ) => void;
+  handleIconSizeChange: (
+    id: string,
+    size: DesktopIconSize,
+    position: { x: number; y: number }
+  ) => void;
   openProjectWindow: (
     project: Project,
     originRect?: { x: number; y: number; width: number; height: number }
@@ -45,11 +60,15 @@ interface DesktopIconsLayerProps {
 function DesktopIconsLayer({
   projectIcons,
   isMobile,
+  isAdmin,
   isReady = true,
   handleIconPositionChange,
+  handleIconZIndexChange,
+  handleIconSizeChange,
   openProjectWindow,
 }: DesktopIconsLayerProps) {
   const { windows } = useDesktopWindowContext();
+  const { getZIndex, bringToFront, registerElement, unregisterElement } = useUnifiedZIndex();
 
   const [selectedIconId, setSelectedIconId] = useState<string | null>(null);
   const [quickLookIcon, setQuickLookIcon] = useState<ProjectIcon | null>(null);
@@ -59,8 +78,51 @@ function DesktopIconsLayer({
   const [closingToIconId, setClosingToIconId] = useState<string | null>(null);
   // Refs to each icon's wrapper m.div for accurate getBoundingClientRect
   const iconRefs = useRef<Record<string, HTMLElement | null>>({});
+  const registeredIconIdsRef = useRef<Set<string>>(new Set());
   // Ref to previous window states for diffing
   const prevWindowsRef = useRef(windows);
+
+  useEffect(() => {
+    const nextIds = new Set<string>();
+
+    projectIcons.forEach((icon) => {
+      nextIds.add(icon.id);
+      if (!registeredIconIdsRef.current.has(icon.id)) {
+        registerElement(icon.id, 'desktopIcon', icon.zIndex);
+      }
+    });
+
+    registeredIconIdsRef.current.forEach((id) => {
+      if (!nextIds.has(id)) {
+        unregisterElement(id);
+      }
+    });
+
+    registeredIconIdsRef.current = nextIds;
+  }, [projectIcons, registerElement, unregisterElement]);
+
+  useEffect(() => {
+    return () => {
+      registeredIconIdsRef.current.forEach((id) => unregisterElement(id));
+      registeredIconIdsRef.current.clear();
+    };
+  }, [unregisterElement]);
+
+  const bringIconToFront = React.useCallback(
+    (icon: ProjectIcon) => {
+      const nextZIndex = bringToFront(icon.id, 'desktopIcon');
+      handleIconZIndexChange(icon.id, nextZIndex, { x: icon.x, y: icon.y });
+    },
+    [bringToFront, handleIconZIndexChange]
+  );
+
+  const handleIconSizeRequest = React.useCallback(
+    (icon: ProjectIcon, size: DesktopIconSize) => {
+      if (!isAdmin) return;
+      handleIconSizeChange(icon.id, size, { x: icon.x, y: icon.y });
+    },
+    [handleIconSizeChange, isAdmin]
+  );
 
   // Detect window close/minimize in the SAME render cycle (no parent propagation delay)
   useEffect(() => {
@@ -133,6 +195,13 @@ function DesktopIconsLayer({
           {projectIcons.map((icon) => {
             const isSelected = selectedIconId === icon.id;
             const isOpen = windows.some((w) => w.id === icon.id || w.id.includes(icon.id));
+            const zIndex = getZIndex(icon.id);
+            const iconSize = icon.size ?? 'medium';
+            const folderSize = {
+              small: 0.75,
+              medium: 0.85,
+              large: 1,
+            }[iconSize];
 
             return (
               <m.div
@@ -146,12 +215,14 @@ function DesktopIconsLayer({
                   position: 'absolute',
                   left: icon.x,
                   top: icon.y,
+                  zIndex,
                 }}
               >
                 <DesktopIcon
                   {...icon}
                   x={0}
                   y={0}
+                  size={iconSize}
                   icon={!icon.type || icon.type !== 'folder' ? icon.icon : undefined}
                   isMobile={isMobile}
                   priority={icon.priority}
@@ -159,6 +230,10 @@ function DesktopIconsLayer({
                   onPositionChange={(id, relX, relY) => {
                     handleIconPositionChange(id, icon.x + relX, icon.y + relY);
                   }}
+                  onFocus={() => bringIconToFront(icon)}
+                  onSizeChange={
+                    isAdmin ? (size) => handleIconSizeRequest(icon, size) : undefined
+                  }
                   onClick={() => {
                     setSelectedIconId(icon.id);
                   }}
@@ -206,7 +281,7 @@ function DesktopIconsLayer({
                   }}
                 >
                   {icon.type === 'folder' && (
-                    <MacFolder size={0.85} isStatic={true} open={isOpen} />
+                    <MacFolder size={folderSize} isStatic={true} open={isOpen} />
                   )}
                 </DesktopIcon>
               </m.div>

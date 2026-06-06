@@ -115,10 +115,14 @@ export interface WallpaperConfig {
   blur?: number; // 0-20px
 }
 
+export type DesktopIconSize = 'small' | 'medium' | 'large';
+
 export interface DesktopIconPosition {
   // Legacy pixel values — kept for backward compatibility with existing saves.
   x: number;
   y: number;
+  zIndex?: number;
+  size?: DesktopIconSize;
   // Percentage-based (responsive). Optional supaya data lama tetap valid;
   // kalau ada, lebih diprioritaskan daripada pixel legacy saat render.
   xPct?: number;
@@ -152,6 +156,7 @@ export interface WindowPreference {
   y?: number;
   width?: number;
   height?: number;
+  zIndex?: number;
   // Percentage-based for responsive positioning
   xPct?: number;
   yPct?: number;

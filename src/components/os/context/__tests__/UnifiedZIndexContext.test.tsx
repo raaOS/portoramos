@@ -148,6 +148,27 @@ describe('UnifiedZIndexContext', () => {
       // After unregister, getZIndex falls back to BASE
       expect(result.current.getZIndex('el-1')).toBe(100);
     });
+
+    it('hydrates initial zIndex dan tetap bisa promote element legacy di bawah BASE', () => {
+      const { result } = renderHook(() => useUnifiedZIndex(), { wrapper });
+
+      act(() => {
+        result.current.registerElement('legacy-window', 'window', 10);
+        result.current.registerElement('saved-note', 'stickyNote', 250);
+      });
+
+      expect(result.current.getZIndex('legacy-window')).toBe(10);
+      expect(result.current.getZIndex('saved-note')).toBe(250);
+      expect(result.current.isOnTop('saved-note')).toBe(true);
+
+      let promoted = 0;
+      act(() => {
+        promoted = result.current.bringToFront('legacy-window', 'window');
+      });
+
+      expect(promoted).toBeGreaterThan(250);
+      expect(result.current.isOnTop('legacy-window')).toBe(true);
+    });
   });
 
   describe('resetZIndexes', () => {

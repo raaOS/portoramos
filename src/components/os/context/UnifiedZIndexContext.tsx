@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 
 // Types of focusable elements in the OS
-export type ElementType = 'window' | 'stickyNote' | 'dynamicIsland';
+export type ElementType = 'window' | 'stickyNote' | 'desktopIcon' | 'dynamicIsland';
 
 interface ZIndexEntry {
   id: string;
@@ -32,7 +32,7 @@ interface UnifiedZIndexContextType {
   // Reset all z-indexes (e.g., on logout)
   resetZIndexes: () => void;
   // Register element (optional, for tracking)
-  registerElement: (id: string, type: ElementType) => void;
+  registerElement: (id: string, type: ElementType, initialZIndex?: number) => void;
   // Unregister element
   unregisterElement: (id: string) => void;
   // Internal subscription helpers
@@ -47,6 +47,10 @@ const UnifiedZIndexContext = createContext<UnifiedZIndexContextType | undefined>
 
 const BASE_Z_INDEX = 100;
 const NORMALIZE_THRESHOLD = 900000; // Normalize when approaching max
+
+function normalizeInitialZIndex(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : BASE_Z_INDEX;
+}
 
 /**
  * Consume z-index context with GLOBAL subscription.
@@ -211,7 +215,12 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
       // BUGFIX: Sebelumnya cek `currentEntry?.zIndex === topZIndexRef.current`
       // yang salah, karena element baru register dengan zIndex=BASE juga memenuhi
       // kondisi saat topZIndexRef masih BASE — bringToFront jadi no-op di kasus itu.
-      if (currentEntry && topIdRef.current === id) {
+      if (
+        currentEntry &&
+        topIdRef.current === id &&
+        currentEntry.zIndex === topZIndexRef.current &&
+        topZIndexRef.current > BASE_Z_INDEX
+      ) {
         return currentEntry.zIndex;
       }
 
@@ -267,14 +276,21 @@ export const UnifiedZIndexProvider: React.FC<UnifiedZIndexProviderProps> = ({ ch
   }, [notifyGlobal, notifyId]);
 
   const registerElement = useCallback(
-    (id: string, type: ElementType) => {
+    (id: string, type: ElementType, initialZIndex?: number) => {
       if (!elementsRef.current.has(id)) {
-        elementsRef.current.set(id, { id, type, zIndex: BASE_Z_INDEX });
+        const zIndex = normalizeInitialZIndex(initialZIndex);
+        elementsRef.current.set(id, { id, type, zIndex });
+        if (zIndex >= topZIndexRef.current) {
+          topZIndexRef.current = zIndex;
+          topIdRef.current = id;
+        } else {
+          updateTopId();
+        }
         notifyId(id);
         notifyGlobal();
       }
     },
-    [notifyGlobal, notifyId]
+    [notifyGlobal, notifyId, updateTopId]
   );
 
   const unregisterElement = useCallback(

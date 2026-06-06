@@ -1,19 +1,21 @@
 // Sistem positions yang simple dan reliable
 // localStorage = primary source for ADMIN ONLY, CLOUDFLARE_D1 = template for visitors
 
-import type { WindowPreference } from '@/types/about';
+import type { DesktopIconSize, WindowPreference } from '@/types/about';
 
 const STORAGE_KEY = 'ramos-positions-v2';
 
-type WindowPosition = { x: number; y: number; width: number; height: number };
+type WindowPosition = { x: number; y: number; width: number; height: number; zIndex?: number };
 type IconPosition = { x: number; y: number };
 type PersistedIconData = IconPosition & {
+  zIndex?: number;
+  size?: DesktopIconSize;
   xPct?: number;
   yPct?: number;
   refScreenWidth?: number;
   refScreenHeight?: number;
 };
-type NotePosition = { x: number; y: number; width: number; height: number };
+type NotePosition = { x: number; y: number; width: number; height: number; zIndex?: number };
 
 interface PositionData {
   windows: Record<string, WindowPosition>;
@@ -211,7 +213,7 @@ export function getIconPosition(
 // besar tetap responsive saat visitor buka di layar kecil/sedang.
 export function saveIconPosition(
   id: string,
-  pos: { x: number; y: number },
+  pos: { x: number; y: number; zIndex?: number; size?: DesktopIconSize },
   isAdmin: boolean = false
 ) {
   if (!isAdmin) return; // Visitor: no persistence to follow "refresh = reset" rule
@@ -227,6 +229,8 @@ export function saveIconPosition(
       [id]: {
         x: pos.x,
         y: pos.y,
+        zIndex: pos.zIndex ?? current.icons?.[id]?.zIndex,
+        size: pos.size ?? current.icons?.[id]?.size,
         xPct,
         yPct,
         refScreenWidth: vp.width,
@@ -236,10 +240,46 @@ export function saveIconPosition(
   });
 }
 
+export function saveIconSize(id: string, size: DesktopIconSize, isAdmin: boolean = false) {
+  if (!isAdmin) return;
+
+  const current = loadPositions();
+  const existing = current.icons?.[id];
+  if (!existing) return;
+
+  savePositions({
+    icons: {
+      ...current.icons,
+      [id]: {
+        ...existing,
+        size,
+      },
+    },
+  });
+}
+
+export function saveIconZIndex(id: string, zIndex: number, isAdmin: boolean = false) {
+  if (!isAdmin) return;
+
+  const current = loadPositions();
+  const existing = current.icons?.[id];
+  if (!existing) return;
+
+  savePositions({
+    icons: {
+      ...current.icons,
+      [id]: {
+        ...existing,
+        zIndex,
+      },
+    },
+  });
+}
+
 // Save single window position
 export function saveWindowPosition(
   id: string,
-  pos: { x?: number; y?: number; width?: number; height?: number },
+  pos: { x?: number; y?: number; width?: number; height?: number; zIndex?: number },
   isAdmin: boolean = false
 ) {
   if (!isAdmin) return; // Visitor changes are not persisted
@@ -257,6 +297,7 @@ export function saveWindowPosition(
     y: pos.y ?? base.y,
     width: pos.width ?? base.width,
     height: pos.height ?? base.height,
+    zIndex: pos.zIndex ?? base.zIndex,
   };
 
   savePositions({
@@ -270,7 +311,7 @@ export function saveWindowPosition(
 // Save single note position (for visitor session)
 export function saveNotePosition(
   id: string,
-  pos: { x?: number; y?: number; width?: number; height?: number },
+  pos: { x?: number; y?: number; width?: number; height?: number; zIndex?: number },
   isAdmin: boolean = false
 ) {
   if (!isAdmin) return; // Visitor changes no longer persisted (refresh = reset)
@@ -286,6 +327,7 @@ export function saveNotePosition(
     y: pos.y ?? base.y,
     width: pos.width ?? base.width,
     height: pos.height ?? base.height,
+    zIndex: pos.zIndex ?? base.zIndex,
   };
 
   savePositions({

@@ -27,6 +27,7 @@ interface UseWindowActionsProps {
       y: number;
       width: number;
       height: number;
+      zIndex: number;
       xPct: number;
       yPct: number;
       widthPct: number;
@@ -49,11 +50,22 @@ export function useWindowActions({
   csrfToken,
   saveWindowPreference,
 }: UseWindowActionsProps) {
+  const persistWindowZIndex = useCallback(
+    (id: string, zIndex: number) => {
+      saveWindowPosition(id, { zIndex }, isAdmin);
+      if (isAdmin && csrfToken) {
+        void saveWindowPreference(id, { zIndex });
+      }
+    },
+    [csrfToken, isAdmin, saveWindowPreference]
+  );
+
   // Sound ownership lives in Window.tsx / WindowTitleBar.tsx through SoundManager.
   // Keep state actions silent so opening/closing a window cannot emit duplicate sounds.
   const openWindow = useCallback(
     (id: string, customConfig?: Partial<WindowState>) => {
       const newZIndex = bringToFrontZIndex(id, 'window');
+      persistWindowZIndex(id, newZIndex);
 
       const resolveWindowContent = (windowState?: WindowState, overrideContent?: ReactNode) => {
         if (overrideContent !== undefined) {
@@ -139,7 +151,7 @@ export function useWindowActions({
         });
       });
     },
-    [aboutData, getCenterPosition, bringToFrontZIndex, setWindows]
+    [aboutData, getCenterPosition, bringToFrontZIndex, persistWindowZIndex, setWindows]
   );
 
   const closeWindow = useCallback(
@@ -172,6 +184,7 @@ export function useWindowActions({
   const maximizeWindow = useCallback(
     (id: string) => {
       const newZIndex = bringToFrontZIndex(id, 'window');
+      persistWindowZIndex(id, newZIndex);
       setWindows((prev) =>
         prev.map((w) => {
           if (w.id === id) return { ...w, isMaximized: !w.isMaximized, zIndex: newZIndex };
@@ -179,12 +192,13 @@ export function useWindowActions({
         })
       );
     },
-    [bringToFrontZIndex, setWindows]
+    [bringToFrontZIndex, persistWindowZIndex, setWindows]
   );
 
   const focusWindow = useCallback(
     (id: string) => {
       const newZIndex = bringToFrontZIndex(id, 'window');
+      persistWindowZIndex(id, newZIndex);
       setWindows((prev) =>
         prev.map((w) => {
           if (w.id === id) return { ...w, zIndex: newZIndex };
@@ -192,7 +206,7 @@ export function useWindowActions({
         })
       );
     },
-    [bringToFrontZIndex, setWindows]
+    [bringToFrontZIndex, persistWindowZIndex, setWindows]
   );
 
   const updateWindowPosition = useCallback(
@@ -310,6 +324,7 @@ export function useWindowActions({
           refScreenWidth: vp.width,
           refScreenHeight: vp.height,
           isOpenByDefault: true,
+          zIndex: targetWindow.zIndex,
         });
       } else {
         void saveWindowPreference(id, { isOpenByDefault: false });

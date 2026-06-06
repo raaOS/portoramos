@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import type { NoteData } from '../ui/elements/StickyNoteItem';
 import { useLayoutPersistence } from '../contexts/LayoutPersistenceContext';
+import type { ElementType } from '../context/UnifiedZIndexContext';
 
 // BUG FIX #5: Gunakan function untuk lazy initialization agar tidak SSR leak
 // HYDRATION FIX: Generate client-specific values only when function is called (client-side)
@@ -71,7 +72,7 @@ export const useStickyNotes = (
   mounted: boolean,
   isAdmin: boolean = false,
   csrfToken?: string,
-  requestNextZIndex?: (id?: string) => number,
+  requestNextZIndex?: (id?: string, type?: ElementType) => number,
   isAuthLoading: boolean = false
 ) => {
   const [notes, setNotes] = useState<NoteData[]>([]);
@@ -341,7 +342,7 @@ export const useStickyNotes = (
       '-' +
       (isClient ? Math.random().toString(36).substr(2, 9) : 'xxxxxxxx');
     // Get z-index from unified system, passing the note ID
-    const nextZ = requestNextZIndex ? requestNextZIndex(noteId) : 100;
+    const nextZ = requestNextZIndex ? requestNextZIndex(noteId, 'stickyNote') : 100;
 
     // HYDRATION FIX: Use consistent SSR-safe defaults, then update on client
     const newNote: NoteData = {
@@ -418,7 +419,7 @@ export const useStickyNotes = (
       // Get z-index from unified system, passing the note ID
       // The actual z-index is managed by UnifiedZIndexContext
       if (requestNextZIndex) {
-        const nextZ = requestNextZIndex(id);
+        const nextZ = requestNextZIndex(id, 'stickyNote');
         updateNote(id, { zIndex: nextZ });
       }
     },

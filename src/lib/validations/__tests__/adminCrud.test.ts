@@ -9,6 +9,7 @@ import {
   updateDesignPhilosophySchema,
   createHardSkillConceptSchema,
   updateHardSkillConceptSchema,
+  updateAboutSchema,
 } from '../adminCrud';
 
 describe('hardSkillSchema', () => {
@@ -240,5 +241,38 @@ describe('hardSkillConceptSchemas', () => {
   it('updateHardSkillConceptSchema requires at least one field', () => {
     expect(updateHardSkillConceptSchema.safeParse({}).success).toBe(false);
     expect(updateHardSkillConceptSchema.safeParse({ title: 'New' }).success).toBe(true);
+  });
+});
+
+describe('updateAboutSchema layout preferences', () => {
+  it('accepts persisted zIndex for desktop icons/windows and icon size', () => {
+    const result = updateAboutSchema.safeParse({
+      desktopPreferences: {
+        iconPositions: {
+          'project-a': {
+            x: 120,
+            y: 160,
+            zIndex: 420,
+            size: 'large',
+            xPct: 10,
+            yPct: 20,
+            refScreenWidth: 1200,
+            refScreenHeight: 800,
+          },
+        },
+      },
+      windowPreferences: {
+        about: {
+          x: 100,
+          y: 80,
+          width: 900,
+          height: 600,
+          zIndex: 430,
+          isOpenByDefault: true,
+        },
+      },
+    });
+
+    expect(result.success).toBe(true);
   });
 });

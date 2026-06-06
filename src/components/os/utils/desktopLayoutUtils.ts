@@ -144,6 +144,8 @@ export const generateDesktopIcons = (
         label: item.label,
         x: finalX,
         y: finalY,
+        zIndex: savedPos?.zIndex,
+        size: savedPos?.size,
         action: item.action,
       };
     }
@@ -192,6 +194,8 @@ export const generateDesktopIcons = (
       aspectRatio: aspectRatio,
       x: finalX,
       y: finalY,
+      zIndex: savedPos?.zIndex,
+      size: savedPos?.size,
       priority: index < 4, // Prioritize the first 4 icons for LCP
     };
   });

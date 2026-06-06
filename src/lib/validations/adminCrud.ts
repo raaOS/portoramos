@@ -192,6 +192,8 @@ const desktopIconPositionSchema = z
   .object({
     x: z.number(),
     y: z.number(),
+    zIndex: z.number().optional(),
+    size: z.enum(['small', 'medium', 'large']).optional(),
     // Percentage-based for responsive positioning (optional for backward compat)
     xPct: z.number().min(-100).max(200).optional(),
     yPct: z.number().min(-100).max(200).optional(),
@@ -245,6 +247,7 @@ const windowPreferenceSchema = z
     y: z.number().optional(),
     width: z.number().positive().optional(),
     height: z.number().positive().optional(),
+    zIndex: z.number().optional(),
     // Percentage-based for responsive positioning
     xPct: z.number().min(0).max(100).optional(),
     yPct: z.number().min(0).max(100).optional(),

@@ -272,7 +272,12 @@ function DesktopMain({
     },
     [baseOpenProjectWindow]
   );
-  const { iconPositions, handleIconPositionChange } = useDesktopLayout({
+  const {
+    iconPositions,
+    handleIconPositionChange,
+    handleIconZIndexChange,
+    handleIconSizeChange,
+  } = useDesktopLayout({
     aboutData,
     isAdmin,
     csrfToken,
@@ -483,8 +488,11 @@ function DesktopMain({
                   <DesktopIconsLayer
                     projectIcons={projectIcons}
                     isMobile={isMobile}
+                    isAdmin={isAdmin}
                     isReady={isDesktopRevealed}
                     handleIconPositionChange={handleIconPositionChange}
+                    handleIconZIndexChange={handleIconZIndexChange}
+                    handleIconSizeChange={handleIconSizeChange}
                     openProjectWindow={openProjectWindow}
                   />
                 </React.Suspense>

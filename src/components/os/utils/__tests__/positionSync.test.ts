@@ -4,6 +4,8 @@ import {
   savePositions,
   saveWindowPosition,
   saveIconPosition,
+  saveIconZIndex,
+  saveIconSize,
   saveNotePosition,
   getWindowPosition,
   getIconPosition,
@@ -72,6 +74,21 @@ describe('positionSync', () => {
       const stored = loadPositions().windows?.['win-new'];
       expect(stored).toEqual({ x: 500, y: 80, width: 900, height: 600 });
     });
+
+    it('preserves zIndex saat position atau size di-save terpisah', () => {
+      saveWindowPosition('win-stack', { x: 10, y: 20, width: 800, height: 500, zIndex: 230 }, true);
+      saveWindowPosition('win-stack', { x: 100, y: 120 }, true);
+      saveWindowPosition('win-stack', { width: 900, height: 620 }, true);
+
+      const stored = loadPositions().windows?.['win-stack'];
+      expect(stored).toMatchObject({
+        x: 100,
+        y: 120,
+        width: 900,
+        height: 620,
+        zIndex: 230,
+      });
+    });
   });
 
   describe('saveIconPosition', () => {
@@ -103,6 +120,54 @@ describe('positionSync', () => {
       expect(icons?.['icon-a']?.x).toBe(1);
       expect(icons?.['icon-b']?.x).toBe(2);
     });
+
+    it('saves and preserves icon zIndex across later position saves', () => {
+      saveIconPosition('icon-z', { x: 100, y: 120, zIndex: 410 }, true);
+      saveIconPosition('icon-z', { x: 160, y: 180 }, true);
+
+      const stored = loadPositions().icons?.['icon-z'];
+      expect(stored).toMatchObject({
+        x: 160,
+        y: 180,
+        zIndex: 410,
+      });
+    });
+
+    it('saves and preserves icon size across later position saves', () => {
+      saveIconPosition('icon-size', { x: 100, y: 120, size: 'large' }, true);
+      saveIconPosition('icon-size', { x: 160, y: 180 }, true);
+
+      const stored = loadPositions().icons?.['icon-size'];
+      expect(stored).toMatchObject({
+        x: 160,
+        y: 180,
+        size: 'large',
+      });
+    });
+
+    it('updates only zIndex for an existing icon', () => {
+      saveIconPosition('icon-z-only', { x: 40, y: 50 }, true);
+      saveIconZIndex('icon-z-only', 510, true);
+
+      const stored = loadPositions().icons?.['icon-z-only'];
+      expect(stored).toMatchObject({
+        x: 40,
+        y: 50,
+        zIndex: 510,
+      });
+    });
+
+    it('updates only size for an existing icon', () => {
+      saveIconPosition('icon-size-only', { x: 40, y: 50 }, true);
+      saveIconSize('icon-size-only', 'small', true);
+
+      const stored = loadPositions().icons?.['icon-size-only'];
+      expect(stored).toMatchObject({
+        x: 40,
+        y: 50,
+        size: 'small',
+      });
+    });
   });
 
   describe('saveNotePosition', () => {
@@ -121,6 +186,20 @@ describe('positionSync', () => {
         y: 250,
         width: 400,
         height: 400,
+      });
+    });
+
+    it('preserves zIndex saat note digeser setelah dibawa ke depan', () => {
+      saveNotePosition('note-z', { x: 50, y: 50, width: 400, height: 400, zIndex: 360 }, true);
+      saveNotePosition('note-z', { x: 150, y: 250 }, true);
+
+      const stored = loadPositions().notes?.['note-z'];
+      expect(stored).toMatchObject({
+        x: 150,
+        y: 250,
+        width: 400,
+        height: 400,
+        zIndex: 360,
       });
     });
   });

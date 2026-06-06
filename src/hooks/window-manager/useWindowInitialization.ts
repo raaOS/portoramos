@@ -86,6 +86,7 @@ export function useWindowInitialization({
 
           const initialPosition = { x, y };
           const isPinned = pref?.isOpenByDefault || false;
+          const zIndex = pref?.zIndex ?? w.zIndex;
 
           // ── Content sync: ambil fresh content dari baseW, atau hydrate via factory ──
           // Urutan prioritas:
@@ -109,6 +110,7 @@ export function useWindowInitialization({
             isPinned,
             width,
             height,
+            zIndex,
             initialPosition,
           };
         });

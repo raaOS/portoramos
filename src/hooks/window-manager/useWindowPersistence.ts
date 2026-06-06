@@ -9,6 +9,25 @@ export function useWindowPersistence({ csrfToken, isAdmin }: UseWindowPersistenc
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const persistTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isPersistingRef = useRef(false);
+  const pendingWindowPreferenceUpdatesRef = useRef<
+    Record<
+      string,
+      Partial<{
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        zIndex: number;
+        xPct: number;
+        yPct: number;
+        widthPct: number;
+        heightPct: number;
+        refScreenWidth: number;
+        refScreenHeight: number;
+        isOpenByDefault: boolean;
+      }>
+    >
+  >({});
 
   // Cleanup timeouts on unmount to prevent memory leak
   useEffect(() => {
@@ -30,6 +49,7 @@ export function useWindowPersistence({ csrfToken, isAdmin }: UseWindowPersistenc
         y: number;
         width: number;
         height: number;
+        zIndex: number;
         xPct: number;
         yPct: number;
         widthPct: number;
@@ -69,11 +89,23 @@ export function useWindowPersistence({ csrfToken, isAdmin }: UseWindowPersistenc
         return;
       }
 
-      // Use debounce for manual moves to avoid race conditions
+      pendingWindowPreferenceUpdatesRef.current = {
+        ...pendingWindowPreferenceUpdatesRef.current,
+        [id]: {
+          ...(pendingWindowPreferenceUpdatesRef.current[id] || {}),
+          ...updates,
+        },
+      };
+
+      // Use debounce for manual moves to avoid race conditions, but merge
+      // pending fields so focus zIndex cannot cancel position/size saves.
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       isPersistingRef.current = true;
 
       saveTimeoutRef.current = setTimeout(async () => {
+        const windowPreferences = pendingWindowPreferenceUpdatesRef.current;
+        pendingWindowPreferenceUpdatesRef.current = {};
+
         try {
           const response = await fetch('/api/about', {
             method: 'PUT',
@@ -83,9 +115,7 @@ export function useWindowPersistence({ csrfToken, isAdmin }: UseWindowPersistenc
             },
             credentials: 'include',
             body: JSON.stringify({
-              windowPreferences: {
-                [id]: updates,
-              },
+              windowPreferences,
             }),
           });
 

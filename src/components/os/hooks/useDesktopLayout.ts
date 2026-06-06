@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { AboutData, DesktopIconPosition } from '@/types/about';
-import { getIconPosition, saveIconPosition, loadPositions } from '../utils/positionSync';
+import type { AboutData, DesktopIconPosition, DesktopIconSize } from '@/types/about';
+import {
+  getIconPosition,
+  saveIconPosition,
+  loadPositions,
+} from '../utils/positionSync';
 import { useLayoutPersistence } from '../contexts/LayoutPersistenceContext';
 
 interface UseDesktopLayoutProps {
@@ -35,6 +39,7 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
           : { width: 1440, height: 900 };
 
       const updated: DesktopIconPosition = {
+        ...iconPositions[id],
         x,
         y,
         xPct: vp.width > 0 ? (x / vp.width) * 100 : 0,
@@ -46,9 +51,61 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
       setIconPositionOverrides((prev) => ({ ...prev, [id]: updated }));
 
       // Save ke positionSync (localStorage untuk admin, no-op untuk visitor)
-      saveIconPosition(id, { x, y }, isAdmin);
+      saveIconPosition(
+        id,
+        { x, y, zIndex: iconPositions[id]?.zIndex, size: iconPositions[id]?.size },
+        isAdmin
+      );
     },
-    [isAdmin]
+    [iconPositions, isAdmin]
+  );
+
+  const handleIconZIndexChange = useCallback(
+    (id: string, zIndex: number, position?: { x: number; y: number }) => {
+      setIconPositionOverrides((prev) => {
+        const existing = prev[id] || iconPositions[id] || position;
+        if (!existing) return prev;
+        return {
+          ...prev,
+          [id]: {
+            ...existing,
+            zIndex,
+          },
+        };
+      });
+
+      const existing = iconPositions[id] || position;
+      if (existing) {
+        saveIconPosition(id, { x: existing.x, y: existing.y, zIndex, size: existing.size }, isAdmin);
+      }
+    },
+    [iconPositions, isAdmin]
+  );
+
+  const handleIconSizeChange = useCallback(
+    (id: string, size: DesktopIconSize, position?: { x: number; y: number }) => {
+      setIconPositionOverrides((prev) => {
+        const existing = prev[id] || iconPositions[id] || position;
+        if (!existing) return prev;
+        return {
+          ...prev,
+          [id]: {
+            ...existing,
+            size,
+          },
+        };
+      });
+
+      const existing = iconPositions[id] || position;
+      if (existing) {
+        saveIconPosition(
+          id,
+          { x: existing.x, y: existing.y, zIndex: existing.zIndex, size },
+          isAdmin
+        );
+      }
+    },
+    [iconPositions, isAdmin]
   );
 
   const getIconPos = useCallback(
@@ -80,6 +137,8 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
     iconPositions,
     setIconPositions: setIconPositionOverrides,
     handleIconPositionChange,
+    handleIconZIndexChange,
+    handleIconSizeChange,
     getIconPos,
   };
 }
