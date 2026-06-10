@@ -136,6 +136,7 @@ function toEventPageAsset(file: ExplorerFile): EventPageAsset {
     storageKey: file.storageKey,
     size: file.size,
     updatedAt: file.updatedAt,
+    metadata: file.metadata,
   };
 }
 

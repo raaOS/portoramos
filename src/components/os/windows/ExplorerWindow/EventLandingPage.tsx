@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { CalendarDays, Images, ExternalLink } from 'lucide-react';
 import type { ResolvedEventPage } from '@/types/event-page';
 import type { GalleryItem } from '@/types/projects';
+import { getProxiedUrl } from '@/lib/utils';
 
 const _formatDate = (dateStr?: string) => {
   if (!dateStr) return '--';
@@ -71,13 +73,14 @@ export default function EventLandingPage({
           <div className="absolute inset-0 bg-gradient-to-tr from-black/30 via-transparent to-white/10 mix-blend-overlay" />
         )}
         {cover ? (
-          <img
-            src={cover.thumbnailUrl || cover.url}
+          <Image
+            src={getProxiedUrl(cover.thumbnailUrl || cover.url)}
             alt={cover.name}
+            fill
+            priority
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 hover:scale-105"
             draggable={false}
-            loading="eager"
-            fetchPriority="high"
+            sizes="100vw"
           />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
@@ -155,10 +158,13 @@ export default function EventLandingPage({
                             }}
                             className="group relative block w-full overflow-hidden rounded-none border border-black/5 bg-slate-100 text-left dark:border-white/5 dark:bg-white/[0.02]"
                           >
-                            <img
-                              src={file.thumbnailUrl || file.url}
+                            <Image
+                              src={getProxiedUrl(file.thumbnailUrl || file.url)}
                               alt={file.name}
-                              className="block w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                              width={file.metadata?.width || 800}
+                              height={file.metadata?.height || 600}
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              className="block w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                               loading="lazy"
                               onContextMenu={(e) => e.preventDefault()}
                             />
@@ -210,10 +216,13 @@ export default function EventLandingPage({
                         }}
                         className="group relative block w-full overflow-hidden rounded-none border border-black/5 bg-slate-50 text-left dark:border-white/5 dark:bg-white/[0.01]"
                       >
-                        <img
-                          src={file.thumbnailUrl || file.url}
+                        <Image
+                          src={getProxiedUrl(file.thumbnailUrl || file.url)}
                           alt={file.name}
-                          className="block w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                          width={file.metadata?.width || 800}
+                          height={file.metadata?.height || 600}
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                          className="block w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                           loading="lazy"
                           onContextMenu={(e) => e.preventDefault()}
                         />

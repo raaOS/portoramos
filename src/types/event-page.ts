@@ -40,6 +40,7 @@ export type EventPageAsset = Pick<
   | 'storageKey'
   | 'size'
   | 'updatedAt'
+  | 'metadata'
 >;
 
 export interface ResolvedEventPage extends EventPage {
