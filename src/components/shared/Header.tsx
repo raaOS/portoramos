@@ -104,7 +104,7 @@ const Header: React.FC = () => {
       <div className="flex items-center gap-4">
         <Link
           href="/admin/login"
-          className="relative flex h-8 w-12 shrink-0 cursor-pointer items-center justify-center overflow-y-hidden overflow-x-visible"
+          className="relative flex h-8 w-12 shrink-0 cursor-pointer items-center justify-center"
           aria-label="Admin Login"
         >
           <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
