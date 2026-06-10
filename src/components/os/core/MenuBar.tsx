@@ -108,7 +108,7 @@ export default function MenuBar({
       {/* Left Side */}
       <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2 lg:gap-4">
         <div
-          onClick={() => window.open('/admin', '_blank')}
+          onClick={() => window.open('/admin/login', '_blank')}
           className="flex h-8 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden"
           aria-label="Ramos OS"
           role="img"

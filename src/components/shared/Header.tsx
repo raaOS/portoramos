@@ -103,10 +103,9 @@ const Header: React.FC = () => {
       {/* Left Side */}
       <div className="flex items-center gap-4">
         <Link
-          href="/"
-          onClickCapture={markBack}
+          href="/admin/login"
           className="flex h-8 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden"
-          aria-label="Home"
+          aria-label="Admin Login"
         >
           {logoAnimationData ? (
             <Lottie
