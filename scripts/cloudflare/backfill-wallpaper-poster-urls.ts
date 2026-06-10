@@ -43,10 +43,7 @@ import { config as loadEnv } from 'dotenv';
 loadEnv({ path: '.env.local' });
 loadEnv({ path: '.env' });
 
-import {
-  isD1Configured,
-  getMissingD1EnvKeys,
-} from '../../src/lib/cloudflareD1';
+import { isD1Configured, getMissingD1EnvKeys } from '../../src/lib/cloudflareD1';
 import { aboutService } from '../../src/lib/services/aboutService';
 import {
   buildR2PublicUrl,

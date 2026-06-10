@@ -19,6 +19,7 @@ interface OSSystemContextType {
   hiddenNoteIds: ReadonlySet<string>;
   hideNote: (id: string) => void;
   unhideAllNotes: () => void;
+  restoreHiddenNoteIds: (ids: string[]) => void;
 
   // Control Center visibility
   showControlCenter: boolean;
@@ -27,6 +28,11 @@ interface OSSystemContextType {
   // Calendar visibility
   showCalendar: boolean;
   setShowCalendar: (show: boolean) => void;
+
+  // Mission Control visibility
+  showMissionControl: boolean;
+  setShowMissionControl: (show: boolean) => void;
+  toggleMissionControl: () => void;
 
   brightness: number;
   setBrightness: (val: number) => void;
@@ -71,6 +77,9 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
   const [volume, setVolume] = useState(50);
   const [showControlCenter, setShowControlCenter] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showMissionControl, setShowMissionControl] = useState(false);
+
+  const toggleMissionControl = useCallback(() => setShowMissionControl((prev) => !prev), []);
 
   const toggleSpotlight = useCallback(() => setShowSpotlight((prev) => !prev), []);
   const toggleNotes = useCallback(() => setNotesVisible((prev) => !prev), []);
@@ -88,6 +97,10 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
     setHiddenNoteIds((prev) => (prev.size === 0 ? prev : new Set()));
   }, []);
 
+  const restoreHiddenNoteIds = useCallback((ids: string[]) => {
+    setHiddenNoteIds(new Set(ids));
+  }, []);
+
   const value = React.useMemo(
     () => ({
       showSpotlight,
@@ -99,6 +112,7 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
       hiddenNoteIds,
       hideNote,
       unhideAllNotes,
+      restoreHiddenNoteIds,
       isRevealed,
       setIsRevealed,
       startScreenReady,
@@ -111,6 +125,9 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
       setShowControlCenter,
       showCalendar,
       setShowCalendar,
+      showMissionControl,
+      setShowMissionControl,
+      toggleMissionControl,
     }),
     [
       showSpotlight,
@@ -120,12 +137,15 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
       hiddenNoteIds,
       hideNote,
       unhideAllNotes,
+      restoreHiddenNoteIds,
       isRevealed,
       startScreenReady,
       brightness,
       volume,
       showControlCenter,
       showCalendar,
+      showMissionControl,
+      toggleMissionControl,
     ]
   );
 

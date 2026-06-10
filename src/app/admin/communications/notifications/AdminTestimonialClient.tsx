@@ -38,7 +38,7 @@ export default function AdminTestimonialClient() {
 
   if (authLoading || (loading && testimonials.length === 0)) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center">
+      <div className="flex min-h-[400px] items-center justify-center">
         <AdminLoading size="page" />
       </div>
     );
@@ -92,7 +92,7 @@ export default function AdminTestimonialClient() {
   };
 
   return (
-    <div className="space-y-8 mt-4">
+    <div className="mt-4 space-y-8">
       <AIGenerator onGenerate={handleAiFill} isLoading={isAiGenerating} />
 
       {/* Main Form Section */}
@@ -130,9 +130,7 @@ export default function AdminTestimonialClient() {
               <div className="relative">
                 <select
                   value={formData.projectId || ''}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, projectId: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, projectId: e.target.value }))}
                   className="w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-gray-50 py-3 pl-4 pr-10 text-sm outline-none transition-all focus:border-violet-400 focus:bg-white"
                 >
                   <option value="">-- Pilih Project --</option>
@@ -164,7 +162,9 @@ export default function AdminTestimonialClient() {
 
           <ChatEditor
             messages={formData.messages || []}
-            onChange={(msgs: ChatHistoryMessage[]) => setFormData((prev) => ({ ...prev, messages: msgs }))}
+            onChange={(msgs: ChatHistoryMessage[]) =>
+              setFormData((prev) => ({ ...prev, messages: msgs }))
+            }
             projects={projects}
             projectId={formData.projectId}
           />
@@ -185,9 +185,7 @@ export default function AdminTestimonialClient() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-gray-900">Database Testimonial</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Total {testimonials.length} simulasi aktif
-            </p>
+            <p className="mt-1 text-sm text-gray-500">Total {testimonials.length} simulasi aktif</p>
           </div>
           <div className="text-right">
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
@@ -217,9 +215,7 @@ export default function AdminTestimonialClient() {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 onDelete={() => deleteTestimonial(t.id)}
-                onToggleStatus={() =>
-                  updateTestimonial(t.id, { isActive: t.isActive === false })
-                }
+                onToggleStatus={() => updateTestimonial(t.id, { isActive: t.isActive === false })}
               />
             ))}
           </div>

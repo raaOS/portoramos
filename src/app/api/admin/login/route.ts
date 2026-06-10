@@ -18,7 +18,11 @@ const BLOCK_DURATION = 30 * 60 * 1000; // 30 menit
 const GOOGLE_MAPS_API_KEY =
   process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-async function auditLogin(request: NextRequest, action: string, metadata?: Record<string, unknown>) {
+async function auditLogin(
+  request: NextRequest,
+  action: string,
+  metadata?: Record<string, unknown>
+) {
   await logAdminActivity(request, action, metadata).catch((error) => {
     console.error('[Audit] Failed to log admin login activity:', error);
   });
@@ -47,7 +51,7 @@ async function getGeoInfo(ip: string) {
   }
 
   try {
-    const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,isp`);
+    const res = await fetch(`https://ip-api.com/json/${ip}?fields=status,country,city,isp`);
     const data = await res.json();
 
     if (data.status === 'success') {
@@ -327,7 +331,7 @@ ${locationInfo.text}
     response.cookies.set('admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge: 2 * 60 * 60, // 2 jam (sesuai JWT expiry)
       path: '/',
       // Hapus domain untuk kompatibilitas Vercel

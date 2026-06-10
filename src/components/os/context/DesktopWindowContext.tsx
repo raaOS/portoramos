@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useWindowManager, WindowState } from '@/hooks/useWindowManager';
 import { AboutData } from '@/types/about';
 
@@ -36,9 +36,9 @@ export function DesktopWindowProvider({
     isAdmin,
   });
 
-  return (
-    <DesktopWindowContext.Provider value={windowManager}>{children}</DesktopWindowContext.Provider>
-  );
+  const value = useMemo(() => windowManager, [windowManager]);
+
+  return <DesktopWindowContext.Provider value={value}>{children}</DesktopWindowContext.Provider>;
 }
 
 export function useDesktopWindowContext() {

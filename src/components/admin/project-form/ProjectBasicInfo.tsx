@@ -120,7 +120,7 @@ export default function ProjectBasicInfo({
             type="text"
             value={formData.title}
             onChange={(e) => updateField('title', e.target.value)}
-            className={`w-full rounded-none border bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.title ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
+            className={`w-full rounded-lg border bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.title ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
             placeholder="e.g. Neon Cyberpunk City"
           />
           {errors.title && <p className="mt-1 text-sm font-medium text-red-600">{errors.title}</p>}
@@ -136,7 +136,7 @@ export default function ProjectBasicInfo({
               type="text"
               value={formData.client}
               onChange={(e) => updateField('client', e.target.value)}
-              className={`w-full rounded-none border bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.client ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
+              className={`w-full rounded-lg border bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.client ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
               placeholder="e.g. Personal Work"
             />
             {errors.client && (
@@ -161,7 +161,7 @@ export default function ProjectBasicInfo({
                   if (!isNaN(num)) updateField('year', num);
                 }
               }}
-              className={`w-full rounded-none border bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.year ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
+              className={`w-full rounded-lg border bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.year ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
               min="2000"
               max={new Date().getFullYear() + 1}
             />
@@ -170,9 +170,9 @@ export default function ProjectBasicInfo({
         </div>
 
         {/* Engagement Settings Section - Moved Up */}
-        <div className="rounded-none border border-gray-100 bg-gray-50 p-4">
+        <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
           <h4 className="mb-4 flex items-center gap-2 text-sm font-bold text-gray-900">
-            <span className="h-1.5 w-1.5 rounded-none bg-violet-500"></span>
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-500"></span>
             Engagement Settings
           </h4>
 
@@ -185,7 +185,7 @@ export default function ProjectBasicInfo({
                 type="number"
                 value={formData.likes}
                 onChange={(e) => updateField('likes', parseInt(e.target.value) || 0)}
-                className="w-full rounded-none border border-gray-200 bg-white px-3 py-2 font-mono text-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 font-mono text-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500"
                 min="0"
               />
             </div>
@@ -197,7 +197,7 @@ export default function ProjectBasicInfo({
                 type="number"
                 value={formData.shares}
                 onChange={(e) => updateField('shares', parseInt(e.target.value) || 0)}
-                className="w-full rounded-none border border-gray-200 bg-white px-3 py-2 font-mono text-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 font-mono text-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500"
                 min="0"
               />
             </div>
@@ -211,7 +211,7 @@ export default function ProjectBasicInfo({
                 type="number"
                 value={formData.initialCommentCount ?? (formData.id ? 0 : 2)}
                 onChange={(e) => updateField('initialCommentCount', parseInt(e.target.value) || 0)}
-                className="w-full rounded-none border border-blue-200 bg-blue-50 px-3 py-2 font-mono text-blue-700 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 font-mono text-blue-700 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="0"
                 max="10"
                 placeholder={formData.id ? '0' : '2'}
@@ -220,7 +220,7 @@ export default function ProjectBasicInfo({
           </div>
 
           <div className="mt-4 flex items-end">
-            <label className="group flex h-[38px] w-full cursor-pointer items-center gap-3 rounded-none border border-transparent p-2 transition-colors hover:border-gray-200 hover:bg-gray-100">
+            <label className="group flex h-[38px] w-full cursor-pointer items-center gap-3 rounded-lg border border-transparent p-2 transition-colors hover:border-gray-200 hover:bg-gray-100">
               <div className="relative inline-flex items-center">
                 <input
                   type="checkbox"
@@ -228,7 +228,7 @@ export default function ProjectBasicInfo({
                   checked={formData.allowComments !== false} // Default true
                   onChange={(e) => updateField('allowComments', e.target.checked)}
                 />
-                <div className="peer h-5 w-9 rounded-none bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-none after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-green-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
+                <div className="peer h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-green-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-600">
                 Allow Comments
@@ -243,17 +243,17 @@ export default function ProjectBasicInfo({
           {/* New Tag Selector UI */}
           <div className="space-y-3">
             {/* Selected Tags */}
-            <div className="flex min-h-[38px] flex-wrap gap-2 rounded-none border border-gray-300 bg-white p-2 transition-all focus-within:border-transparent focus-within:ring-2 focus-within:ring-violet-500">
+            <div className="flex min-h-[38px] flex-wrap gap-2 rounded-lg border border-gray-300 bg-white p-2 transition-all focus-within:border-transparent focus-within:ring-2 focus-within:ring-violet-500">
               {currentTagsList.map((tag, idx) => (
                 <span
                   key={idx}
-                  className="group inline-flex items-center gap-1 rounded-none bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-700"
+                  className="group inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-700"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
-                    className="rounded-none p-0.5 transition-colors hover:bg-violet-200"
+                    className="rounded-full p-0.5 transition-colors hover:bg-violet-200"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -282,7 +282,7 @@ export default function ProjectBasicInfo({
                       key={idx}
                       type="button"
                       onClick={() => handleAddTag(label.name)}
-                      className="group inline-flex items-center gap-1.5 rounded-none border border-violet-200 px-2.5 py-1 text-xs text-violet-700 transition-all hover:border-violet-300 hover:bg-violet-50"
+                      className="group inline-flex items-center gap-1.5 rounded-full border border-violet-200 px-2.5 py-1 text-xs text-violet-700 transition-all hover:border-violet-300 hover:bg-violet-50"
                     >
                       <div
                         className="h-1.5 w-1.5 rounded-full"
@@ -308,7 +308,7 @@ export default function ProjectBasicInfo({
                       key={idx}
                       type="button"
                       onClick={() => handleAddTag(tag)}
-                      className="inline-flex items-center gap-1 rounded-none border border-gray-200 px-2.5 py-1 text-xs text-gray-600 transition-all hover:border-gray-300 hover:bg-gray-50"
+                      className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-2.5 py-1 text-xs text-gray-600 transition-all hover:border-gray-300 hover:bg-gray-50"
                     >
                       <Plus className="h-3 w-3 text-gray-400" />
                       {tag}
@@ -334,7 +334,7 @@ export default function ProjectBasicInfo({
             value={formData.description}
             onChange={(e) => updateField('description', e.target.value)}
             rows={4}
-            className={`w-full resize-none rounded-none border bg-white px-4 py-3 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.description ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
+            className={`w-full resize-none rounded-lg border bg-white px-4 py-3 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500 ${errors.description ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-300'}`}
             placeholder="Describe the project concept, tools used, and outcome..."
           />
           {errors.description && (
@@ -353,7 +353,7 @@ export default function ProjectBasicInfo({
               type="text"
               value={formData.role || ''}
               onChange={(e) => updateField('role', e.target.value)}
-              className="w-full rounded-none border border-gray-300 bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500"
               placeholder="e.g. Lead Designer"
             />
           </div>
@@ -366,7 +366,7 @@ export default function ProjectBasicInfo({
               type="text"
               value={formData.timeline || ''}
               onChange={(e) => updateField('timeline', e.target.value)}
-              className="w-full rounded-none border border-gray-300 bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500"
               placeholder="e.g. 2 Weeks"
             />
           </div>
@@ -379,7 +379,7 @@ export default function ProjectBasicInfo({
               type="text"
               value={formData.team || ''}
               onChange={(e) => updateField('team', e.target.value)}
-              className="w-full rounded-none border border-gray-300 bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-violet-500"
               placeholder="e.g. Solo, Marketing Team"
             />
           </div>
@@ -417,7 +417,7 @@ export default function ProjectBasicInfo({
                       updateField('software', [...current, tool]);
                     }
                   }}
-                  className={`flex items-center gap-2 rounded-none border px-3 py-1.5 text-xs font-bold uppercase transition-all ${
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-bold uppercase transition-all ${
                     isSelected
                       ? 'border-violet-600 bg-violet-600 text-white'
                       : 'border-gray-200 bg-white text-gray-500 hover:border-violet-300 hover:text-violet-600'

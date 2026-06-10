@@ -109,9 +109,7 @@ export const useStickyNotes = (
         //
         // Net effect untuk visitor: 1 D1 read per page load (bukan per
         // mount) dan TTFB sticky-notes panel turun saat refresh.
-        const url = isAdmin
-          ? `/api/sticky-notes?t=${Date.now()}&force=true`
-          : '/api/sticky-notes';
+        const url = isAdmin ? `/api/sticky-notes?t=${Date.now()}&force=true` : '/api/sticky-notes';
         const response = await fetch(url, {
           signal: controller.signal,
         });
@@ -435,5 +433,6 @@ export const useStickyNotes = (
     restoreNote,
     bringToFrontNote,
     setNotes,
+    hasLoaded,
   };
 };

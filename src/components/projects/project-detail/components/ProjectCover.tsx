@@ -18,28 +18,34 @@ interface ProjectCoverProps {
 
 export function ProjectCover({ project, cover, ratio, isWindowMode = false }: ProjectCoverProps) {
   const { toast, handleContextMenu } = useImageProtection();
+  const coverFrameClassName = `relative overflow-hidden ${
+    isWindowMode ? 'rounded-none' : 'rounded-xl'
+  } border border-black/5 bg-gray-100 shadow-lg dark:border-white/5 dark:bg-gray-800`;
+  const comparisonMediaClassName = isWindowMode
+    ? 'rounded-none object-cover object-left-top'
+    : 'object-cover object-left-top';
+  const coverMediaClassName = isWindowMode
+    ? 'h-auto w-full rounded-none object-cover'
+    : 'h-auto w-full object-cover';
 
   return (
     <div
       className={`${ratio < 1 ? 'mx-auto max-w-sm' : ratio === 1 ? 'mx-auto max-w-md' : 'w-full'} p-4 lg:p-6`}
     >
       {project.comparison && project.comparison.beforeImage ? (
-        <div
-          className="relative h-full w-full overflow-hidden rounded-xl border border-black/5 bg-gray-100 shadow-lg dark:border-white/5 dark:bg-gray-800"
-          style={{ aspectRatio: ratio }}
-        >
+        <div className={`h-full w-full ${coverFrameClassName}`} style={{ aspectRatio: ratio }}>
           <Compare
             firstImage={project.comparison.beforeImage}
             secondImage={project.comparison.afterImage || cover.src}
-            firstImageClassName="object-cover object-left-top"
-            secondImageClassname="object-cover object-left-top"
-            className="h-full w-full"
+            firstImageClassName={comparisonMediaClassName}
+            secondImageClassname={comparisonMediaClassName}
+            className={isWindowMode ? 'h-full w-full rounded-none' : 'h-full w-full'}
             slideMode="hover"
           />
         </div>
       ) : (
         <div
-          className="relative overflow-hidden rounded-xl border border-black/5 bg-gray-100 shadow-lg dark:border-white/5 dark:bg-gray-800"
+          className={coverFrameClassName}
           style={{ aspectRatio: ratio }}
           onContextMenu={handleContextMenu}
         >
@@ -51,7 +57,9 @@ export function ProjectCover({ project, cover, ratio, isWindowMode = false }: Pr
             width={1600}
             height={Math.round(1600 / ratio)}
             priority={true}
-            className="h-auto w-full object-cover"
+            className={`${coverMediaClassName} ${
+              isWindowMode && cover.kind === 'video' ? 'project-window-video' : ''
+            }`}
             autoplay={project.autoplay ?? true}
             muted={project.muted ?? true}
             loop={project.loop ?? true}

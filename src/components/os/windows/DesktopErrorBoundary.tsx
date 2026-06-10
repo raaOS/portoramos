@@ -56,6 +56,7 @@ export default class DesktopErrorBoundary extends Component<Props, State> {
     try {
       localStorage.removeItem('ramos-positions-v2');
       localStorage.removeItem('dock-config');
+      sessionStorage.removeItem('ramos-os-visitor-session-v1');
       sessionStorage.removeItem('ramos-session-positions');
       sessionStorage.removeItem('ramos_os_welcome_seen');
       sessionStorage.removeItem('ramos_os_booted');

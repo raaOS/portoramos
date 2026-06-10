@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Trash2, Plus, Tag, Save, AlertCircle } from 'lucide-react';
+import { Trash2, Plus, Tag, Save, AlertCircle, ChevronDown } from 'lucide-react';
 import { Label } from '@/types/labels';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -147,7 +147,7 @@ export default function LabelsManager({
                       type="text"
                       value={label.name}
                       onChange={(e) => handleLabelChange(index, 'name', e.target.value)}
-                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       placeholder="Misal: UI/UX Design"
                       required
                     />
@@ -156,17 +156,20 @@ export default function LabelsManager({
                     <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-gray-400">
                       Warna
                     </label>
-                    <select
-                      value={label.color || 'gray'}
-                      onChange={(e) => handleLabelChange(index, 'color', e.target.value)}
-                      className="w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-gray-50 px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                    >
-                      {COLOR_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={label.color || 'gray'}
+                        onChange={(e) => handleLabelChange(index, 'color', e.target.value)}
+                        className="w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2.5 pl-2.5 pr-8 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                      >
+                        {COLOR_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                    </div>
                   </div>
                 </div>
 
@@ -178,7 +181,7 @@ export default function LabelsManager({
                     type="text"
                     value={label.slug}
                     onChange={(e) => handleLabelChange(index, 'slug', e.target.value)}
-                    className="w-full rounded-lg border border-transparent bg-gray-100 px-3 py-2 font-mono text-xs text-gray-600 outline-none transition-all focus:border-gray-200 focus:bg-white"
+                    className="w-full rounded-lg border border-transparent bg-gray-100 px-3 py-2.5 font-mono text-xs text-gray-600 outline-none transition-all focus:border-gray-200 focus:bg-white"
                     placeholder="ui-ux-design"
                     required
                   />

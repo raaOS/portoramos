@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { motion } from 'motion/react';
-import { Save, X, Sparkles, Loader2, Search } from 'lucide-react';
+import { Save, X, Sparkles, Loader2, Search, ChevronDown } from 'lucide-react';
 import { HardSkill, HardSkillLevel } from '@/types/hardSkill';
 
 interface SkillEditorProps {
@@ -54,22 +54,27 @@ export default function SkillEditor({
             type="text"
             value={editForm.name}
             onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-            className="w-full rounded-lg border p-2"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             placeholder="e.g. Photoshop"
           />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium">Level</label>
-          <select
-            value={editForm.level}
-            onChange={(e) => setEditForm({ ...editForm, level: e.target.value as HardSkillLevel })}
-            className="w-full rounded-lg border p-2"
-          >
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-            <option value="Expert">Expert</option>
-          </select>
+          <div className="relative">
+            <select
+              value={editForm.level}
+              onChange={(e) =>
+                setEditForm({ ...editForm, level: e.target.value as HardSkillLevel })
+              }
+              className="w-full cursor-pointer appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 pr-10 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+              <option value="Expert">Expert</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          </div>
         </div>
         <div>
           <div className="mb-1 flex items-center justify-between">
@@ -91,7 +96,7 @@ export default function SkillEditor({
             type="text"
             value={editForm.iconUrl}
             onChange={(e) => setEditForm({ ...editForm, iconUrl: e.target.value })}
-            className="w-full rounded-lg border p-2"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             placeholder="https://cdn..."
           />
         </div>
@@ -116,7 +121,7 @@ export default function SkillEditor({
               type="text"
               value={detail}
               onChange={(e) => updateFormDetail(idx, e.target.value)}
-              className="w-full rounded-lg border p-2"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               placeholder={`Capability ${idx + 1}`}
             />
           ))}

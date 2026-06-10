@@ -188,6 +188,69 @@ describe('POST /api/about/wallpaper-collection', () => {
       expect(res.status).toBe(409);
       expect(updateAboutData).not.toHaveBeenCalled();
     });
+
+    it('persists startTime when provided in the wallpaper payload', async () => {
+      getAboutData.mockResolvedValue(makeAboutData());
+      updateAboutData.mockImplementation(async (updates) => updates);
+
+      const res = await POST(
+        buildPostRequest({
+          action: 'add',
+          wallpaper: {
+            id: 'w-st',
+            url: '/r2/assets/wallpapers/x.mp4',
+            startTime: 45,
+          },
+        })
+      );
+
+      expect(res.status).toBe(200);
+      const payload = updateAboutData.mock.calls[0][0];
+      expect(payload.wallpaperConfig.collection).toEqual([
+        { id: 'w-st', url: '/r2/assets/wallpapers/x.mp4', startTime: 45 },
+      ]);
+    });
+
+    it('omits startTime when not provided (optional field)', async () => {
+      getAboutData.mockResolvedValue(makeAboutData());
+      updateAboutData.mockImplementation(async (updates) => updates);
+
+      const res = await POST(
+        buildPostRequest({
+          action: 'add',
+          wallpaper: { id: 'w-no-st', url: '/r2/v.mp4' },
+        })
+      );
+
+      expect(res.status).toBe(200);
+      const payload = updateAboutData.mock.calls[0][0];
+      const added = payload.wallpaperConfig.collection.find(
+        (w: { id: string }) => w.id === 'w-no-st'
+      );
+      expect(added.startTime).toBeUndefined();
+    });
+
+    it('rejects startTime below 0', async () => {
+      const res = await POST(
+        buildPostRequest({
+          action: 'add',
+          wallpaper: { id: 'w-neg', url: '/r2/v.mp4', startTime: -1 },
+        })
+      );
+      expect(res.status).toBe(400);
+      expect(updateAboutData).not.toHaveBeenCalled();
+    });
+
+    it('rejects startTime above 250', async () => {
+      const res = await POST(
+        buildPostRequest({
+          action: 'add',
+          wallpaper: { id: 'w-over', url: '/r2/v.mp4', startTime: 300 },
+        })
+      );
+      expect(res.status).toBe(400);
+      expect(updateAboutData).not.toHaveBeenCalled();
+    });
   });
 
   describe('action = remove', () => {
@@ -267,9 +330,7 @@ describe('POST /api/about/wallpaper-collection', () => {
         { id: 'w-1', url: '/r2/1.mp4' },
         { id: 'w-2', url: '/r2/2.mp4' },
       ];
-      getAboutData.mockResolvedValue(
-        makeAboutData({ activeWallpaperId: 'w-1', collection })
-      );
+      getAboutData.mockResolvedValue(makeAboutData({ activeWallpaperId: 'w-1', collection }));
       updateAboutData.mockImplementation(async (updates) => updates);
 
       const res = await POST(buildPostRequest({ action: 'setActive', id: 'w-2' }));

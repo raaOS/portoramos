@@ -5,14 +5,13 @@ import { useMemo, useEffect, useRef, memo, useDeferredValue, useState } from 're
 import { LazyMotion, domAnimation, m, AnimatePresence, type Transition } from 'motion/react';
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest';
 import MasonryGrid from '@/components/layout/MasonryGrid';
-import dynamic from 'next/dynamic';
 import { useProjectFiltering } from './hooks/useProjectFiltering';
 import { useInfiniteScroll } from './hooks/useInfiniteScroll';
 import { useQuickLook } from '@/hooks/useQuickLook';
 import QuickLookModal from '@/components/ui/QuickLookModal';
 import { resolveCover } from '@/lib/images';
 
-const Projects3DView = dynamic(() => import('@/components/canvas/Projects3DView'), { ssr: false });
+import Projects3DView from '@/components/canvas/Projects3DView';
 
 type Props = {
   projects: Project[];

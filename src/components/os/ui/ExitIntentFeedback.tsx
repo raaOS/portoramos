@@ -2,12 +2,15 @@
 
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, Send } from 'lucide-react';
 import { useExitIntent } from '@/hooks/useExitIntent';
 import { useToast } from '@/contexts/ToastContext';
 import { POPULAR_EMOJIS } from '@/components/chat/data/EmojiData';
 import { Z_LAYERS } from '../utils/zIndexLayers';
+
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
 /**
  * Exit-Intent Feedback Modal
@@ -41,8 +44,68 @@ function getEmojiByName(name: string, fallback: string) {
 const FEEDBACK_EMOJIS = {
   heart: getEmojiByName('heart', '\u2764\uFE0F'),
   success: getEmojiByName('smiling heart', '\u{1F970}'),
-  star: getEmojiByName('star', '\u2B50'),
 } as const;
+
+function FeedbackEyeIcon() {
+  const [animationData, setAnimationData] = useState<unknown>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const lottieRef = useRef<any>(null);
+
+  useEffect(() => {
+    const instance = lottieRef.current;
+    return () => {
+      instance?.destroy?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadAnimation = async () => {
+      try {
+        const response = await fetch('/lottie/mata.json', {
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        setAnimationData(data);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+      }
+    };
+
+    loadAnimation();
+
+    return () => controller.abort();
+  }, []);
+
+  if (!animationData) {
+    return (
+      <div className="flex items-center justify-center" style={{ width: 280, height: 120 }}>
+        <span className="text-[88px] leading-none" aria-hidden="true">
+          {FEEDBACK_EMOJIS.heart}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex h-[120px] w-[280px] items-center justify-center overflow-hidden">
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <Lottie
+          lottieRef={lottieRef}
+          animationData={animationData}
+          loop={!prefersReducedMotion}
+          autoplay={!prefersReducedMotion}
+          rendererSettings={{ preserveAspectRatio: 'xMidYMid meet' }}
+          style={{ width: 280, height: 280 }}
+          aria-hidden="true"
+        />
+      </div>
+    </div>
+  );
+}
 
 /**
  * Baca session flags sekali di client. Server selalu return true (enabled)
@@ -161,7 +224,7 @@ export default function ExitIntentFeedback() {
     e.preventDefault();
     if (submitState === 'submitting') return;
     if (rating === 0) {
-      toast.showWarning('Kasih bintang dulu ya', 2500);
+      toast.showWarning('Kasih love dulu ya', 2500);
       return;
     }
 
@@ -273,22 +336,8 @@ export default function ExitIntentFeedback() {
               <form onSubmit={handleSubmit} className="px-6 pb-5 pt-6">
                 {/* Header */}
                 <div className="mb-4 text-center">
-                  <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-orange-100">
-                    <motion.span 
-                      className="inline-block text-[22px] leading-none origin-center" 
-                      aria-hidden="true"
-                      animate={prefersReducedMotion ? {} : { 
-                        scale: [1, 1.2, 1, 1.2, 1],
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        times: [0, 0.1, 0.2, 0.3, 1],
-                        ease: "easeInOut"
-                      }}
-                    >
-                      {FEEDBACK_EMOJIS.heart}
-                    </motion.span>
+                  <div className="mb-1 inline-flex items-center justify-center">
+                    <FeedbackEyeIcon />
                   </div>
                   <h2 id="exit-feedback-title" className="text-lg font-semibold text-gray-900">
                     Eh, sebelum pergi...
@@ -309,25 +358,25 @@ export default function ExitIntentFeedback() {
                         onClick={() => setRating(n)}
                         onMouseEnter={() => setHoverRating(n)}
                         onMouseLeave={() => setHoverRating(0)}
-                        aria-label={`${n} bintang`}
-                        className="p-1 origin-center"
+                        aria-label={`${n} love`}
+                        className="origin-center p-1"
                         initial={false}
                         animate={{
                           scale: active ? 1.15 : 0.95,
                           opacity: active ? 1 : 0.3,
-                          filter: active 
-                            ? 'grayscale(0%) drop-shadow(0 4px 8px rgba(245,158,11,0.32))' 
-                            : 'grayscale(100%) drop-shadow(0 0px 0px rgba(0,0,0,0))'
+                          filter: active
+                            ? 'grayscale(0%) drop-shadow(0 4px 8px rgba(244,63,94,0.32))'
+                            : 'grayscale(100%) drop-shadow(0 0px 0px rgba(0,0,0,0))',
                         }}
-                        whileHover={{ 
-                          scale: active ? 1.25 : 1.05, 
-                          opacity: active ? 1 : 0.7 
+                        whileHover={{
+                          scale: active ? 1.25 : 1.05,
+                          opacity: active ? 1 : 0.7,
                         }}
                         whileTap={{ scale: 0.85 }}
                         transition={springTransition}
                       >
                         <span className="block text-[30px] leading-none" aria-hidden="true">
-                          {FEEDBACK_EMOJIS.star}
+                          {FEEDBACK_EMOJIS.heart}
                         </span>
                       </motion.button>
                     );
@@ -418,17 +467,21 @@ export default function ExitIntentFeedback() {
 
 function SuccessView({ onClose }: { onClose: () => void }) {
   const prefersReducedMotion = useReducedMotion();
-  
+
   return (
     <div className="px-6 pb-6 pt-8 text-center">
       <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 to-green-100">
-        <motion.span 
-          className="inline-block text-[26px] leading-none origin-center" 
+        <motion.span
+          className="inline-block origin-center text-[26px] leading-none"
           aria-hidden="true"
-          animate={prefersReducedMotion ? {} : { 
-            rotate: [0, -15, 15, -15, 15, 0],
-            scale: [0.8, 1.2, 1.2, 1.2, 1.2, 1]
-          }}
+          animate={
+            prefersReducedMotion
+              ? {}
+              : {
+                  rotate: [0, -15, 15, -15, 15, 0],
+                  scale: [0.8, 1.2, 1.2, 1.2, 1.2, 1],
+                }
+          }
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           {FEEDBACK_EMOJIS.success}

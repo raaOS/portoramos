@@ -102,7 +102,10 @@ async function sendTelegramMessage(
   chatId: string,
   botToken: string,
   message: string,
-  options?: { buttons?: { text: string; url?: string; callback_data?: string }[][]; messageThreadId?: number },
+  options?: {
+    buttons?: { text: string; url?: string; callback_data?: string }[][];
+    messageThreadId?: number;
+  },
   label = 'Telegram'
 ): Promise<{ success: boolean; error?: string }> {
   try {

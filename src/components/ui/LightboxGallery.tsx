@@ -29,9 +29,10 @@ export default function LightboxGallery({
 
   const desktopContext = useContext(DesktopWindowContext);
 
-  const isWindowMaximized = desktopContext && windowId
-    ? desktopContext.windows.find((w) => w.id === windowId)?.isMaximized || false
-    : false;
+  const isWindowMaximized =
+    desktopContext && windowId
+      ? desktopContext.windows.find((w) => w.id === windowId)?.isMaximized || false
+      : false;
 
   const showActiveFullscreenState = windowId && desktopContext ? isWindowMaximized : isFullscreen;
 
@@ -116,8 +117,8 @@ export default function LightboxGallery({
         transition={{ duration: 0.2 }}
         className={
           windowId && desktopContext
-            ? "absolute inset-0 z-30 flex items-center justify-center bg-black/95 backdrop-blur-sm"
-            : "fixed inset-0 z-[100000] flex items-center justify-center bg-black/95 backdrop-blur-sm"
+            ? 'absolute inset-0 z-30 flex items-center justify-center bg-black/95 backdrop-blur-sm'
+            : 'fixed inset-0 z-[100000] flex items-center justify-center bg-black/95 backdrop-blur-sm'
         }
       >
         {/* Header / Top Bar */}
@@ -132,7 +133,11 @@ export default function LightboxGallery({
               className="inline-flex items-center justify-center rounded-full bg-black/20 p-2 text-white/70 transition-all hover:bg-black/40 hover:text-white"
               aria-label={showActiveFullscreenState ? 'Exit fullscreen' : 'Enter fullscreen'}
             >
-              {showActiveFullscreenState ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+              {showActiveFullscreenState ? (
+                <Minimize2 className="h-5 w-5" />
+              ) : (
+                <Maximize2 className="h-5 w-5" />
+              )}
             </button>
             <button
               onClick={onClose}
@@ -151,7 +156,7 @@ export default function LightboxGallery({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="relative flex min-h-0 w-full flex-grow items-center justify-center"
+            className="relative flex min-h-0 w-full flex-grow items-center justify-center px-3"
           >
             {currentItem.kind === 'video' ? (
               <Media
@@ -199,7 +204,7 @@ export default function LightboxGallery({
                           <img
                             src={getProxiedUrl(item.poster)}
                             alt=""
-                            className="h-full w-full object-cover rounded-none"
+                            className="h-full w-full rounded-none object-cover"
                             draggable={false}
                             onContextMenu={(e) => e.preventDefault()}
                           />
@@ -218,7 +223,7 @@ export default function LightboxGallery({
                       <img
                         src={getProxiedUrl(item.src)}
                         alt=""
-                        className="h-full w-full object-cover rounded-none"
+                        className="h-full w-full rounded-none object-cover"
                         draggable={false}
                         onContextMenu={(e) => e.preventDefault()}
                       />
@@ -238,7 +243,7 @@ export default function LightboxGallery({
                 e.stopPropagation();
                 handlePrev();
               }}
-              className="group absolute left-4 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-black/20 p-3 text-white/50 backdrop-blur-md transition-all hover:bg-black/60 hover:text-white sm:block"
+              className="group absolute left-2 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-black/20 p-3 text-white/50 backdrop-blur-md transition-all hover:bg-black/60 hover:text-white sm:block"
             >
               <ChevronLeft className="h-8 w-8 transition-transform group-hover:-translate-x-1" />
             </button>
@@ -247,7 +252,7 @@ export default function LightboxGallery({
                 e.stopPropagation();
                 handleNext();
               }}
-              className="group absolute right-4 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-black/20 p-3 text-white/50 backdrop-blur-md transition-all hover:bg-black/60 hover:text-white sm:block"
+              className="group absolute right-2 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-black/20 p-3 text-white/50 backdrop-blur-md transition-all hover:bg-black/60 hover:text-white sm:block"
             >
               <ChevronRight className="h-8 w-8 transition-transform group-hover:translate-x-1" />
             </button>

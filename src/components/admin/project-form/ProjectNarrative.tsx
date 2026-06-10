@@ -18,7 +18,7 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
 
   return (
     <div className="space-y-6">
-      <div className="rounded-none border border-gray-200 bg-white p-4">
+      <div className="rounded-lg border border-gray-200 bg-white p-4">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-gray-900">
           <span
             className={`h-1.5 w-1.5 rounded-full ${isCommercial ? 'bg-purple-500' : 'bg-pink-500'}`}
@@ -44,7 +44,7 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
                   ? handleNarrativeChange('challenge', e.target.value)
                   : handleNarrativeChange('concept', e.target.value)
               }
-              className="min-h-[80px] w-full rounded-none border border-gray-200 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="min-h-[80px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder={
                 isCommercial ? 'cth. Penjualan turun 20%...' : 'cth. Eksplorasi dualitas alam...'
               }
@@ -68,7 +68,7 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
                   ? handleNarrativeChange('solution', e.target.value)
                   : handleNarrativeChange('process', e.target.value)
               }
-              className="min-h-[80px] w-full rounded-none border border-gray-200 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="min-h-[80px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder={
                 isCommercial
                   ? 'cth. Implementasi design system baru...'
@@ -94,7 +94,7 @@ export default function ProjectNarrative({ formData, updateField }: ProjectNarra
                   ? handleNarrativeChange('impact', e.target.value)
                   : handleNarrativeChange('detail', e.target.value)
               }
-              className="min-h-[60px] w-full rounded-none border border-gray-200 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="min-h-[60px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder={
                 isCommercial
                   ? 'cth. +40% Engagement user...'

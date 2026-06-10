@@ -164,7 +164,7 @@ export default function ProjectAIHelper({
   };
 
   return (
-    <div className="relative mb-6 overflow-hidden rounded-none border border-gray-200 bg-white p-5">
+    <div className="relative mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white p-5">
       {/* Background design elements */}
       <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-violet-100 opacity-50 blur-3xl"></div>
 
@@ -172,7 +172,7 @@ export default function ProjectAIHelper({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <div className="flex items-center gap-2">
-            <div className="rounded-sm bg-violet-100 p-1.5">
+            <div className="rounded-lg bg-violet-100 p-1.5">
               <Sparkles className="h-5 w-5 text-violet-600" />
             </div>
             <div>
@@ -195,7 +195,7 @@ export default function ProjectAIHelper({
                   setAiOptions((prev) => ({ ...prev, viralPackage: e.target.checked }))
                 }
               />
-              <div className="peer h-5 w-9 rounded-none bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-none after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-violet-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
+              <div className="peer h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-violet-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
             </div>
           </label>
         </div>
@@ -209,7 +209,7 @@ export default function ProjectAIHelper({
             <select
               value={aiOptions.style}
               onChange={(e) => setAiOptions((prev) => ({ ...prev, style: e.target.value }))}
-              className="w-full cursor-pointer truncate rounded-none border border-gray-200 bg-gray-50 py-2.5 pl-3 pr-10 text-sm outline-none transition-all hover:border-violet-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+              className="w-full cursor-pointer truncate rounded-lg border border-gray-200 bg-gray-50 py-2.5 pl-3 pr-10 text-sm outline-none transition-all hover:border-violet-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
             >
               <option value="estetik & profesional">Estetik & Profesional</option>
               <option value="minimalis & elegan">Minimalis & Elegan</option>
@@ -232,7 +232,7 @@ export default function ProjectAIHelper({
               onChange={(e) =>
                 setAiOptions((prev) => ({ ...prev, maxTitleWords: parseInt(e.target.value) || 5 }))
               }
-              className="w-full rounded-none border border-gray-200 bg-gray-50 px-3 py-2.5 text-center text-sm outline-none transition-all hover:border-violet-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-center text-sm outline-none transition-all hover:border-violet-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
               min="1"
               max="15"
             />
@@ -247,7 +247,7 @@ export default function ProjectAIHelper({
               onChange={(e) =>
                 setAiOptions((prev) => ({ ...prev, sentenceCount: parseInt(e.target.value) || 2 }))
               }
-              className="w-full rounded-none border border-gray-200 bg-gray-50 px-3 py-2.5 text-center text-sm outline-none transition-all hover:border-violet-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-center text-sm outline-none transition-all hover:border-violet-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
               min="1"
               max="5"
             />
@@ -258,7 +258,7 @@ export default function ProjectAIHelper({
               onClick={handleGenerate}
               disabled={isGenerating || (!cover && !pendingFile)}
               title="Auto-Fill Form with AI"
-              className="flex h-[42px] w-full items-center justify-center gap-2 rounded-none bg-violet-600 text-white transition-all hover:bg-violet-700 active:scale-95 disabled:pointer-events-none disabled:bg-gray-400 disabled:opacity-50"
+              className="flex h-[42px] w-full items-center justify-center gap-2 rounded-lg bg-violet-600 text-white transition-all hover:bg-violet-700 active:scale-95 disabled:pointer-events-none disabled:bg-gray-400 disabled:opacity-50"
             >
               {isGenerating ? (
                 <>
@@ -276,7 +276,7 @@ export default function ProjectAIHelper({
         </div>
 
         {error && (
-          <div className="mt-2 flex items-center gap-2 border border-red-100 bg-red-50 p-2 text-xs font-bold text-red-500">
+          <div className="mt-2 flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 p-2 text-xs font-bold text-red-500">
             <span>⚠️ Error: {error}</span>
           </div>
         )}

@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { displayClassName, sansClassName } from '@/app/fonts';
-import { baseSEO } from '@/lib/seo';
+import { baseSEO, generateStructuredData } from '@/lib/seo';
 import Providers from '@/components/layout/Providers';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
@@ -87,6 +87,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {/* Google Fonts - Fallback for next/font to satisfy Babel/SWC conflict */}
           {/* Structured Data */}
           <meta name="application-version" content={APP_VERSION} />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(generateStructuredData('website')),
+            }}
+          />
           <Script id="os-boot-state" strategy="beforeInteractive">
             {`
             (function() {

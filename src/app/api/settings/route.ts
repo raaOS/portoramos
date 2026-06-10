@@ -3,19 +3,39 @@ import { db } from '@/lib/database';
 import { validateAdminRequest } from '@/lib/auth';
 import { updateSettingsSchema } from '@/lib/validations';
 
+const DEFAULT_BANNED_WORDS = [
+  'judol',
+  'slot',
+  'gacor',
+  'maxwin',
+  'togel',
+  'casino',
+  'rtp',
+  'pragmatic',
+  'crypto',
+  'bitcoin',
+  'viagra',
+  'bokep',
+  'porn',
+];
+
 export async function getSettingsData() {
   try {
     const snap = await db.ref('settings').once('value');
     const data = snap.val();
-    return data || { bannedWords: [] };
+    if (!data || !data.bannedWords || data.bannedWords.length === 0) {
+      return { ...data, bannedWords: DEFAULT_BANNED_WORDS };
+    }
+    return data;
   } catch {
-    return { bannedWords: [] };
+    return { bannedWords: DEFAULT_BANNED_WORDS };
   }
 }
 
 export async function GET(_request: NextRequest) {
   const data = await getSettingsData();
-  return NextResponse.json(data);
+  const { bannedWords, ...publicSettings } = data;
+  return NextResponse.json(publicSettings);
 }
 
 export async function POST(request: NextRequest) {
@@ -36,8 +56,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save only validated data to CLOUDFLARE_D1 (prevents junk fields)
-    await db.ref('settings').set(validation.data);
+    // Save only validated data to CLOUDFLARE_D1 (prevents junk fields).
+    // Use .update() instead of .set() to merge into the existing row —
+    // .set() would overwrite the entire `settings` row, destroying nested
+    // fields like adminPassword and adminOtp written by other endpoints.
+    await db.ref('settings').update(validation.data);
 
     return NextResponse.json({ success: true, settings: validation.data });
   } catch (error: unknown) {

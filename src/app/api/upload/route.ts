@@ -218,6 +218,54 @@ function extFromContentType(type: string): string | null {
   }
 }
 
+function extractPngFromIcns(icnsBuffer: Buffer): Buffer | null {
+  if (icnsBuffer.length < 8) return null;
+  const magic = icnsBuffer.toString('ascii', 0, 4);
+  if (magic !== 'icns') return null;
+
+  let offset = 8;
+  let largestBuffer: Buffer | null = null;
+  let largestSize = 0;
+
+  const isPng = (buf: Buffer) => {
+    return (
+      buf.length >= 8 &&
+      buf[0] === 0x89 &&
+      buf[1] === 0x50 &&
+      buf[2] === 0x4e &&
+      buf[3] === 0x47 &&
+      buf[4] === 0x0d &&
+      buf[5] === 0x0a &&
+      buf[6] === 0x1a &&
+      buf[7] === 0x0a
+    );
+  };
+
+  const isJpeg = (buf: Buffer) => {
+    return buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+  };
+
+  while (offset + 8 <= icnsBuffer.length) {
+    const size = icnsBuffer.readUInt32BE(offset + 4);
+
+    if (size < 8 || offset + size > icnsBuffer.length) {
+      break;
+    }
+
+    const blockData = icnsBuffer.subarray(offset + 8, offset + size);
+    if (isPng(blockData) || isJpeg(blockData)) {
+      if (blockData.length > largestSize) {
+        largestSize = blockData.length;
+        largestBuffer = Buffer.from(blockData);
+      }
+    }
+
+    offset += size;
+  }
+
+  return largestBuffer;
+}
+
 export async function POST(req: NextRequest) {
   try {
     if (!(await validateAdminRequest(req))) {
@@ -241,6 +289,8 @@ export async function POST(req: NextRequest) {
       'image/heic',
       'image/heif',
       'image/avif',
+      'image/x-icns',
+      'image/icns',
       'video/mp4',
       'video/webm',
       // Audio formats (used by SoundEffectsManager). Compressed server-side
@@ -259,7 +309,18 @@ export async function POST(req: NextRequest) {
       'audio/x-m4a',
       'audio/flac',
     ];
-    if (!validTypes.includes(file.type)) {
+
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const isIcnsFile = fileExtension === 'icns';
+    const isAcceptedMime =
+      validTypes.includes(file.type) ||
+      (isIcnsFile &&
+        (file.type === 'image/x-icns' ||
+          file.type === 'image/icns' ||
+          file.type === 'application/octet-stream' ||
+          file.type === ''));
+
+    if (!isAcceptedMime) {
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
     }
 
@@ -276,34 +337,61 @@ export async function POST(req: NextRequest) {
     //              200 MB ceiling sendiri tapi itu untuk direct-to-R2
     //              path; FormData-based upload di sini harus stricter.
     //   - Audio  : 25 MB. SoundEffect biasanya pendek (<30 detik).
-    const isVideoUpload = file.type.startsWith('video/');
-    const isImageUpload = file.type.startsWith('image/');
-    const isAudioUpload = file.type.startsWith('audio/');
+    const originalBuffer = Buffer.from(await file.arrayBuffer());
+    let buffer: Buffer<ArrayBufferLike> = originalBuffer;
+    let contentType = file.type;
+
+    if (isIcnsFile) {
+      const extracted = extractPngFromIcns(originalBuffer);
+      if (!extracted) {
+        return NextResponse.json(
+          { error: 'Gagal mengekstrak gambar dari file ICNS. Pastikan file ICNS valid.' },
+          { status: 400 }
+        );
+      }
+      buffer = extracted;
+      if (
+        extracted.length >= 3 &&
+        extracted[0] === 0xff &&
+        extracted[1] === 0xd8 &&
+        extracted[2] === 0xff
+      ) {
+        contentType = 'image/jpeg';
+      } else {
+        contentType = 'image/png';
+      }
+    }
+
+    const isVideoUpload = contentType.startsWith('video/');
+    const isImageUpload = contentType.startsWith('image/');
+    const isAudioUpload = contentType.startsWith('audio/');
 
     const MAX_IMAGE_BYTES = 30 * 1024 * 1024;
     const MAX_VIDEO_BYTES_FORMDATA = 60 * 1024 * 1024;
     const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
-    if (isImageUpload && file.size > MAX_IMAGE_BYTES) {
+    const currentSize = buffer.length;
+
+    if (isImageUpload && currentSize > MAX_IMAGE_BYTES) {
       return NextResponse.json(
         {
-          error: `Image ${(file.size / 1024 / 1024).toFixed(1)} MB melewati batas ${MAX_IMAGE_BYTES / 1024 / 1024} MB.`,
+          error: `Image ${(currentSize / 1024 / 1024).toFixed(1)} MB melewati batas ${MAX_IMAGE_BYTES / 1024 / 1024} MB.`,
         },
         { status: 413 }
       );
     }
-    if (isVideoUpload && file.size > MAX_VIDEO_BYTES_FORMDATA) {
+    if (isVideoUpload && currentSize > MAX_VIDEO_BYTES_FORMDATA) {
       return NextResponse.json(
         {
-          error: `Video ${(file.size / 1024 / 1024).toFixed(1)} MB melewati batas ${MAX_VIDEO_BYTES_FORMDATA / 1024 / 1024} MB untuk upload langsung. Pakai direct-to-R2 path untuk file besar.`,
+          error: `Video ${(currentSize / 1024 / 1024).toFixed(1)} MB melewati batas ${MAX_VIDEO_BYTES_FORMDATA / 1024 / 1024} MB untuk upload langsung. Pakai direct-to-R2 path untuk file besar.`,
         },
         { status: 413 }
       );
     }
-    if (isAudioUpload && file.size > MAX_AUDIO_BYTES) {
+    if (isAudioUpload && currentSize > MAX_AUDIO_BYTES) {
       return NextResponse.json(
         {
-          error: `Audio ${(file.size / 1024 / 1024).toFixed(1)} MB melewati batas ${MAX_AUDIO_BYTES / 1024 / 1024} MB.`,
+          error: `Audio ${(currentSize / 1024 / 1024).toFixed(1)} MB melewati batas ${MAX_AUDIO_BYTES / 1024 / 1024} MB.`,
         },
         { status: 413 }
       );
@@ -317,10 +405,6 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-
-    const originalBuffer = Buffer.from(await file.arrayBuffer());
-    let buffer: Buffer<ArrayBufferLike> = originalBuffer;
-    let contentType = file.type;
 
     const { searchParams } = new URL(req.url);
     const rawCustomFilename = searchParams.get('filename');
@@ -389,17 +473,17 @@ export async function POST(req: NextRequest) {
     let audioStats: { originalSize: number; optimizedSize: number } | null = null;
     let optimizedExtensionOverride: string | null = null;
 
-    if (isImageUpload && IMAGE_TRANSCODE_TYPES.has(file.type) && !skipImageOptimization) {
+    if (isImageUpload && IMAGE_TRANSCODE_TYPES.has(contentType) && !skipImageOptimization) {
       // Wallpaper: enforce min 1920x1080 sebelum transcode. Sharp
       // resize `withoutEnlargement: true` tidak akan upscale sub-1080p
       // source, jadi output akan pecah di fullscreen. Reject di sini
       // dengan WallpaperImageTooSmallError yang ditangkap outer catch
       // sebagai 413.
       if (isWallpaperFolder) {
-        await assertWallpaperImageDimensions(originalBuffer, 1920, 1080);
+        await assertWallpaperImageDimensions(buffer, 1920, 1080);
       }
 
-      const optimized = await optimizeImageBuffer(originalBuffer, file.type, {
+      const optimized = await optimizeImageBuffer(buffer, contentType, {
         isWallpaper: isWallpaperFolder,
       });
       buffer = optimized.buffer;
@@ -425,7 +509,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine Name & Folder
-    const sourceExt = file.name.split('.').pop() || '';
+    const sourceExt = isIcnsFile
+      ? contentType === 'image/jpeg'
+        ? 'jpg'
+        : 'png'
+      : file.name.split('.').pop() || '';
     const ext = isVideoUpload ? 'mp4' : optimizedExtensionOverride || sourceExt;
     let finalFilename: string;
     let targetDir: string;

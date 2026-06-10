@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { validateAdminRequestMock, saveNotesMock, checkDataRateLimitMock, revalidatePathMock } =
+const { validateAdminRequestMock, saveNotesMock, enforceRequestRateLimitMock, revalidatePathMock } =
   vi.hoisted(() => ({
     validateAdminRequestMock: vi.fn(),
     saveNotesMock: vi.fn(),
-    checkDataRateLimitMock: vi.fn(),
+    enforceRequestRateLimitMock: vi.fn(),
     revalidatePathMock: vi.fn(),
   }));
 
@@ -19,8 +19,8 @@ vi.mock('@/lib/services/stickyNotesService', () => ({
   },
 }));
 
-vi.mock('@/lib/dataRateLimit', () => ({
-  checkDataRateLimit: checkDataRateLimitMock,
+vi.mock('@/lib/security/request', () => ({
+  enforceRequestRateLimit: enforceRequestRateLimitMock,
 }));
 
 vi.mock('next/cache', () => ({
@@ -50,7 +50,7 @@ describe('PUT /api/sticky-notes', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     validateAdminRequestMock.mockResolvedValue(true);
-    checkDataRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
+    enforceRequestRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
     saveNotesMock.mockResolvedValue([validNote]);
   });
 
@@ -62,7 +62,7 @@ describe('PUT /api/sticky-notes', () => {
   });
 
   it('rejects ketika rate limit tercapai', async () => {
-    checkDataRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 60 });
+    enforceRequestRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 60 });
 
     const response = await PUT(buildPut([validNote]) as never);
     expect(response.status).toBe(429);

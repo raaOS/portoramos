@@ -30,6 +30,7 @@ import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 import { useFFmpeg } from '@/app/admin/components/file-upload/hooks';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import AdminLoading from '@/components/admin/AdminLoading';
+import MoveDialog, { type MoveTarget } from './components/MoveDialog';
 
 type UploadResult = {
   url: string;
@@ -43,11 +44,6 @@ type UploadResult = {
   videoStats?: { optimizedSize: number };
   imageStats?: { optimizedSize: number };
   audioStats?: { optimizedSize: number };
-};
-
-type MoveTarget = {
-  id: string | null;
-  label: string;
 };
 
 export default function AdminExplorerClient() {
@@ -124,23 +120,20 @@ export default function AdminExplorerClient() {
   }, [currentParentId, fetchNodes]);
 
   // Navigation logic
-  const navigateTo = useCallback(
-    (id: string | null, addToHistory = true) => {
-      if (addToHistory) {
-        setHistory((prev) => {
-          const newHistory = prev.slice(0, (historyIndexRef.current ?? -1) + 1);
-          newHistory.push(id);
-          return newHistory;
-        });
-        setHistoryIndex((prev) => {
-          historyIndexRef.current = prev + 1;
-          return prev + 1;
-        });
-      }
-      setCurrentParentId(id);
-    },
-    []
-  );
+  const navigateTo = useCallback((id: string | null, addToHistory = true) => {
+    if (addToHistory) {
+      setHistory((prev) => {
+        const newHistory = prev.slice(0, (historyIndexRef.current ?? -1) + 1);
+        newHistory.push(id);
+        return newHistory;
+      });
+      setHistoryIndex((prev) => {
+        historyIndexRef.current = prev + 1;
+        return prev + 1;
+      });
+    }
+    setCurrentParentId(id);
+  }, []);
 
   const goBack = useCallback(() => {
     if (historyIndex > 0) {
@@ -859,58 +852,18 @@ export default function AdminExplorerClient() {
           </div>
         </div>
         {moveDialog && (
-          <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
-              <div className="border-b border-gray-100 px-5 py-4">
-                <h2 className="text-base font-semibold text-gray-900">Pindah item</h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  Pilih folder tujuan untuk "{getExplorerNodeDisplayName(moveDialog.node)}".
-                </p>
-              </div>
-              <div className="space-y-2 px-5 py-4">
-                <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Folder tujuan
-                </label>
-                <select
-                  value={moveDialog.selectedParentId || 'root'}
-                  onChange={(event) =>
-                    setMoveDialog((current) =>
-                      current
-                        ? {
-                            ...current,
-                            selectedParentId:
-                              event.target.value === 'root' ? null : event.target.value,
-                          }
-                        : current
-                    )
-                  }
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                >
-                  {moveDialog.targets.map((target) => (
-                    <option key={target.id || 'root'} value={target.id || 'root'}>
-                      {target.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex justify-end gap-2 border-t border-gray-100 bg-gray-50 px-5 py-3">
-                <button
-                  type="button"
-                  onClick={() => setMoveDialog(null)}
-                  className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-                >
-                  Batal
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmitMove}
-                  className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
-                >
-                  Pindah
-                </button>
-              </div>
-            </div>
-          </div>
+          <MoveDialog
+            node={moveDialog.node}
+            targets={moveDialog.targets}
+            selectedParentId={moveDialog.selectedParentId}
+            onChangeSelectedParentId={(parentId) =>
+              setMoveDialog((current) =>
+                current ? { ...current, selectedParentId: parentId } : null
+              )
+            }
+            onClose={() => setMoveDialog(null)}
+            onSubmit={handleSubmitMove}
+          />
         )}
         {/* Hidden File Input */}
         <input

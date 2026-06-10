@@ -85,7 +85,9 @@ export const buildChatContactsFromTestimonials = (
   testimonialContacts: ContactProfile[];
   allContactsList: ContactProfile[];
 } => {
-  const testimonials = testimonialData?.testimonials || [];
+  const testimonials = Array.isArray(testimonialData?.testimonials)
+    ? testimonialData!.testimonials
+    : [];
   const activeTestimonials = testimonials.filter((testimonial) => testimonial.isActive !== false);
   const testimonialContacts = activeTestimonials.map(convertTestimonialToContact);
   const dynamicContacts = mergeContacts({}, testimonials);

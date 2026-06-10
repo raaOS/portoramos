@@ -12,11 +12,7 @@ import AdminLoading from '@/components/admin/AdminLoading';
 
 function NotificationsClientContent() {
   const { csrfToken } = useAdminAuth();
-  const {
-    systemData,
-    loading: systemLoading,
-    handleUpdateSystem,
-  } = useAdminSystem(csrfToken);
+  const { systemData, loading: systemLoading, handleUpdateSystem } = useAdminSystem(csrfToken);
 
   const [activeSubTab, setActiveSubTab] = useState<'whatsapp' | 'island'>('whatsapp');
 
@@ -27,7 +23,7 @@ function NotificationsClientContent() {
         titleIcon={<MessageSquare className="h-5 w-5" aria-hidden />}
         titleAccent="bg-green-50 text-green-700"
       />
-      
+
       <div className="flex-1 space-y-6 p-6">
         {/* Sub-Tabs Selector */}
         <div className="flex border-b border-gray-200">

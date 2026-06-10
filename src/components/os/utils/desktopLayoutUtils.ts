@@ -22,8 +22,8 @@ export const generateDesktopIcons = (
   const topOffset = 60; // MenuBar
   const bottomOffset = 120; // Dock
 
-  const cols = Math.floor((windowSize.width - margin * 2) / gridX);
-  const rows = Math.floor((windowSize.height - topOffset - bottomOffset) / gridY);
+  const cols = Math.max(0, Math.floor((windowSize.width - margin * 2) / gridX));
+  const rows = Math.max(0, Math.floor((windowSize.height - topOffset - bottomOffset) / gridY));
 
   const availableSlots: { x: number; y: number }[] = [];
 

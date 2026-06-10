@@ -6,8 +6,13 @@ import { enforceRequestRateLimit } from '@/lib/security/request';
 import { bulkUpdateHardSkillsSchema } from '@/lib/validations';
 
 export async function GET() {
-  const data = await hardSkillService.getHardSkills();
-  return NextResponse.json(data.skills);
+  try {
+    const data = await hardSkillService.getHardSkills();
+    return NextResponse.json(data.skills);
+  } catch (error) {
+    console.error('Error loading hard skills:', error);
+    return NextResponse.json({ error: 'Failed to load hard skills' }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {

@@ -20,6 +20,7 @@ interface DockConfigFormProps {
 const DEFAULT_DOCK_ITEMS = [
   { id: 'about', defaultLabel: 'About Me' },
   { id: 'projects', defaultLabel: 'Projects' },
+  { id: 'mission-control', defaultLabel: 'Mission Control' },
   { id: 'contact', defaultLabel: 'Contact' },
   { id: 'gallery', defaultLabel: 'Photos' },
   { id: 'whatsapp', defaultLabel: 'WhatsApp' },
@@ -126,6 +127,8 @@ export default function DockConfigForm({ data, onUpdate }: DockConfigFormProps) 
                   {/* Large Icon Preview */}
                   <button
                     onClick={() => handleOpenPicker(item.id)}
+                    aria-label={`Upload atau ganti ikon ${label}`}
+                    title={`Upload atau ganti ikon ${label}`}
                     className="group/icon relative h-20 w-20 overflow-hidden rounded-[22px] transition-transform focus:outline-none focus:ring-4 focus:ring-blue-500/10 active:scale-95"
                   >
                     <div className="flex h-full w-full items-center justify-center bg-gray-50">
@@ -152,6 +155,10 @@ export default function DockConfigForm({ data, onUpdate }: DockConfigFormProps) 
                         className="scale-90 text-white drop-shadow-md transition-transform group-hover/icon:scale-100"
                       />
                     </div>
+
+                    <span className="pointer-events-none absolute bottom-1.5 right-1.5 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg ring-2 ring-white transition-all duration-200 group-hover/icon:scale-95 group-hover/icon:opacity-0">
+                      <Pencil size={12} strokeWidth={2.5} />
+                    </span>
                   </button>
 
                   {/* Label Input */}

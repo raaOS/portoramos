@@ -176,8 +176,6 @@ export function fetchAdminProjectsFresh() {
   return fetchJson<AdminProjectsResponse>('/api/projects?fresh=true');
 }
 
-
-
 export function fetchAdminStickyNotes() {
   return fetchJson<NoteData[]>('/api/sticky-notes').then((data) =>
     Array.isArray(data) ? data : []

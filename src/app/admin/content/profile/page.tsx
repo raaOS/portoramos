@@ -17,13 +17,7 @@ const DesignPhilosophyForm = dynamic(
 
 function ProfileClientContent() {
   const { csrfToken } = useAdminAuth();
-  const {
-    contentData,
-    loading,
-    error,
-    projects,
-    handleUpdateContent,
-  } = useAdminContent(csrfToken);
+  const { contentData, loading, error, projects, handleUpdateContent } = useAdminContent(csrfToken);
 
   const [activeSubTab, setActiveSubTab] = useState<'info' | 'philosophy'>('info');
 
@@ -52,7 +46,7 @@ function ProfileClientContent() {
         titleIcon={<User className="h-5 w-5" aria-hidden />}
         titleAccent="bg-blue-50 text-blue-700"
       />
-      
+
       <div className="flex-1 space-y-6 p-6">
         {error && (
           <div className="mb-6 flex items-center justify-between rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">

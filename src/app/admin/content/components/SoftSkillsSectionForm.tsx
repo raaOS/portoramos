@@ -125,7 +125,7 @@ export default function SoftSkillsSectionForm({ data, onUpdate }: SoftSkillsSect
                         type="text"
                         value={item.text}
                         onChange={(e) => handleItemChange(index, 'text', e.target.value)}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         placeholder="e.g. Kreativitas & Inovasi"
                         required
                       />
@@ -162,7 +162,7 @@ export default function SoftSkillsSectionForm({ data, onUpdate }: SoftSkillsSect
                       rows={2}
                       value={item.description}
                       onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       placeholder="Jelaskan skill ini..."
                       required
                     />

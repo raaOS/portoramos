@@ -2,8 +2,6 @@
 
 import { useEffect, Component, ReactNode } from 'react';
 import { PageErrorFallback } from '@/components/ui/ErrorFallback';
-// Temporarily removed logger import to fix chunk loading issue
-// import { logError } from '@/lib/logger';
 
 interface ErrorBoundaryState {
   hasError: boolean;

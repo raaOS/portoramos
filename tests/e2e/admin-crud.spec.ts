@@ -63,8 +63,8 @@ test.describe('Admin Authentication', () => {
 
     await page.goto('/admin/projects', { waitUntil: 'domcontentloaded' });
 
-    // Verify projects page loaded
-    await expect(page.locator('body')).toContainText('Projects');
+    // Verify projects page loaded (UI is in Indonesian)
+    await expect(page.locator('body')).toContainText('Proyek Karya');
     await expect(page.getByRole('button', { name: /Tambah Project/i })).toBeVisible();
   });
 
@@ -72,16 +72,15 @@ test.describe('Admin Authentication', () => {
     await loginAdmin(page, context);
 
     await page.goto('/admin/projects', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('button:has-text("Tambah Project")');
+    await expect(page).toHaveURL(/\/admin\/projects/, { timeout: 10000 });
+    await expect(page.locator('body')).toContainText('Proyek Karya', { timeout: 15000 });
+    await page.waitForSelector('button:has-text("Tambah Project")', { timeout: 15000 });
 
     // Click add button
     await page.click('button:has-text("Tambah Project")');
     await page.waitForTimeout(1500);
 
-    // Verify modal/form appeared (by taking screenshot)
-    await page.screenshot({ path: 'test-results/modal-opened.png' });
-
-    // Just verify we're still on admin page (modal opened)
+    // Verify we're still on admin page (modal opened)
     expect(page.url()).toContain('/admin');
   });
 });

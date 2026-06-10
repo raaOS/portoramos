@@ -34,7 +34,6 @@ export const useDesktopLock = () => {
     body.style.overflow = 'hidden';
     html.style.height = '100%';
     body.style.height = '100%';
-    html.classList.add('lenis-stopped');
 
     // Apply OS mode lock via CSS class instead of injecting a <style> tag.
     // The class applies the same styles (overflow:hidden, position:fixed, etc.)
@@ -60,7 +59,6 @@ export const useDesktopLock = () => {
       body.style.overflow = originalStyles.bodyOverflow;
       html.style.height = originalStyles.htmlHeight;
       body.style.height = originalStyles.bodyHeight;
-      html.classList.remove('lenis-stopped');
       html.classList.remove('os-mode-active');
       body.classList.remove('os-mode-active');
     };

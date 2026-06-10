@@ -84,14 +84,17 @@ async function purgeCloudflareCdn(): Promise<CacheClearStep> {
         cache: 'no-store',
       }
     );
-    const data = (await response.json().catch(() => null)) as
-      | { success?: boolean; errors?: Array<{ message?: string }> }
-      | null;
+    const data = (await response.json().catch(() => null)) as {
+      success?: boolean;
+      errors?: Array<{ message?: string }>;
+    } | null;
 
     if (!response.ok || data?.success === false) {
       const message =
-        data?.errors?.map((item) => item.message).filter(Boolean).join('; ') ||
-        `Cloudflare API returned ${response.status}`;
+        data?.errors
+          ?.map((item) => item.message)
+          .filter(Boolean)
+          .join('; ') || `Cloudflare API returned ${response.status}`;
       return {
         name: 'Cloudflare CDN/R2 edge',
         status: 'error',

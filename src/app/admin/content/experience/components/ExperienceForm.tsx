@@ -61,7 +61,7 @@ export default function ExperienceForm({ work, onSave, onCancel }: ExperienceFor
             type="text"
             value={formData.position || ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, position: e.target.value }))}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="e.g. Senior Designer"
           />
         </div>
@@ -73,7 +73,7 @@ export default function ExperienceForm({ work, onSave, onCancel }: ExperienceFor
             type="text"
             value={formData.company || ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, company: e.target.value }))}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="e.g. Tech Corp"
           />
         </div>
@@ -85,7 +85,7 @@ export default function ExperienceForm({ work, onSave, onCancel }: ExperienceFor
             type="text"
             value={formData.year || ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, year: e.target.value }))}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="e.g. 2020-2023"
           />
         </div>
@@ -97,7 +97,7 @@ export default function ExperienceForm({ work, onSave, onCancel }: ExperienceFor
             type="text"
             value={formData.duration || ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, duration: e.target.value }))}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="e.g. 3 years"
           />
         </div>
@@ -109,7 +109,7 @@ export default function ExperienceForm({ work, onSave, onCancel }: ExperienceFor
             type="text"
             value={formData.imageUrl || ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, imageUrl: e.target.value }))}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="https://example.com/company-logo.png"
           />
           {formData.imageUrl && (
@@ -154,7 +154,7 @@ export default function ExperienceForm({ work, onSave, onCancel }: ExperienceFor
                   .filter((d) => d),
               }));
             }}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="Led design team, Improved UX by 20%, etc."
           />
           <p className="mt-1 text-xs text-gray-500">Each comma creates a new bullet point.</p>

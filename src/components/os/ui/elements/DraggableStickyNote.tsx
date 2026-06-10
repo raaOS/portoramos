@@ -20,6 +20,7 @@ interface DraggableStickyNoteProps {
   addNote?: () => void;
   isAdmin?: boolean;
   zIndex?: number;
+  isRevealed?: boolean;
 }
 
 export const DraggableStickyNote = ({
@@ -32,6 +33,7 @@ export const DraggableStickyNote = ({
   restoreNote,
   addNote,
   isAdmin = false,
+  isRevealed = true,
 }: DraggableStickyNoteProps) => {
   const dragControls = useDragControls();
   // PERFORMANCE: Subscribe only to this note's zIndex. Mutator via actions hook (no subscription).
@@ -186,6 +188,7 @@ export const DraggableStickyNote = ({
   const unifiedZIndex = unifiedZIndexValue || note.zIndex || 1;
   // Pinned notes get a small boost but still participate in unified stacking
   const finalZIndex = note.isPinned ? Math.max(unifiedZIndex, 5000) : unifiedZIndex;
+  const renderedHeight = note.isCollapsed ? 60 : dynamicSize.height;
 
   return (
     <m.div
@@ -198,7 +201,7 @@ export const DraggableStickyNote = ({
       dragElastic={0}
       data-lenis-prevent
       data-testid="sticky-note"
-      animate={note.isDeleted ? { opacity: 0, scale: 0.8 } : 'show'}
+      animate={note.isDeleted ? { opacity: 0, scale: 0.8 } : isRevealed ? 'show' : 'hidden'}
       initial="hidden"
       variants={{
         hidden: {
@@ -206,6 +209,8 @@ export const DraggableStickyNote = ({
           scale: 0.8,
           y: note.y || 100, // No extra drop here, parent handles it
           x: note.x || 100,
+          width: dynamicSize.width,
+          height: renderedHeight,
         },
         show: {
           opacity: note.opacity || 1,
@@ -213,13 +218,22 @@ export const DraggableStickyNote = ({
           y: note.y || 100,
           x: note.x || 100,
           width: dynamicSize.width,
+          height: renderedHeight,
           transition: {
             y: { type: 'spring' as const, stiffness: 250, damping: 18, mass: 0.8 },
+            scale: { type: 'spring' as const, stiffness: 340, damping: 18, mass: 0.8 },
             opacity: { duration: 0.4 },
           },
         },
       }}
       transition={{ type: 'spring' as const }}
+      exit={{
+        opacity: 0,
+        scale: 0.86,
+        x: note.x || 100,
+        y: (note.y || 100) + 18,
+        transition: { duration: 0.18, ease: 'easeIn' },
+      }}
       onDragStart={(e, info) => {
         handleBringToFront();
         onDragStart(e, info);
@@ -238,6 +252,8 @@ export const DraggableStickyNote = ({
       style={{
         left: 0,
         top: 0,
+        width: dynamicSize.width,
+        height: renderedHeight,
         zIndex: finalZIndex,
         transformOrigin: '50% 50%',
       }}

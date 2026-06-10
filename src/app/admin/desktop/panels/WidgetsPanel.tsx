@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Smile, Type } from 'lucide-react';
+import { Smile } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAdminSystem } from '@/app/admin/hooks/useAdminSystem';
 import StickyNotesManager from '@/app/admin/system/components/StickyNotesManager';
@@ -9,9 +9,7 @@ import AdminLoading from '@/components/admin/AdminLoading';
 
 export default function WidgetsPanel() {
   const { csrfToken } = useAdminAuth();
-  const {
-    systemData, loading, error,
-  } = useAdminSystem(csrfToken);
+  const { systemData, loading, error } = useAdminSystem(csrfToken);
 
   const [activeSubTab, setActiveSubTab] = useState<'sticky'>('sticky');
 

@@ -15,8 +15,7 @@ const DesignPhilosophyForm = dynamic(
 
 export default function ProfilePanel() {
   const { csrfToken } = useAdminAuth();
-  const { contentData, loading, error, projects, handleUpdateContent } =
-    useAdminContent(csrfToken);
+  const { contentData, loading, error, projects, handleUpdateContent } = useAdminContent(csrfToken);
 
   const [activeSubTab, setActiveSubTab] = useState<'info' | 'philosophy'>('info');
 

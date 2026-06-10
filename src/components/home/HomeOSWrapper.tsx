@@ -70,10 +70,11 @@ export default function HomeOSWrapper(props: DesktopEnvironmentProps) {
 function HomeOSWrapperInner(props: DesktopEnvironmentProps) {
   const { isWindowOpen } = useBackgroundEffect();
 
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.innerWidth < 768;
-  });
+  // Keep the first client render identical to SSR. Reading window.innerWidth
+  // in the state initializer makes mobile hydrate with a different background
+  // transform than the server markup, which React correctly reports as a
+  // mismatch. The effect below updates the value immediately after hydration.
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768);
@@ -83,51 +84,74 @@ function HomeOSWrapperInner(props: DesktopEnvironmentProps) {
   }, []);
 
   const [DesktopOS, setDesktopOS] = useState<DesktopComponent | null>(() => cachedDesktopOS);
+  const [chunkError, setChunkError] = useState<string | null>(null);
+  const [transitionPhase, setTransitionPhase] = useState<'loading' | 'fading' | 'ready'>(() =>
+    cachedDesktopOS ? 'ready' : 'loading'
+  );
 
   useEffect(() => {
     let cancelled = false;
+    const retries = { count: 0 };
 
-    // Defer chunk download sampai browser idle (atau setelah hydration siap)
-    // supaya tidak rebut bandwidth dengan wallpaper LCP.
-    const start = () => {
+    const loadChunk = () => {
       import('@/components/os/core/DesktopEnvironmentClient')
         .then((mod) => {
           cachedDesktopOS = mod.default;
-          if (!cancelled) setDesktopOS(() => mod.default);
+          if (!cancelled) {
+            setDesktopOS(() => mod.default);
+            setTransitionPhase('fading');
+            setTimeout(() => setTransitionPhase('ready'), 500);
+          }
         })
-
         .catch((err) => {
           console.error('[HomeOSWrapper] Failed to load DesktopOS chunk:', err);
+          if (!cancelled && retries.count < 1) {
+            retries.count++;
+            setTimeout(loadChunk, 2000);
+          } else if (!cancelled) {
+            setChunkError('Failed to load desktop. Please check your connection and reload.');
+          }
         });
     };
 
     if (shouldLoadDesktopImmediately()) {
-      start();
+      loadChunk();
       return () => {
         cancelled = true;
       };
     }
 
-    const win = window as Window & {
-      requestIdleCallback?: (cb: IdleRequestCallback, opts?: IdleRequestOptions) => number;
-      cancelIdleCallback?: (handle: number) => void;
-    };
+    const win = window;
+    let tid: number | null = null;
+    const rafId = win.requestAnimationFrame(() => {
+      tid = win.setTimeout(loadChunk, 0);
+    });
 
-    if (typeof win.requestIdleCallback === 'function') {
-      const id = win.requestIdleCallback(start, { timeout: 1500 });
-      return () => {
-        cancelled = true;
-        win.cancelIdleCallback?.(id);
-      };
-    }
-
-    // Fallback untuk Safari (belum support requestIdleCallback)
-    const tid = win.setTimeout(start, 0);
     return () => {
       cancelled = true;
-      win.clearTimeout(tid);
+      win.cancelAnimationFrame(rafId);
+      if (tid !== null) win.clearTimeout(tid);
     };
   }, []);
+
+  if (chunkError) {
+    return (
+      <div className="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-black text-white">
+        <p className="text-lg font-medium">{chunkError}</p>
+        <button
+          onClick={() => {
+            setChunkError(null);
+            setDesktopOS(null);
+            setTransitionPhase('loading');
+            cachedDesktopOS = null;
+          }}
+          className="rounded-lg bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
+        >
+          Reload Desktop
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -141,7 +165,11 @@ function HomeOSWrapperInner(props: DesktopEnvironmentProps) {
         isMobile={isMobile}
         isWindowOpen={isWindowOpen}
       />
-      {DesktopOS ? <DesktopOS {...props} /> : <DesktopSkeleton />}
+      {transitionPhase === 'ready' && DesktopOS ? (
+        <DesktopOS {...props} />
+      ) : (
+        <DesktopSkeleton fading={transitionPhase === 'fading'} />
+      )}
     </>
   );
 }

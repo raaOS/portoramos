@@ -60,7 +60,9 @@ export default function ProjectDetailTwoColumn({
     handleProjectShare,
     translateAll,
   } = useProjectDetail({ project });
-  const [activeWindowTab, setActiveWindowTab] = useState<'overview' | 'story' | 'gallery'>('overview');
+  const [activeWindowTab, setActiveWindowTab] = useState<'overview' | 'story' | 'gallery'>(
+    'overview'
+  );
   const [isLeftColumnHovered, setIsLeftColumnHovered] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
@@ -68,7 +70,7 @@ export default function ProjectDetailTwoColumn({
 
   const handleScrollToComments = useCallback(() => {
     if (isWindowMode) {
-      setIsCommentsOpen(prev => !prev);
+      setIsCommentsOpen((prev) => !prev);
       return;
     }
 
@@ -147,13 +149,30 @@ export default function ProjectDetailTwoColumn({
 
   if (isWindowMode) {
     const hasGroupedGallery = project.galleryGroups && project.galleryGroups.length > 0;
-    const totalGalleryCount = gallery.length + (project.galleryGroups?.reduce((acc, g) => acc + g.items.length, 0) || 0);
+    const totalGalleryCount =
+      gallery.length + (project.galleryGroups?.reduce((acc, g) => acc + g.items.length, 0) || 0);
 
     const windowTabs = [
-      { id: 'overview' as const, label: translations ? 'Overview' : 'Ringkasan', icon: Info, show: true },
-      { id: 'story' as const, label: translations ? 'Story' : 'Proses', icon: BookOpen, show: !!project.narrative },
-      { id: 'gallery' as const, label: translations ? 'Gallery' : 'Galeri', icon: Image, show: gallery.length > 0 || hasGroupedGallery, count: totalGalleryCount },
-    ].filter(t => t.show);
+      {
+        id: 'overview' as const,
+        label: translations ? 'Overview' : 'Ringkasan',
+        icon: Info,
+        show: true,
+      },
+      {
+        id: 'story' as const,
+        label: translations ? 'Story' : 'Proses',
+        icon: BookOpen,
+        show: !!project.narrative,
+      },
+      {
+        id: 'gallery' as const,
+        label: translations ? 'Gallery' : 'Galeri',
+        icon: Image,
+        show: gallery.length > 0 || hasGroupedGallery,
+        count: totalGalleryCount,
+      },
+    ].filter((t) => t.show);
 
     return (
       <motion.div
@@ -161,25 +180,28 @@ export default function ProjectDetailTwoColumn({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="flex flex-col md:flex-row h-full w-full overflow-hidden bg-white dark:bg-black transition-colors duration-300 select-text"
+        className="flex h-full w-full select-text flex-col overflow-hidden bg-white transition-colors duration-300 dark:bg-black md:flex-row"
       >
         {/* Left Column: Media & Core Interaction */}
-        <div 
+        <div
           onMouseEnter={() => setIsLeftColumnHovered(true)}
-          onMouseLeave={() => { setIsLeftColumnHovered(false); setIsCommentsOpen(false); }}
-          className="relative w-full md:w-[42%] flex items-center justify-center border-b md:border-b-0 md:border-r border-black/10 dark:border-white/10 bg-gray-50/50 dark:bg-gray-900/10 h-full overflow-hidden" 
+          onMouseLeave={() => {
+            setIsLeftColumnHovered(false);
+            setIsCommentsOpen(false);
+          }}
+          className="relative flex h-full w-full items-center justify-center overflow-hidden border-b border-black/10 bg-gray-50/50 dark:border-white/10 dark:bg-gray-900/10 md:w-[42%] md:border-b-0 md:border-r"
           data-no-window-drag
         >
           {/* Cover + Icons wrapper — icons positioned relative to the media, not the column */}
-          <div 
+          <div
             className="relative w-full transition-[padding] duration-300 ease-out"
             style={{ padding: isLeftColumnHovered ? '0 24px' : '0' }}
           >
             <ProjectCover project={project} cover={cover} ratio={ratio} isWindowMode={true} />
-            
+
             {/* Vertical Interaction Bar — centered vertically relative to image */}
-            <motion.div 
-              className="absolute right-1 inset-y-0 z-20 flex items-center"
+            <motion.div
+              className="absolute inset-y-0 right-1 z-20 flex items-center"
               initial={{ x: 50, opacity: 0 }}
               animate={{ x: isLeftColumnHovered ? 0 : 50, opacity: isLeftColumnHovered ? 1 : 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
@@ -208,26 +230,38 @@ export default function ProjectDetailTwoColumn({
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                className="absolute inset-0 z-30 flex flex-col bg-white/95 dark:bg-black/95 backdrop-blur-xl"
+                className="absolute inset-0 z-30 flex flex-col bg-white/95 backdrop-blur-xl dark:bg-black/95"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-black/5 dark:border-white/10 flex-shrink-0">
+                <div className="flex flex-shrink-0 items-center justify-between border-b border-black/5 px-4 py-3 dark:border-white/10">
                   <div className="flex items-center gap-2">
                     <MessageSquare size={14} className="text-indigo-500" />
                     <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
                       {translations ? 'Reviews' : 'Ulasan'}
                     </span>
                     {comments.length > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 font-bold">
+                      <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
                         {comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)}
                       </span>
                     )}
                   </div>
                   <button
                     onClick={() => setIsCommentsOpen(false)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </svg>
                   </button>
                 </div>
                 {/* Scrollable comments content */}
@@ -250,22 +284,24 @@ export default function ProjectDetailTwoColumn({
         </div>
 
         {/* Right Column: Tabbed Content (Header, Tabs Navigation, Tab Panels) */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-black" data-no-window-drag>
+        <div
+          className="flex h-full flex-1 flex-col overflow-hidden bg-white dark:bg-black"
+          data-no-window-drag
+        >
           {/* Header & Meta (Fixed Top of Right Column) */}
-          <div className="p-5 sm:p-6 border-b border-black/5 dark:border-white/5 flex-shrink-0">
+          <div className="flex-shrink-0 border-b border-black/5 p-5 dark:border-white/5 sm:p-6">
             <ProjectHeader project={project} translations={translations} isWindowMode={true} />
           </div>
 
           {/* Tabs Navigation Bar (Mac/iOS-style segment control) */}
-          <div className="px-5 sm:px-6 py-3 border-b border-black/5 dark:border-white/5 bg-gray-50/30 dark:bg-gray-900/5 flex-shrink-0">
-            <div className="relative flex bg-gray-100/80 dark:bg-gray-900/60 p-1 rounded-xl gap-1">
+          <div className="flex-shrink-0 border-b border-black/5 bg-gray-50/30 px-5 py-3 dark:border-white/5 dark:bg-gray-900/5 sm:px-6">
+            <div className="relative flex gap-1 rounded-xl bg-gray-100/80 p-1 dark:bg-gray-900/60">
               {/* Persistent animated pill — prevents animation jump bug */}
               <motion.div
-                className="absolute inset-y-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm z-0"
-                layoutId={`activeWindowTabPill-${project.id}`}
+                className="absolute inset-y-1 z-0 rounded-lg bg-white shadow-sm dark:bg-gray-800"
                 transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                 style={{
-                  left: `calc(${(windowTabs.findIndex(t => t.id === activeWindowTab) / windowTabs.length) * 100}% + 4px)`,
+                  left: `calc(${(windowTabs.findIndex((t) => t.id === activeWindowTab) / windowTabs.length) * 100}% + 4px)`,
                   width: `calc(${100 / windowTabs.length}% - ${windowTabs.length > 1 ? '4px' : '8px'})`,
                 }}
               />
@@ -276,21 +312,26 @@ export default function ProjectDetailTwoColumn({
                   <button
                     key={tab.id}
                     onClick={() => setActiveWindowTab(tab.id)}
-                    className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors duration-200 outline-none ${
+                    className={`relative z-10 flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold outline-none transition-colors duration-200 ${
                       isActive
                         ? 'text-gray-900 dark:text-white'
                         : 'text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-100'
                     }`}
                   >
                     <span className="flex items-center gap-1.5 text-center">
-                      <Icon size={14} className={isActive ? 'text-indigo-600 dark:text-indigo-400' : ''} />
+                      <Icon
+                        size={14}
+                        className={isActive ? 'text-indigo-600 dark:text-indigo-400' : ''}
+                      />
                       <span>{tab.label}</span>
                       {tab.count !== undefined && tab.count > 0 && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                          isActive 
-                            ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400' 
-                            : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                        }`}>
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                            isActive
+                              ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400'
+                              : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                          }`}
+                        >
                           {tab.count}
                         </span>
                       )}
@@ -302,7 +343,7 @@ export default function ProjectDetailTwoColumn({
           </div>
 
           {/* Tab Content Panel (Independent Internal Scrolling) */}
-          <div className="flex-grow flex-1 h-0 overflow-y-auto p-5 sm:p-6">
+          <div className="h-0 flex-1 flex-grow overflow-y-auto p-5 sm:p-6">
             <AnimatePresence mode="wait">
               {activeWindowTab === 'overview' && (
                 <motion.div
@@ -315,9 +356,9 @@ export default function ProjectDetailTwoColumn({
                 >
                   {projectBadges}
                   <ProjectMeta project={project} translations={translations} isWindowMode={true} />
-                  
-                  <div className="border-t border-black/5 dark:border-white/5 pt-4">
-                    <h4 className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 mb-3">
+
+                  <div className="border-t border-black/5 pt-4 dark:border-white/5">
+                    <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
                       {translations ? 'About Project' : 'Tentang Proyek'}
                     </h4>
                     <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
@@ -354,7 +395,7 @@ export default function ProjectDetailTwoColumn({
                   transition={{ type: 'spring', stiffness: 300, damping: 28 }}
                   className="space-y-4"
                 >
-                  <h4 className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 mb-2">
+                  <h4 className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
                     {translations ? 'Project Gallery' : 'Galeri Proyek'}
                   </h4>
                   <ProjectGallery
@@ -400,8 +441,6 @@ export default function ProjectDetailTwoColumn({
             <div className="flex h-full flex-col lg:flex-row">
               {/* Cover & Interaction Section */}
               <div className="w-full border-b border-gray-100 bg-gray-50 dark:border-white/10 dark:bg-gray-900/20 lg:w-[45%] lg:border-b-0 lg:border-r">
-
-
                 <ProjectCover
                   project={project}
                   cover={cover}
@@ -410,9 +449,7 @@ export default function ProjectDetailTwoColumn({
                 />
 
                 {!isWindowMode &&
-                  renderEngagementPanel(
-                    'mt-6 space-y-6 px-6 pb-10 sm:mt-8 sm:space-y-8 lg:px-10'
-                  )}
+                  renderEngagementPanel('mt-6 space-y-6 px-6 pb-10 sm:mt-8 sm:space-y-8 lg:px-10')}
               </div>
 
               {/* Details Section */}
@@ -452,8 +489,6 @@ export default function ProjectDetailTwoColumn({
                     isWindowMode={isWindowMode}
                     translations={translations}
                   />
-
-
                 </div>
               </div>
             </div>

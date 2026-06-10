@@ -41,11 +41,7 @@ interface DesktopIconsLayerProps {
   isAdmin: boolean;
   isReady?: boolean;
   handleIconPositionChange: (id: string, x: number, y: number) => void;
-  handleIconZIndexChange: (
-    id: string,
-    zIndex: number,
-    position: { x: number; y: number }
-  ) => void;
+  handleIconZIndexChange: (id: string, zIndex: number, position: { x: number; y: number }) => void;
   handleIconSizeChange: (
     id: string,
     size: DesktopIconSize,
@@ -55,6 +51,7 @@ interface DesktopIconsLayerProps {
     project: Project,
     originRect?: { x: number; y: number; width: number; height: number }
   ) => void;
+  isDimmed?: boolean;
 }
 
 function DesktopIconsLayer({
@@ -66,6 +63,7 @@ function DesktopIconsLayer({
   handleIconZIndexChange,
   handleIconSizeChange,
   openProjectWindow,
+  isDimmed = false,
 }: DesktopIconsLayerProps) {
   const { windows } = useDesktopWindowContext();
   const { getZIndex, bringToFront, registerElement, unregisterElement } = useUnifiedZIndex();
@@ -81,6 +79,8 @@ function DesktopIconsLayer({
   const registeredIconIdsRef = useRef<Set<string>>(new Set());
   // Ref to previous window states for diffing
   const prevWindowsRef = useRef(windows);
+  const openTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const nextIds = new Set<string>();
@@ -140,14 +140,25 @@ function DesktopIconsLayer({
       if (justClosed || justMinimized) {
         const projectId = currW.id.replace('project-', '');
         setClosingToIconId(projectId);
-        // Reset after window animation completes (~700ms for new fluid physics)
-        setTimeout(() => setClosingToIconId(null), 700);
+        if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = setTimeout(() => {
+          closeTimeoutRef.current = null;
+          setClosingToIconId(null);
+        }, 700);
         break;
       }
     }
 
     prevWindowsRef.current = curr;
   }, [windows]);
+
+  // Clean up all pending animation timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
 
   // Parent container animation variants for staggering
   const containerVariants: Variants = {
@@ -184,8 +195,10 @@ function DesktopIconsLayer({
 
   return (
     <>
-      <div className="pointer-events-auto absolute inset-0" onClick={() => setSelectedIconId(null)}>
-        {/* Desktop Icons Grid */}
+      <div
+        className={`absolute inset-0 ${isDimmed ? 'pointer-events-none opacity-30' : 'pointer-events-auto'}`}
+        onClick={() => setSelectedIconId(null)}
+      >
         <m.div
           className="pointer-events-none relative h-full w-full"
           variants={containerVariants}
@@ -231,9 +244,7 @@ function DesktopIconsLayer({
                     handleIconPositionChange(id, icon.x + relX, icon.y + relY);
                   }}
                   onFocus={() => bringIconToFront(icon)}
-                  onSizeChange={
-                    isAdmin ? (size) => handleIconSizeRequest(icon, size) : undefined
-                  }
+                  onSizeChange={isAdmin ? (size) => handleIconSizeRequest(icon, size) : undefined}
                   onClick={() => {
                     setSelectedIconId(icon.id);
                   }}
@@ -274,7 +285,11 @@ function DesktopIconsLayer({
                       );
 
                       // 3. Return icon to normal after window expansion is well underway
-                      setTimeout(() => setOpeningIconId(null), 700);
+                      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
+                      openTimeoutRef.current = setTimeout(() => {
+                        openTimeoutRef.current = null;
+                        setOpeningIconId(null);
+                      }, 700);
                     } else if (icon.action) {
                       icon.action();
                     }

@@ -125,6 +125,7 @@ interface BuildArgs {
    * and preview clips from every project / wallpaper video.
    */
   includeVideoSidecars?: boolean;
+  allowUnreferencedR2?: boolean;
 }
 
 async function buildCategory({
@@ -133,6 +134,7 @@ async function buildCategory({
   prefix,
   references,
   includeVideoSidecars,
+  allowUnreferencedR2 = false,
 }: BuildArgs): Promise<CategoryStats> {
   // D1 side: count by the URL the user actually sees, dedup by URL.
   const d1 = emptyCounts();
@@ -197,6 +199,7 @@ async function buildCategory({
   // ditolerir (memang sengaja generated oleh pipeline).
   const orphanKeys: string[] = [];
   for (const key of r2Keys) {
+    if (allowUnreferencedR2) continue;
     if (primaryPathsInPrefix.has(key)) continue;
     if (derivedSidecarPaths.has(key)) continue;
     orphanKeys.push(key);
@@ -294,13 +297,24 @@ async function runStats(): Promise<StorageStatsResponse> {
     }
   }
 
-  // ── Hard skill icons ─────────────────────────────────────────
+  // ── Hard skill and Dock icons ─────────────────────────────────
   const iconRefs: BuildArgs['references'] = [];
   for (const skill of hardSkillData.skills || []) {
     if (skill?.iconUrl) {
       iconRefs.push({
         url: skill.iconUrl,
         storagePath: extractStoragePath(skill.iconUrl),
+      });
+    }
+  }
+
+  const dockConfig = aboutData?.dockConfig || {};
+  for (const key of Object.keys(dockConfig)) {
+    const item = dockConfig[key];
+    if (item?.iconUrl) {
+      iconRefs.push({
+        url: item.iconUrl,
+        storagePath: extractStoragePath(item.iconUrl),
       });
     }
   }
@@ -369,7 +383,7 @@ async function runStats(): Promise<StorageStatsResponse> {
       },
       {
         id: 'hardSkillIcons',
-        label: 'Hard Skill Icons',
+        label: 'Hard Skill & Dock Icons',
         prefix: 'assets/icons-library/',
         d1: countByKind(iconRefs),
         r2: emptyCounts(),
@@ -422,7 +436,7 @@ async function runStats(): Promise<StorageStatsResponse> {
       }),
       buildCategory({
         id: 'hardSkillIcons',
-        label: 'Hard Skill Icons',
+        label: 'Hard Skill & Dock Icons',
         prefix: 'assets/icons-library/',
         references: iconRefs,
       }),
@@ -442,6 +456,7 @@ async function runStats(): Promise<StorageStatsResponse> {
         label: 'Explorer Legacy Media',
         prefix: 'assets/media/',
         references: explorerLegacyRefs,
+        allowUnreferencedR2: true,
       }),
     ]);
   }
@@ -521,18 +536,21 @@ function describeCategory(cat: CategoryStats): string {
 
   if (cat.id === 'hardSkillIcons') {
     if (cat.d1.total > 0 && cat.r2.total === 0) {
-      return `${cat.d1.total} icon URL tersimpan di D1. Semua mengarah ke CDN eksternal (mis. lucide.dev), bukan R2 — wajar kalau R2 kosong untuk kategori ini.`;
+      return `${cat.d1.total} icon URL tersimpan di database. Semua mengarah ke CDN eksternal, bukan R2 — wajar kalau R2 kosong untuk kategori ini.`;
     }
     if (cat.dangling > 0) {
-      return `${cat.dangling} icon URL dirujuk di D1 tapi file-nya hilang dari R2.`;
+      return `${cat.dangling} icon URL dirujuk di database tapi file-nya hilang dari R2.`;
     }
     if (cat.orphans > 0) {
-      return `${cat.orphans} icon di R2 tidak dipakai skill manapun.`;
+      return `${cat.orphans} icon di R2 tidak dipakai oleh skill atau dock item manapun.`;
     }
-    return `${cat.d1.total} icon URL tersimpan di D1.`;
+    return `${cat.d1.total} icon URL tersimpan di database.`;
   }
 
   if (cat.id === 'explorer' || cat.id === 'explorerLegacy') {
+    if (cat.id === 'explorerLegacy' && cat.d1.total === 0 && cat.r2.total > 0) {
+      return `${cat.r2.total} legacy object masih ada di assets/media. Prefix ini tidak lagi dikelola D1 Explorer, jadi tidak dihitung sebagai mismatch.`;
+    }
     if (cat.d1.total === 0 && cat.r2.total === 0) {
       return cat.id === 'explorer'
         ? 'Belum ada file Explorer di namespace baru.'

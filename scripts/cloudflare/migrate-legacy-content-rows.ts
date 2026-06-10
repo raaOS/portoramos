@@ -194,9 +194,7 @@ async function main() {
         `(termasuk ${conflicting.length} yang isinya berbeda).`
     );
   } else {
-    console.log(
-      `Akan menghapus ${safeToDrop.length} row literal (isinya identik dengan nested):`
-    );
+    console.log(`Akan menghapus ${safeToDrop.length} row literal (isinya identik dengan nested):`);
   }
   for (const d of safeToDrop) console.log(`  - ${d.literalKey}`);
 

@@ -16,7 +16,7 @@ const MAX_BASE64_CHARS = Math.ceil(MAX_REMOTE_MEDIA_BYTES * 1.4);
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const PROMPT_VERSION = 'project-details-v2';
 
-const modelCandidates = ['gemini-flash-latest', 'gemini-2.0-flash-lite', 'gemini-2.0-flash'];
+const modelCandidates = ['gemini-flash-latest', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
 const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_IMAGE_MODEL_CANDIDATES = [
   'openai/gpt-4o-mini',
@@ -535,7 +535,7 @@ export async function POST(req: NextRequest) {
 
     if (geminiApiKey) {
       for (const model of modelCandidates) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
@@ -544,7 +544,7 @@ export async function POST(req: NextRequest) {
         try {
           response = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiApiKey },
             body: JSON.stringify(requestBody),
             signal: controller.signal,
           });

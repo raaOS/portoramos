@@ -148,6 +148,9 @@ function ensureAuthRuntime() {
 }
 
 async function logoutWithSharedState() {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 2_000);
+
   try {
     await fetch('/api/admin/logout', {
       method: 'POST',
@@ -155,6 +158,7 @@ async function logoutWithSharedState() {
         'x-csrf-token': authSnapshot.csrfToken,
       },
       credentials: 'include',
+      signal: controller.signal,
     });
 
     publish({ isAdmin: false, csrfToken: '', isLoading: false });
@@ -167,6 +171,8 @@ async function logoutWithSharedState() {
     console.error('Logout failed, forcing redirect:', error);
     publish({ isAdmin: false, csrfToken: '', isLoading: false });
     window.location.href = '/?logged_out=error';
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 }
 

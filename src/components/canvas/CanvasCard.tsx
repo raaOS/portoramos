@@ -11,6 +11,7 @@ type CanvasCardProps = {
   isPriority: boolean;
   registerCardRef: (key: string, element: HTMLDivElement | null) => void;
   registerVideoRef: (key: string, element: HTMLVideoElement | null) => void;
+  initialStyle?: React.CSSProperties;
 };
 
 export function CanvasCardInner({
@@ -18,10 +19,10 @@ export function CanvasCardInner({
   isPriority,
   registerCardRef,
   registerVideoRef,
+  initialStyle,
 }: CanvasCardProps) {
   const router = useTransitionRouter();
 
-  // Drag tracking to avoid accidental clicks when panning
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const dragDistance = useRef(0);
 
@@ -49,12 +50,12 @@ export function CanvasCardInner({
         width: CARD_WIDTH,
         height: CARD_WIDTH / aspectRatio,
         display: 'block',
-        // willChange is set dynamically in updateDomNodes
-        // only for visible items — saves VRAM on low-end GPUs
+        willChange: 'transform',
         backfaceVisibility: 'hidden',
         contain: 'layout paint style',
         visibility: 'hidden', // Start hidden, rAF loop will reveal
         opacity: 0,
+        ...initialStyle,
       }}
       onPointerDown={(e) => {
         pointerStart.current = { x: e.clientX, y: e.clientY };
@@ -86,6 +87,7 @@ export function CanvasCardInner({
             loop
             playsInline
             preload="none"
+            {...({ fetchPriority: isPriority ? 'high' : 'low' } as any)}
             className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         ) : (
@@ -96,8 +98,8 @@ export function CanvasCardInner({
             className="pointer-events-none absolute inset-0 object-cover transition-transform duration-500 group-hover:scale-[1.03]"
             sizes="(max-width: 768px) 100vw, 700px"
             priority={isPriority}
-            loading="eager"
-            fetchPriority={isPriority ? 'high' : 'auto'}
+            loading={isPriority ? 'eager' : 'lazy'}
+            {...({ fetchPriority: isPriority ? 'high' : 'auto' } as any)}
           />
         )}
 
@@ -110,9 +112,9 @@ export function CanvasCardInner({
             <p className="text-white/68 text-[10px] font-medium uppercase tracking-[0.32em]">
               {eyebrow}
             </p>
-            <h3 className="mt-2 text-[24px] font-semibold leading-[1.02] text-white [text-shadow:0_8px_24px_rgba(0,0,0,0.35)]">
+            <h2 className="mt-2 text-[24px] font-semibold leading-[1.02] text-white [text-shadow:0_8px_24px_rgba(0,0,0,0.35)]">
               {item.project.title}
-            </h3>
+            </h2>
             <p className="text-white/64 mt-3 truncate text-[11px] uppercase tracking-[0.24em]">
               {metaLine}
             </p>

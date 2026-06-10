@@ -43,10 +43,7 @@ export function useCvExport({ cvRef, displayName }: UseCvExportProps) {
       // Lazy-load heavy export deps in parallel. Network roundtrip
       // diserialize jadi satu Promise.all supaya total wait time =
       // max(htmlToImage, jspdf) instead of sum.
-      const [{ toPng }, { jsPDF }] = await Promise.all([
-        import('html-to-image'),
-        import('jspdf'),
-      ]);
+      const [{ toPng }, { jsPDF }] = await Promise.all([import('html-to-image'), import('jspdf')]);
 
       // Generate high quality PNG
       const dataUrl = await toPng(cvRef.current, {

@@ -42,8 +42,8 @@ async function main() {
 
   // About hero backgroundTrail src list
   const trail =
-    (about?.hero as { backgroundTrail?: Array<{ src?: string; slug?: string }> })?.backgroundTrail ||
-    [];
+    (about?.hero as { backgroundTrail?: Array<{ src?: string; slug?: string }> })
+      ?.backgroundTrail || [];
   for (const t of trail) {
     if (t.src) haystacks.push({ source: 'hero.backgroundTrail.src', text: t.src });
     if (t.slug) haystacks.push({ source: 'hero.backgroundTrail.slug', text: t.slug });
@@ -63,7 +63,9 @@ async function main() {
     }
   }
 
-  console.log(`Scanning ${haystacks.length} URL/slug strings for ${TARGET_BASES.length} bases...\n`);
+  console.log(
+    `Scanning ${haystacks.length} URL/slug strings for ${TARGET_BASES.length} bases...\n`
+  );
 
   let hits = 0;
   for (const base of TARGET_BASES) {

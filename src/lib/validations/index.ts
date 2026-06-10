@@ -58,7 +58,6 @@ export {
   experienceStatisticsSchema,
   workExperienceSchema,
   updateExperienceSchema,
-
   updateAboutSchema,
   hardSkillSchema,
   bulkUpdateHardSkillsSchema,
@@ -72,7 +71,6 @@ export {
   type CreateTestimonialInput,
   type UpdateTestimonialInput,
   type UpdateExperienceInput,
-
   type UpdateAboutInput,
   type HardSkillInput,
   type UpdateHardSkillInput,

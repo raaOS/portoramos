@@ -8,7 +8,9 @@ import { validationError } from '@/lib/api-response';
 export async function GET() {
   try {
     const data = await experienceService.getExperienceData();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=3600' },
+    });
   } catch (error) {
     console.error('Error reading experience data:', error);
     return NextResponse.json({ error: 'Failed to read experience data' }, { status: 500 });

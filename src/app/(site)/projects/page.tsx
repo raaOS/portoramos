@@ -6,6 +6,7 @@ import { allLabelsAsync } from '@/lib/labels';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
 import QueryProvider from '@/components/layout/QueryProvider';
 import ProjectsFinderHeader from './_components/ProjectsFinderHeader';
+import { baseSEO } from '@/lib/seo';
 
 // Public catalog can be cached by Vercel. Search/tag/view state is handled in
 // client components wrapped with Suspense, so the shell can stay ISR-backed.
@@ -14,6 +15,9 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: 'Projects | Ramos Portfolio',
   description: 'Daftar lengkap project desain dan pengembangan oleh Ramos.',
+  alternates: {
+    canonical: `${baseSEO.siteUrl}/projects`,
+  },
 };
 
 export default async function ProjectsPage() {

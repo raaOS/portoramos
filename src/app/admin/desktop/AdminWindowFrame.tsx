@@ -16,12 +16,12 @@ interface AdminWindowFrameProps {
  * With tension 0.08 and friction 0.82 the window will overshoot
  * its rest position ~3 times before settling — very Compiz-like.
  * ────────────────────────────────────────────────────────────── */
-const SPRING_TENSION  = 0.08;
+const SPRING_TENSION = 0.08;
 const SPRING_FRICTION = 0.82;
 
 // How much mouse velocity influences each axis
-const SKEW_FACTOR    = 6;      // degrees per px/ms
-const STRETCH_FACTOR = 0.025;  // scale per px/ms
+const SKEW_FACTOR = 6; // degrees per px/ms
+const STRETCH_FACTOR = 0.025; // scale per px/ms
 
 function clamp(v: number, lo: number, hi: number) {
   return Math.min(hi, Math.max(lo, v));
@@ -29,8 +29,7 @@ function clamp(v: number, lo: number, hi: number) {
 
 function prefersReducedMotion() {
   return (
-    typeof window !== 'undefined' &&
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   );
 }
 
@@ -49,18 +48,14 @@ function springRest(): SpringState {
 
 // ────────────────────────────────────────────────────────────────
 
-export default function AdminWindowFrame({
-  state,
-  actions,
-  children,
-}: AdminWindowFrameProps) {
+export default function AdminWindowFrame({ state, actions, children }: AdminWindowFrameProps) {
   const windowRef = useRef<HTMLDivElement | null>(null);
 
   // Spring simulation state (mutable, never causes re-render)
   const springCur = useRef<SpringState>(springRest());
   const springVel = useRef<SpringState>(springRest()); // velocity — rest values don't matter, overwritten
   const springTgt = useRef<SpringState>(springRest());
-  const rafId     = useRef<number | null>(null);
+  const rafId = useRef<number | null>(null);
 
   // Drag bookkeeping
   const dragRef = useRef<{
@@ -83,7 +78,7 @@ export default function AdminWindowFrame({
     originH: number;
   } | null>(null);
 
-  const dragCleanupRef   = useRef<(() => void) | null>(null);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
   const resizeCleanupRef = useRef<(() => void) | null>(null);
 
   // Clean up on unmount
@@ -100,9 +95,9 @@ export default function AdminWindowFrame({
     const el = windowRef.current;
     if (!el) return;
     const c = springCur.current;
-    el.style.setProperty('--jw-skew',   `${c.skewX.toFixed(3)}deg`);
-    el.style.setProperty('--jw-sx',     c.scaleX.toFixed(4));
-    el.style.setProperty('--jw-sy',     c.scaleY.toFixed(4));
+    el.style.setProperty('--jw-skew', `${c.skewX.toFixed(3)}deg`);
+    el.style.setProperty('--jw-sx', c.scaleX.toFixed(4));
+    el.style.setProperty('--jw-sy', c.scaleY.toFixed(4));
   }, []);
 
   /* ── Start / continue the RAF spring loop ──────────────────── */
@@ -118,7 +113,7 @@ export default function AdminWindowFrame({
 
       for (const k of ['skewX', 'scaleX', 'scaleY'] as const) {
         const force = (tgt[k] - cur[k]) * SPRING_TENSION;
-        vel[k]  = (vel[k] + force) * SPRING_FRICTION;
+        vel[k] = (vel[k] + force) * SPRING_FRICTION;
         cur[k] += vel[k];
 
         if (Math.abs(vel[k]) > 0.001 || Math.abs(tgt[k] - cur[k]) > 0.001) {
@@ -188,15 +183,15 @@ export default function AdminWindowFrame({
         actions.updatePosition(state.id, d.originX + dx, d.originY + dy);
 
         // Velocity (px/ms) with exponential smoothing
-        const now     = performance.now();
-        const dt      = Math.max(1, now - d.lastTime);
-        const rawVx   = (ev.clientX - d.lastX) / dt;
-        const rawVy   = (ev.clientY - d.lastY) / dt;
-        d.smoothVx    = d.smoothVx * 0.6 + rawVx * 0.4;
-        d.smoothVy    = d.smoothVy * 0.6 + rawVy * 0.4;
+        const now = performance.now();
+        const dt = Math.max(1, now - d.lastTime);
+        const rawVx = (ev.clientX - d.lastX) / dt;
+        const rawVy = (ev.clientY - d.lastY) / dt;
+        d.smoothVx = d.smoothVx * 0.6 + rawVx * 0.4;
+        d.smoothVy = d.smoothVy * 0.6 + rawVy * 0.4;
 
-        d.lastX    = ev.clientX;
-        d.lastY    = ev.clientY;
+        d.lastX = ev.clientX;
+        d.lastY = ev.clientY;
         d.lastTime = now;
 
         if (d.reducedMotion) return;
@@ -206,7 +201,7 @@ export default function AdminWindowFrame({
 
         // Set spring targets based on drag velocity
         const tgt = springTgt.current;
-        tgt.skewX  = clamp(vx * -SKEW_FACTOR, -12, 12);
+        tgt.skewX = clamp(vx * -SKEW_FACTOR, -12, 12);
 
         const speed = Math.hypot(vx, vy);
         const s = Math.min(speed, 4) * STRETCH_FACTOR;
@@ -250,7 +245,7 @@ export default function AdminWindowFrame({
       window.addEventListener('mouseup', onUp);
       dragCleanupRef.current = onUp;
     },
-    [state.id, state.x, state.y, state.isMaximized, actions, ensureSpringLoop, applySpring],
+    [state.id, state.x, state.y, state.isMaximized, actions, ensureSpringLoop, applySpring]
   );
 
   /* ═══════════════════════════════════════════════════════════════
@@ -277,7 +272,7 @@ export default function AdminWindowFrame({
         actions.updateSize(
           state.id,
           Math.max(480, resizeRef.current.originW + dx),
-          Math.max(320, resizeRef.current.originH + dy),
+          Math.max(320, resizeRef.current.originH + dy)
         );
       };
 
@@ -292,7 +287,7 @@ export default function AdminWindowFrame({
       window.addEventListener('mouseup', cleanupResize);
       resizeCleanupRef.current = cleanupResize;
     },
-    [state.id, state.width, state.height, state.isMaximized, actions],
+    [state.id, state.width, state.height, state.isMaximized, actions]
   );
 
   /* ═══════════════════════════════════════════════════════════════
@@ -470,17 +465,10 @@ export default function AdminWindowFrame({
       </div>
 
       {/* Content area */}
-      <div className="admin-window-content">
-        {children}
-      </div>
+      <div className="admin-window-content">{children}</div>
 
       {/* Resize handle */}
-      {!isMax && (
-        <div
-          className="admin-window-resize-handle"
-          onMouseDown={handleResizeStart}
-        />
-      )}
+      {!isMax && <div className="admin-window-resize-handle" onMouseDown={handleResizeStart} />}
     </div>
   );
 }

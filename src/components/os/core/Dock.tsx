@@ -20,7 +20,7 @@ import { Link } from 'next-view-transitions';
 import { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTransitionRouter } from 'next-view-transitions';
-import { Grid, User, Mail, FileText, Trash2 } from 'lucide-react';
+import { Grid, User, Mail, FileText, Trash2, Layers } from 'lucide-react';
 import AppIcon from '../ui/AppIcon';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
 import DockProjectModes from '../ui/DockProjectModes';
@@ -29,6 +29,18 @@ import { getDockItemConfig } from '../utils/dockUtils';
 import { markBack } from '@/lib/navigationDirection';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 import { DockPortal } from '@/components/layout/GlobalDockSlot';
+import { useOSSystem } from '../context/OSSystemContext';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import { SortableContext, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const LINK_BOUNCE_DELAY_MS = 280;
 
@@ -71,6 +83,7 @@ interface DockItemProps {
   onTogglePopover: () => void;
   anyPopoverOpen: boolean;
   disableTooltips?: boolean;
+  isOpen?: boolean;
 }
 
 function DockItem({
@@ -87,6 +100,7 @@ function DockItem({
   onTogglePopover,
   anyPopoverOpen,
   disableTooltips = false,
+  isOpen = false,
 }: DockItemProps) {
   const ref = useRef<HTMLDivElement>(null);
   const navigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -302,6 +316,10 @@ function DockItem({
           className: 'w-full h-full',
         })}
       </div>
+
+      {isOpen && (
+        <div className="absolute bottom-[3px] left-1/2 h-[4px] w-[4px] -translate-x-1/2 rounded-full bg-black/60 dark:bg-white/80" />
+      )}
     </m.div>
   );
 }
@@ -321,6 +339,48 @@ interface DockProps {
   items: DockItemData[];
   bouncingId?: string | null;
   isMobile?: boolean;
+  dockConfig?: DockPreferences;
+}
+
+function SortableDockItem({ id, children }: { id: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? Z_LAYERS.DOCK + 10 : 'auto',
+    position: 'relative' as const,
+    display: 'flex',
+    alignItems: 'end',
+    touchAction: 'none',
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
+}
+
+function sortDockItemsWithLocalOrder(rawItems: DockItemData[]): DockItemData[] {
+  if (typeof window === 'undefined') return rawItems;
+  const localOrderRaw = localStorage.getItem('visitor-dock-order');
+  if (localOrderRaw) {
+    try {
+      const localOrder = JSON.parse(localOrderRaw) as string[];
+      if (Array.isArray(localOrder) && localOrder.length > 0) {
+        const orderMap = new Map(localOrder.map((id, index) => [id, index]));
+        return [...rawItems].sort((a, b) => {
+          const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : 1000;
+          const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : 1000;
+          return indexA - indexB;
+        });
+      }
+    } catch (e) {
+      console.warn('Failed to parse visitor dock order:', e);
+    }
+  }
+  return rawItems;
 }
 
 // Module-level flag to track client-side hydration.
@@ -328,12 +388,107 @@ interface DockProps {
 // and render the full Dock synchronously during view transitions.
 let isClientHydrated = false;
 
-export default function Dock({ items, bouncingId, isMobile = false }: DockProps) {
+export default function Dock({ items, bouncingId, isMobile = false, dockConfig }: DockProps) {
   const mouseX = useMotionValue(Infinity);
   const [isMounted, setIsMounted] = useState(isClientHydrated);
   const [activePopoverId, setActivePopoverId] = useState<string | null>(null);
   const [disableTooltips, setDisableTooltips] = useState(false);
   const prevPopoverIdRef = useRef<string | null>(null);
+
+  const { isAdmin, csrfToken } = useAdminAuth();
+  const [isDraggingActive, setIsDraggingActive] = useState(false);
+
+  // Sync sortedItems when items prop changes (moved from render body to effect)
+  const [sortedItems, setSortedItems] = useState<DockItemData[]>(() =>
+    sortDockItemsWithLocalOrder(items)
+  );
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    const prevIds = sortedItems.map((item) => item.id).join(',');
+    const sortedRaw = sortDockItemsWithLocalOrder(items);
+    const sortedRawIds = sortedRaw.map((item) => item.id).join(',');
+    if (prevIds === sortedRawIds) {
+      const itemMap = new Map(items.map((item) => [item.id, item]));
+      setSortedItems(
+        sortedItems.map(
+          (item) =>
+            ({
+              ...item,
+              ...itemMap.get(item.id),
+            }) as DockItemData
+        )
+      );
+    } else {
+      setSortedItems(sortedRaw);
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
+
+  const pointerSensorConfig = useMemo(() => ({ activationConstraint: { distance: 8 } }), []);
+  const sensors = useSensors(useSensor(PointerSensor, pointerSensorConfig));
+
+  const handleDragStart = useCallback(() => {
+    setIsDraggingActive(true);
+  }, []);
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      setIsDraggingActive(false);
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      let updatedOrderIds: string[] = [];
+
+      setSortedItems((prev) => {
+        const oldIndex = prev.findIndex((i) => i.id === active.id);
+        const newIndex = prev.findIndex((i) => i.id === over.id);
+        if (oldIndex === -1 || newIndex === -1) return prev;
+
+        const newItems = [...prev];
+        const [movedItem] = newItems.splice(oldIndex, 1);
+        newItems.splice(newIndex, 0, movedItem);
+
+        updatedOrderIds = newItems.map((item) => item.id);
+        return newItems;
+      });
+
+      if (updatedOrderIds.length > 0) {
+        if (isAdmin) {
+          const updatedDockConfig: DockPreferences = {};
+          const currentPrefs = dockConfig || {};
+
+          updatedOrderIds.forEach((id, index) => {
+            updatedDockConfig[id] = {
+              ...(currentPrefs[id] || {}),
+              order: index,
+            };
+          });
+
+          try {
+            const response = await fetch('/api/about', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-csrf-token': csrfToken,
+              },
+              credentials: 'include',
+              body: JSON.stringify({ dockConfig: updatedDockConfig }),
+            });
+            if (!response.ok) {
+              console.error('Failed to save admin dock order on backend');
+            }
+          } catch (err) {
+            console.error('Network error saving admin dock order:', err);
+          }
+        } else {
+          localStorage.setItem('visitor-dock-order', JSON.stringify(updatedOrderIds));
+        }
+      }
+    },
+    [isAdmin, csrfToken, dockConfig]
+  );
 
   // Suppress tooltips for 1000ms when any popover is closed (e.g. view mode selected)
   // to cover the page transition gap and prevent flash overlays.
@@ -395,15 +550,15 @@ export default function Dock({ items, bouncingId, isMobile = false }: DockProps)
     return () => cancelAnimationFrame(frame);
   }, []);
 
-
   const filteredItems = useMemo(() => {
     if (isMobile) {
-      return items.filter((item) => item.id !== 'trash');
+      return sortedItems.filter((item) => item.id !== 'trash');
     }
-    return items;
-  }, [items, isMobile]);
+    return sortedItems;
+  }, [sortedItems, isMobile]);
 
-  const dockBaseWidth = filteredItems.length > 0 ? filteredItems.length * 64 + (filteredItems.length - 1) * 8 + 24 : 0;
+  const dockBaseWidth =
+    filteredItems.length > 0 ? filteredItems.length * 64 + (filteredItems.length - 1) * 8 + 24 : 0;
   const hoverCaptureWidth = dockBaseWidth + 160;
 
   const handleMouseMove = useCallback(
@@ -500,65 +655,79 @@ export default function Dock({ items, bouncingId, isMobile = false }: DockProps)
               background:
                 'linear-gradient(180deg, rgba(255,255,255,0.44) 0%, rgba(255,255,255,0.24) 46%, rgba(255,255,255,0.16) 100%)',
               border: '1px solid rgba(255, 255, 255, 0.52)',
-              boxShadow:
-                'inset 0 1px 0 rgba(255,255,255,0.72), inset 0 -1px 0 rgba(0,0,0,0.08)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.72), inset 0 -1px 0 rgba(0,0,0,0.08)',
             }}
           >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.35),transparent_58%)]" />
           </div>
 
-          {/* Icon row */}
-          <div
-            className={`relative z-10 flex items-end ${
-              isMobile
-                ? 'scrollbar-hide h-[72px] gap-3 overflow-x-auto px-4 py-3'
-                : 'h-[96px] gap-2 px-3 py-4'
-            }`}
-            style={{
-              minWidth: isMobile ? 'auto' : dockBaseWidth,
-            }}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
           >
-            {filteredItems.map((item) => {
-              const dockItem = (
-                <DockItem
-                  key={item.id}
-                  id={item.id}
-                  icon={item.icon}
-                  label={item.label}
-                  onActivate={item.onClick}
-                  href={item.href}
-                  mouseX={mouseX}
-                  popoverContent={item.popoverContent}
-                  isPopoverOpen={activePopoverId === item.id}
-                  onTogglePopover={togglePopoverHandlers[item.id]}
-                  anyPopoverOpen={anyPopoverOpen}
-                  shouldBounceExternal={bouncingId === item.id}
-                  isMobile={isMobile}
-                  disableTooltips={disableTooltips}
-                />
-              );
+            <SortableContext
+              items={filteredItems.map((item) => item.id)}
+              strategy={horizontalListSortingStrategy}
+            >
+              {/* Icon row */}
+              <div
+                className={`relative z-10 flex items-end ${
+                  isMobile
+                    ? 'scrollbar-hide h-[72px] gap-3 overflow-x-auto px-4 py-3'
+                    : 'h-[96px] gap-2 px-3 py-4'
+                }`}
+                style={{
+                  minWidth: isMobile ? 'auto' : dockBaseWidth,
+                }}
+              >
+                {filteredItems.map((item) => {
+                  const dockItem = (
+                    <DockItem
+                      key={item.id}
+                      id={item.id}
+                      icon={item.icon}
+                      label={item.label}
+                      onActivate={item.onClick}
+                      href={item.href}
+                      mouseX={mouseX}
+                      popoverContent={item.popoverContent}
+                      isPopoverOpen={activePopoverId === item.id}
+                      onTogglePopover={togglePopoverHandlers[item.id]}
+                      anyPopoverOpen={anyPopoverOpen || isDraggingActive}
+                      shouldBounceExternal={bouncingId === item.id}
+                      isMobile={isMobile}
+                      disableTooltips={disableTooltips}
+                      isOpen={item.isOpen}
+                    />
+                  );
 
-              // Wrap dengan <Link> untuk prefetch + native back/forward.
-              // Item dengan popover tidak dibungkus karena klik harus
-              // membuka popover, bukan navigate.
-              if (item.href && !item.popoverContent) {
-                return (
-                  <Link
-                    key={item.id}
-                    href={item.href}
-                    prefetch={true}
-                    data-dock-focusable="true"
-                    aria-label={item.label}
-                    className="flex items-end rounded-[18px] no-underline focus-visible:outline-none"
-                  >
-                    {dockItem}
-                  </Link>
-                );
-              }
+                  const renderedItem =
+                    item.href && !item.popoverContent ? (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        prefetch={true}
+                        data-dock-focusable="true"
+                        aria-label={item.label}
+                        className="flex items-end rounded-[18px] no-underline focus-visible:outline-none"
+                      >
+                        {dockItem}
+                      </Link>
+                    ) : (
+                      dockItem
+                    );
 
-              return dockItem;
-            })}
-          </div>
+                  return (
+                    <SortableDockItem key={item.id} id={item.id}>
+                      {renderedItem}
+                    </SortableDockItem>
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
         </nav>
       </div>
     </div>
@@ -607,6 +776,13 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
           : () => {},
         href: isMobile ? '/projects' : undefined,
         popoverContent: isMobile ? undefined : <DockProjectModes />,
+      },
+      {
+        id: 'mission-control',
+        label: 'Mission Control',
+        icon: <AppIcon icon={Layers} color="from-indigo-500 to-purple-600" />,
+        onClick: markNav,
+        href: '/?app=mission-control',
       },
       {
         id: 'about',
@@ -675,7 +851,12 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
   return (
     <DockPortal>
       <div className="pointer-events-auto">
-        <Dock items={dockItems} bouncingId={bouncingDocId} isMobile={isMobile} />
+        <Dock
+          items={dockItems}
+          bouncingId={bouncingDocId}
+          isMobile={isMobile}
+          dockConfig={dockConfig}
+        />
       </div>
     </DockPortal>
   );
@@ -717,6 +898,7 @@ export function OSDock({
   isMobile = false,
 }: OSDockProps) {
   const router = useTransitionRouter();
+  const { showMissionControl, toggleMissionControl } = useOSSystem();
 
   // Stable handler — projects adalah satu-satunya item OS yang menavigasi
   // ke route lain. Pakai useTransitionRouter agar view-transition arah
@@ -745,6 +927,12 @@ export function OSDock({
         onClick: handleOpenProjects,
         href: isMobile ? '/projects' : undefined,
         popoverContent: isMobile ? undefined : <DockProjectModes />,
+      },
+      {
+        id: 'mission-control',
+        label: 'Mission Control',
+        icon: <AppIcon icon={Layers} color="from-indigo-500 to-purple-600" />,
+        onClick: toggleMissionControl,
       },
       {
         id: 'about',
@@ -787,11 +975,14 @@ export function OSDock({
     onOpenNotes,
     onOpenTrash,
     isMobile,
+    toggleMissionControl,
   ]);
 
   const dockItems = useMemo<DockItemData[]>(() => {
     return baseItems.map((item) => {
       switch (item.id) {
+        case 'mission-control':
+          return { ...item, isOpen: showMissionControl };
         case 'about':
           return { ...item, isOpen: isWindowOpen('about') };
         case 'whatsapp':
@@ -806,11 +997,16 @@ export function OSDock({
           return item;
       }
     });
-  }, [baseItems, isWindowOpen, notesVisible]);
+  }, [baseItems, isWindowOpen, notesVisible, showMissionControl]);
 
   return (
     <div className={className}>
-      <Dock items={dockItems} bouncingId={bouncingId} isMobile={isMobile} />
+      <Dock
+        items={dockItems}
+        bouncingId={bouncingId}
+        isMobile={isMobile}
+        dockConfig={aboutData?.dockConfig}
+      />
     </div>
   );
 }

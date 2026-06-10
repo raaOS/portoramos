@@ -4,6 +4,7 @@ import type { Project } from '@/types/projects';
 import ReadMoreDescription from '@/components/ui/ReadMoreDescription';
 import { useMemo } from 'react';
 import { motion } from 'motion/react';
+import { getTranslation } from '../utils/translations';
 
 interface ProjectNarrativeProps {
   project: Project;
@@ -112,21 +113,10 @@ export function ProjectNarrative({
           <div className="relative flex items-end px-0">
             {/* Animated Pill — single persistent element, moves via layout animation */}
             <motion.div
-              className={`absolute -bottom-px h-full rounded-t-md z-10 ${tabStyles[activeTab].bg}`}
-              layoutId={`activeNarrativeTabPill-${project.id}`}
+              className={`absolute -bottom-px z-10 h-full rounded-t-md ${tabStyles[activeTab].bg}`}
               transition={{ type: 'spring', stiffness: 380, damping: 30 }}
               style={{
-                left: `${(tabs.findIndex(t => t.id === activeTab) / tabs.length) * 100}%`,
-                width: `${100 / tabs.length}%`,
-              }}
-            />
-            {/* Anti-Ghosting Shield */}
-            <motion.div
-              className={`absolute -bottom-px h-[4px] z-30 ${tabStyles[activeTab].bg}`}
-              layoutId={`activeNarrativeTabShield-${project.id}`}
-              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-              style={{
-                left: `${(tabs.findIndex(t => t.id === activeTab) / tabs.length) * 100}%`,
+                left: `${(tabs.findIndex((t) => t.id === activeTab) / tabs.length) * 100}%`,
                 width: `${100 / tabs.length}%`,
               }}
             />
@@ -138,9 +128,7 @@ export function ProjectNarrative({
                   key={tab.id}
                   onClick={() => onTabChange(tab.id)}
                   className={`relative -mb-[1px] flex flex-1 items-center justify-center px-5 py-1.5 text-sm font-bold outline-none transition-colors duration-150 sm:px-8 ${
-                    isActive
-                      ? 'z-20 text-white'
-                      : 'z-0 text-gray-400 hover:text-gray-600'
+                    isActive ? 'z-20 text-white' : 'z-0 text-gray-400 hover:text-gray-600'
                   } ${idx === 0 ? 'ml-0' : ''} `}
                 >
                   <span className="relative z-10 text-center">{tab.label}</span>
@@ -179,7 +167,7 @@ function TabContent({
       return (
         <div className="space-y-4">
           <ReadMoreDescription
-            text={translations?.description || project.description || ''}
+            text={getTranslation(translations, 'description') || project.description || ''}
             maxLines={12}
             className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 sm:text-base"
           />
@@ -190,7 +178,14 @@ function TabContent({
       return (
         <div className="space-y-4">
           <p className="text-sm font-medium leading-relaxed text-gray-800 dark:text-gray-200 sm:text-base">
-            {translations?.challenge || narrative?.challenge || narrative?.concept}
+            {getTranslation(
+              translations,
+              narrative?.challenge && 'narrative.challenge',
+              narrative?.concept && 'narrative.concept',
+              'challenge'
+            ) ||
+              narrative?.challenge ||
+              narrative?.concept}
           </p>
         </div>
       );
@@ -199,7 +194,14 @@ function TabContent({
       return (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-gray-800 dark:text-gray-200 sm:text-base">
-            {translations?.solution || narrative?.solution || narrative?.process}
+            {getTranslation(
+              translations,
+              narrative?.solution && 'narrative.solution',
+              narrative?.process && 'narrative.process',
+              'solution'
+            ) ||
+              narrative?.solution ||
+              narrative?.process}
           </p>
         </div>
       );
@@ -208,7 +210,16 @@ function TabContent({
       return (
         <div className="space-y-4">
           <p className="text-sm font-medium leading-relaxed text-gray-800 dark:text-gray-200 sm:text-base">
-            {translations?.impact || narrative?.impact || narrative?.result || narrative?.detail}
+            {getTranslation(
+              translations,
+              narrative?.impact && 'narrative.impact',
+              narrative?.result && 'narrative.result',
+              narrative?.detail && 'narrative.detail',
+              'impact'
+            ) ||
+              narrative?.impact ||
+              narrative?.result ||
+              narrative?.detail}
           </p>
         </div>
       );

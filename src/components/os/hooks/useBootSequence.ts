@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, startTransition } from 'react';
 import { soundManager } from '../utils/SoundManager';
 
 interface BootSequenceConfig {
@@ -108,13 +108,10 @@ export function useBootSequence(config: Partial<BootSequenceConfig> = {}) {
 
   // Client-side synchronization after hydration
   useEffect(() => {
-    // Run skip check only once after mounting to avoid hydration mismatch
     const shouldSkip = checkShouldSkipBoot();
     if (shouldSkip) {
-      import('react').then(({ startTransition }) => {
-        startTransition(() => {
-          setNeedsPowerOn(false);
-        });
+      startTransition(() => {
+        setNeedsPowerOn(false);
       });
     }
   }, []);

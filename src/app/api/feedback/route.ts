@@ -40,9 +40,39 @@ async function getBannedWords(): Promise<string[]> {
     if (snap.exists()) return snap.val();
     const rootSnap = await db.ref('settings').once('value');
     const settings = rootSnap.val();
-    return settings?.bannedWords || ['judol', 'slot'];
+    return (
+      settings?.bannedWords || [
+        'judol',
+        'slot',
+        'gacor',
+        'maxwin',
+        'togel',
+        'casino',
+        'rtp',
+        'pragmatic',
+        'crypto',
+        'bitcoin',
+        'viagra',
+        'bokep',
+        'porn',
+      ]
+    );
   } catch {
-    return ['judol', 'slot'];
+    return [
+      'judol',
+      'slot',
+      'gacor',
+      'maxwin',
+      'togel',
+      'casino',
+      'rtp',
+      'pragmatic',
+      'crypto',
+      'bitcoin',
+      'viagra',
+      'bokep',
+      'porn',
+    ];
   }
 }
 

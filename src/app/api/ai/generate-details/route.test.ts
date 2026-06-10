@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getGeminiApiKeyMock, getOpenRouterApiKeyMock, guardAdminAiRequestMock } = vi.hoisted(() => ({
-  getGeminiApiKeyMock: vi.fn(),
-  getOpenRouterApiKeyMock: vi.fn(),
-  guardAdminAiRequestMock: vi.fn(),
-}));
+const { getGeminiApiKeyMock, getOpenRouterApiKeyMock, guardAdminAiRequestMock } = vi.hoisted(
+  () => ({
+    getGeminiApiKeyMock: vi.fn(),
+    getOpenRouterApiKeyMock: vi.fn(),
+    guardAdminAiRequestMock: vi.fn(),
+  })
+);
 
 vi.mock('../_shared', () => ({
   getGeminiApiKey: getGeminiApiKeyMock,
@@ -104,7 +106,7 @@ describe('POST /api/ai/generate-details', () => {
     expect(body.title).toBe('Poster Eksplorasi');
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(String(fetchMock.mock.calls[0][0])).toContain('gemini-flash-latest');
-    expect(String(fetchMock.mock.calls[1][0])).toContain('gemini-2.0-flash-lite');
+    expect(String(fetchMock.mock.calls[1][0])).toContain('gemini-2.0-flash');
   });
 
   it('falls back to OpenRouter vision models when all Gemini models are quota-limited', async () => {
@@ -142,7 +144,9 @@ describe('POST /api/ai/generate-details', () => {
     expect(response.status).toBe(200);
     expect(body.title).toBe('OpenRouter Fallback');
     expect(fetchMock).toHaveBeenCalledTimes(4);
-    expect(String(fetchMock.mock.calls[3][0])).toBe('https://openrouter.ai/api/v1/chat/completions');
+    expect(String(fetchMock.mock.calls[3][0])).toBe(
+      'https://openrouter.ai/api/v1/chat/completions'
+    );
     expect(JSON.parse(fetchMock.mock.calls[3][1]?.body as string).model).toBe('openai/gpt-4o-mini');
   });
 
@@ -176,7 +180,9 @@ describe('POST /api/ai/generate-details', () => {
     expect(response.status).toBe(200);
     expect(body.title).toBe('Only OpenRouter');
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(String(fetchMock.mock.calls[0][0])).toBe('https://openrouter.ai/api/v1/chat/completions');
+    expect(String(fetchMock.mock.calls[0][0])).toBe(
+      'https://openrouter.ai/api/v1/chat/completions'
+    );
   });
 
   it('keeps trying OpenRouter free vision fallback after paid models return insufficient credits', async () => {

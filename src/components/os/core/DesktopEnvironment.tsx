@@ -22,9 +22,17 @@ import type { HardSkillsData } from '@/types/hardSkill';
 import type { Project } from '@/types/projects';
 import type { TestimonialData } from '@/types/testimonial';
 import type { ContactData } from '@/types/contact';
+import type { WindowState } from '@/hooks/useWindowManager';
 import { soundManager } from '../utils/SoundManager';
 import { createInitialWindows } from '../utils/windowFactory';
 import { clearVisitorPositions } from '../utils/positionSync';
+import {
+  applyVisitorNoteSnapshots,
+  applyVisitorWindowSnapshot,
+  loadVisitorDesktopSession,
+  saveVisitorNoteSnapshots,
+  saveVisitorWindowSnapshots,
+} from '../utils/visitorSessionState';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 import type { ContactProfile } from '../data/mockChats';
 import DesktopProviders from './DesktopProviders';
@@ -38,31 +46,81 @@ const ChatWindow = dynamic(() => import('../windows/ChatWindow'), {
   loading: () => <div className="h-full w-full animate-pulse rounded bg-gray-100" />,
   ssr: false,
 });
+const ProjectDetailWrapper = dynamic(() => import('../ui/ProjectDetailWrapper'), {
+  loading: () => (
+    <div className="h-full w-full animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+  ),
+  ssr: false,
+});
 const StartScreen = dynamic(() => import('../ui/StartScreen'), {
   ssr: false,
   loading: () => (
     <div
-      className="fixed inset-0 flex h-full w-full select-none items-center justify-center overflow-hidden bg-black print:hidden"
+      className="fixed inset-0 h-full w-full bg-black print:hidden"
       style={{ zIndex: Z_LAYERS.BOOT }}
-    >
-      <div className="relative flex items-center justify-center">
-        <svg
-          width="80"
-          height="120"
-          viewBox="0 0 24 36"
-          fill="#ffffff"
-          className="relative overflow-visible"
-        >
-          <circle cx="12" cy="10" r="9" />
-          <path d="M8 16 L4 32 C 3 35, 21 35, 20 32 L16 16 Z" />
-        </svg>
-        <p className="absolute -bottom-24 whitespace-nowrap text-sm font-medium uppercase tracking-[0.4em] text-white/90">
-          Click to Start
-        </p>
-      </div>
-    </div>
+    />
   ),
 });
+
+const DESKTOP_ENTRANCE_AFTER_REVEAL_MS = 520;
+const DESKTOP_ENTRANCE_AFTER_SKIPPED_BOOT_MS = 160;
+const WINDOWS_ENTRANCE_AFTER_ICONS_MS = 120;
+const NOTES_ENTRANCE_AFTER_WINDOWS_MS = 220;
+
+interface MissionTarget {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  scale: number;
+}
+
+function computeMissionTargets(
+  windows: WindowState[],
+  vpWidth: number,
+  vpHeight: number
+): Map<string, MissionTarget> {
+  const openWindows = windows.filter((w) => w.isOpen && !w.isMinimized);
+  const targets = new Map<string, MissionTarget>();
+  const count = openWindows.length;
+  if (count === 0) return targets;
+
+  const cols = count === 1 ? 1 : Math.min(count, 3);
+  const rows = Math.ceil(count / cols);
+  const gap = 40;
+  const menubarH = 44;
+  const availableW = vpWidth - gap * (cols + 1);
+  const availableH = vpHeight - menubarH - 80 - gap * (rows + 1);
+  const cellW = Math.floor(availableW / cols);
+  const cellH = Math.floor(availableH / rows);
+  const gridStartX = gap;
+  const totalGridH = rows * cellH + (rows - 1) * gap;
+  const gridStartY = menubarH + Math.floor((vpHeight - menubarH - 80 - totalGridH) / 2);
+
+  openWindows.forEach((w, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cx = gridStartX + col * (cellW + gap) + Math.floor(cellW / 2);
+    const cy = gridStartY + row * (cellH + gap) + Math.floor(cellH / 2);
+    const winW = w.width || 800;
+    const winH = w.height || 600;
+
+    // Scale window down dynamically to fit inside the grid cell, cap at 0.65 to avoid scaling up small windows
+    const scaleX = (cellW - 20) / winW; // Leave 20px cell padding
+    const scaleY = (cellH - 20) / winH; // Leave 20px cell padding
+    const scale = Math.min(0.65, scaleX, scaleY);
+
+    targets.set(w.id, {
+      x: cx - Math.floor(winW / 2),
+      y: cy - Math.floor(winH / 2),
+      width: winW,
+      height: winH,
+      scale,
+    });
+  });
+
+  return targets;
+}
 
 export interface DesktopEnvironmentProps {
   children?: React.ReactNode;
@@ -130,7 +188,6 @@ export default function DesktopEnvironment({
         hardSkillsData,
         contactData,
         projects,
-        commercialProjects,
         dynamicContacts,
         isAdmin,
         isMobile,
@@ -141,7 +198,6 @@ export default function DesktopEnvironment({
       hardSkillsData,
       contactData,
       projects,
-      commercialProjects,
       dynamicContacts,
       isAdmin,
       isMobile,
@@ -182,19 +238,27 @@ export default function DesktopEnvironment({
 function DesktopMainWithLogout({ originalLogout, ...props }: DesktopMainWithLogoutProps) {
   const { flushAll } = useLayoutPersistence();
   const handleLogout = async () => {
-    await flushAll();
-    clearVisitorPositions();
-    await new Promise((r) => setTimeout(r, 300));
-    await originalLogout();
+    const flushTimeout = new Promise<void>((resolve) => {
+      window.setTimeout(resolve, 700);
+    });
+
+    try {
+      await Promise.race([flushAll(), flushTimeout]);
+    } catch (error) {
+      console.warn('[DesktopEnvironment] Layout flush skipped before admin exit:', error);
+    } finally {
+      clearVisitorPositions();
+      await originalLogout();
+    }
   };
   return <DesktopMain {...props} logout={handleLogout} />;
 }
 
 function DesktopMain({
   aboutData,
-  experienceData,
-  hardSkillsData,
-  contactData,
+  experienceData: _experienceData,
+  hardSkillsData: _hardSkillsData,
+  contactData: _contactData,
   isMobile,
   isAdmin,
   logout,
@@ -207,13 +271,37 @@ function DesktopMain({
   bootSequence,
 }: DesktopMainProps) {
   const { needsPowerOn, isBooting, finishBooting } = bootSequence;
-  const { startScreenReady, setStartScreenReady, isRevealed, setIsRevealed } = useOSSystem();
+  const {
+    startScreenReady,
+    setStartScreenReady,
+    isRevealed,
+    setIsRevealed,
+    notesVisible,
+    setNotesVisible,
+    hiddenNoteIds,
+    restoreHiddenNoteIds,
+    showMissionControl,
+    setShowMissionControl,
+  } = useOSSystem();
   const wasBootSkipped = !needsPowerOn && !isBooting;
+  const [desktopEntranceReady, setDesktopEntranceReady] = React.useState(false);
+  const [windowsEntranceReady, setWindowsEntranceReady] = React.useState(false);
+  const [notesEntranceReady, setNotesEntranceReady] = React.useState(false);
 
-  // Track which icons are currently "morphed" into windows (supports multiple)
-  // Getter tidak dipakai karena status morph hanya dipakai oleh handlers,
-  // tapi setter perlu untuk add/delete id.
   const [, setActiveIconIds] = React.useState<Set<string>>(new Set());
+
+  // Listen to viewport resizing for responsive Mission Control positioning
+  const [viewport, setViewport] = React.useState({ width: 1440, height: 900 });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResize = () => {
+      setViewport({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial compute
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useDesktopShortcuts();
 
@@ -230,11 +318,17 @@ function DesktopMain({
     minimizeWindow,
     maximizeWindow,
     focusWindow,
+    setWindows,
     updateWindowPosition,
     handleWindowResize,
     handleWindowResizeEnd,
     togglePin,
   } = useDesktopWindowContext();
+
+  const missionTargets = React.useMemo(() => {
+    if (!showMissionControl) return new Map<string, MissionTarget>();
+    return computeMissionTargets(windows, viewport.width, viewport.height);
+  }, [showMissionControl, windows, viewport]);
 
   const {
     notes,
@@ -244,6 +338,8 @@ function DesktopMain({
     permanentDeleteNote,
     restoreNote,
     bringToFrontNote,
+    setNotes,
+    hasLoaded: notesLoaded,
   } = useStickyNotes(true, isAdmin, csrfToken ?? undefined, requestNextZIndex, isAuthLoading);
   const {
     openProjectWindow: baseOpenProjectWindow,
@@ -272,16 +368,12 @@ function DesktopMain({
     },
     [baseOpenProjectWindow]
   );
-  const {
-    iconPositions,
-    handleIconPositionChange,
-    handleIconZIndexChange,
-    handleIconSizeChange,
-  } = useDesktopLayout({
-    aboutData,
-    isAdmin,
-    csrfToken,
-  });
+  const { iconPositions, handleIconPositionChange, handleIconZIndexChange, handleIconSizeChange } =
+    useDesktopLayout({
+      aboutData,
+      isAdmin,
+      csrfToken,
+    });
   const { projectIcons } = useDesktopIcons({
     mounted: true,
     commercialProjects,
@@ -290,6 +382,129 @@ function DesktopMain({
     onOpenExplorer: () => openWindow('explorer'),
     iconPositions,
   });
+  const restoredVisitorWindowsRef = React.useRef(false);
+  const restoredVisitorNotesRef = React.useRef(false);
+  const [visitorWindowsReady, setVisitorWindowsReady] = React.useState(isAdmin);
+  const [visitorNotesReady, setVisitorNotesReady] = React.useState(isAdmin);
+  const markVisitorWindowsReady = React.useCallback(() => {
+    window.setTimeout(() => setVisitorWindowsReady(true), 0);
+  }, []);
+  const markVisitorNotesReady = React.useCallback(() => {
+    window.setTimeout(() => setVisitorNotesReady(true), 0);
+  }, []);
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (isAdmin) {
+      markVisitorWindowsReady();
+      return;
+    }
+
+    if (restoredVisitorWindowsRef.current) return;
+    const session = loadVisitorDesktopSession();
+    const snapshots = session?.windows ?? {};
+    const projectById = new Map(projects.map((project) => [project.id, project]));
+
+    setWindows((prev) => {
+      let changed = false;
+      const existingIds = new Set(prev.map((windowState) => windowState.id));
+      const restoredExisting = prev.map((windowState) => {
+        const snapshot = snapshots[windowState.id];
+        if (!snapshot) return windowState;
+        changed = true;
+        return applyVisitorWindowSnapshot(windowState, snapshot);
+      });
+
+      const restoredProjects = Object.values(snapshots)
+        .filter((snapshot) => snapshot.kind === 'project' && snapshot.isOpen && snapshot.projectId)
+        .filter((snapshot) => !existingIds.has(snapshot.id))
+        .map((snapshot) => {
+          const project = projectById.get(snapshot.projectId!);
+          if (!project) return null;
+
+          changed = true;
+          return applyVisitorWindowSnapshot(
+            {
+              id: snapshot.id,
+              title: snapshot.title ?? `Portfolio: ${project.title}`,
+              isOpen: true,
+              isMinimized: snapshot.isMinimized ?? false,
+              isMaximized: snapshot.isMaximized ?? false,
+              zIndex: snapshot.zIndex ?? 30,
+              noPadding: true,
+              initialPosition: snapshot.initialPosition,
+              width: snapshot.width ?? 900,
+              height: snapshot.height ?? 620,
+              content: null,
+              contentFactory: () => <ProjectDetailWrapper project={project} projects={projects} />,
+            },
+            snapshot
+          );
+        })
+        .filter((windowState): windowState is WindowState => windowState !== null);
+
+      return changed ? [...restoredExisting, ...restoredProjects] : prev;
+    });
+
+    restoredVisitorWindowsRef.current = true;
+    markVisitorWindowsReady();
+  }, [
+    isAdmin,
+    isAuthLoading,
+    markVisitorNotesReady,
+    markVisitorWindowsReady,
+    projects,
+    setWindows,
+  ]);
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (isAdmin) {
+      markVisitorNotesReady();
+      return;
+    }
+    if (restoredVisitorNotesRef.current || !notesLoaded) return;
+
+    const session = loadVisitorDesktopSession();
+    if (session) {
+      setNotes((prev) => applyVisitorNoteSnapshots(prev, session.notes));
+      if (typeof session.notesVisible === 'boolean') {
+        setNotesVisible(session.notesVisible);
+      }
+      restoreHiddenNoteIds(session.hiddenNoteIds ?? []);
+    }
+
+    restoredVisitorNotesRef.current = true;
+    markVisitorNotesReady();
+  }, [
+    isAdmin,
+    isAuthLoading,
+    markVisitorNotesReady,
+    notesLoaded,
+    restoreHiddenNoteIds,
+    setNotes,
+    setNotesVisible,
+  ]);
+
+  useEffect(() => {
+    if (isAdmin || isAuthLoading || !visitorWindowsReady) return;
+
+    const timer = window.setTimeout(() => {
+      saveVisitorWindowSnapshots(windows);
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [isAdmin, isAuthLoading, visitorWindowsReady, windows]);
+
+  useEffect(() => {
+    if (isAdmin || isAuthLoading || !visitorNotesReady || !notesLoaded) return;
+
+    const timer = window.setTimeout(() => {
+      saveVisitorNoteSnapshots(notes, notesVisible, hiddenNoteIds);
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [hiddenNoteIds, isAdmin, isAuthLoading, notes, notesLoaded, notesVisible, visitorNotesReady]);
 
   useEffect(() => {
     if (aboutData?.soundConfig) {
@@ -348,42 +563,81 @@ function DesktopMain({
       openWhatsAppList();
     } else if (app === 'notes') {
       showNotes();
+    } else if (app === 'mission-control') {
+      setShowMissionControl(true);
     } else {
       openWindow(app);
     }
 
     // Cleanup URL setelah handled
     if (typeof window !== 'undefined') {
-      const nextUrl = window.location.pathname + window.location.hash;
-      window.history.replaceState({}, '', nextUrl);
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.delete('app');
+      window.history.replaceState({}, '', nextUrl.pathname + nextUrl.search + window.location.hash);
     }
-  }, [searchParams, openWindow, openWhatsAppList, showNotes]);
+  }, [searchParams, openWindow, openWhatsAppList, showNotes, setShowMissionControl]);
 
   const isDesktopReady = wasBootSkipped || startScreenReady;
   const isDesktopRevealed = wasBootSkipped || isRevealed;
+
+  useEffect(() => {
+    if (!isDesktopRevealed || desktopEntranceReady) {
+      return;
+    }
+
+    const delay = wasBootSkipped
+      ? DESKTOP_ENTRANCE_AFTER_SKIPPED_BOOT_MS
+      : DESKTOP_ENTRANCE_AFTER_REVEAL_MS;
+    const timer = window.setTimeout(() => {
+      setDesktopEntranceReady(true);
+    }, delay);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [desktopEntranceReady, isDesktopRevealed, wasBootSkipped]);
+
+  useEffect(() => {
+    if (!desktopEntranceReady) return;
+
+    const windowsTimer = window.setTimeout(() => {
+      setWindowsEntranceReady(true);
+    }, WINDOWS_ENTRANCE_AFTER_ICONS_MS);
+    const notesTimer = window.setTimeout(() => {
+      setNotesEntranceReady(true);
+    }, WINDOWS_ENTRANCE_AFTER_ICONS_MS + NOTES_ENTRANCE_AFTER_WINDOWS_MS);
+
+    return () => {
+      window.clearTimeout(windowsTimer);
+      window.clearTimeout(notesTimer);
+    };
+  }, [desktopEntranceReady]);
 
   // Bridge ke `BackgroundEffectContext` (provider hidup di HomeOSWrapper).
   // DesktopBackground sekarang di-render di level wrapper supaya `<video>`
   // tidak ke-remount; tapi efek blur+scale saat project window terbuka
   // tetap perlu trigger dari sini karena state `windows` lokal ke
   // DesktopMain.
-  const { setIsWindowOpen } = useBackgroundEffect();
+  const { setIsWindowOpen, setIsDesktopRevealed } = useBackgroundEffect();
   const isProjectWindowOpen = useMemo(
-    () =>
-      windows.some(
-        (w) => w.id.startsWith('project-') && w.isOpen && !w.isMinimized
-      ),
+    () => windows.some((w) => w.id.startsWith('project-') && w.isOpen && !w.isMinimized),
     [windows]
   );
   useEffect(() => {
     setIsWindowOpen(isProjectWindowOpen);
   }, [isProjectWindowOpen, setIsWindowOpen]);
   useEffect(() => {
+    setIsDesktopRevealed(isDesktopRevealed);
+  }, [isDesktopRevealed, setIsDesktopRevealed]);
+  useEffect(() => {
     // Pastikan saat DesktopMain unmount (mis. logout / route change),
     // background effect kembali ke neutral. Kalau dibiarkan true,
     // wallpaper sisa-blur saat user balik ke desktop.
-    return () => setIsWindowOpen(false);
-  }, [setIsWindowOpen]);
+    return () => {
+      setIsWindowOpen(false);
+      setIsDesktopRevealed(false);
+    };
+  }, [setIsWindowOpen, setIsDesktopRevealed]);
 
   // Pre-mount desktop layers as soon as StartScreen is mounted (sebelum
   // hollow-O pecah). Tujuannya: chunk JS untuk DesktopIconsLayer / UnifiedLayer
@@ -400,153 +654,182 @@ function DesktopMain({
   // Preload NonOSChrome dynamically so navigation to /projects is instant and dock doesn't slide
   useEffect(() => {
     if (isDesktopRevealed) {
+      let idleId: number | undefined;
+      let timerId: ReturnType<typeof setTimeout> | undefined;
       const preload = () => {
         import('@/components/layout/NonOSChrome').catch(() => {});
       };
       if (typeof window !== 'undefined') {
         if ('requestIdleCallback' in window) {
-          window.requestIdleCallback(preload);
+          idleId = window.requestIdleCallback(preload);
         } else {
-          setTimeout(preload, 1000);
+          timerId = setTimeout(preload, 1000);
         }
       }
+      return () => {
+        if (idleId !== undefined && 'cancelIdleCallback' in window) {
+          window.cancelIdleCallback(idleId);
+        }
+        if (timerId !== undefined) clearTimeout(timerId);
+      };
     }
   }, [isDesktopRevealed]);
 
   return (
     <LazyMotion features={domMax}>
       <>
-          {(needsPowerOn || isBooting) && (
-            <AnimatePresence>
-              <StartScreen
-                key="start-screen"
-                onStart={handleBootComplete}
-                isActive={needsPowerOn || isBooting}
-                onReady={() => {
-                  // `body::before` only protects the SSR gap before
-                  // StartScreen mounts. Keeping it during the hollow-O
-                  // reveal blocks the desktop behind the transparent mask.
-                  releaseBootCover();
-                  setStartScreenReady(true);
-                }}
-                onReveal={() => {
-                  // Pre-reveal desktop layers DI BELAKANG hollow-O
-                  // supaya saat lubang membesar, user langsung lihat
-                  // wallpaper, icons, dock, menubar — bukan layar kosong.
-                  soundManager.suppressSound('window-open', 2500);
-                  soundManager.suppressSound('notification', 1500);
-                  startTransition(() => setIsRevealed(true));
-                }}
-              />
-            </AnimatePresence>
-          )}
-          <m.div
-            className="desktop-main-container relative h-full w-full select-none overflow-hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isDesktopReady ? 1 : 0 }}
-            transition={{
-              duration: wasBootSkipped ? 0.4 : 0.2,
-              ease: wasBootSkipped ? [0.32, 0.72, 0, 1] : 'easeOut',
-            }}
-          >
-            {/*
-             * DesktopBackground TIDAK lagi di-render di sini. Wallpaper
-             * hidup di `HomeOSWrapper` supaya `<video>` element stable
-             * lintas transisi skeleton -> DesktopOS dan mounted flip,
-             * sehingga browser cuma fetch sekali (lihat header
-             * BackgroundEffectContext untuk konteks). Efek blur+scale
-             * saat project window terbuka di-bridge lewat
-             * `BackgroundEffectContext` — effect di bawah memantau
-             * `windows` dan push state ke context.
-             *
-             * Layer di bawah pre-mount segera setelah StartScreen siap
-             * (`isDesktopMounted`) supaya chunk JS DesktopIconsLayer /
-             * UnifiedLayer / UIOverlaysLayer dan sticky-notes API
-             * sudah siap saat user pertama kali melihat desktop. Tanpa
-             * pre-mount, semua chunk + API request baru kicked-off
-             * saat reveal -> wallpaper kosong selama beberapa ratus ms
-             * di belakang lubang. Visibility di-gate via opacity —
-             * StartScreen di z=BOOT menutupi semuanya sampai hollow-O
-             * pecah. `pointer-events-none` saat belum revealed wajib
-             * supaya icon/dock di belakang StartScreen tidak menerima
-             * klik yang seharusnya men-trigger boot.
-             */}
-            {isDesktopMounted && (
-              <div
-                className="absolute inset-0"
-                style={{
-                  opacity: isDesktopRevealed ? 1 : 0,
-                  pointerEvents: isDesktopRevealed ? 'auto' : 'none',
-                  // Tidak transition opacity — layer harus instan visible
-                  // bersamaan dengan hollow-O reveal. Animasi entrance
-                  // (icons stagger, notes fade) di-handle di masing-masing
-                  // layer, di-trigger lewat `isRevealed`.
-                }}
-                aria-hidden={!isDesktopRevealed}
+        {(needsPowerOn || isBooting) && (
+          <AnimatePresence>
+            <StartScreen
+              key="start-screen"
+              onStart={handleBootComplete}
+              isActive={needsPowerOn || isBooting}
+              onReady={() => {
+                // `body::before` only protects the SSR gap before
+                // StartScreen mounts. Keeping it during the hollow-O
+                // reveal blocks the desktop behind the transparent mask.
+                releaseBootCover();
+                setStartScreenReady(true);
+              }}
+              onReveal={() => {
+                // Pre-reveal desktop layers DI BELAKANG hollow-O
+                // supaya saat lubang membesar, user langsung lihat
+                // wallpaper, icons, dock, menubar — bukan layar kosong.
+                soundManager.suppressSound('window-open', 2500);
+                soundManager.suppressSound('notification', 1500);
+                startTransition(() => setIsRevealed(true));
+              }}
+            />
+          </AnimatePresence>
+        )}
+        <m.div
+          className="desktop-main-container relative h-full w-full select-none overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isDesktopReady ? 1 : 0 }}
+          transition={{
+            duration: wasBootSkipped ? 0.4 : 0.2,
+            ease: wasBootSkipped ? [0.32, 0.72, 0, 1] : 'easeOut',
+          }}
+        >
+          {/*
+           * DesktopBackground TIDAK lagi di-render di sini. Wallpaper
+           * hidup di `HomeOSWrapper` supaya `<video>` element stable
+           * lintas transisi skeleton -> DesktopOS dan mounted flip,
+           * sehingga browser cuma fetch sekali (lihat header
+           * BackgroundEffectContext untuk konteks). Efek blur+scale
+           * saat project window terbuka di-bridge lewat
+           * `BackgroundEffectContext` — effect di bawah memantau
+           * `windows` dan push state ke context.
+           *
+           * Layer di bawah pre-mount segera setelah StartScreen siap
+           * (`isDesktopMounted`) supaya chunk JS DesktopIconsLayer /
+           * UnifiedLayer / UIOverlaysLayer dan sticky-notes API
+           * sudah siap saat user pertama kali melihat desktop. Tanpa
+           * pre-mount, semua chunk + API request baru kicked-off
+           * saat reveal -> wallpaper kosong selama beberapa ratus ms
+           * di belakang lubang. Visibility di-gate via opacity —
+           * StartScreen di z=BOOT menutupi semuanya sampai hollow-O
+           * pecah. `pointer-events-none` saat belum revealed wajib
+           * supaya icon/dock di belakang StartScreen tidak menerima
+           * klik yang seharusnya men-trigger boot.
+           */}
+          {isDesktopMounted && (
+            <div
+              className="absolute inset-0"
+              data-desktop-entrance-ready={desktopEntranceReady ? 'true' : 'false'}
+              style={{
+                opacity: isDesktopRevealed ? 1 : 0,
+                pointerEvents: isDesktopRevealed ? 'auto' : 'none',
+                // Tidak transition opacity — layer harus instan visible
+                // bersamaan dengan hollow-O reveal. Animasi entrance
+                // (icons stagger, notes fade) tetap di-handle di masing-masing
+                // layer, tapi dipicu sedikit setelah reveal mulai supaya
+                // tidak selesai saat masih tertutup StartScreen.
+              }}
+              aria-hidden={!isDesktopRevealed}
+            >
+              <React.Suspense
+                fallback={
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
+                  </div>
+                }
               >
-                <React.Suspense fallback={null}>
-                  <DesktopIconsLayer
-                    projectIcons={projectIcons}
-                    isMobile={isMobile}
-                    isAdmin={isAdmin}
-                    isReady={isDesktopRevealed}
-                    handleIconPositionChange={handleIconPositionChange}
-                    handleIconZIndexChange={handleIconZIndexChange}
-                    handleIconSizeChange={handleIconSizeChange}
-                    openProjectWindow={openProjectWindow}
-                  />
-                </React.Suspense>
-                <React.Suspense fallback={null}>
-                  <UnifiedLayer
-                    windows={windows}
-                    notes={notes}
-                    isAdmin={isAdmin}
-                    isRevealed={isDesktopRevealed}
-                    closeWindow={closeWindow}
-                    minimizeWindow={minimizeWindow}
-                    maximizeWindow={maximizeWindow}
-                    focusWindow={focusWindow}
-                    updateWindowPosition={updateWindowPosition}
-                    handleWindowResize={handleWindowResize}
-                    handleWindowResizeEnd={handleWindowResizeEnd}
-                    togglePin={togglePin}
-                    updateNote={updateNote}
-                    bringToFrontNote={bringToFrontNote}
-                    deleteNote={deleteNote}
-                    permanentDeleteNote={permanentDeleteNote}
-                    restoreNote={restoreNote}
-                    addNote={addNote}
-                    onWindowClosed={(id) => {
-                      // id format: "project-${projectId}"
-                      if (id.startsWith('project-')) {
-                        const projectId = id.replace('project-', '');
-                        setActiveIconIds((prev) => {
-                          const next = new Set(prev);
-                          next.delete(projectId);
-                          return next;
-                        });
-                      }
-                    }}
-                  />
-                </React.Suspense>
-                <UIOverlaysLayer
-                  navToChat={navToChat}
-                  openWhatsAppList={openWhatsAppList}
-                  testimonialContacts={testimonialContacts}
-                  aboutData={aboutData}
-                  isAdmin={isAdmin}
-                  logout={logout}
-                  toggleNotesVisibility={toggleNotesVisibility}
+                <DesktopIconsLayer
+                  projectIcons={projectIcons}
                   isMobile={isMobile}
-                  commercialProjects={commercialProjects}
+                  isAdmin={isAdmin}
+                  isReady={desktopEntranceReady}
+                  handleIconPositionChange={handleIconPositionChange}
+                  handleIconZIndexChange={handleIconZIndexChange}
+                  handleIconSizeChange={handleIconSizeChange}
                   openProjectWindow={openProjectWindow}
-                  needsPowerOn={needsPowerOn}
-                  isBooting={isBooting}
+                  isDimmed={showMissionControl}
                 />
-              </div>
-            )}
-          </m.div>
-        </>
+              </React.Suspense>
+              <React.Suspense
+                fallback={
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
+                  </div>
+                }
+              >
+                <UnifiedLayer
+                  windows={windows}
+                  notes={notes}
+                  isAdmin={isAdmin}
+                  isRevealed={desktopEntranceReady}
+                  windowsReady={windowsEntranceReady && visitorWindowsReady}
+                  notesReady={notesEntranceReady && visitorNotesReady}
+                  closeWindow={closeWindow}
+                  minimizeWindow={minimizeWindow}
+                  maximizeWindow={maximizeWindow}
+                  focusWindow={focusWindow}
+                  updateWindowPosition={updateWindowPosition}
+                  handleWindowResize={handleWindowResize}
+                  handleWindowResizeEnd={handleWindowResizeEnd}
+                  togglePin={togglePin}
+                  updateNote={updateNote}
+                  bringToFrontNote={bringToFrontNote}
+                  deleteNote={deleteNote}
+                  permanentDeleteNote={permanentDeleteNote}
+                  restoreNote={restoreNote}
+                  addNote={addNote}
+                  onWindowClosed={(id) => {
+                    if (id.startsWith('project-')) {
+                      const projectId = id.replace('project-', '');
+                      setActiveIconIds((prev) => {
+                        const next = new Set(prev);
+                        next.delete(projectId);
+                        return next;
+                      });
+                    }
+                  }}
+                  showMissionControl={showMissionControl}
+                  missionTargets={missionTargets}
+                  onMissionControlDismiss={() => setShowMissionControl(false)}
+                />
+              </React.Suspense>
+              <UIOverlaysLayer
+                navToChat={navToChat}
+                openWhatsAppList={openWhatsAppList}
+                testimonialContacts={testimonialContacts}
+                aboutData={aboutData}
+                isAdmin={isAdmin}
+                logout={logout}
+                toggleNotesVisibility={toggleNotesVisibility}
+                isMobile={isMobile}
+                commercialProjects={commercialProjects}
+                openProjectWindow={openProjectWindow}
+                needsPowerOn={needsPowerOn}
+                isBooting={isBooting}
+                showMissionControl={showMissionControl}
+                onMissionControlDismiss={() => setShowMissionControl(false)}
+              />
+            </div>
+          )}
+        </m.div>
+      </>
     </LazyMotion>
   );
 }

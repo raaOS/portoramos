@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { m, useMotionValue, useReducedMotion, useSpring } from 'motion/react';
+import { m } from 'motion/react';
 import { soundManager } from '../utils/SoundManager';
-import { Z_LAYERS } from '../utils/zIndexLayers';
 
 interface StartScreenProps {
   onStart: () => void;
@@ -14,6 +13,36 @@ interface StartScreenProps {
 
 type ScreenState = 'idle' | 'zooming' | 'showingText' | 'glassReveal' | 'done';
 
+/**
+ * BOOT ANIMATION SEQUENCE — DO NOT REORDER OR ADD GAPS.
+ *
+ * Original design (raaOS/portoramos):
+ * ┌──────────┬─────────────────────┬────────────────────────────────┐
+ * │ Phase    │ Duration            │ Visual                         │
+ * ├──────────┼─────────────────────┼────────────────────────────────┤
+ * │ idle     │ until user clicks   │ Hollow-O keyhole + "Click to   │
+ * │          │                     │ Start" text on black bg        │
+ * │ zooming  │ 1200ms              │ Hollow-O scales to 300×        │
+ * │ showing  │ 2000ms              │ RAMOS wordmark text fades in   │
+ * │ Text     │ (1000ms after zoom) │ inside the O at scale 1        │
+ * │ glass    │ 1500ms              │ White mask hole scales 100×,   │
+ * │ Reveal   │ (3200ms from start) │ revealing desktop through O.   │
+ * │          │                     │ Wordmark scales with mask as   │
+ * │          │                     │ intentional visual transition. │
+ * │ done     │ 4700ms from start   │ StartScreen unmounts           │
+ * └──────────┴─────────────────────┴────────────────────────────────┘
+ *
+ * CRITICAL: The wordmark text is INSIDE the scaling SVG by design.
+ * When glassReveal scales the mask to 100×, the wordmark also scales
+ * and disappears — this creates the visual of the O "opening" to reveal
+ * the desktop. Do NOT split the wordmark into a separate non-scaling
+ * layer — that breaks the intended transition.
+ *
+ * Mask hole alignment: the O-ring center (31.056, 4.345) maps to
+ * (50, 50) via group transform: translate(50,50) scale(0.6) translate(-31.056,-4.345).
+ * The mask hole at (50, 50) aligns perfectly with the first O in "RAMOS".
+ */
+
 const REVEAL_OVERLAP_MS = 200;
 
 const BOOT_CONFIG = {
@@ -22,30 +51,15 @@ const BOOT_CONFIG = {
   textDisplayDuration: 2000,
   revealDuration: 1500,
   allowSkip: true,
+  /** Text starts fading in 200ms before zoom completes. */
   get showTextDelay() {
     return this.keyholeZoomDuration - REVEAL_OVERLAP_MS;
   },
+  /** Hole starts growing after text has been displayed for the full duration. */
   get glassRevealDelay() {
     return this.keyholeZoomDuration + this.textDisplayDuration - REVEAL_OVERLAP_MS;
   },
-  get completeDelay() {
-    return this.glassRevealDelay + this.revealDuration;
-  },
-};
-
-// Fast-path timing when user prefers reduced motion — skip most of the cinematic
-// sequence but keep enough delay untuk sound "startup" sempat main.
-const REDUCED_MOTION_CONFIG = {
-  keyholeZoomDuration: 200,
-  textFadeInDuration: 0,
-  textDisplayDuration: 300,
-  revealDuration: 200,
-  get showTextDelay() {
-    return this.keyholeZoomDuration;
-  },
-  get glassRevealDelay() {
-    return this.keyholeZoomDuration + this.textDisplayDuration;
-  },
+  /** Complete after hole finishes expanding. */
   get completeDelay() {
     return this.glassRevealDelay + this.revealDuration;
   },
@@ -53,7 +67,7 @@ const REDUCED_MOTION_CONFIG = {
 
 const textFadeTransition = {
   duration: BOOT_CONFIG.textFadeInDuration / 1000,
-  ease: [0.4, 0, 0.2, 1], // Kurva ease yang lebih sinematik (mulai perlahan, mulus di tengah, melambat di akhir)
+  ease: [0.4, 0, 0.2, 1],
 } as const;
 
 const revealScaleTransition = {
@@ -61,27 +75,12 @@ const revealScaleTransition = {
   ease: [0.76, 0, 0.24, 1],
 } as const;
 
-const KEY_TILT_MAX_DEGREES = 10;
-const KEY_TILT_SPRING = { stiffness: 150, damping: 20, mass: 0.4 } as const;
-
 const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps) => {
-  const prefersReducedMotion = useReducedMotion();
   const [screenState, setScreenState] = useState<ScreenState>('idle');
   const timersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const revealRafRef = useRef<number | null>(null);
-  const tiltRafRef = useRef<number | null>(null);
-  const latestTiltPointRef = useRef<{ x: number; y: number; width: number; height: number } | null>(
-    null
-  );
   const hasStartedRef = useRef(false);
   const maskId = `hollow-o-mask-${useId().replace(/:/g, '')}`;
-
-  const activeConfig = prefersReducedMotion ? REDUCED_MOTION_CONFIG : BOOT_CONFIG;
-
-  const tiltX = useMotionValue(0);
-  const tiltY = useMotionValue(0);
-  const rotateX = useSpring(tiltX, KEY_TILT_SPRING);
-  const rotateY = useSpring(tiltY, KEY_TILT_SPRING);
 
   useEffect(() => {
     onReady?.();
@@ -94,10 +93,6 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
 
       if (revealRafRef.current !== null) {
         window.cancelAnimationFrame(revealRafRef.current);
-      }
-
-      if (tiltRafRef.current !== null) {
-        window.cancelAnimationFrame(tiltRafRef.current);
       }
     };
   }, []);
@@ -118,12 +113,11 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
 
     setScreenState('zooming');
     soundManager.unlock();
-    soundManager.clearCache('startup');
     soundManager.play('startup');
 
     queueTimer(() => {
       setScreenState('showingText');
-    }, activeConfig.showTextDelay);
+    }, BOOT_CONFIG.showTextDelay);
 
     queueTimer(() => {
       setScreenState('glassReveal');
@@ -137,13 +131,13 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
         onReveal?.();
         revealRafRef.current = null;
       });
-    }, activeConfig.glassRevealDelay);
+    }, BOOT_CONFIG.glassRevealDelay);
 
     queueTimer(() => {
       setScreenState('done');
       onStart();
-    }, activeConfig.completeDelay);
-  }, [onReveal, onStart, queueTimer, screenState, activeConfig]);
+    }, BOOT_CONFIG.completeDelay);
+  }, [onReveal, onStart, queueTimer, screenState]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -162,61 +156,6 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleClick, screenState]);
 
-  const resetTilt = useCallback(() => {
-    latestTiltPointRef.current = null;
-
-    if (tiltRafRef.current !== null) {
-      window.cancelAnimationFrame(tiltRafRef.current);
-      tiltRafRef.current = null;
-    }
-
-    tiltX.set(0);
-    tiltY.set(0);
-  }, [tiltX, tiltY]);
-
-  const handlePointerMove = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      if (screenState !== 'idle' || prefersReducedMotion) {
-        return;
-      }
-
-      const bounds = event.currentTarget.getBoundingClientRect();
-      if (bounds.width === 0 || bounds.height === 0) {
-        return;
-      }
-
-      latestTiltPointRef.current = {
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
-        width: bounds.width,
-        height: bounds.height,
-      };
-
-      if (tiltRafRef.current !== null) {
-        return;
-      }
-
-      tiltRafRef.current = window.requestAnimationFrame(() => {
-        tiltRafRef.current = null;
-        const point = latestTiltPointRef.current;
-        if (!point) return;
-
-        const nx = (point.x / point.width) * 2 - 1;
-        const ny = (point.y / point.height) * 2 - 1;
-
-        tiltY.set(nx * KEY_TILT_MAX_DEGREES);
-        tiltX.set(-ny * KEY_TILT_MAX_DEGREES);
-      });
-    },
-    [prefersReducedMotion, screenState, tiltX, tiltY]
-  );
-
-  useEffect(() => {
-    if (!isActive || screenState !== 'idle' || prefersReducedMotion) {
-      resetTilt();
-    }
-  }, [isActive, prefersReducedMotion, resetTilt, screenState]);
-
   if (!isActive || screenState === 'done') {
     return null;
   }
@@ -225,50 +164,32 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
   const masterFrameColor =
     screenState === 'idle' || screenState === 'zooming' ? '#000000' : '#ffffff';
 
-  // Reduced-motion-aware transitions: eliminate scale/opacity springs where possible.
-  const effectiveRevealScaleTransition = prefersReducedMotion
-    ? { duration: REDUCED_MOTION_CONFIG.revealDuration / 1000, ease: [0.4, 0, 0.2, 1] as const }
-    : revealScaleTransition;
-  const effectiveTextFadeTransition = prefersReducedMotion
-    ? { duration: 0.1, ease: [0.4, 0, 0.2, 1] as const }
-    : textFadeTransition;
-  const effectiveZoomTransition = prefersReducedMotion
-    ? {
-        duration: REDUCED_MOTION_CONFIG.keyholeZoomDuration / 1000,
-        ease: [0.4, 0, 0.2, 1] as const,
-      }
-    : { duration: BOOT_CONFIG.keyholeZoomDuration / 1000, ease: [0.76, 0, 0.24, 1] as const };
-  const zoomTargetScale = prefersReducedMotion ? 50 : 300;
-  const glassRevealTargetScale = prefersReducedMotion ? 20 : 100;
-
   return (
     <m.div
       id="start-screen"
       data-testid="os-start-screen"
       data-boot-state={screenState}
-      className="fixed inset-0 h-full w-full select-none overflow-hidden bg-transparent print:hidden"
+      className="fixed inset-0 z-[999999] h-full w-full select-none overflow-hidden bg-transparent print:hidden"
       initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
-      style={{
-        pointerEvents: screenState === 'glassReveal' ? 'none' : 'auto',
-        zIndex: Z_LAYERS.BOOT,
-      }}
+      style={{ pointerEvents: screenState === 'glassReveal' ? 'none' : 'auto' }}
     >
+      {/* --- REVEAL LAYER: white mask with growing hole --- */}
       <m.div
-        className="pointer-events-none absolute inset-0 overflow-hidden"
+        className="pointer-events-none absolute inset-0 z-[10002] overflow-hidden"
         initial={{ opacity: 0 }}
         animate={{
           opacity: isWordmarkVisible ? 1 : 0,
-          scale: screenState === 'glassReveal' ? glassRevealTargetScale : 1,
+          scale: screenState === 'glassReveal' ? 100 : 1,
         }}
         transition={{
-          opacity: { duration: prefersReducedMotion ? 0.15 : 0.35, ease: 'easeInOut' },
+          opacity: { duration: 0.35, ease: 'easeInOut' },
           scale:
             screenState === 'glassReveal'
-              ? effectiveRevealScaleTransition
-              : { duration: prefersReducedMotion ? 0.15 : 0.6, ease: [0.76, 0, 0.24, 1] },
+              ? revealScaleTransition
+              : { duration: 0.6, ease: [0.76, 0, 0.24, 1] },
         }}
-        style={{ transformOrigin: '50% 50%', zIndex: Z_LAYERS.POPOUT_CONTENT }}
+        style={{ transformOrigin: '50% 50%' }}
         data-boot-layer="reveal"
       >
         <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
@@ -281,6 +202,13 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
 
           <rect x="0" y="0" width="100" height="100" fill="#ffffff" mask={`url(#${maskId})`} />
 
+          {/* CRITICAL PORTAL COVER:
+              This circle covers the transparent mask hole at (50,50) during the unblurring text phase.
+              - MUST use fill="#ffffff" (white) to match the screen background, keeping the first 'O' hollow
+                and identical to the second 'O' (instead of looking solid black).
+              - MUST remain opaque (opacity: 1) during 'showingText' to hide the desktop background.
+              - ONLY fades out (opacity: 0) during 'glassReveal' to reveal the desktop through the 'O' 
+                portal simultaneously as the zoom-in scaling transition runs. */}
           <m.circle
             cx="50"
             cy="50"
@@ -289,23 +217,21 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
             initial={{ opacity: 1 }}
             animate={{ opacity: screenState === 'glassReveal' ? 0 : 1 }}
             transition={{
-              duration: screenState === 'glassReveal' ? (prefersReducedMotion ? 0.15 : 0.35) : 0.2,
-              ease: [0.32, 0.72, 0, 1],
+              duration: screenState === 'glassReveal' ? 0.5 : 0.2,
+              ease: 'easeInOut',
             }}
           />
 
+          {/* RAMOS wordmark — INSIDE scaling SVG by design.
+              Scales with the mask during glassReveal as part of the transition. */}
           <m.g
             transform="translate(50, 50) scale(0.6) translate(-31.056, -4.345)"
             initial={{ opacity: 0, filter: 'blur(10px)' }}
             animate={{
               opacity: isWordmarkVisible ? 1 : 0,
-              filter: isWordmarkVisible
-                ? 'blur(0px)'
-                : prefersReducedMotion
-                  ? 'blur(0px)'
-                  : 'blur(10px)',
+              filter: isWordmarkVisible ? 'blur(0px)' : 'blur(10px)',
             }}
-            transition={effectiveTextFadeTransition}
+            transition={textFadeTransition}
           >
             <g fill="black">
               <path d="M 1.8 8.545 L 0 8.545 L 0 0.145 L 3.264 0.145 Q 4.284 0.145 4.962 0.499 Q 5.64 0.853 5.97 1.441 Q 6.3 2.029 6.3 2.749 Q 6.3 3.421 5.982 4.009 Q 5.664 4.597 4.992 4.957 Q 4.32 5.317 3.252 5.317 L 1.8 5.317 L 1.8 8.545 Z M 1.8 1.645 L 1.8 4.021 L 3.156 4.021 Q 3.828 4.021 4.146 3.697 Q 4.464 3.373 4.464 2.821 Q 4.464 2.281 4.146 1.963 Q 3.828 1.645 3.156 1.645 L 1.8 1.645 Z M 6.372 8.545 L 4.332 8.545 L 2.64 4.873 L 4.572 4.873 L 6.372 8.545 Z" />
@@ -333,116 +259,65 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
         </svg>
       </m.div>
 
+      {/* --- BACKGROUND COLOR OVERLAY --- */}
       <m.div
-        className="absolute inset-0"
+        className="absolute inset-0 z-[10000]"
         animate={{
-          opacity: screenState === 'glassReveal' ? 0 : 1,
+          opacity: screenState === 'idle' || screenState === 'zooming' ? 1 : 0,
           backgroundColor: masterFrameColor,
         }}
         transition={{
           opacity: {
-            duration: screenState === 'glassReveal' ? 0 : prefersReducedMotion ? 0.2 : 0.8,
+            duration: screenState === 'glassReveal' ? 0 : 0.8,
             ease: 'easeInOut',
           },
           backgroundColor: { duration: 0 },
         }}
-        style={{ zIndex: Z_LAYERS.CHROME }}
       />
 
+      {/* --- KEYHOLE ICON LAYER: Hollow-O + Click to Start --- */}
       <m.div
-        className="absolute inset-0 flex items-center justify-center"
-        style={{ pointerEvents: screenState === 'idle' ? 'auto' : 'none', zIndex: Z_LAYERS.POPOUT }}
+        className="absolute inset-0 z-[10001] flex items-center justify-center"
+        style={{ pointerEvents: screenState === 'idle' ? 'auto' : 'none' }}
         onClick={screenState === 'idle' ? handleClick : undefined}
-        onPointerMove={
-          screenState === 'idle' && !prefersReducedMotion ? handlePointerMove : undefined
-        }
-        onPointerLeave={resetTilt}
         animate={{ opacity: screenState === 'idle' || screenState === 'zooming' ? 1 : 0 }}
-        transition={{ duration: prefersReducedMotion ? 0.2 : 0.8, ease: 'easeInOut' }}
+        transition={{ duration: 0.8, ease: 'easeInOut' }}
       >
         <m.div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: screenState === 'idle' ? 1 : 0 }}
-          transition={{
-            duration: prefersReducedMotion ? 0.2 : screenState === 'idle' ? 1.2 : 0.18,
-            ease: 'easeOut',
-          }}
-          style={{
-            background:
-              'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.06) 22%, rgba(0,0,0,0) 58%), radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 48%, rgba(0,0,0,0.62) 100%)',
-          }}
-        />
-        <m.div
-          className={`relative flex cursor-pointer items-center justify-center ${
-            screenState === 'idle' ? 'will-change-transform' : ''
-          }`}
+          className="relative flex cursor-pointer items-center justify-center will-change-transform"
           layout={false}
           initial={{ scale: 0, opacity: 0 }}
           animate={{
-            scale: screenState === 'idle' ? 1 : zoomTargetScale,
+            scale: screenState === 'idle' ? 1 : 300,
             opacity: 1,
           }}
           transition={{
             scale:
               screenState === 'idle'
-                ? prefersReducedMotion
-                  ? { duration: 0.2, ease: [0.4, 0, 0.2, 1] }
-                  : { type: 'spring', stiffness: 260, damping: 20 }
-                : effectiveZoomTransition,
-            opacity: { duration: prefersReducedMotion ? 0.15 : 0.5 },
+                ? { type: 'spring', stiffness: 260, damping: 20 }
+                : {
+                    duration: BOOT_CONFIG.keyholeZoomDuration / 1000,
+                    ease: [0.76, 0, 0.24, 1],
+                  },
+            opacity: { duration: 0.5 },
           }}
         >
           <m.div
             className="relative flex items-center justify-center text-[#ffffff]"
-            whileHover={
-              screenState === 'idle' && !prefersReducedMotion ? { scale: 1.05 } : { scale: 1 }
-            }
+            whileHover={screenState === 'idle' ? { scale: 1.05 } : { scale: 1 }}
             animate={{ scale: 1 }}
             transition={{ duration: screenState === 'idle' ? 0.3 : 0 }}
-            style={
-              screenState === 'idle'
-                ? {
-                    transformPerspective: 500,
-                    rotateX,
-                    rotateY,
-                  }
-                : undefined
-            }
           >
-            <m.div
-              className={`flex items-center justify-center ${
-                screenState === 'idle' ? 'will-change-transform' : ''
-              }`}
-              animate={
-                screenState === 'idle' && !prefersReducedMotion
-                  ? { scale: [1, 1.08, 1] }
-                  : { scale: 1 }
-              }
-              transition={
-                screenState === 'idle' && !prefersReducedMotion
-                  ? { duration: 3.2, ease: 'easeInOut', repeat: Infinity }
-                  : { duration: 0 }
-              }
-              style={{
-                filter:
-                  screenState === 'idle'
-                    ? 'drop-shadow(0 18px 32px rgba(255,255,255,0.22))'
-                    : 'none',
-              }}
+            <svg
+              width="80"
+              height="120"
+              viewBox="0 0 24 36"
+              fill="#ffffff"
+              className="relative overflow-visible"
             >
-              <svg
-                width="80"
-                height="120"
-                viewBox="0 0 24 36"
-                fill="#ffffff"
-                className="relative overflow-visible"
-              >
-                <circle cx="12" cy="10" r="9" />
-                <path d="M8 16 L4 32 C 3 35, 21 35, 20 32 L16 16 Z" />
-              </svg>
-            </m.div>
+              <circle cx="12" cy="10" r="9" />
+              <path d="M8 16 L4 32 C 3 35, 21 35, 20 32 L16 16 Z" />
+            </svg>
           </m.div>
 
           {screenState === 'idle' && (
@@ -451,8 +326,8 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
-                delay: prefersReducedMotion ? 0.1 : 0.8,
-                duration: prefersReducedMotion ? 0.2 : 1,
+                delay: 0.8,
+                duration: 1,
                 ease: 'easeOut',
               }}
             >

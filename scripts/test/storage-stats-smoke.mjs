@@ -8,9 +8,10 @@ if (!password) {
 }
 
 function parseSetCookie(headers, name) {
-  const all = typeof headers.getSetCookie === 'function'
-    ? headers.getSetCookie()
-    : (headers.get('set-cookie') || '').split(/, (?=[A-Za-z0-9_]+=)/);
+  const all =
+    typeof headers.getSetCookie === 'function'
+      ? headers.getSetCookie()
+      : (headers.get('set-cookie') || '').split(/, (?=[A-Za-z0-9_]+=)/);
   for (const line of all) {
     const m = line.match(new RegExp('^' + name + '=([^;]+)'));
     if (m) return m[1];
@@ -27,7 +28,7 @@ const loginRes = await fetch(baseUrl + '/api/admin/login', {
   headers: {
     'Content-Type': 'application/json',
     'x-csrf-token': csrfBody.csrfToken,
-    'cookie': 'csrf_token=' + csrfCookie,
+    cookie: 'csrf_token=' + csrfCookie,
   },
   body: JSON.stringify({ password }),
 });

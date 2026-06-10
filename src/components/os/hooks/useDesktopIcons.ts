@@ -59,6 +59,7 @@ export function useDesktopIcons({
     commercialProjects,
     aboutData,
     handleGoHome,
+    onOpenExplorer,
     iconPositions,
   ]);
 

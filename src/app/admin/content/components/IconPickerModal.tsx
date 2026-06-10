@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  X,
-  Trash2,
-  Search,
-  CheckCircle2,
-  Loader2,
-  Image as ImageIcon,
-  RotateCcw,
-} from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, Check, Search, Loader2, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
@@ -104,19 +97,19 @@ export default function IconPickerModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const filteredIcons = icons.filter((icon) =>
     icon.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal Content */}
-      <div className="animate-in fade-in zoom-in relative flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl duration-200">
+      <div className="animate-in fade-in zoom-in relative flex max-h-[85vh] min-h-0 w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl duration-200">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 p-6">
           <div>
@@ -131,9 +124,9 @@ export default function IconPickerModal({
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
           {/* Sidebar / Upload Area */}
-          <div className="flex w-full flex-col gap-6 border-r border-gray-100 bg-gray-50/50 p-6 md:w-72">
+          <div className="flex max-h-[40vh] w-full shrink-0 flex-col gap-6 overflow-y-auto border-r border-gray-100 bg-gray-50/50 p-6 md:max-h-none md:w-72">
             <div className="space-y-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
                 Quick Upload
@@ -179,7 +172,7 @@ export default function IconPickerModal({
           </div>
 
           {/* Main Gallery Grid */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="min-h-0 flex-1 overflow-y-auto p-6">
             {loading ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
                 <Loader2 className="animate-spin" size={32} />
@@ -195,7 +188,7 @@ export default function IconPickerModal({
                     <div
                       key={idx}
                       onClick={() => handleIconClick(iconUrl)}
-                      className={`group relative flex aspect-square cursor-pointer items-center justify-center rounded-xl border-2 p-2 transition-all ${isActive ? 'border-blue-500 bg-blue-50/30' : 'border-gray-100 bg-white hover:border-blue-200 hover:shadow-md'} ${isSelected ? 'scale-95 ring-4 ring-blue-500/20' : ''} ${selectedUrl ? 'pointer-events-none opacity-50' : ''} `}
+                      className={`group relative flex aspect-square cursor-pointer items-center justify-center rounded-xl border-2 p-2 transition-all ${isActive ? 'border-emerald-500 bg-emerald-50/20' : 'border-gray-100 bg-white hover:border-emerald-200 hover:shadow-md'} ${isSelected ? 'scale-95 ring-4 ring-emerald-500/20' : ''} ${selectedUrl ? 'pointer-events-none opacity-50' : ''} `}
                     >
                       <img
                         src={iconUrl}
@@ -203,26 +196,26 @@ export default function IconPickerModal({
                         className="h-full w-full object-contain drop-shadow-sm transition-transform group-hover:scale-110"
                       />
                       {isActive && (
-                        <div className="animate-in zoom-in absolute -right-2 -top-2 rounded-full bg-blue-500 p-0.5 text-white shadow-lg duration-200">
-                          <CheckCircle2 size={16} />
+                        <div className="animate-in zoom-in absolute -right-2 -top-2 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md duration-200">
+                          <Check size={12} strokeWidth={3} />
                         </div>
                       )}
 
-                      {/* Delete Button - Using Trash icon now, bottom-right and subtle */}
+                      {/* Delete Button - Using X icon now, top-left */}
                       <button
                         onClick={(e) => handleDelete(e, iconUrl)}
                         onContextMenu={(e) => {
                           e.preventDefault();
                           handleDelete(e, iconUrl);
                         }}
-                        className="absolute bottom-1 right-1 z-20 rounded-lg p-1.5 text-gray-400 opacity-0 transition-all hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                        className="absolute -left-2 -top-2 z-20 flex h-5 !min-h-0 w-5 !min-w-0 items-center justify-center rounded-full bg-red-500 p-0 text-white opacity-0 shadow-md transition-all duration-200 group-hover:opacity-100"
                         title="Hapus ikon (Klik kanan juga bisa)"
                         type="button"
                       >
-                        <Trash2 size={16} />
+                        <X size={12} strokeWidth={3} />
                       </button>
 
-                      <div className="absolute inset-0 rounded-xl bg-blue-500/0 transition-colors group-hover:bg-blue-500/5" />
+                      <div className="absolute inset-0 rounded-xl bg-emerald-500/0 transition-colors group-hover:bg-emerald-500/5" />
                     </div>
                   );
                 })}
@@ -247,6 +240,7 @@ export default function IconPickerModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

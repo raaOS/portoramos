@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Project } from '@/types/projects';
 import type { ContactProfile } from '../data/mockChats';
@@ -45,6 +45,19 @@ export function useDesktopNavigation({
 }: UseDesktopNavigationProps) {
   const { notesVisible, setNotesVisible, hiddenNoteIds, unhideAllNotes } = useOSSystem();
   const router = useRouter();
+  const bounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (bounceTimerRef.current) clearTimeout(bounceTimerRef.current);
+    };
+  }, []);
+
+  const debouncedBounce = useCallback(() => {
+    setNotesDockBouncing(true);
+    if (bounceTimerRef.current) clearTimeout(bounceTimerRef.current);
+    bounceTimerRef.current = setTimeout(() => setNotesDockBouncing(false), 600);
+  }, [setNotesDockBouncing]);
 
   const handleGoHome = useCallback(() => router.push('/'), [router]);
   const resetDesktopAndClose = useCallback(() => resetWindows(), [resetWindows]);
@@ -113,18 +126,14 @@ export function useDesktopNavigation({
     } else {
       setNotesVisible(!notesVisible);
     }
-    setNotesDockBouncing(true);
-    setTimeout(() => setNotesDockBouncing(false), 600);
-  }, [notesVisible, setNotesVisible, hiddenNoteIds, unhideAllNotes, setNotesDockBouncing]);
+    debouncedBounce();
+  }, [notesVisible, setNotesVisible, hiddenNoteIds, unhideAllNotes, debouncedBounce]);
 
   const showNotes = useCallback(() => {
     unhideAllNotes();
-    if (!notesVisible) {
-      setNotesVisible(true);
-    }
-    setNotesDockBouncing(true);
-    setTimeout(() => setNotesDockBouncing(false), 600);
-  }, [notesVisible, setNotesVisible, unhideAllNotes, setNotesDockBouncing]);
+    setNotesVisible(true);
+    debouncedBounce();
+  }, [setNotesVisible, unhideAllNotes, debouncedBounce]);
 
   return {
     handleGoHome,

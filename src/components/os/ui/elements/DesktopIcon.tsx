@@ -54,21 +54,31 @@ export default function DesktopIcon({
   const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
   const [failedVideoUrl, setFailedVideoUrl] = useState<string | null>(null);
   const [hovering, setHovering] = useState(false);
+  const [previewActive, setPreviewActive] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const previewTimerRef = useRef<number | null>(null);
   const imageError = Boolean(imageUrl && failedImageUrl === imageUrl);
   const videoError = Boolean(videoUrl && failedVideoUrl === videoUrl);
 
   // Handle video playback on hover
   useEffect(() => {
     if (videoRef.current) {
-      if (hovering && !isMobile) {
+      if (hovering && previewActive && !isMobile) {
         videoRef.current.play().catch(() => {});
       } else {
         videoRef.current.pause();
         // videoRef.current.currentTime = 0; // Optional: reset to start
       }
     }
-  }, [hovering, isMobile]);
+  }, [hovering, previewActive, isMobile]);
+
+  useEffect(() => {
+    return () => {
+      if (previewTimerRef.current !== null) {
+        window.clearTimeout(previewTimerRef.current);
+      }
+    };
+  }, []);
 
   // Motion Values for smooth coordinate handling (avoids jump on drag end)
   const iconX = useMotionValue(x);
@@ -116,7 +126,34 @@ export default function DesktopIcon({
     }
   };
 
-  const showMedia = (imageUrl && !imageError) || (videoUrl && !videoError);
+  const clearPreviewTimer = () => {
+    if (previewTimerRef.current !== null) {
+      window.clearTimeout(previewTimerRef.current);
+      previewTimerRef.current = null;
+    }
+  };
+
+  const handleMouseEnter = () => {
+    if (isMobile) return;
+    setHovering(true);
+    clearPreviewTimer();
+    previewTimerRef.current = window.setTimeout(() => {
+      setPreviewActive(true);
+      previewTimerRef.current = null;
+    }, 160);
+  };
+
+  const handleMouseLeave = () => {
+    if (isMobile) return;
+    clearPreviewTimer();
+    setPreviewActive(false);
+    setHovering(false);
+  };
+
+  const hasImage = Boolean(imageUrl && !imageError);
+  const hasVideo = Boolean(videoUrl && !videoError);
+  const shouldRenderVideo = Boolean(hasVideo && !isMobile && (previewActive || !hasImage));
+  const showMedia = hasImage || hasVideo;
 
   return (
     <m.div
@@ -179,10 +216,10 @@ export default function DesktopIcon({
         }
       }}
       onMouseEnter={() => {
-        if (!isMobile) setHovering(true);
+        handleMouseEnter();
       }}
       onMouseLeave={() => {
-        if (!isMobile) setHovering(false);
+        handleMouseLeave();
       }}
     >
       {/* Icon Media Wrapper - Only this part scales during open/close animations */}
@@ -194,7 +231,7 @@ export default function DesktopIcon({
       >
         {children ? (
           <div
-            className={`relative transition-all duration-200 ${isSelected ? 'scale-[1.05]' : ''}`}
+            className={`relative transition-transform duration-200 ${isSelected ? 'scale-[1.05]' : ''}`}
           >
             {children}
           </div>
@@ -206,7 +243,7 @@ export default function DesktopIcon({
               minWidth: baseHeight * aspectRatio,
               minHeight: baseHeight,
             }}
-            className={`relative overflow-hidden rounded-none bg-white/20 transition-all duration-200 ${isSelected ? 'scale-[1.02]' : ''}`}
+            className={`relative overflow-hidden rounded-none bg-white/20 transition-transform duration-200 ${isSelected ? 'scale-[1.02]' : ''}`}
           >
             {/* Always render Image as base layer if available and not error */}
             {imageUrl && !imageError && (
@@ -214,7 +251,7 @@ export default function DesktopIcon({
                 src={imageUrl}
                 alt={label}
                 fill
-                className={`pointer-events-none object-cover transition-opacity duration-300 ${hovering && videoUrl && !videoError ? 'opacity-0' : 'opacity-100'}`}
+                className={`pointer-events-none object-cover transition-opacity duration-300 ${shouldRenderVideo ? 'opacity-0' : 'opacity-100'}`}
                 sizes="(max-width: 768px) 96px, 128px"
                 draggable={false}
                 onError={() => setFailedImageUrl(imageUrl ?? '__missing__')}
@@ -225,8 +262,8 @@ export default function DesktopIcon({
               />
             )}
 
-            {/* Always render Video if video exists to act as its own thumbnail fallback */}
-            {videoUrl && !isMobile && !videoError && (
+            {/* Render preview video only while it is useful to avoid metadata churn on idle icons. */}
+            {shouldRenderVideo && (
               <video
                 ref={videoRef}
                 src={videoUrl + '#t=0.1'}
@@ -257,10 +294,10 @@ export default function DesktopIcon({
       </m.div>
 
       {/* Label with macOS-style selection */}
-      <div className="relative mt-1 rounded-[4px] px-2 py-0.5 transition-all duration-200 group-active:scale-95">
+      <div className="relative mt-1 rounded-[4px] px-2 py-0.5 transition-transform duration-200 group-active:scale-95">
         {/* Background for contrast */}
         <div
-          className={`absolute inset-0 rounded-[4px] transition-all duration-200 ${
+          className={`absolute inset-0 rounded-[4px] transition-colors transition-opacity duration-200 ${
             isSelected
               ? 'bg-[rgba(0,122,255,0.85)] opacity-100'
               : 'bg-black/30 opacity-100 backdrop-blur-[2px]'

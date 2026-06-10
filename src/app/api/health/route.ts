@@ -1,11 +1,15 @@
-﻿import { NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { enforceRequestRateLimit } from '@/lib/security/request';
 
-/**
- * Health Check Endpoint
- * Used for monitoring uptime and basic system status
- */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const rateLimit = await enforceRequestRateLimit(request, 'health', 10, 60_000, 300_000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { status: 'rate_limited', retryAfter: rateLimit.retryAfter },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+      );
+    }
     const checks: Record<string, unknown> = {
       status: 'ok',
       timestamp: new Date().toISOString(),

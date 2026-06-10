@@ -1,9 +1,9 @@
-﻿const fs = require("fs");
-const path = require("path");
+﻿const fs = require('fs');
+const path = require('path');
 
 const root = process.cwd();
-const SCAN_ROOTS = ["src", "scripts", "tests", "scratch"];
-const SCAN_EXTS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
+const SCAN_ROOTS = ['src', 'scripts', 'tests', 'scratch'];
+const SCAN_EXTS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
 
 // Gather all files in scan roots (full codebase, including tests + scripts + app/)
 function gatherAll(dir, list) {
@@ -12,7 +12,7 @@ function gatherAll(dir, list) {
   for (const e of entries) {
     const full = path.join(dir, e.name);
     if (e.isDirectory()) {
-      if (e.name === "node_modules" || e.name === ".next" || e.name === ".git") continue;
+      if (e.name === 'node_modules' || e.name === '.next' || e.name === '.git') continue;
       gatherAll(full, list);
     } else {
       list.push(full);
@@ -30,14 +30,14 @@ for (const f of fs.readdirSync(root)) {
 }
 
 // Helper: try to resolve an import specifier from a given source file path to an absolute file path.
-const candidateExts = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
-const indexNames = ["index.ts", "index.tsx", "index.js", "index.jsx"];
+const candidateExts = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'];
+const indexNames = ['index.ts', 'index.tsx', 'index.js', 'index.jsx'];
 
 function resolveSpecifier(spec, fromFile) {
   let basePath = null;
-  if (spec.startsWith("@/")) {
-    basePath = path.join(root, "src", spec.slice(2));
-  } else if (spec.startsWith(".") || spec.startsWith("/")) {
+  if (spec.startsWith('@/')) {
+    basePath = path.join(root, 'src', spec.slice(2));
+  } else if (spec.startsWith('.') || spec.startsWith('/')) {
     basePath = path.resolve(path.dirname(fromFile), spec);
   } else {
     return null; // node module
@@ -56,8 +56,8 @@ function resolveSpecifier(spec, fromFile) {
     }
   }
   // 4. css fallback
-  if (fs.existsSync(basePath + ".css")) return basePath + ".css";
-  if (fs.existsSync(basePath + ".module.css")) return basePath + ".module.css";
+  if (fs.existsSync(basePath + '.css')) return basePath + '.css';
+  if (fs.existsSync(basePath + '.module.css')) return basePath + '.module.css';
   return null;
 }
 
@@ -77,11 +77,11 @@ const importRegexes = [
 
 for (const f of allFiles) {
   const ext = path.extname(f).toLowerCase();
-  if (!SCAN_EXTS.has(ext) && ext !== ".css" && ext !== ".json" && ext !== ".md") continue;
-  if (![".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"].includes(ext)) continue;
+  if (!SCAN_EXTS.has(ext) && ext !== '.css' && ext !== '.json' && ext !== '.md') continue;
+  if (!['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'].includes(ext)) continue;
   let content;
   try {
-    content = fs.readFileSync(f, "utf8");
+    content = fs.readFileSync(f, 'utf8');
   } catch {
     continue;
   }
@@ -104,34 +104,34 @@ for (const f of allFiles) {
 // Now, in-scope files: src/components/**, src/lib/**, src/hooks/**, src/contexts/**, src/utils/**, src/data/**, src/types/**, src/middleware/**, src/constants/**, src/dictionaries/**, src/styles/**
 // excluding __tests__, *.test.*, *.spec.*, *.json
 const inScopeRoots = [
-  ["components"],
-  ["lib"],
-  ["hooks"],
-  ["contexts"],
-  ["utils"],
-  ["data"],
-  ["types"],
-  ["middleware"],
-  ["constants"],
-  ["dictionaries"],
-  ["styles"],
+  ['components'],
+  ['lib'],
+  ['hooks'],
+  ['contexts'],
+  ['utils'],
+  ['data'],
+  ['types'],
+  ['middleware'],
+  ['constants'],
+  ['dictionaries'],
+  ['styles'],
 ];
 
 function isInScope(absPath) {
-  const rel = path.relative(path.join(root, "src"), absPath).replace(/\\/g, "/");
-  if (rel.startsWith("..")) return false;
+  const rel = path.relative(path.join(root, 'src'), absPath).replace(/\\/g, '/');
+  if (rel.startsWith('..')) return false;
   if (/(__tests__|\.test\.|\.spec\.)/.test(rel)) return false;
   const ext = path.extname(rel);
   // Allow .ts/.tsx in all, .css in styles
-  const inFolder = inScopeRoots.find((r) => rel.startsWith(r[0] + "/"));
+  const inFolder = inScopeRoots.find((r) => rel.startsWith(r[0] + '/'));
   if (!inFolder) return false;
-  if (inFolder[0] === "styles") {
-    return ext === ".css";
+  if (inFolder[0] === 'styles') {
+    return ext === '.css';
   }
-  if (inFolder[0] === "data") {
-    return ext === ".ts" || ext === ".tsx";
+  if (inFolder[0] === 'data') {
+    return ext === '.ts' || ext === '.tsx';
   }
-  return ext === ".ts" || ext === ".tsx";
+  return ext === '.ts' || ext === '.tsx';
 }
 
 const inScope = [];
@@ -145,22 +145,24 @@ for (const f of inScope) {
   const importers = refMap.get(f);
   const importerCount = importers ? importers.size : 0;
   orphans.push({
-    file: path.relative(root, f).replace(/\\/g, "/"),
-    importers: importers ? Array.from(importers).map((x) => path.relative(root, x).replace(/\\/g, "/")) : [],
+    file: path.relative(root, f).replace(/\\/g, '/'),
+    importers: importers
+      ? Array.from(importers).map((x) => path.relative(root, x).replace(/\\/g, '/'))
+      : [],
   });
 }
 
 orphans.sort((a, b) => a.importers.length - b.importers.length || a.file.localeCompare(b.file));
 
 const noImporters = orphans.filter((o) => o.importers.length === 0);
-console.log("=== FILES WITH ZERO RESOLVED IMPORTERS ===");
-console.log("Total:", noImporters.length);
+console.log('=== FILES WITH ZERO RESOLVED IMPORTERS ===');
+console.log('Total:', noImporters.length);
 for (const o of noImporters) {
   console.log(o.file);
 }
-console.log("\n=== FILES WITH 1 IMPORTER ===");
+console.log('\n=== FILES WITH 1 IMPORTER ===');
 const one = orphans.filter((o) => o.importers.length === 1);
-console.log("Total:", one.length);
+console.log('Total:', one.length);
 for (const o of one) {
-  console.log(o.file, "<-", o.importers[0]);
+  console.log(o.file, '<-', o.importers[0]);
 }

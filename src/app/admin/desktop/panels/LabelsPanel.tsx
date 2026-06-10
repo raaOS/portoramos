@@ -7,8 +7,7 @@ import AdminLoading from '@/components/admin/AdminLoading';
 
 export default function LabelsPanel() {
   const { csrfToken } = useAdminAuth();
-  const { labels, labelsLoading, error, handleUpdateLabels } =
-    useAdminContent(csrfToken);
+  const { labels, labelsLoading, error, handleUpdateLabels } = useAdminContent(csrfToken);
 
   if (labelsLoading && labels.length === 0) return <AdminLoading size="default" />;
 

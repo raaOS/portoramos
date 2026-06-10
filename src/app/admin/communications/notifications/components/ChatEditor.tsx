@@ -10,6 +10,7 @@ import {
   Plus,
   ArrowLeftRight,
   Wand2,
+  ChevronDown,
 } from 'lucide-react';
 import { ChatHistoryMessage } from '@/types/testimonial';
 import { Project } from '@/types/projects';
@@ -234,18 +235,21 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                   {/* Project Selector & Preview */}
                   {msg.type === 'project' && (
                     <div className="mb-2">
-                      <select
-                        value={msg.projectId || ''}
-                        onChange={(e) => updateMessage(index, { projectId: e.target.value })}
-                        className="mb-2 w-full rounded-lg border border-black/10 bg-white/70 p-2 text-xs outline-none"
-                      >
-                        <option value="">-- Pilih Project --</option>
-                        {projects.map((p) => (
-                          <option key={p.id} value={p.id || p.slug}>
-                            {p.title} {p.client ? `- ${p.client}` : ''}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative mb-2 w-full">
+                        <select
+                          value={msg.projectId || ''}
+                          onChange={(e) => updateMessage(index, { projectId: e.target.value })}
+                          className="w-full cursor-pointer appearance-none rounded-lg border border-black/10 bg-white/70 py-2.5 pl-3 pr-10 text-sm outline-none"
+                        >
+                          <option value="">-- Pilih Project --</option>
+                          {projects.map((p) => (
+                            <option key={p.id} value={p.id || p.slug}>
+                              {p.title} {p.client ? `- ${p.client}` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                      </div>
 
                       {/* Project Preview */}
                       {linkedProject && (
@@ -357,21 +361,24 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
                         <label className="ml-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
                           Ambil dari Project
                         </label>
-                        <select
-                          value=""
-                          onChange={(e) => {
-                            const p = getProjectById(e.target.value);
-                            if (p) updateMessage(index, { imageSrc: p.cover });
-                          }}
-                          className="w-full rounded-lg border border-black/10 bg-white/70 p-2 text-xs outline-none"
-                        >
-                          <option value="">-- Pilih Project (Auto-fill URL) --</option>
-                          {projects.map((p) => (
-                            <option key={p.id} value={p.id || p.slug}>
-                              {p.title}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative w-full">
+                          <select
+                            value=""
+                            onChange={(e) => {
+                              const p = getProjectById(e.target.value);
+                              if (p) updateMessage(index, { imageSrc: p.cover });
+                            }}
+                            className="w-full cursor-pointer appearance-none rounded-lg border border-black/10 bg-white/70 py-2.5 pl-3 pr-10 text-sm outline-none"
+                          >
+                            <option value="">-- Pilih Project (Auto-fill URL) --</option>
+                            {projects.map((p) => (
+                              <option key={p.id} value={p.id || p.slug}>
+                                {p.title}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        </div>
                       </div>
 
                       {msg.imageSrc && (

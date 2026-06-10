@@ -30,9 +30,11 @@ const HOMEPAGE_D1_KEYS = [
   // itu supaya admin update langsung kelihatan tanpa double fetch.
   'projects',
   'lastUpdated',
-  'content/experience',
-  'content/hardSkills',
-  'content/testimonial',
+  // Baca row 'content' secara utuh lalu ekstrak nested fields di bawah.
+  // getD1Values mencari row LITERAL — `content/experience` tidak ada
+  // sebagai row terpisah karena ContentService menulis nested field
+  // experience/hardSkills/testimonial di bawah row `content`.
+  'content',
 ];
 
 function deepMerge<T>(base: T, override: unknown): T {
@@ -147,17 +149,18 @@ async function loadHomepageDataFromD1(): Promise<HomepageData> {
     getCachedAboutData(),
   ]);
 
+  const contentRow = (values['content'] as Record<string, unknown>) ?? {};
   const experienceData = deepMerge(
     experienceFallback as unknown as ExperienceData,
-    values['content/experience']
+    contentRow.experience
   );
   const hardSkillsData = deepMerge(
     hardSkillsFallback as unknown as HardSkillsData,
-    values['content/hardSkills']
+    contentRow.hardSkills
   );
   const testimonialsData = deepMerge(
     testimonialFallback as unknown as TestimonialData,
-    values['content/testimonial']
+    contentRow.testimonial
   );
   const projectsResult = normalizeProjects(values.projects, values.lastUpdated);
 

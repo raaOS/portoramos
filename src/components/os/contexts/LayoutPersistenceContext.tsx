@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useRef, useCallback, useMemo } from 'react';
 
 interface LayoutPersistenceContextValue {
   registerFlush: (name: string, flushFn: () => Promise<void>) => void;
@@ -26,10 +26,13 @@ export function LayoutPersistenceProvider({ children }: { children: React.ReactN
     await Promise.all(promises);
   }, []);
 
+  const value = useMemo(
+    () => ({ registerFlush, unregisterFlush, flushAll }),
+    [registerFlush, unregisterFlush, flushAll]
+  );
+
   return (
-    <LayoutPersistenceContext.Provider value={{ registerFlush, unregisterFlush, flushAll }}>
-      {children}
-    </LayoutPersistenceContext.Provider>
+    <LayoutPersistenceContext.Provider value={value}>{children}</LayoutPersistenceContext.Provider>
   );
 }
 

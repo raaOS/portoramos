@@ -7,7 +7,6 @@ import { ChatHeader } from './components/ChatHeader';
 import { ChatMessages } from './components/ChatMessages';
 import { ChatList } from './components/ChatList';
 import QuickLookModal from '@/components/ui/QuickLookModal';
-import { useDesktopWindowContext } from '../context/DesktopWindowContext';
 import type { ContactProfile } from '../data/mockChats';
 import type { Project } from '@/types/projects';
 
@@ -24,7 +23,6 @@ export default function ChatWindow({
 }: ChatWindowProps) {
   const [activeContact, setActiveContact] = useState<ContactProfile | null>(null);
   const [showList, setShowList] = useState(true);
-  const [_input, _setInput] = useState('');
   const [previewMedia, setPreviewMedia] = useState<{
     src: string;
     title: string;
@@ -32,7 +30,6 @@ export default function ChatWindow({
     project?: Project;
   } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { openWindow: _openWindow } = useDesktopWindowContext();
 
   // Contacts state
   const contacts = useMemo(
@@ -42,16 +39,26 @@ export default function ChatWindow({
 
   // Custom Hooks
   const { getProjectById } = useChatProjects(initialProjects);
-  const {
-    visibleMessages,
-    isRemoteTyping,
-    addMessage: _addMessage,
-    setVisibleMessages,
-  } = useChatSequencer(activeContact, showList);
+  const { visibleMessages, isRemoteTyping, setVisibleMessages } = useChatSequencer(
+    activeContact,
+    showList
+  );
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom — only if user hasn't scrolled up
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = bottomRef.current;
+    if (!el) return;
+    const container = el.parentElement;
+    if (!container) {
+      el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    const threshold = 80;
+    const nearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+    if (nearBottom) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [visibleMessages, isRemoteTyping]);
 
   const selectContact = useCallback(
@@ -82,7 +89,9 @@ export default function ChatWindow({
     const messages = contact.messages || contact.conversation || [];
     if (messages.length === 0) return 'Tidak ada pesan';
     const lastMsg = messages[messages.length - 1];
-    return lastMsg.text.length > 30 ? lastMsg.text.substring(0, 30) + '...' : lastMsg.text;
+    const text = lastMsg.text;
+    if (!text) return '';
+    return text.length > 30 ? text.substring(0, 30) + '...' : text;
   }, []);
 
   // Sync activeChatId changes via effect

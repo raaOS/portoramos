@@ -74,8 +74,6 @@ export const updateExperienceSchema = z
     'At least one experience field must be updated'
   );
 
-
-
 const trailItemSchema = z
   .object({
     src: requiredText(1000),
@@ -212,12 +210,13 @@ const desktopPreferencesSchema = z
   })
   .strict();
 
-const wallpaperSchema = z
+export const wallpaperSchema = z
   .object({
     id: requiredText(120),
     url: requiredText(1000),
     name: shortText(200).optional(),
     posterUrl: shortText(1000).optional(),
+    startTime: z.coerce.number().min(0).max(250).optional(),
   })
   .strict();
 
@@ -237,6 +236,7 @@ const dockItemConfigSchema = z
     label: shortText(120).optional(),
     iconUrl: z.string().trim().max(1000).optional(),
     isHidden: z.boolean().optional(),
+    order: z.coerce.number().int().optional(),
   })
   .strict();
 

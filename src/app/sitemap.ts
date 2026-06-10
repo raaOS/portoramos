@@ -2,12 +2,10 @@ import { MetadataRoute } from 'next';
 import { allProjectsAsync } from '@/lib/projects';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://ramos-portofolio.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ramos-portofolio.vercel.app';
 
-  // Ambil semua project
   const projects = await allProjectsAsync();
 
-  // URL statis (halaman tetap)
   const staticUrls: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -22,22 +20,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
       url: `${baseUrl}/cv`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/contact`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.6,
     },
   ];
 

@@ -56,13 +56,43 @@ async function getBannedWords(): Promise<string[]> {
     // Try getting from root settings if not in subpath
     const rootSnap = await db.ref('settings').once('value');
     const settings = rootSnap.val();
-    return settings?.bannedWords || ['judol', 'slot'];
+    return (
+      settings?.bannedWords || [
+        'judol',
+        'slot',
+        'gacor',
+        'maxwin',
+        'togel',
+        'casino',
+        'rtp',
+        'pragmatic',
+        'crypto',
+        'bitcoin',
+        'viagra',
+        'bokep',
+        'porn',
+      ]
+    );
   } catch (e) {
     console.warn(
       'Failed to load banned words from CLOUDFLARE_D1, using fallback',
       e instanceof Error ? e.message : e
     );
-    return ['judol', 'slot'];
+    return [
+      'judol',
+      'slot',
+      'gacor',
+      'maxwin',
+      'togel',
+      'casino',
+      'rtp',
+      'pragmatic',
+      'crypto',
+      'bitcoin',
+      'viagra',
+      'bokep',
+      'porn',
+    ];
   }
 }
 

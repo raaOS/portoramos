@@ -10,8 +10,7 @@ import AdminLoading from '@/components/admin/AdminLoading';
 
 export default function SkillsPanel() {
   const { csrfToken } = useAdminAuth();
-  const { contentData, loading, error, handleUpdateContent } =
-    useAdminContent(csrfToken);
+  const { contentData, loading, error, handleUpdateContent } = useAdminContent(csrfToken);
 
   const [activeSubTab, setActiveSubTab] = useState<'soft' | 'hard'>('soft');
 

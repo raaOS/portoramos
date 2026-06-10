@@ -13,7 +13,7 @@ export const metadata: Metadata = generateSEOMetadata({
 });
 
 // Selalu render dinamis agar data CV mengikuti perubahan data portofolio terbaru
-export const revalidate = 0;
+export const revalidate = 3600;
 
 export default async function CvPage() {
   const [aboutData, experienceData, hardSkillsData] = await Promise.all([

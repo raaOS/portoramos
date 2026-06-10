@@ -8,70 +8,59 @@ import AdminLoading from '@/components/admin/AdminLoading';
 // Each component is the actual CRUD panel rendered inside an admin window.
 // They are lazy-loaded so opening a folder doesn't pull in all CRUD bundles.
 
-const ProjectsPanel = dynamic(
-  () => import('@/app/admin/projects/AdminProjectsClient'),
-  { loading: () => <AdminLoading size="page" /> }
-);
+const ProjectsPanel = dynamic(() => import('@/app/admin/projects/AdminProjectsClient'), {
+  loading: () => <AdminLoading size="page" />,
+});
 
-const ProfilePanel = dynamic(
-  () => import('./panels/ProfilePanel'),
-  { loading: () => <AdminLoading size="page" /> }
-);
+const ProfilePanel = dynamic(() => import('./panels/ProfilePanel'), {
+  loading: () => <AdminLoading size="page" />,
+});
 
 const ExperiencePanel = dynamic(
   () => import('@/app/admin/content/experience/AdminExperienceClient'),
   { loading: () => <AdminLoading size="page" /> }
 );
 
-const SkillsPanel = dynamic(
-  () => import('./panels/SkillsPanel'),
-  { loading: () => <AdminLoading size="page" /> }
-);
+const SkillsPanel = dynamic(() => import('./panels/SkillsPanel'), {
+  loading: () => <AdminLoading size="page" />,
+});
 
-const ArchivePanel = dynamic(
-  () => import('./panels/ArchivePanel'),
-  { loading: () => <AdminLoading size="page" /> }
-);
+const ArchivePanel = dynamic(() => import('./panels/ArchivePanel'), {
+  loading: () => <AdminLoading size="page" />,
+});
 
-const LabelsPanel = dynamic(
-  () => import('./panels/LabelsPanel'),
-  { loading: () => <AdminLoading size="page" /> }
-);
+const LabelsPanel = dynamic(() => import('./panels/LabelsPanel'), {
+  loading: () => <AdminLoading size="page" />,
+});
 
-const ExplorerPanel = dynamic(
-  () => import('@/app/admin/projects/explorer/AdminExplorerClient'),
-  { loading: () => <AdminLoading size="page" /> }
-);
+const ExplorerPanel = dynamic(() => import('@/app/admin/projects/explorer/AdminExplorerClient'), {
+  loading: () => <AdminLoading size="page" />,
+});
 
 const EventPagesPanel = dynamic(
   () => import('@/app/admin/projects/event-pages/AdminEventPagesClient'),
   { loading: () => <AdminLoading size="page" /> }
 );
 
-const AppearancePanel = dynamic(
-  () => import('./panels/AppearancePanel'),
-  { loading: () => <AdminLoading size="page" /> }
-);
+const AppearancePanel = dynamic(() => import('./panels/AppearancePanel'), {
+  loading: () => <AdminLoading size="page" />,
+});
 
-const DockPanel = dynamic(
-  () => import('./panels/DockPanel'),
-  { loading: () => <AdminLoading size="page" /> }
-);
+const DockPanel = dynamic(() => import('./panels/DockPanel'), {
+  loading: () => <AdminLoading size="page" />,
+});
 
-const WidgetsPanel = dynamic(
-  () => import('./panels/WidgetsPanel'),
-  { loading: () => <AdminLoading size="page" /> }
-);
+const WidgetsPanel = dynamic(() => import('./panels/WidgetsPanel'), {
+  loading: () => <AdminLoading size="page" />,
+});
 
-const SoundsPanel = dynamic(
-  () => import('./panels/SoundsPanel'),
-  { loading: () => <AdminLoading size="page" /> }
-);
+const SoundsPanel = dynamic(() => import('./panels/SoundsPanel'), {
+  loading: () => <AdminLoading size="page" />,
+});
 
-const NotificationsPanel = dynamic(
-  () => import('./panels/NotificationsPanel'),
-  { loading: () => <AdminLoading size="page" /> }
-);
+const NotificationsPanel = dynamic(() => import('./panels/NotificationsPanel'), {
+  loading: () => <AdminLoading size="page" />,
+});
 
 const MessagesPanel = dynamic(
   () => import('@/app/admin/communications/messages/AdminLeadsClient'),
@@ -124,7 +113,7 @@ export default function WindowContentRenderer({ appId }: WindowContentRendererPr
 
   return (
     <Suspense fallback={<AdminLoading size="page" />}>
-      <div className="admin-window-panel-scroll">
+      <div className="admin-window-panel-scroll" data-lenis-prevent>
         <Panel />
       </div>
     </Suspense>

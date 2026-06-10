@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import type { AboutHero } from '@/types/about';
+import { ChevronDown } from 'lucide-react';
 
 interface MottoData {
   badge?: string;
@@ -117,17 +118,23 @@ export default function ProfessionalSectionForm({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Status</label>
-                <select
-                  value={formData.availStatus}
-                  onChange={(e) =>
-                    setFormData({ ...formData, availStatus: e.target.value as AvailabilityStatus })
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="available">Available (Green)</option>
-                  <option value="booked">Booked (Red)</option>
-                  <option value="limited">Limited (Red)</option>
-                </select>
+                <div className="relative mt-1">
+                  <select
+                    value={formData.availStatus}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        availStatus: e.target.value as AvailabilityStatus,
+                      })
+                    }
+                    className="block w-full cursor-pointer appearance-none rounded-md border border-gray-300 bg-white px-3 py-2.5 pr-10 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="available">Available (Green)</option>
+                    <option value="booked">Booked (Red)</option>
+                    <option value="limited">Limited (Red)</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Teks Status</label>
@@ -135,7 +142,7 @@ export default function ProfessionalSectionForm({
                   type="text"
                   value={formData.availText}
                   onChange={(e) => setFormData({ ...formData, availText: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -147,7 +154,7 @@ export default function ProfessionalSectionForm({
               <input
                 type="text"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 value={formData.mottoBadge}
                 onChange={(e) => setFormData({ ...formData, mottoBadge: e.target.value })}
               />
@@ -157,7 +164,7 @@ export default function ProfessionalSectionForm({
               <input
                 type="text"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 value={formData.mottoQuote}
                 onChange={(e) => setFormData({ ...formData, mottoQuote: e.target.value })}
               />
@@ -169,7 +176,7 @@ export default function ProfessionalSectionForm({
             <textarea
               rows={4}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               value={formData.bioContent}
               onChange={(e) => setFormData({ ...formData, bioContent: e.target.value })}
             />

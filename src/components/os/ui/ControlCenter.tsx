@@ -24,8 +24,6 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
     }
   }, [isOpen, volume]);
 
-  if (!isOpen) return null;
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8, filter: 'blur(10px)' }}

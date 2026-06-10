@@ -1,13 +1,21 @@
 'use client';
 
 import React from 'react';
-import { m } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import OSWindow from '../windows/Window';
 import { DraggableStickyNote } from '../ui/elements/DraggableStickyNote';
 import type { NoteData } from '../ui/elements/StickyNoteItem';
 import { useUnifiedZIndex } from '../context/UnifiedZIndexContext';
 import { WindowState } from '@/hooks/useWindowManager';
 import { useOSSystem } from '../context/OSSystemContext';
+
+interface MissionTarget {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  scale: number;
+}
 
 interface UnifiedLayerProps {
   windows: WindowState[];
@@ -30,8 +38,14 @@ interface UnifiedLayerProps {
   restoreNote: (id: string) => void;
   addNote: () => void;
   isRevealed?: boolean;
+  windowsReady?: boolean;
+  notesReady?: boolean;
   /** Callback when a window is closed */
   onWindowClosed?: (id: string) => void;
+  // Mission Control props
+  showMissionControl?: boolean;
+  missionTargets?: Map<string, MissionTarget>;
+  onMissionControlDismiss?: () => void;
 }
 
 // Animation variants - only for container fade in
@@ -40,8 +54,7 @@ const containerVariants = {
   show: {
     opacity: 1,
     transition: {
-      duration: 0.3,
-      delay: 0.28,
+      duration: 0.18,
     },
   },
 };
@@ -65,7 +78,12 @@ export default function UnifiedLayer({
   restoreNote,
   addNote,
   isRevealed: isRevealedProp,
+  windowsReady,
+  notesReady,
   onWindowClosed,
+  showMissionControl: _showMissionControl,
+  missionTargets,
+  onMissionControlDismiss,
 }: UnifiedLayerProps) {
   const { bringToFront, getZIndex, registerElement, unregisterElement } = useUnifiedZIndex();
   const {
@@ -73,8 +91,11 @@ export default function UnifiedLayer({
     isRevealed: isRevealedFromContext,
     hiddenNoteIds,
     hideNote,
+    showMissionControl,
   } = useOSSystem();
   const isRevealed = isRevealedProp !== undefined ? isRevealedProp : isRevealedFromContext;
+  const canRenderWindows = windowsReady ?? isRevealed;
+  const canRenderNotes = notesReady ?? isRevealed;
   const registeredElementIdsRef = React.useRef(new Set<string>());
 
   // Combine windows and visible notes for unified rendering.
@@ -84,8 +105,13 @@ export default function UnifiedLayer({
   //  - notes yang ada di `hiddenNoteIds` (ephemeral hide via tombol X header,
   //    tidak persist; auto-clear saat user toggle dock icon Notes)
   const visibleNotes = React.useMemo(
-    () => (notesVisible ? notes.filter((n) => !n.isDeleted && !hiddenNoteIds.has(n.id)) : []),
-    [hiddenNoteIds, notes, notesVisible]
+    () =>
+      showMissionControl
+        ? []
+        : notesVisible
+          ? notes.filter((n) => !n.isDeleted && !hiddenNoteIds.has(n.id))
+          : [],
+    [hiddenNoteIds, notes, notesVisible, showMissionControl]
   );
 
   React.useEffect(() => {
@@ -147,64 +173,69 @@ export default function UnifiedLayer({
       animate={isRevealed ? 'show' : 'hidden'}
     >
       {/* Sticky Notes Layer - Unified with Windows */}
-      {visibleNotes.map((note) => (
-        <div
-          key={`note-${note.id}`}
-          className="pointer-events-none"
-          style={{
-            position: 'absolute',
-            zIndex: getZIndex(note.id),
-            willChange: 'auto',
-          }}
-        >
-          <DraggableStickyNote
-            note={note}
-            updateNote={updateNote}
-            bringToFrontNote={() => handleNoteFocus(note.id)}
-            deleteNote={deleteNote}
-            hideNote={hideNote}
-            permanentDeleteNote={permanentDeleteNote}
-            restoreNote={restoreNote}
-            addNote={addNote}
-            isAdmin={isAdmin}
-            zIndex={getZIndex(note.id)}
-          />
-        </div>
-      ))}
+      <AnimatePresence>
+        {canRenderNotes &&
+          visibleNotes.map((note) => (
+            <DraggableStickyNote
+              key={`note-${note.id}`}
+              note={note}
+              updateNote={updateNote}
+              bringToFrontNote={() => handleNoteFocus(note.id)}
+              deleteNote={deleteNote}
+              hideNote={hideNote}
+              permanentDeleteNote={permanentDeleteNote}
+              restoreNote={restoreNote}
+              addNote={addNote}
+              isAdmin={isAdmin}
+              zIndex={getZIndex(note.id)}
+              isRevealed={canRenderNotes}
+            />
+          ))}
+      </AnimatePresence>
 
       {/* Windows Layer */}
-      {windows.map((w) => (
-        <OSWindow
-          key={`window-${w.id}`}
-          id={w.id}
-          isOpen={w.isOpen}
-          title={w.title}
-          isMinimized={w.isMinimized}
-          isMaximized={w.isMaximized}
-          isFocused={w.isOpen && !w.isMinimized && getZIndex(w.id) === maxWindowZIndex}
-          onClose={() => {
-            closeWindow(w.id);
-            onWindowClosed?.(w.id);
-          }}
-          onMinimize={() => minimizeWindow(w.id)}
-          onMaximize={() => maximizeWindow(w.id)}
-          onFocus={() => handleWindowFocus(w.id)}
-          onUpdatePosition={(x, y) => updateWindowPosition(w.id, x, y)}
-          onResize={(width, height) => handleWindowResize(w.id, width, height)}
-          onResizeEnd={(width, height) => handleWindowResizeEnd(w.id, width, height)}
-          isPinned={isAdmin && w.isPinned}
-          onTogglePin={isAdmin ? () => togglePin(w.id) : undefined}
-          isAdmin={isAdmin}
-          initialPosition={w.initialPosition}
-          width={w.width || 800}
-          height={w.height || 600}
-          zIndex={getZIndex(w.id)}
-          noPadding={w.noPadding}
-          originRect={w.originRect}
-        >
-          {w.content || (w.contentFactory ? w.contentFactory() : null)}
-        </OSWindow>
-      ))}
+      {canRenderWindows &&
+        windows.map((w) => (
+          <OSWindow
+            key={`window-${w.id}`}
+            id={w.id}
+            isOpen={w.isOpen}
+            title={w.title}
+            isMinimized={w.isMinimized}
+            isMaximized={w.isMaximized}
+            isFocused={w.isOpen && !w.isMinimized && getZIndex(w.id) === maxWindowZIndex}
+            onClose={() => {
+              closeWindow(w.id);
+              onWindowClosed?.(w.id);
+            }}
+            onMinimize={() => minimizeWindow(w.id)}
+            onMaximize={() => maximizeWindow(w.id)}
+            onFocus={() => handleWindowFocus(w.id)}
+            onUpdatePosition={(x, y) => updateWindowPosition(w.id, x, y)}
+            onResize={(width, height) => handleWindowResize(w.id, width, height)}
+            onResizeEnd={(width, height) => handleWindowResizeEnd(w.id, width, height)}
+            isPinned={isAdmin && w.isPinned}
+            onTogglePin={isAdmin ? () => togglePin(w.id) : undefined}
+            isAdmin={isAdmin}
+            initialPosition={w.initialPosition}
+            width={w.width || 800}
+            height={w.height || 600}
+            zIndex={getZIndex(w.id)}
+            noPadding={w.noPadding}
+            originRect={w.originRect}
+            missionTarget={showMissionControl ? missionTargets?.get(w.id) : null}
+            onMissionControlSelect={
+              showMissionControl
+                ? () => {
+                    handleWindowFocus(w.id);
+                    onMissionControlDismiss?.();
+                  }
+                : undefined
+            }
+          >
+            {w.content || (w.contentFactory ? w.contentFactory() : null)}
+          </OSWindow>
+        ))}
     </m.div>
   );
 }

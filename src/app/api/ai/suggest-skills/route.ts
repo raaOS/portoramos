@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     const model = 'gemini-flash-latest';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
     const prompt = `Act as a Senior Graphic Designer & Tech Expert.
         Target Skill: "${skillName}"
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': API_KEY },
       body: JSON.stringify(requestBody),
     });
 

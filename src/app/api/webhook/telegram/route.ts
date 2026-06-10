@@ -3,18 +3,19 @@ import { getTelegramConfigSafe, isValidTelegramWebhookSecret } from '@/lib/teleg
 import { checkRateLimit } from '@/lib/telegram/rateLimiter';
 import { validateWebhookData } from '@/lib/telegram/validators';
 import { checkIsAdmin, logWebhookDebug } from '@/lib/telegram/helpers';
-import { sendImmediate, sendMessage, answerCallbackQuery, editMessageText } from '@/lib/telegram/sender';
+import {
+  sendImmediate,
+  sendMessage,
+  answerCallbackQuery,
+  editMessageText,
+} from '@/lib/telegram/sender';
 import { db } from '@/lib/database';
 import { hashPasswordScrypt } from '@/lib/auth';
 import { chatStore } from '@/lib/chatStore';
 import { cleanEnvVar } from '@/lib/utils/env';
 import { logActivity } from '@/lib/services/auditLogger';
 import type { MessageToSend } from '@/lib/telegram/types';
-import {
-  handleAiCommand,
-  handleAdminReply,
-  handleGuestMessage,
-} from '@/lib/telegram/handlers';
+import { handleAiCommand, handleAdminReply, handleGuestMessage } from '@/lib/telegram/handlers';
 
 /**
  * SECURITY HARDENED Telegram Webhook
@@ -142,7 +143,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const webhookBody = body as { message?: Record<string, unknown>, callback_query?: Record<string, unknown> };
+    const webhookBody = body as {
+      message?: Record<string, unknown>;
+      callback_query?: Record<string, unknown>;
+    };
 
     // --- CALLBACK QUERY HANDLING (Inline Buttons) ---
     if (webhookBody.callback_query) {
@@ -151,9 +155,11 @@ export async function POST(request: Request) {
       const data = String(cbQuery['data'] || '');
       const { action, requestId } = parseCallbackData(data);
       const cbMessage = cbQuery['message'] as Record<string, unknown> | undefined;
-      const incomingChatId = String(cbMessage?.chat ? (cbMessage.chat as Record<string, unknown>).id : '');
+      const incomingChatId = String(
+        cbMessage?.chat ? (cbMessage.chat as Record<string, unknown>).id : ''
+      );
       const messageId = Number(cbMessage?.message_id);
-      
+
       // Verify admin authorization for this action
       const isAdminAction = checkIsAdmin(incomingChatId, adminChatId, groupId);
 
@@ -175,7 +181,12 @@ export async function POST(request: Request) {
             expiresAt: Date.now() + 60 * 1000, // biarkan hidup 1 menit agar UI sempat polling
           });
 
-          await editMessageText(incomingChatId, messageId, '🚨 **Akses Digagalkan!**\nUpaya ganti sandi telah diblokir. UI penyusup akan langsung dikunci.', botToken);
+          await editMessageText(
+            incomingChatId,
+            messageId,
+            '🚨 **Akses Digagalkan!**\nUpaya ganti sandi telah diblokir. UI penyusup akan langsung dikunci.',
+            botToken
+          );
           await answerCallbackQuery(callbackId, botToken, { text: 'Akses diblokir!' });
           await logActivity('Admin password OTP rejected from Telegram', {
             category: 'admin',
@@ -202,7 +213,10 @@ export async function POST(request: Request) {
         if (sessionState === 'active') {
           const salt = process.env.PASSWORD_SALT;
           if (!salt) {
-            await answerCallbackQuery(callbackId, botToken, { text: 'Error konfigurasi server', showAlert: true });
+            await answerCallbackQuery(callbackId, botToken, {
+              text: 'Error konfigurasi server',
+              showAlert: true,
+            });
             return NextResponse.json({ ok: true });
           }
 
@@ -218,7 +232,12 @@ export async function POST(request: Request) {
             expiresAt: Date.now() + 5 * 60 * 1000,
           });
 
-          await editMessageText(incomingChatId, messageId, `✅ **Persetujuan Diterima**\n\nGunakan kode OTP berikut:\n\`${otpCode}\`\n\n(Berlaku 5 menit)`, botToken);
+          await editMessageText(
+            incomingChatId,
+            messageId,
+            `✅ **Persetujuan Diterima**\n\nGunakan kode OTP berikut:\n\`${otpCode}\`\n\n(Berlaku 5 menit)`,
+            botToken
+          );
           await answerCallbackQuery(callbackId, botToken, { text: 'Persetujuan Diterima!' });
           await logActivity('Admin password OTP approved from Telegram', {
             category: 'admin',
@@ -236,7 +255,7 @@ export async function POST(request: Request) {
         }
         return NextResponse.json({ ok: true });
       }
-      
+
       // Default jika callback tidak dikenali
       await answerCallbackQuery(callbackId, botToken, { text: 'Aksi tidak dikenal' });
       return NextResponse.json({ ok: true });

@@ -182,9 +182,7 @@ export async function DELETE(request: NextRequest) {
       updatedPageIds: [],
     };
     try {
-      eventPageCleanup = await eventPageService.pruneDeletedExplorerReferences(
-        result.deletedIds
-      );
+      eventPageCleanup = await eventPageService.pruneDeletedExplorerReferences(result.deletedIds);
     } catch (pruneError) {
       console.warn(
         '[API /explorer DELETE] Event page prune failed (orphans will self-heal):',

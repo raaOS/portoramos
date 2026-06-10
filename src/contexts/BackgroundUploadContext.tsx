@@ -1,6 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  ReactNode,
+} from 'react';
 import { useStorageUpload } from '@/app/admin/components/file-upload/hooks/useStorageUpload';
 import {
   useFFmpeg,
@@ -100,7 +108,9 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
   // selalu max 1 task encoding di waktu bersamaan.
   const encodingTaskIdRef = useRef<string | null>(null);
 
-  const updateTaskRef = useRef<((id: string, updates: Partial<BackgroundUploadTask>) => void) | null>(null);
+  const updateTaskRef = useRef<
+    ((id: string, updates: Partial<BackgroundUploadTask>) => void) | null
+  >(null);
 
   // Forward useFFmpeg status string ke task statusDetail. Callback
   // identity stable supaya tidak menyebabkan re-load WASM core
@@ -130,9 +140,7 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
   }, []);
 
   const updateTask = useCallback((id: string, updates: Partial<BackgroundUploadTask>) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
-    );
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
   }, []);
 
   // Keep ref pointing at latest updateTask so the encode-status
@@ -145,11 +153,12 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
     updateTaskRef.current = updateTask;
   }, [updateTask]);
 
-  const hasActiveUploads = tasks.some(t => t.status !== 'complete' && t.status !== 'error');
-  const activeTasks = tasks.filter(t => t.status !== 'complete' && t.status !== 'error');
-  const totalProgress = activeTasks.length > 0
-    ? activeTasks.reduce((sum, t) => sum + t.progress, 0) / activeTasks.length
-    : 0;
+  const hasActiveUploads = tasks.some((t) => t.status !== 'complete' && t.status !== 'error');
+  const activeTasks = tasks.filter((t) => t.status !== 'complete' && t.status !== 'error');
+  const totalProgress =
+    activeTasks.length > 0
+      ? activeTasks.reduce((sum, t) => sum + t.progress, 0) / activeTasks.length
+      : 0;
 
   // ── Session keep-alive heartbeat ────────────────────────────────
   // JWT TTL admin = 2 jam (lihat lib/auth.ts). Compress wallpaper 4K
@@ -212,7 +221,7 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
     async (file: File, options?: { profile?: WallpaperUploadProfile }) => {
       const profile = options?.profile ?? DEFAULT_WALLPAPER_PROFILE;
       const taskId = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       setTasks((prev) => [
         ...prev,
         {
@@ -259,23 +268,16 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
           formData.append('file', file);
 
           const token = getWritableCsrfToken(csrfToken);
-          const uploadRes = await fetch(
-            '/api/upload?folder=wallpapers',
-            {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'x-csrf-token': token },
-              body: formData,
-            }
-          );
+          const uploadRes = await fetch('/api/upload?folder=wallpapers', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'x-csrf-token': token },
+            body: formData,
+          });
 
           if (!uploadRes.ok) {
-            const errBody = await uploadRes
-              .json()
-              .catch(() => ({}) as { error?: string });
-            throw new Error(
-              errBody.error || `Image upload gagal (${uploadRes.status})`
-            );
+            const errBody = await uploadRes.json().catch(() => ({}) as { error?: string });
+            throw new Error(errBody.error || `Image upload gagal (${uploadRes.status})`);
           }
 
           const uploadBody = (await uploadRes.json()) as {
@@ -313,22 +315,19 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
                 // tidak butuh poster sidecar.
               };
 
-              const updateRes = await fetch(
-                '/api/about/wallpaper-collection',
-                {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'x-csrf-token': token,
-                  },
-                  body: JSON.stringify({
-                    action: 'add',
-                    wallpaper: newWallpaper,
-                    makeActive: true,
-                  }),
-                }
-              );
+              const updateRes = await fetch('/api/about/wallpaper-collection', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-csrf-token': token,
+                },
+                body: JSON.stringify({
+                  action: 'add',
+                  wallpaper: newWallpaper,
+                  makeActive: true,
+                }),
+              });
 
               if (!updateRes.ok) {
                 const errBody = await updateRes
@@ -341,17 +340,13 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
                 );
               }
 
-              const updateBody = (await updateRes
-                .json()
-                .catch(() => null)) as
-                | { success?: boolean; data?: AboutData }
-                | null;
+              const updateBody = (await updateRes.json().catch(() => null)) as {
+                success?: boolean;
+                data?: AboutData;
+              } | null;
 
               if (updateBody?.data) {
-                queryClient.setQueryData(
-                  ADMIN_QUERY_KEYS.about,
-                  updateBody.data
-                );
+                queryClient.setQueryData(ADMIN_QUERY_KEYS.about, updateBody.data);
                 await mutate('/api/about', updateBody.data, {
                   revalidate: false,
                 });
@@ -364,10 +359,7 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
             });
 
           finalizeChainRef.current = finalizePromise.catch((err) => {
-            console.warn(
-              '[BackgroundUpload] finalize chain link rejected:',
-              err
-            );
+            console.warn('[BackgroundUpload] finalize chain link rejected:', err);
             return undefined;
           });
           await finalizePromise;
@@ -492,7 +484,10 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
             // original. Server tidak akan re-encode (direct PUT),
             // tapi minimal video tetap masuk dan bisa direplace
             // setelah admin tahu engine-nya offline.
-            console.warn('[BackgroundUpload] client compression failed, uploading original:', compressErr);
+            console.warn(
+              '[BackgroundUpload] client compression failed, uploading original:',
+              compressErr
+            );
             showWarning(
               'Compression engine offline. Uploading wallpaper as-is — kualitas tergantung file asli.'
             );
@@ -610,9 +605,10 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
               );
             }
 
-            const updateBody = (await updateRes.json().catch(() => null)) as
-              | { success?: boolean; data?: AboutData }
-              | null;
+            const updateBody = (await updateRes.json().catch(() => null)) as {
+              success?: boolean;
+              data?: AboutData;
+            } | null;
 
             // Push the fresh snapshot into the React Query cache so the
             // open WallpaperManager / appearance panel re-renders with
@@ -646,7 +642,6 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
 
         // Clean up task after 3 seconds
         setTimeout(() => removeTask(taskId), 3000);
-
       } catch (error) {
         console.error('[BackgroundUpload]', error);
         updateTask(taskId, {

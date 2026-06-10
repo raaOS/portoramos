@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
-import { Plus, Check, Trash2, Loader2, Pencil, Play } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Plus, Loader2 } from 'lucide-react';
 import { WallpaperConfig, Wallpaper } from '@/types/about';
 import type { AboutData } from '@/types/about';
-import { useBackgroundUpload, type WallpaperUploadProfile } from '@/contexts/BackgroundUploadContext';
+import {
+  useBackgroundUpload,
+  type WallpaperUploadProfile,
+} from '@/contexts/BackgroundUploadContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { ADMIN_QUERY_KEYS } from '@/app/admin/lib/adminQueries';
@@ -11,6 +13,8 @@ import { mutate as swrMutate } from 'swr';
 import { extractStoragePath, isVideoLink, detectImageDimensions } from '@/lib/media';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import { readVideoDimensions, checkMinResolution } from '@/lib/videoMeta';
+import { useToast } from '@/contexts/ToastContext';
+import WallpaperCard from './WallpaperCard';
 
 interface WallpaperManagerProps {
   data?: WallpaperConfig;
@@ -96,12 +100,15 @@ export default function WallpaperManager({
 }: WallpaperManagerProps) {
   const { csrfToken } = useAdminAuth();
   const { confirm } = useConfirm();
+  const { showError } = useToast();
   // No more hard-coded "default"/"minimal" wallpapers. The collection starts
   // empty; the public site has its own DEFAULT_WALLPAPER_URL fallback baked
   // into the bundle (see `os/utils/zIndexLayers.ts`), so visitors always see
   // *something* even when this list is empty.
   const [wallpapers, setWallpapers] = useState<Wallpaper[]>(data?.collection || []);
-  const [activeId, setActiveId] = useState<string>(data?.activeWallpaperId || (data?.collection?.[0]?.id ?? ''));
+  const [activeId, setActiveId] = useState<string>(
+    data?.activeWallpaperId || (data?.collection?.[0]?.id ?? '')
+  );
   // Local state for blur — only saves to database on pointer/mouse up (not every keystroke)
   const [blurValue, setBlurValue] = useState<number>(data?.blur || 0);
   // Encode profile untuk wallpaper upload. Persisted di localStorage
@@ -121,7 +128,7 @@ export default function WallpaperManager({
     }
   }, []);
   const { enqueueWallpaperUpload, hasActiveUploads } = useBackgroundUpload();
-  
+
   // Track wallpaper card mana yang user hover/active untuk lazy-play video.
   // Tanpa ini semua video di-autoplay → bandwidth habis & preview gambar
   // lain ikut antri.
@@ -134,6 +141,7 @@ export default function WallpaperManager({
   // revert on Escape so accidental clicks don't wipe a name.
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState<string>('');
+  const [startTimeDraft, setStartTimeDraft] = useState<string>('');
   const renameInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -231,9 +239,7 @@ export default function WallpaperManager({
           // Non-200: log once and bail. Don't show user-facing error
           // since this is a background self-heal, not an action they
           // initiated.
-          console.warn(
-            `[WallpaperManager] poster backfill returned ${res.status}, skipping`
-          );
+          console.warn(`[WallpaperManager] poster backfill returned ${res.status}, skipping`);
           return;
         }
 
@@ -291,7 +297,7 @@ export default function WallpaperManager({
     for (const file of fileArray) {
       enqueueWallpaperUpload(file, { profile: uploadProfile });
     }
-    
+
     // Clear input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -510,11 +516,13 @@ export default function WallpaperManager({
   const startRename = (wp: Wallpaper) => {
     setRenamingId(wp.id);
     setRenameDraft(wp.name || '');
+    setStartTimeDraft(wp.startTime !== undefined ? wp.startTime.toString() : '');
   };
 
   const cancelRename = () => {
     setRenamingId(null);
     setRenameDraft('');
+    setStartTimeDraft('');
   };
 
   const commitRename = (id: string) => {
@@ -522,14 +530,33 @@ export default function WallpaperManager({
     const fallback = 'Custom Wallpaper';
     const nextName = trimmed.length > 0 ? trimmed.slice(0, 200) : fallback;
 
-    // Skip the round-trip if the name didn't actually change.
     const current = wallpapers.find((w) => w.id === id);
-    if (!current || current.name === nextName) {
+    if (!current) {
       cancelRename();
       return;
     }
 
-    const newCollection = wallpapers.map((w) => (w.id === id ? { ...w, name: nextName } : w));
+    // Parse and validate start time for video wallpapers
+    let parsedStartTime: number | undefined = undefined;
+    const isVideo = isVideoLink(current.url);
+    if (isVideo && startTimeDraft.trim() !== '') {
+      const val = parseInt(startTimeDraft.trim(), 10);
+      if (isNaN(val) || val < 0 || val > 250) {
+        showError('Start time must be a number between 0 and 250 seconds.');
+        return;
+      }
+      parsedStartTime = val;
+    }
+
+    // Skip the round-trip if name and startTime didn't actually change.
+    if (current.name === nextName && current.startTime === parsedStartTime) {
+      cancelRename();
+      return;
+    }
+
+    const newCollection = wallpapers.map((w) =>
+      w.id === id ? { ...w, name: nextName, startTime: parsedStartTime } : w
+    );
     setWallpapers(newCollection);
     cancelRename();
 
@@ -605,12 +632,10 @@ export default function WallpaperManager({
             <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
               <div className="mb-3 flex items-center justify-between">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Upload Quality
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700">Upload Quality</label>
                   <p className="mt-0.5 text-xs text-gray-500">
-                    Kualitas encode untuk video wallpaper baru. Pilihan
-                    bertahan sampai tab ini ditutup.
+                    Kualitas encode untuk video wallpaper baru. Pilihan bertahan sampai tab ini
+                    ditutup.
                   </p>
                 </div>
                 {hasActiveUploads && (
@@ -657,11 +682,7 @@ export default function WallpaperManager({
                         isSelected
                           ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-200'
                           : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                      } ${
-                        hasActiveUploads
-                          ? 'cursor-not-allowed opacity-60'
-                          : 'cursor-pointer'
-                      }`}
+                      } ${hasActiveUploads ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                     >
                       <span className="text-sm font-semibold">{opt.label}</span>
                       <span
@@ -681,8 +702,6 @@ export default function WallpaperManager({
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {/* Active Wallpaper Hero (Optional Visual Emphasis) */}
-
               {wallpapers.map((wp, index) => (
                 <WallpaperCard
                   key={wp.id}
@@ -691,6 +710,7 @@ export default function WallpaperManager({
                   isHovered={hoveredId === wp.id}
                   isRenaming={renamingId === wp.id}
                   renameDraft={renameDraft}
+                  startTimeDraft={startTimeDraft}
                   renameInputRef={renameInputRef}
                   // Pertama tampil di viewport: prioritize. Sisanya
                   // lazy load oleh next/image otomatis.
@@ -700,6 +720,7 @@ export default function WallpaperManager({
                   onMouseLeave={() => setHoveredId((prev) => (prev === wp.id ? null : prev))}
                   onStartRename={() => startRename(wp)}
                   onRenameDraftChange={setRenameDraft}
+                  onStartTimeDraftChange={setStartTimeDraft}
                   onCommitRename={() => commitRename(wp.id)}
                   onCancelRename={cancelRename}
                   onDelete={() => handleDelete(wp.id)}
@@ -722,11 +743,11 @@ export default function WallpaperManager({
                   if (e.dataTransfer.files) handleFileDrop(e.dataTransfer.files);
                 }}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-3 relative aspect-video rounded-xl border-dashed cursor-pointer ${
-                  hasActiveUploads 
-                    ? 'border-amber-400 bg-amber-50/20' 
-                    : isDragOver 
-                      ? 'border-blue-500 bg-blue-50/20' 
+                className={`border-3 relative aspect-video cursor-pointer rounded-xl border-dashed ${
+                  hasActiveUploads
+                    ? 'border-amber-400 bg-amber-50/20'
+                    : isDragOver
+                      ? 'border-blue-500 bg-blue-50/20'
                       : 'border-gray-200 bg-gray-50/50 hover:border-blue-400 hover:bg-blue-50/10'
                 } group flex flex-col items-center justify-center gap-4 overflow-hidden transition-all`}
               >
@@ -740,7 +761,9 @@ export default function WallpaperManager({
                 />
                 <div
                   className={`pointer-events-none rounded-full p-4 shadow-sm transition-transform ${
-                    hasActiveUploads ? 'bg-amber-50 text-amber-500' : 'bg-white text-blue-500 group-hover:scale-110'
+                    hasActiveUploads
+                      ? 'bg-amber-50 text-amber-500'
+                      : 'bg-white text-blue-500 group-hover:scale-110'
                   }`}
                 >
                   {hasActiveUploads ? (
@@ -766,193 +789,6 @@ export default function WallpaperManager({
           </>
         )}
       </div>
-    </div>
-  );
-}
-
-// ---------- Subcomponent: WallpaperCard ----------
-
-interface WallpaperCardProps {
-  wp: Wallpaper;
-  isActive: boolean;
-  isHovered: boolean;
-  isRenaming: boolean;
-  renameDraft: string;
-  renameInputRef: React.MutableRefObject<HTMLInputElement | null>;
-  priority: boolean;
-  onSelect: () => void;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-  onStartRename: () => void;
-  onRenameDraftChange: (value: string) => void;
-  onCommitRename: () => void;
-  onCancelRename: () => void;
-  onDelete: () => void;
-}
-
-function WallpaperCard({
-  wp,
-  isActive,
-  isHovered,
-  isRenaming,
-  renameDraft,
-  renameInputRef,
-  priority,
-  onSelect,
-  onMouseEnter,
-  onMouseLeave,
-  onStartRename,
-  onRenameDraftChange,
-  onCommitRename,
-  onCancelRename,
-  onDelete,
-}: WallpaperCardProps) {
-  const isVideo = useMemo(() => isVideoLink(wp.url), [wp.url]);
-  // Click-to-play: video hanya start saat user hover atau wallpaper aktif.
-  // Idle state cuma render poster (kalau ada) atau frame pertama lewat
-  // <img>. Tanpa ini semua video preload metadata + autoplay → bandwidth.
-  const shouldPlayVideo = isVideo && (isHovered || isActive);
-
-  const optimizedImageSrc = useMemo(() => buildOptimizedUrl(wp.url), [wp.url]);
-  const optimizedPosterSrc = useMemo(
-    () => (wp.posterUrl ? buildOptimizedUrl(wp.posterUrl) : null),
-    [wp.posterUrl]
-  );
-
-  return (
-    <div
-      onClick={onSelect}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      className={`group relative aspect-video cursor-pointer overflow-hidden rounded-xl transition-all duration-300 ${
-        isActive
-          ? 'scale-[1.02] shadow-2xl shadow-blue-500/20 ring-4 ring-blue-500'
-          : 'ring-1 ring-gray-200 hover:-translate-y-1 hover:shadow-xl'
-      } `}
-    >
-      {isVideo ? (
-        shouldPlayVideo ? (
-          <video
-            // hanya muncul saat hover/active → preload metadata di
-            // titik ini sudah OK karena user benar-benar mau lihat
-            src={wp.url}
-            poster={optimizedPosterSrc || undefined}
-            muted
-            loop
-            autoPlay
-            playsInline
-            preload="metadata"
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-        ) : (
-          <>
-            {optimizedPosterSrc ? (
-              // Poster jpg yang dihasilkan saat upload — ringan,
-              // dilewatkan ke next/image agar di-resize ke ukuran
-              // card.
-              <Image
-                src={optimizedPosterSrc}
-                alt={wp.name || 'Wallpaper preview'}
-                fill
-                sizes="(max-width: 768px) 100vw, 600px"
-                quality={70}
-                priority={priority}
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-            ) : (
-              // Tidak ada poster → fallback placeholder gelap +
-              // tombol play, biar tidak men-download MP4 untuk
-              // sekedar thumbnail.
-              <div className="flex h-full w-full items-center justify-center bg-gray-900">
-                <Play size={32} className="text-white/70" />
-              </div>
-            )}
-            <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-sm">
-              <Play size={10} /> Video
-            </div>
-          </>
-        )
-      ) : (
-        <Image
-          src={optimizedImageSrc}
-          alt={wp.name || 'Wallpaper preview'}
-          fill
-          sizes="(max-width: 768px) 100vw, 600px"
-          quality={70}
-          priority={priority}
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
-        />
-      )}
-
-      {/* Active Badge */}
-      <div
-        className={`absolute right-4 top-4 rounded-full bg-blue-500 p-2 text-white shadow-lg transition-transform duration-300 ${isActive ? 'scale-100' : 'scale-0'}`}
-      >
-        <Check size={16} strokeWidth={3} />
-      </div>
-
-      {/* Overlay & Info */}
-      <div
-        className={`absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent p-6 opacity-0 transition-opacity group-hover:opacity-100 ${isActive || isRenaming ? 'opacity-100' : ''}`}
-      >
-        {isRenaming ? (
-          <input
-            ref={renameInputRef}
-            type="text"
-            value={renameDraft}
-            maxLength={200}
-            onChange={(e) => onRenameDraftChange(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                onCommitRename();
-              } else if (e.key === 'Escape') {
-                e.preventDefault();
-                onCancelRename();
-              }
-            }}
-            onBlur={onCommitRename}
-            placeholder="Wallpaper name"
-            className="w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium text-white placeholder-white/50 drop-shadow-md backdrop-blur-md focus:border-white focus:outline-none"
-          />
-        ) : (
-          <>
-            <p className="translate-y-2 transform text-lg font-medium text-white drop-shadow-md transition-transform group-hover:translate-y-0">
-              {isActive ? 'Active Wallpaper' : wp.name || 'Wallpaper'}
-            </p>
-            <span className="mt-1 font-mono text-[10px] uppercase tracking-widest text-white/80">
-              {isActive ? 'Applied' : 'Click to Apply'}
-            </span>
-          </>
-        )}
-      </div>
-
-      {/* Edit & Delete Actions */}
-      {!isRenaming && (
-        <div className="absolute left-4 top-4 flex items-center gap-2 opacity-0 transition-all group-hover:opacity-100">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onStartRename();
-            }}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all hover:scale-110 hover:bg-blue-500 hover:text-white"
-            title="Rename Wallpaper"
-          >
-            <Pencil size={16} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all hover:scale-110 hover:bg-red-500 hover:text-white"
-            title="Delete Wallpaper"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

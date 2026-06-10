@@ -217,15 +217,15 @@ per-window.
 
 31 API route directories di `src/app/api/`:
 
-| Kategori             | Routes                                                                                                     |
-| -------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Content CRUD**     | `about`, `experience`, `hard-skills`, `projects`, `testimonial`, `running-text`, `sticky-notes`, `gallery` |
-| **Chat / Messaging** | `chat`, `comments`, `contact`, `feedback`, `webhook`                                                       |
-| **AI**               | `ai`, `translate`                                                                                          |
+| Kategori             | Routes                                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Content CRUD**     | `about`, `experience`, `hard-skills`, `projects`, `testimonial`, `running-text`, `sticky-notes`, `gallery`                                       |
+| **Chat / Messaging** | `chat`, `comments`, `contact`, `feedback`, `webhook`                                                                                             |
+| **AI**               | `ai`, `translate`                                                                                                                                |
 | **Admin**            | `admin`, `admin/storage-stats` (per-category D1↔R2 breakdown untuk panel Storage), `admin/wallpaper-poster-backfill` (self-heal posterUrl di D1) |
-| **Media**            | `media`, `upload`, `img`                                                                                   |
-| **System**           | `analytics`, `health`, `debug`, `empty`, `os`, `revalidate`, `utils`                                       |
-| **Data**             | `leads`, `metrics`, `settings`, `explorer`                                                                 |
+| **Media**            | `media`, `upload`, `img`                                                                                                                         |
+| **System**           | `analytics`, `health`, `debug`, `empty`, `os`, `revalidate`, `utils`                                                                             |
+| **Data**             | `leads`, `metrics`, `settings`, `explorer`                                                                                                       |
 
 ---
 
@@ -448,14 +448,14 @@ import Toast from '@/components/ui/Toast'; // default export — pola per-file b
 
 ### Root Contexts (`src/contexts/`)
 
-| Context                   | Kegunaan                                                          |
-| ------------------------- | ----------------------------------------------------------------- |
-| `LastUpdatedContext`      | Track last updated timestamps                                     |
-| `ModalContext`            | Modal state management                                            |
-| `NavbarVisibilityContext` | Navbar show/hide state                                            |
-| `ToastContext`            | Toast notification system                                         |
-| `WindowContext`           | Window management state                                           |
-| `BackgroundUploadContext` | Antrian upload wallpaper di background (admin-only, lihat bawah)  |
+| Context                   | Kegunaan                                                         |
+| ------------------------- | ---------------------------------------------------------------- |
+| `LastUpdatedContext`      | Track last updated timestamps                                    |
+| `ModalContext`            | Modal state management                                           |
+| `NavbarVisibilityContext` | Navbar show/hide state                                           |
+| `ToastContext`            | Toast notification system                                        |
+| `WindowContext`           | Window management state                                          |
+| `BackgroundUploadContext` | Antrian upload wallpaper di background (admin-only, lihat bawah) |
 
 > **Pattern — BackgroundUploadContext (admin)**
 >
@@ -492,12 +492,12 @@ import Toast from '@/components/ui/Toast'; // default export — pola per-file b
 >
 > Setelah save, context push hasilnya ke
 > `queryClient.setQueryData(ADMIN_QUERY_KEYS.about)` + `mutate('/api/about',
-> data, { revalidate: false })`. Pakai `revalidate: false` supaya tidak
+data, { revalidate: false })`. Pakai `revalidate: false` supaya tidak
 > trigger fetch berikutnya yang bisa balik dengan cached server response
 > (race window kecil tapi nyata saat upload back-to-back).
 >
 > Status detail dari WASM ffmpeg (mis. `"Compressing 35% - ~12s
-> remaining"`) di-route ke task aktif via `encodingTaskIdRef` dan
+remaining"`) di-route ke task aktif via `encodingTaskIdRef` dan
 > tampil di tooltip CloudUpload icon menubar admin.
 >
 > Detail lengkap (encoder settings, profile, audit logic) ada di
@@ -623,18 +623,18 @@ Karakteristik `ContentService` saat ini:
 
 ### Key Lib Utilities
 
-| File                   | Kegunaan                               |
-| ---------------------- | -------------------------------------- |
-| `urlResolver.ts`       | Centralized URL resolution             |
-| `seo.ts`               | SEO metadata generation                |
-| `api-response.ts`      | Standardized API response helpers      |
-| `media.ts`             | Media file handling                    |
-| `magic.ts`             | Animation/magic utilities              |
-| `chatStore.ts`         | Chat state management                  |
-| `constants.ts`         | Shared constants                       |
-| `dataRateLimit.ts`     | Cloudflare D1-backed rate limiter      |
-| `r2Storage.ts`         | Cloudflare R2 media storage operations |
-| `gemini.ts`            | Gemini AI client setup                 |
+| File               | Kegunaan                               |
+| ------------------ | -------------------------------------- |
+| `urlResolver.ts`   | Centralized URL resolution             |
+| `seo.ts`           | SEO metadata generation                |
+| `api-response.ts`  | Standardized API response helpers      |
+| `media.ts`         | Media file handling                    |
+| `magic.ts`         | Animation/magic utilities              |
+| `chatStore.ts`     | Chat state management                  |
+| `constants.ts`     | Shared constants                       |
+| `dataRateLimit.ts` | Cloudflare D1-backed rate limiter      |
+| `r2Storage.ts`     | Cloudflare R2 media storage operations |
+| `gemini.ts`        | Gemini AI client setup                 |
 
 ### Caching Strategy
 
@@ -683,7 +683,7 @@ separator `/` lalu menulis ke key parent dengan field nested. Contoh:
   field `about = x`. Bukan ke row literal `"content/about"`.
 - `db.ref('content/about').once('value')` membaca lewat path yang sama,
   jadi konsisten dengan write.
-- `db.ref(\`projects/${id}\`).set(...)` juga nested di parent `projects`.
+- `db.ref(\`projects/${id}\`).set(...)`juga nested di parent`projects`.
 
 Sebaliknya, helper mentah di `src/lib/cloudflareD1.ts` **tidak** menafsirkan
 `/` sebagai nested path:
@@ -810,6 +810,7 @@ Konsumer: `BackgroundUploadContext.enqueueWallpaperUpload`. Flow:
    (top-level partial, validated by `updateAboutSchema.strict()`)
 
 Concurrency:
+
 - WASM ffmpeg single-threaded → encode di-serialize via
   `compressChainRef` (Promise mutex)
 - Network upload paralel (per task)
@@ -825,12 +826,14 @@ trigger fetch berikutnya yang bisa balik dengan cached server response
 #### Jalur FormData fallback (`/api/upload` POST biasa)
 
 Server-side ceiling per type (di-enforce di route handler awal):
+
 - Image: 30 MB (sharp decode RGBA buffer ~width×height×4)
 - Video: 60 MB (match wallpaper ceiling; bigger files harus pakai
   direct-to-R2 path)
 - Audio: 25 MB
 
 Jalur ini masih dipakai untuk:
+
 - Project asset upload (image/video <60 MB)
 - Sound effects (audio)
 - Poster JPG side-car dari direct-to-R2 wallpaper flow
@@ -840,25 +843,25 @@ Jalur ini masih dipakai untuk:
 Setting di-tune untuk **motion graphics / particle / CGI** (umum di live
 wallpaper), bukan live-action:
 
-| Knob | Sebelum (era lama) | Sekarang | Alasan |
-| --- | --- | --- | --- |
-| Preset (server) | `slow` | `medium` | `slow` 5-10× lebih lambat tanpa quality bump signifikan untuk content motion graphics |
-| Preset (client WASM) | `medium` (sempat) → **`fast`** | — | WASM single-thread, `medium` butuh 150-300s untuk 30s 4K vs 50-100s di `fast`. Quality drop ~5-10% di scene complex, hampir tidak terlihat untuk ambient motion |
-| `-tune film` | aktif | dihapus | Bias ke film grain pattern → buang detail di gradient halus motion graphics |
-| `fps=30` filter | aktif | dihapus | Drop frame kalau source 60 fps → judder di pan/particle |
-| CRF (high) | 20 | 18 | Lebih agresif untuk gradient halus tanpa file size meledak |
-| Maxrate cap | tidak ada | `8M` (high), `18M` (ultra), `3M` (standard) | Anti-VBR-spike yang bikin browser drop frame |
-| GOP / keyint | default 250 | `60` eksplisit | Loop seam wallpaper tidak macroblocking (keyframe selalu dekat akhir clip pendek) |
-| `+faststart` (client) / `frag_keyframe+empty_moov` (server pipe) | partial | konsisten | moov atom di awal → browser start playback <500 ms |
+| Knob                                                             | Sebelum (era lama)             | Sekarang                                    | Alasan                                                                                                                                                          |
+| ---------------------------------------------------------------- | ------------------------------ | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Preset (server)                                                  | `slow`                         | `medium`                                    | `slow` 5-10× lebih lambat tanpa quality bump signifikan untuk content motion graphics                                                                           |
+| Preset (client WASM)                                             | `medium` (sempat) → **`fast`** | —                                           | WASM single-thread, `medium` butuh 150-300s untuk 30s 4K vs 50-100s di `fast`. Quality drop ~5-10% di scene complex, hampir tidak terlihat untuk ambient motion |
+| `-tune film`                                                     | aktif                          | dihapus                                     | Bias ke film grain pattern → buang detail di gradient halus motion graphics                                                                                     |
+| `fps=30` filter                                                  | aktif                          | dihapus                                     | Drop frame kalau source 60 fps → judder di pan/particle                                                                                                         |
+| CRF (high)                                                       | 20                             | 18                                          | Lebih agresif untuk gradient halus tanpa file size meledak                                                                                                      |
+| Maxrate cap                                                      | tidak ada                      | `8M` (high), `18M` (ultra), `3M` (standard) | Anti-VBR-spike yang bikin browser drop frame                                                                                                                    |
+| GOP / keyint                                                     | default 250                    | `60` eksplisit                              | Loop seam wallpaper tidak macroblocking (keyframe selalu dekat akhir clip pendek)                                                                               |
+| `+faststart` (client) / `frag_keyframe+empty_moov` (server pipe) | partial                        | konsisten                                   | moov atom di awal → browser start playback <500 ms                                                                                                              |
 
 Profile-nya identik antara client (`useFFmpeg.PROFILE_PRESETS`) dan
 server (`videoOptimization.PROFILES`):
 
-| Profile | Resolusi | CRF | Maxrate | Use case |
-| --- | --- | --- | --- | --- |
-| `standard` | 720p | 24 | 3M | project thumbnail, gallery |
-| `high` | 1440p | 18 | 8M | default wallpaper — sweet spot 1080p s/d 24" QHD; 4K masih tajam |
-| `ultra` | 2160p | 20 | 18M | wallpaper untuk monitor 4K target |
+| Profile    | Resolusi | CRF | Maxrate | Use case                                                         |
+| ---------- | -------- | --- | ------- | ---------------------------------------------------------------- |
+| `standard` | 720p     | 24  | 3M      | project thumbnail, gallery                                       |
+| `high`     | 1440p    | 18  | 8M      | default wallpaper — sweet spot 1080p s/d 24" QHD; 4K masih tajam |
+| `ultra`    | 2160p    | 20  | 18M     | wallpaper untuk monitor 4K target                                |
 
 Toggle High/Ultra di `WallpaperManager` persisted via `sessionStorage`
 (per-tab, bukan localStorage cross-session — mencegah preference bocor
@@ -878,6 +881,7 @@ Browser GET /r2/assets/wallpapers/xxx.mp4
 ```
 
 **Implikasi:**
+
 - Bytes wallpaper **lewat** Vercel function — bukan direct dari R2 CDN.
   Counts as Vercel **Fast Origin Transfer** (10 GB cap Hobby) dan
   **Fast Data Transfer** (100 GB cap Hobby).
@@ -890,6 +894,7 @@ Browser GET /r2/assets/wallpapers/xxx.mp4
   tidak ke-cut Vercel default 10s.
 
 Untuk skala portfolio 250 visitor/bulan:
+
 - Storage R2: ~60 MB total (5 wallpaper × 12 MB) → free tier 10 GB
 - Egress R2 → Vercel: 0 cost (R2 egress gratis)
 - Cache-HIT ratio diharapkan tinggi (1 tahun immutable cache) → cold-cache
@@ -901,10 +906,10 @@ Untuk skala portfolio 250 visitor/bulan:
 Endpoint `/api/admin/storage-stats` membandingkan D1 vs R2 per kategori.
 Logic memisahkan **dua jenis path**:
 
-1. **`primaryPathsInPrefix`** — D1 *eksplisit* nunjuk (url + posterUrl
+1. **`primaryPathsInPrefix`** — D1 _eksplisit_ nunjuk (url + posterUrl
    yang tersimpan). Hanya ini yang dihitung dangling. Kalau D1 bilang
    "saya nunjuk X" tapi X tidak ada di R2 → real dangling.
-2. **`derivedSidecarPaths`** — path yang *kemungkinan* di-generate
+2. **`derivedSidecarPaths`** — path yang _kemungkinan_ di-generate
    pipeline (preview clip, poster auto-generate `.jpg` ATAU `.webp`).
    Set ini cuma untuk filter orphan; kalau muncul di R2 dianggap
    referenced. **Ketidakhadiran-nya bukan dangling.**
@@ -913,6 +918,7 @@ Tanpa pemisahan ini, audit akan flag MISMATCH palsu untuk wallpaper
 yang skipPreview (preview tidak dibuat tapi diharapkan ada) atau
 wallpaper era poster `.webp` (audit hardcode `.jpg`). Kalau menambah
 side-car convention baru di pipeline, update **kedua**:
+
 - `src/app/api/admin/storage-stats/route.ts` (dashboard live)
 - `scripts/cloudflare/audit-orphan-{wallpapers,projects}.ts` (CLI cleanup)
 
@@ -1113,7 +1119,7 @@ Env aktif/opsional lain yang muncul di codebase:
 > model billing **Active CPU + Provisioned Memory** sebagai default — di
 > model baru ini setting manual `memory` di-ignore dan Vercel emit warning
 > saat build (`Provided 'memory' setting ... is ignored on Active CPU
-> billing`). Memory allocation untuk function di-handle otomatis oleh
+billing`). Memory allocation untuk function di-handle otomatis oleh
 > Fluid Compute. Jangan re-add field `memory` walaupun history config lama
 > punya — itu cuma jadi noise tanpa efek.
 
@@ -1122,10 +1128,10 @@ Env aktif/opsional lain yang muncul di codebase:
 >
 > **Solusi Pemulihan Webhook 5 Menit:**
 > Gunakan layanan cron pihak ketiga yang gratis seperti [cron-job.org](https://cron-job.org/) untuk menembak endpoint `/api/cron/telegram-watchdog` setiap 5 menit dengan konfigurasi:
+>
 > - **Method**: `GET`
 > - **URL**: `https://<domain-anda>.vercel.app/api/cron/telegram-watchdog`
 > - **Header**: `Authorization: Bearer <CRON_SECRET>`
-
 
 ### Build / Deploy Notes
 
@@ -1158,10 +1164,10 @@ Beberapa pattern di code yang sengaja di-tune untuk hemat budget dan
 
 #### Polling intervals (semua dinaikkan untuk hemat invocations)
 
-| Hook | Interval Sebelum | Interval Sekarang | Alasan |
-| --- | --- | --- | --- |
-| `useChatSync` (`/api/chat/sync`) | 3s active / 30s bg | **8s active / 60s bg** | Visitor portfolio tidak ekspektasi sub-second chat. 3s = 14,400 invocations/24h per tab. |
-| `useRealtimeSync` (`/api/data/version`) | 5s | **30s** | Admin-only consumer; refresh 30s cukup. /api/data/version sudah Edge runtime tapi panggilan tetap counted. |
+| Hook                                    | Interval Sebelum   | Interval Sekarang      | Alasan                                                                                                     |
+| --------------------------------------- | ------------------ | ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `useChatSync` (`/api/chat/sync`)        | 3s active / 30s bg | **8s active / 60s bg** | Visitor portfolio tidak ekspektasi sub-second chat. 3s = 14,400 invocations/24h per tab.                   |
+| `useRealtimeSync` (`/api/data/version`) | 5s                 | **30s**                | Admin-only consumer; refresh 30s cukup. /api/data/version sudah Edge runtime tapi panggilan tetap counted. |
 
 Polling baru = ~6× lebih hemat invocations untuk admin/realtime path,
 ~3× lebih hemat untuk chat polling. Untuk 250 visitor/bulan ini selisih

@@ -10,6 +10,7 @@ import {
   createHardSkillConceptSchema,
   updateHardSkillConceptSchema,
   updateAboutSchema,
+  wallpaperSchema,
 } from '../adminCrud';
 
 describe('hardSkillSchema', () => {
@@ -274,5 +275,106 @@ describe('updateAboutSchema layout preferences', () => {
     });
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe('wallpaperSchema', () => {
+  it('accepts valid wallpaper with all fields', () => {
+    const result = wallpaperSchema.safeParse({
+      id: 'wp-1',
+      url: '/r2/assets/wallpapers/ocean.mp4',
+      name: 'Ocean Sunset',
+      posterUrl: '/r2/assets/wallpapers/ocean.jpg',
+      startTime: 30,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts wallpaper without optional fields', () => {
+    const result = wallpaperSchema.safeParse({
+      id: 'wp-minimal',
+      url: '/r2/image.jpg',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts startTime as string and coerces to number', () => {
+    const result = wallpaperSchema.safeParse({
+      id: 'wp-coerce',
+      url: '/r2/v.mp4',
+      startTime: '45',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.startTime).toBe(45);
+  });
+
+  it('accepts startTime = 0', () => {
+    const result = wallpaperSchema.safeParse({
+      id: 'wp-zero',
+      url: '/r2/v.mp4',
+      startTime: 0,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.startTime).toBe(0);
+  });
+
+  it('accepts startTime = 250 (max boundary)', () => {
+    const result = wallpaperSchema.safeParse({
+      id: 'wp-max',
+      url: '/r2/v.mp4',
+      startTime: 250,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects startTime below 0', () => {
+    const result = wallpaperSchema.safeParse({
+      id: 'wp-neg',
+      url: '/r2/v.mp4',
+      startTime: -1,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects startTime above 250', () => {
+    const result = wallpaperSchema.safeParse({
+      id: 'wp-over',
+      url: '/r2/v.mp4',
+      startTime: 251,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts undefined startTime (optional field omitted)', () => {
+    const result = wallpaperSchema.safeParse({
+      id: 'wp-no-st',
+      url: '/r2/v.mp4',
+      name: 'Test',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.startTime).toBeUndefined();
+  });
+
+  it('rejects missing required id', () => {
+    const result = wallpaperSchema.safeParse({
+      url: '/r2/v.mp4',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects missing required url', () => {
+    const result = wallpaperSchema.safeParse({
+      id: 'wp-x',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects unknown extra fields (strict mode)', () => {
+    const result = wallpaperSchema.safeParse({
+      id: 'wp-x',
+      url: '/r2/v.mp4',
+      extraField: 'nope',
+    });
+    expect(result.success).toBe(false);
   });
 });

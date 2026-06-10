@@ -25,6 +25,42 @@ const MINIMIZED_STYLE = {
   filter: 'blur(10px) saturate(0.9)',
 } as const;
 
+const WINDOW_OPEN_BOUNCE = {
+  type: 'spring',
+  stiffness: 260,
+  damping: 16,
+  mass: 0.86,
+} as const;
+
+const WINDOW_POSITION_SETTLE = {
+  duration: 0.34,
+  ease: [0.32, 0.72, 0, 1],
+} as const;
+
+const WINDOW_SIZE_BOUNCE = {
+  type: 'spring',
+  stiffness: 240,
+  damping: 17,
+  mass: 0.9,
+} as const;
+
+const WINDOW_EXIT_BOUNCE = {
+  type: 'spring',
+  stiffness: 330,
+  damping: 18,
+  mass: 0.78,
+} as const;
+
+const WINDOW_EXIT_POSITION_SETTLE = {
+  duration: 0.24,
+  ease: [0.4, 0, 0.2, 1],
+} as const;
+
+const WINDOW_ICON_MORPH_CLOSE = {
+  duration: 0.28,
+  ease: [0.4, 0, 0.2, 1],
+} as const;
+
 const BODY_DRAG_BLOCK_SELECTOR = [
   'a',
   'button',
@@ -155,6 +191,14 @@ function shouldStartWindowBodyDrag(
   return true;
 }
 
+interface MissionTarget {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  scale: number;
+}
+
 interface WindowProps {
   id: string;
   title: string;
@@ -182,8 +226,10 @@ interface WindowProps {
   isFocused?: boolean;
   /** Origin rect from the icon that launched this window (for Apple-style morph) */
   originRect?: { x: number; y: number; width: number; height: number };
-  /** Shared layoutId for Framer Motion layout morph animation */
-  layoutId?: string;
+  /** Mission Control target position/size/scale */
+  missionTarget?: MissionTarget | null;
+  /** Called when window is clicked during Mission Control */
+  onMissionControlSelect?: () => void;
 }
 
 export default function OSWindow({
@@ -209,10 +255,15 @@ export default function OSWindow({
   onTogglePin,
   isAdmin = false,
   isFocused = false,
-  animationVariant: _animationVariant,
   originRect,
+  missionTarget,
+  onMissionControlSelect,
 }: WindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
+  const [isSnapped, setIsSnapped] = useState<'left' | 'right' | false>(false);
+  const preSnapFrameRef = useRef<{ x: number; y: number; width: number; height: number } | null>(
+    null
+  );
 
   // ── Jelly Physics ──
   // Single source of truth lewat useJellyDrag (shared dengan DraggableStickyNote).
@@ -260,7 +311,13 @@ export default function OSWindow({
 
   const dragControls = useDragControls();
 
-  const { handleKeyDown } = useWindowKeyboard({ onClose, onMinimize, onMaximize });
+  const handleMaximize = useCallback(() => {
+    setIsSnapped(false);
+    preSnapFrameRef.current = null;
+    onMaximize?.();
+  }, [onMaximize]);
+
+  const { handleKeyDown } = useWindowKeyboard({ onClose, onMinimize, onMaximize: handleMaximize });
   const { dynamicSize, isResizing, handleResizeStart } = useWindowResize({
     initialWidth: width,
     initialHeight: height,
@@ -268,11 +325,27 @@ export default function OSWindow({
     onResizeEnd,
   });
 
+  const handleWrappedResizeStart = useCallback(
+    (e: React.MouseEvent | React.TouchEvent | React.PointerEvent, direction: 'e' | 's' | 'se') => {
+      setIsSnapped(false);
+      preSnapFrameRef.current = null;
+      handleResizeStart(e, direction);
+    },
+    [handleResizeStart]
+  );
+
   // ── Jelly drag setup ──
   // Disable persis saat drag itu sendiri di-disable: maximized, resizing, mobile,
   // atau pinned non-admin. Hook akan abort jelly state mid-drag kalau enabled flip ke false
   // (cegah bug #6: jellyDragRef + idleInterval stuck saat resize handle ke-grab mid-drag).
-  const jellyEnabled = !isMaximized && !isResizing && !isSmallScreen && (!isPinned || isAdmin);
+  const isMissionControlActive = !!missionTarget;
+  const jellyEnabled =
+    !isMaximized &&
+    !isSnapped &&
+    !isResizing &&
+    !isSmallScreen &&
+    (!isPinned || isAdmin) &&
+    !isMissionControlActive;
   const {
     attachRef: attachJellyRef,
     onDragStart: jellyOnDragStart,
@@ -294,11 +367,12 @@ export default function OSWindow({
 
   const handleWindowBodyPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
+      if (isMissionControlActive) return;
       if (!jellyEnabled || !shouldStartWindowBodyDrag(event, event.currentTarget)) return;
 
       dragControls.start(event);
     },
-    [dragControls, jellyEnabled]
+    [dragControls, jellyEnabled, isMissionControlActive]
   );
 
   // Sound effect on open - delay until user interaction
@@ -350,7 +424,28 @@ export default function OSWindow({
     [viewportWidth, viewportHeight]
   );
 
-  const activeFrame = isMaximized ? maximizedFrame : normalFrame;
+  const snappedFrame = useMemo(() => {
+    if (isSnapped === 'left') {
+      return {
+        x: 0,
+        y: 36,
+        width: Math.floor(viewportWidth / 2),
+        height: viewportHeight - 46,
+      };
+    }
+    if (isSnapped === 'right') {
+      const w = Math.floor(viewportWidth / 2);
+      return {
+        x: w,
+        y: 36,
+        width: w,
+        height: viewportHeight - 46,
+      };
+    }
+    return null;
+  }, [isSnapped, viewportWidth, viewportHeight]);
+
+  const activeFrame = isMaximized ? maximizedFrame : snappedFrame || normalFrame;
 
   const shellStyle = useMemo(() => {
     const base = isMaximized ? SHELL_STYLE_MAXIMIZED : SHELL_STYLE;
@@ -397,7 +492,7 @@ export default function OSWindow({
         y: originRect!.y,
         width: originRect!.width,
         height: originRect!.height,
-        scale: 0.45,
+        scale: 1,
         opacity: 0,
         borderRadius: 12,
         backgroundColor: 'rgba(255,255,255,0.30)',
@@ -405,8 +500,8 @@ export default function OSWindow({
       }
     : {
         x: activeFrame.x,
-        y: activeFrame.y,
-        scale: 0.82,
+        y: Math.min(activeFrame.y + 72, Math.max(viewportHeight - 80, activeFrame.y)),
+        scale: 0.76,
         opacity: 0,
         borderRadius: 26,
         ...MINIMIZED_STYLE,
@@ -423,49 +518,62 @@ export default function OSWindow({
     ...shellStyle,
   };
 
-  // Spring physics — Deep iOS Analysis Refinement
-  // Opening: Luxurious & Fluid
+  // Bounce physics for open, maximize, restore, and unminimize.
   const standardTransition = {
-    x: { type: 'spring', stiffness: 180, damping: 25, mass: 1 },
-    y: { type: 'spring', stiffness: 180, damping: 25, mass: 1 },
-    width: { type: 'spring', stiffness: 180, damping: 25, mass: 1 },
-    height: { type: 'spring', stiffness: 180, damping: 25, mass: 1 },
-    scale: { type: 'spring', stiffness: 180, damping: 25, mass: 1 },
-    opacity: { duration: 0.28, ease: 'easeOut' },
-    borderRadius: { duration: 0.35, ease: [0.32, 0.72, 0, 1] },
-    filter: { duration: 0.3, ease: 'easeOut' },
-    backgroundColor: { duration: 0.3, ease: 'easeOut' },
+    x: WINDOW_POSITION_SETTLE,
+    y: WINDOW_POSITION_SETTLE,
+    width: WINDOW_SIZE_BOUNCE,
+    height: WINDOW_SIZE_BOUNCE,
+    scale: WINDOW_OPEN_BOUNCE,
+    opacity: { duration: 0.2, ease: 'easeOut' },
+    borderRadius: { duration: 0.42, ease: [0.32, 0.72, 0, 1] },
+    filter: { duration: 0.24, ease: 'easeOut' },
+    backgroundColor: { duration: 0.24, ease: 'easeOut' },
   } as Transition;
 
-  // Minimize/close: Snappy & Responsive (Vacuum effect)
+  // Minimize/close snaps away with a visible rebound.
   const minimizeTransition = {
-    x: { type: 'spring', stiffness: 220, damping: 28, mass: 1 },
-    y: { type: 'spring', stiffness: 220, damping: 28, mass: 1 },
-    width: { type: 'spring', stiffness: 220, damping: 28, mass: 1 },
-    height: { type: 'spring', stiffness: 220, damping: 28, mass: 1 },
-    scale: { type: 'spring', stiffness: 220, damping: 28, mass: 1 },
-    opacity: { duration: 0.22, ease: 'easeIn' },
-    borderRadius: { duration: 0.25, ease: 'easeIn' },
+    x: WINDOW_EXIT_POSITION_SETTLE,
+    y: WINDOW_EXIT_POSITION_SETTLE,
+    width: WINDOW_EXIT_BOUNCE,
+    height: WINDOW_EXIT_BOUNCE,
+    scale: WINDOW_EXIT_BOUNCE,
+    opacity: { duration: 0.26, ease: 'easeIn' },
+    borderRadius: { duration: 0.28, ease: 'easeIn' },
     filter: { duration: 0.22, ease: 'easeIn' },
     backgroundColor: { duration: 0.22, ease: 'easeIn' },
+  } as Transition;
+
+  const iconMorphCloseTransition = {
+    x: WINDOW_ICON_MORPH_CLOSE,
+    y: WINDOW_ICON_MORPH_CLOSE,
+    width: WINDOW_ICON_MORPH_CLOSE,
+    height: WINDOW_ICON_MORPH_CLOSE,
+    scale: { duration: 0.18, ease: 'easeOut' },
+    opacity: { duration: 0.22, ease: 'easeIn' },
+    borderRadius: { duration: 0.2, ease: 'easeIn' },
+    filter: { duration: 0.2, ease: 'easeIn' },
+    backgroundColor: { duration: 0.2, ease: 'easeIn' },
   } as Transition;
 
   // Exit: fly back into icon position
   const exitState = hasOrigin
     ? ({
         ...minimizedState,
-        transition: minimizeTransition,
+        transition: iconMorphCloseTransition,
       } as TargetAndTransition)
     : ({
-        scale: 0.85,
-        opacity: 0,
+        y: Math.min(activeFrame.y + 44, Math.max(viewportHeight - 80, activeFrame.y)),
+        scale: [1, 1.045, 0.82],
+        opacity: [1, 1, 0],
         borderRadius: 26,
         backgroundColor: 'rgba(255,255,255,0.66)',
         filter: 'blur(4px) saturate(0.92)',
         transition: {
-          opacity: { duration: 0.16 },
-          scale: { type: 'spring', stiffness: 210, damping: 28 },
-          filter: { duration: 0.16 },
+          y: WINDOW_EXIT_BOUNCE,
+          opacity: { duration: 0.26, times: [0, 0.45, 1] },
+          scale: { duration: 0.3, times: [0, 0.24, 1], ease: [0.32, 0.72, 0, 1] },
+          filter: { duration: 0.18 },
         },
       } as TargetAndTransition);
 
@@ -474,18 +582,103 @@ export default function OSWindow({
       {isOpen && (
         <m.div
           ref={setRefs}
-          drag={!isMaximized && !isResizing && (!isPinned || isAdmin) && !isSmallScreen}
+          drag={
+            !isMissionControlActive &&
+            !isMaximized &&
+            !isResizing &&
+            (!isPinned || isAdmin) &&
+            !isSmallScreen
+          }
           dragControls={dragControls}
           dragListener={false}
           dragMomentum={false}
           dragElastic={0}
-          onDragStart={jellyOnDragStart}
-          onDrag={jellyOnDrag}
+          onDragStart={(e, info) => {
+            jellyOnDragStart(e, info);
+          }}
+          onDrag={(e, info) => {
+            jellyOnDrag(e, info);
+
+            // Unsnap if dragging a snapped window
+            if (isSnapped && preSnapFrameRef.current) {
+              const restoredW = preSnapFrameRef.current.width;
+              const restoredH = preSnapFrameRef.current.height;
+
+              // Clear ref synchronously to prevent double execution in subsequent drag frames
+              preSnapFrameRef.current = null;
+              setIsSnapped(false);
+
+              // Find the absolute pointer coordinates when drag started
+              const startX = info.point.x - info.offset.x;
+              const startY = info.point.y - info.offset.y;
+
+              // Center the restored window horizontally under the cursor
+              const newX = startX - restoredW / 2;
+              const newY = startY - 16; // 16px is half of 32px title bar
+
+              onUpdatePosition?.(newX, newY);
+              onResize?.(restoredW, restoredH);
+              onResizeEnd?.(restoredW, restoredH);
+            }
+          }}
           onDragEnd={(_, info) => {
             jellyOnDragEnd();
+            if (isMissionControlActive) return;
             if (!isMaximized && !isMinimized && (!isPinned || isAdmin) && onUpdatePosition) {
               const newX = initialPosition.x + info.offset.x;
               const newY = initialPosition.y + info.offset.y;
+
+              // ── Window Snapping ──
+              // Priority: left/right half-snap > top maximize
+              // supaya drag ke pojok gak trigger maximize duluan.
+              const vpW = viewportWidth;
+              const vpH = viewportHeight;
+              const pointerX = info.point.x;
+              const pointerY = info.point.y;
+              const snapMarginX = Math.max(25, vpW * 0.02); // 2% of screen or min 25px
+              const snapMarginY = 38; // Menu bar is 36px, trigger snap within 38px of the top edge
+
+              if (pointerX < snapMarginX) {
+                const snapW = Math.floor(vpW / 2);
+                const snapH = vpH - 46;
+                if (!isSnapped) {
+                  preSnapFrameRef.current = {
+                    x: initialPosition.x,
+                    y: initialPosition.y,
+                    width: measuredWidth,
+                    height: measuredHeight,
+                  };
+                  setIsSnapped('left');
+                }
+                onUpdatePosition?.(0, 36);
+                onResize?.(snapW, snapH);
+                onResizeEnd?.(snapW, snapH);
+                return;
+              }
+
+              if (pointerX > vpW - snapMarginX) {
+                const snapW = Math.floor(vpW / 2);
+                const snapH = vpH - 46;
+                if (!isSnapped) {
+                  preSnapFrameRef.current = {
+                    x: initialPosition.x,
+                    y: initialPosition.y,
+                    width: measuredWidth,
+                    height: measuredHeight,
+                  };
+                  setIsSnapped('right');
+                }
+                onUpdatePosition?.(Math.floor(vpW / 2), 36);
+                onResize?.(snapW, snapH);
+                onResizeEnd?.(snapW, snapH);
+                return;
+              }
+
+              if (pointerY < snapMarginY) {
+                handleMaximize();
+                return;
+              }
+
               onUpdatePosition(newX, newY);
             }
           }}
@@ -501,15 +694,41 @@ export default function OSWindow({
                   height: activeFrame.height,
                 }
           }
-          animate={isMinimized ? minimizedState : activeState}
+          animate={
+            isMissionControlActive && missionTarget
+              ? {
+                  x: missionTarget.x,
+                  y: missionTarget.y,
+                  scale: missionTarget.scale,
+                  width: missionTarget.width,
+                  height: missionTarget.height,
+                  opacity: 1,
+                  borderRadius: 18,
+                  ...shellStyle,
+                }
+              : isMinimized
+                ? minimizedState
+                : activeState
+          }
           transition={
-            isResizing ? { duration: 0 } : isMinimized ? minimizeTransition : standardTransition
+            isResizing
+              ? { duration: 0 }
+              : isMissionControlActive
+                ? standardTransition
+                : isMinimized
+                  ? minimizeTransition
+                  : standardTransition
           }
           exit={exitState}
-          layoutId={undefined}
           layout={false}
-          onPointerDown={onFocus}
-          onKeyDown={handleKeyDown}
+          onPointerDown={(_e) => {
+            if (isMissionControlActive && onMissionControlSelect) {
+              onMissionControlSelect();
+            } else {
+              onFocus?.();
+            }
+          }}
+          onKeyDown={isMissionControlActive ? undefined : handleKeyDown}
           tabIndex={0}
           aria-modal="true"
           role="dialog"
@@ -541,10 +760,18 @@ export default function OSWindow({
             isMaximized={isMaximized}
             isPinned={isPinned}
             isAdmin={isAdmin}
-            onClose={onClose}
-            onMinimize={onMinimize}
-            onMaximize={onMaximize}
-            onTogglePin={onTogglePin}
+            onClose={
+              isMissionControlActive && onMissionControlSelect ? onMissionControlSelect : onClose
+            }
+            onMinimize={
+              isMissionControlActive && onMissionControlSelect ? onMissionControlSelect : onMinimize
+            }
+            onMaximize={
+              isMissionControlActive && onMissionControlSelect
+                ? onMissionControlSelect
+                : handleMaximize
+            }
+            onTogglePin={isMissionControlActive ? undefined : onTogglePin}
             onDragStart={(e) => dragControls.start(e)}
             onFocus={onFocus}
           />
@@ -559,8 +786,8 @@ export default function OSWindow({
             {children}
 
             {/* Safe Zone for Resize Overlays (Only if not maximized and resizable) */}
-            {!isMaximized && !isSmallScreen && onResize && (
-              <WindowResizeHandles onResizeStart={handleResizeStart} />
+            {!isMissionControlActive && !isMaximized && !isSmallScreen && onResize && (
+              <WindowResizeHandles onResizeStart={handleWrappedResizeStart} />
             )}
           </div>
         </m.div>

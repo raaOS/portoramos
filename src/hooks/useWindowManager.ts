@@ -44,7 +44,13 @@ export const useWindowManager = ({
   });
 
   // 3. Initialization
-  useWindowInitialization({ initialWindows, aboutData, setWindows, getCenterPositionStatic });
+  useWindowInitialization({
+    initialWindows,
+    aboutData,
+    setWindows,
+    getCenterPositionStatic,
+    isAdmin,
+  });
 
   // Cleanup bouncing doc
   useEffect(() => {

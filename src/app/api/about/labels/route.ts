@@ -4,6 +4,18 @@ import { validateAdminRequest } from '@/lib/auth';
 import labelsFallback from '@/data/labels.json';
 import { Label } from '@/types/labels';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
+import { validationError } from '@/lib/api-response';
+
+const labelSchema = z.object({
+  id: z.string().min(1).max(100),
+  name: z.string().min(1).max(200),
+  slug: z.string().min(1).max(200),
+  color: z.string().max(50).optional(),
+  description: z.string().max(500).optional(),
+});
+
+const labelsArraySchema = z.array(labelSchema).max(200);
 
 const service = new ContentService<Label[]>('labels.json', labelsFallback as Label[]);
 
@@ -33,8 +45,12 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
 
-    // Save the updated labels
-    await saveLabels(body);
+    const validation = labelsArraySchema.safeParse(body);
+    if (!validation.success) {
+      return validationError(validation.error);
+    }
+
+    await saveLabels(validation.data);
 
     // Wait for cache revalidation and broadcast
     await Promise.all([revalidatePath('/', 'layout')]);

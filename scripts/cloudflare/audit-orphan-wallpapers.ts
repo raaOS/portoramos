@@ -250,12 +250,7 @@ async function main() {
 
   if (wantDelete) {
     console.log('');
-    await deleteOrphans(
-      result.orphans,
-      result.totalR2Objects,
-      result.totalReferenced,
-      skipConfirm
-    );
+    await deleteOrphans(result.orphans, result.totalR2Objects, result.totalReferenced, skipConfirm);
   }
 
   if (!wantDelete && (result.orphans.length > 0 || result.dangling.length > 0)) {

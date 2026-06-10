@@ -56,30 +56,30 @@ export const FlowchartProcess = ({ workflowSteps }: FlowchartProcessProps) => {
   const activeIndex = workflowSteps.findIndex((s) => s.id === activeStepId);
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full min-w-0">
       {/* Grid Area */}
       <div className="py-4">
-        <div className="flex flex-wrap content-start gap-8 sm:gap-10">
+        <div className="flowchart-process-grid flex min-w-0 flex-wrap content-start">
           {workflowSteps.map((step) => {
             if (!step) return null;
             return (
               <div
                 key={step.id}
                 onClick={() => setActiveStepId(step.id)}
-                className="group flex w-20 cursor-pointer flex-col items-center gap-3 sm:w-24"
+                className="flowchart-step-card group flex cursor-pointer flex-col items-center gap-3"
               >
                 {/* DOCX Icon Design */}
                 <div className="relative flex h-20 w-16 flex-col items-center justify-center transition-all group-hover:scale-105 group-active:scale-95 sm:h-24 sm:w-20">
                   <FileText
-                    className="mb-2 h-10 w-10 text-blue-600 opacity-80 drop-shadow-sm transition-opacity group-hover:opacity-100 dark:text-blue-500 sm:h-12 sm:w-12"
+                    className="flowchart-icon mb-2 text-blue-600 opacity-80 drop-shadow-sm transition-opacity group-hover:opacity-100 dark:text-blue-500"
                     strokeWidth={1.5}
                   />
-                  <div className="absolute bottom-2 rounded-sm bg-blue-600 px-1.5 py-0.5 text-[8px] font-bold text-white shadow-sm sm:text-[9px]">
+                  <div className="flowchart-badge absolute bottom-2 rounded-sm bg-blue-600 px-1.5 py-0.5 font-bold text-white shadow-sm">
                     DOCX
                   </div>
                 </div>
                 {/* Label */}
-                <span className="line-clamp-3 px-1 text-center text-[10px] font-medium leading-tight text-gray-700 transition-colors group-hover:text-blue-600 dark:text-gray-300 dark:group-hover:text-blue-400 sm:text-[11px]">
+                <span className="flowchart-label line-clamp-3 break-words px-1 text-center font-medium leading-tight text-gray-700 transition-colors group-hover:text-blue-600 dark:text-gray-300 dark:group-hover:text-blue-400">
                   Step {step.number} - {step.title}.docx
                 </span>
               </div>

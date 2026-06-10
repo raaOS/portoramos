@@ -8,9 +8,11 @@ import { DM_Sans, Six_Caps } from 'next/font/google';
  */
 
 export const dmSans = DM_Sans({
+  weight: ['400', '500', '700'],
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-sans',
+  fallback: ['system-ui', 'sans-serif'],
 });
 
 export const sixCaps = Six_Caps({

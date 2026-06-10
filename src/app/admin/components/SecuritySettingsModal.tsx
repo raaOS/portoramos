@@ -101,7 +101,7 @@ export default function SecuritySettingsModal({ onClose }: SecuritySettingsModal
           </AdminButton>
         </div>
 
-        <div className="max-h-[400px] min-h-[200px] overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3">
+        <div className="max-h-[240px] min-h-[120px] overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3">
           {loading ? (
             <div className="flex justify-center p-4">
               <Loader2 className="animate-spin text-gray-400" />

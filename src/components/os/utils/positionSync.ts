@@ -2,6 +2,7 @@
 // localStorage = primary source for ADMIN ONLY, CLOUDFLARE_D1 = template for visitors
 
 import type { DesktopIconSize, WindowPreference } from '@/types/about';
+import { clearVisitorDesktopSession } from './visitorSessionState';
 
 const STORAGE_KEY = 'ramos-positions-v2';
 
@@ -46,8 +47,8 @@ export function loadPositions(): Partial<PositionData> {
 }
 
 // Load session positions (VISITOR).
-// NOTE: Visitor positions no longer persisted ("refresh = reset" requirement).
-// This loader is kept for API compatibility but always returns empty for visitors.
+// Visitor session state now lives in visitorSessionState.ts. This legacy
+// loader is kept for API compatibility with older callers.
 export function loadSessionPositions(): Partial<PositionData> {
   // Short-circuit: no writes happen, so there is nothing meaningful to load.
   // Kept as a function (not inlined) so callers can keep the old import path.
@@ -75,6 +76,7 @@ export function clearVisitorPositions() {
   if (typeof window === 'undefined') return;
   try {
     // Legacy key — remove if it still exists from older versions
+    clearVisitorDesktopSession();
     sessionStorage.removeItem('ramos-session-positions');
   } catch {}
 }

@@ -56,13 +56,15 @@ export function useWindowResize({
 
   // Separate ref for final size (to avoid mutating start values)
   const finalSizeRef = useRef({ w: 0, h: 0 });
+  const cleanupResizeListenersRef = useRef<(() => void) | null>(null);
 
   const handleResizeStart = (
-    e: React.MouseEvent | React.TouchEvent,
+    e: React.MouseEvent | React.TouchEvent | React.PointerEvent,
     direction: 'e' | 's' | 'se'
   ) => {
     e.preventDefault();
     e.stopPropagation();
+    cleanupResizeListenersRef.current?.();
     setIsResizing(true);
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
@@ -78,20 +80,25 @@ export function useWindowResize({
       dir: direction,
     };
     finalSizeRef.current = { w: startWidth, h: startHeight };
-  };
-
-  useEffect(() => {
-    if (!isResizing) return;
 
     let rafId: number | null = null;
-    let pendingSize = { width: 0, height: 0 };
+    let pendingSize = { width: startWidth, height: startHeight };
     const touchMoveOptions: AddEventListenerOptions = { passive: false };
 
-    const handleMouseMove = (moveEvent: MouseEvent | TouchEvent) => {
+    const getClientPoint = (moveEvent: MouseEvent | TouchEvent | PointerEvent) => {
+      if ('touches' in moveEvent) {
+        const touch = moveEvent.touches[0] || moveEvent.changedTouches[0];
+        return { clientX: touch.clientX, clientY: touch.clientY };
+      }
+
+      return { clientX: moveEvent.clientX, clientY: moveEvent.clientY };
+    };
+
+    const handleMouseMove = (moveEvent: MouseEvent | TouchEvent | PointerEvent) => {
+      moveEvent.preventDefault();
       if (!resizeStartRef.current) return;
 
-      const clientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
-      const clientY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+      const { clientX, clientY } = getClientPoint(moveEvent);
 
       const {
         x: startX,
@@ -130,39 +137,52 @@ export function useWindowResize({
         rafId = null;
       }
 
-      if (isResizing) {
-        const { width: currentWidth, height: currentHeight } = dynamicSizeRef.current;
-        const { width: initialWidthValue, height: initialHeightValue } = initialSizeRef.current;
-        const fallbackWidth = resizeStartRef.current?.w || currentWidth || initialWidthValue || 300;
-        const fallbackHeight =
-          resizeStartRef.current?.h || currentHeight || initialHeightValue || 200;
-        const finalW = finalSizeRef.current.w || fallbackWidth;
-        const finalH = finalSizeRef.current.h || fallbackHeight;
+      const { width: currentWidth, height: currentHeight } = dynamicSizeRef.current;
+      const { width: initialWidthValue, height: initialHeightValue } = initialSizeRef.current;
+      const fallbackWidth = resizeStartRef.current?.w || currentWidth || initialWidthValue || 300;
+      const fallbackHeight =
+        resizeStartRef.current?.h || currentHeight || initialHeightValue || 200;
+      const finalW = finalSizeRef.current.w || fallbackWidth;
+      const finalH = finalSizeRef.current.h || fallbackHeight;
 
-        setDynamicSize({ width: finalW, height: finalH });
+      setDynamicSize({ width: finalW, height: finalH });
 
-        if (onResizeRef.current) onResizeRef.current(finalW, finalH);
-        if (onResizeEndRef.current) onResizeEndRef.current(finalW, finalH);
-      }
+      if (onResizeRef.current) onResizeRef.current(finalW, finalH);
+      if (onResizeEndRef.current) onResizeEndRef.current(finalW, finalH);
+
       setIsResizing(false);
       resizeStartRef.current = null;
+      cleanupResizeListenersRef.current?.();
+      cleanupResizeListenersRef.current = null;
     };
 
+    window.addEventListener('pointermove', handleMouseMove);
+    window.addEventListener('pointerup', handleMouseUp);
+    window.addEventListener('pointercancel', handleMouseUp);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('touchmove', handleMouseMove, touchMoveOptions);
     window.addEventListener('touchend', handleMouseUp);
 
-    return () => {
+    cleanupResizeListenersRef.current = () => {
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
       }
+      window.removeEventListener('pointermove', handleMouseMove);
+      window.removeEventListener('pointerup', handleMouseUp);
+      window.removeEventListener('pointercancel', handleMouseUp);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('touchmove', handleMouseMove, touchMoveOptions);
       window.removeEventListener('touchend', handleMouseUp);
     };
-  }, [isResizing]);
+  };
+
+  useEffect(() => {
+    return () => {
+      cleanupResizeListenersRef.current?.();
+    };
+  }, []);
 
   return {
     dynamicSize,

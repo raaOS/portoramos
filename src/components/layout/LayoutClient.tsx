@@ -64,9 +64,7 @@ export default function LayoutClient({
         {modal}
       </>
     ) : (
-      <NonOSChrome modal={modal}>
-        {children}
-      </NonOSChrome>
+      <NonOSChrome modal={modal}>{children}</NonOSChrome>
     );
 
   return (
@@ -79,4 +77,3 @@ export default function LayoutClient({
     </WindowProvider>
   );
 }
-

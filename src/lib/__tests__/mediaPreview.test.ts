@@ -87,10 +87,7 @@ describe('mediaPreview', () => {
       // regardless of input video extension.
       for (const ext of ['mp4', 'webm', 'mov']) {
         const out = getVideoPosterCandidates(`/r2/assets/projects/clip.${ext}`);
-        expect(out).toEqual([
-          '/r2/assets/projects/clip.jpg',
-          '/r2/assets/projects/clip.webp',
-        ]);
+        expect(out).toEqual(['/r2/assets/projects/clip.jpg', '/r2/assets/projects/clip.webp']);
       }
     });
   });

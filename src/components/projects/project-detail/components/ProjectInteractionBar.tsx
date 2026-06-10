@@ -53,14 +53,16 @@ export function ProjectInteractionBar({
     : 'pr-1 text-sm font-medium';
 
   return (
-    <div className={isVertical ? 'flex flex-col items-center gap-3' : 'flex flex-wrap items-center gap-2 pt-2'}>
+    <div
+      className={
+        isVertical ? 'flex flex-col items-center gap-3' : 'flex flex-wrap items-center gap-2 pt-2'
+      }
+    >
       <div className={isVertical ? 'flex flex-col items-center gap-3' : 'flex items-center gap-2'}>
         {/* Like Button */}
         <button
           className={buttonClassName(
-            isProjectLiked || metrics.likes > 0
-              ? 'text-red-500'
-              : '',
+            isProjectLiked || metrics.likes > 0 ? 'text-red-500' : '',
             'text-gray-400 hover:text-red-500'
           )}
           onClick={onLike}
@@ -85,9 +87,7 @@ export function ProjectInteractionBar({
         {/* Comment Button */}
         <button
           className={buttonClassName(
-            commentCount > 0
-              ? 'text-green-600 dark:text-green-500'
-              : '',
+            commentCount > 0 ? 'text-green-600 dark:text-green-500' : '',
             'text-gray-400 hover:text-green-600 dark:hover:text-green-500'
           )}
           onClick={onScrollToComments}
@@ -142,7 +142,9 @@ export function ProjectInteractionBar({
           onClick={onTranslate}
           disabled={translateLoading}
           className={`${isVertical ? 'flex-col gap-0.5' : 'gap-1'} flex items-center rounded-full p-1.5 transition-all duration-200 disabled:opacity-50 ${
-            translations ? 'text-purple-600 hover:text-gray-400' : 'text-gray-400 hover:text-purple-600'
+            translations
+              ? 'text-purple-600 hover:text-gray-400'
+              : 'text-gray-400 hover:text-purple-600'
           }`}
           title={translations ? 'Restore original' : 'Translate with Gemini AI'}
         >
@@ -161,7 +163,7 @@ export function ProjectInteractionBar({
             href={`/projects/${projectSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center rounded-full p-1.5 transition-all duration-200 text-gray-400 hover:text-amber-500"
+            className="flex items-center rounded-full p-1.5 text-gray-400 transition-all duration-200 hover:text-amber-500"
             aria-label="Open full page"
             title="Open full page"
           >

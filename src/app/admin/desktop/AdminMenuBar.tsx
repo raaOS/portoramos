@@ -6,7 +6,13 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { mutate as mutateSWR } from 'swr';
 import { useDataStatus } from '../hooks/useDataStatus';
-import { DatabasePopout, NetworkPopout, WatchdogPopout, SettingsPopout, UploadsPopout } from './AdminStatusPopouts';
+import {
+  DatabasePopout,
+  NetworkPopout,
+  WatchdogPopout,
+  SettingsPopout,
+  UploadsPopout,
+} from './status-popouts';
 import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import { ActivityLogModal } from '../components/ActivityLogModal';
 import {
@@ -16,7 +22,7 @@ import {
 } from '../components/ClearCacheProgressModal';
 import { useToast } from '@/contexts/ToastContext';
 import { useCsrfToken } from '@/hooks/useCsrfToken';
-import type { WatchdogStatusData } from './AdminStatusPopouts';
+import type { WatchdogStatusData } from './status-popouts';
 import { useBackgroundUpload } from '@/contexts/BackgroundUploadContext';
 import { CloudUpload } from 'lucide-react';
 
@@ -179,8 +185,7 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
   // Icon color state: prioritas active > complete-recent > idle.
   // Hijau muncul saat ada task complete yang belum di-auto-remove (3 detik
   // window per context), kasih admin sinyal "selesai" tanpa harus buka popout.
-  const hasRecentlyCompleted =
-    !hasActiveUploads && tasks.some((t) => t.status === 'complete');
+  const hasRecentlyCompleted = !hasActiveUploads && tasks.some((t) => t.status === 'complete');
   const cloudIconColorClass = hasActiveUploads
     ? 'text-blue-500'
     : hasRecentlyCompleted
@@ -212,14 +217,8 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
   });
   const [isRefreshingWatchdog, setIsRefreshingWatchdog] = useState(false);
 
-  const {
-    connectionStatus,
-    serverStatus,
-    latencyMs,
-    lastCheckedAt,
-    errorMessage,
-    health,
-  } = useDataStatus();
+  const { connectionStatus, serverStatus, latencyMs, lastCheckedAt, errorMessage, health } =
+    useDataStatus();
 
   const updateCacheStep = React.useCallback(
     (id: string, patch: Partial<ClearCacheProgressStep>) => {
@@ -540,9 +539,7 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
           }
           aria-expanded={openPopout === 'uploads'}
         >
-          <CloudUpload
-            className={`h-3.5 w-3.5 ${hasActiveUploads ? 'animate-pulse' : ''}`}
-          />
+          <CloudUpload className={`h-3.5 w-3.5 ${hasActiveUploads ? 'animate-pulse' : ''}`} />
           {erroredUploadCount > 0 && (
             <span
               className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-rose-500 ring-1 ring-white"
@@ -552,7 +549,6 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
         </button>
 
         <span className="admin-menubar-time">{time}</span>
-
 
         <button
           onClick={() => router.push('/')}
@@ -630,14 +626,8 @@ export default function AdminMenuBar({ onLogout }: AdminMenuBarProps) {
         isClearingCache={isClearingCache}
       />
 
-      <ChangePasswordModal 
-        isOpen={showPasswordModal} 
-        onClose={() => setShowPasswordModal(false)} 
-      />
-      <ActivityLogModal
-        isOpen={showActivityLog}
-        onClose={() => setShowActivityLog(false)}
-      />
+      <ChangePasswordModal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
+      <ActivityLogModal isOpen={showActivityLog} onClose={() => setShowActivityLog(false)} />
       <ClearCacheProgressModal
         isOpen={showClearCacheProgress}
         steps={cacheSteps}

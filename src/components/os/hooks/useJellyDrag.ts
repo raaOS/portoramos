@@ -233,40 +233,37 @@ export function useJellyDrag(options: UseJellyDragOptions = {}): UseJellyDragRet
     [enabled, ensureSpringLoop, stopIdleInterval]
   );
 
-  const onDrag = useCallback(
-    (_event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => {
-      const d = dragRef.current;
-      if (!d) return;
+  const onDrag = useCallback((_event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => {
+    const d = dragRef.current;
+    if (!d) return;
 
-      const now = performance.now();
-      const dt = Math.max(1, now - d.lastTime);
+    const now = performance.now();
+    const dt = Math.max(1, now - d.lastTime);
 
-      const rawVx = (info.point.x - d.lastX) / dt;
-      const rawVy = (info.point.y - d.lastY) / dt;
+    const rawVx = (info.point.x - d.lastX) / dt;
+    const rawVy = (info.point.y - d.lastY) / dt;
 
-      // EMA: 60% history + 40% new sample. Bukan jitter-free tapi cukup stabil
-      // untuk skew/squash visual — tuning value matched ke feel asli Window.
-      d.smoothVx = d.smoothVx * 0.6 + rawVx * 0.4;
-      d.smoothVy = d.smoothVy * 0.6 + rawVy * 0.4;
-      d.lastX = info.point.x;
-      d.lastY = info.point.y;
-      d.lastTime = now;
+    // EMA: 60% history + 40% new sample. Bukan jitter-free tapi cukup stabil
+    // untuk skew/squash visual — tuning value matched ke feel asli Window.
+    d.smoothVx = d.smoothVx * 0.6 + rawVx * 0.4;
+    d.smoothVy = d.smoothVy * 0.6 + rawVy * 0.4;
+    d.lastX = info.point.x;
+    d.lastY = info.point.y;
+    d.lastTime = now;
 
-      if (d.reducedMotion) return;
+    if (d.reducedMotion) return;
 
-      const vx = clamp(d.smoothVx, -VELOCITY_CLAMP, VELOCITY_CLAMP);
-      const vy = clamp(d.smoothVy, -VELOCITY_CLAMP, VELOCITY_CLAMP);
+    const vx = clamp(d.smoothVx, -VELOCITY_CLAMP, VELOCITY_CLAMP);
+    const vy = clamp(d.smoothVy, -VELOCITY_CLAMP, VELOCITY_CLAMP);
 
-      const tgt = springTgt.current;
-      tgt.skewX = clamp(vx * -SKEW_FACTOR, -SKEW_CLAMP, SKEW_CLAMP);
+    const tgt = springTgt.current;
+    tgt.skewX = clamp(vx * -SKEW_FACTOR, -SKEW_CLAMP, SKEW_CLAMP);
 
-      const speed = Math.hypot(vx, vy);
-      const s = Math.min(speed, 4) * STRETCH_FACTOR;
-      tgt.scaleX = 1 + s;
-      tgt.scaleY = 1 - s * 0.5;
-    },
-    []
-  );
+    const speed = Math.hypot(vx, vy);
+    const s = Math.min(speed, 4) * STRETCH_FACTOR;
+    tgt.scaleX = 1 + s;
+    tgt.scaleY = 1 - s * 0.5;
+  }, []);
 
   const onDragEnd = useCallback(() => {
     stopIdleInterval();

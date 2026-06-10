@@ -153,7 +153,7 @@ export default function AdminContactClient() {
                 <SocialMediaForm
                   data={contactData.info.socialMedia}
                   onUpdate={(socialData) =>
-                     handleUpdateContact({ info: { ...contactData.info, socialMedia: socialData } })
+                    handleUpdateContact({ info: { ...contactData.info, socialMedia: socialData } })
                   }
                 />
               </div>

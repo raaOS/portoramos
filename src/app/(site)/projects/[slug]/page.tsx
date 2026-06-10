@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { allProjectsAsync, getProjectBySlugAsync } from '@/lib/projects';
 import ProjectDetailTwoColumn from '@/components/projects/ProjectDetailTwoColumn';
 import { resolveCover, resolveGallery } from '@/lib/images';
+import { generateProjectMetadata, generateStructuredData } from '@/lib/seo';
 
 export const revalidate = 60;
 
@@ -20,15 +21,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
     };
   }
 
-  return {
-    title: `${project.title} | Ramos Portfolio`,
-    description: project.description || `Project ${project.title} oleh Ramos.`,
-    openGraph: {
-      title: project.title,
-      description: project.description || `Project ${project.title} oleh Ramos.`,
-      images: [project.cover || '/placeholder.jpg'],
-    },
-  };
+  return generateProjectMetadata(project);
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
@@ -49,6 +42,22 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-900">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            generateStructuredData('project', {
+              title: project.title,
+              description: project.description || '',
+              cover: cover,
+              tags: project.tags,
+              client: project.client || undefined,
+              year: project.year,
+              slug: project.slug,
+            })
+          ),
+        }}
+      />
       <ProjectDetailTwoColumn
         project={project}
         cover={cover}

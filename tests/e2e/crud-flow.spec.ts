@@ -46,16 +46,18 @@ test.describe('Project CRUD Flow (Simplified)', () => {
   test('should navigate through admin sections', async ({ page, context }) => {
     await loginAdmin(page, context);
 
-    // Navigate to projects
+    // Navigate to projects (UI is in Indonesian)
     await page.goto('/admin/projects', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('body')).toContainText('Projects');
+    await expect(page).toHaveURL(/\/admin\/projects/);
+    await expect(page.locator('body')).toContainText('Proyek Karya');
 
-    // Navigate to about
-    await page.goto('/admin/about', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('body')).toContainText('About');
+    // Navigate to content profile
+    await page.goto('/admin/content/profile', { waitUntil: 'domcontentloaded' });
+    await expect(page).toHaveURL(/\/admin\/content\/profile/);
 
-    // Navigate back to admin page
+    // Navigate back to admin dashboard
     await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('body')).toContainText('Admin Panel');
+    await expect(page).toHaveURL(/\/admin/);
+    await expect(page.locator('body')).toContainText('Ramos');
   });
 });

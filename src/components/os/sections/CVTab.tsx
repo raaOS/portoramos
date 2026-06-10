@@ -14,15 +14,13 @@ export const CVTab = ({ experienceData }: CVTabProps) => (
       {experienceData?.workExperience.map((job, idx) => (
         <article
           key={idx}
-          className="group cv-card flex min-w-0 flex-col rounded-2xl border border-gray-100 bg-gray-50/30 p-5 transition-all duration-300 hover:border-black/10 hover:bg-white"
+          className="cv-card group flex min-w-0 flex-col rounded-2xl border border-gray-100 bg-gray-50/30 p-5 transition-all duration-300 hover:border-black/10 hover:bg-white"
         >
           <div className="flex flex-col">
             <h3 className="break-words text-base font-semibold tracking-tight text-gray-900">
               {job.position}
             </h3>
-            <div className="mt-0.5 break-words text-[15px] text-gray-800">
-              {job.company}
-            </div>
+            <div className="mt-0.5 break-words text-[15px] text-gray-800">{job.company}</div>
             <div className="mt-0.5 break-words text-sm text-gray-500">
               {job.year} <span className="mx-1">·</span> {job.duration}
             </div>

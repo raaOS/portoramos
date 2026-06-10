@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, startTransition } from 'react';
 import type { Project, GalleryGroup } from '@/types/projects';
 import type { Comment } from '@/lib/magic';
+import { collectProjectTranslationFields } from '../utils/translations';
 
 interface UseProjectDetailProps {
   project: Project;
@@ -38,7 +39,7 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
   const [, setIsLoaded] = useState(false);
   const [translations, setTranslations] = useState<Record<string, string> | null>(null);
   const [translateLoading, setTranslateLoading] = useState(false);
-  const CACHE_KEY = `gemini_proj_${project.slug}`;
+  const CACHE_KEY = `gemini_proj_v2_${project.slug}`;
 
   const [activeGalleryGroup, setActiveGalleryGroup] = useState<GalleryGroup | null>(null);
   const [activeNarrativeTab, setActiveNarrativeTab] = useState<
@@ -81,20 +82,8 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
 
     setTranslateLoading(true);
     try {
-      const fields: Record<string, string> = {};
-      if (project.title) fields.title = project.title;
-      if (project.description) fields.description = project.description;
-      if (project.role) fields.role = project.role;
-      if (project.timeline) fields.timeline = project.timeline;
-      if (project.team) fields.team = project.team;
-      if (project.narrative?.context) fields.context = project.narrative.context;
-      const challenge = project.narrative?.challenge || project.narrative?.concept;
-      if (challenge) fields.challenge = challenge;
-      const solution = project.narrative?.solution || project.narrative?.process;
-      if (solution) fields.solution = solution;
-      const impact =
-        project.narrative?.impact || project.narrative?.result || project.narrative?.detail;
-      if (impact) fields.impact = impact;
+      const fields = collectProjectTranslationFields(project);
+      if (Object.keys(fields).length === 0) return;
 
       const res = await fetch('/api/translate', {
         method: 'POST',
@@ -102,7 +91,7 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
         body: JSON.stringify({ fields }),
       });
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.translations) {
         setTranslations(data.translations);
         // Cache to localStorage
         try {
@@ -110,9 +99,11 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
         } catch {
           /* ignore */
         }
+      } else {
+        console.warn('[useProjectDetail] Translation failed:', data.error || res.statusText);
       }
-    } catch {
-      /* silent */
+    } catch (error) {
+      console.warn('[useProjectDetail] Translation failed:', error);
     } finally {
       setTranslateLoading(false);
     }
@@ -136,12 +127,17 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
 
   // Defer non-critical API calls to improve initial load time
   useEffect(() => {
+    const controller = new AbortController();
+    let isActive = true;
+
     const timer = setTimeout(async () => {
       try {
         const [metricsRes, commentsRes] = await Promise.all([
-          fetch(`/api/metrics?slug=${project.slug}`),
-          fetch(`/api/comments?slug=${project.slug}`),
+          fetch(`/api/metrics?slug=${project.slug}`, { signal: controller.signal }),
+          fetch(`/api/comments?slug=${project.slug}`, { signal: controller.signal }),
         ]);
+
+        if (!isActive) return;
 
         if (metricsRes.ok) {
           const metricsData = await metricsRes.json();
@@ -155,11 +151,16 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
           }
         }
       } catch (error) {
+        if (!isActive || controller.signal.aborted) return;
         console.error('Failed to load project data:', error);
       }
     }, 1500); // Defer 1.5s to prioritize first paint
 
-    return () => clearTimeout(timer);
+    return () => {
+      isActive = false;
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [project.slug]);
 
   const handleProjectLike = async () => {

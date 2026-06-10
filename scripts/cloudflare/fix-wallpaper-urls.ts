@@ -23,10 +23,7 @@ import { join, basename, extname } from 'node:path';
 loadEnv({ path: '.env.local' });
 loadEnv({ path: '.env' });
 
-import {
-  isD1Configured,
-  getMissingD1EnvKeys,
-} from '../../src/lib/cloudflareD1';
+import { isD1Configured, getMissingD1EnvKeys } from '../../src/lib/cloudflareD1';
 import { aboutService } from '../../src/lib/services/aboutService';
 
 const PUBLIC_DIR = 'public';

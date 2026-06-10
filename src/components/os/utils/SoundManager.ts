@@ -46,10 +46,14 @@ class SoundManager {
   private pendingSounds: Set<SoundType> = new Set();
   private hasPlayedStartup: boolean = false;
   private suppressedSounds: Set<SoundType> = new Set();
+  private suppressionTimers: Map<SoundType, ReturnType<typeof setTimeout>> = new Map();
+  private inFlight: Set<SoundType> = new Set();
 
   // FIXED (BUG-002): Track active audio elements for cleanup
   private activeAudioElements: Set<HTMLAudioElement> = new Set();
   private readonly maxActiveAudioElements: number = 20;
+  // Track event listener references per audio element for proper cleanup
+  private audioListeners: WeakMap<HTMLAudioElement, () => void> = new WeakMap();
 
   /** Conditional debug logging — silent in production. */
   private log(message: string, ...args: unknown[]): void {
@@ -60,11 +64,17 @@ class SoundManager {
    * Temporarily suppress a sound type for the given duration (ms).
    */
   public suppressSound(type: SoundType, durationMs: number) {
+    const existing = this.suppressionTimers.get(type);
+    if (existing) clearTimeout(existing);
     this.suppressedSounds.add(type);
-    setTimeout(() => {
-      this.suppressedSounds.delete(type);
-      this.log(`Suppression lifted for "${type}".`);
-    }, durationMs);
+    this.suppressionTimers.set(
+      type,
+      setTimeout(() => {
+        this.suppressedSounds.delete(type);
+        this.suppressionTimers.delete(type);
+        this.log(`Suppression lifted for "${type}".`);
+      }, durationMs)
+    );
   }
 
   private constructor() {
@@ -93,6 +103,7 @@ class SoundManager {
     try {
       const silentAudio = new Audio(SoundManager.SILENT_AUDIO_DATA_URI);
       silentAudio.volume = 0;
+      this.trackAudioElement(silentAudio);
       silentAudio.play().catch(() => {});
     } catch {
       // Ignore
@@ -131,7 +142,7 @@ class SoundManager {
   public loadConfig(config: Record<string, { path: string; volume: number }>) {
     if (!config) return;
 
-    this.log('Loading dynamic sound configuration:', config);
+    console.log('[SoundManager] loadConfig called with config:', JSON.stringify(config, null, 2));
     Object.entries(config).forEach(([key, setting]) => {
       const typeKey = key as SoundType;
       if (this.soundPaths[typeKey] !== undefined) {
@@ -144,14 +155,14 @@ class SoundManager {
           const version = path.split('?v=')[1] || '1.3';
           if (filename) {
             path = `/sounds/${filename}?v=${version}`;
-            this.log(`Localized path for ${typeKey}: ${path}`);
+            console.log(`[SoundManager] Localized path for ${typeKey}: ${path}`);
           }
         }
 
         this.soundPaths[typeKey] = path;
 
         if (oldPath !== path) {
-          this.log(`Updating path for ${typeKey}: ${oldPath} -> ${path}`);
+          console.log(`[SoundManager] Updating path for ${typeKey}: ${oldPath} -> ${path}`);
           this.sounds.delete(typeKey);
         }
 
@@ -167,6 +178,9 @@ class SoundManager {
    * Audio elements di-track dan di-remove setelah selesai diputar.
    */
   public play(type: SoundType, customVolume?: number) {
+    console.log(
+      `[SoundManager] play called for "${type}", path is: "${this.soundPaths[type]}", isUnlocked: ${this.isUnlocked}`
+    );
     if (this.isMuted) return;
 
     // Check if this sound is temporarily suppressed
@@ -223,7 +237,9 @@ class SoundManager {
       // For very large sounds (like startup), avoid cloning on the first play
       // to ensure metadata is handled correctly.
       let playTarget: HTMLAudioElement;
-      if (audio.paused && audio.currentTime === 0) {
+      const isIdle = audio.paused && audio.currentTime === 0 && !this.inFlight.has(type);
+      if (isIdle) {
+        this.inFlight.add(type);
         playTarget = audio;
       } else {
         playTarget = audio.cloneNode() as HTMLAudioElement;
@@ -238,12 +254,14 @@ class SoundManager {
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
+            this.inFlight.delete(type);
             this.log(`Successfully started playing "${type}"`);
             if (type === 'startup') {
               this.hasPlayedStartup = true;
             }
           })
           .catch((err) => {
+            this.inFlight.delete(type);
             if (err.name === 'NotAllowedError') {
               this.pendingSounds.add(type);
               this.log(`Autoplay blocked for "${type}". Queued for interaction.`);
@@ -268,16 +286,17 @@ class SoundManager {
     // Evict oldest element when at capacity
     if (this.activeAudioElements.size >= this.maxActiveAudioElements) {
       const oldest = this.activeAudioElements.values().next().value;
-      if (oldest) {
+      if (oldest && oldest.paused) {
         this.untrackAudioElement(oldest);
       }
     }
 
     this.activeAudioElements.add(audio);
 
-    const cleanup = () => this.untrackAudioElement(audio);
-    audio.addEventListener('ended', cleanup, { once: true });
-    audio.addEventListener('error', cleanup, { once: true });
+    const onDone = () => this.untrackAudioElement(audio);
+    this.audioListeners.set(audio, onDone);
+    audio.addEventListener('ended', onDone, { once: true });
+    audio.addEventListener('error', onDone, { once: true });
   }
 
   /**
@@ -288,15 +307,22 @@ class SoundManager {
   private untrackAudioElement(audio: HTMLAudioElement): void {
     if (!this.activeAudioElements.has(audio)) return;
 
+    // Remove event listeners to prevent memory leak
+    const onDone = this.audioListeners.get(audio);
+    if (onDone) {
+      audio.removeEventListener('ended', onDone);
+      audio.removeEventListener('error', onDone);
+      this.audioListeners.delete(audio);
+    }
+
     audio.pause();
 
     const isCachedOriginal = this.isCachedAudio(audio);
 
     if (!isCachedOriginal) {
       audio.src = '';
-      audio.load(); // Force release resources for clones
+      audio.load();
     } else {
-      // Reset to start for reuse — keep src intact
       audio.currentTime = 0;
     }
 
@@ -317,6 +343,11 @@ class SoundManager {
   public cleanupAllAudio(): void {
     this.log(`Cleaning up ${this.activeAudioElements.size} active audio elements`);
     this.activeAudioElements.forEach((audio) => {
+      const onDone = this.audioListeners.get(audio);
+      if (onDone) {
+        audio.removeEventListener('ended', onDone);
+        audio.removeEventListener('error', onDone);
+      }
       audio.pause();
       audio.src = '';
       try {
@@ -326,7 +357,7 @@ class SoundManager {
       }
     });
     this.activeAudioElements.clear();
-    // Clear cached refs — their src is now invalid after cleanup above
+    this.audioListeners = new WeakMap();
     this.sounds.clear();
   }
 

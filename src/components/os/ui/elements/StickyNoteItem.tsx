@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { sanitize } from '@/lib/security/sanitization';
-import { m, DragControls } from 'motion/react';
+import { DragControls } from 'motion/react';
 import { NoteHeader } from '../NoteHeader';
 import { NoteFooter } from '../NoteFooter';
 
@@ -134,12 +134,9 @@ export default function StickyNoteItem({
   };
 
   return (
-    <m.div
+    <div
       ref={containerRef}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="group absolute flex flex-col rounded-lg"
+      className="group relative flex flex-col rounded-lg"
       style={{
         backgroundColor: note.color,
         width: width,
@@ -173,7 +170,7 @@ export default function StickyNoteItem({
       />
 
       {!note.isCollapsed && (
-        <div className="group relative flex flex-grow flex-col overflow-hidden px-4 pb-0 pt-12">
+        <div className="group relative flex flex-grow flex-col overflow-hidden px-4 pb-0 pt-16">
           <div
             ref={textAreaRef}
             contentEditable={false}
@@ -246,6 +243,6 @@ export default function StickyNoteItem({
           />
         </>
       )}
-    </m.div>
+    </div>
   );
 }

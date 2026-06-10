@@ -107,6 +107,7 @@ export interface Wallpaper {
    * have an instant thumbnail without having to decode the MP4.
    */
   posterUrl?: string;
+  startTime?: number; // Optional custom start time in seconds
 }
 
 export interface WallpaperConfig {
@@ -144,6 +145,7 @@ export interface DockItemConfig {
   label?: string;
   iconUrl?: string;
   isHidden?: boolean;
+  order?: number;
 }
 
 export interface DockPreferences {

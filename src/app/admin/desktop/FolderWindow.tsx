@@ -12,20 +12,14 @@ interface FolderWindowProps {
 export default function FolderWindow({ zone, actions }: FolderWindowProps) {
   return (
     <div className="admin-folder-overlay" onClick={() => actions.closeFolder()}>
-      <div
-        className="admin-folder-window"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="admin-folder-window" onClick={(e) => e.stopPropagation()}>
         {/* Folder title bar */}
         <div className={`admin-folder-titlebar ${zone.gradient}`}>
           <div className="flex items-center gap-2">
             <zone.icon className="h-5 w-5 text-white" />
             <span className="font-semibold text-white">{zone.label}</span>
           </div>
-          <button
-            onClick={() => actions.closeFolder()}
-            className="admin-folder-close"
-          >
+          <button onClick={() => actions.closeFolder()} className="admin-folder-close">
             <X className="h-4 w-4" />
           </button>
         </div>

@@ -40,6 +40,11 @@ const ExitIntentFeedback = dynamic(() => import('../ui/ExitIntentFeedback'), {
   ssr: false,
 });
 
+const MissionControl = dynamic(() => import('../core/MissionControl'), {
+  loading: () => null,
+  ssr: false,
+});
+
 interface UIOverlaysLayerProps {
   navToChat: (chatId?: string) => void;
   openWhatsAppList: () => void;
@@ -53,6 +58,8 @@ interface UIOverlaysLayerProps {
   openProjectWindow: (project: Project) => void;
   needsPowerOn: boolean;
   isBooting: boolean;
+  showMissionControl?: boolean;
+  onMissionControlDismiss?: () => void;
 }
 
 export default function UIOverlaysLayer({
@@ -68,6 +75,8 @@ export default function UIOverlaysLayer({
   openProjectWindow,
   needsPowerOn,
   isBooting,
+  showMissionControl: _showMissionControl,
+  onMissionControlDismiss: _onMissionControlDismiss,
 }: UIOverlaysLayerProps) {
   const {
     showSpotlight,
@@ -78,6 +87,7 @@ export default function UIOverlaysLayer({
     showCalendar,
     setShowCalendar,
     isRevealed,
+    showMissionControl,
   } = useOSSystem();
   // Saat hollow-O mulai membesar (`isRevealed = true`), dock & menubar sudah
   // boleh render di belakang StartScreen supaya terlihat dari dalam lubang.
@@ -102,13 +112,15 @@ export default function UIOverlaysLayer({
 
   return (
     <div className="pointer-events-none absolute inset-0">
-      {/* Dynamic Island - Unified Z-index participant */}
-      <DynamicIsland
-        isBooting={isBootSequenceActive}
-        onOpenChat={navToChat}
-        customNotifications={testimonialContacts}
-        islandId={ISLAND_ID}
-      />
+      {/* Dynamic Island - hidden during Mission Control */}
+      {!showMissionControl && (
+        <DynamicIsland
+          isBooting={isBootSequenceActive}
+          onOpenChat={navToChat}
+          customNotifications={testimonialContacts}
+          islandId={ISLAND_ID}
+        />
+      )}
 
       <AnimatePresence mode="wait">
         {/* MenuBar - hidden during boot */}
@@ -137,7 +149,14 @@ export default function UIOverlaysLayer({
         {/* Dock Container - hidden during boot */}
         {!isBootingOrStarting && (
           <DockPortal>
-            <div className="pointer-events-auto">
+            <motion.div
+              key="dock"
+              className="pointer-events-auto"
+              initial={{ opacity: 0, y: 40, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28, mass: 0.8 }}
+            >
               {aboutData && (
                 <OSDock
                   aboutData={aboutData}
@@ -152,28 +171,35 @@ export default function UIOverlaysLayer({
                   isMobile={isMobile}
                 />
               )}
-            </div>
+            </motion.div>
           </DockPortal>
         )}
       </AnimatePresence>
 
-      {showSpotlight && (
-        <div
-          className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          style={{ zIndex: Z_LAYERS.BACKDROP }}
-        >
-          <Spotlight
-            isOpen={showSpotlight}
-            onClose={() => setShowSpotlight(false)}
-            projects={commercialProjects}
-            onOpenProject={(project: Project) => {
-              setShowSpotlight(false);
-              openProjectWindow(project);
-            }}
-            onOpenApp={(id) => openWindow(id)}
-          />
-        </div>
-      )}
+      <AnimatePresence>
+        {showSpotlight && (
+          <motion.div
+            key="spotlight"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            style={{ zIndex: Z_LAYERS.BACKDROP }}
+          >
+            <Spotlight
+              isOpen={showSpotlight}
+              onClose={() => setShowSpotlight(false)}
+              projects={commercialProjects}
+              onOpenProject={(project: Project) => {
+                setShowSpotlight(false);
+                openProjectWindow(project);
+              }}
+              onOpenApp={(id) => openWindow(id)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showControlCenter && (
@@ -205,6 +231,9 @@ export default function UIOverlaysLayer({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Mission Control */}
+      <MissionControl />
 
       {/* Exit-intent feedback — visitor only, appears on tab close attempt */}
       {!isAdmin && !isBootSequenceActive && <ExitIntentFeedback />}

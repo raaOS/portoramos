@@ -24,9 +24,7 @@ export default function AdminDesktopShell({
   actions,
   onLogout,
 }: AdminDesktopShellProps) {
-  const openZone = openFolderId
-    ? ADMIN_ZONES.find((z) => z.id === openFolderId)
-    : null;
+  const openZone = openFolderId ? ADMIN_ZONES.find((z) => z.id === openFolderId) : null;
 
   return (
     <div className="admin-desktop">

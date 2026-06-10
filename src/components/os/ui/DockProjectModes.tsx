@@ -48,7 +48,6 @@ export default function DockProjectModes({ onSelect }: DockProjectModesProps) {
     import('@/components/layout/NonOSChrome').catch(() => {});
   }, []);
 
-
   const handleModeSelect = useCallback(
     (mode: ModeOption) => (e: React.MouseEvent) => {
       // Prevent default Link navigation dan pakai useTransitionRouter

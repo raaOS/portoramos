@@ -2,12 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { AboutData, DesktopIconPosition, DesktopIconSize } from '@/types/about';
-import {
-  getIconPosition,
-  saveIconPosition,
-  loadPositions,
-} from '../utils/positionSync';
+import { getIconPosition, saveIconPosition, loadPositions } from '../utils/positionSync';
 import { useLayoutPersistence } from '../contexts/LayoutPersistenceContext';
+import { loadVisitorDesktopSession, saveVisitorIconSnapshot } from '../utils/visitorSessionState';
 
 interface UseDesktopLayoutProps {
   aboutData?: AboutData | null;
@@ -22,7 +19,7 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
   // a derived template, so aboutData changes do not require render-phase setState.
   const [iconPositionOverrides, setIconPositionOverrides] = useState<
     Record<string, DesktopIconPosition>
-  >(() => (isAdmin ? loadPositions().icons || {} : {}));
+  >(() => (isAdmin ? loadPositions().icons || {} : loadVisitorDesktopSession()?.icons || {}));
 
   const iconPositions = useMemo(() => {
     const cloudIconPositions = aboutData?.desktopPreferences?.iconPositions || {};
@@ -56,6 +53,9 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
         { x, y, zIndex: iconPositions[id]?.zIndex, size: iconPositions[id]?.size },
         isAdmin
       );
+      if (!isAdmin) {
+        saveVisitorIconSnapshot(id, updated);
+      }
     },
     [iconPositions, isAdmin]
   );
@@ -76,7 +76,14 @@ export function useDesktopLayout({ aboutData, isAdmin, csrfToken }: UseDesktopLa
 
       const existing = iconPositions[id] || position;
       if (existing) {
-        saveIconPosition(id, { x: existing.x, y: existing.y, zIndex, size: existing.size }, isAdmin);
+        saveIconPosition(
+          id,
+          { x: existing.x, y: existing.y, zIndex, size: existing.size },
+          isAdmin
+        );
+        if (!isAdmin) {
+          saveVisitorIconSnapshot(id, { ...existing, zIndex });
+        }
       }
     },
     [iconPositions, isAdmin]

@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import type { Project } from '@/types/projects';
 import { getIconMap } from '@/constants/skillIcons';
+import { getTranslation } from '../utils/translations';
 
 interface ProjectMetaProps {
   project: Project;
@@ -10,11 +11,7 @@ interface ProjectMetaProps {
   isWindowMode?: boolean;
 }
 
-export function ProjectMeta({
-  project,
-  translations,
-  isWindowMode = false,
-}: ProjectMetaProps) {
+export function ProjectMeta({ project, translations, isWindowMode = false }: ProjectMetaProps) {
   // Memoize icon map to prevent recreation on every render
   // MUST be called before any early return (Rules of Hooks)
   const iconMap = useMemo(() => getIconMap('w-5 h-5'), []);
@@ -33,7 +30,7 @@ export function ProjectMeta({
         <div className="grid grid-cols-2 gap-x-4 gap-y-4">
           {project.role && (
             <MetaItem label={translations ? 'Role' : 'Peran'}>
-              {translations?.role || project.role}
+              {getTranslation(translations, 'role') || project.role}
             </MetaItem>
           )}
 
@@ -49,13 +46,13 @@ export function ProjectMeta({
 
           {project.timeline && (
             <MetaItem label={translations ? 'Timeline' : 'Waktu'}>
-              {translations?.timeline || project.timeline}
+              {getTranslation(translations, 'timeline') || project.timeline}
             </MetaItem>
           )}
 
           {project.team && (
             <MetaItem label={translations ? 'Team' : 'Tim'}>
-              {translations?.team || project.team}
+              {getTranslation(translations, 'team') || project.team}
             </MetaItem>
           )}
 
@@ -83,7 +80,7 @@ export function ProjectMeta({
               {translations ? 'Role' : 'Peran'}
             </h3>
             <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {translations?.role || project.role}
+              {getTranslation(translations, 'role') || project.role}
             </p>
           </div>
         )}
@@ -109,7 +106,7 @@ export function ProjectMeta({
               {translations ? 'Timeline' : 'Waktu'}
             </h3>
             <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {translations?.timeline || project.timeline}
+              {getTranslation(translations, 'timeline') || project.timeline}
             </p>
           </div>
         )}
@@ -121,7 +118,7 @@ export function ProjectMeta({
               {translations ? 'Team' : 'Tim'}
             </h3>
             <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {translations?.team || project.team}
+              {getTranslation(translations, 'team') || project.team}
             </p>
           </div>
         )}

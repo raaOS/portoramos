@@ -6,14 +6,23 @@ import GalleryGroupCard from '@/components/projects/GalleryGroupCard';
 import MasonryGrid from '@/components/layout/MasonryGrid';
 import { useImageProtection } from '@/hooks/useImageProtection';
 import { useMemo } from 'react';
+import type { ProjectTranslations } from '../utils/translations';
 
 interface ProjectGalleryProps {
   project: Project;
   gallery: GalleryItem[];
   onGroupClick: (group: GalleryGroup) => void;
+  isWindowMode?: boolean;
+  translations?: ProjectTranslations | null;
 }
 
-export function ProjectGallery({ project, gallery, onGroupClick }: ProjectGalleryProps) {
+export function ProjectGallery({
+  project,
+  gallery,
+  onGroupClick,
+  isWindowMode = false,
+  translations,
+}: ProjectGalleryProps) {
   const { toast, handleContextMenu } = useImageProtection();
 
   const hasLegacyGallery = gallery && gallery.length > 0;
@@ -38,6 +47,7 @@ export function ProjectGallery({ project, gallery, onGroupClick }: ProjectGaller
                 index={idx}
                 onContextMenu={handleContextMenu}
                 toast={toast}
+                isWindowMode={isWindowMode}
               />
             ))}
           </MasonryGrid>
@@ -51,6 +61,8 @@ export function ProjectGallery({ project, gallery, onGroupClick }: ProjectGaller
             <GalleryGroupCard
               key={group.id || gIdx}
               group={group}
+              index={gIdx}
+              translations={translations}
               onClick={() => onGroupClick(group)}
             />
           ))}
@@ -67,9 +79,17 @@ interface GalleryItemProps {
   index: number;
   onContextMenu: (e: React.MouseEvent) => void;
   toast: { emoji: string; text: string } | null;
+  isWindowMode?: boolean;
 }
 
-function GalleryItem({ item, projectTitle, index, onContextMenu, toast }: GalleryItemProps) {
+function GalleryItem({
+  item,
+  projectTitle,
+  index,
+  onContextMenu,
+  toast,
+  isWindowMode = false,
+}: GalleryItemProps) {
   // Memoize style object
   const style = useMemo(
     () => ({
@@ -81,7 +101,9 @@ function GalleryItem({ item, projectTitle, index, onContextMenu, toast }: Galler
 
   return (
     <div
-      className={`group relative mb-4 overflow-hidden rounded-xl border border-black/5 bg-gray-50 shadow-md dark:border-white/5 dark:bg-gray-900/40`}
+      className={`group relative mb-4 overflow-hidden ${
+        isWindowMode ? 'rounded-none' : 'rounded-xl'
+      } border border-black/5 bg-gray-50 shadow-md dark:border-white/5 dark:bg-gray-900/40`}
       style={style}
       onContextMenu={onContextMenu}
     >

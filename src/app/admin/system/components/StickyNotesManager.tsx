@@ -167,7 +167,7 @@ export default function StickyNotesManager({}: StickyNotesManagerProps) {
                     <button
                       key={c}
                       onClick={() => updateNote(note.id, { color: c })}
-                      className={`h-5 w-5 rounded-full border border-gray-200 transition-transform hover:scale-110 ${note.color === c ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+                      className={`h-4 min-h-0 w-4 min-w-0 rounded-full border border-gray-200 transition-transform hover:scale-110 ${note.color === c ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
                       style={{ backgroundColor: c }}
                       title="Atur Warna"
                     />
@@ -176,14 +176,14 @@ export default function StickyNotesManager({}: StickyNotesManagerProps) {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => updateNote(note.id, { isPinned: !note.isPinned })}
-                    className={`rounded-md p-1.5 transition-colors ${note.isPinned ? 'bg-orange-100 text-orange-600' : 'text-gray-400 hover:bg-gray-100'}`}
+                    className={`min-h-0 min-w-0 rounded-md p-1.5 transition-colors ${note.isPinned ? 'bg-orange-100 text-orange-600' : 'text-gray-400 hover:bg-gray-100'}`}
                     title="Sematkan Catatan"
                   >
                     <Pin size={14} className={note.isPinned ? 'fill-current' : ''} />
                   </button>
                   <button
                     onClick={() => updateNote(note.id, { isStarred: !note.isStarred })}
-                    className={`rounded-md p-1.5 transition-colors ${note.isStarred ? 'bg-yellow-100 text-yellow-600' : 'text-gray-400 hover:bg-gray-100'}`}
+                    className={`min-h-0 min-w-0 rounded-md p-1.5 transition-colors ${note.isStarred ? 'bg-yellow-100 text-yellow-600' : 'text-gray-400 hover:bg-gray-100'}`}
                     title="Bintang"
                   >
                     <Star size={14} className={note.isStarred ? 'fill-current' : ''} />
@@ -216,7 +216,7 @@ export default function StickyNotesManager({}: StickyNotesManagerProps) {
                   </div>
                   <button
                     onClick={() => deleteNote(note.id)}
-                    className="rounded px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-700"
+                    className="min-h-0 min-w-0 rounded px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-700"
                   >
                     Hapus
                   </button>

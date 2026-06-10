@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+'use client';
+
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { m, useReducedMotion, type Transition } from 'motion/react';
 import type { WallpaperConfig } from '@/types/about';
 import { DEFAULT_WALLPAPER_URL } from '../utils/zIndexLayers';
 import { getVideoPosterCandidates, isVideoSource } from '@/lib/mediaPreview';
+import { useBackgroundEffect } from '@/components/home/BackgroundEffectContext';
 
 interface DesktopBackgroundProps {
   wallpaperConfig?: WallpaperConfig;
@@ -21,6 +24,8 @@ export default function DesktopBackground({
   isMobile = false,
 }: DesktopBackgroundProps) {
   const prefersReducedMotion = useReducedMotion();
+  const { isDesktopRevealed } = useBackgroundEffect();
+  const videoRef = React.useRef<HTMLVideoElement>(null);
 
   // Resolve the active wallpaper entry (not just URL) so we can also
   // pick up the side-car poster image if the upload pipeline produced
@@ -29,9 +34,7 @@ export default function DesktopBackground({
   const activeEntry = useMemo(() => {
     if (!wallpaperConfig?.activeWallpaperId) return null;
     return (
-      wallpaperConfig.collection?.find(
-        (w) => w.id === wallpaperConfig.activeWallpaperId
-      ) ?? null
+      wallpaperConfig.collection?.find((w) => w.id === wallpaperConfig.activeWallpaperId) ?? null
     );
   }, [wallpaperConfig]);
 
@@ -43,6 +46,16 @@ export default function DesktopBackground({
 
   const blurAmount = wallpaperConfig?.blur || 0;
   const isVideo = useMemo(() => isVideoSource(activeWallpaper), [activeWallpaper]);
+
+  const videoSrc = useMemo(() => {
+    if (!isVideo) return activeWallpaper;
+    if (activeEntry?.startTime !== undefined) {
+      const baseUrl = activeWallpaper.split('#')[0];
+      return `${baseUrl}#t=${activeEntry.startTime}`;
+    }
+    if (activeWallpaper.includes('#t=')) return activeWallpaper;
+    return `${activeWallpaper}#t=14`;
+  }, [activeWallpaper, isVideo, activeEntry]);
 
   // Poster candidates: explicit `posterUrl` from D1 wins (current
   // pipeline always persists it for new wallpapers). Otherwise we
@@ -83,9 +96,13 @@ export default function DesktopBackground({
   // `undefined === undefined` (true) → akses `.url` ke null = crash.
   // Karena itu kita require `probedOverride` truthy dulu.
   const posterUrl =
-    probedOverride && probedOverride.forSeed === seedPoster
-      ? probedOverride.url
-      : seedPoster;
+    probedOverride && probedOverride.forSeed === seedPoster ? probedOverride.url : seedPoster;
+
+  const [videoReady, setVideoReady] = useState(false);
+
+  const handleVideoCanPlay = useCallback(() => {
+    setVideoReady(true);
+  }, []);
 
   useEffect(() => {
     // Skip probe when a single candidate exists. Either we have an
@@ -120,7 +137,10 @@ export default function DesktopBackground({
       img.src = url;
     };
 
-    tryNext(0);
+    // Start from index 1 — index 0 (seed) is already loaded by
+    // `<video poster={posterUrl}>` above. Probing it again via
+    // `new Image()` creates a redundant HTTP request.
+    tryNext(1);
 
     return () => {
       cancelled = true;
@@ -200,31 +220,66 @@ export default function DesktopBackground({
     };
   }, [isVideo]);
 
+  // Programmatic playback control linked to desktop boot/reveal state
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !shouldPlayVideo || prefersReducedMotion) return;
+
+    if (isDesktopRevealed) {
+      video.play().catch((err) => {
+        console.warn('[DesktopBackground] Playback execution aborted:', err);
+      });
+    } else {
+      video.pause();
+    }
+  }, [isDesktopRevealed, shouldPlayVideo, prefersReducedMotion, videoSrc]);
+
+  // Programmatic custom start times (e.g. video URL ending with #t=14, default to 14 if no fragment)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const match = videoSrc.match(/#t=(\d+(\.\d+)?)/);
+    const startTime = match ? parseFloat(match[1]) : (activeEntry?.startTime ?? 14);
+
+    const applyStartTime = () => {
+      video.currentTime = startTime;
+    };
+
+    if (video.readyState >= 1) {
+      applyStartTime();
+    } else {
+      video.addEventListener('loadedmetadata', applyStartTime, { once: true });
+    }
+  }, [videoSrc, activeEntry?.startTime]);
+
   // iOS-style background effect: scales down slightly and blurs when a window is active.
   // Reduced-motion or mobile: skip spring entirely — langsung set filter static tanpa scale shift.
-  const springTransition: Transition = prefersReducedMotion || isMobile
-    ? { duration: 0 }
-    : { type: 'spring', stiffness: 180, damping: 28, mass: 1 };
+  const springTransition: Transition =
+    prefersReducedMotion || isMobile
+      ? { duration: 0 }
+      : { type: 'spring', stiffness: 180, damping: 28, mass: 1 };
 
   // Video wallpaper: skip scale 1.08 supaya tidak zoom/upsample (yang bikin
   // pecah). Image wallpaper tetap dapat efek breathing iOS karena image
   // di-resize sharp di build pipeline + Next/Image, jadi aman di-scale.
   const idleScale = isVideo ? 1 : 1.08;
 
-  const animateTarget = prefersReducedMotion || isMobile
-    ? {
-        scale: 1,
-        filter: `blur(${blurAmount}px)`,
-      }
-    : {
-        scale: isWindowOpen ? 1 : idleScale,
-        // Window-open blur amplification dikurangi dari +12 ke +6.
-        // Alasan: nilai +12 membuat wallpaper terlalu pucat untuk di-pickup
-        // oleh backdrop-filter dock (chained blur kehilangan info warna →
-        // dock terasa "padat putih" alih-alih "vibrancy glass"). +6 cukup
-        // untuk efek iOS-depth tanpa membunuh dock.
-        filter: isWindowOpen ? `blur(${blurAmount + 6}px)` : `blur(${blurAmount}px)`,
-      };
+  const animateTarget =
+    prefersReducedMotion || isMobile
+      ? {
+          scale: 1,
+          filter: `blur(${blurAmount}px)`,
+        }
+      : {
+          scale: isWindowOpen ? 1 : idleScale,
+          // Window-open blur amplification dikurangi dari +12 ke +6.
+          // Alasan: nilai +12 membuat wallpaper terlalu pucat untuk di-pickup
+          // oleh backdrop-filter dock (chained blur kehilangan info warna →
+          // dock terasa "padat putih" alih-alih "vibrancy glass"). +6 cukup
+          // untuk efek iOS-depth tanpa membunuh dock.
+          filter: isWindowOpen ? `blur(${blurAmount + 6}px)` : `blur(${blurAmount}px)`,
+        };
 
   return (
     <div className="fixed inset-0 z-0 h-full w-full overflow-hidden bg-black">
@@ -242,25 +297,39 @@ export default function DesktopBackground({
           //     request, ~30-80 KB) so the screen is not black while
           //     the MP4 buffers. This is the LCP for the desktop on
           //     first paint when video is involved.
-          //   - `preload="metadata"` tells the browser to fetch only
-          //     the moov atom + a few KB of header so it can start
-          //     playback, not the entire 1440p MP4 up front.
+          //   - `preload="auto"` ensures the active wallpaper video starts
+          //     buffering immediately so the crossfade from poster to video
+          //     happens as early as possible.
           //   - On `saveData` / 2g connections we don't render the
           //     <video> at all — we fall back to the poster as a still
           //     image. Visitor menghemat bandwidth, dan halaman tetap
           //     punya wallpaper visual yang masuk akal.
           shouldPlayVideo ? (
-            <video
-              src={activeWallpaper}
-              poster={posterUrl}
-              autoPlay={!prefersReducedMotion}
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              className="h-full w-full object-cover"
-              style={{ transform: 'translateZ(0)' }}
-            />
+            <React.Fragment key={activeWallpaper}>
+              {posterUrl && (
+                <Image
+                  src={posterUrl}
+                  alt=""
+                  fill
+                  priority
+                  unoptimized={posterUrl.startsWith('/r2/')}
+                  className={`pointer-events-none object-cover transition-opacity duration-700 ${videoReady ? 'opacity-0' : 'opacity-100'}`}
+                  style={{ transform: 'translateZ(0)' }}
+                />
+              )}
+              <video
+                ref={videoRef}
+                src={videoSrc}
+                poster={posterUrl}
+                muted
+                loop
+                playsInline
+                preload="auto"
+                onCanPlay={handleVideoCanPlay}
+                className={`h-full w-full object-cover transition-opacity duration-700 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
+                style={{ transform: 'translateZ(0)' }}
+              />
+            </React.Fragment>
           ) : posterUrl ? (
             <Image
               src={posterUrl}
@@ -268,6 +337,7 @@ export default function DesktopBackground({
               fill
               priority
               fetchPriority="high"
+              unoptimized={posterUrl.startsWith('/r2/')}
               quality={75}
               sizes="100vw"
               className="object-cover"

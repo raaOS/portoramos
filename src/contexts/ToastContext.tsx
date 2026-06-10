@@ -198,7 +198,7 @@ export function ToastProvider({
 
       {/* Toast Container */}
       <div
-        className={`pointer-events-none fixed z-50 flex flex-col space-y-2 ${getPositionClasses()}`}
+        className={`pointer-events-none fixed z-[999999] flex flex-col space-y-2 ${getPositionClasses()}`}
         style={{ maxWidth: '400px' }}
       >
         {toasts.map((toast) => (

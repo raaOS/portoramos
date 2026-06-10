@@ -224,7 +224,9 @@ export const eventPageService = {
   async upsertPage(input: EventPageInput): Promise<{ page: EventPage; isNew: boolean }> {
     return mutateEventPages((pages) => {
       const existingById = input.id ? pages[input.id] : undefined;
-      const existingByFolder = Object.values(pages).find((page) => page.folderId === input.folderId);
+      const existingByFolder = Object.values(pages).find(
+        (page) => page.folderId === input.folderId
+      );
 
       // Reject create (no id) when folder already has a page
       if (!input.id && existingByFolder) {
@@ -286,7 +288,8 @@ export const eventPageService = {
           nextCoverFileId !== page.coverFileId ||
           nextGalleryFileIds.length !== page.galleryFileIds.length ||
           nextSections.some(
-            (section, index) => section.imageFileIds.length !== page.sections[index].imageFileIds.length
+            (section, index) =>
+              section.imageFileIds.length !== page.sections[index].imageFileIds.length
           );
 
         if (changed) {

@@ -65,12 +65,18 @@ export async function POST(request: NextRequest) {
       !otpData.codeHash ||
       !otpData.expiresAt
     ) {
-      return NextResponse.json({ error: 'Sesi OTP tidak ditemukan atau sudah kadaluarsa. Silakan request ulang.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Sesi OTP tidak ditemukan atau sudah kadaluarsa. Silakan request ulang.' },
+        { status: 400 }
+      );
     }
 
     if (Date.now() > otpData.expiresAt) {
       await db.ref('settings/adminOtp').remove();
-      return NextResponse.json({ error: 'Kode OTP sudah kadaluarsa (lebih dari 5 menit). Silakan request ulang.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Kode OTP sudah kadaluarsa (lebih dari 5 menit). Silakan request ulang.' },
+        { status: 400 }
+      );
     }
 
     const hashedInputOtp = hashPasswordScrypt(otpCode, salt);
@@ -86,7 +92,7 @@ export async function POST(request: NextRequest) {
         isOtpValid = crypto.timingSafeEqual(bufA, bufB);
       }
     } catch {
-       isOtpValid = hashedInputOtp === otpData.codeHash; // fallback jika timing safe gagal dipanggil
+      isOtpValid = hashedInputOtp === otpData.codeHash; // fallback jika timing safe gagal dipanggil
     }
 
     if (!isOtpValid) {
@@ -114,7 +120,7 @@ Seseorang baru saja berhasil mengubah sandi admin Anda menggunakan OTP.
 📡 **IP:** \`${ip}\``;
 
     await sendTelegramAlert(alertMessage, {
-      priority: 'high'
+      priority: 'high',
     });
 
     await logAdminActivity(request, 'Admin password changed', {

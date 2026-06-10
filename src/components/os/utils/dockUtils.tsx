@@ -26,6 +26,8 @@ export const getDockItemConfig = <T extends DockItem>(
 ): T[] => {
   if (!config) return defaultItems;
 
+  const defaultIndexMap = new Map(defaultItems.map((item, index) => [item.id, index]));
+
   return defaultItems
     .filter((item) => !config[item.id]?.isHidden)
     .map((item) => {
@@ -40,5 +42,10 @@ export const getDockItemConfig = <T extends DockItem>(
         next.label = pref.label;
       }
       return next;
+    })
+    .sort((a, b) => {
+      const orderA = config[a.id]?.order ?? defaultIndexMap.get(a.id) ?? 1000;
+      const orderB = config[b.id]?.order ?? defaultIndexMap.get(b.id) ?? 1000;
+      return orderA - orderB;
     });
 };

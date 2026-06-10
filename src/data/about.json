@@ -141,9 +141,7 @@
             "status": "default"
           }
         ],
-        "nextSteps": [
-          "strategy"
-        ],
+        "nextSteps": ["strategy"],
         "loopTargets": []
       },
       {
@@ -181,12 +179,8 @@
             "status": "default"
           }
         ],
-        "nextSteps": [
-          "execution"
-        ],
-        "loopTargets": [
-          "discovery"
-        ]
+        "nextSteps": ["execution"],
+        "loopTargets": ["discovery"]
       },
       {
         "id": "execution",
@@ -223,13 +217,8 @@
             "status": "default"
           }
         ],
-        "nextSteps": [
-          "approval"
-        ],
-        "loopTargets": [
-          "strategy",
-          "execution"
-        ]
+        "nextSteps": ["approval"],
+        "loopTargets": ["strategy", "execution"]
       },
       {
         "id": "approval",
@@ -266,14 +255,8 @@
             "status": "default"
           }
         ],
-        "nextSteps": [
-          "delivery"
-        ],
-        "loopTargets": [
-          "execution",
-          "strategy",
-          "discovery"
-        ]
+        "nextSteps": ["delivery"],
+        "loopTargets": ["execution", "strategy", "discovery"]
       },
       {
         "id": "delivery",

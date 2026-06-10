@@ -1,9 +1,9 @@
-﻿import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { validateAdminRequestMock, refMock, setMock } = vi.hoisted(() => ({
+const { validateAdminRequestMock, refMock, updateMock } = vi.hoisted(() => ({
   validateAdminRequestMock: vi.fn(),
   refMock: vi.fn(),
-  setMock: vi.fn(),
+  updateMock: vi.fn(),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -30,8 +30,8 @@ describe('POST /api/settings', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     validateAdminRequestMock.mockResolvedValue(true);
-    refMock.mockReturnValue({ set: setMock });
-    setMock.mockResolvedValue(undefined);
+    refMock.mockReturnValue({ update: updateMock });
+    updateMock.mockResolvedValue(undefined);
   });
 
   it('rejects unauthenticated', async () => {
@@ -57,7 +57,7 @@ describe('POST /api/settings', () => {
     const body = await response.json();
     expect(body.success).toBe(true);
     expect(body.settings.bannedWords).toEqual(['judol', 'slot']);
-    expect(setMock).toHaveBeenCalled();
+    expect(updateMock).toHaveBeenCalled();
   });
 
   it('passes through flag fields (maintenanceMode, allowComments)', async () => {

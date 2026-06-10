@@ -180,7 +180,7 @@ export default function ProjectForm({
     >
       <ProjectStepIndicator currentStep={currentStep} />
 
-      <form onSubmit={handleSubmit} className="min-h-[400px]">
+      <form onSubmit={handleSubmit} className="min-h-0">
         {/* STEP 1: SETUP - Minimalist with Checkbox Style */}
         {currentStep === 1 && (
           <div className="animate-in fade-in zoom-in-95 space-y-8 px-2 duration-300">

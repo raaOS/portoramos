@@ -12,7 +12,10 @@ export interface AuditLog {
  * Logs an administrative activity to the database.
  * Uses Cloudflare D1 via the database wrapper.
  */
-export async function logActivity(action: string, metadata?: Record<string, unknown>): Promise<void> {
+export async function logActivity(
+  action: string,
+  metadata?: Record<string, unknown>
+): Promise<void> {
   try {
     const payload: AuditLog = {
       action,

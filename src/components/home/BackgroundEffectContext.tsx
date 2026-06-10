@@ -26,21 +26,32 @@ import type { ReactNode } from 'react';
 interface BackgroundEffectValue {
   isWindowOpen: boolean;
   setIsWindowOpen: (v: boolean) => void;
+  isDesktopRevealed: boolean;
+  setIsDesktopRevealed: (v: boolean) => void;
 }
 
 const BackgroundEffectContext = createContext<BackgroundEffectValue>({
   isWindowOpen: false,
-  // No-op default supaya `DesktopBackground` aman dipakai di luar
-  // provider (mis. di test / preview) tanpa crash.
   setIsWindowOpen: () => {},
+  isDesktopRevealed: false,
+  setIsDesktopRevealed: () => {},
 });
 
 export function BackgroundEffectProvider({ children }: { children: ReactNode }) {
   const [isWindowOpen, setOpen] = useState(false);
+  const [isDesktopRevealed, setRevealed] = useState(false);
+
   const setIsWindowOpen = useCallback((v: boolean) => setOpen(v), []);
+  const setIsDesktopRevealed = useCallback((v: boolean) => setRevealed(v), []);
+
   const value = useMemo(
-    () => ({ isWindowOpen, setIsWindowOpen }),
-    [isWindowOpen, setIsWindowOpen]
+    () => ({
+      isWindowOpen,
+      setIsWindowOpen,
+      isDesktopRevealed,
+      setIsDesktopRevealed,
+    }),
+    [isWindowOpen, setIsWindowOpen, isDesktopRevealed, setIsDesktopRevealed]
   );
   return (
     <BackgroundEffectContext.Provider value={value}>{children}</BackgroundEffectContext.Provider>

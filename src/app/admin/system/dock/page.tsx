@@ -10,12 +10,7 @@ import AdminLoading from '@/components/admin/AdminLoading';
 
 function DockClientContent() {
   const { csrfToken } = useAdminAuth();
-  const {
-    systemData,
-    loading,
-    error,
-    handleUpdateSystem,
-  } = useAdminSystem(csrfToken);
+  const { systemData, loading, error, handleUpdateSystem } = useAdminSystem(csrfToken);
 
   if (loading && !systemData) {
     return (
@@ -42,7 +37,7 @@ function DockClientContent() {
         titleIcon={<Layout className="h-5 w-5" aria-hidden />}
         titleAccent="bg-indigo-50 text-indigo-700"
       />
-      
+
       <div className="flex-1 space-y-6 p-6">
         {error && (
           <div className="mb-6 flex items-center justify-between rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">

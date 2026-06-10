@@ -25,6 +25,7 @@
  */
 export const Z_LAYERS = {
   DESKTOP_BASE: 0,
+  MISSION_CONTROL: 9_997,
   BACKDROP: 9_999,
   CHROME: 10_000,
   POPOUT: 10_001,

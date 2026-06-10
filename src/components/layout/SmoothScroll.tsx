@@ -1,35 +1,52 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { useReducedMotion } from 'motion/react';
 
 export default function SmoothScroll() {
   const pathname = usePathname();
   const isOsMode = pathname?.startsWith('/about-test');
   const isProjectsRoute = pathname?.startsWith('/projects');
+  const prefersReducedMotion = useReducedMotion();
+  const lenisInstanceRef = useRef<any>(null);
 
   useEffect(() => {
-    if (isOsMode || isProjectsRoute) return;
+    if (isOsMode || isProjectsRoute || prefersReducedMotion) return;
 
-    let lenis: { raf: (time: number) => void; destroy: () => void } | null = null;
+    let cancelled = false;
     let rafId: number;
+    let hidden = false;
 
-    // Lazy-load Lenis to reduce initial bundle size (~12KB savings)
     import('lenis').then((LenisModule) => {
-      const Lenis = LenisModule.default;
+      if (cancelled) return;
 
-      lenis = new Lenis({
-        duration: 1.5, // Slightly "heavier" for premium feel
+      const Lenis = LenisModule.default;
+      const lenis = new Lenis({
+        duration: 1.5,
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         orientation: 'vertical',
         gestureOrientation: 'vertical',
         smoothWheel: true,
-        wheelMultiplier: 0.9, // Lower multiplier for more controlled scrolling
+        wheelMultiplier: 0.9,
         touchMultiplier: 2,
       });
 
+      lenisInstanceRef.current = lenis;
+
+      const handleVisibility = () => {
+        hidden = document.visibilityState === 'hidden';
+      };
+      document.addEventListener('visibilitychange', handleVisibility);
+
       function raf(time: number) {
-        lenis?.raf(time);
+        if (cancelled) {
+          document.removeEventListener('visibilitychange', handleVisibility);
+          lenis.destroy();
+          lenisInstanceRef.current = null;
+          return;
+        }
+        if (!hidden) lenis.raf(time);
         rafId = requestAnimationFrame(raf);
       }
 
@@ -37,10 +54,14 @@ export default function SmoothScroll() {
     });
 
     return () => {
+      cancelled = true;
       if (rafId) cancelAnimationFrame(rafId);
-      lenis?.destroy();
+      if (lenisInstanceRef.current) {
+        lenisInstanceRef.current.destroy();
+        lenisInstanceRef.current = null;
+      }
     };
-  }, [isOsMode, isProjectsRoute]);
+  }, [isOsMode, isProjectsRoute, prefersReducedMotion]);
 
   return null;
 }

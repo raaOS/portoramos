@@ -29,7 +29,7 @@ const ISLAND_ID = 'dynamic-island';
 const FIRST_CYCLE_INTERVAL_MS = 8000;
 const STEADY_CYCLE_INTERVAL_MS = 20000;
 const NOTIFICATION_DISPLAY_MS = 6000;
-const INITIAL_DELAY_MS = 1000;
+const INITIAL_DELAY_MS = 3000;
 
 const DynamicIsland = ({
   isBooting,
@@ -219,17 +219,18 @@ const DynamicIsland = ({
   }, [isBooting, customNotifications, triggerNotification]);
 
   const currentState: 'idle' | 'notification' = notification ? 'notification' : 'idle';
+  const isIdle = currentState === 'idle';
 
   const variants = {
     idle: {
-      width: 90,
-      height: 32,
+      width: 36,
+      height: 36,
       borderRadius: 9999,
     },
     notification: {
-      width: '100%',
-      height: '100%',
-      borderRadius: 24,
+      width: 220,
+      height: 48,
+      borderRadius: 9999,
     },
   };
 
@@ -240,10 +241,8 @@ const DynamicIsland = ({
   const islandTransition = prefersReducedMotion
     ? { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const }
     : {
-        type: 'spring' as const,
-        stiffness: 400,
-        damping: 28,
-        layout: { duration: 0.3 },
+        duration: 0.28,
+        ease: [0.22, 1, 0.36, 1] as const,
       };
 
   const avatarBounceAnimation = prefersReducedMotion
@@ -274,23 +273,48 @@ const DynamicIsland = ({
         <m.div
           onMouseDown={handleFocus}
           onPointerDown={handleFocus}
-          className="pointer-events-auto shrink-0 origin-center cursor-default overflow-hidden border border-white/10 bg-black"
+          className={`pointer-events-auto shrink-0 origin-center cursor-default overflow-hidden border bg-black ${
+            isIdle ? 'border-black/70 ring-1 ring-white/10' : 'border-white/10'
+          }`}
+          style={{
+            boxShadow: isIdle
+              ? '0 8px 24px rgba(0, 0, 0, 0.35)'
+              : '0 10px 30px rgba(0, 0, 0, 0.28)',
+          }}
           initial="idle"
           animate={currentState}
           variants={variants}
           transition={islandTransition}
         >
-          <div className="relative flex h-full w-full items-center px-5 text-white">
-            {/* Idle State - minimal "pill" */}
-            {currentState === 'idle' && null}
+          <div
+            className={`relative flex h-full w-full items-center text-white ${
+              isIdle ? 'justify-center px-0' : 'px-5'
+            }`}
+          >
+            {/* Idle State - camera-style cutout */}
+            {isIdle && (
+              <div
+                aria-hidden="true"
+                className="absolute inset-[3px] rounded-full bg-black"
+                style={{
+                  boxShadow:
+                    'inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(255, 255, 255, 0.08)',
+                }}
+              />
+            )}
 
             {/* Notification State (WhatsApp-style testimonial) */}
             {currentState === 'notification' && notification && (
               <m.div
                 className="flex h-full w-full cursor-pointer items-center gap-3"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{
+                  duration: prefersReducedMotion ? 0.1 : 0.18,
+                  delay: prefersReducedMotion ? 0 : 0.08,
+                  ease: [0.4, 0, 0.2, 1],
+                }}
                 onClick={() => {
                   if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
                   if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);

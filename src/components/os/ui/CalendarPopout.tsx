@@ -10,7 +10,10 @@ interface CalendarPopoutProps {
   onClose?: () => void;
 }
 
-export default function CalendarPopout({ isOpen, onClose: _onClose }: CalendarPopoutProps) {
+export default function CalendarPopout({
+  isOpen: _isOpen,
+  onClose: _onClose,
+}: CalendarPopoutProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewDate, setViewDate] = useState(new Date());
 
@@ -20,8 +23,6 @@ export default function CalendarPopout({ isOpen, onClose: _onClose }: CalendarPo
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  if (!isOpen) return null;
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();

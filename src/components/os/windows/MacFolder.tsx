@@ -125,7 +125,7 @@ const MacFolder = ({
         <div className="group relative cursor-pointer" onClick={handleClick}>
           {/* Visual Folder Component - Moves on group hover */}
           <div
-            className="relative transition-all duration-200 ease-in"
+            className="relative transition-transform duration-300 ease-in-out"
             style={{
               ...folderStyle,
               transform: isOpen ? 'translateY(10px)' : undefined,
@@ -164,10 +164,10 @@ const MacFolder = ({
                     key={i}
                     onMouseMove={(e) => handlePaperMouseMove(e, i)}
                     onMouseLeave={(e) => handlePaperMouseLeave(e, i)}
-                    className={`absolute bottom-[10%] left-1/2 z-20 transition-all duration-300 ease-in-out ${
+                    className={`absolute bottom-[10%] left-1/2 z-20 transition-transform duration-300 ease-in-out ${
                       !isOpen
                         ? '-translate-x-1/2 translate-y-[10%] transform group-hover:translate-y-0'
-                        : 'hover:scale-110'
+                        : ''
                     } ${sizeClasses}`}
                     style={{
                       ...(!isOpen ? {} : { transform: transformStyle }),
@@ -180,7 +180,7 @@ const MacFolder = ({
                 );
               })}
               <div
-                className={`absolute z-30 h-full w-full origin-bottom transition-all duration-300 ease-in-out ${
+                className={`absolute z-30 h-full w-full origin-bottom transition-transform duration-300 ease-in-out ${
                   !isOpen ? 'group-hover:[transform:skew(15deg)_scaleY(0.6)]' : ''
                 }`}
                 style={{
@@ -190,7 +190,7 @@ const MacFolder = ({
                 }}
               ></div>
               <div
-                className={`absolute z-30 h-full w-full origin-bottom transition-all duration-300 ease-in-out ${
+                className={`absolute z-30 h-full w-full origin-bottom transition-transform duration-300 ease-in-out ${
                   !isOpen ? 'group-hover:[transform:skew(-15deg)_scaleY(0.6)]' : ''
                 }`}
                 style={{

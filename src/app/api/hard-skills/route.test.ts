@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { validateAdminRequestMock, saveHardSkillsMock, checkDataRateLimitMock, revalidatePathMock } =
-  vi.hoisted(() => ({
-    validateAdminRequestMock: vi.fn(),
-    saveHardSkillsMock: vi.fn(),
-    checkDataRateLimitMock: vi.fn(),
-    revalidatePathMock: vi.fn(),
-  }));
+const {
+  validateAdminRequestMock,
+  saveHardSkillsMock,
+  enforceRequestRateLimitMock,
+  revalidatePathMock,
+} = vi.hoisted(() => ({
+  validateAdminRequestMock: vi.fn(),
+  saveHardSkillsMock: vi.fn(),
+  enforceRequestRateLimitMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
+}));
 
 vi.mock('@/lib/auth', () => ({
   validateAdminRequest: validateAdminRequestMock,
@@ -19,8 +23,8 @@ vi.mock('@/lib/services/hardSkillService', () => ({
   },
 }));
 
-vi.mock('@/lib/dataRateLimit', () => ({
-  checkDataRateLimit: checkDataRateLimitMock,
+vi.mock('@/lib/security/request', () => ({
+  enforceRequestRateLimit: enforceRequestRateLimitMock,
 }));
 
 vi.mock('next/cache', () => ({
@@ -51,7 +55,7 @@ describe('POST /api/hard-skills (bulk)', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     validateAdminRequestMock.mockResolvedValue(true);
-    checkDataRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
+    enforceRequestRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
     saveHardSkillsMock.mockResolvedValue(true);
   });
 
@@ -60,11 +64,11 @@ describe('POST /api/hard-skills (bulk)', () => {
 
     const response = await POST(buildPost([validSkill]) as never);
     expect(response.status).toBe(401);
-    expect(checkDataRateLimitMock).not.toHaveBeenCalled();
+    expect(enforceRequestRateLimitMock).not.toHaveBeenCalled();
   });
 
   it('enforces rate limit 5 req/min', async () => {
-    checkDataRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 60 });
+    enforceRequestRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 60 });
     const response = await POST(buildPost([validSkill]) as never);
     expect(response.status).toBe(429);
   });

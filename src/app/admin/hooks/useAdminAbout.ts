@@ -46,8 +46,6 @@ export function useAdminAbout(csrfToken: string | null) {
     initialData: [] as Label[],
   });
 
-
-
   const projectsQuery = useQuery({
     queryKey: ADMIN_QUERY_KEYS.projects,
     queryFn: fetchAdminProjects,
@@ -61,8 +59,6 @@ export function useAdminAbout(csrfToken: string | null) {
     queryClient.setQueryData(ADMIN_QUERY_KEYS.about, data);
     return data;
   }, [queryClient]);
-
-
 
   const handleUpdateAbout = async (updateData: UpdateAboutData) => {
     try {
@@ -125,8 +121,6 @@ export function useAdminAbout(csrfToken: string | null) {
       return false;
     }
   };
-
-
 
   return {
     aboutData: aboutQuery.data ?? null,

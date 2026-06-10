@@ -283,7 +283,6 @@ async function sendWithButtons(
   });
 }
 
-
 /**
  * Sumber scan yang didukung. Bot menampilkan picker saat user kirim /scan,
  * lalu callback `scanSrc:{source}` jalankan flow yang sesuai.
@@ -669,7 +668,8 @@ export async function handleJobBotUpdate(
   const replyTo = message.reply_to_message;
   const repliedFromBot = replyTo?.from?.is_bot === true;
   const repliedText = typeof replyTo?.text === 'string' ? replyTo.text : '';
-  const isReplyToCekPrompt = !!replyTo && repliedFromBot && repliedText.startsWith(CEK_PROMPT_MARKER);
+  const isReplyToCekPrompt =
+    !!replyTo && repliedFromBot && repliedText.startsWith(CEK_PROMPT_MARKER);
 
   // Fallback pending-state: kalau bukan command dan kita baru saja kirim
   // prompt cek ke topic ini, treat input sebagai argumen cek meski

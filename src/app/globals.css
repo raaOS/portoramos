@@ -167,6 +167,16 @@ body {
   will-change: transform;
 }
 
+/* Project window videos should not crop when opened through native fullscreen controls. */
+.project-window-video:fullscreen,
+.project-window-video:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #000000 !important;
+}
+
 /* Mobile: Simplify animations to prevent flickering */
 @media (max-width: 768px) {
   .project-card,
@@ -624,7 +634,7 @@ html[data-vt-direction='back']::view-transition-new(root) {
 }
 
 /* Force hide tooltips immediately when dock popover is closing to prevent flickering/clipping during transitions */
-html[data-dock-popover-closing='true'] [data-dock-tooltip="true"] {
+html[data-dock-popover-closing='true'] [data-dock-tooltip='true'] {
   display: none !important;
   opacity: 0 !important;
   visibility: hidden !important;

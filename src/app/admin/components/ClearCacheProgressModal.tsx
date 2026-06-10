@@ -117,7 +117,9 @@ export function ClearCacheProgressModal({
 
         <div className="px-5 pt-4">
           <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500">
-            <span>{finishedSteps}/{steps.length}</span>
+            <span>
+              {finishedSteps}/{steps.length}
+            </span>
             <span>{progress}%</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100">

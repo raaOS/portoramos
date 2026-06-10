@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     const pipeIdx = clientId.indexOf('|');
     const ip = pipeIdx > -1 ? clientId.substring(0, pipeIdx) : clientId;
     const userAgent = pipeIdx > -1 ? clientId.substring(pipeIdx + 1) : 'unknown';
-    
+
     const message = `🚨 **PERINGATAN KEAMANAN!**
 
 Ada upaya penggantian sandi Admin dari perangkat yang berhasil memasukkan sandi lama dengan benar.
@@ -69,16 +69,12 @@ Ada upaya penggantian sandi Admin dari perangkat yang berhasil memasukkan sandi 
 
 ⚠️ *Apakah ini Anda? Jika YA, klik persetujuan untuk mendapatkan OTP.*`;
 
-    const telegramRes = await sendTelegramAlert(message, { 
+    const telegramRes = await sendTelegramAlert(message, {
       priority: 'high',
       buttons: [
-        [
-          { text: '✅ Iya, Ini Saya', callback_data: `otp_approve:${requestId}` }
-        ],
-        [
-          { text: '🚨 Bukan! Ini Hacker', callback_data: `otp_reject:${requestId}` }
-        ]
-      ]
+        [{ text: '✅ Iya, Ini Saya', callback_data: `otp_approve:${requestId}` }],
+        [{ text: '🚨 Bukan! Ini Hacker', callback_data: `otp_reject:${requestId}` }],
+      ],
     });
 
     if (!telegramRes.success) {

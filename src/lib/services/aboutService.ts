@@ -75,10 +75,9 @@ function extractAboutAssets(data: AboutData): string[] {
   }
 
   if (data.soundConfig) {
-    if (data.soundConfig.startupSound?.path) assets.push(data.soundConfig.startupSound.path);
-    if (data.soundConfig.notificationSound?.path) assets.push(data.soundConfig.notificationSound.path);
-    if (data.soundConfig.errorSound?.path) assets.push(data.soundConfig.errorSound.path);
-    if (data.soundConfig.successSound?.path) assets.push(data.soundConfig.successSound.path);
+    for (const setting of Object.values(data.soundConfig)) {
+      if (setting?.path) assets.push(setting.path);
+    }
   }
 
   return assets;

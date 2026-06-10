@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Type, Smile } from 'lucide-react';
+import { Smile } from 'lucide-react';
 import { AdminAuthGuard } from '../../components/AdminAuthGuard';
 import { AdminHeader } from '../../components/components/AdminHeader';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -11,11 +11,7 @@ import AdminLoading from '@/components/admin/AdminLoading';
 
 function WidgetsClientContent() {
   const { csrfToken } = useAdminAuth();
-  const {
-    systemData,
-    loading,
-    error,
-  } = useAdminSystem(csrfToken);
+  const { systemData, loading, error } = useAdminSystem(csrfToken);
 
   const [activeSubTab, setActiveSubTab] = useState<'sticky'>('sticky');
 
@@ -44,7 +40,7 @@ function WidgetsClientContent() {
         titleIcon={<Smile className="h-5 w-5" aria-hidden />}
         titleAccent="bg-yellow-50 text-yellow-700"
       />
-      
+
       <div className="flex-1 space-y-6 p-6">
         {error && (
           <div className="mb-6 flex items-center justify-between rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">

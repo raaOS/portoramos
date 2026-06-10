@@ -10,7 +10,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Ambil maksimal 50 log terakhir
-    const snapshot = await db.ref('audit_logs').orderByChild('timestamp').limitToLast(50).once('value');
+    const snapshot = await db
+      .ref('audit_logs')
+      .orderByChild('timestamp')
+      .limitToLast(50)
+      .once('value');
     const data = snapshot.val();
 
     if (!data) {
@@ -18,10 +22,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Convert Object ke array dan sort descending berdasarkan timestamp
-    const logsArray = Object.keys(data).map((key) => ({
-      id: key,
-      ...data[key],
-    })).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    const logsArray = Object.keys(data)
+      .map((key) => ({
+        id: key,
+        ...data[key],
+      }))
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     return NextResponse.json({ logs: logsArray });
   } catch (error) {

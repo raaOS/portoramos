@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { useReducedMotion } from 'motion/react';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
@@ -126,6 +127,15 @@ export default function AnimatedEmoji({ emoji, className = '' }: AnimatedEmojiPr
   const [animationData, setAnimationData] = useState<Record<string, unknown> | null>(null);
   const [hasAnimation, setHasAnimation] = useState(false);
   const loadAttempted = useRef(false);
+  const prefersReducedMotion = useReducedMotion();
+  const lottieRef = useRef<any>(null);
+
+  useEffect(() => {
+    const instance = lottieRef.current;
+    return () => {
+      instance?.destroy?.();
+    };
+  }, [isHovered, hasAnimation]);
 
   const unicode = EMOJI_TO_UNICODE[emoji];
 
@@ -195,9 +205,10 @@ export default function AnimatedEmoji({ emoji, className = '' }: AnimatedEmojiPr
           }}
         >
           <Lottie
+            lottieRef={lottieRef}
             animationData={animationData}
-            loop={true}
-            autoplay={true}
+            loop={!prefersReducedMotion}
+            autoplay={!prefersReducedMotion}
             style={{
               width: '100%',
               height: '100%',

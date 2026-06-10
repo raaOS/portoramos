@@ -45,7 +45,7 @@ const MenuButton = ({
     title={collapsed ? label : undefined}
   >
     <div className="flex min-w-0 shrink-0 items-center gap-0">
-      <div className="flex w-[48px] shrink-0 justify-center">
+      <div className="flex w-[32px] shrink-0 justify-center">
         <Icon size={16} />
       </div>
       <span
@@ -65,13 +65,22 @@ export default function AboutContent({
   const containerRef = useRef<HTMLDivElement>(null);
   const lastCompactLayoutRef = useRef<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<'about' | 'cv' | 'philosophy' | 'interests'>('about');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const handleTabSelect = (tabId: 'about' | 'cv' | 'philosophy' | 'interests') => {
+    setActiveTab(tabId);
+    if (lastCompactLayoutRef.current) {
+      setSidebarCollapsed(true);
+    }
+  };
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const syncLayout = (width: number) => {
+      if (width === 0 && lastCompactLayoutRef.current === null) return;
+
       const isCompact = width <= AUTO_COLLAPSE_BREAKPOINT;
 
       if (isCompact && lastCompactLayoutRef.current !== true) {
@@ -81,7 +90,7 @@ export default function AboutContent({
       lastCompactLayoutRef.current = isCompact;
     };
 
-    syncLayout(container.getBoundingClientRect().width);
+    syncLayout(container.offsetWidth);
 
     if (typeof ResizeObserver === 'undefined') return;
 
@@ -105,7 +114,7 @@ export default function AboutContent({
         onClick={() => sidebarCollapsed && setSidebarCollapsed(false)}
         data-no-window-drag
         aria-label={sidebarCollapsed ? 'Open About sidebar' : 'About sidebar'}
-        className={`about-sidebar ${sidebarCollapsed ? 'collapsed cursor-pointer hover:bg-black/5' : 'expanded'} relative z-20 flex shrink-0 flex-col gap-1 overflow-hidden border-r border-[#D1D1D1] bg-[#E3E3E3]/50 p-3 pt-4 transition-[width] duration-300 ease-in-out`}
+        className={`about-sidebar ${sidebarCollapsed ? 'collapsed cursor-pointer hover:bg-black/5' : 'expanded'} relative z-20 flex shrink-0 flex-col gap-1 overflow-hidden border-r border-[#D1D1D1] bg-[#E3E3E3]/50 p-3 pt-4`}
       >
         <div
           className={`about-sidebar-header mb-1 overflow-hidden whitespace-nowrap px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}
@@ -117,7 +126,7 @@ export default function AboutContent({
           label="About me"
           icon={User}
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleTabSelect}
           collapsed={sidebarCollapsed}
         />
         <MenuButton
@@ -125,7 +134,7 @@ export default function AboutContent({
           label="CV"
           icon={FileText}
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleTabSelect}
           collapsed={sidebarCollapsed}
         />
         <MenuButton
@@ -133,7 +142,7 @@ export default function AboutContent({
           label="Design Thinking"
           icon={Lightbulb}
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleTabSelect}
           collapsed={sidebarCollapsed}
         />
         <MenuButton
@@ -141,7 +150,7 @@ export default function AboutContent({
           label="Skillset"
           icon={Brain}
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleTabSelect}
           collapsed={sidebarCollapsed}
         />
 
@@ -151,8 +160,13 @@ export default function AboutContent({
             target="_blank"
             className="flex w-full items-center justify-center gap-2 overflow-hidden rounded-md py-2.5 text-sm text-gray-600 transition-colors hover:bg-red-600 hover:text-white active:bg-red-700 active:text-white"
             title={sidebarCollapsed ? 'Download CV' : undefined}
+            onClick={() => {
+              if (lastCompactLayoutRef.current) {
+                setSidebarCollapsed(true);
+              }
+            }}
           >
-            <div className="flex shrink-0 items-center justify-center">
+            <div className="flex w-[32px] shrink-0 items-center justify-center">
               <FileText size={16} />
             </div>
             <span
@@ -166,7 +180,11 @@ export default function AboutContent({
 
       {/* Content Area (Right) */}
       <div
-        onClick={() => !sidebarCollapsed && setSidebarCollapsed(true)}
+        onClick={(e) => {
+          if (!sidebarCollapsed && e.target === e.currentTarget) {
+            setSidebarCollapsed(true);
+          }
+        }}
         className={`relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white ${!sidebarCollapsed ? 'cursor-pointer' : ''}`}
       >
         <div

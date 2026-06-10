@@ -577,7 +577,7 @@ export default function DesignPhilosophyForm() {
                               onChange={(e) =>
                                 handlePhaseChange(phaseIndex, 'title', e.target.value)
                               }
-                              className="w-full rounded-lg border border-black/10 bg-white/70 px-3 py-2 text-sm font-bold"
+                              className="w-full rounded-lg border border-black/10 bg-white/70 px-3 py-2.5 text-sm font-bold outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             />
                           </div>
                           <div>
@@ -590,44 +590,50 @@ export default function DesignPhilosophyForm() {
                               onChange={(e) =>
                                 handlePhaseChange(phaseIndex, 'subtitle', e.target.value)
                               }
-                              className="w-full rounded-lg border border-black/10 bg-white/70 px-3 py-2 text-sm"
+                              className="w-full rounded-lg border border-black/10 bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             />
                           </div>
                           <div>
                             <label className="mb-1 block text-[10px] font-bold uppercase text-gray-500">
                               Warna
                             </label>
-                            <select
-                              value={phase.color || 'amber'}
-                              onChange={(e) =>
-                                handlePhaseChange(phaseIndex, 'color', e.target.value)
-                              }
-                              className="w-full rounded-lg border border-black/10 bg-white/70 px-3 py-2 text-sm"
-                            >
-                              {COLORS.map((c) => (
-                                <option key={c.value} value={c.value}>
-                                  {c.label}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="relative">
+                              <select
+                                value={phase.color || 'amber'}
+                                onChange={(e) =>
+                                  handlePhaseChange(phaseIndex, 'color', e.target.value)
+                                }
+                                className="w-full cursor-pointer appearance-none rounded-lg border border-black/10 bg-white/70 px-3 py-2.5 pr-10 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                              >
+                                {COLORS.map((c) => (
+                                  <option key={c.value} value={c.value}>
+                                    {c.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            </div>
                           </div>
                           <div>
                             <label className="mb-1 block text-[10px] font-bold uppercase text-gray-500">
                               Icon
                             </label>
-                            <select
-                              value={phase.icon || 'Sparkles'}
-                              onChange={(e) =>
-                                handlePhaseChange(phaseIndex, 'icon', e.target.value)
-                              }
-                              className="w-full rounded-lg border border-black/10 bg-white/70 px-3 py-2 text-sm"
-                            >
-                              {AVAILABLE_ICONS.map((icon) => (
-                                <option key={icon} value={icon}>
-                                  {icon}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="relative">
+                              <select
+                                value={phase.icon || 'Sparkles'}
+                                onChange={(e) =>
+                                  handlePhaseChange(phaseIndex, 'icon', e.target.value)
+                                }
+                                className="w-full cursor-pointer appearance-none rounded-lg border border-black/10 bg-white/70 px-3 py-2.5 pr-10 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                              >
+                                {AVAILABLE_ICONS.map((icon) => (
+                                  <option key={icon} value={icon}>
+                                    {icon}
+                                  </option>
+                                ))}
+                              </select>
+                              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            </div>
                           </div>
                         </div>
 
@@ -642,7 +648,7 @@ export default function DesignPhilosophyForm() {
                               handlePhaseChange(phaseIndex, 'description', e.target.value)
                             }
                             rows={2}
-                            className="w-full rounded-lg border border-black/10 bg-white/70 px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-black/10 bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           />
                         </div>
 
@@ -708,7 +714,7 @@ export default function DesignPhilosophyForm() {
                                         )
                                       }
                                       placeholder="Judul sub-step"
-                                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium"
+                                      className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                     />
                                     <input
                                       type="text"
@@ -722,7 +728,7 @@ export default function DesignPhilosophyForm() {
                                         )
                                       }
                                       placeholder="Deskripsi"
-                                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+                                      className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                     />
                                   </div>
                                   <button

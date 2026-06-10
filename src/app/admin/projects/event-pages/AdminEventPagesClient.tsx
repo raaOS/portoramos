@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Save,
   Trash2,
+  ChevronDown,
 } from 'lucide-react';
 import { AdminHeader } from '../../components/components/AdminHeader';
 import AdminButton from '@/app/admin/components/AdminButton';
@@ -122,9 +123,7 @@ export default function AdminEventPagesClient() {
           (node): node is ExplorerFile =>
             node.type === 'file' && node.parentId === form.folderId && node.fileType === 'image'
         )
-        .sort((a, b) =>
-          getExplorerFileDisplayName(a).localeCompare(getExplorerFileDisplayName(b))
-        ),
+        .sort((a, b) => getExplorerFileDisplayName(a).localeCompare(getExplorerFileDisplayName(b))),
     [form.folderId, nodes]
   );
 
@@ -424,34 +423,40 @@ export default function AdminEventPagesClient() {
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                       Folder Explorer
                     </span>
-                    <select
-                      value={form.folderId}
-                      onChange={(event) => handleFolderChange(event.target.value)}
-                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    >
-                      <option value="">Pilih folder</option>
-                      {folders.map((folder) => (
-                        <option key={folder.id} value={folder.id}>
-                          {folder.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative mt-1">
+                      <select
+                        value={form.folderId}
+                        onChange={(event) => handleFolderChange(event.target.value)}
+                        className="w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white px-3 py-2.5 pr-10 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      >
+                        <option value="">Pilih folder</option>
+                        {folders.map((folder) => (
+                          <option key={folder.id} value={folder.id}>
+                            {folder.name}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    </div>
                   </label>
 
                   <label className="block">
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                       Status
                     </span>
-                    <select
-                      value={form.status}
-                      onChange={(event) =>
-                        updateForm('status', event.target.value as EventPageStatus)
-                      }
-                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    >
-                      <option value="published">Published</option>
-                      <option value="draft">Draft</option>
-                    </select>
+                    <div className="relative mt-1">
+                      <select
+                        value={form.status}
+                        onChange={(event) =>
+                          updateForm('status', event.target.value as EventPageStatus)
+                        }
+                        className="w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white px-3 py-2.5 pr-10 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      >
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    </div>
                   </label>
 
                   <label className="block">
@@ -461,7 +466,7 @@ export default function AdminEventPagesClient() {
                     <input
                       value={form.title}
                       onChange={(event) => updateForm('title', event.target.value)}
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       placeholder="Event Kampus Merdeka"
                     />
                   </label>
@@ -473,7 +478,7 @@ export default function AdminEventPagesClient() {
                     <input
                       value={form.subtitle}
                       onChange={(event) => updateForm('subtitle', event.target.value)}
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       placeholder="Dokumentasi desain, persiapan, dan acara"
                     />
                   </label>
@@ -485,7 +490,7 @@ export default function AdminEventPagesClient() {
                     <input
                       value={form.role}
                       onChange={(event) => updateForm('role', event.target.value)}
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       placeholder="Desain kebutuhan event, dokumentasi visual, dan publikasi progres"
                     />
                   </label>
@@ -498,7 +503,7 @@ export default function AdminEventPagesClient() {
                       value={form.description}
                       onChange={(event) => updateForm('description', event.target.value)}
                       rows={5}
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       placeholder="Ceritakan ringkas konteks event, pekerjaan yang dibuat, dan hasil dokumentasinya."
                     />
                   </label>
@@ -522,19 +527,22 @@ export default function AdminEventPagesClient() {
                   <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                     Cover
                   </span>
-                  <select
-                    value={form.coverFileId}
-                    onChange={(event) => updateForm('coverFileId', event.target.value)}
-                    disabled={imageFilesInFolder.length === 0}
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-50"
-                  >
-                    <option value="">Tanpa cover (warna solid)</option>
-                    {imageFilesInFolder.map((file) => (
-                      <option key={file.id} value={file.id}>
-                        {getExplorerFileDisplayName(file)} - {getExplorerActualFormat(file)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative mt-1">
+                    <select
+                      value={form.coverFileId}
+                      onChange={(event) => updateForm('coverFileId', event.target.value)}
+                      disabled={imageFilesInFolder.length === 0}
+                      className="w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white px-3 py-2.5 pr-10 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-50"
+                    >
+                      <option value="">Tanpa cover (warna solid)</option>
+                      {imageFilesInFolder.map((file) => (
+                        <option key={file.id} value={file.id}>
+                          {getExplorerFileDisplayName(file)} - {getExplorerActualFormat(file)}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  </div>
                 </label>
 
                 {!form.coverFileId && (
@@ -613,7 +621,12 @@ export default function AdminEventPagesClient() {
                       Section tampil berurutan di mini landing page.
                     </p>
                   </div>
-                  <AdminButton variant="secondary" size="sm" icon={<Plus size={14} />} onClick={addSection}>
+                  <AdminButton
+                    variant="secondary"
+                    size="sm"
+                    icon={<Plus size={14} />}
+                    onClick={addSection}
+                  >
                     Section
                   </AdminButton>
                 </div>
@@ -646,7 +659,7 @@ export default function AdminEventPagesClient() {
                             onChange={(event) =>
                               updateSection(section.id, 'title', event.target.value)
                             }
-                            className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                            className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                             placeholder="Judul section"
                           />
                           <textarea
@@ -655,7 +668,7 @@ export default function AdminEventPagesClient() {
                               updateSection(section.id, 'body', event.target.value)
                             }
                             rows={3}
-                            className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                            className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                             placeholder="Isi cerita section"
                           />
                         </div>
@@ -692,7 +705,9 @@ export default function AdminEventPagesClient() {
                 )}
                 <AdminButton
                   variant="primary"
-                  icon={isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  icon={
+                    isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />
+                  }
                   onClick={savePage}
                   disabled={isSaving}
                 >

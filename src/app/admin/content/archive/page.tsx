@@ -14,11 +14,7 @@ const GalleryManager = dynamic(() => import('@/components/admin/GalleryManager')
 
 function ArchiveClientContent() {
   const { csrfToken } = useAdminAuth();
-  const {
-    projects,
-    loading,
-    error,
-  } = useAdminContent(csrfToken);
+  const { projects, loading, error } = useAdminContent(csrfToken);
 
   if (loading && projects.length === 0) {
     return (
@@ -35,7 +31,7 @@ function ArchiveClientContent() {
         titleIcon={<Archive className="h-5 w-5" aria-hidden />}
         titleAccent="bg-indigo-50 text-indigo-700"
       />
-      
+
       <div className="flex-1 space-y-6 p-6">
         {error && (
           <div className="mb-6 flex items-center justify-between rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">

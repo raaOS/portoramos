@@ -117,8 +117,8 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
     <div
       role={ariaRole}
       aria-live={ariaLive}
-      className={`fixed bottom-4 right-4 z-50 transition-all duration-300 ease-in-out print:hidden ${
-        show ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-2 scale-95 opacity-0'
+      className={`transition-all duration-300 ease-in-out print:hidden ${
+        show ? 'translate-x-0 scale-100 opacity-100' : 'translate-x-2 scale-95 opacity-0'
       }`}
     >
       <div
@@ -134,7 +134,7 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
             setTimeout(() => onClose && onClose(), 300);
           }}
           aria-label="Close notification"
-          className="ml-2 flex-shrink-0 rounded-full p-1 transition-colors hover:bg-black hover:bg-opacity-20"
+          className="ml-2 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-colors hover:bg-black hover:bg-opacity-20 focus:outline-none"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path

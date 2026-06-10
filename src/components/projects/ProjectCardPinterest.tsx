@@ -1,6 +1,6 @@
 'use client';
 
-import { Link } from 'next-view-transitions';
+import Link from 'next/link';
 import { Project } from '@/types/projects';
 import Media from '@/components/shared/Media';
 import { resolvePreviewCover } from '@/lib/images';
@@ -100,7 +100,7 @@ export default function ProjectCardPinterest({
       </div>
 
       {/* Project Info */}
-      <div className="hidden md:block mt-3 space-y-1 px-1">
+      <div className="mt-3 hidden space-y-1 px-1 md:block">
         <div className="flex items-baseline justify-between gap-4">
           <p className="truncate text-sm font-medium leading-tight text-gray-900 decoration-1 underline-offset-2 group-hover:underline dark:text-gray-100">
             {title}

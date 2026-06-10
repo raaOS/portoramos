@@ -15,7 +15,9 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const data = await testimonialService.getTestimonials();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=3600' },
+    });
   } catch (error) {
     console.error('Error fetching testimonials:', error);
     return NextResponse.json({ error: 'Failed to read testimonials' }, { status: 500 });

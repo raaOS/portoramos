@@ -37,7 +37,6 @@ interface WindowFactoryProps {
   hardSkillsData: HardSkillsData | null | undefined;
   contactData: ContactData | null | undefined;
   projects: Project[];
-  commercialProjects: Project[];
   dynamicContacts: Record<string, ContactProfile>;
   isAdmin?: boolean;
   isMobile?: boolean;
@@ -49,7 +48,6 @@ export const createInitialWindows = ({
   hardSkillsData,
   contactData,
   projects: _projects,
-  commercialProjects: _commercialProjects,
   dynamicContacts,
   isAdmin = false,
   isMobile = false,
@@ -133,6 +131,7 @@ export const createInitialWindows = ({
       width: 1000,
       height: 700,
       content: null,
+      contentFactory: () => <ExplorerWindow isAdmin={isAdmin} />,
     },
     {
       id: 'explorer',

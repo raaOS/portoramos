@@ -28,15 +28,11 @@ export function useAdminSystem(csrfToken: string | null) {
     refetchOnMount: 'always',
   });
 
-
-
   const refreshAboutData = useCallback(async () => {
     const data = await fetchAdminAboutFresh();
     queryClient.setQueryData(ADMIN_QUERY_KEYS.about, data);
     return data;
   }, [queryClient]);
-
-
 
   const handleUpdateSystem = async (updateData: UpdateAboutData) => {
     try {
@@ -72,8 +68,6 @@ export function useAdminSystem(csrfToken: string | null) {
       showError(msg);
     }
   };
-
-
 
   return {
     systemData: aboutQuery.data ?? null,

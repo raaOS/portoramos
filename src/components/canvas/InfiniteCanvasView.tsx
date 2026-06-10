@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useReducedMotion } from 'motion/react';
 import type { Project } from '@/types/projects';
 import { getPreviewCoverUrl, isVideoUrl } from '@/utils/canvas-helpers';
 import {
@@ -32,10 +33,38 @@ const SCROLL_SENSITIVITY = 1.5;
 const VELOCITY_DECAY = 0.95; // longer premium glide after release
 const VELOCITY_LERP = 0.2; // camera follows mouse faster
 
+// — Magnetic hover & ambient float tuning —
+const MAGNET_RADIUS = 350;
+const MAGNET_STRENGTH = 20;
+const FLOAT_AMPLITUDE = 6;
+const FLOAT_SPEED = 1.2;
+
+// — Speed tilt tuning —
+const TILT_FACTOR = 0.15;
+const MAX_TILT = 8;
+const TILT_SMOOTHING = 0.2;
+
 export default function InfiniteCanvasView({ projects }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [renderedItems, setRenderedItems] = useState<CanvasItem[]>([]);
-  const renderedItemsRef = useRef<CanvasItem[]>([]);
+  const prefersReducedMotion = useReducedMotion();
+
+  // Pre-calculate initial visible items for SSR support
+  const initialItems = useMemo(() => {
+    const camera = { x: 0, y: 0, z: 0 };
+    const cellPositions = buildCellPositions(camera);
+    const projectById = new Map(projects.map((project) => [project.id, project]));
+    const nextState = assignProjectsToCells({
+      cellPositions,
+      projects,
+      persistedAssignments: new Map(),
+      insertionOrder: [],
+      projectById,
+    });
+    return nextState.items;
+  }, [projects]);
+
+  const [renderedItems, setRenderedItems] = useState<CanvasItem[]>(initialItems);
+  const renderedItemsRef = useRef<CanvasItem[]>(initialItems);
 
   // — Camera state —
   const cameraRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
@@ -43,6 +72,16 @@ export default function InfiniteCanvasView({ projects }: Props) {
   const targetCameraRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
   const scrollDeltaRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
   const previousCullCameraRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
+
+  // — Atmospheric Depth Fog state —
+  const fogRef = useRef<HTMLDivElement>(null);
+
+  // — Magnetic hover & ambient float state —
+  const mousePosRef = useRef({ x: 0, y: 0 });
+  const floatPhasesRef = useRef<Map<string, number>>(new Map());
+  const magneticStateRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const tiltStateRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const timeRef = useRef(0);
 
   // — Input state —
   const isDraggingRef = useRef(false);
@@ -63,6 +102,16 @@ export default function InfiniteCanvasView({ projects }: Props) {
   const visualStateRef = useRef<
     Map<string, { opacity: number; grayscale: number; hidden: boolean }>
   >(new Map());
+
+  // — Mouse tracker for magnetic effect —
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    mousePosRef.current = {
+      x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      y: ((e.clientY - rect.top) / rect.height) * 2 - 1,
+    };
+  }, []);
 
   // Stable ref callbacks — prevents CanvasCard memo() from re-rendering on parent state change
   const registerCardRef = useCallback((key: string, el: HTMLDivElement | null) => {
@@ -157,6 +206,9 @@ export default function InfiniteCanvasView({ projects }: Props) {
       visualStateRef.current.delete(key);
       cardNodesRef.current.delete(key);
       videoNodesRef.current.delete(key);
+      floatPhasesRef.current.delete(key);
+      magneticStateRef.current.delete(key);
+      tiltStateRef.current.delete(key);
     });
   }, []);
 
@@ -226,26 +278,91 @@ export default function InfiniteCanvasView({ projects }: Props) {
         continue;
       }
 
-      node.style.display = 'block';
-      node.style.visibility = 'visible';
-      node.style.opacity = visualStyle.opacity.toFixed(3);
-      node.style.pointerEvents = 'auto';
-      node.style.filter = visualStyle.filter;
-      node.style.transform = visualStyle.transform;
-      node.style.zIndex = visualStyle.zIndex;
-      node.style.willChange = 'transform';
+      // — Ambient float offset —
+      if (!floatPhasesRef.current.has(item.key)) {
+        floatPhasesRef.current.set(
+          item.key,
+          Math.sin(item.dist + item.x * 0.1 + item.y * 0.1) * Math.PI
+        );
+      }
+      const floatPhase = floatPhasesRef.current.get(item.key)!;
+      const floatY = Math.sin(timeRef.current * 0.001 * FLOAT_SPEED + floatPhase) * FLOAT_AMPLITUDE;
+
+      // — Magnetic hover offset —
+      const dx = item.x - camera.x;
+      const dy = item.y - camera.y;
+      const scaleFactor =
+        CANVAS_CONSTANTS.perspective / Math.max(1, CANVAS_CONSTANTS.perspective - dz);
+      const virtualScreenX = dx * scaleFactor;
+      const virtualScreenY = dy * scaleFactor;
+      const mouseVX = mousePosRef.current.x * (CANVAS_CONSTANTS.screenWidth / 2);
+      const mouseVY = mousePosRef.current.y * (CANVAS_CONSTANTS.screenHeight / 2);
+      const screenDist = Math.sqrt(
+        (virtualScreenX - mouseVX) ** 2 + (virtualScreenY - mouseVY) ** 2
+      );
+      let targetMX = 0,
+        targetMY = 0;
+      if (!isDraggingRef.current && screenDist < MAGNET_RADIUS && screenDist > 0.01) {
+        const strength = (1 - screenDist / MAGNET_RADIUS) ** 2 * MAGNET_STRENGTH;
+        targetMX = ((mouseVX - virtualScreenX) / screenDist) * strength;
+        targetMY = ((mouseVY - virtualScreenY) / screenDist) * strength;
+      }
+      const prevMag = magneticStateRef.current.get(item.key) ?? { x: 0, y: 0 };
+      const smoothMX = prevMag.x + (targetMX - prevMag.x) * 0.12;
+      const smoothMY = prevMag.y + (targetMY - prevMag.y) * 0.12;
+      magneticStateRef.current.set(item.key, { x: smoothMX, y: smoothMY });
+
+      // — Speed tilt —
+      const targetTiltX = Math.max(
+        -MAX_TILT,
+        Math.min(MAX_TILT, -velocityRef.current.y * TILT_FACTOR)
+      );
+      const targetTiltY = Math.max(
+        -MAX_TILT,
+        Math.min(MAX_TILT, -velocityRef.current.x * TILT_FACTOR)
+      );
+      const prevTilt = tiltStateRef.current.get(item.key) ?? { x: 0, y: 0 };
+      const smoothTiltX = prevTilt.x + (targetTiltX - prevTilt.x) * TILT_SMOOTHING;
+      const smoothTiltY = prevTilt.y + (targetTiltY - prevTilt.y) * TILT_SMOOTHING;
+      tiltStateRef.current.set(item.key, { x: smoothTiltX, y: smoothTiltY });
+
+      if (node.style.display !== 'block') node.style.display = 'block';
+      if (node.style.visibility !== 'visible') node.style.visibility = 'visible';
+      if (node.style.pointerEvents !== 'auto') node.style.pointerEvents = 'auto';
+
+      const nextOpacity = visualStyle.opacity.toFixed(3);
+      if (node.style.opacity !== nextOpacity) node.style.opacity = nextOpacity;
+
+      if (node.style.filter !== visualStyle.filter) node.style.filter = visualStyle.filter;
+      if (node.style.zIndex !== visualStyle.zIndex) node.style.zIndex = visualStyle.zIndex;
+
+      node.style.transform =
+        visualStyle.transform +
+        ` rotateX(${smoothTiltX.toFixed(1)}deg) rotateY(${smoothTiltY.toFixed(1)}deg) translate(${smoothMX.toFixed(1)}px, ${(smoothMY + floatY).toFixed(1)}px)`;
 
       const videoNode = videoNodesRef.current.get(item.key);
       if (videoNode) {
-        if (visualStyle.opacity > VIDEO_VISIBILITY_OPACITY && activeKeys.has(item.key)) {
+        // Only load and play video for cards within focus distance (< 1800) to optimize bandwidth, memory, and CPU
+        const isNearFocus = item.dist < 1800;
+        if (
+          visualStyle.opacity > VIDEO_VISIBILITY_OPACITY &&
+          activeKeys.has(item.key) &&
+          isNearFocus
+        ) {
           if (videoNode.paused) {
             if (!videoNode.getAttribute('src')) {
               videoNode.src = videoNode.dataset.src || getPreviewCoverUrl(item.project);
             }
             void videoNode.play().catch(() => undefined);
           }
-        } else if (!videoNode.paused) {
-          videoNode.pause();
+        } else {
+          if (!videoNode.paused) {
+            videoNode.pause();
+          }
+          if (videoNode.getAttribute('src') && item.dist >= 1800) {
+            videoNode.removeAttribute('src');
+            videoNode.load();
+          }
         }
       }
     }
@@ -263,6 +380,8 @@ export default function InfiniteCanvasView({ projects }: Props) {
       const deltaTime = Math.min(currentTime - lastTime, CANVAS_CONSTANTS.maxDeltaTime);
       const timeScale = deltaTime / CANVAS_CONSTANTS.targetFrameTime;
       lastTime = currentTime;
+
+      timeRef.current = currentTime;
 
       velocityRef.current.x += scrollDeltaRef.current.x * SCROLL_SENSITIVITY;
       velocityRef.current.y += scrollDeltaRef.current.y * SCROLL_SENSITIVITY;
@@ -286,6 +405,17 @@ export default function InfiniteCanvasView({ projects }: Props) {
       cameraRef.current.y += (targetCameraRef.current.y - cameraRef.current.y) * lerpFactor;
       cameraRef.current.z += (targetCameraRef.current.z - cameraRef.current.z) * lerpFactor;
 
+      // — Atmospheric Depth Fog —
+      if (fogRef.current) {
+        const zDepth = cameraRef.current.z;
+        const fogT = Math.min(1, Math.max(0, (-zDepth - 1500) / 5000));
+        const clearSize = 70 - fogT * 40;
+        const opacity = fogT * 0.45;
+        const xOff = 50 + cameraRef.current.x * 0.0005;
+        const yOff = 50 + cameraRef.current.y * 0.0005;
+        fogRef.current.style.background = `radial-gradient(ellipse 70% 60% at ${xOff.toFixed(1)}% ${yOff.toFixed(1)}%, transparent ${clearSize.toFixed(0)}%, rgba(220,228,236,${opacity.toFixed(3)}) 100%)`;
+      }
+
       const cullDistanceSq =
         (cameraRef.current.x - previousCullCameraRef.current.x) ** 2 +
         (cameraRef.current.y - previousCullCameraRef.current.y) ** 2 +
@@ -300,6 +430,14 @@ export default function InfiniteCanvasView({ projects }: Props) {
       animationFrameRef.current = requestAnimationFrame(loop);
     };
 
+    if (prefersReducedMotion) {
+      requestAnimationFrame(() => {
+        syncVisibleItems();
+        updateDomNodes();
+      });
+      return;
+    }
+
     animationFrameRef.current = requestAnimationFrame(loop);
     const initialSyncFrame = requestAnimationFrame(() => {
       syncVisibleItems();
@@ -313,7 +451,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
         removalTimerRef.current = null;
       }
     };
-  }, [projects.length, syncVisibleItems, updateDomNodes]);
+  }, [projects.length, syncVisibleItems, updateDomNodes, prefersReducedMotion]);
 
   if (projects.length === 0) return null;
 
@@ -323,6 +461,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
     <div
       ref={containerRef}
       data-canvas-viewport
+      onPointerMove={handlePointerMove}
       className="relative z-10 h-full w-full cursor-grab select-none overflow-hidden bg-[#F0F0F0] active:cursor-grabbing"
       style={{
         touchAction: 'none',
@@ -341,6 +480,92 @@ export default function InfiniteCanvasView({ projects }: Props) {
             !isVideo && item.dist < PRIORITY_IMAGE_DISTANCE && priorityCount < MAX_PRIORITY_IMAGES;
           if (shouldPriority) priorityCount++;
 
+          // Compute initial visual style for server-side rendering (SSR) at camera = { x: 0, y: 0, z: 0 }
+          const dx = item.x;
+          const dy = item.y;
+          const dz = item.z;
+
+          let targetOpacity = 1;
+          let blur = 0;
+          let targetGrayscale = 0;
+
+          // Forward (Close-up) Fading
+          if (dz > CANVAS_CONSTANTS.fadeCloseStart) {
+            const t = Math.min(
+              1,
+              Math.max(0, (dz - CANVAS_CONSTANTS.fadeCloseStart) / CANVAS_CONSTANTS.fadeCloseRange)
+            );
+            targetOpacity = 1 - (1 - Math.pow(1 - t, 5)); // easeOutQuint
+            blur = Math.min(
+              12,
+              Math.max(0, (dz - CANVAS_CONSTANTS.fadeCloseStart) / CANVAS_CONSTANTS.blurCloseRange)
+            );
+          }
+
+          // Backward (Far) Fading & Grayscale
+          if (dz < CANVAS_CONSTANTS.grayscaleStart) {
+            targetGrayscale = Math.min(
+              100,
+              Math.max(
+                0,
+                ((CANVAS_CONSTANTS.grayscaleStart - dz) / CANVAS_CONSTANTS.grayscaleRange) * 100
+              )
+            );
+          }
+
+          if (dz < CANVAS_CONSTANTS.fadeFarStart) {
+            const t = Math.min(
+              1,
+              Math.max(0, (dz - CANVAS_CONSTANTS.fadeFarStart) / CANVAS_CONSTANTS.fadeFarRange)
+            );
+            targetOpacity = 1 - (1 - Math.pow(1 - t, 5)); // easeOutQuint
+            blur = Math.max(
+              blur,
+              Math.min(
+                15,
+                Math.max(0, (dz - CANVAS_CONSTANTS.fadeFarStart) / CANVAS_CONSTANTS.blurFarRange)
+              )
+            );
+          }
+
+          // Radial (Edge) Fading
+          const scaleFactor =
+            CANVAS_CONSTANTS.perspective / Math.max(1, CANVAS_CONSTANTS.perspective - dz);
+          const normalizedX = (dx * scaleFactor) / CANVAS_CONSTANTS.screenWidth;
+          const normalizedY = (dy * scaleFactor) / CANVAS_CONSTANTS.screenHeight;
+          const radialDistance = Math.sqrt(normalizedX ** 2 + normalizedY ** 2);
+
+          if (radialDistance > CANVAS_CONSTANTS.edgeFadeStart) {
+            const t = Math.min(
+              1,
+              (radialDistance - CANVAS_CONSTANTS.edgeFadeStart) / CANVAS_CONSTANTS.edgeFadeRange
+            );
+            targetOpacity *= 1 - (1 - Math.pow(1 - t, 5)); // easeOutQuint
+          }
+
+          // Final Clipping
+          if (dz > CANVAS_CONSTANTS.clipClose || dz < CANVAS_CONSTANTS.clipFar) {
+            targetOpacity = 0;
+          }
+
+          const isHidden = targetOpacity <= CANVAS_CONSTANTS.minVisibleOpacity;
+          const filterParts: string[] = [];
+
+          if (blur > 0.5 && targetOpacity > 0.1) {
+            filterParts.push(`blur(${Math.min(10, blur).toFixed(1)}px)`);
+          }
+          if (targetGrayscale > 1) {
+            filterParts.push(`grayscale(${targetGrayscale.toFixed(0)}%)`);
+          }
+
+          const initialStyle: React.CSSProperties = {
+            visibility: isHidden ? 'hidden' : 'visible',
+            opacity: targetOpacity,
+            transform: `translate3d(calc(-50% + ${dx.toFixed(2)}px), calc(-50% + ${dy.toFixed(2)}px), ${dz.toFixed(2)}px) scale(${item.scale})`,
+            zIndex: Math.round(10000 + dz),
+            filter: filterParts.join(' ') || 'none',
+          };
+
           return (
             <CanvasCard
               key={item.key}
@@ -348,10 +573,20 @@ export default function InfiniteCanvasView({ projects }: Props) {
               isPriority={shouldPriority}
               registerCardRef={registerCardRef}
               registerVideoRef={registerVideoRef}
+              initialStyle={initialStyle}
             />
           );
         })}
       </div>
+
+      <div
+        ref={fogRef}
+        className="pointer-events-none absolute inset-0 z-[15]"
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 60% at 50% 50%, transparent 70%, rgba(220,228,236,0) 100%)',
+        }}
+      />
 
       <div className="pointer-events-none absolute bottom-10 left-10 flex flex-col gap-2">
         <div className="text-[10px] uppercase tracking-[0.3em] text-black/20">

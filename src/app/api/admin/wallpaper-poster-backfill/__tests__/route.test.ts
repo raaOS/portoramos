@@ -157,9 +157,7 @@ describe('POST /api/admin/wallpaper-poster-backfill', () => {
 
   it('skips entries that already have posterUrl', async () => {
     getAboutData.mockResolvedValue(
-      makeAboutData([
-        { id: 'a', url: '/r2/assets/wallpapers/a.mp4', posterUrl: '/r2/a.jpg' },
-      ])
+      makeAboutData([{ id: 'a', url: '/r2/assets/wallpapers/a.mp4', posterUrl: '/r2/a.jpg' }])
     );
     const res = await POST(buildPostRequest());
     expect(res.status).toBe(200);
@@ -194,9 +192,7 @@ describe('POST /api/admin/wallpaper-poster-backfill', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.result.backfilled).toBe(1);
-    expect(body.result.changes).toEqual([
-      { id: 'a', posterUrl: '/r2/assets/wallpapers/a.jpg' },
-    ]);
+    expect(body.result.changes).toEqual([{ id: 'a', posterUrl: '/r2/assets/wallpapers/a.jpg' }]);
 
     expect(headR2Object).toHaveBeenCalledTimes(1);
     expect(headR2Object).toHaveBeenCalledWith('assets/wallpapers/a.jpg');
@@ -215,9 +211,7 @@ describe('POST /api/admin/wallpaper-poster-backfill', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.result.backfilled).toBe(1);
-    expect(body.result.changes).toEqual([
-      { id: 'a', posterUrl: '/r2/assets/wallpapers/a.webp' },
-    ]);
+    expect(body.result.changes).toEqual([{ id: 'a', posterUrl: '/r2/assets/wallpapers/a.webp' }]);
 
     expect(headR2Object).toHaveBeenCalledTimes(2);
     expect(headR2Object).toHaveBeenNthCalledWith(1, 'assets/wallpapers/a.jpg');

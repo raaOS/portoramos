@@ -181,7 +181,9 @@ export class ContentService<T> {
       contentCache.set(getCacheKey(this.dataPath), payload as unknown as object, this.cacheTTL);
 
       // Log the activity (await to prevent serverless function termination before write finishes)
-      const actionMessage = _message ? `Update ${this.dataPath}: ${_message}` : `Update ${this.dataPath}`;
+      const actionMessage = _message
+        ? `Update ${this.dataPath}: ${_message}`
+        : `Update ${this.dataPath}`;
       await logActivity(actionMessage).catch((err) => console.error('[Audit] Failed to log:', err));
 
       return true;

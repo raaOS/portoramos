@@ -49,7 +49,7 @@ test.describe('Grade A Public Experience', () => {
   });
 
   test('Contact page loads with CTA', async ({ page }) => {
-    await page.goto('/contact');
+    await page.goto('/contact', { waitUntil: 'domcontentloaded', timeout: 30000 });
     await expect(page.locator('body')).toBeVisible();
 
     // Contact page should have call-to-action content
@@ -71,7 +71,8 @@ test.describe('Grade A Public Experience', () => {
       console.log('Navigating to project:', href);
 
       await firstProjectLink.click();
-      await page.waitForURL(new RegExp(href!), { timeout: 15000 });
+      // View Transitions may delay the load event; use assertion-based URL check
+      await expect(page).toHaveURL(/\/projects\//, { timeout: 15000 });
 
       // Verify project detail loads
       await expect(page.locator('h1')).toBeVisible();

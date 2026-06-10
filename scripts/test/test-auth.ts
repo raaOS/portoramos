@@ -14,7 +14,7 @@ async function testPasswordLogic() {
     // 1. Initial State (No DB Password)
     console.log('[Test 1] DB is empty. Checking with .env password...');
     await db.ref('settings/adminPassword').remove();
-    
+
     // We don't know the exact .env password, so we just check if it fails gracefully
     // when given a wrong password, rather than throwing DB errors.
     const isWrongValid = await verifyAdminPassword('WrongPassword123!');
