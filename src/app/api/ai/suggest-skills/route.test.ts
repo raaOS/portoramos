@@ -106,14 +106,12 @@ describe('POST /api/ai/suggest-skills', () => {
   });
 
   it('returns 500 when AI returns no candidates text', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify({}), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        })
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const response = await POST(request({ skillName: 'Figma' }));

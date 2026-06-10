@@ -113,14 +113,12 @@ describe('POST /api/ai/generate-conversation', () => {
   });
 
   it('returns 500 when AI returns empty candidates', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ candidates: [] }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        })
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ candidates: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const response = await POST(request({ senderName: 'Budi', notifMessage: 'Halo ada project' }));

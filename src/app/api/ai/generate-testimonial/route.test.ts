@@ -121,14 +121,12 @@ describe('POST /api/ai/generate-testimonial', () => {
   });
 
   it('returns 500 when AI returns empty candidates', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify({}), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        })
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const response = await POST(request({ topic: 'Banner' }));
