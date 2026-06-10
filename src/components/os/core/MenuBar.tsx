@@ -109,7 +109,7 @@ export default function MenuBar({
       <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2 lg:gap-4">
         <div
           onClick={() => window.open('/admin/login', '_blank')}
-          className="relative flex h-8 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden"
+          className="relative flex h-8 w-12 shrink-0 cursor-pointer items-center justify-center overflow-y-hidden overflow-x-visible"
           aria-label="Ramos OS"
           role="img"
         >
