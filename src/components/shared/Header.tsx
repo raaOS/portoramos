@@ -105,7 +105,7 @@ const Header: React.FC = () => {
         <Link
           href="/"
           onClickCapture={markBack}
-          className="flex h-8 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded transition-colors hover:bg-black/5"
+          className="flex h-8 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden"
           aria-label="Home"
         >
           {logoAnimationData ? (
