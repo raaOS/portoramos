@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateCSRFToken } from '@/lib/security';
 import { isAPIRoute } from './utils';
+import { CSRF_TOKEN_COOKIE, CSRF_TOKEN_HEADER } from '@/lib/security/constants';
 
 export function checkCSRF(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -24,8 +25,8 @@ export function checkCSRF(request: NextRequest) {
       '/api/feedback',
     ];
     if (!allowlistPaths.includes(pathname)) {
-      const csrfToken = request.headers.get('x-csrf-token');
-      const sessionCsrfToken = request.cookies.get('csrf_token')?.value;
+      const csrfToken = request.headers.get(CSRF_TOKEN_HEADER);
+      const sessionCsrfToken = request.cookies.get(CSRF_TOKEN_COOKIE)?.value;
 
       if (!csrfToken || !sessionCsrfToken || !validateCSRFToken(csrfToken, sessionCsrfToken)) {
         console.warn(`[Security] CSRF Validation Failed for ${pathname}.`);

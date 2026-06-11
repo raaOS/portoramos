@@ -13,6 +13,7 @@ import { enforceRequestRateLimit, getClientIP } from '@/lib/security/request';
 import { sanitizeInput } from '@/lib/security/sanitization';
 import { sendFeedbackNotification } from '@/lib/telegram';
 import { validateAdminRequest } from '@/lib/auth';
+import { getBannedWords, containsBannedWord } from '@/lib/services/bannedWordsService';
 
 // Rate limit: max 3 submissions per 10 menit per IP.
 // Cukup untuk iterasi pengiriman yang valid, cukup ketat untuk blokir spam.
@@ -29,57 +30,6 @@ const MIN_FILL_TIME_MS = 1500;
 // Rough age limit untuk duplicate check (per clientId) — 1 jam.
 // Visitor dengan clientId yang sama tidak bisa kirim >1 feedback dalam rentang ini.
 const DEDUP_WINDOW_MS = 60 * 60 * 1000;
-
-/**
- * Load banned words dari settings CLOUDFLARE_D1 — pattern sama dengan /api/comments.
- * Silent fallback ke daftar default supaya outage CLOUDFLARE_D1 tidak gagalkan submit.
- */
-async function getBannedWords(): Promise<string[]> {
-  try {
-    const snap = await db.ref('settings/bannedWords').once('value');
-    if (snap.exists()) return snap.val();
-    const rootSnap = await db.ref('settings').once('value');
-    const settings = rootSnap.val();
-    return (
-      settings?.bannedWords || [
-        'judol',
-        'slot',
-        'gacor',
-        'maxwin',
-        'togel',
-        'casino',
-        'rtp',
-        'pragmatic',
-        'crypto',
-        'bitcoin',
-        'viagra',
-        'bokep',
-        'porn',
-      ]
-    );
-  } catch {
-    return [
-      'judol',
-      'slot',
-      'gacor',
-      'maxwin',
-      'togel',
-      'casino',
-      'rtp',
-      'pragmatic',
-      'crypto',
-      'bitcoin',
-      'viagra',
-      'bokep',
-      'porn',
-    ];
-  }
-}
-
-function containsBannedWord(text: string, banned: string[]): boolean {
-  const lower = text.toLowerCase();
-  return banned.some((word) => word && lower.includes(word.toLowerCase()));
-}
 
 async function hasRecentSubmissionFromClient(clientId: string): Promise<boolean> {
   try {

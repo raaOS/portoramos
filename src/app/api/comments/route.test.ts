@@ -11,6 +11,7 @@ vi.mock('@/lib/database', () => ({
 }));
 
 import { POST } from './route';
+import { invalidateBannedWordsCache } from '@/lib/services/bannedWordsService';
 
 type StoredComment = {
   id: string;
@@ -24,6 +25,7 @@ type StoredComment = {
 describe('POST /api/comments', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    invalidateBannedWordsCache();
   });
 
   it('appends a single sanitized comment instead of accepting a client-side overwrite array', async () => {
@@ -87,6 +89,35 @@ describe('POST /api/comments', () => {
     expect(storedComments?.[0].id).toBe('new-comment');
     expect(storedComments?.[1]).toEqual(existingComments[0]);
     expect(storedComments?.some((comment) => comment.id === 'tampered')).toBe(false);
+  });
+
+  it('rejects comments containing banned words', async () => {
+    refMock.mockImplementation((path: string) => {
+      if (path === 'settings/bannedWords') {
+        return {
+          once: vi.fn().mockResolvedValue({
+            exists: () => true,
+            val: () => ['gacor', 'slot'],
+          }),
+        };
+      }
+      throw new Error(`Unexpected CLOUDFLARE_D1 path: ${path}`);
+    });
+
+    const response = await POST(
+      new Request('http://localhost/api/comments', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          slug: 'demo-project',
+          comment: { id: 'bad-comment', text: 'Info gacor bosku', name: 'Bob' },
+        }),
+      }) as never
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe('Comment contains restricted word: gacor');
   });
 
   it('rate-limits rapid repeat comments from the same author', async () => {

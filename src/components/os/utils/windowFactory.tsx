@@ -1,7 +1,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { Trash2 } from 'lucide-react';
-import { WindowState } from '@/hooks/useWindowManager';
+import { WindowState } from '@/components/os/hooks/useWindowManager';
 import { AboutData } from '@/types/about';
 import { ExperienceData } from '@/types/experience';
 import { HardSkillsData } from '@/types/hardSkill';

@@ -99,7 +99,7 @@ export default function ChatEditor({ messages, onChange, projects, projectId }: 
 
       if (confirmDelete) {
         try {
-          await fetch(`/api/upload?path=${encodeURIComponent(storagePath)}`, {
+          await fetch(`/api/admin/upload?path=${encodeURIComponent(storagePath)}`, {
             method: 'DELETE',
             credentials: 'include',
             headers: {

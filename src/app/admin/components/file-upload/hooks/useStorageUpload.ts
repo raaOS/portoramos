@@ -124,7 +124,7 @@ export function useStorageUpload(options: UseStorageUploadOptions = {}) {
 
         const query = params.toString();
         const data = await postFormDataWithProgress(
-          `/api/upload${query ? `?${query}` : ''}`,
+          `/api/admin/upload${query ? `?${query}` : ''}`,
           formData,
           csrfToken ? { 'x-csrf-token': csrfToken } : {},
           uploadOptions.onUploadProgress
@@ -184,7 +184,7 @@ export function useStorageUpload(options: UseStorageUploadOptions = {}) {
         }
 
         // 1) Ask the server for a signed URL.
-        const presignRes = await fetch('/api/upload/presign', {
+        const presignRes = await fetch('/api/admin/upload/presign', {
           method: 'POST',
           credentials: 'include',
           headers: {
@@ -269,7 +269,7 @@ export function useStorageUpload(options: UseStorageUploadOptions = {}) {
             posterParams.append('skipImageOptimization', '1');
 
             const posterData = await postFormDataWithProgress(
-              `/api/upload?${posterParams.toString()}`,
+              `/api/admin/upload?${posterParams.toString()}`,
               posterForm,
               csrfToken ? { 'x-csrf-token': csrfToken } : {}
             );

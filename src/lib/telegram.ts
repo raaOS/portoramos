@@ -356,3 +356,71 @@ export async function sendFeedbackNotification(
   );
   return { ...result, target: result.success ? 'personal' : 'none' };
 }
+
+export interface SecurityAlertParams {
+  title: string;
+  ip: string;
+  device: string;
+  description?: string;
+  network?: string;
+  location?: string;
+  extraInfo?: string;
+  buttons?: { text: string; url?: string; callback_data?: string }[][];
+  sendToGroup?: boolean;
+}
+
+/**
+ * Send structured Security Alert to Telegram.
+ * Unifies formatting across login rate limit, failure, success, password change, and OTP requests.
+ */
+export async function sendSecurityAlert(
+  params: SecurityAlertParams
+): Promise<{ success: boolean; error?: string }> {
+  const lines = [params.title, ''];
+
+  if (params.description) {
+    lines.push(params.description, '');
+  }
+
+  lines.push(`💻 **Device:** ${params.device}`);
+  
+  if (params.network) {
+    lines.push(`🌐 **Network:** ${params.network}`);
+  }
+
+  lines.push(`📡 **IP:** \`${params.ip}\``);
+
+  if (params.location) {
+    if (params.location.includes('📍') || params.location.includes('•')) {
+      lines.push(params.location);
+    } else {
+      lines.push(`📍 **Location:** ${params.location}`);
+    }
+  }
+
+  if (params.extraInfo) {
+    lines.push(params.extraInfo);
+  }
+
+  lines.push('', `🕒 ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`);
+
+  const message = lines.join('\n').trim();
+
+  // Send to personal alert chat
+  const personalRes = await sendTelegramAlert(message, {
+    priority: 'high',
+    buttons: params.buttons,
+  });
+
+  // Also send to group if requested
+  if (params.sendToGroup) {
+    await sendTelegramToGroup(message, {
+      priority: 'high',
+      buttons: params.buttons as { text: string; url: string }[][],
+    }).catch((err) => {
+      console.error('[Telegram] Failed to send security alert to group:', err);
+    });
+  }
+
+  return personalRes;
+}

@@ -7,7 +7,7 @@ import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest';
 import MasonryGrid from '@/components/layout/MasonryGrid';
 import { useProjectFiltering } from './hooks/useProjectFiltering';
 import { useInfiniteScroll } from './hooks/useInfiniteScroll';
-import { useQuickLook } from '@/hooks/useQuickLook';
+import { useQuickLook } from '@/components/os/hooks/useQuickLook';
 import QuickLookModal from '@/components/ui/QuickLookModal';
 import { resolveCover } from '@/lib/images';
 

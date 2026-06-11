@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { randomInt } from 'node:crypto';
 import { getTelegramConfigSafe, isValidTelegramWebhookSecret } from '@/lib/telegram';
 import { checkRateLimit } from '@/lib/telegram/rateLimiter';
 import { validateWebhookData } from '@/lib/telegram/validators';
@@ -220,8 +221,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ ok: true });
           }
 
-          // Generate OTP
-          const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+          // Generate OTP — pakai crypto.randomInt() (cryptographically secure).
+          // Math.random() BUKAN CSPRNG; di teori bisa diprediksi untuk targeting
+          // targeted admin. 6-digit OTP harus uniform distribution [100000, 1000000).
+          const otpCode = randomInt(100000, 1000000).toString();
           const codeHash = hashPasswordScrypt(otpCode, salt);
 
           // Update status ke approved beserta Hash OTP-nya

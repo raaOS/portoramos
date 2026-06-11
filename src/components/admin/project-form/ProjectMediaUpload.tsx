@@ -75,7 +75,7 @@ export default function ProjectMediaUpload({
   const deleteMedia = useCallback(
     async (path: string) => {
       try {
-        const res = await fetch(`/api/upload?path=${encodeURIComponent(path)}`, {
+        const res = await fetch(`/api/admin/upload?path=${encodeURIComponent(path)}`, {
           method: 'DELETE',
           credentials: 'include',
           headers: {

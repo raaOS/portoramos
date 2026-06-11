@@ -84,7 +84,7 @@ describe('useStorageUpload', () => {
     const xhr = MockXMLHttpRequest.instances[0];
 
     expect(xhr.method).toBe('POST');
-    expect(xhr.url).toBe('/api/upload?folder=wallpapers&filename=hero');
+    expect(xhr.url).toBe('/api/admin/upload?folder=wallpapers&filename=hero');
     expect(xhr.headers['x-csrf-token']).toBe('csrf-token');
     expect(xhr.withCredentials).toBe(true);
     expect(xhr.body).toBeInstanceOf(FormData);

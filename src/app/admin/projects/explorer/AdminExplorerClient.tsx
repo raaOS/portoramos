@@ -381,7 +381,7 @@ export default function AdminExplorerClient() {
       ].filter((path): path is string => Boolean(path));
       await Promise.all(
         paths.map((path) =>
-          fetch(`/api/upload?path=${encodeURIComponent(path)}`, {
+          fetch(`/api/admin/upload?path=${encodeURIComponent(path)}`, {
             method: 'DELETE',
             headers: {
               'x-csrf-token': getWritableCsrfToken(csrfToken),
@@ -491,7 +491,7 @@ export default function AdminExplorerClient() {
           if (videoWasClientProcessed) {
             params.set('skipMainVideoOptimization', '1');
           }
-          xhr.open('POST', `/api/upload?${params.toString()}`);
+          xhr.open('POST', `/api/admin/upload?${params.toString()}`);
           xhr.setRequestHeader('x-csrf-token', getWritableCsrfToken(csrfToken));
           xhr.send(formData);
         });

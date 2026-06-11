@@ -87,7 +87,6 @@ export function CanvasCardInner({
             loop
             playsInline
             preload="none"
-            {...({ fetchPriority: isPriority ? 'high' : 'low' } as any)}
             className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         ) : (
@@ -99,7 +98,7 @@ export function CanvasCardInner({
             sizes="(max-width: 768px) 100vw, 700px"
             priority={isPriority}
             loading={isPriority ? 'eager' : 'lazy'}
-            {...({ fetchPriority: isPriority ? 'high' : 'auto' } as any)}
+            fetchPriority={isPriority ? 'high' : 'auto'}
           />
         )}
 

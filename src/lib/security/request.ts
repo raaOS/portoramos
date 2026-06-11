@@ -1,5 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { checkDataRateLimit } from '@/lib/dataRateLimit';
+import {
+  CLOUDFLARE_CONNECTING_IP_HEADER,
+  UNKNOWN_IP,
+  VERCEL_FORWARDED_FOR_HEADER,
+  X_FORWARDED_FOR_HEADER,
+  X_REAL_IP_HEADER,
+} from '@/lib/security/constants';
 
 /**
  * Get client IP address from request
@@ -13,30 +20,30 @@ import { checkDataRateLimit } from '@/lib/dataRateLimit';
  */
 export function getClientIP(request: Request | NextRequest): string {
   // Vercel sets this header - cannot be spoofed from client
-  const vercelIP = request.headers.get('x-vercel-forwarded-for');
+  const vercelIP = request.headers.get(VERCEL_FORWARDED_FOR_HEADER);
   if (vercelIP) {
     return vercelIP.split(',')[0].trim();
   }
 
   // Cloudflare proxy IP (trusted when using Cloudflare)
-  const cfIP = request.headers.get('cf-connecting-ip');
+  const cfIP = request.headers.get(CLOUDFLARE_CONNECTING_IP_HEADER);
   if (cfIP) {
     return cfIP.trim();
   }
 
   // Fallback for non-Vercel/Cloudflare environments
   // Note: These can be spoofed, so rate limiting based on this is not fully reliable
-  const forwarded = request.headers.get('x-forwarded-for');
+  const forwarded = request.headers.get(X_FORWARDED_FOR_HEADER);
   if (forwarded) {
     return forwarded.split(',')[0].trim();
   }
 
-  const realIP = request.headers.get('x-real-ip');
+  const realIP = request.headers.get(X_REAL_IP_HEADER);
   if (realIP) {
     return realIP.trim();
   }
 
-  return 'unknown';
+  return UNKNOWN_IP;
 }
 
 export function getClientIdentifier(request: Request | NextRequest, scope?: string): string {

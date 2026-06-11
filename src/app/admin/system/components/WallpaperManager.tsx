@@ -469,7 +469,7 @@ export default function WallpaperManager({
         try {
           await Promise.all(
             Array.from(candidatePaths).map((path) =>
-              fetch(`/api/upload?path=${encodeURIComponent(path)}`, {
+              fetch(`/api/admin/upload?path=${encodeURIComponent(path)}`, {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: { 'x-csrf-token': csrfToken || '' },

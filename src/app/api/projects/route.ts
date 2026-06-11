@@ -1,4 +1,4 @@
-﻿import { NextRequest } from 'next/server';
+import { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { validateAdminRequest } from '@/lib/auth';
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     // Type assertion needed due to Zod schema allowing nulls that CreateProjectData doesn't.
     // NOTE: `projectService.createProject` may re-validate via its own Zod schema.
-    // Kalau schema service divergen, ia throw ZodError â†’ ditangkap di bawah
+    // Kalau schema service divergen, ia throw ZodError → ditangkap di bawah
     // dan return 400 (bukan 500) agar perilaku konsisten dengan route-level validation.
     let newProject;
     try {
@@ -92,15 +92,12 @@ export async function POST(request: NextRequest) {
         );
 
         await db.ref(`comments/${newProject.slug}`).set(generatedComments);
-        console.log(
-          `[API/Projects] Successfully generated ${generatedComments.length} comments for ${newProject.slug}`
-        );
       } catch (commentErr) {
         console.warn('[API/Projects] Failed to auto-generate comments:', commentErr);
       }
     }
 
-    const successMessage = `âœ¨ **NEW PROJECT CREATED**\n\n**Title:** ${newProject.title}\n**Client:** ${newProject.client}\n**ID:** ${newProject.id}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
+    const successMessage = `✨ **NEW PROJECT CREATED**\n\n**Title:** ${newProject.title}\n**Client:** ${newProject.client}\n**ID:** ${newProject.id}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
     await sendTelegramAlert(successMessage).catch(() => {});
 
     revalidatePath('/', 'layout');

@@ -13,14 +13,34 @@ const localLimits = new Map<
   }
 >();
 
+/**
+ * Cek rate limit dengan strategi two-tier:
+ * 1. Primary: Cloudflare D1-backed (persistent lintas cold-start serverless)
+ * 2. Fallback: in-memory Map (HANYA untuk development)
+ *
+ * Di production, fallback in-memory TIDAK aman karena:
+ * - Vercel serverless bikin instance baru per cold-start
+ * - Attacker bisa spread attempts ke banyak instance → reset counter
+ * - Memori tidak shared antar region
+ *
+ * Karena itu di production kita return `false` (block) kalau D1 gagal.
+ * Fail-closed lebih aman daripada fail-open untuk endpoint sensitif.
+ */
 export async function checkRateLimit(ip: string): Promise<boolean> {
   if (!ip) return false;
 
   try {
     const result = await checkDataRateLimit(ip, MAX_ATTEMPTS, WINDOW_MS, LOCKOUT_MS);
     return result.allowed;
-  } catch {
-    return checkRateLimitLocal(ip);
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[RateLimit] D1 unavailable, using local fallback (dev only):', error);
+      return checkRateLimitLocal(ip);
+    }
+    // Fail-closed di production: D1 down = treat as rate limited.
+    // Jangan izinkan request tanpa rate limit protection.
+    console.error('[RateLimit] D1 unavailable in production, failing closed:', error);
+    return false;
   }
 }
 
@@ -68,3 +88,4 @@ export function cleanupRateLimits(): void {
     }
   }
 }
+

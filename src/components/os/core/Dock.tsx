@@ -9,7 +9,7 @@ import {
   MotionValue,
   AnimatePresence,
 } from 'motion/react';
-import { useSystemSound } from '@/hooks/useSystemSound';
+import { useSystemSound } from '@/components/os/hooks/useSystemSound';
 import type { AboutData, DockPreferences } from '@/types/about';
 // next-view-transitions/Link wraps next/link tapi auto-trigger
 // document.startViewTransition() di setiap klik. Tanpa ini, slide animation

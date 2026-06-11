@@ -5,6 +5,7 @@ const {
   getAdminTokenMock,
   sendTelegramAlertMock,
   sendTelegramToGroupMock,
+  sendSecurityAlertMock,
   checkDataRateLimitMock,
   cookiesMock,
 } = vi.hoisted(() => ({
@@ -12,6 +13,7 @@ const {
   getAdminTokenMock: vi.fn(),
   sendTelegramAlertMock: vi.fn(),
   sendTelegramToGroupMock: vi.fn(),
+  sendSecurityAlertMock: vi.fn(),
   checkDataRateLimitMock: vi.fn(),
   cookiesMock: vi.fn(),
 }));
@@ -24,6 +26,7 @@ vi.mock('@/lib/auth', () => ({
 vi.mock('@/lib/telegram', () => ({
   sendTelegramAlert: sendTelegramAlertMock,
   sendTelegramToGroup: sendTelegramToGroupMock,
+  sendSecurityAlert: sendSecurityAlertMock,
 }));
 
 vi.mock('@/lib/dataRateLimit', () => ({
@@ -86,7 +89,7 @@ describe('POST /api/admin/login', () => {
     expect(response.status).toBe(429);
     expect(body.retryAfter).toBe(120);
     expect(checkDataRateLimitMock).toHaveBeenCalledTimes(1);
-    expect(sendTelegramAlertMock).toHaveBeenCalledTimes(1);
+    expect(sendSecurityAlertMock).toHaveBeenCalledTimes(1);
   });
 
   it('returns sanitized 500 responses without leaking internal error details', async () => {

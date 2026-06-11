@@ -6,6 +6,7 @@ const {
   dbSetMock,
   dbRefMock,
   sendTelegramAlertMock,
+  sendSecurityAlertMock,
   getClientIdentifierMock,
   logAdminActivityMock,
 } = vi.hoisted(() => ({
@@ -14,6 +15,7 @@ const {
   dbSetMock: vi.fn(),
   dbRefMock: vi.fn(),
   sendTelegramAlertMock: vi.fn(),
+  sendSecurityAlertMock: vi.fn(),
   getClientIdentifierMock: vi.fn(),
   logAdminActivityMock: vi.fn(),
 }));
@@ -29,6 +31,7 @@ vi.mock('@/lib/database', () => ({
 
 vi.mock('@/lib/telegram', () => ({
   sendTelegramAlert: sendTelegramAlertMock,
+  sendSecurityAlert: sendSecurityAlertMock,
 }));
 
 vi.mock('@/lib/security/request', () => ({
@@ -59,6 +62,7 @@ describe('POST /api/admin/password/otp-request', () => {
     dbRefMock.mockReturnValue({ set: dbSetMock });
     getClientIdentifierMock.mockReturnValue('1.2.3.4|TestBrowser');
     sendTelegramAlertMock.mockResolvedValue({ success: true });
+    sendSecurityAlertMock.mockResolvedValue({ success: true });
     dbSetMock.mockResolvedValue(undefined);
     logAdminActivityMock.mockResolvedValue(undefined);
   });
@@ -114,7 +118,7 @@ describe('POST /api/admin/password/otp-request', () => {
   it('returns 500 when Telegram send fails', async () => {
     validateAdminRequestMock.mockResolvedValue(true);
     verifyAdminPasswordMock.mockResolvedValue(true);
-    sendTelegramAlertMock.mockResolvedValue({ success: false, error: 'Bot blocked' });
+    sendSecurityAlertMock.mockResolvedValue({ success: false, error: 'Bot blocked' });
     const res = await POST(makeRequest({ oldPassword: 'old1234', newPassword: 'newpassword123' }));
     expect(res.status).toBe(500);
     const body = await res.json();
@@ -124,7 +128,7 @@ describe('POST /api/admin/password/otp-request', () => {
   it('returns 200 success on valid OTP request', async () => {
     validateAdminRequestMock.mockResolvedValue(true);
     verifyAdminPasswordMock.mockResolvedValue(true);
-    sendTelegramAlertMock.mockResolvedValue({ success: true });
+    sendSecurityAlertMock.mockResolvedValue({ success: true });
 
     const res = await POST(makeRequest({ oldPassword: 'old1234', newPassword: 'newpassword123' }));
     expect(res.status).toBe(200);
@@ -138,14 +142,14 @@ describe('POST /api/admin/password/otp-request', () => {
     expect(otpPayload.requestId).toBeDefined();
     expect(otpPayload.expiresAt).toBeGreaterThan(Date.now());
 
-    expect(sendTelegramAlertMock).toHaveBeenCalledTimes(1);
+    expect(sendSecurityAlertMock).toHaveBeenCalledTimes(1);
     expect(logAdminActivityMock).toHaveBeenCalledTimes(1);
   });
 
   it('returns 200 even when audit log fails (non-blocking)', async () => {
     validateAdminRequestMock.mockResolvedValue(true);
     verifyAdminPasswordMock.mockResolvedValue(true);
-    sendTelegramAlertMock.mockResolvedValue({ success: true });
+    sendSecurityAlertMock.mockResolvedValue({ success: true });
     logAdminActivityMock.mockRejectedValue(new Error('audit db down'));
 
     const res = await POST(makeRequest({ oldPassword: 'old1234', newPassword: 'newpassword123' }));
@@ -157,7 +161,7 @@ describe('POST /api/admin/password/otp-request', () => {
   it('returns 500 on generic catch error', async () => {
     validateAdminRequestMock.mockResolvedValue(true);
     verifyAdminPasswordMock.mockResolvedValue(true);
-    sendTelegramAlertMock.mockRejectedValue(new Error('network failure'));
+    sendSecurityAlertMock.mockRejectedValue(new Error('network failure'));
     const res = await POST(makeRequest({ oldPassword: 'old1234', newPassword: 'newpassword123' }));
     expect(res.status).toBe(500);
   });

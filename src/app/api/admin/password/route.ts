@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'node:crypto';
 import { validateAdminRequest, verifyAdminPassword, hashPasswordScrypt } from '@/lib/auth';
 import { db } from '@/lib/database';
-import { sendTelegramAlert } from '@/lib/telegram';
+import { sendSecurityAlert } from '@/lib/telegram';
 import { getClientIdentifier } from '@/lib/security/request';
 import { logAdminActivity } from '@/lib/services/auditLogger';
 
@@ -80,19 +81,23 @@ export async function POST(request: NextRequest) {
     }
 
     const hashedInputOtp = hashPasswordScrypt(otpCode, salt);
-    // Kita buat helper lokal jika `timingSafeEqualString` tidak tersedia langsung dari utils
-    // Tapi karena sudah diimport, langsung pakai saja
+    // Pakai timingSafeEqual WAJIB. Sebelumnya ada fallback `===` yang non-constant
+    // time — side-channel attacker bisa leak byte-by-byte perbandingan hash.
+    // Untuk OTP admin, ini unacceptable: throw 500 dan force admin retry
+    // daripada return success dari perbandingan tidak aman.
     let isOtpValid = false;
     try {
-      // Gunakan crypto module Node.js secara langsung untuk timing safe
-      const crypto = await import('crypto');
       const bufA = Buffer.from(hashedInputOtp);
       const bufB = Buffer.from(otpData.codeHash);
       if (bufA.length === bufB.length) {
         isOtpValid = crypto.timingSafeEqual(bufA, bufB);
       }
-    } catch {
-      isOtpValid = hashedInputOtp === otpData.codeHash; // fallback jika timing safe gagal dipanggil
+    } catch (compareError) {
+      console.error('[Admin Password] OTP compare failed:', compareError);
+      return NextResponse.json(
+        { error: 'Kesalahan layanan autentikasi' },
+        { status: 500 }
+      );
     }
 
     if (!isOtpValid) {
@@ -112,15 +117,11 @@ export async function POST(request: NextRequest) {
     const ip = pipeIdx > -1 ? clientId.substring(0, pipeIdx) : clientId;
     const userAgent = pipeIdx > -1 ? clientId.substring(pipeIdx + 1) : 'unknown';
 
-    const alertMessage = `⚠️ **SANDI ADMIN BERHASIL DIUBAH**
-
-Seseorang baru saja berhasil mengubah sandi admin Anda menggunakan OTP.
-
-💻 **Device:** ${userAgent}
-📡 **IP:** \`${ip}\``;
-
-    await sendTelegramAlert(alertMessage, {
-      priority: 'high',
+    await sendSecurityAlert({
+      title: '⚠️ **SANDI ADMIN BERHASIL DIUBAH**',
+      description: 'Seseorang baru saja berhasil mengubah sandi admin Anda menggunakan OTP.',
+      device: userAgent,
+      ip,
     });
 
     await logAdminActivity(request, 'Admin password changed', {

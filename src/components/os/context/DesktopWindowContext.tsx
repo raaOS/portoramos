@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
-import { useWindowManager, WindowState } from '@/hooks/useWindowManager';
+import { useWindowManager, WindowState } from '@/components/os/hooks/useWindowManager';
 import { AboutData } from '@/types/about';
 
 // Extract the return type of useWindowManager to use as our Context type

@@ -1,4 +1,4 @@
-﻿import { NextRequest } from 'next/server';
+import { NextRequest } from 'next/server';
 import { db } from '@/lib/database';
 import { validateAdminRequest } from '@/lib/auth';
 import { feedbackModerationSchema } from '@/lib/validations';
@@ -13,7 +13,7 @@ import {
 
 /**
  * PATCH /api/feedback/[id]
- * Admin-only â€” update status + isPublic untuk moderation.
+ * Admin-only — update status + isPublic untuk moderation.
  *
  * Body: { status: 'pending' | 'approved' | 'hidden' | 'deleted', isPublic?: boolean }
  */
@@ -36,7 +36,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const snap = await ref.once('value');
     if (!snap.exists()) return notFound('Feedback not found');
 
-    // Auto-set isPublic: default approved â†’ public, hidden/deleted â†’ not public
+    // Auto-set isPublic: default approved → public, hidden/deleted → not public
     const { status, isPublic } = parsed.data;
     const resolvedIsPublic = typeof isPublic === 'boolean' ? isPublic : status === 'approved';
 
@@ -58,7 +58,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 /**
  * DELETE /api/feedback/[id]
- * Admin-only â€” hard delete feedback entry.
+ * Admin-only — hard delete feedback entry.
  */
 export async function DELETE(
   request: NextRequest,

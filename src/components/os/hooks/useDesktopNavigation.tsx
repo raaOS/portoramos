@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import type { Project } from '@/types/projects';
 import type { ContactProfile } from '../data/mockChats';
 import type { NoteData } from '../ui/elements/StickyNoteItem';
-import { WindowState } from '@/hooks/useWindowManager';
+import { WindowState } from '@/components/os/hooks/useWindowManager';
 import dynamic from 'next/dynamic';
 import { useOSSystem } from '../context/OSSystemContext';
 

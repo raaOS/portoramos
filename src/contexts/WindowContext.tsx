@@ -10,7 +10,7 @@ import React, {
   useRef,
   useEffect,
 } from 'react';
-import { WindowState } from '@/hooks/useWindowManager';
+import { WindowState } from '@/components/os/hooks/useWindowManager';
 
 interface WindowContextType {
   windows: WindowState[];

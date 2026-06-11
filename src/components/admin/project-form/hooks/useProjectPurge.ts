@@ -15,7 +15,7 @@ export function useProjectPurge(project?: Project, csrfToken?: string | null) {
     try {
       const path = extractStoragePath(url);
       if (path && !url.startsWith('blob:')) {
-        const response = await fetch(`/api/upload?path=${encodeURIComponent(path)}`, {
+        const response = await fetch(`/api/admin/upload?path=${encodeURIComponent(path)}`, {
           method: 'DELETE',
           credentials: 'include',
           headers: {

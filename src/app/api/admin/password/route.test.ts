@@ -8,6 +8,7 @@ const {
   dbRemoveMock,
   dbRefMock,
   sendTelegramAlertMock,
+  sendSecurityAlertMock,
   getClientIdentifierMock,
   logAdminActivityMock,
 } = vi.hoisted(() => ({
@@ -18,6 +19,7 @@ const {
   dbRemoveMock: vi.fn(),
   dbRefMock: vi.fn(),
   sendTelegramAlertMock: vi.fn(),
+  sendSecurityAlertMock: vi.fn(),
   getClientIdentifierMock: vi.fn(),
   logAdminActivityMock: vi.fn(),
 }));
@@ -34,6 +36,7 @@ vi.mock('@/lib/database', () => ({
 
 vi.mock('@/lib/telegram', () => ({
   sendTelegramAlert: sendTelegramAlertMock,
+  sendSecurityAlert: sendSecurityAlertMock,
 }));
 
 vi.mock('@/lib/security/request', () => ({
@@ -81,6 +84,7 @@ describe('POST /api/admin/password', () => {
     hashPasswordScryptMock.mockReturnValue(HASH_OUTPUT);
     getClientIdentifierMock.mockReturnValue('1.2.3.4|TestBrowser');
     sendTelegramAlertMock.mockResolvedValue({ success: true });
+    sendSecurityAlertMock.mockResolvedValue({ success: true });
   });
 
   afterAll(() => {
@@ -219,7 +223,7 @@ describe('POST /api/admin/password', () => {
 
     expect(dbSetMock).toHaveBeenCalledWith(HASH_OUTPUT);
     expect(dbRemoveMock).toHaveBeenCalled();
-    expect(sendTelegramAlertMock).toHaveBeenCalled();
+    expect(sendSecurityAlertMock).toHaveBeenCalled();
     expect(logAdminActivityMock).toHaveBeenCalled();
   });
 

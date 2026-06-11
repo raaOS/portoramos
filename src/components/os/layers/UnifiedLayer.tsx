@@ -6,7 +6,7 @@ import OSWindow from '../windows/Window';
 import { DraggableStickyNote } from '../ui/elements/DraggableStickyNote';
 import type { NoteData } from '../ui/elements/StickyNoteItem';
 import { useUnifiedZIndex } from '../context/UnifiedZIndexContext';
-import { WindowState } from '@/hooks/useWindowManager';
+import { WindowState } from '@/components/os/hooks/useWindowManager';
 import { useOSSystem } from '../context/OSSystemContext';
 
 interface MissionTarget {

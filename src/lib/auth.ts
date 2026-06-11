@@ -6,6 +6,13 @@ import { cookies } from 'next/headers';
 import { cleanEnvVar } from '@/lib/utils/env';
 import { db } from '@/lib/database';
 import { logAdminActivity } from '@/lib/services/auditLogger';
+import {
+  ADMIN_TOKEN_COOKIE,
+  ADMIN_TOKEN_COOKIE_LEGACY,
+  BEARER_PREFIX,
+  CSRF_TOKEN_COOKIE,
+  CSRF_TOKEN_HEADER,
+} from '@/lib/security/constants';
 
 // Clean auth system - scrypt only (most secure)
 const ADMIN_PASSWORD_SCRYPT = cleanEnvVar('ADMIN_PASSWORD_SCRYPT');
@@ -111,9 +118,9 @@ export const validateAdminRequest = async (
   const shouldCheckCsrf = options.checkCsrf ?? isMutation;
 
   if (shouldCheckCsrf) {
-    const csrfHeader = request.headers.get('x-csrf-token');
+    const csrfHeader = request.headers.get(CSRF_TOKEN_HEADER);
     const cookieStore = await cookies();
-    const csrfCookie = cookieStore.get('csrf_token')?.value;
+    const csrfCookie = cookieStore.get(CSRF_TOKEN_COOKIE)?.value;
 
     if (!csrfHeader || !csrfCookie || !validateCSRFToken(csrfHeader, csrfCookie)) {
       return false;
@@ -135,10 +142,11 @@ export const checkAdminAuth = (request: NextRequest): boolean => {
   try {
     const authHeader = request.headers.get('authorization');
     const cookieToken =
-      request.cookies.get('admin_token')?.value || request.cookies.get('admin-token')?.value;
+      request.cookies.get(ADMIN_TOKEN_COOKIE)?.value ||
+      request.cookies.get(ADMIN_TOKEN_COOKIE_LEGACY)?.value;
 
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
+    if (authHeader?.startsWith(BEARER_PREFIX)) {
+      const token = authHeader.substring(BEARER_PREFIX.length);
       return verifyAdminToken(token);
     }
 

@@ -268,7 +268,7 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
           formData.append('file', file);
 
           const token = getWritableCsrfToken(csrfToken);
-          const uploadRes = await fetch('/api/upload?folder=wallpapers', {
+          const uploadRes = await fetch('/api/admin/upload?folder=wallpapers', {
             method: 'POST',
             credentials: 'include',
             headers: { 'x-csrf-token': token },

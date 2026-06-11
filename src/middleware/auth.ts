@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify, SignJWT } from 'jose';
 import { protectedRoutes, publicRoutes } from './constants';
+import {
+  ADMIN_TOKEN_COOKIE,
+  ADMIN_TOKEN_COOKIE_LEGACY,
+  BEARER_PREFIX,
+} from '@/lib/security/constants';
 
 // Sliding window refresh: kalau sisa umur token < threshold, set ulang cookie
 // dengan TTL fresh. Tujuannya supaya admin yang aktif (mis. lagi upload
@@ -34,7 +39,7 @@ async function maybeRefreshAdminToken(
       .setExpirationTime(nowSec + TOKEN_TTL_SECONDS)
       .sign(secretKey);
 
-    response.cookies.set('admin_token', fresh, {
+    response.cookies.set(ADMIN_TOKEN_COOKIE, fresh, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -59,9 +64,9 @@ export async function checkAdminAuth(request: NextRequest) {
     // dengan session yang di-set oleh versi sebelumnya. Semua write path
     // (login/logout) hanya menyentuh `admin_token` sekarang.
     const token =
-      request.cookies.get('admin_token')?.value ||
-      request.cookies.get('admin-token')?.value ||
-      request.headers.get('authorization')?.replace('Bearer ', '');
+      request.cookies.get(ADMIN_TOKEN_COOKIE)?.value ||
+      request.cookies.get(ADMIN_TOKEN_COOKIE_LEGACY)?.value ||
+      request.headers.get('authorization')?.replace(BEARER_PREFIX, '');
 
     // NOTE: debug log hanya saat development. Di production kita hindari
     // mencetak daftar cookie dan token state ke log Vercel (noise + info leak).
@@ -120,7 +125,7 @@ export async function checkAdminAuth(request: NextRequest) {
     if (verifiedPayload) {
       const refreshResponse = NextResponse.next();
       await maybeRefreshAdminToken(verifiedPayload, refreshResponse);
-      const refreshedCookie = refreshResponse.cookies.get('admin_token');
+      const refreshedCookie = refreshResponse.cookies.get(ADMIN_TOKEN_COOKIE);
       if (refreshedCookie) {
         return { authenticated: true, refreshResponse };
       }

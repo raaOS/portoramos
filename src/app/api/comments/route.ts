@@ -5,6 +5,7 @@ import { validateCommentDepth } from '@/lib/validations';
 import { success, badRequest, unauthorized, serverError, rateLimit } from '@/lib/api-response';
 import { z } from 'zod';
 import { sanitizeInput } from '@/lib/security/sanitization';
+import { getBannedWords, findBannedWord } from '@/lib/services/bannedWordsService';
 
 interface Comment {
   id: string;
@@ -45,54 +46,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('[API /comments GET] Error:', error);
     return serverError('Failed to load comments');
-  }
-}
-
-async function getBannedWords(): Promise<string[]> {
-  try {
-    const snap = await db.ref('settings/bannedWords').once('value');
-    if (snap.exists()) return snap.val();
-
-    // Try getting from root settings if not in subpath
-    const rootSnap = await db.ref('settings').once('value');
-    const settings = rootSnap.val();
-    return (
-      settings?.bannedWords || [
-        'judol',
-        'slot',
-        'gacor',
-        'maxwin',
-        'togel',
-        'casino',
-        'rtp',
-        'pragmatic',
-        'crypto',
-        'bitcoin',
-        'viagra',
-        'bokep',
-        'porn',
-      ]
-    );
-  } catch (e) {
-    console.warn(
-      'Failed to load banned words from CLOUDFLARE_D1, using fallback',
-      e instanceof Error ? e.message : e
-    );
-    return [
-      'judol',
-      'slot',
-      'gacor',
-      'maxwin',
-      'togel',
-      'casino',
-      'rtp',
-      'pragmatic',
-      'crypto',
-      'bitcoin',
-      'viagra',
-      'bokep',
-      'porn',
-    ];
   }
 }
 
@@ -140,7 +93,7 @@ export async function POST(request: NextRequest) {
     // --- 3. CONTENT MODERATION ---
     const bannedWords = await getBannedWords();
     const payloadString = JSON.stringify(commentToSave).toLowerCase();
-    const foundBadWord = bannedWords.find((word) => payloadString.includes(word.toLowerCase()));
+    const foundBadWord = findBannedWord(payloadString, bannedWords);
 
     if (foundBadWord) {
       return badRequest(`Comment contains restricted word: ${foundBadWord}`);

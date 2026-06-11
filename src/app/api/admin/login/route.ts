@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminPassword, getAdminToken } from '@/lib/auth';
-import { sendTelegramAlert, sendTelegramToGroup } from '@/lib/telegram';
+import { sendSecurityAlert } from '@/lib/telegram';
 import { generateCSRFToken, validateCSRFToken } from '@/lib/security';
 import { checkDataRateLimit } from '@/lib/dataRateLimit';
 import { cookies } from 'next/headers';
 import { getClientIdentifier } from '@/lib/security/request';
 import { logAdminActivity } from '@/lib/services/auditLogger';
+import {
+  ADMIN_TOKEN_COOKIE,
+  CSRF_TOKEN_COOKIE,
+  CSRF_TOKEN_HEADER,
+} from '@/lib/security/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -136,7 +141,7 @@ export async function GET() {
   const token = generateCSRFToken();
   const response = NextResponse.json({ csrfToken: token });
 
-  response.cookies.set('csrf_token', token, {
+  response.cookies.set(CSRF_TOKEN_COOKIE, token, {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -162,9 +167,9 @@ interface LoginRequestBody {
 export async function POST(request: NextRequest) {
   try {
     // 1. CSRF VALIDATION
-    const csrfToken = request.headers.get('x-csrf-token');
+    const csrfToken = request.headers.get(CSRF_TOKEN_HEADER);
     const cookieStore = await cookies();
-    const sessionCsrfToken = cookieStore.get('csrf_token')?.value;
+    const sessionCsrfToken = cookieStore.get(CSRF_TOKEN_COOKIE)?.value;
 
     if (!csrfToken || !sessionCsrfToken) {
       await auditLogin(request, 'Admin login rejected', { reason: 'missing-csrf' });
@@ -200,17 +205,14 @@ export async function POST(request: NextRequest) {
         const geo = await getGeoInfo(ip);
         const device = parseUserAgent(userAgent);
 
-        const message = `🚫 **BLOCKED BY RATE LIMIT**
-
-💻 **Device:** ${device}
-🌐 **Network:** ${geo.isp}
-📡 **IP:** \`${ip}\`
-📍 **Location:** ${geo.location}
-⏰ **Retry After:** ${rateLimit.retryAfter} seconds
-
-🕒 ${new Date().toLocaleString('id-ID')}`;
-
-        await sendTelegramAlert(message, { priority: 'high' });
+        await sendSecurityAlert({
+          title: '🚫 **BLOCKED BY RATE LIMIT**',
+          ip,
+          device,
+          network: geo.isp,
+          location: geo.location,
+          extraInfo: `⏰ **Retry After:** ${rateLimit.retryAfter} seconds`,
+        });
 
         await auditLogin(request, 'Admin login blocked by rate limit', {
           retryAfter: rateLimit.retryAfter,
@@ -265,22 +267,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (!passwordValid) {
-      const message = `❌ **LOGIN FAILED**
-
-${locationInfo.text}
-
-💻 **Device:** ${device}
-🌐 **Network:** ${geo.isp}
-📡 **IP:** \`${ip}\`
-
-🕒 ${new Date().toLocaleString('id-ID')}`;
-
       const buttons = locationInfo.mapUrl
         ? [[{ text: '🗺️ Buka di Google Maps', url: locationInfo.mapUrl }]]
         : undefined;
 
       if (!isTestEnv) {
-        await sendTelegramAlert(message, { priority: 'normal', buttons });
+        await sendSecurityAlert({
+          title: '❌ **LOGIN FAILED**',
+          description: locationInfo.text,
+          device,
+          network: geo.isp,
+          ip,
+          buttons,
+        });
       }
 
       await auditLogin(request, 'Admin login failed', {
@@ -293,26 +292,20 @@ ${locationInfo.text}
 
     // SUCCESS
 
-    const message = `✅ **LOGIN SUCCESS**
-
-${locationInfo.text}
-
-💻 **Device:** ${device}
-🌐 **Network:** ${geo.isp}
-📡 **IP:** \`${ip}\`
-
-🕒 ${new Date().toLocaleString('id-ID')}`;
-
     const buttons = locationInfo.mapUrl
       ? [[{ text: '🗺️ Buka di Google Maps', url: locationInfo.mapUrl }]]
       : undefined;
 
     if (!isTestEnv) {
-      // Send to personal chat
-      await sendTelegramAlert(message, { priority: 'normal', buttons });
-
-      // Also send to group if configured
-      await sendTelegramToGroup(message, { priority: 'normal', buttons });
+      await sendSecurityAlert({
+        title: '✅ **LOGIN SUCCESS**',
+        description: locationInfo.text,
+        device,
+        network: geo.isp,
+        ip,
+        buttons,
+        sendToGroup: true,
+      });
     }
 
     await auditLogin(request, 'Admin login success', {
@@ -328,7 +321,7 @@ ${locationInfo.text}
     });
 
     // SECURE COOKIE SETTINGS
-    response.cookies.set('admin_token', token, {
+    response.cookies.set(ADMIN_TOKEN_COOKIE, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

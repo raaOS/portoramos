@@ -5,7 +5,7 @@ import { LayoutPersistenceProvider } from '../contexts/LayoutPersistenceContext'
 import { UnifiedZIndexProvider } from '../context/UnifiedZIndexContext';
 import { DesktopWindowProvider } from '../context/DesktopWindowContext';
 import DesktopErrorBoundary from '../windows/DesktopErrorBoundary';
-import { WindowState } from '@/hooks/useWindowManager';
+import { WindowState } from '@/components/os/hooks/useWindowManager';
 import { AboutData } from '@/types/about';
 
 interface DesktopProvidersProps {

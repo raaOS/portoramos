@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAdminRequest, verifyAdminPassword } from '@/lib/auth';
 import { db } from '@/lib/database';
-import { sendTelegramAlert } from '@/lib/telegram';
+import { sendSecurityAlert } from '@/lib/telegram';
 import { getClientIdentifier } from '@/lib/security/request';
 import { randomUUID } from 'node:crypto';
 import { logAdminActivity } from '@/lib/services/auditLogger';
@@ -60,17 +60,12 @@ export async function POST(request: NextRequest) {
     const ip = pipeIdx > -1 ? clientId.substring(0, pipeIdx) : clientId;
     const userAgent = pipeIdx > -1 ? clientId.substring(pipeIdx + 1) : 'unknown';
 
-    const message = `🚨 **PERINGATAN KEAMANAN!**
-
-Ada upaya penggantian sandi Admin dari perangkat yang berhasil memasukkan sandi lama dengan benar.
-
-💻 **Device:** ${userAgent}
-📡 **IP:** \`${ip}\`
-
-⚠️ *Apakah ini Anda? Jika YA, klik persetujuan untuk mendapatkan OTP.*`;
-
-    const telegramRes = await sendTelegramAlert(message, {
-      priority: 'high',
+    const telegramRes = await sendSecurityAlert({
+      title: '🚨 **PERINGATAN KEAMANAN!**',
+      description: 'Ada upaya penggantian sandi Admin dari perangkat yang berhasil memasukkan sandi lama dengan benar.',
+      device: userAgent,
+      ip,
+      extraInfo: '⚠️ *Apakah ini Anda? Jika YA, klik persetujuan untuk mendapatkan OTP.*',
       buttons: [
         [{ text: '✅ Iya, Ini Saya', callback_data: `otp_approve:${requestId}` }],
         [{ text: '🚨 Bukan! Ini Hacker', callback_data: `otp_reject:${requestId}` }],

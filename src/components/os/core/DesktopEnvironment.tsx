@@ -22,7 +22,7 @@ import type { HardSkillsData } from '@/types/hardSkill';
 import type { Project } from '@/types/projects';
 import type { TestimonialData } from '@/types/testimonial';
 import type { ContactData } from '@/types/contact';
-import type { WindowState } from '@/hooks/useWindowManager';
+import type { WindowState } from '@/components/os/hooks/useWindowManager';
 import { soundManager } from '../utils/SoundManager';
 import { createInitialWindows } from '../utils/windowFactory';
 import { clearVisitorPositions } from '../utils/positionSync';
