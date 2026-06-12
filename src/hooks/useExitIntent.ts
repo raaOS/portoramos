@@ -23,6 +23,12 @@ interface UseExitIntentOptions {
  *   trigger-nya kena ke visitor yang beneran "mau pergi" bukan yang baru nyampe.
  * - Fires sekali per mount — caller wajib handle sendiri persistensi
  *   (sessionStorage/localStorage) kalau mau throttle across navigations.
+ *
+ * @example
+ * ```tsx
+ * const showExitPopup = useExitIntent({ minEngagementMs: 10_000 });
+ * if (showExitPopup) { <FeedbackForm /> }
+ * ```
  */
 export function useExitIntent({
   enabled = true,

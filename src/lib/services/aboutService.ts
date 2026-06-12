@@ -1,3 +1,11 @@
+/**
+ * About Service — CRUD data halaman About (profil, filosofi desain, desktop prefs).
+ *
+ * Menggunakan ContentService sebagai backend D1 dengan fallback JSON statis.
+ * Cache React `cache()` untuk deduplikasi dalam satu server render cycle.
+ *
+ * @module aboutService
+ */
 import { cache } from 'react';
 import { ContentService } from './contentService';
 import {

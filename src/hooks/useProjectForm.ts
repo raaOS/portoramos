@@ -9,6 +9,17 @@ import {
 import { isVideoLink, detectImageDimensions } from '@/lib/media';
 import { Comment } from '@/lib/magic';
 
+/**
+ * Project Form Hook — Form state management untuk create/edit project.
+ *
+ * Menangani validasi, gallery CRUD (flat + grouped), auto-detect dimensi gambar,
+ * dan transformasi data ke format submit (create/update).
+ *
+ * Mendukung field case study (commercial & visual art) dan magic comments.
+ *
+ * @module useProjectForm
+ */
+
 export interface ProjectFormData {
   title: string;
   client: string;

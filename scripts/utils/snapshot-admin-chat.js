@@ -1,3 +1,11 @@
+/**
+ * Snapshot Admin Chat — Capture screenshot panel chat admin.
+ *
+ * Menggunakan Playwright headless untuk membuka halaman admin dan
+ * mengambil screenshot panel chat untuk keperluan dokumentasi/debug.
+ *
+ * @module scripts/utils/snapshot-admin-chat
+ */
 const { chromium } = require('playwright');
 const path = require('path');
 

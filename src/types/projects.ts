@@ -1,3 +1,4 @@
+/** Type definitions untuk data project portofolio. @module */
 import { Comment } from '@/lib/magic';
 
 export interface Project {

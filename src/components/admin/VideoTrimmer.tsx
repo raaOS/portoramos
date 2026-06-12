@@ -1,3 +1,11 @@
+/**
+ * Video Trimmer — Komponen trim dan crop video di sisi client.
+ *
+ * Menyediakan UI untuk memotong durasi video dan crop aspect ratio
+ * sebelum diupload ke R2, menggunakan rc-slider dan react-easy-crop.
+ *
+ * @module components/admin/VideoTrimmer
+ */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';

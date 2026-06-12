@@ -1,3 +1,11 @@
+/**
+ * Chat Store — Server-side persistence untuk chat messages (D1).
+ *
+ * CRUD pesan chat visitor ↔ admin. Hanya berjalan di server
+ * (`import 'server-only'`). Digunakan oleh `/api/chat/*` routes.
+ *
+ * @module chatStore
+ */
 import 'server-only';
 import { db } from './database';
 import * as crypto from 'crypto';

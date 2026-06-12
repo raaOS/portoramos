@@ -1,3 +1,12 @@
+/**
+ * Media — Utilitas untuk deteksi tipe media dan manipulasi gambar.
+ *
+ * Menyediakan `isVideoLink()` untuk deteksi URL video, dan
+ * `detectImageDimensions()` untuk mendapatkan width/height gambar
+ * menggunakan API browser (createImageBitmap).
+ *
+ * @module media
+ */
 import { extractStoragePath as resolveStoragePath } from '@/lib/urlResolver';
 
 export const isVideoLink = (url: string) => {

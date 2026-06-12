@@ -1,4 +1,12 @@
 'use client';
+/**
+ * Confirm Dialog — Dialog konfirmasi reusable untuk operasi admin.
+ *
+ * Menyediakan context provider dan hook `useConfirm()` untuk menampilkan
+ * dialog konfirmasi sebelum operasi destruktif (hapus, reset, dll.).
+ *
+ * @module components/admin/ConfirmDialog
+ */
 
 import {
   createContext,

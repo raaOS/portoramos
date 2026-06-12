@@ -1,3 +1,11 @@
+/**
+ * Hard Skill Service — CRUD data keahlian teknis (hard skills).
+ *
+ * Instansiasi ContentService dengan fallback JSON. Mendukung upload
+ * ikon skill ke R2 via storageCleanup.
+ *
+ * @module hardSkillService
+ */
 import { HardSkill, HardSkillsData } from '@/types/hardSkill';
 import { ContentService } from '@/lib/services/contentService';
 import { deleteStorageAsset } from '@/lib/services/storageCleanup';

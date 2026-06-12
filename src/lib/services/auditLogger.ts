@@ -1,3 +1,11 @@
+/**
+ * Audit Logger — Mencatat aktivitas admin (login, CRUD, password change) ke D1.
+ *
+ * Log disimpan di tabel `audit_logs` dengan metadata IP, user-agent, dan timestamp.
+ * Kegagalan logging tidak memblokir operasi utama (non-blocking, fire-and-forget).
+ *
+ * @module auditLogger
+ */
 import { db } from '@/lib/database';
 import type { NextRequest } from 'next/server';
 

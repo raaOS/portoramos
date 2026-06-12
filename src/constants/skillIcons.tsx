@@ -1,3 +1,12 @@
+/**
+ * Skill Icons Map — Mapping nama skill ke komponen ikon visual.
+ *
+ * Menyediakan fungsi `getIconMap()` yang mengembalikan record icon React
+ * untuk ditampilkan di komponen CV, About, dan skill showcase. Setiap
+ * ikon dirender sebagai badge berwarna dengan inisial nama tool.
+ *
+ * @module constants/skillIcons
+ */
 import React from 'react';
 
 export const getIconMap = (className: string): Record<string, React.ReactNode> => ({

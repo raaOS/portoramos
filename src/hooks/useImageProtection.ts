@@ -2,6 +2,24 @@
 
 import { useCallback, useState, useEffect } from 'react';
 
+/**
+ * Image Protection Hook — Mencegah klik kanan pada gambar portfolio.
+ *
+ * Menampilkan toast lucu saat user mencoba context menu pada gambar.
+ * Toast auto-dismiss setelah 2.5 detik.
+ *
+ * Catatan: Ini hanya pencegahan UX — gambar tetap bisa diakses via DevTools.
+ *
+ * @module useImageProtection
+ *
+ * @example
+ * ```tsx
+ * const { toast, handleContextMenu } = useImageProtection();
+ * <img onContextMenu={handleContextMenu} src="..." />
+ * {toast && <div>{toast.emoji} {toast.text}</div>}
+ * ```
+ */
+
 const MESSAGES = [
   { emoji: '😂', text: 'Hayooo ngapain klik kanan?? wkwkwk' },
   { emoji: '👀', text: 'Mau nyolong desain gw ya?? keliatan banget~' },

@@ -56,12 +56,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const otpSnap = await db.ref('settings/adminOtp').once('value');
+    const otpSnap = await db.ref('settings/adminPasswordOtp').once('value');
     const otpData = otpSnap.val();
 
     if (
       !otpData ||
       typeof otpData !== 'object' ||
+      otpData.purpose !== 'password' ||
       otpData.status !== 'approved' ||
       !otpData.codeHash ||
       !otpData.expiresAt
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (Date.now() > otpData.expiresAt) {
-      await db.ref('settings/adminOtp').remove();
+      await db.ref('settings/adminPasswordOtp').remove();
       return NextResponse.json(
         { error: 'Kode OTP sudah kadaluarsa (lebih dari 5 menit). Silakan request ulang.' },
         { status: 400 }
@@ -94,10 +95,7 @@ export async function POST(request: NextRequest) {
       }
     } catch (compareError) {
       console.error('[Admin Password] OTP compare failed:', compareError);
-      return NextResponse.json(
-        { error: 'Kesalahan layanan autentikasi' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Kesalahan layanan autentikasi' }, { status: 500 });
     }
 
     if (!isOtpValid) {
@@ -109,7 +107,7 @@ export async function POST(request: NextRequest) {
     await db.ref('settings/adminPassword').set(hashedNewPassword);
 
     // Bersihkan OTP dari database
-    await db.ref('settings/adminOtp').remove();
+    await db.ref('settings/adminPasswordOtp').remove();
 
     // 6. Kirim Telegram Alert dengan Panic Button
     const clientId = getClientIdentifier(request);

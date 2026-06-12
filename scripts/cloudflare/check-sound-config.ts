@@ -1,3 +1,7 @@
+/**
+ * Check Sound Config — Inspeksi konfigurasi suara desktop di D1.
+ * @module scripts/cloudflare/check-sound-config
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });

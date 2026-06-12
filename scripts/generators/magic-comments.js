@@ -1,3 +1,11 @@
+/**
+ * Magic Comments Generator — Generator komentar AI untuk chat/testimoni.
+ *
+ * Menghasilkan komentar balasan otomatis menggunakan Gemini API yang
+ * kontekstual terhadap pesan pengunjung di sistem chat portofolio.
+ *
+ * @module scripts/generators/magic-comments
+ */
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
 const fs = require('fs');

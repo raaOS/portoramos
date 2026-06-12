@@ -1,3 +1,7 @@
+/**
+ * Check Raw About — Inspeksi data mentah about dari database D1.
+ * @module scripts/cloudflare/check-raw-about
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });

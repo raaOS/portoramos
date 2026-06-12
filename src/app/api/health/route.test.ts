@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { NextRequest } from 'next/server';
 
 const { accessMock, refMock } = vi.hoisted(() => ({
   accessMock: vi.fn(),
@@ -32,7 +33,7 @@ describe('GET /api/health', () => {
     });
 
     const mockRequest = new Request('http://localhost/api/health');
-    const response = await GET(mockRequest as any);
+    const response = await GET(mockRequest as unknown as NextRequest);
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -51,7 +52,7 @@ describe('GET /api/health', () => {
     });
 
     const mockRequest = new Request('http://localhost/api/health');
-    const response = await GET(mockRequest as any);
+    const response = await GET(mockRequest as unknown as NextRequest);
     const body = await response.json();
 
     expect(response.status).toBe(503);
@@ -66,7 +67,7 @@ describe('GET /api/health', () => {
     });
 
     const mockRequest = new Request('http://localhost/api/health');
-    const response = await GET(mockRequest as any);
+    const response = await GET(mockRequest as unknown as NextRequest);
     const body = await response.json();
 
     expect(body.database).toBe('disconnected');

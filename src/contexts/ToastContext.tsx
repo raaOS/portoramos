@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * Toast Context — Antrean notifikasi toast global.
+ *
+ * Menyediakan API `addToast()` untuk menampilkan notifikasi popup
+ * dengan auto-dismiss, tipe (success/error/info/warning), dan aksi kustom.
+ *
+ * @module ToastContext
+ */
 import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import Toast from '@/components/ui/Toast';
 

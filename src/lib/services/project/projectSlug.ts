@@ -1,4 +1,12 @@
-﻿import { db } from '@/lib/database';
+﻿/**
+ * Project Slug — Generator slug unik untuk project baru.
+ *
+ * Membuat URL-friendly slug dari title project, memastikan keunikan
+ * dengan mengecek konflik di database D1.
+ *
+ * @module projectSlug
+ */
+import { db } from '@/lib/database';
 
 export async function generateUniqueSlug(title: string): Promise<string> {
   const MAX_TITLE_LENGTH = 200;

@@ -1,3 +1,12 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION MAP (WallpaperManager.tsx — 799 lines)
+// L1-60:    Imports, types, constants (compression profiles, dimensions)
+// L61-95:   readStoredProfile + buildOptimizedUrl helpers
+// L96-284:  WallpaperManager component — state, FFmpeg init, profile selector
+// L285-503: handleFileDrop — video compression + R2 upload + poster extraction
+// L504-569: handleSetActive, handleDelete — wallpaper CRUD
+// L570-799: JSX render — upload zone, grid, aspect ratio controls, preview
+// ═══════════════════════════════════════════════════════════════════
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus, Loader2 } from 'lucide-react';
 import { WallpaperConfig, Wallpaper } from '@/types/about';

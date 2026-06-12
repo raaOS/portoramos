@@ -1,3 +1,11 @@
+/**
+ * Project Cache — In-memory cache manager khusus untuk data project.
+ *
+ * Menggunakan CacheManager dengan TTL 30 detik dan LRU eviction.
+ * Termasuk memory usage monitoring untuk mencegah OOM di serverless.
+ *
+ * @module projectCache
+ */
 import v8 from 'v8';
 import { CacheManager } from '@/lib/cache/CacheManager';
 

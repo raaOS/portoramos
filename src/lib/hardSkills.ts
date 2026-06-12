@@ -1,3 +1,10 @@
+/**
+ * Hard Skills — Helper loader untuk data hard skills.
+ *
+ * Thin wrapper di atas `hardSkillService` untuk server component rendering.
+ *
+ * @module hardSkills
+ */
 import { hardSkillService } from '@/lib/services/hardSkillService';
 import type { HardSkillsData } from '@/types/hardSkill';
 

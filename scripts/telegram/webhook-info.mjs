@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+/**
+ * Webhook Info — Tampilkan status webhook dan antrean kedua bot Telegram.
+ *
+ * @module scripts/telegram/webhook-info
+ */
 // Show webhook + queue status for both Telegram bots.
 //
 // Usage:

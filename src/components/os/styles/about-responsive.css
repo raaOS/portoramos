@@ -18,8 +18,109 @@
 }
 
 .about-sidebar.collapsed {
-  transform: translateX(-128px);
-  margin-right: -128px;
+  transform: translateX(-136px) !important;
+  margin-right: -136px !important;
+  padding-left: 0.25rem !important;
+  padding-right: 0.25rem !important;
+}
+
+/* Hide sidebar texts and headers completely */
+.about-sidebar.collapsed .about-sidebar-text {
+  display: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  margin-left: 0 !important;
+}
+
+.about-sidebar.collapsed .about-sidebar-header {
+  display: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+}
+
+.about-sidebar.collapsed .about-sidebar-download-text {
+  display: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* Center items inside sidebar so they sit in the visible collapsed area without touching the borders */
+.about-sidebar.collapsed button {
+  justify-content: flex-end !important;
+  padding-left: 0 !important;
+  padding-right: 10px !important; /* Center the 36px icon container inside 64px visible sidebar */
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* First-level wrapper inside collapsed button - acts as the background container */
+.about-sidebar.collapsed button > div {
+  justify-content: center !important;
+  align-items: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  border-radius: 8px !important;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease !important;
+}
+
+/* Second-level icon container inside collapsed button - transparent centering child */
+.about-sidebar.collapsed button div div {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Active tab styles for wrapper */
+.about-sidebar.collapsed button[class*='bg-black/10'] > div,
+.about-sidebar.collapsed button.bg-black\/10 > div {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  color: #000000 !important;
+}
+
+/* Hover styles for wrapper */
+.about-sidebar.collapsed button:hover > div {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.about-sidebar.collapsed a {
+  justify-content: flex-end !important;
+  gap: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 10px !important; /* Match button padding */
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Link icon container - acts as background container just like button > div */
+.about-sidebar.collapsed a > div {
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease !important;
+}
+
+/* Hover and active styles for CV link icon container */
+.about-sidebar.collapsed a:hover > div {
+  background-color: rgb(220, 38, 38) !important;
+  color: #ffffff !important;
+}
+
+.about-sidebar.collapsed a:active > div {
+  background-color: rgb(185, 28, 28) !important;
+  color: #ffffff !important;
 }
 
 /* Grid layout in Skillset / Interests Tab */
@@ -45,118 +146,6 @@
   .interests-grid,
   .interpersonal-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* ==========================================================================
-   Responsive Overrides for Medium Window Container (< 700px)
-   ========================================================================== */
-@container about-win (max-width: 700px) {
-  /* Keep the sidebar compact so tablet-sized windows preserve content width. */
-  .about-sidebar.collapsed {
-    transform: translateX(-136px) !important;
-    margin-right: -136px !important;
-    padding-left: 0.25rem !important;
-    padding-right: 0.25rem !important;
-  }
-
-  /* Hide sidebar texts and headers completely */
-  .about-sidebar.collapsed .about-sidebar-text {
-    display: none !important;
-    opacity: 0 !important;
-    width: 0 !important;
-    margin-left: 0 !important;
-  }
-
-  .about-sidebar.collapsed .about-sidebar-header {
-    display: none !important;
-    opacity: 0 !important;
-    width: 0 !important;
-  }
-
-  .about-sidebar.collapsed .about-sidebar-download-text {
-    display: none !important;
-    opacity: 0 !important;
-    width: 0 !important;
-    margin-left: 0 !important;
-  }
-
-  /* Center items inside sidebar so they sit in the visible collapsed area without touching the borders */
-  .about-sidebar.collapsed button {
-    justify-content: flex-end !important;
-    padding-left: 0 !important;
-    padding-right: 10px !important; /* Center the 36px icon container inside 64px visible sidebar */
-    background: transparent !important;
-    background-color: transparent !important;
-  }
-
-  /* First-level wrapper inside collapsed button - acts as the background container */
-  .about-sidebar.collapsed button > div {
-    justify-content: center !important;
-    align-items: center !important;
-    width: 36px !important;
-    height: 36px !important;
-    display: flex !important;
-    border-radius: 8px !important;
-    transition:
-      background-color 0.2s ease,
-      color 0.2s ease !important;
-  }
-
-  /* Second-level icon container inside collapsed button - transparent centering child */
-  .about-sidebar.collapsed button div div {
-    width: 100% !important;
-    height: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: transparent !important;
-    background-color: transparent !important;
-  }
-
-  /* Active tab styles for wrapper */
-  .about-sidebar.collapsed button[class*='bg-black/10'] > div,
-  .about-sidebar.collapsed button.bg-black\/10 > div {
-    background-color: rgba(0, 0, 0, 0.08) !important;
-    color: #000000 !important;
-  }
-
-  /* Hover styles for wrapper */
-  .about-sidebar.collapsed button:hover > div {
-    background-color: rgba(0, 0, 0, 0.05) !important;
-  }
-
-  .about-sidebar.collapsed a {
-    justify-content: flex-end !important;
-    gap: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 10px !important; /* Match button padding */
-    background: transparent !important;
-    background-color: transparent !important;
-  }
-
-  /* Link icon container - acts as background container just like button > div */
-  .about-sidebar.collapsed a > div {
-    width: 36px !important;
-    height: 36px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 8px !important;
-    transition:
-      background-color 0.2s ease,
-      color 0.2s ease !important;
-  }
-
-  /* Hover and active styles for CV link icon container */
-  .about-sidebar.collapsed a:hover > div {
-    background-color: rgb(220, 38, 38) !important;
-    color: #ffffff !important;
-  }
-
-  .about-sidebar.collapsed a:active > div {
-    background-color: rgb(185, 28, 28) !important;
-    color: #ffffff !important;
   }
 }
 

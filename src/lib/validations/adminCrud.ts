@@ -1,3 +1,11 @@
+/**
+ * Admin CRUD Validation Schemas — Skema Zod untuk validasi operasi admin.
+ *
+ * Mencakup schema untuk about, experience, hard-skill, hard-skill-concept,
+ * testimonial, wallpaper, dan entitas admin lainnya.
+ *
+ * @module validations/adminCrud
+ */
 import { z } from 'zod';
 
 const shortText = (max: number) => z.string().trim().max(max);

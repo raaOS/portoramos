@@ -1,3 +1,4 @@
+/** Type definitions untuk data keahlian teknis (Hard Skills). @module */
 export type HardSkillLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
 
 export interface HardSkill {

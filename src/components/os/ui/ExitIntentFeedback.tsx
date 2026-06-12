@@ -343,7 +343,8 @@ export default function ExitIntentFeedback() {
                     Eh, sebelum pergi...
                   </h2>
                   <p className="mt-1 text-sm leading-relaxed text-gray-500">
-                    Boleh minta kesan kamu tentang portfolio ini? Satu menit aja.
+                    <span className="block">Boleh minta kesan kamu tentang portfolio ini?</span>
+                    <span className="block">Satu menit aja.</span>
                   </p>
                 </div>
 

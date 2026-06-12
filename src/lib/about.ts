@@ -1,3 +1,11 @@
+/**
+ * About — Helper loader untuk data halaman About.
+ *
+ * Thin wrapper di atas `aboutService` yang menyediakan fungsi
+ * `loadAboutData()` untuk server component rendering.
+ *
+ * @module about
+ */
 import { getCachedAboutData } from '@/lib/services/aboutService';
 import type {
   AboutData,

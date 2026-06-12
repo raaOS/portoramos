@@ -1,3 +1,11 @@
+/**
+ * Middleware Utilities — Helper functions untuk middleware pipeline.
+ *
+ * Menyediakan deteksi route (`isAPIRoute`, `isStaticAsset`) dan injeksi
+ * security headers (CSP, HSTS, X-Frame-Options, dll.) pada response.
+ *
+ * @module middleware/utils
+ */
 import { NextResponse } from 'next/server';
 
 export function isAPIRoute(pathname: string): boolean {

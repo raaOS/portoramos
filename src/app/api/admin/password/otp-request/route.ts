@@ -10,13 +10,11 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Validasi Auth & CSRF
     const isValid = await validateAdminRequest(request, { checkCsrf: true });
     if (!isValid) {
       return NextResponse.json({ error: 'Unauthorized or invalid CSRF token' }, { status: 401 });
     }
 
-    // 2. Parse Body
     const body = await request.json();
     const { oldPassword, newPassword } = body;
 
@@ -31,7 +29,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Verifikasi Sandi Lama
     let isOldValid = false;
     try {
       isOldValid = await verifyAdminPassword(oldPassword);
@@ -43,32 +40,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Sandi lama tidak sesuai' }, { status: 401 });
     }
 
-    // 4. Inisialisasi Status Pre-OTP di D1
-    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 menit
+    const expiresAt = Date.now() + 5 * 60 * 1000;
     const requestId = randomUUID();
 
-    await db.ref('settings/adminOtp').set({
+    await db.ref('settings/adminPasswordOtp').set({
       status: 'pending',
+      purpose: 'password',
       requestId,
       expiresAt,
       createdAt: Date.now(),
     });
 
-    // 5. Kirim ke Telegram (Meminta Persetujuan)
     const clientId = getClientIdentifier(request);
     const pipeIdx = clientId.indexOf('|');
     const ip = pipeIdx > -1 ? clientId.substring(0, pipeIdx) : clientId;
     const userAgent = pipeIdx > -1 ? clientId.substring(pipeIdx + 1) : 'unknown';
 
     const telegramRes = await sendSecurityAlert({
-      title: '🚨 **PERINGATAN KEAMANAN!**',
-      description: 'Ada upaya penggantian sandi Admin dari perangkat yang berhasil memasukkan sandi lama dengan benar.',
+      title: '**PERINGATAN KEAMANAN: UBAH SANDI**',
+      description:
+        'Ada upaya penggantian sandi Admin dari perangkat yang berhasil memasukkan sandi lama dengan benar.',
       device: userAgent,
       ip,
-      extraInfo: '⚠️ *Apakah ini Anda? Jika YA, klik persetujuan untuk mendapatkan OTP.*',
+      extraInfo:
+        '*Ini adalah OTP untuk UBAH SANDI. Jika ini Anda, klik persetujuan untuk mendapatkan kode OTP sandi.*',
       buttons: [
-        [{ text: '✅ Iya, Ini Saya', callback_data: `otp_approve:${requestId}` }],
-        [{ text: '🚨 Bukan! Ini Hacker', callback_data: `otp_reject:${requestId}` }],
+        [{ text: 'Setujui OTP Sandi', callback_data: `otp_approve:password:${requestId}` }],
+        [{ text: 'Tolak Ubah Sandi', callback_data: `otp_reject:password:${requestId}` }],
       ],
     });
 
@@ -84,7 +82,6 @@ export async function POST(request: NextRequest) {
       console.error('[Audit] Failed to log OTP request:', error);
     });
 
-    // 6. Response Sukses
     return NextResponse.json({
       success: true,
       message: 'Peringatan persetujuan berhasil dikirim ke Telegram',

@@ -1,3 +1,11 @@
+/**
+ * Gallery API Test — Integration test untuk endpoint gallery.
+ *
+ * Menguji endpoint `/api/gallery` dan `/api/admin/gallery` terhadap
+ * dev server lokal untuk memverifikasi operasi CRUD gallery.
+ *
+ * @module scripts/test/test-gallery-api
+ */
 const http = require('http');
 
 const BASE_URL = 'http://localhost:3000';

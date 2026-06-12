@@ -1,3 +1,7 @@
+/**
+ * Fix Icons Mismatch — Perbaiki inkonsistensi ikon skill antara D1 dan data lokal.
+ * @module scripts/cloudflare/fix-icons-mismatch
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 

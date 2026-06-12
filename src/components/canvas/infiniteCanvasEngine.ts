@@ -9,7 +9,7 @@ export const CANVAS_CONSTANTS = {
   maxDeltaTime: 32,
   targetFrameTime: 16.66,
   maxActiveItems: 100,
-  cullingDistanceThreshold: 500,
+  cameraSyncDistanceThreshold: 500,
   maxCacheMultiplier: 2,
   cacheTrimRatio: 0.1,
   screenWidth: 1800,
@@ -29,6 +29,50 @@ export const CANVAS_CONSTANTS = {
   blurFarRange: 200,
   clipClose: 1200,
   clipFar: -8000,
+
+  // — Rendering & culling thresholds —
+  removalBatchInterval: 100,
+  maxPriorityImages: 4,
+  cullingBehindThreshold: 1200,
+  cullingDistanceThreshold: 9000,
+  priorityImageDistance: 3000,
+  videoVisibilityOpacity: 0.4,
+
+  // — Input physics tuning —
+  scrollSensitivity: 1.5,
+  velocityDecay: 0.95,
+  velocityLerp: 0.2,
+
+  // — Magnetic hover & ambient float tuning —
+  magnetRadius: 350,
+  magnetStrength: 20,
+  floatAmplitude: 6,
+  floatSpeed: 1.2,
+  floatPhaseMultiplier: 0.1,
+  floatPhaseBase: Math.PI,
+  magneticSmoothing: 0.12,
+
+  // — Speed tilt tuning —
+  tiltFactor: 0.15,
+  maxTilt: 8,
+  tiltSmoothing: 0.2,
+
+  // — Video optimization —
+  videoNearFocusDistance: 1800,
+
+  // — Atmospheric Depth Fog —
+  fogZOffset: 1500,
+  fogZRange: 5000,
+  fogClearSizeBase: 70,
+  fogClearSizeRange: 40,
+  fogOpacityMax: 0.45,
+  fogPositionFactor: 0.0005,
+
+  // — Z-index base —
+  zIndexBase: 10000,
+
+  // — Time scaling —
+  timeScaleFactor: 0.001,
 } as const;
 
 export type Point3D = {

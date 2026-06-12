@@ -2,180 +2,145 @@
 
 /**
  * Critical CSS Generator
- * Extracts and inlines critical CSS for above-the-fold content
+ * ======================
+ * Menghasilkan file `public/css/critical.css` yang berisi CSS di atas garis lipat
+ * (above-the-fold) untuk mengurangi First Contentful Paint (FCP).
+ *
+ * Pendekatan:
+ *   1. Jika build output Next.js tersedia (.next/static/css/), baca dan ekstrak
+ *      CSS rules yang relevan untuk boot sequence & desktop shell.
+ *   2. Jika build belum ada, gunakan curated CSS yang sesuai dengan arsitektur
+ *      OS-style desktop simulator (bukan landing page konvensional).
+ *
+ * Output: public/css/critical.css (target < 14 KB agar muat dalam 1 TCP round-trip)
+ *
+ * Penggunaan:
+ *   node scripts/performance/critical-css.js
+ *   node scripts/performance/critical-css.js --from-build   # Ekstrak dari Next.js build
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Critical CSS rules for above-the-fold content
-const criticalCSS = `
-/* Critical CSS for Portfolio */
+/**
+ * Curated critical CSS untuk OS-style desktop simulator.
+ * CSS ini dirancang khusus untuk boot sequence dan initial desktop render —
+ * bukan landing page konvensional (proyek ini tidak punya hero section / nav / btn).
+ *
+ * Mencakup:
+ *   - CSS reset minimal & box-sizing
+ *   - Design tokens (CSS custom properties) yang dipakai di boot & desktop
+ *   - Boot sequence animation (loading screen sebelum desktop muncul)
+ *   - Dark mode default (proyek ini dark-first)
+ *   - Accessibility utilities (sr-only, focus, reduced-motion, skip-link)
+ *   - Layout dasar untuk body & root container
+ *   - Prevent FOUC (Flash of Unstyled Content) saat JS hydrate
+ */
+const CURATED_CRITICAL_CSS = `/* ============================================================
+ * Critical CSS — portfolio-shared OS Desktop
+ * Generated: ${new Date().toISOString()}
+ * Target: Above-the-fold render untuk boot sequence & desktop shell
+ * ============================================================ */
 
-/* Reset and base styles */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* --- Reset & Box Model --- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html {
+  -webkit-text-size-adjust: 100%;
+  -moz-tab-size: 4;
+  tab-size: 4;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
   scroll-behavior: smooth;
-  font-size: 16px;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  line-height: 1.5;
-  color: #1a1a1a;
-  background-color: #ffffff;
-  overflow-x: hidden;
+  background-color: #000;
+  color: #fff;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100dvh;
 }
 
-/* Layout utilities */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
+/* --- Design Tokens (CSS Custom Properties) --- */
+:root {
+  --color-bg: #000000;
+  --color-text: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.6);
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-surface: rgba(255, 255, 255, 0.06);
+  --color-accent: #ff9500;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --z-base: 0;
+  --z-window: 100;
+  --z-dock: 500;
+  --z-menubar: 600;
+  --z-modal: 1000;
+  --z-notification: 1100;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
 
-.flex {
+/* --- Root Container --- */
+#__next {
+  min-height: 100dvh;
   display: flex;
+  flex-direction: column;
 }
 
-.grid {
-  display: grid;
-}
-
-.block {
-  display: block;
-}
-
-.hidden {
-  display: none;
-}
-
-/* Typography */
-.text-center {
-  text-align: center;
-}
-
-.text-left {
-  text-align: left;
-}
-
-.text-right {
-  text-align: right;
-}
-
-/* Spacing */
-.mx-auto {
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.p-4 {
-  padding: 1rem;
-}
-
-.py-4 {
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-}
-
-.px-4 {
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
-/* Colors */
-.text-white {
-  color: #ffffff;
-}
-
-.text-black {
-  color: #000000;
-}
-
-.bg-white {
-  background-color: #ffffff;
-}
-
-.bg-black {
-  background-color: #000000;
-}
-
-/* Masonry Grid Critical */
-.masonry-grid {
-  display: flex;
-  margin-left: -1rem;
-  width: auto;
-}
-
-.masonry-grid_column {
-  padding-left: 1rem;
-  background-clip: padding-box;
-}
-
-/* Navigation */
-nav {
+/* --- Boot Sequence (Loading Screen) --- */
+.boot-screen {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-/* Hero section */
-.hero {
-  min-height: 100vh;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 2rem;
+  flex-direction: column;
+  background: #000;
+  z-index: 9999;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
 }
 
-.hero h1 {
-  font-size: clamp(2rem, 5vw, 4rem);
-  font-weight: 700;
-  margin-bottom: 1rem;
-  line-height: 1.1;
+.boot-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
-.hero p {
-  font-size: clamp(1rem, 2vw, 1.5rem);
-  opacity: 0.8;
-  margin-bottom: 2rem;
+.boot-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: boot-spin 0.8s linear infinite;
 }
 
-/* Buttons */
-.btn {
-  display: inline-block;
-  padding: 0.75rem 2rem;
-  background: #3b82f6;
-  color: white;
-  text-decoration: none;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border: none;
-  cursor: pointer;
-  min-height: 44px;
-  min-width: 44px;
+@keyframes boot-spin {
+  to { transform: rotate(360deg); }
 }
 
-.btn:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
+/* --- Desktop Shell --- */
+.desktop-environment {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-/* Accessibility */
+/* --- Images --- */
+img, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* --- Accessibility --- */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -188,127 +153,169 @@ nav {
   border: 0;
 }
 
-/* Focus styles */
-:focus {
-  outline: 2px solid #3b82f6;
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 10000;
+  padding: 0.5rem 1rem;
+  background: var(--color-accent);
+  color: #000;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 var(--radius-sm) 0;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* Loading states */
-.loading {
+/* --- Loading State --- */
+[aria-busy="true"] {
   opacity: 0.6;
   pointer-events: none;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .container {
-    padding: 0 0.5rem;
-  }
-  
-  .hero {
-    padding: 1rem;
-  }
-  
-  .hero h1 {
-    font-size: 2rem;
-  }
+/* --- Animations --- */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #0a0a0a;
-    color: #ffffff;
-  }
-  
-  nav {
-    background: rgba(0, 0, 0, 0.95);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Performance optimizations */
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* Critical animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.6s ease-out forwards;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.8s ease-out forwards;
-}
-
-/* Reduced motion support */
+/* --- Reduced Motion --- */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+}
+
+/* --- Responsive Base --- */
+@media (max-width: 768px) {
+  body { font-size: 14px; }
 }
 `;
 
+/**
+ * Coba ekstrak critical CSS dari Next.js build output.
+ * @returns {string|null} CSS yang diekstrak, atau null jika build tidak tersedia
+ */
+function extractFromBuild() {
+  const cssDir = path.join(process.cwd(), '.next', 'static', 'css');
+
+  if (!fs.existsSync(cssDir)) {
+    return null;
+  }
+
+  const cssFiles = fs.readdirSync(cssDir).filter((f) => f.endsWith('.css'));
+
+  if (cssFiles.length === 0) {
+    return null;
+  }
+
+  console.log(`📂 Ditemukan ${cssFiles.length} file CSS di build output`);
+
+  // Gabungkan semua CSS dari build
+  let combined = '';
+  for (const file of cssFiles) {
+    const content = fs.readFileSync(path.join(cssDir, file), 'utf8');
+    combined += content + '\n';
+  }
+
+  // Ekstrak rules yang relevan untuk critical path
+  // Prioritas: :root variables, body, #__next, boot-*, desktop-*, sr-only, :focus
+  const criticalPatterns = [
+    /\/\*\s*Critical[\s\S]*?\*\//gi,
+    /:root\s*\{[^}]*\}/g,
+    /body\s*\{[^}]*\}/g,
+    /#__next\s*\{[^}]*\}/g,
+    /\.boot-[\s\S]*?\}/g,
+    /\.desktop-environment\s*\{[^}]*\}/g,
+    /\.sr-only\s*\{[^}]*\}/g,
+    /\.skip-link[\s\S]*?\}/g,
+    /:focus-visible\s*\{[^}]*\}/g,
+    /@keyframes\s+boot-[\s\S]*?\}/g,
+    /@keyframes\s+fade-in[\s\S]*?\}/g,
+    /@media\s*\(prefers-reduced-motion[\s\S]*?\}\s*\}/g,
+  ];
+
+  let extracted = '';
+  for (const pattern of criticalPatterns) {
+    const matches = combined.match(pattern);
+    if (matches) {
+      extracted += matches.join('\n') + '\n';
+    }
+  }
+
+  if (extracted.trim().length === 0) {
+    return null;
+  }
+
+  return `/* ============================================================
+ * Critical CSS — Extracted from Next.js Build
+ * Generated: ${new Date().toISOString()}
+ * Source files: ${cssFiles.join(', ')}
+ * ============================================================ */
+
+${extracted.trim()}
+`;
+}
+
+/**
+ * Generate critical CSS file.
+ */
 function generateCriticalCSS() {
   try {
-    console.log('🎨 Generating critical CSS...');
+    const fromBuild = process.argv.includes('--from-build');
+    const outputPath = path.join(process.cwd(), 'public', 'css', 'critical.css');
+    const dir = path.dirname(outputPath);
 
-    // Create critical CSS file
-    const criticalCSSPath = path.join(process.cwd(), 'public', 'css', 'critical.css');
-    const dir = path.dirname(criticalCSSPath);
+    console.log('🎨 Generating critical CSS...');
 
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(criticalCSSPath, criticalCSS);
+    let css;
 
-    // Calculate size
-    const size = Buffer.byteLength(criticalCSS, 'utf8');
+    if (fromBuild) {
+      console.log('   Mode: Extract from Next.js build output');
+      css = extractFromBuild();
+      if (!css) {
+        console.log('   ⚠️  Build output tidak ditemukan, fallback ke curated CSS');
+        console.log('   💡 Jalankan "npm run build" terlebih dahulu');
+        css = CURATED_CRITICAL_CSS;
+      }
+    } else {
+      console.log('   Mode: Curated CSS (gunakan --from-build untuk extract dari build)');
+      css = CURATED_CRITICAL_CSS;
+    }
+
+    fs.writeFileSync(outputPath, css);
+
+    const size = Buffer.byteLength(css, 'utf8');
     const sizeKB = (size / 1024).toFixed(2);
+    const sizeWarn = size > 14336 ? ' ⚠️ Melebihi 14KB target!' : '';
 
-    console.log(`✅ Critical CSS generated: ${sizeKB}KB`);
-    console.log(`📁 Saved to: ${criticalCSSPath}`);
+    console.log(`✅ Critical CSS generated: ${sizeKB}KB${sizeWarn}`);
+    console.log(`📁 Saved to: ${outputPath}`);
 
-    return {
-      success: true,
-      size,
-      sizeKB,
-      path: criticalCSSPath,
-    };
+    return { success: true, size, sizeKB, path: outputPath };
   } catch (error) {
-    console.error('❌ Critical CSS generation failed:', error);
-    return {
-      success: false,
-      error: error.message,
-    };
+    console.error('❌ Critical CSS generation failed:', error.message);
+    return { success: false, error: error.message };
   }
 }
 

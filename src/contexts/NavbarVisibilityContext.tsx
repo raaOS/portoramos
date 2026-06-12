@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * Navbar Visibility Context — Mengendalikan tampilan menubar desktop.
+ *
+ * Menyediakan state dan callback untuk show/hide menubar macOS-style
+ * yang ada di bagian atas desktop simulator.
+ *
+ * @module NavbarVisibilityContext
+ */
 import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 
 interface NavbarVisibilityContextType {

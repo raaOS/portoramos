@@ -67,6 +67,7 @@ function makeRequest(body: Record<string, unknown>): NextRequest {
 function makeValidOtpData(overrides: Record<string, unknown> = {}) {
   return {
     status: 'approved',
+    purpose: 'password',
     codeHash: HASH_OUTPUT,
     expiresAt: Date.now() + 300000,
     ...overrides,
@@ -206,6 +207,22 @@ describe('POST /api/admin/password', () => {
     expect(body.error).toBe('Kode OTP salah');
   });
 
+  it('rejects an approved PIN OTP session', async () => {
+    validateAdminRequestMock.mockResolvedValue(true);
+    verifyAdminPasswordMock.mockResolvedValue(true);
+    dbOnceMock.mockResolvedValue({
+      val: () => makeValidOtpData({ purpose: 'pin' }),
+    });
+
+    const res = await POST(
+      makeRequest({ oldPassword: 'old1234', newPassword: 'newpassword123', otpCode: '123456' })
+    );
+    expect(res.status).toBe(400);
+    expect(dbRefMock).toHaveBeenCalledWith('settings/adminPasswordOtp');
+    expect(dbSetMock).not.toHaveBeenCalled();
+    expect(sendSecurityAlertMock).not.toHaveBeenCalled();
+  });
+
   it('returns 200 success on valid password change', async () => {
     validateAdminRequestMock.mockResolvedValue(true);
     verifyAdminPasswordMock.mockResolvedValue(true);
@@ -221,6 +238,7 @@ describe('POST /api/admin/password', () => {
     expect(body.success).toBe(true);
     expect(body.message).toBe('Sandi admin berhasil diubah!');
 
+    expect(dbRefMock).toHaveBeenCalledWith('settings/adminPasswordOtp');
     expect(dbSetMock).toHaveBeenCalledWith(HASH_OUTPUT);
     expect(dbRemoveMock).toHaveBeenCalled();
     expect(sendSecurityAlertMock).toHaveBeenCalled();

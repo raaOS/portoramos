@@ -1,3 +1,11 @@
+/**
+ * Storage Cleanup — Utilitas untuk menghapus aset media dari Cloudflare R2.
+ *
+ * Digunakan oleh service domain (project, hard skill, wallpaper) saat
+ * user menghapus atau mengganti file yang tersimpan di R2.
+ *
+ * @module storageCleanup
+ */
 import { extractStoragePath } from '@/lib/urlResolver';
 import { deleteFromR2, isR2StorageConfigured } from '@/lib/r2Storage';
 

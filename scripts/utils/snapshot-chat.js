@@ -1,3 +1,11 @@
+/**
+ * Snapshot Chat — Capture screenshot panel chat pengunjung.
+ *
+ * Menggunakan Playwright headless untuk membuka halaman utama dan
+ * mengambil screenshot panel chat untuk keperluan dokumentasi/debug.
+ *
+ * @module scripts/utils/snapshot-chat
+ */
 const { chromium } = require('playwright');
 const path = require('path');
 

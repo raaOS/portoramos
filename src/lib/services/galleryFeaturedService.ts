@@ -1,3 +1,8 @@
+/**
+ * Gallery Featured Service — CRUD daftar project yang di-pin sebagai featured.
+ *
+ * @module galleryFeaturedService
+ */
 import { ContentService } from './contentService';
 import { GalleryFeaturedData } from '@/types/gallery';
 import galleryFeaturedFallback from '@/data/gallery-featured.json';

@@ -1,12 +1,15 @@
 #!/usr/bin/env node
-// Script untuk deployment ke Vercel dengan environment variables yang lengkap
-// Usage: node scripts/deploy-vercel.mjs
+// Script untuk deployment ke Vercel dengan environment variables Cloudflare D1/R2
+// Usage: node scripts/deploy/deploy-vercel.mjs
 
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-// Read .env.local file untuk mendapatkan environment variables
+/**
+ * Baca .env.local dan parse key-value pairs.
+ * Menangani comments, quoted values, dan multi-line.
+ */
 function loadEnvFile() {
   try {
     const envPath = join(process.cwd(), '.env.local');
@@ -18,7 +21,15 @@ function loadEnvFile() {
       if (trimmed && !trimmed.startsWith('#')) {
         const [key, ...valueParts] = trimmed.split('=');
         if (key && valueParts.length > 0) {
-          envVars[key] = valueParts.join('=');
+          // Strip surrounding quotes dari value
+          let value = valueParts.join('=').trim();
+          if (
+            (value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith("'") && value.endsWith("'"))
+          ) {
+            value = value.slice(1, -1);
+          }
+          envVars[key.trim()] = value;
         }
       }
     });
@@ -33,7 +44,6 @@ function loadEnvFile() {
 function runCommand(command, description) {
   try {
     console.log(`\n🔄 ${description}...`);
-    console.log(`Command: ${command}`);
     const output = execSync(command, { encoding: 'utf8', stdio: 'inherit' });
     console.log(`✅ ${description} completed successfully`);
     return true;
@@ -44,26 +54,43 @@ function runCommand(command, description) {
 }
 
 async function main() {
-  console.log('🚀 Deploying to Vercel with Environment Variables\n');
+  console.log('🚀 Deploying to Vercel — Cloudflare D1/R2 Architecture\n');
 
   const envVars = loadEnvFile();
 
-  // Environment variables yang diperlukan untuk production
+  // Environment variables yang diperlukan untuk production (Cloudflare D1/R2)
   const requiredEnvVars = [
-    'UPSTASH_REDIS_REST_URL',
-    'UPSTASH_REDIS_REST_TOKEN',
+    'CLOUDFLARE_D1_DATABASE_ID',
+    'CLOUDFLARE_D1_API_TOKEN',
+    'CLOUDFLARE_R2_BUCKET',
+    'CLOUDFLARE_R2_PUBLIC_BASE_URL',
+    'JWT_SECRET',
     'ADMIN_USERNAME',
     'ADMIN_PASSWORD',
   ];
 
-  console.log('📋 Checking Environment Variables:');
+  // Optional tapi direkomendasikan
+  const optionalEnvVars = [
+    'CLOUDFLARE_R2_ACCOUNT_ID',
+    'CLOUDFLARE_R2_ACCESS_KEY_ID',
+    'CLOUDFLARE_R2_SECRET_ACCESS_KEY',
+    'CRON_SECRET',
+    'JOB_BOT_TELEGRAM_TOKEN',
+    'GEMINI_API_KEY',
+    'NEXT_PUBLIC_SITE_URL',
+  ];
+
+  console.log('📋 Checking Required Environment Variables:');
   console.log('='.repeat(50));
 
-  let missingVars = [];
+  const missingVars = [];
 
   for (const varName of requiredEnvVars) {
     if (envVars[varName]) {
-      console.log(`✅ ${varName}: Found`);
+      // Mask sensitive values
+      const val = envVars[varName];
+      const masked = val.length > 8 ? val.slice(0, 4) + '****' + val.slice(-4) : '****';
+      console.log(`✅ ${varName}: Found (${masked})`);
     } else {
       console.log(`❌ ${varName}: Missing`);
       missingVars.push(varName);
@@ -71,67 +98,74 @@ async function main() {
   }
 
   if (missingVars.length > 0) {
-    console.log('\n⚠️  Missing environment variables:');
+    console.log('\n⚠️  Missing required environment variables:');
     missingVars.forEach((varName) => {
       console.log(`   - ${varName}`);
     });
     console.log('\nPlease add these variables to your .env.local file before deploying.');
+    console.log('See .env.example for reference.');
     return;
   }
 
-  console.log('\n🎯 All environment variables found!');
+  console.log('\n📋 Optional Environment Variables:');
+  console.log('='.repeat(50));
+  for (const varName of optionalEnvVars) {
+    console.log(
+      `${envVars[varName] ? '✅' : '⬜'} ${varName}: ${envVars[varName] ? 'Found' : 'Not set (optional)'}`
+    );
+  }
 
-  // Build environment variables command untuk Vercel
-  const envFlags = requiredEnvVars
-    .filter((varName) => envVars[varName])
-    .map((varName) => `-e ${varName}="${envVars[varName]}"`)
-    .join(' ');
+  console.log('\n🎯 All required environment variables found!');
 
+  // Step 1: Login ke Vercel (jika belum)
   console.log('\n📦 Starting Deployment Process:');
   console.log('='.repeat(50));
 
-  // Step 1: Login ke Vercel (jika belum)
   console.log('\n1️⃣ Checking Vercel authentication...');
   try {
     execSync('vercel whoami', { encoding: 'utf8', stdio: 'pipe' });
     console.log('✅ Already logged in to Vercel');
-  } catch (error) {
+  } catch {
     console.log('🔐 Please login to Vercel first:');
     console.log('Run: vercel login');
     return;
   }
 
-  // Step 2: Deploy dengan environment variables
-  console.log('\n2️⃣ Deploying to Vercel...');
-  const deployCommand = `vercel --prod ${envFlags}`;
+  // Step 2: Sync env vars ke Vercel (lebih aman dari -e flags)
+  console.log('\n2️⃣ Syncing environment variables to Vercel...');
+  console.log('   💡 Tip: Use "vercel env pull" untuk sync, atau set manual di dashboard.');
+  console.log(
+    '   ⚠️  Pastikan semua env vars sudah di-set di Vercel dashboard (Project Settings > Environment Variables)'
+  );
 
-  console.log('\n📝 Deployment command:');
-  console.log('vercel --prod [with environment variables]');
+  // Step 3: Deploy
+  console.log('\n3️⃣ Deploying to Vercel...');
+  const deployCommand = 'vercel --prod';
 
+  console.log('\n📝 Deployment command: vercel --prod');
   const deploySuccess = runCommand(deployCommand, 'Vercel deployment');
 
   if (deploySuccess) {
     console.log('\n🎉 Deployment Successful!');
-    console.log('\n📋 What happens next:');
-    console.log('1. ✅ Production will use separate KV store keys (with :prod suffix)');
-    console.log('2. ✅ Development data remains separate (with :dev suffix)');
-    console.log('3. 🔄 Upload new content in production admin panel');
-    console.log('4. ✅ Verify that dev and production data are completely separate');
+    console.log('\n📋 Architecture: Cloudflare D1 + R2');
+    console.log('   • Database: Cloudflare D1 (relational, SQLite-compatible)');
+    console.log('   • Media: Cloudflare R2 (S3-compatible object storage)');
+    console.log('   • Auth: JWT + CSRF tokens (stored in D1)');
+    console.log('   • Rate Limiting: D1-backed persistent rate limiter');
 
-    console.log('\n🔗 Access your deployed application:');
-    console.log('- Production URL will be shown above');
-    console.log('- Admin panel: [your-url]/admin');
-
-    console.log('\n🎯 Environment Separation Status:');
-    console.log('✅ Development: Uses keys with :dev suffix');
-    console.log('✅ Production: Uses keys with :prod suffix');
-    console.log('✅ Data is completely separated between environments');
+    console.log('\n🔗 Post-deployment checklist:');
+    console.log('   1. Verify admin login works at /admin');
+    console.log('   2. Check D1 connectivity via admin status popout');
+    console.log('   3. Verify R2 media loading (wallpapers, project images)');
+    console.log('   4. Test chat system (visitor message → Telegram notification)');
+    console.log('   5. Verify cron watchdog is running (check admin status)');
   } else {
     console.log('\n❌ Deployment failed. Please check the error messages above.');
     console.log('\n🛠️  Troubleshooting:');
-    console.log('1. Make sure all environment variables are correct');
-    console.log('2. Check your Vercel account permissions');
-    console.log('3. Verify your project is properly configured');
+    console.log('   1. Ensure all env vars are set in Vercel dashboard');
+    console.log('   2. Check Vercel account permissions');
+    console.log('   3. Verify Cloudflare D1/R2 credentials are valid');
+    console.log('   4. Run: node scripts/cloudflare/test-env.ts');
   }
 }
 

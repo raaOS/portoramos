@@ -1,3 +1,11 @@
+/**
+ * Glints Login — Otomasi login ke Glints untuk Job Hunter Bot.
+ *
+ * Menggunakan Playwright untuk melakukan login otomatis ke Glints
+ * dan menyimpan session state untuk scraper loker.
+ *
+ * @module scripts/job-bot/glints-login
+ */
 import dotenv from 'dotenv';
 import { chromium } from 'playwright';
 import {

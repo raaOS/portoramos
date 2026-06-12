@@ -1,3 +1,13 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION MAP (upload/route.ts — 796 lines)
+// L1-11:    Imports, runtime config (nodejs, maxDuration: 60)
+// L12-109:  Constants: size limits, allowed types, validation helpers
+// L110-147: assertWallpaperImageDimensions — dimension validation
+// L148-268: optimizeImageBuffer — sharp image processing (webp/avif/jpg)
+// L269-757: POST handler — multipart parse, type detection, FFmpeg video
+//           compression, sharp image resize, R2 upload, D1 metadata write
+// L758-796: DELETE handler — R2 object deletion + D1 cleanup
+// ═══════════════════════════════════════════════════════════════════
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAdminRequest } from '@/lib/auth';
 import {

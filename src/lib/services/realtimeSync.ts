@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * Realtime Sync Hook — Polling versi data untuk mendeteksi pembaruan.
+ *
+ * Mengirim request ke `/api/data/version` setiap 30 detik untuk mengecek
+ * apakah ada data baru di database. Interval dioptimasi untuk Vercel Hobby.
+ *
+ * @module realtimeSync
+ */
 import { useEffect, useRef } from 'react';
 
 // Vercel Hobby Free Tier guard — interval 5s adalah peninggalan era

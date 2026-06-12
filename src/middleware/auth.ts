@@ -1,3 +1,11 @@
+/**
+ * Auth Middleware — Verifikasi JWT admin token pada protected routes.
+ *
+ * Digunakan oleh `proxy.ts` untuk memfilter request ke endpoint admin.
+ * Mendukung sliding-window token refresh.
+ *
+ * @module middleware/auth
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify, SignJWT } from 'jose';
 import { protectedRoutes, publicRoutes } from './constants';

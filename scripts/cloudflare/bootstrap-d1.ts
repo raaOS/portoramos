@@ -1,3 +1,11 @@
+/**
+ * Bootstrap D1 — Inisialisasi skema tabel Cloudflare D1.
+ *
+ * Membaca konfigurasi dari `.env.local` lalu menjalankan migrasi skema
+ * dasar (CREATE TABLE IF NOT EXISTS) pada database D1.
+ *
+ * @module scripts/cloudflare/bootstrap-d1
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { bootstrapD1Schema, getMissingD1EnvKeys, isD1Configured } from '../../src/lib/cloudflareD1';

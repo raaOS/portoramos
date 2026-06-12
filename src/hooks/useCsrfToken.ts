@@ -24,6 +24,12 @@ function readCsrfTokenFromCookie(): string | null {
  *  - Baca fresh saat mount
  *  - Re-check saat tab kembali visible
  *  - Dengarkan BroadcastChannel `admin-auth-sync` untuk update dari useAdminAuth
+ *
+ * @example
+ * ```tsx
+ * const csrfToken = useCsrfToken();
+ * // Use in fetch headers: { 'X-CSRF-Token': csrfToken || '' }
+ * ```
  */
 export function useCsrfToken(): string | null {
   const [token, setToken] = useState<string | null>(() => readCsrfTokenFromCookie());

@@ -1,3 +1,11 @@
+/**
+ * Compress Videos — Kompresi batch video menggunakan FFmpeg.
+ *
+ * Mengompresi file video di direktori target untuk mengurangi ukuran
+ * file sambil mempertahankan kualitas visual yang dapat diterima.
+ *
+ * @module scripts/utils/compress-videos
+ */
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegInstaller = require('ffmpeg-static');
 const path = require('path');

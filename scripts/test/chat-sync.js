@@ -1,3 +1,11 @@
+/**
+ * Chat Sync Test — Integration test untuk endpoint chat sync.
+ *
+ * Menguji endpoint `/api/chat/sync` secara langsung terhadap dev
+ * server lokal untuk memverifikasi sinkronisasi pesan berfungsi.
+ *
+ * @module scripts/test/chat-sync
+ */
 const fetch = require('node-fetch');
 const dotenv = require('dotenv');
 const path = require('path');

@@ -1,3 +1,4 @@
+/** Type definitions untuk konsep detail hard skill. @module */
 export interface HardSkillConcept {
   id: string;
   title: string;

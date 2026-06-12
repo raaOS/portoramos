@@ -1,3 +1,7 @@
+/**
+ * Remap Dangling Dock — Perbaiki referensi dock yang mengarah ke item hilang.
+ * @module scripts/cloudflare/remap-dangling-dock
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';

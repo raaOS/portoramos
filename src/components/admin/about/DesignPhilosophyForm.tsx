@@ -1,3 +1,11 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION MAP (DesignPhilosophyForm.tsx — 758 lines)
+// L1-270:   Imports, Zod schemas, types (DesignPhilosophyData, WorkflowStep)
+// L271-311: DesignPhilosophyForm component — state, useQuery, CSRF
+// L312-365: togglePhase, handleChange, handlePhaseChange — form handlers
+// L366-470: handleAddSubStep, handleRemoveSubStep — nested array mutations
+// L471-758: JSX render — phase cards, sub-step lists, save button
+// ═══════════════════════════════════════════════════════════════════
 'use client';
 
 import { useState } from 'react';

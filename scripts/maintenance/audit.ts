@@ -1,3 +1,11 @@
+/**
+ * Maintenance Audit — Pemeriksaan integritas database dan media storage.
+ *
+ * Memverifikasi konsistensi data antara Cloudflare D1 (database) dan R2
+ * (media bucket), serta menjalankan pengecekan dependency via npm audit.
+ *
+ * @module scripts/maintenance/audit
+ */
 import * as dotenv from 'dotenv';
 import { execSync } from 'child_process';
 import path from 'path';

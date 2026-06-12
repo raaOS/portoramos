@@ -1,3 +1,12 @@
+/**
+ * CSRF Middleware — Validasi token CSRF pada setiap request mutasi data.
+ *
+ * Memeriksa header `X-CSRF-Token` terhadap cookie `csrf_token` untuk semua
+ * endpoint API dengan method POST/PUT/DELETE/PATCH. Endpoint publik yang
+ * diproteksi oleh rate-limit (bukan CSRF) didaftarkan di allowlist.
+ *
+ * @module middleware/csrf
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { validateCSRFToken } from '@/lib/security';
 import { isAPIRoute } from './utils';
@@ -16,6 +25,7 @@ export function checkCSRF(request: NextRequest) {
       '/api/webhook/telegram',
       '/api/webhook/job-telegram',
       '/api/translate',
+      '/api/admin/pin/verify',
       // Visitor-reachable mutation endpoints yang tidak memerlukan sesi admin.
       // Endpoint ini diproteksi oleh rate-limit dan Zod validation, bukan CSRF.
       // Tanpa allowlist ini, visitor fresh tanpa cookie csrf_token akan 403.

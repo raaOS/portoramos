@@ -1,3 +1,7 @@
+/**
+ * Dump Icons Sync — Inspeksi status sinkronisasi ikon skill di D1.
+ * @module scripts/cloudflare/dump-icons-sync
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });

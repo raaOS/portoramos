@@ -1,4 +1,12 @@
 #!/usr/bin/env node
+/**
+ * Ensure Next Dev Not Running — Guard untuk mencegah konflik port.
+ *
+ * Memeriksa apakah port dev server Next.js (3000/3100) sudah digunakan
+ * sebelum menjalankan operasi yang memerlukan port tersebut.
+ *
+ * @module scripts/utils/ensure-next-dev-not-running
+ */
 
 const net = require('net');
 

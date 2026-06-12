@@ -1,3 +1,4 @@
+/** Type definitions untuk data pengalaman kerja (Work Experience). @module */
 export interface WorkExperience {
   id: string;
   year: string;

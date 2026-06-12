@@ -16,7 +16,14 @@ export const getAvatarColors = (name: string) => {
 
 export const getAvatarUrl = (name: string) => {
   if (!name) name = '?';
-  const char = name.charAt(0).toUpperCase();
+
+  // Find the first alphanumeric character (letter or digit) in any language
+  const alphaNumericMatch = name.match(/[\p{L}\p{N}]/u);
+  const char = alphaNumericMatch ? alphaNumericMatch[0].toUpperCase() : name.trim();
+
+  // Ensure we get the first Unicode code point safely to avoid splitting surrogate pairs
+  const safeChar = [...char][0] || '?';
+
   const colors = getAvatarColors(name);
-  return `https://ui-avatars.com/api/?background=${colors.bg}&color=${colors.text}&bold=true&length=1&name=${encodeURIComponent(char)}`;
+  return `https://ui-avatars.com/api/?background=${colors.bg}&color=${colors.text}&bold=true&length=1&name=${encodeURIComponent(safeChar)}`;
 };

@@ -1,4 +1,12 @@
 #!/usr/bin/env node
+/**
+ * Pre-Deploy Check — Verifikasi prasyarat sebelum deployment ke Vercel.
+ *
+ * Memeriksa ketersediaan environment variables wajib, validasi konfigurasi,
+ * dan dependency yang diperlukan untuk deployment yang sukses.
+ *
+ * @module scripts/deploy/pre-deploy-check
+ */
 
 const fs = require('fs');
 const path = require('path');

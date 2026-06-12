@@ -1,3 +1,11 @@
+/**
+ * Magic Caption Generator — Generator caption otomatis menggunakan AI.
+ *
+ * Menghasilkan caption kreatif untuk proyek menggunakan Gemini API
+ * berdasarkan metadata dan deskripsi proyek yang tersimpan.
+ *
+ * @module scripts/generators/magic-caption
+ */
 // Load env vars
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env.local') });

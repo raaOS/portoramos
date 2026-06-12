@@ -1,3 +1,11 @@
+/**
+ * Project Storage — Utilitas ekstraksi dan pembersihan aset project dari R2.
+ *
+ * Mengekstrak semua URL aset (cover, gallery items) dari project
+ * dan menyediakan fungsi hapus batch dari R2 storage.
+ *
+ * @module projectStorage
+ */
 import { deleteFromR2, isR2StorageConfigured } from '@/lib/r2Storage';
 import { extractStoragePath } from '@/lib/urlResolver';
 import type { Project } from '@/types/projects';

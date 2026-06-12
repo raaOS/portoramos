@@ -1,3 +1,11 @@
+/**
+ * Job Bot Poller — Long-polling Telegram updates untuk Job Hunter Bot.
+ *
+ * Menjalankan long-polling terhadap Telegram Bot API untuk menerima
+ * dan memproses update perintah job hunter secara lokal.
+ *
+ * @module scripts/job-bot/poll
+ */
 import dotenv from 'dotenv';
 import { getJobBotConfig } from '../../src/lib/jobBot/config';
 import { handleJobBotUpdate, type JobBotUpdate } from '../../src/lib/jobBot/handler';

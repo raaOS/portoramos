@@ -1,3 +1,12 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION MAP (InfiniteCanvasView.tsx — 578 lines)
+// L1-22:    Imports, types, constants (camera limits, shader code)
+// L23-200:  InfiniteCanvasView component — Canvas setup, camera config,
+//           refs for WebGL context, orbital controls, render loop
+// L201-400: Project cards rendering — Three.js meshes, hover effects,
+//           custom shaders, position calculations
+// L401-578: JSX return — Canvas wrapper, lights, camera, scene graph
+// ═══════════════════════════════════════════════════════════════════
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,30 +28,6 @@ import { CanvasCard } from './CanvasCard';
 type Props = {
   projects: Project[];
 };
-
-// — Rendering & culling thresholds —
-const REMOVAL_BATCH_INTERVAL = 100; // ms — batch DOM removals to avoid per-frame React re-renders
-const MAX_PRIORITY_IMAGES = 4;
-const CULLING_BEHIND_THRESHOLD = 1200;
-const CULLING_DISTANCE_THRESHOLD = 9000;
-const PRIORITY_IMAGE_DISTANCE = 3000;
-const VIDEO_VISIBILITY_OPACITY = 0.4;
-
-// — Input physics tuning —
-const SCROLL_SENSITIVITY = 1.5;
-const VELOCITY_DECAY = 0.95; // longer premium glide after release
-const VELOCITY_LERP = 0.2; // camera follows mouse faster
-
-// — Magnetic hover & ambient float tuning —
-const MAGNET_RADIUS = 350;
-const MAGNET_STRENGTH = 20;
-const FLOAT_AMPLITUDE = 6;
-const FLOAT_SPEED = 1.2;
-
-// — Speed tilt tuning —
-const TILT_FACTOR = 0.15;
-const MAX_TILT = 8;
-const TILT_SMOOTHING = 0.2;
 
 export default function InfiniteCanvasView({ projects }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -237,8 +222,8 @@ export default function InfiniteCanvasView({ projects }: Props) {
 
       const dz = item.z - camera.z;
 
-      const isFarBehind = dz > CULLING_BEHIND_THRESHOLD;
-      const isTooFar = item.dist > CULLING_DISTANCE_THRESHOLD;
+      const isFarBehind = dz > CANVAS_CONSTANTS.cullingBehindThreshold;
+      const isTooFar = item.dist > CANVAS_CONSTANTS.cullingDistanceThreshold;
       const isInactiveAndHidden =
         !activeKeys.has(item.key) && (visualStyle.hidden || visualStyle.opacity < 0.01);
 
@@ -286,7 +271,9 @@ export default function InfiniteCanvasView({ projects }: Props) {
         );
       }
       const floatPhase = floatPhasesRef.current.get(item.key)!;
-      const floatY = Math.sin(timeRef.current * 0.001 * FLOAT_SPEED + floatPhase) * FLOAT_AMPLITUDE;
+      const floatY =
+        Math.sin(timeRef.current * 0.001 * CANVAS_CONSTANTS.floatSpeed + floatPhase) *
+        CANVAS_CONSTANTS.floatAmplitude;
 
       // — Magnetic hover offset —
       const dx = item.x - camera.x;
@@ -302,8 +289,13 @@ export default function InfiniteCanvasView({ projects }: Props) {
       );
       let targetMX = 0,
         targetMY = 0;
-      if (!isDraggingRef.current && screenDist < MAGNET_RADIUS && screenDist > 0.01) {
-        const strength = (1 - screenDist / MAGNET_RADIUS) ** 2 * MAGNET_STRENGTH;
+      if (
+        !isDraggingRef.current &&
+        screenDist < CANVAS_CONSTANTS.magnetRadius &&
+        screenDist > 0.01
+      ) {
+        const strength =
+          (1 - screenDist / CANVAS_CONSTANTS.magnetRadius) ** 2 * CANVAS_CONSTANTS.magnetStrength;
         targetMX = ((mouseVX - virtualScreenX) / screenDist) * strength;
         targetMY = ((mouseVY - virtualScreenY) / screenDist) * strength;
       }
@@ -314,16 +306,16 @@ export default function InfiniteCanvasView({ projects }: Props) {
 
       // — Speed tilt —
       const targetTiltX = Math.max(
-        -MAX_TILT,
-        Math.min(MAX_TILT, -velocityRef.current.y * TILT_FACTOR)
+        -CANVAS_CONSTANTS.maxTilt,
+        Math.min(CANVAS_CONSTANTS.maxTilt, -velocityRef.current.y * CANVAS_CONSTANTS.tiltFactor)
       );
       const targetTiltY = Math.max(
-        -MAX_TILT,
-        Math.min(MAX_TILT, -velocityRef.current.x * TILT_FACTOR)
+        -CANVAS_CONSTANTS.maxTilt,
+        Math.min(CANVAS_CONSTANTS.maxTilt, -velocityRef.current.x * CANVAS_CONSTANTS.tiltFactor)
       );
       const prevTilt = tiltStateRef.current.get(item.key) ?? { x: 0, y: 0 };
-      const smoothTiltX = prevTilt.x + (targetTiltX - prevTilt.x) * TILT_SMOOTHING;
-      const smoothTiltY = prevTilt.y + (targetTiltY - prevTilt.y) * TILT_SMOOTHING;
+      const smoothTiltX = prevTilt.x + (targetTiltX - prevTilt.x) * CANVAS_CONSTANTS.tiltSmoothing;
+      const smoothTiltY = prevTilt.y + (targetTiltY - prevTilt.y) * CANVAS_CONSTANTS.tiltSmoothing;
       tiltStateRef.current.set(item.key, { x: smoothTiltX, y: smoothTiltY });
 
       if (node.style.display !== 'block') node.style.display = 'block';
@@ -345,7 +337,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
         // Only load and play video for cards within focus distance (< 1800) to optimize bandwidth, memory, and CPU
         const isNearFocus = item.dist < 1800;
         if (
-          visualStyle.opacity > VIDEO_VISIBILITY_OPACITY &&
+          visualStyle.opacity > CANVAS_CONSTANTS.videoVisibilityOpacity &&
           activeKeys.has(item.key) &&
           isNearFocus
         ) {
@@ -368,7 +360,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
     }
 
     if (pendingRemovalsRef.current.size > 0 && !removalTimerRef.current) {
-      removalTimerRef.current = setTimeout(flushRemovals, REMOVAL_BATCH_INTERVAL);
+      removalTimerRef.current = setTimeout(flushRemovals, CANVAS_CONSTANTS.removalBatchInterval);
     }
   }, [flushRemovals]);
 
@@ -383,14 +375,14 @@ export default function InfiniteCanvasView({ projects }: Props) {
 
       timeRef.current = currentTime;
 
-      velocityRef.current.x += scrollDeltaRef.current.x * SCROLL_SENSITIVITY;
-      velocityRef.current.y += scrollDeltaRef.current.y * SCROLL_SENSITIVITY;
-      velocityRef.current.z += scrollDeltaRef.current.z * SCROLL_SENSITIVITY;
+      velocityRef.current.x += scrollDeltaRef.current.x * CANVAS_CONSTANTS.scrollSensitivity;
+      velocityRef.current.y += scrollDeltaRef.current.y * CANVAS_CONSTANTS.scrollSensitivity;
+      velocityRef.current.z += scrollDeltaRef.current.z * CANVAS_CONSTANTS.scrollSensitivity;
       scrollDeltaRef.current = { x: 0, y: 0, z: 0 };
 
-      velocityRef.current.x *= Math.pow(VELOCITY_DECAY, timeScale);
-      velocityRef.current.y *= Math.pow(VELOCITY_DECAY, timeScale);
-      velocityRef.current.z *= Math.pow(VELOCITY_DECAY, timeScale);
+      velocityRef.current.x *= Math.pow(CANVAS_CONSTANTS.velocityDecay, timeScale);
+      velocityRef.current.y *= Math.pow(CANVAS_CONSTANTS.velocityDecay, timeScale);
+      velocityRef.current.z *= Math.pow(CANVAS_CONSTANTS.velocityDecay, timeScale);
 
       if (!isDraggingRef.current) {
         targetCameraRef.current.x += velocityRef.current.x * timeScale;
@@ -400,7 +392,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
         targetCameraRef.current.z += velocityRef.current.z * timeScale;
       }
 
-      const lerpFactor = 1 - Math.pow(1 - VELOCITY_LERP, timeScale);
+      const lerpFactor = 1 - Math.pow(1 - CANVAS_CONSTANTS.velocityLerp, timeScale);
       cameraRef.current.x += (targetCameraRef.current.x - cameraRef.current.x) * lerpFactor;
       cameraRef.current.y += (targetCameraRef.current.y - cameraRef.current.y) * lerpFactor;
       cameraRef.current.z += (targetCameraRef.current.z - cameraRef.current.z) * lerpFactor;
@@ -421,7 +413,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
         (cameraRef.current.y - previousCullCameraRef.current.y) ** 2 +
         (cameraRef.current.z - previousCullCameraRef.current.z) ** 2;
 
-      if (cullDistanceSq > CANVAS_CONSTANTS.cullingDistanceThreshold ** 2) {
+      if (cullDistanceSq > CANVAS_CONSTANTS.cameraSyncDistanceThreshold ** 2) {
         previousCullCameraRef.current = { ...cameraRef.current };
         syncVisibleItems();
       }
@@ -477,7 +469,9 @@ export default function InfiniteCanvasView({ projects }: Props) {
           const coverUrl = getPreviewCoverUrl(item.project);
           const isVideo = isVideoUrl(coverUrl);
           const shouldPriority =
-            !isVideo && item.dist < PRIORITY_IMAGE_DISTANCE && priorityCount < MAX_PRIORITY_IMAGES;
+            !isVideo &&
+            item.dist < CANVAS_CONSTANTS.priorityImageDistance &&
+            priorityCount < CANVAS_CONSTANTS.maxPriorityImages;
           if (shouldPriority) priorityCount++;
 
           // Compute initial visual style for server-side rendering (SSR) at camera = { x: 0, y: 0, z: 0 }

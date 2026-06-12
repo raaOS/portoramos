@@ -1,3 +1,11 @@
+/**
+ * Testimonial Service — CRUD data testimoni visitor.
+ *
+ * Instansiasi ContentService dengan fallback JSON. Mendukung
+ * approve/reject, hapus avatar dari R2 saat testimonial dihapus.
+ *
+ * @module testimonialService
+ */
 import { ContentService } from './contentService';
 import { Testimonial, TestimonialData } from '@/types/testimonial';
 import testimonialDataFallback from '@/data/testimonial.json';

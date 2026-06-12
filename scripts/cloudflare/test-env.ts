@@ -1,3 +1,11 @@
+/**
+ * Test Environment — Verifikasi konektivitas Cloudflare D1 dan R2.
+ *
+ * Memeriksa apakah semua environment variables untuk D1 database dan
+ * R2 storage sudah tersedia dan koneksi berfungsi dengan benar.
+ *
+ * @module scripts/cloudflare/test-env
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { getMissingD1EnvKeys, isD1Configured, queryD1 } from '../../src/lib/cloudflareD1';

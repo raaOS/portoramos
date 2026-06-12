@@ -34,6 +34,11 @@ interface OSSystemContextType {
   setShowMissionControl: (show: boolean) => void;
   toggleMissionControl: () => void;
 
+  // Ghost Cursors (multiplayer presence)
+  showGhostCursors: boolean;
+  setShowGhostCursors: (show: boolean) => void;
+  toggleGhostCursors: () => void;
+
   brightness: number;
   setBrightness: (val: number) => void;
   volume: number;
@@ -78,8 +83,10 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
   const [showControlCenter, setShowControlCenter] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showMissionControl, setShowMissionControl] = useState(false);
+  const [showGhostCursors, setShowGhostCursors] = useState(false);
 
   const toggleMissionControl = useCallback(() => setShowMissionControl((prev) => !prev), []);
+  const toggleGhostCursors = useCallback(() => setShowGhostCursors((prev) => !prev), []);
 
   const toggleSpotlight = useCallback(() => setShowSpotlight((prev) => !prev), []);
   const toggleNotes = useCallback(() => setNotesVisible((prev) => !prev), []);
@@ -128,6 +135,9 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
       showMissionControl,
       setShowMissionControl,
       toggleMissionControl,
+      showGhostCursors,
+      setShowGhostCursors,
+      toggleGhostCursors,
     }),
     [
       showSpotlight,
@@ -146,6 +156,8 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
       showCalendar,
       showMissionControl,
       toggleMissionControl,
+      showGhostCursors,
+      toggleGhostCursors,
     ]
   );
 

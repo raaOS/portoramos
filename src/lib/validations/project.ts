@@ -1,3 +1,11 @@
+/**
+ * Project Validation Schemas — Skema Zod untuk validasi data proyek.
+ *
+ * Mendefinisikan `CreateProjectSchema` dan `UpdateProjectSchema` yang
+ * digunakan oleh admin project form dan API endpoint terkait.
+ *
+ * @module validations/project
+ */
 import { z } from 'zod';
 
 const nullableOptionalString = z.preprocess(

@@ -6,11 +6,7 @@ import { checkDataRateLimit } from '@/lib/dataRateLimit';
 import { cookies } from 'next/headers';
 import { getClientIdentifier } from '@/lib/security/request';
 import { logAdminActivity } from '@/lib/services/auditLogger';
-import {
-  ADMIN_TOKEN_COOKIE,
-  CSRF_TOKEN_COOKIE,
-  CSRF_TOKEN_HEADER,
-} from '@/lib/security/constants';
+import { ADMIN_TOKEN_COOKIE, CSRF_TOKEN_COOKIE, CSRF_TOKEN_HEADER } from '@/lib/security/constants';
 
 export const dynamic = 'force-dynamic';
 

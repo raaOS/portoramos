@@ -1,5 +1,14 @@
 'use client';
 
+/**
+ * Window Context — State manajemen window OS simulator.
+ *
+ * Mengelola daftar window yang terbuka, status minimasi/maximize,
+ * dan urutan buka. Terpisah dari z-index (di UnifiedZIndexContext)
+ * untuk menghindari re-render berlebihan.
+ *
+ * @module WindowContext
+ */
 import React, {
   createContext,
   useContext,

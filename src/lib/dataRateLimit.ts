@@ -1,3 +1,11 @@
+/**
+ * Data Rate Limit — Persistent rate limiter berbasis D1.
+ *
+ * Menggunakan Cloudflare D1 sebagai backend pencatat request count per identifier.
+ * Fallback ke in-memory Map jika D1 tidak tersedia (misalnya di unit test).
+ *
+ * @module dataRateLimit
+ */
 import 'server-only';
 import { isD1Configured } from '@/lib/cloudflareD1';
 import { db } from '@/lib/database';

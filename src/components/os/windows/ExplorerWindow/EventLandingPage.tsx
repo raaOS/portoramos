@@ -164,7 +164,7 @@ export default function EventLandingPage({
                               width={file.metadata?.width || 800}
                               height={file.metadata?.height || 600}
                               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                              className="block w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                              className="block h-auto w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                               loading="lazy"
                               onContextMenu={(e) => e.preventDefault()}
                             />
@@ -222,7 +222,7 @@ export default function EventLandingPage({
                           width={file.metadata?.width || 800}
                           height={file.metadata?.height || 600}
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                          className="block w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                          className="block h-auto w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                           loading="lazy"
                           onContextMenu={(e) => e.preventDefault()}
                         />

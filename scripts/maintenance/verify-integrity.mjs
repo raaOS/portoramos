@@ -1,3 +1,11 @@
+/**
+ * Verify Integrity — Verifikasi integritas file publik dan aset.
+ *
+ * Memeriksa apakah file-file di direktori `public/` masih utuh dan
+ * tidak ada file yang hilang atau korup setelah build/deployment.
+ *
+ * @module scripts/maintenance/verify-integrity
+ */
 import fs from 'fs';
 import path from 'path';
 

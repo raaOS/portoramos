@@ -1,3 +1,11 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION MAP (ExplorerWindow/index.tsx — 666 lines)
+// L1-29:    Imports, types
+// L30-311:  ExplorerWindow component — state, tree loading, navigation
+// L312-400: handleNodeClick, handleNodeDoubleClick — gesture detection
+// L401-500: QuickLook modal (PDF viewer, Markdown renderer)
+// L501-666: JSX render — sidebar tree, content grid, breadcrumbs
+// ═══════════════════════════════════════════════════════════════════
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';

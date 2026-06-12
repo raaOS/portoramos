@@ -1,3 +1,11 @@
+/**
+ * Magic Caption ID Generator — Generator caption berbahasa Indonesia.
+ *
+ * Menghasilkan caption kreatif dalam Bahasa Indonesia untuk proyek
+ * menggunakan Gemini API berdasarkan metadata yang tersimpan.
+ *
+ * @module scripts/generators/magic-caption-id
+ */
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
 const fs = require('fs');

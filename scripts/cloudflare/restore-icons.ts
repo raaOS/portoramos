@@ -1,3 +1,7 @@
+/**
+ * Restore Icons — Pulihkan konfigurasi ikon skill di D1 dari backup.
+ * @module scripts/cloudflare/restore-icons
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';

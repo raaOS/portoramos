@@ -1,3 +1,11 @@
+/**
+ * Admin Loading — Komponen loading state untuk halaman admin.
+ *
+ * Menampilkan spinner dengan pesan opsional saat data admin sedang
+ * dimuat dari database atau API.
+ *
+ * @module components/admin/AdminLoading
+ */
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 

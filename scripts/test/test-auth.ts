@@ -1,11 +1,19 @@
+/**
+ * Test Auth — Integration test untuk alur otentikasi admin.
+ *
+ * Menguji endpoint login, check-auth, dan logout terhadap dev
+ * server lokal untuk memverifikasi alur JWT berfungsi dengan benar.
+ *
+ * @module scripts/test/test-auth
+ */
 import { config } from 'dotenv';
 import { resolve } from 'path';
 
 // Load environment variables before anything else
 config({ path: resolve(process.cwd(), '.env.local') });
 
-import { verifyAdminPassword } from '@/lib/auth';
-import { db } from '@/lib/database';
+import { verifyAdminPassword } from '../../src/lib/auth';
+import { db } from '../../src/lib/database';
 
 async function testPasswordLogic() {
   console.log('--- STARTING PASSWORD LOGIC TEST ---\n');
@@ -23,7 +31,7 @@ async function testPasswordLogic() {
     // 2. Set DB Password
     console.log('\n[Test 2] Setting DB password...');
     // We mock a hash for 'DatabasePassword123'
-    const { hashPasswordScrypt } = await import('@/lib/auth');
+    const { hashPasswordScrypt } = await import('../../src/lib/auth');
     const salt = process.env.PASSWORD_SALT!;
     const dbHash = hashPasswordScrypt('DatabasePassword123', salt);
     await db.ref('settings/adminPassword').set(dbHash);

@@ -8,6 +8,12 @@ import type { ElementType } from '../context/UnifiedZIndexContext';
 const getInitialNotes = (): NoteData[] => {
   // Generate timestamp and position only on client to prevent hydration mismatch
   const isClient = typeof window !== 'undefined';
+  const width = 320;
+  const height = 380;
+  const vp = getViewport();
+  const x = isClient ? Math.max(20, vp.width - width - 60) : 1060;
+  const y = isClient ? 100 : 100;
+
   return [
     {
       id: 'welcome-note',
@@ -16,11 +22,16 @@ const getInitialNotes = (): NoteData[] => {
       color: '#fef08a',
       isStarred: true,
       isDeleted: false,
-      // BUG FIX #5: Safe window access dengan fallback yang lebih reasonable
-      x: isClient ? Math.max(50, (window.innerWidth - 300) / 2) : 100,
-      y: isClient ? Math.max(50, (window.innerHeight - 350) / 2) : 100,
-      width: 300,
-      height: 350,
+      x,
+      y,
+      width,
+      height,
+      xPct: (x / vp.width) * 100,
+      yPct: (y / vp.height) * 100,
+      widthPct: (width / vp.width) * 100,
+      heightPct: (height / vp.height) * 100,
+      refScreenWidth: vp.width,
+      refScreenHeight: vp.height,
       zIndex: 100,
       isPinned: false,
     },

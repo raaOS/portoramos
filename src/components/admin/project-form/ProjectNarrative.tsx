@@ -1,3 +1,11 @@
+/**
+ * Project Narrative — Form narasi dan cerita di balik proyek.
+ *
+ * Menangani input deskripsi panjang, cerita proses, dan tantangan
+ * yang dihadapi selama pengerjaan proyek.
+ *
+ * @module components/admin/project-form/ProjectNarrative
+ */
 import { ProjectFormData } from '@/hooks/useProjectForm';
 
 interface ProjectNarrativeProps {

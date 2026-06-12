@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { Search, Wifi, LogOut } from 'lucide-react';
+import { Search, Wifi, LogOut, Users } from 'lucide-react';
 import { useOSSystem } from '../context/OSSystemContext';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 import { useReducedMotion } from 'motion/react';
+import { useTransitionRouter } from 'next-view-transitions';
+import IOSPinModal from '@/components/shared/IOSPinModal';
+import logoAnimationData from '../../../../public/lottie/mata.json';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
@@ -31,9 +34,12 @@ export default function MenuBar({
   onLogout,
   onToggleControlCenter,
 }: MenuBarProps) {
-  const { showCalendar, setShowCalendar } = useOSSystem();
+  const { showCalendar, setShowCalendar, showGhostCursors, toggleGhostCursors } = useOSSystem();
+  const [viewMenuOpen, setViewMenuOpen] = useState(false);
+  const viewMenuRef = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(new Date());
-  const [logoAnimationData, setLogoAnimationData] = useState<unknown>(null);
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const router = useTransitionRouter();
 
   const prefersReducedMotion = useReducedMotion();
   const lottieRef = useRef<any>(null);
@@ -65,26 +71,15 @@ export default function MenuBar({
     return () => window.clearTimeout(timer);
   }, []);
 
+  // Close view menu on outside click
   useEffect(() => {
-    const controller = new AbortController();
-
-    const loadLogoAnimation = async () => {
-      try {
-        const response = await fetch('/lottie/mata.json', {
-          signal: controller.signal,
-        });
-        if (!response.ok) return;
-
-        const data = await response.json();
-        setLogoAnimationData(data);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (viewMenuRef.current && !viewMenuRef.current.contains(e.target as Node)) {
+        setViewMenuOpen(false);
       }
     };
-
-    loadLogoAnimation();
-
-    return () => controller.abort();
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Format: "Sen 22 Jan 19:30"
@@ -108,34 +103,21 @@ export default function MenuBar({
       {/* Left Side */}
       <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2 lg:gap-4">
         <div
-          onClick={() => window.open('/admin/login', '_blank')}
+          onClick={() => setIsPinModalOpen(true)}
           className="relative flex h-8 w-12 shrink-0 cursor-pointer items-center justify-center"
           aria-label="Ramos OS"
           role="img"
         >
           <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            {logoAnimationData ? (
-              <Lottie
-                lottieRef={lottieRef}
-                animationData={logoAnimationData}
-                loop={!prefersReducedMotion}
-                autoplay={!prefersReducedMotion}
-                rendererSettings={{ preserveAspectRatio: 'xMidYMid meet' }}
-                style={{ width: 112, height: 112 }}
-                aria-hidden="true"
-              />
-            ) : (
-              <svg
-                width="15"
-                height="18"
-                viewBox="0 0 17 20"
-                fill="black"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <path d="M11.6661 17.6533C10.7495 18.9959 9.68947 19.9572 8.52947 20C7.61613 20 7.18947 19.6826 6.32947 19.6826C5.4628 19.6826 4.9628 19.6826 4.09613 20C3.0028 19.9714 2.05613 18.9959 1.15613 17.1666C-0.650534 13.9166 -0.563868 8.64731 2.76947 6.84865C3.8428 6.27398 4.71613 6.13131 5.5628 6.13131C6.55613 6.13131 7.22947 6.74465 8.16947 6.74465C9.09613 6.74465 9.77613 5.96598 10.9561 6.13131C11.5161 6.17398 13.0695 6.36065 14.1228 7.89398C14.0761 7.94731 12.0361 9.13131 12.0761 11.5313C12.1161 14.3473 14.5428 15.3087 14.5961 15.3487C14.5828 15.394 14.2295 16.642 13.5628 17.6133L11.6661 17.6533ZM11.1361 4.10065C11.5961 3.52598 11.9161 2.75931 11.8228 1.95665C11.0828 2.02865 10.1961 2.45798 9.66947 3.09798C9.17613 3.65798 8.7628 4.45798 8.87613 5.23131C9.69613 5.29531 10.5561 4.79398 11.1361 4.10065Z" />
-              </svg>
-            )}
+            <Lottie
+              lottieRef={lottieRef}
+              animationData={logoAnimationData}
+              loop={!prefersReducedMotion}
+              autoplay={!prefersReducedMotion}
+              rendererSettings={{ preserveAspectRatio: 'xMidYMid meet' }}
+              style={{ width: 96, height: 96 }}
+              aria-hidden="true"
+            />
           </div>
         </div>
         <div
@@ -147,14 +129,54 @@ export default function MenuBar({
         </div>
         {/* Menus (Hidden on mobile for simplicity) */}
         <div className="hidden items-center gap-1 font-medium lg:flex">
-          {['File', 'Edit', 'View', 'Go', 'Window', 'Help'].map((menu) => (
-            <div
-              key={menu}
-              className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3"
-            >
-              {menu}
+          <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
+            File
+          </div>
+          <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
+            Edit
+          </div>
+          <div
+            ref={viewMenuRef}
+            className="relative"
+            onClick={() => setViewMenuOpen(!viewMenuOpen)}
+          >
+            <div className="flex cursor-default items-center gap-1 rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
+              View
+              <span className="text-[10px]">▾</span>
             </div>
-          ))}
+            {viewMenuOpen && (
+              <div className="absolute left-0 top-full z-[1000] mt-1 min-w-[140px] rounded border border-gray-200 bg-white py-1 shadow-lg">
+                <div
+                  className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-black/5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleGhostCursors();
+                  }}
+                >
+                  <Users
+                    size={14}
+                    className={`flex-shrink-0 ${
+                      showGhostCursors ? 'text-emerald-500' : 'text-gray-400'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">Show Ghost Cursors</span>
+                  {showGhostCursors && (
+                    <span className="ml-auto text-[10px] font-bold text-emerald-500">✓</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
+            Go
+          </div>
+          <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
+            Window
+          </div>
+          <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
+            Help
+          </div>
         </div>
       </div>
 
@@ -248,6 +270,11 @@ export default function MenuBar({
           <span>{formattedTime}</span>
         </div>
       </div>
+      <IOSPinModal
+        isOpen={isPinModalOpen}
+        onClose={() => setIsPinModalOpen(false)}
+        onSuccess={() => router.push('/admin/login?redirect=%2Fadmin')}
+      />
     </div>
   );
 }

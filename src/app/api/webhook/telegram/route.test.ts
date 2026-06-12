@@ -206,6 +206,7 @@ describe('POST /api/webhook/telegram', () => {
       once: vi.fn().mockResolvedValue({
         val: () => ({
           status: 'pending',
+          purpose: 'pin',
           requestId: 'request-123',
           expiresAt: Date.now() + 60_000,
         }),
@@ -225,7 +226,7 @@ describe('POST /api/webhook/telegram', () => {
         body: JSON.stringify({
           callback_query: {
             id: 'callback-1',
-            data: 'otp_approve:request-123',
+            data: 'otp_approve:pin:request-123',
             message: {
               message_id: 42,
               chat: { id: 'admin-chat' },
@@ -238,19 +239,27 @@ describe('POST /api/webhook/telegram', () => {
 
     expect(response.status).toBe(200);
     expect(body).toEqual({ ok: true });
+    expect(db.ref).toHaveBeenCalledWith('settings/adminPinOtp');
     expect(hashPasswordScrypt).toHaveBeenCalledWith(expect.stringMatching(/^\d{6}$/), 'test-salt');
     expect(dbRef.set).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 'approved',
+        purpose: 'pin',
         requestId: 'request-123',
         codeHash: 'hashed-otp',
       })
     );
     expect(editMessageText).toHaveBeenCalled();
+    expect(editMessageText).toHaveBeenCalledWith(
+      'admin-chat',
+      42,
+      expect.stringContaining('OTP UBAH PIN DISETUJUI'),
+      'telegram-bot-token'
+    );
     expect(answerCallbackQuery).toHaveBeenCalledWith(
       'callback-1',
       'telegram-bot-token',
-      expect.objectContaining({ text: 'Persetujuan Diterima!' })
+      expect.objectContaining({ text: 'OTP PIN disetujui' })
     );
   });
 

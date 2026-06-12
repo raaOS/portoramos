@@ -1,6 +1,12 @@
 /**
- * Generates viral metrics for a project
+ * Magic Comment Generator
+ * ======================
+ * Menghasilkan komentar Gen-Z dan metrik viral untuk project portofolio.
+ * Data ini bersifat dekoratif — tidak disimpan di database.
+ *
+ * @module magic
  */
+
 export interface CommentReply {
   id?: string;
   text: string;
@@ -36,17 +42,18 @@ interface Vibe {
 }
 
 /**
- * Generates viral metrics for a project
+ * Generates viral metrics for a project.
+ * Likes: 5-45, Shares: 0-5 (randomized).
  */
 export function generateViralMetrics(): ViralMetrics {
   return {
-    likes: Math.floor(Math.random() * 41) + 5, // 5-45
-    shares: Math.floor(Math.random() * 6), // 0-5
+    likes: Math.floor(Math.random() * 41) + 5,
+    shares: Math.floor(Math.random() * 6),
   };
 }
 
 /**
- * Vibe definitions for comments
+ * Vibe definitions — kumpulan template komentar berdasarkan nuansa.
  */
 export const COMMENT_VIBES: Vibe[] = [
   {
@@ -56,25 +63,25 @@ export const COMMENT_VIBES: Vibe[] = [
       'Suka banget sama warnanya ✨',
       'Gokil sih ini 👏',
       'Simple tapi ngena banget.',
-      'Visualnya manja di mata �',
+      'Visualnya manja di mata 👀',
       'Favorit sih ini!',
-      'Kelas abangku �',
+      'Kelas abangku 🤝',
       'Asli keren parah ✨',
-      "Defisini 'Art' sesungguhnya",
+      "Definisi 'Art' sesungguhnya",
       'Estetik parah! 🌈',
     ],
     admin_replies: [
       'Makasih banyak! 🙏',
       'Glad you like it! ✨',
-      'Thank you! �',
+      'Thank you! 🙌',
       'Thanks for the support! 🔥',
     ],
-    user_replies: [], // Usually no replies for short praise
+    user_replies: [],
   },
   {
     type: 'praise_detailed',
     comments: [
-      'Detail teksturnya dapet banget, rapi! �',
+      'Detail teksturnya dapet banget, rapi! 🔥',
       'Komposisi warnanya juara sih ini, adem liatnya.',
       'Transisinya halus banget bang, enak dimata.',
       'Konsepnya out of the box banget, salut! 🧠',
@@ -83,8 +90,8 @@ export const COMMENT_VIBES: Vibe[] = [
     ],
     admin_replies: [
       'Thank you! Emang agak tricky di bagian itu hehe ✨',
-      'Makasih! Butuh waktu lama buat nemu mood yg pas ',
-      'Thanks! Glad you noticed the details �️',
+      'Makasih! Butuh waktu lama buat nemu mood yg pas 🙏',
+      'Thanks! Glad you noticed the details 🙌',
     ],
     user_replies: ['Setuju, mood-nya dapet banget emang.', 'Iya, warnanya itu lho yg bikin beda.'],
   },
@@ -99,7 +106,7 @@ export const COMMENT_VIBES: Vibe[] = [
     ],
     admin_replies: [
       'Pake AE + Photoshop aja kok bang 🙏',
-      'Render lumayan lama, ditinggal tidur semalem haha �',
+      'Render lumayan lama, ditinggal tidur semalem haha 😂',
       'Grading manual di Premiere bang hehe',
     ],
     user_replies: ['Kayaknya pake AE deh ini.', 'Biasanya sih Red Giant bang kalo look gini.'],
@@ -107,9 +114,9 @@ export const COMMENT_VIBES: Vibe[] = [
   {
     type: 'joke_casual',
     comments: [
-      'Info loker bang, mau berguru �',
+      'Info loker bang, mau berguru 🙏',
       'Mundur bang, gantengnya kelewatan (karyanya maksudnya) 🤣',
-      'Ajarin dong puh sepuh �',
+      'Ajarin dong puh sepuh 🙇',
       'Spek PC NASA ya bang? 😂',
       'Ginjal aman bang buat rakit PC ginian? 🤣',
     ],
@@ -118,7 +125,7 @@ export const COMMENT_VIBES: Vibe[] = [
       'PC kentang kok bang, kipasnya aja yg kenceng ✈️',
       'Aman bang, cuma makan mie instan sebulan 😂',
     ],
-    user_replies: ['Wkwk PC NASA valid �', 'Gas puh ajarin kita'],
+    user_replies: ['Wkwk PC NASA valid 🔥', 'Gas puh ajarin kita'],
   },
 ];
 
@@ -133,6 +140,7 @@ const TIMES = [
   '1 hari yang lalu',
   '2 hari yang lalu',
 ];
+
 const NAMES = [
   'Bagas',
   'Dinda',
@@ -160,7 +168,6 @@ const NAMES = [
   'Lala',
   'Eka',
   'Fani',
-  'Gilang',
   'Hana',
   'Indra',
 ];
@@ -170,7 +177,11 @@ function getRandom<T>(arr: T[]): T {
 }
 
 /**
- * Generates a full thread of Gen-Z comments for a project
+ * Generates a full thread of Gen-Z comments for a project.
+ *
+ * @param slug - Project slug untuk unique ID generation
+ * @param count - Jumlah komentar (default: random 0-2)
+ * @returns Array of comments with optional replies
  */
 export function generateGenZComments(slug: string, count?: number): Comment[] {
   const projectComments: Comment[] = [];
@@ -186,9 +197,6 @@ export function generateGenZComments(slug: string, count?: number): Comment[] {
     if (seed > 0.95) commentCount = 0; // Rare: No comments
   }
 
-  // Pick different vibes for variety
-  // Don't just pick one vibe for all comments in a project, mix them up.
-
   for (let i = 0; i < commentCount; i++) {
     const vibe = getRandom(COMMENT_VIBES);
     const text = getRandom(vibe.comments);
@@ -203,7 +211,7 @@ export function generateGenZComments(slug: string, count?: number): Comment[] {
         replies.push({
           id: `r-${slug}-${i}-admin`,
           text: replyText,
-          name: 'Ramos', // Owner name
+          name: 'Ramos',
           time: getRandom(TIMES),
           createdAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
           likes: Math.floor(Math.random() * 20),
@@ -229,7 +237,7 @@ export function generateGenZComments(slug: string, count?: number): Comment[] {
       id: `c-${slug}-${i}-${Date.now()}`,
       text: text,
       name: name,
-      createdAt: new Date(Date.now() - Math.random() * 172800000).toISOString(), // Within last 2 days
+      createdAt: new Date(Date.now() - Math.random() * 172800000).toISOString(),
       likes: Math.floor(Math.random() * 100),
       replies: replies,
       avatar: `https://ui-avatars.com/api/?name=${name}&background=random`,

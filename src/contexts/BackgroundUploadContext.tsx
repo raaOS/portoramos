@@ -1,5 +1,23 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION MAP (BackgroundUploadContext.tsx — 700 lines)
+// L1-104:   Imports, types (BackgroundUploadTask, WallpaperUploadProfile),
+//           context interface, useBackgroundUpload hook
+// L105-146: BackgroundUploadProvider — state, FFmpeg refs, compression chains
+// L147-350: removeTask, enqueueVideoCompression — queue management
+// L351-550: FFmpeg compression pipeline — progress tracking, chain serialization
+// L551-700: Context value, menubar progress integration, provider JSX
+// ═══════════════════════════════════════════════════════════════════
 'use client';
 
+/**
+ * Background Upload Context — State upload wallpaper video ke Cloudflare R2.
+ *
+ * Mengelola antrean kompresi WASM FFmpeg di client-side, progress tracking,
+ * dan direct upload ke R2 via presigned URL. Digunakan oleh admin panel
+ * untuk upload wallpaper video besar (bypass batas 4.5MB Vercel).
+ *
+ * @module BackgroundUploadContext
+ */
 import React, {
   createContext,
   useContext,

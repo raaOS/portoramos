@@ -1,4 +1,12 @@
 #!/usr/bin/env node
+/**
+ * Set Webhook (Telegram) — Atur webhook Telegram ke URL produksi.
+ *
+ * Mengkonfigurasi webhook Telegram bot ke URL serverless yang sudah
+ * di-deploy, mendukung satu atau kedua bot sekaligus.
+ *
+ * @module scripts/telegram/set-webhook
+ */
 // Point Telegram webhooks at the deployed app for one or both bots.
 //
 // Reads the public base URL from (in order):

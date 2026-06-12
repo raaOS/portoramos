@@ -1,3 +1,12 @@
+/**
+ * CRUD API Test — Integration test untuk endpoint CRUD utama.
+ *
+ * Menguji endpoint CRUD (projects, experience, testimonials, dll.)
+ * terhadap dev server lokal untuk memverifikasi operasi database.
+ *
+ * @module scripts/test/test-crud-api
+ */
+// @ts-expect-error — node-fetch types may not be installed; this is a manual test script
 import fetch from 'node-fetch';
 
 const BASE_URL = 'http://localhost:3000';
@@ -12,7 +21,9 @@ async function runTests() {
   const csrfHeaderToken = csrfData.csrfToken;
 
   const csrfSetCookie = csrfRes.headers.raw()['set-cookie'];
-  const csrfCookieStr = csrfSetCookie ? csrfSetCookie.map((c) => c.split(';')[0]).join('; ') : '';
+  const csrfCookieStr = csrfSetCookie
+    ? csrfSetCookie.map((c: string) => c.split(';')[0]).join('; ')
+    : '';
 
   // 1. Login
   console.log('\n[1] Logging in...');
@@ -33,7 +44,7 @@ async function runTests() {
   }
 
   const setCookieHeader = loginRes.headers.raw()['set-cookie'];
-  const adminCookieStr = setCookieHeader.map((c) => c.split(';')[0]).join('; ');
+  const adminCookieStr = setCookieHeader.map((c: string) => c.split(';')[0]).join('; ');
   const allCookies = `${csrfCookieStr}; ${adminCookieStr}`;
 
   console.log('Login successful. Cookies grabbed.');

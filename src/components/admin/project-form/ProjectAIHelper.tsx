@@ -1,3 +1,11 @@
+/**
+ * Project AI Helper — Asisten AI untuk mengisi data proyek.
+ *
+ * Menggunakan Gemini API untuk menghasilkan deskripsi, caption, dan
+ * komentar AI secara otomatis berdasarkan metadata proyek.
+ *
+ * @module components/admin/project-form/ProjectAIHelper
+ */
 import { useState } from 'react';
 import { Sparkles, Loader2, Wand2 } from 'lucide-react';
 import { Comment } from '@/lib/magic';

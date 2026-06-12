@@ -1,3 +1,11 @@
+/**
+ * Refine Gen-Z Comments — Penyempurnaan komentar bergaya Gen-Z.
+ *
+ * Memproses dan memperhalus komentar yang dihasilkan AI agar terdengar
+ * lebih natural dan sesuai dengan gaya bahasa Gen-Z Indonesia.
+ *
+ * @module scripts/generators/refine-gen-z-comments
+ */
 const fs = require('fs');
 const path = require('path');
 

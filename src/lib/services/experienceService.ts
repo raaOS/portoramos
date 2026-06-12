@@ -1,3 +1,11 @@
+/**
+ * Experience Service — CRUD data pengalaman kerja.
+ *
+ * Instansiasi ContentService untuk domain experience dengan fallback JSON.
+ * Digunakan oleh halaman CV dan admin panel.
+ *
+ * @module experienceService
+ */
 import { ContentService } from './contentService';
 import { ExperienceData, WorkExperience } from '@/types/experience';
 

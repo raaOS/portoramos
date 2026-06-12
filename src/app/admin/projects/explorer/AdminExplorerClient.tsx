@@ -1,3 +1,13 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION MAP (AdminExplorerClient.tsx — 881 lines)
+// L1-48:    Imports, UploadResult type
+// L49-93:   State declarations (history, nodes, search, upload, move dialog)
+// L94-189:  fetchNodes — tree loading + breadcrumb path computation
+// L190-267: handleCreateFolder, handleDeleteNode — CRUD mutations
+// L268-370: handleRenameNode, handleOpenMoveDialog, handleSubmitMove
+// L371-613: handleUploadFile, handleFileChange — FFmpeg compression + R2 upload
+// L614-881: JSX render — header, breadcrumb, grid, action sheet, move dialog
+// ═══════════════════════════════════════════════════════════════════
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';

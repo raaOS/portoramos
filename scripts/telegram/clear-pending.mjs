@@ -1,4 +1,12 @@
 #!/usr/bin/env node
+/**
+ * Clear Pending — Hapus antrean update tertunda di Telegram.
+ *
+ * Membuang semua pending updates dari queue Telegram tanpa mengubah
+ * konfigurasi webhook, menggunakan deleteWebhook+setWebhook round-trip.
+ *
+ * @module scripts/telegram/clear-pending
+ */
 // Drop pending updates from Telegram's queue without touching the webhook
 // configuration. Implemented as a deleteWebhook+setWebhook round-trip when a
 // webhook is set, so the bot keeps responding afterwards.

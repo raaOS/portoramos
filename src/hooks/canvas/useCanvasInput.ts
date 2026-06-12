@@ -1,6 +1,30 @@
 import { useCallback, useEffect, useRef, type MutableRefObject, type RefObject } from 'react';
 import type { Point3D } from '@/components/canvas/infiniteCanvasEngine';
 
+/**
+ * Canvas Input Hook — Menangani pan, zoom, dan pinch pada infinite canvas.
+ *
+ * Menerjemahkan input mouse (drag, scroll) dan touch (drag, pinch-zoom)
+ * menjadi perubahan posisi kamera 3D. Velocity smoothing diterapkan
+ * menggunakan exponential moving average untuk mengurangi jitter.
+ *
+ * Input tuning constants (sensitivitas, multiplier, smooth factor)
+ * dapat disesuaikan di bagian atas file ini.
+ *
+ * @module useCanvasInput
+ *
+ * @example
+ * ```ts
+ * useCanvasInput({
+ *   containerRef,
+ *   targetCameraRef,
+ *   velocityRef,
+ *   scrollDeltaRef,
+ *   isDraggingRef,
+ * });
+ * ```
+ */
+
 type UseCanvasInputProps = {
   containerRef: RefObject<HTMLElement | null>;
   targetCameraRef: MutableRefObject<Point3D>;

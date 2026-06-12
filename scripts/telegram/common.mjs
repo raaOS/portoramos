@@ -1,3 +1,11 @@
+/**
+ * Telegram Common — Shared helpers untuk CLI scripts Telegram.
+ *
+ * Menyediakan helper bersama untuk script telegram: load env, expose
+ * token bot utama (@WebPortofolioBot) dan bot job hunter.
+ *
+ * @module scripts/telegram/common
+ */
 // Shared helpers for telegram CLI scripts.
 // Loads .env.local then .env (Next.js convention) and exposes the two bot
 // tokens this project uses: the main "@WebPortofolioBot" and the job hunter

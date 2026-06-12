@@ -1,0 +1,3 @@
+- **Dev Environment Bootstrap**: Run `node scripts/core/dev.js` (or `npm run dev`) to start the full local environment, which automatically manages Telegram webhook states using a D1-backed lease system to prevent conflicts with production.
+- **System Audit**: Execute `npm run audit` (mapped to `scripts/maintenance/audit.ts`) to perform a comprehensive check of environment variables, D1/R2 connectivity, TypeScript types, and ESLint rules.
+- **Performance Workflow**: Run `node scripts/performance/workflow.js` to execute a chained sequence of linting, critical CSS generation, config optimization, building, and bundle analysis.

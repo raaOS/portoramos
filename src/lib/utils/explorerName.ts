@@ -1,3 +1,7 @@
+/**
+ * Explorer Name — Utility untuk ekstraksi dan normalisasi nama explorer node.
+ * @module lib/utils/explorerName
+ */
 import type { AnyExplorerNode, ExplorerFile } from '@/types/explorer';
 
 function cleanLabel(value?: string | null) {

@@ -1,3 +1,11 @@
+/**
+ * Compress Images — Kompresi batch gambar menggunakan FFmpeg/sharp.
+ *
+ * Mengompresi file gambar di direktori target untuk mengoptimalkan
+ * ukuran aset tanpa mengorbankan kualitas visual secara signifikan.
+ *
+ * @module scripts/utils/compress-images
+ */
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegInstaller = require('ffmpeg-static');
 const path = require('path');

@@ -1,3 +1,4 @@
+/** Type definitions untuk event page (showcase interaktif). @module */
 import type { ExplorerFile } from './explorer';
 
 export type EventPageStatus = 'draft' | 'published';

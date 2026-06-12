@@ -1,3 +1,11 @@
+/**
+ * Generate Icons — Generator ikon PWA dari aset sumber.
+ *
+ * Membuat ikon PWA dalam berbagai ukuran yang diperlukan untuk
+ * manifest.json dan tampilan di berbagai platform.
+ *
+ * @module scripts/media/generate-icons
+ */
 const fs = require('fs');
 const path = require('path');
 

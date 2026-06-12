@@ -1,3 +1,11 @@
+/**
+ * Project Card Skeleton — Placeholder animasi untuk kartu proyek.
+ *
+ * Menampilkan skeleton loading animation yang menyerupai layout kartu
+ * proyek saat data sedang dimuat dari database.
+ *
+ * @module components/admin/ProjectCardSkeleton
+ */
 import React from 'react';
 
 export default function ProjectCardSkeleton() {

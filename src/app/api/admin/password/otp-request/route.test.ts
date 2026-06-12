@@ -136,13 +136,27 @@ describe('POST /api/admin/password/otp-request', () => {
     expect(body.success).toBe(true);
     expect(body.message).toContain('berhasil dikirim ke Telegram');
 
+    expect(dbRefMock).toHaveBeenCalledWith('settings/adminPasswordOtp');
     expect(dbSetMock).toHaveBeenCalledTimes(1);
     const otpPayload = dbSetMock.mock.calls[0][0];
     expect(otpPayload.status).toBe('pending');
+    expect(otpPayload.purpose).toBe('password');
     expect(otpPayload.requestId).toBeDefined();
     expect(otpPayload.expiresAt).toBeGreaterThan(Date.now());
 
     expect(sendSecurityAlertMock).toHaveBeenCalledTimes(1);
+    expect(sendSecurityAlertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: expect.stringContaining('UBAH SANDI'),
+        buttons: expect.arrayContaining([
+          [
+            expect.objectContaining({
+              callback_data: expect.stringMatching(/^otp_approve:password:/),
+            }),
+          ],
+        ]),
+      })
+    );
     expect(logAdminActivityMock).toHaveBeenCalledTimes(1);
   });
 

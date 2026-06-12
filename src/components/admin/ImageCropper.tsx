@@ -1,3 +1,11 @@
+/**
+ * Image Cropper — Komponen crop gambar dengan react-easy-crop.
+ *
+ * Menyediakan UI interaktif untuk memotong gambar sebelum diupload,
+ * mendukung aspect ratio dan zoom yang dapat disesuaikan.
+ *
+ * @module components/admin/ImageCropper
+ */
 import React, { useState, useCallback } from 'react';
 import Cropper, { Area } from 'react-easy-crop';
 import getCroppedImg from '@/utils/cropImage';

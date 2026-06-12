@@ -1,3 +1,11 @@
+/**
+ * Auto Recover — Pemulihan otomatis dari kegagalan build/cache.
+ *
+ * Mendeteksi dan memperbaiki masalah cache build Next.js secara
+ * otomatis, termasuk penghapusan cache korup dan restart dev server.
+ *
+ * @module scripts/maintenance/auto-recover
+ */
 import fs from 'fs';
 import path from 'path';
 import https from 'https';

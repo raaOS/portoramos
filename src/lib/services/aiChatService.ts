@@ -1,3 +1,12 @@
+/**
+ * AI Chat Service — Generate balasan otomatis dari Gemini AI untuk chat visitor.
+ *
+ * Menggunakan persona Ramos (bio, skills, pengalaman) sebagai system prompt.
+ * Mendukung fallback ke Groq API jika Gemini gagal atau timeout (30s).
+ * Filter vulgar/SARA diterapkan sebelum response dikembalikan.
+ *
+ * @module aiChatService
+ */
 import { geminiModel } from '@/lib/gemini';
 import aboutData from '@/data/about.json';
 import hardSkillsData from '@/data/hardSkills.json';
@@ -85,7 +94,14 @@ export const aiChatService = {
         `;
 
     try {
-      const result = await geminiModel.generateContent(prompt);
+      const AI_TIMEOUT_MS = 30_000;
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`Gemini timeout after ${AI_TIMEOUT_MS}ms`)),
+          AI_TIMEOUT_MS
+        )
+      );
+      const result = await Promise.race([geminiModel.generateContent(prompt), timeoutPromise]);
       const response = await result.response;
       let aiText = response.text().trim();
       if (containsVulgarOrSARA(aiText)) {

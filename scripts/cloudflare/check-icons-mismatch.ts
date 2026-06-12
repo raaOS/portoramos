@@ -1,3 +1,7 @@
+/**
+ * Check Icons Mismatch — Deteksi inkonsistensi ikon skill antara D1 dan data lokal.
+ * @module scripts/cloudflare/check-icons-mismatch
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 

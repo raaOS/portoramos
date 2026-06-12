@@ -189,6 +189,11 @@ async function logoutWithSharedState() {
  * unmount → cleanup terjadwal → mount baru tetap nge-publish `isLoading: true`
  * lalu re-fetch /api/admin/check-auth, bikin flicker spinner di tiap navigasi
  * antar menu CRUD.
+ *
+ * @example
+ * ```tsx
+ * const { isAdmin, csrfToken, isLoading, logout, refreshAuth } = useAdminAuth();
+ * ```
  */
 export function useAdminAuth() {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);

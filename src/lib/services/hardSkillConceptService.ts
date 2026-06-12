@@ -1,3 +1,8 @@
+/**
+ * Hard Skill Concept Service — CRUD data konsep detail tiap hard skill.
+ *
+ * @module hardSkillConceptService
+ */
 import { ContentService } from './contentService';
 import { HardSkillConcept, HardSkillConceptsData } from '@/types/hardSkillConcept';
 import { FALLBACK_HARD_SKILL_CONCEPTS } from '@/data/fallback-content';

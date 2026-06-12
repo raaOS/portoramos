@@ -1,3 +1,11 @@
+/**
+ * Fix Audio Assets — Perbaikan dan normalisasi file audio.
+ *
+ * Mengonversi dan memperbaiki file audio di `public/sounds/` agar
+ * kompatibel dengan Web Audio API dan format yang didukung browser.
+ *
+ * @module scripts/utils/fix-audio-assets
+ */
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');

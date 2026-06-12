@@ -1,3 +1,4 @@
+/** Type definitions untuk data testimonial dan chat history. @module */
 export interface ChatHistoryMessage {
   id: number;
   text: string;

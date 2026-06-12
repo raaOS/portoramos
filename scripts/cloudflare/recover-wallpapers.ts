@@ -1,3 +1,7 @@
+/**
+ * Recover Wallpapers — Pemulihan data wallpaper di D1 dari R2.
+ * @module scripts/cloudflare/recover-wallpapers
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 

@@ -1,3 +1,12 @@
+/**
+ * Database — Unified database abstraction layer.
+ *
+ * Menyediakan singleton `db` yang merujuk ke backend Cloudflare D1.
+ * Mendukung API `db.ref(path)` untuk path-based CRUD operations.
+ * Hanya berjalan di server (`import 'server-only'`).
+ *
+ * @module database
+ */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import 'server-only';
 import {

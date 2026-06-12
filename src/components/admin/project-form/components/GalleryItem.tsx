@@ -1,4 +1,8 @@
 'use client';
+/**
+ * Gallery Item — Komponen single item gallery dengan preview dan hapus.
+ * @module components/admin/project-form/components/GalleryItem
+ */
 import React from 'react';
 import { X } from 'lucide-react';
 import { GalleryItem as GalleryItemType } from '@/types/projects';

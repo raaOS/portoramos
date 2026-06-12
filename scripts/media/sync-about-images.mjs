@@ -1,3 +1,11 @@
+/**
+ * Sync About Images — Sinkronisasi gambar about dengan data projects.
+ *
+ * Memastikan referensi gambar di about.json konsisten dengan gambar
+ * yang ada di projects.json dan file lokal.
+ *
+ * @module scripts/media/sync-about-images
+ */
 import fs from 'fs';
 import path from 'path';
 

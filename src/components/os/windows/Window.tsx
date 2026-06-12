@@ -1,3 +1,12 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION MAP (Window.tsx — 798 lines)
+// L1-124:   Imports, types, constants (zIndex, animation variants)
+// L125-158: Utility functions: hasDirectReadableText, isPointerOnScrollableGutter,
+//           isSelectableTextTarget
+// L159-234: shouldStartWindowBodyDrag — drag detection logic
+// L235-798: OSWindow (export default) — useWindowDrag, useWindowResize,
+//           z-index focus, AnimatePresence minimize/maximize, title bar
+// ═══════════════════════════════════════════════════════════════════
 'use client';
 
 import React, { useRef, useEffect, useMemo, useState, useCallback } from 'react';
@@ -261,6 +270,9 @@ export default function OSWindow({
 }: WindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const [isSnapped, setIsSnapped] = useState<'left' | 'right' | false>(false);
+  const [dragSnapPreview, setDragSnapPreview] = useState<'left' | 'right' | 'maximize' | null>(
+    null
+  );
   const preSnapFrameRef = useRef<{ x: number; y: number; width: number; height: number } | null>(
     null
   );
@@ -312,8 +324,6 @@ export default function OSWindow({
   const dragControls = useDragControls();
 
   const handleMaximize = useCallback(() => {
-    setIsSnapped(false);
-    preSnapFrameRef.current = null;
     onMaximize?.();
   }, [onMaximize]);
 
@@ -325,6 +335,9 @@ export default function OSWindow({
     onResizeEnd,
   });
 
+  const measuredWidth = dynamicSize.width || width || winWidth;
+  const measuredHeight = dynamicSize.height || height || 600;
+
   const handleWrappedResizeStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent | React.PointerEvent, direction: 'e' | 's' | 'se') => {
       setIsSnapped(false);
@@ -332,6 +345,52 @@ export default function OSWindow({
       handleResizeStart(e, direction);
     },
     [handleResizeStart]
+  );
+
+  const handleSnap = useCallback(
+    (layout: 'left' | 'right' | 'maximize') => {
+      if (layout === 'maximize') {
+        handleMaximize();
+        return;
+      }
+
+      const vpW = viewportWidth;
+      const vpH = viewportHeight;
+      const snapW = Math.floor(vpW / 2);
+      const snapH = vpH - 46;
+
+      if (!isSnapped) {
+        preSnapFrameRef.current = {
+          x: initialPosition.x,
+          y: initialPosition.y,
+          width: measuredWidth,
+          height: measuredHeight,
+        };
+      }
+
+      if (isMaximized) {
+        onMaximize?.();
+      }
+
+      setIsSnapped(layout);
+      onUpdatePosition?.(layout === 'left' ? 0 : Math.floor(vpW / 2), 36);
+      onResize?.(snapW, snapH);
+      onResizeEnd?.(snapW, snapH);
+    },
+    [
+      isSnapped,
+      viewportWidth,
+      viewportHeight,
+      initialPosition,
+      measuredWidth,
+      measuredHeight,
+      onUpdatePosition,
+      onResize,
+      onResizeEnd,
+      handleMaximize,
+      isMaximized,
+      onMaximize,
+    ]
   );
 
   // ── Jelly drag setup ──
@@ -392,9 +451,6 @@ export default function OSWindow({
       windowRef.current.focus({ preventScroll: true });
     }
   }, [isFocused]);
-
-  const measuredWidth = dynamicSize.width || width || winWidth;
-  const measuredHeight = dynamicSize.height || height || 600;
 
   const normalFrame = useMemo(
     () => ({
@@ -578,220 +634,278 @@ export default function OSWindow({
       } as TargetAndTransition);
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <m.div
-          ref={setRefs}
-          drag={
-            !isMissionControlActive &&
-            !isMaximized &&
-            !isResizing &&
-            (!isPinned || isAdmin) &&
-            !isSmallScreen
-          }
-          dragControls={dragControls}
-          dragListener={false}
-          dragMomentum={false}
-          dragElastic={0}
-          onDragStart={(e, info) => {
-            jellyOnDragStart(e, info);
-          }}
-          onDrag={(e, info) => {
-            jellyOnDrag(e, info);
-
-            // Unsnap if dragging a snapped window
-            if (isSnapped && preSnapFrameRef.current) {
-              const restoredW = preSnapFrameRef.current.width;
-              const restoredH = preSnapFrameRef.current.height;
-
-              // Clear ref synchronously to prevent double execution in subsequent drag frames
-              preSnapFrameRef.current = null;
-              setIsSnapped(false);
-
-              // Find the absolute pointer coordinates when drag started
-              const startX = info.point.x - info.offset.x;
-              const startY = info.point.y - info.offset.y;
-
-              // Center the restored window horizontally under the cursor
-              const newX = startX - restoredW / 2;
-              const newY = startY - 16; // 16px is half of 32px title bar
-
-              onUpdatePosition?.(newX, newY);
-              onResize?.(restoredW, restoredH);
-              onResizeEnd?.(restoredW, restoredH);
-            }
-          }}
-          onDragEnd={(_, info) => {
-            jellyOnDragEnd();
-            if (isMissionControlActive) return;
-            if (!isMaximized && !isMinimized && (!isPinned || isAdmin) && onUpdatePosition) {
-              const newX = initialPosition.x + info.offset.x;
-              const newY = initialPosition.y + info.offset.y;
-
-              // ── Window Snapping ──
-              // Priority: left/right half-snap > top maximize
-              // supaya drag ke pojok gak trigger maximize duluan.
-              const vpW = viewportWidth;
-              const vpH = viewportHeight;
-              const pointerX = info.point.x;
-              const pointerY = info.point.y;
-              const snapMarginX = Math.max(25, vpW * 0.02); // 2% of screen or min 25px
-              const snapMarginY = 38; // Menu bar is 36px, trigger snap within 38px of the top edge
-
-              if (pointerX < snapMarginX) {
-                const snapW = Math.floor(vpW / 2);
-                const snapH = vpH - 46;
-                if (!isSnapped) {
-                  preSnapFrameRef.current = {
-                    x: initialPosition.x,
-                    y: initialPosition.y,
-                    width: measuredWidth,
-                    height: measuredHeight,
-                  };
-                  setIsSnapped('left');
-                }
-                onUpdatePosition?.(0, 36);
-                onResize?.(snapW, snapH);
-                onResizeEnd?.(snapW, snapH);
-                return;
-              }
-
-              if (pointerX > vpW - snapMarginX) {
-                const snapW = Math.floor(vpW / 2);
-                const snapH = vpH - 46;
-                if (!isSnapped) {
-                  preSnapFrameRef.current = {
-                    x: initialPosition.x,
-                    y: initialPosition.y,
-                    width: measuredWidth,
-                    height: measuredHeight,
-                  };
-                  setIsSnapped('right');
-                }
-                onUpdatePosition?.(Math.floor(vpW / 2), 36);
-                onResize?.(snapW, snapH);
-                onResizeEnd?.(snapW, snapH);
-                return;
-              }
-
-              if (pointerY < snapMarginY) {
-                handleMaximize();
-                return;
-              }
-
-              onUpdatePosition(newX, newY);
-            }
-          }}
-          transformTemplate={jellyTransformTemplate}
-          initial={
-            hasOrigin
-              ? {
-                  ...entryState,
-                }
-              : {
-                  ...entryState,
-                  width: activeFrame.width,
-                  height: activeFrame.height,
-                }
-          }
-          animate={
-            isMissionControlActive && missionTarget
-              ? {
-                  x: missionTarget.x,
-                  y: missionTarget.y,
-                  scale: missionTarget.scale,
-                  width: missionTarget.width,
-                  height: missionTarget.height,
-                  opacity: 1,
-                  borderRadius: 18,
-                  ...shellStyle,
-                }
-              : isMinimized
-                ? minimizedState
-                : activeState
-          }
-          transition={
-            isResizing
-              ? { duration: 0 }
-              : isMissionControlActive
-                ? standardTransition
-                : isMinimized
-                  ? minimizeTransition
-                  : standardTransition
-          }
-          exit={exitState}
-          layout={false}
-          onPointerDown={(_e) => {
-            if (isMissionControlActive && onMissionControlSelect) {
-              onMissionControlSelect();
-            } else {
-              onFocus?.();
-            }
-          }}
-          onKeyDown={isMissionControlActive ? undefined : handleKeyDown}
-          tabIndex={0}
-          aria-modal="true"
-          role="dialog"
-          aria-label={title}
-          data-window-id={id}
-          data-testid="window-frame"
-          style={{
-            position: 'absolute',
-            zIndex: zIndex,
-            top: 0,
-            left: 0,
-            transformOrigin: '50% 50%',
-            pointerEvents: isMinimized ? 'none' : 'auto',
-            backdropFilter: isMinimized
-              ? 'none'
-              : isSmallScreen
-                ? 'none' // Disable GPU intensive backdrop filter on mobile
-                : isFocused
-                  ? 'blur(24px) saturate(1.2)'
-                  : 'blur(12px) saturate(1)',
-            transition: 'backdrop-filter 0.3s ease',
-          }}
-          data-lenis-prevent
-          className="flex flex-col overflow-hidden rounded-[18px] border border-white/45 outline-none will-change-transform"
-        >
-          {/* Title Bar */}
-          <WindowTitleBar
-            title={title}
-            isMaximized={isMaximized}
-            isPinned={isPinned}
-            isAdmin={isAdmin}
-            onClose={
-              isMissionControlActive && onMissionControlSelect ? onMissionControlSelect : onClose
-            }
-            onMinimize={
-              isMissionControlActive && onMissionControlSelect ? onMissionControlSelect : onMinimize
-            }
-            onMaximize={
-              isMissionControlActive && onMissionControlSelect
-                ? onMissionControlSelect
-                : handleMaximize
-            }
-            onTogglePin={isMissionControlActive ? undefined : onTogglePin}
-            onDragStart={(e) => dragControls.start(e)}
-            onFocus={onFocus}
-          />
-
-          {/* Window Content */}
-          <div
-            data-lenis-prevent
-            onPointerDown={handleWindowBodyPointerDown}
-            style={{ touchAction: 'auto' }}
-            className={`relative w-full flex-1 overflow-hidden bg-white/50 ${noPadding ? '' : 'p-4'}`}
+    <>
+      <AnimatePresence>
+        {isOpen && dragSnapPreview && (
+          <m.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 0.35, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="pointer-events-none fixed rounded-2xl border border-white/50 bg-white/20 shadow-xl backdrop-blur-md transition-all duration-300 ease-out"
+            style={{
+              zIndex: zIndex - 1,
+              left:
+                dragSnapPreview === 'left'
+                  ? 0
+                  : dragSnapPreview === 'right'
+                    ? Math.floor(viewportWidth / 2)
+                    : 10,
+              top: 36,
+              width:
+                dragSnapPreview === 'left' || dragSnapPreview === 'right'
+                  ? Math.floor(viewportWidth / 2)
+                  : viewportWidth - 20,
+              height: viewportHeight - 46,
+            }}
           >
-            {children}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="rounded-full bg-black/40 px-3 py-1.5 text-xs font-medium tracking-wide text-white/95 backdrop-blur-sm">
+                Lepas untuk membagi layar
+              </span>
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
 
-            {/* Safe Zone for Resize Overlays (Only if not maximized and resizable) */}
-            {!isMissionControlActive && !isMaximized && !isSmallScreen && onResize && (
-              <WindowResizeHandles onResizeStart={handleWrappedResizeStart} />
-            )}
-          </div>
-        </m.div>
-      )}
-    </AnimatePresence>
+      <AnimatePresence>
+        {isOpen && (
+          <m.div
+            ref={setRefs}
+            drag={
+              !isMissionControlActive &&
+              !isMaximized &&
+              !isResizing &&
+              (!isPinned || isAdmin) &&
+              !isSmallScreen
+            }
+            dragControls={dragControls}
+            dragListener={false}
+            dragMomentum={false}
+            dragElastic={0}
+            onDragStart={(e, info) => {
+              jellyOnDragStart(e, info);
+            }}
+            onDrag={(e, info) => {
+              jellyOnDrag(e, info);
+
+              // Unsnap if dragging a snapped window
+              if (isSnapped && preSnapFrameRef.current) {
+                const restoredW = preSnapFrameRef.current.width;
+                const restoredH = preSnapFrameRef.current.height;
+
+                // Clear ref synchronously to prevent double execution in subsequent drag frames
+                preSnapFrameRef.current = null;
+                setIsSnapped(false);
+
+                // Find the absolute pointer coordinates when drag started
+                const startX = info.point.x - info.offset.x;
+                const startY = info.point.y - info.offset.y;
+
+                // Center the restored window horizontally under the cursor
+                const newX = startX - restoredW / 2;
+                const newY = startY - 16; // 16px is half of 32px title bar
+
+                onUpdatePosition?.(newX, newY);
+                onResize?.(restoredW, restoredH);
+                onResizeEnd?.(restoredW, restoredH);
+              }
+
+              // Live preview silhouette calculation
+              if (!isMaximized && (!isPinned || isAdmin) && !isSmallScreen) {
+                const vpW = viewportWidth;
+                const pointerX = info.point.x;
+                const pointerY = info.point.y;
+                const snapMarginX = Math.max(25, vpW * 0.02);
+                const snapMarginY = 38;
+
+                if (pointerX < snapMarginX) {
+                  setDragSnapPreview('left');
+                } else if (pointerX > vpW - snapMarginX) {
+                  setDragSnapPreview('right');
+                } else if (pointerY < snapMarginY) {
+                  setDragSnapPreview('maximize');
+                } else {
+                  setDragSnapPreview(null);
+                }
+              }
+            }}
+            onDragEnd={(_, info) => {
+              jellyOnDragEnd();
+              setDragSnapPreview(null);
+              if (isMissionControlActive) return;
+              if (!isMaximized && !isMinimized && (!isPinned || isAdmin) && onUpdatePosition) {
+                const newX = initialPosition.x + info.offset.x;
+                const newY = initialPosition.y + info.offset.y;
+
+                // ── Window Snapping ──
+                // Priority: left/right half-snap > top maximize
+                // supaya drag ke pojok gak trigger maximize duluan.
+                const vpW = viewportWidth;
+                const vpH = viewportHeight;
+                const pointerX = info.point.x;
+                const pointerY = info.point.y;
+                const snapMarginX = Math.max(25, vpW * 0.02); // 2% of screen or min 25px
+                const snapMarginY = 38; // Menu bar is 36px, trigger snap within 38px of the top edge
+
+                if (pointerX < snapMarginX) {
+                  const snapW = Math.floor(vpW / 2);
+                  const snapH = vpH - 46;
+                  if (!isSnapped) {
+                    preSnapFrameRef.current = {
+                      x: initialPosition.x,
+                      y: initialPosition.y,
+                      width: measuredWidth,
+                      height: measuredHeight,
+                    };
+                    setIsSnapped('left');
+                  }
+                  onUpdatePosition?.(0, 36);
+                  onResize?.(snapW, snapH);
+                  onResizeEnd?.(snapW, snapH);
+                  return;
+                }
+
+                if (pointerX > vpW - snapMarginX) {
+                  const snapW = Math.floor(vpW / 2);
+                  const snapH = vpH - 46;
+                  if (!isSnapped) {
+                    preSnapFrameRef.current = {
+                      x: initialPosition.x,
+                      y: initialPosition.y,
+                      width: measuredWidth,
+                      height: measuredHeight,
+                    };
+                    setIsSnapped('right');
+                  }
+                  onUpdatePosition?.(Math.floor(vpW / 2), 36);
+                  onResize?.(snapW, snapH);
+                  onResizeEnd?.(snapW, snapH);
+                  return;
+                }
+
+                if (pointerY < snapMarginY) {
+                  handleMaximize();
+                  return;
+                }
+
+                onUpdatePosition(newX, newY);
+              }
+            }}
+            transformTemplate={jellyTransformTemplate}
+            initial={
+              hasOrigin
+                ? {
+                    ...entryState,
+                  }
+                : {
+                    ...entryState,
+                    width: activeFrame.width,
+                    height: activeFrame.height,
+                  }
+            }
+            animate={
+              isMissionControlActive && missionTarget
+                ? {
+                    x: missionTarget.x,
+                    y: missionTarget.y,
+                    scale: missionTarget.scale,
+                    width: missionTarget.width,
+                    height: missionTarget.height,
+                    opacity: 1,
+                    borderRadius: 18,
+                    ...shellStyle,
+                  }
+                : isMinimized
+                  ? minimizedState
+                  : activeState
+            }
+            transition={
+              isResizing
+                ? { duration: 0 }
+                : isMissionControlActive
+                  ? standardTransition
+                  : isMinimized
+                    ? minimizeTransition
+                    : standardTransition
+            }
+            exit={exitState}
+            layout={false}
+            onPointerDown={(_e) => {
+              if (isMissionControlActive && onMissionControlSelect) {
+                onMissionControlSelect();
+              } else {
+                onFocus?.();
+              }
+            }}
+            onKeyDown={isMissionControlActive ? undefined : handleKeyDown}
+            tabIndex={0}
+            aria-modal="true"
+            role="dialog"
+            aria-label={title}
+            data-window-id={id}
+            data-testid="window-frame"
+            style={{
+              position: 'absolute',
+              zIndex: zIndex,
+              top: 0,
+              left: 0,
+              transformOrigin: '50% 50%',
+              pointerEvents: isMinimized ? 'none' : 'auto',
+              backdropFilter: isMinimized
+                ? 'none'
+                : isSmallScreen
+                  ? 'none' // Disable GPU intensive backdrop filter on mobile
+                  : isFocused
+                    ? 'blur(24px) saturate(1.2)'
+                    : 'blur(12px) saturate(1)',
+              transition: 'backdrop-filter 0.3s ease',
+            }}
+            data-lenis-prevent
+            className="flex flex-col overflow-hidden rounded-[18px] border border-white/45 outline-none will-change-transform"
+          >
+            {/* Title Bar */}
+            <WindowTitleBar
+              title={title}
+              isMaximized={isMaximized}
+              isPinned={isPinned}
+              isAdmin={isAdmin}
+              onClose={
+                isMissionControlActive && onMissionControlSelect ? onMissionControlSelect : onClose
+              }
+              onMinimize={
+                isMissionControlActive && onMissionControlSelect
+                  ? onMissionControlSelect
+                  : onMinimize
+              }
+              onMaximize={
+                isMissionControlActive && onMissionControlSelect
+                  ? onMissionControlSelect
+                  : handleMaximize
+              }
+              onTogglePin={isMissionControlActive ? undefined : onTogglePin}
+              onDragStart={(e) => dragControls.start(e)}
+              onFocus={onFocus}
+              onSnap={handleSnap}
+            />
+
+            {/* Window Content */}
+            <div
+              data-lenis-prevent
+              onPointerDown={handleWindowBodyPointerDown}
+              style={{ touchAction: 'auto' }}
+              className={`relative w-full flex-1 overflow-hidden bg-white/50 ${noPadding ? '' : 'p-4'}`}
+            >
+              {children}
+
+              {/* Safe Zone for Resize Overlays (Only if not maximized and resizable) */}
+              {!isMissionControlActive && !isMaximized && !isSmallScreen && onResize && (
+                <WindowResizeHandles onResizeStart={handleWrappedResizeStart} />
+              )}
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

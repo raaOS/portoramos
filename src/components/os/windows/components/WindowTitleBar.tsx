@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Minus, Plus, Pin, Lock } from 'lucide-react';
-import { m } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { soundManager } from '../../utils/SoundManager';
 
 interface WindowTitleBarProps {
@@ -14,6 +14,7 @@ interface WindowTitleBarProps {
   onTogglePin?: () => void;
   onDragStart: (e: React.PointerEvent<HTMLDivElement>) => void;
   onFocus?: () => void;
+  onSnap?: (layout: 'left' | 'right' | 'maximize') => void;
 }
 
 export function WindowTitleBar({
@@ -27,7 +28,29 @@ export function WindowTitleBar({
   onTogglePin,
   onDragStart,
   onFocus,
+  onSnap,
 }: WindowTitleBarProps) {
+  const [showSnapMenu, setShowSnapMenu] = React.useState(false);
+  const hoverTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowSnapMenu(true);
+    }, 450);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setShowSnapMenu(false);
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
+  }, []);
+
   const buttonTransition = {
     type: 'spring' as const,
     stiffness: 500,
@@ -101,27 +124,97 @@ export function WindowTitleBar({
           </div>
         </m.button>
 
-        {/* Maximize Button (Green) */}
-        <m.button
-          whileTap={{ scale: 0.85 }}
-          transition={buttonTransition}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (onMaximize) onMaximize();
-          }}
-          onPointerDown={handleActionFocus}
-          onDoubleClick={(e) => e.stopPropagation()}
-          className="relative flex h-6 min-h-[24px] w-6 min-w-[24px] items-center justify-center rounded-full p-0 outline-none transition-colors focus:outline-none focus:ring-0 active:outline-none"
-          aria-label="Maximize window"
+        {/* Maximize Button (Green) wrapped with Snap Layout Menu */}
+        <div
+          className="relative flex items-center justify-center"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
-          <div className="relative flex h-3 w-3 items-center justify-center rounded-full border border-[#22AA32] bg-[#28C840] transition-all hover:brightness-95 active:brightness-90">
-            <Plus
-              size={8}
-              className="text-black/60 opacity-0 transition-opacity group-hover:opacity-100"
-              strokeWidth={4}
-            />
-          </div>
-        </m.button>
+          <m.button
+            whileTap={{ scale: 0.85 }}
+            transition={buttonTransition}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onMaximize) onMaximize();
+            }}
+            onPointerDown={handleActionFocus}
+            onDoubleClick={(e) => e.stopPropagation()}
+            className="relative flex h-6 min-h-[24px] w-6 min-w-[24px] items-center justify-center rounded-full p-0 outline-none transition-colors focus:outline-none focus:ring-0 active:outline-none"
+            aria-label="Maximize window"
+          >
+            <div className="relative flex h-3 w-3 items-center justify-center rounded-full border border-[#22AA32] bg-[#28C840] transition-all hover:brightness-95 active:brightness-90">
+              <Plus
+                size={8}
+                className="text-black/60 opacity-0 transition-opacity group-hover:opacity-100"
+                strokeWidth={4}
+              />
+            </div>
+          </m.button>
+
+          <AnimatePresence>
+            {showSnapMenu && (
+              <m.div
+                initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                style={{ zIndex: 99999 }}
+                className="pointer-events-auto absolute left-0 top-6 flex w-36 flex-col gap-1 rounded-xl border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur-md"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="select-none px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                  Tata Letak Snap
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSnap?.('left');
+                    setShowSnapMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1 text-left text-xs font-medium text-gray-700 transition-colors hover:bg-black/5 active:bg-black/10"
+                >
+                  <span className="flex h-3.5 w-5 shrink-0 overflow-hidden rounded border border-gray-400 bg-white">
+                    <span className="w-1/2 border-r border-gray-400 bg-blue-500/40" />
+                    <span className="w-1/2 bg-transparent" />
+                  </span>
+                  Snap Kiri
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSnap?.('right');
+                    setShowSnapMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1 text-left text-xs font-medium text-gray-700 transition-colors hover:bg-black/5 active:bg-black/10"
+                >
+                  <span className="flex h-3.5 w-5 shrink-0 overflow-hidden rounded border border-gray-400 bg-white">
+                    <span className="w-1/2 border-r border-gray-400 bg-transparent" />
+                    <span className="w-1/2 bg-blue-500/40" />
+                  </span>
+                  Snap Kanan
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSnap?.('maximize');
+                    setShowSnapMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1 text-left text-xs font-medium text-gray-700 transition-colors hover:bg-black/5 active:bg-black/10"
+                >
+                  <span className="flex h-3.5 w-5 shrink-0 rounded border border-gray-400 bg-blue-500/40" />
+                  Penuhi Layar
+                </button>
+              </m.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Title Indicator */}

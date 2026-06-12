@@ -383,7 +383,7 @@ export async function sendSecurityAlert(
   }
 
   lines.push(`💻 **Device:** ${params.device}`);
-  
+
   if (params.network) {
     lines.push(`🌐 **Network:** ${params.network}`);
   }

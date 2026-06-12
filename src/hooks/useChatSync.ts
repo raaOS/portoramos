@@ -3,6 +3,18 @@ import { v4 as uuidv4 } from 'uuid';
 import useSWR from 'swr';
 import { soundManager } from '@/components/os/utils/SoundManager';
 
+/**
+ * Chat Sync Hook — Real-time messaging untuk visitor ↔ admin.
+ *
+ * Mengelola state chat (messages, typing indicator, sync error) dengan
+ * polling SWR yang dioptimasi untuk Vercel Hobby Free Tier:
+ * - 8 detik saat tab aktif, 60 detik saat background (~62% penghematan).
+ * - Deduplikasi pesan server-side dengan temp message client-side.
+ * - Notifikasi suara saat pesan admin baru diterima (hanya di tab visible).
+ *
+ * @module useChatSync
+ */
+
 interface ChatMessage {
   id: string;
   text: string;
@@ -16,6 +28,17 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+/**
+ * Hook untuk sinkronisasi chat visitor ↔ admin secara real-time.
+ *
+ * @param initialGreeting - Pesan sapaan awal dari admin (opsional)
+ * @returns Object berisi messages, sendMessage, typing indicator, dan sync error
+ *
+ * @example
+ * ```tsx
+ * const { messages, sendMessage, isSending, isAdminTyping } = useChatSync('Halo!');
+ * ```
+ */
 export function useChatSync(initialGreeting?: string) {
   const [visitorId, setVisitorId] = useState<string>('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);

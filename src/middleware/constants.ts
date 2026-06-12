@@ -1,3 +1,15 @@
+/**
+ * Middleware Constants — Definisi route protegeksi dan route publik.
+ *
+ * `protectedRoutes`: prefix path yang wajib melewati auth check + sliding-window
+ * token refresh di proxy pipeline.
+ *
+ * `publicRoutes`: path yang dikecualikan dari auth check meskipun match prefix
+ * protected (login, logout, check-auth, pin-verify).
+ *
+ * @module middleware/constants
+ */
+
 // Protected routes — proxy menjalankan auth check + sliding-window
 // token refresh untuk request yang match prefix di sini.
 //
@@ -23,6 +35,7 @@ export const publicRoutes = [
   '/api/admin/check-auth',
   '/api/admin/login',
   '/api/admin/logout',
+  '/api/admin/pin/verify',
 ];
 
 // Note: RATE_LIMIT_* previously defined here was removed. Rate limiting is

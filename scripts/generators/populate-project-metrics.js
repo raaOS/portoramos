@@ -1,3 +1,11 @@
+/**
+ * Populate Project Metrics — Generator metrik dummy untuk proyek.
+ *
+ * Mengisi field metrik (views, likes, dll.) pada data proyek dengan
+ * nilai realistis untuk keperluan development dan preview.
+ *
+ * @module scripts/generators/populate-project-metrics
+ */
 const fs = require('fs');
 const path = require('path');
 

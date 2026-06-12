@@ -1,3 +1,14 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION MAP (explorerService.ts — 684 lines)
+// L1-16:    Imports, types (ExplorerDeleteResult)
+// L17-56:   Utility helpers: cloneNodeMap, sleep, runExplorerMutation
+// L57-104:  readExplorerRoot, mutateExplorerNodes — D1 read/write ops
+// L105-140: Path/name utilities: normalizeParentId, sanitizeStorageBase,
+//           storageKeyForName, fileNameFromStorageKey
+// L141-400: CRUD operations: createFolder, createFile, renameNode, moveNode
+// L401-684: deleteNode (atomic D1+R2), copyNode, TOCTOU guards,
+//           virtual tree rebuild on R2 key changes
+// ═══════════════════════════════════════════════════════════════════
 import { compareAndSetD1Value, getD1Value } from '@/lib/cloudflareD1';
 import {
   buildR2PublicUrl,

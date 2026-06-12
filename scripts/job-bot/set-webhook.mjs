@@ -1,3 +1,11 @@
+/**
+ * Set Webhook — Konfigurasi webhook Telegram untuk bot.
+ *
+ * Mengatur URL webhook Telegram agar update dari Telegram API
+ * dikirim langsung ke endpoint serverless produksi.
+ *
+ * @module scripts/job-bot/set-webhook
+ */
 import dotenv from 'dotenv';
 import crypto from 'node:crypto';
 

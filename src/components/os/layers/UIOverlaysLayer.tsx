@@ -97,6 +97,28 @@ export default function UIOverlaysLayer({
   const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
   const { getZIndex } = useUnifiedZIndex();
 
+  const enhancedTestimonialContacts = React.useMemo(() => {
+    const tipContact: ContactProfile = {
+      id: 'system-tip-snapping',
+      name: '💡 Desktop Tip',
+      status: 'Seret jendela ke tepi layar / hover tombol hijau untuk membagi layar!',
+      conversation: [],
+      avatar: '',
+    };
+    return [tipContact, ...(testimonialContacts || [])];
+  }, [testimonialContacts]);
+
+  const handleOpenChat = React.useCallback(
+    (chatId?: string) => {
+      if (chatId === 'system-tip-snapping') {
+        toggleNotesVisibility();
+      } else {
+        navToChat(chatId);
+      }
+    },
+    [navToChat, toggleNotesVisibility]
+  );
+
   const isWindowOpen = (id: string) => windows?.find((w) => w.id === id)?.isOpen ?? false;
   const activeWindows = (windows || []).filter((w) => w.isOpen && !w.isMinimized);
   const topWindow = activeWindows.reduce<(typeof activeWindows)[number] | null>(
@@ -116,8 +138,8 @@ export default function UIOverlaysLayer({
       {!showMissionControl && (
         <DynamicIsland
           isBooting={isBootSequenceActive}
-          onOpenChat={navToChat}
-          customNotifications={testimonialContacts}
+          onOpenChat={handleOpenChat}
+          customNotifications={enhancedTestimonialContacts}
           islandId={ISLAND_ID}
         />
       )}

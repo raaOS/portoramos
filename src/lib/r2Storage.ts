@@ -1,3 +1,12 @@
+/**
+ * R2 Storage — Client SDK untuk Cloudflare R2 (S3-compatible object storage).
+ *
+ * Menyediakan fungsi upload, download, copy, delete, dan presigned URL
+ * untuk interaksi dengan bucket Cloudflare R2. Konfigurasi dibaca dari
+ * environment variables (R2_BUCKET, R2_ACCOUNT_ID, dll).
+ *
+ * @module r2Storage
+ */
 import {
   CopyObjectCommand,
   DeleteObjectCommand,

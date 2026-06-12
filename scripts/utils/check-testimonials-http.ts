@@ -1,3 +1,11 @@
+/**
+ * Check Testimonials HTTP — Quick-test endpoint testimonial lokal.
+ *
+ * Script kecil untuk memverifikasi bahwa endpoint `/api/testimonial`
+ * di dev server merespons dengan benar (HTTP 200).
+ *
+ * @module scripts/utils/check-testimonials-http
+ */
 async function check() {
   try {
     const res = await fetch('http://localhost:3000/api/testimonial');

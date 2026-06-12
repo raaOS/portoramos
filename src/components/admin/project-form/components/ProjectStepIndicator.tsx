@@ -1,3 +1,7 @@
+/**
+ * Project Step Indicator — Indikator langkah aktif pada form proyek.
+ * @module components/admin/project-form/components/ProjectStepIndicator
+ */
 import React from 'react';
 import { Check } from 'lucide-react';
 

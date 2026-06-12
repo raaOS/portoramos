@@ -1,3 +1,7 @@
+/**
+ * Check About — Inspeksi data about yang tersimpan di D1.
+ * @module scripts/cloudflare/check-about
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { getD1Value } from '../../src/lib/cloudflareD1';

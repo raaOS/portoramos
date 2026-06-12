@@ -1,3 +1,14 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION MAP (handler.ts — 714 lines)
+// L1-28:    Imports, config types
+// L29-85:   Interfaces + small helpers: commandOf, argText, getUrl,
+//           isListingUrl, isAllowedChat, shouldHandleThread
+// L86-193:  formatJobCard, splitMessage — Telegram message formatting
+// L194-266: send, sendWithButtons — Telegram API communication
+// L267-632: Inline button handlers, platform scrapers (Glints/Jobstreet),
+//           /scan and /cek command processing, dedup & shortlist logic
+// L633-714: handleJobBotUpdate (export) — main dispatcher for all updates
+// ═══════════════════════════════════════════════════════════════════
 import type { JobSearchResult } from '@/lib/services/jobHuntService';
 import type { JobBotConfig } from './config';
 import { answerJobBotCallback, sendJobBotDocument, sendJobBotMessage } from './sender';

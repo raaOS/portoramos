@@ -1,4 +1,8 @@
 'use client';
+/**
+ * Gallery Group — Komponen grup gallery dengan judul dan item.
+ * @module components/admin/project-form/components/GalleryGroup
+ */
 import React from 'react';
 import { Trash2, Plus, Type } from 'lucide-react';
 import GalleryItem from './GalleryItem';

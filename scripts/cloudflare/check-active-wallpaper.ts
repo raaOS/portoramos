@@ -1,3 +1,7 @@
+/**
+ * Check Active Wallpaper — Inspeksi wallpaper yang sedang aktif.
+ * @module scripts/cloudflare/check-active-wallpaper
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });

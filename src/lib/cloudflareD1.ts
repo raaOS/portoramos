@@ -1,3 +1,14 @@
+/**
+ * Cloudflare D1 — Low-level query helper untuk Cloudflare D1 REST API.
+ *
+ * Menyediakan `queryD1()`, `getD1Value()`, `setD1Value()`, dan `compareAndSetD1Value()`
+ * sebagai utility mentah untuk operasi key-value di D1.
+ *
+ * Catatan: Untuk domain content, gunakan `ContentService` alih-alih fungsi ini
+ * untuk menghindari inkonsistensi data (lihat AGENTS.md §5).
+ *
+ * @module cloudflareD1
+ */
 type D1Param = string | number | boolean | null;
 
 interface D1QueryResponse<T = Record<string, unknown>> {

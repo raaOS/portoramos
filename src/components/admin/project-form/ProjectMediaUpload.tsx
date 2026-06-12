@@ -1,3 +1,11 @@
+/**
+ * Project Media Upload — Upload media cover dan thumbnail proyek.
+ *
+ * Menangani upload gambar cover, thumbnail, dan comparison before/after
+ * untuk setiap proyek, dengan preview dan kemampuan hapus.
+ *
+ * @module components/admin/project-form/ProjectMediaUpload
+ */
 import { ProjectFormData } from '@/hooks/useProjectForm';
 import { Loader2, Trash2, Image as ImageIcon } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';

@@ -1,3 +1,8 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION: Imports & Constants (L1-88)
+// Imports: motion/react, @dnd-kit, next-view-transitions, contexts
+// Constants: LINK_BOUNCE_DELAY_MS, DockProps type
+// ═══════════════════════════════════════════════════════════════════
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
@@ -86,6 +91,11 @@ interface DockItemProps {
   isOpen?: boolean;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// SECTION: DockItem Component (L89-326)
+// Inner component: hover physics (spring scale), bounce animation,
+// popover handling, click/keyboard handlers, navigation with view-transition
+// ═══════════════════════════════════════════════════════════════════
 function DockItem({
   id,
   icon,
@@ -324,6 +334,10 @@ function DockItem({
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// SECTION: SortableDockItem & Sort Helper (L335-395)
+// @dnd-kit sortable wrapper + sortDockItemsWithLocalOrder
+// ═══════════════════════════════════════════════════════════════════
 export interface DockItemData {
   id: string;
   label: string;
@@ -388,6 +402,11 @@ function sortDockItemsWithLocalOrder(rawItems: DockItemData[]): DockItemData[] {
 // and render the full Dock synchronously during view transitions.
 let isClientHydrated = false;
 
+// ═══════════════════════════════════════════════════════════════════
+// SECTION: Main Dock Component (L400-745) — export default
+// DnD context, sensors, drag handlers, glass material, tooltip,
+// sound integration, bounce animation orchestration
+// ═══════════════════════════════════════════════════════════════════
 export default function Dock({ items, bouncingId, isMobile = false, dockConfig }: DockProps) {
   const mouseX = useMotionValue(Infinity);
   const [isMounted, setIsMounted] = useState(isClientHydrated);
@@ -734,6 +753,11 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// SECTION: GlobalDock (L755-880) — named export for non-OS routes
+// Hidden on `/`, active on /projects, /contact, etc.
+// Uses DockPortal to render into GlobalDockSlot
+// ═══════════════════════════════════════════════════════════════════
 /**
  * GlobalDock — Dock untuk route non-OS (mis. /projects, /contact).
  * Pada route OS desktop (`/`) komponen ini disembunyikan; OSDock yang aktif.
@@ -862,6 +886,10 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// SECTION: OSDock (L890-1030) — named export for OS desktop route `/`
+// Window context integration, item config, isOpen state tracking
+// ═══════════════════════════════════════════════════════════════════
 /**
  * OSDock — Dock untuk route OS desktop (`/`).
  *

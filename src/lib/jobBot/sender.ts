@@ -1,3 +1,7 @@
+/**
+ * Job Bot Sender — Utility untuk mengirim pesan Telegram dari Job Hunter Bot.
+ * @module lib/jobBot/sender
+ */
 export async function sendJobBotMessage(
   botToken: string,
   chatId: string,

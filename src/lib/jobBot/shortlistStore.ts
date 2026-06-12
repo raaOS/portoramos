@@ -1,3 +1,7 @@
+/**
+ * Shortlist Store — Penyimpanan data shortlist loker ke file JSON.
+ * @module lib/jobBot/shortlistStore
+ */
 import path from 'node:path';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import type { JobSearchResult } from '@/lib/services/jobHuntService';

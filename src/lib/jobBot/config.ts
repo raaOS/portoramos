@@ -1,3 +1,7 @@
+/**
+ * Job Bot Config — Konfigurasi dan credential untuk Job Hunter Bot.
+ * @module lib/jobBot/config
+ */
 import crypto from 'crypto';
 import { cleanEnvVar } from '@/lib/utils/env';
 

@@ -1,4 +1,12 @@
 'use client';
+/**
+ * Project Gallery Manager — Pengelola gallery per proyek.
+ *
+ * Menangani upload, penghapusan, dan pengelompokan gambar gallery
+ * untuk setiap proyek di form admin, dengan upload direct ke R2.
+ *
+ * @module components/admin/project-form/ProjectGalleryManager
+ */
 
 import React from 'react';
 import { Plus, Image as ImageIcon, FolderPlus } from 'lucide-react';

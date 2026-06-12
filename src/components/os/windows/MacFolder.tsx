@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import { useReducedMotion } from 'motion/react';
+
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
 // Helper to darken hex color
 const darkenColor = (hex: string, percent: number) => {
@@ -56,6 +60,40 @@ const MacFolder = ({
   const [paperOffsets, setPaperOffsets] = useState(
     Array.from({ length: maxItems }, () => ({ x: 0, y: 0 }))
   );
+
+  const [logoAnimationData, setLogoAnimationData] = useState<unknown>(null);
+  const prefersReducedMotion = useReducedMotion();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lottieRef = useRef<any>(null);
+
+  useEffect(() => {
+    const instance = lottieRef.current;
+    return () => {
+      instance?.destroy?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadLogoAnimation = async () => {
+      try {
+        const response = await fetch('/lottie/mata.json', {
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        setLogoAnimationData(data);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+      }
+    };
+
+    loadLogoAnimation();
+
+    return () => controller.abort();
+  }, []);
 
   const folderBackColor = darkenColor(color, 0.08);
   const paper1 = darkenColor('#ffffff', 0.1);
@@ -198,7 +236,26 @@ const MacFolder = ({
                   borderRadius: '5px 10px 10px 10px',
                   ...(isOpen && { transform: 'skew(-15deg) scaleY(0.6)' }),
                 }}
-              ></div>
+              >
+                {/* Lottie Eye on Front Cover - Centered inside the cover flap to inherit 3D skew & scaling */}
+                {!!logoAnimationData && (
+                  <div
+                    className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-300 ease-in-out ${
+                      isOpen ? 'opacity-0' : 'opacity-100'
+                    }`}
+                  >
+                    <Lottie
+                      lottieRef={lottieRef}
+                      animationData={logoAnimationData}
+                      loop={!prefersReducedMotion}
+                      autoplay={!prefersReducedMotion}
+                      rendererSettings={{ preserveAspectRatio: 'xMidYMid meet' }}
+                      style={{ width: 90, height: 90 }}
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

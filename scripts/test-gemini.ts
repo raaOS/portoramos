@@ -1,3 +1,11 @@
+/**
+ * Test Gemini — Quick-test konektivitas Google Generative AI API.
+ *
+ * Script sederhana untuk memverifikasi bahwa API key Gemini valid
+ * dan model dapat menghasilkan respons dengan benar.
+ *
+ * @module scripts/test-gemini
+ */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as dotenv from 'dotenv';
 

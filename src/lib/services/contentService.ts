@@ -1,3 +1,17 @@
+/**
+ * Content Service — Generic CRUD abstraction untuk Cloudflare D1.
+ *
+ * Menyediakan pattern `getData()`/`saveData()` dengan:
+ * - In-memory cache (CacheManager) dengan LRU eviction.
+ * - Fallback ke JSON statis jika D1 tidak tersedia.
+ * - Audit logging otomatis pada setiap write operation.
+ * - Timeout protection untuk mencegah hanging requests.
+ *
+ * Setiap domain (about, experience, testimonial, dll) menginstansiasi
+ * ContentService dengan path dan fallback data masing-masing.
+ *
+ * @module contentService
+ */
 import { db } from '@/lib/database';
 import { CacheManager } from '@/lib/cache/CacheManager';
 import { logActivity } from '@/lib/services/auditLogger';

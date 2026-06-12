@@ -13,10 +13,16 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Baca dari D1
-    const otpSnap = await db.ref('settings/adminOtp').once('value');
+    const otpSnap = await db.ref('settings/adminPasswordOtp').once('value');
     const otpData = otpSnap.val();
 
-    if (!otpData || typeof otpData !== 'object' || !otpData.status || !otpData.expiresAt) {
+    if (
+      !otpData ||
+      typeof otpData !== 'object' ||
+      otpData.purpose !== 'password' ||
+      !otpData.status ||
+      !otpData.expiresAt
+    ) {
       return NextResponse.json({ status: 'expired' });
     }
 
@@ -24,7 +30,7 @@ export async function GET(request: NextRequest) {
     if (Date.now() > otpData.expiresAt) {
       // Jika status 'rejected', biarkan expired juga tapi kita mungkin mau kasih lihat layarnya bentar
       // Tapi karena expired akan mereset form, lebih baik hapus
-      await db.ref('settings/adminOtp').remove();
+      await db.ref('settings/adminPasswordOtp').remove();
       return NextResponse.json({ status: 'expired' });
     }
 

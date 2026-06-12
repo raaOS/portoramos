@@ -1,3 +1,11 @@
+/**
+ * Optimize Assets — Optimasi batch gambar dan video di public/assets.
+ *
+ * Menggunakan sharp untuk konversi gambar ke WebP/AVIF dan FFmpeg
+ * untuk kompresi video agar ukuran aset optimal untuk web delivery.
+ *
+ * @module scripts/media/optimize-assets
+ */
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');

@@ -41,6 +41,7 @@ describe('GET /api/admin/password/otp-status', () => {
     dbOnceFn.mockResolvedValue({ val: () => null });
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);
+    expect(dbRefMock).toHaveBeenCalledWith('settings/adminPasswordOtp');
     const body = await res.json();
     expect(body.status).toBe('expired');
   });
@@ -57,7 +58,7 @@ describe('GET /api/admin/password/otp-status', () => {
   it('returns pending status', async () => {
     validateAdminRequestMock.mockResolvedValue(true);
     dbOnceFn.mockResolvedValue({
-      val: () => ({ status: 'pending', expiresAt: Date.now() + 300000 }),
+      val: () => ({ status: 'pending', purpose: 'password', expiresAt: Date.now() + 300000 }),
     });
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);
@@ -68,7 +69,7 @@ describe('GET /api/admin/password/otp-status', () => {
   it('returns approved status', async () => {
     validateAdminRequestMock.mockResolvedValue(true);
     dbOnceFn.mockResolvedValue({
-      val: () => ({ status: 'approved', expiresAt: Date.now() + 300000 }),
+      val: () => ({ status: 'approved', purpose: 'password', expiresAt: Date.now() + 300000 }),
     });
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);
@@ -79,7 +80,7 @@ describe('GET /api/admin/password/otp-status', () => {
   it('returns rejected status', async () => {
     validateAdminRequestMock.mockResolvedValue(true);
     dbOnceFn.mockResolvedValue({
-      val: () => ({ status: 'rejected', expiresAt: Date.now() + 300000 }),
+      val: () => ({ status: 'rejected', purpose: 'password', expiresAt: Date.now() + 300000 }),
     });
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);
@@ -92,6 +93,7 @@ describe('GET /api/admin/password/otp-status', () => {
     dbOnceFn.mockResolvedValue({
       val: () => ({
         status: 'approved',
+        purpose: 'password',
         expiresAt: Date.now() - 1000,
       }),
     });
@@ -101,6 +103,17 @@ describe('GET /api/admin/password/otp-status', () => {
     const body = await res.json();
     expect(body.status).toBe('expired');
     expect(dbRemoveFn).toHaveBeenCalled();
+  });
+
+  it('returns expired for a PIN OTP session', async () => {
+    validateAdminRequestMock.mockResolvedValue(true);
+    dbOnceFn.mockResolvedValue({
+      val: () => ({ status: 'approved', purpose: 'pin', expiresAt: Date.now() + 300000 }),
+    });
+    const res = await GET(makeRequest());
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe('expired');
   });
 
   it('returns 500 on internal error', async () => {

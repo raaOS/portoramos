@@ -1,4 +1,12 @@
-﻿const fs = require('fs');
+﻿/**
+ * Scratch Dead Audit — Audit file scratch yang tidak terpakai.
+ *
+ * Memindai direktori scratch/, src/, scripts/, dan tests/ untuk
+ * menemukan file yang sudah tidak direferensikan lagi oleh kode lain.
+ *
+ * @module scripts/maintenance/scratch-dead-audit
+ */
+const fs = require('fs');
 const path = require('path');
 
 const root = process.cwd();

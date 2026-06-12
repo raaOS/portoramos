@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: web_app
+title: OS-Style Portfolio & Admin Dashboard
+scope:
+  - src/
+  - public/
+source_files: []
+depends_on: []
+related_to:
+  - path: scripts_and_tooling

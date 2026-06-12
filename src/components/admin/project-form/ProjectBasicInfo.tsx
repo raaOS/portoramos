@@ -1,3 +1,11 @@
+/**
+ * Project Basic Info — Form informasi dasar proyek.
+ *
+ * Menangani input nama, deskripsi, tags, dan metadata dasar proyek
+ * dengan validasi real-time dan autocomplete untuk tag.
+ *
+ * @module components/admin/project-form/ProjectBasicInfo
+ */
 import { useState, useMemo } from 'react';
 import { ProjectFormData } from '@/hooks/useProjectForm';
 import { X, Plus } from 'lucide-react';

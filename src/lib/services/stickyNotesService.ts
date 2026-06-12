@@ -1,9 +1,13 @@
+/**
+ * Sticky Notes Service — CRUD sticky notes di desktop simulator.
+ *
+ * @module stickyNotesService
+ */
 import { ContentService } from './contentService';
 import { NoteData } from '@/components/os/ui/elements/StickyNoteItem';
+import fallbackNotes from '@/data/sticky-notes.json';
 
-const FALLBACK_NOTES: NoteData[] = [];
-
-const service = new ContentService<NoteData[]>('sticky-notes.json', FALLBACK_NOTES);
+const service = new ContentService<NoteData[]>('sticky-notes.json', fallbackNotes as NoteData[]);
 
 function normalizeNote(note: Partial<NoteData> & { id: string }, index: number): NoteData {
   return {

@@ -1,3 +1,11 @@
+/**
+ * Run E2E — Runner interaktif untuk Playwright E2E tests.
+ *
+ * Meminta password admin lalu menjalankan suite E2E Playwright
+ * dengan environment variables yang diperlukan.
+ *
+ * @module scripts/test/run-e2e
+ */
 const { execSync } = require('child_process');
 const readline = require('readline');
 const fs = require('fs');

@@ -1,4 +1,12 @@
 'use client';
+/**
+ * Gallery Manager — Komponen admin untuk mengelola gallery foto.
+ *
+ * Menampilkan grid gambar dengan kemampuan upload, hapus, dan reorder
+ * menggunakan TanStack Query untuk data fetching dan caching.
+ *
+ * @module components/admin/GalleryManager
+ */
 
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';

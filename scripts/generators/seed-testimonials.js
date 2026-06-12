@@ -1,3 +1,11 @@
+/**
+ * Seed Testimonials — Generator data seed testimonial.
+ *
+ * Membuat data testimonial dummy yang realistis untuk keperluan
+ * development dan preview tanpa data production.
+ *
+ * @module scripts/generators/seed-testimonials
+ */
 const fs = require('fs');
 const path = require('path');
 

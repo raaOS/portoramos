@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * Modal Context — Global modal dialog state management.
+ *
+ * Menyediakan API `openModal(content)` / `closeModal()` yang digunakan
+ * oleh komponen di seluruh aplikasi untuk menampilkan dialog modal.
+ *
+ * @module ModalContext
+ */
 import { createContext, useContext, useState, useMemo, ReactNode } from 'react';
 
 interface ModalContextType {

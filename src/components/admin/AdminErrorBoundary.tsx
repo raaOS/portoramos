@@ -1,4 +1,12 @@
 'use client';
+/**
+ * Admin Error Boundary — Error boundary khusus halaman admin.
+ *
+ * Menangkap error React di subtree admin dan menampilkan fallback UI
+ * dengan opsi retry, mencegah crash seluruh dashboard admin.
+ *
+ * @module components/admin/AdminErrorBoundary
+ */
 
 import { Component, ReactNode } from 'react';
 

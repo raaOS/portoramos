@@ -1,3 +1,12 @@
+/**
+ * Event Page Service — CRUD halaman event (portfolio showcase interaktif).
+ *
+ * Mengelola event pages yang dapat berisi aset (gambar/video/markdown),
+ * metadata, dan konfigurasi tampilan. Data disimpan di D1 dengan
+ * referensi file ke R2 melalui explorer service.
+ *
+ * @module eventPageService
+ */
 import { compareAndSetD1Value, getD1Value } from '@/lib/cloudflareD1';
 import { getExplorerFileDisplayName } from '@/lib/utils/explorerName';
 import { explorerService } from '@/lib/services/explorerService';

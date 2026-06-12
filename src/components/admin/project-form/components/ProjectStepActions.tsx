@@ -1,3 +1,7 @@
+/**
+ * Project Step Actions — Tombol navigasi antar langkah form proyek.
+ * @module components/admin/project-form/components/ProjectStepActions
+ */
 import React from 'react';
 import AdminButton from '@/app/admin/components/AdminButton';
 import { Project } from '@/types/projects';

@@ -1,3 +1,13 @@
+// ═══════════════════════════════════════════════════════════════════
+// SECTION MAP (DesktopEnvironment.tsx — 836 lines)
+// L1-77:    Imports, dynamic imports, constants
+// L78-124:  computeMissionTargets() helper
+// L125-159: DesktopEnvironmentProps interface + DesktopEnvironment (export default)
+// L160-237: DesktopEnvironment render: boot sequence, skeleton, providers
+// L238-256: DesktopMainWithLogout wrapper
+// L257-836: DesktopMain — 15 useEffects, window management, visitor session,
+//           layout persistence, keyboard shortcuts, wallpaper transitions
+// ═══════════════════════════════════════════════════════════════════
 'use client';
 
 import React, { startTransition, useCallback, useEffect, useMemo } from 'react';

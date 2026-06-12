@@ -1,3 +1,4 @@
+/** Type definitions untuk virtual file explorer (folders, files, nodes). @module */
 export type NodeType = 'folder' | 'file';
 export type FileKind = 'image' | 'video' | 'audio' | 'pdf' | 'text';
 

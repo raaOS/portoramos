@@ -1,3 +1,7 @@
+/**
+ * List R2 — Daftar semua objek di bucket Cloudflare R2.
+ * @module scripts/cloudflare/list-r2
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { listR2ObjectKeys } from '../../src/lib/r2Storage';

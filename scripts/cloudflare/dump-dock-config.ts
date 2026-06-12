@@ -1,3 +1,7 @@
+/**
+ * Dump Dock Config — Export konfigurasi dock dari D1 ke stdout.
+ * @module scripts/cloudflare/dump-dock-config
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });

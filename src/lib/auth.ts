@@ -1,3 +1,13 @@
+/**
+ * Auth — Utilitas otentikasi admin (JWT, password hashing, CSRF).
+ *
+ * Menyediakan:
+ * - `createAdminToken()` / `verifyAdminToken()` — JWT signing & verification.
+ * - `hashPassword()` / `verifyPassword()` — scrypt hashing dengan timing-safe comparison.
+ * - `validateAdminRequest()` — Validasi cookie auth + CSRF pada API routes.
+ *
+ * @module auth
+ */
 import { NextRequest } from 'next/server';
 import crypto from 'crypto';
 import { sign, verify } from 'jsonwebtoken';

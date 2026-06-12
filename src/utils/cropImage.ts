@@ -1,3 +1,12 @@
+/**
+ * Crop Image — Utility untuk crop gambar menggunakan Canvas API.
+ *
+ * Menyediakan fungsi `createImage()` dan default export `getCroppedImg()`
+ * yang mengintegrasikan koordinat crop dari react-easy-crop ke canvas
+ * untuk menghasilkan Blob gambar yang sudah terpotong.
+ *
+ * @module utils/cropImage
+ */
 export const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();

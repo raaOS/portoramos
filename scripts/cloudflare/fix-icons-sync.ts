@@ -1,3 +1,7 @@
+/**
+ * Fix Icons Sync — Sinkronisasi ulang ikon skill ke database D1.
+ * @module scripts/cloudflare/fix-icons-sync
+ */
 import * as dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });

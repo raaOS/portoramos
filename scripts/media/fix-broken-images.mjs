@@ -1,3 +1,11 @@
+/**
+ * Fix Broken Images — Perbaiki referensi gambar yang rusak di data JSON.
+ *
+ * Memeriksa file gambar yang direferensikan di data JSON dan memperbaiki
+ * path yang tidak valid atau file yang hilang.
+ *
+ * @module scripts/media/fix-broken-images
+ */
 import fs from 'fs';
 import path from 'path';
 import https from 'https';

@@ -114,4 +114,28 @@ describe('POST /api/admin/login', () => {
     expect(body).toEqual({ error: 'Authentication service error' });
     expect(body).not.toHaveProperty('details');
   });
+
+  it('does not accept the 4-digit PIN as an admin password', async () => {
+    checkDataRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
+
+    const response = await POST(
+      new Request('http://localhost/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-csrf-token': 'a'.repeat(64),
+          'x-forwarded-for': '203.0.113.1',
+          'user-agent': 'Mozilla/5.0 Chrome',
+        },
+        body: JSON.stringify({ password: '2101' }),
+      }) as never
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(body).toEqual({ error: 'Invalid password' });
+    expect(verifyAdminPasswordMock).not.toHaveBeenCalled();
+    expect(getAdminTokenMock).not.toHaveBeenCalled();
+    expect(response.headers.get('set-cookie')).toBeNull();
+  });
 });

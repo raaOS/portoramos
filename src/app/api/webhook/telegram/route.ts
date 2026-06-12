@@ -31,20 +31,42 @@ import { handleAiCommand, handleAdminReply, handleGuestMessage } from '@/lib/tel
 
 interface AdminOtpSession {
   status?: string;
+  purpose?: 'password' | 'pin';
   requestId?: string;
   expiresAt?: number;
   codeHash?: string;
 }
 
+type AdminOtpPurpose = NonNullable<AdminOtpSession['purpose']>;
+
+function isAdminOtpPurpose(value: string): value is AdminOtpPurpose {
+  return value === 'password' || value === 'pin';
+}
+
+function getAdminOtpPath(purpose?: AdminOtpPurpose) {
+  if (purpose === 'password') return 'settings/adminPasswordOtp';
+  if (purpose === 'pin') return 'settings/adminPinOtp';
+  return null;
+}
+
+function getAdminOtpLabel(purpose?: AdminOtpPurpose) {
+  return purpose === 'pin' ? 'PIN' : 'SANDI';
+}
+
 function parseCallbackData(data: string) {
-  const separatorIndex = data.indexOf(':');
-  if (separatorIndex < 0) {
-    return { action: data, requestId: '' };
+  const [action = '', maybePurpose = '', ...rest] = data.split(':');
+  if (!maybePurpose) {
+    return { action, purpose: undefined, requestId: '' };
+  }
+
+  if (isAdminOtpPurpose(maybePurpose)) {
+    return { action, purpose: maybePurpose, requestId: rest.join(':') };
   }
 
   return {
-    action: data.slice(0, separatorIndex),
-    requestId: data.slice(separatorIndex + 1),
+    action,
+    purpose: undefined,
+    requestId: [maybePurpose, ...rest].join(':'),
   };
 }
 
@@ -76,10 +98,11 @@ async function respondToInactiveOtpSession(
   incomingChatId: string,
   messageId: number,
   callbackId: string,
-  botToken: string
+  botToken: string,
+  otpRef?: { remove: () => Promise<void> }
 ) {
   if (state === 'expired') {
-    await db.ref('settings/adminOtp').remove();
+    await otpRef?.remove();
     await editMessageText(
       incomingChatId,
       messageId,
@@ -154,7 +177,8 @@ export async function POST(request: Request) {
       const cbQuery = webhookBody.callback_query as Record<string, unknown>;
       const callbackId = String(cbQuery['id'] || '');
       const data = String(cbQuery['data'] || '');
-      const { action, requestId } = parseCallbackData(data);
+      const { action, purpose, requestId } = parseCallbackData(data);
+      const otpPath = getAdminOtpPath(purpose);
       const cbMessage = cbQuery['message'] as Record<string, unknown> | undefined;
       const incomingChatId = String(
         cbMessage?.chat ? (cbMessage.chat as Record<string, unknown>).id : ''
@@ -169,15 +193,29 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
+      if ((action === 'otp_reject' || action === 'otp_approve') && !otpPath) {
+        await answerCallbackQuery(callbackId, botToken, {
+          text: 'Tombol OTP lama tidak valid. Request OTP ulang.',
+          showAlert: true,
+        });
+        return NextResponse.json({ ok: true });
+      }
+
       if (action === 'otp_reject') {
-        const otpSnap = await db.ref('settings/adminOtp').once('value');
+        if (!otpPath) return NextResponse.json({ ok: true });
+        const otpRef = db.ref(otpPath);
+        const otpSnap = await otpRef.once('value');
         const otpData = otpSnap.val() as AdminOtpSession | null;
         const sessionState = getPendingOtpSessionState(otpData, requestId);
 
         if (sessionState === 'active') {
+          const sessionPurpose = otpData?.purpose ?? purpose;
+          const purposeLabel = sessionPurpose === 'pin' ? 'PIN' : 'password';
+          const purposeText = getAdminOtpLabel(sessionPurpose);
           // Update status ke rejected agar di-polling oleh UI
-          await db.ref('settings/adminOtp').set({
+          await otpRef.set({
             status: 'rejected',
+            purpose: sessionPurpose,
             requestId,
             expiresAt: Date.now() + 60 * 1000, // biarkan hidup 1 menit agar UI sempat polling
           });
@@ -188,9 +226,18 @@ export async function POST(request: Request) {
             '🚨 **Akses Digagalkan!**\nUpaya ganti sandi telah diblokir. UI penyusup akan langsung dikunci.',
             botToken
           );
-          await answerCallbackQuery(callbackId, botToken, { text: 'Akses diblokir!' });
-          await logActivity('Admin password OTP rejected from Telegram', {
+          await editMessageText(
+            incomingChatId,
+            messageId,
+            `**Akses Digagalkan**\nUpaya ubah ${purposeText} telah diblokir.`,
+            botToken
+          );
+          await answerCallbackQuery(callbackId, botToken, {
+            text: `Ubah ${purposeText} diblokir`,
+          });
+          await logActivity(`Admin ${purposeLabel} OTP rejected from Telegram`, {
             category: 'admin',
+            purpose: sessionPurpose,
             requestId,
             telegramChatId: incomingChatId,
           });
@@ -200,18 +247,24 @@ export async function POST(request: Request) {
             incomingChatId,
             messageId,
             callbackId,
-            botToken
+            botToken,
+            otpRef
           );
         }
         return NextResponse.json({ ok: true });
       }
 
       if (action === 'otp_approve') {
-        const otpSnap = await db.ref('settings/adminOtp').once('value');
+        if (!otpPath) return NextResponse.json({ ok: true });
+        const otpRef = db.ref(otpPath);
+        const otpSnap = await otpRef.once('value');
         const otpData = otpSnap.val() as AdminOtpSession | null;
         const sessionState = getPendingOtpSessionState(otpData, requestId);
 
         if (sessionState === 'active') {
+          const sessionPurpose = otpData?.purpose ?? purpose;
+          const purposeLabel = sessionPurpose === 'pin' ? 'PIN' : 'password';
+          const purposeText = getAdminOtpLabel(sessionPurpose);
           const salt = process.env.PASSWORD_SALT;
           if (!salt) {
             await answerCallbackQuery(callbackId, botToken, {
@@ -228,8 +281,9 @@ export async function POST(request: Request) {
           const codeHash = hashPasswordScrypt(otpCode, salt);
 
           // Update status ke approved beserta Hash OTP-nya
-          await db.ref('settings/adminOtp').set({
+          await otpRef.set({
             status: 'approved',
+            purpose: sessionPurpose,
             requestId,
             codeHash: codeHash,
             expiresAt: Date.now() + 5 * 60 * 1000,
@@ -241,9 +295,18 @@ export async function POST(request: Request) {
             `✅ **Persetujuan Diterima**\n\nGunakan kode OTP berikut:\n\`${otpCode}\`\n\n(Berlaku 5 menit)`,
             botToken
           );
-          await answerCallbackQuery(callbackId, botToken, { text: 'Persetujuan Diterima!' });
-          await logActivity('Admin password OTP approved from Telegram', {
+          await editMessageText(
+            incomingChatId,
+            messageId,
+            `**OTP UBAH ${purposeText} DISETUJUI**\n\nGunakan kode OTP ${purposeText} berikut:\n\`${otpCode}\`\n\n(Berlaku 5 menit)`,
+            botToken
+          );
+          await answerCallbackQuery(callbackId, botToken, {
+            text: `OTP ${purposeText} disetujui`,
+          });
+          await logActivity(`Admin ${purposeLabel} OTP approved from Telegram`, {
             category: 'admin',
+            purpose: sessionPurpose,
             requestId,
             telegramChatId: incomingChatId,
           });
@@ -253,7 +316,8 @@ export async function POST(request: Request) {
             incomingChatId,
             messageId,
             callbackId,
-            botToken
+            botToken,
+            otpRef
           );
         }
         return NextResponse.json({ ok: true });

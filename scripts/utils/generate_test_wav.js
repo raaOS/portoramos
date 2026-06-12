@@ -1,3 +1,11 @@
+/**
+ * Generate Test WAV — Generator file WAV sintetis untuk testing.
+ *
+ * Membuat file WAV sine-wave sederhana yang digunakan sebagai input
+ * test pada unit test dan script pemrosesan audio.
+ *
+ * @module scripts/utils/generate-test-wav
+ */
 const fs = require('fs');
 const path = require('path');
 
