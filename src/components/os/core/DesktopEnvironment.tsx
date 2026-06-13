@@ -1,12 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
-// SECTION MAP (DesktopEnvironment.tsx — 836 lines)
-// L1-77:    Imports, dynamic imports, constants
-// L78-124:  computeMissionTargets() helper
-// L125-159: DesktopEnvironmentProps interface + DesktopEnvironment (export default)
-// L160-237: DesktopEnvironment render: boot sequence, skeleton, providers
-// L238-256: DesktopMainWithLogout wrapper
-// L257-836: DesktopMain — 15 useEffects, window management, visitor session,
-//           layout persistence, keyboard shortcuts, wallpaper transitions
+// SECTION MAP
+// Imports, dynamic imports, and entrance timing constants
+// DesktopEnvironment: data preparation, boot skeleton, and providers
+// DesktopMainWithLogout: logout sound wrapper
+// DesktopMain: window management, visitor session, layout persistence,
+// keyboard shortcuts, wallpaper transitions, and layer rendering
+// Mission Control layout math lives in ../utils/missionControlLayout.
 // ═══════════════════════════════════════════════════════════════════
 'use client';
 
@@ -48,6 +47,7 @@ import type { ContactProfile } from '../data/mockChats';
 import DesktopProviders from './DesktopProviders';
 import DesktopSkeleton from '../ui/DesktopSkeleton';
 import { useBackgroundEffect } from '@/components/home/BackgroundEffectContext';
+import { computeMissionTargets, type MissionTarget } from '../utils/missionControlLayout';
 
 const DesktopIconsLayer = dynamic(() => import('../layers/DesktopIconsLayer'), { ssr: false });
 const UnifiedLayer = dynamic(() => import('../layers/UnifiedLayer'), { ssr: false });
@@ -76,61 +76,6 @@ const DESKTOP_ENTRANCE_AFTER_REVEAL_MS = 520;
 const DESKTOP_ENTRANCE_AFTER_SKIPPED_BOOT_MS = 160;
 const WINDOWS_ENTRANCE_AFTER_ICONS_MS = 120;
 const NOTES_ENTRANCE_AFTER_WINDOWS_MS = 220;
-
-interface MissionTarget {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  scale: number;
-}
-
-function computeMissionTargets(
-  windows: WindowState[],
-  vpWidth: number,
-  vpHeight: number
-): Map<string, MissionTarget> {
-  const openWindows = windows.filter((w) => w.isOpen && !w.isMinimized);
-  const targets = new Map<string, MissionTarget>();
-  const count = openWindows.length;
-  if (count === 0) return targets;
-
-  const cols = count === 1 ? 1 : Math.min(count, 3);
-  const rows = Math.ceil(count / cols);
-  const gap = 40;
-  const menubarH = 44;
-  const availableW = vpWidth - gap * (cols + 1);
-  const availableH = vpHeight - menubarH - 80 - gap * (rows + 1);
-  const cellW = Math.floor(availableW / cols);
-  const cellH = Math.floor(availableH / rows);
-  const gridStartX = gap;
-  const totalGridH = rows * cellH + (rows - 1) * gap;
-  const gridStartY = menubarH + Math.floor((vpHeight - menubarH - 80 - totalGridH) / 2);
-
-  openWindows.forEach((w, i) => {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const cx = gridStartX + col * (cellW + gap) + Math.floor(cellW / 2);
-    const cy = gridStartY + row * (cellH + gap) + Math.floor(cellH / 2);
-    const winW = w.width || 800;
-    const winH = w.height || 600;
-
-    // Scale window down dynamically to fit inside the grid cell, cap at 0.65 to avoid scaling up small windows
-    const scaleX = (cellW - 20) / winW; // Leave 20px cell padding
-    const scaleY = (cellH - 20) / winH; // Leave 20px cell padding
-    const scale = Math.min(0.65, scaleX, scaleY);
-
-    targets.set(w.id, {
-      x: cx - Math.floor(winW / 2),
-      y: cy - Math.floor(winH / 2),
-      width: winW,
-      height: winH,
-      scale,
-    });
-  });
-
-  return targets;
-}
 
 export interface DesktopEnvironmentProps {
   children?: React.ReactNode;

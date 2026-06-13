@@ -46,6 +46,7 @@ import {
 import { SortableContext, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { applyDockItemOrder } from '../utils/dockOrder';
 
 const LINK_BOUNCE_DELAY_MS = 280;
 
@@ -383,12 +384,7 @@ function sortDockItemsWithLocalOrder(rawItems: DockItemData[]): DockItemData[] {
     try {
       const localOrder = JSON.parse(localOrderRaw) as string[];
       if (Array.isArray(localOrder) && localOrder.length > 0) {
-        const orderMap = new Map(localOrder.map((id, index) => [id, index]));
-        return [...rawItems].sort((a, b) => {
-          const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : 1000;
-          const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : 1000;
-          return indexA - indexB;
-        });
+        return applyDockItemOrder(rawItems, localOrder);
       }
     } catch (e) {
       console.warn('Failed to parse visitor dock order:', e);
