@@ -1,8 +1,12 @@
 export function sanitizeInput(input: string): string {
   return input
     .trim()
-    .replace(/[<>]/g, '') // Remove potential HTML tags
-    .substring(0, 1000); // Limit length
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .substring(0, 1000);
 }
 
 const ALLOWED_RICH_TEXT_TAGS = new Set([
@@ -162,6 +166,11 @@ export const sanitize = {
       .replace(/^[._]/, 'file');
   },
 
+  /**
+   * @deprecated Blacklist-based SQL sanitization is trivially bypassable
+   * (UNION without quotes, hex encoding, CHAR(), etc.).
+   * Use parameterized queries instead. Kept only for legacy/test compatibility.
+   */
   sql: (input: string): string => {
     return input
       .replace(/[';"\\]/g, '')

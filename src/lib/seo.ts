@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import type { Project } from '@/types/projects';
+import { DEFAULT_SITE_URL } from '@/lib/constants';
 
 // Dynamic site URL detection
 function getDynamicSiteUrl(): string {
   // In production, use environment variable
   if (process.env.NODE_ENV === 'production') {
-    return process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio.example.com';
+    return process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL;
   }
 
   // In development, try to detect from browser if available

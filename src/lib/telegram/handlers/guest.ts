@@ -4,9 +4,10 @@
  */
 
 import type { MessageToSend, ReplyMarkup } from '../types';
+import { DEFAULT_SITE_URL } from '@/lib/constants';
 
 export function handleGuestMessage(): MessageToSend[] {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ramos-portofolio.vercel.app';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL;
 
   const markup: ReplyMarkup = {
     inline_keyboard: [

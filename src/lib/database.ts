@@ -10,6 +10,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import 'server-only';
 import {
+  compareAndSetD1Value,
   deleteD1Value,
   getAllD1Values,
   getD1Value,
@@ -215,15 +216,59 @@ class D1Reference implements DatabaseReferenceLike {
   }
 
   async transaction(updateFn: (currentValue: any) => any) {
-    const currentValue = await this.readValue();
-    const nextValue = updateFn(clone(currentValue));
+    const MAX_RETRIES = 3;
+    const segments = splitPath(this.path);
 
-    if (nextValue === undefined) {
-      return { committed: false, snapshot: new D1Snapshot(currentValue, this.key) };
+    // Root-level transaction (no path) requires bulk replace.
+    // We cannot CAS the entire table, so fall through to simple write.
+    if (segments.length === 0) {
+      const currentValue = await this.readValue();
+      const nextValue = updateFn(clone(currentValue));
+      if (nextValue === undefined) {
+        return { committed: false, snapshot: new D1Snapshot(currentValue, this.key) };
+      }
+      await this.writeValue(nextValue);
+      return { committed: true, snapshot: new D1Snapshot(nextValue, this.key) };
     }
 
-    await this.writeValue(nextValue);
-    return { committed: true, snapshot: new D1Snapshot(nextValue, this.key) };
+    const [topLevelKey, ...rest] = segments;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      // Read the full top-level D1 row to get a consistent snapshot for CAS.
+      const rawRows = await import('@/lib/cloudflareD1').then((m) =>
+        m.queryD1<{ value: string }>(`SELECT value FROM app_kv WHERE key = ? LIMIT 1`, [topLevelKey])
+      );
+      const rawJson = rawRows[0]?.value ?? null;
+      const topValue = rawJson !== null ? JSON.parse(rawJson) : null;
+      const nestedValue = rest.length === 0 ? topValue : getNested(topValue, rest);
+
+      const nextNested = updateFn(clone(nestedValue));
+      if (nextNested === undefined) {
+        return { committed: false, snapshot: new D1Snapshot(nestedValue, this.key) };
+      }
+
+      const nextTop = rest.length === 0 ? nextNested : setNested(topValue ?? {}, rest, nextNested);
+
+      // CAS at the top-level key prevents lost updates from concurrent transactions.
+      const expectedJson = rawJson; // The raw string we read is the CAS basis
+
+      if (expectedJson === null) {
+        // Row didn't exist — insert only if it still doesn't
+        const ok = await compareAndSetD1Value(topLevelKey, null, nextTop);
+        if (ok) {
+          return { committed: true, snapshot: new D1Snapshot(nextNested, this.key) };
+        }
+      } else {
+        const ok = await compareAndSetD1Value(topLevelKey, JSON.parse(expectedJson), nextTop);
+        if (ok) {
+          return { committed: true, snapshot: new D1Snapshot(nextNested, this.key) };
+        }
+      }
+      // CAS failed — another writer modified the row; retry
+    }
+
+    // All retries exhausted
+    return { committed: false, snapshot: new D1Snapshot(null, this.key) };
   }
 
   private async readValue() {

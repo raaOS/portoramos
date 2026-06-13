@@ -220,13 +220,36 @@ export async function deleteD1Value(key: string) {
   await queryD1(`DELETE FROM ${D1_TABLE_NAME} WHERE key = ?`, [key]);
 }
 
+/**
+ * Replace the entire app_kv table contents with `root`.
+ *
+ * SAFETY: Uses upsert-then-prune instead of DELETE-all then INSERT
+ * to avoid catastrophic data loss if the process crashes between
+ * the DELETE and the last INSERT. Any keys present in the current
+ * table but absent from `root` are pruned after upserts succeed.
+ */
 export async function replaceAllD1Values(root: Record<string, unknown>) {
   await bootstrapD1Schema();
-  await queryD1(`DELETE FROM ${D1_TABLE_NAME}`);
 
+  const incomingKeys = new Set<string>();
+
+  // Step 1: Upsert every key in root — no data is lost for existing rows.
   for (const [key, value] of Object.entries(root)) {
     if (value !== undefined && value !== null) {
+      incomingKeys.add(key);
       await setD1Value(key, value);
     }
+  }
+
+  // Step 2: Prune keys that exist in D1 but are absent from root.
+  const existingRows = await queryD1<{ key: string }>(`SELECT key FROM ${D1_TABLE_NAME}`);
+  const orphans = existingRows.filter((row) => !incomingKeys.has(row.key));
+
+  if (orphans.length > 0) {
+    const placeholders = orphans.map(() => '?').join(', ');
+    await queryD1(
+      `DELETE FROM ${D1_TABLE_NAME} WHERE key IN (${placeholders})`,
+      orphans.map((row) => row.key)
+    );
   }
 }

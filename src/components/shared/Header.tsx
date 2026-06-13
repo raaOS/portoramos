@@ -5,7 +5,7 @@ import { Link, useTransitionRouter } from 'next-view-transitions';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Search, Wifi, Volume2 } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { useOSSystem } from '@/components/os/context/OSSystemContext';
+import { useOSOverlays } from '@/components/os/context/OSSystemContext';
 import { markBack } from '@/lib/navigationDirection';
 import dynamic from 'next/dynamic';
 import { useReducedMotion } from 'motion/react';
@@ -19,7 +19,7 @@ const Header: React.FC = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { trackEvent } = useAnalytics();
-  const { setShowControlCenter, showCalendar, setShowCalendar } = useOSSystem();
+  const { setShowControlCenter, showCalendar, setShowCalendar } = useOSOverlays();
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const router = useTransitionRouter();
 

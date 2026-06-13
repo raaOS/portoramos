@@ -13,7 +13,7 @@ import type { ContactProfile } from '../data/mockChats';
 import { useDesktopWindowContext } from '../context/DesktopWindowContext';
 import { useUnifiedZIndex } from '../context/UnifiedZIndexContext';
 import { ISLAND_ID } from '../ui/DynamicIsland';
-import { useOSSystem } from '../context/OSSystemContext';
+import { useOSOverlays, useOSBoot } from '../context/OSSystemContext';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 
 const Spotlight = dynamic(() => import('../core/Spotlight'), {
@@ -86,9 +86,9 @@ export default function UIOverlaysLayer({
     setShowControlCenter,
     showCalendar,
     setShowCalendar,
-    isRevealed,
     showMissionControl,
-  } = useOSSystem();
+  } = useOSOverlays();
+  const { isRevealed } = useOSBoot();
   // Saat hollow-O mulai membesar (`isRevealed = true`), dock & menubar sudah
   // boleh render di belakang StartScreen supaya terlihat dari dalam lubang.
   const isBootSequenceActive = isBooting || needsPowerOn;

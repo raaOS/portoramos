@@ -50,6 +50,7 @@ export default function ProjectDetailTwoColumn({
     setComments,
     isProjectLiked,
     metrics,
+    isLikePending,
     translations,
     translateLoading,
     activeGalleryGroup,
@@ -125,6 +126,7 @@ export default function ProjectDetailTwoColumn({
         comments={comments}
         translations={translations}
         translateLoading={translateLoading}
+        likePending={isLikePending}
         onLike={handleProjectLike}
         onShare={handleProjectShare}
         onTranslate={translateAll}
@@ -212,6 +214,7 @@ export default function ProjectDetailTwoColumn({
                 comments={comments}
                 translations={translations}
                 translateLoading={translateLoading}
+                likePending={isLikePending}
                 onLike={handleProjectLike}
                 onShare={handleProjectShare}
                 onTranslate={translateAll}

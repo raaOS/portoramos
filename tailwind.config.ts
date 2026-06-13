@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss';
 const config: Config = {
-  content: ['./src/**/*.{ts,tsx}', './app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+  content: ['./src/**/*.{ts,tsx}'],
   darkMode: 'class',
   theme: {
     extend: {
@@ -51,5 +51,3 @@ const config: Config = {
   plugins: [],
 };
 export default config;
-
-// Force Tailwind Rebuild: fix ghost ENOENT v3

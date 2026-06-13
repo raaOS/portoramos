@@ -24,6 +24,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  await handleJobBotUpdate(body, config);
+  try {
+    await handleJobBotUpdate(body, config);
+  } catch (error) {
+    console.error('[JobBot Webhook] Handler error:', error);
+  }
+
   return NextResponse.json({ ok: true });
 }

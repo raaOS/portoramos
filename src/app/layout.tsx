@@ -8,7 +8,6 @@ import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import UnregisterSW from '@/components/shared/UnregisterSW';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import DevWebVitalsGate from '@/components/shared/DevWebVitalsGate';
-import Script from 'next/script';
 import { ViewTransitions } from 'next-view-transitions';
 import { APP_VERSION } from '@/lib/constants';
 
@@ -93,49 +92,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               __html: JSON.stringify(generateStructuredData('website')),
             }}
           />
-          <Script id="os-boot-state" strategy="beforeInteractive">
-            {`
-            (function() {
-              try {
-                var html = document.documentElement;
-                var booted = sessionStorage.getItem('ramos_os_booted') === 'true';
-                if (booted) {
-                  html.setAttribute('data-os-booted', 'true');
-                  html.removeAttribute('data-os-needs-boot');
-                  return;
-                }
-                // Internal navigation tetap dianggap "already booted" supaya
-                // visitor yang pindah halaman dalam site tidak lihat boot lagi.
-                // Logic ini cermin dari useBootSequence.checkShouldSkipBoot.
-                var ref = document.referrer;
-                if (ref) {
-                  try {
-                    var refHost = new URL(ref).host;
-                    if (refHost === window.location.host) {
-                      html.setAttribute('data-os-booted', 'true');
-                      html.removeAttribute('data-os-needs-boot');
-                      return;
-                    }
-                  } catch (e) {}
-                }
-                var search = window.location.search || '';
-                if (search.indexOf('app=') !== -1) {
-                  html.setAttribute('data-os-booted', 'true');
-                  html.removeAttribute('data-os-needs-boot');
-                  return;
-                }
-                var path = window.location.pathname || '/';
-                if (path === '/') {
-                  // Boot cover hanya untuk homepage OS; route non-OS tidak
-                  // punya StartScreen yang akan melepas overlay hitam ini.
-                  html.setAttribute('data-os-needs-boot', 'true');
-                  return;
-                }
-                html.removeAttribute('data-os-needs-boot');
-              } catch (e) {}
-            })();
-          `}
-          </Script>
+          {/*
+            Raw inline <script> instead of next/script beforeInteractive.
+            Next.js Script loader adds a blocking fetch round-trip for its
+            chunk, delaying FCP. Inline script executes during initial HTML
+            parse — zero extra latency. Logic mirrors useBootSequence.
+          */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `(function(){try{var h=document.documentElement,b=sessionStorage.getItem('ramos_os_booted')==='true';if(b){h.setAttribute('data-os-booted','true');h.removeAttribute('data-os-needs-boot');return}var r=document.referrer;if(r){try{if(new URL(r).host===window.location.host){h.setAttribute('data-os-booted','true');h.removeAttribute('data-os-needs-boot');return}}catch(e){}}var s=window.location.search||'';if(s.indexOf('app=')!==-1){h.setAttribute('data-os-booted','true');h.removeAttribute('data-os-needs-boot');return}var p=window.location.pathname||'/';if(p==='/'){h.setAttribute('data-os-needs-boot','true');return}h.removeAttribute('data-os-needs-boot')}catch(e){}})()`,
+            }}
+          />
         </head>
         {/* suppressHydrationWarning removed: handled by Two-Pass Rendering in HomeOSWrapper */}
         <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default">

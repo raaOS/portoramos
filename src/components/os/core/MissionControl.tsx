@@ -2,11 +2,11 @@
 
 import React from 'react';
 import { m, AnimatePresence } from 'motion/react';
-import { useOSSystem } from '../context/OSSystemContext';
+import { useOSOverlays } from '../context/OSSystemContext';
 import { useDesktopWindowContext } from '../context/DesktopWindowContext';
 
 export default function MissionControl() {
-  const { showMissionControl, setShowMissionControl } = useOSSystem();
+  const { showMissionControl, setShowMissionControl } = useOSOverlays();
   const { windows, focusWindow } = useDesktopWindowContext();
 
   const openWindows = windows.filter((w) => w.isOpen && !w.isMinimized);

@@ -136,6 +136,7 @@ ${text}`;
         ],
         response_format: { type: 'json_object' },
       }),
+      signal: AbortSignal.timeout(30_000), // 30s hard timeout to prevent serverless hang
     });
 
     const data = await response.json();

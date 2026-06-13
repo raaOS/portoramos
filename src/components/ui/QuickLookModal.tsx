@@ -126,6 +126,9 @@ function QuickLookModalBody({
 
   return (
     <div
+      role="dialog"
+      aria-label={title}
+      aria-modal="true"
       className={`fixed inset-0 z-[99999] flex items-center justify-center p-0 sm:p-4 ${isFullscreen ? 'sm:p-0' : ''}`}
     >
       {/* Backdrop */}

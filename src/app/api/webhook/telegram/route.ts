@@ -223,13 +223,7 @@ export async function POST(request: Request) {
           await editMessageText(
             incomingChatId,
             messageId,
-            '🚨 **Akses Digagalkan!**\nUpaya ganti sandi telah diblokir. UI penyusup akan langsung dikunci.',
-            botToken
-          );
-          await editMessageText(
-            incomingChatId,
-            messageId,
-            `**Akses Digagalkan**\nUpaya ubah ${purposeText} telah diblokir.`,
+            `🚨 **Akses Digagalkan!**\nUpaya ubah ${purposeText} telah diblokir.`,
             botToken
           );
           await answerCallbackQuery(callbackId, botToken, {
@@ -292,13 +286,7 @@ export async function POST(request: Request) {
           await editMessageText(
             incomingChatId,
             messageId,
-            `✅ **Persetujuan Diterima**\n\nGunakan kode OTP berikut:\n\`${otpCode}\`\n\n(Berlaku 5 menit)`,
-            botToken
-          );
-          await editMessageText(
-            incomingChatId,
-            messageId,
-            `**OTP UBAH ${purposeText} DISETUJUI**\n\nGunakan kode OTP ${purposeText} berikut:\n\`${otpCode}\`\n\n(Berlaku 5 menit)`,
+            `✅ **OTP UBAH ${purposeText} DISETUJUI**\n\nGunakan kode OTP ${purposeText} berikut:\n\`${otpCode}\`\n\n(Berlaku 5 menit)`,
             botToken
           );
           await answerCallbackQuery(callbackId, botToken, {

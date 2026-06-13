@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Search, FileText, AppWindow, Command } from 'lucide-react';
 import type { Project } from '@/types/projects';
@@ -24,6 +24,34 @@ interface SpotlightProps {
   onOpenApp: (id: string) => void;
 }
 
+/**
+ * Lightweight fuzzy scorer: checks if all query characters appear in order.
+ * Returns a simple score (higher = better match). Returns 0 for no match.
+ * This replaces exact `.includes()` to support typos and partial matches.
+ */
+function fuzzyMatch(query: string, text: string): number {
+  const q = query.toLowerCase();
+  const t = text.toLowerCase();
+
+  // Exact substring match → highest priority
+  if (t.includes(q)) return 100;
+
+  // Subsequence match: all query chars appear in order
+  let qi = 0;
+  let score = 0;
+  for (let ti = 0; ti < t.length && qi < q.length; ti++) {
+    if (t[ti] === q[qi]) {
+      qi++;
+      score += 1;
+      // Bonus for consecutive matches
+      if (ti > 0 && q[qi - 2] !== undefined && t[ti - 1] === q[qi - 2]) score += 2;
+    }
+  }
+
+  // All query characters matched in order
+  return qi === q.length ? score : 0;
+}
+
 export default function Spotlight({
   isOpen,
   onClose,
@@ -35,17 +63,48 @@ export default function Spotlight({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const results = [
-    ...SYSTEM_APPS.filter((app) => app.title.toLowerCase().includes(query.toLowerCase())),
-    ...projects
-      .filter((project) => project.title.toLowerCase().includes(query.toLowerCase()))
-      .map((project) => ({
-        id: project.id,
-        title: project.title,
-        type: 'project' as const,
-        project,
-      })),
-  ].slice(0, 8) as SpotlightResult[];
+  const results = useMemo<SpotlightResult[]>(() => {
+    if (!query.trim()) {
+      return [
+        ...SYSTEM_APPS,
+        ...projects.slice(0, 8 - SYSTEM_APPS.length).map((project) => ({
+          id: project.id,
+          title: project.title,
+          type: 'project' as const,
+          project,
+        })),
+      ];
+    }
+
+    const scored: Array<{ item: SpotlightResult; score: number }> = [];
+
+    for (const app of SYSTEM_APPS) {
+      const score = fuzzyMatch(query, app.title);
+      if (score > 0) scored.push({ item: app, score });
+    }
+
+    for (const project of projects) {
+      const score = fuzzyMatch(query, project.title);
+      if (score > 0) {
+        scored.push({
+          item: {
+            id: project.id,
+            title: project.title,
+            type: 'project' as const,
+            project,
+          },
+          score,
+        });
+      }
+    }
+
+    // Sort by score descending, take top 8
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map((s) => s.item);
+  }, [query, projects]);
+
   const safeSelectedIndex = results.length === 0 ? 0 : Math.min(selectedIndex, results.length - 1);
 
   useEffect(() => {
@@ -104,10 +163,13 @@ export default function Spotlight({
 
   return (
     <motion.div
+      role="dialog"
+      aria-label="Spotlight Search"
+      aria-modal="true"
       initial={{ opacity: 0, scale: 1.05 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 1.05 }}
-      className="pointer-events-auto fixed inset-0 flex items-start justify-center bg-black/20 pt-[20vh] print:hidden"
+      className="pointer-events-auto fixed inset-0 flex items-start justify-center bg-black/20 print:hidden"
       style={{ zIndex: Z_LAYERS.POPOUT_CONTENT }}
       onClick={onClose}
     >
@@ -117,7 +179,7 @@ export default function Spotlight({
         onKeyDown={handleKeyDown}
       >
         <div className="flex items-center border-b border-gray-200 px-4 py-4">
-          <Search className="mr-3 text-gray-400" size={20} />
+          <Search className="mr-3 text-gray-400" size={20} aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
@@ -127,6 +189,9 @@ export default function Spotlight({
               setSelectedIndex(0);
             }}
             placeholder="Spotlight Search"
+            aria-label="Search applications and projects"
+            aria-autocomplete="list"
+            aria-controls="spotlight-results"
             className="flex-1 border-none bg-transparent text-xl text-gray-800 outline-none placeholder:text-gray-400"
           />
           <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-400">
@@ -135,11 +200,13 @@ export default function Spotlight({
           </div>
         </div>
 
-        <div className="max-h-[400px] overflow-y-auto py-2">
+        <div id="spotlight-results" role="listbox" className="max-h-[400px] overflow-y-auto py-2">
           {results.length > 0 ? (
             results.map((result, index) => (
               <div
                 key={result.id}
+                role="option"
+                aria-selected={index === safeSelectedIndex}
                 className={`flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors ${
                   index === safeSelectedIndex
                     ? 'bg-black text-white'

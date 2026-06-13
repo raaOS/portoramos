@@ -50,6 +50,41 @@ export default function InfiniteCanvasView({ projects }: Props) {
 
   const [renderedItems, setRenderedItems] = useState<CanvasItem[]>(initialItems);
   const renderedItemsRef = useRef<CanvasItem[]>(initialItems);
+  const [hoveredProject, setHoveredProject] = useState<Project | null>(null);
+  const [isTooltipSuppressed, setIsTooltipSuppressed] = useState(false);
+  const hoveredProjectRef = useRef<Project | null>(null);
+  const isTooltipSuppressedRef = useRef(false);
+  const pointerClientRef = useRef({ x: 0, y: 0, inside: false });
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  const handleHoverChange = useCallback((project: Project | null) => {
+    if (hoveredProjectRef.current === project) return;
+
+    hoveredProjectRef.current = project;
+    setHoveredProject(project);
+  }, []);
+
+  const reconcileHoveredProject = useCallback(() => {
+    const container = containerRef.current;
+    const pointer = pointerClientRef.current;
+
+    if (!container || !pointer.inside) {
+      handleHoverChange(null);
+      return;
+    }
+
+    const hitElement = document.elementFromPoint(pointer.x, pointer.y);
+    const cardElement = hitElement?.closest<HTMLElement>('[data-canvas-card]');
+
+    if (!cardElement || !container.contains(cardElement)) {
+      handleHoverChange(null);
+      return;
+    }
+
+    const cardKey = cardElement.dataset.canvasCard;
+    const hoveredItem = renderedItemsRef.current.find((item) => item.key === cardKey);
+    handleHoverChange(hoveredItem?.project ?? null);
+  }, [handleHoverChange]);
 
   // — Camera state —
   const cameraRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
@@ -67,6 +102,9 @@ export default function InfiniteCanvasView({ projects }: Props) {
   const magneticStateRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const tiltStateRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const timeRef = useRef(0);
+
+  // — Motion trail / wake effect state —
+  const trailIntensityRef = useRef(0);
 
   // — Input state —
   const isDraggingRef = useRef(false);
@@ -88,14 +126,47 @@ export default function InfiniteCanvasView({ projects }: Props) {
     Map<string, { opacity: number; grayscale: number; hidden: boolean }>
   >(new Map());
 
-  // — Mouse tracker for magnetic effect —
+  // — Mouse tracker for magnetic effect & tooltip position —
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    pointerClientRef.current = { x: e.clientX, y: e.clientY, inside: true };
     mousePosRef.current = {
       x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
       y: ((e.clientY - rect.top) / rect.height) * 2 - 1,
     };
+
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const tooltipBounds = tooltipRef.current?.getBoundingClientRect();
+    const tooltipWidth = tooltipBounds?.width ?? 260;
+    const tooltipHeight = tooltipBounds?.height ?? 120;
+    const edgePadding = 12;
+    const pointerGap = 20;
+    const preferredX = x + pointerGap;
+    const preferredY = y + pointerGap;
+    const flippedX = x - tooltipWidth - pointerGap;
+    const flippedY = y - tooltipHeight - pointerGap;
+    const maxX = Math.max(edgePadding, rect.width - tooltipWidth - edgePadding);
+    const maxY = Math.max(edgePadding, rect.height - tooltipHeight - edgePadding);
+    const tooltipX = Math.min(
+      Math.max(
+        edgePadding,
+        preferredX + tooltipWidth <= rect.width - edgePadding ? preferredX : flippedX
+      ),
+      maxX
+    );
+    const tooltipY = Math.min(
+      Math.max(
+        edgePadding,
+        preferredY + tooltipHeight <= rect.height - edgePadding ? preferredY : flippedY
+      ),
+      maxY
+    );
+
+    container.style.setProperty('--tooltip-x', `${tooltipX}px`);
+    container.style.setProperty('--tooltip-y', `${tooltipY}px`);
   }, []);
 
   // Stable ref callbacks — prevents CanvasCard memo() from re-rendering on parent state change
@@ -201,6 +272,46 @@ export default function InfiniteCanvasView({ projects }: Props) {
     const camera = cameraRef.current;
     const activeKeys = new Set(activeItemsRef.current.map((i) => i.key));
     const currentItems = renderedItemsRef.current;
+
+    // — Motion Trail: compute global trail intensity from velocity —
+    const vx = velocityRef.current.x;
+    const vy = velocityRef.current.y;
+    const speed = Math.sqrt(vx * vx + vy * vy);
+    const targetIntensity =
+      speed > CANVAS_CONSTANTS.trailSpeedThreshold
+        ? Math.min(
+            1,
+            (speed - CANVAS_CONSTANTS.trailSpeedThreshold) /
+              (CANVAS_CONSTANTS.trailMaxSpeed - CANVAS_CONSTANTS.trailSpeedThreshold)
+          )
+        : 0;
+    // Smooth ramp up (attack) and slow fade out (decay)
+    const lerpFactor =
+      targetIntensity > trailIntensityRef.current
+        ? CANVAS_CONSTANTS.trailAttack
+        : CANVAS_CONSTANTS.trailDecay;
+    trailIntensityRef.current += (targetIntensity - trailIntensityRef.current) * lerpFactor;
+    // Clamp very small values to zero to avoid unnecessary style updates
+    if (trailIntensityRef.current < 0.005) trailIntensityRef.current = 0;
+
+    // Precompute trail direction (opposite to velocity) and shadow string
+    const trailIntensity = trailIntensityRef.current;
+    let trailShadow = 'none';
+    if (trailIntensity > 0 && speed > 0.01) {
+      const nx = -vx / speed; // normalized opposite direction
+      const ny = -vy / speed;
+      const shadows: string[] = [];
+      for (let i = 1; i <= CANVAS_CONSTANTS.trailLayers; i++) {
+        const t = i / CANVAS_CONSTANTS.trailLayers;
+        const offset = t * CANVAS_CONSTANTS.trailMaxOffset * trailIntensity;
+        const blur = CANVAS_CONSTANTS.trailBlurBase + t * CANVAS_CONSTANTS.trailBlurGrowth;
+        const opacity = CANVAS_CONSTANTS.trailMaxOpacity * (1 - t * 0.6) * trailIntensity;
+        shadows.push(
+          `${(nx * offset).toFixed(1)}px ${(ny * offset).toFixed(1)}px ${blur.toFixed(1)}px rgba(0,0,0,${opacity.toFixed(3)})`
+        );
+      }
+      trailShadow = shadows.join(',');
+    }
 
     for (const item of currentItems) {
       const node = cardNodesRef.current.get(item.key);
@@ -332,6 +443,11 @@ export default function InfiniteCanvasView({ projects }: Props) {
         visualStyle.transform +
         ` rotateX(${smoothTiltX.toFixed(1)}deg) rotateY(${smoothTiltY.toFixed(1)}deg) translate(${smoothMX.toFixed(1)}px, ${(smoothMY + floatY).toFixed(1)}px)`;
 
+      // — Motion Trail / Wake Effect —
+      if (node.style.boxShadow !== trailShadow) {
+        node.style.boxShadow = trailShadow;
+      }
+
       const videoNode = videoNodesRef.current.get(item.key);
       if (videoNode) {
         // Only load and play video for cards within focus distance (< 1800) to optimize bandwidth, memory, and CPU
@@ -397,6 +513,17 @@ export default function InfiniteCanvasView({ projects }: Props) {
       cameraRef.current.y += (targetCameraRef.current.y - cameraRef.current.y) * lerpFactor;
       cameraRef.current.z += (targetCameraRef.current.z - cameraRef.current.z) * lerpFactor;
 
+      // Transformed cards can move underneath a stationary pointer without firing
+      // pointerenter/pointerleave. Re-hit-test while the camera moves so the tooltip
+      // switches immediately instead of waiting for inertia to finish.
+      const isCameraMoving =
+        Math.abs(velocityRef.current.x) > 0.05 ||
+        Math.abs(velocityRef.current.y) > 0.05 ||
+        Math.abs(velocityRef.current.z) > 0.05 ||
+        Math.abs(targetCameraRef.current.x - cameraRef.current.x) > 0.1 ||
+        Math.abs(targetCameraRef.current.y - cameraRef.current.y) > 0.1 ||
+        Math.abs(targetCameraRef.current.z - cameraRef.current.z) > 0.1;
+
       // — Atmospheric Depth Fog —
       if (fogRef.current) {
         const zDepth = cameraRef.current.z;
@@ -419,6 +546,19 @@ export default function InfiniteCanvasView({ projects }: Props) {
       }
 
       updateDomNodes();
+
+      const shouldSuppressTooltip = isDraggingRef.current;
+      const wasTooltipSuppressed = isTooltipSuppressedRef.current;
+
+      if (shouldSuppressTooltip !== wasTooltipSuppressed) {
+        isTooltipSuppressedRef.current = shouldSuppressTooltip;
+        setIsTooltipSuppressed(shouldSuppressTooltip);
+      }
+
+      if (!shouldSuppressTooltip && (isCameraMoving || wasTooltipSuppressed)) {
+        reconcileHoveredProject();
+      }
+
       animationFrameRef.current = requestAnimationFrame(loop);
     };
 
@@ -443,7 +583,13 @@ export default function InfiniteCanvasView({ projects }: Props) {
         removalTimerRef.current = null;
       }
     };
-  }, [projects.length, syncVisibleItems, updateDomNodes, prefersReducedMotion]);
+  }, [
+    projects.length,
+    syncVisibleItems,
+    updateDomNodes,
+    prefersReducedMotion,
+    reconcileHoveredProject,
+  ]);
 
   if (projects.length === 0) return null;
 
@@ -454,16 +600,26 @@ export default function InfiniteCanvasView({ projects }: Props) {
       ref={containerRef}
       data-canvas-viewport
       onPointerMove={handlePointerMove}
+      onPointerLeave={() => {
+        pointerClientRef.current.inside = false;
+        handleHoverChange(null);
+      }}
+      onPointerCancel={() => {
+        pointerClientRef.current.inside = false;
+        handleHoverChange(null);
+      }}
       className="relative z-10 h-full w-full cursor-grab select-none overflow-hidden bg-[#F0F0F0] active:cursor-grabbing"
       style={{
         touchAction: 'none',
-        perspective: `${CANVAS_CONSTANTS.perspective}px`,
-        perspectiveOrigin: '50% 50%',
       }}
     >
       <div
         className="pointer-events-none absolute inset-0"
-        style={{ transformStyle: 'preserve-3d' }}
+        style={{
+          perspective: `${CANVAS_CONSTANTS.perspective}px`,
+          perspectiveOrigin: '50% 50%',
+          transformStyle: 'preserve-3d',
+        }}
       >
         {renderedItems.map((item) => {
           const coverUrl = getPreviewCoverUrl(item.project);
@@ -568,6 +724,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
               registerCardRef={registerCardRef}
               registerVideoRef={registerVideoRef}
               initialStyle={initialStyle}
+              onHoverChange={handleHoverChange}
             />
           );
         })}
@@ -582,11 +739,48 @@ export default function InfiniteCanvasView({ projects }: Props) {
         }}
       />
 
+      {hoveredProject && (
+        <div
+          ref={tooltipRef}
+          data-canvas-tooltip
+          className={`pointer-events-none absolute left-0 top-0 z-50 transition-opacity duration-150 ${
+            isTooltipSuppressed ? 'opacity-0' : 'opacity-100'
+          }`}
+          style={{
+            transform: 'translate3d(var(--tooltip-x, 12px), var(--tooltip-y, 12px), 0)',
+            willChange: 'transform',
+          }}
+        >
+          <div
+            className="flex w-[260px] max-w-[calc(100vw-24px)] flex-col gap-0.5 rounded-lg border border-white/20 bg-white/70 p-3 shadow-none backdrop-blur-xl dark:border-white/10 dark:bg-black/75"
+            style={{
+              animation: 'tooltip-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            }}
+          >
+            {/* Title */}
+            <h3 className="text-[15px] font-semibold leading-snug text-slate-900 dark:text-white">
+              {hoveredProject.title}
+            </h3>
+
+            {/* Client & Year */}
+            <div className="flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-black/60 dark:text-zinc-400">
+              {hoveredProject.client && (
+                <>
+                  <span>{hoveredProject.client}</span>
+                  <span className="text-black/30 dark:text-white/30">•</span>
+                </>
+              )}
+              <span>{hoveredProject.year}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="pointer-events-none absolute bottom-10 left-10 flex flex-col gap-2">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-black/20">
+        <div className="text-[10px] uppercase tracking-[0.32em] text-black/20">
           Mode: Infinite Canvas
         </div>
-        <div className="text-[10px] uppercase tracking-[0.3em] text-black/40">
+        <div className="text-[10px] uppercase tracking-[0.32em] text-black/40">
           Drag to PAN / Scroll to ZOOM
         </div>
       </div>

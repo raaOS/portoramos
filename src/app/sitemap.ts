@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next';
 import { allProjectsAsync } from '@/lib/projects';
+import { DEFAULT_SITE_URL } from '@/lib/constants';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ramos-portofolio.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL;
 
   const projects = await allProjectsAsync();
 

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { WindowState } from './types';
 import { AboutData } from '@/types/about';
@@ -339,7 +339,7 @@ export function useWindowActions({
     );
   }, [setWindows]);
 
-  return {
+  return useMemo(() => ({
     openWindow,
     closeWindow,
     minimizeWindow,
@@ -350,5 +350,16 @@ export function useWindowActions({
     handleWindowResizeEnd,
     togglePin,
     resetWindows,
-  };
+  }), [
+    openWindow,
+    closeWindow,
+    minimizeWindow,
+    maximizeWindow,
+    focusWindow,
+    updateWindowPosition,
+    handleWindowResize,
+    handleWindowResizeEnd,
+    togglePin,
+    resetWindows,
+  ]);
 }

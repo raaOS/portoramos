@@ -22,13 +22,13 @@ export async function proxy(request: NextRequest) {
   // 0. CSRF Protection for Mutations
   const csrfResult = checkCSRF(request);
   if (!csrfResult.isValid && csrfResult.response) {
-    return csrfResult.response;
+    return addSecurityHeaders(csrfResult.response);
   }
 
   // 1. Authentication Check
   const authResult = await checkAdminAuth(request);
   if (!authResult.authenticated && authResult.response) {
-    return authResult.response;
+    return addSecurityHeaders(authResult.response);
   }
 
   // 1b. Sliding-window token refresh: kalau auth memutuskan token harus

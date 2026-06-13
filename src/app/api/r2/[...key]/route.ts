@@ -66,12 +66,21 @@ async function serveR2Object(request: NextRequest, context: RouteContext, headOn
     return new NextResponse(body, { status, headers });
   } catch (error) {
     const statusCode = getErrorStatus(error);
+
     if (statusCode === 404) {
       return new NextResponse('Not Found', { status: 404, headers: buildCorsHeaders() });
     }
 
+    // Prevent CDN from caching transient error responses
     console.error('[R2Proxy] Failed to serve object:', error);
-    return new NextResponse('Storage error', { status: 502, headers: buildCorsHeaders() });
+    return new NextResponse('Storage error', {
+      status: 502,
+      headers: {
+        ...buildCorsHeaders(),
+        'cache-control': 'no-store',
+        'cdn-cache-control': 'no-store',
+      },
+    });
   }
 }
 

@@ -13,9 +13,9 @@ function timingSafeEqualString(a: string, b: string): boolean {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
-function getFallbackAdminPin() {
+function getFallbackAdminPin(): string | null {
   const pin = process.env.ADMIN_PIN?.trim();
-  return pin && /^\d{4}$/.test(pin) ? pin : '2101';
+  return pin && /^\d{4}$/.test(pin) ? pin : null;
 }
 
 export async function POST(request: NextRequest) {
@@ -67,12 +67,12 @@ export async function POST(request: NextRequest) {
       } else {
         // Fallback PIN is server-only and only gates navigation to /admin/login.
         const fallbackPin = getFallbackAdminPin();
-        isValid = timingSafeEqualString(pin, fallbackPin);
+        isValid = fallbackPin !== null && timingSafeEqualString(pin, fallbackPin);
       }
     } catch (dbError) {
       console.error('[PIN Verify] DB read failed, falling back to ENV:', dbError);
       const fallbackPin = getFallbackAdminPin();
-      isValid = timingSafeEqualString(pin, fallbackPin);
+      isValid = fallbackPin !== null && timingSafeEqualString(pin, fallbackPin);
     }
 
     if (!isValid) {

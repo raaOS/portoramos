@@ -1,6 +1,18 @@
 import { test, expect, devices, type Page } from '@playwright/test';
 
-async function getPrimaryVisibleCard(page: Page) {
+type VisibleCanvasCard = {
+  key: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  visibleArea: number;
+  opacity: number;
+  display: string;
+  visibility: string;
+};
+
+async function getPrimaryVisibleCard(page: Page): Promise<VisibleCanvasCard | null> {
   return page.locator('[data-canvas-card]').evaluateAll((elements) => {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -121,17 +133,17 @@ test('3D Infinite Canvas should navigate to a project slug on real click', async
   const canvas = page.locator('[data-canvas-viewport]');
   await expect(canvas).toBeVisible();
 
-  let targetCard: any = null;
   await expect
     .poll(
       async () => {
-        targetCard = await getPrimaryVisibleCard(page);
-        return targetCard?.visibleArea ?? 0;
+        const visibleCard = await getPrimaryVisibleCard(page);
+        return visibleCard?.visibleArea ?? 0;
       },
       { timeout: 15000 }
     )
     .toBeGreaterThan(1000);
 
+  const targetCard = await getPrimaryVisibleCard(page);
   if (!targetCard) {
     throw new Error('No onscreen canvas card available for click navigation.');
   }
@@ -145,6 +157,38 @@ test('3D Infinite Canvas should navigate to a project slug on real click', async
   await page.waitForURL(/\/projects\/[^/?#]+$/, { timeout: 10000 });
 });
 
+test('canvas tooltip should stay responsive during scroll inertia', async ({ page }) => {
+  await page.goto('/projects?view=3d', { waitUntil: 'domcontentloaded' });
+
+  const canvas = page.locator('[data-canvas-viewport]');
+  const tooltip = page.locator('[data-canvas-tooltip]');
+  await expect(canvas).toBeVisible();
+
+  await expect
+    .poll(
+      async () => {
+        const visibleCard = await getPrimaryVisibleCard(page);
+        return visibleCard?.visibleArea ?? 0;
+      },
+      { timeout: 15000 }
+    )
+    .toBeGreaterThan(1000);
+
+  const targetCard = await getPrimaryVisibleCard(page);
+  if (!targetCard) {
+    throw new Error('No onscreen canvas card available for tooltip regression test.');
+  }
+
+  const pointerX = targetCard.left + targetCard.width / 2;
+  const pointerY = targetCard.top + targetCard.height / 2;
+  await page.mouse.move(pointerX, pointerY);
+  await expect(tooltip).toBeVisible();
+  await expect(tooltip).toHaveCSS('opacity', '1');
+
+  await page.mouse.wheel(0, 10);
+  await expect(tooltip).toHaveCSS('opacity', '1', { timeout: 300 });
+});
+
 test('3D Infinite Canvas should render cards on mobile viewport', async ({ browser }) => {
   const context = await browser.newContext({ ...devices['iPhone 12'] });
   const page = await context.newPage();
@@ -156,19 +200,19 @@ test('3D Infinite Canvas should render cards on mobile viewport', async ({ brows
     await expect(canvas).toBeVisible({ timeout: 15000 });
 
     // Verify at least one card is visible on mobile
-    let targetCard: any = null;
     await expect
       .poll(
         async () => {
-          targetCard = await getPrimaryVisibleCard(page);
-          return targetCard?.visibleArea ?? 0;
+          const visibleCard = await getPrimaryVisibleCard(page);
+          return visibleCard?.visibleArea ?? 0;
         },
         { timeout: 15000 }
       )
       .toBeGreaterThan(1000);
 
+    const targetCard = await getPrimaryVisibleCard(page);
     expect(targetCard).toBeTruthy();
-    expect(targetCard.key).toBeTruthy();
+    expect(targetCard?.key).toBeTruthy();
   } finally {
     await context.close();
   }

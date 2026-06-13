@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useOSSystem } from '../context/OSSystemContext';
+import { useOSOverlays } from '../context/OSSystemContext';
 
 export function useDesktopShortcuts() {
   const {
@@ -11,7 +11,7 @@ export function useDesktopShortcuts() {
     showMissionControl,
     setShowMissionControl,
     toggleMissionControl,
-  } = useOSSystem();
+  } = useOSOverlays();
 
   const showSpotlightRef = useRef(showSpotlight);
   const showMissionControlRef = useRef(showMissionControl);

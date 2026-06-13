@@ -84,7 +84,7 @@ describe('POST /api/comments', () => {
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.data.comment.id).toBe('new-comment');
-    expect(body.data.comment.name).toBe('Admin');
+    expect(body.data.comment.name).toBe('&lt;Admin&gt;');
     expect(storedComments).toHaveLength(2);
     expect(storedComments?.[0].id).toBe('new-comment');
     expect(storedComments?.[1]).toEqual(existingComments[0]);

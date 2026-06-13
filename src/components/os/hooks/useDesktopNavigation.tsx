@@ -5,7 +5,7 @@ import type { ContactProfile } from '../data/mockChats';
 import type { NoteData } from '../ui/elements/StickyNoteItem';
 import { WindowState } from '@/components/os/hooks/useWindowManager';
 import dynamic from 'next/dynamic';
-import { useOSSystem } from '../context/OSSystemContext';
+import { useOSOverlays } from '../context/OSSystemContext';
 
 const ProjectDetailWrapper = dynamic(() => import('../ui/ProjectDetailWrapper'), {
   loading: () => (
@@ -43,7 +43,7 @@ export function useDesktopNavigation({
   _isAdmin,
   setNotesDockBouncing,
 }: UseDesktopNavigationProps) {
-  const { notesVisible, setNotesVisible, hiddenNoteIds, unhideAllNotes } = useOSSystem();
+  const { notesVisible, setNotesVisible, hiddenNoteIds, unhideAllNotes } = useOSOverlays();
   const router = useRouter();
   const bounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

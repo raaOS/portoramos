@@ -68,7 +68,7 @@ function readR2Config(): R2Config | null {
 }
 
 export function hasR2StorageEnv() {
-  return R2_ENV_KEYS.some((key) => Boolean(process.env[key]));
+  return R2_ENV_KEYS.every((key) => Boolean(process.env[key]));
 }
 
 export function isR2StorageConfigured() {

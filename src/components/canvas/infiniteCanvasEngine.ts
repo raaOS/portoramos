@@ -73,6 +73,19 @@ export const CANVAS_CONSTANTS = {
 
   // — Time scaling —
   timeScaleFactor: 0.001,
+
+  // — Motion Trail / Wake Effect —
+  trailSpeedThreshold: 4, // min velocity magnitude to start showing trail
+  trailMaxSpeed: 25, // velocity at which trail reaches full intensity
+  trailAttack: 0.12, // how quickly trail ramps up (0-1 lerp factor)
+  trailDecay: 0.04, // how slowly trail fades out (lower = longer lingering)
+  trailLayers: 3, // number of ghost shadow layers
+  trailMaxOffset: 40, // max pixel offset for the outermost ghost layer
+  trailMaxOpacity: 0.18, // max opacity of the closest ghost layer
+  trailBlurBase: 6, // base blur for trail shadows (px)
+  trailBlurGrowth: 8, // additional blur per layer (px)
+  trailStretchFactor: 0.012, // subtle scale stretch in movement direction
+  trailMaxStretch: 0.04, // max stretch amount (e.g., scaleX 1.04)
 } as const;
 
 export type Point3D = {

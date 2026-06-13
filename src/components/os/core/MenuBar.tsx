@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Search, Wifi, LogOut, Users } from 'lucide-react';
-import { useOSSystem } from '../context/OSSystemContext';
+import { useOSOverlays } from '../context/OSSystemContext';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 import { useReducedMotion } from 'motion/react';
 import { useTransitionRouter } from 'next-view-transitions';
@@ -34,7 +34,7 @@ export default function MenuBar({
   onLogout,
   onToggleControlCenter,
 }: MenuBarProps) {
-  const { showCalendar, setShowCalendar, showGhostCursors, toggleGhostCursors } = useOSSystem();
+  const { showCalendar, setShowCalendar, showGhostCursors, toggleGhostCursors } = useOSOverlays();
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const viewMenuRef = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(new Date());

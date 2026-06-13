@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     if (!groqRes.ok) {
       const errorText = await groqRes.text();
       console.error('[Voice API] Groq Error:', errorText);
-      return NextResponse.json({ error: `Groq Error: ${errorText}` }, { status: 500 });
+      return NextResponse.json({ error: 'Voice transcription failed' }, { status: 500 });
     }
 
     const data = await groqRes.json();

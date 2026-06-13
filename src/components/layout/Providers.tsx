@@ -1,6 +1,5 @@
 'use client';
 
-import { ModalProvider } from '@/contexts/ModalContext';
 import { OSSystemProvider } from '@/components/os/context/OSSystemContext';
 
 /**
@@ -10,11 +9,9 @@ import { OSSystemProvider } from '@/components/os/context/OSSystemContext';
  * admin pages dan `/projects` (`IndexClientWithAutoUpdate`). Bungkus sub-tree
  * yang relevan dengan {@link QueryProvider} supaya homepage (OS desktop) dan
  * route public sederhana tidak ikut menanggung chunk `@tanstack/react-query`.
+ *
+ * ModalProvider removed — no consumer uses `useModal()` anywhere.
  */
 export default function Providers({ children }: { children: React.ReactNode }) {
-  return (
-    <ModalProvider>
-      <OSSystemProvider>{children}</OSSystemProvider>
-    </ModalProvider>
-  );
+  return <OSSystemProvider>{children}</OSSystemProvider>;
 }

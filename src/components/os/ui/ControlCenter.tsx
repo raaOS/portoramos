@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Wifi, Bluetooth, Airplay, Moon, Sun, Volume2 } from 'lucide-react';
 import { soundManager } from '../utils/SoundManager';
-import { useOSSystem } from '../context/OSSystemContext';
+import { useOSMedia } from '../context/OSSystemContext';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 
 interface ControlCenterProps {
@@ -11,7 +11,7 @@ interface ControlCenterProps {
 }
 
 export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCenterProps) {
-  const { brightness, setBrightness, volume, setVolume } = useOSSystem();
+  const { brightness, setBrightness, volume, setVolume } = useOSMedia();
   const [wifiState, setWifiState] = useState(true);
   const [bluetoothState, setBluetoothState] = useState(true);
   const [airdropState, setAirdropState] = useState(false);
@@ -24,8 +24,28 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
     }
   }, [isOpen, volume]);
 
+  // Apply brightness filter to the root element reactively.
+  // Cleanup restores full brightness on unmount so the filter
+  // doesn't leak and darken the entire page after ControlCenter closes.
+  useEffect(() => {
+    if (brightness < 100) {
+      document.documentElement.style.filter = `brightness(${brightness / 100})`;
+    } else {
+      document.documentElement.style.removeProperty('filter');
+    }
+    return () => {
+      document.documentElement.style.removeProperty('filter');
+    };
+  }, [brightness]);
+
+  const handleBrightnessChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setBrightness(parseInt(e.target.value, 10));
+  }, [setBrightness]);
+
   return (
     <motion.div
+      role="region"
+      aria-label="Control Center"
       initial={{ opacity: 0, scale: 0.8, filter: 'blur(10px)' }}
       animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
       exit={{ opacity: 0, scale: 0.8, filter: 'blur(10px)' }}
@@ -125,12 +145,11 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
               min="0"
               max="100"
               value={brightness}
-              onChange={(e) => {
-                const val = parseInt(e.target.value);
-                setBrightness(val);
-                // Real 0-100% brightness
-                document.documentElement.style.filter = `brightness(${val / 100})`;
-              }}
+              onChange={handleBrightnessChange}
+              aria-label="Brightness"
+              aria-valuenow={brightness}
+              aria-valuemin={0}
+              aria-valuemax={100}
               className="absolute inset-0 w-full cursor-pointer opacity-0"
             />
           </div>
@@ -158,6 +177,10 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
                 // Real 0-100% volume control
                 soundManager.setVolume(val / 100);
               }}
+              aria-label="Volume"
+              aria-valuenow={volume}
+              aria-valuemin={0}
+              aria-valuemax={100}
               className="absolute inset-0 w-full cursor-pointer opacity-0"
             />
           </div>

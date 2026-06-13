@@ -3,6 +3,7 @@ import { validateConfig } from '@/lib/telegram';
 import { chatStore } from '@/lib/chatStore';
 import { aiChatService } from '@/lib/services/aiChatService';
 import { checkDataRateLimit } from '@/lib/dataRateLimit';
+import { getClientIdentifier } from '@/lib/security/request';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +11,25 @@ export const dynamic = 'force-dynamic';
 const CHAT_MAX_MESSAGES = 10;
 const CHAT_WINDOW_MS = 60 * 1000; // 1 menit
 const CHAT_BLOCK_MS = 5 * 60 * 1000; // 5 menit block
+
+/**
+ * Escape characters that Telegram Markdown (v1) treats as special.
+ * Prevents user-supplied `message` / `pageUrl` from breaking formatting
+ * or injecting unintended Markdown directives.
+ */
+function escapeTelegramMarkdown(text: string): string {
+  return text.replace(/([_*\[\]`])/g, '\\$1');
+}
+
+/**
+ * Escape HTML special characters to prevent injection in Telegram HTML parse mode.
+ */
+function escapeTelegramHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
 
 interface TelegramPayload {
   chat_id: string;
@@ -47,9 +67,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Rate limiting per visitorId untuk mencegah spam ke Telegram
+    // Rate limiting keyed on client IP+UA (not user-controlled visitorId)
+    // to prevent a single attacker from bypassing limits by rotating IDs.
+    const clientId = getClientIdentifier(request);
     const rateCheck = await checkDataRateLimit(
-      `chat_${visitorId}`,
+      `chat_${clientId}`,
       CHAT_MAX_MESSAGES,
       CHAT_WINDOW_MS,
       CHAT_BLOCK_MS
@@ -93,10 +115,10 @@ export async function POST(request: Request) {
       text += `🚨 *[KLIEN URGENT!]* 🚨\n_Pesan mengandung kata darurat/mendesak!_\n\n`;
     }
 
-    text += `🌐 *New Web Chat Message*\n_ID: ${visitorId.substring(0, 6)}_\n\n💬 "${message}"`;
+    text += `🌐 *New Web Chat Message*\n_ID: ${visitorId.substring(0, 6)}_\n\n💬 "${escapeTelegramMarkdown(message)}"`;
 
     if (pageUrl) {
-      text += `\n\n📄 Page: ${pageUrl}`;
+      text += `\n\n📄 Page: ${escapeTelegramMarkdown(pageUrl)}`;
     }
     if (isAiMode) {
       text += `\n\n🤖 _AI is calculating a response..._\n_(Reply to take over manually)_`;
@@ -194,12 +216,12 @@ export async function POST(request: Request) {
 
         // Notify admin of AI reply inside the same topic
         if (aiReplyMsg) {
-          let adminAlertText = `🤖 *AI Auto-Reply:*\n"${aiResponseText}"`;
+          let adminAlertText = `🤖 *AI Auto-Reply:*\n"${escapeTelegramMarkdown(aiResponseText)}"`;
 
           if (isUrgent) {
-            adminAlertText = `⚠️ <b>[URGENT BYPASS]</b> ⚠️\n\nSistem AI di-Bypass karena pesan mendesak. Sistem mengirim balasan pegangan darurat:\n"<i>${aiResponseText}</i>"\n\n<b>SEGERA BALAS SECARA MANUAL!</b>`;
+            adminAlertText = `⚠️ <b>[URGENT BYPASS]</b> ⚠️\n\nSistem AI di-Bypass karena pesan mendesak. Sistem mengirim balasan pegangan darurat:\n"<i>${escapeTelegramHtml(aiResponseText)}</i>"\n\n<b>SEGERA BALAS SECARA MANUAL!</b>`;
           } else if (hasApiError) {
-            adminAlertText = `⚠️ <b>[ALERT] API AI ERROR / LIMIT EXCEEDED!</b> ⚠️\n\n<i>Error detail: ${apiErrorMessage}</i>\n\nSistem mengirim pesan auto-reply darurat ke pengunjung:\n"<i>${aiResponseText}</i>"\n\n<b>SEGERA BALAS SECARA MANUAL!</b>`;
+            adminAlertText = `⚠️ <b>[ALERT] API AI ERROR / LIMIT EXCEEDED!</b> ⚠️\n\n<i>Error detail: ${escapeTelegramHtml(apiErrorMessage)}</i>\n\nSistem mengirim pesan auto-reply darurat ke pengunjung:\n"<i>${escapeTelegramHtml(aiResponseText)}</i>"\n\n<b>SEGERA BALAS SECARA MANUAL!</b>`;
           }
 
           const aiPayload: TelegramPayload = {

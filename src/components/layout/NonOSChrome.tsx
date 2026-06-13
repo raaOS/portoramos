@@ -5,7 +5,7 @@ import { LazyMotion, domAnimation, AnimatePresence } from 'motion/react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import Header from '@/components/shared/Header';
-import { useOSSystem } from '@/components/os/context/OSSystemContext';
+import { useOSOverlays } from '@/components/os/context/OSSystemContext';
 import WindowRenderer from './WindowRenderer';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 
@@ -35,7 +35,7 @@ export default function NonOSChrome({
   modal: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { showControlCenter, setShowControlCenter, showCalendar, setShowCalendar } = useOSSystem();
+  const { showControlCenter, setShowControlCenter, showCalendar, setShowCalendar } = useOSOverlays();
 
   const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
 

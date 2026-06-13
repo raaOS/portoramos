@@ -24,7 +24,7 @@ import { useChatContacts } from '../hooks/useChatContacts';
 import { useDesktopLayout } from '../hooks/useDesktopLayout';
 import { useDesktopIcons } from '../hooks/useDesktopIcons';
 import { useDesktopNavigation } from '../hooks/useDesktopNavigation';
-import { useOSSystem } from '../context/OSSystemContext';
+import { useOSOverlays, useOSBoot } from '../context/OSSystemContext';
 import type { AboutData } from '@/types/about';
 import type { ExperienceData } from '@/types/experience';
 import type { HardSkillsData } from '@/types/hardSkill';
@@ -226,18 +226,15 @@ function DesktopMain({
   bootSequence,
 }: DesktopMainProps) {
   const { needsPowerOn, isBooting, finishBooting } = bootSequence;
+  const { startScreenReady, setStartScreenReady, isRevealed, setIsRevealed } = useOSBoot();
   const {
-    startScreenReady,
-    setStartScreenReady,
-    isRevealed,
-    setIsRevealed,
     notesVisible,
     setNotesVisible,
     hiddenNoteIds,
     restoreHiddenNoteIds,
     showMissionControl,
     setShowMissionControl,
-  } = useOSSystem();
+  } = useOSOverlays();
   const wasBootSkipped = !needsPowerOn && !isBooting;
   const [desktopEntranceReady, setDesktopEntranceReady] = React.useState(false);
   const [windowsEntranceReady, setWindowsEntranceReady] = React.useState(false);
@@ -245,17 +242,28 @@ function DesktopMain({
 
   const [, setActiveIconIds] = React.useState<Set<string>>(new Set());
 
-  // Listen to viewport resizing for responsive Mission Control positioning
+  // Listen to viewport resizing for responsive Mission Control positioning.
+  // Throttled via rAF to avoid layout thrashing during rapid resize events.
   const [viewport, setViewport] = React.useState({ width: 1440, height: 900 });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    let rafId: number | undefined;
+
     const handleResize = () => {
-      setViewport({ width: window.innerWidth, height: window.innerHeight });
+      if (rafId) return; // Already scheduled
+      rafId = requestAnimationFrame(() => {
+        rafId = undefined;
+        setViewport({ width: window.innerWidth, height: window.innerHeight });
+      });
     };
+
     window.addEventListener('resize', handleResize);
     handleResize(); // Initial compute
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   useDesktopShortcuts();

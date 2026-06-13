@@ -7,7 +7,7 @@ import { DraggableStickyNote } from '../ui/elements/DraggableStickyNote';
 import type { NoteData } from '../ui/elements/StickyNoteItem';
 import { useUnifiedZIndex } from '../context/UnifiedZIndexContext';
 import { WindowState } from '@/components/os/hooks/useWindowManager';
-import { useOSSystem } from '../context/OSSystemContext';
+import { useOSOverlays, useOSBoot } from '../context/OSSystemContext';
 
 interface MissionTarget {
   x: number;
@@ -88,11 +88,11 @@ export default function UnifiedLayer({
   const { bringToFront, getZIndex, registerElement, unregisterElement } = useUnifiedZIndex();
   const {
     notesVisible,
-    isRevealed: isRevealedFromContext,
     hiddenNoteIds,
     hideNote,
     showMissionControl,
-  } = useOSSystem();
+  } = useOSOverlays();
+  const { isRevealed: isRevealedFromContext } = useOSBoot();
   const isRevealed = isRevealedProp !== undefined ? isRevealedProp : isRevealedFromContext;
   const canRenderWindows = windowsReady ?? isRevealed;
   const canRenderNotes = notesReady ?? isRevealed;

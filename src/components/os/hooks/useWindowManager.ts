@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { AboutData } from '@/types/about';
 import { useLayoutPersistence } from '@/components/os/contexts/LayoutPersistenceContext';
 import {
@@ -89,11 +89,11 @@ export const useWindowManager = ({
     [bringToFrontZIndex]
   );
 
-  return {
+  return useMemo(() => ({
     windows,
     setWindows,
     requestNextZIndex,
     bouncingDocId,
     ...windowActions,
-  };
+  }), [windows, setWindows, requestNextZIndex, bouncingDocId, windowActions]);
 };

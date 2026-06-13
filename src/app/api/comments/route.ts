@@ -105,18 +105,20 @@ export async function POST(request: NextRequest) {
 
     const transactionResult = (await commentsRef.transaction((current: Comment[] | null) => {
       const existingComments = Array.isArray(current) ? current : [];
-      const lastUserComment = existingComments[0];
 
-      if (lastUserComment) {
+      // Scan ALL recent comments by this author (not just the first one)
+      // to prevent a flood attacker from interleaving comments.
+      const COOLDOWN_MS = 5000;
+      for (const existing of existingComments.slice(0, 10)) {
         const isSameAuthor =
-          lastUserComment.name === commentToSave.name ||
-          lastUserComment.author === commentToSave.name;
+          existing.name === commentToSave.name ||
+          existing.author === commentToSave.name;
 
         if (isSameAuthor) {
-          const lastTimeStr = lastUserComment.createdAt || lastUserComment.time;
+          const lastTimeStr = existing.createdAt || existing.time;
           if (lastTimeStr) {
             const timeDiff = Date.now() - new Date(lastTimeStr).getTime();
-            if (timeDiff < 5000) {
+            if (timeDiff < COOLDOWN_MS) {
               abortReason = 'flood';
               return;
             }

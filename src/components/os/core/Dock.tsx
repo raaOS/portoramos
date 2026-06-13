@@ -34,7 +34,7 @@ import { getDockItemConfig } from '../utils/dockUtils';
 import { markBack } from '@/lib/navigationDirection';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 import { DockPortal } from '@/components/layout/GlobalDockSlot';
-import { useOSSystem } from '../context/OSSystemContext';
+import { useOSOverlays } from '../context/OSSystemContext';
 import {
   DndContext,
   closestCenter,
@@ -922,7 +922,7 @@ export function OSDock({
   isMobile = false,
 }: OSDockProps) {
   const router = useTransitionRouter();
-  const { showMissionControl, toggleMissionControl } = useOSSystem();
+  const { showMissionControl, toggleMissionControl } = useOSOverlays();
 
   // Stable handler — projects adalah satu-satunya item OS yang menavigasi
   // ke route lain. Pakai useTransitionRouter agar view-transition arah

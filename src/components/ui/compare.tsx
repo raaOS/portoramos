@@ -43,7 +43,6 @@ export const Compare = ({
 }: CompareProps) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [, setIsMouseOver] = useState(false);
 
   // Motion values for smooth interaction
   const x = useMotionValue(0);
@@ -67,7 +66,7 @@ export const Compare = ({
   const leftPosition = useMotionTemplate`${percentage}%`;
 
   // Autoplay Effect
-  const autoplayRef = useRef<NodeJS.Timeout | null>(null);
+  const autoplayRef = useRef<number | null>(null);
 
   const startAutoplay = useCallback(() => {
     if (!autoplay) return;
@@ -84,15 +83,15 @@ export const Compare = ({
       const nextX = (currentPercent / 100) * w;
 
       x.set(nextX);
-      autoplayRef.current = setTimeout(animate, 16);
+      autoplayRef.current = requestAnimationFrame(animate) as unknown as number;
     };
 
     animate();
   }, [autoplay, autoplayDuration, x, width]);
 
   const stopAutoplay = useCallback(() => {
-    if (autoplayRef.current) {
-      clearTimeout(autoplayRef.current);
+    if (autoplayRef.current !== null) {
+      cancelAnimationFrame(autoplayRef.current);
       autoplayRef.current = null;
     }
   }, []);
@@ -132,12 +131,10 @@ export const Compare = ({
   }, [startAutoplay, stopAutoplay]);
 
   const mouseEnterHandler = () => {
-    setIsMouseOver(true);
     stopAutoplay();
   };
 
   const mouseLeaveHandler = () => {
-    setIsMouseOver(false);
     // Removed auto-reset to center. Slider stays where user left it.
     if (slideMode === 'drag') {
       setIsDragging(false);
@@ -199,10 +196,30 @@ export const Compare = ({
   return (
     <div
       ref={sliderRef}
+      role="slider"
+      aria-label={firstSlideLabel && secondSlideLabel ? `Compare ${firstSlideLabel} vs ${secondSlideLabel}` : 'Image comparison slider'}
+      aria-valuenow={Math.round(initialSliderPercentage)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      tabIndex={0}
       className={cn('relative h-[400px] w-[400px] overflow-hidden', className)}
       style={{
         position: 'relative',
         cursor: slideMode === 'drag' ? 'grab' : 'col-resize',
+      }}
+      onKeyDown={(e) => {
+        const step = 2; // 2% per key press
+        const w = width.get();
+        if (w === 0) return;
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          const currentX = x.get();
+          x.set(Math.max(0, currentX - (step / 100) * w));
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          const currentX = x.get();
+          x.set(Math.min(w, currentX + (step / 100) * w));
+        }
       }}
       onMouseMove={(e) => handleMove(e.clientX)}
       onMouseLeave={mouseLeaveHandler}

@@ -12,6 +12,7 @@ interface ProjectInteractionBarProps {
   comments: Comment[];
   translations: Record<string, string> | null;
   translateLoading: boolean;
+  likePending: boolean;
   onLike: () => void;
   onShare: () => void;
   onTranslate: () => void;
@@ -27,6 +28,7 @@ export function ProjectInteractionBar({
   comments,
   translations,
   translateLoading,
+  likePending,
   onLike,
   onShare,
   onTranslate,
@@ -61,12 +63,14 @@ export function ProjectInteractionBar({
       <div className={isVertical ? 'flex flex-col items-center gap-3' : 'flex items-center gap-2'}>
         {/* Like Button */}
         <button
-          className={buttonClassName(
+          onClick={onLike}
+          disabled={likePending}
+          aria-label={isProjectLiked ? 'Unlike project' : 'Like project'}
+          aria-busy={likePending}
+          className={`${buttonClassName(
             isProjectLiked || metrics.likes > 0 ? 'text-red-500' : '',
             'text-gray-400 hover:text-red-500'
-          )}
-          onClick={onLike}
-          aria-label={isProjectLiked ? 'Unlike project' : 'Like project'}
+          )} disabled:cursor-wait disabled:opacity-70`}
         >
           <svg
             className="h-5 w-5 sm:h-6 sm:w-6"

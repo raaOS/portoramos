@@ -154,7 +154,7 @@ describe('POST /api/chat/voice', () => {
     const body = await response.json();
 
     expect(response.status).toBe(500);
-    expect(body.error).toContain('Groq Error');
+    expect(body.error).toContain('Voice transcription failed');
   });
 
   it('returns 500 on unexpected errors', async () => {

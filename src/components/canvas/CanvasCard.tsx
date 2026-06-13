@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { useTransitionRouter } from 'next-view-transitions';
 import { getCoverPosterUrl, getPreviewCoverUrl, isVideoUrl } from '@/utils/canvas-helpers';
 import type { CanvasItem } from './infiniteCanvasEngine';
+import type { Project } from '@/types/projects';
 
 const CARD_WIDTH = 700;
 
@@ -12,6 +13,7 @@ type CanvasCardProps = {
   registerCardRef: (key: string, element: HTMLDivElement | null) => void;
   registerVideoRef: (key: string, element: HTMLVideoElement | null) => void;
   initialStyle?: React.CSSProperties;
+  onHoverChange?: (project: Project | null) => void;
 };
 
 export function CanvasCardInner({
@@ -20,6 +22,7 @@ export function CanvasCardInner({
   registerCardRef,
   registerVideoRef,
   initialStyle,
+  onHoverChange,
 }: CanvasCardProps) {
   const router = useTransitionRouter();
 
@@ -33,13 +36,7 @@ export function CanvasCardInner({
     item.project.coverWidth && item.project.coverHeight
       ? item.project.coverWidth / item.project.coverHeight
       : 16 / 9;
-  const eyebrow =
-    item.project.type === 'commercial'
-      ? 'Proyek Komersial'
-      : item.project.type === 'visual_art'
-        ? 'Karya Visual'
-        : (item.project.tags?.[0] ?? 'Project');
-  const metaLine = `${item.project.client} • ${item.project.year}`;
+
 
   return (
     <div
@@ -53,6 +50,7 @@ export function CanvasCardInner({
         willChange: 'transform',
         backfaceVisibility: 'hidden',
         contain: 'layout paint style',
+        borderRadius: '18px',
         visibility: 'hidden', // Start hidden, rAF loop will reveal
         opacity: 0,
         ...initialStyle,
@@ -76,6 +74,8 @@ export function CanvasCardInner({
         }
         router.push(`/projects/${item.project.slug}`);
       }}
+      onPointerEnter={() => onHoverChange?.(item.project)}
+      onPointerLeave={() => onHoverChange?.(null)}
     >
       <div className="relative h-full w-full overflow-hidden rounded-[18px] bg-black/5">
         {isVideo ? (
@@ -103,25 +103,24 @@ export function CanvasCardInner({
         )}
 
         <div className="pointer-events-none absolute inset-0 rounded-[18px] bg-black/[0.02] transition-colors duration-300 group-hover:bg-black/[0.06]" />
-        <div className="ring-white/12 pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset transition-all duration-300 group-hover:shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_24px_60px_rgba(15,23,42,0.28)] group-hover:ring-white/45" />
-        <div className="via-black/18 pointer-events-none absolute inset-0 rounded-[18px] bg-gradient-to-t from-black/80 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5 sm:p-6">
-          <div className="max-w-[82%] translate-y-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-            <p className="text-white/68 text-[10px] font-medium uppercase tracking-[0.32em]">
-              {eyebrow}
-            </p>
-            <h2 className="mt-2 text-[24px] font-semibold leading-[1.02] text-white [text-shadow:0_8px_24px_rgba(0,0,0,0.35)]">
-              {item.project.title}
-            </h2>
-            <p className="text-white/64 mt-3 truncate text-[11px] uppercase tracking-[0.24em]">
-              {metaLine}
-            </p>
-          </div>
-        </div>
+        <div className="ring-white/12 pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset transition-all duration-300 group-hover:shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_16px_40px_rgba(0,0,0,0.12)] group-hover:ring-white/45" />
       </div>
     </div>
   );
 }
 
-export const CanvasCard = memo(CanvasCardInner);
+export const CanvasCard = memo(CanvasCardInner, (prevProps, nextProps) => {
+  return (
+    prevProps.item.key === nextProps.item.key &&
+    prevProps.isPriority === nextProps.isPriority &&
+    prevProps.registerCardRef === nextProps.registerCardRef &&
+    prevProps.registerVideoRef === nextProps.registerVideoRef &&
+    prevProps.onHoverChange === nextProps.onHoverChange &&
+    // Shallow compare style properties we care about
+    prevProps.initialStyle?.opacity === nextProps.initialStyle?.opacity &&
+    prevProps.initialStyle?.visibility === nextProps.initialStyle?.visibility &&
+    prevProps.initialStyle?.transform === nextProps.initialStyle?.transform &&
+    prevProps.initialStyle?.zIndex === nextProps.initialStyle?.zIndex &&
+    prevProps.initialStyle?.filter === nextProps.initialStyle?.filter
+  );
+});

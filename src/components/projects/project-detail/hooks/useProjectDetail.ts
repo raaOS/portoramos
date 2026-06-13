@@ -1,6 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, startTransition } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  useOptimistic,
+  useTransition,
+  startTransition,
+} from 'react';
 import type { Project, GalleryGroup } from '@/types/projects';
 import type { Comment } from '@/lib/magic';
 import { collectProjectTranslationFields } from '../utils/translations';
@@ -9,14 +18,31 @@ interface UseProjectDetailProps {
   project: Project;
 }
 
+interface ProjectMetrics {
+  likes: number;
+  shares: number;
+}
+
+interface MetricsMutationResponse {
+  success?: boolean;
+  metrics?: ProjectMetrics;
+  error?: string;
+}
+
+interface OptimisticLikeState {
+  isLiked: boolean;
+  likes: number;
+}
+
 interface UseProjectDetailReturn {
   // States
   comments: Comment[];
   setComments: (comments: Comment[]) => void;
   isProjectLiked: boolean;
   setIsProjectLiked: (liked: boolean) => void;
-  metrics: { likes: number; shares: number };
-  setMetrics: React.Dispatch<React.SetStateAction<{ likes: number; shares: number }>>;
+  metrics: ProjectMetrics;
+  setMetrics: React.Dispatch<React.SetStateAction<ProjectMetrics>>;
+  isLikePending: boolean;
   translations: Record<string, string> | null;
   setTranslations: (translations: Record<string, string> | null) => void;
   translateLoading: boolean;
@@ -36,6 +62,27 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
   const [comments, setComments] = useState<Comment[]>([]);
   const [isProjectLiked, setIsProjectLiked] = useState(false);
   const [metrics, setMetrics] = useState({ likes: 0, shares: 0 });
+  const [isLikePending, startLikeTransition] = useTransition();
+  const likeRequestInFlightRef = useRef(false);
+  const committedLikeState = useMemo(
+    () => ({ isLiked: isProjectLiked, likes: metrics.likes }),
+    [isProjectLiked, metrics.likes]
+  );
+  const [optimisticLikeState, updateOptimisticLike] = useOptimistic<
+    OptimisticLikeState,
+    boolean
+  >(
+    committedLikeState,
+    (current, nextIsLiked) => ({
+      isLiked: nextIsLiked,
+      likes:
+        nextIsLiked === current.isLiked
+          ? current.likes
+          : nextIsLiked
+            ? current.likes + 1
+            : Math.max(0, current.likes - 1),
+    })
+  );
   const [, setIsLoaded] = useState(false);
   const [translations, setTranslations] = useState<Record<string, string> | null>(null);
   const [translateLoading, setTranslateLoading] = useState(false);
@@ -163,32 +210,57 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
     };
   }, [project.slug]);
 
-  const handleProjectLike = async () => {
-    const newIsLiked = !isProjectLiked;
-    setIsProjectLiked(newIsLiked);
-    setMetrics((prev) => ({
-      ...prev,
-      likes: newIsLiked ? prev.likes + 1 : Math.max(0, prev.likes - 1),
-    }));
-    // BUG FIX #6: try-catch untuk localStorage
-    try {
-      localStorage.setItem(`like-${project.slug}`, String(newIsLiked));
-    } catch (e) {
-      console.warn('[useProjectDetail] Failed to save like status:', e);
-    }
-    try {
-      await fetch('/api/metrics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          slug: project.slug,
-          action: newIsLiked ? 'like' : 'unlike',
-        }),
+  const handleProjectLike = useCallback(async () => {
+    if (likeRequestInFlightRef.current) return;
+
+    likeRequestInFlightRef.current = true;
+    const nextIsLiked = !optimisticLikeState.isLiked;
+
+    await new Promise<void>((resolve) => {
+      startLikeTransition(async () => {
+        updateOptimisticLike(nextIsLiked);
+
+        try {
+          const response = await fetch('/api/metrics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slug: project.slug,
+              action: nextIsLiked ? 'like' : 'unlike',
+            }),
+          });
+          const data = (await response.json().catch(() => null)) as MetricsMutationResponse | null;
+          const serverMetrics = data?.metrics;
+
+          if (
+            !response.ok ||
+            data?.success !== true ||
+            !serverMetrics ||
+            !Number.isFinite(serverMetrics.likes) ||
+            !Number.isFinite(serverMetrics.shares)
+          ) {
+            throw new Error(data?.error || `Metrics request failed (${response.status})`);
+          }
+
+          startTransition(() => {
+            setIsProjectLiked(nextIsLiked);
+            setMetrics(serverMetrics);
+          });
+
+          try {
+            localStorage.setItem(`like-${project.slug}`, String(nextIsLiked));
+          } catch (error) {
+            console.warn('[useProjectDetail] Failed to save like status:', error);
+          }
+        } catch (error) {
+          console.error('[useProjectDetail] Failed to update like metric:', error);
+        } finally {
+          likeRequestInFlightRef.current = false;
+          resolve();
+        }
       });
-    } catch {
-      console.error('Failed to update like metric');
-    }
-  };
+    });
+  }, [optimisticLikeState.isLiked, project.slug, startLikeTransition, updateOptimisticLike]);
 
   const handleProjectShare = async () => {
     setMetrics((prev) => ({ ...prev, shares: prev.shares + 1 }));
@@ -216,10 +288,11 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
   return {
     comments,
     setComments,
-    isProjectLiked,
+    isProjectLiked: optimisticLikeState.isLiked,
     setIsProjectLiked,
-    metrics,
+    metrics: { ...metrics, likes: optimisticLikeState.likes },
     setMetrics,
+    isLikePending,
     translations,
     setTranslations,
     translateLoading,

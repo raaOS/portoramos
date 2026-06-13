@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useContext } from 'react';
+import { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
 import type { GalleryItem } from '@/types/projects';
@@ -26,6 +26,10 @@ export default function LightboxGallery({
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const validItems = items.filter((item) => item.isActive !== false);
+
+  // Touch swipe tracking for mobile navigation
+  const touchStartX = useRef<number | null>(null);
+  const SWIPE_THRESHOLD = 50; // minimum px to register a swipe
 
   const desktopContext = useContext(DesktopWindowContext);
 
@@ -111,10 +115,26 @@ export default function LightboxGallery({
   return (
     <AnimatePresence>
       <motion.div
+        role="dialog"
+        aria-label={groupName ? `Gallery: ${groupName}` : 'Image gallery'}
+        aria-modal="true"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={(e) => {
+          if (touchStartX.current !== null) {
+            const diff = e.changedTouches[0].clientX - touchStartX.current;
+            if (Math.abs(diff) >= SWIPE_THRESHOLD) {
+              if (diff > 0) handlePrev();
+              else handleNext();
+            }
+            touchStartX.current = null;
+          }
+        }}
         className={
           windowId && desktopContext
             ? 'absolute inset-0 z-30 flex items-center justify-center bg-black/95 backdrop-blur-sm'

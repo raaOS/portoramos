@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateAdminRequest } from '@/lib/auth';
 import { db } from '@/lib/database';
 import { enforceRequestRateLimit } from '@/lib/security/request';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 // CLOUDFLARE_D1 path for analytics logs
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     const { event, details } = validation.data;
 
     const newLog: AnalyticsLog = {
-      id: Date.now().toString(),
+      id: randomUUID(),
       timestamp: new Date().toISOString(),
       event,
       details: details || {},

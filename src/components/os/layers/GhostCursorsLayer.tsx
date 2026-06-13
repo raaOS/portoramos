@@ -2,7 +2,7 @@
 
 import { useGhostCursors, GhostCursor } from '@/hooks/useGhostCursors';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 export function GhostCursorsLayer({ enabled = true }: { enabled?: boolean }) {
   const cursors = useGhostCursors(enabled);
@@ -25,15 +25,25 @@ export function GhostCursorsLayer({ enabled = true }: { enabled?: boolean }) {
 }
 
 function GhostCursorItem({ cursor }: { cursor: GhostCursor }) {
-  const [pos, setPos] = useState({ x: cursor.x, y: cursor.y });
+  const elRef = useRef<HTMLDivElement>(null);
+  const posRef = useRef({ x: cursor.x, y: cursor.y });
   const rafRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
+    // Set initial position immediately so cursor appears at the right spot
+    if (elRef.current) {
+      elRef.current.style.transform = `translate(${posRef.current.x}px, ${posRef.current.y}px)`;
+    }
+
     const animate = () => {
-      setPos((prev) => ({
-        x: prev.x + (cursor.x - prev.x) * 0.15,
-        y: prev.y + (cursor.y - prev.y) * 0.15,
-      }));
+      const p = posRef.current;
+      p.x += (cursor.x - p.x) * 0.15;
+      p.y += (cursor.y - p.y) * 0.15;
+
+      // Write directly to the DOM to bypass React reconciliation at ~60fps.
+      if (elRef.current) {
+        elRef.current.style.transform = `translate(${p.x}px, ${p.y}px)`;
+      }
       rafRef.current = requestAnimationFrame(animate);
     };
     rafRef.current = requestAnimationFrame(animate);
@@ -43,8 +53,8 @@ function GhostCursorItem({ cursor }: { cursor: GhostCursor }) {
   }, [cursor.x, cursor.y]);
 
   return (
-    <motion.div
-      style={{ x: pos.x, y: pos.y }}
+    <div
+      ref={elRef}
       className="flex items-center gap-1.5 transition-none will-change-transform"
     >
       {/* Kursor */}
@@ -77,6 +87,6 @@ function GhostCursorItem({ cursor }: { cursor: GhostCursor }) {
       >
         {cursor.name}
       </motion.span>
-    </motion.div>
+    </div>
   );
 }

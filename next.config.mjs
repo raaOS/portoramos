@@ -1,13 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Allow development requests from multiple origins to avoid cross-origin warnings in Next.js 16
+  // Allow development requests from localhost
   allowedDevOrigins: [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'http://192.168.100.57:3000',
     'localhost:3000',
     '127.0.0.1:3000',
-    '192.168.100.57:3000',
     '127.0.0.1',
     'localhost',
   ],
@@ -49,7 +47,6 @@ const nextConfig = {
   transpilePackages: ['motion'],
 
   // Optimize static assets
-  assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
   // Improve static asset handling
   trailingSlash: false,
 
@@ -219,7 +216,7 @@ const nextConfig = {
   },
 };
 
-// Next.js Restart: fix hydration mismatch v1
+
 import createBundleAnalyzer from '@next/bundle-analyzer';
 
 const withBundleAnalyzer = createBundleAnalyzer({
