@@ -1,0 +1,3 @@
+- **Media Processing**: Uses `sharp` for image optimization and `fluent-ffmpeg` with `ffmpeg-static` for video compression in `media/optimize-assets.js`.
+- **TypeScript Execution**: Relies on `tsx` (via `require.resolve('tsx/cli')`) to execute `.ts` scripts directly in development environments.
+- **Cloudflare Integration**: Directly interacts with Cloudflare D1 and R2 APIs using `fetch` and environment-based authentication in `cloudflare/` and `core/` scripts.

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "welcome-note",
+    "text": "Halo! Selamat Datang di Ramos OS v2.0 🖥️✨\n\nSaya Ramos, seorang Graphic Designer & Visual Strategist.\n\nQuick Start:\n1. Buka folder \"Projects\" untuk lihat karya saya.\n2. Klik \"Contact\" di bawah untuk ngobrol.\n3. Drag note ini ke mana saja!\n\nSelamat mengeksplorasi!",
+    "date": "2026-02-22T18:17:10.544Z",
+    "color": "#fef08a",
+    "isStarred": false,
+    "isDeleted": false,
+    "x": 1060,
+    "y": 100,
+    "width": 320,
+    "height": 380,
+    "xPct": 73.611,
+    "yPct": 11.111,
+    "widthPct": 22.222,
+    "heightPct": 42.222,
+    "refScreenWidth": 1440,
+    "refScreenHeight": 900,
+    "zIndex": 153,
+    "isPinned": false,
+    "fontSize": 14
+  }
+]

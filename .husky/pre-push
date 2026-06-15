@@ -1,0 +1,14 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🚀 Running pre-push checks..."
+
+# Run audit checks
+echo "Running system audit..."
+npm run audit -- --skip-phase3 2>&1 | tail -30
+if [ $? -ne 0 ]; then
+  echo "⚠️  Note: Audit warning detected. Review before pushing."
+fi
+
+echo "✅ Pre-push checks completed!"
+echo "Pushing to remote..."

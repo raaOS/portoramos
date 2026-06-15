@@ -1,0 +1,50 @@
+{
+  "content": {
+    "headline": "Start a Project?",
+    "subtext": "💬 Mau ngobrol soal kerja sama, project, atau hal lainnya? Tulis di sini, nanti aku segera balas."
+  },
+  "info": {
+    "email": "",
+    "phone": "",
+    "address": "Jakarta, Indonesia",
+    "socialMedia": {
+      "linkedin": "",
+      "instagram": "",
+      "twitter": "",
+      "behance": ""
+    }
+  },
+  "formSettings": {
+    "enabled": true,
+    "fields": {
+      "name": {
+        "required": true,
+        "label": "Nama Lengkap"
+      },
+      "email": {
+        "required": true,
+        "label": "Email"
+      },
+      "phone": {
+        "required": false,
+        "label": "Nomor Telepon"
+      },
+      "company": {
+        "required": false,
+        "label": "Perusahaan"
+      },
+      "subject": {
+        "required": true,
+        "label": "Subjek"
+      },
+      "message": {
+        "required": true,
+        "label": "Pesan"
+      }
+    },
+    "submitButtonText": "Kirim Pesan",
+    "successMessage": "Terima kasih! Pesan Anda telah berhasil dikirim.",
+    "errorMessage": "Maaf, terjadi kesalahan. Silakan coba lagi."
+  },
+  "lastUpdated": "2026-02-28T18:19:19.183Z"
+}

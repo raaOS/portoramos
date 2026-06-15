@@ -1,0 +1,255 @@
+/**
+ * Cloudflare D1 — Low-level query helper untuk Cloudflare D1 REST API.
+ *
+ * Menyediakan `queryD1()`, `getD1Value()`, `setD1Value()`, dan `compareAndSetD1Value()`
+ * sebagai utility mentah untuk operasi key-value di D1.
+ *
+ * Catatan: Untuk domain content, gunakan `ContentService` alih-alih fungsi ini
+ * untuk menghindari inkonsistensi data (lihat AGENTS.md §5).
+ *
+ * @module cloudflareD1
+ */
+type D1Param = string | number | boolean | null;
+
+interface D1QueryResponse<T = Record<string, unknown>> {
+  success?: boolean;
+  errors?: Array<{ message?: string }>;
+  result?: Array<{
+    success?: boolean;
+    error?: string;
+    results?: T[];
+  }>;
+}
+
+interface D1Config {
+  accountId: string;
+  databaseId: string;
+  apiToken: string;
+}
+
+const D1_TABLE_NAME = 'app_kv';
+let schemaPromise: Promise<void> | null = null;
+
+function readEnv(name: string) {
+  return process.env[name]?.trim() || '';
+}
+
+export function getMissingD1EnvKeys() {
+  const missing: string[] = [];
+  if (!readEnv('CLOUDFLARE_D1_ACCOUNT_ID') && !readEnv('CLOUDFLARE_R2_ACCOUNT_ID')) {
+    missing.push('CLOUDFLARE_D1_ACCOUNT_ID');
+  }
+  if (!readEnv('CLOUDFLARE_D1_DATABASE_ID')) {
+    missing.push('CLOUDFLARE_D1_DATABASE_ID');
+  }
+  if (!readEnv('CLOUDFLARE_D1_API_TOKEN') && !readEnv('CLOUDFLARE_API_TOKEN')) {
+    missing.push('CLOUDFLARE_D1_API_TOKEN');
+  }
+  return missing;
+}
+
+export function isD1Configured() {
+  return getMissingD1EnvKeys().length === 0;
+}
+
+export function getD1Config(): D1Config {
+  const accountId = readEnv('CLOUDFLARE_D1_ACCOUNT_ID') || readEnv('CLOUDFLARE_R2_ACCOUNT_ID');
+  const databaseId = readEnv('CLOUDFLARE_D1_DATABASE_ID');
+  const apiToken = readEnv('CLOUDFLARE_D1_API_TOKEN') || readEnv('CLOUDFLARE_API_TOKEN');
+
+  const missing = getMissingD1EnvKeys();
+  if (missing.length > 0) {
+    throw new Error(`Cloudflare D1 env is incomplete. Missing: ${missing.join(', ')}`);
+  }
+
+  return { accountId, databaseId, apiToken };
+}
+
+export async function queryD1<T = Record<string, unknown>>(
+  sql: string,
+  params: D1Param[] = []
+): Promise<T[]> {
+  const config = getD1Config();
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${config.accountId}/d1/database/${config.databaseId}/query`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ sql, params }),
+    }
+  );
+
+  const payload = (await response.json().catch(() => null)) as D1QueryResponse<T> | null;
+  if (!response.ok || !payload?.success) {
+    const detail = payload?.errors
+      ?.map((error) => error.message)
+      .filter(Boolean)
+      .join('; ');
+    throw new Error(`Cloudflare D1 query failed: ${detail || response.statusText}`);
+  }
+
+  const firstResult = payload.result?.[0];
+  if (firstResult && firstResult.success === false) {
+    throw new Error(`Cloudflare D1 SQL failed: ${firstResult.error || sql}`);
+  }
+
+  return firstResult?.results ?? [];
+}
+
+export async function bootstrapD1Schema() {
+  if (!schemaPromise) {
+    schemaPromise = queryD1(`
+            CREATE TABLE IF NOT EXISTS ${D1_TABLE_NAME} (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            ) STRICT
+        `).then(() => undefined);
+  }
+  return schemaPromise;
+}
+
+/**
+ * Read a single D1 row by its **literal key**.
+ *
+ * IMPORTANT: this does NOT follow nested paths. `db.ref('content/about')`
+ * splits paths and writes to the parent key (`content`) with field
+ * `about`. If you need that nested view, go through `db.ref(...)` or
+ * the corresponding service (e.g. `aboutService.getAboutData()`),
+ * never `getD1Value('content/about')` directly — those two read
+ * different rows.
+ *
+ * Use this only for top-level domain keys that are written as full
+ * strings (`projects`, `audit_logs`, `analytics`, etc.) or for
+ * intentional inspection of the raw row.
+ */
+export async function getD1Value<T = unknown>(key: string): Promise<T | null> {
+  const rows = await queryD1<{ value: string }>(
+    `SELECT value FROM ${D1_TABLE_NAME} WHERE key = ? LIMIT 1`,
+    [key]
+  );
+  if (!rows[0]) return null;
+  return JSON.parse(rows[0].value) as T;
+}
+
+export async function getD1Values(keys: string[]): Promise<Record<string, unknown>> {
+  if (keys.length === 0) return {};
+
+  const placeholders = keys.map(() => '?').join(', ');
+  const rows = await queryD1<{ key: string; value: string }>(
+    `SELECT key, value FROM ${D1_TABLE_NAME} WHERE key IN (${placeholders})`,
+    keys
+  );
+
+  return rows.reduce<Record<string, unknown>>((acc, row) => {
+    acc[row.key] = JSON.parse(row.value);
+    return acc;
+  }, {});
+}
+
+export async function getAllD1Values(): Promise<Record<string, unknown>> {
+  const rows = await queryD1<{ key: string; value: string }>(
+    `SELECT key, value FROM ${D1_TABLE_NAME}`
+  );
+
+  return rows.reduce<Record<string, unknown>>((acc, row) => {
+    acc[row.key] = JSON.parse(row.value);
+    return acc;
+  }, {});
+}
+
+/**
+ * Write a single D1 row by its **literal key**.
+ *
+ * Same caveat as `getD1Value`: paths with `/` are NOT interpreted as
+ * nested. Calling `setD1Value('content/about', x)` creates a separate
+ * row from what `db.ref('content/about').set(x)` writes (the latter
+ * stores nested under the `content` row).
+ *
+ * If you want the nested write that the admin UI and `/api/about`
+ * expect, go through the corresponding service.
+ */
+export async function setD1Value(key: string, value: unknown) {
+  await bootstrapD1Schema();
+  await queryD1(
+    `INSERT INTO ${D1_TABLE_NAME} (key, value, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    [key, JSON.stringify(value), new Date().toISOString()]
+  );
+}
+
+export async function compareAndSetD1Value(
+  key: string,
+  expectedValue: unknown | null,
+  nextValue: unknown
+) {
+  await bootstrapD1Schema();
+
+  const now = new Date().toISOString();
+  const nextJson = JSON.stringify(nextValue);
+
+  if (expectedValue === null || expectedValue === undefined) {
+    const rows = await queryD1<{ key: string }>(
+      `INSERT INTO ${D1_TABLE_NAME} (key, value, updated_at)
+         SELECT ?, ?, ?
+         WHERE NOT EXISTS (SELECT 1 FROM ${D1_TABLE_NAME} WHERE key = ?)
+         RETURNING key`,
+      [key, nextJson, now, key]
+    );
+    return rows.length > 0;
+  }
+
+  const expectedJson = JSON.stringify(expectedValue);
+  const rows = await queryD1<{ key: string }>(
+    `UPDATE ${D1_TABLE_NAME}
+       SET value = ?, updated_at = ?
+       WHERE key = ? AND value = ?
+       RETURNING key`,
+    [nextJson, now, key, expectedJson]
+  );
+
+  return rows.length > 0;
+}
+
+export async function deleteD1Value(key: string) {
+  await bootstrapD1Schema();
+  await queryD1(`DELETE FROM ${D1_TABLE_NAME} WHERE key = ?`, [key]);
+}
+
+/**
+ * Replace the entire app_kv table contents with `root`.
+ *
+ * SAFETY: Uses upsert-then-prune instead of DELETE-all then INSERT
+ * to avoid catastrophic data loss if the process crashes between
+ * the DELETE and the last INSERT. Any keys present in the current
+ * table but absent from `root` are pruned after upserts succeed.
+ */
+export async function replaceAllD1Values(root: Record<string, unknown>) {
+  await bootstrapD1Schema();
+
+  const incomingKeys = new Set<string>();
+
+  // Step 1: Upsert every key in root — no data is lost for existing rows.
+  for (const [key, value] of Object.entries(root)) {
+    if (value !== undefined && value !== null) {
+      incomingKeys.add(key);
+      await setD1Value(key, value);
+    }
+  }
+
+  // Step 2: Prune keys that exist in D1 but are absent from root.
+  const existingRows = await queryD1<{ key: string }>(`SELECT key FROM ${D1_TABLE_NAME}`);
+  const orphans = existingRows.filter((row) => !incomingKeys.has(row.key));
+
+  if (orphans.length > 0) {
+    const placeholders = orphans.map(() => '?').join(', ');
+    await queryD1(
+      `DELETE FROM ${D1_TABLE_NAME} WHERE key IN (${placeholders})`,
+      orphans.map((row) => row.key)
+    );
+  }
+}

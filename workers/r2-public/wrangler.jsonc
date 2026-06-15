@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "portfolio-r2-media",
+  "main": "src/index.js",
+  "compatibility_date": "2026-05-16",
+  "workers_dev": true,
+  "account_id": "0312fd83fc971a61b27bdeae0cc6c70b",
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "portofolio",
+    },
+  ],
+}

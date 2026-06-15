@@ -1,0 +1,154 @@
+'use client';
+
+import React, { useMemo, useState, useRef, useEffect, useCallback, startTransition } from 'react';
+import { useChatProjects } from './hooks/useChatProjects';
+import { useChatSequencer } from './hooks/useChatSequencer';
+import { ChatHeader } from './components/ChatHeader';
+import { ChatMessages } from './components/ChatMessages';
+import { ChatList } from './components/ChatList';
+import QuickLookModal from '@/components/ui/QuickLookModal';
+import type { ContactProfile } from '../data/mockChats';
+import type { Project } from '@/types/projects';
+
+interface ChatWindowProps {
+  activeChatId?: string | null;
+  customContacts?: Record<string, ContactProfile>;
+  initialProjects?: Project[];
+}
+
+export default function ChatWindow({
+  activeChatId = null,
+  customContacts,
+  initialProjects,
+}: ChatWindowProps) {
+  const [activeContact, setActiveContact] = useState<ContactProfile | null>(null);
+  const [showList, setShowList] = useState(true);
+  const [previewMedia, setPreviewMedia] = useState<{
+    src: string;
+    title: string;
+    type: 'image' | 'video';
+    project?: Project;
+  } | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Contacts state
+  const contacts = useMemo(
+    () => (customContacts ? Object.values(customContacts) : []),
+    [customContacts]
+  );
+
+  // Custom Hooks
+  const { getProjectById } = useChatProjects(initialProjects);
+  const { visibleMessages, isRemoteTyping, setVisibleMessages } = useChatSequencer(
+    activeContact,
+    showList
+  );
+
+  // Auto-scroll to bottom — only if user hasn't scrolled up
+  useEffect(() => {
+    const el = bottomRef.current;
+    if (!el) return;
+    const container = el.parentElement;
+    if (!container) {
+      el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    const threshold = 80;
+    const nearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+    if (nearBottom) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [visibleMessages, isRemoteTyping]);
+
+  const selectContact = useCallback(
+    (contact: ContactProfile) => {
+      setActiveContact(contact);
+      setShowList(false);
+      setVisibleMessages([]);
+    },
+    [setVisibleMessages]
+  );
+
+  const goBackToList = useCallback(() => {
+    setShowList(true);
+    setActiveContact(null);
+    setVisibleMessages([]);
+  }, [setVisibleMessages]);
+
+  const findContactByChatId = useCallback(
+    (chatId: string) => {
+      return (
+        contacts?.find?.((contact) => contact.id === chatId || contact.name === chatId) || null
+      );
+    },
+    [contacts]
+  );
+
+  const getLastMessage = useCallback((contact: ContactProfile) => {
+    const messages = contact.messages || contact.conversation || [];
+    if (messages.length === 0) return 'Tidak ada pesan';
+    const lastMsg = messages[messages.length - 1];
+    const text = lastMsg.text;
+    if (!text) return '';
+    return text.length > 30 ? text.substring(0, 30) + '...' : text;
+  }, []);
+
+  // Sync activeChatId changes via effect
+  useEffect(() => {
+    if (!activeChatId) return;
+    const target = findContactByChatId(activeChatId);
+    if (target) {
+      startTransition(() => {
+        setActiveContact(target);
+        setShowList(false);
+        setVisibleMessages([]);
+      });
+    }
+  }, [activeChatId, findContactByChatId, setVisibleMessages]);
+
+  if (showList) {
+    return (
+      <ChatList contacts={contacts} onSelect={selectContact} getLastMessage={getLastMessage} />
+    );
+  }
+
+  if (!activeContact) return null;
+
+  return (
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#e5ddd5] text-[#111b21] dark:bg-[#0b141a]">
+      <ChatHeader contact={activeContact} onBack={goBackToList} isTyping={isRemoteTyping} />
+
+      <ChatMessages
+        messages={visibleMessages}
+        isTyping={isRemoteTyping}
+        getProjectById={getProjectById}
+        onOpenProject={(project) => {
+          const isVideo =
+            project.cover?.toLowerCase().endsWith('.mp4') ||
+            project.cover?.toLowerCase().endsWith('.webm');
+          setPreviewMedia({
+            src: project.cover || '',
+            title: project.title,
+            type: isVideo ? 'video' : 'image',
+            project,
+          });
+        }}
+        onPreviewMedia={(src, title, type) => setPreviewMedia({ src, title, type })}
+      />
+
+      <div ref={bottomRef} />
+
+      {/* ChatFooter removed as per request to only show input in contact chat */}
+
+      {/* Media Preview Modal */}
+      <QuickLookModal
+        isOpen={!!previewMedia}
+        onClose={() => setPreviewMedia(null)}
+        title={previewMedia?.title || 'Preview'}
+        type={previewMedia?.type || 'image'}
+        url={previewMedia?.src || ''}
+      />
+    </div>
+  );
+}

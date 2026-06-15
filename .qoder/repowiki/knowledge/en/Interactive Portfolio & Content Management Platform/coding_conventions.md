@@ -1,0 +1,2 @@
+- Enforces strict TypeScript checking and linting rules via shared `tsconfig.json` and `eslint.config.mjs` at the repository root.
+- Utilizes Husky pre-commit and pre-push hooks defined in `.husky/` to automate code quality checks before integration.

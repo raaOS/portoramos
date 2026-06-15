@@ -1,0 +1,657 @@
+/* ==========================================================================
+   Portfolio Website - Global Styles
+   Optimized for Performance, Accessibility, Best Practices, and SEO
+   ========================================================================== */
+
+/* Tailwind Directives */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* ==========================================================================
+   CSS Custom Properties (Design Tokens)
+   ========================================================================== */
+:root {
+  /* Colors */
+  --bg: #ffffff;
+  --fg: #111111;
+  --muted: #6b7280;
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --text-primary: #111111;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+
+  /* Typography */
+  --font-sans:
+    'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Six Caps', 'Arial Narrow', Arial, sans-serif;
+  --font-handwritten:
+    'Comic Sans MS', 'Chalkboard SE', 'Bradley Hand', 'Marker Felt', 'Segoe Print', cursive,
+    sans-serif;
+
+  /* Focus */
+  --focus-ring: #52525b;
+  --focus-ring-offset: 2px;
+
+  /* Spacing */
+  --container-padding: 24px;
+  --container-max-width: 1200px;
+}
+
+/* Dark Mode */
+.dark {
+  --bg: #0b0b0b;
+  --fg: #f5f5f5;
+  --muted: #a1a1aa;
+  --card-bg: #000000;
+  --card-border: #333333;
+  --text-primary: #ffffff;
+  --text-secondary: #e4e4e7;
+  --text-muted: #a1a1aa;
+}
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+html {
+  scroll-behavior: auto;
+  -webkit-text-size-adjust: 100%;
+  -moz-tab-size: 4;
+  tab-size: 4;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Remove default margins */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+/* Focus Visible - WCAG 2.1 AA */
+:focus-visible {
+  outline: 1px solid var(--focus-ring);
+  outline-offset: 0px;
+}
+
+/* Skip Link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #000;
+  color: #fff;
+  padding: 8px 16px;
+  z-index: 100000;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   BUG FIX: Project Card Flickering During Scroll
+   ========================================================================== */
+
+/* Disable content-visibility yang menyebabkan flickering */
+[data-projects-grid] * {
+  content-visibility: visible !important;
+}
+
+/* Stabilize project cards during scroll */
+.project-card,
+[data-project-card] {
+  contain: layout style paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Disable will-change after animation completes to save memory */
+.project-card:hover,
+[data-project-card]:hover {
+  will-change: transform;
+}
+
+/* Project window videos should not crop when opened through native fullscreen controls. */
+.project-window-video:fullscreen,
+.project-window-video:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #000000 !important;
+}
+
+/* Mobile: Simplify animations to prevent flickering */
+@media (max-width: 768px) {
+  .project-card,
+  [data-project-card] {
+    transition: none !important;
+    will-change: auto !important;
+  }
+
+  .project-card img,
+  .project-card video,
+  [data-project-card] img,
+  [data-project-card] video {
+    transition: opacity 0.2s ease !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  :root {
+    --text-secondary: #000000;
+    --text-muted: #333333;
+  }
+
+  .dark {
+    --text-secondary: #ffffff;
+    --text-muted: #cccccc;
+  }
+
+  button,
+  a,
+  [role='button'] {
+    border: 2px solid currentColor;
+  }
+}
+
+/* ==========================================================================
+   Layout Utilities
+   ========================================================================== */
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: var(--container-padding);
+}
+
+/* ==========================================================================
+   Touch & Mobile Optimizations
+   ========================================================================== */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Minimum touch target size - WCAG 2.5.5 */
+button,
+a,
+[role='button'],
+input[type='button'],
+input[type='submit'],
+input[type='reset'] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Allow text selection */
+input,
+textarea,
+[contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* ==========================================================================
+   Performance Optimizations
+   ========================================================================== */
+
+/* Contain layout for complex components */
+.contain-layout {
+  contain: layout style;
+}
+
+/* GPU Acceleration */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Content Visibility for off-screen content */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* ==========================================================================
+   Responsive Typography
+   ========================================================================== */
+@media (max-width: 768px) {
+  :root {
+    --container-padding: 16px;
+  }
+
+  .text-6xl {
+    font-size: 3rem;
+  }
+
+  .text-8xl {
+    font-size: 4rem;
+  }
+
+  .text-9xl {
+    font-size: 5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --container-padding: 12px;
+  }
+
+  .text-6xl {
+    font-size: 2.5rem;
+  }
+
+  .text-8xl {
+    font-size: 3rem;
+  }
+
+  .text-9xl {
+    font-size: 3.5rem;
+  }
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+@media print {
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+
+  /* 
+  a[href]::after {
+    content: " (" attr(href) ")";
+  }
+  */
+
+  abbr[title]::after {
+    content: ' (' attr(title) ')';
+  }
+
+  pre {
+    white-space: pre-wrap !important;
+  }
+
+  pre,
+  blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr,
+  img {
+    page-break-inside: avoid;
+  }
+
+  p,
+  h2,
+  h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+}
+
+/* ==========================================================================
+   OS Mode Global Overrides (managed by useDesktopLock.ts)
+   ========================================================================== */
+html.os-mode-active,
+body.os-mode-active {
+  overflow: hidden !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  overscroll-behavior: none !important;
+}
+
+/* Remove all shadows globally in OS mode (Global Kill-Switch) */
+.os-mode-active *,
+.os-mode-active *::before,
+.os-mode-active *::after {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: drop-shadow(none) !important;
+}
+
+/* ==========================================================================
+   Boot Animation Fast-Path (Option 1)
+   Instantly bypass boot UI if sessionStorage flag is detected by head script.
+   ========================================================================== */
+[data-os-booted='true'] #start-screen {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+[data-os-booted='true'] .desktop-main-container {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html[data-os-booted='true'] .desktop-skeleton-overlay {
+  background: rgb(0 0 0 / 0.05) !important;
+}
+
+/* ==========================================================================
+   Boot Cover (anti-flash for fresh visitors)
+   --------------------------------------------------------------------------
+   Visitor pertama kali ke site harus lihat boot animation, bukan wallpaper
+   muncul sekejap baru ditutup boot screen. Kita SSR `DesktopSkeleton` yang
+   render wallpaper untuk LCP — tanpa cover, wallpaper itu sempat ke-paint
+   sebelum StartScreen mount → glitch.
+
+   Kita pakai `data-os-needs-boot` (di-set via beforeInteractive script di
+   layout.tsx, sebelum render apapun) untuk render solid black overlay dan
+   sembunyikan skeleton sampai StartScreen ambil alih. Setelah boot selesai,
+   `useBootSequence.markAsBooted` set `data-os-booted="true"` dan cover
+   otomatis hilang via CSS rule di bawah.
+   ========================================================================== */
+html[data-os-needs-boot='true'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: #000;
+  /* Z-index taruh DI BAWAH BOOT (999_999) tapi DI ATAS semua lapisan desktop:
+     CHROME (10_000), DOCK (99_999), DOCK_POPOVER (100_000). Cover ini cuma
+     untuk masking wallpaper SSR sebelum StartScreen mount. */
+  z-index: 500000;
+  pointer-events: none;
+}
+html[data-os-booted='true'] body::before {
+  display: none;
+}
+
+/* ==========================================================================
+   Page View Transitions (Opsi 2 — True Native App Slide)
+   via next-view-transitions. Halaman lama geser full ke kiri (100vw),
+   halaman baru masuk dari kanan (100vw), ketemu di tengah. Native GPU.
+   ========================================================================== */
+
+/* Cegah horizontal scrollbar flash saat snapshot slide full-width.
+   NOTE: apply ke body, bukan html. overflow-x di html bisa break
+   scrollRestoration di Safari <16 dan beberapa browser lama. */
+body {
+  overflow-x: clip;
+}
+
+/* Optimasi View Transitions snapshot:
+   - contain: paint → browser tahu main content tidak "bocor" ke luar,
+     snapshot bisa skip repaint area di luar container.
+   - content-visibility: auto di konten jauh = browser skip render
+     halaman di luar viewport saat idle. */
+main[data-vt-container='true'] {
+  contain: paint;
+}
+
+/* GPU compositing hint saat View Transition aktif.
+   Cuma aktif sesaat selama transisi (browser auto-cleanup). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* Skip ALL page animation kalau browser user prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(site-header),
+  ::view-transition-new(site-header),
+  ::view-transition-old(system-nav),
+  ::view-transition-new(system-nav),
+  ::view-transition-old(global-dock),
+  ::view-transition-new(global-dock),
+  ::view-transition-old(dock-popover),
+  ::view-transition-new(dock-popover) {
+    animation: none !important;
+  }
+}
+
+/* Default slide full viewport. Halaman lama geser ke kiri sampai hilang,
+   halaman baru masuk dari kanan full viewport.
+   Easing curve "ios-spring" terasa natural — akselerasi lembut di awal,
+   deselerasi halus di akhir (mirip transisi native iOS/macOS). */
+::view-transition-old(root) {
+  animation:
+    800ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide-out-left,
+    540ms cubic-bezier(0.4, 0, 0.2, 1) 120ms both vt-fade-out;
+}
+
+::view-transition-new(root) {
+  animation:
+    800ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide-in-right,
+    580ms cubic-bezier(0.4, 0, 0.2, 1) both vt-fade-in;
+}
+
+/* Navigasi BACK — arah slide dibalik: halaman lama geser ke kanan,
+   halaman baru masuk dari kiri (persis kayak swipe-back di iOS/Android).
+   Attribute data-vt-direction="back" di-set oleh lib/navigationDirection.ts */
+html[data-vt-direction='back']::view-transition-old(root) {
+  animation:
+    800ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide-out-right,
+    540ms cubic-bezier(0.4, 0, 0.2, 1) 120ms both vt-fade-out;
+}
+
+html[data-vt-direction='back']::view-transition-new(root) {
+  animation:
+    800ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide-in-left,
+    580ms cubic-bezier(0.4, 0, 0.2, 1) both vt-fade-in;
+}
+
+@keyframes vt-slide-out-left {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+@keyframes vt-slide-in-right {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes vt-slide-out-right {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+@keyframes vt-slide-in-left {
+  from {
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Fixed chrome isolation: header/nav cross-fade. */
+::view-transition-old(site-header),
+::view-transition-new(site-header),
+::view-transition-old(system-nav),
+::view-transition-new(system-nav) {
+  animation: 420ms cubic-bezier(0.4, 0, 0.2, 1) both vt-fade-in;
+}
+::view-transition-old(site-header),
+::view-transition-old(system-nav) {
+  animation-name: vt-fade-out;
+}
+
+/* Dock pakai shared view-transition-name 'global-dock' yang dipasang di
+   slot persistent (src/components/layout/GlobalDockSlot.tsx) di level
+   non-lazy. Element ini selalu ada di kedua snapshot lintas semua
+   navigasi, sehingga browser pair old/new dengan benar.
+
+   Kenapa pakai `display: none` di old snapshot, bukan `animation: none`?
+   `animation: none` membuat opacity stuck di nilai initial (1) selama
+   durasi transition (~800ms), jadi old snapshot tetap full-visible di
+   atas new snapshot — terlihat sebagai "double dock". Plus konten
+   transient seperti popover (mis. SELECT VIEW MODE) yang ke-capture
+   di old snapshot ikut nyangkut sampai transition selesai.
+
+   Dengan `display: none`, old snapshot benar-benar dikeluarkan dari
+   rendering. New snapshot (yang representasi live element) langsung
+   tampil di posisi yang sama persis (slot persistent menjamin rect
+   identik), jadi visual-nya: dock diam, popover hilang instan,
+   tidak ada flicker. */
+::view-transition-group(global-dock) {
+  animation-duration: 800ms !important;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+::view-transition-image-pair(global-dock) {
+  animation: none !important;
+}
+::view-transition-old(global-dock) {
+  animation: none !important;
+  display: none !important;
+}
+::view-transition-new(global-dock) {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+/* Dock popover (mis. SELECT VIEW MODE di dock Projects) di-isolate dari
+   snapshot 'global-dock' supaya bbox dock tetap konsisten old↔new.
+   Popover hanya ada saat user buka popover di route lama; di route baru
+   popover sudah hilang, jadi pair-nya exit-only. Tampilkan instan
+   menghilang (display:none) tanpa fade. */
+::view-transition-group(dock-popover),
+::view-transition-image-pair(dock-popover),
+::view-transition-old(dock-popover),
+::view-transition-new(dock-popover) {
+  animation: none !important;
+}
+::view-transition-old(dock-popover),
+::view-transition-new(dock-popover) {
+  display: none !important;
+}
+
+@keyframes vt-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Force hide tooltips immediately when dock popover is closing to prevent flickering/clipping during transitions */
+html[data-dock-popover-closing='true'] [data-dock-tooltip='true'] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: none !important;
+}
+
+/* ==========================================================================
+   3D Canvas Tooltip Entrance Animation
+   ========================================================================== */
+@keyframes tooltip-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+}
+
