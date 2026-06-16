@@ -101,9 +101,7 @@ function GalleryItem({
 
   return (
     <div
-      className={`group relative mb-4 overflow-hidden ${
-        isWindowMode ? 'rounded-none' : 'rounded-xl'
-      } border border-black/5 bg-gray-50 shadow-md dark:border-white/5 dark:bg-gray-900/40`}
+      className={`group relative mb-4 overflow-hidden rounded-none border border-black/5 bg-gray-50 dark:border-white/5 dark:bg-gray-900/40 ${isWindowMode ? 'shadow-md' : 'shadow-none'}`}
       style={style}
       onContextMenu={onContextMenu}
     >

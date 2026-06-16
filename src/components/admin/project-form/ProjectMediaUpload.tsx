@@ -7,7 +7,7 @@
  * @module components/admin/project-form/ProjectMediaUpload
  */
 import { ProjectFormData } from '@/hooks/useProjectForm';
-import { Loader2, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Trash2, Image as ImageIcon, Video, HelpCircle } from 'lucide-react';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
 import { useEffect, useRef, useCallback } from 'react';
 import { extractStoragePath } from '@/lib/media';
@@ -25,6 +25,7 @@ interface ProjectMediaUploadProps {
   onNewUpload?: (url: string) => void;
   csrfToken?: string | null;
 }
+
 export default function ProjectMediaUpload({
   formData,
   errors,
@@ -38,6 +39,7 @@ export default function ProjectMediaUpload({
 }: ProjectMediaUploadProps) {
   const { confirm } = useConfirm();
   const { showError } = useToast();
+
   const handleUploadComplete = (urls: string[]) => {
     if (urls.length > 0) {
       updateField('cover', urls[0]);
@@ -46,8 +48,6 @@ export default function ProjectMediaUpload({
   };
 
   // [Deep Audit] Memory Leak Prevention
-  // Revoke Blob URLs when they are replaced or component unmounts
-  // This prevents memory bloat during heavy editing sessions.
   const prevCover = useRef(formData.cover);
   const prevBefore = useRef(formData.comparison?.beforeImage);
   const prevAfter = useRef(formData.comparison?.afterImage);
@@ -67,13 +67,11 @@ export default function ProjectMediaUpload({
     checkAndRevoke(formData.comparison?.beforeImage, prevBefore);
     checkAndRevoke(formData.comparison?.afterImage, prevAfter);
 
-    // Capture values for cleanup
     const coverToRevoke = prevCover.current;
     const beforeToRevoke = prevBefore.current;
     const afterToRevoke = prevAfter.current;
 
     return () => {
-      // Cleanup on unmount (only if blob)
       if (coverToRevoke?.startsWith('blob:')) URL.revokeObjectURL(coverToRevoke);
       if (beforeToRevoke?.startsWith('blob:')) URL.revokeObjectURL(beforeToRevoke);
       if (afterToRevoke?.startsWith('blob:')) URL.revokeObjectURL(afterToRevoke);
@@ -123,10 +121,10 @@ export default function ProjectMediaUpload({
           const success = await deleteMedia(storagePath);
           if (!success) {
             showError('Gagal menghapus file dari Storage. Silakan coba lagi.');
-            return; // abort UI removal if deletion fails
+            return;
           }
         } else {
-          return; // user cancelled the prompt
+          return;
         }
       } else {
         const ok = await confirm({
@@ -139,7 +137,6 @@ export default function ProjectMediaUpload({
       }
     }
 
-    // Clear the field
     if (field === 'cover') {
       updateField('cover', '');
     } else {
@@ -151,104 +148,118 @@ export default function ProjectMediaUpload({
   };
 
   return (
-    <div className="space-y-4">
-      {/* 2 Column Layout: Preview | Controls */}
+    <div className="space-y-6">
+      {/* 2 Column Layout: Canvas Preview | Control Panel */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {/* Left: Preview */}
-        <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-gray-100 bg-gray-50">
+        {/* Left: Viewport / Canvas (Blackroom) */}
+        <div className="relative flex aspect-video md:h-[220px] md:aspect-auto items-center justify-center rounded-xl bg-slate-950 border border-slate-900 overflow-hidden shadow-inner group">
+          {/* Blueprint Grid Lines */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:24px_24px] opacity-10"></div>
+          
           {formData.cover ? (
-            <div className="group relative p-4">
-              <div className="max-h-56 overflow-hidden rounded-lg bg-gray-100">
-                {formData.cover?.match(/\.(mp4|webm|mov)$/i) ? (
+            <div className="relative z-10 w-full h-full flex items-center justify-center p-2">
+              {formData.cover?.match(/\.(mp4|webm|mov)$/i) ? (
+                <div className="relative w-full h-full flex items-center justify-center">
                   <video
                     src={formData.cover}
-                    className="h-auto max-h-56 w-auto object-contain"
+                    className="max-w-full max-h-full object-contain rounded-md shadow-lg"
                     controls
+                    muted
                   />
-                ) : (
+                  <div className="absolute top-2 left-2 rounded bg-black/60 px-1.5 py-0.5 text-[8px] font-mono tracking-wider text-slate-300 uppercase flex items-center gap-1">
+                    <Video className="h-2.5 w-2.5" /> VIDEO
+                  </div>
+                </div>
+              ) : (
+                <div className="relative w-full h-full flex items-center justify-center">
                   <img
                     src={formData.cover}
                     alt="Cover"
-                    className="h-auto max-h-56 w-auto object-contain"
+                    className="max-w-full max-h-full object-contain rounded-md shadow-lg"
                   />
-                )}
-              </div>
+                  <div className="absolute top-2 left-2 rounded bg-black/60 px-1.5 py-0.5 text-[8px] font-mono tracking-wider text-slate-300 uppercase flex items-center gap-1">
+                    <ImageIcon className="h-2.5 w-2.5" /> IMAGE
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="text-center text-gray-400">
-              <ImageIcon className="mx-auto mb-2 h-12 w-12 opacity-50" />
-              <p className="text-xs">Belum ada preview</p>
+            <div className="relative z-10 text-center text-slate-500">
+              <ImageIcon className="mx-auto mb-2 h-8 w-8 stroke-[1.2] text-slate-700" />
+              <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">No Preview Available</p>
             </div>
           )}
         </div>
 
-        {/* Right: Controls */}
-        <div className="space-y-4">
-          {/* URL Input */}
+        {/* Right: Controller Inspector */}
+        <div className="flex flex-col justify-center space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs text-gray-500">Image/Video URL</label>
+            <label className="mb-1 block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400">
+              Image / Video URL
+            </label>
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={formData.cover}
                 onChange={(e) => updateField('cover', e.target.value)}
-                className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors focus:border-gray-400 focus:outline-none ${errors.cover ? 'border-red-300' : 'border-gray-200'}`}
+                className={`flex-1 rounded-md border bg-white px-3 py-2 text-xs transition-all focus:border-slate-800 focus:outline-none ${
+                  errors.cover ? 'border-red-300 bg-red-50/10' : 'border-slate-200 hover:border-slate-300'
+                }`}
                 placeholder="https://... or /assets/..."
               />
               {formData.cover && (
                 <button
                   type="button"
                   onClick={() => handleDeleteMedia('cover')}
-                  className="p-2 text-gray-400 transition-colors hover:text-red-500"
-                  title="Hapus / Clear"
+                  className="rounded-md border border-slate-200 p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  title="Clear Media"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
-              {isDetectingDimensions && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+              {isDetectingDimensions && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
             </div>
-            {errors.cover && <p className="mt-1 text-xs text-red-600">{errors.cover}</p>}
+            {errors.cover && <p className="mt-1 text-[10px] text-red-500">{errors.cover}</p>}
           </div>
 
-          {/* Uploader */}
-          <AdminFileUpload
-            onUpload={handleUploadComplete}
-            onFileSelect={(file) => {
-              const url = URL.createObjectURL(file);
-              updateField('cover', url);
-              if (onFileChange) onFileChange(file);
-            }}
-            autoUpload={false}
-            multiple={false}
-            accept="image/*,video/*"
-            maxSize={500}
-            enableCrop={true}
-            enableVideoTrim={true}
-          />
+          <div className="rounded-md border border-dashed border-slate-200 p-1 hover:border-slate-300 transition-colors bg-slate-50/30">
+            <AdminFileUpload
+              onUpload={handleUploadComplete}
+              onFileSelect={(file) => {
+                const url = URL.createObjectURL(file);
+                updateField('cover', url);
+                if (onFileChange) onFileChange(file);
+              }}
+              autoUpload={false}
+              multiple={false}
+              accept="image/*,video/*"
+              maxSize={500}
+              enableCrop={true}
+              enableVideoTrim={true}
+            />
+          </div>
 
-          {/* Dimensions */}
+          {/* Dimension Details telemetry */}
           {(formData.coverWidth || formData.coverHeight) && (
-            <div className="flex items-center gap-4 pt-2 text-xs text-gray-500">
+            <div className="flex items-center gap-3 pt-0.5 font-mono text-[9px] text-slate-400 tracking-wider">
               <span>
-                Width:{' '}
-                <span className="font-medium text-gray-700">{formData.coverWidth || '-'}</span> px
+                WIDTH: <span className="font-bold text-slate-700">{formData.coverWidth || '-'}px</span>
               </span>
               <span>
-                Height:{' '}
-                <span className="font-medium text-gray-700">{formData.coverHeight || '-'}</span> px
+                HEIGHT: <span className="font-bold text-slate-700">{formData.coverHeight || '-'}px</span>
               </span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Comparison Section - Clean Cards with Preview */}
+      {/* Comparison Viewport Section */}
       {mediaFormat === 'comparison' && (
-        <div className="grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 md:grid-cols-2">
-          {/* Before */}
-          <div className="rounded-lg border border-gray-100 bg-gray-50/50 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-700">Before</span>
+        <div className="grid grid-cols-1 gap-6 border-t border-slate-100 pt-6 md:grid-cols-2">
+          {/* Before Column */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-1.5">
+              <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400">Before / Kiri</span>
               <select
                 value={formData.comparison?.beforeType || 'image'}
                 onChange={(e) =>
@@ -257,78 +268,87 @@ export default function ProjectMediaUpload({
                     beforeType: e.target.value as 'image' | 'video',
                   })
                 }
-                className="rounded border border-gray-200 bg-white px-2 py-1 text-[10px] focus:border-gray-400 focus:outline-none"
+                className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-slate-600 outline-none hover:border-slate-300 transition-colors"
               >
                 <option value="image">Image</option>
                 <option value="video">Video</option>
               </select>
             </div>
 
-            {/* Preview - Maintains original aspect ratio */}
-            {formData.comparison?.beforeImage && (
-              <div className="group relative mb-3 flex justify-center">
-                <div className="max-h-40 overflow-hidden rounded-lg bg-gray-100">
+            {/* Before Viewport */}
+            <div className="relative aspect-video flex items-center justify-center rounded-lg bg-slate-950 border border-slate-900 overflow-hidden shadow-inner">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:16px_16px] opacity-10"></div>
+              {formData.comparison?.beforeImage ? (
+                <div className="relative z-10 w-full h-full flex items-center justify-center p-2">
                   {formData.comparison?.beforeType === 'video' ||
                   formData.comparison?.beforeImage?.match(/\.(mp4|webm|mov)$/i) ? (
                     <video
                       src={formData.comparison.beforeImage}
-                      className="h-auto max-h-40 w-auto object-contain"
+                      className="max-w-full max-h-full object-contain rounded shadow"
                       controls
+                      muted
                     />
                   ) : (
                     <img
                       src={formData.comparison.beforeImage}
                       alt="Before"
-                      className="h-auto max-h-40 w-auto object-contain"
+                      className="max-w-full max-h-full object-contain rounded shadow"
                     />
                   )}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="relative z-10 text-center text-slate-600">
+                  <HelpCircle className="mx-auto mb-1 h-6 w-6 stroke-[1.2]" />
+                  <span className="font-mono text-[8px] uppercase tracking-wider">Before State Empty</span>
+                </div>
+              )}
+            </div>
 
-            <div className="mb-2 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={formData.comparison?.beforeImage || ''}
                 onChange={(e) =>
                   updateField('comparison', { ...formData.comparison, beforeImage: e.target.value })
                 }
-                className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
-                placeholder="/assets/..."
+                className="flex-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:border-slate-800 focus:outline-none transition-all"
+                placeholder="Image/Video URL"
               />
               {formData.comparison?.beforeImage && (
                 <button
                   type="button"
                   onClick={() => handleDeleteMedia('before')}
-                  className="p-2 text-gray-400 transition-colors hover:text-red-500"
+                  className="rounded-md border border-slate-200 p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
-            <AdminFileUpload
-              onUpload={(urls) => {
-                if (urls.length > 0)
-                  updateField('comparison', { ...formData.comparison, beforeImage: urls[0] });
-              }}
-              onFileSelect={(file) => {
-                const url = URL.createObjectURL(file);
-                updateField('comparison', { ...formData.comparison, beforeImage: url });
-                if (onFileChange) onFileChange(file);
-              }}
-              autoUpload={true}
-              multiple={false}
-              accept="image/*,video/*"
-              maxSize={500}
-              folder="comparisons"
-              customFilename={slug ? `${slug}-before` : undefined}
-            />
+            <div className="rounded-md border border-dashed border-slate-200 p-1 hover:border-slate-300 transition-colors bg-slate-50/30">
+              <AdminFileUpload
+                onUpload={(urls) => {
+                  if (urls.length > 0)
+                    updateField('comparison', { ...formData.comparison, beforeImage: urls[0] });
+                }}
+                onFileSelect={(file) => {
+                  const url = URL.createObjectURL(file);
+                  updateField('comparison', { ...formData.comparison, beforeImage: url });
+                  if (onFileChange) onFileChange(file);
+                }}
+                autoUpload={true}
+                multiple={false}
+                accept="image/*,video/*"
+                maxSize={500}
+                folder="comparisons"
+                customFilename={slug ? `${slug}-before` : undefined}
+              />
+            </div>
           </div>
 
-          {/* After */}
-          <div className="rounded-lg border border-gray-100 bg-gray-50/50 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-700">After</span>
+          {/* After Column */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-1.5">
+              <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400">After / Kanan</span>
               <select
                 value={formData.comparison?.afterType || 'image'}
                 onChange={(e) =>
@@ -337,66 +357,75 @@ export default function ProjectMediaUpload({
                     afterType: e.target.value as 'image' | 'video',
                   })
                 }
-                className="rounded border border-gray-200 bg-white px-2 py-1 text-[10px] focus:border-gray-400 focus:outline-none"
+                className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-slate-600 outline-none hover:border-slate-300 transition-colors"
               >
                 <option value="image">Image</option>
                 <option value="video">Video</option>
               </select>
             </div>
 
-            {/* Preview - Maintains original aspect ratio */}
-            {formData.comparison?.afterImage && (
-              <div className="group relative mb-3 flex justify-center">
-                <div className="max-h-40 overflow-hidden rounded-lg bg-gray-100">
+            {/* After Viewport */}
+            <div className="relative aspect-video flex items-center justify-center rounded-lg bg-slate-950 border border-slate-900 overflow-hidden shadow-inner">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:16px_16px] opacity-10"></div>
+              {formData.comparison?.afterImage ? (
+                <div className="relative z-10 w-full h-full flex items-center justify-center p-2">
                   {formData.comparison?.afterType === 'video' ||
                   formData.comparison?.afterImage?.match(/\.(mp4|webm|mov)$/i) ? (
                     <video
                       src={formData.comparison.afterImage}
-                      className="h-auto max-h-40 w-auto object-contain"
+                      className="max-w-full max-h-full object-contain rounded shadow"
                       controls
+                      muted
                     />
                   ) : (
                     <img
                       src={formData.comparison.afterImage}
                       alt="After"
-                      className="h-auto max-h-40 w-auto object-contain"
+                      className="max-w-full max-h-full object-contain rounded shadow"
                     />
                   )}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="relative z-10 text-center text-slate-600">
+                  <HelpCircle className="mx-auto mb-1 h-6 w-6 stroke-[1.2]" />
+                  <span className="font-mono text-[8px] uppercase tracking-wider">After State Empty</span>
+                </div>
+              )}
+            </div>
 
-            <div className="mb-2 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={formData.comparison?.afterImage || ''}
                 onChange={(e) =>
                   updateField('comparison', { ...formData.comparison, afterImage: e.target.value })
                 }
-                className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
-                placeholder="/assets/..."
+                className="flex-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:border-slate-800 focus:outline-none transition-all"
+                placeholder="Image/Video URL"
               />
               {formData.comparison?.afterImage && (
                 <button
                   type="button"
                   onClick={() => handleDeleteMedia('after')}
-                  className="p-2 text-gray-400 transition-colors hover:text-red-500"
+                  className="rounded-md border border-slate-200 p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
-            <AdminFileUpload
-              onUpload={(urls) => {
-                if (urls.length > 0)
-                  updateField('comparison', { ...formData.comparison, afterImage: urls[0] });
-              }}
-              autoUpload={true}
-              multiple={false}
-              accept="image/*,video/*"
-              maxSize={500}
-              customFilename={slug ? `${slug}-after` : undefined}
-            />
+            <div className="rounded-md border border-dashed border-slate-200 p-1 hover:border-slate-300 transition-colors bg-slate-50/30">
+              <AdminFileUpload
+                onUpload={(urls) => {
+                  if (urls.length > 0)
+                    updateField('comparison', { ...formData.comparison, afterImage: urls[0] });
+                }}
+                autoUpload={true}
+                multiple={false}
+                accept="image/*,video/*"
+                maxSize={500}
+                customFilename={slug ? `${slug}-after` : undefined}
+              />
+            </div>
           </div>
         </div>
       )}

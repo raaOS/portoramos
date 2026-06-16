@@ -1,11 +1,15 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { Project } from '@/types/projects';
 import Media from '@/components/shared/Media';
 import { resolvePreviewCover } from '@/lib/images';
 import { Heart, Share2 } from 'lucide-react';
 import { useImageProtection } from '@/hooks/useImageProtection';
+import {
+  prepareProjectCoverTransition,
+  PROJECT_COVER_TRANSITION_ATTRIBUTE,
+} from '@/lib/projectCoverTransition';
 
 interface ProjectCardPinterestProps {
   project: Project;
@@ -51,10 +55,24 @@ export default function ProjectCardPinterest({
   const hrefProps = !onClick && interactive ? { href: `/projects/${slug}` } : {};
   const isInteractive = interactive || !!onClick;
 
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement | HTMLDivElement>) => {
+    const isModifiedClick = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
+    if (!onClick && interactive && !isModifiedClick) {
+      const mediaContainer = e.currentTarget.querySelector<HTMLElement>(
+        `[${PROJECT_COVER_TRANSITION_ATTRIBUTE}]`
+      );
+      prepareProjectCoverTransition(mediaContainer ?? e.currentTarget);
+    }
+
+    if (onClick) {
+      onClick();
+    }
+  };
+
   return (
     <Component
       {...hrefProps}
-      onClick={onClick}
+      onClick={handleClick}
       data-project-card
       className={`project-card relative z-0 mb-0 block md:mb-6 ${isInteractive ? 'group cursor-pointer hover:z-10' : ''}`}
     >
@@ -64,8 +82,9 @@ export default function ProjectCardPinterest({
         className={`backface-hidden relative transform-gpu transition-transform duration-300 ${isInteractive ? 'hover:scale-[1.02]' : ''}`}
         style={{ aspectRatio: ratio }}
         onContextMenu={handleContextMenu}
+        {...{ [PROJECT_COVER_TRANSITION_ATTRIBUTE]: '' }}
       >
-        <div className="absolute inset-0 overflow-hidden rounded-md bg-neutral-200 dark:bg-neutral-900">
+        <div className="absolute inset-0 overflow-hidden rounded-none bg-neutral-200 dark:bg-neutral-900">
           <Media
             kind={cover.kind}
             src={cover.src}
@@ -90,7 +109,7 @@ export default function ProjectCardPinterest({
 
         {/* Overlay hitam solid menutupi seluruh gambar saat right-click */}
         {toast && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 overflow-hidden rounded-md bg-black">
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 overflow-hidden rounded-none bg-black">
             <span className="text-3xl">{toast.emoji}</span>
             <p className="px-3 text-center text-xs font-bold leading-snug text-white">
               {toast.text}

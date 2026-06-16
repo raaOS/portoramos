@@ -106,7 +106,7 @@ export const ProjectCard = ({
             <div className="flex items-center gap-1.5 opacity-60 grayscale">
               {project.software?.slice(0, 3).map((s) => (
                 <div key={s} title={s.replace('_', ' ')} className="h-4 w-4">
-                  {getIconMap('w-full h-full')[s.toLowerCase()] || (
+                  {getIconMap('w-full h-full !text-[6.5px] !font-semibold tracking-normal !rounded-sm')[s.toLowerCase()] || (
                     <div className="flex h-full w-full items-center justify-center rounded bg-gray-200 text-[6px] font-bold uppercase text-gray-500">
                       {s.slice(0, 2)}
                     </div>

@@ -102,7 +102,7 @@ function createInitialFormData(project?: Project): ProjectFormData {
     role: project?.role || '',
     timeline: project?.timeline || '',
     team: project?.team || '',
-    software: project?.software || [],
+    software: project?.software && project.software.length > 0 ? project.software : ['photoshop'],
     type: project?.type || 'commercial',
 
     narrative: {

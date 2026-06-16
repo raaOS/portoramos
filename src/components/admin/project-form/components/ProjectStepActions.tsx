@@ -7,80 +7,59 @@ import AdminButton from '@/app/admin/components/AdminButton';
 import { Project } from '@/types/projects';
 
 interface ProjectStepActionsProps {
-  currentStep: number;
   isUploading: boolean;
-  isFormRevealed: boolean;
   project?: Project;
   uploadProgress?: number | null;
   onCancel: () => void;
-  onBack: () => void;
-  onNext: () => void;
   onSubmit: () => void;
-  onRevealManual: () => void;
 }
 
 export default function ProjectStepActions({
-  currentStep,
   isUploading,
-  isFormRevealed,
   project,
   uploadProgress,
   onCancel,
-  onBack,
-  onNext,
   onSubmit,
-  onRevealManual,
 }: ProjectStepActionsProps) {
+  const secondaryBtnClass = "bg-white border border-slate-200 text-slate-500 hover:border-slate-800 hover:text-slate-900 transition-all rounded px-4 py-1.5 text-xs font-bold uppercase tracking-wider shadow-sm";
+  const primaryBtnClass = "bg-slate-900 text-white hover:bg-slate-800 transition-all rounded px-4 py-1.5 text-xs font-bold uppercase tracking-wider shadow-sm disabled:bg-slate-100 disabled:text-slate-400";
+
   return (
-    <div className="flex w-full items-center justify-between space-x-3 px-2">
-      {/* Left side actions (Cancel / Back) */}
+    <div className="flex w-full items-center justify-between px-1">
+      {/* Left side: Cancel */}
       <div>
-        {currentStep === 1 ? (
-          <AdminButton variant="secondary" onClick={onCancel} disabled={isUploading}>
-            {' '}
-            Batal{' '}
-          </AdminButton>
-        ) : (
-          <AdminButton variant="secondary" onClick={onBack} disabled={isUploading}>
-            {' '}
-            Kembali{' '}
-          </AdminButton>
-        )}
+        <AdminButton 
+          className={secondaryBtnClass} 
+          onClick={onCancel} 
+          disabled={isUploading}
+        >
+          Batal
+        </AdminButton>
       </div>
 
-      {/* Right side actions (Next / Submit) */}
-      <div>
-        {currentStep < 3 ? (
-          <AdminButton onClick={onNext}> Lanjut: Tahap {currentStep + 1} </AdminButton>
-        ) : (
-          <div className="flex items-center gap-2">
-            {!isFormRevealed && (
-              <button
-                type="button"
-                onClick={onRevealManual}
-                className="px-2 text-[10px] font-bold uppercase text-gray-400 transition-colors hover:text-black"
-              >
-                Lewati AI & Isi Manual
-              </button>
-            )}
-            <AdminButton onClick={onSubmit} disabled={isUploading || !isFormRevealed}>
-              {isUploading ? 'Menyimpan...' : project ? 'Simpan Perubahan' : 'Buat Project'}
-            </AdminButton>
-            {uploadProgress !== null && uploadProgress !== undefined && (
-              <div className="w-24" aria-label={`Upload progress ${uploadProgress}%`}>
-                <div className="mb-1 text-right font-mono text-[10px] text-gray-500">
-                  {uploadProgress}%
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">
-                  <div
-                    className="h-full rounded-full bg-gray-900 transition-all duration-200"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
-                </div>
-              </div>
-            )}
+      {/* Right side: Save/Submit & Upload Progress */}
+      <div className="flex items-center gap-3">
+        {uploadProgress !== null && uploadProgress !== undefined && (
+          <div className="w-24 flex flex-col gap-1" aria-label={`Upload progress ${uploadProgress}%`}>
+            <div className="flex items-center justify-between font-mono text-[8px] text-slate-400 font-bold uppercase tracking-wider">
+              <span>Mengunggah</span>
+              <span>{uploadProgress}%</span>
+            </div>
+            <div className="h-0.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-slate-800 transition-all duration-200"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
           </div>
         )}
+        <AdminButton 
+          className={primaryBtnClass}
+          onClick={onSubmit} 
+          disabled={isUploading}
+        >
+          {isUploading ? 'Menyimpan...' : project ? 'Simpan' : 'Buat'}
+        </AdminButton>
       </div>
     </div>
   );

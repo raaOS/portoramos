@@ -236,6 +236,14 @@ npm run test:coverage     # Menghasilkan laporan cakupan kode (coverage report)
 npm run test:e2e          # Menjalankan E2E testing via Playwright (headless)
 npm run test:e2e:ui       # Membuka dashboard interaktif Playwright E2E UI
 
+# Browser Automation & Local UI Testing (Global Utility)
+# agent-browser sudah terinstall secara global untuk screenshot, snapshot, & browser testing.
+# Contoh penggunaan:
+# agent-browser open http://localhost:3000
+# agent-browser snapshot
+# agent-browser screenshot
+
+
 # Pemeliharaan & Pembersihan
 npm run lint              # Mengecek kualitas kode menggunakan ESLint 9 Flat Config
 npm run clear-cache       # Menghapus direktori cache build .next secara aman

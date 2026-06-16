@@ -11,13 +11,15 @@ interface ProjectStepIndicatorProps {
 
 export default function ProjectStepIndicator({ currentStep }: ProjectStepIndicatorProps) {
   return (
-    <div className="mb-6 px-4">
+    <div className="mb-8 px-2">
       {/* Progress Indicator */}
       <div className="relative flex items-center justify-between">
-        <div className="absolute left-0 top-1/2 -z-10 h-0.5 w-full -translate-y-1/2 bg-gray-200"></div>
+        {/* Background line */}
+        <div className="absolute left-0 top-1/2 -z-10 h-[2px] w-full -translate-y-1/2 bg-slate-100"></div>
+        {/* Active progress line */}
         <div
-          className="absolute left-0 top-1/2 -z-10 h-0.5 -translate-y-1/2 transition-all duration-300"
-          style={{ width: `${(currentStep - 1) * 50}%`, backgroundColor: '#00AA5B' }}
+          className="absolute left-0 top-1/2 -z-10 h-[2px] -translate-y-1/2 transition-all duration-500 ease-out"
+          style={{ width: `${(currentStep - 1) * 50}%`, backgroundColor: '#4f46e5' }}
         ></div>
 
         {[1, 2, 3].map((step) => {
@@ -27,30 +29,25 @@ export default function ProjectStepIndicator({ currentStep }: ProjectStepIndicat
           return (
             <div
               key={step}
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-200 ${
+              className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
                 isCompleted
-                  ? 'text-white shadow-sm'
+                  ? 'bg-indigo-600 text-white shadow-sm'
                   : isActive
-                    ? 'text-white shadow-sm'
-                    : 'bg-gray-200 text-gray-400'
+                    ? 'border-2 border-indigo-600 bg-white text-indigo-600 shadow-sm ring-4 ring-indigo-50'
+                    : 'border-2 border-slate-200 bg-white text-slate-400'
               }`}
-              style={
-                isCompleted
-                  ? { backgroundColor: '#00AA5B' }
-                  : isActive
-                    ? { backgroundColor: '#00AA5B' }
-                    : undefined
-              }
             >
-              {isCompleted ? <Check className="h-4 w-4" strokeWidth={3} /> : step}
+              {isCompleted ? <Check className="h-4 w-4 text-white" strokeWidth={2.5} /> : step}
             </div>
           );
         })}
       </div>
-      <div className="mt-2 flex justify-between text-[10px] font-bold uppercase tracking-wider text-gray-500">
-        <span>1. Setup</span>
-        <span>2. Media</span>
-        <span>3. Review</span>
+      
+      {/* Step Labels */}
+      <div className="mt-3 flex justify-between text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+        <span className={`transition-colors duration-300 ${currentStep >= 1 ? 'text-slate-800' : ''}`}>1. Setup</span>
+        <span className={`transition-colors duration-300 ${currentStep >= 2 ? 'text-slate-800' : ''}`}>2. Media</span>
+        <span className={`transition-colors duration-300 ${currentStep >= 3 ? 'text-slate-800' : ''}`}>3. Review</span>
       </div>
     </div>
   );

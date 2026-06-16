@@ -9,7 +9,7 @@
 // ═══════════════════════════════════════════════════════════════════
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useReducedMotion } from 'motion/react';
 import type { Project } from '@/types/projects';
 import { getPreviewCoverUrl, isVideoUrl } from '@/utils/canvas-helpers';
@@ -24,19 +24,76 @@ import {
 } from './infiniteCanvasEngine';
 import { useCanvasInput } from '@/hooks/canvas/useCanvasInput';
 import { CanvasCard } from './CanvasCard';
+import { clearCameraState, clearTargetSlug, getCameraState } from '@/lib/canvasCameraPersistence';
 
 type Props = {
   projects: Project[];
+};
+
+type TransitionTarget = {
+  key: string;
+  slug: string;
 };
 
 export default function InfiniteCanvasView({ projects }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
 
+  // The cell key is required because renderedItems can retain old cells that reuse a project slug.
+  const [transitionTarget, setTransitionTarget] = useState<TransitionTarget | null>(() => {
+    const savedState = getCameraState();
+    return savedState?.targetSlug && savedState.targetKey
+      ? { slug: savedState.targetSlug, key: savedState.targetKey }
+      : null;
+  });
+  const transitionTargetRef = useRef<TransitionTarget | null>(transitionTarget);
+  const cameraRestoredRef = useRef(false);
+
+  // Keep ref in sync with state (useLayoutEffect to avoid render-time ref access)
+  useLayoutEffect(() => {
+    transitionTargetRef.current = transitionTarget;
+  }, [transitionTarget]);
+
+  // — Camera state — (declared first so getCameraRef can reference them)
+  const cameraRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
+  const velocityRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
+  const targetCameraRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
+  const scrollDeltaRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
+  const previousCullCameraRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
+
+  // Stable camera getter for CanvasCard (created once, reads from cameraRef.current)
+  const getCameraRef = useRef(() => cameraRef.current);
+
+  // Pre-calculate initial camera for SSR - use restored camera if returning from detail
+  // Only runs once on mount (empty deps), reads directly from sessionStorage (no ref access)
+  const initialCamera = useMemo((): Point3D => {
+    if (typeof window !== 'undefined') {
+      const savedState = getCameraState();
+      if (savedState?.targetSlug && savedState.targetKey) {
+        return savedState.position;
+      }
+    }
+    return { x: 0, y: 0, z: 0 };
+  }, []);
+
+  // Initialize camera refs from sessionStorage BEFORE first paint (useLayoutEffect runs synchronously)
+  useLayoutEffect(() => {
+    if (cameraRestoredRef.current) return;
+    const savedState = getCameraState();
+    if (savedState?.targetSlug && savedState.targetKey) {
+      cameraRef.current = { ...savedState.position };
+      targetCameraRef.current = { ...savedState.position };
+      previousCullCameraRef.current = { ...savedState.position };
+      cameraRestoredRef.current = true;
+      clearCameraState();
+    } else {
+      cameraRestoredRef.current = true;
+    }
+  }, []);
+
   // Pre-calculate initial visible items for SSR support
   const initialItems = useMemo(() => {
-    const camera = { x: 0, y: 0, z: 0 };
-    const cellPositions = buildCellPositions(camera);
+    const cellPositions = buildCellPositions(initialCamera);
     const projectById = new Map(projects.map((project) => [project.id, project]));
     const nextState = assignProjectsToCells({
       cellPositions,
@@ -46,7 +103,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
       projectById,
     });
     return nextState.items;
-  }, [projects]);
+  }, [projects, initialCamera]);
 
   const [renderedItems, setRenderedItems] = useState<CanvasItem[]>(initialItems);
   const renderedItemsRef = useRef<CanvasItem[]>(initialItems);
@@ -56,6 +113,17 @@ export default function InfiniteCanvasView({ projects }: Props) {
   const isTooltipSuppressedRef = useRef(false);
   const pointerClientRef = useRef({ x: 0, y: 0, inside: false });
   const tooltipRef = useRef<HTMLDivElement>(null);
+
+  // Clear target slug after a short delay (allows transition to complete)
+  useEffect(() => {
+    if (!transitionTarget) return;
+    const timer = setTimeout(() => {
+      clearTargetSlug();
+      setTransitionTarget(null);
+      transitionTargetRef.current = null;
+    }, 3000); // Increased to ensure transition completes
+    return () => clearTimeout(timer);
+  }, [transitionTarget]);
 
   const handleHoverChange = useCallback((project: Project | null) => {
     if (hoveredProjectRef.current === project) return;
@@ -85,13 +153,6 @@ export default function InfiniteCanvasView({ projects }: Props) {
     const hoveredItem = renderedItemsRef.current.find((item) => item.key === cardKey);
     handleHoverChange(hoveredItem?.project ?? null);
   }, [handleHoverChange]);
-
-  // — Camera state —
-  const cameraRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
-  const velocityRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
-  const targetCameraRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
-  const scrollDeltaRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
-  const previousCullCameraRef = useRef<Point3D>({ x: 0, y: 0, z: 0 });
 
   // — Atmospheric Depth Fog state —
   const fogRef = useRef<HTMLDivElement>(null);
@@ -217,7 +278,34 @@ export default function InfiniteCanvasView({ projects }: Props) {
       projectById,
     });
 
-    const activeKeys = new Set(nextState.items.map((item) => item.key));
+    // Ensure target card is included for back transition (use ref to avoid deps)
+    let finalItems = nextState.items;
+    const currentTarget = transitionTargetRef.current;
+    if (currentTarget) {
+      const targetProject = projects.find((p) => p.slug === currentTarget.slug);
+      if (targetProject) {
+        const targetCell = cellPositions.find((cell) => cell.key === currentTarget.key);
+        const existingTarget = finalItems.find(
+          (item) => item.key === currentTarget.key && item.project.id === targetProject.id
+        );
+
+        if (!existingTarget && targetCell) {
+          const targetItem: CanvasItem = {
+            key: currentTarget.key,
+            project: targetProject,
+            x: targetCell.itemX,
+            y: targetCell.itemY,
+            z: targetCell.itemZ,
+            scale: 1,
+            rotation: 0,
+            dist: targetCell.dist,
+          };
+          finalItems = [targetItem, ...finalItems.filter((item) => item.key !== currentTarget.key)];
+        }
+      }
+    }
+
+    const activeKeys = new Set(finalItems.map((item) => item.key));
     const prunedState = pruneAssignmentState({
       assignments: nextState.assignments,
       insertionOrder: nextState.insertionOrder,
@@ -228,12 +316,11 @@ export default function InfiniteCanvasView({ projects }: Props) {
     assignmentRef.current = prunedState.assignments;
     insertionOrderRef.current = prunedState.insertionOrder;
 
-    activeItemsRef.current = nextState.items;
+    activeItemsRef.current = finalItems;
 
-    const nextItems = nextState.items;
     setRenderedItems((prev) => {
       const prevKeys = new Set(prev.map((i) => i.key));
-      const itemsToAdd = nextItems.filter((item) => !prevKeys.has(item.key));
+      const itemsToAdd = finalItems.filter((item) => !prevKeys.has(item.key));
       if (itemsToAdd.length === 0) return prev;
       const next = [...prev, ...itemsToAdd];
       renderedItemsRef.current = next;
@@ -621,6 +708,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
           transformStyle: 'preserve-3d',
         }}
       >
+        {/* eslint-disable-next-line react-hooks/refs -- renderedItems is useState, not a ref */}
         {renderedItems.map((item) => {
           const coverUrl = getPreviewCoverUrl(item.project);
           const isVideo = isVideoUrl(coverUrl);
@@ -716,6 +804,9 @@ export default function InfiniteCanvasView({ projects }: Props) {
             filter: filterParts.join(' ') || 'none',
           };
 
+          const isTransitionTarget =
+            transitionTarget?.key === item.key && transitionTarget.slug === item.project.slug;
+
           return (
             <CanvasCard
               key={item.key}
@@ -725,6 +816,8 @@ export default function InfiniteCanvasView({ projects }: Props) {
               registerVideoRef={registerVideoRef}
               initialStyle={initialStyle}
               onHoverChange={handleHoverChange}
+              isTransitionTarget={isTransitionTarget}
+              getCamera={getCameraRef.current}
             />
           );
         })}

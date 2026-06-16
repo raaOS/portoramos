@@ -75,12 +75,12 @@ export default function ProjectGalleryManager(props: ProjectGalleryManagerProps)
   };
 
   return (
-    <div className="space-y-6">
-      {/* Action Buttons */}
-      <div className="flex gap-2">
-        <label className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-100">
-          <Plus size={16} />
-          <span>{uploadProgress === null ? 'Single Item' : `Uploading ${uploadProgress}%`}</span>
+    <div className="space-y-4">
+      {/* Action Buttons Toolbar */}
+      <div className="flex gap-2.5">
+        <label className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:border-slate-800 hover:text-slate-900 transition-all">
+          <Plus size={12} className="text-slate-500" />
+          <span>{uploadProgress === null ? 'Item Tunggal' : `Uploading ${uploadProgress}%`}</span>
           <input
             type="file"
             className="hidden"
@@ -101,26 +101,27 @@ export default function ProjectGalleryManager(props: ProjectGalleryManagerProps)
             });
             if (name) props.addGalleryGroup(name);
           }}
-          className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-100"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:border-slate-800 hover:text-slate-900 transition-all"
         >
-          <FolderPlus size={16} />
-          <span>Multiple Group</span>
+          <FolderPlus size={12} className="text-slate-500" />
+          <span>Buat Grup Baru</span>
         </button>
       </div>
+
       {uploadProgress !== null && (
-        <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">
+        <div className="h-0.5 overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-gray-900 transition-all duration-200"
+            className="h-full rounded-full bg-slate-800 transition-all duration-200"
             style={{ width: `${uploadProgress}%` }}
           />
         </div>
       )}
 
       {/* Gallery Content */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Independent Items */}
         {props.formData.galleryItems && props.formData.galleryItems.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2 border-b border-slate-50 pb-4">
             {props.formData.galleryItems.map((item, index) => (
               <GalleryItemComponent
                 key={`single-${index}`}
@@ -159,9 +160,9 @@ export default function ProjectGalleryManager(props: ProjectGalleryManagerProps)
         ))}
 
         {!props.formData.galleryItems?.length && !props.formData.galleryGroups?.length && (
-          <div className="flex h-40 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-100 bg-gray-50/30 text-gray-400">
-            <ImageIcon size={32} className="mb-2 opacity-50" />
-            <p className="text-sm font-medium italic">Belum ada item galeri</p>
+          <div className="flex h-32 flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50/20 text-slate-400">
+            <ImageIcon size={24} className="mb-1.5 opacity-40 text-slate-400" />
+            <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400">Belum ada item galeri</span>
           </div>
         )}
       </div>

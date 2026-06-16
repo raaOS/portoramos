@@ -4,6 +4,10 @@ import type { Project, GalleryItem } from '@/types/projects';
 import { Compare } from '@/components/ui/Compare';
 import Media from '@/components/shared/Media';
 import { useImageProtection } from '@/hooks/useImageProtection';
+import {
+  PROJECT_COVER_TRANSITION_ATTRIBUTE,
+  PROJECT_COVER_TRANSITION_NAME,
+} from '@/lib/projectCoverTransition';
 
 interface ProjectCoverProps {
   project: Project;
@@ -18,22 +22,25 @@ interface ProjectCoverProps {
 
 export function ProjectCover({ project, cover, ratio, isWindowMode = false }: ProjectCoverProps) {
   const { toast, handleContextMenu } = useImageProtection();
-  const coverFrameClassName = `relative overflow-hidden ${
-    isWindowMode ? 'rounded-none' : 'rounded-xl'
-  } border border-black/5 bg-gray-100 shadow-lg dark:border-white/5 dark:bg-gray-800`;
-  const comparisonMediaClassName = isWindowMode
-    ? 'rounded-none object-cover object-left-top'
-    : 'object-cover object-left-top';
-  const coverMediaClassName = isWindowMode
-    ? 'h-auto w-full rounded-none object-cover'
-    : 'h-auto w-full object-cover';
+  const coverFrameClassName = `relative overflow-hidden rounded-none border border-black/5 bg-gray-100 dark:border-white/5 dark:bg-gray-800 ${isWindowMode ? 'shadow-lg' : 'shadow-none'}`;
+  const comparisonMediaClassName = 'rounded-none object-cover object-left-top';
+  const coverMediaClassName = 'h-auto w-full rounded-none object-cover';
+
+  const viewTransitionStyle = !isWindowMode
+    ? { viewTransitionName: PROJECT_COVER_TRANSITION_NAME }
+    : {};
+  const transitionAttribute = !isWindowMode ? { [PROJECT_COVER_TRANSITION_ATTRIBUTE]: '' } : {};
 
   return (
     <div
       className={`${ratio < 1 ? 'mx-auto max-w-sm' : ratio === 1 ? 'mx-auto max-w-md' : 'w-full'} p-4 lg:p-6`}
     >
       {project.comparison && project.comparison.beforeImage ? (
-        <div className={`h-full w-full ${coverFrameClassName}`} style={{ aspectRatio: ratio }}>
+        <div
+          className={`h-full w-full ${coverFrameClassName}`}
+          style={{ aspectRatio: ratio, ...viewTransitionStyle } as React.CSSProperties}
+          {...transitionAttribute}
+        >
           <Compare
             firstImage={project.comparison.beforeImage}
             secondImage={project.comparison.afterImage || cover.src}
@@ -46,8 +53,9 @@ export function ProjectCover({ project, cover, ratio, isWindowMode = false }: Pr
       ) : (
         <div
           className={coverFrameClassName}
-          style={{ aspectRatio: ratio }}
+          style={{ aspectRatio: ratio, ...viewTransitionStyle } as React.CSSProperties}
           onContextMenu={handleContextMenu}
+          {...transitionAttribute}
         >
           <Media
             kind={cover.kind}

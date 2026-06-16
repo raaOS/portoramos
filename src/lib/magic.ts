@@ -152,7 +152,7 @@ const NAMES = [
   'Gilang',
   'Putri',
   'Zaki',
-  'Budi',
+  'Bbudii',
   'Ani',
   'Joko',
   'Rina',
@@ -181,9 +181,16 @@ function getRandom<T>(arr: T[]): T {
  *
  * @param slug - Project slug untuk unique ID generation
  * @param count - Jumlah komentar (default: random 0-2)
+ * @param tone - Tone filter untuk komentar ('tech', 'casual', 'aesthetic')
+ * @param includeReplies - Apakah menyertakan balasan komentar dari admin/user lain
  * @returns Array of comments with optional replies
  */
-export function generateGenZComments(slug: string, count?: number): Comment[] {
+export function generateGenZComments(
+  slug: string,
+  count?: number,
+  tone?: string,
+  includeReplies: boolean = true
+): Comment[] {
   const projectComments: Comment[] = [];
 
   let commentCount = 2; // Default
@@ -191,20 +198,31 @@ export function generateGenZComments(slug: string, count?: number): Comment[] {
   if (typeof count === 'number') {
     commentCount = count;
   } else {
-    // Randomize comment count: 0, 1, or 2 (Weighted towards 1 or 2, rarely 0)
     const seed = Math.random();
     if (seed > 0.8) commentCount = 1;
-    if (seed > 0.95) commentCount = 0; // Rare: No comments
+    if (seed > 0.95) commentCount = 0;
+  }
+
+  // Filter vibes berdasarkan pilihan gaya bahasa (tone)
+  let vibes = COMMENT_VIBES;
+  if (tone) {
+    const cleanTone = tone.toLowerCase();
+    if (cleanTone === 'tech') {
+      vibes = COMMENT_VIBES.filter((v) => v.type === 'curious_tech' || v.type === 'praise_detailed');
+    } else if (cleanTone === 'casual' || cleanTone === 'gen-z') {
+      vibes = COMMENT_VIBES.filter((v) => v.type === 'joke_casual' || v.type === 'praise_short');
+    } else if (cleanTone === 'aesthetic') {
+      vibes = COMMENT_VIBES.filter((v) => v.type === 'praise_detailed' || v.type === 'praise_short');
+    }
   }
 
   for (let i = 0; i < commentCount; i++) {
-    const vibe = getRandom(COMMENT_VIBES);
+    const vibe = getRandom(vibes.length > 0 ? vibes : COMMENT_VIBES);
     const text = getRandom(vibe.comments);
 
-    const hasReplies = Math.random() > 0.6; // 40% chance of having a reply
     const replies: CommentReply[] = [];
 
-    if (hasReplies) {
+    if (includeReplies) {
       const isOwnerReply = Math.random() > 0.3; // 70% chance it's admin replying
       if (isOwnerReply && vibe.admin_replies.length > 0) {
         const replyText = getRandom(vibe.admin_replies);

@@ -385,6 +385,7 @@ export default function ProjectDetailTwoColumn({
                     translations={translations}
                     activeTab={activeNarrativeTab}
                     onTabChange={setActiveNarrativeTab}
+                    isWindowMode={true}
                   />
                 </motion.div>
               )}

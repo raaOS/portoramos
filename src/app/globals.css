@@ -642,6 +642,43 @@ html[data-dock-popover-closing='true'] [data-dock-tooltip='true'] {
 }
 
 /* ==========================================================================
+   Project Cover Shared Element Transition
+   Smooth morph dari kartu (Canvas/Grid) ke cover halaman detail
+   ========================================================================== */
+
+/* Group: animasi posisi & scale (morph) */
+::view-transition-group(project-cover) {
+  animation-duration: 700ms !important;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+/* Image pair: crossfade halus antara gambar lama & baru */
+::view-transition-image-pair(project-cover) {
+  animation-duration: 700ms !important;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Old snapshot: fade out */
+::view-transition-old(project-cover) {
+  animation: 500ms cubic-bezier(0.4, 0, 0.2, 1) 100ms both vt-fade-out;
+}
+
+/* New snapshot: fade in */
+::view-transition-new(project-cover) {
+  animation: 550ms cubic-bezier(0.4, 0, 0.2, 1) both vt-fade-in;
+}
+
+/* Reduced motion: disable */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(project-cover),
+  ::view-transition-image-pair(project-cover),
+  ::view-transition-old(project-cover),
+  ::view-transition-new(project-cover) {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
    3D Canvas Tooltip Entrance Animation
    ========================================================================== */
 @keyframes tooltip-appear {

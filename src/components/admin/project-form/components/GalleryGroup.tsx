@@ -27,32 +27,30 @@ export default function GalleryGroup({
   onToggleItemActive,
 }: GalleryGroupProps) {
   return (
-    <div className="space-y-4 rounded-xl border border-gray-200 bg-gray-50/50 p-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-1 items-center gap-2">
-          <div className="rounded-lg border border-gray-100 bg-white p-1.5">
-            <Type size={14} className="text-gray-400" />
-          </div>
+    <div className="space-y-3 rounded-lg border border-slate-200/80 bg-slate-50/20 p-3">
+      <div className="flex items-center justify-between gap-3 pb-1 border-b border-slate-100">
+        <div className="flex flex-1 items-center gap-1.5">
+          <Type size={12} className="text-slate-400" />
           <input
             type="text"
             value={group.name}
             onChange={(e) => onUpdateName(group.id, e.target.value)}
             placeholder="Nama Grup (e.g. Logo Concepts)"
-            className="w-full border-none bg-transparent p-0 text-sm font-semibold text-gray-900 focus:ring-0"
+            className="w-full border-none bg-transparent p-0 text-xs font-semibold text-slate-800 focus:ring-0 focus:outline-none placeholder-slate-300"
           />
         </div>
 
         <button
           type="button"
           onClick={() => onRemove(group.id)}
-          className="p-1.5 text-gray-400 transition-colors hover:text-red-500"
+          className="p-1 text-slate-400 transition-colors hover:text-red-500"
           title="Hapus Grup"
         >
-          <Trash2 size={16} />
+          <Trash2 size={13} />
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2">
         {group.items.map((item: GalleryItemType, itemIndex: number) => (
           <GalleryItem
             key={`${group.id}-${itemIndex}`}
@@ -65,12 +63,10 @@ export default function GalleryGroup({
         <button
           type="button"
           onClick={() => onAddItem(group.id)}
-          className="group flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 text-gray-400 transition-all hover:border-gray-300 hover:bg-white"
+          className="group flex aspect-square flex-col items-center justify-center gap-1.5 rounded border border-dashed border-slate-200 bg-white text-slate-400 transition-all hover:border-slate-800 hover:text-slate-800"
         >
-          <div className="rounded-full bg-gray-100 p-2 transition-colors group-hover:bg-gray-200">
-            <Plus size={20} />
-          </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider">Add Item</span>
+          <Plus size={16} className="text-slate-400 transition-transform group-hover:scale-110" />
+          <span className="font-mono text-[8px] font-bold uppercase tracking-wider">Add Item</span>
         </button>
       </div>
     </div>

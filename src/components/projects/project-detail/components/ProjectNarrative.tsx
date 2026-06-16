@@ -11,6 +11,7 @@ interface ProjectNarrativeProps {
   translations: Record<string, string> | null;
   activeTab: 'description' | 'challenge' | 'solution' | 'impact';
   onTabChange: (tab: 'description' | 'challenge' | 'solution' | 'impact') => void;
+  isWindowMode?: boolean;
 }
 
 export function ProjectNarrative({
@@ -18,6 +19,7 @@ export function ProjectNarrative({
   translations,
   activeTab,
   onTabChange,
+  isWindowMode = false,
 }: ProjectNarrativeProps) {
   const hasNarrative = !!project.narrative;
   const hasDescription = !!project.description;
@@ -140,7 +142,7 @@ export function ProjectNarrative({
 
         {/* Tab Panel / Content Area - Stable Height to prevent jumping */}
         <div
-          className={`border-x border-b border-black/10 dark:border-white/10 ${currentStyle.border} min-h-[220px] rounded-b-md px-6 py-8 sm:px-10 sm:py-10 ${currentStyle.tint} relative z-0 w-full overflow-hidden bg-white shadow-[0_4px_20px_rgba(0,0,0,0.02)] dark:bg-gray-950`}
+          className={`border-x border-b border-black/10 dark:border-white/10 ${currentStyle.border} min-h-[220px] rounded-b-md px-6 py-8 sm:px-10 sm:py-10 ${currentStyle.tint} relative z-0 w-full overflow-hidden bg-white dark:bg-gray-950 ${isWindowMode ? 'shadow-[0_4px_20px_rgba(0,0,0,0.02)]' : 'shadow-none'}`}
         >
           <div className="relative z-10">
             <TabContent activeTab={activeTab} project={project} translations={translations} />

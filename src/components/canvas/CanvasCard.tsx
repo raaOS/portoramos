@@ -2,6 +2,12 @@ import { memo, useRef } from 'react';
 import Image from 'next/image';
 import { useTransitionRouter } from 'next-view-transitions';
 import { getCoverPosterUrl, getPreviewCoverUrl, isVideoUrl } from '@/utils/canvas-helpers';
+import { saveCameraState } from '@/lib/canvasCameraPersistence';
+import {
+  prepareProjectCoverTransition,
+  PROJECT_COVER_TRANSITION_ATTRIBUTE,
+  PROJECT_COVER_TRANSITION_NAME,
+} from '@/lib/projectCoverTransition';
 import type { CanvasItem } from './infiniteCanvasEngine';
 import type { Project } from '@/types/projects';
 
@@ -14,6 +20,8 @@ type CanvasCardProps = {
   registerVideoRef: (key: string, element: HTMLVideoElement | null) => void;
   initialStyle?: React.CSSProperties;
   onHoverChange?: (project: Project | null) => void;
+  isTransitionTarget?: boolean;
+  getCamera?: () => { x: number; y: number; z: number };
 };
 
 export function CanvasCardInner({
@@ -23,11 +31,14 @@ export function CanvasCardInner({
   registerVideoRef,
   initialStyle,
   onHoverChange,
+  isTransitionTarget = false,
+  getCamera,
 }: CanvasCardProps) {
   const router = useTransitionRouter();
 
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const dragDistance = useRef(0);
+  const transitionElementRef = useRef<HTMLDivElement>(null);
 
   const coverUrl = getPreviewCoverUrl(item.project);
   const posterUrl = getCoverPosterUrl(item.project);
@@ -37,6 +48,9 @@ export function CanvasCardInner({
       ? item.project.coverWidth / item.project.coverHeight
       : 16 / 9;
 
+  const innerMediaStyle: React.CSSProperties = isTransitionTarget
+    ? { viewTransitionName: PROJECT_COVER_TRANSITION_NAME }
+    : {};
 
   return (
     <div
@@ -50,7 +64,7 @@ export function CanvasCardInner({
         willChange: 'transform',
         backfaceVisibility: 'hidden',
         contain: 'layout paint style',
-        borderRadius: '18px',
+        borderRadius: '0px',
         visibility: 'hidden', // Start hidden, rAF loop will reveal
         opacity: 0,
         ...initialStyle,
@@ -72,12 +86,25 @@ export function CanvasCardInner({
           e.preventDefault();
           return;
         }
+
+        const camera = getCamera?.();
+        if (camera) {
+          saveCameraState(camera, item.project.slug, item.key);
+        }
+
+        prepareProjectCoverTransition(transitionElementRef.current ?? e.currentTarget);
+
         router.push(`/projects/${item.project.slug}`);
       }}
       onPointerEnter={() => onHoverChange?.(item.project)}
       onPointerLeave={() => onHoverChange?.(null)}
     >
-      <div className="relative h-full w-full overflow-hidden rounded-[18px] bg-black/5">
+      <div
+        ref={transitionElementRef}
+        className="relative h-full w-full overflow-hidden bg-black/5"
+        style={innerMediaStyle}
+        {...{ [PROJECT_COVER_TRANSITION_ATTRIBUTE]: '' }}
+      >
         {isVideo ? (
           <video
             ref={(element) => registerVideoRef(item.key, element)}
@@ -102,8 +129,8 @@ export function CanvasCardInner({
           />
         )}
 
-        <div className="pointer-events-none absolute inset-0 rounded-[18px] bg-black/[0.02] transition-colors duration-300 group-hover:bg-black/[0.06]" />
-        <div className="ring-white/12 pointer-events-none absolute inset-0 rounded-[18px] ring-1 ring-inset transition-all duration-300 group-hover:shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_16px_40px_rgba(0,0,0,0.12)] group-hover:ring-white/45" />
+        <div className="pointer-events-none absolute inset-0 bg-black/[0.02] transition-colors duration-300 group-hover:bg-black/[0.06]" />
+        <div className="ring-white/12 pointer-events-none absolute inset-0 ring-1 ring-inset transition-all duration-300 group-hover:shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_16px_40px_rgba(0,0,0,0.12)] group-hover:ring-white/45" />
       </div>
     </div>
   );
@@ -116,6 +143,8 @@ export const CanvasCard = memo(CanvasCardInner, (prevProps, nextProps) => {
     prevProps.registerCardRef === nextProps.registerCardRef &&
     prevProps.registerVideoRef === nextProps.registerVideoRef &&
     prevProps.onHoverChange === nextProps.onHoverChange &&
+    prevProps.isTransitionTarget === nextProps.isTransitionTarget &&
+    prevProps.getCamera === nextProps.getCamera &&
     // Shallow compare style properties we care about
     prevProps.initialStyle?.opacity === nextProps.initialStyle?.opacity &&
     prevProps.initialStyle?.visibility === nextProps.initialStyle?.visibility &&

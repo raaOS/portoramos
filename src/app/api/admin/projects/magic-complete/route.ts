@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateViralMetrics, generateGenZComments } from '@/lib/magic';
+import { generateGenZComments, generateViralMetrics } from '@/lib/magic';
 import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
 import { db } from '@/lib/database';
@@ -10,14 +10,27 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { projectId, slug } = await req.json();
+    const { 
+      projectId, 
+      slug, 
+      likes, 
+      shares, 
+      commentCount, 
+      tone, 
+      reply 
+    } = await req.json();
 
     if (!projectId || !slug) {
       return NextResponse.json({ error: 'Missing projectId or slug' }, { status: 400 });
     }
 
     // 1. Update Project Metrics in CLOUDFLARE_D1
-    const metrics = generateViralMetrics();
+    const generatedMetrics = generateViralMetrics();
+    const metrics = {
+      likes: typeof likes === 'number' ? likes : generatedMetrics.likes,
+      shares: typeof shares === 'number' ? shares : generatedMetrics.shares,
+    };
+
     const updatedProject = await projectService.updateProject(projectId, {
       id: projectId,
       ...metrics,
@@ -28,8 +41,19 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Generate and Update Comments in CLOUDFLARE_D1
-    // Since comments don't have a dedicated service yet, we use direct CLOUDFLARE_D1 path
-    const newComments = generateGenZComments(slug);
+    const finalCommentCount = typeof commentCount === 'number' ? commentCount : 5;
+    const finalReply = typeof reply === 'boolean' ? reply : true;
+
+    const hasCustomViralArgs = 
+      likes !== undefined || 
+      shares !== undefined || 
+      commentCount !== undefined || 
+      tone !== undefined || 
+      reply !== undefined;
+
+    const newComments = hasCustomViralArgs
+      ? generateGenZComments(slug, finalCommentCount, tone, finalReply)
+      : generateGenZComments(slug);
     await db.ref(`comments/${slug}`).set(newComments);
 
     return NextResponse.json({
@@ -39,7 +63,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Magic Complete Error:', error instanceof Error ? error.message : error);
-    // Log full error server-side only - do not expose stack trace to client
     return NextResponse.json(
       {
         error: 'Failed to complete magic operation',
