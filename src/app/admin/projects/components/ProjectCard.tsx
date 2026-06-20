@@ -1,12 +1,19 @@
 import React from 'react';
 import Image from 'next/image';
-import { Pencil, Trash2, Copy, Eye, EyeOff, MessageCircle } from 'lucide-react';
+import { Pencil, Trash2, Eye, EyeOff, Heart, MessageCircle, Share2 } from 'lucide-react';
 import { Project } from '@/types/projects';
 import { isVideoLink } from '@/lib/media';
 import { getIconMap } from '@/constants/skillIcons';
 import StatusToggle from '../../components/StatusToggle';
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/400x300/CCCCCC/666666?text=No+Image';
+
+function formatEngagementCount(value?: number) {
+  const count = Number(value) || 0;
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1).replace(/\.0$/, '')}m`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+  return String(count);
+}
 
 interface ProjectCardProps {
   project: Project;
@@ -15,8 +22,6 @@ interface ProjectCardProps {
   handleToggleProjectStatus: (project: Project) => void;
   setEditingProject: (project: Project) => void;
   handleDeleteProject: (id: string) => void;
-  handleDuplicateProject: (project: Project) => void;
-  setManagingCommentsProject: (project: Project) => void;
   commentCount?: number;
   priority?: boolean;
   eager?: boolean;
@@ -29,14 +34,15 @@ export const ProjectCard = ({
   handleToggleProjectStatus,
   setEditingProject,
   handleDeleteProject,
-  handleDuplicateProject,
-  setManagingCommentsProject,
   commentCount = 0,
   priority = false,
   eager = false,
 }: ProjectCardProps) => {
   const isPublished = project.status === 'published';
   const shouldLoadEagerly = priority || eager;
+  const likesCount = formatEngagementCount(project.likes);
+  const commentsCount = formatEngagementCount(commentCount);
+  const sharesCount = formatEngagementCount(project.shares);
 
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all duration-200 hover:border-gray-300">
@@ -95,7 +101,9 @@ export const ProjectCard = ({
             <div className="flex items-center gap-1.5 opacity-85">
               {project.software?.slice(0, 3).map((s) => (
                 <div key={s} title={s.replace('_', ' ')} className="h-5 w-5 flex-shrink-0">
-                  {getIconMap('w-full h-full !text-[8px] !font-bold tracking-normal !rounded-sm')[s.toLowerCase()] || (
+                  {getIconMap('w-full h-full !text-[8px] !font-bold tracking-normal !rounded-sm')[
+                    s.toLowerCase()
+                  ] || (
                     <div className="flex h-full w-full items-center justify-center rounded bg-gray-200 text-[7px] font-bold uppercase text-gray-500">
                       {s.slice(0, 2)}
                     </div>
@@ -105,6 +113,30 @@ export const ProjectCard = ({
             </div>
           </div>
           <p className="line-clamp-2 text-sm text-gray-500">{project.description}</p>
+        </div>
+
+        <div
+          className="mb-4 grid grid-cols-3 gap-2 rounded-lg border border-gray-100 bg-gray-50/70 px-3 py-2"
+          aria-label={`Engagement: ${likesCount} likes, ${commentsCount} comments, ${sharesCount} shares`}
+        >
+          <div className="flex min-w-0 items-center justify-center gap-1.5 text-gray-500">
+            <Heart className="h-3.5 w-3.5 text-rose-500" />
+            <span className="min-w-0 font-mono text-[11px] font-semibold leading-none">
+              {likesCount}
+            </span>
+          </div>
+          <div className="flex min-w-0 items-center justify-center gap-1.5 text-gray-500">
+            <MessageCircle className="h-3.5 w-3.5 text-violet-500" />
+            <span className="min-w-0 font-mono text-[11px] font-semibold leading-none">
+              {commentsCount}
+            </span>
+          </div>
+          <div className="flex min-w-0 items-center justify-center gap-1.5 text-gray-500">
+            <Share2 className="h-3.5 w-3.5 text-sky-500" />
+            <span className="min-w-0 font-mono text-[11px] font-semibold leading-none">
+              {sharesCount}
+            </span>
+          </div>
         </div>
 
         <div
@@ -120,14 +152,6 @@ export const ProjectCard = ({
             <Pencil className="h-4 w-4" />
           </button>
           <button
-            onClick={() => handleDuplicateProject(project)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:text-blue-600"
-            title="Duplicate Project"
-            style={{ minWidth: 'unset', minHeight: 'unset' }}
-          >
-            <Copy className="h-4 w-4" />
-          </button>
-          <button
             onClick={() => handleDeleteProject(project.id)}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:text-red-600"
             title="Delete Project"
@@ -135,24 +159,10 @@ export const ProjectCard = ({
           >
             <Trash2 className="h-4 w-4" />
           </button>
-          <button
-            onClick={() => setManagingCommentsProject(project)}
-            className="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:text-violet-600"
-            title={`Manage Comments${commentCount > 0 ? ` (${commentCount})` : ''}`}
-            aria-label={`Manage comments for ${project.title}${commentCount > 0 ? `, ${commentCount} comments` : ''}`}
-            style={{ minWidth: 'unset', minHeight: 'unset' }}
-          >
-            <MessageCircle className="h-4 w-4 shrink-0" />
-            {commentCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 font-mono text-[9px] font-bold leading-none text-white">
-                {commentCount > 99 ? '99+' : commentCount}
-              </span>
-            )}
-          </button>
           <StatusToggle
             isActive={isPublished}
             onClick={() => handleToggleProjectStatus(project)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
             iconActive={<Eye className="h-4 w-4" />}
             iconInactive={<EyeOff className="h-4 w-4" />}
             title={isPublished ? 'Change to Draft' : 'Publish Project'}

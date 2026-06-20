@@ -7,7 +7,7 @@
  * @module components/admin/project-form/ProjectAIHelper
  */
 import { useState } from 'react';
-import { Sparkles, Loader2, Wand2, Activity } from 'lucide-react';
+import { Sparkles, Loader2, Wand2, Activity, Dices } from 'lucide-react';
 import { Comment, generateGenZComments } from '@/lib/magic';
 import { useToast } from '@/contexts/ToastContext';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
@@ -43,10 +43,17 @@ interface ProjectAIHelperProps {
   slug: string;
   projectId?: string;
   onGenerate: (data: AIResponse) => void;
-  onGenerateViral: (likes: number, shares: number, commentsCount: number, comments?: Comment[]) => void;
+  onGenerateViral: (
+    likes: number,
+    shares: number,
+    commentsCount: number,
+    comments?: Comment[]
+  ) => void;
   existingContentFieldCount?: number;
   existingCommentCount?: number;
   mode?: 'content' | 'viral';
+  projectTitle?: string;
+  projectDescription?: string;
 }
 
 interface GenerateRequestBody {
@@ -67,6 +74,8 @@ export default function ProjectAIHelper({
   existingContentFieldCount = 0,
   existingCommentCount = 0,
   mode,
+  projectTitle = '',
+  projectDescription = '',
 }: ProjectAIHelperProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingViral, setIsGeneratingViral] = useState(false);
@@ -199,36 +208,55 @@ export default function ProjectAIHelper({
       let generatedComments: Comment[] = [];
       const derivedSlug = slug || 'temp-slug';
 
-      if (_projectId) {
-        try {
-          const res = await fetch('/api/admin/projects/magic-complete', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-Token': getCsrfToken(),
-            },
-            body: JSON.stringify({
-              projectId: _projectId,
-              slug: derivedSlug,
-              likes: viralOptions.likes,
-              shares: viralOptions.shares,
-              commentCount: viralOptions.comments,
-              tone: viralOptions.tone,
-              reply: viralOptions.reply,
-            }),
-          });
+      // 1. Process cover file if pending
+      let imageBase64: string | undefined;
+      if (pendingFile) {
+        imageBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(pendingFile);
+        });
+      }
 
-          if (res.ok) {
-            const data = await res.json();
-            if (data.comments && Array.isArray(data.comments)) {
-              generatedComments = data.comments;
-            }
-          }
-        } catch (magicErr) {
-          console.warn('Magic complete API failed silently.', magicErr);
+      // 2. Call backend magic complete API (for both saved and unsaved projects)
+      try {
+        const res = await fetch('/api/admin/projects/magic-complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': getCsrfToken(),
+          },
+          body: JSON.stringify({
+            projectId: _projectId || '',
+            slug: derivedSlug,
+            likes: viralOptions.likes,
+            shares: viralOptions.shares,
+            commentCount: viralOptions.comments,
+            tone: viralOptions.tone,
+            reply: viralOptions.reply,
+            projectTitle,
+            projectDescription,
+            cover,
+            imageBase64,
+          }),
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error || 'Magic complete API failed');
         }
-      } else {
-        // For new unsaved projects, generate comments on the client side
+
+        if (data?.comments && Array.isArray(data.comments)) {
+          generatedComments = data.comments;
+        } else {
+          throw new Error('Comments payload format is incorrect');
+        }
+      } catch (apiErr) {
+        console.warn(
+          '[ProjectAIHelper] API comments generation failed, falling back to client-side mock:',
+          apiErr
+        );
         generatedComments = generateGenZComments(
           derivedSlug,
           viralOptions.comments,
@@ -253,6 +281,18 @@ export default function ProjectAIHelper({
     }
   };
 
+  const handleRandomizeViralStats = () => {
+    const randomComments = Math.floor(Math.random() * 9) + 2; // 2 - 10 comments
+    const randomShares = Math.floor(Math.random() * 80) + 10 + randomComments * 2; // 10 - 150 shares
+    const randomLikes = Math.floor(Math.random() * 800) + 50 + randomShares * 3; // 50 - 1500 likes
+    setViralOptions((prev) => ({
+      ...prev,
+      likes: randomLikes,
+      comments: randomComments,
+      shares: randomShares,
+    }));
+  };
+
   return (
     <div className="space-y-4">
       {/* 1. PROJECT CONTENT AI ASSISTANT */}
@@ -261,12 +301,14 @@ export default function ProjectAIHelper({
           <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-indigo-500/10 blur-2xl"></div>
 
           <div className="relative z-10 space-y-4">
-            <div className="flex items-center gap-2 border-b border-indigo-50/60 dark:border-indigo-950/40 pb-2.5">
+            <div className="flex items-center gap-2 border-b border-indigo-50/60 pb-2.5 dark:border-indigo-950/40">
               <div className="rounded bg-indigo-600/10 p-1 text-indigo-600">
                 <Sparkles className="h-3.5 w-3.5" />
               </div>
               <div>
-                <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-200">Project AI Assistant</h3>
+                <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  Project AI Assistant
+                </h3>
                 <p className="font-mono text-[8px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   Konten & Salin Proyek
                 </p>
@@ -274,7 +316,7 @@ export default function ProjectAIHelper({
             </div>
 
             {/* Style Configuration */}
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-4 items-end">
+            <div className="grid grid-cols-1 items-end gap-2.5 sm:grid-cols-4">
               <div className="sm:col-span-2">
                 <label className="mb-0.5 block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   Gaya Bahasa
@@ -301,9 +343,12 @@ export default function ProjectAIHelper({
                   type="number"
                   value={aiOptions.maxTitleWords}
                   onChange={(e) =>
-                    setAiOptions((prev) => ({ ...prev, maxTitleWords: parseInt(e.target.value) || 5 }))
+                    setAiOptions((prev) => ({
+                      ...prev,
+                      maxTitleWords: parseInt(e.target.value) || 5,
+                    }))
                   }
-                  className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-center text-xs font-mono text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-slate-800 focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300"
+                  className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-center font-mono text-xs text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-slate-800 focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300"
                   min="1"
                   max="15"
                 />
@@ -317,9 +362,12 @@ export default function ProjectAIHelper({
                   type="number"
                   value={aiOptions.sentenceCount}
                   onChange={(e) =>
-                    setAiOptions((prev) => ({ ...prev, sentenceCount: parseInt(e.target.value) || 2 }))
+                    setAiOptions((prev) => ({
+                      ...prev,
+                      sentenceCount: parseInt(e.target.value) || 2,
+                    }))
                   }
-                  className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-center text-xs font-mono text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-slate-800 focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300"
+                  className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-center font-mono text-xs text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-slate-800 focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300"
                   min="1"
                   max="5"
                 />
@@ -330,7 +378,7 @@ export default function ProjectAIHelper({
               type="button"
               onClick={handleGenerate}
               disabled={isGenerating || (!cover && !pendingFile)}
-              className="flex w-full items-center justify-center gap-1.5 rounded bg-indigo-600 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-indigo-700 active:scale-95 disabled:pointer-events-none disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-600 uppercase tracking-wider"
+              className="flex w-full items-center justify-center gap-1.5 rounded bg-indigo-600 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-indigo-700 active:scale-95 disabled:pointer-events-none disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-600"
             >
               {isGenerating ? (
                 <>
@@ -340,7 +388,9 @@ export default function ProjectAIHelper({
               ) : (
                 <>
                   <Wand2 className="h-3 w-3" />
-                  <span>{existingContentFieldCount > 0 ? 'Regenerate Konten' : 'Generate Konten'}</span>
+                  <span>
+                    {existingContentFieldCount > 0 ? 'Regenerate Konten' : 'Generate Konten'}
+                  </span>
                 </>
               )}
             </button>
@@ -350,14 +400,16 @@ export default function ProjectAIHelper({
 
       {/* 2. VIRAL AI ASSISTANT */}
       {showViral && (
-        <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-900/10 p-4 shadow-sm">
+        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50/20 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/10">
           <div className="relative z-10 space-y-3.5">
-            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
-              <div className="rounded bg-slate-200 dark:bg-slate-800 p-1 text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-2 dark:border-slate-800">
+              <div className="rounded bg-slate-200 p-1 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                 <Activity className="h-3.5 w-3.5" />
               </div>
               <div>
-                <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-200">Viral Stats AI Simulator</h3>
+                <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  Viral Stats AI Simulator
+                </h3>
                 <p className="font-mono text-[8px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   Metrik Populer & Komentar
                 </p>
@@ -382,73 +434,93 @@ export default function ProjectAIHelper({
               </div>
 
               <div className="flex flex-col justify-end">
-                <label className="flex cursor-pointer items-center justify-between rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-700 transition-colors">
+                <label className="flex cursor-pointer items-center justify-between rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 transition-colors hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-700">
                   <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                     Balas Komentar
                   </span>
                   <input
                     type="checkbox"
                     checked={viralOptions.reply}
-                    onChange={(e) => setViralOptions((prev) => ({ ...prev, reply: e.target.checked }))}
-                    className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-indigo-600 focus:ring-indigo-500 dark:focus:ring-offset-slate-900 h-3.5 w-3.5"
+                    onChange={(e) =>
+                      setViralOptions((prev) => ({ ...prev, reply: e.target.checked }))
+                    }
+                    className="h-3.5 w-3.5 rounded border-slate-300 bg-white text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:focus:ring-offset-slate-900"
                   />
                 </label>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="mb-0.5 block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Likes
-                </label>
-                <input
-                  type="number"
-                  value={viralOptions.likes}
-                  onChange={(e) =>
-                    setViralOptions((prev) => ({ ...prev, likes: parseInt(e.target.value) || 0 }))
-                  }
-                  className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-center text-xs font-mono text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-slate-800 focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300"
-                  min="0"
-                />
+            <div className="flex items-end gap-1.5">
+              <div className="grid flex-1 grid-cols-3 gap-2">
+                <div>
+                  <label className="mb-0.5 block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Likes
+                  </label>
+                  <input
+                    type="number"
+                    value={viralOptions.likes}
+                    onChange={(e) =>
+                      setViralOptions((prev) => ({ ...prev, likes: parseInt(e.target.value) || 0 }))
+                    }
+                    className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-center font-mono text-xs text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-slate-800 focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300"
+                    min="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-0.5 block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Komentar
+                  </label>
+                  <input
+                    type="number"
+                    value={viralOptions.comments}
+                    onChange={(e) =>
+                      setViralOptions((prev) => ({
+                        ...prev,
+                        comments: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-center font-mono text-xs text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-slate-800 focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300"
+                    min="0"
+                    max="10"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-0.5 block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Share
+                  </label>
+                  <input
+                    type="number"
+                    value={viralOptions.shares}
+                    onChange={(e) =>
+                      setViralOptions((prev) => ({
+                        ...prev,
+                        shares: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-center font-mono text-xs text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-slate-800 focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300"
+                    min="0"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="mb-0.5 block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Komentar
-                </label>
-                <input
-                  type="number"
-                  value={viralOptions.comments}
-                  onChange={(e) =>
-                    setViralOptions((prev) => ({ ...prev, comments: parseInt(e.target.value) || 0 }))
-                  }
-                  className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-center text-xs font-mono text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-slate-800 focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300"
-                  min="0"
-                  max="10"
-                />
-              </div>
-
-              <div>
-                <label className="mb-0.5 block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Share
-                </label>
-                <input
-                  type="number"
-                  value={viralOptions.shares}
-                  onChange={(e) =>
-                    setViralOptions((prev) => ({ ...prev, shares: parseInt(e.target.value) || 0 }))
-                  }
-                  className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-center text-xs font-mono text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-slate-800 focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300"
-                  min="0"
-                />
-              </div>
+              <button
+                type="button"
+                onClick={handleRandomizeViralStats}
+                className="hover:text-indigo-650 flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center text-slate-400 transition-colors focus:outline-none active:scale-90 active:text-indigo-800 dark:text-slate-500 dark:hover:text-indigo-400 dark:active:text-indigo-300"
+                title="Randomize Stats"
+                aria-label="Randomize Stats"
+              >
+                <Dices className="h-4.5 w-4.5 transition-colors active:text-indigo-700 dark:active:text-indigo-300" />
+              </button>
             </div>
 
             <button
               type="button"
               onClick={handleGenerateViral}
               disabled={isGeneratingViral}
-              className="flex w-full items-center justify-center gap-1.5 rounded border border-slate-300 dark:border-slate-700 hover:border-slate-800 dark:hover:border-slate-400 bg-white dark:bg-slate-900 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white shadow-sm transition-all active:scale-95 disabled:pointer-events-none disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-650 uppercase tracking-wider"
+              className="dark:disabled:text-slate-650 flex w-full items-center justify-center gap-1.5 rounded border border-slate-300 bg-white py-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 shadow-sm transition-all hover:border-slate-800 hover:text-slate-900 active:scale-95 disabled:pointer-events-none disabled:bg-slate-200 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-400 dark:hover:text-white dark:disabled:bg-slate-800"
             >
               {isGeneratingViral ? (
                 <>
@@ -458,7 +530,9 @@ export default function ProjectAIHelper({
               ) : (
                 <>
                   <Sparkles className="h-3 w-3 text-slate-400 dark:text-slate-500" />
-                  <span>{existingCommentCount > 0 ? 'Regenerate Viral Stats' : 'Generate Viral Stats'}</span>
+                  <span>
+                    {existingCommentCount > 0 ? 'Regenerate Viral Stats' : 'Generate Viral Stats'}
+                  </span>
                 </>
               )}
             </button>

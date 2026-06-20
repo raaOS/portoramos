@@ -54,6 +54,7 @@ const baseCommentSchema = z.object({
   createdAt: z.string().optional(),
   likes: z.number().int().min(0).optional(),
   likedByMe: z.boolean().optional(),
+  avatar: z.string().max(500, 'Avatar URL too long').optional(),
 });
 
 type CommentType = z.infer<typeof baseCommentSchema> & {

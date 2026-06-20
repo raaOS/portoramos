@@ -63,6 +63,7 @@ export function ProjectInteractionBar({
       <div className={isVertical ? 'flex flex-col items-center gap-3' : 'flex items-center gap-2'}>
         {/* Like Button */}
         <button
+          type="button"
           onClick={onLike}
           disabled={likePending}
           aria-label={isProjectLiked ? 'Unlike project' : 'Like project'}
@@ -90,6 +91,7 @@ export function ProjectInteractionBar({
 
         {/* Comment Button */}
         <button
+          type="button"
           className={buttonClassName(
             commentCount > 0 ? 'text-green-600 dark:text-green-500' : '',
             'text-gray-400 hover:text-green-600 dark:hover:text-green-500'
@@ -115,6 +117,7 @@ export function ProjectInteractionBar({
 
         {/* Share Button */}
         <button
+          type="button"
           className={buttonClassName(
             metrics.shares > 0 ? 'text-blue-500' : '',
             'text-gray-400 hover:text-blue-500'
@@ -143,6 +146,7 @@ export function ProjectInteractionBar({
 
         {/* Translate Button */}
         <button
+          type="button"
           onClick={onTranslate}
           disabled={translateLoading}
           className={`${isVertical ? 'flex-col gap-0.5' : 'gap-1'} flex items-center rounded-full p-1.5 transition-all duration-200 disabled:opacity-50 ${

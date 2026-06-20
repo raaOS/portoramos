@@ -48,7 +48,7 @@ const DataConnectionModal = dynamic(() => import('@/app/admin/components/DataCon
     </div>
   ),
 });
-const ManageCommentsModal = dynamic(() => import('../components/ManageCommentsModal'));
+
 const SecuritySettingsModal = dynamic(() => import('../components/SecuritySettingsModal'));
 
 const subscribeHydration = () => () => undefined;
@@ -99,7 +99,6 @@ export default function AdminProjectsClient() {
   // Local UI State
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [managingCommentsProject, setManagingCommentsProject] = useState<Project | null>(null);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -159,22 +158,6 @@ export default function AdminProjectsClient() {
         });
         if (ok) deleteMutation.mutate(id);
       }}
-      handleDuplicateProject={async (p) => {
-        const ok = await confirm({
-          title: `Duplikat "${p.title}"?`,
-          message: 'Salinan baru akan disimpan sebagai draft, kamu bisa edit lalu publish.',
-          confirmText: 'Duplikat',
-          cancelText: 'Batal',
-        });
-        if (ok) {
-          createMutation.mutate({
-            ...p,
-            title: `${p.title} (Copy)`,
-            status: 'draft',
-          } as CreateProjectData);
-        }
-      }}
-      setManagingCommentsProject={setManagingCommentsProject}
       commentCount={commentCounts[project.slug] || 0}
     />
   );
@@ -274,13 +257,6 @@ export default function AdminProjectsClient() {
       )}
 
       {showSettings && <DataConnectionModal onCancel={() => setShowSettings(false)} />}
-
-      {managingCommentsProject && (
-        <ManageCommentsModal
-          project={managingCommentsProject}
-          onClose={() => setManagingCommentsProject(null)}
-        />
-      )}
 
       {showSecurityModal && <SecuritySettingsModal onClose={() => setShowSecurityModal(false)} />}
     </div>

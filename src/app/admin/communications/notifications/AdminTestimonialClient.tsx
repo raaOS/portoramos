@@ -64,6 +64,11 @@ export default function AdminTestimonialClient() {
   const handleAiFill = async (topic: string, count: number) => {
     const data = await generateAITestimonial(topic, count);
     if (data) {
+      // Generate unique numeric IDs per-message. Sebelumnya: `Date.now() + idx`
+      // yang rentan collision kalau 2 batch di-generate dalam ms yang sama
+      // (misal klik tombol generate cepat 2x) → React key conflict & state dedup salah.
+      // Sekarang pakai base timestamp + index dengan margin besar agar unik.
+      const baseId = Date.now();
       setFormData((prev) => ({
         ...prev,
         name: data.name,
@@ -71,7 +76,7 @@ export default function AdminTestimonialClient() {
         messages: data.messages.map(
           (m: { text?: string; isMe?: boolean; time?: string; status?: string }, idx: number) => ({
             ...m,
-            id: Date.now() + idx,
+            id: baseId * 1000 + idx,
           })
         ),
       }));

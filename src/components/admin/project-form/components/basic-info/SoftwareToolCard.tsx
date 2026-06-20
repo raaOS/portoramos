@@ -17,7 +17,7 @@ function getFallbackIcon(tool: string, variant: SoftwareToolCardProps['variant']
 
   return (
     <div
-      className={`${sizeClass} flex items-center justify-center !rounded-md bg-slate-100 uppercase !font-semibold text-slate-500 border border-slate-200/50`}
+      className={`${sizeClass} flex items-center justify-center !rounded-md border border-slate-200/50 bg-slate-100 !font-semibold uppercase text-slate-500`}
     >
       {tool.substring(0, 2)}
     </div>
@@ -57,18 +57,18 @@ export default function SoftwareToolCard({
     >
       <div className="flex items-center justify-center">{iconNode}</div>
 
-      <div className="mt-2.5 flex items-center gap-1.5 justify-center w-full px-1">
+      <div className="mt-2.5 flex w-full items-center justify-center gap-1.5 px-1">
         {isSelected ? (
-          <div className="flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-xs">
+          <div className="shadow-xs flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
             <Check className="h-1.5 w-1.5 stroke-[4]" />
           </div>
         ) : (
           <div className="h-3 w-3 flex-shrink-0 rounded-full border border-slate-300 bg-white" />
         )}
-        <span className="truncate font-mono text-[8.5px] font-bold uppercase tracking-wider text-slate-500 text-center">
+        <span className="truncate text-center font-mono text-[8.5px] font-bold uppercase tracking-wider text-slate-500">
           {getToolLabel(tool)}
         </span>
-        <div className="h-3 w-3 flex-shrink-0 opacity-0 pointer-events-none" />
+        <div className="pointer-events-none h-3 w-3 flex-shrink-0 opacity-0" />
       </div>
     </button>
   );

@@ -6,8 +6,10 @@ import { projectService } from '@/lib/services/projectService';
 import { generateGenZComments } from '@/lib/magic';
 import { db } from '@/lib/database';
 import { sendTelegramAlert } from '@/lib/telegram';
-import { CreateProjectSchema } from '@/lib/validations';
+import { CreateProjectSchema, commentSchema } from '@/lib/validations';
 import { success, created, unauthorized, serverError, validationError } from '@/lib/api-response';
+
+const submittedCommentsSchema = commentSchema.array().max(1000, 'Too many comments');
 import { resolveStorageUrl } from '@/lib/urlResolver';
 
 export const dynamic = 'force-dynamic';
@@ -50,6 +52,14 @@ export async function POST(request: NextRequest) {
 
     const rawBody = await request.json();
 
+    const submittedCommentsResult = Array.isArray(rawBody.comments)
+      ? submittedCommentsSchema.safeParse(rawBody.comments)
+      : null;
+
+    if (submittedCommentsResult && !submittedCommentsResult.success) {
+      return validationError(submittedCommentsResult.error);
+    }
+
     // Validate with Zod schema
     const validationResult = CreateProjectSchema.safeParse(rawBody);
     if (!validationResult.success) {
@@ -81,7 +91,13 @@ export async function POST(request: NextRequest) {
       throw innerError;
     }
 
-    if (
+    if (submittedCommentsResult?.success) {
+      try {
+        await db.ref(`comments/${newProject.slug}`).set(submittedCommentsResult.data);
+      } catch (commentErr) {
+        console.error('[API/Projects] Failed to persist submitted comments:', commentErr);
+      }
+    } else if (
       validationResult.data.initialCommentCount &&
       validationResult.data.initialCommentCount > 0
     ) {

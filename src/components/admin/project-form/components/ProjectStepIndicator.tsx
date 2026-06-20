@@ -42,12 +42,24 @@ export default function ProjectStepIndicator({ currentStep }: ProjectStepIndicat
           );
         })}
       </div>
-      
+
       {/* Step Labels */}
       <div className="mt-3 flex justify-between text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-        <span className={`transition-colors duration-300 ${currentStep >= 1 ? 'text-slate-800' : ''}`}>1. Setup</span>
-        <span className={`transition-colors duration-300 ${currentStep >= 2 ? 'text-slate-800' : ''}`}>2. Media</span>
-        <span className={`transition-colors duration-300 ${currentStep >= 3 ? 'text-slate-800' : ''}`}>3. Review</span>
+        <span
+          className={`transition-colors duration-300 ${currentStep >= 1 ? 'text-slate-800' : ''}`}
+        >
+          1. Setup
+        </span>
+        <span
+          className={`transition-colors duration-300 ${currentStep >= 2 ? 'text-slate-800' : ''}`}
+        >
+          2. Media
+        </span>
+        <span
+          className={`transition-colors duration-300 ${currentStep >= 3 ? 'text-slate-800' : ''}`}
+        >
+          3. Review
+        </span>
       </div>
     </div>
   );

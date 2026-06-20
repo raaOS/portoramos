@@ -89,11 +89,14 @@ export const useWindowManager = ({
     [bringToFrontZIndex]
   );
 
-  return useMemo(() => ({
-    windows,
-    setWindows,
-    requestNextZIndex,
-    bouncingDocId,
-    ...windowActions,
-  }), [windows, setWindows, requestNextZIndex, bouncingDocId, windowActions]);
+  return useMemo(
+    () => ({
+      windows,
+      setWindows,
+      requestNextZIndex,
+      bouncingDocId,
+      ...windowActions,
+    }),
+    [windows, setWindows, requestNextZIndex, bouncingDocId, windowActions]
+  );
 };

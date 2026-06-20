@@ -88,6 +88,13 @@ function countFilledProjectContentFields(formData: ProjectFormData) {
   return filledTextCount + (hasCustomSoftware ? 1 : 0);
 }
 
+function createPreviewSlug(title: string) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
 type AIUpdatableField = keyof Pick<
   ProjectFormData,
   | 'title'
@@ -136,7 +143,7 @@ function MediaStageUrlInput({ value, placeholder, label, onValueChange }: MediaS
         type="text"
         value={value}
         onChange={(e) => onValueChange(e.target.value)}
-        className="h-8 min-w-0 rounded-md border border-slate-200 bg-white/90 px-2.5 text-[11px] text-slate-800 outline-none focus:outline-none focus:ring-0 backdrop-blur-md transition-colors placeholder:text-slate-400 focus:border-slate-400 dark:border-slate-800 dark:bg-slate-950/90 dark:text-slate-100 dark:placeholder:text-slate-600 dark:focus:border-slate-700"
+        className="h-8 min-w-0 rounded-md border border-slate-200 bg-white/90 px-2.5 text-[11px] text-slate-800 outline-none backdrop-blur-md transition-colors placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-0 dark:border-slate-800 dark:bg-slate-950/90 dark:text-slate-100 dark:placeholder:text-slate-600 dark:focus:border-slate-700"
         placeholder={placeholder}
       />
     </label>
@@ -327,9 +334,7 @@ export default function ProjectForm({
   const [creationMode, setCreationMode] = useState<'undecided' | 'manual' | 'auto'>(
     project?.id ? 'manual' : 'undecided'
   );
-  const [hasGeneratedContent, setHasGeneratedContent] = useState(
-    project?.id ? true : false
-  );
+  const [hasGeneratedContent, setHasGeneratedContent] = useState(project?.id ? true : false);
   const [isAIHelperExpanded, setIsAIHelperExpanded] = useState(true);
 
   // Extracted Hooks
@@ -373,6 +378,7 @@ export default function ProjectForm({
   const originalCommentsRef = useRef<Comment[] | null>(null);
   const originalMetricsRef = useRef<{ likes: number; shares: number } | null>(null);
   const hasGeneratedViralRef = useRef<boolean>(false);
+  const generatedCommentsRef = useRef<Comment[] | null>(null);
 
   useEffect(() => {
     if (project && originalMetricsRef.current === null) {
@@ -389,10 +395,11 @@ export default function ProjectForm({
       fetch(`/api/comments?slug=${project.slug}`)
         .then((res) => res.json())
         .then((data) => {
-          if (data.comments && Array.isArray(data.comments)) {
-            setComments(data.comments);
+          const loadedComments = data?.data?.comments ?? data?.comments;
+          if (Array.isArray(loadedComments)) {
+            setComments(loadedComments);
             if (originalCommentsRef.current === null) {
-              originalCommentsRef.current = data.comments;
+              originalCommentsRef.current = loadedComments;
             }
           }
         })
@@ -432,6 +439,7 @@ export default function ProjectForm({
     [comments]
   );
   const filledContentFieldCount = countFilledProjectContentFields(formData);
+  const activeProjectSlug = formData.slug || project?.slug || createPreviewSlug(formData.title);
 
   const galleryItemCount = useMemo(() => {
     const singleItems = formData.galleryItems.filter((item) => item.isActive !== false).length;
@@ -620,7 +628,9 @@ export default function ProjectForm({
   };
 
   const renderCoverUploadButton = (label: string, compact = false) => (
-    <div className={`flex flex-col items-center gap-2 ${compact ? 'cover-overlay-upload' : 'scale-110'}`}>
+    <div
+      className={`flex flex-col items-center gap-2 ${compact ? 'cover-overlay-upload' : 'scale-110'}`}
+    >
       <AdminFileUpload
         variant="button"
         onUpload={handleCoverDeferredUpload}
@@ -641,7 +651,9 @@ export default function ProjectForm({
   );
 
   const renderBeforeUploadButton = (label: string, compact = false) => (
-    <div className={`flex flex-col items-center gap-2 ${compact ? 'cover-overlay-upload' : 'scale-110'}`}>
+    <div
+      className={`flex flex-col items-center gap-2 ${compact ? 'cover-overlay-upload' : 'scale-110'}`}
+    >
       <AdminFileUpload
         variant="button"
         onUpload={(urls) => {
@@ -692,6 +704,10 @@ export default function ProjectForm({
         submitData.cover = url;
       }
 
+      if (hasGeneratedViralRef.current) {
+        submitData.comments = generatedCommentsRef.current ?? comments;
+      }
+
       // Submit Data to DB First!
       await onSubmit(submitData);
 
@@ -724,33 +740,12 @@ export default function ProjectForm({
   const handleFormCancel = async () => {
     const canCancel = await handleCancelCleanup();
     if (canCancel) {
-      if (hasGeneratedViralRef.current && project?.id && project?.slug) {
-        try {
-          await fetch('/api/admin/projects/magic-complete', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-Token': csrfToken || '',
-            },
-            body: JSON.stringify({
-              projectId: project.id,
-              slug: project.slug,
-              rollback: true,
-              originalComments: originalCommentsRef.current,
-              originalMetrics: originalMetricsRef.current,
-            }),
-          });
-          hasGeneratedViralRef.current = false;
-        } catch (rollbackErr) {
-          console.error('Failed to rollback viral stats on cancel:', rollbackErr);
-        }
-      }
       onCancel();
     }
   };
 
   const projectSetupControls = (
-    <div className="dark:border-slate-850 mb-4 flex w-full items-center gap-3 overflow-x-auto scrollbar-none border-b border-slate-100 pb-4">
+    <div className="dark:border-slate-850 scrollbar-none mb-4 flex w-full items-center gap-3 overflow-x-auto border-b border-slate-100 pb-4">
       {/* Case Study Type */}
       <div className="flex flex-shrink-0 items-center gap-2.5">
         <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400">
@@ -838,193 +833,205 @@ export default function ProjectForm({
           <div className="group relative flex min-h-[350px] flex-col overflow-hidden rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/10 lg:col-span-6">
             {projectSetupControls}
 
-            <div className="relative mx-auto w-full max-w-[460px] sm:max-w-[520px] sm:flex sm:flex-row sm:items-center sm:justify-start">
-              <div className="w-full max-w-[440px] flex-shrink-0 flex flex-col">
+            <div className="relative mx-auto w-full max-w-[460px] sm:flex sm:max-w-[520px] sm:flex-row sm:items-center sm:justify-start">
+              <div className="flex w-full max-w-[440px] flex-shrink-0 flex-col">
                 <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[22px] border border-slate-200 bg-slate-100 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-                {mediaFormat === 'comparison' ? (
-                  <>
-                    {comparisonReady ? (
-                      <Compare
-                        firstImage={beforeSrc}
-                        secondImage={afterSrc}
-                        firstMediaType={beforeKind}
-                        secondMediaType={afterKind}
-                        className="h-full w-full rounded-[22px]"
-                        firstImageClassName="rounded-[22px] object-cover object-center"
-                        secondImageClassname="rounded-[22px] object-cover object-center"
-                        slideMode="hover"
-                        firstSlideLabel=""
-                        secondSlideLabel=""
-                      />
-                    ) : (
-                      <div className="grid h-full grid-cols-2">
-                        <div className="relative h-full overflow-hidden border-r border-white/60 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
-                          {beforeSrc ? (
-                            renderMediaPreview(beforeSrc, beforeKind, 'Before media')
-                          ) : (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-500">
-                              {renderBeforeUploadButton('Upload Before')}
-                            </div>
-                          )}
-                        </div>
-                        <div className="relative h-full overflow-hidden bg-slate-100 dark:bg-slate-950">
-                          {afterSrc ? (
-                            renderMediaPreview(afterSrc, afterKind, 'After media')
-                          ) : (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-500">
-                              {renderCoverUploadButton('Upload Cover')}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="absolute left-3 top-3 z-40 flex items-center gap-1.5 drop-shadow-[0_1px_2.5px_rgba(0,0,0,0.85)]">
-                      <span className="px-1.5 font-mono text-[8px] font-bold uppercase tracking-[0.2em] text-white/85">
-                        Before
-                      </span>
-                      {beforeSrc && (
-                        <>
-                          <span className="h-3.5 w-px bg-white/35" aria-hidden="true" />
-                          {renderBeforeUploadButton('', true)}
-                          <span className="h-3.5 w-px bg-white/35" aria-hidden="true" />
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteMedia('before')}
-                            className="flex h-6 w-6 items-center justify-center rounded-md text-white/75 transition-colors hover:text-red-400"
-                            title="Hapus Before"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="absolute right-3 top-3 z-40 flex items-center gap-1.5 drop-shadow-[0_1px_2.5px_rgba(0,0,0,0.85)]">
-                      <span className="px-1.5 font-mono text-[8px] font-bold uppercase tracking-[0.2em] text-white/85">
-                        {afterOverrideSrc ? 'After Override' : 'Cover / After'}
-                      </span>
-                      {afterOverrideSrc ? (
-                        <>
-                          <span className="h-3.5 w-px bg-white/35" aria-hidden="true" />
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteMedia('after')}
-                            className="flex h-6 w-6 items-center justify-center rounded-md text-white/75 transition-colors hover:text-red-400"
-                            title="Pakai Cover Media"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </>
+                  {mediaFormat === 'comparison' ? (
+                    <>
+                      {comparisonReady ? (
+                        <Compare
+                          firstImage={beforeSrc}
+                          secondImage={afterSrc}
+                          firstMediaType={beforeKind}
+                          secondMediaType={afterKind}
+                          className="h-full w-full rounded-[22px]"
+                          firstImageClassName="rounded-[22px] object-cover object-center"
+                          secondImageClassname="rounded-[22px] object-cover object-center"
+                          slideMode="hover"
+                          firstSlideLabel=""
+                          secondSlideLabel=""
+                        />
                       ) : (
-                        <>
-                          {hasCover && (
+                        <div className="grid h-full grid-cols-2">
+                          <div className="relative h-full overflow-hidden border-r border-white/60 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
+                            {beforeSrc ? (
+                              renderMediaPreview(beforeSrc, beforeKind, 'Before media')
+                            ) : (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-500">
+                                {renderBeforeUploadButton('Upload Before')}
+                              </div>
+                            )}
+                          </div>
+                          <div className="relative h-full overflow-hidden bg-slate-100 dark:bg-slate-950">
+                            {afterSrc ? (
+                              renderMediaPreview(afterSrc, afterKind, 'After media')
+                            ) : (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-500">
+                                {renderCoverUploadButton('Upload Cover')}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {!isCommentsOpen && (
+                        <div className="absolute left-3 top-3 z-40 flex items-center gap-1.5 drop-shadow-[0_1px_2.5px_rgba(0,0,0,0.85)]">
+                          <span className="px-1.5 font-mono text-[8px] font-bold uppercase tracking-[0.2em] text-white/85">
+                            Before
+                          </span>
+                          {beforeSrc && (
                             <>
                               <span className="h-3.5 w-px bg-white/35" aria-hidden="true" />
-                              {renderCoverUploadButton('', true)}
+                              {renderBeforeUploadButton('', true)}
                               <span className="h-3.5 w-px bg-white/35" aria-hidden="true" />
                               <button
                                 type="button"
-                                onClick={() => handleDeleteMedia('cover')}
+                                onClick={() => handleDeleteMedia('before')}
                                 className="flex h-6 w-6 items-center justify-center rounded-md text-white/75 transition-colors hover:text-red-400"
-                                title="Hapus Cover"
+                                title="Hapus Before"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </button>
                             </>
                           )}
-                        </>
+                        </div>
                       )}
-                    </div>
 
-                    <div className="absolute bottom-3 left-3 right-3 z-20 grid gap-2 md:grid-cols-2">
-                      <MediaStageUrlInput
-                        value={beforeSrc}
-                        placeholder="Before media URL..."
-                        onValueChange={handleBeforeUrlChange}
-                        label="Before URL"
-                      />
-                      <MediaStageUrlInput
-                        value={afterOverrideSrc || formData.cover}
-                        placeholder={
-                          afterOverrideSrc ? 'After override URL...' : 'Cover media URL...'
-                        }
-                        onValueChange={
-                          afterOverrideSrc
-                            ? (value) =>
-                                updateField('comparison', {
-                                  ...formData.comparison,
-                                  afterImage: value,
-                                  afterType: isVideoLink(value) ? 'video' : 'image',
-                                })
-                            : handleCoverUrlChange
-                        }
-                        label={afterOverrideSrc ? 'After URL' : 'Cover URL'}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {hasCover ? (
-                      renderMediaPreview(formData.cover, coverKind, formData.title || 'Cover media')
-                    ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-slate-500">
-                        {renderCoverUploadButton('Upload Cover')}
+                      {!isCommentsOpen && (
+                        <div className="absolute right-3 top-3 z-40 flex items-center gap-1.5 drop-shadow-[0_1px_2.5px_rgba(0,0,0,0.85)]">
+                          <span className="px-1.5 font-mono text-[8px] font-bold uppercase tracking-[0.2em] text-white/85">
+                            {afterOverrideSrc ? 'After Override' : 'Cover / After'}
+                          </span>
+                          {afterOverrideSrc ? (
+                            <>
+                              <span className="h-3.5 w-px bg-white/35" aria-hidden="true" />
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteMedia('after')}
+                                className="flex h-6 w-6 items-center justify-center rounded-md text-white/75 transition-colors hover:text-red-400"
+                                title="Pakai Cover Media"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {hasCover && (
+                                <>
+                                  <span className="h-3.5 w-px bg-white/35" aria-hidden="true" />
+                                  {renderCoverUploadButton('', true)}
+                                  <span className="h-3.5 w-px bg-white/35" aria-hidden="true" />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteMedia('cover')}
+                                    className="flex h-6 w-6 items-center justify-center rounded-md text-white/75 transition-colors hover:text-red-400"
+                                    title="Hapus Cover"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {!isCommentsOpen && (
+                        <div className="absolute bottom-3 left-3 right-3 z-20 grid gap-2 md:grid-cols-2">
+                          <MediaStageUrlInput
+                            value={beforeSrc}
+                            placeholder="Before media URL..."
+                            onValueChange={handleBeforeUrlChange}
+                            label="Before URL"
+                          />
+                          <MediaStageUrlInput
+                            value={afterOverrideSrc || formData.cover}
+                            placeholder={
+                              afterOverrideSrc ? 'After override URL...' : 'Cover media URL...'
+                            }
+                            onValueChange={
+                              afterOverrideSrc
+                                ? (value) =>
+                                    updateField('comparison', {
+                                      ...formData.comparison,
+                                      afterImage: value,
+                                      afterType: isVideoLink(value) ? 'video' : 'image',
+                                    })
+                                : handleCoverUrlChange
+                            }
+                            label={afterOverrideSrc ? 'After URL' : 'Cover URL'}
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {hasCover ? (
+                        renderMediaPreview(
+                          formData.cover,
+                          coverKind,
+                          formData.title || 'Cover media'
+                        )
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-slate-500">
+                          {renderCoverUploadButton('Upload Cover')}
+                        </div>
+                      )}
+
+                      {hasCover && !isCommentsOpen && (
+                        <div className="absolute right-3 top-3 z-40 flex items-center gap-1.5 drop-shadow-[0_1px_2.5px_rgba(0,0,0,0.85)]">
+                          {renderCoverUploadButton('', true)}
+                          <span className="h-3.5 w-px bg-white/35" aria-hidden="true" />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMedia('cover')}
+                            className="flex h-6 w-6 items-center justify-center rounded-md text-white/75 transition-colors hover:text-red-400"
+                            title="Hapus Cover"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
+
+                      {!isCommentsOpen && (
+                        <div className="absolute bottom-3 left-3 right-3 z-20">
+                          <MediaStageUrlInput
+                            value={formData.cover}
+                            placeholder="Cover media URL..."
+                            onValueChange={handleCoverUrlChange}
+                            label="Cover URL"
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {mediaFormat === 'single' &&
+                    (hasCover || isDetectingDimensions) &&
+                    !isCommentsOpen && (
+                      <div className="absolute left-3 top-3 z-20 flex items-center gap-2 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-white drop-shadow-[0_1px_2.5px_rgba(0,0,0,0.85)]">
+                        {isDetectingDimensions ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <span>{formData.coverWidth || '-'}w</span>
+                            <span className="text-white/35">/</span>
+                            <span>{formData.coverHeight || '-'}h</span>
+                          </>
+                        )}
                       </div>
                     )}
+                </div>
 
-                    {hasCover && (
-                      <div className="absolute right-3 top-3 z-40 flex items-center gap-1.5 drop-shadow-[0_1px_2.5px_rgba(0,0,0,0.85)]">
-                        {renderCoverUploadButton('', true)}
-                        <span className="h-3.5 w-px bg-white/35" aria-hidden="true" />
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteMedia('cover')}
-                          className="flex h-6 w-6 items-center justify-center rounded-md text-white/75 transition-colors hover:text-red-400"
-                          title="Hapus Cover"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="absolute bottom-3 left-3 right-3 z-20">
-                      <MediaStageUrlInput
-                        value={formData.cover}
-                        placeholder="Cover media URL..."
-                        onValueChange={handleCoverUrlChange}
-                        label="Cover URL"
-                      />
-                    </div>
-                  </>
+                {errors.cover && (
+                  <p className="mt-2 text-center text-[10px] font-medium text-red-500">
+                    {errors.cover}
+                  </p>
                 )}
-
-
-                {mediaFormat === 'single' && (hasCover || isDetectingDimensions) && (
-                  <div className="absolute left-3 top-3 z-20 flex items-center gap-2 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-white drop-shadow-[0_1px_2.5px_rgba(0,0,0,0.85)]">
-                    {isDetectingDimensions ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <>
-                        <span>{formData.coverWidth || '-'}w</span>
-                        <span className="text-white/35">/</span>
-                        <span>{formData.coverHeight || '-'}h</span>
-                      </>
-                    )}
-                  </div>
-                )}
-
               </div>
 
-              {errors.cover && (
-                <p className="mt-2 text-center text-[10px] font-medium text-red-500">
-                  {errors.cover}
-                </p>
-              )}
-            </div>
-
-              {formData.cover && (
-                <div className="pointer-events-none absolute inset-y-0 right-2 z-30 flex items-center sm:relative sm:inset-y-auto sm:right-auto sm:w-[80px] sm:flex-shrink-0 sm:flex sm:justify-center">
+              {formData.cover && !isCommentsOpen && (
+                <div className="pointer-events-none absolute inset-y-0 right-2 z-30 flex items-center sm:relative sm:inset-y-auto sm:right-auto sm:flex sm:w-[80px] sm:flex-shrink-0 sm:justify-center">
                   <div className="pointer-events-auto">
                     <ProjectInteractionBar
                       isProjectLiked={isProjectLiked}
@@ -1040,7 +1047,7 @@ export default function ProjectForm({
                       onTranslate={() => {}}
                       onScrollToComments={() => setIsCommentsOpen(true)}
                       orientation="vertical"
-                      projectSlug={formData.slug}
+                      projectSlug={activeProjectSlug}
                     />
                   </div>
                 </div>
@@ -1085,15 +1092,16 @@ export default function ProjectForm({
                     </button>
                   </div>
                   <div className="flex-1 select-text overflow-y-auto pr-1 pt-2">
-                    {(formData.slug || formData.title) ? (
+                    {activeProjectSlug ? (
                       <ProjectComments
-                        slug={formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'temp-project'}
+                        slug={activeProjectSlug}
                         comments={comments}
                         setComments={setComments}
                         allowComments={formData.allowComments}
                         withDivider={false}
                         isVisible={true}
                         animated={false}
+                        isAdmin={true}
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center py-12 text-center text-slate-400">
@@ -1110,21 +1118,21 @@ export default function ProjectForm({
 
           {/* Right Column (Form Input & Tabs) */}
           <div className="mx-auto flex w-full max-w-[460px] flex-col space-y-6 sm:max-w-[520px] lg:col-span-6">
-            
             {/* Lapisan Pertama: undecided / Pilihan Metode */}
             {creationMode === 'undecided' ? (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                className="flex flex-col space-y-5 rounded-2xl border border-slate-200/80 bg-white/50 p-6 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/50 shadow-lg"
+                className="flex flex-col space-y-5 rounded-2xl border border-slate-200/80 bg-white/50 p-6 shadow-lg backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/50"
               >
-                <div className="text-center space-y-2">
+                <div className="space-y-2 text-center">
                   <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     Pilih Metode Pengisian Proyek
                   </h3>
-                  <p className="text-[11px] text-slate-400 leading-relaxed max-w-sm mx-auto">
-                    Pilih apakah Anda ingin mengisi data detail proyek secara manual atau secara otomatis menggunakan AI asisten.
+                  <p className="mx-auto max-w-sm text-[11px] leading-relaxed text-slate-400">
+                    Pilih apakah Anda ingin mengisi data detail proyek secara manual atau secara
+                    otomatis menggunakan AI asisten.
                   </p>
                 </div>
 
@@ -1142,11 +1150,12 @@ export default function ProjectForm({
                       <BookOpen className="h-5 w-5" />
                     </div>
                     <div className="flex-1 space-y-1">
-                      <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                      <h4 className="text-xs font-bold text-slate-800 group-hover:text-indigo-600 dark:text-slate-200 dark:group-hover:text-indigo-400">
                         Isi Manual
                       </h4>
-                      <p className="text-[10px] text-slate-400 leading-relaxed">
-                        Tulis deskripsi, cerita proses narasi, dan pilih galeri media secara manual dari awal.
+                      <p className="text-[10px] leading-relaxed text-slate-400">
+                        Tulis deskripsi, cerita proses narasi, dan pilih galeri media secara manual
+                        dari awal.
                       </p>
                     </div>
                   </button>
@@ -1163,11 +1172,12 @@ export default function ProjectForm({
                       <Sparkles className="h-5 w-5" />
                     </div>
                     <div className="flex-1 space-y-1">
-                      <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                      <h4 className="text-xs font-bold text-slate-800 group-hover:text-indigo-600 dark:text-slate-200 dark:group-hover:text-indigo-400">
                         Buat Otomatis (Gemini AI)
                       </h4>
-                      <p className="text-[10px] text-slate-400 leading-relaxed">
-                        Gunakan kecerdasan buatan Gemini untuk menghasilkan draf detail proyek & statistik viral berdasarkan cover media.
+                      <p className="text-[10px] leading-relaxed text-slate-400">
+                        Gunakan kecerdasan buatan Gemini untuk menghasilkan draf detail proyek &
+                        statistik viral berdasarkan cover media.
                       </p>
                     </div>
                   </button>
@@ -1178,19 +1188,19 @@ export default function ProjectForm({
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6 w-full"
+                className="w-full space-y-6"
               >
                 {/* Switcher di bagian atas */}
-                <div className="flex rounded-lg bg-slate-100/80 p-0.5 dark:bg-slate-900/60 backdrop-blur-sm w-full">
+                <div className="flex w-full rounded-lg bg-slate-100/80 p-0.5 backdrop-blur-sm dark:bg-slate-900/60">
                   <button
                     type="button"
                     onClick={() => {
                       setCreationMode('manual');
                       setHasGeneratedContent(true);
                     }}
-                    className={`flex-1 py-1.5 text-xs font-extrabold uppercase tracking-wider rounded-md transition-all ${
+                    className={`flex-1 rounded-md py-1.5 text-xs font-extrabold uppercase tracking-wider transition-all ${
                       creationMode === 'manual'
-                        ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-850 dark:text-slate-100'
+                        ? 'dark:bg-slate-850 bg-white text-slate-800 shadow-sm dark:text-slate-100'
                         : 'text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300'
                     }`}
                   >
@@ -1201,9 +1211,9 @@ export default function ProjectForm({
                     onClick={() => {
                       setCreationMode('auto');
                     }}
-                    className={`flex-1 py-1.5 text-xs font-extrabold uppercase tracking-wider rounded-md transition-all ${
+                    className={`flex-1 rounded-md py-1.5 text-xs font-extrabold uppercase tracking-wider transition-all ${
                       creationMode === 'auto'
-                        ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-850 dark:text-slate-100'
+                        ? 'dark:bg-slate-850 bg-white text-slate-800 shadow-sm dark:text-slate-100'
                         : 'text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300'
                     }`}
                   >
@@ -1220,7 +1230,9 @@ export default function ProjectForm({
                         Panduan Asisten AI
                       </h4>
                       <p className="mt-1 text-[10px] leading-relaxed text-slate-400 dark:text-slate-500">
-                        Unggah file cover proyek terlebih dahulu di kolom sebelah kiri. Asisten Gemini akan membaca media tersebut dan memformulasikan draf detail proyek secara otomatis.
+                        Unggah file cover proyek terlebih dahulu di kolom sebelah kiri. Asisten
+                        Gemini akan membaca media tersebut dan memformulasikan draf detail proyek
+                        secara otomatis.
                       </p>
                     </div>
 
@@ -1228,7 +1240,7 @@ export default function ProjectForm({
                       <ProjectAIHelper
                         cover={formData.cover}
                         pendingFile={pendingCoverFile}
-                        slug={formData.slug || ''}
+                        slug={activeProjectSlug}
                         projectId={project?.id}
                         mode="content"
                         existingContentFieldCount={filledContentFieldCount}
@@ -1259,10 +1271,12 @@ export default function ProjectForm({
                       <ProjectAIHelper
                         cover={formData.cover}
                         pendingFile={pendingCoverFile}
-                        slug={formData.slug || ''}
+                        slug={activeProjectSlug}
                         projectId={project?.id}
                         mode="viral"
                         existingCommentCount={totalCommentCount}
+                        projectTitle={formData.title}
+                        projectDescription={formData.description}
                         onGenerate={() => {}}
                         onGenerateViral={(likes, shares, commentsCount, generatedComments) => {
                           updateField('likes', likes);
@@ -1271,8 +1285,10 @@ export default function ProjectForm({
                           updateField('allowComments', true);
                           setShowViralStats(true);
 
-                          if (generatedComments && generatedComments.length > 0) {
+                          if (generatedComments) {
                             setComments(generatedComments);
+                            generatedCommentsRef.current = generatedComments;
+                            updateField('comments', generatedComments);
                           }
 
                           hasGeneratedViralRef.current = true;
@@ -1288,10 +1304,9 @@ export default function ProjectForm({
                 {/* Form Editor Utama (Akan muncul jika manual, atau jika auto dan sudah ada/pernah generate content) */}
                 {(creationMode === 'manual' || hasGeneratedContent) && (
                   <div className="space-y-6">
-                    
                     {/* Collapsible AI Helper di bagian atas untuk mode Auto */}
                     {creationMode === 'auto' && (
-                      <div className="rounded-2xl border border-indigo-100 bg-indigo-50/5 overflow-hidden dark:border-indigo-950/40 shadow-sm transition-all">
+                      <div className="overflow-hidden rounded-2xl border border-indigo-100 bg-indigo-50/5 shadow-sm transition-all dark:border-indigo-950/40">
                         <button
                           type="button"
                           onClick={() => setIsAIHelperExpanded(!isAIHelperExpanded)}
@@ -1299,7 +1314,9 @@ export default function ProjectForm({
                         >
                           <span className="flex items-center gap-2">
                             <Sparkles className="h-4 w-4 animate-pulse text-indigo-500" />
-                            <span className="font-mono uppercase tracking-wider text-[10px]">Gemini AI Assistant</span>
+                            <span className="font-mono text-[10px] uppercase tracking-wider">
+                              Gemini AI Assistant
+                            </span>
                           </span>
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono text-[9px] text-slate-400 dark:text-slate-500">
@@ -1312,7 +1329,7 @@ export default function ProjectForm({
                             )}
                           </div>
                         </button>
-                        
+
                         <AnimatePresence initial={false}>
                           {isAIHelperExpanded && (
                             <motion.div
@@ -1320,13 +1337,13 @@ export default function ProjectForm({
                               animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
                               transition={{ duration: 0.2 }}
-                              className="border-t border-indigo-50/60 p-4 space-y-4 bg-white dark:bg-slate-950 dark:border-indigo-950/40"
+                              className="space-y-4 border-t border-indigo-50/60 bg-white p-4 dark:border-indigo-950/40 dark:bg-slate-950"
                             >
                               <div className="grid grid-cols-1 gap-4">
                                 <ProjectAIHelper
                                   cover={formData.cover}
                                   pendingFile={pendingCoverFile}
-                                  slug={formData.slug || ''}
+                                  slug={activeProjectSlug}
                                   projectId={project?.id}
                                   mode="content"
                                   existingContentFieldCount={filledContentFieldCount}
@@ -1355,20 +1372,32 @@ export default function ProjectForm({
                                   <ProjectAIHelper
                                     cover={formData.cover}
                                     pendingFile={pendingCoverFile}
-                                    slug={formData.slug || ''}
+                                    slug={activeProjectSlug}
                                     projectId={project?.id}
                                     mode="viral"
                                     existingCommentCount={totalCommentCount}
+                                    projectTitle={formData.title}
+                                    projectDescription={formData.description}
                                     onGenerate={() => {}}
-                                    onGenerateViral={(likes, shares, commentsCount, generatedComments) => {
+                                    onGenerateViral={(
+                                      likes,
+                                      shares,
+                                      commentsCount,
+                                      generatedComments
+                                    ) => {
                                       updateField('likes', likes);
                                       updateField('shares', shares);
-                                      updateField('initialCommentCount', project?.id ? 0 : commentsCount);
+                                      updateField(
+                                        'initialCommentCount',
+                                        project?.id ? 0 : commentsCount
+                                      );
                                       updateField('allowComments', true);
                                       setShowViralStats(true);
 
-                                      if (generatedComments && generatedComments.length > 0) {
+                                      if (generatedComments) {
                                         setComments(generatedComments);
+                                        generatedCommentsRef.current = generatedComments;
+                                        updateField('comments', generatedComments);
                                       }
 
                                       hasGeneratedViralRef.current = true;
@@ -1388,7 +1417,7 @@ export default function ProjectForm({
                         type="text"
                         value={formData.title}
                         onChange={(e) => updateField('title', e.target.value)}
-                        className="text-slate-900 w-full border-none bg-transparent p-0 text-2xl font-extrabold tracking-tight placeholder-slate-400 focus:outline-none focus:ring-0 dark:text-slate-100 dark:placeholder-slate-650"
+                        className="dark:placeholder-slate-650 w-full border-none bg-transparent p-0 text-2xl font-extrabold tracking-tight text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-0 dark:text-slate-100"
                         placeholder="Judul Proyek..."
                       />
                       {errors.title && (
@@ -1498,11 +1527,13 @@ export default function ProjectForm({
                                 ref={descriptionRef}
                                 value={formData.description || ''}
                                 onChange={(e) => updateField('description', e.target.value)}
-                                className="w-full min-h-[95px] rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 transition-all focus:outline-none focus:ring-0 focus:border-slate-800 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-650 dark:focus:border-slate-300 dark:hover:border-slate-700 leading-relaxed overflow-hidden resize-none"
+                                className="dark:placeholder-slate-650 min-h-[95px] w-full resize-none overflow-hidden rounded-md border border-slate-200 bg-white px-3 py-2 text-xs leading-relaxed text-slate-800 placeholder-slate-400 transition-all hover:border-slate-300 focus:border-slate-800 focus:outline-none focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300"
                                 placeholder="Deskripsi ringkas proyek..."
                               />
                               {errors.description && (
-                                <p className="text-[10px] font-medium text-red-500">{errors.description}</p>
+                                <p className="text-[10px] font-medium text-red-500">
+                                  {errors.description}
+                                </p>
                               )}
                             </div>
 

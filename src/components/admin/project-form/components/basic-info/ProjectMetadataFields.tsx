@@ -15,7 +15,7 @@ export default function ProjectMetadataFields({
 }: ProjectMetadataFieldsProps) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-100 pb-2 dark:border-slate-800/80">
         <Sliders className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
         <h4 className="font-mono text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
           Metadata Proyek
@@ -31,7 +31,7 @@ export default function ProjectMetadataFields({
             type="text"
             value={formData.client}
             onChange={(e) => updateField('client', e.target.value)}
-            className={`w-full rounded-md border px-3 py-2 text-xs transition-all focus:outline-none focus:ring-0 placeholder-slate-400 dark:placeholder-slate-600 ${
+            className={`w-full rounded-md border px-3 py-2 text-xs placeholder-slate-400 transition-all focus:outline-none focus:ring-0 dark:placeholder-slate-600 ${
               errors.client
                 ? 'border-red-300 bg-red-50/10 text-red-900 focus:border-red-500 dark:border-red-800/50 dark:bg-red-950/10 dark:text-red-200'
                 : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300 focus:border-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300'
@@ -59,7 +59,7 @@ export default function ProjectMetadataFields({
                 if (!isNaN(num)) updateField('year', num);
               }
             }}
-            className={`w-full rounded-md border px-3 py-2 text-xs font-mono transition-all focus:outline-none focus:ring-0 placeholder-slate-400 dark:placeholder-slate-600 ${
+            className={`w-full rounded-md border px-3 py-2 font-mono text-xs placeholder-slate-400 transition-all focus:outline-none focus:ring-0 dark:placeholder-slate-600 ${
               errors.year
                 ? 'border-red-300 bg-red-50/10 text-red-900 focus:border-red-500 dark:border-red-800/50 dark:bg-red-950/10 dark:text-red-200'
                 : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300 focus:border-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300'
@@ -67,7 +67,9 @@ export default function ProjectMetadataFields({
             min="2000"
             max={new Date().getFullYear() + 1}
           />
-          {errors.year && <p className="mt-1 text-[10px] font-medium text-red-500">{errors.year}</p>}
+          {errors.year && (
+            <p className="mt-1 text-[10px] font-medium text-red-500">{errors.year}</p>
+          )}
         </div>
       </div>
 
@@ -80,7 +82,7 @@ export default function ProjectMetadataFields({
             type="text"
             value={formData.role || ''}
             onChange={(e) => updateField('role', e.target.value)}
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 transition-all focus:outline-none focus:ring-0 focus:border-slate-800 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-slate-300 dark:hover:border-slate-700"
+            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 transition-all hover:border-slate-300 focus:border-slate-800 focus:outline-none focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:hover:border-slate-700 dark:focus:border-slate-300"
             placeholder="e.g. Lead Designer"
           />
         </div>
@@ -93,7 +95,7 @@ export default function ProjectMetadataFields({
             type="text"
             value={formData.timeline || ''}
             onChange={(e) => updateField('timeline', e.target.value)}
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 transition-all focus:outline-none focus:ring-0 focus:border-slate-800 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-slate-300 dark:hover:border-slate-700"
+            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 transition-all hover:border-slate-300 focus:border-slate-800 focus:outline-none focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:hover:border-slate-700 dark:focus:border-slate-300"
             placeholder="e.g. 2 Weeks"
           />
         </div>
@@ -106,7 +108,7 @@ export default function ProjectMetadataFields({
             type="text"
             value={formData.team || ''}
             onChange={(e) => updateField('team', e.target.value)}
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 transition-all focus:outline-none focus:ring-0 focus:border-slate-800 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-slate-300 dark:hover:border-slate-700"
+            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 transition-all hover:border-slate-300 focus:border-slate-800 focus:outline-none focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:hover:border-slate-700 dark:focus:border-slate-300"
             placeholder="e.g. Solo"
           />
         </div>

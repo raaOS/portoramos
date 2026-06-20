@@ -67,7 +67,7 @@ export default function ProjectStepActions({
               </div>
               <div className="h-0.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
-                  className="h-full rounded-full bg-slate-800 dark:bg-slate-300 transition-all duration-200"
+                  className="h-full rounded-full bg-slate-800 transition-all duration-200 dark:bg-slate-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -90,7 +90,7 @@ export default function ProjectStepActions({
               initial={{ scale: 0.8, opacity: 0.5 }}
               animate={{ scale: 2.2, opacity: 0 }}
               transition={{ duration: 0.6, ease: 'easeOut' }}
-              className="absolute inset-0 rounded bg-emerald-400 pointer-events-none"
+              className="pointer-events-none absolute inset-0 rounded bg-emerald-400"
             />
           )}
 

@@ -263,6 +263,23 @@ describe('PUT /api/projects/[id]', () => {
     expect(setMock).toHaveBeenCalled();
   });
 
+  it('persists submitted generated comments to the updated project slug', async () => {
+    const submittedComments = [
+      { id: 'generated-1', text: 'Keren banget!', name: 'AI', likes: 2, replies: [] },
+    ];
+    updateProjectMock.mockResolvedValue({ ...mockProject, slug: 'test-project' });
+
+    const response = await PUT(
+      buildPut({ id: 'proj-1', title: 'Test', comments: submittedComments }) as never,
+      params('proj-1')
+    );
+
+    expect(response.status).toBe(200);
+    expect(refMock).toHaveBeenCalledWith('comments/test-project');
+    expect(setMock).toHaveBeenCalledWith(submittedComments);
+    expect(generateGenZCommentsMock).not.toHaveBeenCalled();
+  });
+
   it('moves comments when project slug changes', async () => {
     const previousComments = [{ id: 'old-1', text: 'Old', name: 'User', likes: 0, replies: [] }];
     const generatedComments = [

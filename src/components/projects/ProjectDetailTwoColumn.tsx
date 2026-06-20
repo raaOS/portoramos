@@ -161,14 +161,17 @@ export default function ProjectDetailTwoColumn({
         >
           <div
             className="relative w-full transition-[padding] duration-300 ease-out"
-            style={{ padding: (isLeftColumnHovered || !isWindowMode) ? '0 24px' : '0' }}
+            style={{ padding: isLeftColumnHovered || !isWindowMode ? '0 24px' : '0' }}
           >
             <ProjectCover project={project} cover={cover} ratio={ratio} isWindowMode={true} />
 
             <motion.div
               className="absolute inset-y-0 right-1 z-20 flex items-center"
               initial={{ x: 50, opacity: 0 }}
-              animate={{ x: (isLeftColumnHovered || !isWindowMode) ? 0 : 50, opacity: (isLeftColumnHovered || !isWindowMode) ? 1 : 0 }}
+              animate={{
+                x: isLeftColumnHovered || !isWindowMode ? 0 : 50,
+                opacity: isLeftColumnHovered || !isWindowMode ? 1 : 0,
+              }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             >
               <ProjectInteractionBar
@@ -417,7 +420,7 @@ export default function ProjectDetailTwoColumn({
                 {/* Cover + Icons wrapper — icons positioned relative to the media */}
                 <div
                   className="relative w-full transition-[padding] duration-300 ease-out"
-                  style={{ padding: (isLeftColumnHovered || !isWindowMode) ? '0 24px' : '0' }}
+                  style={{ padding: isLeftColumnHovered || !isWindowMode ? '0 24px' : '0' }}
                 >
                   <ProjectCover project={project} cover={cover} ratio={ratio} isWindowMode={true} />
 
@@ -425,7 +428,10 @@ export default function ProjectDetailTwoColumn({
                   <motion.div
                     className="absolute inset-y-0 right-1 z-20 flex items-center"
                     initial={{ x: 50, opacity: 0 }}
-                    animate={{ x: (isLeftColumnHovered || !isWindowMode) ? 0 : 50, opacity: (isLeftColumnHovered || !isWindowMode) ? 1 : 0 }}
+                    animate={{
+                      x: isLeftColumnHovered || !isWindowMode ? 0 : 50,
+                      opacity: isLeftColumnHovered || !isWindowMode ? 1 : 0,
+                    }}
                     transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                   >
                     <ProjectInteractionBar
@@ -507,10 +513,14 @@ export default function ProjectDetailTwoColumn({
               </div>
 
               {/* Details Section (Uses tabbed layout inside the card box, adapting to height without nested scrollbar) */}
-              <div className="flex w-full flex-col lg:w-[55%] bg-white dark:bg-black">
+              <div className="flex w-full flex-col bg-white dark:bg-black lg:w-[55%]">
                 {/* Header (Title, etc.) */}
                 <div className="border-b border-black/5 p-5 dark:border-white/5 sm:p-6">
-                  <ProjectHeader project={project} translations={translations} isWindowMode={false} />
+                  <ProjectHeader
+                    project={project}
+                    translations={translations}
+                    isWindowMode={false}
+                  />
                 </div>
 
                 {/* Tabs Navigation Bar (Mac/iOS-style segment control) */}
@@ -575,7 +585,11 @@ export default function ProjectDetailTwoColumn({
                         className="space-y-6"
                       >
                         {projectBadges}
-                        <ProjectMeta project={project} translations={translations} isWindowMode={false} />
+                        <ProjectMeta
+                          project={project}
+                          translations={translations}
+                          isWindowMode={false}
+                        />
 
                         <div className="border-t border-black/5 pt-4 dark:border-white/5">
                           <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
@@ -648,11 +662,7 @@ export default function ProjectDetailTwoColumn({
 
       {/* Infinity Scroll Target & Loading UI */}
       <div className="mt-10 pb-20">
-        <div
-          ref={observerTarget}
-          className="pointer-events-none h-20 w-full"
-          aria-hidden="true"
-        />
+        <div ref={observerTarget} className="pointer-events-none h-20 w-full" aria-hidden="true" />
 
         {isLoading && (
           <div className="text-center opacity-50">

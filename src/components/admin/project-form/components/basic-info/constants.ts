@@ -21,7 +21,14 @@ export const ALL_SOFTWARE_CATEGORIES: SoftwareCategory[] = [
   },
   {
     title: 'Desain & UI/UX',
-    items: ['figma', 'sketch', 'affinity_designer', 'affinity_photo', 'affinity_publisher', 'canva'],
+    items: [
+      'figma',
+      'sketch',
+      'affinity_designer',
+      'affinity_photo',
+      'affinity_publisher',
+      'canva',
+    ],
   },
   {
     title: 'Video & Audio Editing',

@@ -35,7 +35,10 @@ function deferred<T>() {
 describe('useProjectDetail optimistic like', () => {
   beforeEach(() => {
     localStorage.clear();
-    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn(() => 1)
+    );
   });
 
   afterEach(() => {
@@ -63,10 +66,10 @@ describe('useProjectDetail optimistic like', () => {
     expect(localStorage.getItem('like-demo-project')).toBeNull();
 
     mutation.resolve(
-      new Response(
-        JSON.stringify({ success: true, metrics: { likes: 12, shares: 3 } }),
-        { status: 200, headers: { 'content-type': 'application/json' } }
-      )
+      new Response(JSON.stringify({ success: true, metrics: { likes: 12, shares: 3 } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
     );
 
     await act(async () => {
@@ -83,7 +86,10 @@ describe('useProjectDetail optimistic like', () => {
   it('rolls back the optimistic state when the server rejects the mutation', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const mutation = deferred<Response>();
-    vi.stubGlobal('fetch', vi.fn(() => mutation.promise));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => mutation.promise)
+    );
     const { result, unmount } = renderHook(() => useProjectDetail({ project }));
 
     let request!: Promise<void>;

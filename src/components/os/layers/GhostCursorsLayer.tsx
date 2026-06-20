@@ -53,10 +53,7 @@ function GhostCursorItem({ cursor }: { cursor: GhostCursor }) {
   }, [cursor.x, cursor.y]);
 
   return (
-    <div
-      ref={elRef}
-      className="flex items-center gap-1.5 transition-none will-change-transform"
-    >
+    <div ref={elRef} className="flex items-center gap-1.5 transition-none will-change-transform">
       {/* Kursor */}
       <div
         className="h-5 w-5"

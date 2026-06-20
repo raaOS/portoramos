@@ -735,7 +735,6 @@ html[data-dock-popover-closing='true'] [data-dock-tooltip='true'] {
   box-shadow: none !important;
 }
 
-
 /* ==========================================================================
    Cover Overlay Upload Button — Compact Override
    --------------------------------------------------------------------------
@@ -745,8 +744,8 @@ html[data-dock-popover-closing='true'] [data-dock-tooltip='true'] {
    that blends with the dark glassmorphic overlay toolbar.
    ========================================================================== */
 .cover-overlay-upload button {
-  height: 1.5rem !important;       /* h-6 */
-  width: 1.5rem !important;        /* w-6 */
+  height: 1.5rem !important; /* h-6 */
+  width: 1.5rem !important; /* w-6 */
   min-height: unset !important;
   min-width: unset !important;
   border: 0 !important;
@@ -758,6 +757,6 @@ html[data-dock-popover-closing='true'] [data-dock-tooltip='true'] {
   color: rgb(255 255 255 / 1) !important;
 }
 .cover-overlay-upload button svg {
-  height: 0.75rem !important;      /* h-3 */
-  width: 0.75rem !important;       /* w-3 */
+  height: 0.75rem !important; /* h-3 */
+  width: 0.75rem !important; /* w-3 */
 }

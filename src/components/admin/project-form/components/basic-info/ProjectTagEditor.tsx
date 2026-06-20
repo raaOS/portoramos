@@ -71,9 +71,9 @@ export default function ProjectTagEditor({ formData, updateField }: ProjectTagEd
         </h4>
       </div>
       <div>
-        <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-wrap items-center gap-2">
           {currentTagsList.length === 0 && !isAddingNewTag ? (
-            <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400 mr-1">
+            <span className="mr-1 font-mono text-[9px] uppercase tracking-wider text-slate-400">
               Belum ada tag
             </span>
           ) : (
@@ -107,7 +107,7 @@ export default function ProjectTagEditor({ formData, updateField }: ProjectTagEd
                   <button
                     type="button"
                     onClick={() => handleToggleTag(tag)}
-                    className="flex h-4 w-4 items-center justify-center text-slate-400 transition-colors hover:text-red-500 cursor-pointer"
+                    className="flex h-4 w-4 cursor-pointer items-center justify-center text-slate-400 transition-colors hover:text-red-500"
                     style={{ minWidth: 'unset', minHeight: 'unset' }}
                     title={`Hapus tag ${tag}`}
                   >
@@ -129,7 +129,7 @@ export default function ProjectTagEditor({ formData, updateField }: ProjectTagEd
                   width: { type: 'spring', stiffness: 260, damping: 28 },
                   opacity: { duration: 0.18 },
                 }}
-                className="overflow-hidden flex-shrink-0 flex items-center p-1"
+                className="flex flex-shrink-0 items-center overflow-hidden p-1"
               >
                 <input
                   type="text"
@@ -177,17 +177,18 @@ export default function ProjectTagEditor({ formData, updateField }: ProjectTagEd
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.85, x: -4 }}
                 transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                className="flex items-center justify-center h-[22px] w-[22px] rounded-lg border border-dashed border-slate-300 hover:border-slate-400 bg-slate-50/10 hover:bg-slate-50/40 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer group"
+                className="group flex h-[22px] w-[22px] cursor-pointer items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50/10 text-slate-500 transition-colors hover:border-slate-400 hover:bg-slate-50/40 hover:text-slate-700"
                 style={{ minWidth: 'unset', minHeight: 'unset' }}
                 title="Tambah Tag"
               >
-                <Plus className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                <Plus className="h-3.5 w-3.5 text-slate-400 transition-colors group-hover:text-slate-600" />
               </motion.button>
             )}
           </AnimatePresence>
         </div>
         <p className="mt-2.5 font-mono text-[8px] text-slate-400">
-          Pilih tag kategori yang akan ditampilkan di halaman detail proyek. Klik (+) untuk menambah atau mengetik tag baru secara langsung.
+          Pilih tag kategori yang akan ditampilkan di halaman detail proyek. Klik (+) untuk menambah
+          atau mengetik tag baru secara langsung.
         </p>
       </div>
     </div>

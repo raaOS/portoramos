@@ -119,7 +119,7 @@ export function ProjectNarrative({
             className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-px bg-black/10 dark:bg-white/10"
           />
           <div
-            className="relative z-10 flex h-11 min-w-0 items-end mr-auto"
+            className="relative z-10 mr-auto flex h-11 min-w-0 items-end"
             style={{ width: `min(100%, ${tabs.length * 180}px)` }}
           >
             {/* Animated Curved Backdrop */}
@@ -132,7 +132,12 @@ export function ProjectNarrative({
                 width: `${100 / tabs.length}%`,
               }}
             >
-              <svg className="h-full w-full" viewBox="0 0 180 44" preserveAspectRatio="none" overflow="visible">
+              <svg
+                className="h-full w-full"
+                viewBox="0 0 180 44"
+                preserveAspectRatio="none"
+                overflow="visible"
+              >
                 <path
                   className="fill-white dark:fill-gray-950"
                   d="M0 47H180V43C166 43 160 39 160 27V18C160 8 152 3 140 3H40C28 3 20 8 20 18V27C20 39 14 43 0 43V47Z"
@@ -169,7 +174,7 @@ export function ProjectNarrative({
                   }`}
                   aria-pressed={isActive}
                 >
-                  <span className="relative z-10 text-center truncate">{tab.label}</span>
+                  <span className="relative z-10 truncate text-center">{tab.label}</span>
                 </button>
               );
             })}

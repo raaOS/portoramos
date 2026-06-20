@@ -1,19 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const {
-  validateAdminRequestMock,
-  generateViralMetricsMock,
-  generateGenZCommentsMock,
-  projectServiceUpdateMock,
-  dbRefSetMock,
-} = vi.hoisted(() => ({
-  validateAdminRequestMock: vi.fn(),
-  generateViralMetricsMock: vi.fn(),
-  generateGenZCommentsMock: vi.fn(),
-  projectServiceUpdateMock: vi.fn(),
-  dbRefSetMock: vi.fn(),
-}));
+const { validateAdminRequestMock, generateViralMetricsMock, generateGenZCommentsMock } = vi.hoisted(
+  () => ({
+    validateAdminRequestMock: vi.fn(),
+    generateViralMetricsMock: vi.fn(),
+    generateGenZCommentsMock: vi.fn(),
+  })
+);
 
 vi.mock('@/lib/auth', () => ({
   validateAdminRequest: validateAdminRequestMock,
@@ -22,18 +16,6 @@ vi.mock('@/lib/auth', () => ({
 vi.mock('@/lib/magic', () => ({
   generateViralMetrics: generateViralMetricsMock,
   generateGenZComments: generateGenZCommentsMock,
-}));
-
-vi.mock('@/lib/services/projectService', () => ({
-  projectService: { updateProject: projectServiceUpdateMock },
-}));
-
-const mockDbRef = {
-  set: dbRefSetMock,
-};
-
-vi.mock('@/lib/database', () => ({
-  db: { ref: vi.fn(() => mockDbRef) },
 }));
 
 import { POST } from './route';
@@ -55,81 +37,79 @@ describe('POST /api/admin/projects/magic-complete', () => {
     validateAdminRequestMock.mockResolvedValue(true);
     generateViralMetricsMock.mockReturnValue(mockMetrics);
     generateGenZCommentsMock.mockReturnValue(mockComments);
-    projectServiceUpdateMock.mockResolvedValue({ id: 'proj-1', ...mockMetrics });
-    dbRefSetMock.mockResolvedValue(undefined);
   });
 
   it('rejects unauthenticated requests', async () => {
     validateAdminRequestMock.mockResolvedValue(false);
-    const res = await POST(buildPostRequest({ projectId: 'proj-1', slug: 'my-project' }));
+    const res = await POST(buildPostRequest({ slug: 'my-project' }));
     expect(res.status).toBe(401);
   });
 
-  it('returns 400 when projectId is missing', async () => {
+  it('performs pure in-memory generation with generated metrics and mock comments', async () => {
     const res = await POST(buildPostRequest({ slug: 'my-project' }));
-    expect(res.status).toBe(400);
-    const body = await res.json();
-    expect(body.error).toContain('Missing');
-  });
-
-  it('returns 400 when slug is missing', async () => {
-    const res = await POST(buildPostRequest({ projectId: 'proj-1' }));
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 404 when project is not found', async () => {
-    projectServiceUpdateMock.mockResolvedValue(null);
-    const res = await POST(buildPostRequest({ projectId: 'proj-1', slug: 'my-project' }));
-    expect(res.status).toBe(404);
-  });
-
-  it('generates metrics, updates project, and writes comments on success', async () => {
-    const res = await POST(buildPostRequest({ projectId: 'proj-1', slug: 'my-project' }));
     expect(res.status).toBe(200);
-
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.metrics).toEqual(mockMetrics);
     expect(body.commentCount).toBe(mockComments.length);
+    expect(body.comments).toEqual(mockComments);
 
     expect(generateViralMetricsMock).toHaveBeenCalledTimes(1);
-    expect(projectServiceUpdateMock).toHaveBeenCalledWith('proj-1', {
-      id: 'proj-1',
-      ...mockMetrics,
-    });
-    expect(generateGenZCommentsMock).toHaveBeenCalledWith('my-project');
-    expect(dbRefSetMock).toHaveBeenCalledWith(mockComments);
+    expect(generateGenZCommentsMock).toHaveBeenCalledWith('my-project', 5, 'casual', true);
   });
 
-  it('rolls back metrics and comments when requested', async () => {
-    const originalMetrics = { likes: 10, shares: 1 };
-    const originalComments = [{ id: 'orig-1', text: 'Original', name: 'User' }];
+  it('uses default slug temp-slug when request slug is missing or empty', async () => {
+    const res = await POST(buildPostRequest({}));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(generateGenZCommentsMock).toHaveBeenCalledWith('temp-slug', 5, 'casual', true);
+  });
 
+  it('uses passed metrics (likes and shares) instead of generating random ones', async () => {
+    const customLikes = 150;
+    const customShares = 45;
     const res = await POST(
       buildPostRequest({
-        projectId: 'proj-1',
         slug: 'my-project',
-        rollback: true,
-        originalMetrics,
-        originalComments,
+        likes: customLikes,
+        shares: customShares,
       })
     );
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
-    expect(body.rollback).toBe(true);
+    expect(body.metrics).toEqual({ likes: customLikes, shares: customShares });
+  });
 
-    expect(projectServiceUpdateMock).toHaveBeenCalledWith('proj-1', {
-      id: 'proj-1',
-      likes: 10,
-      shares: 1,
-    });
-    expect(dbRefSetMock).toHaveBeenCalledWith(originalComments);
+  it('uses custom comment settings from request parameters', async () => {
+    const customCount = 8;
+    const customTone = 'tech';
+    const customReply = false;
+    const res = await POST(
+      buildPostRequest({
+        slug: 'my-project',
+        commentCount: customCount,
+        tone: customTone,
+        reply: customReply,
+      })
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(generateGenZCommentsMock).toHaveBeenCalledWith(
+      'my-project',
+      customCount,
+      customTone,
+      customReply
+    );
   });
 
   it('catches internal errors and returns 500 without leaking details', async () => {
-    projectServiceUpdateMock.mockRejectedValue(new Error('Database explosion'));
-    const res = await POST(buildPostRequest({ projectId: 'proj-1', slug: 'my-project' }));
+    generateViralMetricsMock.mockImplementation(() => {
+      throw new Error('Simulation failed');
+    });
+    const res = await POST(buildPostRequest({ slug: 'my-project' }));
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toBe('Failed to complete magic operation');

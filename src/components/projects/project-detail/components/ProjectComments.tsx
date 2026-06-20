@@ -20,6 +20,7 @@ interface ProjectCommentsProps {
   isVisible?: boolean;
   animated?: boolean;
   className?: string;
+  isAdmin?: boolean;
 }
 
 export function ProjectComments({
@@ -32,6 +33,7 @@ export function ProjectComments({
   isVisible = true,
   animated = false,
   className = '',
+  isAdmin = false,
 }: ProjectCommentsProps) {
   if (!allowComments) return null;
 
@@ -45,7 +47,7 @@ export function ProjectComments({
         .filter(Boolean)
         .join(' ')}
     >
-      <CommentSection slug={slug} comments={comments} setComments={setComments} />
+      <CommentSection slug={slug} comments={comments} setComments={setComments} isAdmin={isAdmin} />
     </div>
   );
 

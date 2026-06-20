@@ -77,6 +77,7 @@ export default function ShareSheet({ isOpen, onClose, url, title, onCopyLink }: 
               Share Project
             </h3>
             <button
+              type="button"
               onClick={onClose}
               aria-label="Close share sheet"
               className="inline-flex items-center justify-center rounded-full bg-gray-100 p-2 text-gray-600 transition-colors hover:bg-gray-200 dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/20"
@@ -88,6 +89,7 @@ export default function ShareSheet({ isOpen, onClose, url, title, onCopyLink }: 
           <div className="grid grid-cols-4 gap-4">
             {canNativeShare && (
               <button
+                type="button"
                 onClick={async () => {
                   try {
                     await navigator.share({ title, url });
@@ -101,9 +103,7 @@ export default function ShareSheet({ isOpen, onClose, url, title, onCopyLink }: 
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-white shadow-sm transition-colors hover:bg-blue-600">
                   <Share2 size={24} />
                 </div>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Share
-                </span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Share</span>
               </button>
             )}
 
@@ -128,6 +128,7 @@ export default function ShareSheet({ isOpen, onClose, url, title, onCopyLink }: 
             ))}
 
             <button
+              type="button"
               onClick={() => {
                 onCopyLink();
                 onClose();

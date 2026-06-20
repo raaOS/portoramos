@@ -6,7 +6,9 @@ import { projectService } from '@/lib/services/projectService';
 import { generateGenZComments } from '@/lib/magic';
 import { db } from '@/lib/database';
 import { sendTelegramAlert } from '@/lib/telegram';
-import { UpdateProjectSchema } from '@/lib/validations';
+import { commentSchema, UpdateProjectSchema } from '@/lib/validations';
+
+const submittedCommentsSchema = commentSchema.array().max(1000, 'Too many comments');
 
 async function moveCommentsWhenSlugChanges(previousSlug?: string, nextSlug?: string) {
   if (!previousSlug || !nextSlug || previousSlug === nextSlug) return;
@@ -71,6 +73,16 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
     const params = await props.params;
     const { id } = params;
     const rawBody = await request.json();
+    const submittedCommentsResult = Array.isArray(rawBody.comments)
+      ? submittedCommentsSchema.safeParse(rawBody.comments)
+      : null;
+
+    if (submittedCommentsResult && !submittedCommentsResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid comments payload', details: submittedCommentsResult.error.format() },
+        { status: 400 }
+      );
+    }
 
     // Validate with Zod schema (safeParse for user-friendly errors)
     const validationResult = UpdateProjectSchema.safeParse({ ...rawBody, id });
@@ -98,7 +110,21 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
 
     await moveCommentsWhenSlugChanges(previousSlug, updatedProject.slug);
 
-    if (rawBody.initialCommentCount && rawBody.initialCommentCount > 0) {
+    // Track apakah persistensi komentar sempat gagal, supaya bisa di-bubble ke
+    // response tanpa menggagalkan update project (yang sudah sukses di step 1).
+    // Sebelumnya: failure ditelan console.error saja → user dapat response 200
+    // tapi komentar hilang dari DB diam-diam (Schrödinbug).
+    let commentsPersistWarning: string | undefined;
+
+    if (submittedCommentsResult?.success) {
+      try {
+        await db.ref(`comments/${updatedProject.slug}`).set(submittedCommentsResult.data);
+      } catch (commentError) {
+        console.error('Failed to persist submitted comments:', commentError);
+        commentsPersistWarning =
+          'Project saved, but comments failed to persist. Please retry comments.';
+      }
+    } else if (rawBody.initialCommentCount && rawBody.initialCommentCount > 0) {
       try {
         const newComments = generateGenZComments(updatedProject.slug, rawBody.initialCommentCount);
 
@@ -115,12 +141,13 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
         console.log(`[API/Projects/[id]] Successfully appended comments to ${updatedProject.slug}`);
       } catch (commentError) {
         console.error('Failed to append comments:', commentError);
+        commentsPersistWarning = 'Project saved, but generated comments failed to persist.';
       }
     }
 
     // --- Telegram Notification ---
     const changedFields = Object.keys(rawBody)
-      .filter((k) => k !== 'initialCommentCount')
+      .filter((k) => k !== 'initialCommentCount' && k !== 'comments')
       .join(', ');
     const updateMessage = `✏️ **PROJECT UPDATED**\n\n**Title:** ${updatedProject.title}\n**ID:** ${updatedProject.id}\n**Changes:** ${changedFields || 'No specific fields'}\n**Time:** ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
     sendTelegramAlert(updateMessage).catch((err) =>
@@ -138,6 +165,7 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
     return NextResponse.json({
       success: true,
       project: updatedProject,
+      ...(commentsPersistWarning ? { commentsWarning: commentsPersistWarning } : {}),
     });
   } catch (error) {
     console.error('Error updating project:', error);

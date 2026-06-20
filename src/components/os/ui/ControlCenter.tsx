@@ -38,9 +38,12 @@ export default function ControlCenter({ isOpen, onClose: _onClose }: ControlCent
     };
   }, [brightness]);
 
-  const handleBrightnessChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setBrightness(parseInt(e.target.value, 10));
-  }, [setBrightness]);
+  const handleBrightnessChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setBrightness(parseInt(e.target.value, 10));
+    },
+    [setBrightness]
+  );
 
   return (
     <motion.div

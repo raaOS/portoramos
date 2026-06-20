@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { Comment } from '@/lib/magic';
 import dynamic from 'next/dynamic';
 import { useToast } from '@/contexts/ToastContext';
+import { Pencil, Trash2 } from 'lucide-react';
 
 const AITranslator = dynamic(() => import('@/components/features/AITranslator'), { ssr: false });
 
@@ -14,6 +15,7 @@ interface CommentSectionProps {
   setComments: (comments: Comment[]) => void;
   className?: string;
   isExpanded?: boolean;
+  isAdmin?: boolean;
 }
 
 export default function CommentSection({
@@ -21,11 +23,58 @@ export default function CommentSection({
   comments,
   setComments,
   className = '',
+  isAdmin = false,
 }: CommentSectionProps) {
   // Guest Identity State
   const [guestName, setGuestName] = useState('');
   const [tempGuestName, setTempGuestName] = useState('');
   const [isSettingName, setIsSettingName] = useState(false);
+
+  // Local Editing State (for admin inline edits)
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+
+  const handleDeleteComment = (commentId: string | undefined) => {
+    if (!commentId) return;
+    const filterComment = (list: any[]): any[] => {
+      return list
+        .filter((c) => c.id !== commentId)
+        .map((c) => ({
+          ...c,
+          replies: c.replies ? filterComment(c.replies) : [],
+        }));
+    };
+    setComments(filterComment(comments));
+    if (editingCommentId === commentId) {
+      setEditingCommentId(null);
+    }
+  };
+
+  const handleStartEdit = (commentId: string | undefined, currentText: string) => {
+    if (!commentId) return;
+    setEditingCommentId(commentId);
+    setEditingText(currentText);
+  };
+
+  const handleSaveEdit = (commentId: string | undefined) => {
+    if (!commentId) return;
+    if (!editingText.trim()) return;
+
+    const updateCommentText = (list: any[]): any[] => {
+      return list.map((c) => {
+        if (c.id === commentId) {
+          return { ...c, text: editingText.trim() };
+        }
+        return {
+          ...c,
+          replies: c.replies ? updateCommentText(c.replies) : [],
+        };
+      });
+    };
+
+    setComments(updateCommentText(comments));
+    setEditingCommentId(null);
+  };
 
   // Comment Input State
   const [commentText, setCommentText] = useState('');
@@ -133,6 +182,7 @@ export default function CommentSection({
     <div className={`space-y-4 ${className}`}>
       {/* Accordion Toggle */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="group flex w-full items-center justify-between py-2 text-gray-500 transition-colors hover:text-gray-900 dark:hover:text-white"
       >
@@ -195,9 +245,58 @@ export default function CommentSection({
                         {formatRelativeTime(comment.createdAt || comment.time || '')}
                       </span>
                     </div>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                      {comment.text}
-                    </p>
+                    {editingCommentId === comment.id ? (
+                      <div className="mt-1 space-y-2">
+                        <textarea
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          className="w-full rounded border border-indigo-200 p-2 text-sm outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                          rows={2}
+                        />
+                        <div className="flex gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleSaveEdit(comment.id)}
+                            className="bg-indigo-650 rounded px-2.5 py-1 text-xs font-semibold text-white hover:bg-indigo-700"
+                          >
+                            Simpan
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingCommentId(null)}
+                            className="dark:bg-slate-850 dark:text-slate-350 rounded bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800"
+                          >
+                            Batal
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="group/text relative flex items-start gap-2">
+                        <p className="flex-1 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                          {comment.text}
+                        </p>
+                        {isAdmin && (
+                          <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/text:opacity-100">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEdit(comment.id, comment.text)}
+                              className="hover:text-indigo-650 p-1 text-slate-400 dark:hover:text-indigo-400"
+                              title="Edit Ulasan"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="hover:text-red-650 p-1 text-slate-400 dark:hover:text-red-400"
+                              title="Hapus Ulasan"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <AITranslator text={comment.text} compact={true} />
                   </div>
                 </div>
@@ -218,7 +317,58 @@ export default function CommentSection({
                               {formatRelativeTime(reply.createdAt || reply.time || '')}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-700 dark:text-gray-400">{reply.text}</p>
+                          {editingCommentId === reply.id ? (
+                            <div className="mt-1 space-y-2">
+                              <textarea
+                                value={editingText}
+                                onChange={(e) => setEditingText(e.target.value)}
+                                className="w-full rounded border border-indigo-200 p-2 text-xs outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                                rows={2}
+                              />
+                              <div className="flex gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveEdit(reply.id)}
+                                  className="bg-indigo-650 rounded px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-indigo-700"
+                                >
+                                  Simpan
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingCommentId(null)}
+                                  className="dark:bg-slate-850 dark:text-slate-350 rounded bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800"
+                                >
+                                  Batal
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="group/text relative flex items-start gap-2">
+                              <p className="flex-1 text-xs text-gray-700 dark:text-gray-400">
+                                {reply.text}
+                              </p>
+                              {isAdmin && (
+                                <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/text:opacity-100">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStartEdit(reply.id, reply.text)}
+                                    className="hover:text-indigo-650 p-1 text-slate-400 dark:hover:text-indigo-400"
+                                    title="Edit Balasan"
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteComment(reply.id)}
+                                    className="hover:text-red-650 p-1 text-slate-400 dark:hover:text-red-400"
+                                    title="Hapus Balasan"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                           <AITranslator text={reply.text} compact={true} />
                         </div>
                       </div>
@@ -243,11 +393,17 @@ export default function CommentSection({
                 type="text"
                 value={tempGuestName}
                 onChange={(e) => setTempGuestName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSaveName();
+                  }
+                }}
                 placeholder="Ketik namamu..."
                 className="flex-1 border-b border-none border-black/10 bg-transparent px-0 py-2.5 text-sm outline-none transition-all focus:border-red-500 focus:outline-none focus:ring-0 dark:border-white/10 dark:text-white"
               />
               <button
+                type="button"
                 onClick={handleSaveName}
                 disabled={!tempGuestName.trim()}
                 className="rounded-full border-none bg-[#E60023] px-6 py-2.5 text-sm font-bold text-white shadow-sm outline-none transition-colors hover:bg-[#ad001b] disabled:opacity-50"
@@ -263,6 +419,7 @@ export default function CommentSection({
                 Komentar sebagai <span className="text-red-500">{guestName}</span>
               </p>
               <button
+                type="button"
                 onClick={() => {
                   setTempGuestName(guestName);
                   setIsSettingName(true);
@@ -277,11 +434,17 @@ export default function CommentSection({
                 type="text"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handlePostComment();
+                  }
+                }}
                 placeholder="Tulis komentar..."
                 className="w-full border-b border-none border-black/10 bg-transparent px-0 py-3 pr-12 text-sm outline-none transition-all focus:border-red-500 focus:outline-none focus:ring-0 dark:border-white/10 dark:text-white"
               />
               <button
+                type="button"
                 onClick={handlePostComment}
                 disabled={!commentText.trim() || isSubmitting}
                 className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-red-500 transition-colors hover:text-red-600 disabled:opacity-30"

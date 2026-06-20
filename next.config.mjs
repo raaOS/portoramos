@@ -216,7 +216,6 @@ const nextConfig = {
   },
 };
 
-
 import createBundleAnalyzer from '@next/bundle-analyzer';
 
 const withBundleAnalyzer = createBundleAnalyzer({

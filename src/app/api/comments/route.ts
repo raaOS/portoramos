@@ -20,16 +20,14 @@ interface Comment {
   replies?: Comment[];
 }
 
-const newCommentSchema = z
-  .object({
-    id: z.string().min(1).max(100),
-    text: z.string().min(1).max(1000),
-    name: z.string().min(1).max(100),
-    time: z.string().optional(),
-    createdAt: z.string().optional(),
-    likes: z.number().int().min(0).optional(),
-  })
-  .strict();
+const newCommentSchema = z.object({
+  id: z.string().min(1).max(100),
+  text: z.string().min(1).max(1000),
+  name: z.string().min(1).max(100),
+  time: z.string().optional(),
+  createdAt: z.string().optional(),
+  likes: z.number().int().min(0).optional(),
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -111,8 +109,7 @@ export async function POST(request: NextRequest) {
       const COOLDOWN_MS = 5000;
       for (const existing of existingComments.slice(0, 10)) {
         const isSameAuthor =
-          existing.name === commentToSave.name ||
-          existing.author === commentToSave.name;
+          existing.name === commentToSave.name || existing.author === commentToSave.name;
 
         if (isSameAuthor) {
           const lastTimeStr = existing.createdAt || existing.time;

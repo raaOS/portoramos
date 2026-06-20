@@ -438,15 +438,19 @@ export default function AdminFileUpload({
       )}
 
       {/* Upload Area */}
-      <div className={variant === 'button' ? `w-auto flex-shrink-0 ${className}` : `w-full ${className}`}>
+      <div
+        className={
+          variant === 'button' ? `w-auto flex-shrink-0 ${className}` : `w-full ${className}`
+        }
+      >
         {status ? (
           <UploadProgress status={status} progress={progress} />
         ) : variant === 'compact' ? (
           <div
-            className={`relative flex items-center justify-center gap-2 cursor-pointer rounded-md border border-dashed p-3 text-center transition-colors ${
+            className={`relative flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed p-3 text-center transition-colors ${
               isDragOver
                 ? 'border-blue-400 bg-blue-50'
-                : 'border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700'
+                : 'hover:border-slate-350 border-slate-200 dark:border-slate-800 dark:hover:border-slate-700'
             } ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-slate-50 dark:hover:bg-slate-900/50'} `}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -480,7 +484,7 @@ export default function AdminFileUpload({
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
               </svg>
-              <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider">
                 {isDragOver ? 'Drop file' : 'Upload File'}
               </span>
             </div>
@@ -488,7 +492,7 @@ export default function AdminFileUpload({
         ) : variant === 'button' ? (
           <button
             type="button"
-            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-550 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-850 hover:border-slate-350 dark:hover:border-slate-700 transition-all ${
+            className={`text-slate-550 dark:hover:bg-slate-850 hover:border-slate-350 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white transition-all hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-slate-700 ${
               disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
             }`}
             onClick={handleClick}
@@ -547,10 +551,7 @@ function formatBytes(bytes: number) {
 function UploadModalPortal({ children }: { children: ReactNode }) {
   if (typeof document === 'undefined') return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[100000]">{children}</div>,
-    document.body
-  );
+  return createPortal(<div className="fixed inset-0 z-[100000]">{children}</div>, document.body);
 }
 
 // Wrappers for Lazy Loading

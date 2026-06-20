@@ -339,27 +339,30 @@ export function useWindowActions({
     );
   }, [setWindows]);
 
-  return useMemo(() => ({
-    openWindow,
-    closeWindow,
-    minimizeWindow,
-    maximizeWindow,
-    focusWindow,
-    updateWindowPosition,
-    handleWindowResize,
-    handleWindowResizeEnd,
-    togglePin,
-    resetWindows,
-  }), [
-    openWindow,
-    closeWindow,
-    minimizeWindow,
-    maximizeWindow,
-    focusWindow,
-    updateWindowPosition,
-    handleWindowResize,
-    handleWindowResizeEnd,
-    togglePin,
-    resetWindows,
-  ]);
+  return useMemo(
+    () => ({
+      openWindow,
+      closeWindow,
+      minimizeWindow,
+      maximizeWindow,
+      focusWindow,
+      updateWindowPosition,
+      handleWindowResize,
+      handleWindowResizeEnd,
+      togglePin,
+      resetWindows,
+    }),
+    [
+      openWindow,
+      closeWindow,
+      minimizeWindow,
+      maximizeWindow,
+      focusWindow,
+      updateWindowPosition,
+      handleWindowResize,
+      handleWindowResizeEnd,
+      togglePin,
+      resetWindows,
+    ]
+  );
 }

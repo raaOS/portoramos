@@ -50,8 +50,8 @@ export default function ProjectSoftwarePickerModal({
       if (filteredItems.length === 0) {
         return (
           <div className="flex flex-col items-center justify-center py-10 text-center">
-            <Cpu className="h-8 w-8 text-slate-400 stroke-[1.2] mb-2" />
-            <p className="text-xs text-slate-400 font-mono">
+            <Cpu className="mb-2 h-8 w-8 stroke-[1.2] text-slate-400" />
+            <p className="font-mono text-xs text-slate-400">
               Tidak ada software ditemukan untuk "{searchQuery}"
             </p>
           </div>
@@ -60,7 +60,7 @@ export default function ProjectSoftwarePickerModal({
 
       return (
         <div className="space-y-3">
-          <h4 className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+          <h4 className="mb-2 font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400">
             Hasil Pencarian untuk "{searchQuery}"
           </h4>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -82,7 +82,7 @@ export default function ProjectSoftwarePickerModal({
     if (!category) return null;
 
     return (
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 pt-1">
+      <div className="grid grid-cols-2 gap-2 pt-1 sm:grid-cols-3">
         {category.items.map((tool) => (
           <SoftwareToolCard
             key={tool}
@@ -97,19 +97,21 @@ export default function ProjectSoftwarePickerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-xl bg-white p-5 shadow-2xl border border-slate-100 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+    <div className="backdrop-blur-xs animate-in fade-in fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 duration-200">
+      <div className="animate-in zoom-in-95 relative flex max-h-[85vh] w-full max-w-lg flex-col rounded-xl border border-slate-100 bg-white p-5 shadow-2xl duration-150">
+        <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-800">
               Tambah Software & Tools
             </h3>
-            <p className="text-[9px] text-slate-400 mt-0.5">Pilih dari pustaka ikon software visual</p>
+            <p className="mt-0.5 text-[9px] text-slate-400">
+              Pilih dari pustaka ikon software visual
+            </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
           >
             <X className="h-4 w-4" />
           </button>
@@ -122,12 +124,12 @@ export default function ProjectSoftwarePickerModal({
             placeholder="Cari software (contoh: Indesign, Final Cut)..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-9 pr-3 text-xs outline-none focus:border-slate-800 focus:ring-0 transition-colors placeholder-slate-400"
+            className="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-9 pr-3 text-xs placeholder-slate-400 outline-none transition-colors focus:border-slate-800 focus:ring-0"
           />
         </div>
 
         {!searchQuery && (
-          <div className="flex gap-1.5 overflow-x-auto pb-2 mb-4 border-b border-slate-100 scrollbar-none flex-nowrap -mx-1 px-1">
+          <div className="scrollbar-none -mx-1 mb-4 flex flex-nowrap gap-1.5 overflow-x-auto border-b border-slate-100 px-1 pb-2">
             {ALL_SOFTWARE_CATEGORIES.map((category) => {
               const isActive = activeCategory === category.title;
               return (
@@ -135,10 +137,10 @@ export default function ProjectSoftwarePickerModal({
                   key={category.title}
                   type="button"
                   onClick={() => onActiveCategoryChange(category.title)}
-                  className={`px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-wider rounded-md border transition-all flex-shrink-0 cursor-pointer ${
+                  className={`flex-shrink-0 cursor-pointer rounded-md border px-3 py-1.5 font-mono text-[9px] font-bold uppercase tracking-wider transition-all ${
                     isActive
-                      ? 'bg-slate-900 border-slate-900 text-white shadow-xs'
-                      : 'bg-slate-50/50 border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                      ? 'shadow-xs border-slate-900 bg-slate-900 text-white'
+                      : 'border-slate-200 bg-slate-50/50 text-slate-500 hover:bg-slate-100 hover:text-slate-800'
                   }`}
                 >
                   {category.title}
@@ -150,11 +152,11 @@ export default function ProjectSoftwarePickerModal({
 
         <div className="flex-1 overflow-y-auto pr-1">{renderSoftwareGrid()}</div>
 
-        <div className="border-t border-slate-100 pt-3 mt-4 flex justify-end">
+        <div className="mt-4 flex justify-end border-t border-slate-100 pt-3">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5 text-xs font-bold transition-all uppercase tracking-wider"
+            className="rounded-md bg-slate-900 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-slate-800"
           >
             Selesai
           </button>

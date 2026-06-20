@@ -125,11 +125,15 @@ export function fetchAdminAboutPhilosophy() {
 }
 
 export function fetchAdminCommentCounts() {
-  return fetchJson<{ comments?: Record<string, unknown[]> }>('/api/comments').then((data) => {
+  return fetchJson<{
+    comments?: Record<string, unknown[]>;
+    data?: { comments?: Record<string, unknown[]> };
+  }>('/api/comments').then((data) => {
     const counts: Record<string, number> = {};
+    const commentsBySlug = data.data?.comments ?? data.comments;
 
-    if (data.comments) {
-      Object.entries(data.comments).forEach(([slug, commentsList]) => {
+    if (commentsBySlug) {
+      Object.entries(commentsBySlug).forEach(([slug, commentsList]) => {
         const commentsArr = Array.isArray(commentsList) ? commentsList : [];
         counts[slug] = commentsArr.reduce<number>(
           (acc, comment) => acc + 1 + ((comment as { replies?: unknown[] }).replies?.length || 0),

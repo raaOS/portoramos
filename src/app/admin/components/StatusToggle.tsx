@@ -30,11 +30,19 @@ export default function StatusToggle({
     <button
       type="button"
       onClick={onClick}
-      title={title !== undefined ? title : (isActive ? labelActive || 'Active' : labelInactive || 'Inactive')}
+      title={
+        title !== undefined
+          ? title
+          : isActive
+            ? labelActive || 'Active'
+            : labelInactive || 'Inactive'
+      }
       className={
         isClean
           ? `inline-flex items-center justify-center transition-colors ${
-              isActive ? 'text-emerald-600 hover:text-emerald-500' : 'text-gray-400 hover:text-gray-500'
+              isActive
+                ? 'text-emerald-600 hover:text-emerald-500'
+                : 'text-gray-400 hover:text-gray-500'
             } ${className}`
           : `inline-flex items-center justify-center rounded-lg border p-2 transition-colors ${
               isActive

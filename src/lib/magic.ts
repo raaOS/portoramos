@@ -208,11 +208,15 @@ export function generateGenZComments(
   if (tone) {
     const cleanTone = tone.toLowerCase();
     if (cleanTone === 'tech') {
-      vibes = COMMENT_VIBES.filter((v) => v.type === 'curious_tech' || v.type === 'praise_detailed');
+      vibes = COMMENT_VIBES.filter(
+        (v) => v.type === 'curious_tech' || v.type === 'praise_detailed'
+      );
     } else if (cleanTone === 'casual' || cleanTone === 'gen-z') {
       vibes = COMMENT_VIBES.filter((v) => v.type === 'joke_casual' || v.type === 'praise_short');
     } else if (cleanTone === 'aesthetic') {
-      vibes = COMMENT_VIBES.filter((v) => v.type === 'praise_detailed' || v.type === 'praise_short');
+      vibes = COMMENT_VIBES.filter(
+        (v) => v.type === 'praise_detailed' || v.type === 'praise_short'
+      );
     }
   }
 

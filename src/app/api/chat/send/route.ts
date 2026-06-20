@@ -25,10 +25,7 @@ function escapeTelegramMarkdown(text: string): string {
  * Escape HTML special characters to prevent injection in Telegram HTML parse mode.
  */
 function escapeTelegramHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 interface TelegramPayload {

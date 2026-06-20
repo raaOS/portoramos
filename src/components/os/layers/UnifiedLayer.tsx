@@ -86,12 +86,7 @@ export default function UnifiedLayer({
   onMissionControlDismiss,
 }: UnifiedLayerProps) {
   const { bringToFront, getZIndex, registerElement, unregisterElement } = useUnifiedZIndex();
-  const {
-    notesVisible,
-    hiddenNoteIds,
-    hideNote,
-    showMissionControl,
-  } = useOSOverlays();
+  const { notesVisible, hiddenNoteIds, hideNote, showMissionControl } = useOSOverlays();
   const { isRevealed: isRevealedFromContext } = useOSBoot();
   const isRevealed = isRevealedProp !== undefined ? isRevealedProp : isRevealedFromContext;
   const canRenderWindows = windowsReady ?? isRevealed;

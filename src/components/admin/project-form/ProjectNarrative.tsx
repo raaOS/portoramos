@@ -72,7 +72,7 @@ export default function ProjectNarrative({ formData, updateField, errors }: Proj
 
   return (
     <div className="space-y-4 font-sans">
-      <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-100 pb-2 dark:border-slate-800/80">
         <AlignLeft className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
         <h4 className="font-mono text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
           {isCommercial ? 'Narasi Komersial' : 'Konsep Artistik'}
@@ -141,12 +141,12 @@ export default function ProjectNarrative({ formData, updateField, errors }: Proj
 
         {/* Tab Panel Content Area */}
         <div
-          className={`rounded-b-md border-x border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-5 min-h-[180px] ${tabStyles[activeTab].tint} relative z-0 w-full bg-white dark:bg-slate-950 shadow-[0_2px_8px_rgba(0,0,0,0.01)]`}
+          className={`min-h-[180px] rounded-b-md border-x border-b border-slate-200/80 px-4 py-5 dark:border-slate-800/80 ${tabStyles[activeTab].tint} relative z-0 w-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.01)] dark:bg-slate-950`}
         >
           <div className="relative z-10">
             {activeTab === 'challenge' && (
               <div className="space-y-1.5">
-                <label className="block text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <label className="block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   {isCommercial ? 'Konteks / Tantangan' : 'Konsep / Filosofi'}
                 </label>
                 <textarea
@@ -156,24 +156,26 @@ export default function ProjectNarrative({ formData, updateField, errors }: Proj
                       ? handleNarrativeChange('challenge', e.target.value)
                       : handleNarrativeChange('concept', e.target.value)
                   }
-                  className="w-full min-h-[110px] rounded-md border border-slate-200/80 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 transition-all focus:outline-none focus:ring-0 focus:border-slate-800 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-slate-300 dark:hover:border-slate-700 leading-relaxed resize-y"
+                  className="min-h-[110px] w-full resize-y rounded-md border border-slate-200/80 bg-white px-3 py-2 text-xs leading-relaxed text-slate-800 placeholder-slate-400 transition-all hover:border-slate-300 focus:border-slate-800 focus:outline-none focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:hover:border-slate-700 dark:focus:border-slate-300"
                   placeholder={tabStyles.challenge.placeholder}
                 />
-                {isCommercial ? (
-                  errors?.['narrative.challenge'] && (
-                    <p className="mt-1 text-[10px] font-medium text-red-500">{errors['narrative.challenge']}</p>
-                  )
-                ) : (
-                  errors?.['narrative.concept'] && (
-                    <p className="mt-1 text-[10px] font-medium text-red-500">{errors['narrative.concept']}</p>
-                  )
-                )}
+                {isCommercial
+                  ? errors?.['narrative.challenge'] && (
+                      <p className="mt-1 text-[10px] font-medium text-red-500">
+                        {errors['narrative.challenge']}
+                      </p>
+                    )
+                  : errors?.['narrative.concept'] && (
+                      <p className="mt-1 text-[10px] font-medium text-red-500">
+                        {errors['narrative.concept']}
+                      </p>
+                    )}
               </div>
             )}
 
             {activeTab === 'solution' && (
               <div className="space-y-1.5">
-                <label className="block text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <label className="block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   {isCommercial ? 'Solusi / Strategi' : 'Proses / Teknik'}
                 </label>
                 <textarea
@@ -183,24 +185,26 @@ export default function ProjectNarrative({ formData, updateField, errors }: Proj
                       ? handleNarrativeChange('solution', e.target.value)
                       : handleNarrativeChange('process', e.target.value)
                   }
-                  className="w-full min-h-[110px] rounded-md border border-slate-200/80 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 transition-all focus:outline-none focus:ring-0 focus:border-slate-800 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-slate-300 dark:hover:border-slate-700 leading-relaxed resize-y"
+                  className="min-h-[110px] w-full resize-y rounded-md border border-slate-200/80 bg-white px-3 py-2 text-xs leading-relaxed text-slate-800 placeholder-slate-400 transition-all hover:border-slate-300 focus:border-slate-800 focus:outline-none focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:hover:border-slate-700 dark:focus:border-slate-300"
                   placeholder={tabStyles.solution.placeholder}
                 />
-                {isCommercial ? (
-                  errors?.['narrative.solution'] && (
-                    <p className="mt-1 text-[10px] font-medium text-red-500">{errors['narrative.solution']}</p>
-                  )
-                ) : (
-                  errors?.['narrative.process'] && (
-                    <p className="mt-1 text-[10px] font-medium text-red-500">{errors['narrative.process']}</p>
-                  )
-                )}
+                {isCommercial
+                  ? errors?.['narrative.solution'] && (
+                      <p className="mt-1 text-[10px] font-medium text-red-500">
+                        {errors['narrative.solution']}
+                      </p>
+                    )
+                  : errors?.['narrative.process'] && (
+                      <p className="mt-1 text-[10px] font-medium text-red-500">
+                        {errors['narrative.process']}
+                      </p>
+                    )}
               </div>
             )}
 
             {activeTab === 'impact' && (
               <div className="space-y-1.5">
-                <label className="block text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <label className="block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   {isCommercial ? 'Dampak / Hasil' : 'Detail / Resepsi'}
                 </label>
                 <textarea
@@ -210,18 +214,20 @@ export default function ProjectNarrative({ formData, updateField, errors }: Proj
                       ? handleNarrativeChange('impact', e.target.value)
                       : handleNarrativeChange('detail', e.target.value)
                   }
-                  className="w-full min-h-[110px] rounded-md border border-slate-200/80 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 transition-all focus:outline-none focus:ring-0 focus:border-slate-800 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-slate-300 dark:hover:border-slate-700 leading-relaxed resize-y"
+                  className="min-h-[110px] w-full resize-y rounded-md border border-slate-200/80 bg-white px-3 py-2 text-xs leading-relaxed text-slate-800 placeholder-slate-400 transition-all hover:border-slate-300 focus:border-slate-800 focus:outline-none focus:ring-0 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:hover:border-slate-700 dark:focus:border-slate-300"
                   placeholder={tabStyles.impact.placeholder}
                 />
-                {isCommercial ? (
-                  errors?.['narrative.impact'] && (
-                    <p className="mt-1 text-[10px] font-medium text-red-500">{errors['narrative.impact']}</p>
-                  )
-                ) : (
-                  errors?.['narrative.detail'] && (
-                    <p className="mt-1 text-[10px] font-medium text-red-500">{errors['narrative.detail']}</p>
-                  )
-                )}
+                {isCommercial
+                  ? errors?.['narrative.impact'] && (
+                      <p className="mt-1 text-[10px] font-medium text-red-500">
+                        {errors['narrative.impact']}
+                      </p>
+                    )
+                  : errors?.['narrative.detail'] && (
+                      <p className="mt-1 text-[10px] font-medium text-red-500">
+                        {errors['narrative.detail']}
+                      </p>
+                    )}
               </div>
             )}
           </div>

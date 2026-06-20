@@ -236,7 +236,9 @@ class D1Reference implements DatabaseReferenceLike {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       // Read the full top-level D1 row to get a consistent snapshot for CAS.
       const rawRows = await import('@/lib/cloudflareD1').then((m) =>
-        m.queryD1<{ value: string }>(`SELECT value FROM app_kv WHERE key = ? LIMIT 1`, [topLevelKey])
+        m.queryD1<{ value: string }>(`SELECT value FROM app_kv WHERE key = ? LIMIT 1`, [
+          topLevelKey,
+        ])
       );
       const rawJson = rawRows[0]?.value ?? null;
       const topValue = rawJson !== null ? JSON.parse(rawJson) : null;

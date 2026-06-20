@@ -135,7 +135,14 @@ export function useAdminProjects() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(`${errorData.error || response.statusText} (${response.status})`);
       }
-      return response.json();
+      const responseData = await response.json();
+      // Surface warning kalau komentar gagal persist (tidak menggagalkan mutation).
+      if (responseData?.commentsWarning) {
+        console.warn(responseData.commentsWarning);
+        // Tidak throw: project sudah tersimpan, kita tidak mau re-run mutation.
+        // User dapat warning lewat query invalidation (UI akan refetch comments).
+      }
+      return responseData;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' });

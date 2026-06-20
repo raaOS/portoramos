@@ -19,7 +19,7 @@ export default function GalleryItem({ item, onRemove, onToggleActive }: GalleryI
   return (
     <div
       className={`group relative overflow-hidden rounded border bg-slate-950 transition-all ${
-        item.isActive === false ? 'opacity-40 grayscale border-slate-200' : 'border-slate-800'
+        item.isActive === false ? 'border-slate-200 opacity-40 grayscale' : 'border-slate-800'
       }`}
     >
       <div
@@ -49,7 +49,7 @@ export default function GalleryItem({ item, onRemove, onToggleActive }: GalleryI
           e.stopPropagation();
           onRemove();
         }}
-        className="absolute right-1 top-1 z-10 rounded bg-slate-900/80 p-1 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-white"
+        className="absolute right-1 top-1 z-10 rounded bg-slate-900/80 p-1 text-slate-400 opacity-0 transition-opacity hover:text-white group-hover:opacity-100"
         title="Remove Item"
       >
         <X size={12} />
@@ -57,7 +57,9 @@ export default function GalleryItem({ item, onRemove, onToggleActive }: GalleryI
 
       {item.alt && (
         <div className="border-t border-slate-900 bg-slate-950 p-1.5">
-          <p className="truncate font-mono text-[8px] text-slate-400 uppercase tracking-wide">{item.alt}</p>
+          <p className="truncate font-mono text-[8px] uppercase tracking-wide text-slate-400">
+            {item.alt}
+          </p>
         </div>
       )}
     </div>

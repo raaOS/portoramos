@@ -52,19 +52,20 @@ export default function ProjectSoftwareSection({
           <button
             type="button"
             onClick={onOpenModal}
-            className="flex flex-col items-center justify-center p-2 rounded-lg border border-dashed border-slate-200 bg-slate-50/20 hover:border-slate-300 hover:bg-slate-50/60 w-[94px] h-[90px] flex-shrink-0 transition-all group cursor-pointer"
+            className="group flex h-[90px] w-[94px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50/20 p-2 transition-all hover:border-slate-300 hover:bg-slate-50/60"
             title="Tambah Software & Tools Lainnya"
           >
-            <div className="flex h-9 w-9 items-center justify-center !rounded-md bg-slate-100 text-slate-400 group-hover:text-slate-650 group-hover:bg-slate-200/80 transition-colors">
+            <div className="group-hover:text-slate-650 flex h-9 w-9 items-center justify-center !rounded-md bg-slate-100 text-slate-400 transition-colors group-hover:bg-slate-200/80">
               <Plus className="h-5 w-5" />
             </div>
-            <span className="mt-2.5 text-[8.5px] font-mono font-bold text-slate-400 group-hover:text-slate-600 uppercase tracking-wider">
+            <span className="mt-2.5 font-mono text-[8.5px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-600">
               Lainnya
             </span>
           </button>
         </div>
         <p className="mt-2.5 font-mono text-[8px] text-slate-400">
-          Pilih ikon software yang akan ditampilkan di halaman detail proyek. Klik (+) untuk menambah tools lainnya.
+          Pilih ikon software yang akan ditampilkan di halaman detail proyek. Klik (+) untuk
+          menambah tools lainnya.
         </p>
       </div>
     </div>

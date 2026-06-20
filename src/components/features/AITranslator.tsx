@@ -100,6 +100,7 @@ export default function AITranslator({
         </div>
       )}
       <button
+        type="button"
         onClick={handleTranslate}
         className="mt-1 text-[11px] font-medium text-blue-500 transition-colors hover:text-blue-700 hover:underline"
         aria-label={shown ? 'Hide translation' : 'See translation'}

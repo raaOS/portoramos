@@ -35,7 +35,8 @@ export default function NonOSChrome({
   modal: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { showControlCenter, setShowControlCenter, showCalendar, setShowCalendar } = useOSOverlays();
+  const { showControlCenter, setShowControlCenter, showCalendar, setShowCalendar } =
+    useOSOverlays();
 
   const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
 

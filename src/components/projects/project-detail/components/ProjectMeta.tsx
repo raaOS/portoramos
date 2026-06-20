@@ -14,7 +14,10 @@ interface ProjectMetaProps {
 export function ProjectMeta({ project, translations, isWindowMode = false }: ProjectMetaProps) {
   // Memoize icon map to prevent recreation on every render
   // MUST be called before any early return (Rules of Hooks)
-  const iconMap = useMemo(() => getIconMap('w-5 h-5 !text-[8.5px] !font-semibold tracking-normal !rounded-sm'), []);
+  const iconMap = useMemo(
+    () => getIconMap('w-5 h-5 !text-[8.5px] !font-semibold tracking-normal !rounded-sm'),
+    []
+  );
 
   const hasMeta =
     project.role ||

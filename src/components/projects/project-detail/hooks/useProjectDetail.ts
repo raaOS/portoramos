@@ -68,10 +68,7 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
     () => ({ isLiked: isProjectLiked, likes: metrics.likes }),
     [isProjectLiked, metrics.likes]
   );
-  const [optimisticLikeState, updateOptimisticLike] = useOptimistic<
-    OptimisticLikeState,
-    boolean
-  >(
+  const [optimisticLikeState, updateOptimisticLike] = useOptimistic<OptimisticLikeState, boolean>(
     committedLikeState,
     (current, nextIsLiked) => ({
       isLiked: nextIsLiked,
@@ -89,9 +86,9 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
   const CACHE_KEY = `gemini_proj_v2_${project.slug}`;
 
   const [activeGalleryGroup, setActiveGalleryGroup] = useState<GalleryGroup | null>(null);
-  const [activeNarrativeTab, setActiveNarrativeTab] = useState<
-    'challenge' | 'solution' | 'impact'
-  >('challenge');
+  const [activeNarrativeTab, setActiveNarrativeTab] = useState<'challenge' | 'solution' | 'impact'>(
+    'challenge'
+  );
 
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -193,8 +190,9 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
 
         if (commentsRes.ok) {
           const commentsData = await commentsRes.json();
-          if (commentsData.comments && Array.isArray(commentsData.comments)) {
-            setComments(commentsData.comments);
+          const loadedComments = commentsData?.data?.comments ?? commentsData?.comments;
+          if (Array.isArray(loadedComments)) {
+            setComments(loadedComments);
           }
         }
       } catch (error) {
@@ -264,13 +262,17 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
 
   const handleProjectShare = async () => {
     setMetrics((prev) => ({ ...prev, shares: prev.shares + 1 }));
-    try {
-      fetch('/api/metrics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: project.slug, action: 'share' }),
-      });
-    } catch {}
+    // Fire-and-log: kirim metrics share ke server, tapi jangan blokir UI.
+    // Gunakan .catch() agar rejection tidak menjadi unhandled promise rejection
+    // (sebelumnya fetch() tanpa await + catch kosong sync = reject tertelan diam-diam).
+    fetch('/api/metrics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug: project.slug, action: 'share' }),
+      keepalive: true,
+    }).catch((error) => {
+      console.error('[useProjectDetail] Failed to record share metric:', error);
+    });
 
     if (navigator.share) {
       navigator

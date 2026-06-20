@@ -1,12 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  OSSystemProvider,
-  useOSBoot,
-  useOSMedia,
-  useOSOverlays,
-} from '../OSSystemContext';
+import { OSSystemProvider, useOSBoot, useOSMedia, useOSOverlays } from '../OSSystemContext';
 
 describe('OSSystemContext granular subscriptions', () => {
   it('keeps media consumers stable when only overlay state changes', () => {
