@@ -15,6 +15,8 @@ import { IconDotsVertical } from '@tabler/icons-react';
 interface CompareProps {
   firstImage?: string;
   secondImage?: string;
+  firstMediaType?: 'image' | 'video';
+  secondMediaType?: 'image' | 'video';
   className?: string;
   firstImageClassName?: string;
   secondImageClassname?: string;
@@ -30,6 +32,8 @@ interface CompareProps {
 export const Compare = ({
   firstImage = '',
   secondImage = '',
+  firstMediaType,
+  secondMediaType,
   className,
   firstImageClassName,
   secondImageClassname,
@@ -168,13 +172,20 @@ export const Compare = ({
     [slideMode, isDragging, x, width]
   );
 
-  const renderMedia = (src: string, className: string, alt: string) => {
+  const renderMedia = (
+    src: string,
+    className: string,
+    alt: string,
+    mediaType?: 'image' | 'video'
+  ) => {
     const proxiedSrc = getProxiedUrl(src);
     const isVideo =
-      proxiedSrc.toLowerCase().includes('.mp4') ||
-      proxiedSrc.toLowerCase().includes('.webm') ||
-      src.toLowerCase().endsWith('.mp4') ||
-      src.toLowerCase().endsWith('.webm');
+      mediaType === 'video' ||
+      (!mediaType &&
+        (proxiedSrc.toLowerCase().includes('.mp4') ||
+          proxiedSrc.toLowerCase().includes('.webm') ||
+          src.toLowerCase().endsWith('.mp4') ||
+          src.toLowerCase().endsWith('.webm')));
 
     if (isVideo) {
       return (
@@ -197,7 +208,11 @@ export const Compare = ({
     <div
       ref={sliderRef}
       role="slider"
-      aria-label={firstSlideLabel && secondSlideLabel ? `Compare ${firstSlideLabel} vs ${secondSlideLabel}` : 'Image comparison slider'}
+      aria-label={
+        firstSlideLabel && secondSlideLabel
+          ? `Compare ${firstSlideLabel} vs ${secondSlideLabel}`
+          : 'Image comparison slider'
+      }
       aria-valuenow={Math.round(initialSliderPercentage)}
       aria-valuemin={0}
       aria-valuemax={100}
@@ -271,7 +286,8 @@ export const Compare = ({
                   'absolute inset-0 z-20 rounded-2xl shrink-0 w-full h-full select-none',
                   firstImageClassName
                 ),
-                'first image'
+                'first image',
+                firstMediaType
               )}
               {/* Label for First Image (Visible when this layer is visible) */}
               {firstSlideLabel && (
@@ -296,7 +312,8 @@ export const Compare = ({
                 'absolute top-0 left-0 z-[19] rounded-2xl w-full h-full select-none',
                 secondImageClassname
               ),
-              'second image'
+              'second image',
+              secondMediaType
             )}
             {/* Label for Second Image (Visible when overlay is clipped away) */}
             {secondSlideLabel && (

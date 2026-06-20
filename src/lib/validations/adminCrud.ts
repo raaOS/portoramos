@@ -223,6 +223,7 @@ export const wallpaperSchema = z
     id: requiredText(120),
     url: requiredText(1000),
     name: shortText(200).optional(),
+    type: z.enum(['image', 'video']).optional(),
     posterUrl: shortText(1000).optional(),
     startTime: z.coerce.number().min(0).max(250).optional(),
   })

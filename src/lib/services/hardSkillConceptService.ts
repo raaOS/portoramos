@@ -15,12 +15,12 @@ const defaultData: HardSkillConceptsData = {
 const service = new ContentService<HardSkillConceptsData>('hardSkillConcepts.json', defaultData);
 
 export const hardSkillConceptService = {
-  async getConcepts() {
-    return await service.getData();
+  async getConcepts(noCache = false, throwOnError = false) {
+    return await service.getData(noCache, throwOnError);
   },
 
   async createConcept(conceptData: Omit<HardSkillConcept, 'id' | 'createdAt' | 'updatedAt'>) {
-    const data = await this.getConcepts();
+    const data = await this.getConcepts(true, true);
     const newConcept: HardSkillConcept = {
       id: `concept-${Date.now()}`,
       ...conceptData,
@@ -36,7 +36,7 @@ export const hardSkillConceptService = {
   },
 
   async updateConcept(id: string, updates: Partial<HardSkillConcept>) {
-    const data = await this.getConcepts();
+    const data = await this.getConcepts(true, true);
     const index = data.concepts.findIndex((c) => c.id === id);
     if (index === -1) return null;
 
@@ -52,7 +52,7 @@ export const hardSkillConceptService = {
   },
 
   async deleteConcept(id: string) {
-    const data = await this.getConcepts();
+    const data = await this.getConcepts(true, true);
     const initialLen = data.concepts.length;
     data.concepts = data.concepts.filter((c) => c.id !== id);
 

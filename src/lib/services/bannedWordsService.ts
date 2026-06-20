@@ -36,6 +36,48 @@ const DEFAULT_BANNED_WORDS: readonly string[] = [
 let cached: { words: string[]; loadedAt: number } | null = null;
 const CACHE_TTL_MS = 60_000;
 
+const LEET_CHAR_MAP: Record<string, string> = {
+  '0': 'o',
+  '3': 'e',
+  '4': 'a',
+  '@': 'a',
+  '5': 's',
+  $: 's',
+  '7': 't',
+  '+': 't',
+  '8': 'b',
+  '9': 'g',
+};
+
+function normalizeForStorage(word: string): string {
+  return word.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function normalizeForMatch(value: string, oneAs: 'i' | 'l'): string {
+  return value
+    .toLowerCase()
+    .split('')
+    .map((char) => {
+      if (char === '1' || char === '!') return oneAs;
+      return LEET_CHAR_MAP[char] ?? char;
+    })
+    .join('')
+    .replace(/[^a-z0-9]+/g, '')
+    .replace(/(.)\1{2,}/g, '$1');
+}
+
+function buildTextMatchVariants(text: string): Set<string> {
+  const oneAsI = normalizeForMatch(text, 'i');
+  const oneAsL = normalizeForMatch(text, 'l');
+
+  return new Set([
+    oneAsI,
+    oneAsL,
+    oneAsI.replace(/(.)\1+/g, '$1'),
+    oneAsL.replace(/(.)\1+/g, '$1'),
+  ]);
+}
+
 /**
  * Reset cache — panggil setelah admin update bannedWords di D1.
  * Lokasi yang harus memanggil: route handler PUT /api/admin/settings atau
@@ -43,6 +85,10 @@ const CACHE_TTL_MS = 60_000;
  */
 export function invalidateBannedWordsCache(): void {
   cached = null;
+}
+
+export function normalizeBannedWords(words: string[]): string[] {
+  return Array.from(new Set(words.map(normalizeForStorage).filter(Boolean)));
 }
 
 export async function getBannedWords(): Promise<string[]> {
@@ -55,7 +101,7 @@ export async function getBannedWords(): Promise<string[]> {
   try {
     const snap = await db.ref('settings/bannedWords').once('value');
     if (snap.exists() && Array.isArray(snap.val())) {
-      const words = snap.val() as string[];
+      const words = normalizeBannedWords(snap.val() as string[]);
       cached = { words, loadedAt: Date.now() };
       return words;
     }
@@ -63,8 +109,9 @@ export async function getBannedWords(): Promise<string[]> {
     const rootSnap = await db.ref('settings').once('value');
     const settings = rootSnap.val();
     if (settings?.bannedWords && Array.isArray(settings.bannedWords)) {
-      cached = { words: settings.bannedWords, loadedAt: Date.now() };
-      return settings.bannedWords;
+      const words = normalizeBannedWords(settings.bannedWords);
+      cached = { words, loadedAt: Date.now() };
+      return words;
     }
   } catch (error) {
     console.warn(
@@ -73,16 +120,14 @@ export async function getBannedWords(): Promise<string[]> {
     );
   }
 
-  cached = { words: [...DEFAULT_BANNED_WORDS], loadedAt: Date.now() };
+  cached = { words: normalizeBannedWords([...DEFAULT_BANNED_WORDS]), loadedAt: Date.now() };
   return cached.words;
 }
 
 /**
  * Cek apakah `text` mengandung salah satu kata terlarang.
- * Case-insensitive substring match — sederhana tapi efektif untuk filter
- * spam kasar. Tidak cocok untuk evasion ("jud0l" vs "judol") — itu memerlukan
- * normalized comparison (hapus angka, leet-speak decode). Untuk saat ini
- * substring cukup karena list di-maintain manual oleh admin.
+ * Memakai substring case-insensitive plus normalized comparison untuk evasion
+ * kasar seperti leet-speak, pemisah karakter, dan huruf berulang.
  */
 export function containsBannedWord(text: string, banned: string[]): boolean {
   return typeof findBannedWord(text, banned) === 'string';
@@ -94,7 +139,24 @@ export function containsBannedWord(text: string, banned: string[]): boolean {
  */
 export function findBannedWord(text: string, banned: string[]): string | undefined {
   const lower = text.toLowerCase();
-  return banned.find((word) => word && lower.includes(word.toLowerCase()));
+  const matchVariants = buildTextMatchVariants(text);
+
+  return normalizeBannedWords(banned).find((word) => {
+    if (!word) return false;
+
+    if (lower.includes(word)) {
+      return true;
+    }
+
+    const normalizedWordI = normalizeForMatch(word, 'i');
+    const normalizedWordL = normalizeForMatch(word, 'l');
+
+    return Array.from(matchVariants).some(
+      (variant) =>
+        (normalizedWordI && variant.includes(normalizedWordI)) ||
+        (normalizedWordL && variant.includes(normalizedWordL))
+    );
+  });
 }
 
 export const BANNED_WORDS_DEFAULTS = DEFAULT_BANNED_WORDS;

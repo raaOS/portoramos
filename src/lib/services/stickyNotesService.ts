@@ -37,8 +37,8 @@ function normalizeNote(note: Partial<NoteData> & { id: string }, index: number):
 }
 
 export const stickyNotesService = {
-  async getNotes(noCache = false) {
-    const notes = await service.getData(noCache);
+  async getNotes(noCache = false, throwOnError = false) {
+    const notes = await service.getData(noCache, throwOnError);
     return Array.isArray(notes) ? notes.map((note, index) => normalizeNote(note, index)) : [];
   },
 

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
 
-    const data = await stickyNotesService.getNotes(force);
+    const data = await stickyNotesService.getNotes(force, true);
 
     return NextResponse.json(data, {
       headers: {

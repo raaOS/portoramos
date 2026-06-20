@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useFileValidation, useFFmpeg, useStorageUpload } from './file-upload/hooks';
@@ -30,6 +31,7 @@ export default function AdminFileUpload({
   onUploadEnd,
   onUploadProgress,
   customValidator,
+  variant = 'default',
 }: AdminFileUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [status, setStatus] = useState<string>('');
@@ -416,25 +418,107 @@ export default function AdminFileUpload({
     <>
       {/* Modals */}
       {activeCrop && (
-        <ImageCropperWrapper
-          src={activeCrop.src}
-          onConfirm={handleCropComplete}
-          onCancel={handleCropCancel}
-        />
+        <UploadModalPortal>
+          <ImageCropperWrapper
+            src={activeCrop.src}
+            onConfirm={handleCropComplete}
+            onCancel={handleCropCancel}
+          />
+        </UploadModalPortal>
       )}
 
       {activeTrim && (
-        <VideoTrimmerWrapper
-          file={activeTrim.file}
-          onConfirm={handleTrimConfirm}
-          onCancel={handleTrimCancel}
-        />
+        <UploadModalPortal>
+          <VideoTrimmerWrapper
+            file={activeTrim.file}
+            onConfirm={handleTrimConfirm}
+            onCancel={handleTrimCancel}
+          />
+        </UploadModalPortal>
       )}
 
       {/* Upload Area */}
-      <div className={`w-full ${className}`}>
+      <div className={variant === 'button' ? `w-auto flex-shrink-0 ${className}` : `w-full ${className}`}>
         {status ? (
           <UploadProgress status={status} progress={progress} />
+        ) : variant === 'compact' ? (
+          <div
+            className={`relative flex items-center justify-center gap-2 cursor-pointer rounded-md border border-dashed p-3 text-center transition-colors ${
+              isDragOver
+                ? 'border-blue-400 bg-blue-50'
+                : 'border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700'
+            } ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-slate-50 dark:hover:bg-slate-900/50'} `}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleClick}
+            role="button"
+            tabIndex={disabled ? -1 : 0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleClick();
+              }
+            }}
+            aria-label="Upload File"
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={accept}
+              multiple={multiple}
+              onChange={handleFileInput}
+              className="hidden"
+              disabled={disabled}
+            />
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+              <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
+                {isDragOver ? 'Drop file' : 'Upload File'}
+              </span>
+            </div>
+          </div>
+        ) : variant === 'button' ? (
+          <button
+            type="button"
+            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-550 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-850 hover:border-slate-350 dark:hover:border-slate-700 transition-all ${
+              disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+            }`}
+            onClick={handleClick}
+            tabIndex={disabled ? -1 : 0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleClick();
+              }
+            }}
+            aria-label="Upload File"
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={accept}
+              multiple={multiple}
+              onChange={handleFileInput}
+              className="hidden"
+              disabled={disabled}
+            />
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+          </button>
         ) : (
           <UploadDropzone
             isDragOver={isDragOver}
@@ -458,6 +542,15 @@ function formatBytes(bytes: number) {
   if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
+function UploadModalPortal({ children }: { children: ReactNode }) {
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100000]">{children}</div>,
+    document.body
+  );
 }
 
 // Wrappers for Lazy Loading

@@ -1,7 +1,6 @@
 'use client';
 
 import type { Project } from '@/types/projects';
-import ReadMoreDescription from '@/components/ui/ReadMoreDescription';
 import { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { getTranslation } from '../utils/translations';
@@ -9,8 +8,8 @@ import { getTranslation } from '../utils/translations';
 interface ProjectNarrativeProps {
   project: Project;
   translations: Record<string, string> | null;
-  activeTab: 'description' | 'challenge' | 'solution' | 'impact';
-  onTabChange: (tab: 'description' | 'challenge' | 'solution' | 'impact') => void;
+  activeTab: 'challenge' | 'solution' | 'impact';
+  onTabChange: (tab: 'challenge' | 'solution' | 'impact') => void;
   isWindowMode?: boolean;
 }
 
@@ -21,8 +20,6 @@ export function ProjectNarrative({
   onTabChange,
   isWindowMode = false,
 }: ProjectNarrativeProps) {
-  const hasNarrative = !!project.narrative;
-  const hasDescription = !!project.description;
   const hasChallenge = !!(project.narrative?.challenge || project.narrative?.concept);
   const hasSolution = !!(project.narrative?.solution || project.narrative?.process);
   const hasImpact = !!(
@@ -30,14 +27,14 @@ export function ProjectNarrative({
     project.narrative?.result ||
     project.narrative?.detail
   );
+  const hasNarrativeContent = hasChallenge || hasSolution || hasImpact;
 
   const tabs = useMemo(() => {
     const result: Array<{
-      id: 'description' | 'challenge' | 'solution' | 'impact';
+      id: 'challenge' | 'solution' | 'impact';
       label: string;
       show: boolean;
     }> = [
-      { id: 'description', label: translations ? 'About' : 'Tentang', show: hasDescription },
       {
         id: 'challenge',
         label: translations
@@ -77,14 +74,9 @@ export function ProjectNarrative({
       },
     ];
     return result.filter((t) => t.show);
-  }, [translations, project.narrative, hasDescription, hasChallenge, hasSolution, hasImpact]);
+  }, [translations, project.narrative, hasChallenge, hasSolution, hasImpact]);
 
   const tabStyles: Record<string, { bg: string; tint: string; border: string }> = {
-    description: {
-      bg: 'bg-indigo-600 dark:bg-indigo-500',
-      tint: 'bg-indigo-50/50 dark:bg-indigo-950/20',
-      border: 'border-black/10 dark:border-white/10',
-    },
     challenge: {
       bg: 'bg-rose-600 dark:bg-rose-500',
       tint: 'bg-rose-50/50 dark:bg-rose-950/20',
@@ -102,38 +94,82 @@ export function ProjectNarrative({
     },
   };
 
-  const currentStyle = tabStyles[activeTab];
+  const activeTabIndex = useMemo(() => {
+    const idx = tabs.findIndex((t) => t.id === activeTab);
+    return idx >= 0 ? idx : 0;
+  }, [tabs, activeTab]);
 
-  if (!hasNarrative && !hasDescription) return null;
+  const currentTabId = useMemo(() => {
+    const currentTab = tabs[activeTabIndex];
+    return currentTab ? currentTab.id : 'challenge';
+  }, [tabs, activeTabIndex]);
+
+  const currentStyle = tabStyles[currentTabId];
+
+  if (!hasNarrativeContent) return null;
 
   return (
     <div className="mb-8 mt-12 font-sans">
-      {/* React-Tabs Style Container */}
-      <div className="react-tabs-container">
-        {/* Tab List Base Line - Consolidated to prevent flickering */}
-        <div className="relative z-10 w-full border-b border-black/10 dark:border-white/10">
-          <div className="relative flex items-end px-0">
-            {/* Animated Pill — single persistent element, moves via layout animation */}
+      {/* Curved Browser-Tabs Style Container */}
+      <div className="react-tabs-container overflow-hidden rounded-[22px] border border-black/10 bg-white dark:border-white/10 dark:bg-gray-950">
+        {/* Browser-style Tab Bar */}
+        <div className="relative bg-gray-50/90 px-4 pt-2 dark:bg-gray-900/40">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-px bg-black/10 dark:bg-white/10"
+          />
+          <div
+            className="relative z-10 flex h-11 min-w-0 items-end mr-auto"
+            style={{ width: `min(100%, ${tabs.length * 180}px)` }}
+          >
+            {/* Animated Curved Backdrop */}
             <motion.div
-              className={`absolute -bottom-px z-10 h-full rounded-t-md ${tabStyles[activeTab].bg}`}
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-0 left-0 z-[1] h-11"
               transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-              style={{
-                left: `${(tabs.findIndex((t) => t.id === activeTab) / tabs.length) * 100}%`,
+              animate={{
+                left: `${(activeTabIndex / tabs.length) * 100}%`,
                 width: `${100 / tabs.length}%`,
               }}
-            />
+            >
+              <svg className="h-full w-full" viewBox="0 0 180 44" preserveAspectRatio="none" overflow="visible">
+                <path
+                  className="fill-white dark:fill-gray-950"
+                  d="M0 47H180V43C166 43 160 39 160 27V18C160 8 152 3 140 3H40C28 3 20 8 20 18V27C20 39 14 43 0 43V47Z"
+                />
+                <path
+                  className="fill-none stroke-black/10 dark:stroke-white/10"
+                  d="M0 43C14 43 20 39 20 27V18C20 8 28 3 40 3H140C152 3 160 8 160 18V27C160 39 166 43 180 43"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+            </motion.div>
 
-            {tabs.map((tab, idx) => {
+            {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
+              const textActiveColor =
+                tab.id === 'challenge'
+                  ? 'text-rose-600 dark:text-rose-400'
+                  : tab.id === 'solution'
+                    ? 'text-amber-500 dark:text-amber-400'
+                    : 'text-emerald-600 dark:text-emerald-400';
+
               return (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => onTabChange(tab.id)}
-                  className={`relative -mb-[1px] flex flex-1 items-center justify-center px-5 py-1.5 text-sm font-bold outline-none transition-colors duration-150 sm:px-8 ${
-                    isActive ? 'z-20 text-white' : 'z-0 text-gray-400 hover:text-gray-600'
-                  } ${idx === 0 ? 'ml-0' : ''} `}
+                  className={`relative flex h-11 min-w-0 flex-1 cursor-pointer appearance-none items-center justify-center gap-2 border-0 bg-transparent px-2 text-[11px] font-extrabold tracking-tight transition-colors duration-200 sm:px-[18px] ${
+                    isActive
+                      ? `z-20 ${textActiveColor}`
+                      : 'z-10 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+                  }`}
+                  aria-pressed={isActive}
                 >
-                  <span className="relative z-10 text-center">{tab.label}</span>
+                  <span className="relative z-10 text-center truncate">{tab.label}</span>
                 </button>
               );
             })}
@@ -142,7 +178,7 @@ export function ProjectNarrative({
 
         {/* Tab Panel / Content Area - Stable Height to prevent jumping */}
         <div
-          className={`border-x border-b border-black/10 dark:border-white/10 ${currentStyle.border} min-h-[220px] rounded-b-md px-6 py-8 sm:px-10 sm:py-10 ${currentStyle.tint} relative z-0 w-full overflow-hidden bg-white dark:bg-gray-950 ${isWindowMode ? 'shadow-[0_4px_20px_rgba(0,0,0,0.02)]' : 'shadow-none'}`}
+          className={`min-h-[220px] px-6 py-8 sm:px-10 sm:py-10 ${currentStyle.tint} relative z-0 w-full overflow-hidden bg-white dark:bg-gray-950 ${isWindowMode ? 'shadow-[0_4px_20px_rgba(0,0,0,0.02)]' : 'shadow-none'}`}
         >
           <div className="relative z-10">
             <TabContent activeTab={activeTab} project={project} translations={translations} />
@@ -165,17 +201,6 @@ function TabContent({
   const narrative = project.narrative;
 
   switch (activeTab) {
-    case 'description':
-      return (
-        <div className="space-y-4">
-          <ReadMoreDescription
-            text={getTranslation(translations, 'description') || project.description || ''}
-            maxLines={12}
-            className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 sm:text-base"
-          />
-        </div>
-      );
-
     case 'challenge':
       return (
         <div className="space-y-4">

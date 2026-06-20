@@ -194,7 +194,7 @@ export default function ProjectMediaUpload({
         {/* Right: Controller Inspector */}
         <div className="flex flex-col justify-center space-y-4">
           <div>
-            <label className="mb-1 block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400">
+            <label className="mb-1 block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Image / Video URL
             </label>
             <div className="flex items-center gap-2">
@@ -202,8 +202,10 @@ export default function ProjectMediaUpload({
                 type="text"
                 value={formData.cover}
                 onChange={(e) => updateField('cover', e.target.value)}
-                className={`flex-1 rounded-md border bg-white px-3 py-2 text-xs transition-all focus:border-slate-800 focus:outline-none ${
-                  errors.cover ? 'border-red-300 bg-red-50/10' : 'border-slate-200 hover:border-slate-300'
+                className={`flex-1 rounded-md border px-3 py-2 text-xs transition-all focus:outline-none focus:ring-0 placeholder-slate-400 dark:placeholder-slate-600 ${
+                  errors.cover
+                    ? 'border-red-300 bg-red-50/10 text-red-900 focus:border-red-500 dark:border-red-800/50 dark:bg-red-950/10 dark:text-red-200'
+                    : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300 focus:border-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-700 dark:focus:border-slate-300'
                 }`}
                 placeholder="https://... or /assets/..."
               />
@@ -211,7 +213,7 @@ export default function ProjectMediaUpload({
                 <button
                   type="button"
                   onClick={() => handleDeleteMedia('cover')}
-                  className="rounded-md border border-slate-200 p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  className="rounded-md border border-slate-200 dark:border-slate-800 p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/20 dark:hover:text-red-400 transition-colors"
                   title="Clear Media"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -222,7 +224,7 @@ export default function ProjectMediaUpload({
             {errors.cover && <p className="mt-1 text-[10px] text-red-500">{errors.cover}</p>}
           </div>
 
-          <div className="rounded-md border border-dashed border-slate-200 p-1 hover:border-slate-300 transition-colors bg-slate-50/30">
+          <div className="rounded-md border border-dashed border-slate-200 dark:border-slate-800 p-1 hover:border-slate-300 dark:hover:border-slate-700 transition-colors bg-slate-50/30 dark:bg-slate-900/10">
             <AdminFileUpload
               onUpload={handleUploadComplete}
               onFileSelect={(file) => {
@@ -241,25 +243,22 @@ export default function ProjectMediaUpload({
 
           {/* Dimension Details telemetry */}
           {(formData.coverWidth || formData.coverHeight) && (
-            <div className="flex items-center gap-3 pt-0.5 font-mono text-[9px] text-slate-400 tracking-wider">
+            <div className="flex items-center gap-3 pt-0.5 font-mono text-[9px] text-slate-400 dark:text-slate-500 tracking-wider">
               <span>
-                WIDTH: <span className="font-bold text-slate-700">{formData.coverWidth || '-'}px</span>
+                WIDTH: <span className="font-bold text-slate-700 dark:text-slate-300">{formData.coverWidth || '-'}px</span>
               </span>
               <span>
-                HEIGHT: <span className="font-bold text-slate-700">{formData.coverHeight || '-'}px</span>
+                HEIGHT: <span className="font-bold text-slate-700 dark:text-slate-300">{formData.coverHeight || '-'}px</span>
               </span>
             </div>
           )}
         </div>
-      </div>
-
-      {/* Comparison Viewport Section */}
-      {mediaFormat === 'comparison' && (
-        <div className="grid grid-cols-1 gap-6 border-t border-slate-100 pt-6 md:grid-cols-2">
+      </div>      {mediaFormat === 'comparison' && (
+        <div className="grid grid-cols-1 gap-6 border-t border-slate-100 dark:border-slate-800 pt-6 md:grid-cols-2">
           {/* Before Column */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-50 pb-1.5">
-              <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400">Before / Kiri</span>
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+              <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Before / Kiri</span>
               <select
                 value={formData.comparison?.beforeType || 'image'}
                 onChange={(e) =>
@@ -268,7 +267,7 @@ export default function ProjectMediaUpload({
                     beforeType: e.target.value as 'image' | 'video',
                   })
                 }
-                className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-slate-600 outline-none hover:border-slate-300 transition-colors"
+                className="rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2 py-0.5 text-[10px] text-slate-650 dark:text-slate-350 outline-none hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
               >
                 <option value="image">Image</option>
                 <option value="video">Video</option>
@@ -311,20 +310,20 @@ export default function ProjectMediaUpload({
                 onChange={(e) =>
                   updateField('comparison', { ...formData.comparison, beforeImage: e.target.value })
                 }
-                className="flex-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:border-slate-800 focus:outline-none transition-all"
+                className="flex-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 placeholder-slate-400 transition-all focus:outline-none focus:ring-0 focus:border-slate-800 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-slate-300 dark:hover:border-slate-700"
                 placeholder="Image/Video URL"
               />
               {formData.comparison?.beforeImage && (
                 <button
                   type="button"
                   onClick={() => handleDeleteMedia('before')}
-                  className="rounded-md border border-slate-200 p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  className="rounded-md border border-slate-200 dark:border-slate-800 p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/20 dark:hover:text-red-400 transition-colors"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
-            <div className="rounded-md border border-dashed border-slate-200 p-1 hover:border-slate-300 transition-colors bg-slate-50/30">
+            <div className="rounded-md border border-dashed border-slate-200 dark:border-slate-800 p-1 hover:border-slate-300 dark:hover:border-slate-700 transition-colors bg-slate-50/30 dark:bg-slate-900/10">
               <AdminFileUpload
                 onUpload={(urls) => {
                   if (urls.length > 0)
@@ -347,8 +346,8 @@ export default function ProjectMediaUpload({
 
           {/* After Column */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-50 pb-1.5">
-              <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400">After / Kanan</span>
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+              <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">After / Kanan</span>
               <select
                 value={formData.comparison?.afterType || 'image'}
                 onChange={(e) =>
@@ -357,7 +356,7 @@ export default function ProjectMediaUpload({
                     afterType: e.target.value as 'image' | 'video',
                   })
                 }
-                className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-slate-600 outline-none hover:border-slate-300 transition-colors"
+                className="rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2 py-0.5 text-[10px] text-slate-650 dark:text-slate-350 outline-none hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
               >
                 <option value="image">Image</option>
                 <option value="video">Video</option>
@@ -400,20 +399,20 @@ export default function ProjectMediaUpload({
                 onChange={(e) =>
                   updateField('comparison', { ...formData.comparison, afterImage: e.target.value })
                 }
-                className="flex-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:border-slate-800 focus:outline-none transition-all"
+                className="flex-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 placeholder-slate-400 transition-all focus:outline-none focus:ring-0 focus:border-slate-800 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:border-slate-300 dark:hover:border-slate-700"
                 placeholder="Image/Video URL"
               />
               {formData.comparison?.afterImage && (
                 <button
                   type="button"
                   onClick={() => handleDeleteMedia('after')}
-                  className="rounded-md border border-slate-200 p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  className="rounded-md border border-slate-200 dark:border-slate-800 p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/20 dark:hover:text-red-400 transition-colors"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
-            <div className="rounded-md border border-dashed border-slate-200 p-1 hover:border-slate-300 transition-colors bg-slate-50/30">
+            <div className="rounded-md border border-dashed border-slate-200 dark:border-slate-800 p-1 hover:border-slate-300 dark:hover:border-slate-700 transition-colors bg-slate-50/30 dark:bg-slate-900/10">
               <AdminFileUpload
                 onUpload={(urls) => {
                   if (urls.length > 0)

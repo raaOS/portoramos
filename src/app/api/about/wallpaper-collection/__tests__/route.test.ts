@@ -199,6 +199,7 @@ describe('POST /api/about/wallpaper-collection', () => {
           wallpaper: {
             id: 'w-st',
             url: '/r2/assets/wallpapers/x.mp4',
+            type: 'video',
             startTime: 45,
           },
         })
@@ -207,7 +208,7 @@ describe('POST /api/about/wallpaper-collection', () => {
       expect(res.status).toBe(200);
       const payload = updateAboutData.mock.calls[0][0];
       expect(payload.wallpaperConfig.collection).toEqual([
-        { id: 'w-st', url: '/r2/assets/wallpapers/x.mp4', startTime: 45 },
+        { id: 'w-st', url: '/r2/assets/wallpapers/x.mp4', type: 'video', startTime: 45 },
       ]);
     });
 

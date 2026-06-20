@@ -284,6 +284,7 @@ describe('wallpaperSchema', () => {
       id: 'wp-1',
       url: '/r2/assets/wallpapers/ocean.mp4',
       name: 'Ocean Sunset',
+      type: 'video',
       posterUrl: '/r2/assets/wallpapers/ocean.jpg',
       startTime: 30,
     });
@@ -296,6 +297,23 @@ describe('wallpaperSchema', () => {
       url: '/r2/image.jpg',
     });
     expect(result.success).toBe(true);
+  });
+
+  it('accepts legacy wallpaper media type', () => {
+    expect(
+      wallpaperSchema.safeParse({
+        id: 'wp-video',
+        url: '/r2/video.mp4',
+        type: 'video',
+      }).success
+    ).toBe(true);
+    expect(
+      wallpaperSchema.safeParse({
+        id: 'wp-image',
+        url: '/r2/image.webp',
+        type: 'image',
+      }).success
+    ).toBe(true);
   });
 
   it('accepts startTime as string and coerces to number', () => {

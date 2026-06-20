@@ -120,6 +120,35 @@ describe('POST /api/comments', () => {
     expect(body.error).toBe('Comment contains restricted word: gacor');
   });
 
+  it('rejects obfuscated banned words', async () => {
+    refMock.mockImplementation((path: string) => {
+      if (path === 'settings/bannedWords') {
+        return {
+          once: vi.fn().mockResolvedValue({
+            exists: () => true,
+            val: () => ['slot'],
+          }),
+        };
+      }
+      throw new Error(`Unexpected CLOUDFLARE_D1 path: ${path}`);
+    });
+
+    const response = await POST(
+      new Request('http://localhost/api/comments', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          slug: 'demo-project',
+          comment: { id: 'bad-comment', text: 'promo s.l.0.t cepat', name: 'Bob' },
+        }),
+      }) as never
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe('Comment contains restricted word: slot');
+  });
+
   it('rate-limits rapid repeat comments from the same author', async () => {
     const existingComments: StoredComment[] = [
       {

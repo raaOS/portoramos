@@ -16,7 +16,7 @@ vi.mock('@/lib/database', () => ({
   },
 }));
 
-import { POST } from './route';
+import { GET, POST } from './route';
 
 function buildPost(body: unknown): Request {
   return new Request('http://localhost/api/settings', {
@@ -60,6 +60,16 @@ describe('POST /api/settings', () => {
     expect(updateMock).toHaveBeenCalled();
   });
 
+  it('normalizes bannedWords before saving', async () => {
+    const response = await POST(
+      buildPost({ bannedWords: [' Slot ', 'slot', '', 'GACOR'] }) as never
+    );
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.settings.bannedWords).toEqual(['slot', 'gacor']);
+    expect(updateMock).toHaveBeenCalledWith({ bannedWords: ['slot', 'gacor'] });
+  });
+
   it('passes through flag fields (maintenanceMode, allowComments)', async () => {
     const response = await POST(
       buildPost({
@@ -69,5 +79,51 @@ describe('POST /api/settings', () => {
       }) as never
     );
     expect(response.status).toBe(200);
+  });
+});
+
+describe('GET /api/settings', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('keeps bannedWords hidden from public settings response', async () => {
+    validateAdminRequestMock.mockResolvedValue(false);
+    refMock.mockReturnValue({
+      once: vi.fn().mockResolvedValue({
+        val: () => ({
+          bannedWords: ['slot'],
+          maintenanceMode: true,
+        }),
+      }),
+    });
+
+    const response = await GET(new Request('http://localhost/api/settings') as never);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ maintenanceMode: true });
+  });
+
+  it('includes normalized bannedWords for authenticated admin requests', async () => {
+    validateAdminRequestMock.mockResolvedValue(true);
+    refMock.mockReturnValue({
+      once: vi.fn().mockResolvedValue({
+        val: () => ({
+          bannedWords: [' Slot ', 'slot', 'GACOR'],
+          allowComments: true,
+        }),
+      }),
+    });
+
+    const response = await GET(new Request('http://localhost/api/settings') as never);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.bannedWords).toEqual(['slot', 'gacor']);
+    expect(body.allowComments).toBe(true);
+    expect(validateAdminRequestMock).toHaveBeenCalledWith(expect.any(Request), {
+      checkCsrf: false,
+    });
   });
 });

@@ -101,4 +101,37 @@ describe('/api/feedback', () => {
     // Verify it only checked bannedWords and did not write to db
     expect(mocks.dbRef).toHaveBeenCalledTimes(1);
   });
+
+  it('silently discards feedback containing obfuscated banned words', async () => {
+    invalidateBannedWordsCache();
+    mocks.dbRef.mockImplementation((path: string) => {
+      if (path === 'settings/bannedWords') {
+        return {
+          once: vi.fn().mockResolvedValue({
+            exists: () => true,
+            val: () => ['gacor'],
+          }),
+        };
+      }
+      throw new Error(`Unexpected path: ${path}`);
+    });
+
+    const request = new NextRequest('http://localhost/api/feedback', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        rating: 5,
+        name: 'Bob',
+        message: 'Promo g@c0r hari ini',
+      }),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.data).toEqual({ received: true });
+    expect(mocks.dbRef).toHaveBeenCalledTimes(1);
+  });
 });

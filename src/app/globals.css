@@ -692,3 +692,72 @@ html[data-dock-popover-closing='true'] [data-dock-tooltip='true'] {
   }
 }
 
+/* ==========================================================================
+   Admin Browser-Tab Buttons — Focus Kill-Switch
+   --------------------------------------------------------------------------
+   Tab buttons shaped by SVG (e.g. ProjectForm) must never show the default
+   rectangular :focus-visible outline because the rectangular shape clashes
+   with the curved SVG tab visual. This rule overrides the global
+   :focus-visible (line 89) and any Tailwind ring utilities.
+   ========================================================================== */
+[data-tab-nav] > button,
+[data-tab-nav] > button:focus,
+[data-tab-nav] > button:focus-visible,
+[data-tab-nav] > button:active {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* ==========================================================================
+   Admin Form Inputs — Focus-Visible Kill-Switch
+   --------------------------------------------------------------------------
+   Form elements in the admin project form already have their own focus
+   styling (border-color change via Tailwind). The global :focus-visible
+   outline (line 89) stacks on top of the existing border, creating a
+   "double border" visual artifact. This rule prevents that overlap.
+   ========================================================================== */
+[role='dialog'] input:focus,
+[role='dialog'] textarea:focus,
+[role='dialog'] select:focus,
+[role='dialog'] input:focus-visible,
+[role='dialog'] textarea:focus-visible,
+[role='dialog'] select:focus-visible,
+.project-form-container input:focus,
+.project-form-container textarea:focus,
+.project-form-container select:focus,
+.project-form-container input:focus-visible,
+.project-form-container textarea:focus-visible,
+.project-form-container select:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+}
+
+
+/* ==========================================================================
+   Cover Overlay Upload Button — Compact Override
+   --------------------------------------------------------------------------
+   When AdminFileUpload variant="button" is rendered inside the compact
+   cover overlay (wrapped with .cover-overlay-upload), shrink the button
+   from the default 32×32 white bordered box to a 24×24 transparent icon
+   that blends with the dark glassmorphic overlay toolbar.
+   ========================================================================== */
+.cover-overlay-upload button {
+  height: 1.5rem !important;       /* h-6 */
+  width: 1.5rem !important;        /* w-6 */
+  min-height: unset !important;
+  min-width: unset !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: rgb(255 255 255 / 0.75) !important;
+  border-radius: 0.375rem !important;
+}
+.cover-overlay-upload button:hover {
+  color: rgb(255 255 255 / 1) !important;
+}
+.cover-overlay-upload button svg {
+  height: 0.75rem !important;      /* h-3 */
+  width: 0.75rem !important;       /* w-3 */
+}

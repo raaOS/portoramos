@@ -36,7 +36,7 @@ const nextConfig = {
     // Modern formats for best compression and performance
     formats: ['image/avif', 'image/webp'],
     // Supported image qualities to match assets
-    qualities: [60, 75, 85, 90],
+    qualities: [60, 70, 75, 85, 90],
     // Long cache time for CDN optimization (1 year)
     minimumCacheTTL: 31536000,
     // Security: prevent SVG injection attacks

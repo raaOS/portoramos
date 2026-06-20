@@ -74,7 +74,7 @@ describe('GET /api/about', () => {
 
   it('passes fresh flag to service', async () => {
     await GET(buildGet('?fresh=true') as never);
-    expect(getAboutDataMock).toHaveBeenCalledWith(true);
+    expect(getAboutDataMock).toHaveBeenCalledWith(true, true);
   });
 
   it('returns 500 on error', async () => {

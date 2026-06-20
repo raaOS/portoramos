@@ -19,6 +19,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { ADMIN_QUERY_KEYS } from '@/app/admin/lib/adminQueries';
 import { mutate as swrMutate } from 'swr';
+import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 import { extractStoragePath, isVideoLink, detectImageDimensions } from '@/lib/media';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 import { readVideoDimensions, checkMinResolution } from '@/lib/videoMeta';
@@ -39,6 +40,17 @@ interface WallpaperManagerProps {
    * dari D1 muncul — yang membuat tampilan kosong/aneh sebelum refresh.
    */
   isLoading?: boolean;
+}
+
+type WallpaperCollectionMutation =
+  | { action: 'remove'; id: string }
+  | { action: 'setActive'; id: string };
+
+interface WallpaperCollectionResponse {
+  success?: boolean;
+  data?: AboutData;
+  error?: string;
+  details?: string;
 }
 
 // Width target untuk preview card di admin grid (2 kolom @ aspect-video di
@@ -109,7 +121,7 @@ export default function WallpaperManager({
 }: WallpaperManagerProps) {
   const { csrfToken } = useAdminAuth();
   const { confirm } = useConfirm();
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
   // No more hard-coded "default"/"minimal" wallpapers. The collection starts
   // empty; the public site has its own DEFAULT_WALLPAPER_URL fallback baked
   // into the bundle (see `os/utils/zIndexLayers.ts`), so visitors always see
@@ -291,6 +303,39 @@ export default function WallpaperManager({
     };
   }, [collectionFingerprint, csrfToken, queryClient]);
 
+  const persistWallpaperCollectionAction = useCallback(
+    async (payload: WallpaperCollectionMutation) => {
+      const token = getWritableCsrfToken(csrfToken);
+      const res = await fetch('/api/about/wallpaper-collection', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': token,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const body = (await res.json().catch(() => null)) as WallpaperCollectionResponse | null;
+      if (!res.ok || !body?.success) {
+        throw new Error(
+          body?.error || body?.details || `Failed to update wallpaper collection (${res.status})`
+        );
+      }
+
+      if (body.data) {
+        queryClient.setQueryData(ADMIN_QUERY_KEYS.about, body.data);
+        await swrMutate('/api/about', body.data, { revalidate: false });
+      } else {
+        await queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.about });
+        await swrMutate('/api/about');
+      }
+
+      return body.data;
+    },
+    [csrfToken, queryClient]
+  );
+
   const handleFileDrop = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
     if (fileArray.length === 0) return;
@@ -455,44 +500,13 @@ export default function WallpaperManager({
         tone: 'danger',
       });
 
-      if (confirmDelete) {
-        // Build the list of side-car files we generated for this asset.
-        // For video wallpapers the upload pipeline writes a `-preview.mp4`
-        // and a poster (`.jpg` from server ffmpeg, atau `.webp` setelah
-        // server sharp transcode di flow direct-to-R2). Untuk safety
-        // tracking dua extension supaya residual lama (sebelum sharp
-        // transcode) maupun upload baru sama-sama ke-cleanup.
-        const candidatePaths = new Set<string>();
-        candidatePaths.add(storagePath);
-        if (isVideoLink(wallpaperToDelete.url)) {
-          const base = storagePath.replace(/\.(mp4|webm|mov)$/i, '');
-          candidatePaths.add(`${base}-preview.mp4`);
-          candidatePaths.add(`${base}.jpg`);
-          candidatePaths.add(`${base}.webp`);
-        }
-        const posterPath = wallpaperToDelete.posterUrl
-          ? extractStoragePath(wallpaperToDelete.posterUrl)
-          : null;
-        if (posterPath) candidatePaths.add(posterPath);
-
-        try {
-          await Promise.all(
-            Array.from(candidatePaths).map((path) =>
-              fetch(`/api/admin/upload?path=${encodeURIComponent(path)}`, {
-                method: 'DELETE',
-                credentials: 'include',
-                headers: { 'x-csrf-token': csrfToken || '' },
-              }).catch(() => null)
-            )
-          );
-        } catch (e) {
-          console.error('Failed to delete physical wallpaper file', e);
-        }
-      } else {
+      if (!confirmDelete) {
         return; // User cancelled
       }
     }
 
+    const previousWallpapers = wallpapers;
+    const previousActive = activeId;
     const newCollection = wallpapers.filter((w) => w.id !== id);
     setWallpapers(newCollection);
     // If the active wallpaper was deleted, fall back to the first remaining
@@ -503,23 +517,72 @@ export default function WallpaperManager({
       newActive = newCollection[0]?.id || '';
       setActiveId(newActive);
     }
-    onUpdate({
-      activeWallpaperId: newActive,
-      collection: newCollection,
-      blur: data?.blur,
-    });
+
+    try {
+      await persistWallpaperCollectionAction({ action: 'remove', id });
+      showSuccess('Wallpaper berhasil dihapus.');
+    } catch (e) {
+      setWallpapers(previousWallpapers);
+      setActiveId(previousActive);
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      showError(`Gagal menghapus wallpaper: ${message}`);
+      return;
+    }
+
+    if (wallpaperToDelete && storagePath) {
+      // Build the list of side-car files we generated for this asset.
+      // For video wallpapers the upload pipeline writes a `-preview.mp4`
+      // and a poster (`.jpg` from server ffmpeg, atau `.webp` setelah
+      // server sharp transcode di flow direct-to-R2). Untuk safety
+      // tracking dua extension supaya residual lama (sebelum sharp
+      // transcode) maupun upload baru sama-sama ke-cleanup.
+      const candidatePaths = new Set<string>();
+      candidatePaths.add(storagePath);
+      if (isVideoLink(wallpaperToDelete.url)) {
+        const base = storagePath.replace(/\.(mp4|webm|mov)$/i, '');
+        candidatePaths.add(`${base}-preview.mp4`);
+        candidatePaths.add(`${base}.jpg`);
+        candidatePaths.add(`${base}.webp`);
+      }
+      const posterPath = wallpaperToDelete.posterUrl
+        ? extractStoragePath(wallpaperToDelete.posterUrl)
+        : null;
+      if (posterPath) candidatePaths.add(posterPath);
+
+      try {
+        const token = getWritableCsrfToken(csrfToken);
+        await Promise.all(
+          Array.from(candidatePaths).map((path) =>
+            fetch(`/api/admin/upload?path=${encodeURIComponent(path)}`, {
+              method: 'DELETE',
+              credentials: 'include',
+              headers: { 'x-csrf-token': token },
+            }).catch(() => null)
+          )
+        );
+      } catch (e) {
+        console.error('Failed to delete physical wallpaper file', e);
+        showError('Wallpaper terhapus dari daftar, tapi file storage gagal dibersihkan otomatis.');
+      }
+    }
   };
 
-  const handleSetActive = (id: string) => {
+  const handleSetActive = async (id: string) => {
     // Don't apply a wallpaper accidentally while the user is editing its
     // name; the click target is the same card.
     if (renamingId === id) return;
+    if (id === activeId) return;
+
+    const previousActive = activeId;
     setActiveId(id);
-    onUpdate({
-      activeWallpaperId: id,
-      collection: wallpapers,
-      blur: data?.blur,
-    });
+    try {
+      await persistWallpaperCollectionAction({ action: 'setActive', id });
+      showSuccess('Wallpaper utama diperbarui.');
+    } catch (e) {
+      setActiveId(previousActive);
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      showError(`Gagal menerapkan wallpaper: ${message}`);
+    }
   };
 
   const startRename = (wp: Wallpaper) => {

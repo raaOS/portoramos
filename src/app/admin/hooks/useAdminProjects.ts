@@ -87,6 +87,10 @@ export function useAdminProjects() {
     [queryClient]
   );
 
+  const refreshCommentCounts = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.commentCounts });
+  }, [queryClient]);
+
   // 3. Mutations
   const createMutation = useMutation({
     mutationFn: async (data: CreateProjectData | UpdateProjectData) => {
@@ -109,6 +113,7 @@ export function useAdminProjects() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' });
       await refreshProjects(true);
+      await refreshCommentCounts();
       showSuccess('Project berhasil dibuat');
     },
     onError: (err: Error) => showError(err.message || 'Failed to create project'),
@@ -135,6 +140,7 @@ export function useAdminProjects() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' });
       await refreshProjects(true);
+      await refreshCommentCounts();
       showSuccess('Project berhasil diperbarui');
     },
     onError: (err: Error) => showError(err.message || 'Failed to update project'),
@@ -159,6 +165,7 @@ export function useAdminProjects() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' });
       await refreshProjects(true);
+      await refreshCommentCounts();
       showSuccess('Project dihapus');
     },
     onError: (err: Error) => showError(err.message || 'Failed to delete project'),
@@ -219,6 +226,7 @@ export function useAdminProjects() {
       showSuccess(`Bulk ${action} complete`);
       await queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' });
       await refreshProjects(true);
+      await refreshCommentCounts();
     } catch {
       showError(`Bulk ${action} failed`);
     } finally {
@@ -248,6 +256,7 @@ export function useAdminProjects() {
     onUpdate: () => {
       console.log('[AdminProjects] Real-time update detected, refreshing...');
       void refreshProjects(true);
+      void refreshCommentCounts();
     },
     onUnavailable: () => {
       console.log('[AdminProjects] Real-time sync unavailable, using manual refresh');

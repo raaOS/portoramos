@@ -31,7 +31,7 @@ export const ProjectCard = ({
   handleDeleteProject,
   handleDuplicateProject,
   setManagingCommentsProject,
-  commentCount: _commentCount = 0,
+  commentCount = 0,
   priority = false,
   eager = false,
 }: ProjectCardProps) => {
@@ -87,27 +87,16 @@ export const ProjectCard = ({
             >
               {project.title}
             </h3>
-            <div onPointerDown={(e) => e.stopPropagation()}>
-              <StatusToggle
-                isActive={isPublished}
-                onClick={() => handleToggleProjectStatus(project)}
-                className="flex-shrink-0"
-                iconActive={<Eye className="h-4 w-4" />}
-                iconInactive={<EyeOff className="h-4 w-4" />}
-                labelActive=""
-                labelInactive=""
-              />
-            </div>
           </div>
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-2 flex items-center gap-3">
             <p className="text-sm font-medium text-violet-600">
               {project.client} • {project.year}
             </p>
-            <div className="flex items-center gap-1.5 opacity-60 grayscale">
+            <div className="flex items-center gap-1.5 opacity-85">
               {project.software?.slice(0, 3).map((s) => (
-                <div key={s} title={s.replace('_', ' ')} className="h-4 w-4">
-                  {getIconMap('w-full h-full !text-[6.5px] !font-semibold tracking-normal !rounded-sm')[s.toLowerCase()] || (
-                    <div className="flex h-full w-full items-center justify-center rounded bg-gray-200 text-[6px] font-bold uppercase text-gray-500">
+                <div key={s} title={s.replace('_', ' ')} className="h-5 w-5 flex-shrink-0">
+                  {getIconMap('w-full h-full !text-[8px] !font-bold tracking-normal !rounded-sm')[s.toLowerCase()] || (
+                    <div className="flex h-full w-full items-center justify-center rounded bg-gray-200 text-[7px] font-bold uppercase text-gray-500">
                       {s.slice(0, 2)}
                     </div>
                   )}
@@ -119,37 +108,57 @@ export const ProjectCard = ({
         </div>
 
         <div
-          className="mt-auto flex items-center gap-3 border-t border-gray-100 pt-4"
+          className="mt-auto flex items-center justify-between border-t border-gray-100 pt-4"
           onPointerDown={(e) => e.stopPropagation()}
         >
           <button
             onClick={() => setEditingProject(project)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-violet-50 hover:text-violet-600"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:text-violet-600"
             title="Edit Project"
+            style={{ minWidth: 'unset', minHeight: 'unset' }}
           >
             <Pencil className="h-4 w-4" />
           </button>
           <button
             onClick={() => handleDuplicateProject(project)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-blue-50 hover:text-blue-600"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:text-blue-600"
             title="Duplicate Project"
+            style={{ minWidth: 'unset', minHeight: 'unset' }}
           >
             <Copy className="h-4 w-4" />
           </button>
           <button
             onClick={() => handleDeleteProject(project.id)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-red-50 hover:text-red-600"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:text-red-600"
             title="Delete Project"
+            style={{ minWidth: 'unset', minHeight: 'unset' }}
           >
             <Trash2 className="h-4 w-4" />
           </button>
           <button
             onClick={() => setManagingCommentsProject(project)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-violet-50 hover:text-violet-600"
-            title="Manage Comments"
+            className="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:text-violet-600"
+            title={`Manage Comments${commentCount > 0 ? ` (${commentCount})` : ''}`}
+            aria-label={`Manage comments for ${project.title}${commentCount > 0 ? `, ${commentCount} comments` : ''}`}
+            style={{ minWidth: 'unset', minHeight: 'unset' }}
           >
             <MessageCircle className="h-4 w-4 shrink-0" />
+            {commentCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 font-mono text-[9px] font-bold leading-none text-white">
+                {commentCount > 99 ? '99+' : commentCount}
+              </span>
+            )}
           </button>
+          <StatusToggle
+            isActive={isPublished}
+            onClick={() => handleToggleProjectStatus(project)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0"
+            iconActive={<Eye className="h-4 w-4" />}
+            iconInactive={<EyeOff className="h-4 w-4" />}
+            title={isPublished ? 'Change to Draft' : 'Publish Project'}
+            variant="clean"
+            style={{ minWidth: 'unset', minHeight: 'unset' }}
+          />
         </div>
       </div>
     </div>

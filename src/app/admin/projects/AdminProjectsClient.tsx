@@ -266,10 +266,8 @@ export default function AdminProjectsClient() {
           onSubmit={async (data) => {
             if (editingProject) {
               await updateMutation.mutateAsync(data as UpdateProjectData);
-              setEditingProject(null);
             } else {
               await createMutation.mutateAsync(data as CreateProjectData);
-              setShowCreateForm(false);
             }
           }}
         />

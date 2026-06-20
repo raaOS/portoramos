@@ -9,6 +9,7 @@ const {
   onceMock,
   valMock,
   setMock,
+  removeMock,
   sendTelegramAlertMock,
   revalidatePathMock,
   generateGenZCommentsMock,
@@ -21,6 +22,7 @@ const {
   onceMock: vi.fn(),
   valMock: vi.fn(),
   setMock: vi.fn(),
+  removeMock: vi.fn(),
   sendTelegramAlertMock: vi.fn(),
   revalidatePathMock: vi.fn(),
   generateGenZCommentsMock: vi.fn(),
@@ -173,8 +175,9 @@ describe('PUT /api/projects/[id]', () => {
     sendTelegramAlertMock.mockResolvedValue(undefined);
     valMock.mockReturnValue([]);
     onceMock.mockResolvedValue({ val: valMock });
-    refMock.mockReturnValue({ once: onceMock, set: setMock });
+    refMock.mockReturnValue({ once: onceMock, set: setMock, remove: removeMock });
     setMock.mockResolvedValue(undefined);
+    removeMock.mockResolvedValue(undefined);
   });
 
   it('rejects unauthenticated updates', async () => {
@@ -258,6 +261,42 @@ describe('PUT /api/projects/[id]', () => {
 
     expect(generateGenZCommentsMock).toHaveBeenCalledWith('test-project', 1);
     expect(setMock).toHaveBeenCalled();
+  });
+
+  it('moves comments when project slug changes', async () => {
+    const previousComments = [{ id: 'old-1', text: 'Old', name: 'User', likes: 0, replies: [] }];
+    const generatedComments = [
+      { id: 'new-1', text: 'Generated', name: 'AI', likes: 0, replies: [] },
+    ];
+
+    const projectRef = { once: vi.fn().mockResolvedValue({ val: () => mockProject }) };
+    const oldCommentsRef = {
+      once: vi.fn().mockResolvedValue({ val: () => previousComments }),
+      remove: removeMock,
+    };
+    const newCommentsRef = {
+      once: vi.fn().mockResolvedValue({ val: () => generatedComments }),
+      set: setMock,
+    };
+
+    refMock.mockImplementation((path: string) => {
+      if (path === 'projects/proj-1') return projectRef;
+      if (path === 'comments/test-project') return oldCommentsRef;
+      if (path === 'comments/new-slug') return newCommentsRef;
+      return { once: onceMock, set: setMock, remove: removeMock };
+    });
+    updateProjectMock.mockResolvedValue({ ...mockProject, slug: 'new-slug' });
+
+    const response = await PUT(
+      buildPut({ id: 'proj-1', slug: 'new-slug', title: 'Test' }) as never,
+      params('proj-1')
+    );
+
+    expect(response.status).toBe(200);
+    expect(setMock).toHaveBeenCalledWith([...generatedComments, ...previousComments]);
+    expect(removeMock).toHaveBeenCalled();
+    expect(revalidatePathMock).toHaveBeenCalledWith('/projects/test-project');
+    expect(revalidatePathMock).toHaveBeenCalledWith('/projects/new-slug');
   });
 
   it('handles unexpected error in update', async () => {

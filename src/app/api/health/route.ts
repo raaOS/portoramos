@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { enforceRequestRateLimit } from '@/lib/security/request';
 
 export async function GET(request: NextRequest) {
@@ -37,8 +37,9 @@ export async function GET(request: NextRequest) {
       // Perform an actual lightweight read operation with a timeout
       // This guarantees that the network connection is alive and credentials are valid
       const dbStart = Date.now();
+      const timeoutMs = process.env.NODE_ENV === 'development' ? 15000 : 5000;
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout')), 5000)
+        setTimeout(() => reject(new Error('Timeout')), timeoutMs)
       );
       const readPromise = db.ref('_healthCheck').once('value');
 

@@ -48,8 +48,8 @@ interface UseProjectDetailReturn {
   translateLoading: boolean;
   activeGalleryGroup: GalleryGroup | null;
   setActiveGalleryGroup: (group: GalleryGroup | null) => void;
-  activeNarrativeTab: 'description' | 'challenge' | 'solution' | 'impact';
-  setActiveNarrativeTab: (tab: 'description' | 'challenge' | 'solution' | 'impact') => void;
+  activeNarrativeTab: 'challenge' | 'solution' | 'impact';
+  setActiveNarrativeTab: (tab: 'challenge' | 'solution' | 'impact') => void;
   observerTarget: React.RefObject<HTMLDivElement | null>;
 
   // Actions
@@ -90,8 +90,8 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
 
   const [activeGalleryGroup, setActiveGalleryGroup] = useState<GalleryGroup | null>(null);
   const [activeNarrativeTab, setActiveNarrativeTab] = useState<
-    'description' | 'challenge' | 'solution' | 'impact'
-  >('description');
+    'challenge' | 'solution' | 'impact'
+  >('challenge');
 
   const observerTarget = useRef<HTMLDivElement>(null);
 

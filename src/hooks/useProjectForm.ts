@@ -75,6 +75,21 @@ export interface ProjectFormData {
  * Eliminates the previous duplication between useState init and useEffect sync.
  */
 function createInitialFormData(project?: Project): ProjectFormData {
+  const galleryItems: GalleryItem[] =
+    project?.galleryItems && project.galleryItems.length > 0
+      ? project.galleryItems.map((item) => ({
+          ...item,
+          kind: item.kind || (isVideoLink(item.src) ? 'video' : 'image'),
+          isActive: item.isActive ?? true,
+        }))
+      : (project?.gallery || [])
+          .filter((src) => src.trim())
+          .map((src) => ({
+            kind: isVideoLink(src) ? 'video' : 'image',
+            src,
+            isActive: true,
+          }));
+
   return {
     title: project?.title || '',
     client: project?.client || '',
@@ -83,8 +98,8 @@ function createInitialFormData(project?: Project): ProjectFormData {
     cover: project?.cover || '',
     coverWidth: project?.coverWidth || 800,
     coverHeight: project?.coverHeight || 600,
-    gallery: '',
-    galleryItems: [],
+    gallery: project?.gallery?.join(', ') || '',
+    galleryItems,
     galleryGroups: project?.galleryGroups || [],
     tags: project?.tags?.join(', ') || '',
     autoplay: project?.autoplay ?? true,
@@ -96,7 +111,7 @@ function createInitialFormData(project?: Project): ProjectFormData {
     likes: project?.likes ?? 0,
     shares: project?.shares ?? 0,
     allowComments: project?.allowComments ?? true,
-    initialCommentCount: 2,
+    initialCommentCount: project?.id ? 0 : 2,
 
     // Case Study Fields
     role: project?.role || '',

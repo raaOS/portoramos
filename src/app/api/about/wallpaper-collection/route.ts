@@ -43,6 +43,7 @@ const wallpaperBodySchema = z
     id: z.string().trim().min(1).max(120),
     url: z.string().trim().min(1).max(1000),
     name: z.string().trim().max(200).optional(),
+    type: z.enum(['image', 'video']).optional(),
     posterUrl: z.string().trim().max(1000).optional(),
     startTime: z.number().min(0).max(250).optional(),
   })

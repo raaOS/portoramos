@@ -17,11 +17,30 @@ export async function POST(req: NextRequest) {
       shares, 
       commentCount, 
       tone, 
-      reply 
+      reply,
+      rollback,
+      originalComments,
+      originalMetrics
     } = await req.json();
 
     if (!projectId || !slug) {
       return NextResponse.json({ error: 'Missing projectId or slug' }, { status: 400 });
+    }
+
+    if (rollback) {
+      if (originalMetrics) {
+        await projectService.updateProject(projectId, {
+          id: projectId,
+          likes: originalMetrics.likes,
+          shares: originalMetrics.shares,
+        });
+      }
+      if (Array.isArray(originalComments)) {
+        await db.ref(`comments/${slug}`).set(originalComments);
+      } else {
+        await db.ref(`comments/${slug}`).remove();
+      }
+      return NextResponse.json({ success: true, rollback: true });
     }
 
     // 1. Update Project Metrics in CLOUDFLARE_D1
@@ -60,6 +79,7 @@ export async function POST(req: NextRequest) {
       success: true,
       metrics,
       commentCount: newComments.length,
+      comments: newComments,
     });
   } catch (error) {
     console.error('Magic Complete Error:', error instanceof Error ? error.message : error);

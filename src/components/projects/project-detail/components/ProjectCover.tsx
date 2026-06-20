@@ -1,7 +1,7 @@
 'use client';
 
 import type { Project, GalleryItem } from '@/types/projects';
-import { Compare } from '@/components/ui/Compare';
+import { Compare } from '@/components/ui/compare';
 import Media from '@/components/shared/Media';
 import { useImageProtection } from '@/hooks/useImageProtection';
 import {
@@ -44,6 +44,10 @@ export function ProjectCover({ project, cover, ratio, isWindowMode = false }: Pr
           <Compare
             firstImage={project.comparison.beforeImage}
             secondImage={project.comparison.afterImage || cover.src}
+            firstMediaType={project.comparison.beforeType}
+            secondMediaType={
+              project.comparison.afterImage ? project.comparison.afterType : cover.kind
+            }
             firstImageClassName={comparisonMediaClassName}
             secondImageClassname={comparisonMediaClassName}
             className={isWindowMode ? 'h-full w-full rounded-none' : 'h-full w-full'}

@@ -11,7 +11,7 @@ import { validationError } from '@/lib/api-response';
 export async function GET(request: NextRequest) {
   try {
     const fresh = request.nextUrl.searchParams.get('fresh') === 'true';
-    const data = await aboutService.getAboutData(fresh);
+    const data = await aboutService.getAboutData(fresh, true);
     return NextResponse.json(data);
   } catch (error) {
     console.error(

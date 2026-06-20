@@ -78,7 +78,7 @@ export default function ProjectGalleryManager(props: ProjectGalleryManagerProps)
     <div className="space-y-4">
       {/* Action Buttons Toolbar */}
       <div className="flex gap-2.5">
-        <label className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:border-slate-800 hover:text-slate-900 transition-all">
+        <label className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:border-slate-800 dark:hover:border-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
           <Plus size={12} className="text-slate-500" />
           <span>{uploadProgress === null ? 'Item Tunggal' : `Uploading ${uploadProgress}%`}</span>
           <input
@@ -101,7 +101,7 @@ export default function ProjectGalleryManager(props: ProjectGalleryManagerProps)
             });
             if (name) props.addGalleryGroup(name);
           }}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:border-slate-800 hover:text-slate-900 transition-all"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:border-slate-800 dark:hover:border-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
         >
           <FolderPlus size={12} className="text-slate-500" />
           <span>Buat Grup Baru</span>
@@ -160,9 +160,9 @@ export default function ProjectGalleryManager(props: ProjectGalleryManagerProps)
         ))}
 
         {!props.formData.galleryItems?.length && !props.formData.galleryGroups?.length && (
-          <div className="flex h-32 flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50/20 text-slate-400">
-            <ImageIcon size={24} className="mb-1.5 opacity-40 text-slate-400" />
-            <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400">Belum ada item galeri</span>
+          <div className="flex h-32 flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50/20 text-slate-400 dark:border-slate-800 dark:bg-slate-900/10">
+            <ImageIcon size={24} className="mb-1.5 opacity-40 text-slate-400 dark:text-slate-500" />
+            <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500">Belum ada item galeri</span>
           </div>
         )}
       </div>

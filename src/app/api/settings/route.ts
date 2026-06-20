@@ -2,39 +2,34 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
 import { validateAdminRequest } from '@/lib/auth';
 import { updateSettingsSchema } from '@/lib/validations';
-
-const DEFAULT_BANNED_WORDS = [
-  'judol',
-  'slot',
-  'gacor',
-  'maxwin',
-  'togel',
-  'casino',
-  'rtp',
-  'pragmatic',
-  'crypto',
-  'bitcoin',
-  'viagra',
-  'bokep',
-  'porn',
-];
+import {
+  BANNED_WORDS_DEFAULTS,
+  invalidateBannedWordsCache,
+  normalizeBannedWords,
+} from '@/lib/services/bannedWordsService';
 
 export async function getSettingsData() {
   try {
     const snap = await db.ref('settings').once('value');
     const data = snap.val();
     if (!data || !data.bannedWords || data.bannedWords.length === 0) {
-      return { ...data, bannedWords: DEFAULT_BANNED_WORDS };
+      return { ...data, bannedWords: [...BANNED_WORDS_DEFAULTS] };
     }
-    return data;
+    return { ...data, bannedWords: normalizeBannedWords(data.bannedWords) };
   } catch {
-    return { bannedWords: DEFAULT_BANNED_WORDS };
+    return { bannedWords: [...BANNED_WORDS_DEFAULTS] };
   }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   const data = await getSettingsData();
-  const { bannedWords, ...publicSettings } = data;
+  const isAdmin = await validateAdminRequest(request, { checkCsrf: false });
+
+  if (isAdmin) {
+    return NextResponse.json(data);
+  }
+
+  const { bannedWords: _bannedWords, ...publicSettings } = data;
   return NextResponse.json(publicSettings);
 }
 
@@ -56,13 +51,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const settingsToSave = { ...validation.data };
+    if (Array.isArray(settingsToSave.bannedWords)) {
+      settingsToSave.bannedWords = normalizeBannedWords(settingsToSave.bannedWords);
+    }
+
     // Save only validated data to CLOUDFLARE_D1 (prevents junk fields).
     // Use .update() instead of .set() to merge into the existing row —
     // .set() would overwrite the entire `settings` row, destroying nested
     // fields like adminPassword and adminOtp written by other endpoints.
-    await db.ref('settings').update(validation.data);
+    await db.ref('settings').update(settingsToSave);
 
-    return NextResponse.json({ success: true, settings: validation.data });
+    if ('bannedWords' in settingsToSave) {
+      invalidateBannedWordsCache();
+    }
+
+    return NextResponse.json({ success: true, settings: settingsToSave });
   } catch (error: unknown) {
     console.error('[API/Settings] POST Error:', error);
     return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });

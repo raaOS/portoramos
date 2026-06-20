@@ -101,6 +101,7 @@ export interface Wallpaper {
   id: string;
   url: string;
   name?: string;
+  type?: 'image' | 'video';
   /**
    * Optional poster image URL for video wallpapers. Generated server-side by
    * the upload pipeline (`/api/upload`) so the admin grid and skeleton screens

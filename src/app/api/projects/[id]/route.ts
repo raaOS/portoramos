@@ -8,6 +8,32 @@ import { db } from '@/lib/database';
 import { sendTelegramAlert } from '@/lib/telegram';
 import { UpdateProjectSchema } from '@/lib/validations';
 
+async function moveCommentsWhenSlugChanges(previousSlug?: string, nextSlug?: string) {
+  if (!previousSlug || !nextSlug || previousSlug === nextSlug) return;
+
+  try {
+    const previousRef = db.ref(`comments/${previousSlug}`);
+    const nextRef = db.ref(`comments/${nextSlug}`);
+    const [previousSnap, nextSnap] = await Promise.all([
+      previousRef.once('value'),
+      nextRef.once('value'),
+    ]);
+
+    const previousComments = previousSnap.val();
+    if (!Array.isArray(previousComments) || previousComments.length === 0) return;
+
+    const nextComments = nextSnap.val();
+    const mergedComments = Array.isArray(nextComments)
+      ? [...nextComments, ...previousComments]
+      : previousComments;
+
+    await nextRef.set(mergedComments);
+    await previousRef.remove();
+  } catch (error) {
+    console.error('[API/Projects/[id]] Failed to migrate comments after slug change:', error);
+  }
+}
+
 // GET - Read single project
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
@@ -56,6 +82,9 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
     }
 
     const { id: _validatedId, ...updateData } = validationResult.data;
+    const currentProjectSnap = await db.ref(`projects/${id}`).once('value');
+    const currentProject = currentProjectSnap.val() as Project | null;
+    const previousSlug = currentProject?.slug;
 
     // 1. Update Project
     const updatedProject = await projectService.updateProject(
@@ -66,6 +95,8 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
     if (!updatedProject) {
       return NextResponse.json({ error: 'Project not found or update failed' }, { status: 404 });
     }
+
+    await moveCommentsWhenSlugChanges(previousSlug, updatedProject.slug);
 
     if (rawBody.initialCommentCount && rawBody.initialCommentCount > 0) {
       try {
@@ -98,6 +129,9 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
 
     revalidatePath('/', 'layout');
     revalidatePath('/projects');
+    if (previousSlug && previousSlug !== updatedProject.slug) {
+      revalidatePath(`/projects/${previousSlug}`);
+    }
     revalidatePath(`/projects/${updatedProject.slug}`);
     revalidatePath('/admin');
 

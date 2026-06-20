@@ -5,15 +5,10 @@ export function useProjectWizard(project?: Project) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isFormRevealed, setIsFormRevealed] = useState(!!project); // Auto reveal if editing
 
-  // Determine initial media format
-  const [mediaFormat, setMediaFormat] = useState<'single' | 'comparison' | 'gallery'>(() => {
+  // Determine initial primary media format. Gallery is supporting content,
+  // so it should not override the cover/comparison choice.
+  const [mediaFormat, setMediaFormat] = useState<'single' | 'comparison'>(() => {
     if (project) {
-      if (
-        (project.galleryGroups && project.galleryGroups.length > 0) ||
-        (project.galleryItems && project.galleryItems.length > 0)
-      ) {
-        return 'gallery';
-      }
       if (project.comparison && project.comparison.beforeImage) {
         return 'comparison';
       }

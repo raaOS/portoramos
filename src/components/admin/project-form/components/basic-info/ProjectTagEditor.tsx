@@ -99,7 +99,7 @@ export default function ProjectTagEditor({ formData, updateField }: ProjectTagEd
                   onAnimationComplete={() => {
                     if (isMorphing) setMorphingTag(null);
                   }}
-                  className="flex h-8 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all"
+                  className="flex h-8 items-center gap-2.5 rounded-full border border-slate-200 bg-white pl-4 pr-2.5 text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all"
                 >
                   <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-slate-600">
                     {tag}
@@ -107,7 +107,8 @@ export default function ProjectTagEditor({ formData, updateField }: ProjectTagEd
                   <button
                     type="button"
                     onClick={() => handleToggleTag(tag)}
-                    className="flex h-4 w-4 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
+                    className="flex h-4 w-4 items-center justify-center text-slate-400 transition-colors hover:text-red-500 cursor-pointer"
+                    style={{ minWidth: 'unset', minHeight: 'unset' }}
                     title={`Hapus tag ${tag}`}
                   >
                     <X className="h-3 w-3" />
@@ -177,6 +178,7 @@ export default function ProjectTagEditor({ formData, updateField }: ProjectTagEd
                 exit={{ opacity: 0, scale: 0.85, x: -4 }}
                 transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
                 className="flex items-center justify-center h-[22px] w-[22px] rounded-lg border border-dashed border-slate-300 hover:border-slate-400 bg-slate-50/10 hover:bg-slate-50/40 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer group"
+                style={{ minWidth: 'unset', minHeight: 'unset' }}
                 title="Tambah Tag"
               >
                 <Plus className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />

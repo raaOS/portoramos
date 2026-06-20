@@ -44,8 +44,8 @@ export const experienceService = {
    *
    * @returns A promise that resolves to the ExperienceData.
    */
-  async getExperienceData() {
-    const data = await service.getData();
+  async getExperienceData(noCache = false, throwOnError = false) {
+    const data = await service.getData(noCache, throwOnError);
     return {
       ...data,
       workExperience: normalizeWorkExperience(data.workExperience || []),
@@ -60,7 +60,7 @@ export const experienceService = {
    * @returns A promise that resolves to the updated experience data.
    */
   async updateExperienceData(updates: Partial<ExperienceData>) {
-    const current = await this.getExperienceData();
+    const current = await this.getExperienceData(true, true);
     const normalizedIncomingWorkExperience = updates.workExperience
       ? normalizeWorkExperience(updates.workExperience)
       : undefined;

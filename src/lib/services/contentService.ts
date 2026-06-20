@@ -73,7 +73,7 @@ export class ContentService<T> {
     this.skipFallbackMerge = skipFallbackMerge;
   }
 
-  async getData(noCache = false): Promise<T> {
+  async getData(noCache = false, throwOnError = false): Promise<T> {
     const cacheKey = getCacheKey(this.dataPath);
 
     // Cek memory cache dulu (kecuali noCache=true)
@@ -84,9 +84,10 @@ export class ContentService<T> {
       }
     }
 
+    const timeoutMs = process.env.NODE_ENV === 'development' ? 15000 : 5000;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const timeout = new Promise<null>((_, reject) => {
-      timeoutId = setTimeout(() => reject(new Error('Data backend timeout')), 5000);
+      timeoutId = setTimeout(() => reject(new Error('Data backend timeout')), timeoutMs);
     });
 
     try {
@@ -113,6 +114,9 @@ export class ContentService<T> {
       return finalData;
     } catch (error) {
       console.error(`[ContentService] Error loading data from ${this.dataPath}:`, error);
+      if (throwOnError) {
+        throw error;
+      }
       return this.fallbackData;
     } finally {
       // MEMORY-LEAK FIX: clear timer regardless of outcome

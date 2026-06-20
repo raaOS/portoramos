@@ -44,4 +44,6 @@ export interface AdminFileUploadProps {
    * toast error dan tidak proses file.
    */
   customValidator?: (files: File[]) => Promise<string | null> | string | null;
+  /** UI display mode: 'default' (large dropzone), 'compact' (slim bar), or 'button' (icon button). */
+  variant?: 'default' | 'compact' | 'button';
 }

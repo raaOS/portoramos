@@ -101,6 +101,32 @@ describe('POST /api/admin/projects/magic-complete', () => {
     expect(dbRefSetMock).toHaveBeenCalledWith(mockComments);
   });
 
+  it('rolls back metrics and comments when requested', async () => {
+    const originalMetrics = { likes: 10, shares: 1 };
+    const originalComments = [{ id: 'orig-1', text: 'Original', name: 'User' }];
+
+    const res = await POST(
+      buildPostRequest({
+        projectId: 'proj-1',
+        slug: 'my-project',
+        rollback: true,
+        originalMetrics,
+        originalComments,
+      })
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.rollback).toBe(true);
+
+    expect(projectServiceUpdateMock).toHaveBeenCalledWith('proj-1', {
+      id: 'proj-1',
+      likes: 10,
+      shares: 1,
+    });
+    expect(dbRefSetMock).toHaveBeenCalledWith(originalComments);
+  });
+
   it('catches internal errors and returns 500 without leaking details', async () => {
     projectServiceUpdateMock.mockRejectedValue(new Error('Database explosion'));
     const res = await POST(buildPostRequest({ projectId: 'proj-1', slug: 'my-project' }));

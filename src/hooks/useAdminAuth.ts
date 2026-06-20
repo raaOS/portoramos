@@ -149,7 +149,7 @@ function ensureAuthRuntime() {
 
 async function logoutWithSharedState() {
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), 2_000);
+  const timeoutId = window.setTimeout(() => controller.abort(), 10_000);
 
   try {
     await fetch('/api/admin/logout', {

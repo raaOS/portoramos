@@ -47,13 +47,13 @@ const generateTestimonialId = (): string => {
 };
 
 export const testimonialService = {
-  async getTestimonials(): Promise<TestimonialData> {
-    const data = await service.getData();
+  async getTestimonials(noCache = false, throwOnError = false): Promise<TestimonialData> {
+    const data = await service.getData(noCache, throwOnError);
     return normalizeTestimonialData(data);
   },
 
   async createTestimonial(data: Omit<Testimonial, 'id'>): Promise<Testimonial> {
-    const currentData = await this.getTestimonials();
+    const currentData = await this.getTestimonials(true, true);
     const existingIds = new Set(currentData.testimonials.map((t) => t.id));
     let finalId = generateTestimonialId();
     while (existingIds.has(finalId)) {
@@ -77,7 +77,7 @@ export const testimonialService = {
     id: number | string,
     updates: Partial<Testimonial>
   ): Promise<Testimonial | null> {
-    const currentData = await this.getTestimonials();
+    const currentData = await this.getTestimonials(true, true);
     const normalizedId = normalizeTestimonialId(id);
     const index = currentData.testimonials.findIndex((t) => t.id === normalizedId);
 
@@ -96,7 +96,7 @@ export const testimonialService = {
   },
 
   async deleteTestimonial(id: number | string): Promise<boolean> {
-    const currentData = await this.getTestimonials();
+    const currentData = await this.getTestimonials(true, true);
     const normalizedId = normalizeTestimonialId(id);
     const testimonial = currentData.testimonials.find((t) => t.id === normalizedId);
 

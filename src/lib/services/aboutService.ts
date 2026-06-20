@@ -106,8 +106,8 @@ export const aboutService = {
    *
    * @returns A promise that resolves to the AboutData.
    */
-  async getAboutData(noCache = false) {
-    return await service.getData(noCache);
+  async getAboutData(noCache = false, throwOnError = false) {
+    return await service.getData(noCache, throwOnError);
   },
 
   /**
@@ -119,7 +119,7 @@ export const aboutService = {
    */
   async updateAboutData(updates: UpdateAboutData) {
     try {
-      const current = await this.getAboutData(true);
+      const current = await this.getAboutData(true, true);
 
       // Explicit merging since updates contains Partials
       const mergedData: AboutData = {
