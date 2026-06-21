@@ -282,8 +282,8 @@
 }
 
 .admin-folder-app:hover {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.04);
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 .admin-folder-app:active {

@@ -163,12 +163,43 @@ class SoundManager {
 
         if (oldPath !== path) {
           console.log(`[SoundManager] Updating path for ${typeKey}: ${oldPath} -> ${path}`);
+          const cachedAudio = this.sounds.get(typeKey);
+          if (cachedAudio) {
+            cachedAudio.pause();
+            cachedAudio.src = '';
+            try {
+              cachedAudio.load();
+            } catch {
+              // Ignore cache cleanup errors.
+            }
+          }
           this.sounds.delete(typeKey);
         }
 
         this.soundVolumes[typeKey] = setting.volume;
       }
     });
+  }
+
+  /**
+   * Preload a sound without unlocking or playing it. This keeps large startup
+   * assets ready so the click-triggered boot sound starts with the visual zoom.
+   */
+  public preload(type: SoundType) {
+    if (typeof window === 'undefined' || this.sounds.has(type)) return;
+
+    const path = this.soundPaths[type];
+    if (!path) return;
+
+    try {
+      const audio = new Audio(path);
+      audio.preload = 'auto';
+      this.sounds.set(type, audio);
+      audio.load();
+      this.log(`Preloaded "${type}" from ${path}`);
+    } catch (e) {
+      console.warn(`[SoundManager] Failed to preload "${type}":`, e);
+    }
   }
 
   /**

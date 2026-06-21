@@ -32,7 +32,7 @@ export default function ClientAdminLayout({ children }: ClientAdminLayoutProps) 
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const { logout } = useAdminAuth();
-  const { windows, openFolderId, actions } = useAdminDesktop();
+  const { windows, actions } = useAdminDesktop();
   const warmedRef = useRef(false);
   const deepLinkedRef = useRef(false);
 
@@ -81,7 +81,6 @@ export default function ClientAdminLayout({ children }: ClientAdminLayoutProps) 
       <BackgroundUploadProvider>
         <AdminDesktopShell
           windows={windows}
-          openFolderId={openFolderId}
           actions={actions}
           onLogout={handleLogout}
         />

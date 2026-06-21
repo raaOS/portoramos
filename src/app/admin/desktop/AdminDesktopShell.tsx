@@ -5,7 +5,6 @@ import { ADMIN_ZONES } from './registry';
 import type { AdminDesktopActions, AdminWindowState } from './types';
 import AdminMenuBar from './AdminMenuBar';
 import ZoneFolderIcon from './ZoneFolderIcon';
-import FolderWindow from './FolderWindow';
 import AdminWindowFrame from './AdminWindowFrame';
 import WindowContentRenderer from './WindowContentRenderer';
 import AdminTaskbar from './AdminTaskbar';
@@ -13,19 +12,15 @@ import './admin-desktop.css';
 
 interface AdminDesktopShellProps {
   windows: AdminWindowState[];
-  openFolderId: string | null;
   actions: AdminDesktopActions;
   onLogout: () => Promise<void>;
 }
 
 export default function AdminDesktopShell({
   windows,
-  openFolderId,
   actions,
   onLogout,
 }: AdminDesktopShellProps) {
-  const openZone = openFolderId ? ADMIN_ZONES.find((z) => z.id === openFolderId) : null;
-
   return (
     <div className="admin-desktop">
       <div className="admin-desktop-wallpaper" />
@@ -49,13 +44,10 @@ export default function AdminDesktopShell({
         ))}
       </div>
 
-      {/* Folder Window Overlay */}
-      {openZone && <FolderWindow zone={openZone} actions={actions} />}
-
       {/* Active CRUD Windows */}
       {windows.map((win) => (
         <AdminWindowFrame key={win.id} state={win} actions={actions}>
-          <WindowContentRenderer appId={win.appId} />
+          <WindowContentRenderer appId={win.appId} actions={actions} />
         </AdminWindowFrame>
       ))}
 

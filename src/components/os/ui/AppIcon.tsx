@@ -8,14 +8,25 @@ interface AppIconProps {
   icon?: LucideIcon;
   imageUrl?: string;
   priority?: boolean;
+  fallback?: React.ReactNode;
+  className?: string;
 }
 
-const AppIcon = ({ color, icon: Icon, imageUrl, priority = false }: AppIconProps) => {
+const AppIcon = ({
+  color = 'from-indigo-500 to-purple-600',
+  icon: Icon,
+  imageUrl,
+  priority = false,
+  fallback,
+  className = 'h-full w-full',
+}: AppIconProps) => {
   const [imgError, setImgError] = React.useState(false);
 
   if (imageUrl && !imgError) {
     return (
-      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[18px]">
+      <div
+        className={`flex ${className} items-center justify-center overflow-hidden rounded-[18px]`}
+      >
         <Image
           src={imageUrl}
           alt="icon"
@@ -31,9 +42,14 @@ const AppIcon = ({ color, icon: Icon, imageUrl, priority = false }: AppIconProps
       </div>
     );
   }
+
+  if (imgError && fallback) {
+    return <>{fallback}</>;
+  }
+
   return (
     <div
-      className={`h-full w-full rounded-[18px] bg-gradient-to-b ${color} relative flex items-center justify-center`}
+      className={`${className} rounded-[18px] bg-gradient-to-b ${color} relative flex items-center justify-center`}
     >
       {Icon && <Icon className="text-white" size="65%" strokeWidth={2} />}
     </div>

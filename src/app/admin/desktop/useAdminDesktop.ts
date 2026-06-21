@@ -16,7 +16,6 @@ function getStaggerOffset(windowCount: number) {
 
 export function useAdminDesktop() {
   const [windows, setWindows] = useState<AdminWindowState[]>([]);
-  const [openFolderId, setOpenFolderId] = useState<string | null>(null);
   const windowCountRef = useRef(0);
 
   const openApp: AdminDesktopActions['openApp'] = useCallback((_zoneId: string, appId: string) => {
@@ -102,11 +101,47 @@ export function useAdminDesktop() {
   }, []);
 
   const openFolder: AdminDesktopActions['openFolder'] = useCallback((zoneId) => {
-    setOpenFolderId(zoneId);
-  }, []);
+    const folderAppId = `folder-${zoneId}`;
+    setWindows((prev) => {
+      const existing = prev.find((w) => w.appId === folderAppId);
+      if (existing) {
+        nextZIndex++;
+        return prev.map((w) =>
+          w.id === existing.id ? { ...w, zIndex: nextZIndex, isMinimized: false } : w
+        );
+      }
 
-  const closeFolder: AdminDesktopActions['closeFolder'] = useCallback(() => {
-    setOpenFolderId(null);
+      const zone = ADMIN_ZONES.find((z) => z.id === zoneId);
+      if (!zone) return prev;
+
+      windowCountRef.current++;
+      nextZIndex++;
+      const offset = getStaggerOffset(windowCountRef.current);
+
+      const vw = typeof window !== 'undefined' ? window.innerWidth : 1440;
+      const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+      const defaultWidth = 560;
+      const defaultHeight = 400;
+      const w = Math.min(defaultWidth, vw - 80);
+      const h = Math.min(defaultHeight, vh - 80);
+
+      const newWindow: AdminWindowState = {
+        id: `${folderAppId}-${Date.now()}`,
+        appId: folderAppId,
+        title: zone.label,
+        icon: zone.icon,
+        iconColor: zone.iconColor,
+        isMinimized: false,
+        isMaximized: false,
+        zIndex: nextZIndex,
+        x: Math.max(20, Math.min(offset.x, vw - w - 20)),
+        y: Math.max(40, Math.min(offset.y, vh - h - 40)),
+        width: w,
+        height: h,
+      };
+
+      return [...prev, newWindow];
+    });
   }, []);
 
   const actions: AdminDesktopActions = {
@@ -118,8 +153,9 @@ export function useAdminDesktop() {
     updatePosition,
     updateSize,
     openFolder,
-    closeFolder,
   };
 
-  return { windows, openFolderId, actions };
+  return { windows, actions };
 }
+
+

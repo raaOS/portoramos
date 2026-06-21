@@ -1,3 +1,0 @@
-- Route handlers in `src/app/api` strictly enforce CSRF validation for mutation requests (POST/PUT/DELETE) by comparing header tokens against httpOnly cookies.
-- Complex UI components within the OS environment (e.g., DesktopIconsLayer, ChatWindow) are dynamically imported with `next/dynamic` and `ssr: false` to prevent hydration mismatches and reduce initial bundle size.
-- Admin-specific API routes and layouts consistently apply `export const dynamic = 'force-dynamic'` to ensure runtime execution for authentication and session checks.

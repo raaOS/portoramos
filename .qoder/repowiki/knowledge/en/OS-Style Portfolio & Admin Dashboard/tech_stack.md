@@ -1,4 +1,0 @@
-- **Authentication**: JWT (HS256) via `jose` (Edge-compatible) and `jsonwebtoken` (Node.js), with sliding window refresh logic in middleware.
-- **Security**: CSRF protection using double-submit cookie pattern; password hashing via `crypto.scryptSync` with timing-safe comparison.
-- **Animations**: `framer-motion` (via `motion/react`) for desktop boot sequences, window morphing, and layer transitions.
-- **Data Persistence**: Cloudflare D1 provides relational content storage, rate limiting, and audit logs.

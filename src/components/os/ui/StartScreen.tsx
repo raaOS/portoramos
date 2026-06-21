@@ -111,9 +111,9 @@ const StartScreen = ({ onStart, isActive, onReady, onReveal }: StartScreenProps)
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
 
-    setScreenState('zooming');
     soundManager.unlock();
     soundManager.play('startup');
+    setScreenState('zooming');
 
     queueTimer(() => {
       setScreenState('showingText');

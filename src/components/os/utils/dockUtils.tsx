@@ -36,7 +36,7 @@ export const getDockItemConfig = <T extends DockItem>(
 
       const next: T = { ...item };
       if (pref.iconUrl) {
-        next.icon = <AppIcon imageUrl={pref.iconUrl} priority />;
+        next.icon = <AppIcon imageUrl={pref.iconUrl} fallback={item.icon} priority />;
       }
       if (pref.label) {
         next.label = pref.label;

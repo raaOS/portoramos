@@ -291,6 +291,23 @@ describe('wallpaperSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('accepts wallpaper type metadata from persisted wallpaper entries', () => {
+    const videoResult = wallpaperSchema.safeParse({
+      id: 'wp-video',
+      url: '/r2/assets/wallpapers/ocean.mp4',
+      type: 'video',
+      startTime: 15,
+    });
+    const imageResult = wallpaperSchema.safeParse({
+      id: 'wp-image',
+      url: '/r2/assets/wallpapers/static.webp',
+      type: 'image',
+    });
+
+    expect(videoResult.success).toBe(true);
+    expect(imageResult.success).toBe(true);
+  });
+
   it('accepts wallpaper without optional fields', () => {
     const result = wallpaperSchema.safeParse({
       id: 'wp-minimal',

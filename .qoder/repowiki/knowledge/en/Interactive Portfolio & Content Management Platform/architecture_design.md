@@ -1,3 +1,0 @@
-- Integrates the Next.js application (`web_app`) with domain-specific automation scripts (`scripts_and_tooling`) for media optimization, cloud infrastructure management (Cloudflare D1/R2), and automated testing.
-- Enforces cross-cutting concerns through shared root-level configurations including TypeScript (`tsconfig.json`), ESLint (`eslint.config.mjs`), Prettier (`.prettierrc`), and Husky git hooks (`.husky/`) to ensure code quality and consistent pre-commit checks across all modules.
-- Centralizes environment configuration (`.env.example`, `.env.local`) and deployment settings (`vercel.json`, `next.config.mjs`) to unify the build and runtime context for both the interactive frontend and backend API routes.

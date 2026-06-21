@@ -473,7 +473,10 @@ function DesktopMain({
     if (aboutData?.soundConfig) {
       soundManager.loadConfig(aboutData.soundConfig);
     }
-  }, [aboutData?.soundConfig]);
+    if (needsPowerOn) {
+      soundManager.preload('startup');
+    }
+  }, [aboutData?.soundConfig, needsPowerOn]);
 
   const handleBootComplete = useCallback(() => {
     soundManager.suppressSound('window-open', 1500);

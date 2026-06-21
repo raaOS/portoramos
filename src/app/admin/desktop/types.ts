@@ -50,5 +50,4 @@ export interface AdminDesktopActions {
   updatePosition: (windowId: string, x: number, y: number) => void;
   updateSize: (windowId: string, width: number, height: number) => void;
   openFolder: (zoneId: string) => void;
-  closeFolder: () => void;
 }

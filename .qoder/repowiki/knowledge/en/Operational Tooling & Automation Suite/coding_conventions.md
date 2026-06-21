@@ -1,3 +1,0 @@
-- Scripts that interact with external services or require specific configurations consistently load environment variables using `dotenv.config({ path: '.env.local' })` or a custom `loadEnvFlag` helper at the entry point.
-- Utility scripts intended for direct CLI execution include a shebang line (`#!/usr/bin/env node`) and guard their main execution logic with `if (require.main === module)` or an immediately invoked async function expression.
-- Cloudflare-related scripts validate the presence of required environment keys (e.g., `CLOUDFLARE_D1_ACCOUNT_ID`, `CLOUDFLARE_R2_API_TOKEN`) using shared helper functions like `isD1Configured()` or `getMissingD1EnvKeys()` before attempting API calls.

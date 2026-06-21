@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, List, Clock, Activity } from 'lucide-react';
+import { X, List, Clock, Activity, ChevronDown } from 'lucide-react';
 
 interface AuditLog {
   id: string;
@@ -19,6 +19,14 @@ interface ActivityLogModalProps {
 export function ActivityLogModal({ isOpen, onClose }: ActivityLogModalProps) {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
+
+  const toggleLog = (id: string) => {
+    setExpandedLogs((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   const fetchLogs = React.useCallback(async () => {
     setIsLoading(true);
@@ -90,7 +98,7 @@ export function ActivityLogModal({ isOpen, onClose }: ActivityLogModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="flex h-8 w-8 min-h-0 min-w-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
           >
             <X size={18} />
           </button>
@@ -119,21 +127,54 @@ export function ActivityLogModal({ isOpen, onClose }: ActivityLogModalProps) {
                     {/* Hide line for the last item */}
                     {index !== logs.length - 1 && <div className="mt-2 h-full w-px bg-gray-200" />}
                   </div>
-                  <div className="mb-2 flex-1 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                    <p className="text-sm font-medium text-gray-800">{log.action}</p>
-                    <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
-                      <Clock size={12} />
-                      <span>{formatDate(log.timestamp)}</span>
-                    </div>
-                    {formatMetadata(log.metadata).length > 0 ? (
-                      <div className="mt-3 space-y-1 rounded-lg bg-gray-50 px-3 py-2">
-                        {formatMetadata(log.metadata).map((item) => (
-                          <div key={item} className="truncate text-[11px] text-gray-500">
-                            {item}
-                          </div>
-                        ))}
+                  <div
+                    className={`mb-2 flex-1 rounded-xl border bg-white p-4 shadow-sm transition-all duration-200 ${
+                      formatMetadata(log.metadata).length > 0
+                        ? 'cursor-pointer hover:border-indigo-100 hover:bg-indigo-50/5'
+                        : ''
+                    } ${expandedLogs[log.id] ? 'border-indigo-100 bg-indigo-50/5 ring-1 ring-indigo-500/5' : 'border-gray-100'}`}
+                    onClick={() => {
+                      if (formatMetadata(log.metadata).length > 0) {
+                        toggleLog(log.id);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800">{log.action}</p>
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
+                          <Clock size={12} />
+                          <span>{formatDate(log.timestamp)}</span>
+                        </div>
                       </div>
-                    ) : null}
+                      {formatMetadata(log.metadata).length > 0 && (
+                        <ChevronDown
+                          size={16}
+                          className={`shrink-0 text-gray-400 transition-transform duration-200 ${
+                            expandedLogs[log.id] ? 'rotate-180 text-indigo-500' : ''
+                          }`}
+                        />
+                      )}
+                    </div>
+                    {formatMetadata(log.metadata).length > 0 && (
+                      <div
+                        className={`grid transition-all duration-300 ease-in-out ${
+                          expandedLogs[log.id]
+                            ? 'grid-rows-[1fr] opacity-100 mt-3'
+                            : 'grid-rows-[0fr] opacity-0 mt-0'
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="space-y-1 rounded-lg bg-gray-50 px-3 py-2">
+                            {formatMetadata(log.metadata).map((item) => (
+                              <div key={item} className="truncate text-[11px] text-gray-500">
+                                {item}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

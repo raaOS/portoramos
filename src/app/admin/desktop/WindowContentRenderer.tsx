@@ -3,6 +3,8 @@
 import React, { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import AdminLoading from '@/components/admin/AdminLoading';
+import { ADMIN_ZONES } from './registry';
+import type { AdminDesktopActions } from './types';
 
 // ─── Lazy-loaded CRUD client components ───
 // Each component is the actual CRUD panel rendered inside an admin window.
@@ -98,9 +100,44 @@ const PANEL_MAP: Record<string, React.ComponentType> = {
 
 interface WindowContentRendererProps {
   appId: string;
+  actions: AdminDesktopActions;
 }
 
-export default function WindowContentRenderer({ appId }: WindowContentRendererProps) {
+export default function WindowContentRenderer({
+  appId,
+  actions,
+}: WindowContentRendererProps) {
+  if (appId.startsWith('folder-')) {
+    const zoneId = appId.replace('folder-', '');
+    const zone = ADMIN_ZONES.find((z) => z.id === zoneId);
+    if (!zone) {
+      return (
+        <div className="flex h-full items-center justify-center text-gray-400">
+          Folder &quot;{zoneId}&quot; tidak ditemukan
+        </div>
+      );
+    }
+
+    return (
+      <div className="admin-folder-grid h-full overflow-y-auto items-start">
+        {zone.apps.map((app) => (
+          <button
+            key={app.id}
+            className="admin-folder-app"
+            onClick={() => {
+              actions.openApp(zone.id, app.id);
+            }}
+          >
+            <div className={`admin-folder-app-icon ${app.iconBg}`}>
+              <app.icon className={`h-7 w-7 ${app.iconColor}`} />
+            </div>
+            <span className="admin-folder-app-label">{app.label}</span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   const Panel = PANEL_MAP[appId];
 
   if (!Panel) {
