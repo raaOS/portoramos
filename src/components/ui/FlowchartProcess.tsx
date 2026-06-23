@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { FileText, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { m, AnimatePresence } from 'motion/react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { localizeText } from '@/lib/i18n/contentLocalization';
 import type { WorkflowStep } from '@/types/about';
 
 interface FlowchartProcessProps {
@@ -11,6 +13,7 @@ interface FlowchartProcessProps {
 }
 
 export const FlowchartProcess = ({ workflowSteps }: FlowchartProcessProps) => {
+  const { locale } = useLanguage();
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -49,7 +52,11 @@ export const FlowchartProcess = ({ workflowSteps }: FlowchartProcessProps) => {
 
   // Defensive: ensure steps is array
   if (!workflowSteps || !Array.isArray(workflowSteps) || workflowSteps.length === 0) {
-    return <div className="py-4 text-sm italic text-gray-400">Workflow data tidak tersedia</div>;
+    return (
+      <div className="py-4 text-sm italic text-gray-400">
+        {localizeText('Workflow data tidak tersedia', locale)}
+      </div>
+    );
   }
 
   const activeStep = workflowSteps.find((s) => s.id === activeStepId) || null;
@@ -182,7 +189,10 @@ export const FlowchartProcess = ({ workflowSteps }: FlowchartProcessProps) => {
                     {activeStep.loopTargets && activeStep.loopTargets.length > 0 && (
                       <div className="mt-12 border-t border-gray-100 pt-6 dark:border-white/5">
                         <p className="font-serif text-[11px] italic text-gray-400 dark:text-gray-600">
-                          * Catatan Iterasi: Dapat berulang (loop) kembali ke tahap{' '}
+                          {localizeText(
+                            '* Catatan Iterasi: Dapat berulang (loop) kembali ke tahap',
+                            locale
+                          )}{' '}
                           {activeStep.loopTargets.join(', ')}.
                         </p>
                       </div>

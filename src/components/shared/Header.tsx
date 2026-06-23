@@ -11,6 +11,8 @@ import dynamic from 'next/dynamic';
 import { useReducedMotion } from 'motion/react';
 import IOSPinModal from './IOSPinModal';
 import logoAnimationData from '../../../public/lottie/mata.json';
+import LanguageSwitch from './LanguageSwitch';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
@@ -22,6 +24,7 @@ const Header: React.FC = () => {
   const { setShowControlCenter, showCalendar, setShowCalendar } = useOSOverlays();
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const router = useTransitionRouter();
+  const { dictionary: t, meta } = useLanguage();
 
   const prefersReducedMotion = useReducedMotion();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,31 +47,37 @@ const Header: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const formatTime = useCallback((date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-  }, []);
+  const formatTime = useCallback(
+    (date: Date) => {
+      return date.toLocaleTimeString(meta.intlLocale, {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: meta.intlLocale === 'en-US',
+      });
+    },
+    [meta.intlLocale]
+  );
 
-  const formatDate = useCallback((date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    });
-  }, []);
+  const formatDate = useCallback(
+    (date: Date) => {
+      return date.toLocaleDateString(meta.intlLocale, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
+    },
+    [meta.intlLocale]
+  );
 
   // Memoize app name to avoid recalculating on every timer tick
   const appName = useMemo(() => {
-    if (pathname === '/') return 'Finder';
-    if (pathname?.startsWith('/projects')) return 'Portfolio';
-    if (pathname?.startsWith('/cv')) return 'Resume';
-    if (pathname?.startsWith('/contact')) return 'Contact';
-    if (pathname?.startsWith('/about')) return 'About';
-    return 'Portfolio';
-  }, [pathname]);
+    if (pathname === '/') return t.header.appNames.finder;
+    if (pathname?.startsWith('/projects')) return t.header.appNames.portfolio;
+    if (pathname?.startsWith('/cv')) return t.header.appNames.resume;
+    if (pathname?.startsWith('/contact')) return t.header.appNames.contact;
+    if (pathname?.startsWith('/about')) return t.header.appNames.about;
+    return t.header.appNames.portfolio;
+  }, [pathname, t]);
 
   const isProjectsPage = pathname?.startsWith('/projects');
 
@@ -113,33 +122,34 @@ const Header: React.FC = () => {
               href="/projects"
               className="cursor-pointer rounded px-3 py-1 transition-colors hover:bg-black/5"
             >
-              Works
+              {t.header.works}
             </Link>
             <Link
               href="/"
               onClickCapture={markBack}
               className="cursor-pointer rounded px-3 py-1 transition-colors hover:bg-black/5"
             >
-              About
+              {t.header.about}
             </Link>
             <Link
               href="/contact"
               className="cursor-pointer rounded px-3 py-1 transition-colors hover:bg-black/5"
             >
-              Contact
+              {t.header.contact}
             </Link>
             <Link
               href="/cv"
               className="cursor-pointer rounded px-3 py-1 transition-colors hover:bg-black/5"
             >
-              Resume
+              {t.header.resume}
             </Link>
           </nav>
         )}
       </div>
 
       {/* Right Side */}
-      <div className="flex items-center gap-3 sm:gap-5">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <LanguageSwitch className="hidden sm:inline-grid" />
         <div
           className="flex cursor-pointer items-center gap-3 text-black/80"
           onClick={() => setShowControlCenter(true)}
@@ -149,7 +159,7 @@ const Header: React.FC = () => {
               e.stopPropagation();
               trackEvent('header_search_click', { page: pathname });
             }}
-            aria-label="Search"
+            aria-label={t.header.search}
           >
             <Search size={14} className="transition-colors hover:text-black" />
           </button>
@@ -158,9 +168,9 @@ const Header: React.FC = () => {
           {/* Custom Battery 100% Green - Matching OS Style */}
           <span
             className="flex items-center gap-[1px]"
-            title="Battery Full (100%)"
+            title={t.menuBar.batteryFull}
             role="img"
-            aria-label="Battery 100%"
+            aria-label={t.menuBar.batteryFull}
           >
             <div className="flex h-[11px] w-[22px] items-center justify-center rounded-[2.5px] border border-[#16a34a] bg-[#22c55e]">
               <span

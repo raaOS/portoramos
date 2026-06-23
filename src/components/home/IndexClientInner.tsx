@@ -10,6 +10,7 @@ import { useInfiniteScroll } from './hooks/useInfiniteScroll';
 import { useQuickLook } from '@/components/os/hooks/useQuickLook';
 import QuickLookModal from '@/components/ui/QuickLookModal';
 import { resolveCover } from '@/lib/images';
+import { useDictionary } from '@/contexts/LanguageContext';
 
 import Projects3DView from '@/components/canvas/Projects3DView';
 
@@ -55,6 +56,7 @@ export default function IndexClientInner({
   isLoading: isParentLoading,
   view = 'grid',
 }: Props) {
+  const t = useDictionary();
   const { filteredProjects } = useProjectFiltering(projects, tag, searchQuery);
   const { visibleCount, isLoadingMore, hasMore, resetCount, initialCount } = useInfiniteScroll(
     filteredProjects.length
@@ -143,11 +145,11 @@ export default function IndexClientInner({
 
   return (
     <section className={`${activeView === '3d' ? '' : 'px-4 pb-8 pt-4'}`} data-projects-grid>
-      <h1 className="sr-only">Portfolio - Creative Works & Projects</h1>
+      <h1 className="sr-only">{t.projects.srTitle}</h1>
       {tag && (
         <div className="mb-6 text-center">
           <span className="inline-block rounded-full bg-black px-4 py-2 text-sm text-white">
-            Filtered by tag: <strong>{tag}</strong>
+            {t.projects.filteredByTag}: <strong>{tag}</strong>
           </span>
         </div>
       )}
@@ -186,10 +188,10 @@ export default function IndexClientInner({
             <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
               <p className="mb-2 text-lg text-gray-600">
                 {searchQuery
-                  ? `No projects found for "${searchQuery}"`
+                  ? `${t.projects.noProjectsForSearch} "${searchQuery}"`
                   : tag
-                    ? `No projects with tag "${tag}"`
-                    : 'No projects available'}
+                    ? `${t.projects.noProjectsWithTag} "${tag}"`
+                    : t.projects.noProjectsAvailable}
               </p>
             </div>
           )}

@@ -373,5 +373,16 @@ export const useProjectForm = (project?: Project) => {
     toggleGalleryItemInGroup,
     updateGroupName,
     getSubmitData,
+    setFieldError: (field: string, msg: string | null) => {
+      setErrors(prev => {
+        const newErrs = { ...prev };
+        if (msg) {
+          newErrs[field] = msg;
+        } else {
+          delete newErrs[field];
+        }
+        return newErrs;
+      });
+    }
   };
 };

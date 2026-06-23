@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Video, Phone, MoreVertical } from 'lucide-react';
 import type { ContactProfile } from '../../data/mockChats';
+import { useDictionary } from '@/contexts/LanguageContext';
 
 interface ChatHeaderProps {
   contact: ContactProfile;
@@ -9,6 +10,8 @@ interface ChatHeaderProps {
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({ contact, onBack, isTyping }) => {
+  const t = useDictionary();
+
   return (
     <div className="z-10 flex h-[60px] shrink-0 items-center justify-between border-b border-[#d1d7db] bg-[#f0f2f5] px-3 py-2 shadow-sm">
       <div className="flex items-center gap-2">
@@ -31,7 +34,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ contact, onBack, isTypin
             {contact.name}
           </span>
           <span className="text-[11px] font-medium leading-tight text-[#00a884]">
-            {isTyping ? 'sedang mengetik...' : 'online'}
+            {isTyping ? t.chat.typing : t.chat.online}
           </span>
         </div>
       </div>

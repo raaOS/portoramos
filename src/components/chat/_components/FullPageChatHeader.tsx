@@ -1,7 +1,10 @@
 import React from 'react';
 import { Video, Phone, MoreVertical } from 'lucide-react';
+import { useDictionary } from '@/contexts/LanguageContext';
 
 export default function FullPageChatHeader() {
+  const t = useDictionary();
+
   return (
     <div className="z-10 flex h-[60px] shrink-0 items-center justify-between border-b border-[#d1d7db] bg-[#f0f2f5] px-3 py-2 shadow-sm">
       <div className="flex items-center gap-2">
@@ -18,7 +21,9 @@ export default function FullPageChatHeader() {
           <span className="line-clamp-1 text-sm font-semibold leading-tight text-[#111b21]">
             Ramos
           </span>
-          <span className="text-[11px] font-medium leading-tight text-[#00a884]">online</span>
+          <span className="text-[11px] font-medium leading-tight text-[#00a884]">
+            {t.chat.online}
+          </span>
         </div>
       </div>
 

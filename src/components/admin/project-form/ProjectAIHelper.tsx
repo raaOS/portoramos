@@ -54,6 +54,7 @@ interface ProjectAIHelperProps {
   mode?: 'content' | 'viral';
   projectTitle?: string;
   projectDescription?: string;
+  onCoverMissing?: () => void;
 }
 
 interface GenerateRequestBody {
@@ -76,6 +77,7 @@ export default function ProjectAIHelper({
   mode,
   projectTitle = '',
   projectDescription = '',
+  onCoverMissing,
 }: ProjectAIHelperProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingViral, setIsGeneratingViral] = useState(false);
@@ -104,7 +106,9 @@ export default function ProjectAIHelper({
   const handleGenerate = async () => {
     if (isGenerating) return;
     if (!cover && !pendingFile) {
-      setError('Upload media cover first!');
+      setError('Silakan unggah Cover Media di sebelah kiri terlebih dahulu agar AI bisa membaca konteks proyek Anda.');
+      showToastError('Cover Media belum diunggah!');
+      if (onCoverMissing) onCoverMissing();
       return;
     }
 
@@ -189,6 +193,13 @@ export default function ProjectAIHelper({
 
   const handleGenerateViral = async () => {
     if (isGeneratingViral) return;
+
+    if (!cover && !pendingFile) {
+      setError('Silakan unggah Cover Media di sebelah kiri terlebih dahulu agar AI bisa menganalisis potensi viral.');
+      showToastError('Cover Media belum diunggah!');
+      if (onCoverMissing) onCoverMissing();
+      return;
+    }
 
     if (existingCommentCount > 0) {
       const shouldRegenerate = await confirm({
@@ -377,8 +388,12 @@ export default function ProjectAIHelper({
             <button
               type="button"
               onClick={handleGenerate}
-              disabled={isGenerating || (!cover && !pendingFile)}
-              className="flex w-full items-center justify-center gap-1.5 rounded bg-indigo-600 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-indigo-700 active:scale-95 disabled:pointer-events-none disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-600"
+              disabled={isGenerating}
+              className={`flex w-full items-center justify-center gap-1.5 rounded py-1.5 text-xs font-bold uppercase tracking-wider shadow-sm transition-all ${
+                (!cover && !pendingFile) || isGenerating
+                  ? 'cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'
+              }`}
             >
               {isGenerating ? (
                 <>
@@ -520,7 +535,11 @@ export default function ProjectAIHelper({
               type="button"
               onClick={handleGenerateViral}
               disabled={isGeneratingViral}
-              className="dark:disabled:text-slate-650 flex w-full items-center justify-center gap-1.5 rounded border border-slate-300 bg-white py-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 shadow-sm transition-all hover:border-slate-800 hover:text-slate-900 active:scale-95 disabled:pointer-events-none disabled:bg-slate-200 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-400 dark:hover:text-white dark:disabled:bg-slate-800"
+              className={`flex w-full items-center justify-center gap-1.5 rounded border py-1.5 text-xs font-bold uppercase tracking-wider shadow-sm transition-all active:scale-95 ${
+                (!cover && !pendingFile) || isGeneratingViral
+                  ? 'cursor-not-allowed border-slate-200 bg-slate-200 text-slate-400 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-600'
+                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-800 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-400 dark:hover:text-white'
+              }`}
             >
               {isGeneratingViral ? (
                 <>

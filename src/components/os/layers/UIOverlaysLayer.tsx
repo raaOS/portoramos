@@ -200,26 +200,24 @@ export default function UIOverlaysLayer({
 
       <AnimatePresence>
         {showSpotlight && (
-          <motion.div
-            key="spotlight"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-            style={{ zIndex: Z_LAYERS.BACKDROP }}
+          <div
+            className="pointer-events-auto absolute inset-0"
+            style={{ zIndex: Z_LAYERS.POPOUT }}
+            onClick={() => setShowSpotlight(false)}
           >
-            <Spotlight
-              isOpen={showSpotlight}
-              onClose={() => setShowSpotlight(false)}
-              projects={commercialProjects}
-              onOpenProject={(project: Project) => {
-                setShowSpotlight(false);
-                openProjectWindow(project);
-              }}
-              onOpenApp={(id) => openWindow(id)}
-            />
-          </motion.div>
+            <div onClick={(e) => e.stopPropagation()}>
+              <Spotlight
+                isOpen={showSpotlight}
+                onClose={() => setShowSpotlight(false)}
+                projects={commercialProjects}
+                onOpenProject={(project: Project) => {
+                  setShowSpotlight(false);
+                  openProjectWindow(project);
+                }}
+                onOpenApp={(id) => openWindow(id)}
+              />
+            </div>
+          </div>
         )}
       </AnimatePresence>
 

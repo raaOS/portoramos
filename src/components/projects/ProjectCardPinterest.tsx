@@ -10,6 +10,8 @@ import {
   prepareProjectCoverTransition,
   PROJECT_COVER_TRANSITION_ATTRIBUTE,
 } from '@/lib/projectCoverTransition';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { localizeText } from '@/lib/i18n/contentLocalization';
 
 interface ProjectCardPinterestProps {
   project: Project;
@@ -30,6 +32,8 @@ export default function ProjectCardPinterest({
   onClick,
 }: ProjectCardPinterestProps & { onClick?: () => void }) {
   const { slug, title, tags, likes, shares } = project;
+  const { locale } = useLanguage();
+  const localizedTitle = localizeText(title, locale);
   const cover = resolvePreviewCover(project);
   const shouldAutoplay = videoEnabled && (project.autoplay ?? true);
   const { toast, handleContextMenu } = useImageProtection();
@@ -91,7 +95,7 @@ export default function ProjectCardPinterest({
             poster={cover.poster}
             posterPriority={cover.kind === 'video' ? priority : undefined}
             eager={shouldEagerLoad}
-            alt={title}
+            alt={localizedTitle}
             // Optimized: Request 256px for thumbnails (closer to actual display size ~170-200px)
             width={256}
             height={Math.round(256 / ratio)}
@@ -122,7 +126,7 @@ export default function ProjectCardPinterest({
       <div className="mt-3 hidden space-y-1 px-1 md:block">
         <div className="flex items-baseline justify-between gap-4">
           <p className="truncate text-sm font-medium leading-tight text-gray-900 decoration-1 underline-offset-2 group-hover:underline dark:text-gray-100">
-            {title}
+            {localizedTitle}
           </p>
           {displayTag && (
             <p className="shrink-0 whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-gray-500">

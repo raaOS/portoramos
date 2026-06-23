@@ -1,7 +1,11 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 import { Check } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { getIconMap } from '@/constants/skillIcons';
+import { localizeText } from '@/lib/i18n/contentLocalization';
 import { getProxiedUrl } from '@/lib/utils';
 import type { AboutData } from '@/types/about';
 import type { HardSkillsData } from '@/types/hardSkill';
@@ -25,6 +29,7 @@ function getLocalHardSkillIcon(name: string) {
 }
 
 export const InterestsTab = ({ aboutData, hardSkillsData }: InterestsTabProps) => {
+  const { locale } = useLanguage();
   // Normalize soft skills data
   const rawItems =
     aboutData?.softSkills?.items ||
@@ -52,8 +57,10 @@ export const InterestsTab = ({ aboutData, hardSkillsData }: InterestsTabProps) =
       <div>
         <h1 className="about-heading mb-6 break-words text-2xl font-bold text-black">Skillset</h1>
         <p className="mb-8 break-words text-sm leading-relaxed text-gray-500">
-          Kombinasi keahlian teknis dan interpersonal yang saya gunakan untuk membangun solusi
-          berkualitas.
+          {localizeText(
+            'Kombinasi keahlian teknis dan interpersonal yang saya gunakan untuk membangun solusi berkualitas.',
+            locale
+          )}
         </p>
       </div>
 
@@ -91,7 +98,7 @@ export const InterestsTab = ({ aboutData, hardSkillsData }: InterestsTabProps) =
                         <Check size={8} className="text-[#42b549]" strokeWidth={3} />
                       </div>
                       <span className="break-words text-xs leading-tight text-gray-600">
-                        {detail}
+                        {localizeText(detail, locale)}
                       </span>
                     </div>
                   ))}
@@ -115,10 +122,10 @@ export const InterestsTab = ({ aboutData, hardSkillsData }: InterestsTabProps) =
                 className="group flex min-w-0 flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50/30 p-4 transition-all duration-300 hover:border-black/10 hover:bg-white"
               >
                 <h3 className="flex items-center gap-2 break-words text-lg font-bold text-black">
-                  {item.text}
+                  {localizeText(item.text, locale)}
                 </h3>
                 <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-600">
-                  {item.description}
+                  {localizeText(item.description, locale)}
                 </p>
               </div>
             ))}

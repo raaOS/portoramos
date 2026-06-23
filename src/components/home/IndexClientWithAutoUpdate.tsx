@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLastUpdated } from '@/contexts/LastUpdatedContext';
 import { POLLING } from '@/lib/constants';
 import IndexClientInner from './IndexClientInner';
+import { useDictionary } from '@/contexts/LanguageContext';
 
 type Props = {
   initialProjects?: Project[];
@@ -22,6 +23,7 @@ export default function IndexClientWithAutoUpdate({
   initialProjects: serverProjects = [],
   windowWidth,
 }: Props) {
+  const t = useDictionary();
   // Safe context access
   const context = useLastUpdated();
   const contextLastUpdated = context?.lastUpdated;
@@ -109,7 +111,7 @@ export default function IndexClientWithAutoUpdate({
       {/* BUG FIX #5: Error state indicator */}
       {isError && (
         <div className="border border-red-200 bg-red-50 px-4 py-2 text-center text-sm text-red-700">
-          Gagal memuat data terbaru. Menampilkan data cache.
+          {t.projects.loadLatestError}
         </div>
       )}
 

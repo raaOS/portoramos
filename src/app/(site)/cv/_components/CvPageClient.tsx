@@ -6,6 +6,8 @@ import type { AboutData } from '@/types/about';
 import type { ExperienceData } from '@/types/experience';
 import type { HardSkillsData } from '@/types/hardSkill';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { localizeText, localizeWorkExperience } from '@/lib/i18n/contentLocalization';
 
 // Extracted Sub-components & Hook
 import { useCvExport } from './hooks/useCvExport';
@@ -24,15 +26,18 @@ type Props = {
 };
 
 export default function CvPageClient({ aboutData, experienceData, hardSkillsData }: Props) {
+  const { locale } = useLanguage();
   const searchParams = useSearchParams();
   const shouldAutoPrint = searchParams?.get('print') === 'true';
   const cvRef = useRef<HTMLDivElement>(null);
 
   const displayName = 'Ramos';
   const headline = 'Graphic Designer';
-  const summary =
+  const summary = localizeText(
     aboutData?.professional?.bio?.content ??
-    'Desainer Grafis senior dengan fokus pada solusi visual yang strategis dan berdampak nyata.';
+      'Desainer Grafis senior dengan fokus pada solusi visual yang strategis dan berdampak nyata.',
+    locale
+  );
 
   const { handlePrint } = useCvExport({ cvRef, displayName });
 
@@ -54,7 +59,10 @@ export default function CvPageClient({ aboutData, experienceData, hardSkillsData
     return chunks;
   };
 
-  const softSkills = aboutData?.softSkills?.texts ?? [];
+  const softSkills = useMemo(
+    () => (aboutData?.softSkills?.texts ?? []).map((skill) => localizeText(skill, locale)),
+    [aboutData?.softSkills?.texts, locale]
+  );
   const hardSkills = useMemo(() => {
     const skills = hardSkillsData?.skills || [];
     return skills
@@ -64,11 +72,14 @@ export default function CvPageClient({ aboutData, experienceData, hardSkillsData
       .map((s) => ({
         tool: s.name,
         level: s.level,
-        details: s.details || [],
+        details: (s.details || []).map((detail) => localizeText(detail, locale)),
       }));
-  }, [hardSkillsData]);
+  }, [hardSkillsData, locale]);
 
-  const workExperience = experienceData?.workExperience ?? [];
+  const workExperience = useMemo(
+    () => (experienceData?.workExperience ?? []).map((job) => localizeWorkExperience(job, locale)),
+    [experienceData?.workExperience, locale]
+  );
 
   return (
     <SystemNavFrame>
@@ -105,7 +116,10 @@ export default function CvPageClient({ aboutData, experienceData, hardSkillsData
             <div className="no-print pointer-events-none absolute right-0 top-0 -mr-16 -mt-16 h-32 w-32 rounded-full bg-red-50/50 blur-3xl" />
 
             <div className="relative z-10 space-y-10">
-              <CvSection title="Ringkasan Profesional" accent>
+              <CvSection
+                title={locale === 'en' ? 'Professional Summary' : 'Ringkasan Profesional'}
+                accent
+              >
                 <p className="text-sm font-medium leading-relaxed text-gray-700 md:text-base">
                   {summary}
                 </p>

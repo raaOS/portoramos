@@ -3,6 +3,7 @@ import { m, AnimatePresence } from 'motion/react';
 import { CheckCheck } from 'lucide-react';
 import { parseEmojiText } from '@/components/chat/AnimatedEmoji';
 import TypingIndicator from './TypingIndicator';
+import { useDictionary } from '@/contexts/LanguageContext';
 
 interface ChatMessage {
   id: string;
@@ -22,6 +23,8 @@ export default function FullPageChatMessages({
   isTyping,
   bottomRef,
 }: FullPageChatMessagesProps) {
+  const t = useDictionary();
+
   return (
     <div className="relative flex min-h-0 w-full flex-1 flex-col gap-2 overflow-y-auto bg-[#e5ddd5] px-4 py-4 dark:bg-[#0b141a]">
       {/* WhatsApp Pattern Background */}
@@ -38,7 +41,7 @@ export default function FullPageChatMessages({
       <div className="relative z-10 flex w-full flex-col gap-2">
         <div className="z-10 mb-2 flex w-full justify-center">
           <span className="rounded-md bg-[#d9ddcf] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#54656f] shadow-sm dark:bg-[#1f2c34] dark:text-gray-300">
-            Today
+            {t.chat.today}
           </span>
         </div>
         <AnimatePresence initial={false}>

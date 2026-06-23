@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import type { Project } from '@/types/projects';
 import { getIconMap } from '@/constants/skillIcons';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '../utils/translations';
 
 interface ProjectMetaProps {
@@ -12,6 +13,8 @@ interface ProjectMetaProps {
 }
 
 export function ProjectMeta({ project, translations, isWindowMode = false }: ProjectMetaProps) {
+  const { locale } = useLanguage();
+  const isEnglish = locale === 'en' || !!translations;
   // Memoize icon map to prevent recreation on every render
   // MUST be called before any early return (Rules of Hooks)
   const iconMap = useMemo(
@@ -32,7 +35,7 @@ export function ProjectMeta({ project, translations, isWindowMode = false }: Pro
       <div className="mb-4 border-t border-gray-100 pt-4 dark:border-gray-800">
         <div className="grid grid-cols-2 gap-x-4 gap-y-4">
           {project.role && (
-            <MetaItem label={translations ? 'Role' : 'Peran'}>
+            <MetaItem label={isEnglish ? 'Role' : 'Peran'}>
               {getTranslation(translations, 'role') || project.role}
             </MetaItem>
           )}
@@ -48,19 +51,19 @@ export function ProjectMeta({ project, translations, isWindowMode = false }: Pro
           )}
 
           {project.timeline && (
-            <MetaItem label={translations ? 'Timeline' : 'Waktu'}>
+            <MetaItem label={isEnglish ? 'Timeline' : 'Waktu'}>
               {getTranslation(translations, 'timeline') || project.timeline}
             </MetaItem>
           )}
 
           {project.team && (
-            <MetaItem label={translations ? 'Team' : 'Tim'}>
+            <MetaItem label={isEnglish ? 'Team' : 'Tim'}>
               {getTranslation(translations, 'team') || project.team}
             </MetaItem>
           )}
 
-          <MetaItem label={translations ? 'Type' : 'Tipe'}>
-            {translations
+          <MetaItem label={isEnglish ? 'Type' : 'Tipe'}>
+            {isEnglish
               ? project.type === 'commercial'
                 ? 'Commercial Project'
                 : 'Visual Art'
@@ -80,7 +83,7 @@ export function ProjectMeta({ project, translations, isWindowMode = false }: Pro
         {project.role && (
           <div>
             <h3 className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-              {translations ? 'Role' : 'Peran'}
+              {isEnglish ? 'Role' : 'Peran'}
             </h3>
             <p className="text-sm font-medium text-gray-900 dark:text-white">
               {getTranslation(translations, 'role') || project.role}
@@ -106,7 +109,7 @@ export function ProjectMeta({ project, translations, isWindowMode = false }: Pro
         {project.timeline && (
           <div>
             <h3 className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-              {translations ? 'Timeline' : 'Waktu'}
+              {isEnglish ? 'Timeline' : 'Waktu'}
             </h3>
             <p className="text-sm font-medium text-gray-900 dark:text-white">
               {getTranslation(translations, 'timeline') || project.timeline}
@@ -118,7 +121,7 @@ export function ProjectMeta({ project, translations, isWindowMode = false }: Pro
         {project.team && (
           <div>
             <h3 className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-              {translations ? 'Team' : 'Tim'}
+              {isEnglish ? 'Team' : 'Tim'}
             </h3>
             <p className="text-sm font-medium text-gray-900 dark:text-white">
               {getTranslation(translations, 'team') || project.team}
@@ -129,10 +132,10 @@ export function ProjectMeta({ project, translations, isWindowMode = false }: Pro
         {/* Type */}
         <div>
           <h3 className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-            {translations ? 'Type' : 'Tipe'}
+            {isEnglish ? 'Type' : 'Tipe'}
           </h3>
           <p className="text-sm font-medium text-gray-900 dark:text-white">
-            {translations
+            {isEnglish
               ? project.type === 'commercial'
                 ? 'Commercial Project'
                 : 'Visual Art'

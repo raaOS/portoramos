@@ -5,16 +5,10 @@ import { motion } from 'motion/react';
 import { Search, FileText, AppWindow, Command } from 'lucide-react';
 import type { Project } from '@/types/projects';
 import { Z_LAYERS } from '../utils/zIndexLayers';
+import { useDictionary } from '@/contexts/LanguageContext';
 
-const SYSTEM_APPS = [
-  { id: 'about', title: 'About Me', type: 'app' as const },
-  { id: 'whatsapp', title: 'WhatsApp', type: 'app' as const },
-  { id: 'contact', title: 'Contact', type: 'app' as const },
-  { id: 'trash-bin', title: 'Trash', type: 'app' as const },
-];
-type SpotlightResult =
-  | (typeof SYSTEM_APPS)[number]
-  | { id: string; title: string; type: 'project'; project: Project };
+type SystemApp = { id: string; title: string; type: 'app' };
+type SpotlightResult = SystemApp | { id: string; title: string; type: 'project'; project: Project };
 
 interface SpotlightProps {
   isOpen: boolean;
@@ -59,15 +53,26 @@ export default function Spotlight({
   onOpenProject,
   onOpenApp,
 }: SpotlightProps) {
+  const t = useDictionary();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const systemApps = useMemo<SystemApp[]>(
+    () => [
+      { id: 'about', title: t.dock.about, type: 'app' },
+      { id: 'whatsapp', title: 'WhatsApp', type: 'app' },
+      { id: 'contact', title: t.dock.contact, type: 'app' },
+      { id: 'trash-bin', title: t.dock.trash, type: 'app' },
+    ],
+    [t]
+  );
+
   const results = useMemo<SpotlightResult[]>(() => {
     if (!query.trim()) {
       return [
-        ...SYSTEM_APPS,
-        ...projects.slice(0, 8 - SYSTEM_APPS.length).map((project) => ({
+        ...systemApps,
+        ...projects.slice(0, 8 - systemApps.length).map((project) => ({
           id: project.id,
           title: project.title,
           type: 'project' as const,
@@ -78,7 +83,7 @@ export default function Spotlight({
 
     const scored: Array<{ item: SpotlightResult; score: number }> = [];
 
-    for (const app of SYSTEM_APPS) {
+    for (const app of systemApps) {
       const score = fuzzyMatch(query, app.title);
       if (score > 0) scored.push({ item: app, score });
     }
@@ -103,7 +108,7 @@ export default function Spotlight({
       .sort((a, b) => b.score - a.score)
       .slice(0, 8)
       .map((s) => s.item);
-  }, [query, projects]);
+  }, [query, projects, systemApps]);
 
   const safeSelectedIndex = results.length === 0 ? 0 : Math.min(selectedIndex, results.length - 1);
 
@@ -164,22 +169,34 @@ export default function Spotlight({
   return (
     <motion.div
       role="dialog"
-      aria-label="Spotlight Search"
+      aria-label={t.spotlight.ariaLabel}
       aria-modal="true"
-      initial={{ opacity: 0, scale: 1.05 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.05 }}
-      className="pointer-events-auto fixed inset-0 flex items-start justify-center bg-black/20 print:hidden"
+      initial={{ opacity: 0, width: 46, height: 46, filter: 'blur(4px)' }}
+      animate={{ opacity: 1, width: 380, height: 'auto', filter: 'blur(0px)' }}
+      exit={{ opacity: 0, width: 46, height: 46, filter: 'blur(4px)' }}
+      transition={{
+        type: 'spring',
+        stiffness: 380,
+        damping: 34,
+        mass: 0.85,
+        opacity: { duration: 0.16 },
+        filter: { duration: 0.16 },
+        width: { type: 'spring', stiffness: 430, damping: 34, mass: 0.85 },
+        height: { type: 'spring', stiffness: 320, damping: 34, mass: 0.9 },
+      }}
+      className="pointer-events-auto fixed right-4 top-11 flex flex-col items-end overflow-hidden rounded-2xl border border-white/20 bg-white/80 text-black shadow-2xl backdrop-blur-2xl print:hidden dark:border-white/10 dark:bg-black/70 dark:text-white"
       style={{ zIndex: Z_LAYERS.POPOUT_CONTENT }}
-      onClick={onClose}
     >
       <motion.div
-        className="w-[600px] overflow-hidden rounded-xl border border-gray-200 bg-white"
-        onClick={(event) => event.stopPropagation()}
+        className="w-[380px] shrink-0"
+        initial={{ opacity: 0, x: 8, filter: 'blur(2px)' }}
+        animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+        exit={{ opacity: 0, x: 8, filter: 'blur(2px)' }}
+        transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
         onKeyDown={handleKeyDown}
       >
-        <div className="flex items-center border-b border-gray-200 px-4 py-4">
-          <Search className="mr-3 text-gray-400" size={20} aria-hidden="true" />
+        <div className="flex items-center border-b border-black/5 px-4 py-3 dark:border-white/5">
+          <Search className="mr-3 text-black/40 dark:text-white/40" size={18} aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
@@ -188,70 +205,70 @@ export default function Spotlight({
               setQuery(event.target.value);
               setSelectedIndex(0);
             }}
-            placeholder="Spotlight Search"
-            aria-label="Search applications and projects"
+            placeholder={t.spotlight.placeholder}
+            aria-label={t.spotlight.searchApplications}
             aria-autocomplete="list"
             aria-controls="spotlight-results"
-            className="flex-1 border-none bg-transparent text-xl text-gray-800 outline-none placeholder:text-gray-400"
+            className="flex-1 border-none bg-transparent text-lg text-black outline-none placeholder:text-black/40 dark:text-white dark:placeholder:text-white/40"
           />
-          <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-400">
+          <div className="flex items-center gap-1 rounded bg-black/5 px-2 py-1 text-[10px] font-medium text-black/40 dark:bg-white/10 dark:text-white/40">
             <Command size={10} />
             <span>K</span>
           </div>
         </div>
 
-        <div id="spotlight-results" role="listbox" className="max-h-[400px] overflow-y-auto py-2">
+        <div id="spotlight-results" role="listbox" className="max-h-[360px] overflow-y-auto py-2">
           {results.length > 0 ? (
             results.map((result, index) => (
               <div
                 key={result.id}
                 role="option"
                 aria-selected={index === safeSelectedIndex}
-                className={`flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors ${
+                className={`flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors ${
                   index === safeSelectedIndex
-                    ? 'bg-black text-white'
-                    : 'text-gray-700 hover:bg-black/5'
+                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-black'
+                    : 'text-black/70 hover:bg-black/5 dark:text-white/70 dark:hover:bg-white/5'
                 }`}
                 onClick={() => openResult(result)}
                 onMouseEnter={() => setSelectedIndex(index)}
               >
                 {result.type === 'app' ? (
                   <AppWindow
-                    size={18}
-                    className={index === safeSelectedIndex ? 'text-white' : 'text-gray-400'}
+                    size={16}
+                    className={index === safeSelectedIndex ? 'text-white dark:text-black' : 'text-black/40 dark:text-white/40'}
                   />
                 ) : (
                   <FileText
-                    size={18}
-                    className={index === safeSelectedIndex ? 'text-white' : 'text-orange-500'}
+                    size={16}
+                    className={index === safeSelectedIndex ? 'text-white dark:text-black' : 'text-orange-500'}
                   />
                 )}
-                <span className="flex-1 font-medium">{result.title}</span>
+                <span className="flex-1 text-sm font-medium">{result.title}</span>
                 {index === safeSelectedIndex && (
-                  <span className="text-[10px] opacity-70">Enter to Open</span>
+                  <span className="text-[10px] opacity-70">{t.spotlight.enterToOpen}</span>
                 )}
               </div>
             ))
           ) : (
-            <div className="px-4 py-8 text-center text-gray-400">
-              No results for &quot;{query}&quot;
+            <div className="px-4 py-8 text-center text-sm text-black/40 dark:text-white/40">
+              {t.spotlight.noResultsPrefix} &quot;{query}&quot;
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-2 text-[10px] text-gray-400">
+        <div className="flex items-center justify-between border-t border-black/5 bg-black/5 px-4 py-2 text-[10px] text-black/40 dark:border-white/5 dark:bg-white/5 dark:text-white/40">
           <div className="flex gap-3">
             <span>
-              <span className="font-bold">Up/Down</span> to navigate
+              <span className="font-bold">{t.spotlight.upDownHint}</span> {t.spotlight.navigateHint}
             </span>
             <span>
-              <span className="font-bold">Enter</span> to open
+              <span className="font-bold">{t.spotlight.enterHint}</span> {t.spotlight.openHint}
             </span>
             <span>
-              <span className="font-bold">Esc</span> to close
+              <span className="font-bold">{t.spotlight.escHint}</span> {t.spotlight.closeHint}
             </span>
           </div>
-          <div className="flex items-center gap-1">Powered by Gemini</div>
+          <div className="hidden items-center gap-1 sm:flex">{t.spotlight.poweredBy}</div>
         </div>
       </motion.div>
     </motion.div>

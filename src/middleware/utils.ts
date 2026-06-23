@@ -33,8 +33,8 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
     [
       "default-src 'self'",
       isProd
-        ? "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com https://vercel.live"
-        : "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com blob:",
+        ? "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com https://vercel.live https://www.youtube.com https://s.ytimg.com"
+        : "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com blob: https://www.youtube.com https://s.ytimg.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
@@ -43,7 +43,7 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
-      "frame-src 'self' https://vercel.live",
+      "frame-src 'self' https://vercel.live https://www.youtube.com",
       "frame-ancestors 'self'",
     ].join('; ') + ';';
 

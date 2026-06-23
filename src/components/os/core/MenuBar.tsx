@@ -2,13 +2,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { Search, Wifi, LogOut, Users } from 'lucide-react';
+import { Check, ChevronDown, Search, Wifi, LogOut, Users } from 'lucide-react';
 import { useOSOverlays } from '../context/OSSystemContext';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 import { useReducedMotion } from 'motion/react';
 import { useTransitionRouter } from 'next-view-transitions';
 import IOSPinModal from '@/components/shared/IOSPinModal';
 import logoAnimationData from '../../../../public/lottie/mata.json';
+import LanguageSwitch from '@/components/shared/LanguageSwitch';
+import { useLanguage } from '@/contexts/LanguageContext';
+import MusicPlayerWidget from '../ui/MusicWidget';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
@@ -35,6 +38,7 @@ export default function MenuBar({
   onToggleControlCenter,
 }: MenuBarProps) {
   const { showCalendar, setShowCalendar, showGhostCursors, toggleGhostCursors } = useOSOverlays();
+  const { dictionary: t, meta } = useLanguage();
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const viewMenuRef = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(new Date());
@@ -83,17 +87,40 @@ export default function MenuBar({
   }, []);
 
   // Format: "Sen 22 Jan 19:30"
-  const formattedTime = time.toLocaleTimeString('id-ID', {
+  const formattedTime = time.toLocaleTimeString(meta.intlLocale, {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
   });
 
-  const formattedDate = time.toLocaleDateString('id-ID', {
+  const formattedDate = time.toLocaleDateString(meta.intlLocale, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
   });
+
+  const localizedActiveWindow =
+    activeWindow === 'Finder'
+      ? t.windowTitles.finder
+      : activeWindow === 'Finder: About Me'
+        ? t.windowTitles.about
+        : activeWindow === 'WhatsApp'
+          ? t.windowTitles.whatsapp
+          : activeWindow === 'Contact'
+            ? t.windowTitles.contact
+            : activeWindow === 'Finder: Projects'
+              ? t.windowTitles.projects
+              : activeWindow === 'Project Explorer'
+                ? t.windowTitles.explorer
+                : activeWindow === 'Recycle Bin'
+                  ? t.windowTitles.trash
+                  : activeWindow;
+  const availabilityText =
+    availability?.status === 'available'
+      ? t.header.available
+      : availability?.status === 'busy'
+        ? t.header.busy
+        : availability?.text;
 
   return (
     <div
@@ -105,7 +132,7 @@ export default function MenuBar({
         <div
           onClick={() => setIsPinModalOpen(true)}
           className="relative flex h-8 w-12 shrink-0 cursor-pointer items-center justify-center"
-          aria-label="Ramos OS"
+          aria-label={t.menuBar.ramosOS}
           role="img"
         >
           <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -123,17 +150,17 @@ export default function MenuBar({
         <div
           className="hidden max-w-[clamp(5rem,22vw,12rem)] cursor-pointer truncate whitespace-nowrap rounded px-2 py-1 font-bold transition-colors hover:bg-black/5 sm:block"
           onClick={onAbout}
-          title={activeWindow}
+          title={localizedActiveWindow}
         >
-          {activeWindow}
+          {localizedActiveWindow}
         </div>
         {/* Menus (Hidden on mobile for simplicity) */}
         <div className="hidden items-center gap-1 font-medium lg:flex">
           <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-            File
+            {t.menuBar.file}
           </div>
           <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-            Edit
+            {t.menuBar.edit}
           </div>
           <div
             ref={viewMenuRef}
@@ -141,8 +168,8 @@ export default function MenuBar({
             onClick={() => setViewMenuOpen(!viewMenuOpen)}
           >
             <div className="flex cursor-default items-center gap-1 rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-              View
-              <span className="text-[10px]">▾</span>
+              {t.menuBar.view}
+              <ChevronDown size={10} aria-hidden="true" />
             </div>
             {viewMenuOpen && (
               <div className="absolute left-0 top-full z-[1000] mt-1 min-w-[140px] rounded border border-gray-200 bg-white py-1 shadow-lg">
@@ -160,22 +187,22 @@ export default function MenuBar({
                     }`}
                     aria-hidden="true"
                   />
-                  <span className="truncate">Show Ghost Cursors</span>
+                  <span className="truncate">{t.menuBar.showGhostCursors}</span>
                   {showGhostCursors && (
-                    <span className="ml-auto text-[10px] font-bold text-emerald-500">✓</span>
+                    <Check size={12} className="ml-auto text-emerald-500" aria-hidden="true" />
                   )}
                 </div>
               </div>
             )}
           </div>
           <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-            Go
+            {t.menuBar.go}
           </div>
           <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-            Window
+            {t.menuBar.window}
           </div>
           <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-            Help
+            {t.menuBar.help}
           </div>
         </div>
       </div>
@@ -187,23 +214,28 @@ export default function MenuBar({
             <div className="animate-in fade-in slide-in-from-top-1 flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5">
               <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
               <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700">
-                Admin Mode
+                {t.menuBar.adminMode}
               </span>
             </div>
             <button
               onClick={onLogout}
               className="group flex items-center gap-1.5 px-3 py-1 text-red-600 transition-all hover:text-red-700 active:scale-95"
-              title="Sign Out from Admin Session"
+              title={t.menuBar.exitAdmin}
             >
               <LogOut size={14} className="transition-transform group-hover:-translate-x-0.5" />
-              <span className="text-[11px] font-bold uppercase tracking-tight">Exit Admin</span>
+              <span className="text-[11px] font-bold uppercase tracking-tight">
+                {t.menuBar.exitAdmin}
+              </span>
             </button>
           </div>
         </div>
       )}
 
       {/* Right Side */}
-      <div className="flex shrink-0 items-center gap-2 sm:gap-3 lg:gap-5">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
+        <MusicPlayerWidget />
+        <LanguageSwitch className="hidden md:inline-grid" />
+
         {/* Availability Status */}
         {availability && (
           <div
@@ -219,7 +251,7 @@ export default function MenuBar({
               }`}
             />
             <span className="truncate text-[10px] font-medium uppercase tracking-wide">
-              {availability.text}
+              {availabilityText}
             </span>
           </div>
         )}
@@ -242,9 +274,9 @@ export default function MenuBar({
           {/* Custom Battery 100% Green */}
           <span
             className="flex items-center gap-[1px]"
-            title="Battery Full (100%)"
+            title={t.menuBar.batteryFull}
             role="img"
-            aria-label="Battery 100%"
+            aria-label={t.menuBar.batteryFull}
           >
             <div className="flex h-[11px] w-[22px] items-center justify-center rounded-[2.5px] border border-[#16a34a] bg-[#22c55e]">
               <span

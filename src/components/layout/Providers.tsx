@@ -1,6 +1,8 @@
 'use client';
 
 import { OSSystemProvider } from '@/components/os/context/OSSystemContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
+import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 
 /**
  * Root client providers.
@@ -13,5 +15,11 @@ import { OSSystemProvider } from '@/components/os/context/OSSystemContext';
  * ModalProvider removed — no consumer uses `useModal()` anywhere.
  */
 export default function Providers({ children }: { children: React.ReactNode }) {
-  return <OSSystemProvider>{children}</OSSystemProvider>;
+  return (
+    <OSSystemProvider>
+      <LanguageProvider>
+        <MusicPlayerProvider>{children}</MusicPlayerProvider>
+      </LanguageProvider>
+    </OSSystemProvider>
+  );
 }

@@ -3,6 +3,7 @@
 import type { Project } from '@/types/projects';
 import { useMemo } from 'react';
 import { motion } from 'motion/react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '../utils/translations';
 
 interface ProjectNarrativeProps {
@@ -20,6 +21,8 @@ export function ProjectNarrative({
   onTabChange,
   isWindowMode = false,
 }: ProjectNarrativeProps) {
+  const { locale } = useLanguage();
+  const isEnglish = locale === 'en' || !!translations;
   const hasChallenge = !!(project.narrative?.challenge || project.narrative?.concept);
   const hasSolution = !!(project.narrative?.solution || project.narrative?.process);
   const hasImpact = !!(
@@ -37,7 +40,7 @@ export function ProjectNarrative({
     }> = [
       {
         id: 'challenge',
-        label: translations
+        label: isEnglish
           ? project.narrative?.concept
             ? 'Concept'
             : 'Challenge'
@@ -48,7 +51,7 @@ export function ProjectNarrative({
       },
       {
         id: 'solution',
-        label: translations
+        label: isEnglish
           ? project.narrative?.process
             ? 'Process'
             : 'Solution'
@@ -59,7 +62,7 @@ export function ProjectNarrative({
       },
       {
         id: 'impact',
-        label: translations
+        label: isEnglish
           ? project.narrative?.impact
             ? 'Impact'
             : project.narrative?.detail
@@ -74,7 +77,7 @@ export function ProjectNarrative({
       },
     ];
     return result.filter((t) => t.show);
-  }, [translations, project.narrative, hasChallenge, hasSolution, hasImpact]);
+  }, [isEnglish, project.narrative, hasChallenge, hasSolution, hasImpact]);
 
   const tabStyles: Record<string, { bg: string; tint: string; border: string }> = {
     challenge: {

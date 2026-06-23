@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransitionRouter } from 'next-view-transitions';
 import { Grid, Filter, Search as SearchIcon, X, Check, Box } from 'lucide-react';
 import { saveProjectsViewMode } from '@/lib/projectsViewMode';
+import { useDictionary } from '@/contexts/LanguageContext';
 
 import { Label } from '@/types/labels';
 
@@ -17,6 +18,7 @@ export default function ProjectsFinderHeader({
   itemCount,
   labels = [],
 }: ProjectsFinderHeaderProps) {
+  const t = useDictionary();
   const router = useRouter();
   // Router khusus untuk transisi visual saat ganti mode grid ↔ 3D canvas
   const vtRouter = useTransitionRouter();
@@ -33,7 +35,7 @@ export default function ProjectsFinderHeader({
   const filterRef = useRef<HTMLDivElement>(null);
 
   // Add "All" option to labels
-  const allCategories = [{ name: 'Semua Karya', slug: '' }, ...labels];
+  const allCategories = [{ name: t.projects.allWorks, slug: '' }, ...labels];
 
   useEffect(() => {
     const query = searchParams?.get('q') || '';
@@ -118,10 +120,10 @@ export default function ProjectsFinderHeader({
       <div className="flex w-full items-center gap-3 sm:w-auto">
         <div>
           <h1 className="whitespace-nowrap text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-            Koleksi Project
+            {t.projects.collectionTitle}
           </h1>
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-            {itemCount} Items
+            {itemCount} {t.projects.items}
           </p>
         </div>
       </div>
@@ -135,7 +137,7 @@ export default function ProjectsFinderHeader({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Cari project, klien, atau kategori..."
+          placeholder={t.projects.searchPlaceholder}
           className="w-full rounded-md border border-gray-300 bg-gray-200/50 py-2 pl-10 pr-9 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-gray-100 dark:focus:bg-neutral-900"
         />
         {isMounted && searchQuery && (
@@ -161,8 +163,8 @@ export default function ProjectsFinderHeader({
             <button
               onClick={() => handleViewChange('grid')}
               className={`p-1 transition-all duration-200 ${currentView === 'grid' ? 'scale-110 text-emerald-500 drop-shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
-              title="Tampilan Grid"
-              aria-label="Grid view"
+              title={t.projects.gridView}
+              aria-label={t.projects.gridView}
               aria-pressed={currentView === 'grid'}
             >
               <Grid size={18} />
@@ -170,8 +172,8 @@ export default function ProjectsFinderHeader({
             <button
               onClick={() => handleViewChange('3d')}
               className={`p-1 transition-all duration-200 ${currentView === '3d' ? 'scale-110 text-blue-500 drop-shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
-              title="Tampilan 3D"
-              aria-label="3D view"
+              title={t.projects.view3d}
+              aria-label={t.projects.view3d}
               aria-pressed={currentView === '3d'}
             >
               <Box size={18} />
@@ -188,7 +190,9 @@ export default function ProjectsFinderHeader({
             aria-haspopup="listbox"
           >
             <Filter size={12} />{' '}
-            {currentTag ? allCategories.find((c) => c.slug === currentTag)?.name : 'Filter'}
+            {currentTag
+              ? allCategories.find((c) => c.slug === currentTag)?.name
+              : t.projects.filter}
           </button>
 
           {isFilterOpen && (

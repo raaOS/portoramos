@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { ChevronRight, Monitor, Zap } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { markBack } from '@/lib/navigationDirection';
+import { useDictionary } from '@/contexts/LanguageContext';
 
 interface SystemNavFrameProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export default function SystemNavFrame({
   title: _title,
   hideFooter,
 }: SystemNavFrameProps) {
+  const t = useDictionary();
   const searchParams = useSearchParams();
   const isPrintMode = searchParams?.get('print') === 'true';
   const pathname = usePathname();
@@ -57,7 +59,7 @@ export default function SystemNavFrame({
               <Monitor size={14} className="text-gray-600" />
               <span className="text-[11px] font-bold tracking-tight text-gray-800">
                 Ramos v2.0{' '}
-                <span className="ml-1 font-normal text-gray-500">(System Connected)</span>
+                <span className="ml-1 font-normal text-gray-500">({t.systemNav.connected})</span>
               </span>
             </div>
 
@@ -84,7 +86,7 @@ export default function SystemNavFrame({
             <div className="flex items-center gap-1.5">
               <Zap size={12} className="fill-green-600 text-green-600" />
               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-700">
-                Live
+                {t.systemNav.live}
               </span>
             </div>
           </div>
@@ -106,7 +108,7 @@ export default function SystemNavFrame({
         <footer className="mt-auto w-full border-t border-gray-100 bg-gray-50/50 px-8 py-6 print:hidden">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 md:flex-row">
             <div className="text-[10px] font-medium uppercase tracking-widest text-gray-400">
-              Handcrafted with passion & Precision
+              {t.systemNav.footer}
             </div>
             <div className="flex gap-6">
               <Link
@@ -114,19 +116,19 @@ export default function SystemNavFrame({
                 onClickCapture={markBack}
                 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 transition-colors hover:text-black"
               >
-                Back to OS
+                {t.systemNav.backToOS}
               </Link>
               <Link
                 href="/cv"
                 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 transition-colors hover:text-black"
               >
-                Resume
+                {t.header.resume}
               </Link>
               <Link
                 href="/contact"
                 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 transition-colors hover:text-black"
               >
-                Contact
+                {t.header.contact}
               </Link>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { Plus, Send, Mic, Square, Loader2 } from 'lucide-react';
 import EmojiPicker from '@/components/chat/EmojiPicker';
 import { soundManager } from '@/components/os/utils/SoundManager';
 import { useToast } from '@/contexts/ToastContext';
+import { useDictionary } from '@/contexts/LanguageContext';
 
 interface FullPageChatFooterProps {
   onSend: (text: string) => void;
@@ -10,6 +11,7 @@ interface FullPageChatFooterProps {
 }
 
 export default function FullPageChatFooter({ onSend, isSending }: FullPageChatFooterProps) {
+  const t = useDictionary();
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -137,13 +139,15 @@ export default function FullPageChatFooter({ onSend, isSending }: FullPageChatFo
         {isRecording ? (
           <div className="flex w-full animate-pulse items-center gap-2 text-red-500">
             <span className="h-2 w-2 rounded-full bg-red-500"></span>
-            <span className="text-sm font-medium">Merekam ({formatTime(recordingTime)})</span>
+            <span className="text-sm font-medium">
+              {t.chat.recording} ({formatTime(recordingTime)})
+            </span>
           </div>
         ) : (
           <input
             ref={inputRef}
             type="text"
-            placeholder={isTranscribing ? 'Menerjemahkan suara...' : 'Ketik pesan...'}
+            placeholder={isTranscribing ? t.chat.transcribing : t.chat.inputPlaceholder}
             className="w-full border-none bg-transparent text-[14.5px] text-[#111b21] outline-none placeholder:text-[#8696a0] focus:outline-none dark:text-[#e9edef]"
             value={inputValue}
             onChange={(e) => {

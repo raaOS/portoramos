@@ -4,6 +4,7 @@ import { Check, CheckCheck } from 'lucide-react';
 import type { ChatMessage } from '../../data/mockChats';
 import type { Project } from '@/types/projects';
 import { getVideoPosterSource, getVideoPreviewSource, isVideoSource } from '@/lib/mediaPreview';
+import { useDictionary } from '@/contexts/LanguageContext';
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
@@ -53,6 +54,8 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   onOpenProject,
   onPreviewMedia,
 }) => {
+  const t = useDictionary();
+
   return (
     <div className="relative flex w-full flex-1 flex-col gap-2 overflow-y-auto bg-[#e5ddd5] px-4 py-4 dark:bg-[#0b141a]">
       {/* Pattern Background */}
@@ -68,7 +71,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       {/* Date Indicator */}
       <div className="z-10 mb-2 flex w-full justify-center">
         <span className="rounded-md bg-[#d9ddcf] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#54656f] shadow-sm dark:bg-[#1f2c34] dark:text-gray-300">
-          Today
+          {t.chat.today}
         </span>
       </div>
 

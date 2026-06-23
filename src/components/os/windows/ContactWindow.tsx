@@ -2,6 +2,8 @@
 
 import useSWR from 'swr';
 import FullPageChat from '@/components/chat/FullPageChat';
+import { type Locale, useLanguage } from '@/contexts/LanguageContext';
+import { localizeText } from '@/lib/i18n/contentLocalization';
 import type { ContactData } from '@/types/contact';
 
 interface FullPageChatContactInfo {
@@ -29,17 +31,21 @@ const fetcher = async (url: string) => {
   return res.json() as Promise<ContactData>;
 };
 
-function toContactInfo(data?: ContactData): FullPageChatContactInfo | undefined {
+function toContactInfo(
+  data: ContactData | undefined,
+  locale: Locale
+): FullPageChatContactInfo | undefined {
   if (!data) return undefined;
   return {
     email: data.info?.email,
     socialMedia: data.info?.socialMedia,
-    headline: data.content?.headline,
-    subtext: data.content?.subtext,
+    headline: localizeText(data.content?.headline, locale),
+    subtext: localizeText(data.content?.subtext, locale),
   };
 }
 
 export default function ContactWindow({ initialData }: ContactWindowProps) {
+  const { locale } = useLanguage();
   const { data } = useSWR('/api/contact', fetcher, {
     fallbackData: initialData ?? undefined,
     revalidateOnFocus: false,
@@ -48,5 +54,5 @@ export default function ContactWindow({ initialData }: ContactWindowProps) {
     revalidateOnMount: !initialData,
   });
 
-  return <FullPageChat embedded contactInfo={toContactInfo(data)} />;
+  return <FullPageChat embedded contactInfo={toContactInfo(data, locale)} />;
 }

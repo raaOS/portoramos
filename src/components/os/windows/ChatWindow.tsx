@@ -9,6 +9,7 @@ import { ChatList } from './components/ChatList';
 import QuickLookModal from '@/components/ui/QuickLookModal';
 import type { ContactProfile } from '../data/mockChats';
 import type { Project } from '@/types/projects';
+import { useDictionary } from '@/contexts/LanguageContext';
 
 interface ChatWindowProps {
   activeChatId?: string | null;
@@ -21,6 +22,7 @@ export default function ChatWindow({
   customContacts,
   initialProjects,
 }: ChatWindowProps) {
+  const t = useDictionary();
   const [activeContact, setActiveContact] = useState<ContactProfile | null>(null);
   const [showList, setShowList] = useState(true);
   const [previewMedia, setPreviewMedia] = useState<{
@@ -85,14 +87,17 @@ export default function ChatWindow({
     [contacts]
   );
 
-  const getLastMessage = useCallback((contact: ContactProfile) => {
-    const messages = contact.messages || contact.conversation || [];
-    if (messages.length === 0) return 'Tidak ada pesan';
-    const lastMsg = messages[messages.length - 1];
-    const text = lastMsg.text;
-    if (!text) return '';
-    return text.length > 30 ? text.substring(0, 30) + '...' : text;
-  }, []);
+  const getLastMessage = useCallback(
+    (contact: ContactProfile) => {
+      const messages = contact.messages || contact.conversation || [];
+      if (messages.length === 0) return t.chat.noMessages;
+      const lastMsg = messages[messages.length - 1];
+      const text = lastMsg.text;
+      if (!text) return '';
+      return text.length > 30 ? text.substring(0, 30) + '...' : text;
+    },
+    [t.chat.noMessages]
+  );
 
   // Sync activeChatId changes via effect
   useEffect(() => {

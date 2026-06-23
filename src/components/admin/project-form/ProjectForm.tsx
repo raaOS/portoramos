@@ -14,8 +14,8 @@ import { useConfirm } from '@/components/admin/ConfirmDialog';
 import { extractStoragePath, isVideoLink } from '@/lib/media';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
 
-// Icons & Animate
 import {
+  ArrowLeft,
   BookOpen,
   Info,
   MessageSquare,
@@ -311,6 +311,7 @@ export default function ProjectForm({
     toggleGalleryItemInGroup,
     updateGroupName,
     getSubmitData,
+    setFieldError,
   } = useProjectForm(project);
 
   const { csrfToken } = useAdminAuth();
@@ -835,7 +836,7 @@ export default function ProjectForm({
 
             <div className="relative mx-auto w-full max-w-[460px] sm:flex sm:max-w-[520px] sm:flex-row sm:items-center sm:justify-start">
               <div className="flex w-full max-w-[440px] flex-shrink-0 flex-col">
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[22px] border border-slate-200 bg-slate-100 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                <div className={`relative aspect-[4/5] w-full overflow-hidden rounded-[22px] border-2 bg-slate-100 shadow-sm transition-all duration-300 dark:bg-slate-950 ${errors.cover ? 'animate-pulse border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-slate-200 dark:border-slate-800'}`}>
                   {mediaFormat === 'comparison' ? (
                     <>
                       {comparisonReady ? (
@@ -1190,34 +1191,18 @@ export default function ProjectForm({
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full space-y-6"
               >
-                {/* Switcher di bagian atas */}
-                <div className="flex w-full rounded-lg bg-slate-100/80 p-0.5 backdrop-blur-sm dark:bg-slate-900/60">
+                {/* Tombol Back untuk kembali ke pilihan mode */}
+                <div className="mb-4 flex">
                   <button
                     type="button"
                     onClick={() => {
-                      setCreationMode('manual');
-                      setHasGeneratedContent(true);
+                      setCreationMode('undecided');
+                      setHasGeneratedContent(false); // BUG FIX: Reset flag agar welcome screen AI tidak ter-skip
                     }}
-                    className={`flex-1 rounded-md py-1.5 text-xs font-extrabold uppercase tracking-wider transition-all ${
-                      creationMode === 'manual'
-                        ? 'dark:bg-slate-850 bg-white text-slate-800 shadow-sm dark:text-slate-100'
-                        : 'text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300'
-                    }`}
+                    className="group flex items-center gap-1.5 rounded-full bg-slate-100/50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 transition-all hover:bg-slate-200 hover:text-slate-800 dark:bg-slate-900/50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   >
-                    Manual
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCreationMode('auto');
-                    }}
-                    className={`flex-1 rounded-md py-1.5 text-xs font-extrabold uppercase tracking-wider transition-all ${
-                      creationMode === 'auto'
-                        ? 'dark:bg-slate-850 bg-white text-slate-800 shadow-sm dark:text-slate-100'
-                        : 'text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300'
-                    }`}
-                  >
-                    Otomatis (AI)
+                    <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+                    Pilih Metode Lain
                   </button>
                 </div>
 
@@ -1267,6 +1252,7 @@ export default function ProjectForm({
                           setIsAIHelperExpanded(false);
                         }}
                         onGenerateViral={() => {}}
+                        onCoverMissing={() => setFieldError('cover', 'Wajib unggah Cover Media sebelum menggunakan AI Assistant!')}
                       />
                       <ProjectAIHelper
                         cover={formData.cover}
@@ -1367,6 +1353,7 @@ export default function ProjectForm({
                                     });
                                   }}
                                   onGenerateViral={() => {}}
+                                  onCoverMissing={() => setFieldError('cover', 'Wajib unggah Cover Media sebelum menggunakan AI Assistant!')}
                                 />
                                 <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
                                   <ProjectAIHelper

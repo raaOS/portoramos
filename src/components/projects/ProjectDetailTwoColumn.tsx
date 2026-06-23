@@ -5,6 +5,8 @@ import type { Project, GalleryItem } from '@/types/projects';
 import { motion, AnimatePresence } from 'motion/react';
 import { Info, BookOpen, Image, MessageSquare } from 'lucide-react';
 import LightboxGallery from '@/components/ui/LightboxGallery';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { localizeProject, localizeText } from '@/lib/i18n/contentLocalization';
 import { useProjectDetail } from './project-detail/hooks';
 import { getTranslation } from './project-detail/utils/translations';
 import {
@@ -37,6 +39,9 @@ export default function ProjectDetailTwoColumn({
   otherProjects,
   isWindowMode = false,
 }: ProjectDetailTwoColumnProps) {
+  const { locale } = useLanguage();
+  const localizedProject = useMemo(() => localizeProject(project, locale), [locale, project]);
+
   // SSR-safe mount detection without triggering set-state-in-effect lint
   const subscribe = useCallback(() => () => {}, []);
   const hasMounted = useSyncExternalStore(
@@ -61,6 +66,8 @@ export default function ProjectDetailTwoColumn({
     handleProjectShare,
     translateAll,
   } = useProjectDetail({ project });
+  const displayProject = translations ? project : localizedProject;
+  const isEnglish = locale === 'en' || !!translations;
 
   const [activeWindowTab, setActiveWindowTab] = useState<'overview' | 'story' | 'gallery'>(
     'overview'
@@ -125,25 +132,25 @@ export default function ProjectDetailTwoColumn({
     return [
       {
         id: 'overview' as const,
-        label: translations ? 'Overview' : 'Ringkasan',
+        label: isEnglish ? 'Overview' : 'Ringkasan',
         icon: Info,
         show: true,
       },
       {
         id: 'story' as const,
-        label: translations ? 'Story' : 'Proses',
+        label: isEnglish ? 'Story' : 'Proses',
         icon: BookOpen,
-        show: !!project.narrative,
+        show: !!displayProject.narrative,
       },
       {
         id: 'gallery' as const,
-        label: translations ? 'Gallery' : 'Galeri',
+        label: isEnglish ? 'Gallery' : 'Galeri',
         icon: Image,
         show: gallery.length > 0 || hasGroupedGallery,
         count: totalGalleryCount,
       },
     ].filter((t) => t.show);
-  }, [translations, project.narrative, gallery.length, hasGroupedGallery, totalGalleryCount]);
+  }, [displayProject.narrative, gallery.length, hasGroupedGallery, isEnglish, totalGalleryCount]);
 
   // Window split layout helper
   const renderSplitContent = () => {
@@ -163,7 +170,12 @@ export default function ProjectDetailTwoColumn({
             className="relative w-full transition-[padding] duration-300 ease-out"
             style={{ padding: isLeftColumnHovered || !isWindowMode ? '0 24px' : '0' }}
           >
-            <ProjectCover project={project} cover={cover} ratio={ratio} isWindowMode={true} />
+            <ProjectCover
+              project={displayProject}
+              cover={cover}
+              ratio={ratio}
+              isWindowMode={true}
+            />
 
             <motion.div
               className="absolute inset-y-0 right-1 z-20 flex items-center"
@@ -204,7 +216,7 @@ export default function ProjectDetailTwoColumn({
                   <div className="flex items-center gap-2">
                     <MessageSquare size={14} className="text-indigo-500" />
                     <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                      {translations ? 'Reviews' : 'Ulasan'}
+                      {isEnglish ? 'Reviews' : 'Ulasan'}
                     </span>
                     {comments.length > 0 && (
                       <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
@@ -255,7 +267,11 @@ export default function ProjectDetailTwoColumn({
           data-no-window-drag
         >
           <div className="flex-shrink-0 border-b border-black/5 p-5 dark:border-white/5 sm:p-6">
-            <ProjectHeader project={project} translations={translations} isWindowMode={true} />
+            <ProjectHeader
+              project={displayProject}
+              translations={translations}
+              isWindowMode={true}
+            />
           </div>
 
           <div className="flex-shrink-0 border-b border-black/5 bg-gray-50/30 px-5 py-3 dark:border-white/5 dark:bg-gray-900/5 sm:px-6">
@@ -317,14 +333,18 @@ export default function ProjectDetailTwoColumn({
                   className="space-y-6"
                 >
                   {projectBadges}
-                  <ProjectMeta project={project} translations={translations} isWindowMode={true} />
+                  <ProjectMeta
+                    project={displayProject}
+                    translations={translations}
+                    isWindowMode={true}
+                  />
 
                   <div className="border-t border-black/5 pt-4 dark:border-white/5">
                     <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                      {translations ? 'About Project' : 'Tentang Proyek'}
+                      {isEnglish ? 'About Project' : 'Tentang Proyek'}
                     </h4>
                     <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                      {getTranslation(translations, 'description') || project.description}
+                      {getTranslation(translations, 'description') || displayProject.description}
                     </p>
                   </div>
                 </motion.div>
@@ -340,7 +360,7 @@ export default function ProjectDetailTwoColumn({
                   className="story-tab-container -mt-8"
                 >
                   <ProjectNarrative
-                    project={project}
+                    project={displayProject}
                     translations={translations}
                     activeTab={activeNarrativeTab}
                     onTabChange={setActiveNarrativeTab}
@@ -359,10 +379,10 @@ export default function ProjectDetailTwoColumn({
                   className="space-y-4"
                 >
                   <h4 className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                    {translations ? 'Project Gallery' : 'Galeri Proyek'}
+                    {isEnglish ? 'Project Gallery' : 'Galeri Proyek'}
                   </h4>
                   <ProjectGallery
-                    project={project}
+                    project={displayProject}
                     gallery={gallery}
                     onGroupClick={setActiveGalleryGroup}
                     isWindowMode={true}
@@ -422,7 +442,12 @@ export default function ProjectDetailTwoColumn({
                   className="relative w-full transition-[padding] duration-300 ease-out"
                   style={{ padding: isLeftColumnHovered || !isWindowMode ? '0 24px' : '0' }}
                 >
-                  <ProjectCover project={project} cover={cover} ratio={ratio} isWindowMode={true} />
+                  <ProjectCover
+                    project={displayProject}
+                    cover={cover}
+                    ratio={ratio}
+                    isWindowMode={true}
+                  />
 
                   {/* Vertical Interaction Bar — centered vertically relative to image */}
                   <motion.div
@@ -466,7 +491,7 @@ export default function ProjectDetailTwoColumn({
                         <div className="flex items-center gap-2">
                           <MessageSquare size={14} className="text-indigo-500" />
                           <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                            {translations ? 'Reviews' : 'Ulasan'}
+                            {isEnglish ? 'Reviews' : 'Ulasan'}
                           </span>
                           {comments.length > 0 && (
                             <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
@@ -517,7 +542,7 @@ export default function ProjectDetailTwoColumn({
                 {/* Header (Title, etc.) */}
                 <div className="border-b border-black/5 p-5 dark:border-white/5 sm:p-6">
                   <ProjectHeader
-                    project={project}
+                    project={displayProject}
                     translations={translations}
                     isWindowMode={false}
                   />
@@ -586,17 +611,18 @@ export default function ProjectDetailTwoColumn({
                       >
                         {projectBadges}
                         <ProjectMeta
-                          project={project}
+                          project={displayProject}
                           translations={translations}
                           isWindowMode={false}
                         />
 
                         <div className="border-t border-black/5 pt-4 dark:border-white/5">
                           <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                            {translations ? 'About Project' : 'Tentang Proyek'}
+                            {isEnglish ? 'About Project' : 'Tentang Proyek'}
                           </h4>
                           <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                            {getTranslation(translations, 'description') || project.description}
+                            {getTranslation(translations, 'description') ||
+                              displayProject.description}
                           </p>
                         </div>
                       </motion.div>
@@ -612,7 +638,7 @@ export default function ProjectDetailTwoColumn({
                         className="story-tab-container -mt-8"
                       >
                         <ProjectNarrative
-                          project={project}
+                          project={displayProject}
                           translations={translations}
                           activeTab={activeNarrativeTab}
                           onTabChange={setActiveNarrativeTab}
@@ -631,10 +657,10 @@ export default function ProjectDetailTwoColumn({
                         className="space-y-4"
                       >
                         <h4 className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                          {translations ? 'Project Gallery' : 'Galeri Proyek'}
+                          {isEnglish ? 'Project Gallery' : 'Galeri Proyek'}
                         </h4>
                         <ProjectGallery
-                          project={project}
+                          project={displayProject}
                           gallery={gallery}
                           onGroupClick={setActiveGalleryGroup}
                           isWindowMode={false}
@@ -668,7 +694,7 @@ export default function ProjectDetailTwoColumn({
           <div className="text-center opacity-50">
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-b-2 border-amber-500"></div>
             <p className="mt-3 whitespace-nowrap text-xs font-medium text-gray-500">
-              Memuat karya...
+              {localizeText('Memuat karya...', locale)}
             </p>
           </div>
         )}

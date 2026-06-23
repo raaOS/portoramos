@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { m } from 'motion/react';
 import FullPageChatHeader from './_components/FullPageChatHeader';
 import FullPageChatMessages from './_components/FullPageChatMessages';
 import FullPageChatFooter from './_components/FullPageChatFooter';
 import { useChatSync } from '@/hooks/useChatSync';
 import SystemNavFrame from '@/components/layout/SystemNavFrame';
+import { useDictionary } from '@/contexts/LanguageContext';
 
 interface FullPageChatContactInfo {
   email?: string;
@@ -27,13 +28,12 @@ interface FullPageChatProps {
 }
 
 export default function FullPageChat({ contactInfo, embedded = false }: FullPageChatProps) {
+  const t = useDictionary();
   const bottomRef = useRef<HTMLDivElement>(null);
   const { messages, sendMessage, isSending, isAdminTyping, syncError } = useChatSync(
-    contactInfo?.subtext ||
-      '💬 Mau ngobrol soal kerja sama, project, atau hal lainnya? Tulis di sini, nanti aku segera balas.'
+    contactInfo?.subtext || t.chat.defaultPrompt
   );
 
-  // Auto-scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isAdminTyping]);
@@ -59,7 +59,7 @@ export default function FullPageChat({ contactInfo, embedded = false }: FullPage
         <FullPageChatHeader />
         {syncError && (
           <div className="animate-pulse border-b border-red-500/20 bg-red-500/10 px-4 py-1 text-center text-[10px] text-red-500">
-            ⚠️ Koneksi terganggu. Mencoba menghubungkan kembali...
+            {t.chat.connectionInterrupted}
           </div>
         )}
         <FullPageChatMessages messages={messages} isTyping={isAdminTyping} bottomRef={bottomRef} />
