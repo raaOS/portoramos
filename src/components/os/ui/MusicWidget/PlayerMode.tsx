@@ -1,6 +1,15 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowLeft, X, Music2, SkipBack, Play, Pause, SkipForward, Shuffle, Repeat } from 'lucide-react';
+import {
+  ArrowLeft,
+  Music2,
+  SkipBack,
+  Play,
+  Pause,
+  SkipForward,
+  Shuffle,
+  Repeat,
+} from 'lucide-react';
 import { MusicTrack } from '@/contexts/MusicPlayerContext';
 import { formatTime } from './utils';
 import { slideVariants } from './animations';
@@ -45,7 +54,6 @@ export default function PlayerMode({
   isLooping,
   isActiveTrackPlaying,
   onSetViewMode,
-  onCloseWidget,
   onSetThumbnailErrorTrackId,
   onToggleShuffle,
   onPrevious,

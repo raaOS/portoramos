@@ -94,14 +94,18 @@ export default function SystemNavFrame({
       )}
 
       {/* Main Content Area */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="flex flex-1 flex-col"
-      >
-        {children}
-      </motion.div>
+      {is3D ? (
+        <div className="flex flex-1 flex-col">{children}</div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="flex flex-1 flex-col"
+        >
+          {children}
+        </motion.div>
+      )}
 
       {/* Minimal Retro Footer (Print Hidden) */}
       {!effectiveHideFooter && (

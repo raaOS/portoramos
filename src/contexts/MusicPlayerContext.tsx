@@ -11,9 +11,42 @@ import React, {
 } from 'react';
 import { useOSMedia } from '@/components/os/context/OSSystemContext';
 
+interface YouTubePlayer {
+  unMute?: () => void;
+  setVolume?: (volume: number) => void;
+  loadVideoById: (videoId: string) => void;
+  cueVideoById?: (videoId: string) => void;
+  playVideo: () => void;
+  pauseVideo?: () => void;
+  getCurrentTime?: () => number;
+  getDuration?: () => number;
+  getVideoUrl?: () => string;
+  destroy?: () => void;
+}
+
+interface YouTubePlayerEvent {
+  target: YouTubePlayer;
+  data?: number;
+}
+
+interface YouTubePlayerConfig {
+  height: string;
+  width: string;
+  videoId: string;
+  playerVars: Record<string, string | number>;
+  events: {
+    onReady: (event: YouTubePlayerEvent) => void;
+    onStateChange: (event: YouTubePlayerEvent) => void;
+  };
+}
+
+interface YouTubeIframeApi {
+  Player: new (elementId: string, config: YouTubePlayerConfig) => YouTubePlayer;
+}
+
 declare global {
   interface Window {
-    YT: any;
+    YT?: YouTubeIframeApi;
     onYouTubeIframeAPIReady?: () => void;
   }
 }
@@ -91,7 +124,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   const playRef = useRef<() => void>(() => {});
 
   // YouTube Player State
-  const ytPlayerRef = useRef<any>(null);
+  const ytPlayerRef = useRef<YouTubePlayer | null>(null);
   const ytContainerId = 'hidden-youtube-player';
 
   const ensureAudio = useCallback(() => {
@@ -134,6 +167,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
 
     const initPlayer = () => {
       if (ytPlayerRef.current) return;
+      if (!window.YT?.Player) return;
       try {
         new window.YT.Player(ytContainerId, {
           height: '200',
@@ -150,14 +184,16 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
             origin: window.location.origin,
           },
           events: {
-            onReady: (event: any) => {
+            onReady: (event) => {
               ytPlayerRef.current = event.target;
               try {
                 if (typeof event.target.unMute === 'function') {
                   event.target.unMute();
                 }
                 const combinedVolume = (systemVolume / 100) * (playerVolume / 100);
-                event.target.setVolume(combinedVolume * 100);
+                if (typeof event.target.setVolume === 'function') {
+                  event.target.setVolume(combinedVolume * 100);
+                }
               } catch (e) {
                 console.warn('Failed to set initial YT volume/unmute:', e);
               }
@@ -168,7 +204,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
                 event.target.playVideo();
               }
             },
-            onStateChange: (event: any) => {
+            onStateChange: (event) => {
               if (event.data === 1) {
                 setIsPlaying(true);
               } else if (event.data === 2) {
@@ -191,7 +227,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
       }
     };
 
-    if (window.YT && window.YT.Player) {
+    if (window.YT?.Player) {
       initPlayer();
     } else {
       const previousCallback = window.onYouTubeIframeAPIReady;
@@ -205,11 +241,6 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
-
-  // Pre-load YouTube player on mount
-  useEffect(() => {
-    ensureYoutube();
-  }, [ensureYoutube]);
 
   // Sync loop setting on active audio element
   useEffect(() => {
@@ -280,10 +311,14 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     const isYt = currentTrack && (currentTrack.src === 'youtube' || currentTrack.source === 'youtube');
     if (!isYt) return;
 
-    let intervalId: any;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
     if (isPlaying) {
       intervalId = setInterval(() => {
-        if (ytPlayerRef.current && typeof ytPlayerRef.current.getCurrentTime === 'function') {
+        if (
+          ytPlayerRef.current &&
+          typeof ytPlayerRef.current.getCurrentTime === 'function' &&
+          typeof ytPlayerRef.current.getDuration === 'function'
+        ) {
           try {
             const time = ytPlayerRef.current.getCurrentTime();
             const dur = ytPlayerRef.current.getDuration();
@@ -412,7 +447,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
           if (isPlayingRef.current) {
             ytPlayerRef.current.loadVideoById(nextTrack.id);
             ytPlayerRef.current.playVideo();
-          } else {
+          } else if (typeof ytPlayerRef.current.cueVideoById === 'function') {
             ytPlayerRef.current.cueVideoById(nextTrack.id);
           }
         } catch {}

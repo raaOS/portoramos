@@ -186,6 +186,7 @@ export default function DesktopBackground({
     const slow = conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g';
     return !conn.saveData && !slow;
   });
+  const shouldMountVideo = isVideo && shouldPlayVideo && !prefersReducedMotion && isDesktopRevealed;
 
   useEffect(() => {
     if (!isVideo) return;
@@ -223,21 +224,17 @@ export default function DesktopBackground({
   // Programmatic playback control linked to desktop boot/reveal state
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !shouldPlayVideo || prefersReducedMotion) return;
+    if (!video || !shouldMountVideo) return;
 
-    if (isDesktopRevealed) {
-      video.play().catch((err) => {
-        console.warn('[DesktopBackground] Playback execution aborted:', err);
-      });
-    } else {
-      video.pause();
-    }
-  }, [isDesktopRevealed, shouldPlayVideo, prefersReducedMotion, videoSrc]);
+    video.play().catch((err) => {
+      console.warn('[DesktopBackground] Playback execution aborted:', err);
+    });
+  }, [shouldMountVideo, videoSrc]);
 
   // Programmatic custom start times (e.g. video URL ending with #t=14, default to 14 if no fragment)
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !shouldMountVideo) return;
 
     const match = videoSrc.match(/#t=(\d+(\.\d+)?)/);
     const startTime = match ? parseFloat(match[1]) : (activeEntry?.startTime ?? 14);
@@ -251,7 +248,7 @@ export default function DesktopBackground({
     } else {
       video.addEventListener('loadedmetadata', applyStartTime, { once: true });
     }
-  }, [videoSrc, activeEntry?.startTime]);
+  }, [videoSrc, activeEntry?.startTime, shouldMountVideo]);
 
   // iOS-style background effect: scales down slightly and blurs when a window is active.
   // Reduced-motion or mobile: skip spring entirely — langsung set filter static tanpa scale shift.
@@ -297,14 +294,14 @@ export default function DesktopBackground({
           //     request, ~30-80 KB) so the screen is not black while
           //     the MP4 buffers. This is the LCP for the desktop on
           //     first paint when video is involved.
-          //   - `preload="auto"` ensures the active wallpaper video starts
-          //     buffering immediately so the crossfade from poster to video
-          //     happens as early as possible.
+          //   - The MP4 is mounted only after the desktop reveal begins, so
+          //     Lighthouse/cold visitors pay for the poster first, not the
+          //     full wallpaper video before any interaction.
           //   - On `saveData` / 2g connections we don't render the
           //     <video> at all — we fall back to the poster as a still
           //     image. Visitor menghemat bandwidth, dan halaman tetap
           //     punya wallpaper visual yang masuk akal.
-          shouldPlayVideo ? (
+          shouldMountVideo ? (
             <React.Fragment key={activeWallpaper}>
               {posterUrl && (
                 <Image
@@ -324,7 +321,7 @@ export default function DesktopBackground({
                 muted
                 loop
                 playsInline
-                preload="auto"
+                preload="metadata"
                 onCanPlay={handleVideoCanPlay}
                 className={`h-full w-full object-cover transition-opacity duration-700 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
                 style={{ transform: 'translateZ(0)' }}

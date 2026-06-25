@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateGenZComments, generateViralMetrics } from '@/lib/magic';
+import type { Comment } from '@/lib/magic';
 import { validateAdminRequest } from '@/lib/auth';
 import { getGeminiApiKey, getOpenRouterApiKey } from '../../../ai/_shared';
 import {
@@ -18,7 +19,7 @@ async function generateAiCommentsWithFallback(params: {
   cover?: string;
   imageBase64?: string;
   reqUrl: string;
-}): Promise<any[]> {
+}): Promise<Comment[]> {
   const geminiApiKey = getGeminiApiKey();
   const openRouterApiKey = getOpenRouterApiKey();
 
@@ -112,7 +113,11 @@ async function generateAiCommentsWithFallback(params: {
     // Attempt Gemini first
     if (geminiApiKey) {
       const modelCandidates = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-latest'];
-      const requestBody: any = {
+      type GeminiPart = { text: string } | { inline_data: { mime_type: string; data: string } };
+      const requestBody: {
+        contents: Array<{ parts: GeminiPart[] }>;
+        generationConfig: { response_mime_type: string };
+      } = {
         contents: [
           {
             parts: [{ text: prompt }],
@@ -146,8 +151,11 @@ async function generateAiCommentsWithFallback(params: {
           });
 
           if (response.ok) {
-            const data = await response.json();
-            text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const data = (await response.json()) as {
+              candidates?: Array<{ content?: { parts?: Array<{ text?: unknown }> } }>;
+            };
+            const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            text = typeof candidateText === 'string' ? candidateText : '';
             if (text) {
               console.log(`[AI Comments] Comments generated via Gemini ${model}`);
               break;
@@ -168,7 +176,10 @@ async function generateAiCommentsWithFallback(params: {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-      const messages: any[] = [
+      type OpenRouterContentPart =
+        | { type: 'text'; text: string }
+        | { type: 'image_url'; image_url: { url: string } };
+      const messages: Array<{ role: 'user'; content: OpenRouterContentPart[] }> = [
         {
           role: 'user',
           content: [{ type: 'text', text: prompt }],
@@ -203,8 +214,11 @@ async function generateAiCommentsWithFallback(params: {
         });
 
         if (response.ok) {
-          const data = await response.json();
-          text = data.choices?.[0]?.message?.content || '';
+          const data = (await response.json()) as {
+            choices?: Array<{ message?: { content?: unknown } }>;
+          };
+          const content = data.choices?.[0]?.message?.content;
+          text = typeof content === 'string' ? content : '';
           if (text) {
             console.log('[AI Comments] Comments generated via OpenRouter');
           }
@@ -226,7 +240,7 @@ async function generateAiCommentsWithFallback(params: {
       .replace(/```/g, '')
       .trim();
 
-    const parsedArray = JSON.parse(jsonText);
+    const parsedArray = JSON.parse(jsonText) as unknown;
     if (!Array.isArray(parsedArray)) {
       throw new Error('AI output is not a JSON array');
     }
@@ -244,26 +258,43 @@ async function generateAiCommentsWithFallback(params: {
       'Zaki',
     ];
 
-    const mappedComments = parsedArray.map((c: any, i: number) => {
-      const name = c.name || NAMES[Math.floor(Math.random() * NAMES.length)];
-      const replies = Array.isArray(c.replies)
-        ? c.replies.map((r: any, ri: number) => ({
-            id: `r-${params.slug}-${i}-${ri}-ai`,
-            text: r.text || 'Keren!',
-            name: r.name || 'Ramos',
-            time: 'Baru saja',
-            createdAt: new Date(Date.now() - Math.random() * 3600000).toISOString(),
-            likes: typeof r.likes === 'number' ? r.likes : Math.floor(Math.random() * 10),
-            avatar:
-              r.name === 'Ramos'
-                ? `https://ui-avatars.com/api/?name=Ramos&background=000&color=fff`
-                : `https://ui-avatars.com/api/?name=${r.name || 'User'}&background=random`,
-          }))
-        : [];
+    interface AiReplyDraft {
+      text?: unknown;
+      name?: unknown;
+      likes?: unknown;
+    }
+
+    interface AiCommentDraft extends AiReplyDraft {
+      replies?: unknown;
+    }
+
+    const toOptionalString = (value: unknown) =>
+      typeof value === 'string' && value.trim() ? value : undefined;
+
+    const mappedComments: Comment[] = parsedArray.map((item, i: number) => {
+      const c = item as AiCommentDraft;
+      const name = toOptionalString(c.name) || NAMES[Math.floor(Math.random() * NAMES.length)];
+      const replyDrafts = Array.isArray(c.replies) ? c.replies : [];
+      const replies = replyDrafts.map((replyItem, ri: number) => {
+        const r = replyItem as AiReplyDraft;
+        const replyName = toOptionalString(r.name) || 'Ramos';
+        return {
+          id: `r-${params.slug}-${i}-${ri}-ai`,
+          text: toOptionalString(r.text) || 'Keren!',
+          name: replyName,
+          time: 'Baru saja',
+          createdAt: new Date(Date.now() - Math.random() * 3600000).toISOString(),
+          likes: typeof r.likes === 'number' ? r.likes : Math.floor(Math.random() * 10),
+          avatar:
+            replyName === 'Ramos'
+              ? `https://ui-avatars.com/api/?name=Ramos&background=000&color=fff`
+              : `https://ui-avatars.com/api/?name=${replyName}&background=random`,
+        };
+      });
 
       return {
         id: `c-${params.slug}-${i}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        text: c.text || 'Luar biasa!',
+        text: toOptionalString(c.text) || 'Luar biasa!',
         name: name,
         time: 'Beberapa menit yang lalu',
         createdAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),

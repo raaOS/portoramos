@@ -17,4 +17,13 @@ export function prepareProjectCoverTransition(target: HTMLElement): void {
   });
 
   target.style.setProperty('view-transition-name', PROJECT_COVER_TRANSITION_NAME);
+
+  // Set attribute untuk mematikan animasi slide di root selama morph berlangsung
+  document.documentElement.setAttribute('data-vt-morph-active', 'true');
+
+  // Bersihkan attribute sebagai fallback fail-safe (misal navigasi dibatalkan).
+  // Pembersihan utama dilakukan di ProjectCover.tsx setelah komponen mount.
+  setTimeout(() => {
+    document.documentElement.removeAttribute('data-vt-morph-active');
+  }, 10000);
 }

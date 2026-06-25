@@ -2,7 +2,6 @@
 
 import { OSSystemProvider } from '@/components/os/context/OSSystemContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
-import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 
 /**
  * Root client providers.
@@ -17,9 +16,7 @@ import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <OSSystemProvider>
-      <LanguageProvider>
-        <MusicPlayerProvider>{children}</MusicPlayerProvider>
-      </LanguageProvider>
+      <LanguageProvider>{children}</LanguageProvider>
     </OSSystemProvider>
   );
 }

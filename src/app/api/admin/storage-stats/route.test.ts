@@ -212,6 +212,17 @@ describe('GET /api/admin/storage-stats', () => {
     expect(body.warnings.some((w: string) => w.includes('aboutService'))).toBe(true);
   });
 
+  it('surfaces Explorer service failures as warnings without 500', async () => {
+    getAllNodesMock.mockRejectedValue(new Error('Explorer timeout'));
+
+    const res = await GET(buildGetRequest(true));
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.warnings.length).toBeGreaterThan(0);
+    expect(body.warnings.some((w: string) => w.includes('explorerService'))).toBe(true);
+  });
+
   it('serves cached payload on repeated request within TTL', async () => {
     getAboutDataMock.mockResolvedValue({
       wallpaperConfig: { activeWallpaperId: '', collection: [] },

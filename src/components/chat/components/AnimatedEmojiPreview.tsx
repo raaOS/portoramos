@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useReducedMotion } from 'motion/react';
+import type { LottieRefCurrentProps } from 'lottie-react';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
@@ -12,7 +13,7 @@ interface AnimatedEmojiPreviewProps {
 export default function AnimatedEmojiPreview({ unicode }: AnimatedEmojiPreviewProps) {
   const [animationData, setAnimationData] = useState<unknown>(null);
   const prefersReducedMotion = useReducedMotion();
-  const lottieRef = useRef<any>(null);
+  const lottieRef = useRef<LottieRefCurrentProps | null>(null);
 
   useEffect(() => {
     const instance = lottieRef.current;

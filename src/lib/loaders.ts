@@ -15,7 +15,7 @@ import type { HardSkill, HardSkillsData } from '@/types/hardSkill';
 import type { Project, ProjectsData } from '@/types/projects';
 import type { Testimonial, TestimonialData } from '@/types/testimonial';
 
-type HomepageData = {
+export type HomepageData = {
   aboutData: AboutData;
   projects: Project[];
   experienceData: ExperienceData;

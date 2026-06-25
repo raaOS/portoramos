@@ -6,10 +6,6 @@ import Media from '@/components/shared/Media';
 import { resolvePreviewCover } from '@/lib/images';
 import { Heart, Share2 } from 'lucide-react';
 import { useImageProtection } from '@/hooks/useImageProtection';
-import {
-  prepareProjectCoverTransition,
-  PROJECT_COVER_TRANSITION_ATTRIBUTE,
-} from '@/lib/projectCoverTransition';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { localizeText } from '@/lib/i18n/contentLocalization';
 
@@ -59,15 +55,7 @@ export default function ProjectCardPinterest({
   const hrefProps = !onClick && interactive ? { href: `/projects/${slug}` } : {};
   const isInteractive = interactive || !!onClick;
 
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement | HTMLDivElement>) => {
-    const isModifiedClick = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
-    if (!onClick && interactive && !isModifiedClick) {
-      const mediaContainer = e.currentTarget.querySelector<HTMLElement>(
-        `[${PROJECT_COVER_TRANSITION_ATTRIBUTE}]`
-      );
-      prepareProjectCoverTransition(mediaContainer ?? e.currentTarget);
-    }
-
+  const handleClick = () => {
     if (onClick) {
       onClick();
     }
@@ -86,7 +74,6 @@ export default function ProjectCardPinterest({
         className={`backface-hidden relative transform-gpu transition-transform duration-300 ${isInteractive ? 'hover:scale-[1.02]' : ''}`}
         style={{ aspectRatio: ratio }}
         onContextMenu={handleContextMenu}
-        {...{ [PROJECT_COVER_TRANSITION_ATTRIBUTE]: '' }}
       >
         <div className="absolute inset-0 overflow-hidden rounded-none bg-neutral-200 dark:bg-neutral-900">
           <Media
@@ -125,7 +112,7 @@ export default function ProjectCardPinterest({
       {/* Project Info */}
       <div className="mt-3 hidden space-y-1 px-1 md:block">
         <div className="flex items-baseline justify-between gap-4">
-          <p className="truncate text-sm font-medium leading-tight text-gray-900 decoration-1 underline-offset-2 group-hover:underline dark:text-gray-100">
+          <p className="truncate text-sm font-medium leading-tight text-gray-900 transition-colors group-hover:text-indigo-600 group-active:text-indigo-700 dark:text-gray-100 dark:group-hover:text-indigo-400 dark:group-active:text-indigo-300">
             {localizedTitle}
           </p>
           {displayTag && (

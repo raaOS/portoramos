@@ -7,6 +7,7 @@ import { useOSOverlays } from '../context/OSSystemContext';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 import { useReducedMotion } from 'motion/react';
 import { useTransitionRouter } from 'next-view-transitions';
+import type { LottieRefCurrentProps } from 'lottie-react';
 import IOSPinModal from '@/components/shared/IOSPinModal';
 import logoAnimationData from '../../../../public/lottie/mata.json';
 import LanguageSwitch from '@/components/shared/LanguageSwitch';
@@ -46,7 +47,7 @@ export default function MenuBar({
   const router = useTransitionRouter();
 
   const prefersReducedMotion = useReducedMotion();
-  const lottieRef = useRef<any>(null);
+  const lottieRef = useRef<LottieRefCurrentProps | null>(null);
 
   useEffect(() => {
     const instance = lottieRef.current;
@@ -233,9 +234,6 @@ export default function MenuBar({
 
       {/* Right Side */}
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
-        <MusicPlayerWidget />
-        <LanguageSwitch className="hidden md:inline-grid" />
-
         {/* Availability Status */}
         {availability && (
           <div
@@ -255,6 +253,9 @@ export default function MenuBar({
             </span>
           </div>
         )}
+
+        <MusicPlayerWidget />
+        <LanguageSwitch className="hidden md:inline-grid" />
 
         {/* Icons */}
         <div

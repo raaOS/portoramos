@@ -103,6 +103,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               __html: `(function(){try{var h=document.documentElement,b=sessionStorage.getItem('ramos_os_booted')==='true';if(b){h.setAttribute('data-os-booted','true');h.removeAttribute('data-os-needs-boot');return}var r=document.referrer;if(r){try{if(new URL(r).host===window.location.host){h.setAttribute('data-os-booted','true');h.removeAttribute('data-os-needs-boot');return}}catch(e){}}var s=window.location.search||'';if(s.indexOf('app=')!==-1){h.setAttribute('data-os-booted','true');h.removeAttribute('data-os-needs-boot');return}var p=window.location.pathname||'/';if(p==='/'){h.setAttribute('data-os-needs-boot','true');return}h.removeAttribute('data-os-needs-boot')}catch(e){}})()`,
             }}
           />
+          <style
+            dangerouslySetInnerHTML={{
+              __html:
+                'html[data-os-needs-boot] body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important}',
+            }}
+          />
         </head>
         {/* suppressHydrationWarning removed: handled by Two-Pass Rendering in HomeOSWrapper */}
         <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default">

@@ -463,6 +463,10 @@ main[data-vt-container='true'] {
   contain: paint;
 }
 
+main[data-vt-container='true'][data-canvas-mode='true'] {
+  contain: none;
+}
+
 /* GPU compositing hint saat View Transition aktif.
    Cuma aktif sesaat selama transisi (browser auto-cleanup). */
 ::view-transition-old(root),

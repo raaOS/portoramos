@@ -8,19 +8,19 @@ import LightboxGallery from '@/components/ui/LightboxGallery';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { localizeProject, localizeText } from '@/lib/i18n/contentLocalization';
 import { useProjectDetail } from './project-detail/hooks';
-import { getTranslation } from './project-detail/utils/translations';
 import {
   ProjectBackButton,
   ProjectCover,
   ProjectHeader,
-  ProjectMeta,
-  ProjectNarrative,
-  ProjectGallery,
   ProjectInteractionBar,
   ProjectRelatedColumn,
   ProjectComments,
   useInfiniteProjects,
 } from './project-detail/components';
+import ProjectDetailTabsPane, {
+  type ProjectWindowTab,
+  type ProjectWindowTabId,
+} from './project-detail/components/ProjectDetailTabsPane';
 
 interface ProjectDetailTwoColumnProps {
   project: Project;
@@ -69,9 +69,7 @@ export default function ProjectDetailTwoColumn({
   const displayProject = translations ? project : localizedProject;
   const isEnglish = locale === 'en' || !!translations;
 
-  const [activeWindowTab, setActiveWindowTab] = useState<'overview' | 'story' | 'gallery'>(
-    'overview'
-  );
+  const [activeWindowTab, setActiveWindowTab] = useState<ProjectWindowTabId>('overview');
   const [isLeftColumnHovered, setIsLeftColumnHovered] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
@@ -128,7 +126,7 @@ export default function ProjectDetailTwoColumn({
   const totalGalleryCount =
     gallery.length + (project.galleryGroups?.reduce((acc, g) => acc + g.items.length, 0) || 0);
 
-  const windowTabs = useMemo(() => {
+  const windowTabs = useMemo<ProjectWindowTab[]>(() => {
     return [
       {
         id: 'overview' as const,
@@ -149,7 +147,9 @@ export default function ProjectDetailTwoColumn({
         show: gallery.length > 0 || hasGroupedGallery,
         count: totalGalleryCount,
       },
-    ].filter((t) => t.show);
+    ]
+      .filter((tab) => tab.show)
+      .map(({ show: _show, ...tab }) => tab);
   }, [displayProject.narrative, gallery.length, hasGroupedGallery, isEnglish, totalGalleryCount]);
 
   // Window split layout helper
@@ -175,6 +175,7 @@ export default function ProjectDetailTwoColumn({
               cover={cover}
               ratio={ratio}
               isWindowMode={true}
+              enableViewTransition={!isWindowMode}
             />
 
             <motion.div
@@ -274,124 +275,20 @@ export default function ProjectDetailTwoColumn({
             />
           </div>
 
-          <div className="flex-shrink-0 border-b border-black/5 bg-gray-50/30 px-5 py-3 dark:border-white/5 dark:bg-gray-900/5 sm:px-6">
-            <div className="relative flex gap-1 rounded-xl bg-gray-100/80 p-1 dark:bg-gray-900/60">
-              <motion.div
-                className="absolute inset-y-1 z-0 rounded-lg bg-white shadow-sm dark:bg-gray-800"
-                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                animate={{
-                  left: `calc(${(windowTabs.findIndex((t) => t.id === activeWindowTab) / windowTabs.length) * 100}% + 4px)`,
-                  width: `calc(${100 / windowTabs.length}% - ${windowTabs.length > 1 ? '4px' : '8px'})`,
-                }}
-              />
-              {windowTabs.map((tab) => {
-                const isActive = activeWindowTab === tab.id;
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveWindowTab(tab.id)}
-                    className={`relative z-10 flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold outline-none transition-colors duration-200 ${
-                      isActive
-                        ? 'text-gray-900 dark:text-white'
-                        : 'text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-100'
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5 text-center">
-                      <Icon
-                        size={14}
-                        className={isActive ? 'text-indigo-600 dark:text-indigo-400' : ''}
-                      />
-                      <span>{tab.label}</span>
-                      {tab.count !== undefined && tab.count > 0 && (
-                        <span
-                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                            isActive
-                              ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400'
-                              : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                          }`}
-                        >
-                          {tab.count}
-                        </span>
-                      )}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="h-0 flex-1 flex-grow overflow-y-auto p-5 sm:p-6">
-            <AnimatePresence mode="wait">
-              {activeWindowTab === 'overview' && (
-                <motion.div
-                  key="overview"
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                  className="space-y-6"
-                >
-                  {projectBadges}
-                  <ProjectMeta
-                    project={displayProject}
-                    translations={translations}
-                    isWindowMode={true}
-                  />
-
-                  <div className="border-t border-black/5 pt-4 dark:border-white/5">
-                    <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                      {isEnglish ? 'About Project' : 'Tentang Proyek'}
-                    </h4>
-                    <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                      {getTranslation(translations, 'description') || displayProject.description}
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeWindowTab === 'story' && (
-                <motion.div
-                  key="story"
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                  className="story-tab-container -mt-8"
-                >
-                  <ProjectNarrative
-                    project={displayProject}
-                    translations={translations}
-                    activeTab={activeNarrativeTab}
-                    onTabChange={setActiveNarrativeTab}
-                    isWindowMode={true}
-                  />
-                </motion.div>
-              )}
-
-              {activeWindowTab === 'gallery' && (
-                <motion.div
-                  key="gallery"
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                  className="space-y-4"
-                >
-                  <h4 className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                    {isEnglish ? 'Project Gallery' : 'Galeri Proyek'}
-                  </h4>
-                  <ProjectGallery
-                    project={displayProject}
-                    gallery={gallery}
-                    onGroupClick={setActiveGalleryGroup}
-                    isWindowMode={true}
-                    translations={translations}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <ProjectDetailTabsPane
+            project={displayProject}
+            gallery={gallery}
+            translations={translations}
+            isEnglish={isEnglish}
+            isWindowMode={true}
+            tabs={windowTabs}
+            activeTab={activeWindowTab}
+            onTabChange={setActiveWindowTab}
+            projectBadges={projectBadges}
+            activeNarrativeTab={activeNarrativeTab}
+            onNarrativeTabChange={setActiveNarrativeTab}
+            onGalleryGroupClick={setActiveGalleryGroup}
+          />
         </div>
       </div>
     );
@@ -447,6 +344,7 @@ export default function ProjectDetailTwoColumn({
                     cover={cover}
                     ratio={ratio}
                     isWindowMode={true}
+                    enableViewTransition={!isWindowMode}
                   />
 
                   {/* Vertical Interaction Bar — centered vertically relative to image */}
@@ -548,128 +446,20 @@ export default function ProjectDetailTwoColumn({
                   />
                 </div>
 
-                {/* Tabs Navigation Bar (Mac/iOS-style segment control) */}
-                <div className="border-b border-black/5 bg-gray-50/30 px-5 py-3 dark:border-white/5 dark:bg-gray-900/5 sm:px-6">
-                  <div className="relative flex gap-1 rounded-xl bg-gray-100/80 p-1 dark:bg-gray-900/60">
-                    {/* Persistent animated pill */}
-                    <motion.div
-                      className="absolute inset-y-1 z-0 rounded-lg bg-white shadow-sm dark:bg-gray-800"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      animate={{
-                        left: `calc(${(windowTabs.findIndex((t) => t.id === activeWindowTab) / windowTabs.length) * 100}% + 4px)`,
-                        width: `calc(${100 / windowTabs.length}% - ${windowTabs.length > 1 ? '4px' : '8px'})`,
-                      }}
-                    />
-                    {windowTabs.map((tab) => {
-                      const isActive = activeWindowTab === tab.id;
-                      const Icon = tab.icon;
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => setActiveWindowTab(tab.id)}
-                          className={`relative z-10 flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold outline-none transition-colors duration-200 ${
-                            isActive
-                              ? 'text-gray-900 dark:text-white'
-                              : 'text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-100'
-                          }`}
-                        >
-                          <span className="flex items-center gap-1.5 text-center">
-                            <Icon
-                              size={14}
-                              className={isActive ? 'text-indigo-600 dark:text-indigo-400' : ''}
-                            />
-                            <span>{tab.label}</span>
-                            {tab.count !== undefined && tab.count > 0 && (
-                              <span
-                                className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                                  isActive
-                                    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400'
-                                    : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                                }`}
-                              >
-                                {tab.count}
-                              </span>
-                            )}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Tab Content Panel (Adapts to content height, no nested scrollbar) */}
-                <div className="p-5 sm:p-6 lg:p-8">
-                  <AnimatePresence mode="wait">
-                    {activeWindowTab === 'overview' && (
-                      <motion.div
-                        key="overview"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                        className="space-y-6"
-                      >
-                        {projectBadges}
-                        <ProjectMeta
-                          project={displayProject}
-                          translations={translations}
-                          isWindowMode={false}
-                        />
-
-                        <div className="border-t border-black/5 pt-4 dark:border-white/5">
-                          <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                            {isEnglish ? 'About Project' : 'Tentang Proyek'}
-                          </h4>
-                          <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                            {getTranslation(translations, 'description') ||
-                              displayProject.description}
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {activeWindowTab === 'story' && (
-                      <motion.div
-                        key="story"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                        className="story-tab-container -mt-8"
-                      >
-                        <ProjectNarrative
-                          project={displayProject}
-                          translations={translations}
-                          activeTab={activeNarrativeTab}
-                          onTabChange={setActiveNarrativeTab}
-                          isWindowMode={false}
-                        />
-                      </motion.div>
-                    )}
-
-                    {activeWindowTab === 'gallery' && (
-                      <motion.div
-                        key="gallery"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                        className="space-y-4"
-                      >
-                        <h4 className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                          {isEnglish ? 'Project Gallery' : 'Galeri Proyek'}
-                        </h4>
-                        <ProjectGallery
-                          project={displayProject}
-                          gallery={gallery}
-                          onGroupClick={setActiveGalleryGroup}
-                          isWindowMode={false}
-                          translations={translations}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                <ProjectDetailTabsPane
+                  project={displayProject}
+                  gallery={gallery}
+                  translations={translations}
+                  isEnglish={isEnglish}
+                  isWindowMode={false}
+                  tabs={windowTabs}
+                  activeTab={activeWindowTab}
+                  onTabChange={setActiveWindowTab}
+                  projectBadges={projectBadges}
+                  activeNarrativeTab={activeNarrativeTab}
+                  onNarrativeTabChange={setActiveNarrativeTab}
+                  onGalleryGroupClick={setActiveGalleryGroup}
+                />
               </div>
             </div>
           </div>

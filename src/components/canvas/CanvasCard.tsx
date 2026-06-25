@@ -5,8 +5,8 @@ import { getCoverPosterUrl, getPreviewCoverUrl, isVideoUrl } from '@/utils/canva
 import { saveCameraState } from '@/lib/canvasCameraPersistence';
 import {
   prepareProjectCoverTransition,
-  PROJECT_COVER_TRANSITION_ATTRIBUTE,
   PROJECT_COVER_TRANSITION_NAME,
+  PROJECT_COVER_TRANSITION_ATTRIBUTE,
 } from '@/lib/projectCoverTransition';
 import type { CanvasItem } from './infiniteCanvasEngine';
 import type { Project } from '@/types/projects';
@@ -31,7 +31,7 @@ export function CanvasCardInner({
   registerVideoRef,
   initialStyle,
   onHoverChange,
-  isTransitionTarget = false,
+  isTransitionTarget,
   getCamera,
 }: CanvasCardProps) {
   const router = useTransitionRouter();
@@ -48,9 +48,7 @@ export function CanvasCardInner({
       ? item.project.coverWidth / item.project.coverHeight
       : 16 / 9;
 
-  const innerMediaStyle: React.CSSProperties = isTransitionTarget
-    ? { viewTransitionName: PROJECT_COVER_TRANSITION_NAME }
-    : {};
+  const innerMediaStyle: React.CSSProperties = {};
 
   return (
     <div
@@ -92,7 +90,12 @@ export function CanvasCardInner({
           saveCameraState(camera, item.project.slug, item.key);
         }
 
-        prepareProjectCoverTransition(transitionElementRef.current ?? e.currentTarget);
+        // Prepare shared element transition: set view-transition-name on
+        // this card's inner media div so the browser morphs it to the
+        // detail page cover during the View Transition slide.
+        if (transitionElementRef.current) {
+          prepareProjectCoverTransition(transitionElementRef.current);
+        }
 
         router.push(`/projects/${item.project.slug}`);
       }}
@@ -102,8 +105,17 @@ export function CanvasCardInner({
       <div
         ref={transitionElementRef}
         className="relative h-full w-full overflow-hidden bg-black/5"
-        style={innerMediaStyle}
-        {...{ [PROJECT_COVER_TRANSITION_ATTRIBUTE]: '' }}
+        style={{
+          ...innerMediaStyle,
+          // Back navigation: browser needs this name on the new page snapshot
+          // to morph from detail-page cover back to this canvas card.
+          ...(isTransitionTarget
+            ? { viewTransitionName: PROJECT_COVER_TRANSITION_NAME }
+            : {}),
+        }}
+        {...(isTransitionTarget
+          ? { [PROJECT_COVER_TRANSITION_ATTRIBUTE]: '' }
+          : {})}
       >
         {isVideo ? (
           <video

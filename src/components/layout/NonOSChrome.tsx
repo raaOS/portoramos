@@ -3,7 +3,7 @@
 import React, { Suspense } from 'react';
 import { LazyMotion, domAnimation, AnimatePresence } from 'motion/react';
 import dynamic from 'next/dynamic';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import Header from '@/components/shared/Header';
 import { useOSOverlays } from '@/components/os/context/OSSystemContext';
 import WindowRenderer from './WindowRenderer';
@@ -35,10 +35,13 @@ export default function NonOSChrome({
   modal: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { showControlCenter, setShowControlCenter, showCalendar, setShowCalendar } =
     useOSOverlays();
 
   const isContact = pathname === '/contact' || pathname?.startsWith('/contact');
+  const isProjects3D = pathname?.startsWith('/projects') && searchParams?.get('view') === '3d';
+  const mainClassName = isContact || isProjects3D ? '' : 'pb-24';
 
   return (
     <ErrorBoundary>
@@ -46,7 +49,11 @@ export default function NonOSChrome({
         <Suspense fallback={null}>
           <Header />
         </Suspense>
-        <main data-vt-container="true" className={isContact ? '' : 'pb-24'}>
+        <main
+          data-vt-container="true"
+          data-canvas-mode={isProjects3D ? 'true' : undefined}
+          className={mainClassName}
+        >
           {children}
         </main>
         {modal}

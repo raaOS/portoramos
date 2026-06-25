@@ -18,18 +18,28 @@ interface ProjectCoverProps {
    * play/pause/scrub langsung dari window project tanpa harus buka lightbox.
    */
   isWindowMode?: boolean;
+  /**
+   * Mengaktifkan view-transition-name 'project-cover' pada cover frame
+   * untuk shared element morph saat navigasi antar halaman.
+   * Default: true saat !isWindowMode, false saat isWindowMode.
+   * Bisa di-override secara eksplisit saat komponen parent membutuhkan
+   * isWindowMode=true untuk styling tapi tetap ingin morph transition aktif.
+   */
+  enableViewTransition?: boolean;
 }
 
-export function ProjectCover({ project, cover, ratio, isWindowMode = false }: ProjectCoverProps) {
+export function ProjectCover({ project, cover, ratio, isWindowMode = false, enableViewTransition }: ProjectCoverProps) {
   const { toast, handleContextMenu } = useImageProtection();
   const coverFrameClassName = `relative overflow-hidden rounded-none border border-black/5 bg-gray-100 dark:border-white/5 dark:bg-gray-800 ${isWindowMode ? 'shadow-lg' : 'shadow-none'}`;
   const comparisonMediaClassName = 'rounded-none object-cover object-left-top';
   const coverMediaClassName = 'h-auto w-full rounded-none object-cover';
 
-  const viewTransitionStyle = !isWindowMode
+  // Default: enable VT when not in window mode, but allow explicit override
+  const shouldEnableVT = enableViewTransition ?? !isWindowMode;
+  const viewTransitionStyle = shouldEnableVT
     ? { viewTransitionName: PROJECT_COVER_TRANSITION_NAME }
     : {};
-  const transitionAttribute = !isWindowMode ? { [PROJECT_COVER_TRANSITION_ATTRIBUTE]: '' } : {};
+  const transitionAttribute = shouldEnableVT ? { [PROJECT_COVER_TRANSITION_ATTRIBUTE]: '' } : {};
 
   return (
     <div

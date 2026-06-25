@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, Send } from 'lucide-react';
+import type { LottieRefCurrentProps } from 'lottie-react';
 import { useExitIntent } from '@/hooks/useExitIntent';
 import { useToast } from '@/contexts/ToastContext';
 import { POPULAR_EMOJIS } from '@/components/chat/data/EmojiData';
@@ -49,7 +50,7 @@ const FEEDBACK_EMOJIS = {
 function FeedbackEyeIcon() {
   const [animationData, setAnimationData] = useState<unknown>(null);
   const prefersReducedMotion = useReducedMotion();
-  const lottieRef = useRef<any>(null);
+  const lottieRef = useRef<LottieRefCurrentProps | null>(null);
 
   useEffect(() => {
     const instance = lottieRef.current;

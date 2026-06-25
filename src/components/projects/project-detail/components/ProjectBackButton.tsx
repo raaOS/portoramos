@@ -32,6 +32,7 @@ export function ProjectBackButton({
   return (
     <Link
       href={buildProjectsHref(mode)}
+      scroll={false}
       // Tandai navigasi ini sebagai "back" agar slide dari arah kiri.
       // Pakai onClickCapture agar set attribute SEBELUM next-view-transitions
       // trigger document.startViewTransition (React capture phase jalan duluan).

@@ -42,6 +42,7 @@ describe('useProjectDetail optimistic like', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -118,5 +119,56 @@ describe('useProjectDetail optimistic like', () => {
     expect(localStorage.getItem('like-demo-project')).toBeNull();
     expect(errorSpy).toHaveBeenCalledOnce();
     unmount();
+  });
+
+  it('does not log when deferred project data loading is interrupted', async () => {
+    vi.useFakeTimers();
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new TypeError('Failed to fetch')))
+    );
+
+    const { unmount } = renderHook(() => useProjectDetail({ project }));
+
+    await act(async () => {
+      vi.advanceTimersByTime(1500);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(errorSpy).not.toHaveBeenCalled();
+
+    unmount();
+    vi.useRealTimers();
+  });
+
+  it('warns instead of logging an error when deferred project data loading fails unexpectedly', async () => {
+    vi.useFakeTimers();
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('Unexpected metrics failure')))
+    );
+
+    const { unmount } = renderHook(() => useProjectDetail({ project }));
+
+    await act(async () => {
+      vi.advanceTimersByTime(1500);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[useProjectDetail] Failed to load non-critical project data:',
+      expect.any(Error)
+    );
+    expect(errorSpy).not.toHaveBeenCalled();
+
+    unmount();
+    vi.useRealTimers();
   });
 });

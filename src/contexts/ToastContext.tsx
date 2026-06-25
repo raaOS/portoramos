@@ -9,7 +9,9 @@
  * @module ToastContext
  */
 import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
-import Toast from '@/components/ui/Toast';
+import dynamic from 'next/dynamic';
+
+const Toast = dynamic(() => import('@/components/ui/Toast'), { ssr: false });
 
 interface ToastData {
   id: string;

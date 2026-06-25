@@ -58,6 +58,11 @@ interface UseProjectDetailReturn {
   translateAll: () => Promise<void>;
 }
 
+function isInterruptedFetch(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  return error.name === 'AbortError' || /failed to fetch/i.test(error.message);
+}
+
 export function useProjectDetail({ project }: UseProjectDetailProps): UseProjectDetailReturn {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isProjectLiked, setIsProjectLiked] = useState(false);
@@ -196,8 +201,8 @@ export function useProjectDetail({ project }: UseProjectDetailProps): UseProject
           }
         }
       } catch (error) {
-        if (!isActive || controller.signal.aborted) return;
-        console.error('Failed to load project data:', error);
+        if (!isActive || controller.signal.aborted || isInterruptedFetch(error)) return;
+        console.warn('[useProjectDetail] Failed to load non-critical project data:', error);
       }
     }, 1500); // Defer 1.5s to prioritize first paint
 

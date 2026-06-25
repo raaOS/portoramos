@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect, Component, ReactNode } from 'react';
-import { PageErrorFallback } from '@/components/ui/ErrorFallback';
+import dynamic from 'next/dynamic';
+
+const PageErrorFallback = dynamic(
+  () => import('@/components/ui/ErrorFallback').then((mod) => mod.PageErrorFallback),
+  { ssr: false }
+);
 
 interface ErrorBoundaryState {
   hasError: boolean;

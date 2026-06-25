@@ -1,5 +1,51 @@
 import { NextResponse } from 'next/server';
 
+interface YouTubeRun {
+  text?: string;
+}
+
+interface YouTubeVideoRenderer {
+  videoId?: string;
+  title?: {
+    runs?: YouTubeRun[];
+    accessibility?: {
+      accessibilityData?: {
+        label?: string;
+      };
+    };
+  };
+  ownerText?: { runs?: YouTubeRun[] };
+  shortBylineText?: { runs?: YouTubeRun[] };
+  lengthText?: { simpleText?: string };
+  thumbnail?: { thumbnails?: Array<{ url?: string }> };
+}
+
+interface YouTubeSearchData {
+  contents?: {
+    twoColumnSearchResultsRenderer?: {
+      primaryContents?: {
+        sectionListRenderer?: {
+          contents?: Array<{
+            itemSectionRenderer?: {
+              contents?: Array<{ videoRenderer?: YouTubeVideoRenderer }>;
+            };
+          }>;
+        };
+      };
+    };
+  };
+}
+
+interface MusicSearchResult {
+  id: string;
+  title: string;
+  artist: string;
+  duration: number;
+  src: 'youtube';
+  source: 'youtube';
+  thumbnail: string;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
@@ -32,14 +78,16 @@ export async function GET(request: Request) {
       return NextResponse.json({ results: [] });
     }
 
-    const data = JSON.parse(match[1]);
-    const contents = data.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents;
+    const data = JSON.parse(match[1]) as YouTubeSearchData;
+    const contents =
+      data.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer
+        ?.contents;
     if (!contents || contents.length === 0) {
       return NextResponse.json({ results: [] });
     }
 
     const videoRendererList = contents[0]?.itemSectionRenderer?.contents || [];
-    const results: any[] = [];
+    const results: MusicSearchResult[] = [];
 
     for (const item of videoRendererList) {
       if (item.videoRenderer) {
@@ -88,8 +136,11 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ results });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('YouTube Search API error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }

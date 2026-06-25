@@ -76,8 +76,10 @@ export default function InfiniteCanvasView({ projects }: Props) {
     return { x: 0, y: 0, z: 0 };
   }, []);
 
-  // Initialize camera refs from sessionStorage BEFORE first paint (useLayoutEffect runs synchronously)
   useLayoutEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
     if (cameraRestoredRef.current) return;
     const savedState = getCameraState();
     if (savedState?.targetSlug && savedState.targetKey) {
@@ -85,7 +87,6 @@ export default function InfiniteCanvasView({ projects }: Props) {
       targetCameraRef.current = { ...savedState.position };
       previousCullCameraRef.current = { ...savedState.position };
       cameraRestoredRef.current = true;
-      clearCameraState();
     } else {
       cameraRestoredRef.current = true;
     }
@@ -118,6 +119,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
   useEffect(() => {
     if (!transitionTarget) return;
     const timer = setTimeout(() => {
+      clearCameraState();
       clearTargetSlug();
       setTransitionTarget(null);
       transitionTargetRef.current = null;
@@ -159,10 +161,10 @@ export default function InfiniteCanvasView({ projects }: Props) {
 
   // — Magnetic hover & ambient float state —
   const mousePosRef = useRef({ x: 0, y: 0 });
-  const floatPhasesRef = useRef<Map<string, number>>(new Map());
   const magneticStateRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const tiltStateRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const timeRef = useRef(0);
+  const mountTimeRef = useRef<number | null>(null);
 
   // — Motion trail / wake effect state —
   const trailIntensityRef = useRef(0);
@@ -349,7 +351,6 @@ export default function InfiniteCanvasView({ projects }: Props) {
       visualStateRef.current.delete(key);
       cardNodesRef.current.delete(key);
       videoNodesRef.current.delete(key);
-      floatPhasesRef.current.delete(key);
       magneticStateRef.current.delete(key);
       tiltStateRef.current.delete(key);
     });
@@ -359,6 +360,12 @@ export default function InfiniteCanvasView({ projects }: Props) {
     const camera = cameraRef.current;
     const activeKeys = new Set(activeItemsRef.current.map((i) => i.key));
     const currentItems = renderedItemsRef.current;
+
+    if (mountTimeRef.current === null && timeRef.current > 0) {
+      mountTimeRef.current = timeRef.current;
+    }
+    const elapsed = mountTimeRef.current !== null ? timeRef.current - mountTimeRef.current : 0;
+    const warmupFactor = Math.min(1, elapsed / 1500);
 
     // — Motion Trail: compute global trail intensity from velocity —
     const vx = velocityRef.current.x;
@@ -403,6 +410,9 @@ export default function InfiniteCanvasView({ projects }: Props) {
     for (const item of currentItems) {
       const node = cardNodesRef.current.get(item.key);
       if (!node) continue;
+
+      const isTarget = transitionTargetRef.current?.key === item.key;
+      const cardWarmup = isTarget ? warmupFactor : 1;
 
       if (pendingRemovalsRef.current.has(item.key)) continue;
 
@@ -461,18 +471,6 @@ export default function InfiniteCanvasView({ projects }: Props) {
         continue;
       }
 
-      // — Ambient float offset —
-      if (!floatPhasesRef.current.has(item.key)) {
-        floatPhasesRef.current.set(
-          item.key,
-          Math.sin(item.dist + item.x * 0.1 + item.y * 0.1) * Math.PI
-        );
-      }
-      const floatPhase = floatPhasesRef.current.get(item.key)!;
-      const floatY =
-        Math.sin(timeRef.current * 0.001 * CANVAS_CONSTANTS.floatSpeed + floatPhase) *
-        CANVAS_CONSTANTS.floatAmplitude;
-
       // — Magnetic hover offset —
       const dx = item.x - camera.x;
       const dy = item.y - camera.y;
@@ -493,7 +491,9 @@ export default function InfiniteCanvasView({ projects }: Props) {
         screenDist > 0.01
       ) {
         const strength =
-          (1 - screenDist / CANVAS_CONSTANTS.magnetRadius) ** 2 * CANVAS_CONSTANTS.magnetStrength;
+          (1 - screenDist / CANVAS_CONSTANTS.magnetRadius) ** 2 *
+          CANVAS_CONSTANTS.magnetStrength *
+          cardWarmup;
         targetMX = ((mouseVX - virtualScreenX) / screenDist) * strength;
         targetMY = ((mouseVY - virtualScreenY) / screenDist) * strength;
       }
@@ -503,14 +503,16 @@ export default function InfiniteCanvasView({ projects }: Props) {
       magneticStateRef.current.set(item.key, { x: smoothMX, y: smoothMY });
 
       // — Speed tilt —
-      const targetTiltX = Math.max(
-        -CANVAS_CONSTANTS.maxTilt,
-        Math.min(CANVAS_CONSTANTS.maxTilt, -velocityRef.current.y * CANVAS_CONSTANTS.tiltFactor)
-      );
-      const targetTiltY = Math.max(
-        -CANVAS_CONSTANTS.maxTilt,
-        Math.min(CANVAS_CONSTANTS.maxTilt, -velocityRef.current.x * CANVAS_CONSTANTS.tiltFactor)
-      );
+      const targetTiltX =
+        Math.max(
+          -CANVAS_CONSTANTS.maxTilt,
+          Math.min(CANVAS_CONSTANTS.maxTilt, -velocityRef.current.y * CANVAS_CONSTANTS.tiltFactor)
+        ) * cardWarmup;
+      const targetTiltY =
+        Math.max(
+          -CANVAS_CONSTANTS.maxTilt,
+          Math.min(CANVAS_CONSTANTS.maxTilt, -velocityRef.current.x * CANVAS_CONSTANTS.tiltFactor)
+        ) * cardWarmup;
       const prevTilt = tiltStateRef.current.get(item.key) ?? { x: 0, y: 0 };
       const smoothTiltX = prevTilt.x + (targetTiltX - prevTilt.x) * CANVAS_CONSTANTS.tiltSmoothing;
       const smoothTiltY = prevTilt.y + (targetTiltY - prevTilt.y) * CANVAS_CONSTANTS.tiltSmoothing;
@@ -528,7 +530,7 @@ export default function InfiniteCanvasView({ projects }: Props) {
 
       node.style.transform =
         visualStyle.transform +
-        ` rotateX(${smoothTiltX.toFixed(1)}deg) rotateY(${smoothTiltY.toFixed(1)}deg) translate(${smoothMX.toFixed(1)}px, ${(smoothMY + floatY).toFixed(1)}px)`;
+        ` rotateX(${smoothTiltX.toFixed(1)}deg) rotateY(${smoothTiltY.toFixed(1)}deg) translate(${smoothMX.toFixed(1)}px, ${smoothMY.toFixed(1)}px)`;
 
       // — Motion Trail / Wake Effect —
       if (node.style.boxShadow !== trailShadow) {
@@ -718,10 +720,10 @@ export default function InfiniteCanvasView({ projects }: Props) {
             priorityCount < CANVAS_CONSTANTS.maxPriorityImages;
           if (shouldPriority) priorityCount++;
 
-          // Compute initial visual style for server-side rendering (SSR) at camera = { x: 0, y: 0, z: 0 }
-          const dx = item.x;
-          const dy = item.y;
-          const dz = item.z;
+          // Compute initial visual style using initialCamera (to support View Transitions morph back)
+          const dx = item.x - initialCamera.x;
+          const dy = item.y - initialCamera.y;
+          const dz = item.z - initialCamera.z;
 
           let targetOpacity = 1;
           let blur = 0;

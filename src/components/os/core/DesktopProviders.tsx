@@ -7,6 +7,7 @@ import { DesktopWindowProvider } from '../context/DesktopWindowContext';
 import DesktopErrorBoundary from '../windows/DesktopErrorBoundary';
 import { WindowState } from '@/components/os/hooks/useWindowManager';
 import { AboutData } from '@/types/about';
+import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 
 interface DesktopProvidersProps {
   children: React.ReactNode;
@@ -25,18 +26,20 @@ export default function DesktopProviders({
 }: DesktopProvidersProps) {
   return (
     <DesktopErrorBoundary isAdmin={isAdmin}>
-      <LayoutPersistenceProvider>
-        <UnifiedZIndexProvider>
-          <DesktopWindowProvider
-            initialWindows={initialWindows}
-            aboutData={aboutData}
-            csrfToken={csrfToken}
-            isAdmin={isAdmin}
-          >
-            {children}
-          </DesktopWindowProvider>
-        </UnifiedZIndexProvider>
-      </LayoutPersistenceProvider>
+      <MusicPlayerProvider>
+        <LayoutPersistenceProvider>
+          <UnifiedZIndexProvider>
+            <DesktopWindowProvider
+              initialWindows={initialWindows}
+              aboutData={aboutData}
+              csrfToken={csrfToken}
+              isAdmin={isAdmin}
+            >
+              {children}
+            </DesktopWindowProvider>
+          </UnifiedZIndexProvider>
+        </LayoutPersistenceProvider>
+      </MusicPlayerProvider>
     </DesktopErrorBoundary>
   );
 }

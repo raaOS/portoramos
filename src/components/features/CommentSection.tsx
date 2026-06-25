@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, startTransition } from 'react';
 import { motion } from 'motion/react';
-import { Comment } from '@/lib/magic';
+import type { Comment, CommentReply } from '@/lib/magic';
 import dynamic from 'next/dynamic';
 import { useToast } from '@/contexts/ToastContext';
 import { Pencil, Trash2 } from 'lucide-react';
@@ -36,12 +36,15 @@ export default function CommentSection({
 
   const handleDeleteComment = (commentId: string | undefined) => {
     if (!commentId) return;
-    const filterComment = (list: any[]): any[] => {
+    const filterReplies = (list: CommentReply[]): CommentReply[] => {
+      return list.filter((reply) => reply.id !== commentId);
+    };
+    const filterComment = (list: Comment[]): Comment[] => {
       return list
         .filter((c) => c.id !== commentId)
         .map((c) => ({
           ...c,
-          replies: c.replies ? filterComment(c.replies) : [],
+          replies: c.replies ? filterReplies(c.replies) : [],
         }));
     };
     setComments(filterComment(comments));
@@ -60,14 +63,23 @@ export default function CommentSection({
     if (!commentId) return;
     if (!editingText.trim()) return;
 
-    const updateCommentText = (list: any[]): any[] => {
+    const updateReplies = (list: CommentReply[]): CommentReply[] => {
+      return list.map((reply) => {
+        if (reply.id === commentId) {
+          return { ...reply, text: editingText.trim() };
+        }
+        return reply;
+      });
+    };
+
+    const updateCommentText = (list: Comment[]): Comment[] => {
       return list.map((c) => {
         if (c.id === commentId) {
           return { ...c, text: editingText.trim() };
         }
         return {
           ...c,
-          replies: c.replies ? updateCommentText(c.replies) : [],
+          replies: c.replies ? updateReplies(c.replies) : [],
         };
       });
     };
