@@ -232,13 +232,21 @@ export async function replaceAllD1Values(root: Record<string, unknown>) {
   await bootstrapD1Schema();
 
   const incomingKeys = new Set<string>();
+  const entries: Array<[string, unknown]> = [];
 
-  // Step 1: Upsert every key in root — no data is lost for existing rows.
   for (const [key, value] of Object.entries(root)) {
     if (value !== undefined && value !== null) {
       incomingKeys.add(key);
-      await setD1Value(key, value);
+      entries.push([key, value]);
     }
+  }
+
+  // Step 1: Upsert in parallel chunks — each setD1Value is an HTTP roundtrip,
+  // so batching cuts wall-clock time significantly for large datasets.
+  const CHUNK_SIZE = 6;
+  for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
+    const chunk = entries.slice(i, i + CHUNK_SIZE);
+    await Promise.all(chunk.map(([key, value]) => setD1Value(key, value)));
   }
 
   // Step 2: Prune keys that exist in D1 but are absent from root.

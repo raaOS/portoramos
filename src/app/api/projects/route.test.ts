@@ -8,7 +8,7 @@ const {
   setMock,
   sendTelegramAlertMock,
   revalidatePathMock,
-  generateGenZCommentsMock,
+  generateAiCommentsWithFallbackMock,
 } = vi.hoisted(() => ({
   validateAdminRequestMock: vi.fn(),
   getProjectsMock: vi.fn(),
@@ -17,7 +17,7 @@ const {
   setMock: vi.fn(),
   sendTelegramAlertMock: vi.fn(),
   revalidatePathMock: vi.fn(),
-  generateGenZCommentsMock: vi.fn(),
+  generateAiCommentsWithFallbackMock: vi.fn(),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -31,6 +31,10 @@ vi.mock('@/lib/services/projectService', () => ({
   },
 }));
 
+vi.mock('@/app/api/admin/projects/magic-complete/route', () => ({
+  generateAiCommentsWithFallback: generateAiCommentsWithFallbackMock,
+}));
+
 vi.mock('@/lib/database', () => ({
   db: {
     ref: refMock,
@@ -39,10 +43,6 @@ vi.mock('@/lib/database', () => ({
 
 vi.mock('@/lib/telegram', () => ({
   sendTelegramAlert: sendTelegramAlertMock,
-}));
-
-vi.mock('@/lib/magic', () => ({
-  generateGenZComments: generateGenZCommentsMock,
 }));
 
 vi.mock('next/cache', () => ({
@@ -141,7 +141,7 @@ describe('POST /api/projects', () => {
     sendTelegramAlertMock.mockResolvedValue(undefined);
     refMock.mockReturnValue({ set: setMock });
     setMock.mockResolvedValue(undefined);
-    generateGenZCommentsMock.mockReturnValue([]);
+    generateAiCommentsWithFallbackMock.mockResolvedValue([]);
   });
 
   it('rejects unauthenticated requests', async () => {
@@ -184,17 +184,19 @@ describe('POST /api/projects', () => {
 
   it('does not generate comments when initialCommentCount is 0', async () => {
     await POST(buildPost(validProjectPayload) as never);
-    expect(generateGenZCommentsMock).not.toHaveBeenCalled();
+    expect(generateAiCommentsWithFallbackMock).not.toHaveBeenCalled();
   });
 
   it('generates comments when initialCommentCount > 0', async () => {
-    generateGenZCommentsMock.mockReturnValue([
-      { id: 1, text: 'Nice!', isMe: false, time: '12:00' },
+    generateAiCommentsWithFallbackMock.mockResolvedValue([
+      { id: '1', text: 'Nice!', name: 'Test User', time: '12:00' },
     ]);
 
     await POST(buildPost({ ...validProjectPayload, initialCommentCount: 2 }) as never);
 
-    expect(generateGenZCommentsMock).toHaveBeenCalledWith('test-project', 2);
+    expect(generateAiCommentsWithFallbackMock).toHaveBeenCalledWith(
+      expect.objectContaining({ slug: 'test-project', count: 2 })
+    );
     expect(refMock).toHaveBeenCalledWith('comments/test-project');
   });
 

@@ -174,4 +174,24 @@ export const chatStore = {
     const until = snap.val() as number;
     return until > Date.now();
   },
+
+  async clearMessages(visitorId: string): Promise<boolean> {
+    const session = await this.getSession(visitorId);
+    if (session) {
+      if (session.telegramMessageId) {
+        await db.ref(`messageMap/${String(session.telegramMessageId)}`).remove();
+      }
+      if (session.telegramThreadId) {
+        await db.ref(`threadMap/${String(session.telegramThreadId)}`).remove();
+      }
+    }
+
+    await Promise.all([
+      db.ref(`messages/${visitorId}`).remove(),
+      db.ref(`sessions/${visitorId}`).remove(),
+      db.ref(`typing/${visitorId}`).remove(),
+    ]);
+
+    return true;
+  },
 };

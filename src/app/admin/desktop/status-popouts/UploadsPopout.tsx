@@ -140,7 +140,7 @@ function UploadTaskRow({ task, onRemove }: UploadTaskRowProps) {
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-zinc-500">
             <span>{UPLOAD_STATUS_LABEL[task.status]}</span>
-            {isActive && <span className="font-mono">{pct}%</span>}
+            {isActive && <span className="font-mono font-medium text-blue-600">(Total Alur: {pct}%)</span>}
             {task.profile && <span className="rounded bg-black/5 px-1 py-px">{task.profile}</span>}
           </div>
           {isActive && (

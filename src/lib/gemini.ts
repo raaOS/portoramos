@@ -59,7 +59,11 @@ function getModel() {
   }
 
   _genAI = new GoogleGenerativeAI(apiKey);
-  _model = _genAI.getGenerativeModel({ model: MODEL_NAME, safetySettings: SAFETY_SETTINGS });
+  _model = _genAI.getGenerativeModel({
+    model: MODEL_NAME,
+    safetySettings: SAFETY_SETTINGS,
+    tools: [{ googleSearchRetrieval: {} } as unknown as import('@google/generative-ai').Tool],
+  });
 
   return _model;
 }

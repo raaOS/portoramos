@@ -1,25 +1,27 @@
 const API_TIMEOUT = 30000;
 const GEMINI_MODEL_CANDIDATES = [
-  'gemini-flash-latest',
   'gemini-2.0-flash',
-  'gemini-2.5-flash-lite',
+  'gemini-2.0-flash-lite',
 ];
 const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_IMAGE_MODEL_CANDIDATES = [
-  'openai/gpt-4o-mini',
-  'openai/gpt-4.1-nano',
-  'google/gemini-2.5-flash-lite',
   'nvidia/nemotron-nano-12b-v2-vl:free',
-  'moonshotai/kimi-k2.6:free',
-  'google/gemma-4-26b-a4b-it:free',
+  'google/gemma-3-4b-it:free',
+  'openrouter/free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'qwen/qwen-2.5-coder-32b-instruct:free',
 ] as const;
 const OPENROUTER_VIDEO_MODEL_CANDIDATES = [
-  'google/gemini-2.5-flash-lite',
-  'google/gemini-2.5-flash',
   'nvidia/nemotron-nano-12b-v2-vl:free',
-  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-  'google/gemma-4-26b-a4b-it:free',
+  'google/gemma-3-4b-it:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'openrouter/free',
 ] as const;
+
+async function sleep(ms: number) {
+  if (process.env.NODE_ENV === 'test') return;
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export interface ProviderFailure {
   provider: 'gemini' | 'openrouter';
@@ -117,10 +119,25 @@ function getOpenRouterModelCandidates(mimeType: string) {
   return OPENROUTER_IMAGE_MODEL_CANDIDATES;
 }
 
-function buildOpenRouterMediaPart(mimeType: string, base64Data: string) {
+type OpenRouterContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } }
+  | { type: 'video_url'; video_url: { url: string } };
+
+function buildOpenRouterMediaPart(
+  mimeType: string,
+  base64Data: string,
+  model: string
+): OpenRouterContentPart | null {
   const dataUrl = `data:${mimeType};base64,${base64Data}`;
 
   if (mimeType.startsWith('video/')) {
+    // Free models or gemini-2.5-flash-lite on OpenRouter do not support video_url payload.
+    const isUnsupported = model.endsWith(':free') || model === 'google/gemini-2.5-flash-lite';
+    if (isUnsupported) {
+      return null;
+    }
+
     return {
       type: 'video_url',
       video_url: {
@@ -196,30 +213,52 @@ export async function generateWithGemini({
   for (const model of GEMINI_MODEL_CANDIDATES) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    let response: Response | null = null;
+    let attempts = 0;
+    const maxAttempts = 2;
 
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    while (attempts < maxAttempts) {
+      attempts++;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
-    if (!response.ok) {
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+      } catch (err) {
+        if (attempts >= maxAttempts) throw err;
+        console.warn(`[AI Generate] Gemini model ${model} fetch failed, retrying in 2s...`);
+        await sleep(2000);
+        continue;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      if (response.ok) {
+        break;
+      }
+
       const body = await response.text();
       lastFailure = { provider: 'gemini', status: response.status, body, model };
 
-      if (isRetryableGeminiFailure(response.status, body)) {
-        console.warn(`[AI Generate] Gemini model ${model} unavailable, trying fallback.`);
+      if (response.status === 429 && attempts < maxAttempts) {
+        console.warn(`[AI Generate] Gemini model ${model} rate limited (429), retrying in 2s...`);
+        await sleep(2000);
         continue;
       }
 
+      break;
+    }
+
+    if (!response || !response.ok) {
+      if (lastFailure && isRetryableGeminiFailure(lastFailure.status, lastFailure.body)) {
+        console.warn(`[AI Generate] Gemini model ${model} unavailable, trying fallback.`);
+        continue;
+      }
       break;
     }
 
@@ -243,48 +282,76 @@ export async function generateWithOpenRouter({
   base64Data,
 }: ProviderGenerationInput): Promise<ProviderGenerationResult> {
   let lastFailure: ProviderFailure | null = null;
-  const mediaPart = buildOpenRouterMediaPart(mimeType, base64Data);
 
   for (const model of getOpenRouterModelCandidates(mimeType)) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    const mediaPart = buildOpenRouterMediaPart(mimeType, base64Data, model);
 
-    let response: Response;
-    try {
-      response = await fetch(OPENROUTER_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-          'X-Title': 'Portfolio Shared Admin',
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            {
-              role: 'user',
-              content: [{ type: 'text', text: prompt }, mediaPart],
-            },
-          ],
-          temperature: 0.35,
-          max_tokens: 1400,
-        }),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeoutId);
+    const content: OpenRouterContentPart[] = [{ type: 'text', text: prompt }];
+    if (mediaPart) {
+      content.push(mediaPart);
     }
 
-    if (!response.ok) {
+    let response: Response | null = null;
+    let attempts = 0;
+    const maxAttempts = 2;
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+      try {
+        response = await fetch(OPENROUTER_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+            'X-Title': 'Portfolio Shared Admin',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              {
+                role: 'user',
+                content,
+              },
+            ],
+            temperature: 0.35,
+            max_tokens: 1400,
+          }),
+          signal: controller.signal,
+        });
+      } catch (err) {
+        if (attempts >= maxAttempts) throw err;
+        console.warn(`[AI Generate] OpenRouter model ${model} fetch failed, retrying in 2s...`);
+        await sleep(2000);
+        continue;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      if (response.ok) {
+        break;
+      }
+
       const body = await response.text();
       lastFailure = { provider: 'openrouter', status: response.status, body, model };
 
-      if (isRetryableOpenRouterFailure(response.status, body)) {
-        console.warn(`[AI Generate] OpenRouter model ${model} unavailable, trying fallback.`);
+      if (response.status === 429 && attempts < maxAttempts) {
+        console.warn(`[AI Generate] OpenRouter model ${model} rate limited (429), retrying in 2s...`);
+        await sleep(2000);
         continue;
       }
 
+      break;
+    }
+
+    if (!response || !response.ok) {
+      if (lastFailure && isRetryableOpenRouterFailure(lastFailure.status, lastFailure.body)) {
+        console.warn(`[AI Generate] OpenRouter model ${model} unavailable, trying fallback.`);
+        continue;
+      }
       break;
     }
 

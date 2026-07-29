@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { refMock, enforceRequestRateLimitMock, getProjectsMock } = vi.hoisted(() => ({
+const { refMock, enforceRequestRateLimitMock, getProjectBySlugMock } = vi.hoisted(() => ({
   refMock: vi.fn(),
   enforceRequestRateLimitMock: vi.fn(),
-  getProjectsMock: vi.fn(),
+  getProjectBySlugMock: vi.fn(),
 }));
 
 vi.mock('@/lib/database', () => ({
@@ -18,7 +18,7 @@ vi.mock('@/lib/security/request', () => ({
 
 vi.mock('@/lib/services/projectService', () => ({
   projectService: {
-    getProjects: getProjectsMock,
+    getProjectBySlug: getProjectBySlugMock,
   },
 }));
 
@@ -48,10 +48,7 @@ describe('POST /api/metrics', () => {
 
   it('applies atomic like mutations on top of fallback metrics', async () => {
     enforceRequestRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
-    getProjectsMock.mockResolvedValue({
-      projects: [{ slug: 'demo', likes: 7, shares: 2 }],
-      lastUpdated: new Date().toISOString(),
-    });
+    getProjectBySlugMock.mockResolvedValue({ slug: 'demo', likes: 7, shares: 2 });
 
     refMock.mockImplementation((path: string) => {
       if (path === 'metrics/metrics/demo') {

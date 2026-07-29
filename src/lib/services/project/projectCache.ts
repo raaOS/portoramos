@@ -16,13 +16,18 @@ const projectCache = new CacheManager({
   enableMetrics: true,
 });
 
-let lastMemoryCheck = 0;
+// --- Memory monitoring via background interval (not inline on hot-path) ---
+let memoryCheckInterval: ReturnType<typeof setInterval> | null = null;
+
+function ensureMemoryMonitor() {
+  if (memoryCheckInterval) return;
+  memoryCheckInterval = setInterval(checkMemoryUsage, 60_000);
+  if (memoryCheckInterval && typeof memoryCheckInterval === 'object' && 'unref' in memoryCheckInterval) {
+    memoryCheckInterval.unref();
+  }
+}
 
 export function checkMemoryUsage() {
-  const now = Date.now();
-  if (now - lastMemoryCheck < 60000) return; // Maksimal sekali per menit
-
-  lastMemoryCheck = now;
   const { heapUsed } = process.memoryUsage();
   const { heap_size_limit } = v8.getHeapStatistics();
   const ratio = heapUsed / heap_size_limit;
@@ -44,12 +49,12 @@ export function getProjectCacheKey(key: string): string {
 }
 
 export function getFromProjectCache<T>(key: string): T | null {
-  checkMemoryUsage();
+  ensureMemoryMonitor();
   return projectCache.get<T>(key);
 }
 
 export function setProjectCache(key: string, data: unknown): void {
-  checkMemoryUsage();
+  ensureMemoryMonitor();
   projectCache.set(key, data);
 }
 

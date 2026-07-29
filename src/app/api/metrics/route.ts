@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
 import { projectService } from '@/lib/services/projectService';
 import { enforceRequestRateLimit } from '@/lib/security/request';
@@ -31,8 +31,7 @@ async function getMetricsData(): Promise<MetricsData> {
 // Helper to get fallback metrics from main project data
 async function getFallbackMetrics(slug: string): Promise<ProjectMetrics> {
   try {
-    const { projects } = await projectService.getProjects();
-    const project = projects.find((p) => p.slug === slug);
+    const project = await projectService.getProjectBySlug(slug);
     if (project) {
       return {
         likes: project.likes || 0,

@@ -8,7 +8,7 @@
  */
 import { useState } from 'react';
 import { Sparkles, Loader2, Wand2, Activity, Dices } from 'lucide-react';
-import { Comment, generateGenZComments } from '@/lib/magic';
+import { Comment } from '@/lib/magic';
 import { useToast } from '@/contexts/ToastContext';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
 
@@ -264,16 +264,10 @@ export default function ProjectAIHelper({
           throw new Error('Comments payload format is incorrect');
         }
       } catch (apiErr) {
-        console.warn(
-          '[ProjectAIHelper] API comments generation failed, falling back to client-side mock:',
-          apiErr
-        );
-        generatedComments = generateGenZComments(
-          derivedSlug,
-          viralOptions.comments,
-          viralOptions.tone,
-          viralOptions.reply
-        );
+        console.error('[ProjectAIHelper] API comments generation failed:', apiErr);
+        const errDetail = apiErr instanceof Error ? apiErr.message : 'Gagal membuat ulasan AI';
+        showToastError(`Real AI Error: ${errDetail}`);
+        return;
       }
 
       onGenerateViral(

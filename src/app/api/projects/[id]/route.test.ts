@@ -12,7 +12,7 @@ const {
   removeMock,
   sendTelegramAlertMock,
   revalidatePathMock,
-  generateGenZCommentsMock,
+  generateAiCommentsWithFallbackMock,
 } = vi.hoisted(() => ({
   validateAdminRequestMock: vi.fn(),
   getProjectsMock: vi.fn(),
@@ -25,7 +25,7 @@ const {
   removeMock: vi.fn(),
   sendTelegramAlertMock: vi.fn(),
   revalidatePathMock: vi.fn(),
-  generateGenZCommentsMock: vi.fn(),
+  generateAiCommentsWithFallbackMock: vi.fn(),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -40,6 +40,10 @@ vi.mock('@/lib/services/projectService', () => ({
   },
 }));
 
+vi.mock('@/app/api/admin/projects/magic-complete/route', () => ({
+  generateAiCommentsWithFallback: generateAiCommentsWithFallbackMock,
+}));
+
 vi.mock('@/lib/database', () => ({
   db: {
     ref: refMock,
@@ -48,10 +52,6 @@ vi.mock('@/lib/database', () => ({
 
 vi.mock('@/lib/telegram', () => ({
   sendTelegramAlert: sendTelegramAlertMock,
-}));
-
-vi.mock('@/lib/magic', () => ({
-  generateGenZComments: generateGenZCommentsMock,
 }));
 
 vi.mock('next/cache', () => ({
@@ -248,8 +248,8 @@ describe('PUT /api/projects/[id]', () => {
   });
 
   it('appends comments when initialCommentCount > 0', async () => {
-    generateGenZCommentsMock.mockReturnValue([
-      { id: 1, text: 'Love it!', isMe: false, time: '12:00' },
+    generateAiCommentsWithFallbackMock.mockResolvedValue([
+      { id: '1', text: 'Love it!', name: 'Test User', time: '12:00' },
     ]);
     updateProjectMock.mockResolvedValue(mockProject);
     valMock.mockReturnValue([{ id: 0, text: 'Existing', isMe: false, time: '11:00' }]);
@@ -259,7 +259,9 @@ describe('PUT /api/projects/[id]', () => {
       params('proj-1')
     );
 
-    expect(generateGenZCommentsMock).toHaveBeenCalledWith('test-project', 1);
+    expect(generateAiCommentsWithFallbackMock).toHaveBeenCalledWith(
+      expect.objectContaining({ slug: 'test-project', count: 1 })
+    );
     expect(setMock).toHaveBeenCalled();
   });
 
@@ -277,7 +279,7 @@ describe('PUT /api/projects/[id]', () => {
     expect(response.status).toBe(200);
     expect(refMock).toHaveBeenCalledWith('comments/test-project');
     expect(setMock).toHaveBeenCalledWith(submittedComments);
-    expect(generateGenZCommentsMock).not.toHaveBeenCalled();
+    expect(generateAiCommentsWithFallbackMock).not.toHaveBeenCalled();
   });
 
   it('moves comments when project slug changes', async () => {

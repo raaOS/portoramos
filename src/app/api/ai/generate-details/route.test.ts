@@ -72,12 +72,20 @@ describe('POST /api/ai/generate-details', () => {
   it('tries the next Gemini model when the first model is quota-limited', async () => {
     const fetchMock = vi
       .fn()
+      // First model fails both attempts
       .mockResolvedValueOnce(
         new Response('quota exceeded for model', {
           status: 429,
           headers: { 'content-type': 'text/plain' },
         })
       )
+      .mockResolvedValueOnce(
+        new Response('quota exceeded for model', {
+          status: 429,
+          headers: { 'content-type': 'text/plain' },
+        })
+      )
+      // Second model succeeds on its first attempt
       .mockResolvedValueOnce(
         geminiResponse({
           title: 'Poster Eksplorasi',
@@ -104,9 +112,10 @@ describe('POST /api/ai/generate-details', () => {
 
     expect(response.status).toBe(200);
     expect(body.title).toBe('Poster Eksplorasi');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(String(fetchMock.mock.calls[0][0])).toContain('gemini-flash-latest');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(String(fetchMock.mock.calls[0][0])).toContain('gemini-2.0-flash');
     expect(String(fetchMock.mock.calls[1][0])).toContain('gemini-2.0-flash');
+    expect(String(fetchMock.mock.calls[2][0])).toContain('gemini-2.0-flash-lite');
   });
 
   it('falls back to OpenRouter vision models when all Gemini models are quota-limited', async () => {
@@ -114,9 +123,21 @@ describe('POST /api/ai/generate-details', () => {
 
     const fetchMock = vi
       .fn()
+      // 2 Gemini models fail both attempts (4 calls)
       .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
       .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
       .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
+      .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
+      // First 4 OpenRouter models fail both attempts (8 calls)
+      .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
+      .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
+      .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
+      .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
+      .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
+      .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
+      .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
+      .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
+      // Last OpenRouter model succeeds on first attempt (1 call)
       .mockResolvedValueOnce(
         openRouterResponse({
           title: 'OpenRouter Fallback',
@@ -143,11 +164,11 @@ describe('POST /api/ai/generate-details', () => {
 
     expect(response.status).toBe(200);
     expect(body.title).toBe('OpenRouter Fallback');
-    expect(fetchMock).toHaveBeenCalledTimes(4);
-    expect(String(fetchMock.mock.calls[3][0])).toBe(
+    expect(fetchMock).toHaveBeenCalledTimes(13);
+    expect(String(fetchMock.mock.calls[12][0])).toBe(
       'https://openrouter.ai/api/v1/chat/completions'
     );
-    expect(JSON.parse(fetchMock.mock.calls[3][1]?.body as string).model).toBe('openai/gpt-4o-mini');
+    expect(JSON.parse(fetchMock.mock.calls[12][1]?.body as string).model).toBe('qwen/qwen-2.5-coder-32b-instruct:free');
   });
 
   it('can use OpenRouter when Gemini API key is not configured', async () => {
@@ -193,7 +214,6 @@ describe('POST /api/ai/generate-details', () => {
       .fn()
       .mockResolvedValueOnce(new Response('Insufficient credits', { status: 402 }))
       .mockResolvedValueOnce(new Response('Insufficient credits', { status: 402 }))
-      .mockResolvedValueOnce(new Response('Insufficient credits', { status: 402 }))
       .mockResolvedValueOnce(
         openRouterResponse({
           title: 'Free Vision Fallback',
@@ -216,12 +236,12 @@ describe('POST /api/ai/generate-details', () => {
       })
     );
     const body = await response.json();
-    const lastPayload = JSON.parse(fetchMock.mock.calls[3][1]?.body as string);
+    const lastPayload = JSON.parse(fetchMock.mock.calls[2][1]?.body as string);
 
     expect(response.status).toBe(200);
     expect(body.title).toBe('Free Vision Fallback');
-    expect(fetchMock).toHaveBeenCalledTimes(4);
-    expect(lastPayload.model).toBe('nvidia/nemotron-nano-12b-v2-vl:free');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(lastPayload.model).toBe('openrouter/free');
   });
 
   it('caches identical media and prompt options', async () => {

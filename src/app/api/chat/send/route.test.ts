@@ -86,7 +86,7 @@ describe('POST /api/chat/send', () => {
     });
   });
 
-  it('returns 500 when Telegram is not configured', async () => {
+  it('succeeds in local standalone mode when Telegram is not configured', async () => {
     mocks.validateConfig.mockReturnValue({ valid: false, error: 'No token' });
 
     const response = await POST(
@@ -98,11 +98,11 @@ describe('POST /api/chat/send', () => {
     );
     const body = await response.json();
 
-    expect(response.status).toBe(500);
-    expect(body.error).toContain('Telegram not configured');
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
   });
 
-  it('returns 500 when botToken or chatId is missing', async () => {
+  it('succeeds in local standalone mode when botToken or chatId is missing', async () => {
     mocks.validateConfig.mockReturnValue({
       valid: true,
       config: { botToken: '', chatId: '', groupId: undefined },
@@ -117,8 +117,8 @@ describe('POST /api/chat/send', () => {
     );
     const body = await response.json();
 
-    expect(response.status).toBe(500);
-    expect(body.error).toBe('Telegram not configured');
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
   });
 
   it('returns 400 when required fields are missing', async () => {

@@ -148,7 +148,10 @@ export default function WallpaperManager({
       // Quota / private mode — preference cuma berlaku untuk session ini.
     }
   }, []);
-  const { enqueueWallpaperUpload, hasActiveUploads } = useBackgroundUpload();
+  const { enqueueWallpaperUpload, hasActiveUploads, totalProgress, tasks } =
+    useBackgroundUpload();
+  const activeTask = tasks.find((t) => t.status !== 'complete' && t.status !== 'error') || tasks[0];
+  const activeProgress = Math.round(totalProgress || activeTask?.progress || 0);
 
   // Track wallpaper card mana yang user hover/active untuk lazy-play video.
   // Tanpa ini semua video di-autoplay → bandwidth habis & preview gambar
@@ -832,29 +835,44 @@ export default function WallpaperManager({
                   onChange={(e) => e.target.files && handleFileDrop(e.target.files)}
                 />
                 <div
-                  className={`pointer-events-none rounded-full p-4 shadow-sm transition-transform ${
+                  className={`pointer-events-none transition-transform ${
                     hasActiveUploads
-                      ? 'bg-amber-50 text-amber-500'
-                      : 'bg-white text-blue-500 group-hover:scale-110'
+                      ? 'text-amber-500'
+                      : 'rounded-full bg-white p-4 text-blue-500 shadow-sm group-hover:scale-110'
                   }`}
                 >
                   {hasActiveUploads ? (
-                    <Loader2 size={32} className="animate-spin" />
+                    <div className="relative flex items-center justify-center">
+                      <Loader2 size={48} className="animate-spin text-amber-500" />
+                      <span className="absolute text-xs font-bold text-amber-800">
+                        {activeProgress}%
+                      </span>
+                    </div>
                   ) : (
                     <Plus size={32} />
                   )}
                 </div>
-                <div className="pointer-events-none text-center">
-                  <h4 className="font-semibold text-gray-700">
-                    {hasActiveUploads ? 'Uploading in background...' : 'Upload Video'}
+                <div className="pointer-events-none flex flex-col items-center text-center">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    {hasActiveUploads
+                      ? activeTask?.statusDetail || 'Uploading in background...'
+                      : 'Upload Video'}
                   </h4>
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-0.5 text-[11px] text-gray-400">
                     {hasActiveUploads
                       ? 'Safe to close window'
                       : `Min. 1920x1080 · Max. ${MAX_WALLPAPER_FILE_SIZE / 1024 / 1024} MB · Encode ${
                           uploadProfile === 'ultra' ? 'Ultra (2160p)' : 'High (1440p)'
                         }`}
                   </p>
+                  {hasActiveUploads && (
+                    <div className="mt-3 h-2 w-48 overflow-hidden rounded-full bg-amber-100 border border-amber-200/80">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-300"
+                        style={{ width: `${Math.max(4, activeProgress)}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

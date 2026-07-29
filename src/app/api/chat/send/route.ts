@@ -43,18 +43,16 @@ interface ChatRequestBody {
 
 export async function POST(request: Request) {
   try {
-    // Use validateConfig to get actual bot token (not masked)
     const validation = validateConfig();
-    if (!validation.valid) {
-      return NextResponse.json(
-        { error: 'Telegram not configured: ' + validation.error },
-        { status: 500 }
-      );
-    }
-    const { botToken, chatId: adminChatId, groupId: envGroupId } = validation.config;
+    const hasTelegram = validation.valid && !!validation.config.botToken && !!validation.config.chatId;
+    const botToken = hasTelegram ? validation.config.botToken : '';
+    const adminChatId = hasTelegram ? validation.config.chatId : '';
+    const envGroupId = hasTelegram ? validation.config.groupId : undefined;
 
-    if (!botToken || !adminChatId) {
-      return NextResponse.json({ error: 'Telegram not configured' }, { status: 500 });
+    if (!hasTelegram) {
+      console.warn(
+        `[Chat Send] Telegram not configured (${validation.valid ? 'missing credentials' : validation.error}). Operating in local/standalone AI mode.`
+      );
     }
 
     const body = (await request.json()) as ChatRequestBody;
@@ -124,65 +122,64 @@ export async function POST(request: Request) {
     }
 
     // 3. Telegram Routing (Topics vs DM)
-    const groupId = envGroupId || process.env.TELEGRAM_GROUP_ID;
-    let targetChatId = groupId || adminChatId;
-    // Ensure threadId is treated as number from CLOUDFLARE_D1
-    let threadId: number | undefined = session.telegramThreadId
-      ? Number(session.telegramThreadId)
-      : undefined;
+    // 3. Telegram Routing (Topics vs DM)
+    if (hasTelegram && botToken) {
+      const groupId = envGroupId || process.env.TELEGRAM_GROUP_ID;
+      let targetChatId = groupId || adminChatId;
+      let threadId: number | undefined = session.telegramThreadId
+        ? Number(session.telegramThreadId)
+        : undefined;
 
-    if (groupId) {
-      // Need to ensure visitor has a Topic created in the forum
-      if (!threadId) {
-        try {
-          const topicRes = await fetch(`https://api.telegram.org/bot${botToken}/createForumTopic`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: groupId,
-              name: `💬 Guest ${visitorId.substring(0, 4)}`,
-            }),
-          });
-          const topicData = await topicRes.json();
+      if (groupId) {
+        if (!threadId) {
+          try {
+            const topicRes = await fetch(`https://api.telegram.org/bot${botToken}/createForumTopic`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: groupId,
+                name: `💬 Guest ${visitorId.substring(0, 4)}`,
+              }),
+            });
+            const topicData = await topicRes.json();
 
-          if (topicData.ok && topicData.result?.message_thread_id) {
-            threadId = Number(topicData.result.message_thread_id);
-            await chatStore.updateSessionThreadId(visitorId, threadId);
-          } else {
-            console.error('[Chat Send] Failed to create Telegram Topic:', topicData);
-            // Fallback to sending to admin DM instead of group topic
+            if (topicData.ok && topicData.result?.message_thread_id) {
+              threadId = Number(topicData.result.message_thread_id);
+              await chatStore.updateSessionThreadId(visitorId, threadId);
+            } else {
+              console.error('[Chat Send] Failed to create Telegram Topic:', topicData);
+              targetChatId = adminChatId;
+            }
+          } catch (topicErr) {
+            console.error('[Chat Send] Network Error creating Telegram Topic:', topicErr);
             targetChatId = adminChatId;
           }
-        } catch (topicErr) {
-          console.error('[Chat Send] Network Error creating Telegram Topic:', topicErr);
-          targetChatId = adminChatId;
         }
       }
-    }
 
-    // Send to Telegram
-    const tgPayload: TelegramPayload = {
-      chat_id: targetChatId,
-      text: text,
-      parse_mode: 'Markdown',
-    };
-    if (threadId) {
-      tgPayload.message_thread_id = threadId;
-    }
+      // Send to Telegram
+      const tgPayload: TelegramPayload = {
+        chat_id: targetChatId,
+        text: text,
+        parse_mode: 'Markdown',
+      };
+      if (threadId) {
+        tgPayload.message_thread_id = threadId;
+      }
 
-    const tgResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(tgPayload),
-    });
+      const tgResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tgPayload),
+      });
 
-    const tgData = await tgResponse.json();
+      const tgData = await tgResponse.json();
 
-    // 3b. Map the Telegram message ID to the visitor ID for future manual replies
-    if (tgData.ok && tgData.result?.message_id) {
-      await chatStore.mapTelegramMessage(visitorId, tgData.result.message_id);
-    } else {
-      console.error('[Chat Send] Failed to send message to Telegram:', tgData);
+      if (tgData.ok && tgData.result?.message_id) {
+        await chatStore.mapTelegramMessage(visitorId, tgData.result.message_id);
+      } else {
+        console.error('[Chat Send] Failed to send message to Telegram:', tgData);
+      }
     }
 
     // 4. Trigger AI if in AI mode
@@ -211,8 +208,14 @@ export async function POST(request: Request) {
         // Add to CLOUDFLARE_D1 store
         const aiReplyMsg = await chatStore.addAiReply(visitorId, aiResponseText);
 
-        // Notify admin of AI reply inside the same topic
-        if (aiReplyMsg) {
+        // Notify admin of AI reply inside the same topic (if Telegram enabled)
+        if (aiReplyMsg && hasTelegram && botToken) {
+          const groupId = envGroupId || process.env.TELEGRAM_GROUP_ID;
+          const targetChatId = groupId || adminChatId;
+          const threadId: number | undefined = session.telegramThreadId
+            ? Number(session.telegramThreadId)
+            : undefined;
+
           let adminAlertText = `🤖 *AI Auto-Reply:*\n"${escapeTelegramMarkdown(aiResponseText)}"`;
 
           if (isUrgent) {

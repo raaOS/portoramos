@@ -3,14 +3,14 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
-import { generateGenZComments } from '@/lib/magic';
+import { generateAiCommentsWithFallback } from '@/app/api/admin/projects/magic-complete/route';
 import { db } from '@/lib/database';
 import { sendTelegramAlert } from '@/lib/telegram';
 import { CreateProjectSchema, commentSchema } from '@/lib/validations';
 import { success, created, unauthorized, serverError, validationError } from '@/lib/api-response';
+import { resolveStorageUrl } from '@/lib/urlResolver';
 
 const submittedCommentsSchema = commentSchema.array().max(1000, 'Too many comments');
-import { resolveStorageUrl } from '@/lib/urlResolver';
 
 export const dynamic = 'force-dynamic';
 
@@ -102,14 +102,20 @@ export async function POST(request: NextRequest) {
       validationResult.data.initialCommentCount > 0
     ) {
       try {
-        const generatedComments = generateGenZComments(
-          newProject.slug,
-          validationResult.data.initialCommentCount
-        );
+        const generatedComments = await generateAiCommentsWithFallback({
+          slug: newProject.slug,
+          count: validationResult.data.initialCommentCount,
+          tone: 'casual',
+          reply: true,
+          projectTitle: newProject.title,
+          projectDescription: newProject.description,
+          cover: newProject.cover,
+          reqUrl: request.url,
+        });
 
         await db.ref(`comments/${newProject.slug}`).set(generatedComments);
       } catch (commentErr) {
-        console.warn('[API/Projects] Failed to auto-generate comments:', commentErr);
+        console.warn('[API/Projects] Failed to auto-generate comments via Real AI:', commentErr);
       }
     }
 

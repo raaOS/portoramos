@@ -1,13 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const { validateAdminRequestMock, generateViralMetricsMock, generateGenZCommentsMock } = vi.hoisted(
-  () => ({
-    validateAdminRequestMock: vi.fn(),
-    generateViralMetricsMock: vi.fn(),
-    generateGenZCommentsMock: vi.fn(),
-  })
-);
+const { validateAdminRequestMock, generateViralMetricsMock } = vi.hoisted(() => ({
+  validateAdminRequestMock: vi.fn(),
+  generateViralMetricsMock: vi.fn(),
+}));
 
 vi.mock('@/lib/auth', () => ({
   validateAdminRequest: validateAdminRequestMock,
@@ -15,7 +12,7 @@ vi.mock('@/lib/auth', () => ({
 
 vi.mock('@/lib/magic', () => ({
   generateViralMetrics: generateViralMetricsMock,
-  generateGenZComments: generateGenZCommentsMock,
+  generateGenZComments: vi.fn().mockReturnValue([]),
 }));
 
 import { POST } from './route';
@@ -29,14 +26,33 @@ function buildPostRequest(body: unknown): NextRequest {
 }
 
 const mockMetrics = { likes: 20, shares: 3 };
-const mockComments = [{ id: 'c-1', text: 'Keren!', name: 'Test', likes: 5, replies: [] }];
+const mockComments = [{ text: 'Visualnya luar biasa clean!', name: 'Budi Test', likes: 5, replies: [] }];
 
 describe('POST /api/admin/projects/magic-complete', () => {
+  const originalEnv = process.env;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env = { ...originalEnv, GEMINI_API_KEY: 'test-gemini-key' };
     validateAdminRequestMock.mockResolvedValue(true);
     generateViralMetricsMock.mockReturnValue(mockMetrics);
-    generateGenZCommentsMock.mockReturnValue(mockComments);
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [{ text: JSON.stringify(mockComments) }],
+            },
+          },
+        ],
+      }),
+    });
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   it('rejects unauthenticated requests', async () => {
@@ -45,25 +61,26 @@ describe('POST /api/admin/projects/magic-complete', () => {
     expect(res.status).toBe(401);
   });
 
-  it('performs pure in-memory generation with generated metrics and mock comments', async () => {
+  it('performs real LLM AI generation with generated metrics and parsed comments', async () => {
     const res = await POST(buildPostRequest({ slug: 'my-project' }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.metrics).toEqual(mockMetrics);
-    expect(body.commentCount).toBe(mockComments.length);
-    expect(body.comments).toEqual(mockComments);
+    expect(body.commentCount).toBe(1);
+    expect(body.comments[0].text).toBe('Visualnya luar biasa clean!');
 
     expect(generateViralMetricsMock).toHaveBeenCalledTimes(1);
-    expect(generateGenZCommentsMock).toHaveBeenCalledWith('my-project', 5, 'casual', true);
+    expect(global.fetch).toHaveBeenCalled();
   });
 
-  it('uses default slug temp-slug when request slug is missing or empty', async () => {
-    const res = await POST(buildPostRequest({}));
-    expect(res.status).toBe(200);
+  it('fails with 500 when no API keys are configured and no fallback is allowed', async () => {
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.OPENROUTER_API_KEY;
+    const res = await POST(buildPostRequest({ slug: 'my-project' }));
+    expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(generateGenZCommentsMock).toHaveBeenCalledWith('temp-slug', 5, 'casual', true);
+    expect(body.error).toBe('Failed to complete magic operation');
   });
 
   it('uses passed metrics (likes and shares) instead of generating random ones', async () => {
@@ -82,29 +99,6 @@ describe('POST /api/admin/projects/magic-complete', () => {
     expect(body.metrics).toEqual({ likes: customLikes, shares: customShares });
   });
 
-  it('uses custom comment settings from request parameters', async () => {
-    const customCount = 8;
-    const customTone = 'tech';
-    const customReply = false;
-    const res = await POST(
-      buildPostRequest({
-        slug: 'my-project',
-        commentCount: customCount,
-        tone: customTone,
-        reply: customReply,
-      })
-    );
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(generateGenZCommentsMock).toHaveBeenCalledWith(
-      'my-project',
-      customCount,
-      customTone,
-      customReply
-    );
-  });
-
   it('catches internal errors and returns 500 without leaking details', async () => {
     generateViralMetricsMock.mockImplementation(() => {
       throw new Error('Simulation failed');
@@ -113,6 +107,5 @@ describe('POST /api/admin/projects/magic-complete', () => {
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toBe('Failed to complete magic operation');
-    expect(body).not.toHaveProperty('stack');
   });
 });

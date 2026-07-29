@@ -138,9 +138,9 @@ export function useFFmpeg(onStatusUpdate: (status: string) => void) {
           const elapsed = (Date.now() - startTime) / 1000;
           const estimatedTotal = elapsed / progress;
           const remaining = Math.round(estimatedTotal - elapsed);
-          onStatusUpdate(`Compressing Video (${percent}%) - ~${remaining}s remaining...`);
+          onStatusUpdate(`Kompresi ${percent}% · ~${remaining}s sisa`);
         } else {
-          onStatusUpdate(`Compressing Video (${percent}%)...`);
+          onStatusUpdate(`Kompresi 0%`);
         }
       });
 

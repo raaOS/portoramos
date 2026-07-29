@@ -105,7 +105,7 @@ export function useChatSync(initialGreeting?: string) {
   // sekarang max 8 detik (acceptable untuk chat asynchronous portfolio),
   // tapi invocations turun ~62%. Untuk skala 250 visitor/bulan ini
   // bedanya signifikan dari "boros" jadi "hemat ratusan invocations".
-  const { data: _syncData, error: swrError } = useSWR(
+  const { data: _syncData, error: swrError, mutate } = useSWR(
     visitorId ? `/api/chat/sync?visitorId=${visitorId}` : null,
     fetcher,
     {
@@ -120,56 +120,59 @@ export function useChatSync(initialGreeting?: string) {
             setIsAdminTyping(data.isAdminTyping);
           }
 
-          if (data.messages?.length > 0) {
-            setMessages((prev) => {
-              const newMessages = [...prev];
-              let hasNewAdminMessage = false;
-
-              data.messages.forEach((serverMsg: ChatMessage) => {
-                const existingTempIndex = newMessages.findIndex(
-                  (m) =>
-                    m.id.startsWith('temp-') &&
-                    m.text === serverMsg.text &&
-                    m.sender === serverMsg.sender
-                );
-                const hasConfirmed = newMessages.find((m) => m.id === serverMsg.id);
-
-                if (!hasConfirmed) {
-                  if (existingTempIndex >= 0) {
-                    newMessages[existingTempIndex] = serverMsg;
-                  } else {
-                    newMessages.push(serverMsg);
-                    if (serverMsg.sender === 'admin') hasNewAdminMessage = true;
-                  }
+          if (Array.isArray(data.messages)) {
+            if (data.messages.length === 0) {
+              setMessages((prev) => {
+                if (prev.length === 0 || (prev.length === 1 && prev[0].id === 'greeting')) {
+                  return prev;
                 }
+                return initialGreeting
+                  ? [
+                      {
+                        id: 'greeting',
+                        text: initialGreeting,
+                        sender: 'admin',
+                        timestamp: Date.now(),
+                      },
+                    ]
+                  : [];
               });
+            } else {
+              setMessages((prev) => {
+                const newMessages = [...prev];
+                let hasNewAdminMessage = false;
 
-              if (hasNewAdminMessage) {
-                // Hanya bunyikan notifikasi kalau tab visible agar user
-                // tidak ter-distract di background tab.
-                if (typeof document === 'undefined' || document.visibilityState === 'visible') {
-                  soundManager.play('notification');
-                }
-                setIsAdminTyping(false);
-              }
+                data.messages.forEach((serverMsg: ChatMessage) => {
+                  const existingTempIndex = newMessages.findIndex(
+                    (m) =>
+                      m.id.startsWith('temp-') &&
+                      m.text === serverMsg.text &&
+                      m.sender === serverMsg.sender
+                  );
+                  const hasConfirmed = newMessages.find((m) => m.id === serverMsg.id);
 
-              // Deduplicate and Sort
-              const uniqueMsgs: ChatMessage[] = [];
-              const seenIds = new Set();
-              newMessages
-                .sort((a, b) => a.timestamp - b.timestamp)
-                .forEach((m) => {
-                  if (!seenIds.has(m.id)) {
-                    seenIds.add(m.id);
-                    uniqueMsgs.push(m);
+                  if (!hasConfirmed) {
+                    if (existingTempIndex >= 0) {
+                      newMessages[existingTempIndex] = serverMsg;
+                    } else {
+                      newMessages.push(serverMsg);
+                      if (serverMsg.sender === 'admin') hasNewAdminMessage = true;
+                    }
                   }
                 });
-              return uniqueMsgs;
-            });
+
+                if (hasNewAdminMessage) {
+                  if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+                    soundManager.play('notification');
+                  }
+                }
+
+                return newMessages;
+              });
+            }
           }
         }
       },
-      onError: () => setSyncError(true),
     }
   );
 
@@ -210,11 +213,52 @@ export function useChatSync(initialGreeting?: string) {
     }
   };
 
+  const clearMessages = async () => {
+    if (!visitorId) return;
+
+    const oldVisitorId = visitorId;
+    const newVisitorId = uuidv4();
+
+    // Reset local state to initial greeting
+    setMessages(
+      initialGreeting
+        ? [
+            {
+              id: 'greeting',
+              text: initialGreeting,
+              sender: 'admin',
+              timestamp: Date.now(),
+            },
+          ]
+        : []
+    );
+
+    // Set fresh visitorId locally & in localStorage
+    try {
+      localStorage.setItem('ramos_visitor_id', newVisitorId);
+    } catch {
+      // ignore
+    }
+    setVisitorId(newVisitorId);
+
+    try {
+      await fetch('/api/chat/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visitorId: oldVisitorId }),
+      });
+      mutate();
+    } catch (error) {
+      console.error('Clear chat failed', error);
+    }
+  };
+
   return {
     visitorId,
     messages,
     setMessages,
     sendMessage,
+    clearMessages,
     isSending,
     isAdminTyping,
     setIsAdminTyping,

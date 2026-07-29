@@ -267,9 +267,17 @@ class D1Reference implements DatabaseReferenceLike {
         }
       }
       // CAS failed — another writer modified the row; retry
+      if (attempt > 0) {
+        console.warn(
+          `[Database] CAS contention on key "${topLevelKey}" (attempt ${attempt + 1}/${MAX_RETRIES})`
+        );
+      }
     }
 
     // All retries exhausted
+    console.error(
+      `[Database] Transaction failed after ${MAX_RETRIES} CAS retries on key "${topLevelKey}" (path: ${this.path})`
+    );
     return { committed: false, snapshot: new D1Snapshot(null, this.key) };
   }
 

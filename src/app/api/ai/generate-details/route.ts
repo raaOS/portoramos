@@ -98,6 +98,8 @@ async function writeCachedDetails(cacheKey: string, data: Record<string, unknown
       createdAt: now,
       expiresAt: now + CACHE_TTL_MS,
     } satisfies GenerateDetailsCacheRecord);
+
+
   } catch (error) {
     console.warn('[AI Generate] Persistent cache write failed:', error);
   }
@@ -150,18 +152,24 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Image payload is too large' }, { status: 413 });
       }
     } else if (imageUrl) {
+      let resolvedUrl = imageUrl;
+      const isVideo = resolvedUrl.endsWith('.mp4') || resolvedUrl.endsWith('.webm');
+      if (isVideo) {
+        resolvedUrl = resolvedUrl.replace(/\.(mp4|webm)(\?.*)?$/i, '.jpg');
+      }
+
       if (
-        imageUrl.startsWith('/r2/') ||
-        imageUrl.startsWith('r2/') ||
-        imageUrl.startsWith('/assets/') ||
-        imageUrl.startsWith('assets/')
+        resolvedUrl.startsWith('/r2/') ||
+        resolvedUrl.startsWith('r2/') ||
+        resolvedUrl.startsWith('/assets/') ||
+        resolvedUrl.startsWith('assets/')
       ) {
-        const localMedia = await fetchLocalMediaAsBase64(imageUrl, req.url);
+        const localMedia = await fetchLocalMediaAsBase64(resolvedUrl, req.url);
         base64Data = localMedia.base64Data;
         mimeType = localMedia.mimeType;
-      } else if (imageUrl.startsWith('http')) {
+      } else if (resolvedUrl.startsWith('http')) {
         // External Remote URL
-        const remoteMedia = await fetchRemoteMediaAsBase64(imageUrl);
+        const remoteMedia = await fetchRemoteMediaAsBase64(resolvedUrl);
         base64Data = remoteMedia.base64Data;
         mimeType = remoteMedia.mimeType;
       }

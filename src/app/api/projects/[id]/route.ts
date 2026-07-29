@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { UpdateProjectData, Project } from '@/types/projects';
 import { validateAdminRequest } from '@/lib/auth';
 import { projectService } from '@/lib/services/projectService';
-import { generateGenZComments } from '@/lib/magic';
+import { generateAiCommentsWithFallback } from '@/app/api/admin/projects/magic-complete/route';
 import { db } from '@/lib/database';
 import { sendTelegramAlert } from '@/lib/telegram';
 import { commentSchema, UpdateProjectSchema } from '@/lib/validations';
@@ -126,7 +126,16 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
       }
     } else if (rawBody.initialCommentCount && rawBody.initialCommentCount > 0) {
       try {
-        const newComments = generateGenZComments(updatedProject.slug, rawBody.initialCommentCount);
+        const newComments = await generateAiCommentsWithFallback({
+          slug: updatedProject.slug,
+          count: rawBody.initialCommentCount,
+          tone: 'casual',
+          reply: true,
+          projectTitle: updatedProject.title,
+          projectDescription: updatedProject.description,
+          cover: updatedProject.cover,
+          reqUrl: request.url,
+        });
 
         const commentsRef = db.ref(`comments/${updatedProject.slug}`);
         const snap = await commentsRef.once('value');
@@ -140,7 +149,7 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
         await commentsRef.set(combinedComments);
         console.log(`[API/Projects/[id]] Successfully appended comments to ${updatedProject.slug}`);
       } catch (commentError) {
-        console.error('Failed to append comments:', commentError);
+        console.error('Failed to append comments via Real AI:', commentError);
         commentsPersistWarning = 'Project saved, but generated comments failed to persist.';
       }
     }
