@@ -89,7 +89,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
-              __html: JSON.stringify(generateStructuredData('website')),
+              __html: JSON.stringify(generateStructuredData('website')).replace(/</g, '\\u003c'),
             }}
           />
           {/*
@@ -110,8 +110,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             }}
           />
         </head>
-        {/* suppressHydrationWarning removed: handled by Two-Pass Rendering in HomeOSWrapper */}
-        <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default">
+        <body className={`font-sans ${sansClassName} ${displayClassName}`} data-page="default" suppressHydrationWarning>
           {/* Skip to content - Accessibility */}
           <a
             href="#main-content"

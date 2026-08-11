@@ -261,7 +261,7 @@ class D1Reference implements DatabaseReferenceLike {
           return { committed: true, snapshot: new D1Snapshot(nextNested, this.key) };
         }
       } else {
-        const ok = await compareAndSetD1Value(topLevelKey, JSON.parse(expectedJson), nextTop);
+        const ok = await compareAndSetD1Value(topLevelKey, JSON.parse(expectedJson), nextTop, expectedJson);
         if (ok) {
           return { committed: true, snapshot: new D1Snapshot(nextNested, this.key) };
         }
@@ -313,9 +313,13 @@ class D1Reference implements DatabaseReferenceLike {
       return;
     }
 
-    const currentTopValue = await getD1Value(topLevelKey);
-    const nextTopValue = setNested(currentTopValue ?? {}, rest, value);
-    await setD1Value(topLevelKey, nextTopValue);
+    // Upgrade nested path writes to use atomic transaction retry
+    const res = await this.transaction(() => value);
+    if (!res.committed) {
+      const currentTopValue = await getD1Value(topLevelKey);
+      const nextTopValue = setNested(currentTopValue ?? {}, rest, value);
+      await setD1Value(topLevelKey, nextTopValue);
+    }
   }
 
   private applyQuery(value: unknown) {
@@ -370,20 +374,60 @@ async function applyD1Updates(updates: Record<string, unknown>) {
   }
 
   for (const [topLevelKey, entries] of grouped) {
-    let topValue = await getD1Value(topLevelKey);
+    const MAX_RETRIES = 3;
+    let committed = false;
 
-    for (const { rest, value } of entries) {
-      if (rest.length === 0) {
-        topValue = value;
-      } else {
-        topValue = setNested(topValue ?? {}, rest, value);
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const rawRows = await import('@/lib/cloudflareD1').then((m) =>
+        m.queryD1<{ value: string }>(`SELECT value FROM app_kv WHERE key = ? LIMIT 1`, [
+          topLevelKey,
+        ])
+      );
+      const rawJson = rawRows[0]?.value ?? null;
+      let topValue = rawJson !== null ? JSON.parse(rawJson) : null;
+
+      for (const { rest, value } of entries) {
+        if (rest.length === 0) {
+          topValue = value;
+        } else {
+          topValue = setNested(topValue ?? {}, rest, value);
+        }
+      }
+
+      if (topValue === null || topValue === undefined) {
+        await deleteD1Value(topLevelKey);
+        committed = true;
+        break;
+      }
+
+      const ok = await compareAndSetD1Value(
+        topLevelKey,
+        rawJson ? JSON.parse(rawJson) : null,
+        topValue,
+        rawJson ?? undefined
+      );
+      if (ok) {
+        committed = true;
+        break;
       }
     }
 
-    if (topValue === null || topValue === undefined) {
-      await deleteD1Value(topLevelKey);
-    } else {
-      await setD1Value(topLevelKey, topValue);
+    if (!committed) {
+      let topValue = await getD1Value(topLevelKey);
+
+      for (const { rest, value } of entries) {
+        if (rest.length === 0) {
+          topValue = value;
+        } else {
+          topValue = setNested(topValue ?? {}, rest, value);
+        }
+      }
+
+      if (topValue === null || topValue === undefined) {
+        await deleteD1Value(topLevelKey);
+      } else {
+        await setD1Value(topLevelKey, topValue);
+      }
     }
   }
 }

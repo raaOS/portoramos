@@ -12,12 +12,11 @@ interface MasonryGridProps {
 }
 
 const defaultBreakpoints = {
-  default: 6, // Desktop (> 1280px)
-  1280: 6, // Desktop
-  1024: 5, // Tablet L
-  768: 4, // Match md:grid-cols-4
-  640: 3, // Match sm:grid-cols-3
-  0: 2, // Base
+  default: 6, // Large Desktop (> 1280px)
+  1280: 5, // Desktop
+  1024: 4, // Tablet Landscape
+  768: 3, // Tablet Portrait
+  640: 2, // Mobile (2 kolom seperti Pinterest)
 };
 const sidebarBreakpoints = {
   default: 3, // Max 3 columns for sidebar

@@ -759,7 +759,14 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : 'Upload failed' },
+      {
+        error:
+          process.env.NODE_ENV === 'production'
+            ? 'Upload failed'
+            : e instanceof Error
+              ? e.message
+              : 'Upload failed',
+      },
       { status: 500 }
     );
   }
@@ -798,7 +805,14 @@ export async function DELETE(req: NextRequest) {
   } catch (e) {
     console.error('Delete Error:', e);
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : 'Delete failed' },
+      {
+        error:
+          process.env.NODE_ENV === 'production'
+            ? 'Delete failed'
+            : e instanceof Error
+              ? e.message
+              : 'Delete failed',
+      },
       { status: 500 }
     );
   }

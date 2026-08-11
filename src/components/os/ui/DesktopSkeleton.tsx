@@ -47,27 +47,3 @@ export default function DesktopSkeleton({ isBooting, fading }: DesktopSkeletonPr
     </div>
   );
 }
-
-// Keyframes injected via style tag since we need custom animation
-function injectKeyframes() {
-  if (typeof document === 'undefined') return;
-  if (document.getElementById('desktop-skeleton-keyframes')) return;
-  const style = document.createElement('style');
-  style.id = 'desktop-skeleton-keyframes';
-  style.textContent = `
-    @keyframes indeterminate-bar {
-      0% { transform: translateX(-100%); }
-      50% { transform: translateX(200%); }
-      100% { transform: translateX(400%); }
-    }
-    .animate-indeterminate-bar {
-      animation: indeterminate-bar 2s ease-in-out infinite;
-    }
-  `;
-  document.head.appendChild(style);
-}
-
-// Inject keyframes on first render
-if (typeof window !== 'undefined') {
-  injectKeyframes();
-}

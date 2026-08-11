@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { m } from 'motion/react';
 import { Loader2, Languages, RotateCcw, ExternalLink } from 'lucide-react';
 import type { Comment } from '@/lib/magic';
 import ShareSheet from '@/components/ui/ShareSheet';
@@ -21,6 +22,13 @@ interface ProjectInteractionBarProps {
   orientation?: 'horizontal' | 'vertical';
   projectSlug?: string;
 }
+
+const springTransition = {
+  type: 'spring' as const,
+  stiffness: 450,
+  damping: 17,
+  mass: 0.6,
+};
 
 export function ProjectInteractionBar({
   isProjectLiked,
@@ -47,34 +55,45 @@ export function ProjectInteractionBar({
   const commentCount = comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0);
   const isVertical = orientation === 'vertical';
   const buttonClassName = (activeClass: string, inactiveClass: string) =>
-    `flex items-center rounded-full p-1.5 transition-all duration-200 ${
-      isVertical ? 'flex-col gap-0.5' : 'gap-1'
-    } ${activeClass || inactiveClass}`;
+    isVertical
+      ? `flex flex-col items-center justify-center w-8 sm:w-9 rounded-full p-1 sm:p-1.5 transition-colors duration-200 select-none text-center ${
+          activeClass || inactiveClass
+        }`
+      : `flex items-center justify-center gap-1 rounded-full p-1.5 transition-colors duration-200 select-none ${
+          activeClass || inactiveClass
+        }`;
   const countClassName = isVertical
-    ? 'text-[11px] font-semibold leading-none'
+    ? 'text-[11px] font-semibold leading-none text-center'
     : 'pr-1 text-sm font-medium';
 
   return (
     <div
       className={
-        isVertical ? 'flex flex-col items-center gap-3' : 'flex flex-wrap items-center gap-2 pt-2'
+        isVertical
+          ? 'pointer-events-auto flex flex-col items-center justify-center'
+          : 'pointer-events-auto flex flex-wrap items-center gap-2 pt-2'
       }
     >
-      <div className={isVertical ? 'flex flex-col items-center gap-3' : 'flex items-center gap-2'}>
+      <div className={isVertical ? 'flex flex-col items-center justify-center gap-2 sm:gap-2.5' : 'flex items-center gap-2'}>
         {/* Like Button */}
-        <button
+        <m.button
           type="button"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.78 }}
+          transition={springTransition}
           onClick={onLike}
           disabled={likePending}
           aria-label={isProjectLiked ? 'Unlike project' : 'Like project'}
           aria-busy={likePending}
           className={`${buttonClassName(
             isProjectLiked || metrics.likes > 0 ? 'text-red-500' : '',
-            'text-gray-400 hover:text-red-500'
+            'text-gray-400 hover:text-red-500 active:text-red-500'
           )} disabled:cursor-wait disabled:opacity-70`}
         >
-          <svg
-            className="h-5 w-5 sm:h-6 sm:w-6"
+          <m.svg
+            animate={{ scale: isProjectLiked ? [1, 1.3, 1] : 1 }}
+            transition={{ duration: 0.3 }}
+            className="h-5 w-5 shrink-0 sm:h-6 sm:w-6"
             fill={isProjectLiked ? 'currentColor' : 'none'}
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -85,22 +104,25 @@ export function ProjectInteractionBar({
               strokeWidth={2}
               d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
             />
-          </svg>
+          </m.svg>
           {metrics.likes > 0 && <span className={countClassName}>{metrics.likes}</span>}
-        </button>
+        </m.button>
 
         {/* Comment Button */}
-        <button
+        <m.button
           type="button"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.78 }}
+          transition={springTransition}
           className={buttonClassName(
             commentCount > 0 ? 'text-green-600 dark:text-green-500' : '',
-            'text-gray-400 hover:text-green-600 dark:hover:text-green-500'
+            'text-gray-400 hover:text-green-600 active:text-green-600 dark:hover:text-green-500'
           )}
           onClick={onScrollToComments}
           aria-label="View comments"
         >
           <svg
-            className="h-5 w-5 sm:h-6 sm:w-6"
+            className="h-5 w-5 shrink-0 sm:h-6 sm:w-6"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -113,14 +135,17 @@ export function ProjectInteractionBar({
             />
           </svg>
           {commentCount > 0 && <span className={countClassName}>{commentCount}</span>}
-        </button>
+        </m.button>
 
         {/* Share Button */}
-        <button
+        <m.button
           type="button"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.78 }}
+          transition={springTransition}
           className={buttonClassName(
             metrics.shares > 0 ? 'text-blue-500' : '',
-            'text-gray-400 hover:text-blue-500'
+            'text-gray-400 hover:text-blue-500 active:text-blue-500'
           )}
           onClick={() => {
             onShare();
@@ -129,7 +154,7 @@ export function ProjectInteractionBar({
           aria-label="Share project"
         >
           <svg
-            className="h-5 w-5 sm:h-6 sm:w-6"
+            className="h-5 w-5 shrink-0 sm:h-6 sm:w-6"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -142,41 +167,51 @@ export function ProjectInteractionBar({
             />
           </svg>
           {metrics.shares > 0 && <span className={countClassName}>{metrics.shares}</span>}
-        </button>
+        </m.button>
 
         {/* Translate Button */}
-        <button
+        <m.button
           type="button"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.78 }}
+          transition={springTransition}
           onClick={onTranslate}
           disabled={translateLoading}
-          className={`${isVertical ? 'flex-col gap-0.5' : 'gap-1'} flex items-center rounded-full p-1.5 transition-all duration-200 disabled:opacity-50 ${
+          className={`${buttonClassName(
             translations
-              ? 'text-purple-600 hover:text-gray-400'
-              : 'text-gray-400 hover:text-purple-600'
-          }`}
+              ? 'text-purple-600 hover:text-gray-400 active:text-gray-400'
+              : 'text-gray-400 hover:text-purple-600 active:text-purple-600',
+            ''
+          )} disabled:opacity-50`}
           title={translations ? 'Restore original' : 'Translate with Gemini AI'}
         >
           {translateLoading ? (
-            <Loader2 className="h-5 w-5 animate-spin sm:h-6 sm:w-6" />
+            <Loader2 className="h-5 w-5 shrink-0 animate-spin sm:h-6 sm:w-6" />
           ) : translations ? (
-            <RotateCcw className="h-5 w-5 sm:h-6 sm:w-6" />
+            <RotateCcw className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
           ) : (
-            <Languages className="h-5 w-5 sm:h-6 sm:w-6" />
+            <Languages className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
           )}
-        </button>
+        </m.button>
 
         {/* Open Full Page Button (vertical/window mode only) */}
         {isVertical && projectSlug && (
-          <a
+          <m.a
             href={`/projects/${projectSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center rounded-full p-1.5 text-gray-400 transition-all duration-200 hover:text-amber-500"
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.78 }}
+            transition={springTransition}
+            className={buttonClassName(
+              '',
+              'text-gray-400 hover:text-amber-500 active:text-amber-500'
+            )}
             aria-label="Open full page"
             title="Open full page"
           >
-            <ExternalLink className="h-5 w-5 sm:h-6 sm:w-6" />
-          </a>
+            <ExternalLink className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
+          </m.a>
         )}
       </div>
 

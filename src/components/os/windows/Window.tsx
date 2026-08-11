@@ -313,15 +313,23 @@ export default function OSWindow({
     }
   }, [isFocused]);
 
+  const isMobile = viewportWidth < 768;
   const normalFrame = useMemo(
     () => ({
-      x: isSmallScreen ? 8 : initialPosition.x,
-      y: isSmallScreen ? 44 : initialPosition.y, // 36px menubar + 8px gap
-      width: isSmallScreen ? viewportWidth - 16 : measuredWidth,
-      height: isSmallScreen ? viewportHeight - 146 : measuredHeight, // leaves room for dock + generous gap margins
+      x: isSmallScreen
+        ? 6
+        : Math.max(10, Math.min(initialPosition.x, viewportWidth - measuredWidth - 10)),
+      y: isSmallScreen
+        ? (isMobile ? 86 : 96)
+        : Math.max(36, Math.min(initialPosition.y, viewportHeight - measuredHeight - 60)),
+      width: isSmallScreen ? Math.max(viewportWidth - 12, 320) : measuredWidth,
+      height: isSmallScreen
+        ? Math.max(viewportHeight - (isMobile ? 204 : 196), 260)
+        : measuredHeight,
     }),
     [
       isSmallScreen,
+      isMobile,
       initialPosition.x,
       initialPosition.y,
       measuredWidth,
@@ -333,12 +341,12 @@ export default function OSWindow({
 
   const maximizedFrame = useMemo(
     () => ({
-      x: 10,
-      y: 36,
-      width: Math.max(viewportWidth - 20, 320),
-      height: Math.max(viewportHeight - 46, 240),
+      x: isSmallScreen ? 6 : 10,
+      y: isSmallScreen ? (isMobile ? 86 : 96) : 36,
+      width: Math.max(viewportWidth - (isSmallScreen ? 12 : 20), 320),
+      height: Math.max(viewportHeight - (isSmallScreen ? (isMobile ? 204 : 196) : 46), 240),
     }),
-    [viewportWidth, viewportHeight]
+    [viewportWidth, viewportHeight, isSmallScreen, isMobile]
   );
 
   const snappedFrame = useMemo(() => {
@@ -431,7 +439,7 @@ export default function OSWindow({
     opacity: 1,
     width: activeFrame.width,
     height: activeFrame.height,
-    borderRadius: isMaximized ? 14 : 22, // iOS-style window radius
+    borderRadius: isSmallScreen ? 16 : isMaximized ? 14 : 22, // iOS-style window radius
     ...shellStyle,
   };
 

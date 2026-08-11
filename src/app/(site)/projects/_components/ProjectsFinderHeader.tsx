@@ -15,7 +15,7 @@ interface ProjectsFinderHeaderProps {
 }
 
 export default function ProjectsFinderHeader({
-  itemCount,
+  itemCount: _itemCount,
   labels = [],
 }: ProjectsFinderHeaderProps) {
   const t = useDictionary();
@@ -116,17 +116,6 @@ export default function ProjectsFinderHeader({
 
   return (
     <div className="relative z-50 mt-8 flex flex-col items-center justify-between gap-4 px-4 py-4 sm:flex-row sm:px-8">
-      {/* Title */}
-      <div className="flex w-full items-center gap-3 sm:w-auto">
-        <div>
-          <h1 className="whitespace-nowrap text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-            {t.projects.collectionTitle}
-          </h1>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-            {itemCount} {t.projects.items}
-          </p>
-        </div>
-      </div>
 
       {/* Search Input Integrated into Header */}
       <div

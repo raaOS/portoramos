@@ -165,18 +165,4 @@ export const sanitize = {
       .substring(0, 255)
       .replace(/^[._]/, 'file');
   },
-
-  /**
-   * @deprecated Blacklist-based SQL sanitization is trivially bypassable
-   * (UNION without quotes, hex encoding, CHAR(), etc.).
-   * Use parameterized queries instead. Kept only for legacy/test compatibility.
-   */
-  sql: (input: string): string => {
-    return input
-      .replace(/[';"\\]/g, '')
-      .replace(/--/g, '')
-      .replace(/\/\*|\*\//g, '')
-      .trim()
-      .substring(0, 1000);
-  },
 };

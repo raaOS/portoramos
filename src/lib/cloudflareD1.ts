@@ -185,7 +185,8 @@ export async function setD1Value(key: string, value: unknown) {
 export async function compareAndSetD1Value(
   key: string,
   expectedValue: unknown | null,
-  nextValue: unknown
+  nextValue: unknown,
+  expectedRawJson?: string
 ) {
   await bootstrapD1Schema();
 
@@ -203,7 +204,7 @@ export async function compareAndSetD1Value(
     return rows.length > 0;
   }
 
-  const expectedJson = JSON.stringify(expectedValue);
+  const expectedJson = expectedRawJson ?? JSON.stringify(expectedValue);
   const rows = await queryD1<{ key: string }>(
     `UPDATE ${D1_TABLE_NAME}
        SET value = ?, updated_at = ?

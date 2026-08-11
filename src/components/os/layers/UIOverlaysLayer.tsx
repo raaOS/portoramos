@@ -12,16 +12,10 @@ import type { Project } from '@/types/projects';
 import type { ContactProfile } from '../data/mockChats';
 import { useDesktopWindowContext } from '../context/DesktopWindowContext';
 import { useUnifiedZIndex } from '../context/UnifiedZIndexContext';
-import { ISLAND_ID } from '../ui/DynamicIsland';
 import { useOSOverlays, useOSBoot } from '../context/OSSystemContext';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 
 const Spotlight = dynamic(() => import('../core/Spotlight'), {
-  loading: () => null,
-  ssr: false,
-});
-
-const DynamicIsland = dynamic(() => import('../ui/DynamicIsland'), {
   loading: () => null,
   ssr: false,
 });
@@ -63,9 +57,9 @@ interface UIOverlaysLayerProps {
 }
 
 export default function UIOverlaysLayer({
-  navToChat,
+  navToChat: _navToChat,
   openWhatsAppList,
-  testimonialContacts,
+  testimonialContacts: _testimonialContacts,
   aboutData,
   isAdmin,
   logout,
@@ -86,7 +80,6 @@ export default function UIOverlaysLayer({
     setShowControlCenter,
     showCalendar,
     setShowCalendar,
-    showMissionControl,
   } = useOSOverlays();
   const { isRevealed } = useOSBoot();
   // Saat hollow-O mulai membesar (`isRevealed = true`), dock & menubar sudah
@@ -96,28 +89,6 @@ export default function UIOverlaysLayer({
 
   const { windows, openWindow, bouncingDocId } = useDesktopWindowContext();
   const { getZIndex } = useUnifiedZIndex();
-
-  const enhancedTestimonialContacts = React.useMemo(() => {
-    const tipContact: ContactProfile = {
-      id: 'system-tip-snapping',
-      name: '💡 Desktop Tip',
-      status: 'Seret jendela ke tepi layar / hover tombol hijau untuk membagi layar!',
-      conversation: [],
-      avatar: '',
-    };
-    return [tipContact, ...(testimonialContacts || [])];
-  }, [testimonialContacts]);
-
-  const handleOpenChat = React.useCallback(
-    (chatId?: string) => {
-      if (chatId === 'system-tip-snapping') {
-        toggleNotesVisibility();
-      } else {
-        navToChat(chatId);
-      }
-    },
-    [navToChat, toggleNotesVisibility]
-  );
 
   const isWindowOpen = (id: string) => windows?.find((w) => w.id === id)?.isOpen ?? false;
   const activeWindows = (windows || []).filter((w) => w.isOpen && !w.isMinimized);
@@ -134,15 +105,6 @@ export default function UIOverlaysLayer({
 
   return (
     <div className="pointer-events-none absolute inset-0">
-      {/* Dynamic Island - hidden during Mission Control */}
-      {!showMissionControl && (
-        <DynamicIsland
-          isBooting={isBootSequenceActive}
-          onOpenChat={handleOpenChat}
-          customNotifications={enhancedTestimonialContacts}
-          islandId={ISLAND_ID}
-        />
-      )}
 
       <AnimatePresence mode="wait">
         {/* MenuBar - hidden during boot */}

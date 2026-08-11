@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 
 // Types of focusable elements in the OS
-export type ElementType = 'window' | 'stickyNote' | 'desktopIcon' | 'dynamicIsland';
+export type ElementType = 'window' | 'stickyNote' | 'desktopIcon';
 
 interface ZIndexEntry {
   id: string;

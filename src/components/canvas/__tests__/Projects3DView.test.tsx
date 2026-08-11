@@ -39,7 +39,7 @@ describe('Projects3DView', () => {
     const module = await import('../Projects3DView');
     render(<module.default projects={[createProject()]} />);
 
-    expect(screen.getByTestId('canvas-3d')).toBeInTheDocument();
+    expect(await screen.findByTestId('canvas-3d')).toBeInTheDocument();
   });
 
   it('menampilkan fallback ketika komponen inti melempar error', async () => {

@@ -76,10 +76,9 @@ test.describe('Ramos OS Core Functionality & Accessibility', () => {
     // Wait 3400ms from click to land inside the glassReveal phase.
     await page.waitForTimeout(3400);
     await expect(startScreen).toBeVisible();
-    await expect(page.getByTestId('dynamic-island')).toHaveCount(0);
 
     await expect(startScreen).toBeHidden({ timeout: 5000 });
-    await expect(page.getByTestId('dynamic-island')).toHaveCount(1, { timeout: 5000 });
+    await expect(page.getByTestId('unified-layer')).toHaveCount(1, { timeout: 5000 });
   });
 
   test('homepage should load with OS elements', async ({ page }) => {

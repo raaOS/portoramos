@@ -474,7 +474,11 @@ function DesktopMain({
       soundManager.loadConfig(aboutData.soundConfig);
     }
     if (needsPowerOn) {
-      soundManager.preload('startup');
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        window.requestIdleCallback(() => soundManager.preload('startup'));
+      } else {
+        setTimeout(() => soundManager.preload('startup'), 1500);
+      }
     }
   }, [aboutData?.soundConfig, needsPowerOn]);
 

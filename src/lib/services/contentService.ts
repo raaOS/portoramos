@@ -188,15 +188,10 @@ export class ContentService<T> {
         ? data
         : { ...(data as Record<string, unknown>), updatedAt: new Date().toISOString() };
 
-      // MEDIUM FIX: Clear cache SEBELUM save untuk mencegah stale data read
-      contentCache.delete(getCacheKey(this.dataPath));
+      // Atomically update cache with payload to prevent stale reads during DB write roundtrips
+      contentCache.set(getCacheKey(this.dataPath), payload as unknown as object, this.cacheTTL);
 
       await db.ref(this.dataPath).set(payload);
-
-      // CRITICAL FIX: Cache `payload` (dengan updatedAt), bukan raw `data`.
-      // Kalau cache tanpa updatedAt, next-read dalam TTL return data stale,
-      // dan komparasi lastUpdated di client jadi broken.
-      contentCache.set(getCacheKey(this.dataPath), payload as unknown as object, this.cacheTTL);
 
       // Log the activity (await to prevent serverless function termination before write finishes)
       const actionMessage = _message

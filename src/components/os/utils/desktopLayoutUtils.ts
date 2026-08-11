@@ -16,14 +16,14 @@ export const generateDesktopIcons = (
 
   // 2. Define Desktop Grid
   const isMobile = windowSize.width < 768;
-  const gridX = isMobile ? 90 : 110; // Tighter grid on mobile
-  const gridY = isMobile ? 120 : 140; // Tighter grid on mobile
-  const margin = isMobile ? 20 : 40; // Smaller margin on mobile
-  const topOffset = 60; // MenuBar
-  const bottomOffset = 120; // Dock
+  const gridX = isMobile ? 82 : 110; // Compact grid on mobile so all icons fit
+  const gridY = isMobile ? 98 : 140; // Compact grid on mobile
+  const margin = isMobile ? 12 : 40; // Compact margin on mobile
+  const topOffset = isMobile ? 50 : 60; // MenuBar
+  const bottomOffset = isMobile ? 95 : 120; // Dock
 
-  const cols = Math.max(0, Math.floor((windowSize.width - margin * 2) / gridX));
-  const rows = Math.max(0, Math.floor((windowSize.height - topOffset - bottomOffset) / gridY));
+  const cols = Math.max(1, Math.floor((windowSize.width - margin * 2) / gridX));
+  const rows = Math.max(1, Math.floor((windowSize.height - topOffset - bottomOffset) / gridY));
 
   const availableSlots: { x: number; y: number }[] = [];
 
@@ -44,10 +44,7 @@ export const generateDesktopIcons = (
   const safeProjects = Array.isArray(commercialProjects) ? commercialProjects : [];
   let visibleProjects = safeProjects.filter((p) => p.status !== 'draft');
 
-  if (isMobile) {
-    // Sembunyikan ikon proyek individual di mobile agar wallpaper bersih & bebas tumpang tindih
-    visibleProjects = [];
-  } else if (desktopPreferences?.maxIcons) {
+  if (desktopPreferences?.maxIcons) {
     visibleProjects = visibleProjects.slice(0, desktopPreferences.maxIcons);
   }
 

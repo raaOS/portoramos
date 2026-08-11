@@ -182,10 +182,12 @@ export async function POST(request: NextRequest) {
     const clientId = getClientIdentifier(request);
 
     // Skip rate limiting and external side effects for automated tests.
+    // SECURITY: Only use server-controlled env vars for test detection.
+    // Never trust HTTP headers (like x-test-bypass) — they can be spoofed
+    // by anyone with network access to the dev server.
     const isTestEnv =
       process.env.NODE_ENV === 'test' ||
-      process.env.E2E_TEST === 'true' ||
-      (process.env.NODE_ENV === 'development' && request.headers.get('x-test-bypass') === 'true');
+      process.env.E2E_TEST === 'true';
 
     if (!isTestEnv) {
       // CLOUDFLARE_D1 rate limiting (persisten di Vercel, tidak hilang saat cold start)

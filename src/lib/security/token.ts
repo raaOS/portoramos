@@ -29,13 +29,17 @@ export function validateCSRFToken(token: string, sessionToken: string): boolean 
   if (!token || !sessionToken) return false;
   if (token.length !== 64 || sessionToken.length !== 64) return false;
 
-  // Timing-safe comparison to prevent side-channel attacks
+  // Timing-safe comparison to prevent side-channel attacks.
+  // Uses a constant-time XOR approach that works in both Node.js and Edge
+  // runtimes without depending on require('crypto').
   const bufA = Buffer.from(token, 'hex');
   const bufB = Buffer.from(sessionToken, 'hex');
   if (bufA.length !== bufB.length) return false;
 
-  // crypto is available globally in Node.js
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const crypto = require('crypto');
-  return crypto.timingSafeEqual(bufA, bufB);
+  let result = 0;
+  for (let i = 0; i < bufA.length; i++) {
+    result |= bufA[i] ^ bufB[i];
+  }
+  return result === 0;
 }
+

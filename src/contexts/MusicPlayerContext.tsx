@@ -434,23 +434,21 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     const isYt = nextTrack.src === 'youtube' || nextTrack.source === 'youtube';
     if (isYt) {
       audio?.pause();
-      ensureYoutube();
-      if (ytPlayerRef.current && typeof ytPlayerRef.current.loadVideoById === 'function') {
-        try {
-          if (typeof ytPlayerRef.current.unMute === 'function') {
-            ytPlayerRef.current.unMute();
-          }
-          const combinedVolume = (systemVolume / 100) * (playerVolume / 100);
-          if (typeof ytPlayerRef.current.setVolume === 'function') {
-            ytPlayerRef.current.setVolume(combinedVolume * 100);
-          }
-          if (isPlayingRef.current) {
+      if (isPlayingRef.current) {
+        ensureYoutube();
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.loadVideoById === 'function') {
+          try {
+            if (typeof ytPlayerRef.current.unMute === 'function') {
+              ytPlayerRef.current.unMute();
+            }
+            const combinedVolume = (systemVolume / 100) * (playerVolume / 100);
+            if (typeof ytPlayerRef.current.setVolume === 'function') {
+              ytPlayerRef.current.setVolume(combinedVolume * 100);
+            }
             ytPlayerRef.current.loadVideoById(nextTrack.id);
             ytPlayerRef.current.playVideo();
-          } else if (typeof ytPlayerRef.current.cueVideoById === 'function') {
-            ytPlayerRef.current.cueVideoById(nextTrack.id);
-          }
-        } catch {}
+          } catch {}
+        }
       }
     } else {
       if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === 'function') {

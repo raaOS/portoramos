@@ -55,7 +55,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               year: project.year,
               slug: project.slug,
             })
-          ),
+          ).replace(/</g, '\\u003c'),
         }}
       />
       <ProjectDetailTwoColumn

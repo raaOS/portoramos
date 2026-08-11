@@ -218,7 +218,7 @@ export function WindowTitleBar({
       </div>
 
       {/* Title Indicator */}
-      <div className="pointer-events-none absolute left-1/2 flex w-[60%] -translate-x-1/2 items-center justify-center gap-1.5 opacity-80">
+      <div className="pointer-events-none absolute left-[108px] right-[108px] flex items-center justify-center gap-1.5 opacity-80 sm:left-32 sm:right-32">
         <span className="block w-full truncate text-center text-xs font-semibold tracking-wide text-gray-700">
           {title}
         </span>

@@ -8,7 +8,7 @@
     "src/app/api/admin/upload/route.ts": {
       "maxDuration": 60
     },
-    "src/app/r2/[...key]/route.ts": {
+    "src/app/api/r2/[...key]/route.ts": {
       "maxDuration": 60
     },
     "src/app/api/ai/generate-details/route.ts": {

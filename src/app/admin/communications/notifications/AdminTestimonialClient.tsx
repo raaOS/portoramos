@@ -152,7 +152,7 @@ export default function AdminTestimonialClient() {
 
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-gray-400">
-              Pesan Notifikasi (Dynamic Island)
+              Pesan Notifikasi (Preview Chat)
             </label>
             <input
               type="text"

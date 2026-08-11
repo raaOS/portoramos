@@ -162,9 +162,9 @@ export const aboutService = {
         throw new Error('ContentService failed to save data');
       }
 
-      // Cleanup storage asynchronously (fire and forget to not block UI response)
+      // Cleanup storage reliably before function completion
       if (orphanedAssets.length > 0) {
-        deleteStorageAssets(orphanedAssets, 'AboutService').catch((e) =>
+        await deleteStorageAssets(orphanedAssets, 'AboutService').catch((e) =>
           console.warn('[AboutService] Failed to clean up orphaned assets:', e)
         );
       }

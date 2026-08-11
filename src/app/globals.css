@@ -833,3 +833,13 @@ html[data-dock-popover-closing='true'] [data-dock-tooltip='true'] {
   height: 0.75rem !important; /* h-3 */
   width: 0.75rem !important; /* w-3 */
 }
+
+@keyframes indeterminate-bar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(200%); }
+  100% { transform: translateX(400%); }
+}
+
+.animate-indeterminate-bar {
+  animation: indeterminate-bar 2s ease-in-out infinite;
+}

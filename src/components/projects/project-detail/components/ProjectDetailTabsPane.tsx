@@ -57,7 +57,7 @@ export default function ProjectDetailTabsPane({
     ? 'flex-shrink-0 border-b border-black/5 bg-gray-50/30 px-5 py-3 dark:border-white/5 dark:bg-gray-900/5 sm:px-6'
     : 'border-b border-black/5 bg-gray-50/30 px-5 py-3 dark:border-white/5 dark:bg-gray-900/5 sm:px-6';
   const contentClassName = isWindowMode
-    ? 'h-0 flex-1 flex-grow overflow-y-auto p-5 sm:p-6'
+    ? 'h-auto overflow-visible p-5 sm:p-6 md:h-0 md:flex-1 md:flex-grow md:overflow-y-auto'
     : 'p-5 sm:p-6 lg:p-8';
   const motionY = isWindowMode ? 24 : 12;
   const motionExitY = isWindowMode ? -12 : -6;

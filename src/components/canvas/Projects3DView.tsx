@@ -2,8 +2,10 @@
 
 import { memo } from 'react';
 import type { Project } from '@/types/projects';
+import dynamic from 'next/dynamic';
 import { SectionErrorBoundary } from '@/components/error/ErrorBoundary';
-import InfiniteCanvasView from './InfiniteCanvasView';
+
+const InfiniteCanvasView = dynamic(() => import('./InfiniteCanvasView'), { ssr: false });
 
 type Props = {
   projects: Project[];

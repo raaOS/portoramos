@@ -71,12 +71,6 @@ describe('security utils', () => {
       expect(sanitize.filename('my document!.pdf')).toBe('my_document_.pdf');
       expect(sanitize.filename('.hidden')).toBe('filehidden');
     });
-
-    it('should sanitize SQL', () => {
-      expect(sanitize.sql('SELECT * FROM users; DROP TABLE--')).toBe(
-        'SELECT * FROM users DROP TABLE'
-      );
-    });
   });
 
   describe('validate', () => {

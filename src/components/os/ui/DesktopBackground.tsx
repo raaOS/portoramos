@@ -25,7 +25,6 @@ export default function DesktopBackground({
 }: DesktopBackgroundProps) {
   const prefersReducedMotion = useReducedMotion();
   const { isDesktopRevealed } = useBackgroundEffect();
-  const videoRef = React.useRef<HTMLVideoElement>(null);
 
   // Resolve the active wallpaper entry (not just URL) so we can also
   // pick up the side-car poster image if the upload pipeline produced
@@ -186,7 +185,22 @@ export default function DesktopBackground({
     const slow = conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g';
     return !conn.saveData && !slow;
   });
-  const shouldMountVideo = isVideo && shouldPlayVideo && !prefersReducedMotion && isDesktopRevealed;
+
+  // Defer video streaming on desktop slightly so <Image> achieves super-fast LCP without network contention
+  const [videoDeferredReady, setVideoDeferredReady] = useState(false);
+  useEffect(() => {
+    if (!isVideo || isMobile || prefersReducedMotion || !isDesktopRevealed) return;
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(() => setVideoDeferredReady(true), { timeout: 1200 });
+      return () => window.cancelIdleCallback(idleId);
+    } else {
+      const tid = setTimeout(() => setVideoDeferredReady(true), 800);
+      return () => clearTimeout(tid);
+    }
+  }, [isVideo, isMobile, prefersReducedMotion, isDesktopRevealed]);
+
+  const shouldMountVideo =
+    isVideo && shouldPlayVideo && !prefersReducedMotion && !isMobile && isDesktopRevealed && videoDeferredReady;
 
   useEffect(() => {
     if (!isVideo) return;
@@ -221,34 +235,82 @@ export default function DesktopBackground({
     };
   }, [isVideo]);
 
+  const videoRefA = React.useRef<HTMLVideoElement>(null);
+  const videoRefB = React.useRef<HTMLVideoElement>(null);
+  const [activePlayer, setActivePlayer] = useState<'A' | 'B'>('A');
+  const isTransitioningRef = React.useRef(false);
+
+  // Compute base start time
+  const startTime = useMemo(() => {
+    const match = videoSrc.match(/#t=(\d+(\.\d+)?)/);
+    return match ? parseFloat(match[1]) : (activeEntry?.startTime ?? 14);
+  }, [videoSrc, activeEntry?.startTime]);
+
+  // Timeupdate handler for Video A (triggers crossfade to Video B near end)
+  const handleTimeUpdateA = useCallback(() => {
+    const vA = videoRefA.current;
+    const vB = videoRefB.current;
+    if (!vA || !vB || isTransitioningRef.current || activePlayer !== 'A') return;
+
+    const remaining = vA.duration - vA.currentTime;
+    const threshold = Math.min(1.0, vA.duration * 0.15 || 1.0);
+
+    if (remaining <= threshold && remaining > 0 && vA.duration > 0) {
+      isTransitioningRef.current = true;
+      vB.currentTime = startTime;
+      vB.play().catch(() => {});
+      setActivePlayer('B');
+
+      setTimeout(() => {
+        isTransitioningRef.current = false;
+        if (vA && !vA.paused) {
+          vA.pause();
+        }
+      }, 1000);
+    }
+  }, [activePlayer, startTime]);
+
+  // Timeupdate handler for Video B (triggers crossfade to Video A near end)
+  const handleTimeUpdateB = useCallback(() => {
+    const vA = videoRefA.current;
+    const vB = videoRefB.current;
+    if (!vA || !vB || isTransitioningRef.current || activePlayer !== 'B') return;
+
+    const remaining = vB.duration - vB.currentTime;
+    const threshold = Math.min(1.0, vB.duration * 0.15 || 1.0);
+
+    if (remaining <= threshold && remaining > 0 && vB.duration > 0) {
+      isTransitioningRef.current = true;
+      vA.currentTime = startTime;
+      vA.play().catch(() => {});
+      setActivePlayer('A');
+
+      setTimeout(() => {
+        isTransitioningRef.current = false;
+        if (vB && !vB.paused) {
+          vB.pause();
+        }
+      }, 1000);
+    }
+  }, [activePlayer, startTime]);
+
   // Programmatic playback control linked to desktop boot/reveal state
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !shouldMountVideo) return;
+    if (!shouldMountVideo) return;
+    const vA = videoRefA.current;
+    const vB = videoRefB.current;
 
-    video.play().catch((err) => {
-      console.warn('[DesktopBackground] Playback execution aborted:', err);
-    });
-  }, [shouldMountVideo, videoSrc]);
-
-  // Programmatic custom start times (e.g. video URL ending with #t=14, default to 14 if no fragment)
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !shouldMountVideo) return;
-
-    const match = videoSrc.match(/#t=(\d+(\.\d+)?)/);
-    const startTime = match ? parseFloat(match[1]) : (activeEntry?.startTime ?? 14);
-
-    const applyStartTime = () => {
-      video.currentTime = startTime;
-    };
-
-    if (video.readyState >= 1) {
-      applyStartTime();
-    } else {
-      video.addEventListener('loadedmetadata', applyStartTime, { once: true });
+    if (vA) {
+      vA.currentTime = startTime;
+      vA.play().catch((err) => {
+        console.warn('[DesktopBackground] Video A playback aborted:', err);
+      });
     }
-  }, [videoSrc, activeEntry?.startTime, shouldMountVideo]);
+    if (vB) {
+      vB.currentTime = startTime;
+    }
+    isTransitioningRef.current = false;
+  }, [shouldMountVideo, videoSrc, startTime]);
 
   // iOS-style background effect: scales down slightly and blurs when a window is active.
   // Reduced-motion or mobile: skip spring entirely — langsung set filter static tanpa scale shift.
@@ -261,9 +323,14 @@ export default function DesktopBackground({
   // pecah). Image wallpaper tetap dapat efek breathing iOS karena image
   // di-resize sharp di build pipeline + Next/Image, jadi aman di-scale.
   const idleScale = isVideo ? 1 : 1.08;
+  const mobileBlur = Math.max(blurAmount + 16, 16);
 
-  const animateTarget =
-    prefersReducedMotion || isMobile
+  const animateTarget = isMobile
+    ? {
+        scale: 1.06,
+        filter: `blur(${mobileBlur}px)`,
+      }
+    : prefersReducedMotion
       ? {
           scale: 1,
           filter: `blur(${blurAmount}px)`,
@@ -300,7 +367,6 @@ export default function DesktopBackground({
               fill
               priority
               fetchPriority="high"
-              unoptimized={wallpaperImageSrc.startsWith('/r2/')}
               quality={75}
               sizes="100vw"
               className={`object-cover transition-opacity duration-700 ${
@@ -311,22 +377,40 @@ export default function DesktopBackground({
           );
         })()}
 
-        {/* Video stream layer — mounted smoothly after reveal without tearing down the poster node */}
+        {/* Dual-Video Seamless Crossfade Stream Layer */}
         {isVideo && shouldMountVideo && (
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            poster={posterUrl}
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            onCanPlay={handleVideoCanPlay}
-            className={`h-full w-full object-cover transition-opacity duration-700 ${
-              videoReady ? 'opacity-100' : 'opacity-0'
-            }`}
-            style={{ transform: 'translateZ(0)' }}
-          />
+          <>
+            {/* Player A */}
+            <video
+              ref={videoRefA}
+              src={videoSrc}
+              poster={posterUrl}
+              muted
+              playsInline
+              preload="auto"
+              onCanPlay={handleVideoCanPlay}
+              onTimeUpdate={handleTimeUpdateA}
+              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
+                videoReady && activePlayer === 'A' ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}
+              style={{ transform: 'translateZ(0)' }}
+            />
+
+            {/* Player B (Buffer & Crossfade Twin) */}
+            <video
+              ref={videoRefB}
+              src={videoSrc}
+              poster={posterUrl}
+              muted
+              playsInline
+              preload="auto"
+              onTimeUpdate={handleTimeUpdateB}
+              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
+                videoReady && activePlayer === 'B' ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}
+              style={{ transform: 'translateZ(0)' }}
+            />
+          </>
         )}
       </m.div>
 

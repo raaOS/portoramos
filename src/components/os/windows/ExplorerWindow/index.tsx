@@ -320,6 +320,10 @@ export default function ExplorerWindow({
   const handleNodeClick = (node: AnyExplorerNode, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedNodeId(node.id);
+    // On mobile touch screens (<768px), single tap opens item directly to avoid double-tap zoom friction
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      void handleNodeDoubleClick(node, e);
+    }
   };
 
   const handleNodeDoubleClick = useCallback(

@@ -217,7 +217,8 @@ export const Compare = ({
       aria-valuemin={0}
       aria-valuemax={100}
       tabIndex={0}
-      className={cn('relative h-[400px] w-[400px] overflow-hidden', className)}
+      data-no-window-drag
+      className={cn('relative h-[400px] w-[400px] select-none touch-none overflow-hidden', className)}
       style={{
         position: 'relative',
         cursor: slideMode === 'drag' ? 'grab' : 'col-resize',

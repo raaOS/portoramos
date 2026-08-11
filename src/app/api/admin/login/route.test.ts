@@ -68,7 +68,7 @@ describe('POST /api/admin/login', () => {
     vi.unstubAllGlobals();
   });
 
-  it('ignores x-test-bypass in production and still enforces rate limits', async () => {
+  it('enforces rate limits regardless of spoofable headers', async () => {
     checkDataRateLimitMock.mockResolvedValue({ allowed: false, retryAfter: 120 });
 
     const response = await POST(
@@ -77,7 +77,6 @@ describe('POST /api/admin/login', () => {
         headers: {
           'content-type': 'application/json',
           'x-csrf-token': 'a'.repeat(64),
-          'x-test-bypass': 'true',
           'x-forwarded-for': '203.0.113.1',
           'user-agent': 'Mozilla/5.0 Chrome',
         },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback, useState, useSyncExternalStore } from 'react';
+import { useMemo, useCallback, useState, useEffect, useSyncExternalStore } from 'react';
 import type { Project, GalleryItem } from '@/types/projects';
 import { motion, AnimatePresence } from 'motion/react';
 import { Info, BookOpen, Image, MessageSquare } from 'lucide-react';
@@ -72,6 +72,16 @@ export default function ProjectDetailTwoColumn({
   const [activeWindowTab, setActiveWindowTab] = useState<ProjectWindowTabId>('overview');
   const [isLeftColumnHovered, setIsLeftColumnHovered] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const commentsSectionId = useMemo(() => `comments-section-${project.id}`, [project.id]);
 
@@ -155,7 +165,7 @@ export default function ProjectDetailTwoColumn({
   // Window split layout helper
   const renderSplitContent = () => {
     return (
-      <div className="flex h-full w-full select-text flex-col overflow-hidden bg-white transition-colors duration-300 dark:bg-black md:flex-row">
+      <div className="flex h-full w-full select-text flex-col overflow-y-auto bg-white transition-colors duration-300 dark:bg-black md:flex-row md:overflow-hidden">
         {/* Left Column: Media & Core Interaction */}
         <div
           onMouseEnter={() => setIsLeftColumnHovered(true)}
@@ -163,12 +173,18 @@ export default function ProjectDetailTwoColumn({
             setIsLeftColumnHovered(false);
             setIsCommentsOpen(false);
           }}
-          className="relative flex h-full w-full items-center justify-center overflow-hidden border-b border-black/10 bg-gray-50/50 dark:border-white/10 dark:bg-gray-900/10 md:w-[42%] md:border-b-0 md:border-r"
+          onClick={() => {
+            if (isMobile) setIsLeftColumnHovered((prev) => !prev);
+          }}
+          className="relative flex min-h-[260px] w-full shrink-0 items-center justify-center overflow-hidden border-b border-black/10 bg-gray-50/50 touch-pan-y dark:border-white/10 dark:bg-gray-900/10 md:h-full md:w-[42%] md:border-b-0 md:border-r cursor-pointer md:cursor-default"
           data-no-window-drag
         >
           <div
             className="relative w-full transition-[padding] duration-300 ease-out"
-            style={{ padding: isLeftColumnHovered || !isWindowMode ? '0 24px' : '0' }}
+            style={{
+              paddingRight: isMobile || isLeftColumnHovered || !isWindowMode ? '44px' : '12px',
+              paddingLeft: '12px',
+            }}
           >
             <ProjectCover
               project={displayProject}
@@ -179,13 +195,19 @@ export default function ProjectDetailTwoColumn({
             />
 
             <motion.div
-              className="absolute inset-y-0 right-1 z-20 flex items-center"
-              initial={{ x: 50, opacity: 0 }}
+              key={`interaction-bar-${project.id}`}
+              className="pointer-events-none absolute inset-y-0 right-1.5 z-20 flex items-center sm:right-2.5"
+              initial={{ x: 60, opacity: 0 }}
               animate={{
-                x: isLeftColumnHovered || !isWindowMode ? 0 : 50,
-                opacity: isLeftColumnHovered || !isWindowMode ? 1 : 0,
+                x: isMobile || isLeftColumnHovered || !isWindowMode ? 0 : 60,
+                opacity: isMobile || isLeftColumnHovered || !isWindowMode ? 1 : 0,
               }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              transition={{
+                type: 'spring',
+                stiffness: 300,
+                damping: 22,
+                delay: isMobile ? 0.35 : 0,
+              }}
             >
               <ProjectInteractionBar
                 isProjectLiked={isProjectLiked}
@@ -264,7 +286,7 @@ export default function ProjectDetailTwoColumn({
 
         {/* Right Column: Tabbed Content (Header, Tabs Navigation, Tab Panels) */}
         <div
-          className="flex h-full flex-1 flex-col overflow-hidden bg-white dark:bg-black"
+          className="flex min-h-0 w-full flex-1 flex-col overflow-visible bg-white dark:bg-black md:h-full md:overflow-hidden"
           data-no-window-drag
         >
           <div className="flex-shrink-0 border-b border-black/5 p-5 dark:border-white/5 sm:p-6">
@@ -332,12 +354,18 @@ export default function ProjectDetailTwoColumn({
                   setIsLeftColumnHovered(false);
                   setIsCommentsOpen(false);
                 }}
-                className="relative flex w-full items-center justify-center overflow-hidden border-b border-gray-100 bg-gray-50 dark:border-white/10 dark:bg-gray-900/20 lg:w-[45%] lg:border-b-0 lg:border-r"
+                onClick={() => {
+                  if (isMobile) setIsLeftColumnHovered((prev) => !prev);
+                }}
+                className="relative flex w-full items-center justify-center overflow-hidden border-b border-gray-100 bg-gray-50 dark:border-white/10 dark:bg-gray-900/20 lg:w-[45%] lg:border-b-0 lg:border-r cursor-pointer lg:cursor-default"
               >
                 {/* Cover + Icons wrapper — icons positioned relative to the media */}
                 <div
                   className="relative w-full transition-[padding] duration-300 ease-out"
-                  style={{ padding: isLeftColumnHovered || !isWindowMode ? '0 24px' : '0' }}
+                  style={{
+                    paddingRight: isMobile || isLeftColumnHovered || !isWindowMode ? '44px' : '12px',
+                    paddingLeft: '12px',
+                  }}
                 >
                   <ProjectCover
                     project={displayProject}
@@ -349,13 +377,19 @@ export default function ProjectDetailTwoColumn({
 
                   {/* Vertical Interaction Bar — centered vertically relative to image */}
                   <motion.div
-                    className="absolute inset-y-0 right-1 z-20 flex items-center"
-                    initial={{ x: 50, opacity: 0 }}
+                    key={`interaction-bar-standalone-${project.id}`}
+                    className="pointer-events-none absolute inset-y-0 right-1.5 z-20 flex items-center sm:right-2.5"
+                    initial={{ x: 60, opacity: 0 }}
                     animate={{
-                      x: isLeftColumnHovered || !isWindowMode ? 0 : 50,
-                      opacity: isLeftColumnHovered || !isWindowMode ? 1 : 0,
+                      x: isMobile || isLeftColumnHovered || !isWindowMode ? 0 : 60,
+                      opacity: isMobile || isLeftColumnHovered || !isWindowMode ? 1 : 0,
                     }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 300,
+                      damping: 22,
+                      delay: isMobile ? 0.35 : 0,
+                    }}
                   >
                     <ProjectInteractionBar
                       isProjectLiked={isProjectLiked}
