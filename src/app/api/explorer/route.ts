@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { validateAdminRequest } from '@/lib/auth';
 import { explorerService } from '@/lib/services/explorerService';
-import { eventPageService } from '@/lib/services/eventPageService';
 import {
   badRequest,
   created,
@@ -173,25 +172,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     const result = await explorerService.deleteNode(id);
-
-    // Prune event page references in a best-effort fashion.
-    // If this fails (e.g. CAS contention), explorer delete still succeeds
-    // and orphaned references are safely handled by resolveAssets' missingFileIds.
-    let eventPageCleanup: { deletedPageIds: string[]; updatedPageIds: string[] } = {
-      deletedPageIds: [],
-      updatedPageIds: [],
-    };
-    try {
-      eventPageCleanup = await eventPageService.pruneDeletedExplorerReferences(result.deletedIds);
-    } catch (pruneError) {
-      console.warn(
-        '[API /explorer DELETE] Event page prune failed (orphans will self-heal):',
-        pruneError
-      );
-    }
-
     revalidatePath('/', 'layout');
-    return success({ ...result, eventPageCleanup }, 'Node deleted successfully');
+    return success(result, 'Node deleted successfully');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message === 'Node not found') return notFound(message);

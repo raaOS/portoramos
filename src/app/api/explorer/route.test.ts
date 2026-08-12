@@ -23,15 +23,6 @@ vi.mock('@/lib/services/explorerService', () => ({
   explorerService: explorerServiceMock,
 }));
 
-vi.mock('@/lib/services/eventPageService', () => ({
-  eventPageService: {
-    pruneDeletedExplorerReferences: vi.fn().mockResolvedValue({
-      deletedPageIds: [],
-      updatedPageIds: [],
-    }),
-  },
-}));
-
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
