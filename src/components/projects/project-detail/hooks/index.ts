@@ -1,1 +1,0 @@
-export { useProjectDetail } from './useProjectDetail';
