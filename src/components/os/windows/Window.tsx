@@ -15,7 +15,6 @@ import { useJellyDrag } from '../hooks/useJellyDrag';
 import { WindowTitleBar } from './components/WindowTitleBar';
 import { WindowResizeHandles } from './components/WindowResizeHandles';
 import { shouldStartWindowBodyDrag } from '../utils/windowBodyDrag';
-import type { MissionTarget } from '../utils/missionControlLayout';
 
 // Module-level constants to avoid re-creation per render
 const SHELL_STYLE = {
@@ -96,10 +95,6 @@ interface WindowProps {
   isFocused?: boolean;
   /** Origin rect from the icon that launched this window (for Apple-style morph) */
   originRect?: { x: number; y: number; width: number; height: number };
-  /** Mission Control target position/size/scale */
-  missionTarget?: MissionTarget | null;
-  /** Called when window is clicked during Mission Control */
-  onMissionControlSelect?: () => void;
 }
 
 export default function OSWindow({
@@ -126,8 +121,6 @@ export default function OSWindow({
   isAdmin = false,
   isFocused = false,
   originRect,
-  missionTarget,
-  onMissionControlSelect,
 }: WindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const [isSnapped, setIsSnapped] = useState<'left' | 'right' | false>(false);
@@ -258,14 +251,12 @@ export default function OSWindow({
   // Disable persis saat drag itu sendiri di-disable: maximized, resizing, mobile,
   // atau pinned non-admin. Hook akan abort jelly state mid-drag kalau enabled flip ke false
   // (cegah bug #6: jellyDragRef + idleInterval stuck saat resize handle ke-grab mid-drag).
-  const isMissionControlActive = !!missionTarget;
   const jellyEnabled =
     !isMaximized &&
     !isSnapped &&
     !isResizing &&
     !isSmallScreen &&
-    (!isPinned || isAdmin) &&
-    !isMissionControlActive;
+    (!isPinned || isAdmin);
   const {
     attachRef: attachJellyRef,
     onDragStart: jellyOnDragStart,
@@ -287,12 +278,11 @@ export default function OSWindow({
 
   const handleWindowBodyPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      if (isMissionControlActive) return;
       if (!jellyEnabled || !shouldStartWindowBodyDrag(event, event.currentTarget)) return;
 
       dragControls.start(event);
     },
-    [dragControls, jellyEnabled, isMissionControlActive]
+    [dragControls, jellyEnabled]
   );
 
   // Sound effect on open - delay until user interaction
@@ -542,7 +532,6 @@ export default function OSWindow({
           <m.div
             ref={setRefs}
             drag={
-              !isMissionControlActive &&
               !isMaximized &&
               !isResizing &&
               (!isPinned || isAdmin) &&
@@ -602,7 +591,6 @@ export default function OSWindow({
             onDragEnd={(_, info) => {
               jellyOnDragEnd();
               setDragSnapPreview(null);
-              if (isMissionControlActive) return;
               if (!isMaximized && !isMinimized && (!isPinned || isAdmin) && onUpdatePosition) {
                 const newX = initialPosition.x + info.offset.x;
                 const newY = initialPosition.y + info.offset.y;
@@ -674,40 +662,23 @@ export default function OSWindow({
                   }
             }
             animate={
-              isMissionControlActive && missionTarget
-                ? {
-                    x: missionTarget.x,
-                    y: missionTarget.y,
-                    scale: missionTarget.scale,
-                    width: missionTarget.width,
-                    height: missionTarget.height,
-                    opacity: 1,
-                    borderRadius: 18,
-                    ...shellStyle,
-                  }
-                : isMinimized
-                  ? minimizedState
-                  : activeState
+              isMinimized
+                ? minimizedState
+                : activeState
             }
             transition={
               isResizing
                 ? { duration: 0 }
-                : isMissionControlActive
-                  ? standardTransition
-                  : isMinimized
-                    ? minimizeTransition
-                    : standardTransition
+                : isMinimized
+                  ? minimizeTransition
+                  : standardTransition
             }
             exit={exitState}
             layout={false}
             onPointerDown={(_e) => {
-              if (isMissionControlActive && onMissionControlSelect) {
-                onMissionControlSelect();
-              } else {
-                onFocus?.();
-              }
+              onFocus?.();
             }}
-            onKeyDown={isMissionControlActive ? undefined : handleKeyDown}
+            onKeyDown={handleKeyDown}
             tabIndex={0}
             aria-modal="true"
             role="dialog"
@@ -739,20 +710,10 @@ export default function OSWindow({
               isMaximized={isMaximized}
               isPinned={isPinned}
               isAdmin={isAdmin}
-              onClose={
-                isMissionControlActive && onMissionControlSelect ? onMissionControlSelect : onClose
-              }
-              onMinimize={
-                isMissionControlActive && onMissionControlSelect
-                  ? onMissionControlSelect
-                  : onMinimize
-              }
-              onMaximize={
-                isMissionControlActive && onMissionControlSelect
-                  ? onMissionControlSelect
-                  : handleMaximize
-              }
-              onTogglePin={isMissionControlActive ? undefined : onTogglePin}
+              onClose={onClose}
+              onMinimize={onMinimize}
+              onMaximize={handleMaximize}
+              onTogglePin={onTogglePin}
               onDragStart={(e) => dragControls.start(e)}
               onFocus={onFocus}
               onSnap={handleSnap}
@@ -768,7 +729,7 @@ export default function OSWindow({
               {children}
 
               {/* Safe Zone for Resize Overlays (Only if not maximized and resizable) */}
-              {!isMissionControlActive && !isMaximized && !isSmallScreen && onResize && (
+              {!isMaximized && !isSmallScreen && onResize && (
                 <WindowResizeHandles onResizeStart={handleWrappedResizeStart} />
               )}
             </div>

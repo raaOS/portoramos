@@ -21,9 +21,6 @@ interface OSOverlaysContextType {
   setShowControlCenter: (show: boolean) => void;
   showCalendar: boolean;
   setShowCalendar: (show: boolean) => void;
-  showMissionControl: boolean;
-  setShowMissionControl: (show: boolean) => void;
-  toggleMissionControl: () => void;
   showGhostCursors: boolean;
   setShowGhostCursors: (show: boolean) => void;
   toggleGhostCursors: () => void;
@@ -121,7 +118,6 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
   const [hiddenNoteIds, setHiddenNoteIds] = useState<Set<string>>(() => new Set());
   const [showControlCenter, setShowControlCenter] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-  const [showMissionControl, setShowMissionControl] = useState(false);
   const [showGhostCursors, setShowGhostCursors] = useState(false);
 
   // --- Media state ---
@@ -144,7 +140,6 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
   // --- Callbacks (stable references) ---
   const toggleSpotlight = useCallback(() => setShowSpotlight((prev) => !prev), []);
   const toggleNotes = useCallback(() => setNotesVisible((prev) => !prev), []);
-  const toggleMissionControl = useCallback(() => setShowMissionControl((prev) => !prev), []);
   const toggleGhostCursors = useCallback(() => setShowGhostCursors((prev) => !prev), []);
 
   const hideNote = useCallback((id: string) => {
@@ -181,9 +176,6 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
       setShowControlCenter,
       showCalendar,
       setShowCalendar,
-      showMissionControl,
-      setShowMissionControl,
-      toggleMissionControl,
       showGhostCursors,
       setShowGhostCursors,
       toggleGhostCursors,
@@ -199,8 +191,6 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
       restoreHiddenNoteIds,
       showControlCenter,
       showCalendar,
-      showMissionControl,
-      toggleMissionControl,
       showGhostCursors,
       toggleGhostCursors,
     ]

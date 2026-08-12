@@ -25,7 +25,7 @@ import { Link } from 'next-view-transitions';
 import { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTransitionRouter } from 'next-view-transitions';
-import { Grid, User, Mail, FileText, Layers } from 'lucide-react';
+import { Grid, User, Mail, FileText } from 'lucide-react';
 import AppIcon from '../ui/AppIcon';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
 import DockProjectModes from '../ui/DockProjectModes';
@@ -34,7 +34,6 @@ import { getDockItemConfig } from '../utils/dockUtils';
 import { markBack } from '@/lib/navigationDirection';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 import { DockPortal } from '@/components/layout/GlobalDockSlot';
-import { useOSOverlays } from '../context/OSSystemContext';
 import {
   DndContext,
   closestCenter,
@@ -113,7 +112,7 @@ function DockItem({
   onTogglePopover,
   anyPopoverOpen,
   disableTooltips = false,
-  isOpen = false,
+  isOpen: _isOpen = false,
   isFirstItem = false,
   isLastItem = false,
 }: DockItemProps) {
@@ -136,8 +135,8 @@ function DockItem({
     return val - bounds.x - bounds.width / 2;
   });
 
-  const baseWidth = isMobile ? 52 : 64;
-  const hoverScaleMultiplier = isMobile ? 1 : 1.6;
+  const baseWidth = isMobile ? 48 : 52;
+  const hoverScaleMultiplier = isMobile ? 1 : 1.35;
   const scaleSync = useTransform(distance, [-100, 0, 100], [1, hoverScaleMultiplier, 1]);
   const springScale = useSpring(scaleSync, { mass: 0.1, stiffness: 250, damping: 20 });
   const width = useTransform(springScale, (s) => (anyPopoverOpen ? baseWidth : s * baseWidth));
@@ -243,7 +242,7 @@ function DockItem({
       // in interactive" (a11y violation) dan tidak duplikat focus stop.
       data-dock-focusable={isLinkWrapped ? undefined : 'true'}
       style={
-        isMobile ? { width: 52, height: 52 } : { width, height, transformOrigin: 'center bottom' }
+        isMobile ? { width: 48, height: 48 } : { width, height, transformOrigin: 'center bottom' }
       }
       animate={
         activeBounce
@@ -264,7 +263,7 @@ function DockItem({
           : { type: 'spring', mass: 0.1, stiffness: 250, damping: 20 }
       }
       onClick={handleClick}
-      className="group relative flex aspect-square shrink-0 cursor-pointer items-center justify-center rounded-[18px] outline-none transition-[filter] duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+      className="group relative flex aspect-square shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-[18px] outline-none transition-[filter] duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
       role={isLinkWrapped ? undefined : 'button'}
       aria-label={isLinkWrapped ? undefined : label}
       aria-haspopup={popoverContent ? 'menu' : undefined}
@@ -346,10 +345,6 @@ function DockItem({
           className: 'w-full h-full',
         })}
       </div>
-
-      {isOpen && (
-        <div className="absolute bottom-[3px] left-1/2 h-[4px] w-[4px] -translate-x-1/2 rounded-full bg-black/60 dark:bg-white/80" />
-      )}
     </m.div>
   );
 }
@@ -395,7 +390,7 @@ function SortableDockItem({
     zIndex: isDragging ? Z_LAYERS.DOCK + 10 : 'auto',
     position: 'relative' as const,
     display: 'flex',
-    alignItems: 'end',
+    alignItems: isMobile ? ('center' as const) : ('end' as const),
     touchAction: isMobile ? ('manipulation' as const) : ('none' as const),
   };
   return (
@@ -622,8 +617,8 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
   }, [sortedItems, isMobile]);
 
   const dockBaseWidth =
-    filteredItems.length > 0 ? filteredItems.length * 64 + (filteredItems.length - 1) * 8 + 24 : 0;
-  const hoverCaptureWidth = dockBaseWidth + 160;
+    filteredItems.length > 0 ? filteredItems.length * 52 + (filteredItems.length - 1) * 10 + 32 : 0;
+  const hoverCaptureWidth = dockBaseWidth + 120;
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
@@ -680,7 +675,7 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
                     dari stacking context. Hanya mode desktop. */}
         {!isMobile && (
           <div
-            className="fixed bottom-0 left-1/2 h-28 -translate-x-1/2 cursor-default"
+            className="fixed bottom-0 left-1/2 h-24 -translate-x-1/2 cursor-default"
             style={{
               width: hoverCaptureWidth,
               pointerEvents: anyPopoverOpen ? 'none' : 'auto',
@@ -712,8 +707,8 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
         >
           {/* iOS-style transparent glass without blur: translucent layers, border, and shadow only. */}
           <div
-            className={`pointer-events-none absolute inset-0 overflow-hidden rounded-[28px] ${
-              isMobile ? 'h-[74px]' : 'h-[96px]'
+            className={`pointer-events-none absolute inset-0 overflow-hidden ${
+              isMobile ? 'h-[68px] rounded-[24px]' : 'h-[72px] rounded-[22px]'
             }`}
             style={{
               background:
@@ -737,10 +732,10 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
             >
               {/* Icon row */}
               <div
-                className={`relative z-10 flex items-end ${
+                className={`relative z-10 flex ${
                   isMobile
-                    ? 'scrollbar-hide h-[74px] gap-1.5 overflow-visible px-2.5 py-2.5'
-                    : 'h-[96px] gap-2 px-3 py-4'
+                    ? 'scrollbar-hide h-[68px] items-center justify-center gap-2 overflow-visible px-5 py-2'
+                    : 'h-[72px] items-end gap-2.5 px-4 py-2.5'
                 }`}
                 style={{
                   minWidth: isMobile ? 'auto' : dockBaseWidth,
@@ -823,15 +818,10 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
     return () => window.removeEventListener('resize', syncViewport);
   }, []);
 
-  // Stable handler: markBack untuk view transition arah, navigasi sendiri
-  // ditangani oleh <Link> di dalam Dock. Tidak ada router.push manual lagi.
   const markNav = useCallback(() => {
     markBack();
   }, []);
 
-  // Pisahkan struktur item statis dari status `isOpen` agar reference stabil
-  // (lihat fix #9): defaultItems hanya bergantung pada handler stable; status
-  // `isOpen` di-merge belakangan tanpa membuat icon node baru.
   const baseItems = useMemo<DockItemData[]>(() => {
     const items: DockItemData[] = [
       {
@@ -841,13 +831,6 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
         onClick: () => {},
         href: undefined,
         popoverContent: <DockProjectModes />,
-      },
-      {
-        id: 'mission-control',
-        label: 'Mission Control',
-        icon: <AppIcon icon={Layers} color="from-indigo-500 to-purple-600" />,
-        onClick: markNav,
-        href: '/?app=mission-control',
       },
       {
         id: 'about',
@@ -881,8 +864,6 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
     return getDockItemConfig(items, dockConfig);
   }, [markNav, dockConfig]);
 
-  // Status `isOpen` di-merge tanpa membuat ulang icon/popoverContent —
-  // mencegah re-create React elements setiap mutasi window state.
   const dockItems = useMemo<DockItemData[]>(() => {
     return baseItems.map((item) => {
       switch (item.id) {
@@ -890,6 +871,8 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
           return { ...item, isOpen: isWindowOpen('about') };
         case 'whatsapp':
           return { ...item, isOpen: isWindowOpen('whatsapp') };
+        case 'contact':
+          return { ...item, isOpen: isWindowOpen('contact') };
         case 'notes':
           return { ...item, isOpen: isWindowOpen('notes') };
         case 'trash':
@@ -900,8 +883,6 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
     });
   }, [baseItems, isWindowOpen]);
 
-  // SSR-safe: pathname null saat server. Sembunyikan di route OS desktop
-  // dan admin. (`/about` dropped — route tidak ada lagi.)
   if (!pathname || pathname === '/' || pathname.startsWith('/admin')) {
     return null;
   }
@@ -960,7 +941,6 @@ export function OSDock({
   isMobile: isMobileProp = false,
 }: OSDockProps) {
   const router = useTransitionRouter();
-  const { showMissionControl, toggleMissionControl } = useOSOverlays();
   const [isMobile, setIsMobile] = useState(isMobileProp);
 
   useEffect(() => {
@@ -970,24 +950,13 @@ export function OSDock({
     return () => window.removeEventListener('resize', syncViewport);
   }, []);
 
-  // Stable handler — projects adalah satu-satunya item OS yang menavigasi
-  // ke route lain. Pakai useTransitionRouter agar view-transition arah
-  // tetap kena snapshot. markForward() sebelum push memastikan slide
-  // direction default (kanan-ke-kiri) tidak ter-warisi dari `data-vt-direction='back'`
-  // yang mungkin tertinggal dari klik back button sebelumnya.
   const handleOpenProjects = useCallback(() => {
-    // Reset direction ke forward eksplisit — kalau atribut `back` masih
-    // melekat dari interaksi sebelumnya (mis. back button view), animasi
-    // slide akan terbalik (slide ke kanan, terlihat "tidak ada efek"
-    // karena halaman lama masih kelihatan saat halaman baru masuk dari kiri).
     if (typeof document !== 'undefined') {
       document.documentElement.removeAttribute('data-vt-direction');
     }
     router.push('/projects');
   }, [router]);
 
-  // Pisahkan struktur item dari status `isOpen`: icon nodes hanya dibuat
-  // sekali, lalu status `isOpen` di-merge tanpa rebuild elements.
   const baseItems = useMemo<DockItemData[]>(() => {
     const items: DockItemData[] = [
       {
@@ -997,12 +966,6 @@ export function OSDock({
         onClick: handleOpenProjects,
         href: undefined,
         popoverContent: <DockProjectModes />,
-      },
-      {
-        id: 'mission-control',
-        label: 'Mission Control',
-        icon: <AppIcon icon={Layers} color="from-indigo-500 to-purple-600" />,
-        onClick: toggleMissionControl,
       },
       {
         id: 'about',
@@ -1037,14 +1000,11 @@ export function OSDock({
     onOpenWhatsApp,
     onOpenContact,
     onOpenNotes,
-    toggleMissionControl,
   ]);
 
   const dockItems = useMemo<DockItemData[]>(() => {
     return baseItems.map((item) => {
       switch (item.id) {
-        case 'mission-control':
-          return { ...item, isOpen: showMissionControl };
         case 'about':
           return { ...item, isOpen: isWindowOpen('about') };
         case 'whatsapp':
@@ -1057,7 +1017,7 @@ export function OSDock({
           return item;
       }
     });
-  }, [baseItems, isWindowOpen, notesVisible, showMissionControl]);
+  }, [baseItems, isWindowOpen, notesVisible]);
 
   return (
     <div className={className}>

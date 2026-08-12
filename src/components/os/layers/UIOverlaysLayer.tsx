@@ -34,11 +34,6 @@ const ExitIntentFeedback = dynamic(() => import('../ui/ExitIntentFeedback'), {
   ssr: false,
 });
 
-const MissionControl = dynamic(() => import('../core/MissionControl'), {
-  loading: () => null,
-  ssr: false,
-});
-
 interface UIOverlaysLayerProps {
   navToChat: (chatId?: string) => void;
   openWhatsAppList: () => void;
@@ -52,8 +47,6 @@ interface UIOverlaysLayerProps {
   openProjectWindow: (project: Project) => void;
   needsPowerOn: boolean;
   isBooting: boolean;
-  showMissionControl?: boolean;
-  onMissionControlDismiss?: () => void;
 }
 
 export default function UIOverlaysLayer({
@@ -69,8 +62,6 @@ export default function UIOverlaysLayer({
   openProjectWindow,
   needsPowerOn,
   isBooting,
-  showMissionControl: _showMissionControl,
-  onMissionControlDismiss: _onMissionControlDismiss,
 }: UIOverlaysLayerProps) {
   const {
     showSpotlight,
@@ -213,9 +204,6 @@ export default function UIOverlaysLayer({
           </div>
         )}
       </AnimatePresence>
-
-      {/* Mission Control */}
-      <MissionControl />
 
       {/* Exit-intent feedback — visitor only, appears on tab close attempt */}
       {!isAdmin && !isBootSequenceActive && <ExitIntentFeedback />}

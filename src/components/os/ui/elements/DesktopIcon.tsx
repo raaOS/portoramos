@@ -159,7 +159,7 @@ export default function DesktopIcon({
     <m.div
       drag
       dragMomentum={false}
-      dragElastic={0.05}
+      dragElastic={isMobile ? 0 : 0.05}
       onDragStart={handleDragStart}
       onDragEnd={(_e, info) => {
         handleDragEnd(info);
@@ -184,7 +184,7 @@ export default function DesktopIcon({
         y: iconY,
       }}
       layout={false}
-      className={`group pointer-events-auto flex w-auto cursor-pointer flex-col items-center gap-1 rounded-none outline-none will-change-transform ${isSelected ? 'z-50' : 'z-auto'}`}
+      className={`group pointer-events-auto flex w-auto cursor-pointer touch-manipulation flex-col items-center gap-1 rounded-none outline-none will-change-transform ${isSelected ? 'z-50' : 'z-auto'}`}
       role="button"
       aria-label={label}
       tabIndex={0}

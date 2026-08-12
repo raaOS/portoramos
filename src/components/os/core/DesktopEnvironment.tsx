@@ -5,7 +5,6 @@
 // DesktopMainWithLogout: logout sound wrapper
 // DesktopMain: window management, visitor session, layout persistence,
 // keyboard shortcuts, wallpaper transitions, and layer rendering
-// Mission Control layout math lives in ../utils/missionControlLayout.
 // ═══════════════════════════════════════════════════════════════════
 'use client';
 
@@ -47,7 +46,6 @@ import type { ContactProfile } from '../data/mockChats';
 import DesktopProviders from './DesktopProviders';
 import DesktopSkeleton from '../ui/DesktopSkeleton';
 import { useBackgroundEffect } from '@/components/home/BackgroundEffectContext';
-import { computeMissionTargets, type MissionTarget } from '../utils/missionControlLayout';
 
 const DesktopIconsLayer = dynamic(() => import('../layers/DesktopIconsLayer'), { ssr: false });
 const UnifiedLayer = dynamic(() => import('../layers/UnifiedLayer'), { ssr: false });
@@ -232,8 +230,6 @@ function DesktopMain({
     setNotesVisible,
     hiddenNoteIds,
     restoreHiddenNoteIds,
-    showMissionControl,
-    setShowMissionControl,
   } = useOSOverlays();
   const wasBootSkipped = !needsPowerOn && !isBooting;
   const [desktopEntranceReady, setDesktopEntranceReady] = React.useState(false);
@@ -241,30 +237,6 @@ function DesktopMain({
   const [notesEntranceReady, setNotesEntranceReady] = React.useState(false);
 
   const [, setActiveIconIds] = React.useState<Set<string>>(new Set());
-
-  // Listen to viewport resizing for responsive Mission Control positioning.
-  // Throttled via rAF to avoid layout thrashing during rapid resize events.
-  const [viewport, setViewport] = React.useState({ width: 1440, height: 900 });
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    let rafId: number | undefined;
-
-    const handleResize = () => {
-      if (rafId) return; // Already scheduled
-      rafId = requestAnimationFrame(() => {
-        rafId = undefined;
-        setViewport({ width: window.innerWidth, height: window.innerHeight });
-      });
-    };
-
-    window.addEventListener('resize', handleResize);
-    handleResize(); // Initial compute
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
-  }, []);
 
   useDesktopShortcuts();
 
@@ -287,11 +259,6 @@ function DesktopMain({
     handleWindowResizeEnd,
     togglePin,
   } = useDesktopWindowContext();
-
-  const missionTargets = React.useMemo(() => {
-    if (!showMissionControl) return new Map<string, MissionTarget>();
-    return computeMissionTargets(windows, viewport.width, viewport.height);
-  }, [showMissionControl, windows, viewport]);
 
   const {
     notes,
@@ -533,8 +500,6 @@ function DesktopMain({
       openWhatsAppList();
     } else if (app === 'notes') {
       showNotes();
-    } else if (app === 'mission-control') {
-      setShowMissionControl(true);
     } else {
       openWindow(app);
     }
@@ -545,7 +510,7 @@ function DesktopMain({
       nextUrl.searchParams.delete('app');
       window.history.replaceState({}, '', nextUrl.pathname + nextUrl.search + window.location.hash);
     }
-  }, [searchParams, openWindow, openWhatsAppList, showNotes, setShowMissionControl]);
+  }, [searchParams, openWindow, openWhatsAppList, showNotes]);
 
   const isDesktopReady = wasBootSkipped || startScreenReady;
   const isDesktopRevealed = wasBootSkipped || isRevealed;
@@ -734,7 +699,6 @@ function DesktopMain({
                   handleIconZIndexChange={handleIconZIndexChange}
                   handleIconSizeChange={handleIconSizeChange}
                   openProjectWindow={openProjectWindow}
-                  isDimmed={showMissionControl}
                 />
               </React.Suspense>
               <React.Suspense
@@ -775,9 +739,6 @@ function DesktopMain({
                       });
                     }
                   }}
-                  showMissionControl={showMissionControl}
-                  missionTargets={missionTargets}
-                  onMissionControlDismiss={() => setShowMissionControl(false)}
                 />
               </React.Suspense>
               <UIOverlaysLayer
@@ -793,8 +754,6 @@ function DesktopMain({
                 openProjectWindow={openProjectWindow}
                 needsPowerOn={needsPowerOn}
                 isBooting={isBooting}
-                showMissionControl={showMissionControl}
-                onMissionControlDismiss={() => setShowMissionControl(false)}
               />
             </div>
           )}

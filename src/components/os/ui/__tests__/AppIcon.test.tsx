@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { Layers } from 'lucide-react';
+import { User } from 'lucide-react';
 
 import { getDockItemConfig } from '../../utils/dockUtils';
 import AppIcon from '../AppIcon';
@@ -31,18 +31,18 @@ describe('AppIcon', () => {
   });
 
   it('keeps the default dock icon as fallback for custom icon URLs', () => {
-    const fallbackIcon = <AppIcon icon={Layers} color="from-indigo-500 to-purple-600" />;
+    const fallbackIcon = <AppIcon icon={User} color="from-gray-300 to-gray-400" />;
     const configuredItems = getDockItemConfig(
       [
         {
-          id: 'mission-control',
-          label: 'Mission Control',
+          id: 'about',
+          label: 'About Me',
           icon: fallbackIcon,
           onClick: vi.fn(),
         },
       ],
       {
-        'mission-control': {
+        about: {
           iconUrl: '/missing-icon.webp',
         },
       }

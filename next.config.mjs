@@ -13,6 +13,9 @@ const nextConfig = {
   reactCompiler: true,
   reactStrictMode: true,
   compress: true,
+  devIndicators: {
+    position: 'top-right',
+  },
   // ... (rest of the images config)
 
   // Optimize images for maximum performance

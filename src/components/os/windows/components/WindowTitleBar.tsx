@@ -75,10 +75,10 @@ export function WindowTitleBar({
         onMaximize?.();
       }}
       data-testid="window-title-bar"
-      className="relative z-50 flex h-8 shrink-0 cursor-default select-none items-center justify-between border-b border-[#D1D1D1] bg-[#EFEFEF] px-3 sm:h-7"
+      className="relative z-50 flex h-9 shrink-0 cursor-default select-none items-center justify-between border-b border-[#D1D1D1] bg-[#EFEFEF] px-2.5 sm:h-7 sm:px-3"
     >
       {/* Traffic Lights */}
-      <div className="group mr-3 flex items-center gap-[8px]">
+      <div className="group mr-2 flex items-center gap-[4px] sm:mr-3 sm:gap-[8px]">
         {/* Close Button (Red) */}
         <m.button
           whileTap={{ scale: 0.85 }}
@@ -90,7 +90,7 @@ export function WindowTitleBar({
           }}
           onPointerDown={handleActionFocus}
           onDoubleClick={(e) => e.stopPropagation()}
-          className="relative flex h-6 min-h-[24px] w-6 min-w-[24px] items-center justify-center rounded-full p-0 outline-none transition-colors focus:outline-none focus:ring-0 active:outline-none"
+          className="relative flex h-7 min-h-[28px] w-7 min-w-[28px] touch-manipulation items-center justify-center rounded-full p-0 outline-none transition-colors focus:outline-none focus:ring-0 active:outline-none sm:h-6 sm:min-h-[24px] sm:w-6 sm:min-w-[24px]"
           aria-label="Close window"
         >
           <div className="relative flex h-3 w-3 items-center justify-center rounded-full border border-[#E0443E] bg-[#FF5F57] transition-all hover:brightness-95 active:brightness-90">
@@ -112,7 +112,7 @@ export function WindowTitleBar({
           }}
           onPointerDown={handleActionFocus}
           onDoubleClick={(e) => e.stopPropagation()}
-          className="relative flex h-6 min-h-[24px] w-6 min-w-[24px] items-center justify-center rounded-full p-0 outline-none transition-colors focus:outline-none focus:ring-0 active:outline-none"
+          className="relative flex h-7 min-h-[28px] w-7 min-w-[28px] touch-manipulation items-center justify-center rounded-full p-0 outline-none transition-colors focus:outline-none focus:ring-0 active:outline-none sm:h-6 sm:min-h-[24px] sm:w-6 sm:min-w-[24px]"
           aria-label="Minimize window"
         >
           <div className="relative flex h-3 w-3 items-center justify-center rounded-full border border-[#DDA335] bg-[#FEBC2E] transition-all hover:brightness-95 active:brightness-90">
@@ -139,7 +139,7 @@ export function WindowTitleBar({
             }}
             onPointerDown={handleActionFocus}
             onDoubleClick={(e) => e.stopPropagation()}
-            className="relative flex h-6 min-h-[24px] w-6 min-w-[24px] items-center justify-center rounded-full p-0 outline-none transition-colors focus:outline-none focus:ring-0 active:outline-none"
+            className="relative flex h-7 min-h-[28px] w-7 min-w-[28px] touch-manipulation items-center justify-center rounded-full p-0 outline-none transition-colors focus:outline-none focus:ring-0 active:outline-none sm:h-6 sm:min-h-[24px] sm:w-6 sm:min-w-[24px]"
             aria-label="Maximize window"
           >
             <div className="relative flex h-3 w-3 items-center justify-center rounded-full border border-[#22AA32] bg-[#28C840] transition-all hover:brightness-95 active:brightness-90">

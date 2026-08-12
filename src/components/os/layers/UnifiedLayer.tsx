@@ -9,14 +9,6 @@ import { useUnifiedZIndex } from '../context/UnifiedZIndexContext';
 import { WindowState } from '@/components/os/hooks/useWindowManager';
 import { useOSOverlays, useOSBoot } from '../context/OSSystemContext';
 
-interface MissionTarget {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  scale: number;
-}
-
 interface UnifiedLayerProps {
   windows: WindowState[];
   notes: NoteData[];
@@ -42,10 +34,6 @@ interface UnifiedLayerProps {
   notesReady?: boolean;
   /** Callback when a window is closed */
   onWindowClosed?: (id: string) => void;
-  // Mission Control props
-  showMissionControl?: boolean;
-  missionTargets?: Map<string, MissionTarget>;
-  onMissionControlDismiss?: () => void;
 }
 
 // Animation variants - only for container fade in
@@ -81,12 +69,9 @@ export default function UnifiedLayer({
   windowsReady,
   notesReady,
   onWindowClosed,
-  showMissionControl: _showMissionControl,
-  missionTargets,
-  onMissionControlDismiss,
 }: UnifiedLayerProps) {
   const { bringToFront, getZIndex, registerElement, unregisterElement } = useUnifiedZIndex();
-  const { notesVisible, hiddenNoteIds, hideNote, showMissionControl } = useOSOverlays();
+  const { notesVisible, hiddenNoteIds, hideNote } = useOSOverlays();
   const { isRevealed: isRevealedFromContext } = useOSBoot();
   const isRevealed = isRevealedProp !== undefined ? isRevealedProp : isRevealedFromContext;
   const canRenderWindows = windowsReady ?? isRevealed;
@@ -101,12 +86,10 @@ export default function UnifiedLayer({
   //    tidak persist; auto-clear saat user toggle dock icon Notes)
   const visibleNotes = React.useMemo(
     () =>
-      showMissionControl
-        ? []
-        : notesVisible
-          ? notes.filter((n) => !n.isDeleted && !hiddenNoteIds.has(n.id))
-          : [],
-    [hiddenNoteIds, notes, notesVisible, showMissionControl]
+      notesVisible
+        ? notes.filter((n) => !n.isDeleted && !hiddenNoteIds.has(n.id))
+        : [],
+    [hiddenNoteIds, notes, notesVisible]
   );
 
   React.useEffect(() => {
@@ -218,15 +201,6 @@ export default function UnifiedLayer({
             zIndex={getZIndex(w.id)}
             noPadding={w.noPadding}
             originRect={w.originRect}
-            missionTarget={showMissionControl ? missionTargets?.get(w.id) : null}
-            onMissionControlSelect={
-              showMissionControl
-                ? () => {
-                    handleWindowFocus(w.id);
-                    onMissionControlDismiss?.();
-                  }
-                : undefined
-            }
           >
             {w.content || (w.contentFactory ? w.contentFactory() : null)}
           </OSWindow>

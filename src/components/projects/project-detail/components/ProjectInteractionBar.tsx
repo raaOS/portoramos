@@ -56,10 +56,10 @@ export function ProjectInteractionBar({
   const isVertical = orientation === 'vertical';
   const buttonClassName = (activeClass: string, inactiveClass: string) =>
     isVertical
-      ? `flex flex-col items-center justify-center w-8 sm:w-9 rounded-full p-1 sm:p-1.5 transition-colors duration-200 select-none text-center ${
+      ? `flex flex-col items-center justify-center w-9 sm:w-9 min-h-[36px] rounded-full p-1 sm:p-1.5 touch-manipulation transition-colors duration-200 select-none text-center ${
           activeClass || inactiveClass
         }`
-      : `flex items-center justify-center gap-1 rounded-full p-1.5 transition-colors duration-200 select-none ${
+      : `flex items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 min-h-[40px] touch-manipulation transition-colors duration-200 select-none ${
           activeClass || inactiveClass
         }`;
   const countClassName = isVertical

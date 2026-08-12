@@ -125,14 +125,14 @@ export default function MenuBar({
 
   return (
     <div
-      className="pointer-events-auto fixed left-0 right-0 top-0 flex h-9 select-none items-center justify-between gap-2 border-b border-gray-200 bg-white px-2 text-xs text-black sm:h-8 sm:px-3 lg:px-4 print:hidden"
+      className="pointer-events-auto fixed left-0 right-0 top-0 flex h-9 select-none touch-manipulation items-center justify-between gap-2 border-b border-gray-200 bg-white px-2 text-xs text-black sm:h-8 sm:px-3 lg:px-4 print:hidden"
       style={{ zIndex: Z_LAYERS.CHROME }}
     >
       {/* Left Side */}
       <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2 lg:gap-4">
         <div
           onClick={() => setIsPinModalOpen(true)}
-          className="relative flex h-8 w-12 shrink-0 cursor-pointer items-center justify-center"
+          className="relative flex h-8 w-12 shrink-0 cursor-pointer touch-manipulation items-center justify-center"
           aria-label={t.menuBar.ramosOS}
           role="img"
         >
@@ -259,17 +259,23 @@ export default function MenuBar({
 
         {/* Icons */}
         <div
-          className="flex cursor-pointer items-center gap-2 sm:gap-3"
+          className="flex cursor-pointer items-center gap-1.5 sm:gap-3"
           onClick={onToggleControlCenter}
         >
-          <Search
-            size={18}
-            className="hover:text-gray-600 sm:h-[14px] sm:w-[14px]"
+          <button
+            type="button"
+            className="flex h-7 w-7 touch-manipulation items-center justify-center rounded p-1 hover:bg-black/5 hover:text-gray-600 sm:h-auto sm:w-auto sm:p-0"
             onClick={(e) => {
               e.stopPropagation();
               if (onSearch) onSearch();
             }}
-          />
+            aria-label="Search"
+          >
+            <Search
+              size={18}
+              className="sm:h-[14px] sm:w-[14px]"
+            />
+          </button>
           <Wifi size={18} className="hidden hover:text-gray-600 sm:block sm:h-[14px] sm:w-[14px]" />
 
           {/* Custom Battery 100% Green */}
@@ -293,7 +299,7 @@ export default function MenuBar({
 
         {/* Clock */}
         <div
-          className="flex cursor-pointer items-center gap-1 rounded px-1.5 py-1 font-medium transition-colors hover:bg-black/5 sm:gap-2 sm:px-2"
+          className="flex cursor-pointer touch-manipulation items-center gap-1 rounded px-1.5 py-1 font-medium transition-colors hover:bg-black/5 sm:gap-2 sm:px-2"
           onClick={(e) => {
             e.stopPropagation();
             setShowCalendar(!showCalendar);

@@ -8,25 +8,16 @@ export function useDesktopShortcuts() {
     showSpotlight,
     setShowSpotlight,
     toggleSpotlight,
-    showMissionControl,
-    setShowMissionControl,
-    toggleMissionControl,
   } = useOSOverlays();
 
   const showSpotlightRef = useRef(showSpotlight);
-  const showMissionControlRef = useRef(showMissionControl);
   const toggleSpotlightRef = useRef(toggleSpotlight);
-  const toggleMissionControlRef = useRef(toggleMissionControl);
   const setShowSpotlightRef = useRef(setShowSpotlight);
-  const setShowMissionControlRef = useRef(setShowMissionControl);
 
   useEffect(() => {
     showSpotlightRef.current = showSpotlight;
-    showMissionControlRef.current = showMissionControl;
     toggleSpotlightRef.current = toggleSpotlight;
-    toggleMissionControlRef.current = toggleMissionControl;
     setShowSpotlightRef.current = setShowSpotlight;
-    setShowMissionControlRef.current = setShowMissionControl;
   });
 
   useEffect(() => {
@@ -37,13 +28,6 @@ export function useDesktopShortcuts() {
       }
       if (e.key === 'Escape' && showSpotlightRef.current) {
         setShowSpotlightRef.current(false);
-      }
-      if (e.key === 'F3') {
-        e.preventDefault();
-        toggleMissionControlRef.current();
-      }
-      if (e.key === 'Escape' && showMissionControlRef.current) {
-        setShowMissionControlRef.current(false);
       }
     };
 

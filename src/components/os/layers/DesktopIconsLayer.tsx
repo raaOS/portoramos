@@ -51,7 +51,6 @@ interface DesktopIconsLayerProps {
     project: Project,
     originRect?: { x: number; y: number; width: number; height: number }
   ) => void;
-  isDimmed?: boolean;
 }
 
 function DesktopIconsLayer({
@@ -63,7 +62,6 @@ function DesktopIconsLayer({
   handleIconZIndexChange,
   handleIconSizeChange,
   openProjectWindow,
-  isDimmed = false,
 }: DesktopIconsLayerProps) {
   const { windows } = useDesktopWindowContext();
   const { getZIndex, bringToFront, registerElement, unregisterElement } = useUnifiedZIndex();
@@ -196,7 +194,7 @@ function DesktopIconsLayer({
   return (
     <>
       <div
-        className={`absolute inset-0 ${isDimmed ? 'pointer-events-none opacity-30' : 'pointer-events-auto'}`}
+        className="pointer-events-auto absolute inset-0"
         onClick={() => setSelectedIconId(null)}
       >
         <m.div

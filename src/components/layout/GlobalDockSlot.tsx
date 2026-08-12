@@ -80,7 +80,7 @@ export default function GlobalDockSlot() {
     <div
       ref={setSlot}
       id={GLOBAL_DOCK_SLOT_ID}
-      className="pb-safe pointer-events-none fixed bottom-4 left-0 right-0 flex justify-center print:hidden"
+      className="pointer-events-none fixed bottom-[max(0.75rem,env(safe-area-inset-bottom,12px))] left-0 right-0 flex justify-center pb-[env(safe-area-inset-bottom,0px)] print:hidden"
       style={{
         viewTransitionName: 'global-dock',
         zIndex: 99999,
