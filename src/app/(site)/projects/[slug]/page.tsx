@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { allProjectsAsync, getProjectBySlugAsync } from '@/lib/projects';
-import ProjectDetailTwoColumn from '@/components/projects/ProjectDetailTwoColumn';
-import { resolveCover, resolveGallery } from '@/lib/images';
+import ProjectPdfViewer from '@/components/projects/ProjectPdfViewer';
+import { resolveCover } from '@/lib/images';
 import { generateProjectMetadata, generateStructuredData } from '@/lib/seo';
 
 export const revalidate = 60;
@@ -33,15 +33,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
-  const otherProjects = projects.filter((p) => p.id !== project.id);
   const cover = resolveCover(project);
-  const gallery = resolveGallery(project);
-
-  const ratio =
-    project.coverWidth && project.coverHeight ? project.coverWidth / project.coverHeight : 16 / 9;
 
   return (
-    <main className="min-h-screen bg-white dark:bg-gray-900">
+    <main className="h-screen w-screen overflow-hidden bg-neutral-100 dark:bg-neutral-950">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -58,14 +53,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           ).replace(/</g, '\\u003c'),
         }}
       />
-      <ProjectDetailTwoColumn
-        project={project}
-        cover={cover}
-        gallery={gallery}
-        ratio={ratio}
-        otherProjects={otherProjects}
-        isWindowMode={false}
-      />
+      <ProjectPdfViewer project={project} isWindowMode={false} />
     </main>
   );
 }

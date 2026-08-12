@@ -42,6 +42,7 @@ export interface ProjectFormData {
   shares?: number;
   allowComments?: boolean;
   initialCommentCount?: number;
+  pdfUrl?: string;
   // Case Study Fields
   role?: string;
   timeline?: string;
@@ -112,6 +113,7 @@ function createInitialFormData(project?: Project): ProjectFormData {
     shares: project?.shares ?? 0,
     allowComments: project?.allowComments ?? true,
     initialCommentCount: project?.id ? 0 : 2,
+    pdfUrl: project?.pdfUrl || '',
 
     // Case Study Fields
     role: project?.role || '',
@@ -161,16 +163,6 @@ export const useProjectForm = (project?: Project) => {
 
     if (!formData.title.trim()) newErrors.title = 'Title is required';
     else if (formData.title.length < 2) newErrors.title = 'Title must be at least 2 characters';
-
-    if (!formData.client.trim()) newErrors.client = 'Client is required';
-
-    if (!formData.year || formData.year < 2000 || formData.year > new Date().getFullYear() + 1) {
-      newErrors.year = 'Year must be between 2000 and ' + (new Date().getFullYear() + 1);
-    }
-
-    if (!formData.description.trim()) newErrors.description = 'Description is required';
-    else if (formData.description.length < 5)
-      newErrors.description = 'Description must be at least 5 characters';
 
     if (!formData.cover.trim()) newErrors.cover = 'Cover image/video URL is required';
     else if (

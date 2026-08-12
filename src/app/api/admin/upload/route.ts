@@ -303,6 +303,8 @@ export async function POST(req: NextRequest) {
       'image/icns',
       'video/mp4',
       'video/webm',
+      // Document formats (PDF for project presentations)
+      'application/pdf',
       // Audio formats (used by SoundEffectsManager). Compressed server-side
       // to MP3 128k mono via `optimizeAudioForPortfolio`. WAV uploads can
       // shrink dramatically; already-encoded MP3 falls back to original
@@ -375,10 +377,12 @@ export async function POST(req: NextRequest) {
     const isVideoUpload = contentType.startsWith('video/');
     const isImageUpload = contentType.startsWith('image/');
     const isAudioUpload = contentType.startsWith('audio/');
+    const isPdfUpload = contentType === 'application/pdf';
 
     const MAX_IMAGE_BYTES = 30 * 1024 * 1024;
     const MAX_VIDEO_BYTES_FORMDATA = 60 * 1024 * 1024;
     const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+    const MAX_PDF_BYTES = 50 * 1024 * 1024;
 
     const currentSize = buffer.length;
 
@@ -386,6 +390,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: `Image ${(currentSize / 1024 / 1024).toFixed(1)} MB melewati batas ${MAX_IMAGE_BYTES / 1024 / 1024} MB.`,
+        },
+        { status: 413 }
+      );
+    }
+    if (isPdfUpload && currentSize > MAX_PDF_BYTES) {
+      return NextResponse.json(
+        {
+          error: `PDF ${(currentSize / 1024 / 1024).toFixed(1)} MB melewati batas ${MAX_PDF_BYTES / 1024 / 1024} MB.`,
         },
         { status: 413 }
       );

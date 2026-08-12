@@ -1,26 +1,27 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useProjectForm, type ProjectFormData } from '@/hooks/useProjectForm';
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { useProjectForm } from '@/hooks/useProjectForm';
 import type { CreateProjectData, Project, UpdateProjectData } from '@/types/projects';
 import type { Label } from '@/types/labels';
-import type { Comment } from '@/lib/magic';
 import { useStorageUpload } from '@/app/admin/components/file-upload/hooks/useStorageUpload';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useToast } from '@/contexts/ToastContext';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
-import { extractStoragePath } from '@/lib/media';
-import ProjectEditorPanel from './components/ProjectEditorPanel';
-import ProjectMediaStage from './components/ProjectMediaStage';
-import ProjectStepActions from './components/ProjectStepActions';
 import ProjectWindowModal from './components/ProjectWindowModal';
-import { useProjectPurge } from './hooks/useProjectPurge';
-import { useProjectWizard } from './hooks/useProjectWizard';
-import type { AIResponse } from './ProjectAIHelper';
 import {
-  countFilledProjectContentFields,
-  createPreviewSlug,
-  type AIUpdatableField,
-} from './projectFormUtils';
-import type { ProjectCreationMode, ProjectFormTabId } from './types';
+  Upload,
+  FileText,
+  Image as ImageIcon,
+  Check,
+  ExternalLink,
+  Loader2,
+  Trash2,
+  Calendar,
+  Building,
+  Tag,
+} from 'lucide-react';
+import { getProxiedUrl } from '@/lib/utils';
 
 interface ProjectFormProps {
   project?: Project;
@@ -33,406 +34,452 @@ interface ProjectFormProps {
 
 export default function ProjectForm({
   project,
-  allProjects = [],
   labels = [],
   onSubmit,
   onCancel,
   title,
 }: ProjectFormProps) {
-  const {
-    formData,
-    errors,
-    isDetectingDimensions,
-    updateField,
-    addGalleryItem,
-    removeGalleryItem,
-    toggleGalleryItem,
-    addGalleryGroup,
-    removeGalleryGroup,
-    addGalleryItemToGroup,
-    removeGalleryItemFromGroup,
-    toggleGalleryItemInGroup,
-    updateGroupName,
-    getSubmitData,
-    setFieldError,
-  } = useProjectForm(project);
+  const { formData, errors, isDetectingDimensions, updateField, getSubmitData } =
+    useProjectForm(project);
 
   const { csrfToken } = useAdminAuth();
   const { upload } = useStorageUpload({ folder: 'projects', csrfToken: csrfToken || '' });
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
   const { confirm } = useConfirm();
 
-  const [activeTab, setActiveTab] = useState<ProjectFormTabId>('ringkasan');
-  const [showViralStats, setShowViralStats] = useState(
-    (formData.likes ?? 0) > 0 || (formData.shares ?? 0) > 0 || !!project?.id
-  );
-  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [isProjectLiked, setIsProjectLiked] = useState(false);
-  const [creationMode, setCreationMode] = useState<ProjectCreationMode>(
-    project?.id ? 'manual' : 'undecided'
-  );
-  const [hasGeneratedContent, setHasGeneratedContent] = useState(project?.id ? true : false);
-  const [isAIHelperExpanded, setIsAIHelperExpanded] = useState(true);
+  // Cover Image state
   const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isSavedSuccessfully, setIsSavedSuccessfully] = useState(false);
-  const [submitUploadProgress, setSubmitUploadProgress] = useState<number | null>(null);
-
-  const { mediaFormat, setMediaFormat } = useProjectWizard(project);
-  const { trackNewUpload, executeCleanup, handleCancelCleanup, purgeUrl } = useProjectPurge(
-    project,
-    csrfToken
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(
+    project?.cover ? getProxiedUrl(project.cover) : null
   );
 
-  const coverBlobUrlRef = useRef<string | null>(null);
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
-  const originalCommentsRef = useRef<Comment[] | null>(null);
-  const originalMetricsRef = useRef<{ likes: number; shares: number } | null>(null);
-  const hasGeneratedViralRef = useRef<boolean>(false);
-  const generatedCommentsRef = useRef<Comment[] | null>(null);
+  // PDF File state
+  const [pendingPdfFile, setPendingPdfFile] = useState<File | null>(null);
+  const [pdfUploadProgress, setPdfUploadProgress] = useState<number | null>(null);
+  const [coverUploadProgress, setCoverUploadProgress] = useState<number | null>(null);
 
-  const revokeCoverBlobUrl = useCallback((url = coverBlobUrlRef.current) => {
-    if (url?.startsWith('blob:')) {
-      URL.revokeObjectURL(url);
-    }
-    if (url === coverBlobUrlRef.current) {
-      coverBlobUrlRef.current = null;
-    }
-  }, []);
+  // Form submission state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+
+  // Cleanup blob URLs on unmount
   useEffect(() => {
-    return () => revokeCoverBlobUrl();
-  }, [revokeCoverBlobUrl]);
-
-  useEffect(() => {
-    const textarea = descriptionRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    }
-  }, [formData.description]);
-
-  useEffect(() => {
-    if (project && originalMetricsRef.current === null) {
-      originalMetricsRef.current = {
-        likes: project.likes || 0,
-        shares: project.shares || 0,
-      };
-    }
-  }, [project]);
-
-  useEffect(() => {
-    if (project?.slug) {
-      fetch(`/api/comments?slug=${project.slug}`)
-        .then((res) => res.json())
-        .then((data) => {
-          const loadedComments = data?.data?.comments ?? data?.comments;
-          if (Array.isArray(loadedComments)) {
-            setComments(loadedComments);
-            if (originalCommentsRef.current === null) {
-              originalCommentsRef.current = loadedComments;
-            }
-          }
-        })
-        .catch((err) => console.error('Failed to load comments', err));
-    }
-  }, [project?.slug]);
-
-  const metrics = useMemo(() => {
-    return {
-      likes: Number(formData.likes) || 0,
-      shares: Number(formData.shares) || 0,
+    return () => {
+      if (coverPreviewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(coverPreviewUrl);
+      }
     };
-  }, [formData.likes, formData.shares]);
+  }, [coverPreviewUrl]);
 
-  const totalCommentCount = useMemo(
-    () => comments.reduce((acc, comment) => acc + 1 + (comment.replies?.length || 0), 0),
-    [comments]
-  );
-  const filledContentFieldCount = countFilledProjectContentFields(formData);
-  const activeProjectSlug = formData.slug || project?.slug || createPreviewSlug(formData.title);
-
-  const deleteMedia = useCallback(
-    async (path: string) => {
-      try {
-        const res = await fetch(`/api/admin/upload?path=${encodeURIComponent(path)}`, {
-          method: 'DELETE',
-          credentials: 'include',
-          headers: {
-            'x-csrf-token': csrfToken || '',
-          },
-        });
-        return res.ok;
-      } catch (e) {
-        console.error('Delete failed', e);
-        return false;
-      }
-    },
-    [csrfToken]
-  );
-
-  const handleDeleteMedia = async (field: 'cover' | 'before' | 'after') => {
-    let url = '';
-    if (field === 'cover') url = formData.cover;
-    else if (field === 'before') url = formData.comparison?.beforeImage || '';
-    else if (field === 'after') url = formData.comparison?.afterImage || '';
-
-    if (!url) return;
-
-    const isBlob = url.startsWith('blob:');
-
-    if (!isBlob) {
-      const storagePath = extractStoragePath(url);
-      if (storagePath) {
-        const confirmDelete = await confirm({
-          title: 'Hapus file ini?',
-          message: 'File akan dihapus permanen dari Storage. Aksi ini tidak bisa di-undo.',
-          confirmText: 'Hapus',
-          cancelText: 'Batal',
-          tone: 'danger',
-        });
-        if (confirmDelete) {
-          const success = await deleteMedia(storagePath);
-          if (!success) {
-            showError('Gagal menghapus file dari Storage. Silakan coba lagi.');
-            return;
-          }
-        } else {
-          return;
-        }
-      } else {
-        const ok = await confirm({
-          title: 'Hapus link media ini?',
-          message: 'Hanya menghapus referensi media dari form, tanpa menyentuh Storage.',
-          confirmText: 'Hapus link',
-          cancelText: 'Batal',
-        });
-        if (!ok) return;
-      }
+  // Handle Cover File Selection
+  const handleCoverSelect = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      showError('Harap pilih file gambar (JPG, PNG, WebP) untuk cover.');
+      return;
     }
-
-    if (field === 'cover') {
-      updateField('cover', '');
-      setPendingCoverFile(null);
-      revokeCoverBlobUrl();
-    } else {
-      updateField('comparison', {
-        ...formData.comparison,
-        [field === 'before' ? 'beforeImage' : 'afterImage']: '',
-      });
-    }
-  };
-
-  const handleCoverFileSelect = (file: File) => {
     setPendingCoverFile(file);
+    const blobUrl = URL.createObjectURL(file);
+    setCoverPreviewUrl(blobUrl);
+    updateField('cover', blobUrl);
   };
 
-  const handleCoverUrlChange = (value: string) => {
-    revokeCoverBlobUrl();
-    setPendingCoverFile(null);
-    updateField('cover', value);
+  // Handle PDF File Selection
+  const handlePdfSelect = (file: File) => {
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      showError('Harap pilih file berekstensi .pdf untuk dokumen project.');
+      return;
+    }
+    setPendingPdfFile(file);
+    updateField('pdfUrl', URL.createObjectURL(file));
   };
 
-  const handleCoverDeferredUpload = (urls: string[]) => {
-    const nextUrl = urls[0];
-    if (!nextUrl?.startsWith('blob:')) return;
-
-    revokeCoverBlobUrl();
-    coverBlobUrlRef.current = nextUrl;
-    updateField('cover', nextUrl);
+  // Handle Tag Selection from Labels
+  const handleToggleTag = (tagSlug: string) => {
+    const currentTags = formData.tags
+      ? formData.tags.split(',').map((t) => t.trim()).filter(Boolean)
+      : [];
+    const index = currentTags.indexOf(tagSlug);
+    let newTags: string[];
+    if (index >= 0) {
+      newTags = currentTags.filter((t) => t !== tagSlug);
+    } else {
+      newTags = [...currentTags, tagSlug];
+    }
+    updateField('tags', newTags.join(', '));
   };
 
-  const handleContentGenerated = useCallback(
-    (data: AIResponse, options?: { revealEditor?: boolean }) => {
-      const updates: Array<[AIUpdatableField, ProjectFormData[AIUpdatableField]]> = [
-        ['title', data.title],
-        ['description', data.description],
-        ['client', data.client],
-        ['role', data.role],
-        ['team', data.team],
-        ['timeline', data.timeline],
-        ['software', data.software || []],
-        ['narrative', data.narrative as ProjectFormData['narrative']],
-        ['tags', data.tags?.join(', ') || ''],
-      ];
-
-      updates.forEach(([field, value]) => {
-        if (value !== undefined) updateField(field, value);
-      });
-
-      if (options?.revealEditor) {
-        setHasGeneratedContent(true);
-        setIsAIHelperExpanded(false);
-      }
-    },
-    [updateField]
-  );
-
-  const handleViralGenerated = useCallback(
-    (
-      likes: number,
-      shares: number,
-      commentsCount: number,
-      generatedComments?: Comment[],
-      options?: { revealEditor?: boolean }
-    ) => {
-      updateField('likes', likes);
-      updateField('shares', shares);
-      updateField('initialCommentCount', project?.id ? 0 : commentsCount);
-      updateField('allowComments', true);
-      setShowViralStats(true);
-
-      if (generatedComments) {
-        setComments(generatedComments);
-        generatedCommentsRef.current = generatedComments;
-        updateField('comments', generatedComments);
-      }
-
-      hasGeneratedViralRef.current = true;
-
-      if (options?.revealEditor) {
-        setHasGeneratedContent(true);
-        setIsAIHelperExpanded(false);
-      }
-    },
-    [project?.id, updateField]
-  );
-
+  // Submit Handler
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+
     const submitData = getSubmitData();
-    if (!submitData) return;
+    if (!submitData) {
+      showError('Harap lengkapi field yang wajib diisi (Judul dan Cover Thumbnail).');
+      return;
+    }
 
     try {
-      setIsUploading(true);
+      setIsSubmitting(true);
 
+      // 1. Upload Cover Image if pending
       if (pendingCoverFile) {
-        setSubmitUploadProgress(0);
-        const {
-          url,
-          success,
-          error: uploadError,
-        } = await upload(pendingCoverFile, {
-          onUploadProgress: setSubmitUploadProgress,
+        setCoverUploadProgress(10);
+        const { url, success, error: uploadError } = await upload(pendingCoverFile, {
+          onUploadProgress: setCoverUploadProgress,
         });
-        if (!success) throw new Error(uploadError || 'Upload failed');
-        setSubmitUploadProgress(100);
+        if (!success || !url) throw new Error(uploadError || 'Gagal mengunggah cover');
         submitData.cover = url;
+        setCoverUploadProgress(100);
       }
 
-      if (hasGeneratedViralRef.current) {
-        submitData.comments = generatedCommentsRef.current ?? comments;
+      // 2. Upload PDF file if pending
+      if (pendingPdfFile) {
+        setPdfUploadProgress(10);
+        const { url, success, error: uploadError } = await upload(pendingPdfFile, {
+          onUploadProgress: setPdfUploadProgress,
+        });
+        if (!success || !url) throw new Error(uploadError || 'Gagal mengunggah file PDF');
+        submitData.pdfUrl = url;
+        setPdfUploadProgress(100);
       }
 
+      // 3. Submit data to backend
       await onSubmit(submitData);
-
-      hasGeneratedViralRef.current = false;
-      setIsSavedSuccessfully(true);
-
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      await executeCleanup(submitData);
-      setPendingCoverFile(null);
-
+      showSuccess('Project berhasil disimpan!');
       onCancel();
-    } catch (error) {
-      const failedCoverUrl = submitData.cover;
-      if (pendingCoverFile && failedCoverUrl && failedCoverUrl !== project?.cover) {
-        await purgeUrl(failedCoverUrl);
-      }
-      console.error('Submit failed', error);
-      showError('Gagal menyimpan project. Silakan coba lagi.');
+    } catch (err: unknown) {
+      console.error('[ProjectForm] Submit failed:', err);
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan project.';
+      showError(msg);
     } finally {
-      setIsUploading(false);
-      setSubmitUploadProgress(null);
+      setIsSubmitting(false);
+      setCoverUploadProgress(null);
+      setPdfUploadProgress(null);
     }
   };
 
-  const handleFormCancel = async () => {
-    const canCancel = await handleCancelCleanup();
-    if (canCancel) {
-      onCancel();
+  const handleRemovePdf = async () => {
+    const ok = await confirm({
+      title: 'Hapus File PDF?',
+      message: 'File PDF akan dihapus dari project ini.',
+      confirmText: 'Hapus PDF',
+      cancelText: 'Batal',
+      tone: 'danger',
+    });
+    if (ok) {
+      setPendingPdfFile(null);
+      updateField('pdfUrl', '');
     }
   };
 
   return (
     <ProjectWindowModal
-      onClose={handleFormCancel}
+      onClose={onCancel}
       title={title}
       actions={
-        <ProjectStepActions
-          isUploading={isUploading}
-          isSuccess={isSavedSuccessfully}
-          project={project}
-          uploadProgress={submitUploadProgress}
-          onCancel={handleFormCancel}
-          onSubmit={() => handleSubmit()}
-        />
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="rounded-xl border border-neutral-300 bg-white px-4 py-2 text-xs font-semibold text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSubmit()}
+            disabled={isSubmitting}
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-xs font-semibold text-white shadow-md transition-all hover:bg-blue-700 disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Menyimpan...</span>
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4" />
+                <span>Simpan Project</span>
+              </>
+            )}
+          </button>
+        </div>
       }
     >
-      <form onSubmit={handleSubmit} className="project-form-container flex min-h-0 flex-col">
-        <div className="grid min-h-[550px] grid-cols-1 gap-8 lg:grid-cols-12">
-          <ProjectMediaStage
-            formData={formData}
-            errors={errors}
-            isDetectingDimensions={isDetectingDimensions}
-            mediaFormat={mediaFormat}
-            setMediaFormat={setMediaFormat}
-            isCommentsOpen={isCommentsOpen}
-            setIsCommentsOpen={setIsCommentsOpen}
-            comments={comments}
-            setComments={setComments}
-            totalCommentCount={totalCommentCount}
-            isProjectLiked={isProjectLiked}
-            setIsProjectLiked={setIsProjectLiked}
-            activeProjectSlug={activeProjectSlug}
-            pendingCoverFile={pendingCoverFile}
-            metrics={metrics}
-            updateField={updateField}
-            onDeleteMedia={handleDeleteMedia}
-            onCoverFileSelect={handleCoverFileSelect}
-            onCoverDeferredUpload={handleCoverDeferredUpload}
-            onCoverUrlChange={handleCoverUrlChange}
-            onNewUpload={trackNewUpload}
-          />
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          {/* Left Column: Project Metadata */}
+          <div className="space-y-4 lg:col-span-6">
+            {/* Title */}
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                Judul Project <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Contoh: Redesign Aplikasi Mobile Bank"
+                className="w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                required
+              />
+              {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
+            </div>
 
-          <ProjectEditorPanel
-            project={project}
-            allProjects={allProjects}
-            labels={labels}
-            formData={formData}
-            errors={errors}
-            pendingCoverFile={pendingCoverFile}
-            activeProjectSlug={activeProjectSlug}
-            filledContentFieldCount={filledContentFieldCount}
-            totalCommentCount={totalCommentCount}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            creationMode={creationMode}
-            setCreationMode={setCreationMode}
-            hasGeneratedContent={hasGeneratedContent}
-            setHasGeneratedContent={setHasGeneratedContent}
-            isAIHelperExpanded={isAIHelperExpanded}
-            setIsAIHelperExpanded={setIsAIHelperExpanded}
-            showViralStats={showViralStats}
-            setShowViralStats={setShowViralStats}
-            descriptionRef={descriptionRef}
-            updateField={updateField}
-            setFieldError={setFieldError}
-            onContentGenerated={handleContentGenerated}
-            onViralGenerated={handleViralGenerated}
-            addGalleryItem={addGalleryItem}
-            removeGalleryItem={removeGalleryItem}
-            toggleGalleryItem={toggleGalleryItem}
-            addGalleryGroup={addGalleryGroup}
-            removeGalleryGroup={removeGalleryGroup}
-            addGalleryItemToGroup={addGalleryItemToGroup}
-            removeGalleryItemFromGroup={removeGalleryItemFromGroup}
-            toggleGalleryItemInGroup={toggleGalleryItemInGroup}
-            updateGroupName={updateGroupName}
-            onNewUpload={trackNewUpload}
-          />
+            {/* Category / Tags */}
+            <div>
+              <label className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                <Tag className="h-3.5 w-3.5" />
+                <span>Kategori & Tag</span>
+              </label>
+              <input
+                type="text"
+                value={formData.tags}
+                onChange={(e) => updateField('tags', e.target.value)}
+                placeholder="UI/UX, Mobile App, Branding (pisahkan koma)"
+                className="mb-2 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm text-neutral-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+              />
+              {labels.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {labels.map((lbl) => {
+                    const isSelected = formData.tags
+                      ?.split(',')
+                      .map((t) => t.trim().toLowerCase())
+                      .includes(lbl.slug.toLowerCase());
+                    return (
+                      <button
+                        key={lbl.id || lbl.slug}
+                        type="button"
+                        onClick={() => handleToggleTag(lbl.slug)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all ${
+                          isSelected
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
+                        }`}
+                      >
+                        {lbl.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Client & Year */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                  <Building className="h-3 w-3" />
+                  <span>Klien / Instansi</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.client}
+                  onChange={(e) => updateField('client', e.target.value)}
+                  placeholder="Contoh: PT. Maju Bersama"
+                  className="w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm text-neutral-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                  <Calendar className="h-3 w-3" />
+                  <span>Tahun</span>
+                </label>
+                <input
+                  type="number"
+                  value={formData.year}
+                  onChange={(e) => updateField('year', parseInt(e.target.value) || new Date().getFullYear())}
+                  className="w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm text-neutral-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                />
+              </div>
+            </div>
+
+            {/* Short Description */}
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                Deskripsi Singkat
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => updateField('description', e.target.value)}
+                rows={3}
+                placeholder="Penjelasan ringkas tentang karya/project ini..."
+                className="w-full resize-none rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+              />
+            </div>
+          </div>
+
+          {/* Right Column: PDF Document & Thumbnail Uploads */}
+          <div className="space-y-5 lg:col-span-6">
+            {/* 1. PDF Document Upload Card */}
+            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+              <label className="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                  <FileText className="h-4 w-4" />
+                  Berkas Dokumen PDF
+                </span>
+                {formData.pdfUrl && (
+                  <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                    PDF Terpasang
+                  </span>
+                )}
+              </label>
+
+              <input
+                ref={pdfInputRef}
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handlePdfSelect(file);
+                }}
+              />
+
+              {formData.pdfUrl ? (
+                /* PDF Ready State */
+                <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-500 dark:bg-red-500/20">
+                        <FileText className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                          {pendingPdfFile ? pendingPdfFile.name : 'Dokumen PDF Project'}
+                        </p>
+                        {pendingPdfFile && (
+                          <p className="text-[10px] text-neutral-400">
+                            {(pendingPdfFile.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {!pendingPdfFile && formData.pdfUrl && (
+                        <a
+                          href={getProxiedUrl(formData.pdfUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-700 dark:text-neutral-200"
+                          title="Buka PDF di tab baru"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleRemovePdf}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400"
+                        title="Hapus PDF"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {pdfUploadProgress !== null && (
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+                      <div
+                        className="h-full bg-blue-600 transition-all duration-300"
+                        style={{ width: `${pdfUploadProgress}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* PDF Empty / Upload Dropzone */
+                <div
+                  onClick={() => pdfInputRef.current?.click()}
+                  className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 p-6 text-center transition-all hover:border-blue-500 hover:bg-blue-50/30 dark:border-neutral-700 dark:bg-neutral-800/30 dark:hover:border-blue-500/50"
+                >
+                  <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
+                    <Upload className="h-5 w-5" />
+                  </div>
+                  <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                    Klik untuk upload file PDF
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-neutral-400">
+                    Mendukung berkas presentasi, deck, atau dokumen portofolio (.pdf)
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Cover / Thumbnail Upload Card */}
+            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+              <label className="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                <span className="flex items-center gap-1.5">
+                  <ImageIcon className="h-4 w-4" />
+                  Cover / Thumbnail <span className="text-red-500">*</span>
+                </span>
+                {isDetectingDimensions && (
+                  <span className="text-[10px] text-blue-500">Mendeteksi dimensi...</span>
+                )}
+              </label>
+
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleCoverSelect(file);
+                }}
+              />
+
+              {coverPreviewUrl ? (
+                /* Cover Preview State */
+                <div className="relative overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
+                  <img
+                    src={coverPreviewUrl}
+                    alt="Cover preview"
+                    className="h-48 w-full object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() => coverInputRef.current?.click()}
+                      className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-bold text-neutral-900 shadow backdrop-blur hover:bg-white"
+                    >
+                      Ganti Gambar
+                    </button>
+                  </div>
+                  {coverUploadProgress !== null && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-neutral-200">
+                      <div
+                        className="h-full bg-blue-600 transition-all duration-300"
+                        style={{ width: `${coverUploadProgress}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Cover Empty / Upload Dropzone */
+                <div
+                  onClick={() => coverInputRef.current?.click()}
+                  className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 p-6 text-center transition-all hover:border-blue-500 hover:bg-blue-50/30 dark:border-neutral-700 dark:bg-neutral-800/30 dark:hover:border-blue-500/50"
+                >
+                  <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-200/60 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300">
+                    <ImageIcon className="h-5 w-5" />
+                  </div>
+                  <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                    Klik untuk upload gambar cover
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-neutral-400">
+                    Dipakai untuk ikon folder desktop OS simulator dan kartu preview
+                  </p>
+                </div>
+              )}
+              {errors.cover && <p className="mt-1.5 text-xs text-red-500">{errors.cover}</p>}
+            </div>
+          </div>
         </div>
       </form>
     </ProjectWindowModal>

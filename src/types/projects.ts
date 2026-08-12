@@ -21,6 +21,7 @@ export interface Project {
   likes?: number;
   shares?: number;
   allowComments?: boolean;
+  pdfUrl?: string;
 
   // New Case Study Fields
   role?: string;
@@ -103,6 +104,7 @@ export interface CreateProjectData {
   shares?: number;
   allowComments?: boolean;
   initialCommentCount?: number;
+  pdfUrl?: string;
 
   // New Case Study Fields
   role?: string;
