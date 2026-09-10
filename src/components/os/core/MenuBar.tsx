@@ -2,19 +2,29 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { Check, ChevronDown, Search, Wifi, LogOut, Users } from 'lucide-react';
 import { useOSOverlays } from '../context/OSSystemContext';
 import { Z_LAYERS } from '../utils/zIndexLayers';
 import { useReducedMotion } from 'motion/react';
 import { useTransitionRouter } from 'next-view-transitions';
 import type { LottieRefCurrentProps } from 'lottie-react';
 import IOSPinModal from '@/components/shared/IOSPinModal';
-import logoAnimationData from '../../../../public/lottie/mata.json';
-import LanguageSwitch from '@/components/shared/LanguageSwitch';
 import { useLanguage } from '@/contexts/LanguageContext';
-import MusicPlayerWidget from '../ui/MusicWidget';
+import { MenuBarViewMenu } from './menu-bar/MenuBarViewMenu';
+import { MenuBarAdminBadge } from './menu-bar/MenuBarAdminBadge';
+import { MenuBarStatusItems } from './menu-bar/MenuBarStatusItems';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+
+// Lazy-load Lottie animation data via fetch from public URL to reduce initial bundle size (11.9 KB).
+// Static import from `public/lottie/mata.json` was synchronous and inflated the main chunk.
+let cachedLogoAnimationData: Record<string, unknown> | null = null;
+const loadLogoAnimationData = () =>
+  fetch('/lottie/mata.json')
+    .then((r) => r.json())
+    .then((data) => {
+      cachedLogoAnimationData = data;
+      return data;
+    });
 
 interface MenuBarProps {
   onSearch?: () => void;
@@ -38,16 +48,23 @@ export default function MenuBar({
   onLogout,
   onToggleControlCenter,
 }: MenuBarProps) {
-  const { showCalendar, setShowCalendar, showGhostCursors, toggleGhostCursors } = useOSOverlays();
+  const { showCalendar, setShowCalendar } = useOSOverlays();
   const { dictionary: t, meta } = useLanguage();
-  const [viewMenuOpen, setViewMenuOpen] = useState(false);
-  const viewMenuRef = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(new Date());
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [logoAnimationData, setLogoAnimationData] = useState<Record<string, unknown> | null>(
+    () => cachedLogoAnimationData
+  );
   const router = useTransitionRouter();
 
   const prefersReducedMotion = useReducedMotion();
   const lottieRef = useRef<LottieRefCurrentProps | null>(null);
+
+  // Lazy-load Lottie animation data after mount
+  useEffect(() => {
+    if (cachedLogoAnimationData) return;
+    loadLogoAnimationData().then(setLogoAnimationData);
+  }, []);
 
   useEffect(() => {
     const instance = lottieRef.current;
@@ -76,18 +93,6 @@ export default function MenuBar({
     return () => window.clearTimeout(timer);
   }, []);
 
-  // Close view menu on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (viewMenuRef.current && !viewMenuRef.current.contains(e.target as Node)) {
-        setViewMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Format: "Sen 22 Jan 19:30"
   const formattedTime = time.toLocaleTimeString(meta.intlLocale, {
     hour: '2-digit',
     minute: '2-digit',
@@ -116,6 +121,7 @@ export default function MenuBar({
                 : activeWindow === 'Recycle Bin'
                   ? t.windowTitles.trash
                   : activeWindow;
+
   const availabilityText =
     availability?.status === 'available'
       ? t.header.available
@@ -137,15 +143,17 @@ export default function MenuBar({
           role="img"
         >
           <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <Lottie
-              lottieRef={lottieRef}
-              animationData={logoAnimationData}
-              loop={!prefersReducedMotion}
-              autoplay={!prefersReducedMotion}
-              rendererSettings={{ preserveAspectRatio: 'xMidYMid meet' }}
-              style={{ width: 96, height: 96 }}
-              aria-hidden="true"
-            />
+            {logoAnimationData && (
+              <Lottie
+                lottieRef={lottieRef}
+                animationData={logoAnimationData}
+                loop={!prefersReducedMotion}
+                autoplay={!prefersReducedMotion}
+                rendererSettings={{ preserveAspectRatio: 'xMidYMid meet' }}
+                style={{ width: 96, height: 96 }}
+                aria-hidden="true"
+              />
+            )}
           </div>
         </div>
         <div
@@ -155,7 +163,8 @@ export default function MenuBar({
         >
           {localizedActiveWindow}
         </div>
-        {/* Menus (Hidden on mobile for simplicity) */}
+
+        {/* Menus */}
         <div className="hidden items-center gap-1 font-medium lg:flex">
           <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
             {t.menuBar.file}
@@ -163,39 +172,10 @@ export default function MenuBar({
           <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
             {t.menuBar.edit}
           </div>
-          <div
-            ref={viewMenuRef}
-            className="relative"
-            onClick={() => setViewMenuOpen(!viewMenuOpen)}
-          >
-            <div className="flex cursor-default items-center gap-1 rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-              {t.menuBar.view}
-              <ChevronDown size={10} aria-hidden="true" />
-            </div>
-            {viewMenuOpen && (
-              <div className="absolute left-0 top-full z-[1000] mt-1 min-w-[140px] rounded border border-gray-200 bg-white py-1 shadow-lg">
-                <div
-                  className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-black/5"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleGhostCursors();
-                  }}
-                >
-                  <Users
-                    size={14}
-                    className={`flex-shrink-0 ${
-                      showGhostCursors ? 'text-emerald-500' : 'text-gray-400'
-                    }`}
-                    aria-hidden="true"
-                  />
-                  <span className="truncate">{t.menuBar.showGhostCursors}</span>
-                  {showGhostCursors && (
-                    <Check size={12} className="ml-auto text-emerald-500" aria-hidden="true" />
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          <MenuBarViewMenu
+            viewLabel={t.menuBar.view}
+            showGhostCursorsLabel={t.menuBar.showGhostCursors}
+          />
           <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
             {t.menuBar.go}
           </div>
@@ -208,107 +188,27 @@ export default function MenuBar({
         </div>
       </div>
 
-      {/* Center Area - Logout Button (Admin Only) */}
-      {isAdmin && (
-        <div className="pointer-events-none absolute inset-x-0 flex h-full items-center justify-center">
-          <div className="pointer-events-auto flex items-center gap-2">
-            <div className="animate-in fade-in slide-in-from-top-1 flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5">
-              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
-              <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700">
-                {t.menuBar.adminMode}
-              </span>
-            </div>
-            <button
-              onClick={onLogout}
-              className="group flex items-center gap-1.5 px-3 py-1 text-red-600 transition-all hover:text-red-700 active:scale-95"
-              title={t.menuBar.exitAdmin}
-            >
-              <LogOut size={14} className="transition-transform group-hover:-translate-x-0.5" />
-              <span className="text-[11px] font-bold uppercase tracking-tight">
-                {t.menuBar.exitAdmin}
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Center Area - Admin Mode Badge */}
+      <MenuBarAdminBadge
+        isAdmin={isAdmin}
+        adminModeLabel={t.menuBar.adminMode}
+        exitAdminLabel={t.menuBar.exitAdmin}
+        onLogout={onLogout}
+      />
 
       {/* Right Side */}
-      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
-        {/* Availability Status */}
-        {availability && (
-          <div
-            className={`hidden max-w-[13rem] items-center gap-2 rounded-full px-2 py-0.5 transition-colors lg:flex ${
-              availability.status === 'available'
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-red-50 text-red-700'
-            }`}
-          >
-            <div
-              className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                availability.status === 'available' ? 'animate-pulse bg-emerald-500' : 'bg-red-500'
-              }`}
-            />
-            <span className="truncate text-[10px] font-medium uppercase tracking-wide">
-              {availabilityText}
-            </span>
-          </div>
-        )}
+      <MenuBarStatusItems
+        availability={availability}
+        availabilityText={availabilityText}
+        batteryFullLabel={t.menuBar.batteryFull}
+        formattedDate={formattedDate}
+        formattedTime={formattedTime}
+        showCalendar={showCalendar}
+        onSearch={onSearch}
+        onToggleControlCenter={onToggleControlCenter}
+        onToggleCalendar={() => setShowCalendar(!showCalendar)}
+      />
 
-        <MusicPlayerWidget />
-        <LanguageSwitch className="hidden md:inline-grid" />
-
-        {/* Icons */}
-        <div
-          className="flex cursor-pointer items-center gap-1.5 sm:gap-3"
-          onClick={onToggleControlCenter}
-        >
-          <button
-            type="button"
-            className="flex h-7 w-7 touch-manipulation items-center justify-center rounded p-1 hover:bg-black/5 hover:text-gray-600 sm:h-auto sm:w-auto sm:p-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onSearch) onSearch();
-            }}
-            aria-label="Search"
-          >
-            <Search
-              size={18}
-              className="sm:h-[14px] sm:w-[14px]"
-            />
-          </button>
-          <Wifi size={18} className="hidden hover:text-gray-600 sm:block sm:h-[14px] sm:w-[14px]" />
-
-          {/* Custom Battery 100% Green */}
-          <span
-            className="flex items-center gap-[1px]"
-            title={t.menuBar.batteryFull}
-            role="img"
-            aria-label={t.menuBar.batteryFull}
-          >
-            <div className="flex h-[11px] w-[22px] items-center justify-center rounded-[2.5px] border border-[#16a34a] bg-[#22c55e]">
-              <span
-                className="pt-[0.5px] text-[7px] font-bold leading-none text-black"
-                aria-hidden="true"
-              >
-                100
-              </span>
-            </div>
-            <div className="h-[3.5px] w-[1.5px] rounded-r-[1px] bg-[#16a34a] opacity-80" />
-          </span>
-        </div>
-
-        {/* Clock */}
-        <div
-          className="flex cursor-pointer touch-manipulation items-center gap-1 rounded px-1.5 py-1 font-medium transition-colors hover:bg-black/5 sm:gap-2 sm:px-2"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowCalendar(!showCalendar);
-          }}
-        >
-          <span className="hidden lg:inline">{formattedDate}</span>
-          <span>{formattedTime}</span>
-        </div>
-      </div>
       <IOSPinModal
         isOpen={isPinModalOpen}
         onClose={() => setIsPinModalOpen(false)}

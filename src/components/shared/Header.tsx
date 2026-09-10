@@ -10,11 +10,20 @@ import { markBack } from '@/lib/navigationDirection';
 import dynamic from 'next/dynamic';
 import { useReducedMotion } from 'motion/react';
 import IOSPinModal from './IOSPinModal';
-import logoAnimationData from '../../../public/lottie/mata.json';
 import LanguageSwitch from './LanguageSwitch';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+
+// Lazy-load Lottie animation data via fetch from public URL to reduce initial bundle size (11.9 KB)
+let cachedLogoAnimationData: Record<string, unknown> | null = null;
+const loadLogoAnimationData = () =>
+  fetch('/lottie/mata.json')
+    .then((r) => r.json())
+    .then((data) => {
+      cachedLogoAnimationData = data;
+      return data;
+    });
 
 const Header: React.FC = () => {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
@@ -23,6 +32,9 @@ const Header: React.FC = () => {
   const { trackEvent } = useAnalytics();
   const { setShowControlCenter, showCalendar, setShowCalendar } = useOSOverlays();
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [logoAnimationData, setLogoAnimationData] = useState<Record<string, unknown> | null>(
+    () => cachedLogoAnimationData
+  );
   const router = useTransitionRouter();
   const { dictionary: t, meta } = useLanguage();
 
@@ -45,6 +57,12 @@ const Header: React.FC = () => {
       setCurrentTime(new Date());
     }, 60_000); // Update every 60s — clock only shows HH:MM
     return () => clearInterval(timer);
+  }, []);
+
+  // Lazy-load Lottie animation data after mount
+  useEffect(() => {
+    if (cachedLogoAnimationData) return;
+    loadLogoAnimationData().then(setLogoAnimationData);
   }, []);
 
   const formatTime = useCallback(
@@ -102,15 +120,17 @@ const Header: React.FC = () => {
           aria-label="Admin Login"
         >
           <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <Lottie
-              lottieRef={lottieRef}
-              animationData={logoAnimationData}
-              loop={!prefersReducedMotion}
-              autoplay={!prefersReducedMotion}
-              rendererSettings={{ preserveAspectRatio: 'xMidYMid meet' }}
-              style={{ width: 96, height: 96 }}
-              aria-hidden="true"
-            />
+            {logoAnimationData && (
+              <Lottie
+                lottieRef={lottieRef}
+                animationData={logoAnimationData}
+                loop={!prefersReducedMotion}
+                autoplay={!prefersReducedMotion}
+                rendererSettings={{ preserveAspectRatio: 'xMidYMid meet' }}
+                style={{ width: 96, height: 96 }}
+                aria-hidden="true"
+              />
+            )}
           </div>
         </Link>
         <div className="hidden cursor-default px-2 py-1 font-bold sm:block">{appName}</div>
