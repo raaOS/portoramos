@@ -49,6 +49,19 @@ const nextConfig = {
   // Transpile packages that need ESM handling
   transpilePackages: ['motion'],
 
+  // Keep native/server-only packages external so Turbopack/webpack does not
+  // try to bundle them (WASM canvas, pdfjs worker, sharp, ffmpeg binaries).
+  serverExternalPackages: [
+    '@napi-rs/canvas',
+    'pdfjs-dist',
+    'sharp',
+    'ffmpeg-static',
+    '@ffmpeg/ffmpeg',
+    '@ffmpeg/core',
+    '@aws-sdk/client-s3',
+    '@aws-sdk/s3-request-presigner',
+  ],
+
   // Optimize static assets
   // Improve static asset handling
   trailingSlash: false,
@@ -64,7 +77,7 @@ const nextConfig = {
     optimizeCss: true,
     // Tree-shake barrel imports untuk paket icon/animation/utility yang dipakai
     // banyak di OS desktop. Mengurangi ukuran bundle client pada cold start.
-    optimizePackageImports: ['lucide-react', '@tabler/icons-react', 'date-fns', 'motion'],
+    optimizePackageImports: ['lucide-react', '@tabler/icons-react', 'motion'],
   },
 
   // Turbopack configuration (Next.js 16 Stable Bundler).

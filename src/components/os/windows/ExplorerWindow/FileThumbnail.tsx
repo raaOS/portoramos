@@ -31,13 +31,20 @@ export default function FileThumbnail({
 }) {
   const displayName = getExplorerFileDisplayName(file);
   const [hasError, setHasError] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   const isVideo = file.fileType === 'video';
   const isImage = file.fileType === 'image';
+  const isPdf = file.fileType === 'pdf';
+
   const videoPoster = isVideo ? file.thumbnailUrl || getVideoPosterSource(file.url) : undefined;
   const videoPreview = isVideo ? getVideoPreviewSource(file.url) || file.url : undefined;
-  const src = isVideo ? videoPoster || videoPreview : file.thumbnailUrl || file.url;
+  const pdfPoster = isPdf && file.url ? file.url.replace(/\.pdf$/i, '.jpg') : undefined;
+
+  const src = isVideo
+    ? videoPoster || videoPreview
+    : isPdf
+      ? file.thumbnailUrl || pdfPoster
+      : file.thumbnailUrl || file.url;
 
   const sizeClasses = {
     xs: 'w-5 h-5',
@@ -49,15 +56,27 @@ export default function FileThumbnail({
   return (
     <div
       className={`${sizeClasses[size]} relative flex items-center justify-center overflow-hidden border border-black/5 bg-white shadow-sm transition-shadow group-hover:shadow-md dark:border-white/10 dark:bg-white/10`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {!src || hasError ? (
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex h-full w-full items-center justify-center">
           {isVideo ? (
             <VideoIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" />
           ) : isImage ? (
             <ImageIcon size={size === 'xs' ? 12 : 24} className="text-green-500 opacity-60" />
+          ) : isPdf ? (
+            <svg
+              viewBox="0 0 48 64"
+              className="h-full w-full"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect x="4" y="2" width="40" height="60" rx="3" fill="#fff" stroke="#d1d5db" strokeWidth="1.5" />
+              <path d="M34 2 L44 12 L34 12 Z" fill="#e5e7eb" stroke="#d1d5db" strokeWidth="1" />
+              <path d="M34 2 L34 12 L44 12" fill="none" stroke="#d1d5db" strokeWidth="1" />
+              <text x="24" y="42" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#dc2626" fontFamily="Arial, sans-serif">PDF</text>
+              <rect x="12" y="48" width="24" height="3" rx="1.5" fill="#e5e7eb" />
+              <rect x="12" y="54" width="18" height="3" rx="1.5" fill="#e5e7eb" />
+            </svg>
           ) : (
             <FileIcon size={size === 'xs' ? 12 : 24} className="text-gray-400 opacity-60" />
           )}
@@ -101,16 +120,6 @@ export default function FileThumbnail({
         />
       )}
 
-      {/* Type Badge (Only for larger sizes) */}
-      {size !== 'xs' && (
-        <div
-          className={`absolute inset-x-0 bottom-0 flex h-4 items-center justify-center bg-black/40 backdrop-blur-[2px] transition-opacity ${isHovered ? 'opacity-100' : 'opacity-70'}`}
-        >
-          <span className="text-[7px] font-black uppercase tracking-tighter text-white">
-            {file.metadata?.extension || file.fileType}
-          </span>
-        </div>
-      )}
     </div>
   );
 }

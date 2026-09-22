@@ -662,6 +662,23 @@ export async function POST(req: NextRequest) {
       posterPath = `${basePath}.jpg`;
     }
 
+    // ---------- PDF: generate page-1 poster side-car ----------
+    // Mirror video poster convention: `<base>.jpg` next to the PDF.
+    // Non-fatal: if render fails, posterBuffer stays null and the
+    // frontend FileThumbnail falls back to its SVG document icon.
+    if (isPdfUpload && !posterPath && !posterBuffer) {
+      try {
+        const { generatePdfThumbnail } = await import('@/lib/pdfThumbnail');
+        const thumb = await generatePdfThumbnail(originalBuffer);
+        if (thumb) {
+          posterBuffer = thumb;
+          posterPath = storagePath.replace(/\.pdf$/i, '.jpg');
+        }
+      } catch (e) {
+        console.warn('[Upload] PDF thumbnail generation failed (non-fatal):', e);
+      }
+    }
+
     const cacheControl = 'public, max-age=31536000, immutable';
     const [r2Main] = await Promise.all([
       uploadToR2({
