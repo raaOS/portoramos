@@ -141,7 +141,9 @@
             "status": "default"
           }
         ],
-        "nextSteps": ["strategy"],
+        "nextSteps": [
+          "strategy"
+        ],
         "loopTargets": []
       },
       {
@@ -179,8 +181,12 @@
             "status": "default"
           }
         ],
-        "nextSteps": ["execution"],
-        "loopTargets": ["discovery"]
+        "nextSteps": [
+          "execution"
+        ],
+        "loopTargets": [
+          "discovery"
+        ]
       },
       {
         "id": "execution",
@@ -217,8 +223,13 @@
             "status": "default"
           }
         ],
-        "nextSteps": ["approval"],
-        "loopTargets": ["strategy", "execution"]
+        "nextSteps": [
+          "approval"
+        ],
+        "loopTargets": [
+          "strategy",
+          "execution"
+        ]
       },
       {
         "id": "approval",
@@ -255,8 +266,14 @@
             "status": "default"
           }
         ],
-        "nextSteps": ["delivery"],
-        "loopTargets": ["execution", "strategy", "discovery"]
+        "nextSteps": [
+          "delivery"
+        ],
+        "loopTargets": [
+          "execution",
+          "strategy",
+          "discovery"
+        ]
       },
       {
         "id": "delivery",
@@ -458,254 +475,6 @@
     }
   },
   "labels": {},
-  "notifications": [
-    {
-      "id": "notif-1",
-      "name": "Sari Rahmawati",
-      "message": "Mas, desain kemasannya udah dilihat tim. Suka!",
-      "avatar": "",
-      "isActive": true,
-      "status": "Online",
-      "conversation": [
-        {
-          "id": 1,
-          "text": "Halo Mas, desain kemasannya udah dilihat tim.",
-          "isMe": false,
-          "time": "09:41",
-          "status": "read"
-        },
-        {
-          "id": 2,
-          "text": "Pada suka banget sama pilihan warnanya, seger.",
-          "isMe": false,
-          "time": "09:41",
-          "status": "read"
-        },
-        {
-          "id": 3,
-          "text": "Syukur deh kalau cocok Mbak.",
-          "isMe": true,
-          "time": "09:42",
-          "status": "read"
-        },
-        {
-          "id": 4,
-          "text": "Cuma logonya bisa digedein dikit lagi gak?",
-          "isMe": false,
-          "time": "09:45",
-          "status": "read"
-        },
-        {
-          "id": 5,
-          "text": "Bisa banget. Nanti sore saya kirim revisinya ya.",
-          "isMe": true,
-          "time": "09:50",
-          "status": "read"
-        }
-      ]
-    },
-    {
-      "id": "notif-2",
-      "name": "Dodi Kurniawan",
-      "message": "Wih, web lu sekarang keren amat bro.",
-      "avatar": "",
-      "isActive": true,
-      "status": "Terakhir dilihat 10:30",
-      "conversation": [
-        {
-          "id": 1,
-          "text": "Woi bro, apa kabar?",
-          "isMe": false,
-          "time": "Kemarin",
-          "status": "read"
-        },
-        {
-          "id": 2,
-          "text": "Baik bro. Tumben chat, kenapa nih?",
-          "isMe": true,
-          "time": "Kemarin",
-          "status": "read"
-        },
-        {
-          "id": 3,
-          "text": "Baru liat update portfolio lu.",
-          "isMe": false,
-          "time": "Kemarin",
-          "status": "read"
-        },
-        {
-          "id": 4,
-          "text": "Keren parah sekarang, makin jago aja lu.",
-          "isMe": false,
-          "time": "10:15",
-          "status": "read"
-        },
-        {
-          "id": 5,
-          "text": "Haha bisa aja lu. Masih belajar ini juga.",
-          "isMe": true,
-          "time": "10:20",
-          "status": "read"
-        },
-        {
-          "id": 6,
-          "text": "Wih, web lu sekarang keren amat bro.",
-          "isMe": false,
-          "time": "10:25",
-          "status": "read"
-        }
-      ]
-    },
-    {
-      "id": "notif-3",
-      "name": "Pak Bambang",
-      "message": "Siang Mas, proposal penawaran sudah saya baca.",
-      "avatar": "",
-      "isActive": true,
-      "status": "Online",
-      "conversation": [
-        {
-          "id": 1,
-          "text": "Selamat siang Mas Ramos.",
-          "isMe": false,
-          "time": "08:00",
-          "status": "read"
-        },
-        {
-          "id": 2,
-          "text": "Siang Pak Bambang.",
-          "isMe": true,
-          "time": "08:15",
-          "status": "read"
-        },
-        {
-          "id": 3,
-          "text": "Proposal penawaran yang mas kirim sudah saya baca.",
-          "isMe": false,
-          "time": "08:20",
-          "status": "read"
-        },
-        {
-          "id": 4,
-          "text": "Secara konsep saya setuju. Kapan kira-kira bisa meeting?",
-          "isMe": false,
-          "time": "08:25",
-          "status": "read"
-        },
-        {
-          "id": 5,
-          "text": "Besok siang saya kosong Pak.",
-          "isMe": true,
-          "time": "08:30",
-          "status": "read"
-        },
-        {
-          "id": 6,
-          "text": "Siang Mas, proposal penawaran sudah saya baca.",
-          "isMe": false,
-          "time": "08:35",
-          "status": "read"
-        }
-      ]
-    },
-    {
-      "id": "notif-4",
-      "name": "Rini (HRD)",
-      "message": "Halo Mas, bisa diskusi soal project redesign web?",
-      "avatar": "",
-      "isActive": true,
-      "status": "Akun Bisnis",
-      "conversation": [
-        {
-          "id": 1,
-          "text": "Halo Mas, saya Rini dari PT Kreatif Maju.",
-          "isMe": false,
-          "time": "Senin",
-          "status": "read"
-        },
-        {
-          "id": 2,
-          "text": "Kami lagi butuh freelance untuk redesign website company profile.",
-          "isMe": false,
-          "time": "Senin",
-          "status": "read"
-        },
-        {
-          "id": 3,
-          "text": "Saya lihat portfolio mas cocok banget sama image perusahaan kami.",
-          "isMe": false,
-          "time": "09:00",
-          "status": "read"
-        },
-        {
-          "id": 4,
-          "text": "Wah menarik Mbak Rini. Deadline-nya kapan ya?",
-          "isMe": true,
-          "time": "09:05",
-          "status": "read"
-        },
-        {
-          "id": 5,
-          "text": "Bulan depan sih Mas. Bisa kita zoom sebentar minggu depan buat bahas briefnya?",
-          "isMe": false,
-          "time": "09:10",
-          "status": "read"
-        },
-        {
-          "id": 6,
-          "text": "Halo Mas, bisa diskusi soal project redesign web?",
-          "isMe": false,
-          "time": "09:15",
-          "status": "read"
-        }
-      ]
-    },
-    {
-      "id": "notif-5",
-      "name": "Andi Fotografer",
-      "message": "Mas, foto katalog kemarin udah saya edit ya.",
-      "avatar": "",
-      "isActive": true,
-      "status": "Online",
-      "conversation": [
-        {
-          "id": 1,
-          "text": "Mas, foto katalog kemarin udah saya edit semua.",
-          "isMe": false,
-          "time": "11:00",
-          "status": "read"
-        },
-        {
-          "id": 2,
-          "text": "Link Google Drive udah di email ya.",
-          "isMe": false,
-          "time": "11:00",
-          "status": "read"
-        },
-        {
-          "id": 3,
-          "text": "Oke siap Mas Andi. Nanti saya cek.",
-          "isMe": true,
-          "time": "11:05",
-          "status": "read"
-        },
-        {
-          "id": 4,
-          "text": "Sip. Kabarin aja kalau ada tone warna yang kurang pas.",
-          "isMe": false,
-          "time": "11:10",
-          "status": "read"
-        },
-        {
-          "id": 5,
-          "text": "Mas, foto katalog kemarin udah saya edit ya.",
-          "isMe": false,
-          "time": "11:12",
-          "status": "read"
-        }
-      ]
-    }
-  ],
   "lastUpdated": "2026-03-02T20:00:57.907Z",
   "updatedAt": "2026-05-25T21:34:16.327Z"
 }

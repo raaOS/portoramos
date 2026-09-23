@@ -34,11 +34,6 @@ const ExitIntentFeedback = dynamic(() => import('../ui/ExitIntentFeedback'), {
   ssr: false,
 });
 
-const MissionControl = dynamic(() => import('../core/MissionControl'), {
-  loading: () => null,
-  ssr: false,
-});
-
 const MacOSNotificationBanner = dynamic(
   () => import('../ui/MacOSNotificationBanner').then((mod) => mod.MacOSNotificationBanner),
   {
@@ -60,8 +55,6 @@ interface UIOverlaysLayerProps {
   openProjectWindow: (project: Project) => void;
   needsPowerOn: boolean;
   isBooting: boolean;
-  showMissionControl?: boolean;
-  onMissionControlDismiss?: () => void;
 }
 
 export default function UIOverlaysLayer({
@@ -77,8 +70,6 @@ export default function UIOverlaysLayer({
   openProjectWindow,
   needsPowerOn,
   isBooting,
-  showMissionControl: _showMissionControl,
-  onMissionControlDismiss: _onMissionControlDismiss,
 }: UIOverlaysLayerProps) {
   const {
     showSpotlight,
@@ -155,7 +146,6 @@ export default function UIOverlaysLayer({
                   onOpenWhatsApp={openWhatsAppList}
                   onOpenContact={() => openWindow('contact')}
                   onOpenNotes={toggleNotesVisibility}
-                  onOpenTrash={() => openWindow('trash-bin')}
                   isWindowOpen={isWindowOpen}
                   notesVisible={notesVisible}
                   bouncingId={bouncingDocId}
@@ -220,9 +210,6 @@ export default function UIOverlaysLayer({
           </div>
         )}
       </AnimatePresence>
-
-      {/* Mission Control */}
-      <MissionControl />
 
       {/* macOS Notification Banner — 3D Canvas / Grid discovery hint for visitors */}
       {!isBootSequenceActive && <MacOSNotificationBanner isReady={!isBootingOrStarting} />}

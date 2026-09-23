@@ -187,28 +187,6 @@ const soundSettingSchema = z
   })
   .strict();
 
-const islandChatMessageSchema = z
-  .object({
-    id: z.number().int(),
-    text: requiredText(2000),
-    isMe: z.boolean(),
-    time: requiredText(100),
-    status: z.enum(['sent', 'read']),
-  })
-  .strict();
-
-const islandNotificationSchema = z
-  .object({
-    id: requiredText(120),
-    name: requiredText(120),
-    message: requiredText(1000),
-    avatar: requiredText(1000),
-    isActive: z.boolean(),
-    conversation: z.array(islandChatMessageSchema).max(100),
-    status: requiredText(120),
-  })
-  .strict();
-
 const aboutLabelsSchema = z
   .object({
     experienceTitle: shortText(200).optional(),
@@ -229,7 +207,6 @@ export const updateAboutSchema = z
     wallpaperConfig: wallpaperConfigSchema.optional(),
     dockConfig: z.record(z.string(), dockItemConfigSchema).optional(),
     windowPreferences: z.record(z.string(), windowPreferenceSchema).optional(),
-    islandNotifications: z.array(islandNotificationSchema).max(100).optional(),
     soundConfig: z.record(z.string(), soundSettingSchema).optional(),
     labels: aboutLabelsSchema.optional(),
   })

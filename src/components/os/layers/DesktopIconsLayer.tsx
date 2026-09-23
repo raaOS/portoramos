@@ -13,7 +13,6 @@ import {
   desktopItemVariants,
 } from './desktop-icons/desktopIconsAnimation';
 import { useDesktopIconTransitions } from './desktop-icons/useDesktopIconTransitions';
-import { DesktopQuickLookModal } from './desktop-icons/DesktopQuickLookModal';
 
 const MacFolder = dynamic(() => import('../windows/MacFolder'), {
   loading: () => <div className="h-16 w-16 animate-pulse rounded-lg bg-gray-200/50" />,
@@ -34,7 +33,6 @@ function DesktopIconsLayer({
   const { getZIndex, bringToFront, registerElement, unregisterElement } = useUnifiedZIndex();
 
   const [selectedIconId, setSelectedIconId] = useState<string | null>(null);
-  const [quickLookIcon, setQuickLookIcon] = useState<ProjectIcon | null>(null);
   const iconRefs = useRef<Record<string, HTMLElement | null>>({});
   const registeredIconIdsRef = useRef<Set<string>>(new Set());
 
@@ -193,13 +191,6 @@ function DesktopIconsLayer({
           })}
         </m.div>
       </div>
-
-      {/* Global Quick Look Modal for Desktop */}
-      <DesktopQuickLookModal
-        quickLookIcon={quickLookIcon}
-        onClose={() => setQuickLookIcon(null)}
-        openProjectWindow={openProjectWindow}
-      />
     </>
   );
 }

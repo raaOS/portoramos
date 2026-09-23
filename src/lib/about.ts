@@ -13,11 +13,6 @@ import type {
   AboutProfessional,
   AboutSoftSkills,
   DesignPhilosophy,
-  WallpaperConfig,
-  DockPreferences,
-  SoundConfig,
-  WindowPreferences,
-  AboutIslandNotification,
 } from '@/types/about';
 
 // Use cached data by default for performance.
@@ -64,23 +59,4 @@ export async function loadSoftSkillsData(): Promise<AboutSoftSkills | null> {
 export async function loadDesignPhilosophy(): Promise<DesignPhilosophy | null> {
   const data = await loadAboutData();
   return data?.designPhilosophy || null;
-}
-
-export async function loadOSConfig(): Promise<{
-  wallpaperConfig?: WallpaperConfig;
-  dockConfig?: DockPreferences;
-  soundConfig?: SoundConfig;
-  windowPreferences?: WindowPreferences;
-  notifications?: AboutIslandNotification[];
-} | null> {
-  const data = await loadAboutData();
-  if (!data) return null;
-
-  return {
-    wallpaperConfig: data.wallpaperConfig,
-    dockConfig: data.dockConfig,
-    soundConfig: data.soundConfig,
-    windowPreferences: data.windowPreferences,
-    notifications: data.islandNotifications,
-  };
 }

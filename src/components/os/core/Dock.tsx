@@ -609,15 +609,8 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  const filteredItems = useMemo(() => {
-    if (isMobile) {
-      return sortedItems.filter((item) => item.id !== 'trash');
-    }
-    return sortedItems;
-  }, [sortedItems, isMobile]);
-
   const dockBaseWidth =
-    filteredItems.length > 0 ? filteredItems.length * 52 + (filteredItems.length - 1) * 10 + 32 : 0;
+    sortedItems.length > 0 ? sortedItems.length * 52 + (sortedItems.length - 1) * 10 + 32 : 0;
   const hoverCaptureWidth = dockBaseWidth + 120;
 
   const tickingRef = React.useRef(false);
@@ -733,7 +726,7 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={filteredItems.map((item) => item.id)}
+              items={sortedItems.map((item) => item.id)}
               strategy={horizontalListSortingStrategy}
             >
               {/* Icon row */}
@@ -747,7 +740,7 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
                   minWidth: isMobile ? 'auto' : dockBaseWidth,
                 }}
               >
-                {filteredItems.map((item, index) => {
+                {sortedItems.map((item, index) => {
                   const dockItem = (
                     <DockItem
                       key={item.id}
@@ -766,7 +759,7 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
                       disableTooltips={disableTooltips}
                       isOpen={item.isOpen}
                       isFirstItem={index === 0}
-                      isLastItem={index === filteredItems.length - 1}
+                      isLastItem={index === sortedItems.length - 1}
                     />
                   );
 
@@ -881,8 +874,6 @@ export function GlobalDock({ dockConfig }: { dockConfig?: DockPreferences }) {
           return { ...item, isOpen: isWindowOpen('contact') };
         case 'notes':
           return { ...item, isOpen: isWindowOpen('notes') };
-        case 'trash':
-          return { ...item, isOpen: isWindowOpen('trash-bin') };
         default:
           return item;
       }
@@ -925,7 +916,6 @@ export interface OSDockProps {
   onOpenWhatsApp: () => void;
   onOpenContact: () => void;
   onOpenNotes: () => void;
-  onOpenTrash: () => void;
   isWindowOpen: (windowId: string) => boolean;
   notesVisible: boolean;
   bouncingId?: string | null;
@@ -939,7 +929,6 @@ export function OSDock({
   onOpenWhatsApp,
   onOpenContact,
   onOpenNotes,
-  onOpenTrash: _onOpenTrash,
   isWindowOpen,
   notesVisible,
   bouncingId,

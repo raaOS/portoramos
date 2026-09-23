@@ -195,7 +195,6 @@ export interface AboutData {
   wallpaperConfig?: WallpaperConfig;
   dockConfig?: DockPreferences;
   windowPreferences?: WindowPreferences;
-  islandNotifications?: AboutIslandNotification[];
   soundConfig?: SoundConfig;
 
   labels?: {
@@ -219,7 +218,6 @@ export interface UpdateAboutData {
   wallpaperConfig?: WallpaperConfig;
   dockConfig?: DockPreferences;
   windowPreferences?: WindowPreferences;
-  islandNotifications?: AboutIslandNotification[];
   soundConfig?: SoundConfig;
 
   labels?: Partial<AboutData['labels']>;
@@ -231,16 +229,6 @@ export interface ChatMessage {
   isMe: boolean;
   time: string;
   status: 'sent' | 'read';
-}
-
-export interface AboutIslandNotification {
-  id: string;
-  name: string;
-  message: string;
-  avatar: string;
-  isActive: boolean;
-  conversation: ChatMessage[];
-  status: string;
 }
 
 export interface ContactProfile {
