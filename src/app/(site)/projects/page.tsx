@@ -28,11 +28,11 @@ export default async function ProjectsPage() {
 
   return (
     <SystemNavFrame>
-      <main id="main-content" role="main" className="flex-1 bg-white">
+      <main id="main-content" role="main" className="flex-1 bg-white text-gray-900 transition-colors dark:bg-neutral-950 dark:text-gray-100">
         {/* Integrated Finder Header - Wrapped in Suspense for useSearchParams */}
         <Suspense
           fallback={
-            <div className="mt-8 h-16 animate-pulse rounded bg-gray-50 px-4 py-4 sm:px-8" />
+            <div className="mt-8 h-16 animate-pulse rounded-xl bg-gray-50 px-4 py-4 dark:bg-neutral-900 sm:px-8" />
           }
         >
           <ProjectsFinderHeader itemCount={projects.length} labels={labels} />
@@ -41,8 +41,8 @@ export default async function ProjectsPage() {
         <Suspense
           fallback={
             <section className="px-4 py-24 text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900"></div>
-              <p className="mt-4 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900 dark:border-white"></div>
+              <p className="mt-4 text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-neutral-400">
                 Memuat koleksi project...
               </p>
             </section>

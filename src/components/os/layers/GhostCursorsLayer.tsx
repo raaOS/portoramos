@@ -53,37 +53,42 @@ function GhostCursorItem({ cursor }: { cursor: GhostCursor }) {
   }, [cursor.x, cursor.y]);
 
   return (
-    <div ref={elRef} className="flex items-center gap-1.5 transition-none will-change-transform">
-      {/* Kursor */}
-      <div
-        className="h-5 w-5"
-        style={{
-          transform: 'rotate(-45deg) translate(-50%, -50%)',
-          transformOrigin: 'top left',
-        }}
-      >
+    <div
+      ref={elRef}
+      className="absolute left-0 top-0 pointer-events-none select-none transition-none will-change-transform"
+    >
+      <div className="relative">
+        {/* Real Mouse Cursor Arrow Icon - No Shadow */}
         <svg
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
           fill="none"
-          stroke={cursor.color}
-          strokeWidth="2.5"
-          className="h-full w-full drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <path d="M5 5l14 14" strokeLinecap="round" />
-          <path d="M5 19l9-9" strokeLinecap="round" />
+          <path
+            d="M3 3L10.07 19.97L12.58 12.58L19.97 10.07L3 3Z"
+            fill={cursor.color}
+            stroke="#ffffff"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
         </svg>
+
+        {/* Label Nama Badge - Flat / No Shadow */}
+        <motion.span
+          initial={{ opacity: 0, scale: 0.8, y: 4 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.8, y: -4 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="absolute left-3.5 top-3.5 whitespace-nowrap rounded px-2 py-0.5 text-xs font-semibold text-white select-none"
+          style={{
+            backgroundColor: cursor.color,
+          }}
+        >
+          {cursor.name}
+        </motion.span>
       </div>
-      {/* Label Nama */}
-      <motion.span
-        initial={{ opacity: 0, scale: 0.8, y: 4 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.8, y: -4 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="whitespace-nowrap rounded bg-black/70 px-2 py-0.5 text-xs font-medium text-white drop-shadow-md backdrop-blur-sm"
-        style={{ backgroundColor: cursor.color, boxShadow: `0 0 8px ${cursor.color}80` }}
-      >
-        {cursor.name}
-      </motion.span>
     </div>
   );
 }

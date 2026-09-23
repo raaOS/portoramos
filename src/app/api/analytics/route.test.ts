@@ -55,4 +55,27 @@ describe('POST /api/analytics', () => {
     expect(body).toEqual({ success: false, error: 'Invalid analytics payload' });
     expect(refMock).not.toHaveBeenCalled();
   });
+
+  it('records analytics event atomically via transaction', async () => {
+    enforceRequestRateLimitMock.mockResolvedValue({ allowed: true, retryAfter: 0 });
+    const transactionMock = vi.fn().mockImplementation((fn: (curr: unknown) => unknown) => {
+      const result = fn({});
+      return Promise.resolve({ committed: true, snapshot: result });
+    });
+    refMock.mockReturnValue({ transaction: transactionMock });
+
+    const response = await POST(
+      new Request('http://localhost/api/analytics', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ event: 'window_open', details: { id: 'about' } }),
+      }) as never
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ success: true });
+    expect(refMock).toHaveBeenCalledWith('analytics/logs');
+    expect(transactionMock).toHaveBeenCalled();
+  });
 });

@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransitionRouter } from 'next-view-transitions';
-import { m, AnimatePresence } from 'motion/react';
-import { Grid, Filter, Search as SearchIcon, X, Check, Box } from 'lucide-react';
+import { Search as SearchIcon, X } from 'lucide-react';
 import { saveProjectsViewMode } from '@/lib/projectsViewMode';
 import { useDictionary } from '@/contexts/LanguageContext';
-
-import { Label } from '@/types/labels';
+import type { Label } from '@/types/labels';
+import { ViewModeToggle } from './ViewModeToggle';
+import { CategoryFilterDropdown } from './CategoryFilterDropdown';
+import { ProjectsSearchModal } from './ProjectsSearchModal';
 
 interface ProjectsFinderHeaderProps {
   itemCount: number;
@@ -174,213 +175,41 @@ export default function ProjectsFinderHeader({
               <div className="h-8 w-8 p-1.5" />
             </div>
           ) : (
-            <div className="flex items-center rounded-xl border border-gray-200/80 bg-gray-100/70 p-1 shadow-sm backdrop-blur-md dark:border-neutral-800 dark:bg-neutral-900/70">
-              {/* Grid View Mode */}
-              <button
-                onClick={() => handleViewChange('grid')}
-                className={`flex h-8 w-8 touch-manipulation items-center justify-center rounded-lg p-1 transition-all duration-200 ${
-                  currentView === 'grid'
-                    ? 'scale-105 bg-white text-emerald-600 shadow-sm dark:bg-neutral-800 dark:text-emerald-400'
-                    : 'text-gray-400 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-white'
-                }`}
-                title={t.projects.gridView}
-                aria-label={t.projects.gridView}
-                aria-pressed={currentView === 'grid'}
-              >
-                <Grid size={18} />
-              </button>
-
-              {/* 3D Infinite Canvas Mode */}
-              <button
-                onClick={() => handleViewChange('3d')}
-                className={`flex h-8 w-8 touch-manipulation items-center justify-center rounded-lg p-1 transition-all duration-200 ${
-                  currentView === '3d'
-                    ? 'scale-105 bg-white text-blue-600 shadow-sm dark:bg-neutral-800 dark:text-blue-400'
-                    : 'text-gray-400 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-white'
-                }`}
-                title={t.projects.view3d}
-                aria-label={t.projects.view3d}
-                aria-pressed={currentView === '3d'}
-              >
-                <Box size={18} />
-              </button>
-
-              <div className="mx-1 h-4 w-[1px] bg-gray-300/80 dark:bg-neutral-700/80" />
-
-              {/* Search Modal Trigger Button */}
-              <button
-                onClick={() => setIsSearchModalOpen(true)}
-                className={`relative flex h-8 w-8 touch-manipulation items-center justify-center rounded-lg p-1 transition-all duration-200 ${
-                  searchQuery || isSearchModalOpen
-                    ? 'scale-105 bg-white text-blue-600 shadow-sm dark:bg-neutral-800 dark:text-blue-400'
-                    : 'text-gray-400 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-white'
-                }`}
-                title="Pencarian Project (Cmd+K atau /)"
-                aria-label="Pencarian Project"
-                aria-expanded={isSearchModalOpen}
-              >
-                <SearchIcon size={18} />
-                {searchQuery && (
-                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-blue-500 ring-2 ring-white dark:ring-neutral-900" />
-                )}
-              </button>
-            </div>
+            <ViewModeToggle
+              currentView={currentView}
+              searchQuery={searchQuery}
+              isSearchModalOpen={isSearchModalOpen}
+              onViewChange={handleViewChange}
+              onOpenSearchModal={() => setIsSearchModalOpen(true)}
+            />
           )}
 
           {/* Filter Dropdown */}
-          <div className="relative" ref={filterRef}>
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`flex h-10 items-center gap-2 rounded-xl border px-3.5 text-[10px] font-black uppercase leading-none tracking-widest shadow-sm transition-all ${
-                currentTag
-                  ? 'border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-900/20'
-                  : 'border-gray-200/80 bg-white/90 text-gray-700 hover:bg-gray-50 dark:border-neutral-800 dark:bg-neutral-900/90 dark:text-gray-300 dark:hover:bg-neutral-800'
-              }`}
-              aria-expanded={isFilterOpen}
-              aria-haspopup="listbox"
-            >
-              <Filter size={12} />{' '}
-              {currentTag
-                ? allCategories.find((c) => c.slug === currentTag)?.name
-                : t.projects.filter}
-            </button>
-
-            {isFilterOpen && (
-              <div
-                className="animate-in fade-in zoom-in absolute right-0 z-[100] mt-2 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-xl duration-200 dark:border-neutral-800 dark:bg-neutral-900"
-                role="listbox"
-                aria-label="Filter categories"
-              >
-                {allCategories.map((cat) => (
-                  <button
-                    key={cat.slug}
-                    onClick={() => handleTagChange(cat.slug)}
-                    className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-xs transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20 ${
-                      currentTag === cat.slug
-                        ? 'font-bold text-blue-600 dark:text-blue-400'
-                        : 'text-gray-700 dark:text-gray-300'
-                    }`}
-                    role="option"
-                    aria-selected={currentTag === cat.slug}
-                  >
-                    {cat.name}
-                    {currentTag === cat.slug && <Check size={12} className="text-blue-600" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <CategoryFilterDropdown
+            isFilterOpen={isFilterOpen}
+            currentTag={currentTag}
+            allCategories={allCategories}
+            filterRef={filterRef}
+            onToggleFilter={() => setIsFilterOpen(!isFilterOpen)}
+            onSelectTag={handleTagChange}
+          />
         </div>
       </div>
 
       {/* Centered Spotlight Search Modal with Frosted Background Blur */}
-      <AnimatePresence>
-        {isSearchModalOpen && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
-            {/* Fullscreen Backdrop Blur */}
-            <m.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.22 }}
-              className="absolute inset-0 bg-black/40 backdrop-blur-md dark:bg-black/65"
-              onClick={() => setIsSearchModalOpen(false)}
-            />
-
-            {/* Centered Modal Window */}
-            <m.div
-              initial={{ opacity: 0, scale: 0.94, y: -12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94, y: -12 }}
-              transition={{ type: 'spring', damping: 26, stiffness: 380 }}
-              className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/50 bg-white/95 p-5 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-neutral-900/95"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Modal Header */}
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-400">
-                  <SearchIcon size={14} className="text-blue-500" />
-                  <span>Pencarian Project</span>
-                </div>
-                <button
-                  onClick={() => setIsSearchModalOpen(false)}
-                  className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-neutral-800 dark:hover:text-white"
-                  aria-label="Tutup pencarian"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              {/* Large Input Field */}
-              <div
-                className={`relative flex items-center transition-opacity duration-200 ${
-                  isNavigating ? 'opacity-70' : 'opacity-100'
-                }`}
-              >
-                <SearchIcon className="absolute left-4 h-5 w-5 text-gray-400 dark:text-neutral-500" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') setIsSearchModalOpen(false);
-                  }}
-                  placeholder={t.projects.searchPlaceholder}
-                  className="w-full rounded-xl border border-gray-200/90 bg-gray-100/80 py-3.5 pl-12 pr-12 text-base text-gray-900 placeholder-gray-400 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/15 dark:border-neutral-800 dark:bg-neutral-800/80 dark:text-white dark:placeholder-neutral-500 dark:focus:border-blue-400 dark:focus:bg-neutral-800"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={handleClear}
-                    className="absolute right-3.5 flex h-7 w-7 items-center justify-center rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200/60 hover:text-gray-700 dark:hover:bg-neutral-700/60 dark:hover:text-white"
-                    aria-label="Hapus teks"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-
-              {/* Quick Categories Selection */}
-              {labels.length > 0 && (
-                <div className="mt-4">
-                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-neutral-500">
-                    Kategori:
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {allCategories.map((cat) => {
-                      const isSelected = currentTag === cat.slug;
-                      return (
-                        <button
-                          key={cat.slug || 'all'}
-                          onClick={() => {
-                            handleTagChange(cat.slug);
-                            setIsSearchModalOpen(false);
-                          }}
-                          className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
-                            isSelected
-                              ? 'bg-blue-600 text-white shadow-sm'
-                              : 'bg-gray-100/90 text-gray-600 hover:bg-gray-200/80 dark:bg-neutral-800/90 dark:text-neutral-300 dark:hover:bg-neutral-700'
-                          }`}
-                        >
-                          {cat.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Modal Footer */}
-              <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-3 text-[11px] text-gray-400 dark:border-neutral-800 dark:text-neutral-500">
-                <span>Ketik kata kunci untuk mencari</span>
-                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-neutral-800 dark:text-neutral-400">
-                  ESC untuk menutup
-                </span>
-              </div>
-            </m.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <ProjectsSearchModal
+        isOpen={isSearchModalOpen}
+        searchQuery={searchQuery}
+        isNavigating={isNavigating}
+        currentTag={currentTag}
+        labels={labels}
+        allCategories={allCategories}
+        searchInputRef={searchInputRef}
+        onClose={() => setIsSearchModalOpen(false)}
+        onSearchChange={setSearchQuery}
+        onClear={handleClear}
+        onSelectTag={handleTagChange}
+      />
     </>
   );
 }

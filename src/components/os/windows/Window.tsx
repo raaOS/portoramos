@@ -471,26 +471,32 @@ export default function OSWindow({
     backgroundColor: { duration: 0.2, ease: 'easeIn' },
   } as Transition;
 
-  // Exit: fly back into icon position
+  // Exit: fly back into icon position, or smoothly exit if already minimized
   const exitState = hasOrigin
     ? ({
         ...minimizedState,
         transition: iconMorphCloseTransition,
       } as TargetAndTransition)
-    : ({
-        y: Math.min(activeFrame.y + 44, Math.max(viewportHeight - 80, activeFrame.y)),
-        scale: [1, 1.045, 0.82],
-        opacity: [1, 1, 0],
-        borderRadius: 26,
-        backgroundColor: 'rgba(255,255,255,0.66)',
-        filter: 'blur(4px) saturate(0.92)',
-        transition: {
-          y: WINDOW_EXIT_BOUNCE,
-          opacity: { duration: 0.26, times: [0, 0.45, 1] },
-          scale: { duration: 0.3, times: [0, 0.24, 1], ease: [0.32, 0.72, 0, 1] },
-          filter: { duration: 0.18 },
-        },
-      } as TargetAndTransition);
+    : isMinimized
+      ? ({
+          ...minimizedState,
+          opacity: 0,
+          transition: { duration: 0.15 },
+        } as TargetAndTransition)
+      : ({
+          y: Math.min(activeFrame.y + 44, Math.max(viewportHeight - 80, activeFrame.y)),
+          scale: [1, 1.045, 0.82],
+          opacity: [1, 1, 0],
+          borderRadius: 26,
+          backgroundColor: 'rgba(255,255,255,0.66)',
+          filter: 'blur(4px) saturate(0.92)',
+          transition: {
+            y: WINDOW_EXIT_BOUNCE,
+            opacity: { duration: 0.26, times: [0, 0.45, 1] },
+            scale: { duration: 0.3, times: [0, 0.24, 1], ease: [0.32, 0.72, 0, 1] },
+            filter: { duration: 0.18 },
+          },
+        } as TargetAndTransition);
 
   return (
     <>

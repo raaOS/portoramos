@@ -1,7 +1,17 @@
 'use client';
 
 import type { Project } from '@/types/projects';
-import { useMemo, useEffect, useRef, memo, useDeferredValue, useState } from 'react';
+import {
+  useMemo,
+  useEffect,
+  useRef,
+  memo,
+  useDeferredValue,
+  useState,
+  useCallback,
+  useSyncExternalStore,
+} from 'react';
+import { createPortal } from 'react-dom';
 import { LazyMotion, domAnimation, m, AnimatePresence, type Transition } from 'motion/react';
 import ProjectCardPinterest from '@/components/projects/ProjectCardPinterest';
 import MasonryGrid from '@/components/layout/MasonryGrid';
@@ -11,6 +21,8 @@ import { useQuickLook } from '@/components/os/hooks/useQuickLook';
 import QuickLookModal from '@/components/ui/QuickLookModal';
 import { resolveCover } from '@/lib/images';
 import { useDictionary } from '@/contexts/LanguageContext';
+import OSWindow from '@/components/os/windows/Window';
+import ProjectDetailWrapper from '@/components/os/ui/ProjectDetailWrapper';
 
 import Projects3DView from '@/components/canvas/Projects3DView';
 
@@ -99,6 +111,80 @@ export default function IndexClientInner({
   const gridPriorityCount = Math.min(initialCount, displayedItems.length);
   const gridEagerCount = Math.min(Math.max(initialCount, 20), displayedItems.length);
 
+  // Project Detail Window Modal state (SSR-safe mount detection)
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedOriginRect, setSelectedOriginRect] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | undefined>(undefined);
+  const [windowPosition, setWindowPosition] = useState<{ x: number; y: number } | null>(null);
+
+  const handleSelectProject = useCallback(
+    (project: Project, e?: React.MouseEvent<HTMLElement>) => {
+      if (e?.currentTarget) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setSelectedOriginRect({
+          x: rect.left,
+          y: rect.top,
+          width: rect.width,
+          height: rect.height,
+        });
+      } else {
+        setSelectedOriginRect(undefined);
+      }
+
+      const modalWidth = Math.min(960, typeof window !== 'undefined' ? window.innerWidth - 32 : 960);
+      const modalHeight = Math.min(640, typeof window !== 'undefined' ? window.innerHeight - 64 : 640);
+      const initialX = Math.max(16, (typeof window !== 'undefined' ? window.innerWidth - modalWidth : 0) / 2);
+      const initialY = Math.max(32, (typeof window !== 'undefined' ? window.innerHeight - modalHeight : 0) / 2);
+
+      setWindowPosition({ x: initialX, y: initialY });
+      setSelectedProject(project);
+    },
+    []
+  );
+
+  const handleCloseProjectWindow = useCallback(() => {
+    setSelectedProject(null);
+  }, []);
+
+  // Close modal on Escape key
+  useEffect(() => {
+    if (!selectedProject) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleCloseProjectWindow();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedProject, handleCloseProjectWindow]);
+
+  // Lock body & html scroll when project modal or quick look is open
+  useEffect(() => {
+    const isModalOpen = !!selectedProject || !!quickLookProject;
+    if (!isModalOpen || typeof document === 'undefined') return;
+
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+    };
+  }, [selectedProject, quickLookProject]);
+
   const gridView = useMemo(
     () => (
       <MasonryGrid width={windowWidth}>
@@ -133,13 +219,14 @@ export default function IndexClientInner({
                 videoEnabled={true}
                 highlightedTag={tag}
                 transitionOrigin="grid"
+                onClick={(e) => handleSelectProject(item.project, e)}
               />
             </m.div>
           );
         })}
       </MasonryGrid>
     ),
-    [displayedItems, windowWidth, tag, gridPriorityCount, gridEagerCount]
+    [displayedItems, windowWidth, tag, gridPriorityCount, gridEagerCount, handleSelectProject]
   );
 
   const showLoading = isParentLoading || isViewTransitioning;
@@ -199,22 +286,75 @@ export default function IndexClientInner({
         </div>
       </LazyMotion>
 
-      {/* Quick Look Modal */}
-      {quickLookProject &&
-        (() => {
-          const cover = resolveCover(quickLookProject);
-          return (
-            <QuickLookModal
-              isOpen={!!quickLookProject}
-              onClose={() => setQuickLookProject(null)}
-              title={quickLookProject.title}
-              type={cover.kind}
-              url={cover.src}
-              metadata={quickLookProject.tags?.join(', ')}
-              onGoToDetail={() => (window.location.href = `/projects/${quickLookProject.slug}`)}
-            />
-          );
-        })()}
+      {/* Quick Look Modal (Portaled to document.body to bypass contain:paint) */}
+      {mounted &&
+        quickLookProject &&
+        createPortal(
+          (() => {
+            const cover = resolveCover(quickLookProject);
+            return (
+              <QuickLookModal
+                isOpen={!!quickLookProject}
+                onClose={() => setQuickLookProject(null)}
+                title={quickLookProject.title}
+                type={cover.kind}
+                url={cover.src}
+                metadata={quickLookProject.tags?.join(', ')}
+                onGoToDetail={() => {
+                  const proj = quickLookProject;
+                  setQuickLookProject(null);
+                  handleSelectProject(proj);
+                }}
+              />
+            );
+          })(),
+          document.body
+        )}
+
+      {/* Project Detail Window Modal (Portaled to document.body to bypass contain:paint) */}
+      {mounted &&
+        selectedProject &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                handleCloseProjectWindow();
+              }
+            }}
+            onWheel={(e) => {
+              if (e.target === e.currentTarget) {
+                e.preventDefault();
+              }
+            }}
+          >
+            <OSWindow
+              id={`project-${selectedProject.id}`}
+              title={`Portfolio: ${selectedProject.title}`}
+              isOpen={true}
+              onClose={handleCloseProjectWindow}
+              width={Math.min(960, typeof window !== 'undefined' ? window.innerWidth - 32 : 960)}
+              height={Math.min(640, typeof window !== 'undefined' ? window.innerHeight - 64 : 640)}
+              noPadding={true}
+              zIndex={60}
+              isFocused={true}
+              originRect={selectedOriginRect}
+              initialPosition={
+                windowPosition || {
+                  x: Math.max(16, (typeof window !== 'undefined' ? window.innerWidth - 960 : 0) / 2),
+                  y: Math.max(32, (typeof window !== 'undefined' ? window.innerHeight - 640 : 0) / 2),
+                }
+              }
+              onUpdatePosition={(x, y) => setWindowPosition({ x, y })}
+            >
+              <ProjectDetailWrapper
+                project={selectedProject}
+                projects={projects}
+              />
+            </OSWindow>
+          </div>,
+          document.body
+        )}
     </section>
   );
 }

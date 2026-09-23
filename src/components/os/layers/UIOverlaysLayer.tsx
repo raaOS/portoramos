@@ -34,10 +34,23 @@ const ExitIntentFeedback = dynamic(() => import('../ui/ExitIntentFeedback'), {
   ssr: false,
 });
 
+const MissionControl = dynamic(() => import('../core/MissionControl'), {
+  loading: () => null,
+  ssr: false,
+});
+
+const MacOSNotificationBanner = dynamic(
+  () => import('../ui/MacOSNotificationBanner').then((mod) => mod.MacOSNotificationBanner),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+);
+
 interface UIOverlaysLayerProps {
-  navToChat: (chatId?: string) => void;
+  navToChat?: (chatId?: string) => void;
   openWhatsAppList: () => void;
-  testimonialContacts: ContactProfile[];
+  testimonialContacts?: ContactProfile[];
   aboutData?: AboutData | null;
   isAdmin: boolean;
   logout: () => void;
@@ -47,6 +60,8 @@ interface UIOverlaysLayerProps {
   openProjectWindow: (project: Project) => void;
   needsPowerOn: boolean;
   isBooting: boolean;
+  showMissionControl?: boolean;
+  onMissionControlDismiss?: () => void;
 }
 
 export default function UIOverlaysLayer({
@@ -62,6 +77,8 @@ export default function UIOverlaysLayer({
   openProjectWindow,
   needsPowerOn,
   isBooting,
+  showMissionControl: _showMissionControl,
+  onMissionControlDismiss: _onMissionControlDismiss,
 }: UIOverlaysLayerProps) {
   const {
     showSpotlight,
@@ -96,7 +113,6 @@ export default function UIOverlaysLayer({
 
   return (
     <div className="pointer-events-none absolute inset-0">
-
       <AnimatePresence mode="wait">
         {/* MenuBar - hidden during boot */}
         {!isBootingOrStarting && (
@@ -204,6 +220,12 @@ export default function UIOverlaysLayer({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Mission Control */}
+      <MissionControl />
+
+      {/* macOS Notification Banner — 3D Canvas / Grid discovery hint for visitors */}
+      {!isBootSequenceActive && <MacOSNotificationBanner isReady={!isBootingOrStarting} />}
 
       {/* Exit-intent feedback — visitor only, appears on tab close attempt */}
       {!isAdmin && !isBootSequenceActive && <ExitIntentFeedback />}

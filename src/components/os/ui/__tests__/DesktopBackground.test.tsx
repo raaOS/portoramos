@@ -15,8 +15,7 @@ describe('DesktopBackground videoSrc logic', () => {
       const baseUrl = activeWallpaper.split('#')[0];
       return `${baseUrl}#t=${activeEntry.startTime}`;
     }
-    if (activeWallpaper.includes('#t=')) return activeWallpaper;
-    return `${activeWallpaper}#t=14`;
+    return activeWallpaper;
   }
 
   it('returns original URL unchanged for non-video wallpaper', () => {
@@ -34,14 +33,14 @@ describe('DesktopBackground videoSrc logic', () => {
     expect(result).toBe('/r2/wallpaper.mp4#t=30');
   });
 
-  it('falls back to #t=14 when startTime is undefined', () => {
+  it('falls back to original URL when startTime is undefined', () => {
     const result = computeVideoSrc('/r2/wallpaper.mp4', true, undefined);
-    expect(result).toBe('/r2/wallpaper.mp4#t=14');
+    expect(result).toBe('/r2/wallpaper.mp4');
   });
 
-  it('falls back to #t=14 when activeEntry has no startTime', () => {
+  it('falls back to original URL when activeEntry has no startTime', () => {
     const result = computeVideoSrc('/r2/wallpaper.mp4', true, {});
-    expect(result).toBe('/r2/wallpaper.mp4#t=14');
+    expect(result).toBe('/r2/wallpaper.mp4');
   });
 
   it('uses #t=0 when startTime is explicitly 0', () => {
@@ -59,8 +58,8 @@ describe('DesktopBackground videoSrc logic', () => {
     expect(result).toBe('/r2/wallpaper.mp4#t=42');
   });
 
-  it('falls back to #t=14 for video without fragment or entry', () => {
+  it('falls back to original URL for video without fragment or entry', () => {
     const result = computeVideoSrc('/r2/wallpaper.mp4', true, undefined);
-    expect(result).toBe('/r2/wallpaper.mp4#t=14');
+    expect(result).toBe('/r2/wallpaper.mp4');
   });
 });

@@ -17,6 +17,9 @@ interface OSOverlaysContextType {
   hideNote: (id: string) => void;
   unhideAllNotes: () => void;
   restoreHiddenNoteIds: (ids: string[]) => void;
+  showMissionControl: boolean;
+  setShowMissionControl: (show: boolean) => void;
+  toggleMissionControl: () => void;
   showControlCenter: boolean;
   setShowControlCenter: (show: boolean) => void;
   showCalendar: boolean;
@@ -116,6 +119,7 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
   const [showSpotlight, setShowSpotlight] = useState(false);
   const [notesVisible, setNotesVisible] = useState(true);
   const [hiddenNoteIds, setHiddenNoteIds] = useState<Set<string>>(() => new Set());
+  const [showMissionControl, setShowMissionControl] = useState(false);
   const [showControlCenter, setShowControlCenter] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showGhostCursors, setShowGhostCursors] = useState(false);
@@ -139,6 +143,7 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
 
   // --- Callbacks (stable references) ---
   const toggleSpotlight = useCallback(() => setShowSpotlight((prev) => !prev), []);
+  const toggleMissionControl = useCallback(() => setShowMissionControl((prev) => !prev), []);
   const toggleNotes = useCallback(() => setNotesVisible((prev) => !prev), []);
   const toggleGhostCursors = useCallback(() => setShowGhostCursors((prev) => !prev), []);
 
@@ -172,6 +177,9 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
       hideNote,
       unhideAllNotes,
       restoreHiddenNoteIds,
+      showMissionControl,
+      setShowMissionControl,
+      toggleMissionControl,
       showControlCenter,
       setShowControlCenter,
       showCalendar,
@@ -189,6 +197,8 @@ export const OSSystemProvider: React.FC<OSSystemProviderProps> = ({ children }) 
       hideNote,
       unhideAllNotes,
       restoreHiddenNoteIds,
+      showMissionControl,
+      toggleMissionControl,
       showControlCenter,
       showCalendar,
       showGhostCursors,

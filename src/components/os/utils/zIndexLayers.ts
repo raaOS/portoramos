@@ -4,7 +4,7 @@
  * Angka di sini sengaja dibiarkan sama dengan nilai hardcoded sebelumnya
  * supaya stacking order tidak berubah saat migrasi. Prinsip:
  *
- *  - Runtime-managed (windows, sticky notes, dynamic island) tetap pakai
+ *  - Runtime-managed (windows, sticky notes, desktop icons) tetap pakai
  *    `UnifiedZIndexContext` (range 100..~900000).
  *  - Overlay persisten (menu bar, dock, popouts, boot screen, modals) pakai
  *    token statis di bawah ini supaya mudah di-audit dan tidak saling

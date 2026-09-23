@@ -2,14 +2,13 @@
 
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { useReducedMotion } from 'motion/react';
 import type Lenis from 'lenis';
 
 export default function SmoothScroll() {
   const pathname = usePathname();
   const isOsMode = pathname?.startsWith('/about-test');
   const isProjectsRoute = pathname?.startsWith('/projects');
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const lenisInstanceRef = useRef<Lenis | null>(null);
 
   useEffect(() => {

@@ -56,19 +56,16 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get('user-agent') || 'Unknown',
     };
 
-    // Write to CLOUDFLARE_D1 (async, works on Vercel)
-    const logsSnap = await db.ref(ANALYTICS_PATH).once('value');
-    const existing: AnalyticsLog[] = logsSnap.exists() ? Object.values(logsSnap.val()) : [];
-
-    // Keep only last MAX_LOGS entries
-    const updated = [newLog, ...existing].slice(0, MAX_LOGS);
-
-    // Rewrite as object keyed by id
-    const updatedMap: Record<string, AnalyticsLog> = {};
-    updated.forEach((log) => {
-      updatedMap[log.id] = log;
+    // Write atomically to CLOUDFLARE_D1 using transaction to prevent race conditions
+    await db.ref(ANALYTICS_PATH).transaction((current: Record<string, AnalyticsLog> | null) => {
+      const existing: AnalyticsLog[] = current && typeof current === 'object' ? Object.values(current) : [];
+      const updated = [newLog, ...existing].slice(0, MAX_LOGS);
+      const updatedMap: Record<string, AnalyticsLog> = {};
+      updated.forEach((log) => {
+        updatedMap[log.id] = log;
+      });
+      return updatedMap;
     });
-    await db.ref(ANALYTICS_PATH).set(updatedMap);
 
     return NextResponse.json({ success: true });
   } catch {

@@ -46,6 +46,52 @@ interface MusicSearchResult {
   thumbnail: string;
 }
 
+function extractYtInitialData(html: string): YouTubeSearchData | null {
+  const marker = 'ytInitialData';
+  const markerIndex = html.indexOf(marker);
+  if (markerIndex === -1) return null;
+
+  const braceStart = html.indexOf('{', markerIndex);
+  if (braceStart === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+
+  for (let i = braceStart; i < html.length; i++) {
+    const char = html[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (char === '\\') {
+      escape = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (!inString) {
+      if (char === '{') {
+        depth++;
+      } else if (char === '}') {
+        depth--;
+        if (depth === 0) {
+          const jsonStr = html.slice(braceStart, i + 1);
+          try {
+            return JSON.parse(jsonStr) as YouTubeSearchData;
+          } catch {
+            return null;
+          }
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
@@ -71,14 +117,11 @@ export async function GET(request: Request) {
     }
 
     const html = await response.text();
-    
-    // Extract ytInitialData json object
-    const match = html.match(/ytInitialData\s*=\s*({.+?});/);
-    if (!match) {
+    const data = extractYtInitialData(html);
+    if (!data) {
       return NextResponse.json({ results: [] });
     }
 
-    const data = JSON.parse(match[1]) as YouTubeSearchData;
     const contents =
       data.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer
         ?.contents;

@@ -33,7 +33,6 @@ import {
   type VideoCompressionProfile,
 } from '@/app/admin/components/file-upload/hooks/useFFmpeg';
 import { useToast } from '@/contexts/ToastContext';
-import { mutate } from 'swr';
 import { useQueryClient } from '@tanstack/react-query';
 import { ADMIN_QUERY_KEYS } from '@/app/admin/lib/adminQueries';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
@@ -365,14 +364,10 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
 
               if (updateBody?.data) {
                 queryClient.setQueryData(ADMIN_QUERY_KEYS.about, updateBody.data);
-                await mutate('/api/about', updateBody.data, {
-                  revalidate: false,
-                });
               } else {
                 await queryClient.invalidateQueries({
                   queryKey: ADMIN_QUERY_KEYS.about,
                 });
-                await mutate('/api/about');
               }
             });
 
@@ -633,16 +628,8 @@ export function BackgroundUploadProvider({ children }: { children: ReactNode }) 
             // the newly added wallpaper without an extra round-trip.
             if (updateBody?.data) {
               queryClient.setQueryData(ADMIN_QUERY_KEYS.about, updateBody.data);
-              // Pre-populate SWR cache dengan snapshot yang sama.
-              // Pakai `revalidate: false` supaya tidak trigger fetch
-              // berikutnya yang bisa balik dengan cached response
-              // dari server-side cache (race window kecil tapi nyata
-              // saat upload back-to-back). Tanpa flag ini, SWR
-              // default-nya revalidate setelah set.
-              await mutate('/api/about', updateBody.data, { revalidate: false });
             } else {
               await queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.about });
-              await mutate('/api/about');
             }
           });
 

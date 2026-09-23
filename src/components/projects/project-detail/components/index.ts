@@ -7,3 +7,7 @@ export { ProjectGallery } from './ProjectGallery';
 export { ProjectInteractionBar } from './ProjectInteractionBar';
 export { ProjectRelated, ProjectRelatedColumn, useInfiniteProjects } from './ProjectRelated';
 export { ProjectComments } from './ProjectComments';
+export { ProjectMediaColumn } from './ProjectMediaColumn';
+export { ProjectBadges } from './ProjectBadges';
+export { ProjectInfiniteScrollLoader } from './ProjectInfiniteScrollLoader';
+export { ProjectWindowSplitView } from './ProjectWindowSplitView';

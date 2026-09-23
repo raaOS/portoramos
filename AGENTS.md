@@ -122,12 +122,12 @@ src/
 
 - **Animasi:** `motion` (`^12.38.0`), `lottie-react`.
 - **Navigasi & Scroll:** `lenis`, `@dnd-kit/core` (drag and drop), `next-view-transitions` (`^0.3.5`).
-- **State / Fetching:** `@tanstack/react-query`, `swr`.
+- **State / Fetching:** `@tanstack/react-query`.
 - **Ikon:** `lucide-react`, `@tabler/icons-react`.
 - **Visual 3D:** `three`, `@react-three/fiber`, `@react-three/drei`.
 - **Media Processing:** `sharp`, `@ffmpeg/ffmpeg` (WASM), `react-easy-crop`.
-- **Format Dokumen:** `html-to-image`, `jspdf`, `jspdf-autotable`, `qrcode.react`.
-- **Validasi & Utilitas:** `zod`, `date-fns`, `uuid`, `fuse.js`, `jsonwebtoken`, `jose`.
+- **Format Dokumen:** `html-to-image`, `jspdf`, `jspdf-autotable`.
+- **Validasi & Utilitas:** `zod`, `uuid`, `fuse.js`, `jsonwebtoken`, `jose`.
 
 ---
 

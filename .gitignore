@@ -81,3 +81,21 @@ _a")sxsx214be5b4520cdd.md
 # Local temporary files
 tmp/
 ts-error.txt
+
+# Debug screenshots & session artifacts (root only)
+/*.png
+/*.jpg
+/*.jpeg
+cookies*.txt
+*-jwt.txt
+agent-cookies.txt
+cdp-payload.json
+headers-*.txt
+login-*.json
+lighthouse-report*.json
+geo-mock.js
+parse-lh.js
+test-pdf-*
+dev-server.log
+*.log
+

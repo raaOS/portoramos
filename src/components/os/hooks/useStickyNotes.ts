@@ -17,7 +17,7 @@ const getInitialNotes = (): NoteData[] => {
   return [
     {
       id: 'welcome-note',
-      text: 'Halo! Selamat Datang di Ramos OS v2.0 🖥️✨\n\nSaya Ramos, seorang Graphic Designer & Visual Strategist.\n\nQuick Start:\n1. Buka folder "Projects" untuk lihat karya saya.\n2. Klik "Contact" di bawah untuk ngobrol.\n3. Drag note ini ke mana saja!\n\nSelamat mengeksplorasi!',
+      text: 'Halo! Selamat datang di Ramos OS v2.0 🖥️✨\nHi! Welcome to my desktop portfolio.\n\nYuk coba / Try these:\n• Buka "My Projects" — grid & 3D view\n• Klik "WhatsApp" — baca testimoni\n• Drag window-nya ke mana aja\n• Ctrl+K = Spotlight cari apa saja\n• Space = Quick Look preview\n• Musik ada di menu bar atas\n\nHave fun exploring!',
       date: isClient ? new Date().toISOString() : '2024-01-01T00:00:00.000Z', // Static date for SSR
       color: '#fef08a',
       isStarred: true,

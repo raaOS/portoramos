@@ -1,13 +1,11 @@
 'use client';
 
+import React from 'react';
 import type { Project, GalleryItem } from '@/types/projects';
+import { motion } from 'motion/react';
 import { Compare } from '@/components/ui/compare';
 import Media from '@/components/shared/Media';
 import { useImageProtection } from '@/hooks/useImageProtection';
-import {
-  PROJECT_COVER_TRANSITION_ATTRIBUTE,
-  PROJECT_COVER_TRANSITION_NAME,
-} from '@/lib/projectCoverTransition';
 
 interface ProjectCoverProps {
   project: Project;
@@ -18,38 +16,35 @@ interface ProjectCoverProps {
    * play/pause/scrub langsung dari window project tanpa harus buka lightbox.
    */
   isWindowMode?: boolean;
-  /**
-   * Mengaktifkan view-transition-name 'project-cover' pada cover frame
-   * untuk shared element morph saat navigasi antar halaman.
-   * Default: true saat !isWindowMode, false saat isWindowMode.
-   * Bisa di-override secara eksplisit saat komponen parent membutuhkan
-   * isWindowMode=true untuk styling tapi tetap ingin morph transition aktif.
-   */
   enableViewTransition?: boolean;
 }
 
-export function ProjectCover({ project, cover, ratio, isWindowMode = false, enableViewTransition }: ProjectCoverProps) {
+export function ProjectCover({
+  project,
+  cover,
+  ratio,
+  isWindowMode = false,
+}: ProjectCoverProps) {
   const { toast, handleContextMenu } = useImageProtection();
-  const coverFrameClassName = `relative overflow-hidden rounded-none border border-black/5 bg-gray-100 dark:border-white/5 dark:bg-gray-800 ${isWindowMode ? 'shadow-lg' : 'shadow-none'}`;
+  const coverFrameClassName = `relative overflow-hidden rounded-none border border-black/5 bg-gray-100 dark:border-white/5 dark:bg-gray-800 ${
+    isWindowMode ? 'shadow-lg' : 'shadow-none'
+  }`;
   const comparisonMediaClassName = 'rounded-none object-cover object-left-top';
   const coverMediaClassName = 'h-auto w-full rounded-none object-cover';
 
-  // Default: enable VT when not in window mode, but allow explicit override
-  const shouldEnableVT = enableViewTransition ?? !isWindowMode;
-  const viewTransitionStyle = shouldEnableVT
-    ? { viewTransitionName: PROJECT_COVER_TRANSITION_NAME }
-    : {};
-  const transitionAttribute = shouldEnableVT ? { [PROJECT_COVER_TRANSITION_ATTRIBUTE]: '' } : {};
-
   return (
     <div
-      className={`${ratio < 1 ? 'mx-auto max-w-sm' : ratio === 1 ? 'mx-auto max-w-md' : 'w-full'} p-4 lg:p-6`}
+      className={`${
+        ratio < 1 ? 'mx-auto max-w-sm' : ratio === 1 ? 'mx-auto max-w-md' : 'w-full'
+      } p-4 lg:p-6`}
     >
       {project.comparison && project.comparison.beforeImage ? (
-        <div
+        <motion.div
+          initial={{ opacity: 0, scale: 0.985, y: 6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           className={`h-full w-full ${coverFrameClassName}`}
-          style={{ aspectRatio: ratio, ...viewTransitionStyle } as React.CSSProperties}
-          {...transitionAttribute}
+          style={{ aspectRatio: ratio }}
         >
           <Compare
             firstImage={project.comparison.beforeImage}
@@ -63,13 +58,15 @@ export function ProjectCover({ project, cover, ratio, isWindowMode = false, enab
             className={isWindowMode ? 'h-full w-full rounded-none' : 'h-full w-full'}
             slideMode="hover"
           />
-        </div>
+        </motion.div>
       ) : (
-        <div
+        <motion.div
+          initial={{ opacity: 0, scale: 0.985, y: 6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           className={coverFrameClassName}
-          style={{ aspectRatio: ratio, ...viewTransitionStyle } as React.CSSProperties}
+          style={{ aspectRatio: ratio }}
           onContextMenu={handleContextMenu}
-          {...transitionAttribute}
         >
           <Media
             kind={cover.kind}
@@ -86,9 +83,6 @@ export function ProjectCover({ project, cover, ratio, isWindowMode = false, enab
             muted={project.muted ?? true}
             loop={project.loop ?? true}
             playsInline={project.playsInline ?? true}
-            // Window mode: aktifkan native controls untuk video supaya
-            // user bisa play/pause/scrub langsung. Di full-page detail
-            // tetap clean (tanpa controls) — visitor pakai lightbox.
             controls={isWindowMode && cover.kind === 'video'}
           />
           {/* Overlay hitam solid saat right-click */}
@@ -100,7 +94,7 @@ export function ProjectCover({ project, cover, ratio, isWindowMode = false, enab
               </p>
             </div>
           )}
-        </div>
+        </motion.div>
       )}
     </div>
   );

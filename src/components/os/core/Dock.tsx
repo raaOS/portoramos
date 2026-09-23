@@ -620,10 +620,16 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
     filteredItems.length > 0 ? filteredItems.length * 52 + (filteredItems.length - 1) * 10 + 32 : 0;
   const hoverCaptureWidth = dockBaseWidth + 120;
 
+  const tickingRef = React.useRef(false);
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       if (anyPopoverOpen) return;
-      mouseX.set(e.clientX);
+      if (tickingRef.current) return;
+      tickingRef.current = true;
+      requestAnimationFrame(() => {
+        mouseX.set(e.clientX);
+        tickingRef.current = false;
+      });
     },
     [anyPopoverOpen, mouseX]
   );

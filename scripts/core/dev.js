@@ -27,6 +27,61 @@ const net = require('net');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const dns = require('dns');
+
+// Force DNS publik agar domain seperti api.telegram.org tidak diblokir
+// oleh DNS resolver bawaan router/ISP lokal.
+// dns.setServers hanya mempengaruhi dns.resolve*, bukan dns.lookup (yang
+// dipakai fetch/undici secara default). Maka kita harus pakai buildConnector
+// dengan custom lookup agar Undici juga pakai DNS publik.
+dns.setDefaultResultOrder('ipv4first');
+dns.setServers(['1.1.1.1', '8.8.8.8', '8.8.4.4']);
+
+// Inisialisasi Undici dispatcher global dengan custom DNS lookup + extended timeout
+try {
+  const { Agent, ProxyAgent, buildConnector, setGlobalDispatcher } = require('undici');
+
+  const connector = buildConnector({
+    timeout: 30000,
+    lookup: (hostname, opts, cb) => {
+      // Pakai dns.resolve4 yang mengikuti dns.setServers (public DNS)
+      dns.resolve4(hostname, (err, addresses) => {
+        if (err) {
+          // Fallback ke dns.lookup bawaan jika resolve4 gagal
+          return dns.lookup(hostname, { family: 4 }, cb);
+        }
+        cb(null, [{ address: addresses[0], family: 4 }]);
+      });
+    },
+  });
+
+  const proxyUrl =
+    process.env.TELEGRAM_PROXY ||
+    process.env.HTTPS_PROXY ||
+    process.env.HTTP_PROXY ||
+    process.env.ALL_PROXY;
+
+  if (proxyUrl) {
+    setGlobalDispatcher(
+      new ProxyAgent({
+        uri: proxyUrl,
+        connect: connector,
+        headersTimeout: 60000,
+        bodyTimeout: 60000,
+      })
+    );
+  } else {
+    setGlobalDispatcher(
+      new Agent({
+        connect: connector,
+        headersTimeout: 60000,
+        bodyTimeout: 60000,
+      })
+    );
+  }
+} catch {
+  /* ignore if undici not directly loadable */
+}
 
 const JOB_BOT_LOCAL_LEASE_KEY = 'telegramJobBotLocalLease';
 const JOB_BOT_LOCAL_LEASE_TTL_MS = 2 * 60 * 1000;
@@ -116,7 +171,7 @@ function resolveExpectedJobBotWebhookUrl() {
 
 async function telegramRequest(token, method, body) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), 20000);
 
   try {
     const response = await fetch(
@@ -460,7 +515,11 @@ function startNextDev(port) {
 }
 
 async function startJobBotPoller() {
-  if (process.argv.includes('--no-job-bot')) {
+  if (
+    process.argv.includes('--no-job-bot') ||
+    loadEnvFlag('DISABLE_JOB_BOT') === 'true' ||
+    loadEnvFlag('ENABLE_JOB_BOT') === 'false'
+  ) {
     console.log(`${COLOR.warn}[dev] job hunter poller di-skip (--no-job-bot)${COLOR.reset}`);
     return;
   }

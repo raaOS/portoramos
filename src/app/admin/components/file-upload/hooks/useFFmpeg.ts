@@ -77,7 +77,9 @@ const PROFILE_PRESETS: Record<VideoCompressionProfile, ProfileSpec> = {
   ultra: { targetHeight: 2160, crf: '20', maxrate: '18M', bufsize: '36M' },
 };
 
-export function useFFmpeg(onStatusUpdate: (status: string) => void) {
+const noop = () => {};
+
+export function useFFmpeg(onStatusUpdate: (status: string) => void = noop) {
   const ffmpegRef = useRef<FFmpeg | null>(null);
 
   const loadFFmpeg = useCallback(async (): Promise<FFmpeg> => {

@@ -159,10 +159,13 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     }
 
     if (!window.YT) {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
+      const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
+      if (!existingScript) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
+      }
     }
 
     const initPlayer = () => {
@@ -457,17 +460,18 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
         } catch {}
       }
 
-      if (audio) {
-        audio.src = nextTrack.src;
-        audio.load();
+      const activeAudio = ensureAudio();
+      if (activeAudio) {
+        activeAudio.src = nextTrack.src;
+        activeAudio.load();
         if (isPlayingRef.current) {
-          void audio.play().catch(() => {
+          void activeAudio.play().catch(() => {
             setIsPlaying(false);
           });
         }
       }
     }
-  }, [tracks, ensureYoutube, playerVolume, systemVolume]);
+  }, [tracks, ensureAudio, ensureYoutube, playerVolume, systemVolume]);
 
   const selectCustomTrack = useCallback((track: MusicTrack, queue?: MusicTrack[]) => {
     const incomingQueue = queue && queue.length > 0 ? queue : [track];

@@ -1,57 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { m, type Variants } from 'motion/react';
-import { useState, useRef, useEffect } from 'react';
+import { m } from 'motion/react';
 import DesktopIcon from '../ui/elements/DesktopIcon';
-
-import QuickLookModal from '@/components/ui/QuickLookModal';
-import { resolveCover } from '@/lib/images';
 import type { DesktopIconSize } from '@/types/about';
-import type { Project } from '@/types/projects';
 import { useDesktopWindowContext } from '../context/DesktopWindowContext';
 import { useUnifiedZIndex } from '../context/UnifiedZIndexContext';
+import type { DesktopIconsLayerProps, ProjectIcon } from './desktop-icons/types';
+import {
+  desktopContainerVariants,
+  desktopItemVariants,
+} from './desktop-icons/desktopIconsAnimation';
+import { useDesktopIconTransitions } from './desktop-icons/useDesktopIconTransitions';
+import { DesktopQuickLookModal } from './desktop-icons/DesktopQuickLookModal';
 
 const MacFolder = dynamic(() => import('../windows/MacFolder'), {
   loading: () => <div className="h-16 w-16 animate-pulse rounded-lg bg-gray-200/50" />,
   ssr: false,
 });
-
-interface ProjectIcon {
-  id: string;
-  x: number;
-  y: number;
-  label: string;
-  icon?: React.ReactNode;
-  imageUrl?: string;
-  videoUrl?: string;
-  aspectRatio?: number;
-  type?: 'project' | 'folder' | string;
-  data?: Project;
-  action?: () => void;
-  priority?: boolean;
-  zIndex?: number;
-  size?: DesktopIconSize;
-}
-
-interface DesktopIconsLayerProps {
-  projectIcons: ProjectIcon[];
-  isMobile: boolean;
-  isAdmin: boolean;
-  isReady?: boolean;
-  handleIconPositionChange: (id: string, x: number, y: number) => void;
-  handleIconZIndexChange: (id: string, zIndex: number, position: { x: number; y: number }) => void;
-  handleIconSizeChange: (
-    id: string,
-    size: DesktopIconSize,
-    position: { x: number; y: number }
-  ) => void;
-  openProjectWindow: (
-    project: Project,
-    originRect?: { x: number; y: number; width: number; height: number }
-  ) => void;
-}
 
 function DesktopIconsLayer({
   projectIcons,
@@ -68,17 +35,13 @@ function DesktopIconsLayer({
 
   const [selectedIconId, setSelectedIconId] = useState<string | null>(null);
   const [quickLookIcon, setQuickLookIcon] = useState<ProjectIcon | null>(null);
-  // Track icon currently scaling up (open animation)
-  const [openingIconId, setOpeningIconId] = useState<string | null>(null);
-  // Track icon receiving a collapsing window (close/minimize animation) — detected LOCALLY
-  const [closingToIconId, setClosingToIconId] = useState<string | null>(null);
-  // Refs to each icon's wrapper m.div for accurate getBoundingClientRect
   const iconRefs = useRef<Record<string, HTMLElement | null>>({});
   const registeredIconIdsRef = useRef<Set<string>>(new Set());
-  // Ref to previous window states for diffing
-  const prevWindowsRef = useRef(windows);
-  const openTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { openingIconId, closingToIconId, triggerOpenProject } = useDesktopIconTransitions({
+    windows,
+    openProjectWindow,
+  });
 
   useEffect(() => {
     const nextIds = new Set<string>();
@@ -106,7 +69,7 @@ function DesktopIconsLayer({
     };
   }, [unregisterElement]);
 
-  const bringIconToFront = React.useCallback(
+  const bringIconToFront = useCallback(
     (icon: ProjectIcon) => {
       const nextZIndex = bringToFront(icon.id, 'desktopIcon');
       handleIconZIndexChange(icon.id, nextZIndex, { x: icon.x, y: icon.y });
@@ -114,82 +77,13 @@ function DesktopIconsLayer({
     [bringToFront, handleIconZIndexChange]
   );
 
-  const handleIconSizeRequest = React.useCallback(
+  const handleIconSizeRequest = useCallback(
     (icon: ProjectIcon, size: DesktopIconSize) => {
       if (!isAdmin) return;
       handleIconSizeChange(icon.id, size, { x: icon.x, y: icon.y });
     },
     [handleIconSizeChange, isAdmin]
   );
-
-  // Detect window close/minimize in the SAME render cycle (no parent propagation delay)
-  useEffect(() => {
-    const prev = prevWindowsRef.current;
-    const curr = windows;
-
-    for (const currW of curr) {
-      if (!currW.id.startsWith('project-')) continue;
-      const prevW = prev.find((w) => w.id === currW.id);
-      if (!prevW) continue;
-
-      const justClosed = prevW.isOpen && !currW.isOpen;
-      const justMinimized = !prevW.isMinimized && currW.isMinimized;
-
-      if (justClosed || justMinimized) {
-        const projectId = currW.id.replace('project-', '');
-        setClosingToIconId(projectId);
-        if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-        closeTimeoutRef.current = setTimeout(() => {
-          closeTimeoutRef.current = null;
-          setClosingToIconId(null);
-        }, 700);
-        break;
-      }
-    }
-
-    prevWindowsRef.current = curr;
-  }, [windows]);
-
-  // Clean up all pending animation timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
-      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-    };
-  }, []);
-
-  // Parent container animation variants for staggering
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.12,
-      },
-    },
-  };
-
-  // Very iOS-like spring animation, but tuned to be bouncy like a popup
-  const itemVariants: Variants = {
-    hidden: {
-      opacity: 0,
-      scale: 0.4,
-      y: 20, // Start slightly lower
-    },
-    show: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: {
-        type: 'spring' as const,
-        stiffness: 450,
-        damping: 12, // Medium damping for a balanced bounce
-        mass: 1,
-        opacity: { duration: 0.1 }, // Fast fade so the bounce is visible
-      },
-    },
-  };
 
   return (
     <>
@@ -199,7 +93,7 @@ function DesktopIconsLayer({
       >
         <m.div
           className="pointer-events-none relative h-full w-full"
-          variants={containerVariants}
+          variants={desktopContainerVariants}
           initial="hidden"
           animate={isReady ? 'show' : 'hidden'}
         >
@@ -220,7 +114,7 @@ function DesktopIconsLayer({
                 ref={(el) => {
                   if (el) iconRefs.current[icon.id] = el;
                 }}
-                variants={itemVariants}
+                variants={desktopItemVariants}
                 className="pointer-events-none"
                 style={{
                   position: 'absolute',
@@ -252,10 +146,9 @@ function DesktopIconsLayer({
                       if (icon.data) {
                         const el = iconRefs.current[icon.id];
                         const rect = el?.getBoundingClientRect();
-
-                        setOpeningIconId(icon.id);
-                        openProjectWindow(
-                          icon.data!,
+                        triggerOpenProject(
+                          icon.id,
+                          icon.data,
                           rect
                             ? {
                                 x: rect.left,
@@ -265,12 +158,6 @@ function DesktopIconsLayer({
                               }
                             : undefined
                         );
-
-                        if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
-                        openTimeoutRef.current = setTimeout(() => {
-                          openTimeoutRef.current = null;
-                          setOpeningIconId(null);
-                        }, 700);
                       } else if (icon.action) {
                         icon.action();
                       }
@@ -280,13 +167,9 @@ function DesktopIconsLayer({
                     if (icon.data) {
                       const el = iconRefs.current[icon.id];
                       const rect = el?.getBoundingClientRect();
-
-                      // 1. Scale up icon immediately
-                      setOpeningIconId(icon.id);
-
-                      // 2. Open window immediately (Zero-latency for iOS feel)
-                      openProjectWindow(
-                        icon.data!,
+                      triggerOpenProject(
+                        icon.id,
+                        icon.data,
                         rect
                           ? {
                               x: rect.left,
@@ -296,13 +179,6 @@ function DesktopIconsLayer({
                             }
                           : undefined
                       );
-
-                      // 3. Return icon to normal after window expansion is well underway
-                      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
-                      openTimeoutRef.current = setTimeout(() => {
-                        openTimeoutRef.current = null;
-                        setOpeningIconId(null);
-                      }, 700);
                     } else if (icon.action) {
                       icon.action();
                     }
@@ -319,44 +195,14 @@ function DesktopIconsLayer({
       </div>
 
       {/* Global Quick Look Modal for Desktop */}
-      {quickLookIcon &&
-        (() => {
-          let type = 'project';
-          let url = '';
-
-          if (quickLookIcon.data) {
-            const cover = resolveCover(quickLookIcon.data);
-            type = cover.kind;
-            url = cover.src;
-          } else if (quickLookIcon.videoUrl) {
-            type = 'video';
-            url = quickLookIcon.videoUrl;
-          } else if (quickLookIcon.imageUrl) {
-            type = 'image';
-            url = quickLookIcon.imageUrl;
-          }
-
-          return (
-            <QuickLookModal
-              isOpen={!!quickLookIcon}
-              onClose={() => setQuickLookIcon(null)}
-              title={quickLookIcon.data?.title || quickLookIcon.label || 'Quick Look'}
-              type={type as 'image' | 'video' | 'pdf' | 'text' | 'project'}
-              url={url}
-              metadata={quickLookIcon.data?.tags?.join(', ') || quickLookIcon.type}
-              onGoToDetail={() => {
-                setQuickLookIcon(null);
-                if (quickLookIcon.data) {
-                  openProjectWindow(quickLookIcon.data);
-                } else if (quickLookIcon.action) {
-                  quickLookIcon.action();
-                }
-              }}
-            />
-          );
-        })()}
+      <DesktopQuickLookModal
+        quickLookIcon={quickLookIcon}
+        onClose={() => setQuickLookIcon(null)}
+        openProjectWindow={openProjectWindow}
+      />
     </>
   );
 }
 
 export default React.memo(DesktopIconsLayer);
+export type { ProjectIcon };

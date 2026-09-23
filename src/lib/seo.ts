@@ -4,17 +4,14 @@ import { DEFAULT_SITE_URL } from '@/lib/constants';
 
 // Dynamic site URL detection
 function getDynamicSiteUrl(): string {
-  // In production, use environment variable
   if (process.env.NODE_ENV === 'production') {
     return process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL;
   }
 
-  // In development, try to detect from browser if available
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }
 
-  // Fallback for server-side rendering in development
   return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 }
 
@@ -123,7 +120,6 @@ export function generateProjectMetadata(project: Project): Metadata {
     ...(project.year ? [project.year.toString()] : []),
   ];
 
-  // Enhanced fallback description
   const fallbackDesc =
     `${project.title} - A ${project.tags?.[0] || 'creative'} project by Ramos` +
     (project.client ? ` for ${project.client}` : '') +
@@ -148,229 +144,5 @@ export function generateProjectMetadata(project: Project): Metadata {
   });
 }
 
-// Generate structured data (JSON-LD)
-interface ProjectStructuredData {
-  title: string;
-  description: string;
-  cover: string;
-  tags?: string[];
-  client?: string;
-  year?: number;
-}
-
-interface PersonStructuredData {
-  socialLinks?: string[];
-}
-
-type StructuredDataType = ProjectStructuredData | PersonStructuredData | Record<string, unknown>;
-
-export function generateStructuredData(
-  type: 'website' | 'portfolio' | 'project' | 'person',
-  data?: StructuredDataType
-) {
-  const baseStructuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: baseSEO.title,
-    description: baseSEO.description,
-    url: baseSEO.siteUrl,
-    author: {
-      '@type': 'Person',
-      name: baseSEO.author,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: baseSEO.title,
-      url: baseSEO.siteUrl,
-    },
-  };
-
-  switch (type) {
-    case 'website':
-      return {
-        ...baseStructuredData,
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: `${baseSEO.siteUrl}/search?q={search_term_string}`,
-          'query-input': 'required name=search_term_string',
-        },
-      };
-
-    case 'portfolio':
-      return {
-        ...baseStructuredData,
-        '@type': 'CollectionPage',
-        name: 'Portfolio',
-        description: 'Collection of creative projects and digital solutions',
-        url: `${baseSEO.siteUrl}/portfolio`,
-      };
-
-    case 'project': {
-      if (!data) return baseStructuredData;
-      const projectData = data as ProjectStructuredData;
-
-      return {
-        '@context': 'https://schema.org',
-        '@type': 'CreativeWork',
-        name: projectData.title,
-        description: projectData.description,
-        url: `${baseSEO.siteUrl}/projects/${(data as { slug?: string }).slug}`,
-        image: projectData.cover,
-        author: {
-          '@type': 'Person',
-          name: baseSEO.author,
-        },
-        publisher: {
-          '@type': 'Organization',
-          name: baseSEO.title,
-          url: baseSEO.siteUrl,
-        },
-        keywords: projectData.tags?.join(', '),
-        ...(projectData.client && {
-          client: {
-            '@type': 'Organization',
-            name: projectData.client,
-          },
-        }),
-        ...(projectData.year && {
-          dateCreated: `${projectData.year}-01-01`,
-        }),
-      };
-    }
-
-    case 'person': {
-      const personData = data as PersonStructuredData | undefined;
-      return {
-        '@context': 'https://schema.org',
-        '@type': 'Person',
-        name: baseSEO.author,
-        url: baseSEO.siteUrl,
-        image: baseSEO.siteUrl + '/images/profile.jpg', // Assuming profile image path
-        sameAs: [
-          // Add links if available in data
-          ...(personData?.socialLinks || []),
-        ],
-        jobTitle: 'Creative Designer & Visual Storyteller',
-        worksFor: {
-          '@type': 'Organization',
-          name: 'Freelance',
-        },
-        description: baseSEO.description,
-        knowsAbout: ['Graphic Design', 'UI/UX', 'Motion Graphics', 'Visual Identity'],
-      };
-    }
-
-    default:
-      return baseStructuredData;
-  }
-}
-
-// Generate breadcrumb structured data
-export function generateBreadcrumbStructuredData(items: Array<{ name: string; url: string }>) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.name,
-      item: item.url,
-    })),
-  };
-}
-
-// Sitemap utilities
-export function generateSitemapUrls(projects: Project[]) {
-  const baseUrls = [
-    {
-      url: '/',
-      priority: 1.0,
-      changefreq: 'weekly',
-    },
-    {
-      url: '/projects',
-      priority: 0.9,
-      changefreq: 'weekly',
-    },
-    {
-      url: '/contact',
-      priority: 0.7,
-      changefreq: 'monthly',
-    },
-  ];
-
-  const projectUrls = projects.map((project) => ({
-    url: `/projects/${project.slug}`,
-    priority: 0.9,
-    changefreq: 'monthly',
-  }));
-
-  return [...baseUrls, ...projectUrls];
-}
-
-export function generateSitemap(projects: Project[]): string {
-  const urls = generateSitemapUrls(projects);
-  const siteUrl = baseSEO.siteUrl;
-
-  const urlElements = urls
-    .map(
-      ({ url, priority, changefreq }) => `
-  <url>
-    <loc>${siteUrl}${url}</loc>
-    <priority>${priority}</priority>
-    <changefreq>${changefreq}</changefreq>
-    <lastmod>${new Date().toISOString()}</lastmod>
-  </url>`
-    )
-    .join('');
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urlElements}
-</urlset>`;
-}
-
-// Generate project structured data (JSON-LD)
-export function generateProjectStructuredData(project: Project): string {
-  const structuredData = generateStructuredData('project', project);
-  return JSON.stringify(structuredData);
-}
-
-// SEO utilities
-export const seoUtils = {
-  // Generate sitemap data
-  generateSitemapData: (projects: Project[]) => {
-    const staticPages = [
-      { url: '', priority: 1.0, changefreq: 'weekly' },
-      { url: '/about', priority: 0.8, changefreq: 'monthly' },
-      { url: '/contact', priority: 0.8, changefreq: 'monthly' },
-    ];
-
-    const projectPages = projects.map((project) => ({
-      url: `/projects/${project.slug}`,
-      priority: 0.9,
-      changefreq: 'monthly',
-    }));
-
-    return [...staticPages, ...projectPages];
-  },
-
-  // Generate robots.txt content
-  generateRobotsTxt: () => {
-    return `User-agent: *
-Allow: /
-
-Sitemap: ${baseSEO.siteUrl}/sitemap.xml`;
-  },
-
-  // Validate and clean meta description
-  cleanMetaDescription: (description: string, maxLength = 160) => {
-    return description.length > maxLength
-      ? description.substring(0, maxLength - 3) + '...'
-      : description;
-  },
-
-  // Generate canonical URL
-  generateCanonicalUrl: (path: string) => {
-    return `${baseSEO.siteUrl}${path}`;
-  },
-};
+export * from './seo/structuredData';
+export * from './seo/sitemapUtils';

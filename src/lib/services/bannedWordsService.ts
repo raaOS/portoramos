@@ -140,9 +140,23 @@ export function containsBannedWord(text: string, banned: string[]): boolean {
 export function findBannedWord(text: string, banned: string[]): string | undefined {
   const lower = text.toLowerCase();
   const matchVariants = buildTextMatchVariants(text);
+  const textTokens = lower.split(/[^a-z0-9]+/).filter(Boolean);
 
   return normalizeBannedWords(banned).find((word) => {
     if (!word) return false;
+
+    // Short words (<= 3 characters, e.g. 'rtp'): match as distinct word token or word boundary only
+    // to avoid false positives on phrases like "expert programmer", "art project", "smart portfolio".
+    if (word.length <= 3) {
+      if (textTokens.includes(word)) return true;
+      const normalizedWordI = normalizeForMatch(word, 'i');
+      const normalizedWordL = normalizeForMatch(word, 'l');
+      return textTokens.some((token) => {
+        const normI = normalizeForMatch(token, 'i');
+        const normL = normalizeForMatch(token, 'l');
+        return normI === normalizedWordI || normL === normalizedWordL;
+      });
+    }
 
     if (lower.includes(word)) {
       return true;

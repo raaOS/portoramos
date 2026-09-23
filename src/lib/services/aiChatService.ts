@@ -7,7 +7,7 @@
  *
  * @module aiChatService
  */
-import { geminiModel } from '@/lib/gemini';
+import { geminiModel } from '@/lib/ai';
 import aboutData from '@/data/about.json';
 import hardSkillsData from '@/data/hardSkills.json';
 import experienceData from '@/data/experience.json';
@@ -157,13 +157,65 @@ Tugas Anda: Evaluasi [Riwayat Obrolan] di atas, jawab sebagai Ramos secara santa
         }
       }
 
+      // --- OPENROUTER FALLBACK (TERTIARY ANTI-MATI) ---
+      const openRouterKey = process.env.OPENROUTER_API_KEY;
+      if (openRouterKey) {
+        try {
+          console.log('[AIChatService] Attempting fallback to OpenRouter AI...');
+          const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${openRouterKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'meta-llama/llama-3.3-70b-instruct:free',
+              messages: [
+                {
+                  role: 'system',
+                  content:
+                    'You are a highly capable AI assistant matching the persona requested in the prompt. Output ONLY the response text.',
+                },
+                { role: 'user', content: prompt },
+              ],
+              temperature: 0.7,
+              max_tokens: 250,
+            }),
+            signal: AbortSignal.timeout(20_000),
+          });
+
+          if (orRes.ok) {
+            const orData = (await orRes.json()) as {
+              choices?: Array<{ message?: { content?: string } }>;
+            };
+            const orText = orData.choices?.[0]?.message?.content;
+            if (orText) {
+              let fallbackText = orText.trim();
+              if (containsVulgarOrSARA(fallbackText)) {
+                console.warn(
+                  '[AIChatService] Vulgar/SARA detected in OpenRouter output. Returning fallback.'
+                );
+                fallbackText =
+                  'Maaf, aku cuma bisa bantu soal desain dan portfolio Ramos ya. Ada yang lain? 😊';
+              }
+              return { text: fallbackText }; // ✅ Berhasil diselamatkan oleh OpenRouter
+            }
+          } else {
+            console.error('[AIChatService] OpenRouter API returned error:', orRes.status);
+          }
+        } catch (orError) {
+          console.error('[AIChatService] OpenRouter fallback network error:', orError);
+        }
+      }
+
       // Mengirim balik pesan fallback beserta flag error agar bot Telegram Admin bisa memberi Notifikasi!
       const errorMessage = error instanceof Error ? error.message : 'Unknown API Error';
       return {
         text: 'Maaf, sistem AI sedang sibuk. Mohon tunggu, pesan Anda akan segera dibalas langsung oleh Ramos.',
         error:
           errorMessage +
-          (groqKey ? ' (And Groq Fallback also failed)' : ' (No Groq Key configured for Fallback)'),
+          (groqKey ? ' (And Groq Fallback also failed)' : '') +
+          (openRouterKey ? ' (And OpenRouter Fallback also failed)' : ''),
       };
     }
   },

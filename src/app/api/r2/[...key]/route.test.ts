@@ -63,6 +63,16 @@ describe('/api/r2/[...key]', () => {
       expect(response.status).toBe(404);
     });
 
+    it('returns 400 for malformed percent-encoded URI parameters', async () => {
+      isConfiguredMock.mockReturnValue(true);
+      const request = new NextRequest('http://localhost/api/r2/assets/%E0%A4%A');
+      const ctx = { params: Promise.resolve({ key: ['assets', '%E0%A4%A'] }) };
+
+      const response = await GET(request, ctx);
+      expect(response.status).toBe(400);
+      expect(await response.text()).toBe('Bad Request');
+    });
+
     it('serves R2 objects with correct headers', async () => {
       isConfiguredMock.mockReturnValue(true);
       const mockBody = {

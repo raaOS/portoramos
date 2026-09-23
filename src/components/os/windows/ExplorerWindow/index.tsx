@@ -3,10 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Search, Grid, RefreshCw, Home } from 'lucide-react';
 import { m, AnimatePresence, type Variants } from 'motion/react';
-import { ExplorerFormatBadge } from '@/components/ui/ExplorerFormatBadge';
 import type { AnyExplorerNode, ExplorerFolder, ExplorerFile } from '@/types/explorer';
 import {
-  getExplorerActualFormat,
   getExplorerFileDisplayName,
   getExplorerNodeDisplayName,
 } from '@/lib/utils/explorerName';
@@ -14,6 +12,7 @@ import MacFolder from '../MacFolder';
 import { useDesktopWindowContext } from '../../context/DesktopWindowContext';
 import InlineFilePreview from './InlineFilePreview';
 import FileThumbnail from './FileThumbnail';
+import PDFPreviewWindow from './PDFPreviewWindow';
 
 interface ExplorerWindowProps {
   initialParentId?: string | null;
@@ -51,7 +50,7 @@ export default function ExplorerWindow({
   const navTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { setWindows, windows } = useDesktopWindowContext();
+  const { setWindows, windows, openWindow } = useDesktopWindowContext();
   const explorerWindow = windows.find((w) => w.id === 'explorer');
   const isMaximized = explorerWindow?.isMaximized || false;
 
@@ -264,11 +263,24 @@ export default function ExplorerWindow({
       if (node.type === 'folder') {
         navigateTo(node.id);
       } else if (node.type === 'file') {
+        const file = node as ExplorerFile;
+        if (file.fileType === 'pdf') {
+          // Buka PDF di window OS terpisah (aplikasi Preview), bukan inline
+          // di dalam Explorer dan bukan tab browser baru.
+          openWindow(`pdf-preview-${file.id}`, {
+            title: getExplorerFileDisplayName(file),
+            content: <PDFPreviewWindow file={file} />,
+            width: 800,
+            height: 640,
+            noPadding: true,
+          });
+          return;
+        }
         setActiveFile(node);
         onOpenFile?.(node);
       }
     },
-    [navigateTo, onOpenFile]
+    [navigateTo, onOpenFile, openWindow]
   );
 
   // Keyboard controls
@@ -284,13 +296,24 @@ export default function ExplorerWindow({
         const node = nodes.find((n) => n.id === selectedNodeId);
         if (node && node.type === 'file') {
           e.preventDefault();
-          setActiveFile(node as ExplorerFile);
+          const file = node as ExplorerFile;
+          if (file.fileType === 'pdf') {
+            openWindow(`pdf-preview-${file.id}`, {
+              title: getExplorerFileDisplayName(file),
+              content: <PDFPreviewWindow file={file} />,
+              width: 800,
+              height: 640,
+              noPadding: true,
+            });
+            return;
+          }
+          setActiveFile(file);
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodeId, nodes, activeFile]);
+  }, [selectedNodeId, nodes, activeFile, openWindow]);
 
   return (
     <div className="flex h-full w-full flex-col select-none overflow-hidden bg-white/70 backdrop-blur-xl dark:bg-black/70">
@@ -450,7 +473,6 @@ export default function ExplorerWindow({
                   const displayName = isFolder
                     ? getExplorerNodeDisplayName(node)
                     : getExplorerFileDisplayName(file!);
-                  const actualFormat = isFolder ? 'FOLDER' : getExplorerActualFormat(file!);
 
                   return (
                     <m.div
@@ -464,19 +486,11 @@ export default function ExplorerWindow({
                           : 'hover:bg-black/5 dark:hover:bg-white/5'
                       }`}
                     >
-                      <div className="relative mb-2 flex h-16 w-16 items-center justify-center">
+                      <div className="relative mb-2 flex h-20 w-16 items-center justify-center">
                         {isFolder ? (
                           <MacFolder size={0.9} isStatic={true} />
                         ) : (
                           <FileThumbnail file={file!} />
-                        )}
-                        {!isFolder && (
-                          <div className="absolute -bottom-1.5 -right-1.5">
-                            <ExplorerFormatBadge
-                              format={actualFormat}
-                              className="bg-black/70 text-[9px] font-bold text-white shadow-sm backdrop-blur dark:bg-white/80 dark:text-black"
-                            />
-                          </div>
                         )}
                       </div>
                       <span className="w-full truncate text-xs font-semibold text-slate-800 dark:text-slate-200">

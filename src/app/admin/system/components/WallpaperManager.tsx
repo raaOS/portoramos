@@ -18,7 +18,6 @@ import {
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { ADMIN_QUERY_KEYS } from '@/app/admin/lib/adminQueries';
-import { mutate as swrMutate } from 'swr';
 import { getWritableCsrfToken } from '@/lib/security/client-csrf';
 import { extractStoragePath, isVideoLink, detectImageDimensions } from '@/lib/media';
 import { useConfirm } from '@/components/admin/ConfirmDialog';
@@ -292,7 +291,6 @@ export default function WallpaperManager({
         if (cancelled) return;
 
         queryClient.setQueryData(ADMIN_QUERY_KEYS.about, refreshed);
-        await swrMutate('/api/about', refreshed, { revalidate: false });
       } catch (e) {
         // AbortError on unmount is expected — quietly ignore.
         if ((e as { name?: string })?.name === 'AbortError') return;
@@ -328,10 +326,8 @@ export default function WallpaperManager({
 
       if (body.data) {
         queryClient.setQueryData(ADMIN_QUERY_KEYS.about, body.data);
-        await swrMutate('/api/about', body.data, { revalidate: false });
       } else {
         await queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEYS.about });
-        await swrMutate('/api/about');
       }
 
       return body.data;

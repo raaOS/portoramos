@@ -1,6 +1,6 @@
 'use client';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
 
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   AnimatePresence,
   motion,
@@ -9,8 +9,9 @@ import {
   useTransform,
   useMotionTemplate,
 } from 'motion/react';
-import { cn, getProxiedUrl } from '@/lib/utils';
-import { IconDotsVertical } from '@tabler/icons-react';
+import { cn } from '@/lib/utils';
+import { CompareMedia } from './compare/CompareMedia';
+import { CompareHandlebar } from './compare/CompareHandlebar';
 
 interface CompareProps {
   firstImage?: string;
@@ -50,9 +51,9 @@ export const Compare = ({
 
   // Motion values for smooth interaction
   const x = useMotionValue(0);
-  const width = useMotionValue(0); // Cache width to avoid layout thrashing
+  const width = useMotionValue(0);
 
-  // Spring physics for natural movement (damping: smoothens the stop, stiffness: responsiveness)
+  // Spring physics for natural movement
   const springX = useSpring(x, {
     stiffness: 400,
     damping: 30,
@@ -83,7 +84,6 @@ export const Compare = ({
       const elapsedTime = Date.now() - startTime;
       const progress = (elapsedTime % (autoplayDuration * 2)) / autoplayDuration;
       const currentPercent = progress <= 1 ? progress * 100 : (2 - progress) * 100;
-
       const nextX = (currentPercent / 100) * w;
 
       x.set(nextX);
@@ -103,24 +103,17 @@ export const Compare = ({
   // Update width on resize
   useEffect(() => {
     if (!sliderRef.current) return;
-
     const element = sliderRef.current;
 
-    // Initial measure
     const rect = element.getBoundingClientRect();
     width.set(rect.width);
     x.set((initialSliderPercentage / 100) * rect.width);
 
-    // Observer
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         if (entry.contentBoxSize) {
-          // Use measure for consistent box model
           const newWidth = entry.contentRect.width;
           width.set(newWidth);
-          // Optional: Keep relative percentage? For now, keep absolute X for stability or re-calc.
-          // let's just update width, X stays (so percentage drops/gains).
-          // It's acceptable for edge case.
         }
       }
     });
@@ -139,7 +132,6 @@ export const Compare = ({
   };
 
   const mouseLeaveHandler = () => {
-    // Removed auto-reset to center. Slider stays where user left it.
     if (slideMode === 'drag') {
       setIsDragging(false);
     }
@@ -165,44 +157,11 @@ export const Compare = ({
         const rect = sliderRef.current.getBoundingClientRect();
         const newX = clientX - rect.left;
         const w = width.get();
-        // Clamp value
         x.set(Math.max(0, Math.min(w, newX)));
       }
     },
     [slideMode, isDragging, x, width]
   );
-
-  const renderMedia = (
-    src: string,
-    className: string,
-    alt: string,
-    mediaType?: 'image' | 'video'
-  ) => {
-    const proxiedSrc = getProxiedUrl(src);
-    const isVideo =
-      mediaType === 'video' ||
-      (!mediaType &&
-        (proxiedSrc.toLowerCase().includes('.mp4') ||
-          proxiedSrc.toLowerCase().includes('.webm') ||
-          src.toLowerCase().endsWith('.mp4') ||
-          src.toLowerCase().endsWith('.webm')));
-
-    if (isVideo) {
-      return (
-        <video
-          src={proxiedSrc}
-          className={cn(className, 'object-cover')}
-          autoPlay
-          loop
-          muted
-          playsInline
-          draggable={false}
-        />
-      );
-    }
-
-    return <img alt={alt} src={proxiedSrc} className={className} draggable={false} />;
-  };
 
   return (
     <div
@@ -224,7 +183,7 @@ export const Compare = ({
         cursor: slideMode === 'drag' ? 'grab' : 'col-resize',
       }}
       onKeyDown={(e) => {
-        const step = 2; // 2% per key press
+        const step = 2;
         const w = width.get();
         if (w === 0) return;
         if (e.key === 'ArrowLeft') {
@@ -252,21 +211,7 @@ export const Compare = ({
       onTouchEnd={handleEnd}
       onTouchMove={(e) => handleMove(e.touches[0].clientX)}
     >
-      {/* Slider Handle Line */}
-      <AnimatePresence initial={false}>
-        <motion.div
-          className="absolute top-0 z-30 m-auto h-full w-px bg-gradient-to-b from-transparent from-[5%] via-indigo-500 to-transparent to-[95%]"
-          style={{
-            left: leftPosition, // USE SPRING for handle
-          }}
-        >
-          {showHandlebar && (
-            <div className="absolute -right-2.5 top-1/2 z-30 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md bg-white shadow-[0px_-1px_0px_0px_#FFFFFF40]">
-              <IconDotsVertical className="h-4 w-4 text-black" />
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+      <CompareHandlebar leftPosition={leftPosition} showHandlebar={showHandlebar} />
 
       {/* First Image (Overlay) - Clipped */}
       <div className="pointer-events-none relative z-20 h-full w-full overflow-hidden">
@@ -278,19 +223,18 @@ export const Compare = ({
                 firstImageClassName
               )}
               style={{
-                clipPath: clipPathLeft, // USE SPRING
+                clipPath: clipPathLeft,
               }}
             >
-              {renderMedia(
-                firstImage,
-                cn(
+              <CompareMedia
+                src={firstImage}
+                className={cn(
                   'absolute inset-0 z-20 rounded-2xl shrink-0 w-full h-full select-none',
                   firstImageClassName
-                ),
-                'first image',
-                firstMediaType
-              )}
-              {/* Label for First Image (Visible when this layer is visible) */}
+                )}
+                alt="first image"
+                mediaType={firstMediaType}
+              />
               {firstSlideLabel && (
                 <div className="absolute left-4 top-4 z-30 rounded bg-black/70 px-2 py-1 text-xs text-white">
                   {firstSlideLabel}
@@ -305,18 +249,15 @@ export const Compare = ({
       <AnimatePresence initial={false}>
         {secondImage ? (
           <div className="absolute inset-0 z-[19] h-full w-full">
-            {' '}
-            {/* Wrap in div to hold label relative to it */}
-            {renderMedia(
-              secondImage,
-              cn(
+            <CompareMedia
+              src={secondImage}
+              className={cn(
                 'absolute top-0 left-0 z-[19] rounded-2xl w-full h-full select-none',
                 secondImageClassname
-              ),
-              'second image',
-              secondMediaType
-            )}
-            {/* Label for Second Image (Visible when overlay is clipped away) */}
+              )}
+              alt="second image"
+              mediaType={secondMediaType}
+            />
             {secondSlideLabel && (
               <div className="absolute right-4 top-4 z-[20] rounded bg-black/70 px-2 py-1 text-xs text-white">
                 {secondSlideLabel}

@@ -25,8 +25,13 @@ async function serveR2Object(request: NextRequest, context: RouteContext, headOn
     return NextResponse.json({ error: 'Cloudflare R2 is not configured' }, { status: 503 });
   }
 
-  const { key: keyParts } = await context.params;
-  const key = keyParts.map(decodeURIComponent).join('/');
+  let key: string;
+  try {
+    const { key: keyParts } = await context.params;
+    key = keyParts.map(decodeURIComponent).join('/');
+  } catch {
+    return new NextResponse('Bad Request', { status: 400, headers: buildCorsHeaders() });
+  }
 
   if (!isAllowedKey(key)) {
     return new NextResponse('Not Found', { status: 404, headers: buildCorsHeaders() });

@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import type { DockPreferences } from '@/types/about';
 import GlobalDockSlot from './GlobalDockSlot';
-import { GlobalDock } from '@/components/os/core/Dock';
 import { WindowProvider } from '@/contexts/WindowContext';
 
 /**
@@ -28,7 +27,10 @@ const NonOSChrome = dynamic(() => import('./NonOSChrome'), {
   ssr: false,
 });
 
-import { LazyMotion, domAnimation } from 'motion/react';
+const LazyGlobalDock = dynamic(
+  () => import('@/components/os/core/Dock').then((m) => ({ default: m.GlobalDock })),
+  { ssr: false }
+);
 
 export default function LayoutClient({
   children,
@@ -69,11 +71,9 @@ export default function LayoutClient({
 
   return (
     <WindowProvider>
-      <LazyMotion features={domAnimation}>
-        {content}
-        {showDockSlot && <GlobalDockSlot />}
-        {showGlobalDock && <GlobalDock dockConfig={dockConfig} />}
-      </LazyMotion>
+      {content}
+      {showDockSlot && <GlobalDockSlot />}
+      {showGlobalDock && <LazyGlobalDock dockConfig={dockConfig} />}
     </WindowProvider>
   );
 }

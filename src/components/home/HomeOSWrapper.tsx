@@ -7,7 +7,6 @@ import type { DesktopEnvironmentProps } from '@/components/os/core/DesktopEnviro
 import { BackgroundEffectProvider, useBackgroundEffect } from './BackgroundEffectContext';
 import { GhostCursorsLayer } from '@/components/os/layers/GhostCursorsLayer';
 import { useOSOverlays } from '@/components/os/context/OSSystemContext';
-import { isVideoSource } from '@/lib/mediaPreview';
 
 type DesktopComponent = React.ComponentType<DesktopEnvironmentProps>;
 const BOOT_SESSION_KEY = 'ramos_os_booted';
@@ -86,35 +85,6 @@ function HomeOSWrapperInner(props: DesktopEnvironmentProps) {
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
-
-  // LCP optimization: Inject <link rel="preload"> for the wallpaper poster/image
-  // as early as possible. This helps the browser discover the LCP element before
-  // React hydration completes and the Image component renders.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const wallpaperConfig = props.aboutData?.wallpaperConfig;
-    if (!wallpaperConfig?.collection?.length) return;
-
-    const activeEntry = wallpaperConfig.activeWallpaperId
-      ? wallpaperConfig.collection.find((w) => w.id === wallpaperConfig.activeWallpaperId)
-      : wallpaperConfig.collection[0];
-
-    if (!activeEntry?.url) return;
-
-    // Determine the preload URL: poster for videos, url for images
-    const isVideo = isVideoSource(activeEntry.url);
-    const preloadUrl = isVideo ? (activeEntry.posterUrl || activeEntry.url) : activeEntry.url;
-
-    // Avoid duplicate preload links
-    if (document.querySelector(`link[rel="preload"][as="image"][href="${preloadUrl}"]`)) return;
-
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'image';
-    link.href = preloadUrl;
-    document.head.appendChild(link);
-  }, [props.aboutData?.wallpaperConfig]);
 
   const [DesktopOS, setDesktopOS] = useState<DesktopComponent | null>(() => cachedDesktopOS);
   const [chunkError, setChunkError] = useState<string | null>(null);

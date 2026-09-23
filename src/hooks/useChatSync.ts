@@ -1,16 +1,16 @@
-import { useState, useEffect, startTransition } from 'react';
+import { useState, useEffect, useCallback, useRef, startTransition } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import useSWR from 'swr';
 import { soundManager } from '@/components/os/utils/SoundManager';
 
 /**
  * Chat Sync Hook — Real-time messaging untuk visitor ↔ admin.
  *
  * Mengelola state chat (messages, typing indicator, sync error) dengan
- * polling SWR yang dioptimasi untuk Vercel Hobby Free Tier:
+ * polling native yang dioptimasi untuk Vercel Hobby Free Tier:
  * - 8 detik saat tab aktif, 60 detik saat background (~62% penghematan).
  * - Deduplikasi pesan server-side dengan temp message client-side.
  * - Notifikasi suara saat pesan admin baru diterima (hanya di tab visible).
+ * - Zero external library dependency (bebas SWR / React Query).
  *
  * @module useChatSync
  */
@@ -92,27 +92,20 @@ export function useChatSync(initialGreeting?: string) {
   }, [visitorId, initialGreeting, messages.length]);
 
   const [syncError, setSyncError] = useState(false);
+  const lastFetchTimeRef = useRef(0);
+  const syncInProgressRef = useRef(false);
 
-  // Polling with Smart Interval — Vercel Hobby Free Tier guard.
-  //
-  // Sebelumnya: 3s active / 30s background. Untuk 1 visitor yang buka chat
-  // window 5 menit = 100 invocations dari satu visitor. Worst case (tab
-  // dibiarkan open semalam) = 14,400 invocations dari satu user. Itu
-  // gerogoti budget invocation 1M/bulan tanpa value real karena visitor
-  // portfolio tidak ekspektasi sub-second message arrival.
-  //
-  // Sekarang: 8s active / 60s background. Latency reply dari admin
-  // sekarang max 8 detik (acceptable untuk chat asynchronous portfolio),
-  // tapi invocations turun ~62%. Untuk skala 250 visitor/bulan ini
-  // bedanya signifikan dari "boros" jadi "hemat ratusan invocations".
-  const { data: _syncData, error: swrError, mutate } = useSWR(
-    visitorId ? `/api/chat/sync?visitorId=${visitorId}` : null,
-    fetcher,
-    {
-      refreshInterval: isPageVisible ? 8000 : 60000,
-      revalidateOnFocus: true,
-      dedupingInterval: 2000,
-      onSuccess: (data) => {
+  const performSync = useCallback(
+    async (currentVisitorId: string) => {
+      if (!currentVisitorId || syncInProgressRef.current) return;
+      const now = Date.now();
+      // Deduping interval: 2000ms
+      if (now - lastFetchTimeRef.current < 2000) return;
+      lastFetchTimeRef.current = now;
+      syncInProgressRef.current = true;
+
+      try {
+        const data = await fetcher(`/api/chat/sync?visitorId=${currentVisitorId}`);
         setSyncError(false);
         if (data?.success) {
           // Update typing status from server
@@ -172,9 +165,40 @@ export function useChatSync(initialGreeting?: string) {
             }
           }
         }
-      },
-    }
+      } catch {
+        setSyncError(true);
+      } finally {
+        syncInProgressRef.current = false;
+      }
+    },
+    [initialGreeting]
   );
+
+  // Polling with Smart Interval & Focus Revalidation
+  useEffect(() => {
+    if (!visitorId) return;
+
+    // Asynchronous initial sync to avoid synchronous setState within effect body
+    const initialTimer = setTimeout(() => {
+      performSync(visitorId);
+    }, 0);
+
+    const intervalMs = isPageVisible ? 8000 : 60000;
+    const timer = setInterval(() => {
+      performSync(visitorId);
+    }, intervalMs);
+
+    const handleFocus = () => {
+      performSync(visitorId);
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(timer);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [visitorId, isPageVisible, performSync]);
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isSending || !visitorId) return;
@@ -247,7 +271,8 @@ export function useChatSync(initialGreeting?: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ visitorId: oldVisitorId }),
       });
-      mutate();
+      lastFetchTimeRef.current = 0;
+      performSync(newVisitorId);
     } catch (error) {
       console.error('Clear chat failed', error);
     }
@@ -262,6 +287,6 @@ export function useChatSync(initialGreeting?: string) {
     isSending,
     isAdminTyping,
     setIsAdminTyping,
-    syncError: syncError || !!swrError,
+    syncError,
   };
 }

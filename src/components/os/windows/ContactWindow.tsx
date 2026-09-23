@@ -1,6 +1,6 @@
 'use client';
 
-import useSWR from 'swr';
+import { useState, useEffect } from 'react';
 import FullPageChat from '@/components/chat/FullPageChat';
 import { type Locale, useLanguage } from '@/contexts/LanguageContext';
 import { localizeText } from '@/lib/i18n/contentLocalization';
@@ -46,13 +46,23 @@ function toContactInfo(
 
 export default function ContactWindow({ initialData }: ContactWindowProps) {
   const { locale } = useLanguage();
-  const { data } = useSWR('/api/contact', fetcher, {
-    fallbackData: initialData ?? undefined,
-    revalidateOnFocus: false,
-    revalidateIfStale: false,
-    shouldRetryOnError: false,
-    revalidateOnMount: !initialData,
-  });
+  const [data, setData] = useState<ContactData | undefined>(initialData ?? undefined);
+
+  useEffect(() => {
+    if (initialData) return;
+    let cancelled = false;
+    fetcher('/api/contact')
+      .then((contactData) => {
+        if (!cancelled) {
+          setData(contactData);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialData]);
 
   return <FullPageChat embedded contactInfo={toContactInfo(data, locale)} />;
 }
