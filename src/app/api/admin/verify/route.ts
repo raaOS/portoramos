@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminToken } from '@/lib/auth';
-import { ADMIN_TOKEN_COOKIE, ADMIN_TOKEN_COOKIE_LEGACY } from '@/lib/security/constants';
+import { ADMIN_TOKEN_COOKIE } from '@/lib/security/constants';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
     const token =
-      request.cookies.get(ADMIN_TOKEN_COOKIE)?.value ||
-      request.cookies.get(ADMIN_TOKEN_COOKIE_LEGACY)?.value;
+      request.cookies.get(ADMIN_TOKEN_COOKIE)?.value;
 
     if (!token) {
       return NextResponse.json(

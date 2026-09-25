@@ -69,7 +69,7 @@ const nextConfig = {
   // Enable experimental features for performance
   experimental: {
     // Enable optimistic client cache for faster navigation
-    optimisticClientCache: true,
+    optimisticClientCache: false,
     // Enable scroll restoration
     scrollRestoration: true,
     // Inline critical CSS via critters to reduce render-blocking CSS on cold start.
@@ -128,12 +128,14 @@ const nextConfig = {
       // Cache control for Home page (HTML).
       // s-maxage diselaraskan dengan ISR `revalidate = 60` di src/app/(site)/page.tsx
       // supaya edge cache tidak menahan HTML lebih lama dari ISR window.
+      // `must-revalidate` DIHAPUS: kontradiktif dengan stale-while-revalidate
+      // (edge boleh sajikan stale SWR window tanpa revalidate paksa).
       {
         source: '/',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=60, stale-while-revalidate=300, must-revalidate',
+            value: 'public, s-maxage=60, stale-while-revalidate=300',
           },
         ],
       },
@@ -163,11 +165,11 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(self), geolocation=(self), interest-cohort=()',
+            value: 'camera=(), microphone=(self), interest-cohort=()',
           },
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'unsafe-none',
+            value: 'credentialless',
           },
           {
             key: 'Cross-Origin-Opener-Policy',

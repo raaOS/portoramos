@@ -18,7 +18,6 @@ import { db } from '@/lib/database';
 import { logAdminActivity } from '@/lib/services/auditLogger';
 import {
   ADMIN_TOKEN_COOKIE,
-  ADMIN_TOKEN_COOKIE_LEGACY,
   BEARER_PREFIX,
   CSRF_TOKEN_COOKIE,
   CSRF_TOKEN_HEADER,
@@ -152,8 +151,7 @@ export const checkAdminAuth = (request: NextRequest): boolean => {
   try {
     const authHeader = request.headers.get('authorization');
     const cookieToken =
-      request.cookies.get(ADMIN_TOKEN_COOKIE)?.value ||
-      request.cookies.get(ADMIN_TOKEN_COOKIE_LEGACY)?.value;
+      request.cookies.get(ADMIN_TOKEN_COOKIE)?.value;
 
     if (authHeader?.startsWith(BEARER_PREFIX)) {
       const token = authHeader.substring(BEARER_PREFIX.length);

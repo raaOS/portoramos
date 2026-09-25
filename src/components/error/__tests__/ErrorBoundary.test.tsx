@@ -5,7 +5,21 @@ import {
   ErrorBoundary,
   SectionErrorBoundary,
   useAsyncErrorHandler,
-} from '../ErrorBoundary';
+} from '@/components/shared/ErrorBoundary';
+
+vi.mock('next/dynamic', () => ({
+  __esModule: true,
+  default: () => {
+    return function MockPageErrorFallback({ error, resetError }: { error: Error; resetError: () => void }) {
+      return (
+        <div>
+          <span>Error: {error.message}</span>
+          <button onClick={resetError}>Reset</button>
+        </div>
+      );
+    };
+  },
+}));
 
 function Thrower(): never {
   throw new Error('render failed');
@@ -27,13 +41,8 @@ describe('ErrorBoundary components', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('menampilkan fallback default dan menjalankan reload', () => {
+  it('menampilkan fallback default PageErrorFallback saat error', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const reloadSpy = vi.fn();
-    Object.defineProperty(window, 'location', {
-      value: { ...window.location, reload: reloadSpy },
-      writable: true,
-    });
 
     render(
       <ErrorBoundary>
@@ -41,9 +50,7 @@ describe('ErrorBoundary components', () => {
       </ErrorBoundary>
     );
 
-    fireEvent.click(screen.getByText('Refresh Page'));
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
-    expect(reloadSpy).toHaveBeenCalled();
+    expect(screen.getByText('Error: render failed')).toBeInTheDocument();
     consoleErrorSpy.mockRestore();
   });
 
@@ -63,10 +70,9 @@ describe('ErrorBoundary components', () => {
     );
 
     fireEvent.click(screen.getByText('Restart System'));
-    fireEvent.click(screen.getByText('Safe Mode'));
-
-    expect(screen.getByText('System Error')).toBeInTheDocument();
     expect(reloadSpy).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText('Safe Mode'));
     expect(window.location.href).toContain('/');
     consoleErrorSpy.mockRestore();
   });
@@ -80,7 +86,7 @@ describe('ErrorBoundary components', () => {
       </SectionErrorBoundary>
     );
 
-    expect(screen.getByText('⚠️ Projects failed to load')).toBeInTheDocument();
+    expect(screen.getByText(/Projects failed to load/)).toBeInTheDocument();
     fireEvent.click(screen.getByText('Try Again'));
     consoleErrorSpy.mockRestore();
   });

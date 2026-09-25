@@ -7,7 +7,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import Header from '@/components/shared/Header';
 import { useOSOverlays } from '@/components/os/context/OSSystemContext';
 import WindowRenderer from './WindowRenderer';
-import { ErrorBoundary } from '@/components/error/ErrorBoundary';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 const ControlCenter = dynamic(() => import('@/components/os/ui/ControlCenter'), {
   ssr: false,

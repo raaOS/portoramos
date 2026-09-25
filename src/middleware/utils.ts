@@ -13,10 +13,12 @@ export function isAPIRoute(pathname: string): boolean {
 }
 
 export function isStaticAsset(pathname: string): boolean {
+  // SECURITY: .svg is intentionally NOT treated as a static skip so
+  // addSecurityHeaders (CSP, nosniff) still runs for vector documents.
   return (
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/static/') ||
-    /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|woff2?|ttf|eot|mp4|webm|wav|mp3|json|xml|txt|map)$/i.test(
+    /\.(ico|png|jpg|jpeg|gif|webp|avif|css|js|woff2?|ttf|eot|mp4|webm|wav|mp3|json|xml|txt|map)$/i.test(
       pathname
     )
   );
@@ -32,6 +34,10 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
   const cspBase =
     [
       "default-src 'self'",
+      // NOTE: Next.js App Router injects inline bootstrap/hydration scripts
+      // without a framework-level nonce hook in this setup, so 'unsafe-inline'
+      // is retained for script-src. Removing it breaks hydration in production.
+      // Style inline is lower risk (CSS injection ≠ script execution).
       isProd
         ? "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com https://vercel.live https://www.youtube.com https://s.ytimg.com"
         : "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com blob: https://www.youtube.com https://s.ytimg.com",
@@ -52,7 +58,7 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
   if (isProd) {
     response.headers.set(
       'Strict-Transport-Security',
-      'max-age=31536000; includeSubDomains; preload'
+      'max-age=63072000; includeSubDomains; preload'
     );
   }
 

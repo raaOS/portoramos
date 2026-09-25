@@ -11,7 +11,6 @@ import { jwtVerify, SignJWT } from 'jose';
 import { protectedRoutes, publicRoutes } from './constants';
 import {
   ADMIN_TOKEN_COOKIE,
-  ADMIN_TOKEN_COOKIE_LEGACY,
   BEARER_PREFIX,
 } from '@/lib/security/constants';
 
@@ -73,7 +72,6 @@ export async function checkAdminAuth(request: NextRequest) {
     // (login/logout) hanya menyentuh `admin_token` sekarang.
     const token =
       request.cookies.get(ADMIN_TOKEN_COOKIE)?.value ||
-      request.cookies.get(ADMIN_TOKEN_COOKIE_LEGACY)?.value ||
       request.headers.get('authorization')?.replace(BEARER_PREFIX, '');
 
     // NOTE: debug log hanya saat development. Di production kita hindari
