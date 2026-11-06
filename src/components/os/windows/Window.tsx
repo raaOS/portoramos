@@ -312,7 +312,7 @@ export default function OSWindow({
       y: isSmallScreen
         ? (isMobile ? 86 : 96)
         : Math.max(36, Math.min(initialPosition.y, viewportHeight - measuredHeight - 60)),
-      width: isSmallScreen ? Math.max(viewportWidth - 12, 320) : measuredWidth,
+      width: isSmallScreen ? Math.max(viewportWidth - 12, 280) : measuredWidth,
       height: isSmallScreen
         ? Math.max(viewportHeight - (isMobile ? 204 : 196), 260)
         : measuredHeight,
@@ -333,7 +333,7 @@ export default function OSWindow({
     () => ({
       x: isSmallScreen ? 6 : 10,
       y: isSmallScreen ? (isMobile ? 86 : 96) : 36,
-      width: Math.max(viewportWidth - (isSmallScreen ? 12 : 20), 320),
+      width: Math.max(viewportWidth - (isSmallScreen ? 12 : 20), 280),
       height: Math.max(viewportHeight - (isSmallScreen ? (isMobile ? 204 : 196) : 46), 240),
     }),
     [viewportWidth, viewportHeight, isSmallScreen, isMobile]
