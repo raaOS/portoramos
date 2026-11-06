@@ -289,6 +289,13 @@ export default function AdminExplorerClient() {
       maxLength: 120,
       validate: (value) => {
         if (/[\\/]/.test(value)) return 'Nama tidak boleh berisi slash';
+        if (node.type === 'file') {
+          const currentExt = currentLabel.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase() || '';
+          const nextExt = value.trim().match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase() || '';
+          if (currentExt && nextExt && nextExt !== currentExt) {
+            return `Ekstensi file tidak boleh diubah (harus .${currentExt})`;
+          }
+        }
         return null;
       },
     });
@@ -882,7 +889,7 @@ export default function AdminExplorerClient() {
           onChange={handleFileChange}
           className="hidden"
           multiple
-          accept="image/*,video/*,application/pdf,text/*"
+          accept="image/*,video/*,audio/*,application/pdf"
         />
       </div>
     </>

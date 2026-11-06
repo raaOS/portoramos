@@ -156,17 +156,24 @@ function ensureDisplayFileName(file: ExplorerFile, requestedName: string) {
   const cleanRequested = normalizeName(requestedName);
   if (!cleanRequested) return cleanRequested;
 
-  const requestedExtension = extensionFromName(cleanRequested);
-  if (requestedExtension) {
-    return cleanRequested;
-  }
-
   const fallbackExtension =
     extensionFromName(getDisplayFileName(file)) ||
     extensionFromKey(file.storageKey || extractStoragePath(file.url)) ||
     file.metadata?.actualExtension ||
     file.metadata?.extension ||
     '';
+
+  const requestedExtension = extensionFromName(cleanRequested);
+  if (requestedExtension) {
+    // Extension is locked to the file's current display extension: the
+    // storage key keeps its original extension on rename (content is never
+    // converted), so letting a different typed extension through would make
+    // the visible name disagree with the physical file.
+    if (!fallbackExtension || requestedExtension === fallbackExtension.toLowerCase()) {
+      return cleanRequested;
+    }
+    return `${stripExtension(cleanRequested)}.${fallbackExtension}`;
+  }
 
   return fallbackExtension ? `${cleanRequested}.${fallbackExtension}` : cleanRequested;
 }
