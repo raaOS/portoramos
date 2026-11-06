@@ -15,10 +15,14 @@ export const generateDesktopIcons = (
   if (!windowSize.width) return [];
 
   // 2. Define Desktop Grid
+  // Mobile pitch harus >= lebar kartu medium (72px tinggi / rasio 0.8 = 90px)
+  // + gap, kalau tidak ikon akan saling menimpa (overlap).
   const isMobile = windowSize.width < 768;
-  const gridX = isMobile ? 82 : 110; // Compact grid on mobile so all icons fit
-  const gridY = isMobile ? 98 : 140; // Compact grid on mobile
-  const margin = isMobile ? 12 : 40; // Compact margin on mobile
+  const gridX = isMobile ? 96 : 110; // Compact grid on mobile so all icons fit
+  // Mobile 124px: kartu medium (72px) + label (~20px) + jarak napas antar
+  // baris, supaya pil judul baris atas tidak menyentuh gambar baris bawah.
+  const gridY = isMobile ? 124 : 140;
+  const margin = isMobile ? 8 : 40; // Compact margin on mobile
   const topOffset = isMobile ? 50 : 60; // MenuBar
   const bottomOffset = isMobile ? 95 : 120; // Dock
 
@@ -60,7 +64,12 @@ export const generateDesktopIcons = (
     ...visibleProjects,
   ];
 
-  const generatedIcons = (desktopItems as DesktopItem[]).map((item, index: number) => {
+  // Anti-overlap: jika ikon lebih banyak dari slot grid (layar pendek),
+  // sisanya tidak dipaksakan menumpuk di slot yang sama — tetap bisa
+  // diakses lewat folder "My Projects" (Explorer).
+  const itemsToPlace = desktopItems.slice(0, Math.max(1, availableSlots.length));
+
+  const generatedIcons = (itemsToPlace as DesktopItem[]).map((item, index: number) => {
     const itemId = item?.id || `icon-${index}`;
     // 1. Check if we have a saved position for this ID (Admin Saved)
     const savedPos: DesktopIconPosition | undefined = desktopPreferences?.iconPositions?.[itemId];
@@ -81,7 +90,10 @@ export const generateDesktopIcons = (
 
     let slotIndex, slot, finalX, finalY;
 
-    if (savedPos) {
+    // Mobile: abaikan posisi yang disimpan admin di layar besar — skala
+    // persentase membuat ikon saling menimpa di layar kecil. Selalu pakai
+    // grid rapi di mobile; susunan kustom tetap berlaku di desktop.
+    if (savedPos && !isMobile) {
       // Resolusi posisi — prioritas percentage (responsive), baru pixel legacy.
       let resolvedX: number;
       let resolvedY: number;
@@ -134,6 +146,11 @@ export const generateDesktopIcons = (
       finalY = Math.max(topOffset, Math.min(windowSize.height - bottomOffset, slot.y + jitterY));
     }
 
+    // Mobile: kartu 'large' (86px / rasio 0.8 = 107px lebar) meluber dari
+    // pitch grid 96px — kecilkan ke 'medium' (90px lebar) supaya pas.
+    const resolvedSize =
+      isMobile && savedPos?.size === 'large' ? ('medium' as const) : savedPos?.size;
+
     if (item.type === 'folder') {
       return {
         id: item.id,
@@ -142,7 +159,7 @@ export const generateDesktopIcons = (
         x: finalX,
         y: finalY,
         zIndex: savedPos?.zIndex,
-        size: savedPos?.size,
+        size: resolvedSize,
         action: item.action,
       };
     }
@@ -192,7 +209,7 @@ export const generateDesktopIcons = (
       x: finalX,
       y: finalY,
       zIndex: savedPos?.zIndex,
-      size: savedPos?.size,
+      size: resolvedSize,
       priority: index < 4, // Prioritize the first 4 icons for LCP
     };
   });
