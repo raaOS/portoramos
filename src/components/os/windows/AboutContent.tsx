@@ -40,7 +40,9 @@ const MenuButton = ({
   <button
     onClick={() => setActiveTab(id)}
     className={`flex w-full items-center justify-between overflow-hidden rounded-md py-2 text-sm transition-colors ${
-      activeTab === id ? 'bg-black/10 font-semibold text-black' : 'text-gray-600 hover:bg-black/5'
+      activeTab === id
+        ? 'font-semibold text-black'
+        : 'text-gray-600 hover:text-black active:text-black/60'
     }`}
     title={collapsed ? label : undefined}
   >
@@ -112,6 +114,13 @@ export default function AboutContent({
       {/* Sidebar (Left) */}
       <div
         onClick={() => sidebarCollapsed && setSidebarCollapsed(false)}
+        onMouseLeave={() => {
+          // Icon-rail mode: once the pointer heads into the content area,
+          // collapse the temporarily-opened rail back to icons-only.
+          if (lastCompactLayoutRef.current && !sidebarCollapsed) {
+            setSidebarCollapsed(true);
+          }
+        }}
         data-no-window-drag
         aria-label={sidebarCollapsed ? 'Open About sidebar' : 'About sidebar'}
         className={`about-sidebar ${sidebarCollapsed ? 'collapsed cursor-pointer hover:bg-black/5' : 'expanded'} relative z-20 flex shrink-0 flex-col gap-1 overflow-hidden border-r border-[#D1D1D1] bg-[#E3E3E3]/50 p-3 pt-4`}
@@ -158,7 +167,7 @@ export default function AboutContent({
           <Link
             href="/cv?mode=ats&print=true"
             target="_blank"
-            className="flex w-full items-center justify-center gap-2 overflow-hidden rounded-md py-2.5 text-sm text-gray-600 transition-colors hover:bg-red-600 hover:text-white active:bg-red-700 active:text-white"
+            className="flex w-full items-center justify-center gap-2 overflow-hidden rounded-md py-2.5 text-sm text-gray-600 transition-colors hover:text-red-600 active:text-red-700"
             title={sidebarCollapsed ? 'Download CV' : undefined}
             onClick={() => {
               if (lastCompactLayoutRef.current) {
