@@ -26,10 +26,10 @@ export const PhilosophyTab = ({ aboutData }: PhilosophyTabProps) => {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 min-w-0 space-y-6 duration-300">
       <div>
-        <h1 className="about-heading mb-2 break-words text-2xl font-bold text-black dark:text-white">
+        <h1 className="about-heading mb-1.5 break-words text-2xl font-bold leading-tight tracking-tight text-black dark:text-white">
           {localizeText(philosophy?.heading || 'Design Philosophy', locale)}
         </h1>
-        <p className="break-words font-medium text-gray-600 dark:text-gray-400">
+        <p className="break-words text-sm font-medium text-gray-600 dark:text-gray-400">
           {localizeText(philosophy?.subheading || 'Strategic Thinking Framework', locale)}
         </p>
       </div>

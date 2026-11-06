@@ -66,7 +66,7 @@ export const FlowchartProcess = ({ workflowSteps }: FlowchartProcessProps) => {
     <div className="relative w-full min-w-0">
       {/* Grid Area */}
       <div className="py-4">
-        <div className="flowchart-process-grid flex min-w-0 flex-wrap content-start">
+        <div className="flowchart-process-grid grid min-w-0 content-start justify-items-center">
           {workflowSteps.map((step) => {
             if (!step) return null;
             return (

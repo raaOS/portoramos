@@ -205,12 +205,16 @@
    FlowchartProcess Responsive Rules
    ========================================================================== */
 .flowchart-process-grid {
-  gap: 1.5rem;
-  /* equivalent to gap-6 */
+  display: grid;
+  /* Narrow container: fit as many aligned columns as possible (2 on small) */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 4.5rem), 1fr));
+  gap: 1.25rem;
+  justify-items: center;
+  align-items: start;
 }
 
 .flowchart-step-card {
-  width: 5rem !important;
+  width: min(5rem, 100%) !important;
   /* equivalent to w-20 */
 }
 
@@ -230,12 +234,12 @@
 
 @container about-win (min-width: 550px) {
   .flowchart-process-grid {
-    gap: 2.5rem;
-    /* equivalent to gap-10 */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 6.5rem), 1fr));
+    gap: 2rem;
   }
 
   .flowchart-step-card {
-    width: 6rem !important;
+    width: min(6rem, 100%) !important;
     /* equivalent to w-24 */
   }
 
