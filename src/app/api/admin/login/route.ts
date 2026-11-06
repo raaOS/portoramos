@@ -4,7 +4,7 @@ import { sendSecurityAlert } from '@/lib/telegram';
 import { generateCSRFToken, validateCSRFToken } from '@/lib/security';
 import { checkDataRateLimit } from '@/lib/dataRateLimit';
 import { cookies } from 'next/headers';
-import { getClientIdentifier } from '@/lib/security/request';
+import { getClientIP } from '@/lib/security/request';
 import { logAdminActivity } from '@/lib/services/auditLogger';
 import { ADMIN_TOKEN_COOKIE, CSRF_TOKEN_COOKIE, CSRF_TOKEN_HEADER } from '@/lib/security/constants';
 
@@ -15,9 +15,9 @@ const MAX_ATTEMPTS_PER_WINDOW = 3;
 const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 menit
 const BLOCK_DURATION = 30 * 60 * 1000; // 30 menit
 
-// Prefer server-only key, keep public fallback for backward compatibility.
-const GOOGLE_MAPS_API_KEY =
-  process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+// Prefer server-only key. Do NOT fall back to NEXT_PUBLIC_* — that value is
+// also embedded in the browser bundle and would expose the key for server calls.
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 async function auditLogin(
   request: NextRequest,
@@ -179,7 +179,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
     }
 
-    const clientId = getClientIdentifier(request);
+    // SECURITY: Rate-limit key MUST be IP-only. Keying on IP+UA lets an
+    // attacker reset the bucket by rotating User-Agent headers.
+    const ip = getClientIP(request);
+    const userAgent = request.headers.get('user-agent') || 'unknown';
 
     // Skip rate limiting and external side effects for automated tests.
     // SECURITY: Only use server-controlled env vars for test detection.
@@ -192,14 +195,13 @@ export async function POST(request: NextRequest) {
     if (!isTestEnv) {
       // CLOUDFLARE_D1 rate limiting (persisten di Vercel, tidak hilang saat cold start)
       const rateLimit = await checkDataRateLimit(
-        `login_${clientId}`,
+        `login_${ip}`,
         MAX_ATTEMPTS_PER_WINDOW,
         RATE_LIMIT_WINDOW,
         BLOCK_DURATION
       );
 
       if (!rateLimit.allowed) {
-        const [ip, userAgent] = clientId.split('|');
         const geo = await getGeoInfo(ip);
         const device = parseUserAgent(userAgent);
 
@@ -244,7 +246,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
 
-    const [ip, userAgent] = clientId.split('|');
     const geo = isTestEnv
       ? { location: 'E2E Test Environment', isp: 'Playwright' }
       : await getGeoInfo(ip);

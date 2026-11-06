@@ -97,7 +97,8 @@ describe('POST /api/ai/generate-notif-message', () => {
     const body = await response.json();
 
     expect(response.status).toBe(500);
-    expect(body.error).toContain('Gemini API Error');
+    expect(body.error).toBe('Internal Server Error');
+    expect(body.error).not.toContain('Gemini');
   });
 
   it('returns 500 when AI returns empty candidates', async () => {
@@ -113,7 +114,8 @@ describe('POST /api/ai/generate-notif-message', () => {
     const body = await response.json();
 
     expect(response.status).toBe(500);
-    expect(body.error).toContain('No response');
+    // Generic error — route no longer leaks AI provider failure details.
+    expect(body.error).toBe('Internal Server Error');
   });
 
   it('returns 500 when AI returns invalid JSON', async () => {
@@ -131,7 +133,8 @@ describe('POST /api/ai/generate-notif-message', () => {
     const body = await response.json();
 
     expect(response.status).toBe(500);
-    expect(body.error).toContain('not valid JSON');
+    // Parse failures are logged server-side; response stays generic.
+    expect(body.error).toBe('Internal Server Error');
   });
 
   it('cleans markdown code fences from AI response', async () => {

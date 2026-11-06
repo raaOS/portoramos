@@ -4,8 +4,6 @@ import {
   CLOUDFLARE_CONNECTING_IP_HEADER,
   UNKNOWN_IP,
   VERCEL_FORWARDED_FOR_HEADER,
-  X_FORWARDED_FOR_HEADER,
-  X_REAL_IP_HEADER,
 } from '@/lib/security/constants';
 
 /**
@@ -31,18 +29,10 @@ export function getClientIP(request: Request | NextRequest): string {
     return cfIP.trim();
   }
 
-  // Fallback for non-Vercel/Cloudflare environments
-  // Note: These can be spoofed, so rate limiting based on this is not fully reliable
-  const forwarded = request.headers.get(X_FORWARDED_FOR_HEADER);
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-
-  const realIP = request.headers.get(X_REAL_IP_HEADER);
-  if (realIP) {
-    return realIP.trim();
-  }
-
+  // SECURITY: Never trust X-Forwarded-For / X-Real-IP for rate-limit identity.
+  // On Vercel/Cloudflare the trusted headers above are always present; falling
+  // back to client-controlled headers would allow rate-limit spoofing on any
+  // other host (dev tunnel, self-host, misconfigured proxy).
   return UNKNOWN_IP;
 }
 

@@ -75,7 +75,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(parsed);
   } catch (error: unknown) {
     console.error('AI Generate Notif Message Error:', error);
-    const errorMsg = error instanceof Error ? error.message : 'Internal Server Error';
-    return NextResponse.json({ error: errorMsg }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

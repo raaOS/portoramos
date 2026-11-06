@@ -41,6 +41,42 @@ export function useWindowPersistence({ csrfToken, isAdmin }: UseWindowPersistenc
    * Saves window position and default open state to the server.
    * Only works for authenticated admins.
    */
+  // Declared before saveWindowPreference so the retry closure captures a
+  // stable binding (React Compiler forbids TDZ access across useCallbacks).
+  const flushPendingPreferences = useCallback(
+    async (windowPreferences: Record<string, unknown>) => {
+      if (!isAdmin || !csrfToken) return;
+      try {
+        const response = await fetch('/api/about', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+          },
+          credentials: 'include',
+          body: JSON.stringify({ windowPreferences }),
+        });
+        if (response.ok) {
+          for (const id of Object.keys(windowPreferences)) {
+            delete pendingWindowPreferenceUpdatesRef.current[id];
+          }
+        }
+      } catch (error) {
+        console.error('[WindowManager] Retry save preference failed:', error);
+      }
+    },
+    [csrfToken, isAdmin]
+  );
+
+  const scheduleRetryFlush = useCallback(() => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      const pending = pendingWindowPreferenceUpdatesRef.current;
+      if (Object.keys(pending).length === 0) return;
+      void flushPendingPreferences(pending);
+    }, 2000);
+  }, [flushPendingPreferences]);
+
   const saveWindowPreference = useCallback(
     async (
       id: string,
@@ -124,6 +160,13 @@ export function useWindowPersistence({ csrfToken, isAdmin }: UseWindowPersistenc
           }
         } catch (error) {
           console.error('[WindowManager] Failed to save preference:', error);
+          // Restore failed payload so the next save retries instead of
+          // silently dropping position/size updates forever.
+          pendingWindowPreferenceUpdatesRef.current = {
+            ...windowPreferences,
+            ...pendingWindowPreferenceUpdatesRef.current,
+          };
+          scheduleRetryFlush();
         } finally {
           persistTimeoutRef.current = setTimeout(() => {
             isPersistingRef.current = false;
@@ -132,7 +175,7 @@ export function useWindowPersistence({ csrfToken, isAdmin }: UseWindowPersistenc
         }
       }, 800);
     },
-    [csrfToken, isAdmin]
+    [csrfToken, isAdmin, scheduleRetryFlush]
   );
 
   const flushWindowPositions = useCallback(async () => {

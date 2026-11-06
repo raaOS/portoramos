@@ -39,6 +39,7 @@ export async function sendJobBotMessage(
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15_000),
   });
 
   if (!response.ok) {
@@ -61,6 +62,7 @@ export async function answerJobBotCallback(
       callback_query_id: callbackQueryId,
       text,
     }),
+    signal: AbortSignal.timeout(15_000),
   });
 }
 
@@ -89,5 +91,6 @@ export async function sendJobBotDocument(
   return fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
     method: 'POST',
     body: formData,
+    signal: AbortSignal.timeout(30_000),
   });
 }

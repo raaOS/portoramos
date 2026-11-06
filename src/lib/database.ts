@@ -316,9 +316,11 @@ class D1Reference implements DatabaseReferenceLike {
     // Upgrade nested path writes to use atomic transaction retry
     const res = await this.transaction(() => value);
     if (!res.committed) {
-      const currentTopValue = await getD1Value(topLevelKey);
-      const nextTopValue = setNested(currentTopValue ?? {}, rest, value);
-      await setD1Value(topLevelKey, nextTopValue);
+      // SECURITY: same as applyD1Updates — do not silently fall back to
+      // non-atomic read-modify-write (lost updates under concurrency).
+      throw new Error(
+        `Concurrent nested set conflict on path "${this.path}" (key "${topLevelKey}")`
+      );
     }
   }
 
@@ -413,21 +415,13 @@ async function applyD1Updates(updates: Record<string, unknown>) {
     }
 
     if (!committed) {
-      let topValue = await getD1Value(topLevelKey);
-
-      for (const { rest, value } of entries) {
-        if (rest.length === 0) {
-          topValue = value;
-        } else {
-          topValue = setNested(topValue ?? {}, rest, value);
-        }
-      }
-
-      if (topValue === null || topValue === undefined) {
-        await deleteD1Value(topLevelKey);
-      } else {
-        await setD1Value(topLevelKey, topValue);
-      }
+      // SECURITY: Do NOT fall back to a non-atomic read-modify-write after
+      // CAS retries are exhausted — that reintroduces lost updates under
+      // concurrent writers. Fail loudly so ContentService can invalidate
+      // cache and report the error instead of silently overwriting peers.
+      throw new Error(
+        `Concurrent update conflict on key "${topLevelKey}" after ${3} CAS attempts`
+      );
     }
   }
 }

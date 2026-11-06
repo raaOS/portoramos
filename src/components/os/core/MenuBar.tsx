@@ -63,7 +63,18 @@ export default function MenuBar({
   // Lazy-load Lottie animation data after mount
   useEffect(() => {
     if (cachedLogoAnimationData) return;
-    loadLogoAnimationData().then(setLogoAnimationData);
+    let cancelled = false;
+    loadLogoAnimationData()
+      .then((data) => {
+        if (!cancelled) setLogoAnimationData(data);
+      })
+      .catch((error) => {
+        console.warn('[MenuBar] Failed to load logo animation:', error);
+        if (!cancelled) setLogoAnimationData(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

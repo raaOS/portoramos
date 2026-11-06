@@ -329,7 +329,9 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
             if (dur > 0) {
               setDuration(dur);
             }
-          } catch {}
+          } catch (err) {
+            console.warn('[MusicPlayer] yt time poll threw:', err);
+          }
         }
       }, 500);
     }
@@ -349,7 +351,9 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     if (ytPlayerRef.current && typeof ytPlayerRef.current.setVolume === 'function') {
       try {
         ytPlayerRef.current.setVolume(combinedVolume * 100);
-      } catch {}
+      } catch (err) {
+        console.warn('[MusicPlayer] yt pauseVideo threw:', err);
+      }
     }
   }, [playerVolume, systemVolume]);
 
@@ -387,7 +391,9 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
       if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === 'function') {
         try {
           ytPlayerRef.current.pauseVideo();
-        } catch {}
+        } catch (err) {
+          console.warn('[MusicPlayer] yt pauseVideo threw:', err);
+        }
       }
 
       const audio = ensureAudio();
@@ -410,7 +416,9 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
       if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === 'function') {
         try {
           ytPlayerRef.current.pauseVideo();
-        } catch {}
+        } catch (err) {
+          console.warn('[MusicPlayer] yt pauseVideo threw:', err);
+        }
       }
     } else {
       const audio = audioRef.current;
@@ -450,14 +458,18 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
             }
             ytPlayerRef.current.loadVideoById(nextTrack.id);
             ytPlayerRef.current.playVideo();
-          } catch {}
+          } catch (err) {
+            console.warn('[MusicPlayer] yt load/play threw:', err);
+          }
         }
       }
     } else {
       if (ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === 'function') {
         try {
           ytPlayerRef.current.pauseVideo();
-        } catch {}
+        } catch (err) {
+          console.warn('[MusicPlayer] yt pauseVideo threw:', err);
+        }
       }
 
       const activeAudio = ensureAudio();
@@ -524,7 +536,9 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
         ytPlayerRef.current.loadVideoById(track.id);
         ytPlayerRef.current.playVideo();
         setIsPlaying(true);
-      } catch {}
+      } catch (err) {
+        console.warn('[MusicPlayer] yt pauseVideo threw:', err);
+      }
     } else {
       setIsPlaying(true);
     }
@@ -603,7 +617,9 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
       if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === 'function') {
         try {
           ytPlayerRef.current.destroy();
-        } catch {}
+        } catch (err) {
+          console.warn('[MusicPlayer] yt destroy threw:', err);
+        }
       }
       ytPlayerRef.current = null;
     };

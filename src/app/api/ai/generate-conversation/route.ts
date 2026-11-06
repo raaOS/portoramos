@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
       );
     }
     console.error('AI Generate Conversation Error:', error);
-    const errorMsg = error instanceof Error ? error.message : 'Internal Server Error';
-    return NextResponse.json({ error: errorMsg }, { status: 500 });
+    // Do not leak provider/internal error details to the client.
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

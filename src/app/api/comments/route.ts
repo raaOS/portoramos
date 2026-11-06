@@ -6,6 +6,7 @@ import { success, badRequest, unauthorized, serverError, rateLimit } from '@/lib
 import { z } from 'zod';
 import { sanitizeInput } from '@/lib/security/sanitization';
 import { getBannedWords, findBannedWord } from '@/lib/services/bannedWordsService';
+import { enforceRequestRateLimit } from '@/lib/security/request';
 
 interface Comment {
   id: string;
@@ -49,6 +50,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Flood control per IP: cooldown-by-name alone is bypassed by rotating name.
+    const ipLimit = await enforceRequestRateLimit(request, 'comments', 10, 60_000, 60_000);
+    if (!ipLimit.allowed) {
+      return rateLimit(ipLimit.retryAfter ?? 60, 'Please wait before posting again');
+    }
+
     const body = await request.json();
     const { slug, website_url } = body;
     const incomingComment =

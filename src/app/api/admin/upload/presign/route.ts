@@ -136,11 +136,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (e) {
     console.error('Presign error:', e);
-    return NextResponse.json(
-      {
-        error: e instanceof Error ? e.message : 'Failed to issue presigned URL',
-      },
-      { status: 500 }
-    );
+    // Do not leak internal/storage error messages to the client.
+    return NextResponse.json({ error: 'Failed to issue presigned URL' }, { status: 500 });
   }
 }

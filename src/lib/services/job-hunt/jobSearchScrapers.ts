@@ -129,6 +129,7 @@ export async function fetchGlintsDesign(): Promise<JobSearchResult[]> {
         'accept-language': 'id-ID,id;q=0.9,en;q=0.8',
       },
       cache: 'no-store',
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!response.ok) return [];
@@ -148,6 +149,7 @@ export async function fetchRemoteOk(query: string): Promise<JobSearchResult[]> {
         accept: 'application/json',
       },
       cache: 'no-store',
+      signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) return [];
     const data = (await response.json()) as Array<Record<string, unknown>>;
@@ -178,6 +180,7 @@ export async function fetchArbeitnow(query: string): Promise<JobSearchResult[]> 
     const response = await fetch('https://www.arbeitnow.com/api/job-board-api', {
       headers: { accept: 'application/json', 'user-agent': USER_AGENT },
       cache: 'no-store',
+      signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) return [];
     const payload = (await response.json()) as { data?: Array<Record<string, unknown>> };

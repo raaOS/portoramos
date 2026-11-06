@@ -134,17 +134,32 @@ function ensureAuthRuntime() {
 
   const handleVisibilityChange = () => {
     if (!document.hidden) {
-      void checkAuth(true);
+      // Visitors: TTL-gated refresh only (no force) when tab regains focus.
+      void checkAuth(!authSnapshot.isAdmin);
     }
   };
   _visibilityHandler = handleVisibilityChange;
-
   document.addEventListener('visibilitychange', handleVisibilityChange);
-  _intervalId = window.setInterval(() => {
-    if (!document.hidden) {
-      void checkAuth(true);
+
+  let lastAdminMode: boolean | null = null;
+  const applyIntervalForMode = () => {
+    const adminMode = authSnapshot.isAdmin;
+    if (adminMode === lastAdminMode) return;
+    lastAdminMode = adminMode;
+    if (_intervalId !== null) {
+      window.clearInterval(_intervalId);
+      _intervalId = null;
     }
-  }, 60_000);
+    // Admin: 60s forced CSRF/auth refresh. Public visitor: 5 min TTL-gated
+    // (AUTH_CACHE_TTL 45s still applies inside checkAuth(false)).
+    const intervalMs = adminMode ? 60_000 : 300_000;
+    _intervalId = window.setInterval(() => {
+      if (document.hidden) return;
+      void checkAuth(adminMode);
+    }, intervalMs);
+  };
+  applyIntervalForMode();
+  listeners.add(applyIntervalForMode);
 }
 
 async function logoutWithSharedState() {

@@ -290,12 +290,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Basic Validation
+    // SECURITY: SVG rejected globally — stored XSS risk when served
+    // same-origin as image/svg+xml without CSP (proxy skips static assets).
+    if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+      return NextResponse.json(
+        { error: 'SVG uploads are not allowed. Use PNG, WebP, JPG, or AVIF.' },
+        { status: 415 }
+      );
+    }
+
     const validTypes = [
       'image/jpeg',
       'image/png',
       'image/webp',
       'image/gif',
-      'image/svg+xml',
       'image/heic',
       'image/heif',
       'image/avif',

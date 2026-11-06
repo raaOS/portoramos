@@ -153,20 +153,31 @@ export const aboutService = {
         lastUpdated: new Date().toISOString(),
       };
 
-      const oldAssets = extractAboutAssets(current);
-      const newAssets = extractAboutAssets(mergedData);
-      const orphanedAssets = oldAssets.filter((url) => !newAssets.includes(url));
-
       const success = await service.saveData(mergedData, 'Update about page content');
       if (!success) {
         throw new Error('ContentService failed to save data');
       }
 
-      // Cleanup storage reliably before function completion
-      if (orphanedAssets.length > 0) {
-        await deleteStorageAssets(orphanedAssets, 'AboutService').catch((e) =>
-          console.warn('[AboutService] Failed to clean up orphaned assets:', e)
+      // ORPHAN CLEANUP: recompute orphans from a FRESH post-write snapshot.
+      // Using the pre-write `current` snapshot can delete assets that a
+      // concurrent request still references (lost-update + R2 delete risk).
+      try {
+        const fresh = await this.getAboutData(true, true);
+        const freshAssets = extractAboutAssets(fresh);
+        const mergedAssets = extractAboutAssets(mergedData);
+        // Assets present in previous state but not in the state we just wrote
+        // AND not in the fresh state are safe to delete.
+        const oldAssets = extractAboutAssets(current);
+        const orphanedAssets = oldAssets.filter(
+          (url) => !mergedAssets.includes(url) && !freshAssets.includes(url)
         );
+        if (orphanedAssets.length > 0) {
+          await deleteStorageAssets(orphanedAssets, 'AboutService').catch((e) =>
+            console.warn('[AboutService] Failed to clean up orphaned assets:', e)
+          );
+        }
+      } catch (orphanErr) {
+        console.warn('[AboutService] Skipping orphan cleanup after save:', orphanErr);
       }
 
       return mergedData;

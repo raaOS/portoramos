@@ -6,12 +6,13 @@ test.describe('Grade A Public Experience', () => {
     await expect(page.locator('body')).toBeVisible();
 
     const startScreen = page.getByTestId('os-start-screen');
-    const powerPrompt = page.getByText('Click to Start').first();
 
     try {
       await expect(startScreen).toBeVisible({ timeout: 5000 });
-
-      await powerPrompt.click();
+      // Wait until the boot state machine reaches 'ready' (click enabled).
+      await expect(startScreen).toHaveAttribute('data-boot-state', 'ready', { timeout: 8000 });
+      // Click the overlay root — the visible prompt is pointer-events:none.
+      await startScreen.click();
       await expect(startScreen).toBeHidden({ timeout: 8000 });
     } catch {
       console.log('Start screen not found or boot already completed');
@@ -61,21 +62,24 @@ test.describe('Grade A Public Experience', () => {
 
     // Wait for grid to load using data attribute
     await page.waitForSelector('[data-projects-grid]', { timeout: 10000 });
-    await page.waitForSelector('a[href^="/projects/"]', { timeout: 10000 });
+    // Grid cards render either as <a data-project-card href="/projects/..."> (plain
+    // link) or as <div data-project-card> with an onClick router push (grid applies
+    // a view-transition handler), so match on the data attribute, not the tag.
+    await page.waitForSelector('[data-project-card]', { timeout: 10000 });
 
-    // Find first project link - using more flexible selector
-    const firstProjectLink = page.locator('a[href^="/projects/"]').first();
+    const firstProjectCard = page.locator('[data-project-card]').first();
 
-    if ((await firstProjectLink.count()) > 0) {
-      const href = await firstProjectLink.getAttribute('href');
-      console.log('Navigating to project:', href);
+    if ((await firstProjectCard.count()) > 0) {
+      console.log('Opening first project card');
 
-      await firstProjectLink.click();
-      // View Transitions may delay the load event; use assertion-based URL check
-      await expect(page).toHaveURL(/\/projects\//, { timeout: 15000 });
+      await firstProjectCard.click();
+      // On /projects the grid opens the detail inside an OS window modal
+      // (data-window-id="project-<id>"), not a URL navigation.
+      const projectWindow = page.locator('[data-window-id^="project-"]');
+      await expect(projectWindow).toBeVisible({ timeout: 15000 });
 
-      // Verify project detail loads
-      await expect(page.locator('h1')).toBeVisible();
+      // Verify project detail content loads inside the window
+      await expect(projectWindow.locator('h1').first()).toBeVisible();
     } else {
       console.log('No projects found in grid to test navigation');
       test.skip();

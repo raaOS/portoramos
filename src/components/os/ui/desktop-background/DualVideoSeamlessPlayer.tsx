@@ -136,7 +136,7 @@ export function DualVideoSeamlessPlayer({
       loop
       playsInline
       autoPlay
-      preload="auto"
+      preload="metadata"
       disablePictureInPicture
       onCanPlay={handleReady}
       onLoadedData={handleReady}

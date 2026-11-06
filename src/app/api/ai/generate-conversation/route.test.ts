@@ -109,7 +109,8 @@ describe('POST /api/ai/generate-conversation', () => {
     const body = await response.json();
 
     expect(response.status).toBe(500);
-    expect(body.error).toContain('Gemini API Error');
+    expect(body.error).toBe('Internal Server Error');
+    expect(body.error).not.toContain('Gemini');
   });
 
   it('returns 500 when AI returns empty candidates', async () => {
@@ -125,7 +126,8 @@ describe('POST /api/ai/generate-conversation', () => {
     const body = await response.json();
 
     expect(response.status).toBe(500);
-    expect(body.error).toContain('No response');
+    // Generic error — route no longer leaks AI provider failure details.
+    expect(body.error).toBe('Internal Server Error');
   });
 
   it('returns 500 when AI returns invalid JSON', async () => {
@@ -143,6 +145,7 @@ describe('POST /api/ai/generate-conversation', () => {
     const body = await response.json();
 
     expect(response.status).toBe(500);
+    // Explicit parse error (not a leak of provider internals).
     expect(body.error).toBe('Invalid JSON response from AI');
   });
 

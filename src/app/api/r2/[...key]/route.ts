@@ -123,6 +123,13 @@ function buildObjectHeaders(input: {
   if (input.lastModified) headers.set('last-modified', input.lastModified.toUTCString());
   if (input.contentRange) headers.set('content-range', input.contentRange);
 
+  if (input.key.toLowerCase().endsWith('.svg')) {
+    const svgHeaders = svgSecurityHeaders();
+    for (const [k, v] of Object.entries(svgHeaders)) {
+      headers.set(k, v);
+    }
+  }
+
   return headers;
 }
 
@@ -174,4 +181,13 @@ function contentTypeForKey(key: string) {
   };
 
   return types[ext || ''] || 'application/octet-stream';
+}
+
+/** Extra headers for SVG: prevent script execution if an old SVG remains in R2. */
+function svgSecurityHeaders(): Record<string, string> {
+  return {
+    'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+    'x-content-type-options': 'nosniff',
+    'content-disposition': 'attachment',
+  };
 }

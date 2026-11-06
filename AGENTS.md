@@ -94,11 +94,11 @@ src/
 | 12  | `src/lib/jobBot/handler.ts`                               | Logika bot Telegram Job Hunter; scraper situs loker (Glints/Jobstreet), parser HTML/API, inline buttons router.           | Putusnya rantai callback Telegram API, kegagalan rate-limiting, kerusakan format teks pesan Telegram.  |
 | 13  | `src/components/os/windows/ExplorerWindow/index.tsx`      | Finder/Explorer simulator client; render pohon direktori virtual, double-click gestures, Quick Look modal (PDF/Markdown). | Traversal folder melambat, double-click gesture macet, rendering ikon berkas rusak.                    |
 | 14  | `src/lib/services/explorerService.ts`                     | Layanan tree virtual file system (D1 & R2); SQL parent-child, copy/delete atomik R2, TOCTOU guard.                        | Kehilangan referensi file virtual (dangling files) atau terhapusnya media asli R2 secara permanen.     |
-| 15  | `src/components/canvas/InfiniteCanvasView.tsx`            | Galeri 3D proyek interaktif; Three.js / React Three Fiber setup, custom shaders, orbital camera limits, render loop.      | WebGL context lost, lag parah karena alokasi ulang objek 3D di setiap render, camera jittering.        |
+| 15  | `src/components/canvas/InfiniteCanvasView.tsx`            | Galeri infinite-canvas proyek; custom canvas engine (TIDAK pakai three.js — lihat package.json), orbital camera, render loop. | Camera jittering, lag karena realokasi posisi kartu di setiap render, memory leak pada loop input.     |
 | 16  | `src/components/os/hooks/useJellyDrag.ts`                 | Kalkulasi physics elastis untuk interaksi drag-and-drop window.                                                           | Referensi pointer frame-by-frame terputus, animasi drag menjadi patah atau error sinkronisasi.         |
 | 17  | `src/components/os/utils/positionSync.ts`                 | Kalkulasi sinkronisasi koordinat posisi window di layar desktop.                                                          | Mengacaukan kalkulasi posisi window, menyebabkan window melompat atau tidak sinkron antar komponen.    |
 | 18  | `src/components/os/context/UnifiedZIndexContext.tsx`      | Mengelola tumpukan lapisan/z-index seluruh window OS.                                                                     | Urutan z-index OS terganggu, window aktif bisa tenggelam di belakang background atau tidak fokus.      |
-| 19  | `src/components/canvas/infiniteCanvasEngine.ts`           | Kalkulasi matriks dan render loop utama 3D Engine.                                                                        | Terjadi kebocoran memori (memory leak), crash tab browser, atau WebGL buffer error.                    |
+| 19  | `src/components/canvas/infiniteCanvasEngine.ts`           | Kalkulasi matriks posisi & engine render infinite canvas (custom, bukan three.js).                                          | Terjadi kebocoran memori (memory leak) atau crash tab browser karena loop yang tidak di-cleanup.       |
 | 20  | `src/components/os/utils/SoundManager.ts`                 | Mengelola koneksi buffer audio Web Audio API secara global.                                                               | Audio menumpuk (double-play), antrean buffer rusak saat komponen memicu re-render.                     |
 | 21  | `src/contexts/MusicPlayerContext.tsx`                     | State global pemutar musik dan antrean track.                                                                             | Terputusnya state musik atau pemutaran tidak terkendali (double audio layer).                          |
 | 22  | `src/components/os/ui/ExitIntentFeedback.tsx`             | Logika deteksi kursor dan exit intent feedback.                                                                           | Gestur kursor terganggu dan memicu modal secara salah.                                                 |
@@ -124,10 +124,12 @@ src/
 - **Navigasi & Scroll:** `lenis`, `@dnd-kit/core` (drag and drop), `next-view-transitions` (`^0.3.5`).
 - **State / Fetching:** `@tanstack/react-query`.
 - **Ikon:** `lucide-react`, `@tabler/icons-react`.
-- **Visual 3D:** `three`, `@react-three/fiber`, `@react-three/drei`.
 - **Media Processing:** `sharp`, `@ffmpeg/ffmpeg` (WASM), `react-easy-crop`.
 - **Format Dokumen:** `html-to-image`, `jspdf`, `jspdf-autotable`.
 - **Validasi & Utilitas:** `zod`, `uuid`, `fuse.js`, `jsonwebtoken`, `jose`.
+
+> [!IMPORTANT]
+> **`three` / `@react-three/*` TIDAK ada di `package.json`.** Infinite canvas memakai custom canvas engine (`infiniteCanvasEngine.ts`). Jangan menambahkan dependensi three.js kecuali diminta eksplisit — bundle size & Vercel Hobby quota sensitif.
 
 ---
 
@@ -209,16 +211,61 @@ Setiap request ke `/r2/<key>` akan diarahkan melalui fungsi serverless Vercel (`
 
 - Otentikasi admin diamankan menggunakan token JWT (`admin_token`) yang disimpan dalam cookie terenkripsi HTTP-only.
 - Filter otentikasi diatur di `src/proxy.ts` dan dievaluasi kembali di file middleware (`src/middleware/auth.ts`).
+- Login rate-limit memakai **IP saja** (`login_${ip}` via `getClientIP`); user-agent hanya untuk display audit, bukan bagian rate-limit key.
+- `GOOGLE_MAPS_API_KEY` **hanya boleh server-side** — jangan di-fallback ke `NEXT_PUBLIC_*`.
 
 ### Proteksi CSRF
 
-- Setiap request mutasi data (`POST`, `PUT`, `DELETE`) wajib menyertakan header CSRF token yang divalidasi lewat fungsi `checkCSRF()` (`src/middleware/csrf.ts`).
+- Setiap request mutasi data (`POST`, `PUT`, `DELETE`, `PATCH`) wajib menyertakan header CSRF token yang divalidasi lewat fungsi `checkCSRF()` (`src/middleware/csrf.ts`).
 - Sinkronisasi token CSRF antar tab admin dilakukan secara real-time melalui BroadcastChannel (`src/lib/security/client-csrf.ts`).
+- **Allowlist CSRF** (`src/middleware/csrf.ts`): `/api/admin/login`, `/api/chat/send`, `/api/chat/session`, `/api/chat/voice`, webhooks Telegram, `/api/translate`, `/api/admin/pin/verify`, `/api/metrics`, `/api/comments`, `/api/analytics`, `/api/feedback`.
+- **`/api/admin/logout` dan `/api/chat/clear` TIDAK di-allowlist** — client wajib kirim `x-csrf-token` (dari cookie `csrf_token`, `httpOnly:false`).
+
+### Chat Session (Signed Visitor ID)
+
+- Endpoint baru `POST /api/chat/session` menerbitkan `{ visitorId, signature }` (HMAC-SHA256 dengan `JWT_SECRET`).
+- `GET /api/chat/sync`, `POST /api/chat/clear`, `POST /api/chat/send` **wajib** `visitorId` + `sig` valid; selain itu 403.
+- Client menyimpan session di `localStorage` key `ramos_chat_session`; bootstrap di `useChatSync`.
+- Old unsigned visitorId di-reset sekali (session baru diterbitkan).
+
+### Upload Media (Anti-XSS)
+
+- **SVG total ditolak** di `/api/admin/upload` (415) — `image/svg+xml` dan `.svg`.
+- `isStaticAsset` di middleware **tidak** skip `.svg` supaya CSP header tetap jalan.
+- `/api/r2/<key>` menyuntikkan `svgSecurityHeaders()` (CSP sandbox + nosniff + attachment) untuk dokumen vector.
+- `next.config.mjs`: `dangerouslyAllowSVG: false`.
 
 ### Rate Limiting
 
-- Proteksi brute force dikendalikan secara persisten menggunakan database Cloudflare D1 sebagai pencatat rate limit (`src/lib/dataRateLimit.ts`).
+- Proteksi brute force dikendalikan secara persisten menggunakan database Cloudflare D1 sebagai pencatat rate limit (`src/lib/dataRateLimit.ts` / `enforceRequestRateLimit`).
 - Sistem fallback menggunakan cache memory lokal jika koneksi ke database D1 terputus atau saat menjalankan unit testing.
+- Route chat (`sync`/`clear`/`session`) memakai rate limit **per IP** + **per visitorId** (D1-backed).
+- Error AI & internal generik: route generate-* mengembalikan `'Internal Server Error'` — jangan leak detail provider ke client.
+
+### Content-Security-Policy (Status Jujur)
+
+- `script-src` mempertahankan `'unsafe-inline'` karena Next.js App Router menyuntikkan inline bootstrap/hydration script tanpa nonce hook di setup ini.
+- Menghapus `unsafe-inline` **akan memecahkan hydration di production** — jangan dihapus tanpa nonce/evaluasi menyeluruh.
+- `style-src 'unsafe-inline'` juga dipertahankan (risiko lebih rendah daripada script).
+
+---
+
+## 8b. Aturan "Jangan Asumsikan" (Anti-Miskomunikasi AI)
+
+Sebelum mengklaim dependensi/interval/konfigurasi, **baca kode nyata** — jangan percaya komentar basi atau dokumentasi lama:
+
+1. **Dependensi 3D:** `three` & `@react-three/*` **tidak** ada di `package.json`. Infinite canvas = custom engine. Grep `from 'three'` sebelum mengklaim.
+2. **Interval polling:** nilai aktual ada di kode, bukan hanya di AGENTS.md:
+   - `useChatSync`: **8s aktif / 60s background** (`src/hooks/useChatSync.ts`).
+   - `useRealtimeSync`: **30s** (`src/lib/services/realtimeSync.ts`).
+   - `useDataStatus` health: **60s** (`src/app/admin/hooks/useDataStatus.ts`).
+   - `useAdminAuth`: **60s force (admin) / 300s TTL-gated (visitor)**.
+   - `POLLING.UPDATE_INTERVAL` (projects): **30s** (`src/lib/constants.ts`).
+3. **XFF / IP:** `getClientIP` **tidak** fallback ke `X-Forwarded-For` / `X-Real-IP` (spoofable di luar Vercel). Hanya Vercel headers yang dipercaya.
+4. **Cache header:** `swr` + `must-revalidate` memang kontradiktif — `must-revalidate` sudah dihapus dari header `/` di `next.config.mjs`.
+5. **CSRF allowlist:** daftar final di `src/middleware/csrf.ts` — logout & chat/clear sengaja **wajib** CSRF.
+6. **CSP `unsafe-inline`:** sengaja dipertahankan (lihat §8) — jangan "memperbaiki" tanpa memahami hydration Next App Router.
+7. **File sensitif:** tetap dilarang di-split/direfaktor (tabel §3); perubahan wajib **in-place bugfix** dengan bukti kode.
 
 ---
 
@@ -310,8 +357,12 @@ Guna menjaga agar aplikasi tidak melewati batas kuota bulanan gratis pada Vercel
 
 - **`useChatSync` (Polling Obrolan):** Ditetapkan ke **8 detik saat aktif / 60 detik saat background** (menghemat invocations serverless hingga ~60%).
 - **`useRealtimeSync` (Polling Versi Data):** Ditetapkan ke **30 detik** (mengurangi konsumsi request D1).
+- **`useDataStatus` (Admin Health):** Ditetapkan ke **60 detik**.
+- **`useAdminAuth`:** **60 detik force** hanya saat `isAdmin === true`; visitor **300 detik TTL-gated**.
+- **`chatStore.getAllMessages`:** default **limit 100 pesan terakhir** (payload sync & AI context).
 - **Watchdog Cron:** Dijalankan setiap **5 menit** menggunakan cron external di [cron-job.org](https://cron-job.org/) dengan menyertakan header `Authorization: Bearer <CRON_SECRET>`.
 - **Transformasi Gambar:** Tag `<Image>` Next.js dikonfigurasi menggunakan transform WebP/AVIF dengan cache jangka panjang. Gunakan atribut `unoptimized` jika gambar berasal dari API eksternal yang sudah teroptimasi.
+- **Fetch eksternal (Telegram/job scrapers):** selalu pakai `AbortSignal.timeout(...)` — jangan biarkan request menggantung hingga hang serverless.
 
 ---
 
@@ -390,5 +441,5 @@ Guna mengunci dependency yang rentan, pastikan kolom `overrides` di file `packag
 
 ---
 
-_Terakhir Diperbarui: 2026-06-11_
-_Tingkat Kepercayaan Informasi: Terverifikasi Penuh oleh Pengujian Unit & Sistem_
+_Terakhir Diperbarui: 2026-09-24_
+_Tingkat Kepercayaan Informasi: Terverifikasi Penuh oleh Pengujian Unit & Sistem; klaim dependensi/interval dicross-check ke kode source pada audit 2026-09-24_

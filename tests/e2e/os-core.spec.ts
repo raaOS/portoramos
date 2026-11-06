@@ -3,12 +3,14 @@ import { test, expect, type Page } from '@playwright/test';
 // Helper to handle boot sequence using the StartScreen lifecycle itself.
 async function handleBootSequence(page: Page) {
   const startScreen = page.getByTestId('os-start-screen');
-  const powerPrompt = page.getByText('Click to Start').first();
 
   try {
     await expect(startScreen).toBeVisible({ timeout: 5000 });
-    await powerPrompt.click();
-    await expect(startScreen).toBeHidden({ timeout: 8000 });
+    // Wait until the boot state machine reaches 'ready' (click enabled).
+    await expect(startScreen).toHaveAttribute('data-boot-state', 'ready', { timeout: 8000 });
+    // Click the overlay root — the visible prompt is pointer-events:none.
+    await startScreen.click();
+    await expect(startScreen).toBeHidden({ timeout: 15000 });
   } catch {
     // Boot sequence may already be completed.
   }
@@ -36,7 +38,9 @@ test.describe('Ramos OS Core Functionality & Accessibility', () => {
       null,
       { timeout: 5000 }
     );
-    await page.getByText('Click to Start').first().click();
+    await expect(startScreen).toHaveAttribute('data-boot-state', 'ready', { timeout: 8000 });
+    // Click the overlay root — the visible prompt is pointer-events:none.
+    await startScreen.click();
 
     await page.waitForFunction(
       () => {

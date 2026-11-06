@@ -74,7 +74,9 @@ export default function IndexClientWithAutoUpdate({
     queryFn: fetchProjects,
     refetchInterval: POLLING.UPDATE_INTERVAL,
     structuralSharing: true,
-    staleTime: 2000,
+    // PERF: was 2000ms — every visit re-fetched projects almost immediately,
+    // defeating initialData. Align with ISR revalidate=60 (page.tsx).
+    staleTime: POLLING.CLIENT_STALE_TIME,
     initialData,
   });
 

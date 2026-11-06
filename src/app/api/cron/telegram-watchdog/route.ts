@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { db } from '@/lib/database';
 import { buildJobBotWebhookSecret } from '@/lib/jobBot/config';
 import { cleanEnvVar } from '@/lib/utils/env';
@@ -99,8 +100,11 @@ function assertCronAuthorized(request: Request) {
     return json({ ok: false, error: 'CRON_SECRET is missing' }, 503);
   }
 
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${secret}`) {
+  const authHeader = request.headers.get('authorization') || '';
+  const expected = `Bearer ${secret}`;
+  const a = Buffer.from(authHeader, 'utf8');
+  const b = Buffer.from(expected, 'utf8');
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
     return json({ ok: false, error: 'Unauthorized' }, 401);
   }
 

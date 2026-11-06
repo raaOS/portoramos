@@ -117,7 +117,8 @@ describe('POST /api/ai/generate-testimonial', () => {
     const body = await response.json();
 
     expect(response.status).toBe(500);
-    expect(body.error).toContain('Gemini API Error');
+    expect(body.error).toBe('Internal Server Error');
+    expect(body.error).not.toContain('Gemini');
   });
 
   it('returns 500 when AI returns empty candidates', async () => {
@@ -133,7 +134,8 @@ describe('POST /api/ai/generate-testimonial', () => {
     const body = await response.json();
 
     expect(response.status).toBe(500);
-    expect(body.error).toContain('No response');
+    // Generic error — route no longer leaks AI provider failure details.
+    expect(body.error).toBe('Internal Server Error');
   });
 
   it('cleans markdown code fences from AI response', async () => {

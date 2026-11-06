@@ -181,6 +181,7 @@ export class ContentService<T> {
   }
 
   private async _doSave(data: T, _message?: string): Promise<boolean> {
+    const cacheKey = getCacheKey(this.dataPath);
     try {
       // For arrays, we save them directly to avoid converting to object with numeric keys.
       // For objects, we merge with updatedAt.
@@ -188,10 +189,12 @@ export class ContentService<T> {
         ? data
         : { ...(data as Record<string, unknown>), updatedAt: new Date().toISOString() };
 
-      // Atomically update cache with payload to prevent stale reads during DB write roundtrips
-      contentCache.set(getCacheKey(this.dataPath), payload as unknown as object, this.cacheTTL);
-
+      // SECURITY/INTEGRITY: only populate cache AFTER a successful D1 write.
+      // Setting cache before write poisons readers for the full TTL when the
+      // write fails (returns false without invalidating).
       await db.ref(this.dataPath).set(payload);
+
+      contentCache.set(cacheKey, payload as unknown as object, this.cacheTTL);
 
       // Log the activity (await to prevent serverless function termination before write finishes)
       const actionMessage = _message
@@ -202,6 +205,8 @@ export class ContentService<T> {
       return true;
     } catch (error) {
       console.error(`[ContentService] Error saving data to ${this.dataPath}:`, error);
+      // Invalidate any stale entry so the next read hits D1 (or fallback).
+      contentCache.delete(cacheKey);
       return false;
     }
   }

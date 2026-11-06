@@ -322,7 +322,7 @@ export const useStickyNotes = (
       // Convert to percentages for responsive positioning before saving
       const notesWithPercentages = notesToFlush.map(convertNoteToPercentages);
 
-      await fetch('/api/sticky-notes', {
+      const response = await fetch('/api/sticky-notes', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -331,7 +331,13 @@ export const useStickyNotes = (
         credentials: 'include',
         body: JSON.stringify(notesWithPercentages),
       });
-      isModified.current = false;
+      // Only mark clean when the server actually accepted the write.
+      // Clearing isModified on 401/429/500 loses notes permanently.
+      if (response.ok || response.status === 304) {
+        isModified.current = false;
+      } else {
+        console.warn(`[StickyNotes] Flush returned ${response.status}`);
+      }
     } catch (error) {
       console.error('[StickyNotes] Failed to flush notes:', error);
     }

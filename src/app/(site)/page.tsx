@@ -1,8 +1,6 @@
 import React from 'react';
-import { preload } from 'react-dom';
 import { loadHomepageData } from '@/lib/loaders';
 import HomeOSWrapper from '@/components/home/HomeOSWrapper';
-import { isVideoSource } from '@/lib/mediaPreview';
 
 // ISR: Revalidate homepage every 60 seconds
 export const revalidate = 60;
@@ -11,21 +9,10 @@ export default async function Home() {
   const { aboutData, experienceData, hardSkillsData, projects, testimonialsData } =
     await loadHomepageData();
 
-  const wallpaperConfig = aboutData?.wallpaperConfig;
-  if (wallpaperConfig?.collection?.length) {
-    const activeEntry = wallpaperConfig.activeWallpaperId
-      ? wallpaperConfig.collection.find((w) => w.id === wallpaperConfig.activeWallpaperId)
-      : wallpaperConfig.collection[0];
-    const rawUrl = activeEntry?.url;
-    if (rawUrl && (rawUrl.startsWith('/') || rawUrl.startsWith('http'))) {
-      const posterUrl = isVideoSource(rawUrl)
-        ? activeEntry.posterUrl || rawUrl
-        : rawUrl;
-      if (posterUrl) {
-        preload(posterUrl, { as: 'image', fetchPriority: 'high' });
-      }
-    }
-  }
+  // NOTE: manual preload of posterUrl was removed. DesktopBackground renders
+  // next/image with priority, which emits its own optimized preload link
+  // (/_next/image?...). Preloading the raw poster URL caused a duplicate
+  // download that never matched the optimized src.
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-[#050505]">

@@ -24,7 +24,7 @@ interface DataStatusSnapshot {
   health: HealthPayload | null;
 }
 
-const POLL_INTERVAL_MS = 30_000;
+const POLL_INTERVAL_MS = 60_000;
 
 // PERF: server snapshot harus referensi yang stabil. Object literal baru tiap
 // call memicu "result of getServerSnapshot should be cached to avoid an

@@ -477,20 +477,20 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      let updatedOrderIds: string[] = [];
+      // BUGFIX: compute new order OUTSIDE the setState updater.
+      // React does not guarantee the updater runs synchronously before the
+      // next statement — reading a mutated outer variable was unreliable.
+      const prevItems = sortedItems;
+      const oldIndex = prevItems.findIndex((i) => i.id === active.id);
+      const newIndex = prevItems.findIndex((i) => i.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
 
-      setSortedItems((prev) => {
-        const oldIndex = prev.findIndex((i) => i.id === active.id);
-        const newIndex = prev.findIndex((i) => i.id === over.id);
-        if (oldIndex === -1 || newIndex === -1) return prev;
+      const newItems = [...prevItems];
+      const [movedItem] = newItems.splice(oldIndex, 1);
+      newItems.splice(newIndex, 0, movedItem);
 
-        const newItems = [...prev];
-        const [movedItem] = newItems.splice(oldIndex, 1);
-        newItems.splice(newIndex, 0, movedItem);
-
-        updatedOrderIds = newItems.map((item) => item.id);
-        return newItems;
-      });
+      const updatedOrderIds = newItems.map((item) => item.id);
+      setSortedItems(newItems);
 
       if (updatedOrderIds.length > 0) {
         if (isAdmin) {
@@ -525,7 +525,7 @@ export default function Dock({ items, bouncingId, isMobile = false, dockConfig }
         }
       }
     },
-    [isAdmin, csrfToken, dockConfig]
+    [isAdmin, csrfToken, dockConfig, sortedItems]
   );
 
   // Suppress tooltips for 1000ms when any popover is closed (e.g. view mode selected)
