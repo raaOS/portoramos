@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef, startTransition } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { soundManager } from '@/components/os/utils/SoundManager';
 
 /**
@@ -11,6 +10,7 @@ import { soundManager } from '@/components/os/utils/SoundManager';
  * - Deduplikasi pesan server-side dengan temp message client-side.
  * - Notifikasi suara saat pesan admin baru diterima (hanya di tab visible).
  * - Zero external library dependency (bebas SWR / React Query).
+ * - Signed visitor session (HMAC) — mencegah IDOR pada sync/clear/send.
  *
  * @module useChatSync
  */
@@ -22,10 +22,73 @@ interface ChatMessage {
   timestamp: number;
 }
 
+interface ChatSessionState {
+  visitorId: string;
+  signature: string;
+}
+
+const SESSION_STORAGE_KEY = 'ramos_chat_session';
+
+function readStoredSession(): ChatSessionState | null {
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<ChatSessionState>;
+    if (typeof parsed.visitorId === 'string' && typeof parsed.signature === 'string') {
+      if (parsed.visitorId && parsed.signature) {
+        return { visitorId: parsed.visitorId, signature: parsed.signature };
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredSession(session: ChatSessionState) {
+  try {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+async function requestNewSession(): Promise<ChatSessionState> {
+  const res = await fetch('/api/chat/session', { method: 'POST' });
+  if (!res.ok) {
+    throw new Error('Failed to issue chat session');
+  }
+  const data = (await res.json()) as { visitorId?: string; signature?: string };
+  if (!data.visitorId || !data.signature) {
+    throw new Error('Invalid chat session payload');
+  }
+  const session = { visitorId: data.visitorId, signature: data.signature };
+  writeStoredSession(session);
+  return session;
+}
+
+function getCsrfHeader(): Record<string, string> {
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    if (match && match[1]) {
+      return { 'x-csrf-token': decodeURIComponent(match[1]) };
+    }
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
 const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error((await res.text()) || 'Network error');
-  return res.json();
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error((await res.text()) || 'Network error');
+    return res.json();
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 };
 
 /**
@@ -40,31 +103,48 @@ const fetcher = async (url: string) => {
  * ```
  */
 export function useChatSync(initialGreeting?: string) {
-  const [visitorId, setVisitorId] = useState<string>('');
+  const [session, setSession] = useState<ChatSessionState | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isAdminTyping, setIsAdminTyping] = useState(false);
   const [isPageVisible, setIsPageVisible] = useState(true);
+  const sessionRef = useRef<ChatSessionState | null>(null);
 
-  // Initial Visitor ID
+  // Keep ref in sync outside of render (react-hooks/refs forbids ref writes
+  // during render body).
   useEffect(() => {
-    try {
-      const storedId = localStorage.getItem('ramos_visitor_id');
-      startTransition(() => {
-        if (storedId) {
-          setVisitorId(storedId);
-        } else {
-          const newId = uuidv4();
-          localStorage.setItem('ramos_visitor_id', newId);
-          setVisitorId(newId);
+    sessionRef.current = session;
+  }, [session]);
+
+  // Initial signed visitor session (server-issued HMAC).
+  useEffect(() => {
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      try {
+        const stored = readStoredSession();
+        if (stored) {
+          if (!cancelled) {
+            startTransition(() => setSession(stored));
+          }
+          return;
         }
-      });
-    } catch {
-      startTransition(() => {
-        setVisitorId(uuidv4());
-      });
-    }
+        const fresh = await requestNewSession();
+        if (!cancelled) {
+          startTransition(() => setSession(fresh));
+        }
+      } catch (error) {
+        console.error('Chat session bootstrap failed', error);
+      }
+    };
+
+    void bootstrap();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const visitorId = session?.visitorId ?? '';
 
   // Track page visibility to optimize polling
   useEffect(() => {
@@ -96,8 +176,8 @@ export function useChatSync(initialGreeting?: string) {
   const syncInProgressRef = useRef(false);
 
   const performSync = useCallback(
-    async (currentVisitorId: string) => {
-      if (!currentVisitorId || syncInProgressRef.current) return;
+    async (currentSession: ChatSessionState) => {
+      if (!currentSession?.visitorId || syncInProgressRef.current) return;
       const now = Date.now();
       // Deduping interval: 2000ms
       if (now - lastFetchTimeRef.current < 2000) return;
@@ -105,7 +185,11 @@ export function useChatSync(initialGreeting?: string) {
       syncInProgressRef.current = true;
 
       try {
-        const data = await fetcher(`/api/chat/sync?visitorId=${currentVisitorId}`);
+        const params = new URLSearchParams({
+          visitorId: currentSession.visitorId,
+          sig: currentSession.signature,
+        });
+        const data = await fetcher(`/api/chat/sync?${params.toString()}`);
         setSyncError(false);
         if (data?.success) {
           // Update typing status from server
@@ -132,8 +216,21 @@ export function useChatSync(initialGreeting?: string) {
               });
             } else {
               setMessages((prev) => {
+                // Skip churn if nothing changed (same length + same last id)
+                if (
+                  prev.length > 0 &&
+                  data.messages.length === prev.filter((m) => !m.id.startsWith('temp-')).length
+                ) {
+                  const lastServer = data.messages[data.messages.length - 1];
+                  const lastLocal = prev[prev.length - 1];
+                  if (lastLocal && lastServer && lastLocal.id === lastServer.id) {
+                    return prev;
+                  }
+                }
+
                 const newMessages = [...prev];
                 let hasNewAdminMessage = false;
+                let changed = false;
 
                 data.messages.forEach((serverMsg: ChatMessage) => {
                   const existingTempIndex = newMessages.findIndex(
@@ -145,6 +242,7 @@ export function useChatSync(initialGreeting?: string) {
                   const hasConfirmed = newMessages.find((m) => m.id === serverMsg.id);
 
                   if (!hasConfirmed) {
+                    changed = true;
                     if (existingTempIndex >= 0) {
                       newMessages[existingTempIndex] = serverMsg;
                     } else {
@@ -153,6 +251,8 @@ export function useChatSync(initialGreeting?: string) {
                     }
                   }
                 });
+
+                if (!changed) return prev;
 
                 if (hasNewAdminMessage) {
                   if (typeof document === 'undefined' || document.visibilityState === 'visible') {
@@ -176,20 +276,20 @@ export function useChatSync(initialGreeting?: string) {
 
   // Polling with Smart Interval & Focus Revalidation
   useEffect(() => {
-    if (!visitorId) return;
+    if (!session?.visitorId) return;
 
     // Asynchronous initial sync to avoid synchronous setState within effect body
     const initialTimer = setTimeout(() => {
-      performSync(visitorId);
+      void performSync(session);
     }, 0);
 
     const intervalMs = isPageVisible ? 8000 : 60000;
     const timer = setInterval(() => {
-      performSync(visitorId);
+      void performSync(session);
     }, intervalMs);
 
     const handleFocus = () => {
-      performSync(visitorId);
+      void performSync(session);
     };
     window.addEventListener('focus', handleFocus);
 
@@ -198,10 +298,11 @@ export function useChatSync(initialGreeting?: string) {
       clearInterval(timer);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [visitorId, isPageVisible, performSync]);
+  }, [session, isPageVisible, performSync]);
 
   const sendMessage = async (text: string) => {
-    if (!text.trim() || isSending || !visitorId) return;
+    const current = sessionRef.current;
+    if (!text.trim() || isSending || !current?.visitorId) return;
 
     setIsSending(true);
     const tempId = `temp-${Date.now()}`;
@@ -216,34 +317,49 @@ export function useChatSync(initialGreeting?: string) {
     soundManager.play('sent');
 
     try {
-      const res = await fetch('/api/chat/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          visitorId,
-          message: text.trim(),
-          pageUrl: window.location.href,
-        }),
-      });
-      const data = await res.json();
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 20_000);
+      let succeeded = false;
+      try {
+        const res = await fetch('/api/chat/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            visitorId: current.visitorId,
+            signature: current.signature,
+            message: text.trim(),
+            pageUrl: window.location.href,
+          }),
+          signal: controller.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.message) {
+            setMessages((prev) => prev.map((m) => (m.id === tempId ? data.message : m)));
+            succeeded = true;
+          }
+        }
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
 
-      if (data.success && data.message) {
-        setMessages((prev) => prev.map((m) => (m.id === tempId ? data.message : m)));
+      if (!succeeded) {
+        // Rollback phantom message so UI does not show a send that never persisted.
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
       }
     } catch (error) {
       console.error('Send failed', error);
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
     } finally {
       setIsSending(false);
     }
   };
 
   const clearMessages = async () => {
-    if (!visitorId) return;
+    const current = sessionRef.current;
+    if (!current?.visitorId) return;
 
-    const oldVisitorId = visitorId;
-    const newVisitorId = uuidv4();
-
-    // Reset local state to initial greeting
+    // Reset local state to initial greeting first for snappy UX
     setMessages(
       initialGreeting
         ? [
@@ -257,22 +373,27 @@ export function useChatSync(initialGreeting?: string) {
         : []
     );
 
-    // Set fresh visitorId locally & in localStorage
     try {
-      localStorage.setItem('ramos_visitor_id', newVisitorId);
-    } catch {
-      // ignore
-    }
-    setVisitorId(newVisitorId);
-
-    try {
-      await fetch('/api/chat/clear', {
+      const res = await fetch('/api/chat/clear', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visitorId: oldVisitorId }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCsrfHeader(),
+        },
+        body: JSON.stringify({
+          visitorId: current.visitorId,
+          signature: current.signature,
+        }),
       });
+      if (!res.ok) {
+        console.error('Clear chat failed', await res.text().catch(() => res.statusText));
+        return;
+      }
+
+      const fresh = await requestNewSession();
+      startTransition(() => setSession(fresh));
       lastFetchTimeRef.current = 0;
-      performSync(newVisitorId);
+      void performSync(fresh);
     } catch (error) {
       console.error('Clear chat failed', error);
     }

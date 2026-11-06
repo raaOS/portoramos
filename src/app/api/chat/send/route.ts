@@ -4,6 +4,7 @@ import { chatStore } from '@/lib/chatStore';
 import { aiChatService } from '@/lib/services/aiChatService';
 import { checkDataRateLimit } from '@/lib/dataRateLimit';
 import { getClientIdentifier } from '@/lib/security/request';
+import { verifyVisitorSession } from '@/lib/chatSession';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,7 @@ interface TelegramPayload {
 interface ChatRequestBody {
   message: string;
   visitorId: string;
+  signature?: string;
   pageUrl?: string;
 }
 
@@ -56,10 +58,14 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as ChatRequestBody;
-    const { message, visitorId, pageUrl } = body;
+    const { message, visitorId, signature, pageUrl } = body;
 
     if (!message || !visitorId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    if (!verifyVisitorSession(visitorId, signature)) {
+      return NextResponse.json({ error: 'Invalid chat session' }, { status: 403 });
     }
 
     // Rate limiting keyed on client IP+UA (not user-controlled visitorId)

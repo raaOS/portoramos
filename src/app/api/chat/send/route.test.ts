@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   addAiReply: vi.fn(),
   setTypingStatus: vi.fn(),
   generateResponse: vi.fn(),
+  verifyVisitorSession: vi.fn(),
 }));
 
 vi.mock('@/lib/telegram', () => ({
@@ -41,6 +42,10 @@ vi.mock('@/lib/services/aiChatService', () => ({
   },
 }));
 
+vi.mock('@/lib/chatSession', () => ({
+  verifyVisitorSession: mocks.verifyVisitorSession,
+}));
+
 import { POST } from './route';
 
 function mockTelegramResponse(ok: boolean, result: Record<string, unknown> = {}) {
@@ -54,6 +59,7 @@ describe('POST /api/chat/send', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.checkDataRateLimit.mockResolvedValue({ allowed: true, retryAfter: 0 });
+    mocks.verifyVisitorSession.mockReturnValue(true);
     mocks.validateConfig.mockReturnValue({
       valid: true,
       config: { botToken: '123:abc', chatId: '456', groupId: undefined },
@@ -86,6 +92,23 @@ describe('POST /api/chat/send', () => {
     });
   });
 
+  it('returns 403 when visitor session signature is invalid', async () => {
+    mocks.verifyVisitorSession.mockReturnValue(false);
+
+    const response = await POST(
+      new Request('http://localhost/api/chat/send', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ message: 'Hello', visitorId: 'v1', signature: 'bad' }),
+      }) as never
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error).toBe('Invalid chat session');
+    expect(mocks.addVisitorMessage).not.toHaveBeenCalled();
+  });
+
   it('succeeds in local standalone mode when Telegram is not configured', async () => {
     mocks.validateConfig.mockReturnValue({ valid: false, error: 'No token' });
 
@@ -93,7 +116,7 @@ describe('POST /api/chat/send', () => {
       new Request('http://localhost/api/chat/send', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ message: 'Hello', visitorId: 'v1' }),
+        body: JSON.stringify({ message: 'Hello', visitorId: 'v1', signature: 'sig' }),
       }) as never
     );
     const body = await response.json();

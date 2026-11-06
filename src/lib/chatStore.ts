@@ -155,12 +155,15 @@ export const chatStore = {
     return msg;
   },
 
-  async getAllMessages(visitorId: string): Promise<ChatMessage[]> {
+  async getAllMessages(visitorId: string, limit = 100): Promise<ChatMessage[]> {
     const snap = await db.ref(`messages/${visitorId}`).once('value');
     if (!snap.exists()) return [];
     const messagesMap = snap.val();
-    // Convert object to sorted array
-    return (Object.values(messagesMap) as ChatMessage[]).sort((a, b) => a.timestamp - b.timestamp);
+    const all = Object.values(messagesMap) as ChatMessage[];
+    all.sort((a, b) => a.timestamp - b.timestamp);
+    // PERF: only ship the last N messages to the client. Unbounded history
+    // grows payload & Telegram AI context without bound.
+    return all.length > limit ? all.slice(-limit) : all;
   },
 
   async setTypingStatus(visitorId: string, durationMs: number): Promise<void> {

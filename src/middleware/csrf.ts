@@ -18,9 +18,11 @@ export function checkCSRF(request: NextRequest) {
 
   if (isAPIRoute(pathname) && mutationMethods.includes(request.method)) {
     const allowlistPaths = [
+      // Login bootstraps CSRF (no token yet). Logout intentionally NOT
+      // allowlisted — client already sends x-csrf-token (force-logout fix).
       '/api/admin/login',
-      '/api/admin/logout',
       '/api/chat/send',
+      '/api/chat/session',
       '/api/chat/voice',
       '/api/webhook/telegram',
       '/api/webhook/job-telegram',

@@ -51,14 +51,26 @@ describe('checkCSRF middleware', () => {
       '/api/comments',
       '/api/analytics',
       '/api/chat/send',
+      '/api/chat/session',
       '/api/webhook/telegram',
       '/api/translate',
       '/api/admin/login',
-      '/api/admin/logout',
     ])('allows %s POST without csrf_token cookie (visitor fresh)', (pathname) => {
       const result = checkCSRF(buildRequest(pathname, 'POST'));
       expect(result.isValid).toBe(true);
       expect(validateCSRFToken).not.toHaveBeenCalled();
+    });
+
+    it('requires CSRF on /api/admin/logout (force-logout prevention)', () => {
+      const result = checkCSRF(buildRequest('/api/admin/logout', 'POST'));
+      expect(result.isValid).toBe(false);
+      expect(result.response?.status).toBe(403);
+    });
+
+    it('requires CSRF on /api/chat/clear', () => {
+      const result = checkCSRF(buildRequest('/api/chat/clear', 'POST'));
+      expect(result.isValid).toBe(false);
+      expect(result.response?.status).toBe(403);
     });
   });
 
