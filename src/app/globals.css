@@ -740,3 +740,34 @@ html[data-dock-popover-closing='true'] [data-dock-tooltip='true'] {
 .animate-indeterminate-bar {
   animation: indeterminate-bar 2s ease-in-out infinite;
 }
+
+/* ==========================================================================
+   Sembunyikan SEMUA scrollbar (desktop & mobile) tanpa mematikan fungsi
+   scroll. Konten tetap bisa digulir via roda mouse, touchpad, sentuhan,
+   dan drag. Aturan pakai !important agar mengungguli style scrollbar
+   spesifik lain (mis. .os-scrollbar di os-scrollbar.css).
+   - scrollbar-width: none      → Firefox & Chrome 121+
+   - -ms-overflow-style: none   → Edge/IE lama
+   - ::-webkit-scrollbar        → Chrome/Safari/Edge (WebKit/Blink)
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  -webkit-appearance: none !important;
+}
+
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track-piece,
+*::-webkit-scrollbar-corner {
+  display: none !important;
+}
