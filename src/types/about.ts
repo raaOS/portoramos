@@ -178,6 +178,8 @@ export interface WindowPreferences {
 export interface SoundSetting {
   path: string;
   volume: number;
+  /** false = suara ini dimatikan admin (tidak diputar di sisi pengunjung). */
+  enabled?: boolean;
 }
 
 export interface SoundConfig {

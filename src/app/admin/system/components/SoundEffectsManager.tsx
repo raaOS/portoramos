@@ -1,12 +1,54 @@
 import React, { useState, useCallback } from 'react';
-import { Save, Play, Music, Info, Upload, Loader2 } from 'lucide-react';
+import { Save, Play, Music, Info, Upload, Loader2, Power } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { SoundConfig } from '@/types/about';
+import { SOUND_MASTER_KEY } from '@/lib/constants';
 import AdminFileUpload from '@/app/admin/components/AdminFileUpload';
 
 interface SoundEffectsManagerProps {
   config: SoundConfig;
   onUpdate: (config: SoundConfig) => void;
+}
+
+/** Saklar pil ON/OFF ukuran standar (48×24) — knob geser dengan teks status. */
+function ToggleSwitch({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-12 min-h-0 min-w-0 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 ${
+        checked ? 'bg-emerald-500' : 'bg-gray-300'
+      }`}
+    >
+      {/* Teks status di sisi berlawanan knob */}
+      <span
+        aria-hidden="true"
+        className={`absolute inset-y-0 flex items-center text-[8px] font-black uppercase tracking-wide text-white transition-all duration-200 ${
+          checked ? 'left-1.5 opacity-95' : 'right-1.5 opacity-90'
+        }`}
+      >
+        {checked ? 'On' : 'Off'}
+      </span>
+      {/* Knob yang bergeser */}
+      <span
+        aria-hidden="true"
+        className={`relative z-10 inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ease-out ${
+          checked ? 'translate-x-6' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
 }
 
 export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsManagerProps) {
@@ -16,13 +58,28 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const { showSuccess, showError } = useToast();
 
-  const handleUpdate = (type: string, field: 'path' | 'volume', value: string | number) => {
+  const masterEnabled = localConfig[SOUND_MASTER_KEY]?.enabled !== false;
+
+  const handleUpdate = (
+    type: string,
+    field: 'path' | 'volume' | 'enabled',
+    value: string | number | boolean
+  ) => {
     setLocalConfig((prev) => ({
       ...prev,
       [type]: {
         ...prev[type],
         [field]: field === 'volume' ? parseFloat(value as string) : value,
       },
+    }));
+  };
+
+  const handleToggleMaster = (next: boolean) => {
+    setLocalConfig((prev) => ({
+      ...prev,
+      // Reserved key: path '-' adalah placeholder (tidak pernah diputar);
+      // `enabled` inilah saklar global semua efek suara.
+      [SOUND_MASTER_KEY]: { ...(prev[SOUND_MASTER_KEY] || {}), path: '-', volume: 0, enabled: next },
     }));
   };
 
@@ -104,14 +161,51 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
         </button>
       </div>
 
+      {/* Master ON/OFF — saklar global semua efek suara */}
+      <div
+        className={`flex items-center justify-between gap-4 rounded-xl border p-5 shadow-sm transition-all ${
+          masterEnabled ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={`rounded-lg p-2.5 ${
+              masterEnabled ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'
+            }`}
+          >
+            <Power className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-800">
+              Suara OS: {masterEnabled ? 'Aktif' : 'Mati'}
+            </h3>
+            <p className="mt-0.5 text-sm text-gray-500">
+              {masterEnabled
+                ? 'Efek suara sistem menyala untuk pengunjung (kecuali yang dimatikan di bawah).'
+                : 'SEMUA efek suara dimatikan untuk pengunjung, apa pun setelan di bawah.'}
+            </p>
+          </div>
+        </div>
+        <ToggleSwitch
+          checked={masterEnabled}
+          onChange={handleToggleMaster}
+          label="Aktifkan atau matikan semua efek suara"
+        />
+      </div>
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {soundTypes.map((type) => {
           const setting = localConfig[type.key] || { path: '', volume: 0.5 };
+          const soundEnabled = setting.enabled !== false;
           const currentProgress = uploadProgress[type.key];
           return (
             <div
               key={type.key}
-              className="group rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:border-amber-200"
+              className={`group rounded-xl border bg-white p-5 shadow-sm transition-all ${
+                soundEnabled
+                  ? 'border-gray-100 hover:border-amber-200'
+                  : 'border-gray-100 opacity-60'
+              }`}
             >
               <div className="mb-4 flex items-start justify-between">
                 <div>
@@ -123,18 +217,25 @@ export default function SoundEffectsManager({ config, onUpdate }: SoundEffectsMa
                   </h4>
                   <p className="mt-0.5 text-xs text-gray-400">{type.description}</p>
                 </div>
-                <button
-                  onClick={() => handlePreview(type.key, setting)}
-                  disabled={uploadingKey === type.key}
-                  className="inline-flex items-center justify-center rounded-lg bg-gray-50 p-2 text-gray-400 transition-all hover:bg-amber-50 hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-40"
-                  title="Test Sound"
-                >
-                  {uploadingKey === type.key ? (
-                    <Loader2 size={18} className="animate-spin text-amber-500" />
-                  ) : (
-                    <Play size={18} fill="currentColor" />
-                  )}
-                </button>
+                <div className="flex items-center gap-2">
+                  <ToggleSwitch
+                    checked={soundEnabled}
+                    onChange={(next) => handleUpdate(type.key, 'enabled', next)}
+                    label={`Aktifkan atau matikan suara ${type.label}`}
+                  />
+                  <button
+                    onClick={() => handlePreview(type.key, setting)}
+                    disabled={uploadingKey === type.key}
+                    className="inline-flex items-center justify-center rounded-lg bg-gray-50 p-2 text-gray-400 transition-all hover:bg-amber-50 hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    title="Test Sound"
+                  >
+                    {uploadingKey === type.key ? (
+                      <Loader2 size={18} className="animate-spin text-amber-500" />
+                    ) : (
+                      <Play size={18} fill="currentColor" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-4">

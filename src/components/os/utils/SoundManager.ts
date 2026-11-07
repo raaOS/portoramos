@@ -4,7 +4,7 @@
  * Standardized on WAV for maximum compatibility with generated assets.
  */
 
-import { getAssetPath } from '@/lib/constants';
+import { getAssetPath, SOUND_MASTER_KEY } from '@/lib/constants';
 
 type SoundType =
   | 'startup'
@@ -26,6 +26,9 @@ class SoundManager {
   private sounds: Map<SoundType, HTMLAudioElement> = new Map();
   private isMuted: boolean = false;
   private volume: number = 0.5;
+  // Admin-controlled config (soundConfig di D1): master ON/OFF + per-sound.
+  private masterEnabled: boolean = true;
+  private disabledSounds: Set<SoundType> = new Set();
   private debugMode = process.env.NODE_ENV === 'development';
 
   private soundPaths: Record<SoundType, string> = {
@@ -139,13 +142,28 @@ class SoundManager {
   /**
    * Load dynamic configuration (overriding defaults)
    */
-  public loadConfig(config: Record<string, { path: string; volume: number }>) {
+  public loadConfig(config: Record<string, { path: string; volume: number; enabled?: boolean }>) {
     if (!config) return;
 
     console.log('[SoundManager] loadConfig called with config:', JSON.stringify(config, null, 2));
+
+    // Master ON/OFF (reserved key `masterEnabled`): tidak punya path, hanya
+    // membawa status enabled. Default (absen) = aktif.
+    const masterSetting = config[SOUND_MASTER_KEY];
+    if (masterSetting && typeof masterSetting.enabled === 'boolean') {
+      this.masterEnabled = masterSetting.enabled;
+    }
+
     Object.entries(config).forEach(([key, setting]) => {
       const typeKey = key as SoundType;
       if (this.soundPaths[typeKey] !== undefined) {
+        // Admin toggle per-sound: false = dimatikan, undefined = aktif.
+        if (setting.enabled === false) {
+          this.disabledSounds.add(typeKey);
+        } else {
+          this.disabledSounds.delete(typeKey);
+        }
+
         const oldPath = this.soundPaths[typeKey];
 
         // UX Fix: Localization Remote URL -> Local path
@@ -213,6 +231,16 @@ class SoundManager {
       `[SoundManager] play called for "${type}", path is: "${this.soundPaths[type]}", isUnlocked: ${this.isUnlocked}`
     );
     if (this.isMuted) return;
+
+    // Admin config: master OFF atau suara spesifik dimatikan → skip total.
+    if (!this.masterEnabled) {
+      this.log(`"${type}" skipped: master sound disabled by admin config.`);
+      return;
+    }
+    if (this.disabledSounds.has(type)) {
+      this.log(`"${type}" skipped: disabled by admin config.`);
+      return;
+    }
 
     // Check if this sound is temporarily suppressed
     if (this.suppressedSounds.has(type)) {

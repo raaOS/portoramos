@@ -184,6 +184,8 @@ const soundSettingSchema = z
   .object({
     path: requiredText(1000),
     volume: z.coerce.number().min(0).max(1),
+    // false = suara dimatikan admin; default (undefined) = aktif
+    enabled: z.boolean().optional(),
   })
   .strict();
 

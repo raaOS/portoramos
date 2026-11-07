@@ -154,3 +154,10 @@ export const getAssetPath = (path: string): string => {
   }
   return `${path}?v=${APP_VERSION}`;
 };
+
+/**
+ * Sound Config — reserved key di `soundConfig` (aboutData) untuk flag
+ * master ON/OFF semua efek suara. Value-nya berbentuk SoundSetting dengan
+ * `enabled` sebagai pembawa status; per-sound memakai `enabled` masing-masing.
+ */
+export const SOUND_MASTER_KEY = 'masterEnabled';
