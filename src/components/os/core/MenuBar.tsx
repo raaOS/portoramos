@@ -11,6 +11,12 @@ import IOSPinModal from '@/components/shared/IOSPinModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { MenuBarViewMenu } from './menu-bar/MenuBarViewMenu';
 import { MenuBarAdminBadge } from './menu-bar/MenuBarAdminBadge';
+import {
+  MenuBarGoMenu,
+  MenuBarWindowMenu,
+  MenuBarHelpMenu,
+  type MenuBarLabels,
+} from './menu-bar/MenuBarNavMenus';
 import { MenuBarStatusItems } from './menu-bar/MenuBarStatusItems';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -175,27 +181,15 @@ export default function MenuBar({
           {localizedActiveWindow}
         </div>
 
-        {/* Menus */}
+        {/* Menus — hanya yang berfungsi nyata */}
         <div className="hidden items-center gap-1 font-medium lg:flex">
-          <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-            {t.menuBar.file}
-          </div>
-          <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-            {t.menuBar.edit}
-          </div>
           <MenuBarViewMenu
             viewLabel={t.menuBar.view}
             showGhostCursorsLabel={t.menuBar.showGhostCursors}
           />
-          <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-            {t.menuBar.go}
-          </div>
-          <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-            {t.menuBar.window}
-          </div>
-          <div className="cursor-default rounded px-2 py-1 transition-colors hover:bg-black/5 xl:px-3">
-            {t.menuBar.help}
-          </div>
+          <MenuBarGoMenu label={t.menuBar.go} labels={t.menuBar as MenuBarLabels} />
+          <MenuBarWindowMenu label={t.menuBar.window} labels={t.menuBar as MenuBarLabels} />
+          <MenuBarHelpMenu label={t.menuBar.help} labels={t.menuBar as MenuBarLabels} />
         </div>
       </div>
 
