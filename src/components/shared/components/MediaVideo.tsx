@@ -226,7 +226,16 @@ const MediaVideo = forwardRef<HTMLVideoElement, MediaVideoProps>(
           loop={loop}
           playsInline={playsInline}
           controls={controls}
-          preload={shouldLoad ? 'metadata' : 'none'}
+          // Proteksi aset: sembunyikan opsi "Download" dari menu titik-tiga
+          // kontrol native & blokir context menu "Save video as" pada video.
+          // Picture-in-picture TETAP AKTIF (diminta user).
+          // Catatan jujur: ini penghalang jalur mudah, bukan proteksi mutlak —
+          // video tetap harus terunduh ke browser agar bisa diputar.
+          controlsList={controls ? 'nodownload' : undefined}
+          onContextMenu={(e) => e.preventDefault()}
+          // priority=true (cover window project) → preload 'auto' supaya video
+          // mulai buffering penuh sejak window terbuka, bukan nunggu play.
+          preload={shouldLoad ? (priority ? 'auto' : 'metadata') : 'none'}
           webkit-playsinline="true"
           x5-playsinline="true"
           x5-video-player-type="h5"

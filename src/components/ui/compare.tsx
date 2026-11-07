@@ -165,6 +165,9 @@ export const Compare = ({
 
   return (
     <div
+      // Pointer Events + setPointerCapture: saat mode drag, geseran TETAP
+      // lanjut meski kursor keluar dari area gambar (dulu berhenti di tepi
+      // kontainer — itulah kenapa slider terasa "susah digeser").
       ref={sliderRef}
       role="slider"
       aria-label={
@@ -196,20 +199,22 @@ export const Compare = ({
           x.set(Math.min(w, currentX + (step / 100) * w));
         }
       }}
-      onMouseMove={(e) => handleMove(e.clientX)}
-      onMouseLeave={mouseLeaveHandler}
-      onMouseEnter={mouseEnterHandler}
-      onMouseDown={(e) => {
+      onPointerMove={(e) => handleMove(e.clientX)}
+      onPointerLeave={mouseLeaveHandler}
+      onPointerEnter={mouseEnterHandler}
+      onPointerDown={(e) => {
         handleStart();
+        if (slideMode === 'drag') {
+          try {
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          } catch {
+            // browser lama tanpa pointer capture — drag tetap jalan di dalam area
+          }
+        }
         handleMove(e.clientX);
       }}
-      onMouseUp={handleEnd}
-      onTouchStart={(e) => {
-        handleStart();
-        handleMove(e.touches[0].clientX);
-      }}
-      onTouchEnd={handleEnd}
-      onTouchMove={(e) => handleMove(e.touches[0].clientX)}
+      onPointerUp={handleEnd}
+      onPointerCancel={handleEnd}
     >
       <CompareHandlebar leftPosition={leftPosition} showHandlebar={showHandlebar} />
 

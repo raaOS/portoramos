@@ -56,7 +56,9 @@ export function ProjectCover({
             firstImageClassName={comparisonMediaClassName}
             secondImageClassname={comparisonMediaClassName}
             className={isWindowMode ? 'h-full w-full rounded-none' : 'h-full w-full'}
-            slideMode="hover"
+            // Mode drag (tahan + geser) dengan pointer capture — lebih terkendali
+            // daripada mode hover yang lepas saat kursor keluar dari gambar.
+            slideMode="drag"
           />
         </motion.div>
       ) : (
