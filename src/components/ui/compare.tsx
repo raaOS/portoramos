@@ -48,6 +48,9 @@ export const Compare = ({
 }: CompareProps) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  // False = pengunjung belum pernah menggeser → posisi slider boleh
+  // dikoreksi otomatis ke initialSliderPercentage saat ukuran berubah.
+  const hasInteractedRef = useRef(false);
 
   // Motion values for smooth interaction
   const x = useMotionValue(0);
@@ -114,6 +117,13 @@ export const Compare = ({
         if (entry.contentBoxSize) {
           const newWidth = entry.contentRect.width;
           width.set(newWidth);
+          // Koreksi posisi slider: saat komponen pertama mount di dalam window
+          // yang masih beranimasi, rect.width bisa terukur ~0 sehingga x
+          // terkunci di nilai kecil (slider nyangkut di kiri). Selama
+          // pengunjung belum menggeser sendiri, jaga posisi tetap di tengah.
+          if (!hasInteractedRef.current && !autoplayRef.current) {
+            x.set((initialSliderPercentage / 100) * newWidth);
+          }
         }
       }
     });
@@ -154,6 +164,7 @@ export const Compare = ({
     (clientX: number) => {
       if (!sliderRef.current) return;
       if (slideMode === 'hover' || (slideMode === 'drag' && isDragging)) {
+        hasInteractedRef.current = true;
         const rect = sliderRef.current.getBoundingClientRect();
         const newX = clientX - rect.left;
         const w = width.get();
@@ -189,6 +200,7 @@ export const Compare = ({
         const step = 2;
         const w = width.get();
         if (w === 0) return;
+        hasInteractedRef.current = true;
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
           const currentX = x.get();
