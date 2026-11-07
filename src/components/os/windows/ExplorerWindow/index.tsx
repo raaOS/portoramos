@@ -13,6 +13,7 @@ import { useDesktopWindowContext } from '../../context/DesktopWindowContext';
 import InlineFilePreview from './InlineFilePreview';
 import FileThumbnail from './FileThumbnail';
 import PDFPreviewWindow from './PDFPreviewWindow';
+import FullscreenMediaViewer from './FullscreenMediaViewer';
 
 interface ExplorerWindowProps {
   initialParentId?: string | null;
@@ -44,6 +45,8 @@ export default function ExplorerWindow({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [activeFile, setActiveFile] = useState<ExplorerFile | null>(null);
+  // Lightbox fullscreen untuk gambar/video — tampil di atas semua window
+  const [lightboxFile, setLightboxFile] = useState<ExplorerFile | null>(null);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isNavigatingRef = useRef(false);
@@ -249,6 +252,14 @@ export default function ExplorerWindow({
     );
   }, [nodes, searchQuery]);
 
+  // File gambar/video se-folder: kandidat navigasi lightbox (1 file besar di
+  // tengah, sisanya sebagai thumbnail di bawah).
+  const lightboxSiblings = useMemo(() => {
+    return filteredNodes.filter(
+      (node) => node.type === 'file' && ((node as ExplorerFile).fileType === 'image' || (node as ExplorerFile).fileType === 'video')
+    ) as ExplorerFile[];
+  }, [filteredNodes]);
+
   const handleNodeClick = (node: AnyExplorerNode, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedNodeId(node.id);
@@ -256,6 +267,21 @@ export default function ExplorerWindow({
       void handleNodeDoubleClick(node, e);
     }
   };
+
+  // Routing preview file: gambar/video → lightbox fullscreen (di atas semua
+  // window), PDF → window OS Preview, sisanya → inline di dalam window.
+  const openFilePreview = useCallback(
+    (file: ExplorerFile) => {
+      if (file.fileType === 'image' || file.fileType === 'video') {
+        setLightboxFile(file);
+        onOpenFile?.(file);
+        return;
+      }
+      setActiveFile(file);
+      onOpenFile?.(file);
+    },
+    [onOpenFile]
+  );
 
   const handleNodeDoubleClick = useCallback(
     async (node: AnyExplorerNode, e?: React.MouseEvent | React.KeyboardEvent) => {
@@ -276,11 +302,10 @@ export default function ExplorerWindow({
           });
           return;
         }
-        setActiveFile(node);
-        onOpenFile?.(node);
+        openFilePreview(file);
       }
     },
-    [navigateTo, onOpenFile, openWindow]
+    [navigateTo, openFilePreview, openWindow]
   );
 
   // Keyboard controls
@@ -307,13 +332,13 @@ export default function ExplorerWindow({
             });
             return;
           }
-          setActiveFile(file);
+          openFilePreview(file);
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodeId, nodes, activeFile, openWindow]);
+  }, [selectedNodeId, nodes, activeFile, openFilePreview, openWindow]);
 
   return (
     <div className="flex h-full w-full flex-col select-none overflow-hidden bg-white/70 backdrop-blur-xl dark:bg-black/70">
@@ -325,7 +350,7 @@ export default function ExplorerWindow({
             <button
               onClick={goBack}
               disabled={historyIndex <= 0 && !activeFile}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-black/5 disabled:opacity-30 dark:text-slate-200 dark:hover:bg-white/5"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-700 transition-colors hover:text-blue-600 disabled:opacity-30 dark:text-slate-200 dark:hover:text-blue-400"
               title="Kembali"
               aria-label="Kembali"
             >
@@ -334,7 +359,7 @@ export default function ExplorerWindow({
             <button
               onClick={goForward}
               disabled={historyIndex >= history.length - 1 || !!activeFile}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-black/5 disabled:opacity-30 dark:text-slate-200 dark:hover:bg-white/5"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-700 transition-colors hover:text-blue-600 disabled:opacity-30 dark:text-slate-200 dark:hover:text-blue-400"
               title="Maju"
               aria-label="Maju"
             >
@@ -346,7 +371,7 @@ export default function ExplorerWindow({
           <div className="flex items-center gap-1.5 overflow-hidden text-xs font-semibold text-slate-600 dark:text-slate-300">
             <button
               onClick={() => navigateTo(null)}
-              className="flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors hover:bg-black/5 hover:text-blue-500 dark:hover:bg-white/5"
+              className="flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors hover:text-blue-500"
             >
               <Home size={13} className="text-slate-400" />
               <span>Root</span>
@@ -356,7 +381,7 @@ export default function ExplorerWindow({
                 <span className="text-slate-400">/</span>
                 <button
                   onClick={() => navigateTo(folder.id)}
-                  className={`rounded px-1.5 py-0.5 transition-colors hover:bg-black/5 hover:text-blue-500 dark:hover:bg-white/5 ${
+                  className={`rounded px-1.5 py-0.5 transition-colors hover:text-blue-500 ${
                     idx === pathNodes.length - 1 && !activeFile
                       ? 'font-bold text-slate-900 dark:text-white'
                       : ''
@@ -382,7 +407,7 @@ export default function ExplorerWindow({
           <button
             onClick={() => fetchNodes(currentParentId)}
             disabled={isLoading || !!activeFile}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/5"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 transition-colors hover:text-blue-600 disabled:opacity-30"
             title="Muat Ulang"
             aria-label="Muat Ulang"
           >
@@ -480,10 +505,10 @@ export default function ExplorerWindow({
                       variants={itemVariants}
                       onClick={(e) => handleNodeClick(node, e)}
                       onDoubleClick={(e) => handleNodeDoubleClick(node, e)}
-                      className={`group relative flex flex-col items-center rounded-xl p-3 text-center transition-all ${
+                      className={`group relative flex flex-col items-center p-3 text-center transition-colors ${
                         isSelected
-                          ? 'bg-blue-500/10 ring-2 ring-blue-500/80 dark:bg-blue-500/20'
-                          : 'hover:bg-black/5 dark:hover:bg-white/5'
+                          ? 'font-bold text-blue-600 dark:text-blue-400'
+                          : 'text-slate-800 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400'
                       }`}
                     >
                       <div className="relative mb-2 flex h-20 w-16 items-center justify-center">
@@ -493,7 +518,7 @@ export default function ExplorerWindow({
                           <FileThumbnail file={file!} />
                         )}
                       </div>
-                      <span className="w-full truncate text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      <span className="w-full truncate text-xs font-semibold text-current">
                         {displayName}
                       </span>
                     </m.div>
@@ -504,6 +529,14 @@ export default function ExplorerWindow({
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Lightbox fullscreen (portal ke body, di atas semua window) */}
+      <FullscreenMediaViewer
+        file={lightboxFile}
+        siblings={lightboxSiblings}
+        onClose={() => setLightboxFile(null)}
+        onNavigate={setLightboxFile}
+      />
     </div>
   );
 }

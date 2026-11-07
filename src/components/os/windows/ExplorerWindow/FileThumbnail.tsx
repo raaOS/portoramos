@@ -103,7 +103,7 @@ export default function FileThumbnail({
             />
           )}
           {size !== 'xs' && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
               <MonitorPlay size={size === 'sm' ? 14 : 20} className="text-white drop-shadow-md" />
             </div>
           )}

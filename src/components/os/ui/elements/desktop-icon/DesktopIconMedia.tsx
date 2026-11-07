@@ -111,7 +111,7 @@ export function DesktopIconMedia({
   }
 
   return (
-    <div className="flex h-16 w-16 items-center justify-center rounded-none bg-white/20 transition-colors group-hover:bg-white/30">
+    <div className="flex h-16 w-16 items-center justify-center rounded-none bg-white/20">
       <div className="text-black/80 transition-colors group-hover:text-black">{icon}</div>
     </div>
   );
