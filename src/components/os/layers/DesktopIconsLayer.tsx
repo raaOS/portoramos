@@ -138,30 +138,11 @@ function DesktopIconsLayer({
                   }}
                   onFocus={() => bringIconToFront(icon)}
                   onSizeChange={isAdmin ? (size) => handleIconSizeRequest(icon, size) : undefined}
+                  // 1x klik langsung buka (desktop & mobile sama) — tanpa
+                  // double-click. Guard isDragging di DesktopIcon mencegah buka
+                  // terpicu saat selesai drag ikon.
                   onClick={() => {
                     setSelectedIconId(icon.id);
-                    if (isMobile || (typeof window !== 'undefined' && window.innerWidth < 768)) {
-                      if (icon.data) {
-                        const el = iconRefs.current[icon.id];
-                        const rect = el?.getBoundingClientRect();
-                        triggerOpenProject(
-                          icon.id,
-                          icon.data,
-                          rect
-                            ? {
-                                x: rect.left,
-                                y: rect.top,
-                                width: rect.width,
-                                height: rect.height,
-                              }
-                            : undefined
-                        );
-                      } else if (icon.action) {
-                        icon.action();
-                      }
-                    }
-                  }}
-                  onDoubleClick={() => {
                     if (icon.data) {
                       const el = iconRefs.current[icon.id];
                       const rect = el?.getBoundingClientRect();

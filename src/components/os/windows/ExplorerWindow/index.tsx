@@ -194,48 +194,33 @@ export default function ExplorerWindow({
       return;
     }
 
-    if (isNavigatingRef.current) return;
-
-    isNavigatingRef.current = true;
+    // Sengaja TANPA isNavigatingRef: klik back yang datang <300ms setelah
+    // pindah folder (mis. klik cepat/double) dulu dibuang diam-diam sehingga
+    // back terasa "tidak jalan". Setiap klik back = mundur satu langkah.
     setSelectedNodeId(null);
     setState((prev) => {
-      if (prev.historyIndex <= 0) {
-        isNavigatingRef.current = false;
-        return prev;
-      }
+      if (prev.historyIndex <= 0) return prev;
       return {
         ...prev,
         historyIndex: prev.historyIndex - 1,
         isLoading: true,
       };
     });
-    if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
-    navTimeoutRef.current = setTimeout(() => {
-      isNavigatingRef.current = false;
-    }, 300);
   }, [activeFile]);
 
   const goForward = useCallback(() => {
     if (activeFile) return;
-    if (isNavigatingRef.current) return;
 
-    isNavigatingRef.current = true;
+    // Sama seperti goBack: tanpa lockout 300ms agar klik maju tidak hilang.
     setSelectedNodeId(null);
     setState((prev) => {
-      if (prev.historyIndex >= prev.history.length - 1) {
-        isNavigatingRef.current = false;
-        return prev;
-      }
+      if (prev.historyIndex >= prev.history.length - 1) return prev;
       return {
         ...prev,
         historyIndex: prev.historyIndex + 1,
         isLoading: true,
       };
     });
-    if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
-    navTimeoutRef.current = setTimeout(() => {
-      isNavigatingRef.current = false;
-    }, 300);
   }, [activeFile]);
 
   // Cleanup navigation timeout on unmount
@@ -260,12 +245,12 @@ export default function ExplorerWindow({
     ) as ExplorerFile[];
   }, [filteredNodes]);
 
+  // 1x klik langsung buka (folder → masuk, file → preview) — desktop & mobile
+  // sama, tidak perlu double-click. selectedNodeId tidak di-set lagi karena
+  // tidak ada lagi tahap "pilih dulu".
   const handleNodeClick = (node: AnyExplorerNode, e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedNodeId(node.id);
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      void handleNodeDoubleClick(node, e);
-    }
+    void handleNodeDoubleClick(node, e);
   };
 
   // Routing preview file: gambar/video → lightbox fullscreen (di atas semua
@@ -481,8 +466,13 @@ export default function ExplorerWindow({
                 </div>
               </m.div>
             ) : (
+              // Key pakai displayedParentId (baru berubah setelah data folder
+              // benar-benar datang) — bukan currentParentId. Kalau pakai
+              // currentParentId, grid lama langsung dibongkar lalu digambar
+              // ulang dengan isi folder LAMA sekejap sebelum fetch selesai,
+              // itulah flash/flicker saat pindah folder.
               <m.div
-                key={`grid:${currentParentId || 'root'}`}
+                key={`grid:${displayedParentId || 'root'}`}
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
@@ -504,7 +494,6 @@ export default function ExplorerWindow({
                       key={node.id}
                       variants={itemVariants}
                       onClick={(e) => handleNodeClick(node, e)}
-                      onDoubleClick={(e) => handleNodeDoubleClick(node, e)}
                       className={`group relative flex flex-col items-center p-3 text-center transition-colors ${
                         isSelected
                           ? 'font-bold text-blue-600 dark:text-blue-400'
