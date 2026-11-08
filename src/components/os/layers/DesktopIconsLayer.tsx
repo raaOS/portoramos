@@ -29,17 +29,52 @@ function DesktopIconsLayer({
   handleIconSizeChange,
   openProjectWindow,
 }: DesktopIconsLayerProps) {
-  const { windows } = useDesktopWindowContext();
+  const { windows, setWindows } = useDesktopWindowContext();
   const { getZIndex, bringToFront, registerElement, unregisterElement } = useUnifiedZIndex();
 
   const [selectedIconId, setSelectedIconId] = useState<string | null>(null);
   const iconRefs = useRef<Record<string, HTMLElement | null>>({});
   const registeredIconIdsRef = useRef<Set<string>>(new Set());
+  const iconsContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const { openingIconId, closingToIconId, triggerOpenProject } = useDesktopIconTransitions({
+  const { openingIconIds, closingIconIds, triggerOpenProject } = useDesktopIconTransitions({
     windows,
     openProjectWindow,
   });
+
+  // Rect ikon dalam koordinat container desktop (bukan viewport) — sama dengan
+  // ruang koordinat jendela, supaya morph ikon↔jendela tidak offset kalau
+  // container tidak mulai tepat di (0,0) viewport.
+  const getIconContainerRect = useCallback((iconId: string) => {
+    const el = iconRefs.current[iconId];
+    const container = iconsContainerRef.current;
+    if (!el || !container) return undefined;
+    const r = el.getBoundingClientRect();
+    const c = container.getBoundingClientRect();
+    return {
+      x: r.left - c.left,
+      y: r.top - c.top,
+      width: r.width,
+      height: r.height,
+    };
+  }, []);
+
+  // originRect jendela project mengikuti posisi ikon TERKINI — kalau ikon
+  // dipindah saat jendelanya terbuka, animasi close tetap mengecil ke ikon
+  // yang sekarang, bukan ke posisi lama saat pertama dibuka.
+  const syncProjectWindowOrigin = useCallback(
+    (icon: ProjectIcon) => {
+      if (!icon.data) return;
+      const rect = getIconContainerRect(icon.id);
+      if (!rect) return;
+      setWindows((prev) =>
+        prev.map((w) =>
+          w.id === `project-${icon.data!.id}` ? { ...w, originRect: rect } : w
+        )
+      );
+    },
+    [getIconContainerRect, setWindows]
+  );
 
   useEffect(() => {
     const nextIds = new Set<string>();
@@ -86,6 +121,7 @@ function DesktopIconsLayer({
   return (
     <>
       <div
+        ref={iconsContainerRef}
         className="pointer-events-auto absolute inset-0"
         onClick={() => setSelectedIconId(null)}
       >
@@ -131,10 +167,14 @@ function DesktopIconsLayer({
                   priority={icon.priority}
                   isSelected={isSelected}
                   activeScale={
-                    openingIconId === icon.id ? 1.15 : closingToIconId === icon.id ? 0.92 : 1
+                    openingIconIds.has(icon.id) ? 1.15 : closingIconIds.has(icon.id) ? 0.92 : 1
                   }
                   onPositionChange={(id, relX, relY) => {
                     handleIconPositionChange(id, icon.x + relX, icon.y + relY);
+                    if (icon.data) {
+                      // Reflow 1 frame dulu supaya rect ikon terbaca di posisi baru.
+                      requestAnimationFrame(() => syncProjectWindowOrigin(icon));
+                    }
                   }}
                   onFocus={() => bringIconToFront(icon)}
                   onSizeChange={isAdmin ? (size) => handleIconSizeRequest(icon, size) : undefined}
@@ -144,20 +184,7 @@ function DesktopIconsLayer({
                   onClick={() => {
                     setSelectedIconId(icon.id);
                     if (icon.data) {
-                      const el = iconRefs.current[icon.id];
-                      const rect = el?.getBoundingClientRect();
-                      triggerOpenProject(
-                        icon.id,
-                        icon.data,
-                        rect
-                          ? {
-                              x: rect.left,
-                              y: rect.top,
-                              width: rect.width,
-                              height: rect.height,
-                            }
-                          : undefined
-                      );
+                      triggerOpenProject(icon.id, icon.data, getIconContainerRect(icon.id));
                     } else if (icon.action) {
                       icon.action();
                     }

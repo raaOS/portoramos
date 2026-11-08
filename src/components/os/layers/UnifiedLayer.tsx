@@ -95,8 +95,12 @@ export default function UnifiedLayer({
   React.useEffect(() => {
     const nextIds = new Set<string>();
 
+    // Register SEMUA window di array (bukan hanya yang terbuka): OSWindow tetap
+    // dirender selama animasi exit berjalan (AnimatePresence di Window.tsx).
+    // Kalau registrasi dilepas saat isOpen=false, zIndex jatuh ke fallback 100
+    // di TENGAH animasi close → jendela yang sedang mengecil bisa tertutup
+    // ikon/desktop icons layer (bug visual "tenggelam").
     windows.forEach((window) => {
-      if (!window.isOpen || window.isMinimized) return;
       nextIds.add(window.id);
       if (!registeredElementIdsRef.current.has(window.id)) {
         registerElement(window.id, 'window', window.zIndex);

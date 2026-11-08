@@ -377,18 +377,21 @@ export default function OSWindow({
   // When originRect is available: window expands FROM icon and shrinks BACK to icon
   const hasOrigin = !!originRect;
 
-  // Entry: start at icon's position and size, then expand to full window
+  // Entry: start at icon's position and size, then expand to full window.
+  // Opacity mulai tinggi (0.92) + blur tipis agar pertumbuhan dari ikon
+  // TERLIHAT sejak frame pertama — dulu opacity 0 + blur 6px membuat ~200ms
+  // awal morph tak terlihat sehingga efek "ikon berubah jadi jendela" hilang.
   const entryState = hasOrigin
     ? {
         x: originRect!.x,
         y: originRect!.y,
         width: originRect!.width,
         height: originRect!.height,
-        opacity: 0,
+        opacity: 0.92,
         scale: 1,
         borderRadius: 12, // Match iOS icon radius roughly
         backgroundColor: 'rgba(255,255,255,0.40)',
-        filter: 'blur(6px) saturate(0.80)',
+        filter: 'blur(3px) saturate(0.85)',
       }
     : {
         x: activeFrame.x,
